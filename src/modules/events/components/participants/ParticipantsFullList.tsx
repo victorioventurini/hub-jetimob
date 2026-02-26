@@ -134,10 +134,10 @@ export function ParticipantsFullList() {
     // Segment tabs
     switch (segment) {
       case "participantes":
-        data = data.filter((p) => p.statusInscricao === "participante");
+        data = data.filter((p) => p.statusInscricao !== "inscrito");
         break;
       case "oportunidades":
-        data = data.filter((p) => p.oportunidadesCount > 0);
+        data = data.filter((p) => p.statusInscricao === "lead" || p.statusInscricao === "oportunidade");
         break;
       case "fit_alto":
         data = data.filter((p) => p.fitScore >= FIT_HIGH_THRESHOLD);
@@ -185,8 +185,8 @@ export function ParticipantsFullList() {
     }
     return {
       inscritos: base.length,
-      participantes: base.filter((p) => p.statusInscricao === "participante").length,
-      oportunidades: base.filter((p) => p.oportunidadesCount > 0).length,
+      participantes: base.filter((p) => p.statusInscricao !== "inscrito").length,
+      oportunidades: base.filter((p) => p.statusInscricao === "lead" || p.statusInscricao === "oportunidade").length,
       fit_alto: base.filter((p) => p.fitScore >= FIT_HIGH_THRESHOLD).length,
     };
   }, [filters]);
@@ -289,6 +289,8 @@ export function ParticipantsFullList() {
             <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
             <SelectItem value="inscrito" className="text-xs">Inscrito</SelectItem>
             <SelectItem value="participante" className="text-xs">Participante</SelectItem>
+            <SelectItem value="lead" className="text-xs">Lead</SelectItem>
+            <SelectItem value="oportunidade" className="text-xs">Oportunidade</SelectItem>
           </SelectContent>
         </Select>
       </ListPageFilters>
@@ -320,7 +322,7 @@ export function ParticipantsFullList() {
               </TableHead>
               <TableHead className="font-semibold">
                 Status
-                <HelpTooltip content="Inscrito: se registrou para o evento. Participante: esteve efetivamente presente." size="sm" />
+                <HelpTooltip content="Inscrito → Participante → Lead (oportunidade captada) → Oportunidade (Fit alto ≥ 80)." size="sm" />
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -354,10 +356,19 @@ export function ParticipantsFullList() {
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={p.statusInscricao === "participante" ? "default" : "outline"}
-                    className="text-xs"
+                    variant={
+                      p.statusInscricao === "oportunidade" ? "default" :
+                      p.statusInscricao === "lead" ? "default" :
+                      p.statusInscricao === "participante" ? "secondary" : "outline"
+                    }
+                    className={`text-xs ${
+                      p.statusInscricao === "oportunidade" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
+                      p.statusInscricao === "lead" ? "bg-violet-600 hover:bg-violet-700 text-white" : ""
+                    }`}
                   >
-                    {p.statusInscricao === "participante" ? "Participante" : "Inscrito"}
+                    {p.statusInscricao === "oportunidade" ? "Oportunidade" :
+                     p.statusInscricao === "lead" ? "Lead" :
+                     p.statusInscricao === "participante" ? "Participante" : "Inscrito"}
                   </Badge>
                 </TableCell>
               </TableRow>
