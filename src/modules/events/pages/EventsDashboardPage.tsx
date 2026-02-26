@@ -1,8 +1,11 @@
 /**
  * EventsDashboardPage — Main dashboard with ROI & Insights
  */
+import { Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 import { ScopeFilter } from "../components/shared/ScopeFilter";
 import { KpiCards } from "../components/dashboard/KpiCards";
 import { ShareOfMindRadar } from "../components/dashboard/ShareOfMindRadar";
@@ -26,6 +29,14 @@ export default function EventsDashboardPage() {
           breadcrumbs={[
             { label: "Eventos" },
           ]}
+          actions={
+            <Button variant="outline" size="sm" className="gap-1.5" asChild>
+              <Link to="/events/settings">
+                <Settings className="h-3.5 w-3.5" />
+                Configurações
+              </Link>
+            </Button>
+          }
         />
         <ScopeFilter />
 
