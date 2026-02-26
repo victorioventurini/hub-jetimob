@@ -28,7 +28,7 @@ export function ShareOfMindRadar() {
     <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/events/participants")}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">
-          Share of Mind
+          Brand Awareness
           <HelpTooltip content="Mede a presença da marca na mente dos participantes em diferentes dimensões (confiança, inovação, custo-benefício, etc.), comparando com competidores anonimizados." size="sm" />
         </CardTitle>
       </CardHeader>
