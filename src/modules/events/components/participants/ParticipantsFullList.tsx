@@ -313,10 +313,6 @@ export function ParticipantsFullList() {
               <TableHead className="font-semibold">Tipo empresa</TableHead>
               <TableHead className="font-semibold">Empresa</TableHead>
               <TableHead className="font-semibold">
-                Atua com
-                <HelpTooltip content="Área de atuação do participante: vendas, aluguéis ou ambos." size="sm" />
-              </TableHead>
-              <TableHead className="font-semibold">
                 Fit
                 <HelpTooltip content="Score de adequação (0–100) do lead ao perfil ideal do patrocinador, baseado em cargo, tipo de empresa, área de atuação e localidade." size="sm" />
               </TableHead>
@@ -329,7 +325,7 @@ export function ParticipantsFullList() {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Nenhum participante encontrado.
                 </TableCell>
               </TableRow>
@@ -346,10 +342,12 @@ export function ParticipantsFullList() {
                 <TableCell className="text-sm">{p.jobTitle}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{p.companyType === "Corretor autônomo" ? "—" : p.companyType}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {p.companyType === "Corretor autônomo" ? "—" : p.companyName}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="text-xs">{p.operationArea}</Badge>
+                  {p.companyType === "Corretor autônomo" ? "—" : (
+                    <div>
+                      <span>{p.companyName}</span>
+                      {p.companyDomain && <p className="text-xs text-muted-foreground">{p.companyDomain}</p>}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <FitBadge score={p.fitScore} label={p.fitLabel} />
