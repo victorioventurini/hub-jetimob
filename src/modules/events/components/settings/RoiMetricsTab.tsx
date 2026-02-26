@@ -36,8 +36,8 @@ const JOB_TITLES = [
 export function RoiMetricsTab() {
   const [ltv, setLtv] = useState("150000");
   const [conversionRate, setConversionRate] = useState("18");
-  const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária de vendas", "Imobiliária de aluguéis"]);
-  const [selectedTitles, setSelectedTitles] = useState<string[]>(["Gerente de marketing", "Diretor geral / Proprietário / CEO"]);
+  const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária de aluguéis", "Imobiliária de vendas e aluguéis"]);
+  const [selectedTitles, setSelectedTitles] = useState<string[]>(["Assessor de locações", "Gerente de locações", "Diretor geral / Proprietário / CEO"]);
 
   const toggleItem = (list: string[], item: string, setter: (v: string[]) => void) => {
     setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
