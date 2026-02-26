@@ -1,7 +1,18 @@
 /**
  * Mock: Full participants dataset for the participants list page
- * Alinhado com os parâmetros de /events/settings (KPIs tab)
- * Distribuição geográfica ~80% RS, proporcional aos attendees por evento
+ * Alinhado com os dados de /events/settings (SponsorshipsTab)
+ *
+ * Totais por evento (de events.ts / eventSettings.ts):
+ *   evt-sm-2026:       55 inscritos /  51 participantes
+ *   evt-pelotas-2026:  47 inscritos /  45 participantes
+ *   evt-capao-2026:    62 inscritos /  53 participantes
+ *   evt-poa-2026:      49 inscritos /  45 participantes
+ *   evt-je-2026:      712 inscritos / 687 participantes
+ *   TOTAL:            925 inscritos / 881 participantes
+ *
+ * Estratégia: gerar participantes únicos por evento na quantidade de inscrições,
+ * depois sortear ~15% de multi-evento entre os Talks (eventos menores).
+ * Participantes do JE2026 podem ter ido a um Talk (~12%).
  */
 import type { JobTitle, CompanyType, OperationArea } from "../types";
 
@@ -116,31 +127,6 @@ const companyNames = [
   "Urban Realty", "Terra Nova", "Ideal Imóveis", "Premium Locações",
 ];
 
-/**
- * Distribuição de participantes por evento (proporcional aos attendees em settings):
- *   evt-sm-2026:       51 attendees
- *   evt-pelotas-2026:  45 attendees
- *   evt-capao-2026:    53 attendees
- *   evt-poa-2026:      45 attendees
- *   evt-je-2026:      687 attendees
- * Total: 881 participantes / 925 inscritos
- *
- * Cada participante pode ter participado em mais de um evento da jornada.
- * Geramos ~300 participantes únicos para representar de forma realista.
- */
-interface EventWeight {
-  id: string;
-  weight: number; // probabilidade relativa
-}
-
-const EVENT_WEIGHTS: EventWeight[] = [
-  { id: "evt-sm-2026", weight: 0.06 },
-  { id: "evt-pelotas-2026", weight: 0.05 },
-  { id: "evt-capao-2026", weight: 0.06 },
-  { id: "evt-poa-2026", weight: 0.05 },
-  { id: "evt-je-2026", weight: 0.78 },
-];
-
 function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
 }
@@ -151,32 +137,107 @@ function pseudoRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
-function assignEvents(i: number): string[] {
-  const primary = pseudoRandom(i * 13 + 7);
-  let cumulative = 0;
-  let primaryEvent = "evt-je-2026";
-  for (const ew of EVENT_WEIGHTS) {
-    cumulative += ew.weight;
-    if (primary < cumulative) {
-      primaryEvent = ew.id;
-      break;
+/**
+ * Dados-alvo por evento (de events.ts):
+ *   eventId → { totalRegistrations, totalAttendees }
+ *
+ * A estratégia é:
+ * 1. Gerar participantes com evento primário proporcional ao totalRegistrations
+ * 2. ~15% dos participantes de Talks também vão a outro Talk
+ * 3. ~12% dos participantes do JE2026 também foram a um Talk
+ * 4. Status "participante" vs "inscrito" proporcional ao ratio attendees/registrations
+ */
+interface EventTarget {
+  id: string;
+  registrations: number;
+  attendees: number;
+}
+
+const EVENT_TARGETS: EventTarget[] = [
+  { id: "evt-sm-2026", registrations: 55, attendees: 51 },
+  { id: "evt-pelotas-2026", registrations: 47, attendees: 45 },
+  { id: "evt-capao-2026", registrations: 62, attendees: 53 },
+  { id: "evt-poa-2026", registrations: 49, attendees: 45 },
+  { id: "evt-je-2026", registrations: 712, attendees: 687 },
+];
+
+const TOTAL_REGISTRATIONS = EVENT_TARGETS.reduce((s, e) => s + e.registrations, 0); // 925
+const TALK_IDS = EVENT_TARGETS.filter((e) => e.id !== "evt-je-2026").map((e) => e.id);
+
+function generateParticipantsFull(): ParticipantFull[] {
+  const participants: ParticipantFull[] = [];
+
+  // Track how many registrations and attendees each event has accumulated
+  const eventRegCount = new Map<string, number>();
+  const eventAttCount = new Map<string, number>();
+  EVENT_TARGETS.forEach((e) => {
+    eventRegCount.set(e.id, 0);
+    eventAttCount.set(e.id, 0);
+  });
+
+  // Build flat assignment list: each slot = one event registration
+  const assignmentSlots: string[] = [];
+  for (const et of EVENT_TARGETS) {
+    for (let j = 0; j < et.registrations; j++) {
+      assignmentSlots.push(et.id);
     }
   }
 
-  const events = [primaryEvent];
-  // ~20% chance of multi-event (attended another event in the journey)
-  if (pseudoRandom(i * 31 + 11) < 0.20) {
-    const secondRand = pseudoRandom(i * 47 + 3);
-    const secondIdx = Math.floor(secondRand * EVENT_WEIGHTS.length);
-    const secondEvent = EVENT_WEIGHTS[secondIdx].id;
-    if (!events.includes(secondEvent)) events.push(secondEvent);
+  // Shuffle deterministically
+  for (let i = assignmentSlots.length - 1; i > 0; i--) {
+    const j = Math.floor(pseudoRandom(i * 17 + 3) * (i + 1));
+    [assignmentSlots[i], assignmentSlots[j]] = [assignmentSlots[j], assignmentSlots[i]];
   }
 
-  return events;
-}
+  // Assign participants: consume slots, allow some multi-event overlap
+  let slotIdx = 0;
 
-function generateParticipantsFull(): ParticipantFull[] {
-  return Array.from({ length: 300 }, (_, i) => {
+  // We target ~800 unique participants (some attend multiple events)
+  const TARGET_UNIQUE = 800;
+
+  for (let i = 0; i < TARGET_UNIQUE && slotIdx < assignmentSlots.length; i++) {
+    const primaryEvent = assignmentSlots[slotIdx];
+    slotIdx++;
+
+    const eventIds = [primaryEvent];
+
+    // Multi-event logic: ~15% chance for Talks participants to attend another Talk
+    // ~12% chance for JE participants to also have attended a Talk
+    const multiRand = pseudoRandom(i * 31 + 11);
+    if (primaryEvent === "evt-je-2026" && multiRand < 0.12) {
+      const talkIdx = Math.floor(pseudoRandom(i * 47 + 3) * TALK_IDS.length);
+      const secondEvent = TALK_IDS[talkIdx];
+      if (!eventIds.includes(secondEvent) && slotIdx < assignmentSlots.length) {
+        eventIds.push(secondEvent);
+        // consume an extra slot for this event if available
+        slotIdx++;
+      }
+    } else if (primaryEvent !== "evt-je-2026" && multiRand < 0.15) {
+      const secondIdx = Math.floor(pseudoRandom(i * 53 + 7) * TALK_IDS.length);
+      const secondEvent = TALK_IDS[secondIdx];
+      if (!eventIds.includes(secondEvent) && slotIdx < assignmentSlots.length) {
+        eventIds.push(secondEvent);
+        slotIdx++;
+      }
+    }
+
+    // Track registration counts
+    for (const eid of eventIds) {
+      eventRegCount.set(eid, (eventRegCount.get(eid) || 0) + 1);
+    }
+
+    // Determine status per event attendance ratios
+    // Use the primary event's attendance rate
+    const target = EVENT_TARGETS.find((e) => e.id === primaryEvent)!;
+    const attendanceRate = target.attendees / target.registrations;
+    const isParticipante = pseudoRandom(i * 7 + 5) < attendanceRate;
+
+    if (isParticipante) {
+      for (const eid of eventIds) {
+        eventAttCount.set(eid, (eventAttCount.get(eid) || 0) + 1);
+      }
+    }
+
     const firstName = pick(firstNames, i);
     const lastName = pick(lastNames, i + 3);
     const loc = pick(cities, i);
@@ -192,11 +253,11 @@ function generateParticipantsFull(): ParticipantFull[] {
       fitScore = 10 + Math.round(pseudoRandom(i + 3) * 39); // 10-49
     }
 
-    const eventIds = assignEvents(i);
-    const isParticipante = pseudoRandom(i * 7 + 5) < 0.95; // ~95% attended (matching 881/925)
-    const oppCount = fitScore >= 70 ? Math.floor(pseudoRandom(i + 10) * 3) + 1 : (pseudoRandom(i + 20) > 0.85 ? 1 : 0);
+    const oppCount = fitScore >= 70
+      ? Math.floor(pseudoRandom(i + 10) * 3) + 1
+      : (pseudoRandom(i + 20) > 0.85 ? 1 : 0);
 
-    return {
+    participants.push({
       id: `pfull-${i + 1}`,
       fullName: `${firstName} ${lastName}`,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@email.com`,
@@ -208,14 +269,16 @@ function generateParticipantsFull(): ParticipantFull[] {
       companyType: pick(companyTypes, i),
       operationArea: pick(operationAreas, i),
       eventIds,
-      journeyId: "jrn-journey-2026", // todos fazem parte da jornada
+      journeyId: "jrn-journey-2026",
       year: 2026,
       statusInscricao: isParticipante ? "participante" : "inscrito",
       oportunidadesCount: oppCount,
       fitScore,
       fitLabel: deriveFitLabel(fitScore),
-    };
-  });
+    });
+  }
+
+  return participants;
 }
 
 export const PARTICIPANTS_FULL_MOCK: ParticipantFull[] = generateParticipantsFull();
