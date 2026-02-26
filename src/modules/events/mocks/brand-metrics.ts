@@ -91,12 +91,12 @@ export const BASELINE_ENDLINE_MOCK: BaselineEndlineMetric[] = [
 
 // Share of Mind dimensions (radar) — Baseline vs Endline
 export const SHARE_OF_MIND_MOCK: ShareOfMindDimension[] = [
-  { dimension: "Confiança", baseline: 55, endline: 85 },
-  { dimension: "Inovação", baseline: 42, endline: 60 },
-  { dimension: "Custo-benefício", baseline: 50, endline: 70 },
-  { dimension: "Atendimento", baseline: 45, endline: 78 },
-  { dimension: "Relevância", baseline: 48, endline: 82 },
-  { dimension: "Reconhecimento", baseline: 40, endline: 75 },
+  { dimension: "Porto Seguro", baseline: 55, endline: 85 },
+  { dimension: "Competidor A", baseline: 42, endline: 60 },
+  { dimension: "Competidor B", baseline: 50, endline: 70 },
+  { dimension: "Competidor C", baseline: 45, endline: 78 },
+  { dimension: "Competidor D", baseline: 48, endline: 82 },
+  { dimension: "Competidor E", baseline: 40, endline: 75 },
 ];
 
 // Pain point ranking
