@@ -26,6 +26,7 @@ export function SponsorshipsTab() {
           <TableHeader>
             <TableRow>
               <TableHead className="text-xs">Evento</TableHead>
+              <TableHead className="text-xs">Data</TableHead>
               <TableHead className="text-xs">Localização</TableHead>
               <TableHead className="text-xs text-center">
                 Projetado
@@ -51,7 +52,9 @@ export function SponsorshipsTab() {
                     <Settings className="h-3.5 w-3.5 text-muted-foreground" />
                     {evt.name}
                   </Link>
-                  <span className="text-xs text-muted-foreground">
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm text-muted-foreground">
                     {new Date(evt.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                   </span>
                 </TableCell>
