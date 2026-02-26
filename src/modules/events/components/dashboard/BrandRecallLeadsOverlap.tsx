@@ -1,44 +1,88 @@
 /**
- * BrandRecallLeadsOverlap — Comparative bars: brand recall × qualified leads
+ * BrandRecallLeadsOverlap — Leads Qualificados com Brand Recall
+ * 3-segment horizontal bar: Apenas Associação Marca-Dor (Não Fit),
+ * Leads Qualificados com Brand Recall (Associação Marca-Dor + Fit),
+ * Apenas Fit (Sem Associação)
  */
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { useAnonymize } from "../../hooks/useAnonymize";
-import { BRAND_RECALL_MOCK } from "../../mocks/brand-metrics";
+import { Brain, Target } from "lucide-react";
+
+const SEGMENTS = [
+  {
+    label: "Apenas Associação Marca-Dor",
+    sublabel: "(Não Fit)",
+    value: 22,
+    bgClass: "bg-blue-500",
+    textClass: "text-white",
+  },
+  {
+    label: "Leads Qualificados com Brand Recall",
+    sublabel: "(Associação Marca-Dor + Fit)",
+    value: 38,
+    bgClass: "bg-emerald-500",
+    textClass: "text-white",
+  },
+  {
+    label: "Apenas Fit",
+    sublabel: "(Sem Associação)",
+    value: 40,
+    bgClass: "bg-orange-500",
+    textClass: "text-white",
+  },
+];
 
 export function BrandRecallLeadsOverlap() {
-  const { getDisplayName } = useAnonymize();
   const navigate = useNavigate();
-  // Leads qualificados correlacionados com recall (seeded, sem Math.random)
-  const SEED_FACTORS = [0.42, 0.35, 0.30, 0.38, 0.28, 0.33];
-  const data = BRAND_RECALL_MOCK.map((b, i) => ({
-    brand: getDisplayName(b.brandId),
-    "Brand Recall": b.stimulated,
-    "Leads Qualificados": Math.round(b.stimulated * (SEED_FACTORS[i % SEED_FACTORS.length])),
-  }));
 
   return (
-    <Card>
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => navigate("/events/participants")}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">
-          Brand Recall × Leads Qualificados
-          <HelpTooltip content="Correlação entre brand recall (reconhecimento da marca) e geração de leads qualificados por marca. Permite identificar se maior recall se traduz em mais leads." size="sm" />
+          Leads Qualificados com Brand Recall
+          <HelpTooltip
+            content="Demonstração da interseção entre reconhecimento de marca (associação à dor) e alinhamento com o Perfil de Fit. Leads que citaram uma dor de interesse, são Fit e associaram a marca à resolução da dor."
+            size="sm"
+          />
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="brand" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-            <YAxis tick={{ fontSize: 10 }} unit="%" />
-            <Tooltip contentStyle={{ fontSize: 12 }} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="Brand Recall" fill="hsl(210, 80%, 55%)" radius={[4, 4, 0, 0]} cursor="pointer" onClick={() => navigate("/events/participants")} />
-            <Bar dataKey="Leads Qualificados" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} cursor="pointer" onClick={() => navigate("/events/participants")} />
-          </BarChart>
-        </ResponsiveContainer>
+      <CardContent className="space-y-4">
+        {/* Header label */}
+        <div className="flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground">
+          <Brain className="h-4 w-4" />
+          <span>Total de Leads Fit</span>
+          <Target className="h-4 w-4" />
+        </div>
+
+        {/* Stacked horizontal bar */}
+        <div className="flex w-full rounded-md overflow-hidden border border-border h-28">
+          {SEGMENTS.map((seg) => (
+            <div
+              key={seg.label}
+              className={`${seg.bgClass} ${seg.textClass} flex flex-col items-center justify-center px-2 text-center border-r last:border-r-0 border-white/20`}
+              style={{ width: `${seg.value}%` }}
+            >
+              <span className="text-[10px] leading-tight font-medium">
+                {seg.label}
+              </span>
+              <span className="text-[9px] leading-tight opacity-80">
+                {seg.sublabel}
+              </span>
+              <span className="text-lg font-bold mt-1">{seg.value}%</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom annotation */}
+        <p className="text-[10px] text-center text-muted-foreground leading-snug">
+          Leads que fizeram associação da marca à dor de interesse
+          <br />
+          (% de associação) e são Fit.
+        </p>
       </CardContent>
     </Card>
   );
