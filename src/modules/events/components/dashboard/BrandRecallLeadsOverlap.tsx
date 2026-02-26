@@ -79,7 +79,7 @@ export function BrandRecallLeadsOverlap() {
 
         {/* Bottom annotation */}
         <p className="text-[10px] text-center text-muted-foreground leading-snug">
-          Leads que fizeram associação da marca à dor de interesse
+          Fit e associou a marca a resolução da dor
           <br />
           (% de associação) e são Fit.
         </p>
