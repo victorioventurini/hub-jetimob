@@ -1,14 +1,17 @@
 /**
  * SegmentationCharts — Donut charts for location, job title, company type
  * Clicking any chart slice navigates to /events/participants
+ * Uses PARTICIPANTS_FULL_MOCK (925 registrations) for consistency with dashboard KPIs.
  */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { PARTICIPANTS_MOCK } from "../../mocks/participants";
+import { PARTICIPANTS_FULL_MOCK } from "../../mocks/participantsFull";
+import { useEventsContext } from "../../context/EventsContext";
+import { JOURNEYS_MOCK } from "../../mocks/events";
 
 const COLORS = [
   "hsl(210, 80%, 45%)", "hsl(210, 80%, 65%)", "hsl(142, 71%, 45%)",
@@ -68,16 +71,32 @@ function DonutChart({ data, title, tooltip, actions, onSliceClick }: { data: { n
   );
 }
 
-/** Unique UFs from mock data */
-const ALL_UFS = Array.from(new Set(PARTICIPANTS_MOCK.map((p) => p.uf))).sort();
-
 export function SegmentationCharts() {
   const navigate = useNavigate();
+  const { filters } = useEventsContext();
   const [selectedUf, setSelectedUf] = useState<string>("all");
 
+  // Filter participants by scope (same logic as participants page)
+  const scopeFiltered = useMemo(() => {
+    let data = PARTICIPANTS_FULL_MOCK.filter((p) => p.year === filters.year);
+    if (filters.scope === "event" && filters.selectedEventId) {
+      data = data.filter((p) => p.eventIds.includes(filters.selectedEventId!));
+    }
+    if (filters.scope === "journey" && filters.selectedJourneyId) {
+      const journey = JOURNEYS_MOCK.find((j) => j.id === filters.selectedJourneyId);
+      if (journey) {
+        data = data.filter((p) => p.eventIds.some((eid) => journey.eventIds.includes(eid)));
+      }
+    }
+    return data;
+  }, [filters]);
+
+  /** Unique UFs from filtered data */
+  const ALL_UFS = useMemo(() => Array.from(new Set(scopeFiltered.map((p) => p.uf))).sort(), [scopeFiltered]);
+
   const filtered = selectedUf === "all"
-    ? PARTICIPANTS_MOCK
-    : PARTICIPANTS_MOCK.filter((p) => p.uf === selectedUf);
+    ? scopeFiltered
+    : scopeFiltered.filter((p) => p.uf === selectedUf);
 
   const locationData = selectedUf === "all"
     ? countBy(filtered, (p) => p.uf)
