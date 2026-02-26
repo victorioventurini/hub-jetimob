@@ -1,11 +1,10 @@
 /**
- * PainRankingTable — Ranking table of most cited pain points
+ * PainRankingGeneral — Ranking geral de dores mais citadas (todas, sem filtro de marca)
  */
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { PAIN_RANKING_MOCK } from "../../mocks/brand-metrics";
 
 const trendIcons = {
   up: <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />,
@@ -13,20 +12,31 @@ const trendIcons = {
   stable: <Minus className="h-3.5 w-3.5 text-muted-foreground" />,
 };
 
-export function PainRankingTable() {
+const GENERAL_PAIN_RANKING = [
+  { painPoint: "Garantia locatícia", percentage: 72, trend: "up" as const, rank: 1 },
+  { painPoint: "Gestão de aluguéis", percentage: 64, trend: "up" as const, rank: 2 },
+  { painPoint: "CRM Imobiliário", percentage: 58, trend: "stable" as const, rank: 3 },
+  { painPoint: "Crédito imobiliário", percentage: 52, trend: "up" as const, rank: 4 },
+  { painPoint: "Captação de imóveis", percentage: 47, trend: "down" as const, rank: 5 },
+  { painPoint: "Portal imobiliário", percentage: 42, trend: "stable" as const, rank: 6 },
+  { painPoint: "Seguro residencial", percentage: 38, trend: "up" as const, rank: 7 },
+  { painPoint: "Marketing digital", percentage: 30, trend: "down" as const, rank: 8 },
+];
+
+export function PainRankingGeneral() {
   const navigate = useNavigate();
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">
-          Dores Mais Citadas Relacionadas com a Marca
-          <HelpTooltip content="Ranking das principais dores e necessidades relacionadas à marca do patrocinador, com percentual de citações e tendência em relação ao período anterior." size="sm" />
+          Ranking de Dores Mais Citadas
+          <HelpTooltip content="Ranking geral das principais dores e necessidades mencionadas pelos participantes, independente de associação com marca. Percentual de citações e tendência em relação ao período anterior." size="sm" />
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {PAIN_RANKING_MOCK.map((pain) => (
+          {GENERAL_PAIN_RANKING.map((pain) => (
             <div
               key={pain.painPoint}
               className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
