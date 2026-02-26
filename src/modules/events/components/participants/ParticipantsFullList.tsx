@@ -306,13 +306,12 @@ export function ParticipantsFullList() {
               <TableHead className="text-xs">Atua com</TableHead>
               <TableHead className="text-xs">Fit</TableHead>
               <TableHead className="text-xs">Status</TableHead>
-              <TableHead className="text-xs text-right">Oport.</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Nenhum participante encontrado.
                 </TableCell>
               </TableRow>
@@ -341,9 +340,6 @@ export function ParticipantsFullList() {
                   >
                     {p.statusInscricao === "participante" ? "Participante" : "Inscrito"}
                   </Badge>
-                </TableCell>
-                <TableCell className="text-right font-mono text-xs">
-                  {p.oportunidadesCount}
                 </TableCell>
               </TableRow>
             ))}
