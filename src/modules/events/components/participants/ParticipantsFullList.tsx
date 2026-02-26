@@ -94,8 +94,11 @@ export function ParticipantsFullList() {
   const [status, setStatus] = useState("all");
 
   // Derive city/uf options from data
-  const allCities = useMemo(() => uniqueValues(PARTICIPANTS_FULL_MOCK, "city"), []);
   const allUfs = useMemo(() => uniqueValues(PARTICIPANTS_FULL_MOCK, "uf"), []);
+  const filteredCities = useMemo(() => {
+    if (uf === "all") return uniqueValues(PARTICIPANTS_FULL_MOCK, "city");
+    return uniqueValues(PARTICIPANTS_FULL_MOCK.filter((p) => p.uf === uf), "city");
+  }, [uf]);
 
   const filtered = useMemo(() => {
     let data: ParticipantFull[] = PARTICIPANTS_FULL_MOCK;
@@ -188,26 +191,26 @@ export function ParticipantsFullList() {
           </SelectContent>
         </Select>
 
+        <Select value={uf} onValueChange={(v) => { setUf(v); setCity("all"); }}>
+          <SelectTrigger className="h-9 w-[100px] text-xs">
+            <SelectValue placeholder="UF" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">Todas as UFs</SelectItem>
+            {allUfs.map((u) => (
+              <SelectItem key={u} value={u} className="text-xs">{u}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={city} onValueChange={setCity}>
           <SelectTrigger className="h-9 w-[160px] text-xs">
             <SelectValue placeholder="Cidade" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all" className="text-xs">Todas as cidades</SelectItem>
-            {allCities.map((c) => (
+            {filteredCities.map((c) => (
               <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={uf} onValueChange={setUf}>
-          <SelectTrigger className="h-9 w-[100px] text-xs">
-            <SelectValue placeholder="UF" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-xs">Todos os UFs</SelectItem>
-            {allUfs.map((u) => (
-              <SelectItem key={u} value={u} className="text-xs">{u}</SelectItem>
             ))}
           </SelectContent>
         </Select>
