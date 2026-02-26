@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Users, Target, DollarSign, Brain, Award } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
-import { EVENTS_MOCK } from "../../mocks/events";
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
@@ -25,7 +24,7 @@ const KPI_TOOLTIPS: Record<string, string> = {
 };
 
 export function KpiCards() {
-  const { opportunities } = useEventsContext();
+  const { filteredOpportunities: opportunities, filteredEvents } = useEventsContext();
 
   const totalOpps = opportunities.length;
   const avgFit = totalOpps > 0 ? Math.round(opportunities.reduce((s, o) => s + o.fitScore, 0) / totalOpps) : 0;
@@ -34,7 +33,7 @@ export function KpiCards() {
 
   const estimatedRoi = Math.round(highFit * LTV_DEFAULT * CONVERSION_RATE);
 
-  const totalAttendees = EVENTS_MOCK.reduce((s, e) => s + e.totalAttendees, 0);
+  const totalAttendees = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
 
   const kpis = [
     { label: "Oportunidades Capturadas", value: String(totalOpps), icon: Target, color: "text-primary" },
