@@ -85,5 +85,6 @@ export function useBuBranding() {
     primaryColor: currentBu?.primary_color || DEFAULT_PRIMARY_COLOR,
     secondaryColor: currentBu?.secondary_color || DEFAULT_SECONDARY_COLOR,
     buName: currentBu?.name || "Hub",
+    memberDisplayName: currentBu?.member_display_name || "Usuários",
   };
 }

@@ -28,7 +28,7 @@ interface SidebarProps {
 
 const navigation = [
   { name: "Início", href: "/", icon: Home },
-  { name: "Jetimobers", href: "/users", icon: Users },
+  { name: "$$MEMBER$$", href: "/users", icon: Users },
   { name: "Times", href: "/teams", icon: Building2 },
   { name: "Módulos", href: "/modules", icon: LayoutGrid },
   { name: "OKRs", href: "/okrs", icon: Target },
@@ -46,7 +46,7 @@ const adminNavigation = [
 export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
   const location = useLocation();
   const { isAdmin } = useAuth();
-  const { symbolUrl, buName, primaryColor } = useBuBranding();
+  const { symbolUrl, buName, primaryColor, memberDisplayName } = useBuBranding();
 
   const NavItem = ({ item }: { item: typeof navigation[0] }) => {
     const isActive = location.pathname === item.href;
@@ -127,9 +127,10 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto [scrollbar-gutter:stable] p-3 space-y-1">
           <div className="space-y-1">
-            {navigation.map((item) => (
-              <NavItem key={item.href} item={item} />
-            ))}
+            {navigation.map((item) => {
+              const displayName = item.name === "$$MEMBER$$" ? memberDisplayName : item.name;
+              return <NavItem key={item.href} item={{ ...item, name: displayName }} />;
+            })}
           </div>
 
           {isAdmin && (

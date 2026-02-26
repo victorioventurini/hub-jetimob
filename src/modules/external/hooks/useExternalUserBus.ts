@@ -53,6 +53,7 @@ export function useExternalUserBus() {
             symbol_url: null,
             primary_color: null,
             secondary_color: null,
+            member_display_name: null,
           },
           created_at: "",
           updated_at: "",

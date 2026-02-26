@@ -1,0 +1,1 @@
+ALTER TABLE public.bu_units ADD COLUMN IF NOT EXISTS member_display_name text;

@@ -7,6 +7,7 @@ export type BuUnit = Tables<"bu_units"> & {
   symbol_url?: string | null;
   primary_color?: string | null;
   secondary_color?: string | null;
+  member_display_name?: string | null;
 };
 
 export type BuUserMembership = Tables<"bu_user_memberships"> & {
