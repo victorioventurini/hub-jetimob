@@ -13,14 +13,12 @@ const trendIcons = {
 };
 
 const GENERAL_PAIN_RANKING = [
-  { painPoint: "Garantia locatícia", percentage: 72, trend: "up" as const, rank: 1 },
-  { painPoint: "Gestão de aluguéis", percentage: 64, trend: "up" as const, rank: 2 },
-  { painPoint: "CRM Imobiliário", percentage: 58, trend: "stable" as const, rank: 3 },
-  { painPoint: "Crédito imobiliário", percentage: 52, trend: "up" as const, rank: 4 },
-  { painPoint: "Captação de imóveis", percentage: 47, trend: "down" as const, rank: 5 },
-  { painPoint: "Portal imobiliário", percentage: 42, trend: "stable" as const, rank: 6 },
-  { painPoint: "Seguro residencial", percentage: 38, trend: "up" as const, rank: 7 },
-  { painPoint: "Marketing digital", percentage: 30, trend: "down" as const, rank: 8 },
+  { painPoint: "Receber muitos contatos, mas a maioria sem perfil de compra", percentage: 72, trend: "up" as const, rank: 1 },
+  { painPoint: "Ter o cliente pronto, mas não encontrar o imóvel atualizado para ele", percentage: 64, trend: "up" as const, rank: 2 },
+  { painPoint: "Perder vendas pela demora no primeiro atendimento ao lead", percentage: 58, trend: "stable" as const, rank: 3 },
+  { painPoint: "Negócios que caem no final por reprovação de crédito ou garantia", percentage: 52, trend: "up" as const, rank: 4 },
+  { painPoint: "Lentidão e burocracia para assinar contratos e fazer vistorias", percentage: 47, trend: "down" as const, rank: 5 },
+  { painPoint: "Sentimento de estar desatualizado perante as novas tecnologias", percentage: 38, trend: "stable" as const, rank: 6 },
 ];
 
 export function PainRankingGeneral() {
