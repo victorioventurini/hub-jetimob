@@ -2,14 +2,23 @@
  * EventsOpportunitiesPage — Opportunities list + export
  */
 import { HubLayout } from "@/components/layout/HubLayout";
-import { SponsorHeader } from "../components/shared/SponsorHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { ScopeFilter } from "../components/shared/ScopeFilter";
 import { OpportunitiesList } from "../components/opportunities/OpportunitiesList";
 
 export default function EventsOpportunitiesPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        <SponsorHeader title="Oportunidades" />
+        <PageHeader
+          title="Oportunidades"
+          description="Oportunidades capturadas nos eventos"
+          breadcrumbs={[
+            { label: "Jet Experience", href: "/events" },
+            { label: "Oportunidades" },
+          ]}
+        />
+        <ScopeFilter />
         <OpportunitiesList />
       </div>
     </HubLayout>

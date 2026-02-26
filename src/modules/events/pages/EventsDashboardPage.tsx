@@ -2,7 +2,8 @@
  * EventsDashboardPage — Main dashboard with ROI & Insights
  */
 import { HubLayout } from "@/components/layout/HubLayout";
-import { SponsorHeader } from "../components/shared/SponsorHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { ScopeFilter } from "../components/shared/ScopeFilter";
 import { KpiCards } from "../components/dashboard/KpiCards";
 import { ShareOfMindRadar } from "../components/dashboard/ShareOfMindRadar";
 import { BrandRecallChart } from "../components/dashboard/BrandRecallChart";
@@ -19,7 +20,14 @@ export default function EventsDashboardPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        <SponsorHeader title="Dashboard ROI & Insights" />
+        <PageHeader
+          title="Dashboard ROI & Insights"
+          description="Jet Experience • Patrocinador"
+          breadcrumbs={[
+            { label: "Jet Experience" },
+          ]}
+        />
+        <ScopeFilter />
 
         {/* KPIs */}
         <KpiCards />
