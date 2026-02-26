@@ -1,6 +1,7 @@
 /**
  * PainRankingTable — Ranking table of most cited pain points
  */
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { PAIN_RANKING_MOCK } from "../../mocks/brand-metrics";
@@ -12,6 +13,8 @@ const trendIcons = {
 };
 
 export function PainRankingTable() {
+  const navigate = useNavigate();
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -22,7 +25,8 @@ export function PainRankingTable() {
           {PAIN_RANKING_MOCK.map((pain) => (
             <div
               key={pain.painPoint}
-              className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+              onClick={() => navigate("/events/participants")}
             >
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-muted-foreground w-6">#{pain.rank}</span>

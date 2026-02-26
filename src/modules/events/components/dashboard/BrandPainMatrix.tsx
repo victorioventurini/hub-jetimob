@@ -1,6 +1,7 @@
 /**
  * BrandPainMatrix — Stacked 100% bars: brand × pain association
  */
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { BRAND_PAIN_MOCK } from "../../mocks/brand-metrics";
@@ -9,7 +10,7 @@ import { SPONSOR_BRAND_ID, COMPETITORS_MOCK } from "../../mocks/sponsor";
 
 export function BrandPainMatrix() {
   const { getDisplayName, getBrandColor } = useAnonymize();
-
+  const navigate = useNavigate();
   const allBrandIds = [SPONSOR_BRAND_ID, ...COMPETITORS_MOCK.map((c) => c.id)];
 
   const data = BRAND_PAIN_MOCK.map((pain) => {
@@ -39,6 +40,8 @@ export function BrandPainMatrix() {
                 dataKey={getDisplayName(id)}
                 stackId="stack"
                 fill={getBrandColor(id)}
+                cursor="pointer"
+                onClick={() => navigate("/events/participants")}
               />
             ))}
           </BarChart>

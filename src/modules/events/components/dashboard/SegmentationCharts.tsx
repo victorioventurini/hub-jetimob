@@ -1,7 +1,9 @@
 /**
  * SegmentationCharts — Donut charts for location, job title, company type
+ * Clicking any chart slice navigates to /events/participants
  */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +27,7 @@ function countBy<T>(arr: T[], key: (item: T) => string): { name: string; value: 
     .sort((a, b) => b.value - a.value);
 }
 
-function DonutChart({ data, title, actions }: { data: { name: string; value: number }[]; title: string; actions?: React.ReactNode }) {
+function DonutChart({ data, title, actions, onSliceClick }: { data: { name: string; value: number }[]; title: string; actions?: React.ReactNode; onSliceClick?: () => void }) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -47,10 +49,11 @@ function DonutChart({ data, title, actions }: { data: { name: string; value: num
               paddingAngle={2}
               label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
               labelLine={false}
-              style={{ fontSize: 9 }}
+              style={{ fontSize: 9, cursor: onSliceClick ? "pointer" : undefined }}
+              onClick={onSliceClick}
             >
               {data.map((_, i) => (
-                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                <Cell key={i} fill={COLORS[i % COLORS.length]} className={onSliceClick ? "cursor-pointer" : ""} />
               ))}
             </Pie>
             <Tooltip contentStyle={{ fontSize: 11 }} />
@@ -65,6 +68,7 @@ function DonutChart({ data, title, actions }: { data: { name: string; value: num
 const ALL_UFS = Array.from(new Set(PARTICIPANTS_MOCK.map((p) => p.uf))).sort();
 
 export function SegmentationCharts() {
+  const navigate = useNavigate();
   const [selectedUf, setSelectedUf] = useState<string>("all");
 
   const filtered = selectedUf === "all"
@@ -92,11 +96,13 @@ export function SegmentationCharts() {
     </Select>
   );
 
+  const goToParticipants = () => navigate("/events/participants");
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <DonutChart data={locationData} title="Distribuição por localidade" actions={ufFilter} />
-      <DonutChart data={byJob} title="Distribuição por Cargo" />
-      <DonutChart data={byCompany} title="Distribuição por Tipo de Empresa" />
+      <DonutChart data={locationData} title="Distribuição por localidade" actions={ufFilter} onSliceClick={goToParticipants} />
+      <DonutChart data={byJob} title="Distribuição por Cargo" onSliceClick={goToParticipants} />
+      <DonutChart data={byCompany} title="Distribuição por Tipo de Empresa" onSliceClick={goToParticipants} />
     </div>
   );
 }
