@@ -38,6 +38,7 @@ const BUSINESS_AREAS = [
 
 export function RoiMetricsTab() {
   const [ltv, setLtv] = useState("150000");
+  const [conversionRate, setConversionRate] = useState("18");
   const [selectedTitles, setSelectedTitles] = useState<string[]>(["Diretor(a)", "Gerente Comercial"]);
   const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária", "Incorporadora"]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>(["Venda de imóveis", "Locação"]);
@@ -74,6 +75,24 @@ export function RoiMetricsTab() {
             </div>
             <p className="text-xs text-muted-foreground">
               Valor atual: {Number(ltv || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </p>
+          </div>
+          <div className="max-w-sm space-y-2 mt-4">
+            <Label className="text-xs">
+              Taxa de Conversão Estimada
+              <HelpTooltip content="Percentual estimado de conversão de leads qualificados em clientes. Usado como fator no cálculo de ROI projetado." size="sm" />
+            </Label>
+            <div className="relative">
+              <Input
+                value={conversionRate}
+                onChange={(e) => setConversionRate(e.target.value.replace(/[^\d]/g, ""))}
+                className="pr-8 text-sm font-mono"
+                placeholder="18"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Valor atual: {conversionRate || 0}%
             </p>
           </div>
         </CardContent>
