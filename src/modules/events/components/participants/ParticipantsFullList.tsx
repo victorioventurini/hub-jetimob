@@ -71,7 +71,7 @@ const JOB_TITLES: { value: string; label: string }[] = [
 function FitBadge({ score, label }: { score: number; label: string }) {
   const config = {
     alto: { variant: "default" as const, icon: Flame, className: "bg-emerald-600 hover:bg-emerald-700 text-white" },
-    medio: { variant: "secondary" as const, icon: TrendingUp, className: "bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200" },
+    medio: { variant: "secondary" as const, icon: TrendingUp, className: "" },
     baixo: { variant: "outline" as const, icon: Minus, className: "text-muted-foreground" },
   }[label] ?? { variant: "outline" as const, icon: Minus, className: "" };
 
@@ -79,8 +79,8 @@ function FitBadge({ score, label }: { score: number; label: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="font-mono text-xs font-semibold tabular-nums w-7 text-right">{score}</span>
-      <Badge variant={config.variant} className={`text-[10px] gap-1 ${config.className}`}>
+      <span className="font-mono text-sm font-semibold tabular-nums w-7 text-right">{score}</span>
+      <Badge variant={config.variant} className={`text-xs gap-1 ${config.className}`}>
         <Icon className="h-3 w-3" />
         {label.charAt(0).toUpperCase() + label.slice(1)}
       </Badge>
@@ -298,24 +298,24 @@ export function ParticipantsFullList() {
       />
 
       {/* Table */}
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">Nome</TableHead>
-              <TableHead className="text-xs">Cidade/UF</TableHead>
-              <TableHead className="text-xs">Cargo</TableHead>
-              <TableHead className="text-xs">Tipo empresa</TableHead>
-              <TableHead className="text-xs">Nome empresa</TableHead>
-              <TableHead className="text-xs">
+            <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold">Nome</TableHead>
+              <TableHead className="font-semibold">Cidade/UF</TableHead>
+              <TableHead className="font-semibold">Cargo</TableHead>
+              <TableHead className="font-semibold">Tipo empresa</TableHead>
+              <TableHead className="font-semibold">Empresa</TableHead>
+              <TableHead className="font-semibold">
                 Atua com
                 <HelpTooltip content="Área de atuação do participante: vendas, aluguéis ou ambos." size="sm" />
               </TableHead>
-              <TableHead className="text-xs">
+              <TableHead className="font-semibold">
                 Fit
                 <HelpTooltip content="Score de adequação (0–100) do lead ao perfil ideal do patrocinador, baseado em cargo, tipo de empresa, área de atuação e localidade." size="sm" />
               </TableHead>
-              <TableHead className="text-xs">
+              <TableHead className="font-semibold">
                 Status
                 <HelpTooltip content="Inscrito: se registrou para o evento. Participante: esteve efetivamente presente." size="sm" />
               </TableHead>
@@ -335,17 +335,16 @@ export function ParticipantsFullList() {
                   <div>
                     <span className="font-medium text-sm">{p.fullName}</span>
                     <p className="text-xs text-muted-foreground">{p.email}</p>
-                    <p className="text-xs text-muted-foreground">{p.phone}</p>
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{p.city}/{p.uf}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{p.jobTitle}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{p.jobTitle === "Corretor autônomo" ? "" : p.companyType}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {p.jobTitle === "Corretor autônomo" ? "" : p.companyName}
+                <TableCell className="text-sm text-muted-foreground">{p.city}/{p.uf}</TableCell>
+                <TableCell className="text-sm">{p.jobTitle}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{p.jobTitle === "Corretor autônomo" ? "—" : p.companyType}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {p.jobTitle === "Corretor autônomo" ? "—" : p.companyName}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className="text-[10px]">{p.operationArea}</Badge>
+                  <Badge variant="secondary" className="text-xs">{p.operationArea}</Badge>
                 </TableCell>
                 <TableCell>
                   <FitBadge score={p.fitScore} label={p.fitLabel} />
@@ -353,7 +352,7 @@ export function ParticipantsFullList() {
                 <TableCell>
                   <Badge
                     variant={p.statusInscricao === "participante" ? "default" : "outline"}
-                    className="text-[10px]"
+                    className="text-xs"
                   >
                     {p.statusInscricao === "participante" ? "Participante" : "Inscrito"}
                   </Badge>
