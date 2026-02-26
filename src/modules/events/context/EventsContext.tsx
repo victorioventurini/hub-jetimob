@@ -28,7 +28,7 @@ const EventsContext = createContext<EventsContextValue | null>(null);
 export function EventsProvider({ children }: { children: ReactNode }) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>(OPPORTUNITIES_MOCK);
   const [viewMode, setViewMode] = useState<ViewMode>("sponsor");
-  const [filters, setFilters] = useState<EventsFilters>({ scope: "event", selectedEventId: "evt-floripa-2026" });
+  const [filters, setFilters] = useState<EventsFilters>({ scope: "event", selectedEventId: "evt-capao-2026", year: 2026 });
   const [webhookConfig, setWebhookConfig] = useState<WebhookConfig>({
     url: "https://hooks.example.com/jet-experience",
     secret: "whsec_mock_secret_key_123",

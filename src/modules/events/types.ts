@@ -169,6 +169,7 @@ export interface EventsFilters {
   scope: EventScope;
   selectedEventId?: string;
   selectedJourneyId?: string;
+  year: number;
   uf?: string;
   city?: string;
   jobTitle?: JobTitle;
