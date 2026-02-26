@@ -7,41 +7,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { DollarSign, SlidersHorizontal } from "lucide-react";
 
-const JOB_TITLES = [
-  "Diretor(a)",
-  "Gerente Comercial",
-  "Corretor autônomo",
-  "Gestor(a) de Vendas",
-  "Coordenador(a)",
-  "Analista",
-];
-
 const COMPANY_TYPES = [
-  "Imobiliária",
-  "Incorporadora",
-  "Construtora",
-  "Loteadora",
-  "Administradora de condomínios",
+  "Imobiliária de vendas",
+  "Imobiliária de aluguéis",
+  "Imobiliária de vendas e aluguéis",
+  "Corretor autônomo",
+  "Incorporadora / loteadora",
+  "Agência de marketing",
+  "Empresa de tecnologia",
+  "Outros",
 ];
 
-const BUSINESS_AREAS = [
-  "Venda de imóveis",
-  "Locação",
-  "Incorporação",
-  "Loteamento",
-  "Administração",
-  "Avaliação",
+const JOB_TITLES = [
+  "Analista de marketing",
+  "Gerente de marketing",
+  "Assessor de locações",
+  "Gerente de locações",
+  "Corretor de imóveis",
+  "Gerente de vendas",
+  "Diretor geral / Proprietário / CEO",
+  "Outros",
 ];
 
 export function RoiMetricsTab() {
   const [ltv, setLtv] = useState("150000");
   const [conversionRate, setConversionRate] = useState("18");
-  const [selectedTitles, setSelectedTitles] = useState<string[]>(["Diretor(a)", "Gerente Comercial"]);
-  const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária", "Incorporadora"]);
-  const [selectedAreas, setSelectedAreas] = useState<string[]>(["Venda de imóveis", "Locação"]);
+  const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária de vendas", "Imobiliária de aluguéis"]);
+  const [selectedTitles, setSelectedTitles] = useState<string[]>(["Gerente de marketing", "Diretor geral / Proprietário / CEO"]);
 
   const toggleItem = (list: string[], item: string, setter: (v: string[]) => void) => {
     setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
@@ -107,76 +103,60 @@ export function RoiMetricsTab() {
             <HelpTooltip content="Defina os critérios que compõem o score de Fit do lead. Leads que atendem mais critérios recebem score mais alto, priorizando oportunidades com maior potencial de conversão." />
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Cargo */}
-          <div className="space-y-3">
-            <Label className="text-xs font-medium">
-              Cargos com peso positivo
-              <HelpTooltip content="Cargos que aumentam o score de Fit quando presentes no perfil do participante." size="sm" />
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {JOB_TITLES.map((title) => (
-                <label key={title} className="flex items-center gap-1.5 cursor-pointer">
-                  <Checkbox
-                    checked={selectedTitles.includes(title)}
-                    onCheckedChange={() => toggleItem(selectedTitles, title, setSelectedTitles)}
-                  />
-                  <span className="text-sm">{title}</span>
-                </label>
-              ))}
-            </div>
-            <div className="flex gap-1 flex-wrap">
-              {selectedTitles.map((t) => (
-                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Tipo de empresa */}
-          <div className="space-y-3">
-            <Label className="text-xs font-medium">
-              Tipos de empresa com peso positivo
-              <HelpTooltip content="Tipos de empresa que indicam maior aderência ao perfil ideal de cliente (ICP)." size="sm" />
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {COMPANY_TYPES.map((ct) => (
-                <label key={ct} className="flex items-center gap-1.5 cursor-pointer">
-                  <Checkbox
-                    checked={selectedCompanyTypes.includes(ct)}
-                    onCheckedChange={() => toggleItem(selectedCompanyTypes, ct, setSelectedCompanyTypes)}
-                  />
-                  <span className="text-sm">{ct}</span>
-                </label>
-              ))}
-            </div>
-            <div className="flex gap-1 flex-wrap">
-              {selectedCompanyTypes.map((t) => (
-                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
-              ))}
+        <CardContent className="space-y-8">
+          {/* Grupo: Negócio */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Negócio</h4>
+            <div className="space-y-3">
+              <Label className="text-xs font-medium">
+                Tipos de empresa com peso positivo
+                <HelpTooltip content="Tipos de empresa que indicam maior aderência ao perfil ideal de cliente (ICP)." size="sm" />
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {COMPANY_TYPES.map((ct) => (
+                  <label key={ct} className="flex items-center gap-1.5 cursor-pointer">
+                    <Checkbox
+                      checked={selectedCompanyTypes.includes(ct)}
+                      onCheckedChange={() => toggleItem(selectedCompanyTypes, ct, setSelectedCompanyTypes)}
+                    />
+                    <span className="text-sm">{ct}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {selectedCompanyTypes.map((t) => (
+                  <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Área de atuação */}
-          <div className="space-y-3">
-            <Label className="text-xs font-medium">
-              Áreas de atuação com peso positivo
-              <HelpTooltip content="Segmentos de mercado que indicam alinhamento com a proposta de valor da marca patrocinadora." size="sm" />
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {BUSINESS_AREAS.map((area) => (
-                <label key={area} className="flex items-center gap-1.5 cursor-pointer">
-                  <Checkbox
-                    checked={selectedAreas.includes(area)}
-                    onCheckedChange={() => toggleItem(selectedAreas, area, setSelectedAreas)}
-                  />
-                  <span className="text-sm">{area}</span>
-                </label>
-              ))}
-            </div>
-            <div className="flex gap-1 flex-wrap">
-              {selectedAreas.map((t) => (
-                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
-              ))}
+          <Separator />
+
+          {/* Grupo: Prospect */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prospect</h4>
+            <div className="space-y-3">
+              <Label className="text-xs font-medium">
+                Cargos com peso positivo
+                <HelpTooltip content="Cargos que aumentam o score de Fit quando presentes no perfil do participante." size="sm" />
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {JOB_TITLES.map((title) => (
+                  <label key={title} className="flex items-center gap-1.5 cursor-pointer">
+                    <Checkbox
+                      checked={selectedTitles.includes(title)}
+                      onCheckedChange={() => toggleItem(selectedTitles, title, setSelectedTitles)}
+                    />
+                    <span className="text-sm">{title}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {selectedTitles.map((t) => (
+                  <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
