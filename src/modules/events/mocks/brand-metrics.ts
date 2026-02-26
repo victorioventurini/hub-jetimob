@@ -23,7 +23,7 @@ export const BRAND_RECALL_MOCK: BrandRecallMetric[] = [
 // Brand × Pain associations (shares sum to 100 per pain)
 export const BRAND_PAIN_MOCK: BrandPainAssociation[] = [
   {
-    painPoint: "Garantia locatícia",
+    painPoint: "Negócios que caem no final por reprovação de crédito ou garantia",
     associations: [
       { brandId: SPONSOR_BRAND_ID, share: 45 },
       { brandId: "comp-loft", share: 18 },
@@ -34,47 +34,14 @@ export const BRAND_PAIN_MOCK: BrandPainAssociation[] = [
     ],
   },
   {
-    painPoint: "CRM Imobiliário",
+    painPoint: "Lentidão e burocracia para assinar contratos e fazer vistorias",
     associations: [
-      { brandId: SPONSOR_BRAND_ID, share: 12 },
-      { brandId: "comp-loft", share: 8 },
-      { brandId: "comp-quintoandar", share: 10 },
-      { brandId: "comp-kenlo", share: 38 },
-      { brandId: "comp-vista", share: 25 },
-      { brandId: "comp-arbo", share: 7 },
-    ],
-  },
-  {
-    painPoint: "Crédito imobiliário",
-    associations: [
-      { brandId: SPONSOR_BRAND_ID, share: 35 },
-      { brandId: "comp-loft", share: 22 },
-      { brandId: "comp-quintoandar", share: 20 },
-      { brandId: "comp-kenlo", share: 8 },
-      { brandId: "comp-vista", share: 10 },
-      { brandId: "comp-arbo", share: 5 },
-    ],
-  },
-  {
-    painPoint: "Portal imobiliário",
-    associations: [
-      { brandId: SPONSOR_BRAND_ID, share: 8 },
+      { brandId: SPONSOR_BRAND_ID, share: 38 },
       { brandId: "comp-loft", share: 15 },
-      { brandId: "comp-quintoandar", share: 35 },
-      { brandId: "comp-kenlo", share: 12 },
-      { brandId: "comp-vista", share: 20 },
-      { brandId: "comp-arbo", share: 10 },
-    ],
-  },
-  {
-    painPoint: "Seguro residencial",
-    associations: [
-      { brandId: SPONSOR_BRAND_ID, share: 52 },
-      { brandId: "comp-loft", share: 10 },
-      { brandId: "comp-quintoandar", share: 12 },
-      { brandId: "comp-kenlo", share: 8 },
-      { brandId: "comp-vista", share: 10 },
-      { brandId: "comp-arbo", share: 8 },
+      { brandId: "comp-quintoandar", share: 20 },
+      { brandId: "comp-kenlo", share: 10 },
+      { brandId: "comp-vista", share: 12 },
+      { brandId: "comp-arbo", share: 5 },
     ],
   },
 ];
