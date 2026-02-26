@@ -20,7 +20,7 @@ export function LeadQualificationFunnel() {
     { label: "Inscritos", value: totalRegistrations, color: "bg-blue-100 text-blue-800" },
     { label: "Participantes", value: totalAttendees, color: "bg-indigo-100 text-indigo-800" },
     { label: "Leads", value: totalOpps, color: "bg-violet-100 text-violet-800" },
-    { label: "Fit Alto (Oportunidades)", value: highFit, color: "bg-emerald-100 text-emerald-800" },
+    { label: "Oportunidades (Fit alto)", value: highFit, color: "bg-emerald-100 text-emerald-800" },
   ];
 
   return (
@@ -28,7 +28,7 @@ export function LeadQualificationFunnel() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">
           Funil de Qualificação
-          <HelpTooltip content="Mostra a jornada de conversão: Inscritos → Participantes → Leads → Fit Alto (Oportunidades). O percentual entre etapas indica a taxa de conversão." size="sm" />
+          <HelpTooltip content="Mostra a jornada de conversão: Inscritos → Participantes → Leads → Oportunidades (Fit alto). O percentual entre etapas indica a taxa de conversão." size="sm" />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
