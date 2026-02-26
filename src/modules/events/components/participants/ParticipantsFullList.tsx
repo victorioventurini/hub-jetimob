@@ -328,7 +328,7 @@ export function ParticipantsFullList() {
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.city}/{p.uf}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.jobTitle}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{p.companyType}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{p.jobTitle === "Corretor autônomo" ? "" : p.companyType}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {p.jobTitle === "Corretor autônomo" ? "" : p.companyName}
                 </TableCell>
