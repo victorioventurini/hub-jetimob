@@ -2772,6 +2772,7 @@ export type Database = {
           id: string
           legal_entity: string | null
           logo_url: string | null
+          member_display_name: string | null
           name: string
           primary_color: string | null
           secondary_color: string | null
@@ -2787,6 +2788,7 @@ export type Database = {
           id?: string
           legal_entity?: string | null
           logo_url?: string | null
+          member_display_name?: string | null
           name: string
           primary_color?: string | null
           secondary_color?: string | null
@@ -2802,6 +2804,7 @@ export type Database = {
           id?: string
           legal_entity?: string | null
           logo_url?: string | null
+          member_display_name?: string | null
           name?: string
           primary_color?: string | null
           secondary_color?: string | null

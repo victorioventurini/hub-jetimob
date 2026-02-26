@@ -89,8 +89,8 @@ const buMenuItems = [
 ];
 
 // Módulos globais que aparecem sempre (mesmo com BU selecionada)
-const globalBuItems = [
-  { name: "Jetimobers", href: "/users", icon: Users, slug: "users" },
+const globalBuItemBase = [
+  { href: "/users", icon: Users, slug: "users" },
 ];
 
 // Links externos
@@ -106,7 +106,12 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const location = useLocation();
   const { isAdmin } = useAuth();
   const { currentBu, userRole } = useBu();
-  const { symbolUrl, buName, primaryColor } = useBuBranding();
+  const { symbolUrl, buName, primaryColor, memberDisplayName } = useBuBranding();
+  
+  const globalBuItems = globalBuItemBase.map((item) => ({
+    ...item,
+    name: item.slug === "users" ? memberDisplayName : item.slug,
+  }));
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
   const { hasModuleAccess, isLoading: permissionsLoading } = useModuleAccess();
   const { isImpersonating } = useOptionalImpersonation();
