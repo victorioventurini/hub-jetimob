@@ -8,7 +8,7 @@ export const SPONSOR_MOCK: Sponsor = {
   name: "Porto Seguro",
   legalName: "Porto Seguro Cia de Seguros Gerais",
   cnpj: "61.198.164/0001-60",
-  logoUrl: "https://brandeps.com/logo/P/Porto-Seguro-01",
+  logoUrl: "/images/sponsors/porto-seguro-logo.svg",
   areasOfOperation: [
     // Software
     { id: "sw-crm", category: "Software", subcategory: "CRM", ltvPerLead: 8000 },
