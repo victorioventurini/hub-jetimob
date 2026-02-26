@@ -62,7 +62,12 @@ export function ParticipantsList() {
                     </Link>
                     <p className="text-xs text-muted-foreground">{p.email}</p>
                   </td>
-                  <td className="py-2.5 px-3 text-muted-foreground">{p.companyName}</td>
+                  <td className="py-2.5 px-3">
+                    <span className="text-muted-foreground">{p.companyName}</span>
+                    {p.companyDomain && (
+                      <p className="text-[11px] text-muted-foreground/60 font-mono">{p.companyDomain}</p>
+                    )}
+                  </td>
                   <td className="py-2.5 px-3 text-xs text-muted-foreground">{p.jobTitle}</td>
                   <td className="py-2.5 px-3 text-xs text-muted-foreground">{p.city}/{p.uf}</td>
                   <td className="py-2.5 px-3">

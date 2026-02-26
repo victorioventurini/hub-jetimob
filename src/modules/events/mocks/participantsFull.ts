@@ -28,6 +28,7 @@ export interface ParticipantFull {
   uf: string;
   jobTitle: JobTitle;
   companyName: string;
+  companyDomain?: string;
   companyType: CompanyType;
   operationArea: OperationArea;
   eventIds: string[];
@@ -103,14 +104,16 @@ const cities: { city: string; uf: string }[] = [
 
 /** Cargos — alinhados com /events/settings?tab=kpis */
 const jobTitles: JobTitle[] = [
-  "Diretor(a)", "Gerente Comercial", "Corretor autônomo",
-  "Gestor(a) de Vendas", "Coordenador(a)", "Analista", "Outros",
+  "Analista de marketing", "Gerente de marketing", "Assessor de locações",
+  "Gerente de locações", "Corretor de imóveis", "Gerente de vendas",
+  "Diretor geral / Proprietário / CEO", "Outros",
 ];
 
 /** Tipos de empresa — alinhados com /events/settings?tab=kpis */
 const companyTypes: CompanyType[] = [
-  "Imobiliária", "Incorporadora", "Construtora",
-  "Loteadora", "Administradora de condomínios", "Outros",
+  "Imobiliária de vendas", "Imobiliária de aluguéis", "Imobiliária de vendas e aluguéis",
+  "Corretor autônomo", "Incorporadora / loteadora", "Agência de marketing",
+  "Empresa de tecnologia", "Outros",
 ];
 
 /** Áreas de atuação — alinhadas com /events/settings?tab=kpis */
@@ -119,12 +122,27 @@ const operationAreas: OperationArea[] = [
   "Loteamento", "Administração", "Avaliação",
 ];
 
-const companyNames = [
-  "Imobiliária Estrela", "Imobiliária Central", "Ponto Imóveis", "Casa & Cia",
-  "HabitarSC", "Morar Bem Imóveis", "Incorpora Sul", "Lotes Premium",
-  "RealTech Soluções", "Digital Imobi", "Construtora Horizonte", "Viva Imóveis",
-  "Nova Era Imobiliária", "Investlar", "Prédio & Lar", "Grupo Habitacional",
-  "Urban Realty", "Terra Nova", "Ideal Imóveis", "Premium Locações",
+const companyNames: { name: string; domain: string }[] = [
+  { name: "Imobiliária Estrela", domain: "estrelaimoveis.com.br" },
+  { name: "Imobiliária Central", domain: "centralimob.com.br" },
+  { name: "Ponto Imóveis", domain: "pontoimoveis.com.br" },
+  { name: "Casa & Cia", domain: "casaecia.com.br" },
+  { name: "HabitarSC", domain: "habitarsc.com.br" },
+  { name: "Morar Bem Imóveis", domain: "morarbem.com.br" },
+  { name: "Incorpora Sul", domain: "incorporasul.com.br" },
+  { name: "Lotes Premium", domain: "lotespremium.com.br" },
+  { name: "RealTech Soluções", domain: "realtechsolucoes.com.br" },
+  { name: "Digital Imobi", domain: "digitalimobi.com.br" },
+  { name: "Construtora Horizonte", domain: "construtorahorizonte.com.br" },
+  { name: "Viva Imóveis", domain: "vivaimoveis.com.br" },
+  { name: "Nova Era Imobiliária", domain: "novaeraimob.com.br" },
+  { name: "Investlar", domain: "investlar.com.br" },
+  { name: "Prédio & Lar", domain: "predioelar.com.br" },
+  { name: "Grupo Habitacional", domain: "grupohabitacional.com.br" },
+  { name: "Urban Realty", domain: "urbanrealty.com.br" },
+  { name: "Terra Nova", domain: "terranova.com.br" },
+  { name: "Ideal Imóveis", domain: "idealimoveis.com.br" },
+  { name: "Premium Locações", domain: "premiumlocacoes.com.br" },
 ];
 
 function pick<T>(arr: T[], i: number): T {
@@ -265,7 +283,8 @@ function generateParticipantsFull(): ParticipantFull[] {
       city: loc.city,
       uf: loc.uf,
       jobTitle: pick(jobTitles, i),
-      companyName: pick(companyNames, i),
+      companyName: pick(companyNames, i).name,
+      companyDomain: pick(companyNames, i).domain,
       companyType: pick(companyTypes, i),
       operationArea: pick(operationAreas, i),
       eventIds,

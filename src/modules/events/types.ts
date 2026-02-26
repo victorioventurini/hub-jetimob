@@ -52,20 +52,23 @@ export interface JourneyMock {
 // ===== Participants =====
 
 export type JobTitle =
-  | "Diretor(a)"
-  | "Gerente Comercial"
-  | "Corretor autônomo"
-  | "Gestor(a) de Vendas"
-  | "Coordenador(a)"
-  | "Analista"
+  | "Analista de marketing"
+  | "Gerente de marketing"
+  | "Assessor de locações"
+  | "Gerente de locações"
+  | "Corretor de imóveis"
+  | "Gerente de vendas"
+  | "Diretor geral / Proprietário / CEO"
   | "Outros";
 
 export type CompanyType =
-  | "Imobiliária"
-  | "Incorporadora"
-  | "Construtora"
-  | "Loteadora"
-  | "Administradora de condomínios"
+  | "Imobiliária de vendas"
+  | "Imobiliária de aluguéis"
+  | "Imobiliária de vendas e aluguéis"
+  | "Corretor autônomo"
+  | "Incorporadora / loteadora"
+  | "Agência de marketing"
+  | "Empresa de tecnologia"
   | "Outros";
 
 export type OperationArea =
@@ -86,6 +89,7 @@ export interface Participant {
   uf: string;
   jobTitle: JobTitle;
   companyName: string;
+  companyDomain?: string;
   companyType: CompanyType;
   operationArea: OperationArea;
   eventIds: string[]; // eventos que participou
