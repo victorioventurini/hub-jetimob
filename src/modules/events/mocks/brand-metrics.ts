@@ -101,6 +101,10 @@ export const SHARE_OF_MIND_MOCK: ShareOfMindDimension[] = [
 
 // Pain point ranking
 export const PAIN_RANKING_MOCK: PainPointRanking[] = [
-  { painPoint: "Garantia locatícia", percentage: 68, trend: "up", rank: 1 },
-  { painPoint: "Seguro residencial", percentage: 42, trend: "up", rank: 2 },
+  { painPoint: "Receber muitos contatos, mas a maioria sem perfil de compra", percentage: 72, trend: "up", rank: 1 },
+  { painPoint: "Negócios que caem no final por reprovação de crédito ou garantia", percentage: 58, trend: "up", rank: 2 },
+  { painPoint: "Perder vendas pela demora no primeiro atendimento ao lead", percentage: 51, trend: "stable", rank: 3 },
+  { painPoint: "Ter o cliente pronto, mas não encontrar o imóvel atualizado para ele", percentage: 45, trend: "up", rank: 4 },
+  { painPoint: "Lentidão e burocracia para assinar contratos e fazer vistorias", percentage: 38, trend: "down", rank: 5 },
+  { painPoint: "Sentimento de estar desatualizado perante as novas tecnologias", percentage: 29, trend: "stable", rank: 6 },
 ];
