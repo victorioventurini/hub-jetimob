@@ -136,7 +136,8 @@ export interface BaselineEndlineMetric {
 
 export interface ShareOfMindDimension {
   dimension: string;
-  scores: { brandId: string; score: number }[];
+  baseline: number;
+  endline: number;
 }
 
 export interface PainPointRanking {

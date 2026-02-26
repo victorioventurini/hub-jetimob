@@ -89,26 +89,14 @@ export const BASELINE_ENDLINE_MOCK: BaselineEndlineMetric[] = [
   { metric: "Top of Mind (categoria)", baseline: 15, endline: 32, delta: 17 },
 ];
 
-// Share of Mind dimensions (radar)
+// Share of Mind dimensions (radar) — Baseline vs Endline
 export const SHARE_OF_MIND_MOCK: ShareOfMindDimension[] = [
-  { dimension: "Confiança", scores: [
-    { brandId: SPONSOR_BRAND_ID, score: 85 }, { brandId: "comp-loft", score: 60 }, { brandId: "comp-quintoandar", score: 55 }, { brandId: "comp-kenlo", score: 48 }, { brandId: "comp-vista", score: 52 }, { brandId: "comp-arbo", score: 40 },
-  ]},
-  { dimension: "Inovação", scores: [
-    { brandId: SPONSOR_BRAND_ID, score: 60 }, { brandId: "comp-loft", score: 55 }, { brandId: "comp-quintoandar", score: 70 }, { brandId: "comp-kenlo", score: 45 }, { brandId: "comp-vista", score: 38 }, { brandId: "comp-arbo", score: 42 },
-  ]},
-  { dimension: "Custo-benefício", scores: [
-    { brandId: SPONSOR_BRAND_ID, score: 70 }, { brandId: "comp-loft", score: 62 }, { brandId: "comp-quintoandar", score: 58 }, { brandId: "comp-kenlo", score: 65 }, { brandId: "comp-vista", score: 55 }, { brandId: "comp-arbo", score: 50 },
-  ]},
-  { dimension: "Atendimento", scores: [
-    { brandId: SPONSOR_BRAND_ID, score: 78 }, { brandId: "comp-loft", score: 45 }, { brandId: "comp-quintoandar", score: 50 }, { brandId: "comp-kenlo", score: 42 }, { brandId: "comp-vista", score: 55 }, { brandId: "comp-arbo", score: 38 },
-  ]},
-  { dimension: "Relevância", scores: [
-    { brandId: SPONSOR_BRAND_ID, score: 82 }, { brandId: "comp-loft", score: 58 }, { brandId: "comp-quintoandar", score: 62 }, { brandId: "comp-kenlo", score: 40 }, { brandId: "comp-vista", score: 48 }, { brandId: "comp-arbo", score: 35 },
-  ]},
-  { dimension: "Reconhecimento", scores: [
-    { brandId: SPONSOR_BRAND_ID, score: 75 }, { brandId: "comp-loft", score: 50 }, { brandId: "comp-quintoandar", score: 55 }, { brandId: "comp-kenlo", score: 38 }, { brandId: "comp-vista", score: 42 }, { brandId: "comp-arbo", score: 30 },
-  ]},
+  { dimension: "Confiança", baseline: 55, endline: 85 },
+  { dimension: "Inovação", baseline: 42, endline: 60 },
+  { dimension: "Custo-benefício", baseline: 50, endline: 70 },
+  { dimension: "Atendimento", baseline: 45, endline: 78 },
+  { dimension: "Relevância", baseline: 48, endline: 82 },
+  { dimension: "Reconhecimento", baseline: 40, endline: 75 },
 ];
 
 // Pain point ranking
