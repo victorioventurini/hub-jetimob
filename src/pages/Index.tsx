@@ -1,6 +1,7 @@
 import { HubLayout } from "@/components/layout/HubLayout";
 import { NewJetimobersBlock } from "@/components/home/NewJetimobersBlock";
 import { BirthdaysBlock } from "@/components/home/BirthdaysBlock";
+import { BirthdayTodayBanner } from "@/components/home/BirthdayTodayBanner";
 import { WorkAnniversariesBlock } from "@/components/home/WorkAnniversariesBlock";
 import { CultureCard } from "@/components/home/CultureCard";
 import { VicCard, type VicCardProfile } from "@/components/home/VicCard";
@@ -110,7 +111,10 @@ const Index = () => {
           isFromAI={isFromAI}
         />
 
-        {/* 2. Culture Card */}
+        {/* 2. Birthday Today Banner */}
+        <BirthdayTodayBanner />
+
+        {/* 3. Culture Card */}
         <CultureCard />
 
         {/* 3. Wizards Section */}

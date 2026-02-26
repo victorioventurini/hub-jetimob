@@ -97,6 +97,7 @@ export function useBirthdays() {
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalizar para meia-noite para comparação correta
 
   return useQuery({
     queryKey: queryKeys.home.birthdays(currentBu?.id ?? null, "next15days"),
@@ -186,6 +187,7 @@ export function useWorkAnniversaries() {
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalizar para meia-noite para comparação correta
   const currentYear = today.getFullYear();
 
   return useQuery({
