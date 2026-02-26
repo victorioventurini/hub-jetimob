@@ -14,7 +14,10 @@ export function BrandPainMatrix() {
   const navigate = useNavigate();
   const allBrandIds = [SPONSOR_BRAND_ID, ...COMPETITORS_MOCK.map((c) => c.id)];
 
-  const VISIBLE_PAINS = ["Garantia locatícia", "Seguro residencial"];
+  const VISIBLE_PAINS = [
+    "Negócios que caem no final por reprovação de crédito ou garantia",
+    "Lentidão e burocracia para assinar contratos e fazer vistorias",
+  ];
 
   const data = BRAND_PAIN_MOCK.filter((p) => VISIBLE_PAINS.includes(p.painPoint)).map((pain) => {
     const row: Record<string, string | number> = { painPoint: pain.painPoint };
