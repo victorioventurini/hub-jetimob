@@ -1,5 +1,6 @@
 /**
  * ParticipantsFullList — Full participants list with segment tabs, fit column, search + filters
+ * Follows Hub canonical pattern: ListPageFilters + ViewOptionsBar + Table
  */
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
-import { ArrowDownWideNarrow, Flame, TrendingUp, Minus } from "lucide-react";
+import { ViewOptionsBar } from "@/components/ui/view-options-bar";
+import { Flame, TrendingUp, Minus } from "lucide-react";
 import {
   PARTICIPANTS_FULL_MOCK,
   FIT_HIGH_THRESHOLD,
@@ -15,7 +17,6 @@ import {
 } from "../../mocks/participantsFull";
 import { useEventsContext } from "../../context/EventsContext";
 import { JOURNEYS_MOCK } from "../../mocks/events";
-import type { JobTitle, CompanyType, OperationArea } from "../../types";
 
 type SegmentTab = "inscritos" | "participantes" | "oportunidades" | "fit_alto";
 type FitRange = "all" | "0-25" | "26-50" | "51-75" | "76-100";
@@ -185,7 +186,7 @@ export function ParticipantsFullList() {
   }, [filters]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Segment tabs */}
       <Tabs value={segment} onValueChange={(v) => setSegment(v as SegmentTab)}>
         <TabsList className="h-9">
@@ -200,7 +201,7 @@ export function ParticipantsFullList() {
         </TabsList>
       </Tabs>
 
-      {/* Search + Filters */}
+      {/* Search + Filters (canonical ListPageFilters) */}
       <ListPageFilters
         searchValue={search}
         onSearchChange={setSearch}
@@ -286,11 +287,12 @@ export function ParticipantsFullList() {
         </Select>
       </ListPageFilters>
 
-      {/* Results count */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <ArrowDownWideNarrow className="h-3.5 w-3.5" />
-        <span>{filtered.length} resultado{filtered.length !== 1 ? "s" : ""} · ordenado por Fit ↓</span>
-      </div>
+      {/* Canonical ViewOptionsBar with result count */}
+      <ViewOptionsBar
+        resultCount={filtered.length}
+        resultCountLabel="participantes encontrados"
+        resultCountLabelSingular="participante encontrado"
+      />
 
       {/* Table */}
       <div className="rounded-lg border bg-card">
