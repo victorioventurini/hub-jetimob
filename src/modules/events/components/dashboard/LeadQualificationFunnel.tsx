@@ -1,26 +1,47 @@
 /**
- * LeadQualificationFunnel — Funnel: registrations > attendees > opportunities > high fit
+ * LeadQualificationFunnel — Funnel: registrations > attendees > leads > opportunities
+ * Uses PARTICIPANTS_FULL_MOCK for lead/opp counts to stay consistent with participants page.
  * Clicking any stage navigates to /events/participants
  */
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
+import { PARTICIPANTS_FULL_MOCK } from "../../mocks/participantsFull";
+import { JOURNEYS_MOCK } from "../../mocks/events";
 
 export function LeadQualificationFunnel() {
-  const { filteredOpportunities: opportunities, filteredEvents } = useEventsContext();
+  const { filteredEvents, filters } = useEventsContext();
   const navigate = useNavigate();
 
-  const totalRegistrations = filteredEvents.reduce((s, e) => s + e.totalRegistrations, 0);
-  const totalAttendees = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
-  const totalOpps = opportunities.length;
-  const highFit = opportunities.filter((o) => o.fitScore >= 75).length;
+  const { totalRegistrations, totalAttendees, totalLeads, totalOpps } = useMemo(() => {
+    const regs = filteredEvents.reduce((s, e) => s + e.totalRegistrations, 0);
+    const atts = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
+
+    // Derive lead/opp counts from PARTICIPANTS_FULL_MOCK with same scope filter
+    let data = PARTICIPANTS_FULL_MOCK.filter((p) => p.year === filters.year);
+    if (filters.scope === "event" && filters.selectedEventId) {
+      data = data.filter((p) => p.eventIds.includes(filters.selectedEventId!));
+    }
+    if (filters.scope === "journey" && filters.selectedJourneyId) {
+      const journey = JOURNEYS_MOCK.find((j) => j.id === filters.selectedJourneyId);
+      if (journey) {
+        data = data.filter((p) => p.eventIds.some((eid) => journey.eventIds.includes(eid)));
+      }
+    }
+
+    const leads = data.filter((p) => p.statusInscricao === "lead" || p.statusInscricao === "oportunidade").length;
+    const opps = data.filter((p) => p.statusInscricao === "oportunidade").length;
+
+    return { totalRegistrations: regs, totalAttendees: atts, totalLeads: leads, totalOpps: opps };
+  }, [filteredEvents, filters]);
 
   const stages = [
     { label: "Inscritos", value: totalRegistrations, color: "bg-blue-100 text-blue-800" },
     { label: "Participantes", value: totalAttendees, color: "bg-indigo-100 text-indigo-800" },
-    { label: "Leads", value: totalOpps, color: "bg-violet-100 text-violet-800" },
-    { label: "Oportunidades", value: highFit, color: "bg-emerald-100 text-emerald-800" },
+    { label: "Leads", value: totalLeads, color: "bg-violet-100 text-violet-800" },
+    { label: "Oportunidades", value: totalOpps, color: "bg-emerald-100 text-emerald-800" },
   ];
 
   return (

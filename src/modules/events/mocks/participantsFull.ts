@@ -1,8 +1,8 @@
 /**
  * Mock: Full participants dataset for the participants list page
- * Alinhado com os dados de /events/settings (SponsorshipsTab)
+ * Alinhado com os dados de events.ts e eventSettings.ts
  *
- * Totais por evento (de events.ts / eventSettings.ts):
+ * Totais por evento (fonte de verdade = events.ts):
  *   evt-sm-2026:       55 inscritos /  51 participantes
  *   evt-pelotas-2026:  47 inscritos /  45 participantes
  *   evt-capao-2026:    62 inscritos /  53 participantes
@@ -10,11 +10,12 @@
  *   evt-je-2026:      712 inscritos / 687 participantes
  *   TOTAL:            925 inscritos / 881 participantes
  *
- * Estratégia: gerar participantes únicos por evento na quantidade de inscrições,
- * depois sortear ~15% de multi-evento entre os Talks (eventos menores).
- * Participantes do JE2026 podem ter ido a um Talk (~12%).
+ * Estratégia: gerar exatamente 925 participantes únicos, um por inscrição.
+ * Cada participante pertence a exatamente 1 evento primário.
+ * Os primeiros N participantes de cada evento (= totalAttendees) são marcados como presentes.
  */
 import type { JobTitle, CompanyType, OperationArea } from "../types";
+import { OPPORTUNITIES_MOCK } from "./opportunities";
 
 export type StatusInscricao = "inscrito" | "participante" | "lead" | "oportunidade";
 export type FitLabel = "baixo" | "medio" | "alto";
@@ -156,14 +157,8 @@ function pseudoRandom(seed: number): number {
 }
 
 /**
- * Dados-alvo por evento (de events.ts):
- *   eventId → { totalRegistrations, totalAttendees }
- *
- * A estratégia é:
- * 1. Gerar participantes com evento primário proporcional ao totalRegistrations
- * 2. ~15% dos participantes de Talks também vão a outro Talk
- * 3. ~12% dos participantes do JE2026 também foram a um Talk
- * 4. Status "participante" vs "inscrito" proporcional ao ratio attendees/registrations
+ * Exatamente 925 participantes, distribuídos proporcionalmente por evento.
+ * Cada evento tem exatamente totalRegistrations inscrições e totalAttendees presentes.
  */
 interface EventTarget {
   id: string;
@@ -179,137 +174,77 @@ const EVENT_TARGETS: EventTarget[] = [
   { id: "evt-je-2026", registrations: 712, attendees: 687 },
 ];
 
-const TOTAL_REGISTRATIONS = EVENT_TARGETS.reduce((s, e) => s + e.registrations, 0); // 925
-const TALK_IDS = EVENT_TARGETS.filter((e) => e.id !== "evt-je-2026").map((e) => e.id);
+// Build a set of participant IDs that are opportunities (from OPPORTUNITIES_MOCK)
+const oppParticipantIds = new Set(OPPORTUNITIES_MOCK.map((o) => o.participantId));
+// Count opportunities per participant
+const oppCountByParticipant = new Map<string, number>();
+for (const o of OPPORTUNITIES_MOCK) {
+  oppCountByParticipant.set(o.participantId, (oppCountByParticipant.get(o.participantId) || 0) + 1);
+}
 
 function generateParticipantsFull(): ParticipantFull[] {
   const participants: ParticipantFull[] = [];
+  let globalIdx = 0;
 
-  // Track how many registrations and attendees each event has accumulated
-  const eventRegCount = new Map<string, number>();
-  const eventAttCount = new Map<string, number>();
-  EVENT_TARGETS.forEach((e) => {
-    eventRegCount.set(e.id, 0);
-    eventAttCount.set(e.id, 0);
-  });
+  for (const target of EVENT_TARGETS) {
+    for (let j = 0; j < target.registrations; j++) {
+      const i = globalIdx;
+      const isAttendee = j < target.attendees; // first N are attendees
 
-  // Build flat assignment list: each slot = one event registration
-  const assignmentSlots: string[] = [];
-  for (const et of EVENT_TARGETS) {
-    for (let j = 0; j < et.registrations; j++) {
-      assignmentSlots.push(et.id);
-    }
-  }
-
-  // Shuffle deterministically
-  for (let i = assignmentSlots.length - 1; i > 0; i--) {
-    const j = Math.floor(pseudoRandom(i * 17 + 3) * (i + 1));
-    [assignmentSlots[i], assignmentSlots[j]] = [assignmentSlots[j], assignmentSlots[i]];
-  }
-
-  // Assign participants: consume slots, allow some multi-event overlap
-  let slotIdx = 0;
-
-  // We target ~800 unique participants (some attend multiple events)
-  const TARGET_UNIQUE = 800;
-
-  for (let i = 0; i < TARGET_UNIQUE && slotIdx < assignmentSlots.length; i++) {
-    const primaryEvent = assignmentSlots[slotIdx];
-    slotIdx++;
-
-    const eventIds = [primaryEvent];
-
-    // Multi-event logic: ~15% chance for Talks participants to attend another Talk
-    // ~12% chance for JE participants to also have attended a Talk
-    const multiRand = pseudoRandom(i * 31 + 11);
-    if (primaryEvent === "evt-je-2026" && multiRand < 0.12) {
-      const talkIdx = Math.floor(pseudoRandom(i * 47 + 3) * TALK_IDS.length);
-      const secondEvent = TALK_IDS[talkIdx];
-      if (!eventIds.includes(secondEvent) && slotIdx < assignmentSlots.length) {
-        eventIds.push(secondEvent);
-        // consume an extra slot for this event if available
-        slotIdx++;
+      // Fit score: ~30% alto (≥80), ~35% medio (50-79), ~35% baixo (<50)
+      const rand = pseudoRandom(i);
+      let fitScore: number;
+      if (rand < 0.30) {
+        fitScore = 80 + Math.round(pseudoRandom(i + 1) * 20); // 80-100
+      } else if (rand < 0.65) {
+        fitScore = 50 + Math.round(pseudoRandom(i + 2) * 29); // 50-79
+      } else {
+        fitScore = 10 + Math.round(pseudoRandom(i + 3) * 39); // 10-49
       }
-    } else if (primaryEvent !== "evt-je-2026" && multiRand < 0.15) {
-      const secondIdx = Math.floor(pseudoRandom(i * 53 + 7) * TALK_IDS.length);
-      const secondEvent = TALK_IDS[secondIdx];
-      if (!eventIds.includes(secondEvent) && slotIdx < assignmentSlots.length) {
-        eventIds.push(secondEvent);
-        slotIdx++;
+
+      // Check if this participant is in OPPORTUNITIES_MOCK
+      const partId = `part-${i + 1}`;
+      const oppCount = oppCountByParticipant.get(partId) || 0;
+
+      // Funnel status: oportunidade > lead > participante > inscrito
+      let statusInscricao: StatusInscricao;
+      if (isAttendee && oppCount >= 2) {
+        statusInscricao = "oportunidade";
+      } else if (isAttendee && oppCount === 1) {
+        statusInscricao = "lead";
+      } else if (isAttendee) {
+        statusInscricao = "participante";
+      } else {
+        statusInscricao = "inscrito";
       }
+
+      const firstName = pick(firstNames, i);
+      const lastName = pick(lastNames, i + 3);
+      const loc = pick(cities, i);
+
+      participants.push({
+        id: `pfull-${i + 1}`,
+        fullName: `${firstName} ${lastName}`,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@email.com`,
+        phone: `(${51 + (i % 6)}) 9${String(9000 + i * 17).slice(0, 4)}-${String(1000 + i * 31).slice(0, 4)}`,
+        city: loc.city,
+        uf: loc.uf,
+        jobTitle: pick(jobTitles, i),
+        companyName: pick(companyNames, i).name,
+        companyDomain: pick(companyNames, i).domain,
+        companyType: pick(companyTypes, i),
+        operationArea: pick(operationAreas, i),
+        eventIds: [target.id],
+        journeyId: "jrn-journey-2026",
+        year: 2026,
+        statusInscricao,
+        oportunidadesCount: oppCount,
+        fitScore,
+        fitLabel: deriveFitLabel(fitScore),
+      });
+
+      globalIdx++;
     }
-
-    // Track registration counts
-    for (const eid of eventIds) {
-      eventRegCount.set(eid, (eventRegCount.get(eid) || 0) + 1);
-    }
-
-    // Determine status following funnel: inscrito → participante → lead → oportunidade
-    const target = EVENT_TARGETS.find((e) => e.id === primaryEvent)!;
-    const attendanceRate = target.attendees / target.registrations;
-    const isParticipante = pseudoRandom(i * 7 + 5) < attendanceRate;
-
-    if (isParticipante) {
-      for (const eid of eventIds) {
-        eventAttCount.set(eid, (eventAttCount.get(eid) || 0) + 1);
-      }
-    }
-
-    // Fit score: ~30% alto (≥80), ~35% medio (50-79), ~35% baixo (<50)
-    const rand = pseudoRandom(i);
-    let fitScore: number;
-    if (rand < 0.30) {
-      fitScore = 80 + Math.round(pseudoRandom(i + 1) * 20); // 80-100
-    } else if (rand < 0.65) {
-      fitScore = 50 + Math.round(pseudoRandom(i + 2) * 29); // 50-79
-    } else {
-      fitScore = 10 + Math.round(pseudoRandom(i + 3) * 39); // 10-49
-    }
-
-    // Opportunity assignment: ~7% of attendees become leads/opportunities (~58 total)
-    // This is independent of fit score — a participant can be an opportunity even with low fit
-    const oppRand = pseudoRandom(i * 41 + 13);
-    const oppCount = isParticipante && oppRand < 0.076
-      ? Math.floor(pseudoRandom(i + 10) * 3) + 1
-      : 0;
-
-    // Funnel status: oportunidade > lead > participante > inscrito
-    // "oportunidade" is NOT gated by high fit — any attended participant with opportunities qualifies
-    let statusInscricao: StatusInscricao;
-    if (isParticipante && oppCount >= 2) {
-      statusInscricao = "oportunidade";
-    } else if (isParticipante && oppCount === 1) {
-      statusInscricao = "lead";
-    } else if (isParticipante) {
-      statusInscricao = "participante";
-    } else {
-      statusInscricao = "inscrito";
-    }
-
-    const firstName = pick(firstNames, i);
-    const lastName = pick(lastNames, i + 3);
-    const loc = pick(cities, i);
-
-    participants.push({
-      id: `pfull-${i + 1}`,
-      fullName: `${firstName} ${lastName}`,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@email.com`,
-      phone: `(${51 + (i % 6)}) 9${String(9000 + i * 17).slice(0, 4)}-${String(1000 + i * 31).slice(0, 4)}`,
-      city: loc.city,
-      uf: loc.uf,
-      jobTitle: pick(jobTitles, i),
-      companyName: pick(companyNames, i).name,
-      companyDomain: pick(companyNames, i).domain,
-      companyType: pick(companyTypes, i),
-      operationArea: pick(operationAreas, i),
-      eventIds,
-      journeyId: "jrn-journey-2026",
-      year: 2026,
-      statusInscricao,
-      oportunidadesCount: oppCount,
-      fitScore,
-      fitLabel: deriveFitLabel(fitScore),
-    });
   }
 
   return participants;
