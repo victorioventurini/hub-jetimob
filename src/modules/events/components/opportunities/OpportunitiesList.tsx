@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
 import { PARTICIPANTS_MOCK } from "../../mocks/participants";
 import { EVENTS_MOCK } from "../../mocks/events";
@@ -64,8 +65,14 @@ export function OpportunitiesList() {
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Participante</th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Empresa</th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Evento</th>
-                <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Áreas</th>
-                <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Fit</th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">
+                  Áreas
+                  <HelpTooltip content="Áreas de interesse declaradas pelo participante durante o evento." size="sm" />
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">
+                  Fit
+                  <HelpTooltip content="Score de adequação (0–100%) do lead ao perfil ideal do patrocinador." size="sm" />
+                </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Data</th>
               </tr>
             </thead>

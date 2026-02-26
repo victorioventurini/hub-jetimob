@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { PARTICIPANTS_MOCK } from "../../mocks/participants";
 
 const COLORS = [
@@ -27,12 +28,15 @@ function countBy<T>(arr: T[], key: (item: T) => string): { name: string; value: 
     .sort((a, b) => b.value - a.value);
 }
 
-function DonutChart({ data, title, actions, onSliceClick }: { data: { name: string; value: number }[]; title: string; actions?: React.ReactNode; onSliceClick?: () => void }) {
+function DonutChart({ data, title, tooltip, actions, onSliceClick }: { data: { name: string; value: number }[]; title: string; tooltip?: string; actions?: React.ReactNode; onSliceClick?: () => void }) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+           <CardTitle className="text-sm font-semibold">
+              {title}
+              {tooltip && <HelpTooltip content={tooltip} size="sm" />}
+            </CardTitle>
           {actions}
         </div>
       </CardHeader>
@@ -100,9 +104,9 @@ export function SegmentationCharts() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <DonutChart data={locationData} title="Distribuição por localidade" actions={ufFilter} onSliceClick={goToParticipants} />
-      <DonutChart data={byJob} title="Distribuição por Cargo" onSliceClick={goToParticipants} />
-      <DonutChart data={byCompany} title="Distribuição por Tipo de Empresa" onSliceClick={goToParticipants} />
+      <DonutChart data={locationData} title="Distribuição por localidade" tooltip="Distribuição geográfica dos participantes por UF ou cidade. Use o filtro para detalhar por estado." actions={ufFilter} onSliceClick={goToParticipants} />
+      <DonutChart data={byJob} title="Distribuição por Cargo" tooltip="Perfil dos participantes por cargo/função, indicando o nível hierárquico e poder de decisão do público." onSliceClick={goToParticipants} />
+      <DonutChart data={byCompany} title="Distribuição por Tipo de Empresa" tooltip="Segmentação dos participantes por tipo de empresa (imobiliária, incorporadora, etc.), útil para entender o perfil do mercado." onSliceClick={goToParticipants} />
     </div>
   );
 }

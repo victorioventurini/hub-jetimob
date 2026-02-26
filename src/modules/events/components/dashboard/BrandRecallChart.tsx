@@ -4,6 +4,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { BRAND_RECALL_MOCK } from "../../mocks/brand-metrics";
 import { useAnonymize } from "../../hooks/useAnonymize";
 
@@ -19,7 +20,10 @@ export function BrandRecallChart() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Brand Recall — Espontâneo vs Estimulado</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Brand Recall — Espontâneo vs Estimulado
+          <HelpTooltip content="Espontâneo: participante citou a marca sem estímulo. Estimulado: reconheceu a marca em uma lista. Quanto maior o recall espontâneo, maior a força da marca." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

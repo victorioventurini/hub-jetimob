@@ -5,6 +5,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Users, Target, DollarSign, Brain, Award } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
 import { SPONSOR_MOCK } from "../../mocks/sponsor";
 import { EVENTS_MOCK } from "../../mocks/events";
@@ -12,6 +13,15 @@ import { PARTICIPANTS_MOCK } from "../../mocks/participants";
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+
+const KPI_TOOLTIPS: Record<string, string> = {
+  "Oportunidades Capturadas": "Total de oportunidades de negócio identificadas durante os eventos, com base nas interações e interesses declarados pelos participantes.",
+  "ROI Estimado": "Retorno sobre investimento projetado, calculado com base no LTV médio por lead qualificado e na taxa de conversão estimada (35%).",
+  "Fit Score Médio": "Média do score de adequação dos leads aos critérios de qualificação do patrocinador (0–100%).",
+  "Leads Qualificados": "Percentual de oportunidades com Fit Score ≥ 75, indicando alta aderência ao perfil ideal de cliente.",
+  "Brand Recall": "Percentual de participantes que lembraram da marca do patrocinador espontaneamente ou de forma estimulada após o evento.",
+  "Participantes": "Número total de participantes que efetivamente estiveram presentes nos eventos do período selecionado.",
+};
 
 export function KpiCards() {
   const { opportunities } = useEventsContext();
@@ -44,6 +54,7 @@ export function KpiCards() {
               <div className="flex items-center gap-2 mb-2">
                 <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
                 <span className="text-xs text-muted-foreground font-medium truncate">{kpi.label}</span>
+                <HelpTooltip content={KPI_TOOLTIPS[kpi.label]} size="sm" />
               </div>
               <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
             </CardContent>

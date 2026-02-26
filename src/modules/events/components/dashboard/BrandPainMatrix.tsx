@@ -4,6 +4,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { BRAND_PAIN_MOCK } from "../../mocks/brand-metrics";
 import { useAnonymize } from "../../hooks/useAnonymize";
 import { SPONSOR_BRAND_ID, COMPETITORS_MOCK } from "../../mocks/sponsor";
@@ -24,7 +25,10 @@ export function BrandPainMatrix() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Associação Marca × Dor (Share 100%)</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Associação Marca × Dor (Share 100%)
+          <HelpTooltip content="Mostra como cada dor/necessidade do mercado é associada às marcas pelos participantes. Barras empilhadas 100% indicam a fatia de cada marca por dor." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>

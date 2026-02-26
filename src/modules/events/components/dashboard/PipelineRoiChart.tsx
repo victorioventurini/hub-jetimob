@@ -4,6 +4,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { SPONSOR_MOCK } from "../../mocks/sponsor";
 import { useEventsContext } from "../../context/EventsContext";
 
@@ -38,7 +39,10 @@ export function PipelineRoiChart() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Pipeline ROI Estimado por Área</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Pipeline ROI Estimado por Área
+          <HelpTooltip content="ROI estimado por área de atuação, calculado com base no número de oportunidades × LTV médio × taxa de conversão esperada (35%)." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>

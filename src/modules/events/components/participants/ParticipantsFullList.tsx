@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ListPageFilters } from "@/components/ui/list-page-filters";
 import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { Flame, TrendingUp, Minus } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import {
   PARTICIPANTS_FULL_MOCK,
   FIT_HIGH_THRESHOLD,
@@ -304,9 +305,18 @@ export function ParticipantsFullList() {
               <TableHead className="text-xs">Cargo</TableHead>
               <TableHead className="text-xs">Tipo empresa</TableHead>
               <TableHead className="text-xs">Nome empresa</TableHead>
-              <TableHead className="text-xs">Atua com</TableHead>
-              <TableHead className="text-xs">Fit</TableHead>
-              <TableHead className="text-xs">Status</TableHead>
+              <TableHead className="text-xs">
+                Atua com
+                <HelpTooltip content="Área de atuação do participante: vendas, aluguéis ou ambos." size="sm" />
+              </TableHead>
+              <TableHead className="text-xs">
+                Fit
+                <HelpTooltip content="Score de adequação (0–100) do lead ao perfil ideal do patrocinador, baseado em cargo, tipo de empresa, área de atuação e localidade." size="sm" />
+              </TableHead>
+              <TableHead className="text-xs">
+                Status
+                <HelpTooltip content="Inscrito: se registrou para o evento. Participante: esteve efetivamente presente." size="sm" />
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

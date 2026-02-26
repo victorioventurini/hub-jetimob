@@ -4,6 +4,7 @@
  */
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { EVENTS_MOCK } from "../../mocks/events";
 import { useEventsContext } from "../../context/EventsContext";
 
@@ -26,7 +27,10 @@ export function LeadQualificationFunnel() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Funil de Qualificação</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Funil de Qualificação
+          <HelpTooltip content="Mostra a jornada de conversão: Inscritos → Participantes → Oportunidades → Fit Alto (≥75). O percentual entre etapas indica a taxa de conversão." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {stages.map((stage, i) => {

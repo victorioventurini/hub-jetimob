@@ -4,6 +4,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useAnonymize } from "../../hooks/useAnonymize";
 import { BRAND_RECALL_MOCK } from "../../mocks/brand-metrics";
 
@@ -20,7 +21,10 @@ export function BrandRecallLeadsOverlap() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Brand Recall × Leads Qualificados</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Brand Recall × Leads Qualificados
+          <HelpTooltip content="Correlação entre brand recall (reconhecimento da marca) e geração de leads qualificados por marca. Permite identificar se maior recall se traduz em mais leads." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>

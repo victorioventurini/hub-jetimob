@@ -5,6 +5,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { EVENTS_MOCK } from "../../mocks/events";
 import { useEventsContext } from "../../context/EventsContext";
 
@@ -20,7 +21,10 @@ export function OpportunitiesVolumeChart() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Volume de Oportunidades por Evento</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Volume de Oportunidades por Evento
+          <HelpTooltip content="Quantidade total de oportunidades capturadas em cada evento, permitindo comparar a performance de geração de leads entre os eventos." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={250}>

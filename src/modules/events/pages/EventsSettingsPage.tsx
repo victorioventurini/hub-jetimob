@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MapPin, ChevronRight, Settings } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { EVENT_SETTINGS_MOCK, type QuotaName } from "../mocks/eventSettings";
 
 const QUOTA_VARIANT: Record<QuotaName, string> = {
@@ -46,10 +47,16 @@ export default function EventsSettingsPage() {
                 <TableRow>
                   <TableHead className="text-xs">Evento</TableHead>
                   <TableHead className="text-xs">Localização</TableHead>
-                  <TableHead className="text-xs text-center">Projetado</TableHead>
+                  <TableHead className="text-xs text-center">
+                    Projetado
+                    <HelpTooltip content="Público estimado/projetado para o evento antes da realização." size="sm" />
+                  </TableHead>
                   <TableHead className="text-xs text-center">Inscritos</TableHead>
                   <TableHead className="text-xs text-center">Participantes</TableHead>
-                  <TableHead className="text-xs">Cota</TableHead>
+                  <TableHead className="text-xs">
+                    Cota
+                    <HelpTooltip content="Nível de patrocínio contratado para o evento (Diamante, Esmeralda, Ouro ou Prata), que define visibilidade e benefícios." size="sm" />
+                  </TableHead>
                   <TableHead className="text-xs w-10" />
                 </TableRow>
               </TableHeader>

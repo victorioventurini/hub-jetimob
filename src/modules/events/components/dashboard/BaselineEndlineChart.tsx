@@ -4,6 +4,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { BASELINE_ENDLINE_MOCK } from "../../mocks/brand-metrics";
 
 export function BaselineEndlineChart() {
@@ -18,7 +19,10 @@ export function BaselineEndlineChart() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Evolução Baseline vs Endline</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          Evolução Baseline vs Endline
+          <HelpTooltip content="Compara métricas de percepção antes (Baseline) e depois (Endline) do evento. O delta em p.p. indica a evolução conquistada com a participação no evento." size="sm" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
