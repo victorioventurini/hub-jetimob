@@ -9,7 +9,69 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { DollarSign, SlidersHorizontal } from "lucide-react";
+import { DollarSign, SlidersHorizontal, Layers } from "lucide-react";
+
+const BRAND_FRONTS: { category: string; subcategories: string[] }[] = [
+  {
+    category: "Geração de Leads",
+    subcategories: [
+      "Portais imobiliários",
+      "Agências de marketing e performance",
+      "Sites",
+      "Plataformas de Ads",
+    ],
+  },
+  {
+    category: "Estoque de Imóveis",
+    subcategories: [
+      "Incorporadoras",
+      "Loteadoras",
+      "Hubs de estoque de imóveis e empreendimentos (Órulo, DWV, Bloco)",
+    ],
+  },
+  {
+    category: "Relacionamento e IA",
+    subcategories: [
+      "CRMs",
+      "IAs de atendimento",
+      "Chatbots",
+    ],
+  },
+  {
+    category: "Viabilização de Negócios",
+    subcategories: [
+      "Bancos",
+      "Fintechs de crédito",
+      "Garantidoras",
+      "Seguradoras",
+    ],
+  },
+  {
+    category: "Formalização e Entrega",
+    subcategories: [
+      "Vistorias",
+      "Soluções de geração de contratos",
+      "Assinaturas digitais",
+      "Soluções de pós-venda",
+    ],
+  },
+  {
+    category: "Gestão Financeira",
+    subcategories: [
+      "ERPs de Locação",
+      "Fintechs de antecipação",
+      "Gestão de fluxo de caixa",
+    ],
+  },
+  {
+    category: "Educação e Desenvolvimento Profissional",
+    subcategories: [
+      "Escolas de negócios",
+      "Consultorias",
+      "Entidades de classe",
+    ],
+  },
+];
 
 const COMPANY_TYPES = [
   "Imobiliária de vendas",
@@ -159,6 +221,34 @@ export function RoiMetricsTab() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Frentes Estratégicas de Brand */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            Frente Estratégica de Brand
+            <HelpTooltip content="Categorias e subcategorias que representam as frentes estratégicas do patrocinador para segmentação de marca nos eventos." />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {BRAND_FRONTS.map((front, idx) => (
+            <div key={front.category}>
+              {idx > 0 && <Separator className="mb-6" />}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {front.category}
+                </h4>
+                <div className="space-y-1 pl-1">
+                  {front.subcategories.map((sub) => (
+                    <p key={sub} className="text-sm text-foreground">{sub}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>
