@@ -14,7 +14,9 @@ export function BrandPainMatrix() {
   const navigate = useNavigate();
   const allBrandIds = [SPONSOR_BRAND_ID, ...COMPETITORS_MOCK.map((c) => c.id)];
 
-  const data = BRAND_PAIN_MOCK.map((pain) => {
+  const VISIBLE_PAINS = ["Garantia locatícia", "Seguro residencial"];
+
+  const data = BRAND_PAIN_MOCK.filter((p) => VISIBLE_PAINS.includes(p.painPoint)).map((pain) => {
     const row: Record<string, string | number> = { painPoint: pain.painPoint };
     pain.associations.forEach((a) => {
       row[getDisplayName(a.brandId)] = a.share;
