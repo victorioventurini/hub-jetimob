@@ -95,11 +95,24 @@ const JOB_TITLES = [
   "Outros",
 ];
 
+const BRAND_PAINS = [
+  "Receber muitos contatos, mas a maioria sem perfil de compra.",
+  "Ter o cliente pronto, mas não encontrar o imóvel atualizado para ele.",
+  "Perder vendas pela demora no primeiro atendimento ao lead.",
+  "Negócios que caem no final por reprovação de crédito ou garantia.",
+  "Lentidão e burocracia para assinar contratos e fazer vistorias.",
+  "Sentimento de estar desatualizado perante as novas tecnologias.",
+];
+
 export function RoiMetricsTab() {
   const [ltv, setLtv] = useState("150000");
   const [conversionRate, setConversionRate] = useState("18");
   const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária de aluguéis", "Imobiliária de vendas e aluguéis"]);
   const [selectedTitles, setSelectedTitles] = useState<string[]>(["Assessor de locações", "Gerente de locações", "Diretor geral / Proprietário / CEO"]);
+  const [selectedBrandSubs, setSelectedBrandSubs] = useState<string[]>(
+    BRAND_FRONTS.flatMap((f) => f.subcategories)
+  );
+  const [selectedPains, setSelectedPains] = useState<string[]>([...BRAND_PAINS]);
 
   const toggleItem = (list: string[], item: string, setter: (v: string[]) => void) => {
     setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
@@ -241,9 +254,15 @@ export function RoiMetricsTab() {
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {front.category}
                 </h4>
-                <div className="space-y-1 pl-1">
+                <div className="space-y-2 pl-1">
                   {front.subcategories.map((sub) => (
-                    <p key={sub} className="text-sm text-foreground">{sub}</p>
+                    <label key={sub} className="flex items-center gap-1.5 cursor-pointer">
+                      <Checkbox
+                        checked={selectedBrandSubs.includes(sub)}
+                        onCheckedChange={() => toggleItem(selectedBrandSubs, sub, setSelectedBrandSubs)}
+                      />
+                      <span className="text-sm">{sub}</span>
+                    </label>
                   ))}
                 </div>
               </div>
@@ -262,13 +281,16 @@ export function RoiMetricsTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1 pl-1">
-            <p className="text-sm text-foreground">Receber muitos contatos, mas a maioria sem perfil de compra.</p>
-            <p className="text-sm text-foreground">Ter o cliente pronto, mas não encontrar o imóvel atualizado para ele.</p>
-            <p className="text-sm text-foreground">Perder vendas pela demora no primeiro atendimento ao lead.</p>
-            <p className="text-sm text-foreground">Negócios que caem no final por reprovação de crédito ou garantia.</p>
-            <p className="text-sm text-foreground">Lentidão e burocracia para assinar contratos e fazer vistorias.</p>
-            <p className="text-sm text-foreground">Sentimento de estar desatualizado perante as novas tecnologias.</p>
+          <div className="space-y-2 pl-1">
+            {BRAND_PAINS.map((pain) => (
+              <label key={pain} className="flex items-center gap-1.5 cursor-pointer">
+                <Checkbox
+                  checked={selectedPains.includes(pain)}
+                  onCheckedChange={() => toggleItem(selectedPains, pain, setSelectedPains)}
+                />
+                <span className="text-sm">{pain}</span>
+              </label>
+            ))}
           </div>
         </CardContent>
       </Card>
