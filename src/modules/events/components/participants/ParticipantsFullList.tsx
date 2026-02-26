@@ -101,6 +101,7 @@ export function ParticipantsFullList() {
   const [jobTitle, setJobTitle] = useState("all");
   const [city, setCity] = useState("all");
   const [uf, setUf] = useState("all");
+  const [status, setStatus] = useState("all");
 
   // Derive city/uf options from data
   const allCities = useMemo(() => uniqueValues(PARTICIPANTS_FULL_MOCK, "city"), []);
@@ -142,6 +143,7 @@ export function ParticipantsFullList() {
     if (jobTitle !== "all") data = data.filter((p) => p.jobTitle === jobTitle);
     if (city !== "all") data = data.filter((p) => p.city === city);
     if (uf !== "all") data = data.filter((p) => p.uf === uf);
+    if (status !== "all") data = data.filter((p) => p.statusInscricao === status);
 
     if (fitRange !== "all") {
       const [min, max] = fitRange.split("-").map(Number);
@@ -161,7 +163,7 @@ export function ParticipantsFullList() {
 
     // Sort by fit desc
     return [...data].sort((a, b) => b.fitScore - a.fitScore);
-  }, [filters, segment, search, fitRange, operationArea, companyType, jobTitle, city, uf]);
+  }, [filters, segment, search, fitRange, operationArea, companyType, jobTitle, city, uf, status]);
 
   const counts = useMemo(() => {
     let base = PARTICIPANTS_FULL_MOCK.filter((p) => p.year === filters.year);
@@ -269,6 +271,17 @@ export function ParticipantsFullList() {
             {allUfs.map((u) => (
               <SelectItem key={u} value={u} className="text-xs">{u}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="h-9 w-[140px] text-xs">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">Todos</SelectItem>
+            <SelectItem value="inscrito" className="text-xs">Inscrito</SelectItem>
+            <SelectItem value="participante" className="text-xs">Participante</SelectItem>
           </SelectContent>
         </Select>
       </ListPageFilters>
