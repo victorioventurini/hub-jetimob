@@ -13,3 +13,4 @@ export { assetRoutes } from './assets.routes';
 export { teamRoutes } from './teams.routes';
 export { settingsRoutes } from './settings.routes';
 export { coreRoutes } from './core.routes';
+export { eventsRoutes } from './events.routes';

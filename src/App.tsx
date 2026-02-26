@@ -29,6 +29,7 @@ import { useGtmConfig, initGTM } from "@/lib/analytics";
 import Auth from "./pages/Auth";
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const PublicAsset = lazy(() => import("./pages/PublicAsset"));
+const EventsCapturePage = lazy(() => import("./modules/events/pages/EventsCapturePage"));
 
 // Rotas modularizadas
 import { hubRoutes } from "./routes/hub.routes";
@@ -38,6 +39,7 @@ import { assetRoutes } from "./routes/assets.routes";
 import { teamRoutes } from "./routes/teams.routes";
 import { settingsRoutes } from "./routes/settings.routes";
 import { coreRoutes } from "./routes/core.routes";
+import { eventsRoutes } from "./routes/events.routes";
 
 /**
  * Fallback de loading otimizado
@@ -114,6 +116,7 @@ function AppRoutes() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/p/assets/:code" element={<PublicAsset />} />
+        <Route path="/p/events/capture/:eventCode" element={<EventsCapturePage />} />
         
         {/* ===== ROTAS AUTENTICADAS (com BuProvider) ===== */}
         <Route path="*" element={<AuthenticatedRoutesWrapper />} />
@@ -192,6 +195,9 @@ function AuthenticatedRoutes() {
         
         {/* Settings (BU-scoped) */}
         {settingsRoutes}
+        
+        {/* Events (Jet Experience) */}
+        {eventsRoutes}
         
         {/* Core (Home, Profile, Users, etc.) */}
         {coreRoutes}
