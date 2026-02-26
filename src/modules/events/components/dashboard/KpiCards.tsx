@@ -19,7 +19,7 @@ const KPI_TOOLTIPS: Record<string, string> = {
   "ROI Estimado": `Retorno sobre investimento projetado, calculado com base no LTV médio (${LTV_DEFAULT.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}) × Oportunidades (Fit alto) × taxa de conversão estimada (${(CONVERSION_RATE * 100).toFixed(0)}%).`,
   "Fit Score Médio": "Média do score de adequação dos leads aos critérios de qualificação do patrocinador (0–100%).",
   "Leads Qualificados": "Percentual de oportunidades com Fit Score ≥ 75, indicando alta aderência ao perfil ideal de cliente.",
-  "Brand Recall": "Percentual de participantes que lembraram da marca do patrocinador espontaneamente ou de forma estimulada após o evento.",
+  "Brand Awareness": "Percentual de participantes que lembraram da marca do patrocinador espontaneamente ou de forma estimulada após o evento.",
   "Participantes": "Número total de participantes que efetivamente estiveram presentes nos eventos do período selecionado.",
 };
 
@@ -40,7 +40,7 @@ export function KpiCards() {
     { label: "ROI Estimado", value: formatCurrency(estimatedRoi), icon: DollarSign, color: "text-emerald-600" },
     { label: "Fit Score Médio", value: `${avgFit}%`, icon: Brain, color: "text-amber-600" },
     { label: "Leads Qualificados", value: `${qualifiedPct}%`, icon: TrendingUp, color: "text-blue-600" },
-    { label: "Brand Recall", value: "78%", icon: Award, color: "text-purple-600" },
+    { label: "Brand Awareness", value: "78%", icon: Award, color: "text-purple-600" },
     { label: "Participantes", value: String(totalAttendees), icon: Users, color: "text-muted-foreground" },
   ];
 
