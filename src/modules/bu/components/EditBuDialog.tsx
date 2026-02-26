@@ -44,6 +44,7 @@ const editBuSchema = z.object({
     (val) => !val || val.length === 0 || validateCNPJ(val),
     "CNPJ inválido"
   ),
+  member_display_name: z.string().optional(),
   allowed_email_domains: z.array(z.string()).min(1, "Adicione ao menos um domínio"),
   logo_url: z.string().nullable().optional(),
   symbol_url: z.string().nullable().optional(),
@@ -81,6 +82,7 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
       description: "",
       legal_entity: "",
       cnpj: "",
+      member_display_name: "",
       allowed_email_domains: [],
       logo_url: null,
       symbol_url: null,
@@ -98,6 +100,7 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
         description: bu.description || "",
         legal_entity: bu.legal_entity || "",
         cnpj: bu.cnpj ? formatCNPJ(bu.cnpj) : "",
+        member_display_name: bu.member_display_name || "",
         allowed_email_domains: bu.allowed_email_domains || [],
         logo_url: bu.logo_url || null,
         symbol_url: bu.symbol_url || null,
@@ -151,6 +154,7 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
         description: data.description || null,
         legal_entity: data.legal_entity || null,
         cnpj: data.cnpj ? unformatCNPJ(data.cnpj) : null,
+        member_display_name: data.member_display_name || null,
         allowed_email_domains: data.allowed_email_domains,
         logo_url: data.logo_url,
         symbol_url: data.symbol_url,
@@ -224,6 +228,27 @@ export function EditBuDialog({ bu, open, onOpenChange }: EditBuDialogProps) {
                           disabled={!canEditAllFields}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="member_display_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome dos Colaboradores</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: Jetimobers, Verdinhos"
+                          {...field}
+                          disabled={!canEditAllFields}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Nome usado no menu e nas telas para se referir aos colaboradores. Se vazio, será exibido "Usuários".
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
