@@ -15,7 +15,7 @@ const LTV_DEFAULT = 150_000; // R$ 150k — conforme /events/settings?tab=kpis
 const CONVERSION_RATE = 0.18; // 18% — benchmark B2B mercado imobiliário Brasil
 
 const KPI_TOOLTIPS: Record<string, string> = {
-  "Oportunidades Capturadas": "Total de oportunidades de negócio identificadas durante os eventos, com base nas interações e interesses declarados pelos participantes.",
+  "Leads Capturados": "Total de leads identificados durante os eventos, com base nas interações e interesses declarados pelos participantes.",
   "ROI Estimado": `Retorno sobre investimento projetado, calculado com base no LTV médio (${LTV_DEFAULT.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}) × leads qualificados × taxa de conversão estimada (${(CONVERSION_RATE * 100).toFixed(0)}%).`,
   "Fit Score Médio": "Média do score de adequação dos leads aos critérios de qualificação do patrocinador (0–100%).",
   "Leads Qualificados": "Percentual de oportunidades com Fit Score ≥ 75, indicando alta aderência ao perfil ideal de cliente.",
@@ -36,7 +36,7 @@ export function KpiCards() {
   const totalAttendees = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
 
   const kpis = [
-    { label: "Oportunidades Capturadas", value: String(totalOpps), icon: Target, color: "text-primary" },
+    { label: "Leads Capturados", value: String(totalOpps), icon: Target, color: "text-primary" },
     { label: "ROI Estimado", value: formatCurrency(estimatedRoi), icon: DollarSign, color: "text-emerald-600" },
     { label: "Fit Score Médio", value: `${avgFit}%`, icon: Brain, color: "text-amber-600" },
     { label: "Leads Qualificados", value: `${qualifiedPct}%`, icon: TrendingUp, color: "text-blue-600" },
