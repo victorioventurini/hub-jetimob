@@ -91,12 +91,24 @@ export const BASELINE_ENDLINE_MOCK: BaselineEndlineMetric[] = [
 
 // Share of Mind dimensions (radar)
 export const SHARE_OF_MIND_MOCK: ShareOfMindDimension[] = [
-  { dimension: "Confiança", sponsorScore: 85, marketAverage: 55 },
-  { dimension: "Inovação", sponsorScore: 60, marketAverage: 50 },
-  { dimension: "Custo-benefício", sponsorScore: 70, marketAverage: 60 },
-  { dimension: "Atendimento", sponsorScore: 78, marketAverage: 48 },
-  { dimension: "Relevância", sponsorScore: 82, marketAverage: 52 },
-  { dimension: "Reconhecimento", sponsorScore: 75, marketAverage: 45 },
+  { dimension: "Confiança", scores: [
+    { brandId: SPONSOR_BRAND_ID, score: 85 }, { brandId: "comp-loft", score: 60 }, { brandId: "comp-quintoandar", score: 55 }, { brandId: "comp-kenlo", score: 48 }, { brandId: "comp-vista", score: 52 }, { brandId: "comp-arbo", score: 40 },
+  ]},
+  { dimension: "Inovação", scores: [
+    { brandId: SPONSOR_BRAND_ID, score: 60 }, { brandId: "comp-loft", score: 55 }, { brandId: "comp-quintoandar", score: 70 }, { brandId: "comp-kenlo", score: 45 }, { brandId: "comp-vista", score: 38 }, { brandId: "comp-arbo", score: 42 },
+  ]},
+  { dimension: "Custo-benefício", scores: [
+    { brandId: SPONSOR_BRAND_ID, score: 70 }, { brandId: "comp-loft", score: 62 }, { brandId: "comp-quintoandar", score: 58 }, { brandId: "comp-kenlo", score: 65 }, { brandId: "comp-vista", score: 55 }, { brandId: "comp-arbo", score: 50 },
+  ]},
+  { dimension: "Atendimento", scores: [
+    { brandId: SPONSOR_BRAND_ID, score: 78 }, { brandId: "comp-loft", score: 45 }, { brandId: "comp-quintoandar", score: 50 }, { brandId: "comp-kenlo", score: 42 }, { brandId: "comp-vista", score: 55 }, { brandId: "comp-arbo", score: 38 },
+  ]},
+  { dimension: "Relevância", scores: [
+    { brandId: SPONSOR_BRAND_ID, score: 82 }, { brandId: "comp-loft", score: 58 }, { brandId: "comp-quintoandar", score: 62 }, { brandId: "comp-kenlo", score: 40 }, { brandId: "comp-vista", score: 48 }, { brandId: "comp-arbo", score: 35 },
+  ]},
+  { dimension: "Reconhecimento", scores: [
+    { brandId: SPONSOR_BRAND_ID, score: 75 }, { brandId: "comp-loft", score: 50 }, { brandId: "comp-quintoandar", score: 55 }, { brandId: "comp-kenlo", score: 38 }, { brandId: "comp-vista", score: 42 }, { brandId: "comp-arbo", score: 30 },
+  ]},
 ];
 
 // Pain point ranking
