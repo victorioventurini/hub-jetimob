@@ -323,6 +323,7 @@ export function ParticipantsFullList() {
                   <div>
                     <span className="font-medium text-sm">{p.fullName}</span>
                     <p className="text-xs text-muted-foreground">{p.email}</p>
+                    <p className="text-xs text-muted-foreground">{p.phone}</p>
                   </div>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.city}/{p.uf}</TableCell>
