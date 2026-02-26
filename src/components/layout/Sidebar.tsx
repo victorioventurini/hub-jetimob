@@ -46,7 +46,7 @@ const adminNavigation = [
 export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
   const location = useLocation();
   const { isAdmin } = useAuth();
-  const { symbolUrl, buName, primaryColor, memberDisplayName } = useBuBranding();
+  const { symbolUrl, buName, primaryColor, memberMenuLabel } = useBuBranding();
 
   const NavItem = ({ item }: { item: typeof navigation[0] }) => {
     const isActive = location.pathname === item.href;
@@ -128,7 +128,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto [scrollbar-gutter:stable] p-3 space-y-1">
           <div className="space-y-1">
             {navigation.map((item) => {
-              const displayName = item.name === "$$MEMBER$$" ? memberDisplayName : item.name;
+              const displayName = item.name === "$$MEMBER$$" ? memberMenuLabel : item.name;
               return <NavItem key={item.href} item={{ ...item, name: displayName }} />;
             })}
           </div>

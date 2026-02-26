@@ -106,11 +106,11 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const location = useLocation();
   const { isAdmin } = useAuth();
   const { currentBu, userRole } = useBu();
-  const { symbolUrl, buName, primaryColor, memberDisplayName } = useBuBranding();
+  const { symbolUrl, buName, primaryColor, memberMenuLabel } = useBuBranding();
   
   const globalBuItems = globalBuItemBase.map((item) => ({
     ...item,
-    name: item.slug === "users" ? memberDisplayName : item.slug,
+    name: item.slug === "users" ? memberMenuLabel : item.slug,
   }));
   const { globalModules, enabledOperationalModules, isLoading } = useModules();
   const { hasModuleAccess, isLoading: permissionsLoading } = useModuleAccess();
