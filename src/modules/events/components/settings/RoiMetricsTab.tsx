@@ -251,6 +251,27 @@ export function RoiMetricsTab() {
           ))}
         </CardContent>
       </Card>
+
+      {/* Dores que a marca resolve */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+            Dores que a sua marca resolve
+            <HelpTooltip content="Dores de mercado que o patrocinador endereça diretamente com seus produtos e serviços. Usadas para segmentação e associação marca-dor nos dashboards." />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1 pl-1">
+            <p className="text-sm text-foreground">Receber muitos contatos, mas a maioria sem perfil de compra.</p>
+            <p className="text-sm text-foreground">Ter o cliente pronto, mas não encontrar o imóvel atualizado para ele.</p>
+            <p className="text-sm text-foreground">Perder vendas pela demora no primeiro atendimento ao lead.</p>
+            <p className="text-sm text-foreground">Negócios que caem no final por reprovação de crédito ou garantia.</p>
+            <p className="text-sm text-foreground">Lentidão e burocracia para assinar contratos e fazer vistorias.</p>
+            <p className="text-sm text-foreground">Sentimento de estar desatualizado perante as novas tecnologias.</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
