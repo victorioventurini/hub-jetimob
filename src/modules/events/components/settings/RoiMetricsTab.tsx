@@ -112,7 +112,10 @@ export function RoiMetricsTab() {
   const [selectedBrandSubs, setSelectedBrandSubs] = useState<string[]>(
     BRAND_FRONTS.flatMap((f) => f.subcategories)
   );
-  const [selectedPains, setSelectedPains] = useState<string[]>([...BRAND_PAINS]);
+  const [selectedPains, setSelectedPains] = useState<string[]>([
+    "Negócios que caem no final por reprovação de crédito ou garantia.",
+    "Lentidão e burocracia para assinar contratos e fazer vistorias.",
+  ]);
 
   const toggleItem = (list: string[], item: string, setter: (v: string[]) => void) => {
     setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
