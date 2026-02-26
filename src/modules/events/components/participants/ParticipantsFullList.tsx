@@ -4,7 +4,7 @@
  */
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
@@ -13,21 +13,12 @@ import { Flame, TrendingUp, Minus } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import {
   PARTICIPANTS_FULL_MOCK,
-  FIT_HIGH_THRESHOLD,
   type ParticipantFull,
 } from "../../mocks/participantsFull";
 import { useEventsContext } from "../../context/EventsContext";
 import { JOURNEYS_MOCK } from "../../mocks/events";
 
-type SegmentTab = "inscritos" | "participantes" | "oportunidades" | "fit_alto";
 type FitRange = "all" | "0-25" | "26-50" | "51-75" | "76-100";
-
-const SEGMENT_TABS: { value: SegmentTab; label: string }[] = [
-  { value: "inscritos", label: "Inscritos" },
-  { value: "participantes", label: "Participantes" },
-  { value: "oportunidades", label: "Oportunidades" },
-  { value: "fit_alto", label: "Fit alto" },
-];
 
 const FIT_RANGES: { value: FitRange; label: string }[] = [
   { value: "all", label: "Todos os fits" },
@@ -90,7 +81,7 @@ function uniqueValues(data: ParticipantFull[], key: "city" | "uf"): string[] {
 
 export function ParticipantsFullList() {
   const { filters } = useEventsContext();
-  const [segment, setSegment] = useState<SegmentTab>("inscritos");
+  
   const [search, setSearch] = useState("");
 
   // Filter state
@@ -123,18 +114,8 @@ export function ParticipantsFullList() {
       }
     }
 
-    // Segment tabs
-    switch (segment) {
-      case "participantes":
-        data = data.filter((p) => p.statusInscricao !== "inscrito");
-        break;
-      case "oportunidades":
-        data = data.filter((p) => p.statusInscricao === "lead" || p.statusInscricao === "oportunidade");
-        break;
-      case "fit_alto":
-        data = data.filter((p) => p.fitScore >= FIT_HIGH_THRESHOLD);
-        break;
-    }
+
+
 
     // Inline filters
     
@@ -162,42 +143,11 @@ export function ParticipantsFullList() {
 
     // Sort by fit desc
     return [...data].sort((a, b) => b.fitScore - a.fitScore);
-  }, [filters, segment, search, fitRange, companyType, jobTitle, city, uf, status]);
+  }, [filters, search, fitRange, companyType, jobTitle, city, uf, status]);
 
-  const counts = useMemo(() => {
-    let base = PARTICIPANTS_FULL_MOCK.filter((p) => p.year === filters.year);
-    if (filters.scope === "event" && filters.selectedEventId) {
-      base = base.filter((p) => p.eventIds.includes(filters.selectedEventId!));
-    }
-    if (filters.scope === "journey" && filters.selectedJourneyId) {
-      const journey = JOURNEYS_MOCK.find((j) => j.id === filters.selectedJourneyId);
-      if (journey) {
-        base = base.filter((p) => p.eventIds.some((eid) => journey.eventIds.includes(eid)));
-      }
-    }
-    return {
-      inscritos: base.length,
-      participantes: base.filter((p) => p.statusInscricao !== "inscrito").length,
-      oportunidades: base.filter((p) => p.statusInscricao === "lead" || p.statusInscricao === "oportunidade").length,
-      fit_alto: base.filter((p) => p.fitScore >= FIT_HIGH_THRESHOLD).length,
-    };
-  }, [filters]);
 
   return (
     <div className="space-y-6">
-      {/* Segment tabs */}
-      <Tabs value={segment} onValueChange={(v) => setSegment(v as SegmentTab)}>
-        <TabsList className="h-9">
-          {SEGMENT_TABS.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="text-xs gap-1.5">
-              {tab.label}
-              <span className="text-[10px] text-muted-foreground font-normal">
-                ({counts[tab.value]})
-              </span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
 
       {/* Search + Filters (canonical ListPageFilters) */}
       <ListPageFilters
