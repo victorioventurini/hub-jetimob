@@ -30,7 +30,7 @@ export default function EventSettingDetailPage() {
           title={event.name}
           description="Configurações e webhook do evento"
           breadcrumbs={[
-            { label: "Jet Experience", href: "/events" },
+            { label: "Eventos", href: "/events" },
             { label: "Configurações", href: "/events/settings" },
             { label: event.name },
           ]}

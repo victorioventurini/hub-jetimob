@@ -14,7 +14,7 @@ export default function EventsParticipantsFullPage() {
           title="Lista de Participantes"
           description="Segmentação e qualificação de participantes por evento"
           breadcrumbs={[
-            { label: "Jet Experience", href: "/events" },
+            { label: "Eventos", href: "/events" },
             { label: "Participantes" },
           ]}
         />

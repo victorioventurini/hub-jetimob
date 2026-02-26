@@ -24,7 +24,7 @@ export default function EventsDashboardPage() {
           title="Dashboard ROI & Insights"
           description="Jet Experience • Patrocinador"
           breadcrumbs={[
-            { label: "Jet Experience" },
+            { label: "Eventos" },
           ]}
         />
         <ScopeFilter />
