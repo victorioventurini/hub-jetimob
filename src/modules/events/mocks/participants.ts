@@ -16,19 +16,41 @@ const companyTypes: CompanyType[] = [
 
 const operationAreas: OperationArea[] = ["vendas", "aluguéis", "vendas e aluguéis"];
 
+/**
+ * Distribuição geográfica: ~80% RS (cidades-sede dos eventos + região metropolitana),
+ * ~12% SC, ~5% PR, ~3% SP — coerente com eventos realizados no RS.
+ */
 const cities: { city: string; uf: string }[] = [
-  // RS — maioria
-  { city: "Porto Alegre", uf: "RS" }, { city: "Caxias do Sul", uf: "RS" },
-  { city: "Canoas", uf: "RS" }, { city: "Pelotas", uf: "RS" },
-  { city: "Santa Maria", uf: "RS" }, { city: "Gravataí", uf: "RS" },
-  { city: "Viamão", uf: "RS" }, { city: "Novo Hamburgo", uf: "RS" },
-  { city: "São Leopoldo", uf: "RS" }, { city: "Rio Grande", uf: "RS" },
-  // PR
-  { city: "Curitiba", uf: "PR" }, { city: "Londrina", uf: "PR" },
-  // SC
-  { city: "Florianópolis", uf: "SC" }, { city: "Joinville", uf: "SC" },
-  // SP
-  { city: "São Paulo", uf: "SP" }, { city: "Campinas", uf: "SP" },
+  // RS — cidades-sede dos eventos (peso alto)
+  { city: "Porto Alegre", uf: "RS" },
+  { city: "Porto Alegre", uf: "RS" },
+  { city: "Porto Alegre", uf: "RS" },
+  { city: "Porto Alegre", uf: "RS" },
+  { city: "Santa Maria", uf: "RS" },
+  { city: "Santa Maria", uf: "RS" },
+  { city: "Pelotas", uf: "RS" },
+  { city: "Pelotas", uf: "RS" },
+  { city: "Capão da Canoa", uf: "RS" },
+  { city: "Capão da Canoa", uf: "RS" },
+  // RS — região metropolitana e interior
+  { city: "Caxias do Sul", uf: "RS" },
+  { city: "Canoas", uf: "RS" },
+  { city: "Gravataí", uf: "RS" },
+  { city: "Novo Hamburgo", uf: "RS" },
+  { city: "São Leopoldo", uf: "RS" },
+  { city: "Rio Grande", uf: "RS" },
+  { city: "Viamão", uf: "RS" },
+  { city: "Passo Fundo", uf: "RS" },
+  { city: "Lajeado", uf: "RS" },
+  { city: "Bento Gonçalves", uf: "RS" },
+  // SC (~12%)
+  { city: "Florianópolis", uf: "SC" },
+  { city: "Joinville", uf: "SC" },
+  { city: "Balneário Camboriú", uf: "SC" },
+  // PR (~5%)
+  { city: "Curitiba", uf: "PR" },
+  // SP (~3%)
+  { city: "São Paulo", uf: "SP" },
 ];
 
 const firstNames = [
