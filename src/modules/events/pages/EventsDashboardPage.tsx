@@ -10,7 +10,7 @@ import { ScopeFilter } from "../components/shared/ScopeFilter";
 import { KpiCards } from "../components/dashboard/KpiCards";
 import { ShareOfMindRadar } from "../components/dashboard/ShareOfMindRadar";
 import { BrandPainMatrix } from "../components/dashboard/BrandPainMatrix";
-import { BaselineEndlineChart } from "../components/dashboard/BaselineEndlineChart";
+
 import { LeadQualificationFunnel } from "../components/dashboard/LeadQualificationFunnel";
 import { PipelineRoiChart } from "../components/dashboard/PipelineRoiChart";
 import { SegmentationCharts } from "../components/dashboard/SegmentationCharts";
@@ -48,8 +48,6 @@ export default function EventsDashboardPage() {
           <BrandPainMatrix />
         </div>
 
-        {/* Row 2: Baseline/Endline */}
-        <BaselineEndlineChart />
 
         {/* Row 3: Funnel + Pipeline ROI */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
