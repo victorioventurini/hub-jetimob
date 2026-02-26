@@ -15,6 +15,7 @@ import { LeadQualificationFunnel } from "../components/dashboard/LeadQualificati
 
 import { SegmentationCharts } from "../components/dashboard/SegmentationCharts";
 import { PainRankingTable } from "../components/dashboard/PainRankingTable";
+import { PainRankingGeneral } from "../components/dashboard/PainRankingGeneral";
 
 import { BrandRecallLeadsOverlap } from "../components/dashboard/BrandRecallLeadsOverlap";
 
@@ -48,8 +49,11 @@ export default function EventsDashboardPage() {
           <BrandPainMatrix />
         </div>
 
-        {/* Row 2: Pain ranking */}
+        {/* Row 2: Dores relacionadas com a marca */}
         <PainRankingTable />
+
+        {/* Row 3: Ranking geral de dores */}
+        <PainRankingGeneral />
 
         {/* Row 3: Funnel */}
         <LeadQualificationFunnel />
