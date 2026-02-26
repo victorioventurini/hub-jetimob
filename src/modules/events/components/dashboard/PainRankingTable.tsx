@@ -26,7 +26,12 @@ export function PainRankingTable() {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {PAIN_RANKING_MOCK.map((pain) => (
+          {PAIN_RANKING_MOCK
+            .filter((pain) =>
+              pain.painPoint === "Negócios que caem no final por reprovação de crédito ou garantia" ||
+              pain.painPoint === "Lentidão e burocracia para assinar contratos e fazer vistorias"
+            )
+            .map((pain) => (
             <div
               key={pain.painPoint}
               className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
