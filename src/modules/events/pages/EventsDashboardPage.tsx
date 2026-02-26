@@ -12,7 +12,7 @@ import { ShareOfMindRadar } from "../components/dashboard/ShareOfMindRadar";
 import { BrandPainMatrix } from "../components/dashboard/BrandPainMatrix";
 
 import { LeadQualificationFunnel } from "../components/dashboard/LeadQualificationFunnel";
-import { PipelineRoiChart } from "../components/dashboard/PipelineRoiChart";
+
 import { SegmentationCharts } from "../components/dashboard/SegmentationCharts";
 import { PainRankingTable } from "../components/dashboard/PainRankingTable";
 import { OpportunitiesVolumeChart } from "../components/dashboard/OpportunitiesVolumeChart";
@@ -49,11 +49,8 @@ export default function EventsDashboardPage() {
         </div>
 
 
-        {/* Row 3: Funnel + Pipeline ROI */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <LeadQualificationFunnel />
-          <PipelineRoiChart />
-        </div>
+        {/* Row 3: Funnel */}
+        <LeadQualificationFunnel />
 
         {/* Segmentation donuts */}
         <SegmentationCharts />
