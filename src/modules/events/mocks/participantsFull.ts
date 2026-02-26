@@ -266,15 +266,19 @@ function generateParticipantsFull(): ParticipantFull[] {
       fitScore = 10 + Math.round(pseudoRandom(i + 3) * 39); // 10-49
     }
 
-    const oppCount = fitScore >= 70
+    // Opportunity assignment: ~7% of attendees become leads/opportunities (~58 total)
+    // This is independent of fit score — a participant can be an opportunity even with low fit
+    const oppRand = pseudoRandom(i * 41 + 13);
+    const oppCount = isParticipante && oppRand < 0.076
       ? Math.floor(pseudoRandom(i + 10) * 3) + 1
-      : (pseudoRandom(i + 20) > 0.85 ? 1 : 0);
+      : 0;
 
     // Funnel status: oportunidade > lead > participante > inscrito
+    // "oportunidade" is NOT gated by high fit — any attended participant with opportunities qualifies
     let statusInscricao: StatusInscricao;
-    if (isParticipante && fitScore >= FIT_HIGH_THRESHOLD) {
+    if (isParticipante && oppCount >= 2) {
       statusInscricao = "oportunidade";
-    } else if (isParticipante && oppCount > 0) {
+    } else if (isParticipante && oppCount === 1) {
       statusInscricao = "lead";
     } else if (isParticipante) {
       statusInscricao = "participante";
