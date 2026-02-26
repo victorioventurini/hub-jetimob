@@ -102,11 +102,5 @@ export const SHARE_OF_MIND_MOCK: ShareOfMindDimension[] = [
 // Pain point ranking
 export const PAIN_RANKING_MOCK: PainPointRanking[] = [
   { painPoint: "Garantia locatícia", percentage: 68, trend: "up", rank: 1 },
-  { painPoint: "CRM Imobiliário", percentage: 55, trend: "stable", rank: 2 },
-  { painPoint: "Crédito imobiliário", percentage: 48, trend: "up", rank: 3 },
-  { painPoint: "Seguro residencial", percentage: 42, trend: "up", rank: 4 },
-  { painPoint: "Portal imobiliário", percentage: 38, trend: "down", rank: 5 },
-  { painPoint: "Captação de imóveis", percentage: 32, trend: "stable", rank: 6 },
-  { painPoint: "Gestão de aluguéis", percentage: 28, trend: "up", rank: 7 },
-  { painPoint: "Marketing digital", percentage: 22, trend: "down", rank: 8 },
+  { painPoint: "Seguro residencial", percentage: 42, trend: "up", rank: 2 },
 ];
