@@ -19,6 +19,7 @@ export interface TransferConfig {
     teamKrs: TransferItem[];
     orgObjectives: TransferItem[];
     orgKrs: TransferItem[];
+    routingRules: TransferItem[];
   };
   /** Items to auto-clear (SET NULL) - don't need newOwnerId */
   autoClear?: {
@@ -153,6 +154,29 @@ export function useTransferDependencies() {
         if (error) throw error;
       }
 
+      // 1.8 Transfer Internal Routing Rules (replace profileId in assignee_user_ids)
+      for (const item of transfers.routingRules) {
+        // Fetch current assignee_user_ids, replace old profileId with new owner
+        const { data: rule, error: fetchError } = await client
+          .from("ticket_internal_routing_rules")
+          .select("assignee_user_ids")
+          .eq("id", item.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        const currentAssignees = (rule?.assignee_user_ids as string[]) || [];
+        const newAssignees = currentAssignees.map((id) =>
+          id === profileId ? item.newOwnerId : id
+        );
+
+        const { error: updateError } = await client
+          .from("ticket_internal_routing_rules")
+          .update({ assignee_user_ids: newAssignees, updated_at: now })
+          .eq("id", item.id);
+        if (updateError) throw updateError;
+      }
+
       // ============================================================
       // 2. OPTIONAL AUTO-CLEAR - SET NULL or remove from arrays
       // ============================================================
@@ -236,6 +260,7 @@ export function useTransferDependencies() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(buId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.internalRoutingRules(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.all(buId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.areas.all(buId) });
       toast.success("Responsabilidades transferidas e Jetimober excluído com sucesso");

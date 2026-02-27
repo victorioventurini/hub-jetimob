@@ -30,7 +30,8 @@ import {
   Building2,
   Handshake,
   ChartLine,
-  Flag
+  Flag,
+  Route,
 } from "lucide-react";
 import { DependencyItem, useUserDependencies } from "@/hooks/useUserDependencies";
 import { useAssetProfiles } from "@/modules/assets/hooks";
@@ -53,7 +54,8 @@ type MandatoryDependencyType =
   | "teamObjectives" 
   | "teamKrs" 
   | "orgObjectives" 
-  | "orgKrs";
+  | "orgKrs"
+  | "routingRules";
 
 interface TransferState {
   kpis: Record<string, string>;
@@ -63,6 +65,7 @@ interface TransferState {
   teamKrs: Record<string, string>;
   orgObjectives: Record<string, string>;
   orgKrs: Record<string, string>;
+  routingRules: Record<string, string>;
 }
 
 export function UserDependenciesDialog({
@@ -85,6 +88,7 @@ export function UserDependenciesDialog({
     teamKrs: {},
     orgObjectives: {},
     orgKrs: {},
+    routingRules: {},
   });
 
   // Bulk transfer state
@@ -125,6 +129,7 @@ export function UserDependenciesDialog({
       teamKrs: {},
       orgObjectives: {},
       orgKrs: {},
+      routingRules: {},
     };
 
     deps.mandatory.kpis.forEach((k) => {
@@ -148,6 +153,9 @@ export function UserDependenciesDialog({
     deps.mandatory.orgKrs.forEach((kr) => {
       newTransfers.orgKrs[kr.id] = bulkOwner;
     });
+    deps.mandatory.routingRules.forEach((r) => {
+      newTransfers.routingRules[r.id] = bulkOwner;
+    });
 
     setTransfers(newTransfers);
   };
@@ -161,8 +169,9 @@ export function UserDependenciesDialog({
     const teamKrsAssigned = deps.mandatory.teamKrs.every((kr) => !!transfers.teamKrs[kr.id]);
     const orgObjectivesAssigned = deps.mandatory.orgObjectives.every((o) => !!transfers.orgObjectives[o.id]);
     const orgKrsAssigned = deps.mandatory.orgKrs.every((kr) => !!transfers.orgKrs[kr.id]);
+    const routingRulesAssigned = deps.mandatory.routingRules.every((r) => !!transfers.routingRules[r.id]);
     return kpisAssigned && initiativesAssigned && ticketsAssigned && 
-           teamObjectivesAssigned && teamKrsAssigned && orgObjectivesAssigned && orgKrsAssigned;
+           teamObjectivesAssigned && teamKrsAssigned && orgObjectivesAssigned && orgKrsAssigned && routingRulesAssigned;
   }, [deps.mandatory, transfers]);
 
   const handleConfirm = async () => {
@@ -192,6 +201,9 @@ export function UserDependenciesDialog({
         orgKrs: deps.mandatory.orgKrs
           .filter((kr) => transfers.orgKrs[kr.id])
           .map((kr) => ({ id: kr.id, newOwnerId: transfers.orgKrs[kr.id] })),
+        routingRules: deps.mandatory.routingRules
+          .filter((r) => transfers.routingRules[r.id])
+          .map((r) => ({ id: r.id, newOwnerId: transfers.routingRules[r.id] })),
       },
       autoClear: {
         teamLeaderships: deps.optional.teams.map((t) => t.id),
@@ -395,6 +407,12 @@ export function UserDependenciesDialog({
                       <Ticket className="h-4 w-4 text-warning" />,
                       deps.mandatory.tickets,
                       "tickets"
+                    )}
+                    {renderDependencySection(
+                      "Roteamento Interno de Tickets",
+                      <Route className="h-4 w-4 text-orange-500" />,
+                      deps.mandatory.routingRules,
+                      "routingRules"
                     )}
                   </div>
                 </>
