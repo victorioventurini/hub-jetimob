@@ -1,5 +1,5 @@
 /**
- * PipelineRoiChart — Horizontal bars: estimated ROI by area of operation
+ * PipelineRoiChart — uses jetExperienceMetrics.ts constants
  */
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,17 +7,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { SPONSOR_MOCK } from "../../mocks/sponsor";
 import { useEventsContext } from "../../context/EventsContext";
-
-const LTV_DEFAULT = 150_000;
-const CONVERSION_RATE = 0.18;
-
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact" }).format(v);
+import { ROI_METRICS, formatCurrencyCompact, formatCurrencyBRL } from "../../mocks/jetExperienceMetrics";
 
 export function PipelineRoiChart() {
   const { filteredOpportunities: opportunities } = useEventsContext();
   const navigate = useNavigate();
-  // Count opps per area, multiply by LTV
+
   const areaMap = new Map<string, { opps: number; ltv: number }>();
   SPONSOR_MOCK.areasOfOperation.forEach((a) => {
     areaMap.set(a.subcategory, { opps: 0, ltv: a.ltvPerLead });
@@ -31,9 +26,9 @@ export function PipelineRoiChart() {
   });
 
   const data = Array.from(areaMap.entries())
-    .map(([area, { opps, ltv }]) => ({
+    .map(([area, { opps }]) => ({
       area,
-      roi: Math.round(opps * LTV_DEFAULT * CONVERSION_RATE),
+      roi: Math.round(opps * ROI_METRICS.ltvPerContrato * ROI_METRICS.conversionRate),
       opps,
     }))
     .filter((d) => d.opps > 0)
@@ -44,16 +39,16 @@ export function PipelineRoiChart() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">
           Pipeline ROI Estimado por Área
-          <HelpTooltip content="ROI estimado por área de atuação, calculado com base no número de oportunidades × LTV configurado (R$ 150 mil) × taxa de conversão esperada (18%, benchmark B2B imobiliário)." size="sm" />
+          <HelpTooltip content={`ROI estimado por área de atuação, calculado com base no número de oportunidades × LTV configurado (${formatCurrencyBRL(ROI_METRICS.ltvPerContrato)}) × taxa de conversão esperada (${Math.round(ROI_METRICS.conversionRate * 100)}%).`} size="sm" />
         </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis type="number" tickFormatter={(v) => formatCurrency(v)} tick={{ fontSize: 10 }} />
+            <XAxis type="number" tickFormatter={(v) => formatCurrencyCompact(v)} tick={{ fontSize: 10 }} />
             <YAxis type="category" dataKey="area" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={140} />
-            <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
+            <Tooltip formatter={(v: number) => formatCurrencyCompact(v)} contentStyle={{ fontSize: 12 }} />
             <Bar dataKey="roi" fill="hsl(142, 71%, 35%)" radius={[0, 4, 4, 0]} name="ROI Estimado" cursor="pointer" onClick={() => navigate("/events/participants")} />
           </BarChart>
         </ResponsiveContainer>
