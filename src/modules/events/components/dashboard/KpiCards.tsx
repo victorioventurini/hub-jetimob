@@ -16,7 +16,7 @@ import {
 
 const KPI_TOOLTIPS: Record<string, string> = {
   "Leads Capturados": "Total de leads identificados durante os eventos, com base nas interações e interesses declarados pelos participantes.",
-  "ROI Estimado": `Retorno sobre investimento projetado: ${EVENT_TOTALS.contratos} contratos × LTV ${formatCurrencyBRL(ROI_METRICS.ltvPerContrato)} = ${formatCurrencyBRL(ROI_METRICS.ltvTotal)}.`,
+  "LTV Total Estimado": `Retorno sobre investimento projetado: ${EVENT_TOTALS.contratos} contratos × LTV ${formatCurrencyBRL(ROI_METRICS.ltvPerContrato)} = ${formatCurrencyBRL(ROI_METRICS.ltvTotal)}.`,
   "Fit Score Médio": "Média do score de adequação dos leads aos critérios de qualificação do patrocinador (0–100%).",
   "Leads Qualificados": "Percentual de oportunidades com Fit Score ≥ 75, indicando alta aderência ao perfil ideal de cliente.",
   "Brand Awareness": "Percentual de participantes que lembraram da marca do patrocinador espontaneamente ou de forma estimulada após o evento.",
@@ -40,7 +40,7 @@ export function KpiCards() {
     { label: "Leads Capturados", value: String(EVENT_TOTALS.leads), icon: Target, color: "text-blue-600" },
     { label: "Fit Score Médio", value: `${avgFit}%`, icon: Brain, color: "text-amber-600" },
     { label: "Oportunidades", value: String(EVENT_TOTALS.oportunidades), icon: Award, color: "text-purple-600" },
-    { label: "ROI Estimado", value: formatCurrencyBRL(ROI_METRICS.ltvTotal), icon: DollarSign, color: "text-emerald-600" },
+    { label: "LTV Total Estimado", value: formatCurrencyBRL(ROI_METRICS.ltvTotal), icon: DollarSign, color: "text-emerald-600" },
   ];
 
   return (
