@@ -144,7 +144,7 @@ export function RoiMetricsTab() {
                 value={ltv}
                 onChange={(e) => setLtv(e.target.value.replace(/\D/g, ""))}
                 className="pl-10 text-sm font-mono"
-                placeholder="150000"
+                placeholder="147500"
               />
             </div>
             <p className="text-xs text-muted-foreground">
