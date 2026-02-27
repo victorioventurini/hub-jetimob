@@ -29,6 +29,7 @@ import { PartnerCompany } from "../../types";
 import { Separator } from "@/components/ui/separator";
 import { useLocalSearch } from "@/shared/url/useLocalSearch";
 import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
+import { ServiceNamesCell } from "./ServiceNamesCell";
 
 export function PartnerCompaniesTab() {
   const { data: rawCompanies = [], isLoading } = usePartnerCompanies();
@@ -197,8 +198,6 @@ function CompanyRow({
 }: CompanyRowProps) {
   const { data: services = [] } = usePartnerServices(company.id);
 
-  // Contar categorias únicas
-  const uniqueCategories = new Set(services.map((s) => s.category_id)).size;
 
   // Formatar documento
   const formatDocument = (doc: string | null | undefined, type: string | null | undefined) => {
@@ -253,30 +252,10 @@ function CompanyRow({
         </div>
       </TableCell>
       <TableCell>
-        {services.length > 0 ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={onConfigureServices}
-              >
-                {uniqueCategories} categoria(s)
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Clique para configurar serviços</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <Badge
-            variant="outline"
-            className="cursor-pointer text-warning border-warning/30"
-            onClick={onConfigureServices}
-          >
-            Configurar
-          </Badge>
-        )}
+        <ServiceNamesCell 
+          services={services} 
+          onConfigureServices={onConfigureServices} 
+        />
       </TableCell>
       <TableCell>
         <Badge variant={company.status === "active" ? "default" : "secondary"}>
