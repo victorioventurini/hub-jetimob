@@ -4,7 +4,7 @@
 // ============================================================
 
 import { useState, useMemo } from "react";
-import { Route, Plus, Pencil, Trash2, Users, Building2, Target } from "lucide-react";
+import { Route, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -28,6 +28,58 @@ import { InternalRoutingRuleDialog } from "./InternalRoutingRuleDialog";
 import { TicketInternalRoutingRule } from "../../types";
 import { useLocalSearch } from "@/shared/url/useLocalSearch";
 import { UrlSearchInput } from "@/shared/filters/UrlSearchInput";
+import { EntityNamesCell } from "@/components/ui/entity-names-cell";
+import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
+import { useTeams } from "@/modules/teams/hooks";
+import { useSquads } from "@/modules/teams/hooks";
+
+// ============================================================
+// HOOK: resolve IDs → display names for all rules
+// ============================================================
+
+function useResolvedNames(rules: TicketInternalRoutingRule[]) {
+  const { data: users = [] } = useBuUsersDirectory({ includeTerminated: true, pageSize: 500 });
+  const { data: teams = [] } = useTeams(true);
+  const { data: squads = [] } = useSquads();
+
+  return useMemo(() => {
+    const userMap = new Map(users.map((u) => [u.id, u.display_name]));
+    const teamMap = new Map((teams ?? []).map((t) => [t.id, t.name]));
+    const squadMap = new Map((squads ?? []).map((s) => [s.id, s.name]));
+
+    const resolve = (ids: string[], map: Map<string, string>) =>
+      ids.map((id) => map.get(id) || id.slice(0, 8) + "…");
+
+    const byRule = new Map<
+      string,
+      {
+        assigneeUserNames: string[];
+        assigneeTeamNames: string[];
+        assigneeSquadNames: string[];
+        watcherUserNames: string[];
+        watcherTeamNames: string[];
+        watcherSquadNames: string[];
+      }
+    >();
+
+    for (const rule of rules) {
+      byRule.set(rule.id, {
+        assigneeUserNames: resolve(rule.assignee_user_ids ?? [], userMap),
+        assigneeTeamNames: resolve(rule.assignee_team_ids ?? [], teamMap),
+        assigneeSquadNames: resolve(rule.assignee_squad_ids ?? [], squadMap),
+        watcherUserNames: resolve(rule.watcher_user_ids ?? [], userMap),
+        watcherTeamNames: resolve(rule.watcher_team_ids ?? [], teamMap),
+        watcherSquadNames: resolve(rule.watcher_squad_ids ?? [], squadMap),
+      });
+    }
+
+    return byRule;
+  }, [rules, users, teams, squads]);
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
 
 export function InternalRoutingSection() {
   const { data: rules = [], isLoading: loadingRules } = useInternalRoutingRules();
@@ -38,6 +90,8 @@ export function InternalRoutingSection() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<TicketInternalRoutingRule | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const resolvedNames = useResolvedNames(rules);
 
   // Filtrar categorias internas ou ambas
   const internalCategories = categories.filter(
@@ -82,62 +136,6 @@ export function InternalRoutingSection() {
       return `${rule.category.name} (Categoria)`;
     }
     return "Escopo desconhecido";
-  };
-
-  const getAssigneeBadges = (rule: TicketInternalRoutingRule) => {
-    const badges: { icon: React.ReactNode; label: string; variant: "default" | "secondary" | "outline" }[] = [];
-
-    if (rule.assignee_user_ids?.length > 0) {
-      badges.push({
-        icon: <Users className="h-3 w-3 mr-1" />,
-        label: `${rule.assignee_user_ids.length} usuário(s)`,
-        variant: "secondary",
-      });
-    }
-    if (rule.assignee_team_ids?.length > 0) {
-      badges.push({
-        icon: <Building2 className="h-3 w-3 mr-1" />,
-        label: `${rule.assignee_team_ids.length} time(s)`,
-        variant: "secondary",
-      });
-    }
-    if (rule.assignee_squad_ids?.length > 0) {
-      badges.push({
-        icon: <Target className="h-3 w-3 mr-1" />,
-        label: `${rule.assignee_squad_ids.length} squad(s)`,
-        variant: "secondary",
-      });
-    }
-
-    return badges;
-  };
-
-  const getWatcherBadges = (rule: TicketInternalRoutingRule) => {
-    const badges: { icon: React.ReactNode; label: string; variant: "default" | "secondary" | "outline" }[] = [];
-
-    if (rule.watcher_user_ids?.length > 0) {
-      badges.push({
-        icon: <Users className="h-3 w-3 mr-1" />,
-        label: `${rule.watcher_user_ids.length} usuário(s)`,
-        variant: "outline",
-      });
-    }
-    if (rule.watcher_team_ids?.length > 0) {
-      badges.push({
-        icon: <Building2 className="h-3 w-3 mr-1" />,
-        label: `${rule.watcher_team_ids.length} time(s)`,
-        variant: "outline",
-      });
-    }
-    if (rule.watcher_squad_ids?.length > 0) {
-      badges.push({
-        icon: <Target className="h-3 w-3 mr-1" />,
-        label: `${rule.watcher_squad_ids.length} squad(s)`,
-        variant: "outline",
-      });
-    }
-
-    return badges;
   };
 
   if (loadingRules || loadingCategories) {
@@ -205,8 +203,7 @@ export function InternalRoutingSection() {
               </TableHeader>
               <TableBody>
                 {filteredRules.map((rule) => {
-                  const assigneeBadges = getAssigneeBadges(rule);
-                  const watcherBadges = getWatcherBadges(rule);
+                  const names = resolvedNames.get(rule.id);
 
                   return (
                     <TableRow key={rule.id}>
@@ -221,32 +218,20 @@ export function InternalRoutingSection() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {assigneeBadges.length > 0 ? (
-                            assigneeBadges.map((badge, idx) => (
-                              <Badge key={idx} variant={badge.variant} className="text-xs">
-                                {badge.icon}
-                                {badge.label}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </div>
+                        <EntityNamesCell
+                          userNames={names?.assigneeUserNames}
+                          teamNames={names?.assigneeTeamNames}
+                          squadNames={names?.assigneeSquadNames}
+                          variant="secondary"
+                        />
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {watcherBadges.length > 0 ? (
-                            watcherBadges.map((badge, idx) => (
-                              <Badge key={idx} variant={badge.variant} className="text-xs">
-                                {badge.icon}
-                                {badge.label}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </div>
+                        <EntityNamesCell
+                          userNames={names?.watcherUserNames}
+                          teamNames={names?.watcherTeamNames}
+                          squadNames={names?.watcherSquadNames}
+                          variant="outline"
+                        />
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline">{rule.priority}</Badge>
