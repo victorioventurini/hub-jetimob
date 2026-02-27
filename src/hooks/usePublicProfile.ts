@@ -49,17 +49,15 @@ export function usePublicProfile(profileId?: string) {
 
       const profileData = data[0];
       
-      // Verify BU access: user must have active membership in current BU
-      // Note: profiles.bu_id is the "home" BU, but users can be members of multiple BUs
-      const { data: membershipCheck } = await supabase
-        .from("bu_user_memberships")
+      // Verify BU visibility via canonical view (User Directory Global v2)
+      const { data: directoryCheck } = await supabase
+        .from("v_bu_active_profiles")
         .select("id")
-        .eq("profile_id", profileData.id)
+        .eq("id", profileData.id)
         .eq("bu_id", currentBu.id)
-        .is("deleted_at", null)
         .maybeSingle();
       
-      if (!membershipCheck) return null;
+      if (!directoryCheck) return null;
 
       // Fetch team data
       let team = null;
