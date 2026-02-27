@@ -68,7 +68,7 @@ export function useCreateTicket(profileId: string | null) {
           visibility_user_ids: data.visibility_user_ids || [],
           expected_due_at: data.expected_due_at || null,
           created_by_user_id: profileId,
-          owner_user_id: profileId,
+          owner_user_id: data.internalRouting?.ownerUserId ?? profileId,
         });
 
       if (insertError) throw insertError;
@@ -159,6 +159,20 @@ export function useCreateTicket(profileId: string | null) {
         }));
 
         await supabase.from("ticket_participants").insert(participantInserts);
+      }
+
+      // Add internal routing participants (assignees + watchers from routing rules)
+      if (data.internalRouting?.participants && data.internalRouting.participants.length > 0) {
+        const routingInserts = data.internalRouting.participants.map((p) => ({
+          bu_id: buId,
+          ticket_id: ticket.id,
+          participant_type: p.type,
+          profile_id: p.type === "internal_user" ? p.id : null,
+          partner_contact_id: p.type === "partner_contact" ? p.id : null,
+          role: p.role,
+        }));
+
+        await supabase.from("ticket_participants").insert(routingInserts);
       }
 
       return ticket;

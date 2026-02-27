@@ -168,3 +168,10 @@ export {
 
 // Viewers and mentions (for ticket detail page)
 export { useTicketViewersAndMentions } from './useTicketViewersAndMentions';
+
+// Internal routing matching (for ticket creation)
+export {
+  useInternalRoutingMatch,
+  matchInternalRoutingRule,
+  type InternalRoutingMatch,
+} from './useApplyInternalRouting';
