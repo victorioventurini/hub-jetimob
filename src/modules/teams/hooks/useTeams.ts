@@ -136,19 +136,21 @@ export function useTeam(teamId: string | undefined) {
         .eq("parent_team_id", teamId)
         .is("deleted_at", null);
 
-      // Get member count
+      // Get member count (exclude terminated users)
       const { count: memberCount } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("team_id", teamId)
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .neq("employment_status", "terminated");
 
-      // Get team members
+      // Get team members (exclude terminated users)
       const { data: membersRaw } = await supabase
         .from("profiles")
         .select("id, display_name, photo_url, job_title_rel:job_titles!job_title_id(name), work_email")
         .eq("team_id", teamId)
         .is("deleted_at", null)
+        .neq("employment_status", "terminated")
         .order("display_name");
       
       const members = (membersRaw || []).map(m => ({
