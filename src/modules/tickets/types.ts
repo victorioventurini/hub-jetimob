@@ -400,6 +400,11 @@ export interface CreateTicketData {
     id: string;
     role: TicketParticipantRole;
   }[];
+  // Internal routing (auto-applied from ticket_internal_routing_rules)
+  internalRouting?: {
+    ownerUserId: string;
+    participants: { type: TicketParticipantType; id: string; role: TicketParticipantRole }[];
+  };
 }
 
 // Dados para atualizar ticket

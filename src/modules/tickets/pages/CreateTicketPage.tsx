@@ -27,6 +27,7 @@ import {
   usePartnerSubcategories, 
   useHasPartnerServices,
   usePartnersByCategory,
+  useInternalRoutingMatch,
 } from "@/modules/tickets/hooks";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
@@ -115,7 +116,11 @@ export default function CreateTicketPage() {
   const selectedCategoryId = form.watch("category_id");
   const selectedSubcategoryId = form.watch("subcategory_id");
 
-
+  // Internal routing match (reactive)
+  const internalRoutingMatch = useInternalRoutingMatch(
+    selectedType === "internal" ? selectedCategoryId : undefined,
+    selectedType === "internal" ? selectedSubcategoryId : undefined,
+  );
   // Hooks para serviços do parceiro - Nova lógica: Categoria → Empresa → Subcategoria
   // Buscar empresas que atendem a categoria selecionada
   const { data: partnersByCategoryRaw = [], isLoading: loadingPartnersByCategory } = usePartnersByCategory(
@@ -343,6 +348,25 @@ export default function CreateTicketPage() {
     try {
       setIsUploading(true);
       
+      // Build internal routing data if applicable
+      const internalRouting = data.type === "internal" && internalRoutingMatch
+        ? {
+            ownerUserId: internalRoutingMatch.ownerUserId,
+            participants: [
+              ...internalRoutingMatch.assigneeUserIds.map((id) => ({
+                type: "internal_user" as const,
+                id,
+                role: "assignee" as const,
+              })),
+              ...internalRoutingMatch.watcherUserIds.map((id) => ({
+                type: "internal_user" as const,
+                id,
+                role: "watcher" as const,
+              })),
+            ],
+          }
+        : undefined;
+
       const ticket = await createTicket.mutateAsync({
         type: data.type,
         title: data.title,
@@ -366,6 +390,8 @@ export default function CreateTicketPage() {
         })),
         // Pass attachments so mutation knows to create initial message even if text is empty
         attachments: attachments,
+        // Internal routing from matched rules
+        internalRouting,
       });
       
       // Upload attachments if any
