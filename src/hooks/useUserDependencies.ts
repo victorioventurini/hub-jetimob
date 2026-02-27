@@ -19,6 +19,7 @@ export interface UserDependencies {
     orgObjectives: DependencyItem[];
     orgKrs: DependencyItem[];
     assetRecommendations: DependencyItem[];
+    routingRules: DependencyItem[];
   };
   /** Optional dependencies that will be auto-cleared (SET NULL) */
   optional: {
@@ -205,6 +206,31 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
     },
   });
 
+  // Fetch internal routing rules where user is an assignee
+  const { data: routingRules = [], isLoading: routingRulesLoading } = useQuery({
+    queryKey: [...queryKeys.tickets.internalRoutingRules(buId ?? null), "assignee", profileId],
+    staleTime: 2 * 60 * 1000,
+    enabled: !!buId && !!profileId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ticket_internal_routing_rules")
+        .select("id, category_id, subcategory_id, assignee_user_ids, category:ticket_categories!category_id(name), subcategory:ticket_subcategories!subcategory_id(name)")
+        .eq("bu_id", buId!)
+        .is("deleted_at", null)
+        .contains("assignee_user_ids", [profileId!]);
+
+      if (error) throw error;
+      return (data || []).map((r) => {
+        const catName = (r.category as any)?.name || "Sem categoria";
+        const subName = (r.subcategory as any)?.name;
+        return {
+          id: r.id,
+          name: subName ? `${catName} → ${subName}` : `${catName} (Categoria)`,
+        };
+      });
+    },
+  });
+
   // ============================================================
   // OPTIONAL DEPENDENCIES - Will be SET NULL automatically
   // ============================================================
@@ -315,6 +341,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
     orgObjectivesLoading ||
     orgKrsLoading ||
     assetRecommendationsLoading ||
+    routingRulesLoading ||
     teamsLoading ||
     areaLeadershipsLoading ||
     areaCoLeadershipsLoading ||
@@ -329,7 +356,8 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
     teamKrs.length +
     orgObjectives.length +
     orgKrs.length +
-    assetRecommendations.length;
+    assetRecommendations.length +
+    routingRules.length;
 
   const totalOptional = 
     teams.length + 
@@ -348,6 +376,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
       orgObjectives,
       orgKrs,
       assetRecommendations,
+      routingRules,
     },
     optional: {
       teams,
