@@ -1,11 +1,8 @@
 /**
- * Mock: Opportunities — volume realista (~6-7% dos participantes)
- * Benchmarks B2B eventos Brasil:
- *   Participantes → Oportunidades: ~6.5%
- *   Oportunidades → Fit Alto (≥75): ~55%
- *   Taxa conversão pipeline → venda: ~18%
+ * Mock: Opportunities — exactly 32 total, distributed per EVENT_DISTRIBUTION
  */
 import type { Opportunity } from "../types";
+import { EVENT_DISTRIBUTION } from "./jetExperienceMetrics";
 
 const AREAS_POOL = [
   "Garantia locatícia",
@@ -41,7 +38,14 @@ const OBSERVATIONS_POOL = [
   "Avaliando soluções de antecipação de recebíveis",
 ];
 
-/** Seeded pseudo-random */
+const EVENT_DATES: Record<string, string> = {
+  "evt-sm-2026": "2026-06-11",
+  "evt-pelotas-2026": "2026-06-25",
+  "evt-capao-2026": "2026-07-09",
+  "evt-poa-2026": "2026-08-14",
+  "evt-je-2026": "2026-09-03",
+};
+
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 49297;
   return x - Math.floor(x);
@@ -60,49 +64,26 @@ function pickAreas(seed: number): string[] {
   return [first, second];
 }
 
-/**
- * Distribution across events (proportional to attendees):
- *   evt-sm-2026:      51 attendees →  3 opps
- *   evt-pelotas-2026: 45 attendees →  3 opps
- *   evt-capao-2026:   53 attendees →  4 opps
- *   evt-poa-2026:     45 attendees →  3 opps
- *   evt-je-2026:     687 attendees → 32 opps
- *   Total: ~45 opps
- */
-interface OppSeed {
-  eventId: string;
-  date: string;
-  count: number;
-}
-
-const EVENT_DISTRIBUTION: OppSeed[] = [
-  { eventId: "evt-sm-2026", date: "2026-06-11", count: 3 },
-  { eventId: "evt-pelotas-2026", date: "2026-06-25", count: 3 },
-  { eventId: "evt-capao-2026", date: "2026-07-09", count: 4 },
-  { eventId: "evt-poa-2026", date: "2026-08-14", count: 3 },
-  { eventId: "evt-je-2026", date: "2026-09-03", count: 45 },
-];
-
 function generateOpportunities(): Opportunity[] {
   const opps: Opportunity[] = [];
   let globalIdx = 0;
 
-  for (const { eventId, date, count } of EVENT_DISTRIBUTION) {
+  for (const { eventId, opps: count } of EVENT_DISTRIBUTION) {
+    const date = EVENT_DATES[eventId];
     for (let i = 0; i < count; i++) {
       const seed = globalIdx * 17 + i * 7;
       const rand = seededRandom(seed);
 
-      // Fit score distribution: ~55% high fit (≥75), rest distributed
       let fitScore: number;
       if (rand < 0.55) {
-        fitScore = 75 + Math.round(seededRandom(seed + 1) * 25); // 75-100
+        fitScore = 75 + Math.round(seededRandom(seed + 1) * 25);
       } else if (rand < 0.85) {
-        fitScore = 50 + Math.round(seededRandom(seed + 2) * 24); // 50-74
+        fitScore = 50 + Math.round(seededRandom(seed + 2) * 24);
       } else {
-        fitScore = 30 + Math.round(seededRandom(seed + 3) * 19); // 30-49
+        fitScore = 30 + Math.round(seededRandom(seed + 3) * 19);
       }
 
-      const hour = 9 + Math.floor(seededRandom(seed + 4) * 8); // 9-16h
+      const hour = 9 + Math.floor(seededRandom(seed + 4) * 8);
       const minute = Math.floor(seededRandom(seed + 5) * 60);
 
       opps.push({

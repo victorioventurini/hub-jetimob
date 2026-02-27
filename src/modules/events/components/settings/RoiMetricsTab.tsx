@@ -105,7 +105,7 @@ const BRAND_PAINS = [
 ];
 
 export function RoiMetricsTab() {
-  const [ltv, setLtv] = useState("150000");
+  const [ltv, setLtv] = useState("147500");
   const [conversionRate, setConversionRate] = useState("18");
   const [selectedCompanyTypes, setSelectedCompanyTypes] = useState<string[]>(["Imobiliária de aluguéis", "Imobiliária de vendas e aluguéis"]);
   const [selectedTitles, setSelectedTitles] = useState<string[]>(["Assessor de locações", "Gerente de locações", "Diretor geral / Proprietário / CEO"]);

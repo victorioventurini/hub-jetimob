@@ -1,26 +1,28 @@
 /**
  * KPI Cards — Top-level metrics
- * Clicking any card navigates to /events/participants
+ * Uses jetExperienceMetrics.ts as single source of truth.
  */
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, Users, Target, DollarSign, Brain, Award } from "lucide-react";
+import { TrendingUp, Users, Target, DollarSign, Brain, Award, FileCheck } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
-
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
-
-const LTV_DEFAULT = 150_000; // R$ 150k — conforme /events/settings?tab=kpis
-const CONVERSION_RATE = 0.18; // 18% — benchmark B2B mercado imobiliário Brasil
+import {
+  EVENT_TOTALS,
+  ROI_METRICS,
+  CONVERSION_RATES,
+  formatCurrencyBRL,
+} from "../../mocks/jetExperienceMetrics";
 
 const KPI_TOOLTIPS: Record<string, string> = {
   "Leads Capturados": "Total de leads identificados durante os eventos, com base nas interações e interesses declarados pelos participantes.",
-  "ROI Estimado": `Retorno sobre investimento projetado, calculado com base no LTV médio (${LTV_DEFAULT.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}) × Oportunidades (Fit alto) × taxa de conversão estimada (${(CONVERSION_RATE * 100).toFixed(0)}%).`,
+  "ROI Estimado": `Retorno sobre investimento projetado: ${EVENT_TOTALS.contratos} contratos × LTV ${formatCurrencyBRL(ROI_METRICS.ltvPerContrato)} = ${formatCurrencyBRL(ROI_METRICS.ltvTotal)}.`,
   "Fit Score Médio": "Média do score de adequação dos leads aos critérios de qualificação do patrocinador (0–100%).",
   "Leads Qualificados": "Percentual de oportunidades com Fit Score ≥ 75, indicando alta aderência ao perfil ideal de cliente.",
   "Brand Awareness": "Percentual de participantes que lembraram da marca do patrocinador espontaneamente ou de forma estimulada após o evento.",
   "Participantes": "Número total de participantes que efetivamente estiveram presentes nos eventos do período selecionado.",
+  "Oportunidades": "Total de oportunidades identificadas entre os leads qualificados.",
+  "Contratos": `Contratos fechados estimados (${EVENT_TOTALS.contratos}), com base na taxa de conversão de ${Math.round(CONVERSION_RATES.contratosRate * 100)}% das oportunidades.`,
 };
 
 export function KpiCards() {
@@ -31,21 +33,20 @@ export function KpiCards() {
   const highFit = opportunities.filter((o) => o.fitScore >= 75).length;
   const qualifiedPct = totalOpps > 0 ? Math.round((highFit / totalOpps) * 100) : 0;
 
-  const estimatedRoi = Math.round(highFit * LTV_DEFAULT * CONVERSION_RATE);
-
   const totalAttendees = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
 
   const kpis = [
-    { label: "Leads Capturados", value: String(totalOpps), icon: Target, color: "text-primary" },
-    { label: "ROI Estimado", value: formatCurrency(estimatedRoi), icon: DollarSign, color: "text-emerald-600" },
+    { label: "Leads Capturados", value: String(EVENT_TOTALS.leads), icon: Target, color: "text-primary" },
+    { label: "ROI Estimado", value: formatCurrencyBRL(ROI_METRICS.ltvTotal), icon: DollarSign, color: "text-emerald-600" },
     { label: "Fit Score Médio", value: `${avgFit}%`, icon: Brain, color: "text-amber-600" },
     { label: "Leads Qualificados", value: `${qualifiedPct}%`, icon: TrendingUp, color: "text-blue-600" },
-    { label: "Brand Awareness", value: "78%", icon: Award, color: "text-purple-600" },
+    { label: "Oportunidades", value: String(EVENT_TOTALS.oportunidades), icon: Award, color: "text-purple-600" },
     { label: "Participantes", value: String(totalAttendees), icon: Users, color: "text-muted-foreground" },
+    { label: "Contratos", value: String(EVENT_TOTALS.contratos), icon: FileCheck, color: "text-emerald-700" },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
       {kpis.map((kpi) => (
         <Link key={kpi.label} to="/events/participants" className="group">
           <Card className="border-border/50 transition-shadow group-hover:shadow-md group-hover:border-primary/20">
