@@ -109,12 +109,9 @@ export default function UsersPage() {
       q: searchQuery || undefined,
       areaId: areaFilter !== 'all' ? areaFilter : undefined,
       teamId: teamFilter !== 'all' ? teamFilter : undefined,
-      // Regra: /users lista somente usuários internos e ativos
-      status: 'active',
       excludeExternal: true,
     }),
     queryFn: async ({ queryKey }): Promise<{ profiles: ProfileWithTeam[]; total: number }> => {
-      // Ensure session is loaded before making the RPC call
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -124,32 +121,70 @@ export default function UsersPage() {
 
       if (!currentBu?.id) return { profiles: [], total: 0 };
 
-      // Extract filters from queryKey to ensure fresh values
       const filters = queryKey[3] as { q?: string; teamId?: string } | undefined;
       const qSearch = filters?.q?.trim() || null;
       const qTeamId = filters?.teamId || null;
 
-      // Use RPC - fetch all, then enforce active+internal on client
-      const { data, error } = await supabase.rpc('get_bu_users_by_membership', {
-        p_bu_id: currentBu.id,
-        p_search: qSearch,
-        p_team_id: qTeamId,
-        p_status: 'active',
-        p_limit: 1000,
-        p_offset: 0,
-      });
+      // Query canonical view v_bu_active_profiles (User Directory Global v2)
+      let query = supabase
+        .from("v_bu_active_profiles")
+        .select(`
+          id,
+          user_id,
+          display_name,
+          first_name,
+          last_name,
+          work_email,
+          photo_url,
+          team_id,
+          team_name,
+          job_title_id,
+          job_title_name,
+          employment_status,
+          onboarding_completed,
+          has_bu_membership,
+          start_date,
+          created_at,
+          user_type
+        `)
+        .eq("bu_id", currentBu.id)
+        .neq("employment_status", "terminated")
+        .eq("user_type", "internal")
+        .order("display_name")
+        .limit(1000);
 
+      if (qSearch) {
+        const searchTerm = `%${qSearch}%`;
+        query = query.or(`display_name.ilike.${searchTerm},work_email.ilike.${searchTerm}`);
+      }
+
+      if (qTeamId) {
+        query = query.eq("team_id", qTeamId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
-      // Enforce “active” + exclude externals (some datasets may return externals even under active)
-      const rows = (data || []).filter((p: { employment_status: string }) => p.employment_status === 'active');
+      const rows = data || [];
+
+      // Buscar campos complementares (manager, city, state, work_mode)
+      const profileIds = rows.map(r => r.id);
+      let extraMap: Record<string, { manager_user_id: string | null; city: string | null; state: string | null; work_mode: string | null }> = {};
+      if (profileIds.length > 0) {
+        const { data: extraData } = await supabase
+          .from("profiles")
+          .select("id, manager_user_id, city, state, work_mode")
+          .in("id", profileIds);
+        if (extraData) {
+          extraMap = Object.fromEntries(extraData.map(e => [e.id, e]));
+        }
+      }
 
       // Coletar manager_user_ids únicos para buscar em lote
       const managerIds = [
-        ...new Set(rows.map((p: { manager_user_id: string | null }) => p.manager_user_id).filter(Boolean)),
+        ...new Set(Object.values(extraMap).map(e => e.manager_user_id).filter(Boolean)),
       ] as string[];
 
-      // Buscar managers em uma query separada
       let managersMap: Record<string, { id: string; display_name: string | null; photo_url: string | null }> = {};
       if (managerIds.length > 0) {
         const { data: managersData } = await supabase
@@ -162,43 +197,26 @@ export default function UsersPage() {
         }
       }
 
-      const profiles = rows
-        .map(
-          (p: {
-            profile_id: string;
-            user_id: string | null;
-            first_name: string;
-            last_name: string;
-            display_name: string;
-            work_email: string;
-            job_title_name: string | null;
-            job_title_id: string | null;
-            photo_url: string | null;
-            city: string;
-            state: string;
-            work_mode: string;
-            employment_status: string;
-            team_id: string | null;
-            team_name: string | null;
-            manager_user_id: string | null;
-          }) => ({
-            id: p.profile_id,
-            user_id: p.user_id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            display_name: p.display_name,
-            work_email: p.work_email,
-            job_title_name: p.job_title_name || 'Sem cargo',
-            job_title_id: p.job_title_id,
-            photo_url: p.photo_url,
-            city: p.city,
-            state: p.state,
-            work_mode: p.work_mode,
-            employment_status: p.employment_status,
-            team: p.team_id && p.team_name ? { id: p.team_id, name: p.team_name } : null,
-            manager: p.manager_user_id ? managersMap[p.manager_user_id] ?? null : null,
-          }),
-        ) as ProfileWithTeam[];
+      const profiles = rows.map((p) => {
+        const extra = extraMap[p.id];
+        return {
+          id: p.id,
+          user_id: p.user_id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          display_name: p.display_name,
+          work_email: p.work_email,
+          job_title_name: p.job_title_name || 'Sem cargo',
+          job_title_id: p.job_title_id,
+          photo_url: p.photo_url,
+          city: extra?.city ?? null,
+          state: extra?.state ?? null,
+          work_mode: extra?.work_mode ?? null,
+          employment_status: p.employment_status,
+          team: p.team_id && p.team_name ? { id: p.team_id, name: p.team_name } : null,
+          manager: extra?.manager_user_id ? managersMap[extra.manager_user_id] ?? null : null,
+        };
+      }) as ProfileWithTeam[];
 
       return { profiles, total: profiles.length };
     },
