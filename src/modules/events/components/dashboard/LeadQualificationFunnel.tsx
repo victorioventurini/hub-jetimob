@@ -8,13 +8,13 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
 import { PARTICIPANTS_FULL_MOCK } from "../../mocks/participantsFull";
 import { JOURNEYS_MOCK } from "../../mocks/events";
-import { EVENT_TOTALS } from "../../mocks/jetExperienceMetrics";
+// EVENT_TOTALS not needed after removing Contratos stage
 
 export function LeadQualificationFunnel() {
   const { filteredEvents, filters } = useEventsContext();
   const navigate = useNavigate();
 
-  const { totalRegistrations, totalAttendees, totalLeads, totalOpps, totalContratos } = useMemo(() => {
+  const { totalRegistrations, totalAttendees, totalLeads, totalOpps } = useMemo(() => {
     const regs = filteredEvents.reduce((s, e) => s + e.totalRegistrations, 0);
     const atts = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
 
@@ -32,9 +32,8 @@ export function LeadQualificationFunnel() {
 
     const leads = data.filter((p) => p.statusInscricao === "lead" || p.statusInscricao === "oportunidade").length;
     const opps = data.filter((p) => p.statusInscricao === "oportunidade").length;
-    const contratos = EVENT_TOTALS.contratos;
 
-    return { totalRegistrations: regs, totalAttendees: atts, totalLeads: leads, totalOpps: opps, totalContratos: contratos };
+    return { totalRegistrations: regs, totalAttendees: atts, totalLeads: leads, totalOpps: opps };
   }, [filteredEvents, filters]);
 
   const stages = [
@@ -42,7 +41,6 @@ export function LeadQualificationFunnel() {
     { label: "Participantes", value: totalAttendees, color: "bg-indigo-100 text-indigo-800" },
     { label: "Leads", value: totalLeads, color: "bg-violet-100 text-violet-800" },
     { label: "Oportunidades", value: totalOpps, color: "bg-amber-100 text-amber-800" },
-    { label: "Contratos", value: totalContratos, color: "bg-emerald-100 text-emerald-800" },
   ];
 
   return (
