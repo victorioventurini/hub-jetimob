@@ -1,85 +1,98 @@
 
-# Correção de Aniversários + Destaque para Aniversariantes do Dia
 
-## Problema 1: Bug na comparacao de datas
+# Aplicar Regras de Roteamento Interno na Criacao de Tickets
 
-O hook `useBirthdays()` em `src/hooks/useHomeData.ts` (linha 142) compara a data do aniversario (meia-noite) com `new Date()` (que inclui hora atual). Quando o aniversario e **hoje**, `birthdayThisYear` (00:00:00) e menor que `today` (ex: 14:30:00), fazendo o codigo pular para o proximo ano e calcular `daysUntil = ~365`, excluindo o aniversariante da lista.
+## Problema
 
-**Correcao**: normalizar `today` para meia-noite antes da comparacao.
+Ao criar um ticket interno (ex: categoria "Inventario"), o sistema ignora as regras de roteamento interno configuradas em `/tickets/settings`. O `owner_user_id` e sempre definido como o criador, e nenhum observador e adicionado automaticamente.
 
-## Problema 2: Destaque para aniversariantes do dia
+## Pre-Checklist Completado
 
-Criar um componente de destaque (banner/card) que apareca no topo do dashboard quando houver aniversariantes no dia, com visual celebrativo.
+- TCR v3.8.0: Revisado (Identity Convention, BU-scoped client, hooks canonicos)
+- IDENTITY_CONVENTION v2.2.0: `owner_user_id` e `created_by_user_id` referenciam `profiles.id`; mutations usam `realProfileId`
+- PERMISSIONS_AND_RBAC_MODEL v1.5.0: Sem impacto em permissoes (roteamento e logica de dominio, nao de acesso)
+- DATA_MODEL_REGISTRY v1.2.2: Tabela `ticket_internal_routing_rules` confirmada com campos `assignee_user_ids`, `watcher_user_ids`, `category_id`, `subcategory_id`, `priority`
+- Hook `useInternalRoutingRules` ja existe e faz fetch com cache de 5min
 
----
+## Causa Raiz
 
-## Plano de implementacao
+Em `useTicketMutations.ts` (linha 71): `owner_user_id: profileId` (sempre o criador). Nenhuma consulta a `ticket_internal_routing_rules` e feita no fluxo de criacao.
 
-### 1. Corrigir bug de data em `useHomeData.ts`
+## Solucao
 
-Normalizar a variavel `today` para meia-noite (zerando horas, minutos, segundos) no hook `useBirthdays()`:
+### 1. Novo arquivo: `src/modules/tickets/hooks/useApplyInternalRouting.ts`
+
+Funcao pura `matchInternalRoutingRule(rules, categoryId, subcategoryId)`:
+- Prioridade 1: match exato por `subcategory_id`
+- Prioridade 2: match por `category_id` com `subcategory_id IS NULL`
+- Desempate: campo `priority` (ASC, ja vem ordenado do hook)
+- Retorna `{ ownerUserId, assigneeUserIds, watcherUserIds } | null`
+
+Hook `useInternalRoutingMatch(categoryId, subcategoryId)`:
+- Consome `useInternalRoutingRules()` (dados ja cacheados)
+- Retorna o resultado do match reativo conforme categoria/subcategoria mudam
+
+### 2. Modificar: `src/modules/tickets/hooks/useTicketMutations.ts`
+
+Adicionar campo opcional `internalRouting` ao `CreateTicketData` (ou parametro separado no `mutationFn`):
 
 ```typescript
-const today = new Date();
-today.setHours(0, 0, 0, 0); // Normalizar para meia-noite
+// No insert do ticket:
+owner_user_id: data.internalRouting?.ownerUserId ?? profileId,
+
+// Apos inserir o requester, inserir assignees e watchers:
+if (data.internalRouting?.participants) {
+  await supabase.from("ticket_participants").insert(data.internalRouting.participants);
+}
 ```
 
-Mesma correcao sera aplicada em `useWorkAnniversaries()` para consistencia.
+Regras de identidade respeitadas:
+- `created_by_user_id` continua sendo `realProfileId` (quem de fato criou)
+- `owner_user_id` passa a ser o primeiro assignee da regra (se existir)
+- Todos os IDs sao `profiles.id` (conforme IDENTITY_CONVENTION)
 
-### 2. Expor aniversariantes do dia no hook
+### 3. Modificar: `src/modules/tickets/pages/CreateTicketPage.tsx`
 
-Adicionar ao retorno do `useBirthdays()` uma lista derivada `todayBirthdays` (filtro `daysUntil === 0`) para facilitar o consumo pelo componente de destaque.
+- Importar `useInternalRoutingMatch`
+- Chamar com `selectedCategoryId` e `selectedSubcategoryId` (reativos via `form.watch`)
+- No `onSubmit`, quando `type === "internal"` e houver match, montar o objeto `internalRouting` com:
+  - `ownerUserId`: primeiro `assignee_user_ids[0]`
+  - `participants`: array de assignees (role `assignee`) + watchers (role `watcher`)
+- Manter criador como `requester` (comportamento atual inalterado)
 
-Alternativa mais limpa: o componente de destaque consumira o mesmo hook e filtrara localmente.
+### 4. Atualizar barrel: `src/modules/tickets/hooks/index.ts`
 
-### 3. Criar componente `BirthdayTodayBanner`
+Exportar `useInternalRoutingMatch` e `matchInternalRoutingRule`.
 
-Novo arquivo: `src/components/home/BirthdayTodayBanner.tsx`
+### 5. Atualizar tipo: `src/modules/tickets/types.ts`
 
-- Consome `useBirthdays()` e filtra `daysUntil === 0`
-- Se nao houver aniversariantes hoje, retorna `null` (nao renderiza nada)
-- Visual: Card com fundo `bg-status-pink-muted`, borda `border-status-pink/30`, icone de bolo animado (confetti), avatares dos aniversariantes, e mensagem "Feliz aniversario!"
-- Usa componentes canonicos: `Card`, `Avatar`, `UserLink`, `Badge`
-- Layout responsivo: avatares em linha com nome e cargo
+Adicionar campo opcional `internalRouting` em `CreateTicketData`:
 
-Design visual:
+```typescript
+internalRouting?: {
+  ownerUserId: string;
+  participants: { type: TicketParticipantType; id: string; role: TicketParticipantRole }[];
+};
+```
+
+## Fluxo Resultante
 
 ```text
-+----------------------------------------------------------+
-|  [Cake icon]  Hoje e dia de festa!                       |
-|                                                          |
-|  [Avatar] Guilherme Souza - Diretor de Produto    [link] |
-|  [Avatar] Maria Silva - Analista de CS            [link] |
-|                                                          |
-|  Deseje parabens!                                        |
-+----------------------------------------------------------+
+Usuario cria ticket interno com categoria "Inventario"
+  -> useInternalRoutingMatch("cat-inventario", null)
+  -> Match: regra com assignee_user_ids = [luiza.piva profile_id]
+                       watcher_user_ids = [natalia.dapieve profile_id]
+  -> owner_user_id = luiza.piva profile_id
+  -> Participantes: criador (requester) + luiza (assignee) + natalia (watcher)
 ```
 
-### 4. Integrar no dashboard (`Index.tsx`)
+## Arquivos Impactados
 
-Inserir `<BirthdayTodayBanner />` logo apos o `<DashboardHero />` e antes do `<CultureCard />`, para que seja a primeira coisa visivel quando houver aniversariantes. So renderiza se houver aniversariantes hoje.
+| Arquivo | Acao |
+|---------|------|
+| `src/modules/tickets/hooks/useApplyInternalRouting.ts` | Criar |
+| `src/modules/tickets/hooks/useTicketMutations.ts` | Editar (aceitar routing no insert) |
+| `src/modules/tickets/pages/CreateTicketPage.tsx` | Editar (integrar hook de matching) |
+| `src/modules/tickets/hooks/index.ts` | Editar (exportar novos hooks) |
+| `src/modules/tickets/types.ts` | Editar (campo internalRouting em CreateTicketData) |
 
-### 5. Destaque no card existente `BirthdaysBlock`
-
-No card "Proximos Aniversarios", dar destaque visual extra aos itens com `daysUntil === 0`:
-- Fundo `bg-status-pink-muted/50` no item
-- Badge "Hoje!" ao lado do nome
-- Avatar com borda mais forte `border-status-pink`
-
----
-
-## Arquivos alterados
-
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/hooks/useHomeData.ts` | Corrigir bug de timezone em `useBirthdays()` e `useWorkAnniversaries()` |
-| `src/components/home/BirthdayTodayBanner.tsx` | **Novo** - Banner de destaque para aniversariantes do dia |
-| `src/components/home/BirthdaysBlock.tsx` | Destaque visual para items com `daysUntil === 0` |
-| `src/pages/Index.tsx` | Integrar `BirthdayTodayBanner` apos o hero |
-
-## Detalhes tecnicos
-
-- O bug ocorre porque `new Date()` retorna a data com hora atual. Ao comparar com `new Date(year, month, day)` (que e meia-noite), aniversarios de "hoje" sao interpretados como "ja passou" apos meia-noite
-- A correcao usa `setHours(0, 0, 0, 0)` que e a forma padrao de normalizar datas para comparacao de dia
-- O banner consome o mesmo hook `useBirthdays()` que ja tem cache de 10 min, sem queries adicionais
-- Nenhuma alteracao de banco de dados necessaria
