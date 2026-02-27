@@ -4,7 +4,7 @@
  */
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, Users, Target, DollarSign, Brain, Award, FileCheck } from "lucide-react";
+import { Users, Target, DollarSign, Brain, Award } from "lucide-react";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useEventsContext } from "../../context/EventsContext";
 import {
@@ -36,17 +36,15 @@ export function KpiCards() {
   const totalAttendees = filteredEvents.reduce((s, e) => s + e.totalAttendees, 0);
 
   const kpis = [
-    { label: "Leads Capturados", value: String(EVENT_TOTALS.leads), icon: Target, color: "text-primary" },
-    { label: "ROI Estimado", value: formatCurrencyBRL(ROI_METRICS.ltvTotal), icon: DollarSign, color: "text-emerald-600" },
+    { label: "Participantes", value: String(totalAttendees), icon: Users, color: "text-primary" },
+    { label: "Leads Capturados", value: String(EVENT_TOTALS.leads), icon: Target, color: "text-blue-600" },
     { label: "Fit Score Médio", value: `${avgFit}%`, icon: Brain, color: "text-amber-600" },
-    { label: "Leads Qualificados", value: `${qualifiedPct}%`, icon: TrendingUp, color: "text-blue-600" },
     { label: "Oportunidades", value: String(EVENT_TOTALS.oportunidades), icon: Award, color: "text-purple-600" },
-    { label: "Participantes", value: String(totalAttendees), icon: Users, color: "text-muted-foreground" },
-    { label: "Contratos", value: String(EVENT_TOTALS.contratos), icon: FileCheck, color: "text-emerald-700" },
+    { label: "ROI Estimado", value: formatCurrencyBRL(ROI_METRICS.ltvTotal), icon: DollarSign, color: "text-emerald-600" },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
       {kpis.map((kpi) => (
         <Link key={kpi.label} to="/events/participants" className="group">
           <Card className="border-border/50 transition-shadow group-hover:shadow-md group-hover:border-primary/20">
