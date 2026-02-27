@@ -88,6 +88,7 @@ export function useOrganogramData() {
         .select("id, display_name, photo_url, work_email, team_id")
         .eq("bu_id", buId)
         .is("deleted_at", null)
+        .neq("employment_status", "terminated")
         .not("team_id", "is", null)
         .order("display_name");
 
