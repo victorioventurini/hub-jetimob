@@ -1,128 +1,74 @@
 
-
-# Corrigir listagem de usuarios no modulo /users
+# Corrigir persistencia de valores de KPI via Collaborator Check-in
 
 ## Problema
 
-A pagina `/users` (`src/pages/Users.tsx`) usa a RPC `get_bu_users_by_membership` para listar usuarios (linha 133). Isso viola o padrao **User Directory Global v2** (TCR v2.13.0+) porque:
+Natalia preencheu valores de KPI no wizard collaborator-checkin, mas os dados nao foram salvos. A tabela `kpi_values` tem **zero registros** em toda a base.
 
-1. A RPC filtra por membership, excluindo usuarios que nunca fizeram login (sem `bu_user_memberships`)
-2. Na linha 145, ha um filtro client-side `employment_status === 'active'` que exclui usuarios com status `vacation`
+## Diagnostico (confirmado via banco)
 
-A usuaria andressa.goulart@jetimob.com pertence ao time de marketing (aparece no organograma), mas nao aparece em `/users` porque provavelmente nao tem membership ativa.
+### Causa raiz: Trigger incompativel
 
-## Fonte de verdade consultada
+O trigger `trg_enforce_bu_scope_kpi_values` executa `enforce_bu_scope()`, que acessa `NEW.bu_id`. Porem, a tabela `kpi_values` **nao possui coluna `bu_id`** — o escopo de BU e garantido via `kpi_id -> kpi_metrics.bu_id`. Toda tentativa de INSERT falha com erro do PostgreSQL.
 
-- **TCR v2.13.0+**: "User Directory Global v2 consolidado: View canonica `v_bu_active_profiles` como fonte unica. Hooks: `useBuUsersDirectory`"
-- **QA_USER_DIRECTORY_GLOBAL_v2.md**: View nunca depende de `bu_user_memberships` para incluir profiles
-- **Padrao canonico**: `useBuUsersDirectory` ja implementa a query correta
+### Causa secundaria: Erro silencioso no wizard
+
+O `CollaboratorCheckinPage.tsx` usa uma mutacao fail-safe (linhas 352-365) com `try/catch` que apenas loga `console.warn`. O usuario nao recebe feedback de que a gravacao falhou.
+
+### Causa terciaria: Cache nao invalida modulo /kpis
+
+O `onSuccess` da mutacao (linhas 198-203) nao invalida as query keys usadas pelo modulo `/kpis`:
+- `kpisKeys.valuesPrefix()` — historico de valores
+- `kpisKeys.all(null)` — listagem geral
+- `kpisKeys.kpiWithHistory(kpiId)` — grafico de evolucao
 
 ## Solucao
 
-Substituir a chamada RPC `get_bu_users_by_membership` por query direta na view `v_bu_active_profiles`, e remover o filtro client-side redundante.
+### 1. Migracao SQL: Remover trigger incompativel
 
-## Alteracoes
-
-### Arquivo: `src/pages/Users.tsx` (linhas 107-206)
-
-**1. Substituir a queryFn (linhas 132-145)**
-
-Trocar a chamada RPC por query na view canonica:
-
-```typescript
-let query = supabase
-  .from("v_bu_active_profiles")
-  .select(`
-    id,
-    user_id,
-    display_name,
-    first_name,
-    last_name,
-    work_email,
-    photo_url,
-    team_id,
-    team_name,
-    job_title_id,
-    job_title_name,
-    employment_status,
-    onboarding_completed,
-    has_bu_membership,
-    start_date,
-    created_at,
-    user_type
-  `)
-  .eq("bu_id", currentBu.id)
-  .neq("employment_status", "terminated")
-  .eq("user_type", "internal")
-  .order("display_name")
-  .limit(1000);
-
-// Filtro de busca
-if (qSearch) {
-  const searchTerm = `%${qSearch}%`;
-  query = query.or(`display_name.ilike.${searchTerm},work_email.ilike.${searchTerm}`);
-}
-
-// Filtro de time
-if (qTeamId) {
-  query = query.eq("team_id", qTeamId);
-}
-
-const { data, error } = await query;
-if (error) throw error;
-
-const rows = data || [];
+```sql
+DROP TRIGGER IF EXISTS trg_enforce_bu_scope_kpi_values ON public.kpi_values;
 ```
 
-**2. Remover filtro client-side (linha 145)**
+A seguranca de BU continua garantida por:
+- RLS policies em `kpi_values` que fazem JOIN com `kpi_metrics` para verificar `bu_id`
+- O trigger `trg_enforce_bu_scope` em `kpi_metrics` (que tem `bu_id`)
 
-A linha `const rows = (data || []).filter(...)` com `employment_status === 'active'` sera removida. A view ja exclui terminated e o filtro na query e suficiente.
+### 2. Codigo: Adicionar invalidacao de cache para modulo /kpis
 
-**3. Adaptar mapeamento de campos (linhas 165-201)**
+**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
 
-Os campos da view usam `id` em vez de `profile_id`. O mapeamento sera ajustado:
+No `onSuccess` da mutacao `addKpiValueSilent` (linhas 198-203), adicionar:
 
 ```typescript
-const profiles = rows.map((p) => ({
-  id: p.id,           // era p.profile_id
-  user_id: p.user_id,
-  first_name: p.first_name,
-  last_name: p.last_name,
-  display_name: p.display_name,
-  work_email: p.work_email,
-  job_title_name: p.job_title_name || 'Sem cargo',
-  job_title_id: p.job_title_id,
-  photo_url: p.photo_url,
-  city: null,          // nao disponivel na view
-  state: null,         // nao disponivel na view
-  work_mode: null,     // nao disponivel na view
-  employment_status: p.employment_status,
-  team: p.team_id && p.team_name ? { id: p.team_id, name: p.team_name } : null,
-  manager: null,       // busca separada abaixo
-})) as ProfileWithTeam[];
+onSuccess: (_result, variables) => {
+  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+  // Novas invalidacoes para modulo /kpis
+  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.kpiWithHistory(variables.kpi_id), refetchType: 'active' });
+  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+},
 ```
 
-**4. Busca de managers e campos complementares**
+### 3. Codigo: Adicionar feedback de erro ao usuario
 
-Apos obter os IDs da view, fazer query complementar em `profiles` para buscar `manager_user_id`, `city`, `state`, `work_mode`:
+**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
+
+No `catch` (linhas 362-365), adicionar toast de aviso:
 
 ```typescript
-const profileIds = rows.map(r => r.id);
-if (profileIds.length > 0) {
-  const { data: extraData } = await supabase
-    .from("profiles")
-    .select("id, manager_user_id, city, state, work_mode")
-    .in("id", profileIds);
-  // Merge extra fields into profiles
+} catch (error) {
+  console.warn('[CollaboratorCheckin] KPI save failed (continuing):', error);
+  toast.warning('Nao foi possivel salvar o valor do KPI. Tente novamente pelo modulo de KPIs.');
 }
 ```
-
-Depois buscar managers como ja e feito hoje.
 
 ## Impacto
 
-- Usuarios importados sem login passarao a aparecer na listagem
-- Usuarios com status `vacation` passarao a aparecer (antes filtrados pelo client-side)
-- Mantida exclusao de `terminated` e `external`
-- Alinhamento completo com o padrao canonico do TCR
-
+- Desbloqueia toda a persistencia de valores de KPI no sistema (0 registros atualmente)
+- Dados preenchidos no wizard passarao a aparecer no modulo `/kpis`
+- Usuario recebe feedback quando gravacao falha (sem bloquear wizard)
+- Nota: o Comment Gate (notas obrigatorias para RAG amarelo/vermelho) continuara ativo — o wizard ja tem campo de notas
