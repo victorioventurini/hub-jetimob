@@ -54,3 +54,6 @@ verify_jwt = false
 
 [functions.team-checkin-summary]
 verify_jwt = false
+
+[functions.mbr-summary]
+verify_jwt = false
