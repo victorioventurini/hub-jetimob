@@ -1,112 +1,80 @@
 
-# Corrigir navegacao "voltar" do navegador nos wizards
 
-## Diagnostico
+# Corrigir bug residual de valor zero e adicionar testes de KPIs
 
-### TCR e docs consultados
-- TCR v3.8.0 (confirmado React Router DOM v7, wizards fullpage)
-- `docs/guides/WIZARD_DEVELOPMENT_GUIDE.md` (arquitetura de wizards)
-- Memory: `architecture/wizard-url-step-sync` (padrao de sync bidirecional com URL)
+## Problema
 
-### Causa raiz
+KPIs com valor `0` (ex: Turnover da Natalia) nao sao exibidos corretamente no contexto do agente Vic, pois o operador `||` em `KpiCard.tsx` trata `0` como falsy.
 
-O hook `useGenericWizardDraft` (linha 290-303) usa `setSearchParams({ replace: true })` do React Router v7 para sincronizar o step atual na URL. Em React Router v7, `setSearchParams` chama `navigate()` internamente, que usa `startTransition`.
+## 1. Correcao do bug (KpiCard.tsx)
 
-O problema ocorre porque:
+**Arquivo:** `src/modules/kpis/components/KpiCard.tsx` (linhas 241-242)
 
-1. **`setSearchParams` com `replace: true` no RR v7 pode criar entradas de historico** em vez de substituir, especialmente durante transicoes concorrentes ou quando chamado em sequencia rapida
-2. **Nenhum tratamento de browser back existe** no `FullPageWizardShell` — so ha `beforeunload` (para fechar aba) e botao visual de voltar
-3. Quando o usuario clica "voltar" no navegador, o React Router processa o `popstate`, mas se houver uma chamada pendente de `setSearchParams` (ex: do mount ou de uma transicao de step), ela pode sobrescrever a navegacao de volta, redirecionando ao wizard
-
-### Evidencias no codigo
-- `useGenericWizardDraft.ts:290-302`: `setStep` chama `setSearchParams` com `replace: true`
-- `useGenericWizardDraft.ts:337,403`: `clearDraft`/`discardDraft` tambem chamam `setSearchParams`
-- `FullPageWizardShell.tsx:126-137`: Apenas `beforeunload`, sem handler de `popstate` ou `useBlocker`
-- Todos os 5 wizard pages (Collaborator, Leader, Team, Managers, CLevel) sao afetados
-
-## Solucao
-
-### 1. Substituir `setSearchParams` por `window.history.replaceState` no sync de step
-
-**Arquivo:** `src/modules/okrs/hooks/useGenericWizardDraft.ts`
-
-Na funcao `setStep` (linhas 290-303), substituir `setSearchParams` por manipulacao direta do `window.history.replaceState`. Isso bypassa o sistema de transicoes do React Router, garantindo que NENHUMA entrada de historico e criada:
+Substituir `||` por `??`:
 
 ```typescript
-const setStep = useCallback((step: TStep) => {
-  setDraft(prev => ({ ...prev, currentStep: step }));
-  setIsDirty(true);
-  // Sync step to URL via replaceState (bypassa React Router transitions)
-  const url = new URL(window.location.href);
-  if (step === defaultStep) {
-    url.searchParams.delete('step');
-  } else {
-    url.searchParams.set('step', step);
-  }
-  window.history.replaceState(window.history.state, '', url.toString());
-}, [defaultStep]);
+// DE:
+currentValue: kpi.current_value || undefined,
+targetValue: kpi.target_value || undefined,
+// PARA:
+currentValue: kpi.current_value ?? undefined,
+targetValue: kpi.target_value ?? undefined,
 ```
 
-Nas funcoes `clearDraft` (linha 403) e `discardDraft` (linha 337), substituir o `setSearchParams` pelo mesmo padrao:
+Isso preserva `0` como valor valido enquanto converte apenas `null` para `undefined`.
 
-```typescript
-// Substituir:
-// setSearchParams(prev => { ... }, { replace: true });
-// Por:
-const url = new URL(window.location.href);
-url.searchParams.delete('step');
-window.history.replaceState(window.history.state, '', url.toString());
-```
+## 2. Testes automatizados
 
-### 2. Adicionar tratamento de browser back no FullPageWizardShell
+### 2.1 Teste unitario: `calculateRagStatus`
 
-**Arquivo:** `src/modules/okrs/components/wizards/shared/FullPageWizardShell.tsx`
+**Arquivo novo:** `src/modules/kpis/__tests__/calculateRagStatus.test.ts`
 
-Adicionar listener de `popstate` para interceptar o botao voltar do navegador e tratar como fechamento do wizard:
+Casos:
+- Retorna `'no_data'` quando `currentValue` e `null`
+- Retorna `'no_data'` quando `targetValue` e `null`
+- Retorna `'on_track'` com 90%+ da meta (direction up)
+- Retorna `'at_risk'` com 70-90% da meta
+- Retorna `'off_track'` abaixo de 70%
+- Direction `'down'` inverte a logica (menor e melhor)
+- Valor `0` com `targetValue > 0` retorna `'off_track'` (nao `no_data`)
+- `targetValue = 0` com direction `'up'` — divisao por zero tratada
 
-```typescript
-// Handle browser back button
-useEffect(() => {
-  // Push a sentinel state so we can detect back
-  const hasSentinel = window.history.state?.__wizardSentinel;
-  if (!hasSentinel) {
-    window.history.pushState(
-      { ...window.history.state, __wizardSentinel: true },
-      ''
-    );
-  }
+### 2.2 Teste unitario: mapeamento de valores (useKpiData)
 
-  const handlePopState = (e: PopStateEvent) => {
-    // User pressed browser back
-    if (isDirty) {
-      // Re-push to stay on page, show exit dialog
-      window.history.pushState(
-        { ...window.history.state, __wizardSentinel: true },
-        ''
-      );
-      setShowExitDialog(true);
-    } else {
-      // Not dirty, just navigate back
-      onClose();
-      navigate(backUrl, { replace: true });
-    }
-  };
+**Arquivo novo:** `src/modules/kpis/hooks/__tests__/kpiValueMapping.test.ts`
 
-  window.addEventListener('popstate', handlePopState);
-  return () => window.removeEventListener('popstate', handlePopState);
-}, [isDirty, onClose, navigate, backUrl]);
-```
+Testa a logica pura (sem React) de mapeamento de valores:
+- `current_value` e `0` quando primeiro valor e `0` (nao null)
+- `trend` e `'stable'` quando `previousValue` e null
+- Variacao calculada corretamente com valores positivos
+- `previousValue = 0` nao causa divisao por zero
+- RAG status com `current_value = 0` e `target_value > 0` retorna `off_track`
 
-### 3. Remover dependencia de `setSearchParams` no hook
+### 2.3 Teste de componente: KpiCard com valor zero
 
-**Arquivo:** `src/modules/okrs/hooks/useGenericWizardDraft.ts`
+**Arquivo novo:** `src/modules/kpis/components/__tests__/KpiCard.test.tsx`
 
-Remover o import de `useSearchParams` e a variavel `setSearchParams` do hook, ja que nao sera mais necessario. Manter apenas a leitura de `searchParams` para o mount sync (linha 185-190), usando `new URLSearchParams(window.location.search)` em vez de `useSearchParams`.
+- Renderiza "0" corretamente quando `current_value` e `0` (nao "---")
+- `formatValue(0)` retorna "0" para unidades genericas
+- `formatValue(0)` retorna "0,0%" para unidade `%`
+- Contexto Vic recebe `currentValue: 0` (nao `undefined`) apos fix com `??`
 
-## Impacto
+### 2.4 Teste de integracao: wizard save + invalidation
 
-- Botao voltar do navegador funcionara corretamente em TODOS os 5 wizards
-- Se houver alteracoes nao salvas (isDirty), usuario vera o dialogo de confirmacao
-- Se nao houver alteracoes, voltara direto para a pagina anterior
-- Step sync na URL continua funcionando (deep-linking preservado)
-- Sem impacto em outros componentes que usam `useSearchParams` normalmente
+**Arquivo novo:** `src/modules/okrs/pages/__tests__/CollaboratorCheckinKpiSave.test.ts`
+
+- Mutacao `addKpiValueSilent` chama insert com campos corretos
+- `onSuccess` invalida `queryKeys.kpis.valuesPrefix()`, `all(null)`, `listPrefix()`, e `kpiWithHistory(kpiId)`
+- Falha exibe toast warning (nao bloqueia wizard)
+- Valor `0` e persistido corretamente
+
+## Resumo de arquivos
+
+| Arquivo | Acao |
+|---------|------|
+| `src/modules/kpis/components/KpiCard.tsx` | Fix: `\|\|` para `??` (2 linhas) |
+| `src/modules/kpis/__tests__/calculateRagStatus.test.ts` | Novo |
+| `src/modules/kpis/hooks/__tests__/kpiValueMapping.test.ts` | Novo |
+| `src/modules/kpis/components/__tests__/KpiCard.test.tsx` | Novo |
+| `src/modules/okrs/pages/__tests__/CollaboratorCheckinKpiSave.test.ts` | Novo |
+
