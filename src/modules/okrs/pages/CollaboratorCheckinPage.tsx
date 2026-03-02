@@ -200,6 +200,11 @@ export default function CollaboratorCheckinPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      // Invalidar queries do módulo /kpis para refletir valores salvos
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.kpiWithHistory(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
     },
     // NO onError toast - completely silent
   });
@@ -362,6 +367,7 @@ export default function CollaboratorCheckinPage() {
               } catch (error) {
                 // Erro logado, mas wizard continua (fail-safe)
                 console.warn('[CollaboratorCheckin] KPI save failed (continuing):', error);
+                toast.warning('Não foi possível salvar o valor do KPI. Tente novamente pelo módulo de KPIs.');
               }
               
               const newKpiResults = [...draft.data.kpiResults];

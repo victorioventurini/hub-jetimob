@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_enforce_bu_scope_kpi_values ON public.kpi_values;
