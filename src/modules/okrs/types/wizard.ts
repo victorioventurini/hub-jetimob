@@ -23,7 +23,8 @@ export type WizardPersona =
   | 'managers-checkin' 
   | 'clevel-checkin'
   | 'team-okr-creation'
-  | 'team-kr-creation';
+  | 'team-kr-creation'
+  | 'mbr';
 
 // ============================================================
 // STEP CONFIG
@@ -158,7 +159,65 @@ export interface LeaderPrepWizardState {
 // TEAM CHECKIN WIZARD
 // ============================================================
 
-export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions';
+export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'org-okrs' | 'closing';
+
+// ============================================================
+// MBR (MONTHLY BUSINESS REVIEW) WIZARD
+// ============================================================
+
+export type MbrStep = 'panorama' | 'kpi-gate' | 'org-okrs' | 'decisions' | 'closing';
+export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'org-okrs' | 'decisions' | 'closing';
+
+/** KPI snapshot imutável — congelado ao iniciar o MBR */
+export interface MbrKpiSnapshot {
+  kpiId: string;
+  name: string;
+  currentValue: number | null;
+  previousValue: number | null;
+  target: number | null;
+  ragStatus: string;
+  variationVsLastMonth: number | null;
+  variationVsTarget: number | null;
+  requiresStrategicDecision: boolean;
+  impactAssessment?: string;
+}
+
+/** OKR organizacional snapshot */
+export interface MbrOrgOkrSnapshot {
+  objectiveId: string;
+  title: string;
+  progress: number;
+  status: string;
+  trend: 'improving' | 'stable' | 'declining';
+  remainsStrategicPriority: boolean;
+}
+
+/** Checklist de governança do MBR */
+export interface MbrGovernanceChecklist {
+  strategicFocusClear: boolean;
+  nextStepsHaveOwners: boolean;
+  nonPrioritiesClear: boolean;
+  communicateInAllHands: boolean;
+}
+
+/** Feedback anônimo sobre melhoria do rito */
+export interface RitualImprovementFeedback {
+  id: string;
+  text: string;
+  status: 'pending' | 'implement' | 'evaluated' | 'discarded';
+  createdAt: string;
+}
+
+/** Draft data completo do MBR */
+export interface MbrDraftData {
+  referenceMonth: string; // YYYY-MM
+  kpiSnapshots: MbrKpiSnapshot[];
+  orgOkrSnapshots: MbrOrgOkrSnapshot[];
+  decisions: TeamCheckinDecision[];
+  checklist: MbrGovernanceChecklist;
+  ritualFeedback: RitualImprovementFeedback[];
+  previousMbrPendingItems: TeamCheckinDecision[];
+}
 
 export interface TeamCheckinDecision {
   id: string;
@@ -369,7 +428,7 @@ export interface WizardSession {
 // ============================================================
 
 export interface WizardVicContext extends VicContext {
-  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation';
+  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr';
   wizardStep?: string;
   krContext?: {
     krId: string;
@@ -401,6 +460,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'clevel-checkin': 'okr-check-alignment',
   'team-okr-creation': 'okr-check-alignment',
   'team-kr-creation': 'okr-check-alignment',
+  'mbr': 'okr-check-alignment',
 };
 
 // ============================================================
@@ -501,5 +561,18 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
       { id: 'kr-review', label: 'Revisão', shortLabel: 'Revisar' },
     ],
     aiAgents: ['coach-okrs', 'analista-kpis', 'alinhamento-estrategico'],
+  },
+  'mbr': {
+    persona: 'mbr',
+    title: 'Monthly Business Review',
+    description: 'Rito decisório mensal — saúde estratégica do negócio',
+    steps: [
+      { id: 'panorama', label: 'Panorama Executivo', shortLabel: 'Panorama' },
+      { id: 'kpi-gate', label: 'KPI Gate Estratégico', shortLabel: 'KPI Gate' },
+      { id: 'org-okrs', label: 'OKRs Organizacionais', shortLabel: 'OKRs Org' },
+      { id: 'decisions', label: 'Decisões Estratégicas', shortLabel: 'Decisões' },
+      { id: 'closing', label: 'Encerramento', shortLabel: 'Encerrar' },
+    ],
+    aiAgents: ['analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes'],
   },
 };

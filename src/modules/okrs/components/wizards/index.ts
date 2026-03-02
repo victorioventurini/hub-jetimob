@@ -25,3 +25,6 @@ export * from './team-okr-creation';
 
 // Wizard 7: Team KR Creation (NEW)
 export * from './team-kr-creation';
+
+// Wizard 8: MBR (Monthly Business Review)
+export * from './mbr';
