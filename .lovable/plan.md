@@ -1,74 +1,112 @@
 
-# Corrigir persistencia de valores de KPI via Collaborator Check-in
+# Corrigir navegacao "voltar" do navegador nos wizards
 
-## Problema
+## Diagnostico
 
-Natalia preencheu valores de KPI no wizard collaborator-checkin, mas os dados nao foram salvos. A tabela `kpi_values` tem **zero registros** em toda a base.
+### TCR e docs consultados
+- TCR v3.8.0 (confirmado React Router DOM v7, wizards fullpage)
+- `docs/guides/WIZARD_DEVELOPMENT_GUIDE.md` (arquitetura de wizards)
+- Memory: `architecture/wizard-url-step-sync` (padrao de sync bidirecional com URL)
 
-## Diagnostico (confirmado via banco)
+### Causa raiz
 
-### Causa raiz: Trigger incompativel
+O hook `useGenericWizardDraft` (linha 290-303) usa `setSearchParams({ replace: true })` do React Router v7 para sincronizar o step atual na URL. Em React Router v7, `setSearchParams` chama `navigate()` internamente, que usa `startTransition`.
 
-O trigger `trg_enforce_bu_scope_kpi_values` executa `enforce_bu_scope()`, que acessa `NEW.bu_id`. Porem, a tabela `kpi_values` **nao possui coluna `bu_id`** — o escopo de BU e garantido via `kpi_id -> kpi_metrics.bu_id`. Toda tentativa de INSERT falha com erro do PostgreSQL.
+O problema ocorre porque:
 
-### Causa secundaria: Erro silencioso no wizard
+1. **`setSearchParams` com `replace: true` no RR v7 pode criar entradas de historico** em vez de substituir, especialmente durante transicoes concorrentes ou quando chamado em sequencia rapida
+2. **Nenhum tratamento de browser back existe** no `FullPageWizardShell` — so ha `beforeunload` (para fechar aba) e botao visual de voltar
+3. Quando o usuario clica "voltar" no navegador, o React Router processa o `popstate`, mas se houver uma chamada pendente de `setSearchParams` (ex: do mount ou de uma transicao de step), ela pode sobrescrever a navegacao de volta, redirecionando ao wizard
 
-O `CollaboratorCheckinPage.tsx` usa uma mutacao fail-safe (linhas 352-365) com `try/catch` que apenas loga `console.warn`. O usuario nao recebe feedback de que a gravacao falhou.
-
-### Causa terciaria: Cache nao invalida modulo /kpis
-
-O `onSuccess` da mutacao (linhas 198-203) nao invalida as query keys usadas pelo modulo `/kpis`:
-- `kpisKeys.valuesPrefix()` — historico de valores
-- `kpisKeys.all(null)` — listagem geral
-- `kpisKeys.kpiWithHistory(kpiId)` — grafico de evolucao
+### Evidencias no codigo
+- `useGenericWizardDraft.ts:290-302`: `setStep` chama `setSearchParams` com `replace: true`
+- `useGenericWizardDraft.ts:337,403`: `clearDraft`/`discardDraft` tambem chamam `setSearchParams`
+- `FullPageWizardShell.tsx:126-137`: Apenas `beforeunload`, sem handler de `popstate` ou `useBlocker`
+- Todos os 5 wizard pages (Collaborator, Leader, Team, Managers, CLevel) sao afetados
 
 ## Solucao
 
-### 1. Migracao SQL: Remover trigger incompativel
+### 1. Substituir `setSearchParams` por `window.history.replaceState` no sync de step
 
-```sql
-DROP TRIGGER IF EXISTS trg_enforce_bu_scope_kpi_values ON public.kpi_values;
-```
+**Arquivo:** `src/modules/okrs/hooks/useGenericWizardDraft.ts`
 
-A seguranca de BU continua garantida por:
-- RLS policies em `kpi_values` que fazem JOIN com `kpi_metrics` para verificar `bu_id`
-- O trigger `trg_enforce_bu_scope` em `kpi_metrics` (que tem `bu_id`)
-
-### 2. Codigo: Adicionar invalidacao de cache para modulo /kpis
-
-**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
-
-No `onSuccess` da mutacao `addKpiValueSilent` (linhas 198-203), adicionar:
+Na funcao `setStep` (linhas 290-303), substituir `setSearchParams` por manipulacao direta do `window.history.replaceState`. Isso bypassa o sistema de transicoes do React Router, garantindo que NENHUMA entrada de historico e criada:
 
 ```typescript
-onSuccess: (_result, variables) => {
-  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
-  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
-  queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
-  // Novas invalidacoes para modulo /kpis
-  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
-  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.all(null), refetchType: 'active' });
-  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.kpiWithHistory(variables.kpi_id), refetchType: 'active' });
-  queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
-},
+const setStep = useCallback((step: TStep) => {
+  setDraft(prev => ({ ...prev, currentStep: step }));
+  setIsDirty(true);
+  // Sync step to URL via replaceState (bypassa React Router transitions)
+  const url = new URL(window.location.href);
+  if (step === defaultStep) {
+    url.searchParams.delete('step');
+  } else {
+    url.searchParams.set('step', step);
+  }
+  window.history.replaceState(window.history.state, '', url.toString());
+}, [defaultStep]);
 ```
 
-### 3. Codigo: Adicionar feedback de erro ao usuario
-
-**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
-
-No `catch` (linhas 362-365), adicionar toast de aviso:
+Nas funcoes `clearDraft` (linha 403) e `discardDraft` (linha 337), substituir o `setSearchParams` pelo mesmo padrao:
 
 ```typescript
-} catch (error) {
-  console.warn('[CollaboratorCheckin] KPI save failed (continuing):', error);
-  toast.warning('Nao foi possivel salvar o valor do KPI. Tente novamente pelo modulo de KPIs.');
-}
+// Substituir:
+// setSearchParams(prev => { ... }, { replace: true });
+// Por:
+const url = new URL(window.location.href);
+url.searchParams.delete('step');
+window.history.replaceState(window.history.state, '', url.toString());
 ```
+
+### 2. Adicionar tratamento de browser back no FullPageWizardShell
+
+**Arquivo:** `src/modules/okrs/components/wizards/shared/FullPageWizardShell.tsx`
+
+Adicionar listener de `popstate` para interceptar o botao voltar do navegador e tratar como fechamento do wizard:
+
+```typescript
+// Handle browser back button
+useEffect(() => {
+  // Push a sentinel state so we can detect back
+  const hasSentinel = window.history.state?.__wizardSentinel;
+  if (!hasSentinel) {
+    window.history.pushState(
+      { ...window.history.state, __wizardSentinel: true },
+      ''
+    );
+  }
+
+  const handlePopState = (e: PopStateEvent) => {
+    // User pressed browser back
+    if (isDirty) {
+      // Re-push to stay on page, show exit dialog
+      window.history.pushState(
+        { ...window.history.state, __wizardSentinel: true },
+        ''
+      );
+      setShowExitDialog(true);
+    } else {
+      // Not dirty, just navigate back
+      onClose();
+      navigate(backUrl, { replace: true });
+    }
+  };
+
+  window.addEventListener('popstate', handlePopState);
+  return () => window.removeEventListener('popstate', handlePopState);
+}, [isDirty, onClose, navigate, backUrl]);
+```
+
+### 3. Remover dependencia de `setSearchParams` no hook
+
+**Arquivo:** `src/modules/okrs/hooks/useGenericWizardDraft.ts`
+
+Remover o import de `useSearchParams` e a variavel `setSearchParams` do hook, ja que nao sera mais necessario. Manter apenas a leitura de `searchParams` para o mount sync (linha 185-190), usando `new URLSearchParams(window.location.search)` em vez de `useSearchParams`.
 
 ## Impacto
 
-- Desbloqueia toda a persistencia de valores de KPI no sistema (0 registros atualmente)
-- Dados preenchidos no wizard passarao a aparecer no modulo `/kpis`
-- Usuario recebe feedback quando gravacao falha (sem bloquear wizard)
-- Nota: o Comment Gate (notas obrigatorias para RAG amarelo/vermelho) continuara ativo — o wizard ja tem campo de notas
+- Botao voltar do navegador funcionara corretamente em TODOS os 5 wizards
+- Se houver alteracoes nao salvas (isDirty), usuario vera o dialogo de confirmacao
+- Se nao houver alteracoes, voltara direto para a pagina anterior
+- Step sync na URL continua funcionando (deep-linking preservado)
+- Sem impacto em outros componentes que usam `useSearchParams` normalmente
