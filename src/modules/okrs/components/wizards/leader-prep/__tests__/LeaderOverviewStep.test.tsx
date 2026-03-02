@@ -11,7 +11,7 @@ import type { LeaderOverviewMetrics } from '@/modules/okrs/types/wizard';
 vi.mock('../shared/LastCheckinBadge', () => ({
   LastCheckinBadge: () => null,
 }));
-vi.mock('../shared/WizardTooltips', () => ({
+vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
 }));
 vi.mock('@/modules/vic/components/AskToVic', () => ({

@@ -8,7 +8,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ManagersCrossIssuesStep } from '../ManagersCrossIssuesStep';
 import type { CrossDependency } from '@/modules/okrs/types/wizard';
 
-vi.mock('../shared/WizardTooltips', () => ({
+vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
 }));
 vi.mock('@/modules/vic/components/AskToVic', () => ({

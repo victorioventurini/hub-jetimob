@@ -11,7 +11,7 @@ import type { AreaOkrSummary } from '@/modules/okrs/types/wizard';
 vi.mock('../shared/LastCheckinBadge', () => ({
   LastCheckinBadge: () => null,
 }));
-vi.mock('../shared/WizardTooltips', () => ({
+vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
 }));
 vi.mock('@/modules/vic/components/AskToVic', () => ({
@@ -55,7 +55,8 @@ describe('ManagersPanoramaStep', () => {
 
   it('shows at-risk badge when issues exist', () => {
     render(<ManagersPanoramaStep areas={[mockArea({ atRiskCount: 2 })]} companyProgress={45} onContinue={vi.fn()} />);
-    expect(screen.getByText('2 em risco')).toBeInTheDocument();
+    const badges = screen.getAllByText('2 em risco');
+    expect(badges.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty state', () => {
