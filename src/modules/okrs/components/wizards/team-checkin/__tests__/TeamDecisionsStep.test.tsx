@@ -9,7 +9,7 @@ import { TeamDecisionsStep } from '../TeamDecisionsStep';
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
 vi.mock('../../shared', () => ({
-  WizardStepHeader: ({ title }: { title: string }) => <h3>{title}</h3>,
+  WizardStepHeader: ({ title, description }: { title: string; description?: string }) => <div><h3>{title}</h3>{description && <p>{description}</p>}</div>,
   WizardLastStepFooter: ({ onPrimary, onBack, primaryDisabled }: any) => (
     <div>
       <button data-testid="back-btn" onClick={onBack}>Voltar</button>

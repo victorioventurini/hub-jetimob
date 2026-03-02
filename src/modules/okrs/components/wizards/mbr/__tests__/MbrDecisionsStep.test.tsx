@@ -9,7 +9,7 @@ import { MbrDecisionsStep } from '../MbrDecisionsStep';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 vi.mock('../../shared', () => ({
-  WizardStepHeader: ({ title }: { title: string }) => <div><h3>{title}</h3></div>,
+  WizardStepHeader: ({ title, description }: { title: string; description?: string }) => <div><h3>{title}</h3>{description && <p>{description}</p>}</div>,
   WizardStepFooter: ({ primaryLabel, onPrimary, onBack }: any) => (
     <div>
       <button data-testid="back-btn" onClick={onBack}>Voltar</button>
