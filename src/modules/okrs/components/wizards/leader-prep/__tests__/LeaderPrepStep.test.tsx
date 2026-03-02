@@ -9,7 +9,7 @@ import { LeaderPrepStep } from '../LeaderPrepStep';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KrAction } from '@/modules/okrs/types/wizard';
 
-vi.mock('../shared/WizardTooltips', () => ({
+vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
 }));
 vi.mock('@/modules/vic/components/AskToVic', () => ({

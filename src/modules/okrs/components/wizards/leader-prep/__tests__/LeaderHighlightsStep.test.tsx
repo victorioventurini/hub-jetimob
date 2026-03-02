@@ -13,7 +13,7 @@ vi.mock('../shared/VicInsightCard', () => ({
     <div data-testid="vic-insights">{insights.length} insights</div>
   ),
 }));
-vi.mock('../shared/WizardTooltips', () => ({
+vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
 }));
 vi.mock('@/modules/vic/components/AskToVic', () => ({
