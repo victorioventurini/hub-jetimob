@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+// URL step sync uses window.history.replaceState directly (bypasses React Router transitions)
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
@@ -83,7 +83,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const { currentBu } = useBu();
   const queryClient = useQueryClient();
   const buSupabase = useBuScopedSupabase();
-  const [searchParams, setSearchParams] = useSearchParams();
+  
   
   const storageKey = getDraftKey(wizardType);
   
@@ -183,7 +183,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   
   // Sync step FROM URL on mount (URL takes priority if present)
   useEffect(() => {
-    const urlStep = searchParams.get('step');
+    const urlStep = new URLSearchParams(window.location.search).get('step');
     if (urlStep && urlStep !== draft.currentStep) {
       setDraft(prev => ({ ...prev, currentStep: urlStep as TStep }));
     }
@@ -286,21 +286,19 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setIsDirty(true);
   }, []);
   
-  // Set step — sync with URL param ?step=
+  // Set step — sync with URL param ?step= via replaceState (no history entries)
   const setStep = useCallback((step: TStep) => {
     setDraft(prev => ({ ...prev, currentStep: step }));
     setIsDirty(true);
-    // Sync step to URL
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev);
-      if (step === defaultStep) {
-        next.delete('step');
-      } else {
-        next.set('step', step);
-      }
-      return next;
-    }, { replace: true });
-  }, [defaultStep, setSearchParams]);
+    // Sync step to URL via replaceState (bypasses React Router transitions)
+    const url = new URL(window.location.href);
+    if (step === defaultStep) {
+      url.searchParams.delete('step');
+    } else {
+      url.searchParams.set('step', step);
+    }
+    window.history.replaceState(window.history.state, '', url.toString());
+  }, [defaultStep]);
   
   // Save draft explicitly
   const saveDraft = useCallback(async () => {
@@ -333,13 +331,15 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setLastSavedAt(null);
     setIsDirty(false);
     setIsResumingDraft(false);
-    // Clear step from URL
-    setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('step'); return next; }, { replace: true });
+    // Clear step from URL via replaceState
+    const url = new URL(window.location.href);
+    url.searchParams.delete('step');
+    window.history.replaceState(window.history.state, '', url.toString());
     
     queryClient.invalidateQueries({ 
       queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType) 
     });
-  }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft, setSearchParams]);
+  }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft]);
   
   // Clear draft (after successful completion)
   // Returns the sessionId (existing or newly created) for post-completion actions
@@ -399,11 +399,13 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     setLastSavedAt(null);
     setIsDirty(false);
     setIsResumingDraft(false);
-    // Clear step from URL
-    setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('step'); return next; }, { replace: true });
+    // Clear step from URL via replaceState
+    const url = new URL(window.location.href);
+    url.searchParams.delete('step');
+    window.history.replaceState(window.history.state, '', url.toString());
     
     return resultId;
-  }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId, setSearchParams]);
+  }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId]);
   
   // Persist changes to localStorage
   useEffect(() => {

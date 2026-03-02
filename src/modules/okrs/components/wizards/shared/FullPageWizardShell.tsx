@@ -122,6 +122,34 @@ export function FullPageWizardShell({
     return `${day} às ${time}`;
   };
   
+  // Handle browser back button via sentinel state
+  useEffect(() => {
+    const hasSentinel = window.history.state?.__wizardSentinel;
+    if (!hasSentinel) {
+      window.history.pushState(
+        { ...window.history.state, __wizardSentinel: true },
+        ''
+      );
+    }
+
+    const handlePopState = () => {
+      if (isDirty) {
+        // Re-push to stay on page, show exit dialog
+        window.history.pushState(
+          { ...window.history.state, __wizardSentinel: true },
+          ''
+        );
+        setShowExitDialog(true);
+      } else {
+        onClose();
+        navigate(backUrl, { replace: true });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isDirty, onClose, navigate, backUrl]);
+
   // Warn before closing tab/window if dirty
   useEffect(() => {
     if (!isDirty) return;
