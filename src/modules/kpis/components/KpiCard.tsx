@@ -238,8 +238,8 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
                   type: "KPI",
                   title: kpi.name,
                   description: kpi.description || undefined,
-                  currentValue: kpi.current_value || undefined,
-                  targetValue: kpi.target_value || undefined,
+                  currentValue: kpi.current_value ?? undefined,
+                  targetValue: kpi.target_value ?? undefined,
                   unit: kpi.unit,
                   additionalData: {
                     variation: kpi.variation,
