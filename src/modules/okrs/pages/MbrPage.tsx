@@ -364,6 +364,7 @@ export default function MbrPage() {
               target,
               direction,
               unit: kr.unit ?? '%',
+              lastCheckinAt: kr.last_checkin_at ?? null,
             };
           }),
         };
