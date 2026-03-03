@@ -33,6 +33,7 @@ import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrs
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
 
+import { calculateProgress } from '@/modules/okrs/types';
 import type {
   MbrStep,
   MbrDraftData,
@@ -247,7 +248,7 @@ export default function MbrPage() {
           id, title, status, team_id,
           team:teams!okr_team_objectives_team_id_fkey(id, name),
           key_results:okr_team_key_results(
-            id, title, status, current_value, baseline, target, direction,
+            id, title, status, current_value, baseline, target, direction, unit,
             owner_user_id, last_checkin_at,
             owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name)
           )
@@ -276,12 +277,21 @@ export default function MbrPage() {
     if (!quarterlyCycle?.id) return;
     if (!hasFetchedTeamOkrs || isLoadingTeamOkrs) return;
 
-    // Check if existing snapshots have valid keyResults data (migration guard)
-    // Drafts saved before keyResults was added need re-seeding
+    // Check if existing snapshots have fully valid KR payload (migration guard)
+    // Drafts salvos com shape antigo (sem unit/current/target/direction) devem ser re-seeded
     const hasValidKeyResults = draft.data.teamOkrSnapshots.length > 0 &&
-      draft.data.teamOkrSnapshots.every(t =>
-        t.objectives.every(o => Array.isArray(o.keyResults) && o.keyResults.length >= 0 &&
-          (o.keyResults.length === 0 || o.keyResults[0]?.status !== undefined)
+      draft.data.teamOkrSnapshots.every(team =>
+        team.objectives.every(objective =>
+          Array.isArray(objective.keyResults) &&
+          objective.keyResults.every(kr =>
+            typeof kr.title === 'string' &&
+            typeof kr.status === 'string' &&
+            typeof kr.baseline === 'number' &&
+            typeof kr.current === 'number' &&
+            typeof kr.target === 'number' &&
+            typeof kr.direction === 'string' &&
+            typeof kr.unit === 'string'
+          )
         )
       );
 
@@ -317,14 +327,8 @@ export default function MbrPage() {
               const baseline = Number(kr.baseline ?? 0);
               const current = Number(kr.current_value ?? baseline);
               const target = Number(kr.target ?? baseline);
-              const direction = kr.direction || 'up';
-              if (direction === 'up') {
-                if (target === baseline) return sum + (current >= target ? 100 : 0);
-                return sum + Math.max(0, Math.min(100, ((current - baseline) / (target - baseline)) * 100));
-              } else {
-                if (baseline === target) return sum + (current <= target ? 100 : 0);
-                return sum + Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100));
-              }
+              const direction = (kr.direction ?? 'up') as 'up' | 'down' | 'maintain';
+              return sum + calculateProgress(baseline, current, target, direction);
             }, 0) / krCount
           : 0;
 
@@ -346,15 +350,9 @@ export default function MbrPage() {
             const baseline = Number(kr.baseline ?? 0);
             const current = Number(kr.current_value ?? baseline);
             const target = Number(kr.target ?? baseline);
-            const direction = (kr.direction || 'up') as 'up' | 'down';
-            let progress: number;
-            if (direction === 'up') {
-              if (target === baseline) progress = current >= target ? 100 : 0;
-              else progress = Math.round(Math.max(0, ((current - baseline) / (target - baseline)) * 100));
-            } else {
-              if (baseline === target) progress = current <= target ? 100 : 0;
-              else progress = Math.round(Math.max(0, ((baseline - current) / (baseline - target)) * 100));
-            }
+            const directionForProgress = (kr.direction ?? 'up') as 'up' | 'down' | 'maintain';
+            const direction = kr.direction === 'down' ? 'down' : 'up';
+            const progress = Math.round(calculateProgress(baseline, current, target, directionForProgress));
             return {
               krId: kr.id,
               title: kr.title,

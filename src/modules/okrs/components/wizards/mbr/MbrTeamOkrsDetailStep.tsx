@@ -243,7 +243,6 @@ export function MbrTeamOkrsDetailStep({
                     <div className="space-y-3 ml-6 overflow-hidden">
                       {obj.keyResults.map(kr => {
                         const rag = toRagKey(kr.status ?? 'not_started');
-                        const hasFullData = kr.status !== undefined;
                         return (
                           <div
                             key={kr.krId}
@@ -258,23 +257,19 @@ export function MbrTeamOkrsDetailStep({
                               {kr.ownerName && (
                                 <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
                               )}
-                              {hasFullData && (
-                                <OkrStatusBadge status={rag} type="kr" className="flex-shrink-0" />
-                              )}
+                              <OkrStatusBadge status={rag} type="kr" className="flex-shrink-0" />
                             </div>
                             {/* Progress bar with base/current/target */}
-                            {hasFullData && (
-                              <OkrProgressBar
-                                baseline={kr.baseline ?? 0}
-                                current={kr.current ?? 0}
-                                target={kr.target ?? 0}
-                                direction={kr.direction ?? 'up'}
-                                status={rag}
-                                unit={kr.unit ?? '%'}
-                                size="sm"
-                                showLabels
-                              />
-                            )}
+                            <OkrProgressBar
+                              baseline={Number(kr.baseline ?? 0)}
+                              current={Number(kr.current ?? 0)}
+                              target={Number(kr.target ?? 0)}
+                              direction={(kr.direction ?? 'up') as 'up' | 'down' | 'maintain'}
+                              status={rag}
+                              unit={kr.unit ?? '%'}
+                              size="sm"
+                              showLabels
+                            />
                           </div>
                         );
                       })}
