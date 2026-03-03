@@ -332,24 +332,32 @@ export default function MbrPage() {
           krsAtRisk,
           krsStagnant,
           trend,
-          keyResults: krs.map((kr: any) => ({
-            krId: kr.id,
-            title: kr.title,
-            progress: (() => {
-              const baseline = Number(kr.baseline ?? 0);
-              const current = Number(kr.current_value ?? baseline);
-              const target = Number(kr.target ?? baseline);
-              const direction = kr.direction || 'up';
-              if (direction === 'up') {
-                if (target === baseline) return current >= target ? 100 : 0;
-                return Math.round(Math.max(0, Math.min(100, ((current - baseline) / (target - baseline)) * 100)));
-              }
-              if (baseline === target) return current <= target ? 100 : 0;
-              return Math.round(Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100)));
-            })(),
-            status: kr.status,
-            ownerName: (kr.owner as any)?.display_name ?? null,
-          })),
+          keyResults: krs.map((kr: any) => {
+            const baseline = Number(kr.baseline ?? 0);
+            const current = Number(kr.current_value ?? baseline);
+            const target = Number(kr.target ?? baseline);
+            const direction = (kr.direction || 'up') as 'up' | 'down';
+            let progress: number;
+            if (direction === 'up') {
+              if (target === baseline) progress = current >= target ? 100 : 0;
+              else progress = Math.round(Math.max(0, ((current - baseline) / (target - baseline)) * 100));
+            } else {
+              if (baseline === target) progress = current <= target ? 100 : 0;
+              else progress = Math.round(Math.max(0, ((baseline - current) / (baseline - target)) * 100));
+            }
+            return {
+              krId: kr.id,
+              title: kr.title,
+              progress,
+              status: kr.status,
+              ownerName: (kr.owner as any)?.display_name ?? null,
+              baseline,
+              current,
+              target,
+              direction,
+              unit: kr.unit ?? '%',
+            };
+          }),
         };
       });
 

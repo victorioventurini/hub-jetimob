@@ -231,6 +231,11 @@ export interface MbrTeamOkrObjectiveSnapshot {
     progress: number;
     status: string;
     ownerName: string | null;
+    baseline: number;
+    current: number;
+    target: number;
+    direction: 'up' | 'down';
+    unit: string;
   }>;
 }
 
