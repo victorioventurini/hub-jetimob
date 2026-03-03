@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, AlertTriangle, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
@@ -89,7 +90,7 @@ export function MbrTeamOkrsOverviewStep({
   }, [teamOkrSnapshots]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col h-full">
       <WizardStepHeader
         icon={Users}
         title="OKRs dos Times"
@@ -115,9 +116,9 @@ export function MbrTeamOkrsOverviewStep({
         <Progress value={avgProgress} className="h-2 mt-3" />
       </div>
 
-      {/* Teams list */}
-      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
-        <div className="p-6 space-y-6 min-w-[640px] md:min-w-0">
+      {/* Teams list - padrão consistente com TeamKrReviewStep */}
+      <ScrollArea className="flex-1">
+        <div className="p-6 space-y-6">
           {sorted.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               Nenhum time com OKRs encontrado para este ciclo.
@@ -165,7 +166,7 @@ export function MbrTeamOkrsOverviewStep({
             })
           )}
         </div>
-      </div>
+      </ScrollArea>
 
       {/* Inline decisions */}
       <div className="border-t">
