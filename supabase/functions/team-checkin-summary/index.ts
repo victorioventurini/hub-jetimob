@@ -891,7 +891,7 @@ serve(async (req) => {
 
     // Build notification metadata
     const currentDatetime = formatDate(new Date());
-    const contextUrl = `/go/wizard-session/${sessionId}`;
+    const contextUrl = `/okrs/ritual-history?session=${sessionId}`;
 
     const metadata = {
       team_name: teamData.team.name,

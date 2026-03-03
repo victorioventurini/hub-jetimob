@@ -26,6 +26,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 
 // Step components
@@ -83,6 +84,8 @@ export default function CollaboratorCheckinPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile, isAdmin, isLoading: isAuthLoading } = useAuth();
   const { isImpersonating } = useOptionalImpersonation();
+  const { currentBu } = useBu();
+  const buSupabase = useBuScopedSupabase();
   const lastCheckin = useLastCompletedSession('collaborator-checkin');
   
   // Check if user is admin - isAdmin already includes super_admin
@@ -165,7 +168,7 @@ export default function CollaboratorCheckinPage() {
   });
   
   // v2.87: Mutation silenciosa para KPI (fail-safe, sem toast de erro)
-  const supabase = useBuScopedSupabase();
+  const supabase = buSupabase;
   const queryClient = useQueryClient();
   
   const addKpiValueSilent = useMutation({
@@ -261,10 +264,24 @@ export default function CollaboratorCheckinPage() {
   }, [discardDraft]);
   
   const handleComplete = useCallback(async () => {
-    await clearDraft();
+    const completedSessionId = await clearDraft();
     toast.success('Check-in concluído!');
     navigate('/wizards');
-  }, [clearDraft, navigate]);
+
+    // Trigger summary email (best-effort, non-blocking)
+    if (completedSessionId && currentBu?.id) {
+      try {
+        await buSupabase.functions.invoke('collaborator-checkin-summary', {
+          body: {
+            sessionId: completedSessionId,
+            bu_id: currentBu.id,
+          },
+        });
+      } catch (e) {
+        console.warn('Collaborator summary email failed (non-blocking):', e);
+      }
+    }
+  }, [clearDraft, navigate, buSupabase, currentBu]);
   
   // Loading - include auth loading to ensure profile is available
   if (isAuthLoading || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
