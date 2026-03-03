@@ -38,6 +38,7 @@ import {
 } from '../hooks/useRitualHistory';
 import { useManageableTeamsFlat } from '../hooks';
 import type { WizardPersona, TeamCheckinDecision } from '../types/wizard';
+import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 
 // ============================================================
 // CONSTANTS
@@ -424,7 +425,7 @@ function DecisionFollowUpRow({
           {decision.owner && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <User className="h-3 w-3" />
-              {decision.owner.name || 'Responsável atribuído'}
+              <OwnerNameResolved ownerId={decision.owner.id} snapshotName={decision.owner.name} />
             </span>
           )}
 
@@ -508,4 +509,16 @@ function SnapshotSummary({ ritual }: { ritual: RitualHistoryItem }) {
       </Collapsible>
     </div>
   );
+}
+
+// ============================================================
+// OWNER NAME RESOLVED (fallback for legacy snapshots with empty name)
+// ============================================================
+
+function OwnerNameResolved({ ownerId, snapshotName }: { ownerId: string; snapshotName?: string }) {
+  const needsResolve = !snapshotName;
+  const { data: participant } = useResolveParticipant(needsResolve ? ownerId : null, needsResolve);
+
+  const displayName = snapshotName || participant?.displayName || 'Responsável';
+  return <>{displayName}</>;
 }

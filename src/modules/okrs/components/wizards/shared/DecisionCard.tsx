@@ -134,10 +134,12 @@ export function DecisionCard({
                 <div className="w-[180px]">
                   <BuUserSelect
                     value={decision.owner?.id}
-                    onValueChange={(userId) => {
-                      // We receive just the ID from BuUserSelect; name is resolved at display time
-                      if (userId) {
-                        onUpdate(decision.id, { owner: { id: userId, name: '' } });
+                    onValueChange={() => {
+                      // handled by onUserSelected
+                    }}
+                    onUserSelected={(user) => {
+                      if (user) {
+                        onUpdate(decision.id, { owner: { id: user.id, name: user.displayName } });
                       } else {
                         onUpdate(decision.id, { owner: undefined });
                       }
