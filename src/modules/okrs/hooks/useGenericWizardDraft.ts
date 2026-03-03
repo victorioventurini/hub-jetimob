@@ -91,6 +91,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isResumingDraft, setIsResumingDraft] = useState(false);
+  const hasHydratedStorageRef = useRef(false);
   
   // Create empty draft
   const createEmptyDraft = useCallback((): GenericWizardDraft<TStep, TData> => ({
@@ -145,6 +146,25 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     return createEmptyDraft();
   });
   
+  // Hydrate from localStorage when enabled becomes true (fixes refresh before cycle load)
+  useEffect(() => {
+    if (!enabled || hasHydratedStorageRef.current) return;
+    hasHydratedStorageRef.current = true;
+
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) return;
+
+      const parsed = JSON.parse(saved) as GenericWizardDraft<TStep, TData>;
+      if (parsed.version === DRAFT_VERSION && parsed.wizardType === wizardType) {
+        setDraft(parsed);
+        setIsResumingDraft(parsed.currentStep !== defaultStep);
+      }
+    } catch (e) {
+      console.warn('Failed to hydrate wizard draft from localStorage:', e);
+    }
+  }, [enabled, storageKey, wizardType, defaultStep]);
+
   // Load from DB if localStorage is empty but DB has data
   useEffect(() => {
     const hasLocalData = (() => {
@@ -159,7 +179,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
         return false;
       }
     })();
-    
+
     if (existingSessionQuery.data && !hasLocalData) {
       const dbData = existingSessionQuery.data.reflection_data as unknown;
       if (dbData && typeof dbData === 'object' && 'version' in dbData) {
