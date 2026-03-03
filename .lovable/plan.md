@@ -1,108 +1,70 @@
 
 
-## Fase 2 — Responsável e Prazo nas Decisões
+## Fase: Step 4 — Análise por Time com navegação 1-por-vez
 
-### Resumo
+### Problema atual
 
-Adicionar `deadline` ao type `TeamCheckinDecision`, ativar o campo `owner` já existente na UI, e centralizar a lógica em um `DecisionCard` compartilhado. Três locais consomem decisões com cards: `MbrDecisionsStep`, `TeamDecisionsStep` e `InlineDecisionInput` (modo compacto).
+O `MbrTeamOkrsDetailStep` renderiza **todos os times** num grid scrollável. Com muitos times, a revisão fica superficial e o conteúdo denso.
 
----
+### Solução
 
-### 1. Tipagem — `src/modules/okrs/types/wizard.ts`
+Usar o `currentTeamIndex` (já existe no `MbrDraftData`) para exibir **um time por vez** dentro do mesmo step, com navegação interna prev/next. Tudo permanece dentro do wizard — sem rotas extras.
 
-Expandir `TeamCheckinDecision` (linhas 282-291):
+### Alteração única: `MbrTeamOkrsDetailStep.tsx`
 
-```typescript
-export interface TeamCheckinDecision {
-  id: string;
-  text: string;
-  category: 'decision' | 'focus_adjustment' | 'next_step';
-  sourceStep?: TeamCheckinDecisionSourceStep;
-  owner?: {
-    id: string;
-    name: string;
-  };
-  deadline?: string | null; // ISO date format
-}
+**Layout por time (1/N):**
+- Header mostra `"Time 1 de N — [Nome do Time]"` com barra de progresso de revisão
+- Área de conteúdo mostra apenas os OKRs/KRs do time atual (usando a mesma estrutura de cards já existente)
+- Checkbox "Revisado" fixo no `topFixed` junto com o nome do time
+- `InlineDecisionInput` no `bottomFixed` (já existente)
+
+**Navegação interna (dentro do step):**
+- Botões "← Time anterior" / "Próximo time →" no footer
+- Ao marcar "Revisado" e clicar próximo, avança `currentTeamIndex`
+- O botão "Prosseguir para OKRs Org" só aparece quando no último time E todos revisados
+- Botão "Voltar" no primeiro time retorna ao step anterior (overview)
+
+**Props inalteradas** — o componente já recebe `currentTeamIndex` e `onCurrentTeamIndexChange`. Basta ativá-los (atualmente ignorados com `_prefix`).
+
+### Detalhes técnicos
+
+```text
+┌─────────────────────────────────┐
+│ Header: "Análise por Time"      │
+│ "Time 2 de 5 — Comercial"      │
+├─────────────────────────────────┤
+│ [■■■■░░░░░] 1/5 revisados      │
+│ ☑ Marcar como revisado          │
+├─────────────────────────────────┤
+│                                 │
+│   OKR 1 do time atual           │
+│     └─ KR 1 [====▓░░] 67%      │
+│     └─ KR 2 [==▓░░░░] 40%      │
+│                                 │
+│   OKR 2 do time atual           │
+│     └─ KR 1 ...                 │
+│                                 │
+├─────────────────────────────────┤
+│ [Nota sobre este time...]       │
+├─────────────────────────────────┤
+│ ← Time anterior  Próximo time → │
+│        (ou "OKRs Org →")        │
+└─────────────────────────────────┘
 ```
 
-Única adição: campo `deadline?: string | null`.
+### Regras de navegação
 
----
-
-### 2. Componente compartilhado — `src/modules/okrs/components/wizards/shared/DecisionCard.tsx` (novo)
-
-Extrair e centralizar a lógica de `MbrDecisionCard` (de `MbrDecisionsStep`) e `DecisionCard` (de `TeamDecisionsStep`) num único componente reutilizável:
-
-**Props:**
-```typescript
-interface DecisionCardProps {
-  decision: TeamCheckinDecision;
-  onUpdate: (id: string, updates: Partial<TeamCheckinDecision>) => void;
-  onRemove: (id: string) => void;
-  showReclassify?: boolean;       // MBR usa, team check-in não
-  showOwnerDeadline?: boolean;    // true por padrão
-  compact?: boolean;              // para uso inline (menor padding)
-}
-```
-
-**UI do card:**
-- Linha 1: Ícone da categoria + texto (editável inline via `TextareaAutoSubmit`)
-- Linha 2: Badges de reclassificação (quando `showReclassify`)
-- Linha 3 (nova): Responsável (`BuUserSelect` compacto, `allowNone`, `placeholder="Responsável"`) + Prazo (`Popover` + `Calendar` mode single, formato `dd/MM`)
-  - Quando vazio: texto sutil "Sem responsável" / "Sem prazo" em `text-muted-foreground` como incentivo
-- Botões de ação: Editar, Remover (já existentes)
-
-**Reclassificação preserva owner e deadline**: o `onUpdate` recebe `Partial<TeamCheckinDecision>`, então reclassificar só altera `category`.
-
-**Componentes reutilizados (zero criação de UI):**
-- `BuUserSelect` (canônico, de `@/components/selects`)
-- `Calendar` + `Popover` (shadcn, já instalados)
-- `TextareaAutoSubmit`, `Badge`, `Card`, `Button`
-
----
-
-### 3. Atualização dos consumidores
-
-**`MbrDecisionsStep.tsx`:**
-- Substituir `MbrDecisionCard` local pelo `DecisionCard` compartilhado com `showReclassify={true}`
-- Atualizar `handleAdd` para incluir `owner: undefined, deadline: null`
-- Simplificar handlers: `handleUpdate`, `handleRemove` (reclassify vira parte do `onUpdate`)
-
-**`TeamDecisionsStep.tsx`:**
-- Substituir `DecisionCard` local pelo compartilhado com `showReclassify={false}`
-- Mesma simplificação de handlers
-
-**`InlineDecisionInput.tsx`:**
-- Sem alteração visual (modo compacto, sem owner/deadline inline)
-- O `handleAdd` já cria decisões sem owner/deadline, que ficam `undefined`/`null` — compatível
-
----
-
-### 4. Exportação — `src/modules/okrs/components/wizards/shared/index.ts`
-
-Adicionar `export { DecisionCard } from './DecisionCard'`.
-
----
-
-### 5. Testes
-
-- Atualizar `MbrDecisionsStep.test.tsx`: mock do `BuUserSelect` e `Calendar`, verificar que reclassificação preserva owner/deadline
-- Atualizar `TeamDecisionsStep.test.tsx`: verificar rendering do card compartilhado
-- Adicionar teste unitário para `DecisionCard` em `shared/__tests__/DecisionCard.test.tsx`
-
----
+- `onBack`: se `currentTeamIndex > 0` → decrementa index; se `== 0` → chama `onBack()` (volta ao overview)
+- `onNext`: se `currentTeamIndex < N-1` → incrementa index; se `== N-1` e todos revisados → chama `onContinue()` (avança ao step org-okrs)
+- Gate: botão primário desabilitado no último time se algum time não foi revisado
+- Times sem OKRs: pular automaticamente (não contam para revisão)
 
 ### Arquivos tocados
 
 | Arquivo | Ação |
 |---|---|
-| `src/modules/okrs/types/wizard.ts` | Adicionar `deadline` ao type |
-| `src/modules/okrs/components/wizards/shared/DecisionCard.tsx` | **Novo** — card compartilhado |
-| `src/modules/okrs/components/wizards/shared/index.ts` | Exportar `DecisionCard` |
-| `src/modules/okrs/components/wizards/mbr/MbrDecisionsStep.tsx` | Usar `DecisionCard` compartilhado |
-| `src/modules/okrs/components/wizards/team-checkin/TeamDecisionsStep.tsx` | Usar `DecisionCard` compartilhado |
-| `src/modules/okrs/components/wizards/shared/__tests__/DecisionCard.test.tsx` | **Novo** — testes do card |
-| `src/modules/okrs/components/wizards/mbr/__tests__/MbrDecisionsStep.test.tsx` | Atualizar mocks |
-| `src/modules/okrs/components/wizards/team-checkin/__tests__/TeamDecisionsStep.test.tsx` | Atualizar mocks |
+| `src/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep.tsx` | Refatorar para exibir 1 time por vez |
+| `src/modules/okrs/components/wizards/mbr/__tests__/MbrTeamOkrsDetailStep.test.tsx` | Atualizar testes para nova navegação |
+
+Zero componentes novos. Zero alterações de tipo. O `currentTeamIndex` e `onCurrentTeamIndexChange` já existem na interface.
 
