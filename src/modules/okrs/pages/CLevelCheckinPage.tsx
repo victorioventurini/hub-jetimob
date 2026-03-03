@@ -168,22 +168,19 @@ export default function CLevelCheckinPage() {
   const handleComplete = useCallback(async () => {
     const completedSessionId = await clearDraft();
     toast.success('Check-in estratégico concluído!');
-    navigate('/okrs');
 
-    // Trigger summary email (best-effort, non-blocking)
+    // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)
     if (completedSessionId && quarterlyCycle?.id && currentBu?.id) {
-      try {
-        await buSupabase.functions.invoke('clevel-checkin-summary', {
-          body: {
-            cycleId: quarterlyCycle.id,
-            sessionId: completedSessionId,
-            bu_id: currentBu.id,
-          },
-        });
-      } catch (e) {
-        console.warn('C-Level summary email failed (non-blocking):', e);
-      }
+      buSupabase.functions.invoke('clevel-checkin-summary', {
+        body: {
+          cycleId: quarterlyCycle.id,
+          sessionId: completedSessionId,
+          bu_id: currentBu.id,
+        },
+      }).catch((e: unknown) => console.warn('C-Level summary email failed (non-blocking):', e));
     }
+
+    navigate('/okrs');
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
   
   // Render step content

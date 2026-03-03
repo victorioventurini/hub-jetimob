@@ -266,21 +266,18 @@ export default function CollaboratorCheckinPage() {
   const handleComplete = useCallback(async () => {
     const completedSessionId = await clearDraft();
     toast.success('Check-in concluído!');
-    navigate('/wizards');
 
-    // Trigger summary email (best-effort, non-blocking)
+    // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)
     if (completedSessionId && currentBu?.id) {
-      try {
-        await buSupabase.functions.invoke('collaborator-checkin-summary', {
-          body: {
-            sessionId: completedSessionId,
-            bu_id: currentBu.id,
-          },
-        });
-      } catch (e) {
-        console.warn('Collaborator summary email failed (non-blocking):', e);
-      }
+      buSupabase.functions.invoke('collaborator-checkin-summary', {
+        body: {
+          sessionId: completedSessionId,
+          bu_id: currentBu.id,
+        },
+      }).catch((e: unknown) => console.warn('Collaborator summary email failed (non-blocking):', e));
     }
+
+    navigate('/wizards');
   }, [clearDraft, navigate, buSupabase, currentBu]);
   
   // Loading - include auth loading to ensure profile is available
