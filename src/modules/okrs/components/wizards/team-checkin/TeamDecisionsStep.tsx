@@ -10,16 +10,14 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
-
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, Plus, X, Lightbulb, Target, Users, Pencil, Check } from 'lucide-react';
+import { CheckCircle2, Plus, Lightbulb, Target, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardLastStepFooter } from '../shared';
+import { WizardStepHeader, WizardLastStepFooter, DecisionCard } from '../shared';
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -53,89 +51,6 @@ const SOURCE_STEP_LABELS: Record<string, string> = {
 };
 
 // ============================================================
-// SUBCOMPONENTS
-// ============================================================
-
-function DecisionCard({
-  decision,
-  onUpdate,
-  onRemove,
-}: {
-  decision: TeamCheckinDecision;
-  onUpdate: (id: string, text: string) => void;
-  onRemove: (id: string) => void;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(decision.text);
-  const config = CATEGORY_CONFIG[decision.category];
-  const Icon = config.icon;
-
-  const handleSave = () => {
-    if (editText.trim()) {
-      onUpdate(decision.id, editText.trim());
-    }
-    setIsEditing(false);
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-3">
-        <div className="flex items-start gap-3">
-          <Icon className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            {isEditing ? (
-              <div className="flex gap-2">
-                <TextareaAutoSubmit
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="text-sm"
-                  autoFocus
-                  onSubmit={() => handleSave()}
-                  minRows={1}
-                  maxRows={4}
-                  onBlur={() => { /* keep editing on blur */ }}
-                  onKeyDownCapture={(e) => {
-                    if (e.key === 'Escape') setIsEditing(false);
-                  }}
-                />
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 self-end" onClick={handleSave}>
-                  <Check className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <p className="text-sm">{decision.text}</p>
-            )}
-            <Badge variant="secondary" className={cn("text-xs mt-1", config.color)}>
-              {config.label}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {!isEditing && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                onClick={() => { setEditText(decision.text); setIsEditing(true); }}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-destructive"
-              onClick={() => onRemove(decision.id)}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -161,7 +76,6 @@ export function TeamDecisionsStep({
       groups[step].push(d);
     }
     
-    // Return ordered
     return stepOrder
       .filter(step => groups[step]?.length > 0)
       .map(step => ({ step, label: SOURCE_STEP_LABELS[step] || step, items: groups[step] }));
@@ -185,8 +99,8 @@ export function TeamDecisionsStep({
     onDecisionsChange(decisions.filter(d => d.id !== id));
   };
 
-  const handleUpdateDecision = (id: string, text: string) => {
-    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, text } : d));
+  const handleUpdateDecision = (id: string, updates: Partial<TeamCheckinDecision>) => {
+    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, ...updates } : d));
   };
 
   const handleChecklistChange = (key: keyof TeamCheckinChecklist, value: boolean) => {
@@ -259,6 +173,7 @@ export function TeamDecisionsStep({
                       decision={decision}
                       onUpdate={handleUpdateDecision}
                       onRemove={handleRemoveDecision}
+                      showOwnerDeadline
                     />
                   ))}
                 </div>

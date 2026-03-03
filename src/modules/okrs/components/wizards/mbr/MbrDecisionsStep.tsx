@@ -14,11 +14,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  Lightbulb, Target, CheckCircle2, Plus, X, Pencil, Check, Clock,
+  Lightbulb, Target, CheckCircle2, Plus, Clock,
   LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter } from '../shared';
+import { WizardStepHeader, WizardStepFooter, DecisionCard } from '../shared';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -52,100 +52,6 @@ const SOURCE_STEP_LABELS: Record<string, string> = {
 };
 
 const CATEGORIES = ['decision', 'focus_adjustment', 'next_step'] as const;
-
-// ============================================================
-// SUBCOMPONENT: DecisionCard with reclassification
-// ============================================================
-
-function MbrDecisionCard({
-  decision,
-  onUpdate,
-  onRemove,
-  onReclassify,
-}: {
-  decision: TeamCheckinDecision;
-  onUpdate: (id: string, text: string) => void;
-  onRemove: (id: string) => void;
-  onReclassify: (id: string, category: TeamCheckinDecision['category']) => void;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(decision.text);
-  const config = CATEGORY_CONFIG[decision.category];
-  const Icon = config.icon;
-
-  const handleSave = () => {
-    if (editText.trim()) onUpdate(decision.id, editText.trim());
-    setIsEditing(false);
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-3">
-        <div className="flex items-start gap-3">
-          <Icon className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            {isEditing ? (
-              <div className="flex gap-2">
-                <TextareaAutoSubmit
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="text-sm"
-                  autoFocus
-                  onSubmit={handleSave}
-                  minRows={1}
-                  maxRows={4}
-                  onKeyDownCapture={(e) => { if (e.key === 'Escape') setIsEditing(false); }}
-                />
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 self-end" onClick={handleSave}>
-                  <Check className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <p className="text-sm">{decision.text}</p>
-            )}
-            {/* Category badges for reclassification */}
-            <div className="flex gap-1 mt-1.5">
-              {CATEGORIES.map((cat) => {
-                const c = CATEGORY_CONFIG[cat];
-                return (
-                  <Badge
-                    key={cat}
-                    variant="outline"
-                    className={cn(
-                      'text-[10px] h-5 px-1.5 cursor-pointer transition-colors',
-                      decision.category === cat && c.color
-                    )}
-                    onClick={() => onReclassify(decision.id, cat)}
-                  >
-                    {c.label}
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {!isEditing && (
-              <Button
-                variant="ghost" size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                onClick={() => { setEditText(decision.text); setIsEditing(true); }}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <Button
-              variant="ghost" size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-destructive"
-              onClick={() => onRemove(decision.id)}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ============================================================
 // COMPONENT
@@ -190,9 +96,9 @@ export function MbrDecisionsStep({
   };
 
   const handleRemove = (id: string) => onDecisionsChange(decisions.filter(d => d.id !== id));
-  const handleUpdate = (id: string, text: string) => onDecisionsChange(decisions.map(d => d.id === id ? { ...d, text } : d));
-  const handleReclassify = (id: string, category: TeamCheckinDecision['category']) =>
-    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, category } : d));
+
+  const handleUpdate = (id: string, updates: Partial<TeamCheckinDecision>) =>
+    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, ...updates } : d));
 
   return (
     <div className="flex flex-col h-full">
@@ -245,12 +151,13 @@ export function MbrDecisionsStep({
                 <div key={step} className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
                   {items.map((d) => (
-                    <MbrDecisionCard
+                    <DecisionCard
                       key={d.id}
                       decision={d}
                       onUpdate={handleUpdate}
                       onRemove={handleRemove}
-                      onReclassify={handleReclassify}
+                      showReclassify
+                      showOwnerDeadline
                     />
                   ))}
                 </div>
