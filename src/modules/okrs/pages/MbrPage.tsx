@@ -167,10 +167,10 @@ export default function MbrPage() {
         .in('kpi_id', kpiIds)
         .order('reference_date', { ascending: false });
 
-      const latestByKpi = new Map<string, { value: number; rag_status: string }>();
+      const latestByKpi = new Map<string, { value: number; rag_status: string; reference_date: string }>();
       for (const v of (latestValues || [])) {
         if (!latestByKpi.has(v.kpi_id)) {
-          latestByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status });
+          latestByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status, reference_date: v.reference_date });
         }
       }
 
@@ -182,6 +182,7 @@ export default function MbrPage() {
           ...kpi,
           latest_value: latest?.value ?? null,
           latest_rag_status: latest?.rag_status ?? 'no_data',
+          latest_reference_date: latest?.reference_date ?? null,
           areaName: areaData?.name ?? null,
           areaColor: areaData?.color ?? null,
           teamName: teamData?.name ?? null,
@@ -205,6 +206,7 @@ export default function MbrPage() {
         ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
         : null;
 
+      
       return {
         kpiId: kpi.id,
         name: kpi.name,
@@ -218,6 +220,8 @@ export default function MbrPage() {
         variationVsLastMonth: null,
         variationVsTarget: variation,
         requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
+        unit: kpi.unit ?? '%',
+        lastValueAt: kpi.latest_reference_date ?? null,
         scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'org',
         areaId: kpi.area_id ?? null,
         areaName: kpi.areaName,

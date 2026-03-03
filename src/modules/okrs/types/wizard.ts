@@ -180,6 +180,10 @@ export interface MbrKpiSnapshot {
   variationVsTarget: number | null;
   requiresStrategicDecision: boolean;
   impactAssessment?: string;
+  /** Unidade de medida do KPI (ex: '%', 'R$', 'Número') */
+  unit?: string;
+  /** Data do último valor registrado (ISO string) */
+  lastValueAt?: string | null;
   /** Escopo do KPI: org, area ou team */
   scope?: 'org' | 'area' | 'team';
   areaId?: string | null;
