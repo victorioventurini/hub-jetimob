@@ -3,6 +3,7 @@
  * 
  * Colapsável por padrão, exibe badge com contagem quando há registros.
  * Filtra e exibe somente decisions com sourceStep correspondente.
+ * Cada decisão registrada exibe owner e deadline inline via DecisionCard.
  */
 
 import { useState } from 'react';
@@ -10,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, X, ChevronDown, Lightbulb, Target, CheckCircle2 } from 'lucide-react';
+import { Plus, ChevronDown, Lightbulb, Target, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DecisionCard } from './DecisionCard';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -64,6 +66,10 @@ export function InlineDecisionInput({
 
     onDecisionsChange([...decisions, newDecision]);
     setText('');
+  };
+
+  const handleUpdate = (id: string, updates: Partial<TeamCheckinDecision>) => {
+    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, ...updates } : d));
   };
 
   const handleRemove = (id: string) => {
@@ -136,34 +142,19 @@ export function InlineDecisionInput({
             </Button>
           </div>
 
-          {/* Step decisions list */}
+          {/* Step decisions list — using DecisionCard with owner/deadline */}
           {stepDecisions.length > 0 && (
-            <div className="space-y-1.5">
-              {stepDecisions.map((decision) => {
-                const config = CATEGORY_CONFIG[decision.category];
-                const Icon = config.icon;
-
-                return (
-                  <div
-                    key={decision.id}
-                    className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm min-w-0 max-w-full"
-                  >
-                    <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <span className="flex-1 min-w-0 truncate">{decision.text}</span>
-                    <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", config.color)}>
-                      {config.label}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-destructive flex-shrink-0"
-                      onClick={() => handleRemove(decision.id)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                );
-              })}
+            <div className="space-y-2">
+              {stepDecisions.map((decision) => (
+                <DecisionCard
+                  key={decision.id}
+                  decision={decision}
+                  onUpdate={handleUpdate}
+                  onRemove={handleRemove}
+                  showReclassify
+                  showOwnerDeadline
+                />
+              ))}
             </div>
           )}
         </div>
