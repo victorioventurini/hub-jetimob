@@ -175,6 +175,8 @@ export function CollaboratorKpiStep({
         type: 'manual',
         message: 'Justificativa obrigatória para indicadores fora da meta',
       });
+      // Focus the notes field so the user sees the error
+      setTimeout(() => form.setFocus('notes'), 50);
       return;
     }
     
