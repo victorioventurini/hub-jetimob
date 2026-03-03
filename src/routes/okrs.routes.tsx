@@ -33,6 +33,7 @@ const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pag
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
 const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
+const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
 
 /**
  * Helper para wrapping consistente de rotas OKR
@@ -74,6 +75,7 @@ export const okrRoutes = (
     <Route path="/okrs/managers-checkin" element={<OkrRoute><ManagersCheckinPage /></OkrRoute>} />
     <Route path="/okrs/clevel-checkin" element={<OkrRoute><CLevelCheckinPage /></OkrRoute>} />
     <Route path="/okrs/checkins" element={<OkrRoute><CycleCheckinsPage /></OkrRoute>} />
+    <Route path="/okrs/ritual-history" element={<OkrRoute><RitualHistoryPage /></OkrRoute>} />
     
     {/* Quality & Analysis */}
     <Route path="/okrs/quality" element={<OkrRoute><OkrQualityPage /></OkrRoute>} />
