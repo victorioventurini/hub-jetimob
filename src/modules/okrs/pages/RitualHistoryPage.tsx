@@ -2,9 +2,10 @@
  * RitualHistoryPage - Histórico de rituais/wizards concluídos
  * 
  * Lista sessões concluídas com filtros, detalhe expandido e follow-up de decisões.
+ * Suporta deep-link via ?session={id} para abrir automaticamente uma sessão específica.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { HubLayout } from '@/components/layout/HubLayout';
@@ -27,6 +28,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
 import {
   useRitualHistory,
+  useRitualDetail,
   useUpdateDecisionFollowUp,
   WIZARD_TYPE_LABELS,
   type RitualHistoryItem,
@@ -62,6 +64,14 @@ const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
 export default function RitualHistoryPage() {
   usePageTitle('Histórico de Rituais');
 
+  // Deep-link: ?session={id}
+  const sessionState = useUrlState<string>({
+    key: 'session',
+    defaultValue: '',
+    parse: parsers.string,
+  });
+  const deepLinkSessionId = sessionState.value || null;
+
   // Filters
   const typeState = useUrlState<string>({
     key: 'type',
@@ -81,6 +91,24 @@ export default function RitualHistoryPage() {
 
   const { data: rituals, isLoading } = useRitualHistory(filters);
   const { teams } = useManageableTeamsFlat();
+
+  // Deep-link: fetch the specific session if not in the list (e.g. user is recipient but not author)
+  const { data: deepLinkSession, isLoading: isLoadingDeepLink } = useRitualDetail(
+    // Only fetch if we have a deep-link ID and it's NOT already in the list
+    deepLinkSessionId && rituals && !rituals.some(r => r.id === deepLinkSessionId)
+      ? deepLinkSessionId
+      : null
+  );
+
+  // Merge: if deep-link session exists and isn't in the list, prepend it
+  const mergedRituals = useMemo(() => {
+    if (!rituals) return rituals;
+    if (!deepLinkSession) return rituals;
+    if (rituals.some(r => r.id === deepLinkSession.id)) return rituals;
+    return [deepLinkSession, ...rituals];
+  }, [rituals, deepLinkSession]);
+
+  const anyLoading = isLoading || (!!deepLinkSessionId && isLoadingDeepLink);
 
   return (
     <HubLayout>
@@ -123,13 +151,13 @@ export default function RitualHistoryPage() {
         </div>
 
         {/* List */}
-        {isLoading ? (
+        {anyLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
               <Skeleton key={i} className="h-20 w-full rounded-lg" />
             ))}
           </div>
-        ) : !rituals || rituals.length === 0 ? (
+        ) : !mergedRituals || mergedRituals.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <History className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
@@ -138,8 +166,12 @@ export default function RitualHistoryPage() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {rituals.map(ritual => (
-              <RitualHistoryCard key={ritual.id} ritual={ritual} />
+            {mergedRituals.map(ritual => (
+              <RitualHistoryCard
+                key={ritual.id}
+                ritual={ritual}
+                autoExpand={ritual.id === deepLinkSessionId}
+              />
             ))}
           </div>
         )}
@@ -152,14 +184,23 @@ export default function RitualHistoryPage() {
 // RITUAL CARD
 // ============================================================
 
-function RitualHistoryCard({ ritual }: { ritual: RitualHistoryItem }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHistoryItem; autoExpand?: boolean }) {
+  const [isExpanded, setIsExpanded] = useState(autoExpand);
   const hasDecisions = ritual.decisions.length > 0;
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
 
+  // Auto-expand when deep-linked
+  useEffect(() => {
+    if (autoExpand) setIsExpanded(true);
+  }, [autoExpand]);
+
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className={cn('transition-shadow', isExpanded && 'shadow-md')}>
+      <Card className={cn(
+        'transition-shadow',
+        isExpanded && 'shadow-md',
+        autoExpand && 'ring-2 ring-primary/30',
+      )}>
         <CollapsibleTrigger asChild>
           <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
             <div className="flex items-center gap-3 min-w-0">
