@@ -64,11 +64,11 @@ export { WIZARD_TYPE_LABELS };
 // ============================================================
 
 const HISTORY_FIELDS = `
-  id, wizard_type, team_id, cycle_id, started_by, started_at,
+  id, bu_id, wizard_type, team_id, cycle_id, started_by, started_at,
   completed_at, decisions, reflection_data,
-  teams:team_id ( name ),
-  cycles:cycle_id ( name ),
-  profiles:started_by ( full_name )
+  teams!okr_wizard_sessions_team_id_fkey ( name ),
+  cycles!okr_wizard_sessions_cycle_id_fkey ( name ),
+  profiles!okr_wizard_sessions_started_by_fkey ( full_name )
 `;
 
 // ============================================================
@@ -88,6 +88,7 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
       let query = buSupabase
         .from('okr_wizard_sessions')
         .select(HISTORY_FIELDS)
+        .eq('bu_id', currentBu.id)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false })
         .limit(100);
