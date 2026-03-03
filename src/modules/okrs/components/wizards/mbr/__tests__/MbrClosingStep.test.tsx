@@ -56,10 +56,12 @@ describe('MbrClosingStep', () => {
     expect(screen.getByText(/comunicado no all hands/i)).toBeInTheDocument();
   });
 
-  it('renders feedback section', () => {
+  it('renders feedback section with star rating', () => {
     render(<MbrClosingStep {...defaultProps()} />);
     expect(screen.getByText(/como podemos melhorar essa reunião/i)).toBeInTheDocument();
     expect(screen.getByText(/feedback anônimo/i)).toBeInTheDocument();
+    // 5 star buttons for input
+    expect(screen.getAllByLabelText(/estrela/i)).toHaveLength(5);
   });
 
   it('calls onChecklistChange when checkbox toggled', () => {
@@ -74,25 +76,48 @@ describe('MbrClosingStep', () => {
     );
   });
 
-  it('adds feedback when submitted', () => {
+  it('add button disabled without star rating', () => {
+    render(<MbrClosingStep {...defaultProps()} />);
+    expect(screen.getByTestId('add-feedback-btn')).toBeDisabled();
+  });
+
+  it('adds feedback with rating when submitted', () => {
     const props = defaultProps();
     render(<MbrClosingStep {...props} />);
     
-    const textarea = screen.getByPlaceholderText(/sugestão de melhoria/i);
+    // Click 3rd star
+    const stars = screen.getAllByLabelText(/estrela/i);
+    fireEvent.click(stars[2]); // 3rd star = rating 3
+
+    // Optionally add text
+    const textarea = screen.getByPlaceholderText(/comentário opcional/i);
     fireEvent.change(textarea, { target: { value: 'Reunião muito longa' } });
     
-    // Press Enter to submit
-    fireEvent.keyDown(textarea, { key: 'Enter' });
+    // Submit
+    fireEvent.click(screen.getByTestId('add-feedback-btn'));
     
     expect(props.onRitualFeedbackChange).toHaveBeenCalledWith([
-      expect.objectContaining({ text: 'Reunião muito longa', status: 'pending' }),
+      expect.objectContaining({ rating: 3, text: 'Reunião muito longa', status: 'pending' }),
     ]);
   });
 
-  it('renders existing feedback items', () => {
+  it('adds feedback with rating only (no text)', () => {
+    const props = defaultProps();
+    render(<MbrClosingStep {...props} />);
+    
+    const stars = screen.getAllByLabelText(/estrela/i);
+    fireEvent.click(stars[4]); // 5th star = rating 5
+    fireEvent.click(screen.getByTestId('add-feedback-btn'));
+    
+    expect(props.onRitualFeedbackChange).toHaveBeenCalledWith([
+      expect.objectContaining({ rating: 5, text: '' }),
+    ]);
+  });
+
+  it('renders existing feedback items with stars', () => {
     const props = defaultProps();
     props.ritualFeedback = [
-      { id: 'fb-1', text: 'Melhorar agenda', status: 'pending', createdAt: new Date().toISOString() },
+      { id: 'fb-1', rating: 4, text: 'Melhorar agenda', status: 'pending', createdAt: new Date().toISOString() },
     ];
     render(<MbrClosingStep {...props} />);
     expect(screen.getByText('Melhorar agenda')).toBeInTheDocument();
@@ -101,11 +126,10 @@ describe('MbrClosingStep', () => {
   it('removes feedback when X clicked', () => {
     const props = defaultProps();
     props.ritualFeedback = [
-      { id: 'fb-1', text: 'Remove this', status: 'pending', createdAt: new Date().toISOString() },
+      { id: 'fb-1', rating: 3, text: 'Remove this', status: 'pending', createdAt: new Date().toISOString() },
     ];
     render(<MbrClosingStep {...props} />);
     
-    // The X button is small, find it near the feedback text
     const removeButtons = screen.getAllByRole('button');
     const removeBtn = removeButtons.find(b => b.querySelector('.lucide-x'));
     if (removeBtn) fireEvent.click(removeBtn);
@@ -115,7 +139,7 @@ describe('MbrClosingStep', () => {
 
   it('GATE: disables complete when checklist incomplete', () => {
     const props = defaultProps();
-    props.ritualFeedback = [{ id: 'fb-1', text: 'Some feedback', status: 'pending', createdAt: '' }];
+    props.ritualFeedback = [{ id: 'fb-1', rating: 4, text: 'Some feedback', status: 'pending', createdAt: '' }];
     render(<MbrClosingStep {...props} />);
     
     expect(screen.getByTestId('complete-btn')).toBeDisabled();
@@ -135,7 +159,7 @@ describe('MbrClosingStep', () => {
   it('GATE: enables complete when checklist full + feedback present', () => {
     const props = defaultProps();
     props.checklist = { ...fullChecklist };
-    props.ritualFeedback = [{ id: 'fb-1', text: 'Good meeting', status: 'pending', createdAt: '' }];
+    props.ritualFeedback = [{ id: 'fb-1', rating: 5, text: 'Good meeting', status: 'pending', createdAt: '' }];
     render(<MbrClosingStep {...props} />);
     
     expect(screen.getByTestId('complete-btn')).not.toBeDisabled();
@@ -144,7 +168,7 @@ describe('MbrClosingStep', () => {
   it('calls onComplete when complete clicked', () => {
     const props = defaultProps();
     props.checklist = { ...fullChecklist };
-    props.ritualFeedback = [{ id: 'fb-1', text: 'OK', status: 'pending', createdAt: '' }];
+    props.ritualFeedback = [{ id: 'fb-1', rating: 4, text: 'OK', status: 'pending', createdAt: '' }];
     render(<MbrClosingStep {...props} />);
     
     screen.getByTestId('complete-btn').click();
