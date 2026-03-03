@@ -176,12 +176,12 @@ async function loadCLevelSessionData(
       .eq('bu_id', buId)
       .eq('status', 'active')
       .is('deleted_at', null),
-    // BU admins via user_bu_roles
+    // BU admins via bu_user_memberships (per DATA_MODEL_REGISTRY)
     serviceClient
-      .from('user_bu_roles')
+      .from('bu_user_memberships')
       .select('user_id')
       .eq('bu_id', buId)
-      .eq('role', 'admin'),
+      .eq('role_in_bu', 'admin'),
   ]);
 
   const session = sessionResult.data;
@@ -207,7 +207,7 @@ async function loadCLevelSessionData(
     recipientAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
   }
 
-  // Add BU admin auth IDs directly (user_bu_roles.user_id = auth.users.id)
+  // Add BU admin auth IDs directly (bu_user_memberships.user_id = auth.users.id)
   const adminAuthIds = (buAdminsResult.data || []).map((r: any) => r.user_id).filter(Boolean);
   recipientAuthIds.push(...adminAuthIds);
 
