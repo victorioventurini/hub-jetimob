@@ -153,19 +153,20 @@ describe('MbrTeamOkrsDetailStep', () => {
     expect(screen.getByText(/Nenhum time com OKRs para revisar/)).toBeInTheDocument();
   });
 
-  it('renders current team name in header', () => {
+  it('renders generic detail header title', () => {
     const teams = [createTeamSnapshot({ teamName: 'Dev Backend' })];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getByText('Dev Backend')).toBeInTheDocument();
+    expect(screen.getByText('Análise por Time')).toBeInTheDocument();
   });
 
-  it('shows team navigation with correct count', () => {
+  it('renders all team names in same page', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', teamName: 'Team A' }),
       createTeamSnapshot({ teamId: 't2', teamName: 'Team B' }),
     ];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getByText('1/2')).toBeInTheDocument();
+    expect(screen.getByText('Team A')).toBeInTheDocument();
+    expect(screen.getByText('Team B')).toBeInTheDocument();
   });
 
   it('renders objectives and KRs', () => {
@@ -176,7 +177,7 @@ describe('MbrTeamOkrsDetailStep', () => {
     expect(screen.getByText('Cobertura de testes')).toBeInTheDocument();
   });
 
-  it('shows reviewed checkbox', () => {
+  it('shows reviewed checkbox per team', () => {
     const teams = [createTeamSnapshot()];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
     expect(screen.getByText(/Marcar "Dev Backend" como revisado/)).toBeInTheDocument();
@@ -231,6 +232,6 @@ describe('MbrTeamOkrsDetailStep', () => {
       createTeamSnapshot({ teamId: 't2', reviewed: false }),
     ];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getByText('1 de 2 times revisados')).toBeInTheDocument();
+    expect(screen.getAllByText('1 de 2 times revisados').length).toBeGreaterThan(0);
   });
 });
