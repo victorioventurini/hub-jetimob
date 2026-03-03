@@ -31,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
+import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
@@ -267,12 +268,7 @@ export function MbrTeamOkrsDetailStep({
                                 <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
                               )}
                               {hasFullData && (
-                                <Badge
-                                  variant="secondary"
-                                  className={cn('text-[10px] h-5 px-1.5 flex-shrink-0 whitespace-nowrap', RAG_STATUS_COLORS[rag].badge)}
-                                >
-                                  {ragLabel(kr.status)}
-                                </Badge>
+                                <OkrStatusBadge status={rag} type="kr" className="flex-shrink-0" />
                               )}
                             </div>
                             {/* Progress bar with base/current/target */}

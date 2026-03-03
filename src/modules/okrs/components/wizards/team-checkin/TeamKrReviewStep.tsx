@@ -11,6 +11,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
+import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -252,20 +253,7 @@ export function TeamKrReviewStep({
                     Revisado
                   </Badge>
                 )}
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "text-xs",
-                    currentKr.status === 'green' && RAG_STATUS_COLORS.green.badge,
-                    currentKr.status === 'yellow' && RAG_STATUS_COLORS.yellow.badge,
-                    currentKr.status === 'red' && RAG_STATUS_COLORS.red.badge
-                  )}
-                >
-                  {currentKr.status === 'green' && 'No caminho'}
-                  {currentKr.status === 'yellow' && 'Atenção'}
-                  {currentKr.status === 'red' && 'Em risco'}
-                  {currentKr.status === 'not_started' && 'Não iniciado'}
-                </Badge>
+                <OkrStatusBadge status={currentKr.status} type="kr" />
               </div>
 
               {/* Title */}
