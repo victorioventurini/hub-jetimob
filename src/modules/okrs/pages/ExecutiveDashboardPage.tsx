@@ -13,7 +13,6 @@ import { RiskKrsList } from '../components/RiskKrsList';
 import { AlignmentMap } from '../components/AlignmentMap';
 import { ProgressSummary } from '../components/ProgressSummary';
 import { YearSelect } from '@/components/selects';
-import { ManagersCheckinWizardCard } from '../components/wizards/managers-checkin/ManagersCheckinWizardCard';
 import { CLevelCheckinWizardCard } from '../components/wizards/clevel-checkin/CLevelCheckinWizardCard';
 import { MbrWizardCard } from '../components/wizards/mbr/MbrWizardCard';
 import { useLastCompletedSession } from '../hooks/useLastCompletedSession';
@@ -78,13 +77,7 @@ export default function ExecutiveDashboardPage() {
         />
 
         {/* Strategic Wizard Entry Points */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ManagersCheckinWizardCard
-            areaCount={teams?.length || 0}
-            crossDependenciesCount={0}
-            blockedItemsCount={redKrs.length}
-            isLoading={isLoading}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <CLevelCheckinWizardCard
             companyOkrCount={totalOrgObjectives}
             overallProgress={avgProgress}
