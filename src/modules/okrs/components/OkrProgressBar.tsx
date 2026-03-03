@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { OkrRagStatus, calculateProgress, OkrDirection } from '../types';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import { Rocket } from 'lucide-react';
 import {
   Tooltip,
@@ -71,7 +72,7 @@ export function OkrProgressBar({
       {showLabels && (
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
           <span>
-            {safeFormat(current)} {unit}
+            {formatValueWithUnit(current, unit)}
           </span>
           <div className="flex items-center gap-1.5">
             {isOverachieved && (
@@ -121,8 +122,8 @@ export function OkrProgressBar({
       </div>
       {showLabels && (
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-          <span>Base: {safeFormat(baseline)}</span>
-          <span>Meta: {safeFormat(target)}</span>
+          <span>Base: {formatValueWithUnit(baseline, unit)}</span>
+          <span>Meta: {formatValueWithUnit(target, unit)}</span>
         </div>
       )}
     </div>

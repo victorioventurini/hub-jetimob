@@ -236,6 +236,7 @@ export interface MbrTeamOkrObjectiveSnapshot {
     target: number;
     direction: 'up' | 'down';
     unit: string;
+    lastCheckinAt: string | null;
   }>;
 }
 

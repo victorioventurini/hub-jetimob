@@ -50,9 +50,9 @@ const createTeamSnapshot = (overrides: Partial<MbrTeamOkrSnapshot> = {}): MbrTea
       krsStagnant: 0,
       trend: 'improving',
       keyResults: [
-        { krId: 'kr-1', title: 'Reduzir latência p95', progress: 70, status: 'on_track', ownerName: 'João', baseline: 0, current: 70, target: 100, direction: 'up' as const, unit: 'ms' },
-        { krId: 'kr-2', title: 'Cobertura de testes', progress: 50, status: 'on_track', ownerName: 'Maria', baseline: 0, current: 50, target: 100, direction: 'up' as const, unit: '%' },
-        { krId: 'kr-3', title: 'Uptime 99.9%', progress: 60, status: 'on_track', ownerName: null, baseline: 0, current: 60, target: 100, direction: 'up' as const, unit: '%' },
+        { krId: 'kr-1', title: 'Reduzir latência p95', progress: 70, status: 'on_track', ownerName: 'João', baseline: 0, current: 70, target: 100, direction: 'up' as const, unit: 'ms', lastCheckinAt: '2026-02-28T10:00:00Z' },
+        { krId: 'kr-2', title: 'Cobertura de testes', progress: 50, status: 'on_track', ownerName: 'Maria', baseline: 0, current: 50, target: 100, direction: 'up' as const, unit: '%', lastCheckinAt: null },
+        { krId: 'kr-3', title: 'Uptime 99.9%', progress: 60, status: 'on_track', ownerName: null, baseline: 0, current: 60, target: 100, direction: 'up' as const, unit: '%', lastCheckinAt: '2026-03-01T14:30:00Z' },
       ],
     },
   ],

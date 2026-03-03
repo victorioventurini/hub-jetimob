@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
+import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
@@ -270,6 +271,8 @@ export function MbrTeamOkrsDetailStep({
                               size="sm"
                               showLabels
                             />
+                            {/* Last checkin date */}
+                            <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} />
                           </div>
                         );
                       })}
