@@ -45,27 +45,27 @@ export function WizardStepScaffold({
   className,
 }: WizardStepScaffoldProps) {
   return (
-    <div className={cn('flex flex-col h-full min-h-0 overflow-hidden', className)}>
+    <div className={cn('flex flex-col h-full w-full min-w-0 max-w-full min-h-0 overflow-hidden', className)}>
       {/* Fixed header */}
-      <div className="shrink-0">{header}</div>
+      <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">{header}</div>
 
       {/* Optional fixed top area */}
-      {topFixed && <div className="shrink-0">{topFixed}</div>}
+      {topFixed && <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">{topFixed}</div>}
 
       {/* Scrollable content — the ONLY region that grows.
           Wrapping div with h-0 + flex-1 forces a concrete height
           so Radix ScrollArea viewport can measure and scroll. */}
-      <div className="flex-1 min-h-0 h-0 overflow-hidden">
-        <ScrollArea className="h-full [&>div[data-radix-scroll-area-viewport]]:!overflow-x-hidden">
+      <div className="flex-1 min-h-0 h-0 min-w-0 max-w-full overflow-hidden">
+        <ScrollArea className="h-full w-full min-w-0 max-w-full [&_[data-radix-scroll-area-viewport]]:!overflow-x-hidden [&_[data-radix-scroll-area-viewport]>div]:!block [&_[data-radix-scroll-area-viewport]>div]:!w-full [&_[data-radix-scroll-area-viewport]>div]:!max-w-full">
           {children}
         </ScrollArea>
       </div>
 
       {/* Optional fixed bottom area */}
-      {bottomFixed && <div className="shrink-0">{bottomFixed}</div>}
+      {bottomFixed && <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">{bottomFixed}</div>}
 
       {/* Fixed footer */}
-      <div className="shrink-0">{footer}</div>
+      <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">{footer}</div>
     </div>
   );
 }

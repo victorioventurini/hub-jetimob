@@ -211,9 +211,9 @@ export function MbrTeamOkrsDetailStep({
     >
       {/* Scrollable content — single team's OKRs */}
       {currentTeam && (
-        <div className="p-6 space-y-4 min-w-0 max-w-full overflow-x-hidden">
+        <div className="p-6 space-y-4 w-full min-w-0 max-w-full overflow-x-hidden">
           {/* Team header card */}
-          <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+          <div className="flex flex-wrap items-center gap-2 w-full min-w-0 max-w-full overflow-x-hidden">
             <Users className="h-4 w-4 text-primary shrink-0" />
             <p className="font-semibold truncate min-w-0 flex-1">{currentTeam.teamName}</p>
             <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">
@@ -226,13 +226,13 @@ export function MbrTeamOkrsDetailStep({
             <Card
               key={objective.objectiveId}
               className={cn(
-                'overflow-hidden min-w-0 max-w-full',
+                'w-full overflow-hidden min-w-0 max-w-full',
                 objective.krsAtRisk > 0 && RAG_STATUS_COLORS.red.border
               )}
             >
-              <CardContent className="p-4 space-y-2 min-w-0">
+              <CardContent className="p-4 space-y-2 w-full min-w-0 max-w-full overflow-x-hidden">
                 {/* Objective header */}
-                <div className="flex items-center gap-2 min-w-0 max-w-full">
+                <div className="flex items-center gap-2 w-full min-w-0 max-w-full overflow-x-hidden">
                   <Target className="h-3.5 w-3.5 text-primary shrink-0" />
                   <p className="text-sm font-medium truncate flex-1 min-w-0">{objective.title}</p>
                   <span className="text-xs font-medium shrink-0">{objective.progress}%</span>
@@ -245,21 +245,21 @@ export function MbrTeamOkrsDetailStep({
                 )}
 
                 {/* KRs */}
-                <div className="space-y-1.5 min-w-0">
+                <div className="space-y-1.5 w-full min-w-0 max-w-full overflow-x-hidden">
                   {objective.keyResults.map((kr) => {
                     const rag = toRagStatus(kr.status ?? 'not_started');
 
                     return (
                       <div
                         key={kr.krId}
-                        className={cn('p-2 rounded border min-w-0 max-w-full overflow-x-hidden', RAG_STATUS_COLORS[rag].border)}
+                        className={cn('p-2 rounded border w-full min-w-0 max-w-full overflow-x-hidden', RAG_STATUS_COLORS[rag].border)}
                       >
-                        <div className="flex items-center gap-2 min-w-0 max-w-full">
+                        <div className="flex items-center gap-2 w-full min-w-0 max-w-full overflow-x-hidden">
                           <p className="text-xs font-medium truncate flex-1 min-w-0">{kr.title}</p>
                           <OkrStatusBadge status={rag} type="kr" className="shrink-0 text-[10px]" />
                         </div>
 
-                        <div className="mt-1.5 min-w-0">
+                        <div className="mt-1.5 w-full min-w-0 max-w-full overflow-x-hidden">
                           <OkrProgressBar
                             baseline={kr.baseline}
                             current={kr.current}
@@ -268,15 +268,16 @@ export function MbrTeamOkrsDetailStep({
                             status={rag}
                             unit={kr.unit ?? '%'}
                             size="sm"
+                            className="w-full min-w-0 max-w-full"
                           />
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-muted-foreground min-w-0 w-full overflow-x-hidden">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-muted-foreground min-w-0 w-full max-w-full overflow-x-hidden">
                           {kr.ownerName && (
                             <span className="truncate min-w-0 max-w-full flex-1">{kr.ownerName}</span>
                           )}
-                          <div className="min-w-0 max-w-full flex-1">
-                            <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} />
+                          <div className="min-w-0 max-w-full flex-1 overflow-x-hidden">
+                            <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} className="w-full min-w-0 max-w-full" />
                           </div>
                         </div>
                       </div>
