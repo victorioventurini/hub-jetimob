@@ -70,15 +70,7 @@ function toRagKey(status: string): keyof typeof RAG_STATUS_COLORS {
   return 'not_started';
 }
 
-function ragLabel(status: string): string {
-  switch (status) {
-    case 'green': return 'No caminho';
-    case 'yellow': return 'Atenção';
-    case 'red': return 'Em risco';
-    case 'not_started': return 'Não iniciado';
-    default: return status;
-  }
-}
+// ragLabel removed — OkrStatusBadge handles labels canonically
 
 // ============================================================
 // COMPONENT
@@ -262,7 +254,6 @@ export function MbrTeamOkrsDetailStep({
                           >
                             {/* KR header row */}
                             <div className="flex items-center gap-2">
-                              <div className={cn('w-2 h-2 rounded-full flex-shrink-0', RAG_STATUS_COLORS[rag].dot)} />
                               <span className="truncate flex-1 min-w-0 font-medium">{kr.title}</span>
                               {kr.ownerName && (
                                 <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
