@@ -14,6 +14,7 @@ import {
   useGenericWizardDraft,
   useActiveCycles,
   useLastCompletedSession,
+  useOrgObjectives,
 } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -147,6 +148,57 @@ export default function MbrPage() {
     seededKpisRef.current = true;
   }, [orgKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
 
+  // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
+  const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(currentBu?.id);
+  const seededOkrsRef = useRef(false);
+
+  useEffect(() => {
+    if (seededOkrsRef.current) return;
+    if (isLoadingOkrs || !orgObjectives || orgObjectives.length === 0) return;
+    if (draft.data.orgOkrSnapshots.length > 0) {
+      seededOkrsRef.current = true;
+      return;
+    }
+
+    const snapshots: MbrOrgOkrSnapshot[] = orgObjectives.map(obj => {
+      const krs = obj.key_results || [];
+      const avgProgress = krs.length > 0
+        ? krs.reduce((sum: number, kr: any) => {
+            const baseline = Number(kr.baseline ?? 0);
+            const current = Number(kr.current_value ?? baseline);
+            const target = Number(kr.target ?? baseline);
+            const direction = kr.direction || 'up';
+            if (direction === 'up') {
+              if (target === baseline) return sum + (current >= target ? 100 : 0);
+              return sum + Math.max(0, ((current - baseline) / (target - baseline)) * 100);
+            } else {
+              if (baseline === target) return sum + (current <= target ? 100 : 0);
+              return sum + Math.max(0, ((baseline - current) / (baseline - target)) * 100);
+            }
+          }, 0) / krs.length
+        : 0;
+
+      // Determine trend from status
+      const trend: 'improving' | 'stable' | 'declining' = 
+        obj.status === 'completed' ? 'improving'
+        : avgProgress >= 70 ? 'improving'
+        : avgProgress >= 40 ? 'stable'
+        : 'declining';
+
+      return {
+        objectiveId: obj.id,
+        title: obj.title,
+        progress: Math.round(avgProgress),
+        status: obj.status,
+        trend,
+        remainsStrategicPriority: true,
+      };
+    });
+
+    updateDraft({ orgOkrSnapshots: snapshots });
+    seededOkrsRef.current = true;
+  }, [orgObjectives, isLoadingOkrs, draft.data.orgOkrSnapshots.length, updateDraft]);
+
   // Load previous MBR pending items on first load
   useEffect(() => {
     if (!currentBu?.id || draft.data.previousMbrPendingItems.length > 0) return;
@@ -255,7 +307,7 @@ export default function MbrPage() {
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
   // Loading
-  if (isLoadingCycles || isLoadingKpis) {
+  if (isLoadingCycles || isLoadingKpis || isLoadingOkrs) {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
   }
 
