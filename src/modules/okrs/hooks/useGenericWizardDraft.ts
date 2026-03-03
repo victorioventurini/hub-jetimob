@@ -240,6 +240,21 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       console.error('Failed to persist wizard draft:', e);
     }
   }, 500);
+
+  // Persist to localStorage immediately (used on critical actions like refresh/save)
+  const persistToStorageNow = useCallback((draftToSave: GenericWizardDraft<TStep, TData>) => {
+    if (!enabled) return;
+
+    try {
+      const toSave = {
+        ...draftToSave,
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(storageKey, JSON.stringify(toSave));
+    } catch (e) {
+      console.error('Failed to persist wizard draft immediately:', e);
+    }
+  }, [enabled, storageKey]);
   
   // Save draft to database mutation
   const saveDraftMutation = useMutation({
@@ -299,16 +314,24 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   
   // Update draft data
   const updateDraft = useCallback((updates: Partial<TData>) => {
-    setDraft(prev => ({
-      ...prev,
-      data: { ...prev.data, ...updates },
-    }));
+    setDraft(prev => {
+      const nextDraft = {
+        ...prev,
+        data: { ...prev.data, ...updates },
+      };
+      persistToStorageNow(nextDraft);
+      return nextDraft;
+    });
     setIsDirty(true);
-  }, []);
+  }, [persistToStorageNow]);
   
   // Set step — sync with URL param ?step= via replaceState (no history entries)
   const setStep = useCallback((step: TStep) => {
-    setDraft(prev => ({ ...prev, currentStep: step }));
+    setDraft(prev => {
+      const nextDraft = { ...prev, currentStep: step };
+      persistToStorageNow(nextDraft);
+      return nextDraft;
+    });
     setIsDirty(true);
     // Sync step to URL via replaceState (bypasses React Router transitions)
     const url = new URL(window.location.href);
@@ -318,12 +341,13 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       url.searchParams.set('step', step);
     }
     window.history.replaceState(window.history.state, '', url.toString());
-  }, [defaultStep]);
+  }, [defaultStep, persistToStorageNow]);
   
   // Save draft explicitly
   const saveDraft = useCallback(async () => {
+    persistToStorageNow(draft);
     await saveDraftMutation.mutateAsync(draft);
-  }, [saveDraftMutation, draft]);
+  }, [saveDraftMutation, draft, persistToStorageNow]);
   
   // Discard draft and start fresh
   const discardDraft = useCallback(async () => {
@@ -438,6 +462,20 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       persistToStorage(draft);
     }
   }, [draft, isDirty, enabled, persistToStorage]);
+
+  // Flush latest draft on browser refresh/close to avoid losing recent typing
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handleBeforeUnload = () => {
+      if (isDirty) {
+        persistToStorageNow(draft);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [enabled, isDirty, draft, persistToStorageNow]);
   
   // Update teamId/cycleId in draft when they change
   useEffect(() => {
