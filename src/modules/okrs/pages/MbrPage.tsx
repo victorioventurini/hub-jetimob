@@ -248,6 +248,7 @@ export default function MbrPage() {
             owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name)
           )
         `)
+        .eq('bu_id', currentBuId!)
         .eq('cycle_id', quarterlyCycle!.id)
         .is('deleted_at', null)
         .is('cancelled_at', null)
