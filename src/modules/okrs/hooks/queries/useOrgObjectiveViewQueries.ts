@@ -16,6 +16,7 @@ import {
   calculateAggregatedProgress,
   AGGREGATE_FIELDS,
 } from './aggregateUtils';
+import { getEffectiveKrRagStatus } from '../../utils/effectiveStatus';
 import type { 
   OrgObjectiveWithKrs, 
   OrgKrWithTeamKrs, 
@@ -175,9 +176,9 @@ export function useOrgObjectiveView(objectiveId: string) {
           target: orgKr.target,
           direction: orgKr.direction,
           unit: orgKr.unit,
-          status: orgKr.status,
+          status: getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value),
           progress,
-          trend: determineTrend(orgKr.status, progress),
+          trend: determineTrend(getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value), progress),
           linkedTeamKrs,
         };
       });
@@ -309,9 +310,9 @@ export function useAllOrgObjectivesView(year?: number) {
             target: orgKr.target,
             direction: orgKr.direction,
             unit: orgKr.unit,
-            status: orgKr.status,
+            status: getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value),
             progress,
-            trend: determineTrend(orgKr.status, progress),
+            trend: determineTrend(getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value), progress),
             linkedTeamKrs,
           };
         });

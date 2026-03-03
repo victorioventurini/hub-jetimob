@@ -12,6 +12,7 @@ import { useBu } from '@/contexts/BuContext';
 import { OrgKrFormDialog } from './OrgKrFormDialog';
 import { OrgObjectiveFormDialog } from './OrgObjectiveFormDialog';
 import type { OkrStatus, OkrRagStatus, OkrDirection } from '../types';
+import { getEffectiveKrRagStatus } from '../utils/effectiveStatus';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -274,7 +275,7 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
-                        <OkrStatusBadge status={kr.status as 'green' | 'yellow' | 'red' | 'not_started'} type="kr" />
+                        <OkrStatusBadge status={getEffectiveKrRagStatus(kr.status as OkrRagStatus, kr.baseline, kr.current_value)} type="kr" />
                       </div>
                     </div>
                   </div>

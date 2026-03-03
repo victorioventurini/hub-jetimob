@@ -6,6 +6,7 @@
 
 import type { OkrDirection, OkrRagStatus } from '../../types';
 import type { OrgKrWithTeamKrs } from './aggregateTypes';
+import { getEffectiveKrRagStatus } from '../../utils/effectiveStatus';
 
 export function calculateProgress(baseline: number, current: number, target: number, direction: OkrDirection): number {
   if (direction === 'up') {
@@ -30,9 +31,10 @@ export function determineTrend(status: OkrRagStatus, _progress: number): 'up' | 
 export function calculateAggregatedStatus(orgKrs: OrgKrWithTeamKrs[]): 'on_track' | 'at_risk' | 'off_track' {
   if (orgKrs.length === 0) return 'off_track';
   
-  const redCount = orgKrs.filter(kr => kr.status === 'red').length;
-  const yellowCount = orgKrs.filter(kr => kr.status === 'yellow').length;
-  const greenCount = orgKrs.filter(kr => kr.status === 'green').length;
+  const effectiveStatuses = orgKrs.map(kr => getEffectiveKrRagStatus(kr.status, kr.baseline, kr.current_value));
+  const redCount = effectiveStatuses.filter(s => s === 'red').length;
+  const yellowCount = effectiveStatuses.filter(s => s === 'yellow').length;
+  const greenCount = effectiveStatuses.filter(s => s === 'green').length;
   
   if (redCount > orgKrs.length / 2) return 'off_track';
   if (redCount > 0 || yellowCount > orgKrs.length / 3) return 'at_risk';
