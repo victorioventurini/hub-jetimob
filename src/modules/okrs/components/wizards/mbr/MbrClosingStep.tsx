@@ -1,7 +1,7 @@
 /**
  * MbrClosingStep - Etapa 5: Encerramento & Governança
  * 
- * Checklist obrigatório de 4 itens + feedback anônimo obrigatório.
+ * Checklist obrigatório de 4 itens + feedback anônimo com rating 1-5 estrelas.
  */
 
 import { useState } from 'react';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardLastStepFooter } from '../shared';
 import type {
@@ -37,6 +37,64 @@ export interface MbrClosingStepProps {
 }
 
 // ============================================================
+// INLINE STAR RATING
+// ============================================================
+
+function StarRatingInput({
+  value,
+  onChange,
+  size = 20,
+}: {
+  value: number;
+  onChange: (rating: number) => void;
+  size?: number;
+}) {
+  const [hovered, setHovered] = useState(0);
+
+  return (
+    <div className="flex items-center gap-0.5" onMouseLeave={() => setHovered(0)}>
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= (hovered || value);
+        return (
+          <button
+            key={star}
+            type="button"
+            aria-label={`${star} estrela${star > 1 ? 's' : ''}`}
+            className="p-0.5 transition-colors"
+            onMouseEnter={() => setHovered(star)}
+            onClick={() => onChange(star)}
+          >
+            <Star
+              size={size}
+              className={cn(
+                'transition-colors',
+                filled ? 'text-yellow-400' : 'text-muted-foreground',
+              )}
+              fill={filled ? 'currentColor' : 'none'}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function StarRatingDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={size}
+          className={cn(star <= rating ? 'text-yellow-400' : 'text-muted-foreground/40')}
+          fill={star <= rating ? 'currentColor' : 'none'}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -50,21 +108,24 @@ export function MbrClosingStep({
   onBack,
 }: MbrClosingStepProps) {
   const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackRating, setFeedbackRating] = useState(0);
 
   const handleCheckChange = (key: keyof MbrGovernanceChecklist, value: boolean) => {
     onChecklistChange({ ...checklist, [key]: value });
   };
 
   const handleAddFeedback = () => {
-    if (!feedbackText.trim()) return;
+    if (feedbackRating < 1) return;
     const fb: RitualImprovementFeedback = {
       id: `fb-${Date.now()}`,
+      rating: feedbackRating,
       text: feedbackText.trim(),
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
     onRitualFeedbackChange([...ritualFeedback, fb]);
     setFeedbackText('');
+    setFeedbackRating(0);
   };
 
   const handleRemoveFeedback = (id: string) => {
@@ -149,37 +210,48 @@ export function MbrClosingStep({
               Feedback anônimo — não será associado ao seu nome.
             </p>
 
-            <div className="flex gap-2">
-              <Textarea
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="Sugestão de melhoria..."
-                className="text-sm min-h-[48px]"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddFeedback();
-                  }
-                }}
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 w-8 p-0 flex-shrink-0 self-end"
-                onClick={handleAddFeedback}
-                disabled={!feedbackText.trim()}
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <StarRatingInput value={feedbackRating} onChange={setFeedbackRating} />
+                <span className="text-xs text-muted-foreground">
+                  {feedbackRating === 0 ? 'Selecione uma nota' : `${feedbackRating}/5`}
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <Textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="Comentário opcional..."
+                  className="text-sm min-h-[48px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddFeedback();
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-8 p-0 flex-shrink-0 self-end"
+                  onClick={handleAddFeedback}
+                  disabled={feedbackRating < 1}
+                  data-testid="add-feedback-btn"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
 
             {ritualFeedback.length > 0 && (
               <div className="space-y-2">
                 {ritualFeedback.map((fb) => (
                   <Card key={fb.id}>
-                    <CardContent className="p-3 flex items-center gap-2">
-                      <MessageSquare className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <p className="text-sm flex-1">{fb.text}</p>
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <StarRatingDisplay rating={fb.rating} />
+                      {fb.text && <p className="text-sm flex-1">{fb.text}</p>}
+                      {!fb.text && <span className="flex-1" />}
                       <Button
                         variant="ghost"
                         size="icon"

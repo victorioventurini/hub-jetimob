@@ -227,6 +227,7 @@ export interface MbrGovernanceChecklist {
 /** Feedback anônimo sobre melhoria do rito */
 export interface RitualImprovementFeedback {
   id: string;
+  rating: number;
   text: string;
   status: 'pending' | 'implement' | 'evaluated' | 'discarded';
   createdAt: string;
