@@ -18,6 +18,9 @@ import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-p
 import { TeamCheckinWizardCard } from "@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard";
 import { TeamOkrCreationWizardCard } from "@/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizardCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { History } from "lucide-react";
 
 export function LeaderDashboard() {
   const {
@@ -120,6 +123,16 @@ export function LeaderDashboard() {
               pendingKrsCount={summary?.okrs?.pending_checkins || 0}
               isLoading={isDashboardLoading}
             />
+          </div>
+
+          {/* Ritual History Quick Access */}
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/okrs/ritual-history" className="gap-2">
+                <History className="h-4 w-4" />
+                Histórico de Rituais
+              </Link>
+            </Button>
           </div>
         </section>
       )}

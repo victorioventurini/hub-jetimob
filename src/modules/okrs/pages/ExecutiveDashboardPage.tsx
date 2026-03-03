@@ -17,6 +17,9 @@ import { CLevelCheckinWizardCard } from '../components/wizards/clevel-checkin/CL
 import { MbrWizardCard } from '../components/wizards/mbr/MbrWizardCard';
 import { useLastCompletedSession } from '../hooks/useLastCompletedSession';
 import { PageHeader } from '@/components/ui/page-header';
+import { Link } from 'react-router-dom';
+import { History } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ExecutiveDashboardPage() {
   usePageTitle("Dashboard Executivo - OKRs");
@@ -88,6 +91,16 @@ export default function ExecutiveDashboardPage() {
             lastMbrDate={lastMbrDate}
             isLoading={loadingMbr}
           />
+        </div>
+
+        {/* Ritual History Quick Access */}
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/okrs/ritual-history" className="gap-2">
+              <History className="h-4 w-4" />
+              Histórico de Rituais
+            </Link>
+          </Button>
         </div>
 
         {/* KPI Cards */}
