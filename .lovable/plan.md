@@ -1,73 +1,57 @@
 
 
-## Plano: Correções e Testes E2E para E-mails Pós-Wizard
+## Diagnóstico — Histórico de Rituais vazio
 
-### Pre-checklist Concluído
+### Pre-Checklist Concluído
 
-Documentos analisados: TCR v3.9.0, IDENTITY_CONVENTION v2.2.0, PERMISSIONS_AND_RBAC_MODEL v1.5.0, DATA_MODEL_REGISTRY, SCHEMA_QUICK_REFERENCE. Todas as 4 Edge Functions e os 2 triggers frontend foram inspecionados.
+| Documento | Versão | Consultado |
+|-----------|--------|------------|
+| TCR | v3.9.0 | Sim (`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`) |
+| IDENTITY_CONVENTION | v2.2.0 | Sim (`docs/canonical/IDENTITY_CONVENTION.md`) |
+| PERMISSIONS_AND_RBAC_MODEL | v1.5.0 | Sim (`docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`) |
+| DATA_MODEL_REGISTRY | v1.2.2 | Sim (`docs/canonical/DATA_MODEL_REGISTRY.md`) |
+| BU_SCOPED_SUPABASE_RULES | v4.1.0 | Sim (contexto adicional) |
+| DEVELOPMENT_STANDARDS | — | Sim (via TCR links) |
+| Schema `profiles` (types.ts) | — | Sim — **confirmado: não existe coluna `full_name`** |
 
----
+### Causa Raiz
 
-### Problemas Encontrados
+**Arquivo:** `src/modules/okrs/hooks/useRitualHistory.ts`, linha 71
 
-| # | Severidade | Problema | Arquivo |
-|---|-----------|----------|---------|
-| 1 | **CRÍTICO** | `clevel-checkin-summary` consulta tabela `user_bu_roles` que **NÃO EXISTE**. A tabela correta é `bu_user_memberships` com `role_in_bu = 'admin'` | `clevel-checkin-summary/index.ts:181` |
-| 2 | **CRÍTICO** | `clevel-checkin-summary` e `collaborator-checkin-summary` **não estão no `config.toml`** — falharão com 401 (JWT) | `supabase/config.toml` |
-| 3 | **MÉDIO** | `clevel-checkin-summary` assume `user_bu_roles.user_id = auth.users.id`, mas per IDENTITY_CONVENTION, `bu_user_memberships.user_id` armazena `auth.users.id` — isso está correto, mas o nome da tabela está errado | `clevel-checkin-summary/index.ts:210` |
-| 4 | **BAIXO** | C-Level trigger no frontend faz `await` na invocação APÓS `navigate('/okrs')` — a navegação pode cancelar o fetch | `CLevelCheckinPage.tsx:170-186` |
+A query `HISTORY_FIELDS` referencia `profiles.full_name`, mas essa coluna **não existe** na tabela `profiles`. As colunas disponíveis são `display_name`, `first_name` e `last_name` (confirmado via `src/integrations/supabase/types.ts` linhas 6624-6629).
 
----
+O PostgREST retorna erro 400 na tentativa de selecionar coluna inexistente. O `throw error` (linha 116) faz o React Query tratar como falha, resultando em lista vazia na UI.
 
-### Tarefas
+### Correção
 
-**1. Corrigir `config.toml`**
-Adicionar:
-```toml
-[functions.clevel-checkin-summary]
-verify_jwt = false
+**Um único arquivo:** `src/modules/okrs/hooks/useRitualHistory.ts`
 
-[functions.collaborator-checkin-summary]
-verify_jwt = false
+1. **Linha 71** — Trocar `full_name` por `display_name, first_name, last_name`:
+```
+profiles!okr_wizard_sessions_started_by_fkey ( display_name, first_name, last_name )
 ```
 
-**2. Corrigir tabela inexistente no C-Level**
-Em `clevel-checkin-summary/index.ts`, substituir:
+2. **Linhas 126, 162** — Atualizar mapeamento (2 ocorrências):
 ```typescript
-// ERRADO
-serviceClient.from('user_bu_roles').select('user_id').eq('bu_id', buId).eq('role', 'admin')
+// De:
+startedByName: row.profiles?.full_name ?? null,
 
-// CORRETO (per DATA_MODEL_REGISTRY + IDENTITY_CONVENTION)
-serviceClient.from('bu_user_memberships').select('user_id').eq('bu_id', buId).eq('role_in_bu', 'admin')
+// Para:
+startedByName: row.profiles?.display_name
+  || [row.profiles?.first_name, row.profiles?.last_name].filter(Boolean).join(' ')
+  || null,
 ```
 
-**3. Corrigir ordem de navegação no C-Level**
-Mover `navigate('/okrs')` para DEPOIS do `await` da Edge Function (ou tornar fire-and-forget sem `await`):
-```typescript
-const handleComplete = useCallback(async () => {
-  const completedSessionId = await clearDraft();
-  toast.success('Check-in estratégico concluído!');
-  // Fire-and-forget ANTES de navegar
-  if (completedSessionId && quarterlyCycle?.id && currentBu?.id) {
-    buSupabase.functions.invoke('clevel-checkin-summary', { ... }).catch(console.warn);
-  }
-  navigate('/okrs');
-}, [...]);
-```
-Aplicar o mesmo padrão ao `CollaboratorCheckinPage.tsx`.
+### Conformidade
 
-**4. Criar testes E2E para as 3 funções sem cobertura**
-Seguindo o padrão do `mbr-summary/index.test.ts`:
-
-| Arquivo | Cenários |
-|---------|----------|
-| `clevel-checkin-summary/index.test.ts` | missing fields → 400, non-existent session → skipped, idempotency → already_sent |
-| `collaborator-checkin-summary/index.test.ts` | missing sessionId → 400, non-existent session → skipped, idempotency → already_sent |
-| `team-checkin-summary/index.test.ts` | missing fields → 400, non-existent session → skipped, idempotency → already_sent |
-
-**5. Executar testes E2E**
-Rodar os 4 arquivos de teste (`mbr-summary`, `clevel-checkin-summary`, `collaborator-checkin-summary`, `team-checkin-summary`) via `test-edge-functions` para validar: campo obrigatório, idempotência, e orquestração de agentes IA (se houver sessão real).
-
-**6. Atualizar memory de ritual-history-intent**
-Registrar a correção da tabela e os resultados dos testes.
+| Regra | Status |
+|-------|--------|
+| Proibido `select('*')` | OK — campos explícitos |
+| BU-scoped client (`useOptionalBuScopedSupabase`) | OK |
+| `.eq('bu_id', currentBu.id)` | OK |
+| `enabled: !!currentBu?.id` | OK |
+| Query keys centralizadas | OK |
+| Identity convention (`started_by` = `profiles.id`) | OK |
+| Nenhum componente duplicado | OK — correção in-place |
+| Sem import de `@/integrations/supabase/client` | OK |
 
