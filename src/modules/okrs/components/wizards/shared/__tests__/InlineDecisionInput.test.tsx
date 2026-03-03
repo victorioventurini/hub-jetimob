@@ -22,6 +22,15 @@ vi.mock('@/components/ui/textarea-auto-submit', () => ({
   ),
 }));
 
+vi.mock('../DecisionCard', () => ({
+  DecisionCard: ({ decision, onUpdate, onRemove }: any) => (
+    <div data-testid={`decision-card-${decision.id}`}>
+      <span>{decision.text}</span>
+      <button data-testid={`remove-${decision.id}`} onClick={() => onRemove(decision.id)}>×</button>
+    </div>
+  ),
+}));
+
 const defaultProps = () => ({
   decisions: [] as TeamCheckinDecision[],
   onDecisionsChange: vi.fn(),
@@ -90,10 +99,8 @@ describe('InlineDecisionInput', () => {
     ];
     render(<InlineDecisionInput {...props} />);
     
-    // Find remove button
-    const removeButtons = screen.getAllByRole('button');
-    const removeBtn = removeButtons.find(b => b.querySelector('.lucide-x'));
-    if (removeBtn) fireEvent.click(removeBtn);
+    // Click remove on the DecisionCard mock
+    fireEvent.click(screen.getByTestId('remove-1'));
     
     expect(props.onDecisionsChange).toHaveBeenCalledWith([]);
   });
