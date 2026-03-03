@@ -23,6 +23,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadixFocusRecovery } from "@/hooks/useRadixFocusRecovery";
 import { useRouteTracking } from "@/hooks/useRouteTracking";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useGtmConfig, initGTM } from "@/lib/analytics";
 
 // Rotas públicas (sem providers de autenticação)
@@ -109,7 +110,10 @@ const App = () => {
  * e rotas públicas (/auth, /auth/callback, /p/assets/*) não devem carregar BuProvider.
  */
 function AppRoutes() {
-  return (
+  // Idle timeout: sign-out automático após 8h de inatividade
+  useIdleTimeout();
+
+   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* ===== ROTAS PÚBLICAS (sem BuProvider) ===== */}
