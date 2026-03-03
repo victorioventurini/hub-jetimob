@@ -7,11 +7,13 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft, useLastCompletedSession } from '@/modules/okrs/hooks';
+import { useGenericWizardDraft, useLastCompletedSession, useActiveCycles } from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
 import { useAuth } from '@/hooks/useAuth';
+import { useBu } from '@/contexts/BuContext';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
 // Step components
 import {
@@ -55,6 +57,8 @@ const DEFAULT_DATA: CLevelDraftData = {
 export default function CLevelCheckinPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { currentBu } = useBu();
+  const buSupabase = useBuScopedSupabase();
   const lastCheckin = useLastCompletedSession('clevel-checkin');
   
   usePageTitle('Check-in Estratégico');
@@ -154,11 +158,33 @@ export default function CLevelCheckinPage() {
     }
   }, [discardDraft]);
   
+  // Get active cycles for summary trigger
+  const { data: activeCycles } = useActiveCycles();
+  const quarterlyCycle = useMemo(() => 
+    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
+    [activeCycles]
+  );
+
   const handleComplete = useCallback(async () => {
-    await clearDraft();
+    const completedSessionId = await clearDraft();
     toast.success('Check-in estratégico concluído!');
     navigate('/okrs');
-  }, [clearDraft, navigate]);
+
+    // Trigger summary email (best-effort, non-blocking)
+    if (completedSessionId && quarterlyCycle?.id && currentBu?.id) {
+      try {
+        await buSupabase.functions.invoke('clevel-checkin-summary', {
+          body: {
+            cycleId: quarterlyCycle.id,
+            sessionId: completedSessionId,
+            bu_id: currentBu.id,
+          },
+        });
+      } catch (e) {
+        console.warn('C-Level summary email failed (non-blocking):', e);
+      }
+    }
+  }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
   
   // Render step content
   const renderStepContent = () => {

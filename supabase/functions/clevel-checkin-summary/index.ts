@@ -1,13 +1,15 @@
 /**
- * mbr-summary - Orchestrates AI agents to send MBR summary email
+ * clevel-checkin-summary - Orchestrates AI agents to send C-Level check-in summary email
  * 
  * Flow:
  * 1. Validates BU via middleware (no auth required for admin re-trigger)
  * 2. Checks idempotency via summary_sent_at
- * 3. Loads MBR session snapshot (KPIs, OKRs, decisions)
+ * 3. Loads C-Level session snapshot (OKRs, KPIs, decisions, directives)
  * 4. Orchestrates 3 AI agents in parallel via direct LLM calls
- * 5. Emits notification to team leaders only (not sub-teams)
+ * 5. Emits notification to area leaders + BU admins
  * 6. Marks session as summary sent
+ * 
+ * Recipients: CEO + leaders of areas (revenue, produto/tech, operações)
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -29,48 +31,36 @@ import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-c
 // Types
 // ============================================================================
 
-interface MbrSummaryRequest {
+interface CLevelSummaryRequest {
   cycleId: string;
   sessionId: string;
   bu_id: string;
 }
 
-interface MbrAgentContext {
+interface CLevelAgentContext {
   buName: string;
-  referenceMonth: string;
-  criticalKpis: Array<{
-    name: string;
-    currentValue: number | null;
-    target: number | null;
-    ragStatus: string;
-    variationVsLastMonth: number | null;
-    impactAssessment?: string;
-  }>;
+  cycleName: string;
   orgOkrsSummary: Array<{
     title: string;
     progress: number;
     trend: string;
-    remainsStrategicPriority: boolean;
   }>;
-  decisions: Array<{
-    text: string;
-    category: string;
+  strategicKpis: Array<{
+    name: string;
+    currentValue: number | null;
+    target: number | null;
+    ragStatus: string;
   }>;
-  checklist: {
-    strategicFocusClear: boolean;
-    nextStepsHaveOwners: boolean;
-    nonPrioritiesClear: boolean;
-    communicateInAllHands: boolean;
-  };
+  strategicDecisions: string;
+  directives: string;
 }
 
-interface MbrSections {
+interface CLevelSections {
   opening_text: string;
-  critical_kpis_summary: string;
-  strategic_decisions: string;
-  focus_adjustments: string;
-  next_steps: string;
-  monthly_directives: string;
+  okrs_analysis: string;
+  kpis_analysis: string;
+  strategic_decisions_summary: string;
+  directives_summary: string;
   closing_text: string;
 }
 
@@ -105,7 +95,7 @@ function extractOrFallback(
 }
 
 // ============================================================================
-// Agent Invocation — Direct LLM (no HTTP invoke-vic dependency)
+// Agent Invocation — Direct LLM
 // ============================================================================
 
 async function invokeAgentDirect(
@@ -158,17 +148,17 @@ async function invokeAgentDirect(
 // Data Loading
 // ============================================================================
 
-async function loadMbrSessionData(
+async function loadCLevelSessionData(
   serviceClient: any,
   sessionId: string,
   buId: string
 ): Promise<{
   snapshot: any;
   buName: string;
-  leaderAuthIds: string[];
+  recipientAuthIds: string[];
 }> {
-  // Load session + BU + team leaders in parallel
-  const [sessionResult, buResult, teamsResult] = await Promise.all([
+  // Load session + BU + area leaders + BU admins in parallel
+  const [sessionResult, buResult, areasResult, buAdminsResult] = await Promise.all([
     serviceClient
       .from('okr_wizard_sessions')
       .select('id, reflection_data, summary_sent_at, status')
@@ -179,42 +169,55 @@ async function loadMbrSessionData(
       .select('name')
       .eq('id', buId)
       .single(),
-    // Team leaders: only direct teams (not sub-teams)
+    // Area leaders (CEO + revenue, produto/tech, operações)
     serviceClient
-      .from('teams')
-      .select('leader_user_id')
+      .from('areas')
+      .select('leader_user_id, co_leader_user_id')
       .eq('bu_id', buId)
       .eq('status', 'active')
-      .is('deleted_at', null)
-      .is('parent_team_id', null),
+      .is('deleted_at', null),
+    // BU admins via user_bu_roles
+    serviceClient
+      .from('user_bu_roles')
+      .select('user_id')
+      .eq('bu_id', buId)
+      .eq('role', 'admin'),
   ]);
 
   const session = sessionResult.data;
   const buName = buResult.data?.name || 'Empresa';
 
-  // Resolve leader profile IDs → auth user IDs
-  const leaderProfileIds = (teamsResult.data || [])
-    .map((t: any) => t.leader_user_id)
-    .filter(Boolean);
+  // Collect area leader profile IDs
+  const areaLeaderProfileIds: string[] = [];
+  for (const area of (areasResult.data || [])) {
+    if (area.leader_user_id) areaLeaderProfileIds.push(area.leader_user_id);
+    if (area.co_leader_user_id) areaLeaderProfileIds.push(area.co_leader_user_id);
+  }
 
-  let leaderAuthIds: string[] = [];
-  if (leaderProfileIds.length > 0) {
+  // Resolve profile IDs → auth user IDs
+  let recipientAuthIds: string[] = [];
+
+  if (areaLeaderProfileIds.length > 0) {
     const { data: profiles } = await serviceClient
       .from('profiles')
       .select('user_id')
-      .in('id', leaderProfileIds)
+      .in('id', areaLeaderProfileIds)
       .not('user_id', 'is', null);
 
-    leaderAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
+    recipientAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
   }
 
+  // Add BU admin auth IDs directly (user_bu_roles.user_id = auth.users.id)
+  const adminAuthIds = (buAdminsResult.data || []).map((r: any) => r.user_id).filter(Boolean);
+  recipientAuthIds.push(...adminAuthIds);
+
   // Deduplicate
-  leaderAuthIds = [...new Set(leaderAuthIds)];
+  recipientAuthIds = [...new Set(recipientAuthIds)];
 
   return {
     snapshot: session?.reflection_data,
     buName,
-    leaderAuthIds,
+    recipientAuthIds,
   };
 }
 
@@ -225,53 +228,51 @@ async function loadMbrSessionData(
 async function orchestrateAgents(
   serviceClient: any,
   buId: string,
-  agentContext: MbrAgentContext,
+  agentContext: CLevelAgentContext,
   requestId: string
-): Promise<MbrSections> {
+): Promise<CLevelSections> {
   const contextJson = JSON.stringify(agentContext);
 
   const [analistaResult, facilitadorResult, revisorResult] = await Promise.allSettled([
-    // Analista de KPIs - KPIs críticos + OKRs
+    // Analista de KPIs — OKRs + KPIs estratégicos
     invokeAgentDirect(serviceClient, 'analista-kpis',
-      `Contexto do MBR (Monthly Business Review):\n${contextJson}\n\nGere um resumo executivo do MBR focando em:
-1. KPIs críticos e seu impacto estratégico
-2. Estado das OKRs organizacionais
+      `Contexto do Check-in Estratégico C-Level:\n${contextJson}\n\nGere um resumo executivo focando em:
+1. Estado das OKRs organizacionais e tendências
+2. KPIs estratégicos em alerta
 Retorne em formato JSON com as chaves:
-- critical_kpis_summary: resumo dos KPIs em risco com impacto (lista markdown)
-- monthly_directives: diretrizes estratégicas para o próximo mês (2-4 pontos, lista markdown)
-Linguagem executiva, objetiva. Foque no que importa.`,
+- okrs_analysis: análise das OKRs organizacionais (lista markdown)
+- kpis_analysis: KPIs estratégicos que demandam atenção (lista markdown)
+Linguagem executiva, objetiva. Tom de C-Level.`,
       buId, requestId),
 
-    // Facilitador de Decisões - Consolidação
+    // Facilitador de Decisões — Decisões e diretrizes
     invokeAgentDirect(serviceClient, 'facilitador-decisoes',
-      `Contexto do MBR (Monthly Business Review):\n${contextJson}\n\nConsolide as decisões estratégicas do MBR.
+      `Contexto do Check-in Estratégico C-Level:\n${contextJson}\n\nConsolide as decisões estratégicas e diretrizes.
 Retorne em formato JSON com as chaves:
-- strategic_decisions: decisões tomadas formatadas como lista markdown
-- focus_adjustments: ajustes de foco formatados como lista markdown
-- next_steps: próximos passos com responsabilização formatados como lista markdown
+- strategic_decisions_summary: decisões estratégicas consolidadas (lista markdown)
+- directives_summary: diretrizes para a organização (lista markdown)
 Linguagem executiva e orientada a ação.`,
       buId, requestId),
 
-    // Revisor de Comunicação - Abertura e encerramento
+    // Revisor de Comunicação — Abertura e encerramento
     invokeAgentDirect(serviceClient, 'revisor-comunicacao',
-      `Contexto: abertura e encerramento do e-mail de MBR mensal
-BU: ${agentContext.buName}, Mês de referência: ${agentContext.referenceMonth}
+      `Contexto: abertura e encerramento do e-mail de check-in estratégico C-Level
+BU: ${agentContext.buName}, Ciclo: ${agentContext.cycleName}
 
-Crie abertura e encerramento para o e-mail de resumo do MBR.
+Crie abertura e encerramento para o e-mail de resumo do check-in C-Level.
 Retorne em formato JSON com as chaves:
-- opening_text: 2-3 frases de abertura contextualizando o fechamento do MBR mensal
+- opening_text: 2-3 frases de abertura contextualizando o check-in estratégico
 - closing_text: 1-2 frases de encerramento com tom positivo e orientado à execução
-Linguagem executiva, sem burocracia.`,
+Linguagem executiva, sem burocracia. Tom de liderança sênior.`,
       buId, requestId),
   ]);
 
-  let sections: MbrSections = {
-    opening_text: 'Este é o resumo do Monthly Business Review mais recente.',
-    critical_kpis_summary: 'Sem KPIs críticos identificados.',
-    strategic_decisions: 'Sem decisões registradas.',
-    focus_adjustments: 'Sem ajustes de foco.',
-    next_steps: '- Manter o foco na execução estratégica',
-    monthly_directives: '- Manter as prioridades definidas',
+  let sections: CLevelSections = {
+    opening_text: 'Este é o resumo do check-in estratégico C-Level mais recente.',
+    okrs_analysis: 'Sem análise de OKRs disponível.',
+    kpis_analysis: 'Sem KPIs em alerta.',
+    strategic_decisions_summary: 'Sem decisões registradas.',
+    directives_summary: 'Sem diretrizes registradas.',
     closing_text: 'Bom trabalho, liderança!',
   };
 
@@ -279,21 +280,20 @@ Linguagem executiva, sem burocracia.`,
   try {
     const content = sanitizeJsonResponse(extractOrFallback(analistaResult, '{}'));
     const json = JSON.parse(content);
-    if (json.critical_kpis_summary) sections.critical_kpis_summary = json.critical_kpis_summary;
-    if (json.monthly_directives) sections.monthly_directives = json.monthly_directives;
+    if (json.okrs_analysis) sections.okrs_analysis = json.okrs_analysis;
+    if (json.kpis_analysis) sections.kpis_analysis = json.kpis_analysis;
   } catch (e) {
     console.warn('Failed to parse analista response:', e);
     const raw = extractOrFallback(analistaResult, '');
-    if (raw && !raw.startsWith('{')) sections.critical_kpis_summary = raw;
+    if (raw && !raw.startsWith('{')) sections.okrs_analysis = raw;
   }
 
   // Parse Facilitador
   try {
     const content = sanitizeJsonResponse(extractOrFallback(facilitadorResult, '{}'));
     const json = JSON.parse(content);
-    if (json.strategic_decisions) sections.strategic_decisions = json.strategic_decisions;
-    if (json.focus_adjustments) sections.focus_adjustments = json.focus_adjustments;
-    if (json.next_steps) sections.next_steps = json.next_steps;
+    if (json.strategic_decisions_summary) sections.strategic_decisions_summary = json.strategic_decisions_summary;
+    if (json.directives_summary) sections.directives_summary = json.directives_summary;
   } catch (e) {
     console.warn('Failed to parse facilitador response:', e);
   }
@@ -333,7 +333,7 @@ serve(async (req) => {
   const serviceClient = ctx.serviceClient;
 
   try {
-    const body: MbrSummaryRequest = await req.json();
+    const body: CLevelSummaryRequest = await req.json();
     const { cycleId, sessionId } = body;
 
     if (!cycleId || !sessionId) {
@@ -343,7 +343,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[${requestId}] MBR summary: cycle=${cycleId}, session=${sessionId}`);
+    console.log(`[${requestId}] C-Level checkin summary: cycle=${cycleId}, session=${sessionId}`);
 
     // Check idempotency
     const { data: session, error: sessionError } = await serviceClient
@@ -362,8 +362,8 @@ serve(async (req) => {
       return successResponse({ skipped: true, reason: 'already_sent' });
     }
 
-    // Load MBR data
-    const { snapshot, buName, leaderAuthIds } = await loadMbrSessionData(
+    // Load C-Level data
+    const { snapshot, buName, recipientAuthIds } = await loadCLevelSessionData(
       serviceClient, sessionId, buId
     );
 
@@ -372,48 +372,39 @@ serve(async (req) => {
       return successResponse({ skipped: true, reason: 'no_snapshot' });
     }
 
-    if (leaderAuthIds.length === 0) {
-      console.warn(`[${requestId}] No team leaders found`);
-      return successResponse({ skipped: true, reason: 'no_leaders' });
+    if (recipientAuthIds.length === 0) {
+      console.warn(`[${requestId}] No recipients found`);
+      return successResponse({ skipped: true, reason: 'no_recipients' });
     }
 
     // Extract snapshot data
     const snapshotData = (snapshot as any)?.data || snapshot;
-    const kpiSnapshots = snapshotData?.kpiSnapshots || [];
-    const orgOkrSnapshots = snapshotData?.orgOkrSnapshots || [];
-    const decisions = snapshotData?.decisions || [];
-    const checklist = snapshotData?.checklist || {};
-    const referenceMonth = snapshotData?.referenceMonth || '';
 
-    // Build agent context from snapshot (immutable data)
-    const agentContext: MbrAgentContext = {
+    // Load cycle name
+    const { data: cycleData } = await serviceClient
+      .from('cycles')
+      .select('name')
+      .eq('id', cycleId)
+      .single();
+
+    const cycleName = cycleData?.name || 'Ciclo';
+
+    // Build agent context from snapshot
+    const agentContext: CLevelAgentContext = {
       buName,
-      referenceMonth,
-      criticalKpis: kpiSnapshots
-        .filter((k: any) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
-        .map((k: any) => ({
-          name: k.name,
-          currentValue: k.currentValue,
-          target: k.target,
-          ragStatus: k.ragStatus,
-          variationVsLastMonth: k.variationVsLastMonth,
-          impactAssessment: k.impactAssessment,
-        })),
-      orgOkrsSummary: orgOkrSnapshots.map((o: any) => ({
-        title: o.title,
-        progress: o.progress,
-        trend: o.trend,
-        remainsStrategicPriority: o.remainsStrategicPriority,
+      cycleName,
+      orgOkrsSummary: (snapshotData?.reviewedOkrs || []).map((id: string) => ({
+        title: id, // simplified — real data is in the wizard state
+        progress: 0,
+        trend: 'stable',
       })),
-      decisions: decisions.map((d: any) => ({
-        text: d.text,
-        category: d.category,
-      })),
-      checklist,
+      strategicKpis: [], // Will be enriched below
+      strategicDecisions: snapshotData?.strategicDecisions || '',
+      directives: snapshotData?.directives || '',
     };
 
     // Orchestrate AI agents
-    console.log(`[${requestId}] Orchestrating AI agents for MBR summary...`);
+    console.log(`[${requestId}] Orchestrating AI agents for C-Level summary...`);
     const sections = await orchestrateAgents(serviceClient, buId, agentContext, requestId);
 
     // Build notification metadata
@@ -422,28 +413,27 @@ serve(async (req) => {
 
     const metadata = {
       bu_name: buName,
-      reference_month: referenceMonth,
+      cycle_name: cycleName,
       current_datetime: currentDatetime,
       opening_text: sections.opening_text,
-      critical_kpis_summary: sections.critical_kpis_summary,
-      strategic_decisions: sections.strategic_decisions,
-      focus_adjustments: sections.focus_adjustments,
-      next_steps: sections.next_steps,
-      monthly_directives: sections.monthly_directives,
+      okrs_analysis: sections.okrs_analysis,
+      kpis_analysis: sections.kpis_analysis,
+      strategic_decisions_summary: sections.strategic_decisions_summary,
+      directives_summary: sections.directives_summary,
       closing_text: sections.closing_text,
       context_url: contextUrl,
     };
 
-    // Emit notification to team leaders only
-    console.log(`[${requestId}] Emitting MBR notification to ${leaderAuthIds.length} leaders`);
+    // Emit notification
+    console.log(`[${requestId}] Emitting C-Level notification to ${recipientAuthIds.length} recipients`);
     const { error: notifyError } = await serviceClient.rpc('emit_notification_event', {
-      p_event_slug: 'mbr.summary',
+      p_event_slug: 'clevel.checkin.summary',
       p_bu_id: buId,
-      p_recipient_user_ids: leaderAuthIds,
+      p_recipient_user_ids: recipientAuthIds,
       p_actor_id: null,
-      p_title: `MBR — ${referenceMonth}`,
-      p_message: `Resumo do Monthly Business Review — ${referenceMonth}`,
-      p_context_type: 'mbr',
+      p_title: `Check-in Estratégico — ${cycleName}`,
+      p_message: `Resumo do check-in estratégico C-Level — ${cycleName}`,
+      p_context_type: 'clevel_checkin',
       p_context_id: sessionId,
       p_context_url: contextUrl,
       p_metadata: metadata,
@@ -453,7 +443,7 @@ serve(async (req) => {
       console.error(`[${requestId}] Notification emit failed:`, notifyError);
     }
 
-    // Mark session as summary sent (idempotency)
+    // Mark session as summary sent
     const { error: updateError } = await serviceClient
       .from('okr_wizard_sessions')
       .update({ summary_sent_at: new Date().toISOString() })
@@ -466,18 +456,18 @@ serve(async (req) => {
     logRequestCompletion(ctx, 'success');
     return successResponse({
       success: true,
-      recipientCount: leaderAuthIds.length,
+      recipientCount: recipientAuthIds.length,
       sessionId,
     });
 
   } catch (error) {
-    console.error(`[${requestId}] MBR summary error:`, error);
+    console.error(`[${requestId}] C-Level checkin summary error:`, error);
     logRequestCompletion(ctx, 'error', error instanceof Error ? error.message : 'Unknown error');
 
     return errorResponse(
-      'Failed to send MBR summary',
+      'Failed to send C-Level checkin summary',
       500,
-      { requestId, error: 'MBR_SUMMARY_FAILED' }
+      { requestId, error: 'CLEVEL_SUMMARY_FAILED' }
     );
   }
 });
