@@ -3,6 +3,11 @@
  * 
  * Navega entre times com setas. Exibe objetivos + KRs de cada time.
  * Gate: todos os times com OKRs devem ser marcados como "revisados".
+ * 
+ * Padrão visual consistente com TeamKrReviewStep (team-checkin):
+ * - OkrProgressBar para progresso de KRs
+ * - RAG_STATUS_COLORS para badges e indicadores
+ * - Valores canônicos do enum okr_rag_status (green/yellow/red/not_started)
  */
 
 import { useMemo } from 'react';
@@ -25,6 +30,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
+import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -54,10 +61,22 @@ function TrendIcon({ trend }: { trend: string }) {
   }
 }
 
-function ragClass(status: string) {
-  if (status === 'at_risk' || status === 'off_track') return 'text-status-red';
-  if (status === 'behind' || status === 'stagnant' || status === 'not_started') return 'text-status-amber';
-  return 'text-status-green';
+/** Map KR status to canonical RAG key */
+function toRagKey(status: string): keyof typeof RAG_STATUS_COLORS {
+  if (status === 'green') return 'green';
+  if (status === 'yellow') return 'yellow';
+  if (status === 'red') return 'red';
+  return 'not_started';
+}
+
+function ragLabel(status: string): string {
+  switch (status) {
+    case 'green': return 'No caminho';
+    case 'yellow': return 'Atenção';
+    case 'red': return 'Em risco';
+    case 'not_started': return 'Não iniciado';
+    default: return status;
+  }
 }
 
 // ============================================================
@@ -143,7 +162,7 @@ export function MbrTeamOkrsDetailStep({
         rightContent={
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               className="h-7 w-7"
               disabled={safeIndex === 0}
@@ -151,11 +170,11 @@ export function MbrTeamOkrsDetailStep({
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium whitespace-nowrap">
-              Time {safeIndex + 1} de {totalTeams}
+            <span className="text-sm font-medium min-w-[3rem] text-center whitespace-nowrap">
+              {safeIndex + 1}/{totalTeams}
             </span>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               className="h-7 w-7"
               disabled={safeIndex === totalTeams - 1}
@@ -167,20 +186,20 @@ export function MbrTeamOkrsDetailStep({
         }
       />
 
-      {/* Review progress bar */}
-      <div className="px-6 py-3 border-b bg-muted/30">
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-          <span>{reviewedCount} de {teamsWithOkrs.length} times revisados</span>
-          <span>{Math.round((reviewedCount / Math.max(1, teamsWithOkrs.length)) * 100)}%</span>
-        </div>
-        <Progress
-          value={(reviewedCount / Math.max(1, teamsWithOkrs.length)) * 100}
-          className="h-1.5"
-        />
-      </div>
+      {/* Review progress bar — same pattern as TeamKrReviewStep */}
+      <Progress
+        value={(reviewedCount / Math.max(1, teamsWithOkrs.length)) * 100}
+        className="h-1"
+      />
 
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-4">
+          {/* Review status bar */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{reviewedCount} de {teamsWithOkrs.length} times revisados</span>
+            <span>{Math.round((reviewedCount / Math.max(1, teamsWithOkrs.length)) * 100)}%</span>
+          </div>
+
           {currentTeam.objectives.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <Users className="h-8 w-8 text-muted-foreground mx-auto" />
@@ -192,7 +211,7 @@ export function MbrTeamOkrsDetailStep({
             currentTeam.objectives.map(obj => (
               <Card key={obj.objectiveId} className={cn(
                 'transition-colors',
-                obj.krsAtRisk > 0 && 'border-status-red/30',
+                obj.krsAtRisk > 0 && RAG_STATUS_COLORS.red.border,
               )}>
                 <CardContent className="p-4 space-y-3">
                   {/* Objective header */}
@@ -206,8 +225,16 @@ export function MbrTeamOkrsDetailStep({
                         <TrendIcon trend={obj.trend} />
                         <span className="text-xs text-muted-foreground">
                           {obj.krCount} KRs
-                          {obj.krsAtRisk > 0 && <span className="text-status-red ml-1">· {obj.krsAtRisk} em risco</span>}
-                          {obj.krsStagnant > 0 && <span className="text-status-amber ml-1">· {obj.krsStagnant} estagnados</span>}
+                          {obj.krsAtRisk > 0 && (
+                            <span className={cn('ml-1', RAG_STATUS_COLORS.red.text)}>
+                              · {obj.krsAtRisk} em risco
+                            </span>
+                          )}
+                          {obj.krsStagnant > 0 && (
+                            <span className={cn('ml-1', RAG_STATUS_COLORS.yellow.text)}>
+                              · {obj.krsStagnant} estagnados
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>
@@ -218,29 +245,38 @@ export function MbrTeamOkrsDetailStep({
 
                   <Progress value={Math.min(100, obj.progress)} className="h-1.5" />
 
-                  {/* KRs list */}
+                  {/* KRs list — aligned with TeamKrReviewStep pattern */}
                   {obj.keyResults && obj.keyResults.length > 0 && (
-                    <div className="space-y-1.5 ml-6">
-                      {obj.keyResults.map(kr => (
-                        <div key={kr.krId} className="flex items-center justify-between py-1.5 px-3 rounded bg-muted/40 text-xs">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <div className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', 
-                              kr.status === 'at_risk' || kr.status === 'off_track' ? 'bg-status-red'
-                              : kr.status === 'stagnant' || kr.status === 'not_started' ? 'bg-status-amber'
-                              : 'bg-status-green'
-                            )} />
-                            <span className="truncate">{kr.title}</span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                            {kr.ownerName && (
-                              <span className="text-muted-foreground">{kr.ownerName}</span>
+                    <div className="space-y-2 ml-6">
+                      {obj.keyResults.map(kr => {
+                        const rag = toRagKey(kr.status);
+                        return (
+                          <div
+                            key={kr.krId}
+                            className={cn(
+                              'flex items-center justify-between py-2 px-3 rounded-md border text-xs',
+                              RAG_STATUS_COLORS[rag].border,
                             )}
-                            <Badge variant="outline" className={cn('text-[10px] h-4 px-1', ragClass(kr.status))}>
-                              {kr.progress}%
-                            </Badge>
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className={cn('w-2 h-2 rounded-full flex-shrink-0', RAG_STATUS_COLORS[rag].dot)} />
+                              <span className="truncate">{kr.title}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              {kr.ownerName && (
+                                <span className="text-muted-foreground hidden sm:inline">{kr.ownerName}</span>
+                              )}
+                              <Badge
+                                variant="secondary"
+                                className={cn('text-[10px] h-5 px-1.5', RAG_STATUS_COLORS[rag].badge)}
+                              >
+                                {ragLabel(kr.status)}
+                              </Badge>
+                              <span className="font-medium tabular-nums">{kr.progress}%</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -248,15 +284,23 @@ export function MbrTeamOkrsDetailStep({
             ))
           )}
 
-          {/* Reviewed checkbox */}
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border">
+          {/* Reviewed checkbox — consistent with gate pattern */}
+          <div className={cn(
+            'flex items-center gap-3 p-4 rounded-lg border transition-colors',
+            currentTeam.reviewed
+              ? 'bg-status-green-muted/50 border-status-green/30'
+              : 'bg-muted/50'
+          )}>
             <Checkbox
               id="reviewed"
               checked={currentTeam.reviewed}
               onCheckedChange={(checked) => handleToggleReviewed(checked === true)}
             />
             <Label htmlFor="reviewed" className="text-sm cursor-pointer flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-status-green" />
+              <CheckCircle2 className={cn(
+                'h-4 w-4',
+                currentTeam.reviewed ? 'text-status-green' : 'text-muted-foreground'
+              )} />
               Marcar "{currentTeam.teamName}" como revisado
             </Label>
           </div>
@@ -280,7 +324,7 @@ export function MbrTeamOkrsDetailStep({
         primaryDisabled={!allReviewed}
       />
       {!allReviewed && (
-        <p className="text-xs text-status-amber text-center pb-2">
+        <p className="text-xs text-muted-foreground text-center pb-2">
           Revise todos os times com OKRs antes de prosseguir ({reviewedCount}/{teamsWithOkrs.length})
         </p>
       )}
