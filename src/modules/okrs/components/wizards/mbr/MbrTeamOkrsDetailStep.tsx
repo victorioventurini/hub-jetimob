@@ -149,7 +149,7 @@ export function MbrTeamOkrsDetailStep({
             value={(reviewedCount / Math.max(1, totalTeams)) * 100}
             className="h-1"
           />
-          <div className="px-6 py-2 flex items-center justify-between gap-2 border-b min-w-0">
+          <div className="px-6 py-2 flex flex-wrap items-center justify-between gap-2 border-b min-w-0">
             {/* Review counter */}
             <span className="text-xs text-muted-foreground shrink-0">
               {reviewedCount}/{totalTeams} revisados
