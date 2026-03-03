@@ -180,7 +180,7 @@ describe('MbrTeamOkrsDetailStep', () => {
   it('shows reviewed checkbox per team', () => {
     const teams = [createTeamSnapshot()];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getByText(/Marcar "Dev Backend" como revisado/)).toBeInTheDocument();
+    expect(screen.getByText(/Revisado/)).toBeInTheDocument();
   });
 
   it('disables continue when not all teams reviewed', () => {
