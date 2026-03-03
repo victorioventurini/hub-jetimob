@@ -41,7 +41,7 @@ interface KpiGroup {
 // HELPERS
 // ============================================================
 
-const RAG_PRIORITY: Record<string, number> = { red: 0, yellow: 1, green: 2 };
+const RAG_PRIORITY: Record<string, number> = { red: 0, yellow: 1, green: 2, no_data: 3 };
 
 function sortByRag(kpis: MbrKpiSnapshot[]): MbrKpiSnapshot[] {
   return [...kpis].sort(
@@ -54,6 +54,7 @@ function ragBadgeClass(rag: string) {
     case 'green': return 'bg-status-green-muted text-status-green';
     case 'yellow': return 'bg-status-yellow-muted text-status-yellow';
     case 'red': return 'bg-status-red-muted text-status-red';
+    case 'no_data': return 'bg-muted text-muted-foreground';
     default: return 'bg-muted text-muted-foreground';
   }
 }
@@ -87,7 +88,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium truncate flex-1">{kpi.name}</p>
               <Badge variant="secondary" className={cn('text-xs ml-2', ragBadgeClass(kpi.ragStatus))}>
-                {kpi.ragStatus === 'green' ? 'OK' : kpi.ragStatus === 'yellow' ? 'Atenção' : 'Crítico'}
+                {kpi.ragStatus === 'green' ? 'OK' : kpi.ragStatus === 'yellow' ? 'Atenção' : kpi.ragStatus === 'red' ? 'Crítico' : 'Sem dados'}
               </Badge>
             </div>
             <div className="flex items-end justify-between">
