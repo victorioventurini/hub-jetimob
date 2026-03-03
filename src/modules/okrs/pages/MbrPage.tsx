@@ -275,7 +275,17 @@ export default function MbrPage() {
     if (seededTeamOkrsRef.current) return;
     if (!quarterlyCycle?.id) return;
     if (!hasFetchedTeamOkrs || isLoadingTeamOkrs) return;
-    if (draft.data.teamOkrSnapshots.length > 0) {
+
+    // Check if existing snapshots have valid keyResults data (migration guard)
+    // Drafts saved before keyResults was added need re-seeding
+    const hasValidKeyResults = draft.data.teamOkrSnapshots.length > 0 &&
+      draft.data.teamOkrSnapshots.every(t =>
+        t.objectives.every(o => Array.isArray(o.keyResults) && o.keyResults.length >= 0 &&
+          (o.keyResults.length === 0 || o.keyResults[0]?.status !== undefined)
+        )
+      );
+
+    if (hasValidKeyResults) {
       seededTeamOkrsRef.current = true;
       return;
     }

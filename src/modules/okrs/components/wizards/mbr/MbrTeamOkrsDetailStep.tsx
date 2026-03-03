@@ -249,7 +249,8 @@ export function MbrTeamOkrsDetailStep({
                   {obj.keyResults && obj.keyResults.length > 0 && (
                     <div className="space-y-3 ml-6 overflow-hidden">
                       {obj.keyResults.map(kr => {
-                        const rag = toRagKey(kr.status);
+                        const rag = toRagKey(kr.status ?? 'not_started');
+                        const hasFullData = kr.status !== undefined;
                         return (
                           <div
                             key={kr.krId}
@@ -265,24 +266,28 @@ export function MbrTeamOkrsDetailStep({
                               {kr.ownerName && (
                                 <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
                               )}
-                              <Badge
-                                variant="secondary"
-                                className={cn('text-[10px] h-5 px-1.5 flex-shrink-0 whitespace-nowrap', RAG_STATUS_COLORS[rag].badge)}
-                              >
-                                {ragLabel(kr.status)}
-                              </Badge>
+                              {hasFullData && (
+                                <Badge
+                                  variant="secondary"
+                                  className={cn('text-[10px] h-5 px-1.5 flex-shrink-0 whitespace-nowrap', RAG_STATUS_COLORS[rag].badge)}
+                                >
+                                  {ragLabel(kr.status)}
+                                </Badge>
+                              )}
                             </div>
                             {/* Progress bar with base/current/target */}
-                            <OkrProgressBar
-                              baseline={kr.baseline}
-                              current={kr.current}
-                              target={kr.target}
-                              direction={kr.direction}
-                              status={rag}
-                              unit={kr.unit}
-                              size="sm"
-                              showLabels
-                            />
+                            {hasFullData && (
+                              <OkrProgressBar
+                                baseline={kr.baseline ?? 0}
+                                current={kr.current ?? 0}
+                                target={kr.target ?? 0}
+                                direction={kr.direction ?? 'up'}
+                                status={rag}
+                                unit={kr.unit ?? '%'}
+                                size="sm"
+                                showLabels
+                              />
+                            )}
                           </div>
                         );
                       })}
