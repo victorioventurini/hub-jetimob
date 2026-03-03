@@ -1,8 +1,8 @@
 /**
  * MbrTeamOkrsOverviewStep - Overview consolidado das OKRs de todos os times
  * 
- * Exibe cards de resumo (saudáveis / atenção / risco) e grid de times
- * com progresso, contagem de OKRs e indicadores de saúde.
+ * Exibe cards por time com objetivos e KRs expandidos.
+ * Usa OkrProgressBar (padrão visual mandatório) e OkrStatusBadge canônicos.
  * Somente times com OKRs cadastradas são listados.
  */
 
@@ -10,11 +10,14 @@ import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Users, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Users, AlertTriangle, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
-import { getProgressBarStyle, TREND_COLORS } from '@/lib/colors';
-import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
+import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
+import { TREND_COLORS } from '@/lib/colors';
+import type { MbrTeamOkrSnapshot, MbrTeamOkrObjectiveSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { OkrRagStatus, OkrDirection } from '@/modules/okrs/types';
 
 // ============================================================
 // TYPES
@@ -41,6 +44,14 @@ function getTrendIcon(objectives: MbrTeamOkrSnapshot['objectives']) {
   if (improving > declining) return <TrendingUp className={`h-4 w-4 ${TREND_COLORS.improving}`} />;
   if (declining > improving) return <TrendingDown className={`h-4 w-4 ${TREND_COLORS.declining}`} />;
   return <Minus className={`h-4 w-4 ${TREND_COLORS.stable}`} />;
+}
+
+/** Map snapshot status string to canonical OkrRagStatus */
+function toRagStatus(status: string): OkrRagStatus {
+  if (status === 'green') return 'green';
+  if (status === 'yellow') return 'yellow';
+  if (status === 'red') return 'red';
+  return 'not_started';
 }
 
 // ============================================================
@@ -104,60 +115,55 @@ export function MbrTeamOkrsOverviewStep({
         <Progress value={avgProgress} className="h-2 mt-3" />
       </div>
 
-      {/* Teams grid */}
+      {/* Teams list */}
       <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
-        <div className="p-6 min-w-[640px] md:min-w-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sorted.length === 0 ? (
-              <div className="md:col-span-2 text-center py-12 text-muted-foreground">
-                Nenhum time com OKRs encontrado para este ciclo.
-              </div>
-            ) : (
-              sorted.map(team => {
-                const teamAvgProgress = team.objectives.length > 0
-                  ? Math.round(team.objectives.reduce((s, o) => s + o.progress, 0) / team.objectives.length)
-                  : 0;
-                const teamAtRisk = team.objectives.reduce((s, o) => s + o.krsAtRisk, 0);
-                const teamKrCount = team.objectives.reduce((s, o) => s + o.krCount, 0);
+        <div className="p-6 space-y-6 min-w-[640px] md:min-w-0">
+          {sorted.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              Nenhum time com OKRs encontrado para este ciclo.
+            </div>
+          ) : (
+            sorted.map(team => {
+              const teamAtRisk = team.objectives.reduce((s, o) => s + o.krsAtRisk, 0);
+              const teamKrCount = team.objectives.reduce((s, o) => s + o.krCount, 0);
 
-                return (
-                  <Card
-                    key={team.teamId}
-                    className={cn(
-                      'transition-colors',
-                      teamAtRisk > 0 && 'border-status-orange/30',
-                    )}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between gap-2">
+              return (
+                <Card
+                  key={team.teamId}
+                  className={cn(
+                    'transition-colors',
+                    teamAtRisk > 0 && 'border-status-orange/30',
+                  )}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                         <CardTitle className="text-base truncate">{team.teamName}</CardTitle>
-                        <div className="shrink-0">{getTrendIcon(team.objectives)}</div>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm gap-2">
-                          <span className="text-muted-foreground truncate">
-                            {team.objectives.length} OKRs · {teamKrCount} KRs
-                          </span>
-                          <span className="font-bold shrink-0">{teamAvgProgress}%</span>
-                        </div>
-                        <Progress
-                          value={teamAvgProgress}
-                          className={cn('h-1.5', getProgressBarStyle(teamAvgProgress))}
-                        />
-                        {teamAtRisk > 0 && (
-                          <p className="text-xs text-status-orange">
-                            {teamAtRisk} KR{teamAtRisk > 1 ? 's' : ''} em risco
-                          </p>
-                        )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-muted-foreground">
+                          {team.objectives.length} OKRs · {teamKrCount} KRs
+                        </span>
+                        {getTrendIcon(team.objectives)}
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </div>
+                    </div>
+                    {teamAtRisk > 0 && (
+                      <p className="text-xs text-status-orange mt-1">
+                        {teamAtRisk} KR{teamAtRisk > 1 ? 's' : ''} em risco
+                      </p>
+                    )}
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    {team.objectives.map(obj => (
+                      <ObjectiveBlock key={obj.objectiveId} objective={obj} />
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -176,6 +182,58 @@ export function MbrTeamOkrsOverviewStep({
         onPrimary={onContinue}
         primaryLabel="Analisar Times"
       />
+    </div>
+  );
+}
+
+// ============================================================
+// SUB-COMPONENTS
+// ============================================================
+
+function ObjectiveBlock({ objective }: { objective: MbrTeamOkrObjectiveSnapshot }) {
+  return (
+    <div className="space-y-2.5">
+      {/* Objective header */}
+      <div className="flex items-center gap-2">
+        <Target className="h-3.5 w-3.5 text-primary shrink-0" />
+        <span className="text-sm font-medium truncate flex-1 min-w-0">{objective.title}</span>
+        <Badge variant="secondary" className="text-xs shrink-0">{objective.progress}%</Badge>
+      </div>
+
+      {/* KR list with canonical progress bars */}
+      {objective.keyResults && objective.keyResults.length > 0 && (
+        <div className="space-y-2 ml-5">
+          {objective.keyResults.map(kr => {
+            const ragStatus = toRagStatus(kr.status ?? 'not_started');
+            return (
+              <div
+                key={kr.krId}
+                className="py-2 px-3 rounded-md border bg-muted/20 space-y-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium truncate flex-1 min-w-0">{kr.title}</span>
+                  <OkrStatusBadge status={ragStatus} type="kr" className="shrink-0" />
+                </div>
+                <OkrProgressBar
+                  baseline={kr.baseline}
+                  current={kr.current}
+                  target={kr.target}
+                  direction={kr.direction as OkrDirection}
+                  status={ragStatus}
+                  unit={kr.unit ?? '%'}
+                  size="sm"
+                  showLabels
+                />
+                {kr.ownerName && (
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    Responsável: {kr.ownerName}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
