@@ -252,8 +252,7 @@ export default function MbrPage() {
         .eq('cycle_id', quarterlyCycle!.id)
         .is('deleted_at', null)
         .is('cancelled_at', null)
-        .neq('status', 'cancelled')
-        .neq('status', 'discarded');
+        .not('status', 'in', '(cancelled,discarded)');
 
       if (error) throw error;
 
@@ -295,8 +294,8 @@ export default function MbrPage() {
       const objectives = teamObjs.map(obj => {
         const krs = obj.key_results || [];
         const krCount = krs.length;
-        const krsAtRisk = krs.filter((kr: any) => kr.status === 'at_risk' || kr.status === 'off_track' || kr.status === 'red' || kr.status === 'yellow').length;
-        const krsStagnant = krs.filter((kr: any) => kr.status === 'stagnant' || kr.status === 'not_started').length;
+        const krsAtRisk = krs.filter((kr: any) => kr.status === 'red' || kr.status === 'yellow').length;
+        const krsStagnant = krs.filter((kr: any) => kr.status === 'not_started').length;
 
         const avgProgress = krCount > 0
           ? krs.reduce((sum: number, kr: any) => {
