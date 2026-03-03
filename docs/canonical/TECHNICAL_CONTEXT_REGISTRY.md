@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.8.0  
-**Última atualização:** 2026-02-23 (v3.8.0 - Progress Overachievement Display v1.0 — Remoção de Math.min(100) de cálculos de progresso em wizards e cards, padrão visual unificado para superação de metas)
+**Versão:** 3.9.0  
+**Última atualização:** 2026-03-03 (v3.9.0 - MBR Ritual v1.0 — Monthly Business Review wizard completo com 7 etapas, KPI Panorama com unidade de medida e data do último valor, UI simplificada de OKRs de time)
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅
 
@@ -1806,6 +1806,7 @@ O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósit
 | **Team Check-in** | `/okrs/team-checkin` | Ritual síncrono de revisão coletiva | Semanal | Líder + membros |
 | **Managers Check-in** | `/okrs/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
 | **C-Level Check-in** | `/okrs/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
+| **MBR (Monthly Business Review)** | `/okrs/mbr` | Revisão estratégica mensal: KPIs mestres, OKRs por time e organizacionais, decisões | Mensal | BU Admin |
 
 **Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
 
@@ -3306,6 +3307,18 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.9.0 (2026-03-03)
+- **MBR (Monthly Business Review) Ritual v1.0**:
+  - Wizard full-page de 7 etapas: Panorama Executivo → KPI Gate → Overview OKRs Times → Análise Detalhada por Time → OKRs Organizacionais → Decisões Estratégicas → Encerramento
+  - **`MbrKpiSnapshot`** inclui `unit` (unidade de medida) e `lastValueAt` (data do último valor registrado)
+  - Panorama Executivo agrupa KPIs ativos por escopo (Global/Área/Time) com `formatValueWithUnit` canônico
+  - Cards de KPI exibem `LastCheckinBadge` com data humanizada do último update
+  - Overview de OKRs usa layout de cards com pontuação de saúde (filtra apenas times com OKRs ativas)
+  - Análise Detalhada por Time: UI simplificada com grid Base/Atual/Meta (sem progress bars internas)
+  - Auto-seeding imutável de KPIs e OKRs para integridade de snapshot histórico
+  - Rota `/okrs/mbr` com `requiresBuAdmin`
+  - Componentes: `MbrPanoramaStep`, `MbrKpiGateStep`, `MbrTeamOkrsOverviewStep`, `MbrTeamOkrsDetailStep`, `MbrOrgOkrsStep`, `MbrDecisionsStep`, `MbrClosingStep`
 
 ### v2.83.0 (2026-02-03)
 - **OKR/KPI Wizard Integration v1.0** — Integração aprimorada entre OKRs, KPIs e Wizards:
