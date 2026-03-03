@@ -29,9 +29,16 @@ import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { Search, User, Clock, AlertCircle } from "lucide-react";
 
+export interface BuUserSelectedMeta {
+  id: string;
+  displayName: string;
+}
+
 export interface BuUserSelectProps {
   value: string | undefined;
   onValueChange: (value: string | null) => void;
+  /** Callback with id + displayName when a user is selected (useful for snapshots) */
+  onUserSelected?: (user: BuUserSelectedMeta | null) => void;
   placeholder?: string;
   excludeUserIds?: string[];
   disabled?: boolean;
@@ -62,6 +69,7 @@ function getInitials(name: string | null | undefined): string {
 export function BuUserSelect({
   value,
   onValueChange,
+  onUserSelected,
   placeholder = "Selecione um usuário",
   excludeUserIds = [],
   disabled = false,
@@ -146,8 +154,14 @@ export function BuUserSelect({
   const handleValueChange = (val: string) => {
     if (val === NONE_VALUE) {
       onValueChange(null);
+      onUserSelected?.(null);
     } else {
       onValueChange(val);
+      const profile = profiles.find((p) => p.id === val);
+      onUserSelected?.({
+        id: val,
+        displayName: profile?.display_name || '',
+      });
     }
     setOpen(false);
   };
