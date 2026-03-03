@@ -1,70 +1,49 @@
 
 
-## Fase: Step 4 — Análise por Time com navegação 1-por-vez
+## Feedback com Estrelas no Encerramento do MBR
 
-### Problema atual
+### Resumo
 
-O `MbrTeamOkrsDetailStep` renderiza **todos os times** num grid scrollável. Com muitos times, a revisão fica superficial e o conteúdo denso.
+Substituir o modelo "texto obrigatório" por "rating 1-5 estrelas obrigatório + texto opcional" no feedback anônimo do encerramento. Os dados são persistidos no snapshot JSONB (`reflection_data` em `okr_wizard_sessions`), sem alterações de banco.
 
-### Solução
+---
 
-Usar o `currentTeamIndex` (já existe no `MbrDraftData`) para exibir **um time por vez** dentro do mesmo step, com navegação interna prev/next. Tudo permanece dentro do wizard — sem rotas extras.
+### 1. Tipagem — `src/modules/okrs/types/wizard.ts` (linhas 228-233)
 
-### Alteração única: `MbrTeamOkrsDetailStep.tsx`
+Adicionar campo `rating` ao `RitualImprovementFeedback`:
 
-**Layout por time (1/N):**
-- Header mostra `"Time 1 de N — [Nome do Time]"` com barra de progresso de revisão
-- Área de conteúdo mostra apenas os OKRs/KRs do time atual (usando a mesma estrutura de cards já existente)
-- Checkbox "Revisado" fixo no `topFixed` junto com o nome do time
-- `InlineDecisionInput` no `bottomFixed` (já existente)
-
-**Navegação interna (dentro do step):**
-- Botões "← Time anterior" / "Próximo time →" no footer
-- Ao marcar "Revisado" e clicar próximo, avança `currentTeamIndex`
-- O botão "Prosseguir para OKRs Org" só aparece quando no último time E todos revisados
-- Botão "Voltar" no primeiro time retorna ao step anterior (overview)
-
-**Props inalteradas** — o componente já recebe `currentTeamIndex` e `onCurrentTeamIndexChange`. Basta ativá-los (atualmente ignorados com `_prefix`).
-
-### Detalhes técnicos
-
-```text
-┌─────────────────────────────────┐
-│ Header: "Análise por Time"      │
-│ "Time 2 de 5 — Comercial"      │
-├─────────────────────────────────┤
-│ [■■■■░░░░░] 1/5 revisados      │
-│ ☑ Marcar como revisado          │
-├─────────────────────────────────┤
-│                                 │
-│   OKR 1 do time atual           │
-│     └─ KR 1 [====▓░░] 67%      │
-│     └─ KR 2 [==▓░░░░] 40%      │
-│                                 │
-│   OKR 2 do time atual           │
-│     └─ KR 1 ...                 │
-│                                 │
-├─────────────────────────────────┤
-│ [Nota sobre este time...]       │
-├─────────────────────────────────┤
-│ ← Time anterior  Próximo time → │
-│        (ou "OKRs Org →")        │
-└─────────────────────────────────┘
+```typescript
+export interface RitualImprovementFeedback {
+  id: string;
+  rating: number;  // 1-5 (novo, obrigatório)
+  text: string;    // agora pode ser '' (opcional)
+  status: 'pending' | 'implement' | 'evaluated' | 'discarded';
+  createdAt: string;
+}
 ```
 
-### Regras de navegação
+### 2. UI — `MbrClosingStep.tsx`
 
-- `onBack`: se `currentTeamIndex > 0` → decrementa index; se `== 0` → chama `onBack()` (volta ao overview)
-- `onNext`: se `currentTeamIndex < N-1` → incrementa index; se `== N-1` e todos revisados → chama `onContinue()` (avança ao step org-okrs)
-- Gate: botão primário desabilitado no último time se algum time não foi revisado
-- Times sem OKRs: pular automaticamente (não contam para revisão)
+- **Estado local**: Adicionar `feedbackRating: number` (inicia em 0).
+- **Input de estrelas**: 5 ícones `Star` (lucide, já disponível) clicáveis. Preenchidos (`fill="currentColor"`) até o rating selecionado, vazios após. Cor: `text-yellow-400` quando preenchido, `text-muted-foreground` quando vazio.
+- **Textarea**: Mantido ao lado, placeholder "Comentário opcional...", sem obrigatoriedade.
+- **Botão Enviar**: Habilitado quando `feedbackRating >= 1` (rating selecionado). Ao clicar, cria `RitualImprovementFeedback` com `rating` e `text` (pode ser `''`). Reseta rating e texto.
+- **Lista de feedbacks**: Cada card exibe estrelas preenchidas inline + texto (se houver) + botão X para remover.
+- **Gate**: `hasFeedback = ritualFeedback.length > 0` — inalterado. Uma avaliação com rating basta.
+
+### 3. Testes — `MbrClosingStep.test.tsx`
+
+- Atualizar fixtures existentes para incluir `rating: 4`.
+- Novo teste: clicar na 3a estrela + enviar → `onRitualFeedbackChange` recebe item com `rating: 3`.
+- Verificar gate: botão enviar desabilitado sem estrelas selecionadas.
 
 ### Arquivos tocados
 
 | Arquivo | Ação |
 |---|---|
-| `src/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep.tsx` | Refatorar para exibir 1 time por vez |
-| `src/modules/okrs/components/wizards/mbr/__tests__/MbrTeamOkrsDetailStep.test.tsx` | Atualizar testes para nova navegação |
+| `src/modules/okrs/types/wizard.ts` | Adicionar `rating` ao type |
+| `src/modules/okrs/components/wizards/mbr/MbrClosingStep.tsx` | UI de estrelas + texto opcional |
+| `src/modules/okrs/components/wizards/mbr/__tests__/MbrClosingStep.test.tsx` | Atualizar testes |
 
-Zero componentes novos. Zero alterações de tipo. O `currentTeamIndex` e `onCurrentTeamIndexChange` já existem na interface.
+Zero componentes novos. Zero alterações de banco. O componente de estrelas é inline (5 botões `Star`).
 
