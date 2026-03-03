@@ -278,20 +278,37 @@ export default function MbrPage() {
     if (!hasFetchedTeamOkrs || isLoadingTeamOkrs) return;
 
     // Check if existing snapshots have fully valid KR payload (migration guard)
-    // Drafts salvos com shape antigo (sem unit/current/target/direction) devem ser re-seeded
+    // Drafts salvos com shape antigo/legado devem ser re-seeded
+    const validRagStatuses = new Set(['green', 'yellow', 'red', 'not_started']);
+    const validDirections = new Set(['up', 'down', 'maintain']);
+
     const hasValidKeyResults = draft.data.teamOkrSnapshots.length > 0 &&
       draft.data.teamOkrSnapshots.every(team =>
         team.objectives.every(objective =>
           Array.isArray(objective.keyResults) &&
-          objective.keyResults.every(kr =>
-            typeof kr.title === 'string' &&
-            typeof kr.status === 'string' &&
-            typeof kr.baseline === 'number' &&
-            typeof kr.current === 'number' &&
-            typeof kr.target === 'number' &&
-            typeof kr.direction === 'string' &&
-            typeof kr.unit === 'string'
-          )
+          objective.keyResults.every(kr => {
+            const hasNumericValues =
+              Number.isFinite(kr.baseline) &&
+              Number.isFinite(kr.current) &&
+              Number.isFinite(kr.target);
+
+            const hasValidStatus = typeof kr.status === 'string' && validRagStatuses.has(kr.status);
+            const hasValidDirection = typeof kr.direction === 'string' && validDirections.has(kr.direction);
+            const hasValidUnit = typeof kr.unit === 'string' && kr.unit.trim().length > 0;
+            const hasValidLastCheckin =
+              kr.lastCheckinAt === null ||
+              kr.lastCheckinAt === undefined ||
+              typeof kr.lastCheckinAt === 'string';
+
+            return (
+              typeof kr.title === 'string' &&
+              hasNumericValues &&
+              hasValidStatus &&
+              hasValidDirection &&
+              hasValidUnit &&
+              hasValidLastCheckin
+            );
+          })
         )
       );
 
