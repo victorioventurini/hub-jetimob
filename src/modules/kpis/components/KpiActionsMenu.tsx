@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +23,7 @@ import { useKpiMutations } from "../hooks/useKpiMutations";
 import { useCanEditKpi } from "../hooks/useCanEditKpi";
 import { KpiMetric, KpiValueSource, KpiVisibility, KpiIndicatorType, KpiLifecycleStatus, KpiScope, KpiDirection, KpiFrequency } from "../types";
 import { EditKpiDialog } from "./EditKpiDialog";
+import { AddKpiValueDialog } from "./AddKpiValueDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 
 /**
@@ -70,22 +71,23 @@ interface KpiActionsMenuProps {
 
 export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }: KpiActionsMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [updateValueOpen, setUpdateValueOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const { archiveKpi, reactivateKpi, deleteKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: permissionLoading } = usePermissions();
-  const { canEdit, isLoading: canEditLoading } = useCanEditKpi(kpi);
+  const { canEdit, canUpdateValues, isLoading: canEditLoading } = useCanEditKpi(kpi);
   
   // Pode gerenciar (arquivar/excluir) - apenas admins
   const canManage = hasPermission("kpis.settings.manage:bu");
   
   const isLoading = permissionLoading || canEditLoading;
 
-  // Early return if no edit permission (after hooks)
-  // Owners e contribuidores podem editar, mas arquivar/excluir só admin
-  if (!isLoading && !canEdit) {
+  // Early return if no permission at all (after hooks)
+  // canUpdateValues é mais amplo que canEdit — inclui contribuidores e líderes
+  if (!isLoading && !canEdit && !canUpdateValues) {
     return null;
   }
 
@@ -172,10 +174,18 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
-          </DropdownMenuItem>
+          {canUpdateValues && (
+            <DropdownMenuItem onClick={() => setUpdateValueOpen(true)}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Atualizar
+            </DropdownMenuItem>
+          )}
+          {canEdit && (
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </DropdownMenuItem>
+          )}
           {/* Arquivar/Excluir apenas para admins */}
           {canManage && (
             <>
@@ -204,6 +214,15 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Update Value Dialog */}
+      <AddKpiValueDialog
+        kpiId={kpi.id}
+        kpiName={kpi.name}
+        unit={kpi.unit ?? '%'}
+        open={updateValueOpen}
+        onOpenChange={setUpdateValueOpen}
+      />
 
       {/* Edit Dialog */}
       <EditKpiDialog
