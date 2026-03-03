@@ -171,6 +171,14 @@ export const okrsKeys = {
   wizardDraftGeneric: (userId: string, wizardType: string) =>
     ['okr-wizard-draft-generic', userId, wizardType] as const,
 
+  // Ritual history (completed wizard sessions)
+  ritualHistory: (buId: string | null, filters?: Record<string, unknown>) =>
+    ['okr-ritual-history', buId, filters] as const,
+  ritualHistoryListPrefix: (buId: string | null) =>
+    ['okr-ritual-history', buId] as const,
+  ritualDetail: (sessionId: string | null) =>
+    ['okr-ritual-detail', sessionId] as const,
+
   // Wizard data
   wizardUserKrs: (
     buId: string | null,
