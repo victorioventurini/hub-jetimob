@@ -165,7 +165,7 @@ describe('MbrTeamOkrsDetailStep', () => {
       createTeamSnapshot({ teamId: 't2', teamName: 'Team B' }),
     ];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getByText('Time 1 de 2')).toBeInTheDocument();
+    expect(screen.getByText('1/2')).toBeInTheDocument();
   });
 
   it('renders objectives and KRs', () => {
