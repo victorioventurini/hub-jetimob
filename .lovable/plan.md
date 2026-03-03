@@ -1,92 +1,137 @@
 
 
-# Plano: Agrupar KPIs por Escopo no Step 1 do MBR
+# Plano: Novo Step "OKRs dos Times" no MBR Wizard
 
 ## Contexto
 
-Atualmente o Step 1 (Panorama Executivo) exibe todos os KPIs em uma lista plana, sem distinção de escopo. Os KPIs no banco possuem o campo `scope` (`org`, `area`, `team`) e relações com `area_id` e `team_id`, permitindo agrupamento natural.
+Atualmente o MBR possui 5 steps: Panorama Executivo, KPI Gate, OKRs Org, Decisoes, Encerramento. O pedido e inserir um novo "grande step" entre KPI Gate e OKRs Org, dividido em duas sub-etapas:
 
-## Alterações
+1. **Overview dos Times** -- visao consolidada de saude/progresso de todos os times
+2. **Analise por Time** -- drill-down sequencial em cada time com OKRs
 
-### 1. Expandir `MbrKpiSnapshot` com campos de agrupamento
+A ordem final do wizard sera:
+```text
+panorama -> kpi-gate -> team-okrs-overview -> team-okrs-detail -> org-okrs -> decisions -> closing
+```
 
-**Arquivo:** `src/modules/okrs/types/wizard.ts`
+---
 
-Adicionar campos opcionais ao `MbrKpiSnapshot`:
+## 1. Tipos (`src/modules/okrs/types/wizard.ts`)
+
+### 1.1 Expandir `MbrStep`
 
 ```typescript
-export interface MbrKpiSnapshot {
-  // ... campos existentes
-  scope?: 'org' | 'area' | 'team';
-  areaId?: string | null;
-  areaName?: string | null;
-  areaColor?: string | null;
-  teamId?: string | null;
-  teamName?: string | null;
+export type MbrStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
+```
+
+### 1.2 Adicionar `TeamCheckinDecisionSourceStep`
+
+Adicionar `'team-okrs-overview'` e `'team-okrs-detail'` ao union de source steps.
+
+### 1.3 Novo tipo: `MbrTeamOkrSnapshot`
+
+```typescript
+export interface MbrTeamOkrSnapshot {
+  teamId: string;
+  teamName: string;
+  objectives: Array<{
+    objectiveId: string;
+    title: string;
+    progress: number;
+    status: string;
+    krCount: number;
+    krsAtRisk: number;
+    krsStagnant: number;
+    trend: 'improving' | 'stable' | 'declining';
+  }>;
+  healthScore: number;
+  healthStatus: 'healthy' | 'attention' | 'risk';
+  reviewed: boolean; // marca se o lider ja revisou este time
 }
 ```
 
-### 2. Enriquecer o seeding no MbrPage com area/team
+### 1.4 Expandir `MbrDraftData`
 
-**Arquivo:** `src/modules/okrs/pages/MbrPage.tsx`
+Adicionar `teamOkrSnapshots: MbrTeamOkrSnapshot[]` e `currentTeamIndex: number` (para saber em qual time esta no detail).
 
-- Trocar `useKpisForWizard({})` por uma query dedicada que busca **todos** os KPIs ativos da BU (sem filtro de owner/team), incluindo os joins de `area` e `team`:
-  - `select('id, name, ..., scope, area_id, team_id, area:areas!kpi_metrics_area_id_fkey(id, name, color), team:teams!kpi_metrics_team_id_fkey(id, name)')`
-- Filtrar para excluir `indicator_type = 'metric'` (somente KPIs, conforme requisito)
-- Mapear `scope`, `areaId`, `areaName`, `areaColor`, `teamId`, `teamName` nos snapshots
+---
 
-### 3. Refatorar MbrPanoramaStep para exibir em 3 grupos
+## 2. Data Seeding (`src/modules/okrs/pages/MbrPage.tsx`)
 
-**Arquivo:** `src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx`
+### 2.1 Buscar times gerenciaveis + objetivos
 
-Substituir o grid plano por seções agrupadas usando `Accordion` (expandido por padrão):
+- Usar `useManageableTeams()` para listar todos os times da BU que o admin pode ver.
+- Criar uma query que busca `okr_team_objectives` com KRs para o ciclo ativo, agrupando por `team_id`.
+- Para cada time, calcular: `healthScore`, `healthStatus`, `trend`, contagens de KRs at risk/stagnant.
 
-```text
-+------------------------------------------+
-| Panorama Executivo           [X KPIs]    |
-+------------------------------------------+
-| [!] Y KPIs em atenção                    |
-+------------------------------------------+
-|                                          |
-| >> KPIs Globais da BU (N)                |
-|   [Card] [Card]                          |
-|                                          |
-| >> KPIs por Área                         |
-|   --- Operações (3) ---                  |
-|   [Card] [Card] [Card]                   |
-|   --- Comercial (2) ---                  |
-|   [Card] [Card]                          |
-|                                          |
-| >> KPIs por Time                         |
-|   --- Dev Backend (2) ---                |
-|   [Card] [Card]                          |
-|   --- Vendas Inside (1) ---              |
-|   [Card]                                 |
-|                                          |
-+------------------------------------------+
-| [Decisão inline]                         |
-| [Analisar KPIs Críticos >>]              |
-+------------------------------------------+
-```
+### 2.2 Auto-seed `teamOkrSnapshots`
 
-Lógica de agrupamento:
-- Usar `useMemo` para separar snapshots em 3 arrays: `orgKpis` (scope=org), `areaGroups` (scope=area, agrupados por areaName), `teamGroups` (scope=team, agrupados por teamName)
-- Cada grupo mantém a ordenação RAG (red > yellow > green)
-- Usar `Accordion` com `type="multiple"` e `defaultValue` com todos os grupos abertos
-- Areas exibem `AreaBadge` no cabeçalho do subgrupo (conforme `AREA_BADGE_STANDARD.md`)
-- Seções vazias são ocultadas automaticamente
+Mesmo padrao dos KPIs e OKRs Org: `useEffect` + ref + seed quando draft vazio.
 
-### 4. Atualizar testes
+### 2.3 Atualizar `WIZARD_STEPS` e `STEP_ORDER`
 
-**Arquivo:** `src/modules/okrs/components/wizards/mbr/__tests__/MbrPanoramaStep.test.tsx`
+Inserir os dois novos steps no array de configuracao, entre `kpi-gate` e `org-okrs`.
 
-- Atualizar fixtures com os novos campos (`scope`, `areaName`, `teamName`)
-- Adicionar testes para: renderização dos 3 grupos, ocultamento de grupo vazio, ordenação RAG dentro de cada grupo
+### 2.4 Loading guard
 
-## Detalhes Técnicos
+Adicionar loading dos dados de team OKRs ao guard existente.
 
-- `useKpisForWizard` atual filtra por `owner_user_id` ou `team_id` -- para o MBR precisamos de **todos** da BU. Criaremos a query inline no `useEffect` do MbrPage (pattern já usado no `loadPrevious`) em vez de modificar o hook compartilhado.
-- Os campos adicionados ao `MbrKpiSnapshot` são opcionais (`?`) para manter backward compatibility com drafts já salvos.
-- O componente `AreaBadge` será usado conforme padrão canônico (outline + cor da área).
-- Nenhuma migração de banco necessária.
+---
+
+## 3. Componente: `MbrTeamOkrsOverviewStep.tsx`
+
+Pagina de overview consolidado. Mostra:
+
+- Header: "OKRs dos Times" com badge de contagem
+- Resumo executivo: cards com metricas globais (total de times, times saudaveis, em atencao, em risco)
+- Lista de times em formato similar ao `TeamSummaryList` existente, mas inline (sem abrir nova aba):
+  - Avatar + nome do time + lider
+  - Badge de saude (healthy/attention/risk)
+  - Contagem de objetivos e KRs
+  - Indicador de trend
+- Ordenacao: risco primeiro, depois atencao, depois saudavel
+- Decisao inline para anotacoes gerais sobre panorama dos times
+- Footer: "Analisar Times" para avancar ao detail
+
+---
+
+## 4. Componente: `MbrTeamOkrsDetailStep.tsx`
+
+Analise sequencial time-a-time:
+
+- Header: nome do time atual + navegacao "Time 1 de N" com setas
+- Para cada time, lista seus objetivos com:
+  - Titulo + progresso + status RAG
+  - KRs resumidos (titulo + owner + status + last checkin)
+  - Badge de saude por objetivo
+- Checkbox "Revisado" que marca `reviewed: true` no snapshot
+- Decisao inline por time (sourceStep: `'team-okrs-detail'`)
+- Gate: so avanca se **todos os times com OKRs** estiverem marcados como "revisados"
+- Footer: "Prosseguir para OKRs Org"
+
+---
+
+## 5. Barrel Export (`src/modules/okrs/components/wizards/mbr/index.ts`)
+
+Adicionar exports para os dois novos componentes.
+
+---
+
+## 6. Testes (`__tests__/MbrTeamOkrsSteps.test.tsx`)
+
+- Renderizacao do overview com times mock
+- Renderizacao do detail com navegacao entre times
+- Gate: botao desabilitado quando nem todos os times estao revisados
+- Times sem OKRs aparecem mas nao exigem revisao
+
+---
+
+## Detalhes Tecnicos
+
+- Os novos steps seguem o padrao canonico: `WizardStepHeader` + `ScrollArea` + `WizardStepFooter` + `InlineDecisionInput`
+- O `currentTeamIndex` no draft persiste a posicao de navegacao entre times no detail
+- `useManageableTeams()` ja retorna todos os times da BU para admins (permissao MBR)
+- A query de team objectives usa `useTeamObjectives` existente ou query dedicada com `OKR_FIELDS.teamObjectiveWithKrs`
+- Nenhuma migracao de banco necessaria
+- ~4 arquivos novos, ~3 arquivos editados
 
