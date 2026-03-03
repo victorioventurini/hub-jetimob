@@ -77,7 +77,7 @@ const HISTORY_FIELDS = `
 
 export function useRitualHistory(filters: RitualHistoryFilters = {}) {
   const { currentBu } = useBu();
-  const { profile, isAdmin } = useAuth();
+  const { profile } = useAuth();
   const buSupabase = useOptionalBuScopedSupabase();
 
   return useQuery({
@@ -93,10 +93,10 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         .order('completed_at', { ascending: false })
         .limit(100);
 
-      // Non-admins only see their own sessions
-      if (!isAdmin) {
-        query = query.eq('started_by', profile.id);
-      }
+      // Visibility is enforced by RLS policies:
+      // - Own sessions: started_by = profile_id
+      // - Team sessions: team members via user_team_memberships
+      // - BU admin/super_admin: all sessions in BU
 
       // Filters
       if (filters.wizardType && filters.wizardType !== 'all') {
