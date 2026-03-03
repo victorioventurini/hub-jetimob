@@ -232,7 +232,11 @@ export default function MbrPage() {
 
   // ── Load team OKRs and seed teamOkrSnapshots ──
 
-  const { data: allTeamObjectives, isLoading: isLoadingTeamOkrs } = useQuery({
+  const {
+    data: allTeamObjectives,
+    isLoading: isLoadingTeamOkrs,
+    isFetched: hasFetchedTeamOkrs,
+  } = useQuery({
     queryKey: ['mbr', 'team-objectives', currentBuId, quarterlyCycle?.id],
     enabled: !!buSupabase && !!currentBuId && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
@@ -269,7 +273,8 @@ export default function MbrPage() {
 
   useEffect(() => {
     if (seededTeamOkrsRef.current) return;
-    if (isLoadingTeamOkrs) return;
+    if (!quarterlyCycle?.id) return;
+    if (!hasFetchedTeamOkrs || isLoadingTeamOkrs) return;
     if (draft.data.teamOkrSnapshots.length > 0) {
       seededTeamOkrsRef.current = true;
       return;
@@ -364,7 +369,7 @@ export default function MbrPage() {
       updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
     }
     seededTeamOkrsRef.current = true;
-  }, [allTeamObjectives, isLoadingTeamOkrs, draft.data.teamOkrSnapshots.length, updateDraft]);
+  }, [allTeamObjectives, quarterlyCycle?.id, hasFetchedTeamOkrs, isLoadingTeamOkrs, draft.data.teamOkrSnapshots.length, updateDraft]);
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
   const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(currentBu?.id);
