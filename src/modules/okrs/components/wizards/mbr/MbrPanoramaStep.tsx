@@ -4,6 +4,7 @@
  * Visão consolidada da saúde do negócio via KPIs mestres.
  * KPIs agrupados por escopo: Global BU, por Área, por Time.
  * KPIs em risco (amarelo/vermelho) destacados no topo de cada grupo.
+ * Cards exibem data humanizada relativa do último update (ex: "há 2 dias").
  */
 
 import { useMemo } from 'react';
@@ -11,7 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AreaBadge } from '@/components/ui/area-badge';
-import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Building2, Users, Layers } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Building2, Users, Layers, RefreshCw } from 'lucide-react';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge } from '../shared';
 import { formatValueWithUnit } from '@/shared/constants/units';
@@ -72,6 +75,22 @@ function formatVariation(value: number | null) {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+function KpiLastUpdateLabel({ date }: { date?: string | null }) {
+  if (!date) return (
+    <div className="inline-flex items-center gap-1 text-xs text-muted-foreground/60">
+      <RefreshCw className="h-3 w-3" />
+      <span>Sem registro</span>
+    </div>
+  );
+  const relative = formatDistanceToNow(parseISO(date), { addSuffix: true, locale: ptBR });
+  return (
+    <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+      <RefreshCw className="h-3 w-3" />
+      <span>Atualizado {relative}</span>
+    </div>
+  );
+}
+
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================
@@ -113,7 +132,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
                 </div>
               </div>
             </div>
-            <LastCheckinBadge lastCompletedAt={kpi.lastValueAt ?? null} />
+            <KpiLastUpdateLabel date={kpi.lastValueAt} />
           </CardContent>
         </Card>
       ))}
