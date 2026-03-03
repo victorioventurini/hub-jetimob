@@ -88,7 +88,7 @@ export function MbrTeamOkrsOverviewStep({
   }, [teamOkrSnapshots]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col h-full">
       <WizardStepHeader
         icon={Users}
         title="OKRs dos Times"

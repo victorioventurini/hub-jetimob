@@ -17,7 +17,6 @@ import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { DiscardChangesDialog } from '@/components/ui/discard-changes-dialog';
 import { LoadingSpinner } from '@/components/ui/loading-state';
 import { ArrowLeft, X, Save } from 'lucide-react';
@@ -215,9 +214,9 @@ export function FullPageWizardShell({
   }, []);
   
   return (
-    <div className={cn('min-h-screen bg-background flex flex-col', className)}>
+    <div className={cn('h-screen bg-background flex flex-col overflow-hidden', className)}>
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="shrink-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center gap-4">
           <Button
             variant="ghost"
@@ -333,8 +332,8 @@ export function FullPageWizardShell({
       )}
       
       {/* Main content */}
-      <div className="flex-1 container py-6">
-        <div className="flex gap-8">
+      <div className="flex-1 min-h-0 container py-6 flex flex-col">
+        <div className="flex gap-8 flex-1 min-h-0">
           {/* Desktop stepper - lateral */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-20">
@@ -348,11 +347,9 @@ export function FullPageWizardShell({
             </div>
           </aside>
           
-          {/* Step content */}
-          <main className="flex-1 min-w-0">
-            <ScrollArea className="h-full">
-              {children}
-            </ScrollArea>
+          {/* Step content — each step controls its own ScrollArea */}
+          <main className="flex-1 min-w-0 min-h-0 flex flex-col">
+            {children}
           </main>
         </div>
       </div>

@@ -78,7 +78,7 @@ export function MbrTeamOkrsDetailStep({
 
   if (teamOkrSnapshots.length === 0) {
     return (
-      <div className="flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="flex flex-col h-full">
         <WizardStepHeader
           icon={Target}
           title="Análise por Time"
@@ -98,7 +98,7 @@ export function MbrTeamOkrsDetailStep({
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col h-full">
       <WizardStepHeader
         icon={Target}
         title="Análise por Time"
