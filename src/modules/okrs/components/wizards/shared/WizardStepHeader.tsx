@@ -106,26 +106,26 @@ export function WizardStepHeader({
       `bg-gradient-to-r ${styles.gradient}`,
       className
     )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={cn('p-2 rounded-lg', styles.iconBg)}>
+      <div className="flex items-center justify-between gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={cn('p-2 rounded-lg shrink-0', styles.iconBg)}>
             <Icon className={cn('h-5 w-5', styles.iconColor)} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg">{title}</h3>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="font-semibold text-lg truncate">{title}</h3>
               {badge && (
-                <Badge variant={badgeVariant}>{badge}</Badge>
+                <Badge variant={badgeVariant} className="shrink-0">{badge}</Badge>
               )}
             </div>
             {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
+              <p className="text-sm text-muted-foreground truncate">{description}</p>
             )}
           </div>
         </div>
         
         {rightContent && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {rightContent}
           </div>
         )}
