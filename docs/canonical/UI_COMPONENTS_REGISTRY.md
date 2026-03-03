@@ -396,6 +396,7 @@ Componente canônico **obrigatório** para seleção de usuários internos da BU
 |------|------|-----------|
 | `value` | `string \| undefined` | ID do usuário selecionado |
 | `onValueChange` | `(id: string \| null) => void` | Callback de mudança |
+| `onUserSelected` | `(user: BuUserSelectedMeta \| null) => void` | Callback com `{ id, displayName }` — útil para snapshots JSONB que precisam persistir o nome |
 | `placeholder` | `string` | Placeholder do select |
 | `teamId` | `string` | Filtra usuários por time |
 | `showBadges` | `boolean` | Mostra badges de onboarding/acesso |
@@ -403,6 +404,8 @@ Componente canônico **obrigatório** para seleção de usuários internos da BU
 | `allowNone` | `boolean` | Permite opção "Nenhum" |
 | `noneLabel` | `string` | Label para opção nenhum |
 | `disabled` | `boolean` | Desabilita o componente |
+
+> **Tipo exportado:** `BuUserSelectedMeta = { id: string; displayName: string }` — importar de `@/components/selects/BuUserSelect`.
 
 ### 6.2 BuUserMultiSelect
 
