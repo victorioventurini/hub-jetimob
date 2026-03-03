@@ -1,20 +1,21 @@
 /**
- * MbrOrgOkrsStep - Etapa 3: OKRs Organizacionais
+ * MbrOrgOkrsStep - Etapa 5: OKRs Organizacionais
  * 
- * Validação de prioridades estratégicas.
+ * Validação de prioridades estratégicas com Key Results detalhados.
  * Se "Não é mais prioridade" → exige registro de Decisão/Ajuste de Foco.
  */
 
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Target, TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
+import { WizardStepHeader, WizardStepFooter, WizardStepScaffold, InlineDecisionInput } from '../shared';
+import { OkrProgressBar } from '../../OkrProgressBar';
+import { OkrStatusBadge } from '../../OkrStatusBadge';
 import type { MbrOrgOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { OkrRagStatus, OkrDirection } from '@/modules/okrs/types';
 
 // ============================================================
 // TYPES
@@ -33,12 +34,21 @@ export interface MbrOrgOkrsStepProps {
 // HELPERS
 // ============================================================
 
-function TrendIcon({ trend }: { trend: string }) {
-  switch (trend) {
-    case 'improving': return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
-    case 'declining': return <TrendingDown className="h-3.5 w-3.5 text-status-red" />;
-    default: return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
-  }
+const TREND_MAP: Record<string, { icon: typeof TrendingUp; label: string; className: string }> = {
+  improving: { icon: TrendingUp, label: 'Melhorando', className: 'text-status-green' },
+  declining: { icon: TrendingDown, label: 'Declinando', className: 'text-status-red' },
+  stable: { icon: Minus, label: 'Estável', className: 'text-muted-foreground' },
+};
+
+function TrendIndicator({ trend }: { trend: string }) {
+  const config = TREND_MAP[trend] ?? TREND_MAP.stable;
+  const Icon = config.icon;
+  return (
+    <span className={cn('inline-flex items-center gap-1 text-xs', config.className)}>
+      <Icon className="h-3.5 w-3.5" />
+      {config.label}
+    </span>
+  );
 }
 
 // ============================================================
@@ -72,107 +82,139 @@ export function MbrOrgOkrsStep({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <WizardStepHeader
-        icon={Target}
-        title="OKRs Organizacionais"
-        description="Validação de prioridades estratégicas"
-        variant="purple"
-        badge={`${orgOkrSnapshots.length}`}
-      />
-
-      <ScrollArea className="flex-1">
-        <div className="p-6 space-y-4">
-          {orgOkrSnapshots.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhuma OKR organizacional carregada. Os snapshots serão preenchidos conforme a integração.
-            </p>
-          ) : (
-            orgOkrSnapshots.map((okr) => (
-              <Card key={okr.objectiveId} className={cn(
-                'transition-colors',
-                !okr.remainsStrategicPriority && 'border-status-amber/40 bg-status-amber/5'
-              )}>
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{okr.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <TrendIcon trend={okr.trend} />
-                        <span className="text-xs text-muted-foreground capitalize">{okr.trend === 'improving' ? 'Melhorando' : okr.trend === 'declining' ? 'Declinando' : 'Estável'}</span>
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {Math.round(okr.progress)}%
-                    </Badge>
-                  </div>
-
-                  <Progress value={Math.min(100, okr.progress)} className="h-1.5" />
-
-                  {/* Priority question */}
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <p className="text-sm">Continua sendo prioridade estratégica?</p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={okr.remainsStrategicPriority ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 gap-1"
-                        onClick={() => handleTogglePriority(okr.objectiveId, true)}
-                      >
-                        <ThumbsUp className="h-3.5 w-3.5" />
-                        Sim
-                      </Button>
-                      <Button
-                        variant={!okr.remainsStrategicPriority ? 'destructive' : 'outline'}
-                        size="sm"
-                        className="h-7 gap-1"
-                        onClick={() => handleTogglePriority(okr.objectiveId, false)}
-                      >
-                        <ThumbsDown className="h-3.5 w-3.5" />
-                        Não
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Decision required when not priority */}
-                  {!okr.remainsStrategicPriority && (
-                    <div className="border rounded-lg border-status-amber/30">
-                      <InlineDecisionInput
-                        decisions={decisions}
-                        onDecisionsChange={onDecisionsChange}
-                        sourceStep="org-okrs"
-                        placeholder={`Decisão ou ajuste sobre "${okr.title.substring(0, 30)}..."...`}
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      </ScrollArea>
-
-      {/* Inline decisions for general notes */}
-      <div className="border-t">
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="org-okrs"
-          placeholder="Nota geral sobre OKRs organizacionais..."
+    <WizardStepScaffold
+      header={
+        <WizardStepHeader
+          icon={Target}
+          title="OKRs Organizacionais"
+          description="Validação de prioridades estratégicas"
+          variant="purple"
+          badge={`${orgOkrSnapshots.length}`}
         />
-      </div>
+      }
+      bottomFixed={
+        <div className="border-t">
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="org-okrs"
+            placeholder="Nota geral sobre OKRs organizacionais..."
+          />
+        </div>
+      }
+      footer={
+        <>
+          <WizardStepFooter
+            onBack={onBack}
+            onPrimary={onContinue}
+            primaryLabel="Consolidar Diretrizes"
+            primaryDisabled={!canProceed}
+          />
+          {!canProceed && (
+            <p className="text-xs text-status-amber text-center pb-2">
+              Registre decisões para OKRs que não são mais prioridade
+            </p>
+          )}
+        </>
+      }
+    >
+      <div className="p-6 space-y-4">
+        {orgOkrSnapshots.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">
+            Nenhuma OKR organizacional carregada. Os snapshots serão preenchidos conforme a integração.
+          </p>
+        ) : (
+          orgOkrSnapshots.map((okr) => (
+            <Card key={okr.objectiveId} className={cn(
+              'transition-colors',
+              !okr.remainsStrategicPriority && 'border-status-amber/40 bg-status-amber/5'
+            )}>
+              <CardContent className="p-4 space-y-3">
+                {/* Objective header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{okr.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <TrendIndicator trend={okr.trend} />
+                      <OkrStatusBadge status={okr.status as any} type="objective" className="text-[10px]" />
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="text-xs shrink-0">
+                    {Math.round(okr.progress)}%
+                  </Badge>
+                </div>
 
-      <WizardStepFooter
-        onBack={onBack}
-        onPrimary={onContinue}
-        primaryLabel="Consolidar Diretrizes"
-        primaryDisabled={!canProceed}
-      />
-      {!canProceed && (
-        <p className="text-xs text-status-amber text-center pb-2">
-          Registre decisões para OKRs que não são mais prioridade
-        </p>
-      )}
-    </div>
+                {/* Key Results list */}
+                {okr.keyResults.length > 0 && (
+                  <div className="space-y-2 pl-3 border-l-2 border-muted">
+                    {okr.keyResults.map((kr) => (
+                      <div key={kr.krId} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <OkrStatusBadge status={kr.status as OkrRagStatus} type="kr" className="shrink-0" />
+                          <span className="text-xs truncate flex-1 min-w-0">{kr.title}</span>
+                          {kr.ownerName && (
+                            <span className="text-[10px] text-muted-foreground shrink-0 inline-flex items-center gap-0.5">
+                              <User className="h-3 w-3" />
+                              {kr.ownerName}
+                            </span>
+                          )}
+                        </div>
+                        <OkrProgressBar
+                          baseline={kr.baseline}
+                          current={kr.current}
+                          target={kr.target}
+                          direction={kr.direction as OkrDirection}
+                          status={kr.status as OkrRagStatus}
+                          unit={kr.unit}
+                          size="sm"
+                          showLabels={false}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Priority question */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <p className="text-sm">Continua sendo prioridade estratégica?</p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={okr.remainsStrategicPriority ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 gap-1"
+                      onClick={() => handleTogglePriority(okr.objectiveId, true)}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5" />
+                      Sim
+                    </Button>
+                    <Button
+                      variant={!okr.remainsStrategicPriority ? 'destructive' : 'outline'}
+                      size="sm"
+                      className="h-7 gap-1"
+                      onClick={() => handleTogglePriority(okr.objectiveId, false)}
+                    >
+                      <ThumbsDown className="h-3.5 w-3.5" />
+                      Não
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Decision required when not priority */}
+                {!okr.remainsStrategicPriority && (
+                  <div className="border rounded-lg border-status-amber/30">
+                    <InlineDecisionInput
+                      decisions={decisions}
+                      onDecisionsChange={onDecisionsChange}
+                      sourceStep="org-okrs"
+                      placeholder={`Decisão ou ajuste sobre "${okr.title.substring(0, 30)}..."...`}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </WizardStepScaffold>
   );
 }

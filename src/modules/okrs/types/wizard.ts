@@ -201,6 +201,19 @@ export interface MbrOrgOkrSnapshot {
   status: string;
   trend: 'improving' | 'stable' | 'declining';
   remainsStrategicPriority: boolean;
+  keyResults: Array<{
+    krId: string;
+    title: string;
+    progress: number;
+    status: string;
+    ownerName: string | null;
+    baseline: number;
+    current: number;
+    target: number;
+    direction: 'up' | 'down';
+    unit: string;
+    lastCheckinAt: string | null;
+  }>;
 }
 
 /** Checklist de governança do MBR */

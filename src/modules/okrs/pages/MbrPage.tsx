@@ -453,6 +453,33 @@ export default function MbrPage() {
         status: obj.status,
         trend,
         remainsStrategicPriority: true,
+        keyResults: krs.map((kr: any) => {
+          const krBaseline = Number(kr.baseline ?? 0);
+          const krCurrent = Number(kr.current_value ?? krBaseline);
+          const krTarget = Number(kr.target ?? krBaseline);
+          const krDirection = (kr.direction || 'up') as 'up' | 'down';
+          const krProgress = (() => {
+            if (krDirection === 'up') {
+              if (krTarget === krBaseline) return krCurrent >= krTarget ? 100 : 0;
+              return Math.max(0, ((krCurrent - krBaseline) / (krTarget - krBaseline)) * 100);
+            }
+            if (krBaseline === krTarget) return krCurrent <= krTarget ? 100 : 0;
+            return Math.max(0, ((krBaseline - krCurrent) / (krBaseline - krTarget)) * 100);
+          })();
+          return {
+            krId: kr.id,
+            title: kr.title,
+            progress: Math.round(krProgress),
+            status: kr.status || 'not_started',
+            ownerName: kr.owner?.full_name ?? null,
+            baseline: krBaseline,
+            current: krCurrent,
+            target: krTarget,
+            direction: krDirection,
+            unit: kr.unit || '%',
+            lastCheckinAt: kr.last_checkin_at ?? null,
+          };
+        }),
       };
     });
 
