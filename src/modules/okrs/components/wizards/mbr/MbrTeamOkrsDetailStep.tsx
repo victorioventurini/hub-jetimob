@@ -271,7 +271,6 @@ export function MbrTeamOkrsDetailStep({
                               >
                                 {ragLabel(kr.status)}
                               </Badge>
-                              <span className="font-medium tabular-nums flex-shrink-0">{kr.progress}%</span>
                             </div>
                             {/* Progress bar with base/current/target */}
                             <OkrProgressBar
