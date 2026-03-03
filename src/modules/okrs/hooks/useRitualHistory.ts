@@ -68,7 +68,7 @@ const HISTORY_FIELDS = `
   completed_at, decisions, reflection_data,
   teams!okr_wizard_sessions_team_id_fkey ( name ),
   cycles!okr_wizard_sessions_cycle_id_fkey ( name ),
-  profiles!okr_wizard_sessions_started_by_fkey ( full_name )
+  profiles!okr_wizard_sessions_started_by_fkey ( display_name, first_name, last_name )
 `;
 
 // ============================================================
@@ -123,7 +123,9 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         cycleId: row.cycle_id,
         cycleName: row.cycles?.name ?? null,
         startedBy: row.started_by,
-        startedByName: row.profiles?.full_name ?? null,
+        startedByName: row.profiles?.display_name
+          || [row.profiles?.first_name, row.profiles?.last_name].filter(Boolean).join(' ')
+          || null,
         startedAt: row.started_at,
         completedAt: row.completed_at,
         decisions: extractDecisions(row),
@@ -159,7 +161,9 @@ export function useRitualDetail(sessionId: string | null) {
         cycleId: row.cycle_id,
         cycleName: row.cycles?.name ?? null,
         startedBy: row.started_by,
-        startedByName: row.profiles?.full_name ?? null,
+        startedByName: row.profiles?.display_name
+          || [row.profiles?.first_name, row.profiles?.last_name].filter(Boolean).join(' ')
+          || null,
         startedAt: row.started_at,
         completedAt: row.completed_at,
         decisions: extractDecisions(row),
