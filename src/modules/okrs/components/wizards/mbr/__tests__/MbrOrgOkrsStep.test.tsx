@@ -16,10 +16,40 @@ vi.mock('../../shared', () => ({
       <button data-testid="primary-btn" onClick={onPrimary} disabled={primaryDisabled}>{primaryLabel}</button>
     </div>
   ),
+  WizardStepScaffold: ({ header, children, bottomFixed, footer }: any) => (
+    <div data-testid="wizard-step-scaffold">{header}{children}{bottomFixed}{footer}</div>
+  ),
   InlineDecisionInput: ({ sourceStep }: { sourceStep: string }) => (
     <div data-testid={`inline-decision-${sourceStep}`} />
   ),
 }));
+
+vi.mock('@/modules/okrs/components/OkrProgressBar', () => ({
+  OkrProgressBar: ({ current, target }: any) => (
+    <div data-testid="okr-progress-bar">{current}/{target}</div>
+  ),
+}));
+
+vi.mock('@/modules/okrs/components/OkrStatusBadge', () => ({
+  OkrStatusBadge: ({ status }: any) => (
+    <span data-testid="okr-status-badge">{status}</span>
+  ),
+}));
+
+const createKr = (overrides = {}) => ({
+  krId: 'kr-1',
+  title: 'Atingir 1M MRR',
+  progress: 50,
+  status: 'yellow',
+  ownerName: 'João',
+  baseline: 0,
+  current: 500000,
+  target: 1000000,
+  direction: 'up' as const,
+  unit: 'R$',
+  lastCheckinAt: null,
+  ...overrides,
+});
 
 const createOkr = (overrides: Partial<MbrOrgOkrSnapshot> = {}): MbrOrgOkrSnapshot => ({
   objectiveId: 'obj-1',
@@ -28,6 +58,7 @@ const createOkr = (overrides: Partial<MbrOrgOkrSnapshot> = {}): MbrOrgOkrSnapsho
   status: 'on_track',
   trend: 'improving',
   remainsStrategicPriority: true,
+  keyResults: [],
   ...overrides,
 });
 
@@ -89,7 +120,6 @@ describe('MbrOrgOkrsStep', () => {
     const props = defaultProps();
     props.orgOkrSnapshots = [createOkr({ remainsStrategicPriority: false })];
     render(<MbrOrgOkrsStep {...props} />);
-    // Should have at least 2: one per OKR + general notes
     const inlineInputs = screen.getAllByTestId('inline-decision-org-okrs');
     expect(inlineInputs.length).toBeGreaterThanOrEqual(2);
   });
@@ -130,5 +160,28 @@ describe('MbrOrgOkrsStep', () => {
     props.orgOkrSnapshots = [createOkr()];
     render(<MbrOrgOkrsStep {...props} />);
     expect(screen.getByTestId('inline-decision-org-okrs')).toBeInTheDocument();
+  });
+
+  it('renders Key Results with OkrProgressBar and OkrStatusBadge', () => {
+    const props = defaultProps();
+    props.orgOkrSnapshots = [createOkr({
+      keyResults: [
+        createKr({ krId: 'kr-1', title: 'KR Alpha', status: 'green' }),
+        createKr({ krId: 'kr-2', title: 'KR Beta', status: 'red', ownerName: 'Maria' }),
+      ],
+    })];
+    render(<MbrOrgOkrsStep {...props} />);
+
+    expect(screen.getByText('KR Alpha')).toBeInTheDocument();
+    expect(screen.getByText('KR Beta')).toBeInTheDocument();
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+    expect(screen.getAllByTestId('okr-progress-bar')).toHaveLength(2);
+    // 1 objective badge + 2 KR badges
+    expect(screen.getAllByTestId('okr-status-badge').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('uses WizardStepScaffold for layout', () => {
+    render(<MbrOrgOkrsStep {...defaultProps()} />);
+    expect(screen.getByTestId('wizard-step-scaffold')).toBeInTheDocument();
   });
 });
