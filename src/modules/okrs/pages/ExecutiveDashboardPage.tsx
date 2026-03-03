@@ -15,6 +15,8 @@ import { ProgressSummary } from '../components/ProgressSummary';
 import { YearSelect } from '@/components/selects';
 import { ManagersCheckinWizardCard } from '../components/wizards/managers-checkin/ManagersCheckinWizardCard';
 import { CLevelCheckinWizardCard } from '../components/wizards/clevel-checkin/CLevelCheckinWizardCard';
+import { MbrWizardCard } from '../components/wizards/mbr/MbrWizardCard';
+import { useLastCompletedSession } from '../hooks/useLastCompletedSession';
 import { PageHeader } from '@/components/ui/page-header';
 
 export default function ExecutiveDashboardPage() {
@@ -52,6 +54,7 @@ export default function ExecutiveDashboardPage() {
       }, 0) / teamKeyResults.length
     : 0;
 
+  const { lastCompletedAt: lastMbrDate, isLoading: loadingMbr } = useLastCompletedSession('mbr');
   const isLoading = loadingOrg || loadingTeam || loadingKrs;
 
   return (
@@ -75,7 +78,7 @@ export default function ExecutiveDashboardPage() {
         />
 
         {/* Strategic Wizard Entry Points */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <ManagersCheckinWizardCard
             areaCount={teams?.length || 0}
             crossDependenciesCount={0}
@@ -87,6 +90,10 @@ export default function ExecutiveDashboardPage() {
             overallProgress={avgProgress}
             atRiskCount={redKrs.length}
             isLoading={isLoading}
+          />
+          <MbrWizardCard
+            lastMbrDate={lastMbrDate}
+            isLoading={loadingMbr}
           />
         </div>
 
