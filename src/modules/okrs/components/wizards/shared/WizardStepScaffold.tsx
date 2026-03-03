@@ -52,10 +52,14 @@ export function WizardStepScaffold({
       {/* Optional fixed top area */}
       {topFixed && <div className="shrink-0">{topFixed}</div>}
 
-      {/* Scrollable content — the ONLY region that grows */}
-      <ScrollArea className="flex-1 min-h-0">
-        {children}
-      </ScrollArea>
+      {/* Scrollable content — the ONLY region that grows.
+          Wrapping div with h-0 + flex-1 forces a concrete height
+          so Radix ScrollArea viewport can measure and scroll. */}
+      <div className="flex-1 min-h-0 h-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          {children}
+        </ScrollArea>
+      </div>
 
       {/* Optional fixed bottom area */}
       {bottomFixed && <div className="shrink-0">{bottomFixed}</div>}
