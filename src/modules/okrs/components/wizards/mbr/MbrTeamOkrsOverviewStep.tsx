@@ -10,7 +10,6 @@ import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
@@ -79,7 +78,7 @@ export function MbrTeamOkrsOverviewStep({
   }, [teamOkrSnapshots]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <WizardStepHeader
         icon={Users}
         title="OKRs dos Times"
@@ -89,7 +88,7 @@ export function MbrTeamOkrsOverviewStep({
       />
 
       {/* Summary bar */}
-      <div className="px-6 py-4 border-b bg-muted/30">
+      <div className="px-6 py-4 border-b bg-muted/30 shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Progresso médio</p>
@@ -106,59 +105,61 @@ export function MbrTeamOkrsOverviewStep({
       </div>
 
       {/* Teams grid */}
-      <ScrollArea className="flex-1">
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sorted.length === 0 ? (
-            <div className="col-span-2 text-center py-12 text-muted-foreground">
-              Nenhum time com OKRs encontrado para este ciclo.
-            </div>
-          ) : (
-            sorted.map(team => {
-              const teamAvgProgress = team.objectives.length > 0
-                ? Math.round(team.objectives.reduce((s, o) => s + o.progress, 0) / team.objectives.length)
-                : 0;
-              const teamAtRisk = team.objectives.reduce((s, o) => s + o.krsAtRisk, 0);
-              const teamKrCount = team.objectives.reduce((s, o) => s + o.krCount, 0);
+      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
+        <div className="p-6 min-w-[640px] md:min-w-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sorted.length === 0 ? (
+              <div className="md:col-span-2 text-center py-12 text-muted-foreground">
+                Nenhum time com OKRs encontrado para este ciclo.
+              </div>
+            ) : (
+              sorted.map(team => {
+                const teamAvgProgress = team.objectives.length > 0
+                  ? Math.round(team.objectives.reduce((s, o) => s + o.progress, 0) / team.objectives.length)
+                  : 0;
+                const teamAtRisk = team.objectives.reduce((s, o) => s + o.krsAtRisk, 0);
+                const teamKrCount = team.objectives.reduce((s, o) => s + o.krCount, 0);
 
-              return (
-                <Card
-                  key={team.teamId}
-                  className={cn(
-                    'transition-colors',
-                    teamAtRisk > 0 && 'border-status-orange/30',
-                  )}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">{team.teamName}</CardTitle>
-                      {getTrendIcon(team.objectives)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {team.objectives.length} OKRs · {teamKrCount} KRs
-                        </span>
-                        <span className="font-bold">{teamAvgProgress}%</span>
+                return (
+                  <Card
+                    key={team.teamId}
+                    className={cn(
+                      'transition-colors',
+                      teamAtRisk > 0 && 'border-status-orange/30',
+                    )}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <CardTitle className="text-base truncate">{team.teamName}</CardTitle>
+                        <div className="shrink-0">{getTrendIcon(team.objectives)}</div>
                       </div>
-                      <Progress
-                        value={teamAvgProgress}
-                        className={cn('h-1.5', getProgressBarStyle(teamAvgProgress))}
-                      />
-                      {teamAtRisk > 0 && (
-                        <p className="text-xs text-status-orange">
-                          {teamAtRisk} KR{teamAtRisk > 1 ? 's' : ''} em risco
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm gap-2">
+                          <span className="text-muted-foreground truncate">
+                            {team.objectives.length} OKRs · {teamKrCount} KRs
+                          </span>
+                          <span className="font-bold shrink-0">{teamAvgProgress}%</span>
+                        </div>
+                        <Progress
+                          value={teamAvgProgress}
+                          className={cn('h-1.5', getProgressBarStyle(teamAvgProgress))}
+                        />
+                        {teamAtRisk > 0 && (
+                          <p className="text-xs text-status-orange">
+                            {teamAtRisk} KR{teamAtRisk > 1 ? 's' : ''} em risco
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Inline decisions */}
       <div className="border-t">
