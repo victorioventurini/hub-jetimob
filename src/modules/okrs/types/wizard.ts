@@ -180,6 +180,13 @@ export interface MbrKpiSnapshot {
   variationVsTarget: number | null;
   requiresStrategicDecision: boolean;
   impactAssessment?: string;
+  /** Escopo do KPI: org, area ou team */
+  scope?: 'org' | 'area' | 'team';
+  areaId?: string | null;
+  areaName?: string | null;
+  areaColor?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
 }
 
 /** OKR organizacional snapshot */

@@ -9,6 +9,7 @@ import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import {
   useGenericWizardDraft,
@@ -21,7 +22,6 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
-import { useKpisForWizard } from '@/modules/kpis/hooks/useKpisForWizard';
 
 // Step components
 import { MbrPanoramaStep } from '@/modules/okrs/components/wizards/mbr/MbrPanoramaStep';
@@ -111,19 +111,70 @@ export default function MbrPage() {
     enabled: !!quarterlyCycle,
   });
 
-  // ── Load org KPIs and seed kpiSnapshots when draft is empty ──
-  const { kpis: orgKpis, isLoading: isLoadingKpis } = useKpisForWizard({});
+  // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
+  const { currentBuId } = useBu();
+  const { data: allBuKpis, isLoading: isLoadingKpis } = useQuery({
+    queryKey: ['mbr', 'bu-kpis', currentBuId],
+    enabled: !!buSupabase && !!currentBuId,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data: kpis, error: kpiErr } = await buSupabase
+        .from('kpi_metrics')
+        .select(`
+          id, name, unit, target_value, direction, frequency,
+          lifecycle_status, scope, area_id, team_id,
+          indicator_type,
+          area:areas!kpi_metrics_area_id_fkey(id, name, color),
+          team:teams!kpi_metrics_team_id_fkey(id, name)
+        `)
+        .eq('lifecycle_status', 'active')
+        .is('deleted_at', null)
+        .neq('indicator_type', 'metric');
+
+      if (kpiErr || !kpis || kpis.length === 0) return [];
+
+      // Fetch latest values
+      const kpiIds = kpis.map(k => k.id);
+      const { data: latestValues } = await buSupabase
+        .from('kpi_values')
+        .select('kpi_id, value, reference_date, rag_status')
+        .in('kpi_id', kpiIds)
+        .order('reference_date', { ascending: false });
+
+      const latestByKpi = new Map<string, { value: number; rag_status: string }>();
+      for (const v of (latestValues || [])) {
+        if (!latestByKpi.has(v.kpi_id)) {
+          latestByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status });
+        }
+      }
+
+      return kpis.map(kpi => {
+        const latest = latestByKpi.get(kpi.id);
+        const areaData = kpi.area as any;
+        const teamData = kpi.team as any;
+        return {
+          ...kpi,
+          latest_value: latest?.value ?? null,
+          latest_rag_status: latest?.rag_status ?? 'no_data',
+          areaName: areaData?.name ?? null,
+          areaColor: areaData?.color ?? null,
+          teamName: teamData?.name ?? null,
+        };
+      });
+    },
+  });
+
   const seededKpisRef = useRef(false);
 
   useEffect(() => {
     if (seededKpisRef.current) return;
-    if (isLoadingKpis || orgKpis.length === 0) return;
+    if (isLoadingKpis || !allBuKpis || allBuKpis.length === 0) return;
     if (draft.data.kpiSnapshots.length > 0) {
       seededKpisRef.current = true;
       return;
     }
 
-    const snapshots: MbrKpiSnapshot[] = orgKpis.map(kpi => {
+    const snapshots: MbrKpiSnapshot[] = allBuKpis.map(kpi => {
       const variation = kpi.target_value && kpi.latest_value != null
         ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
         : null;
@@ -132,7 +183,7 @@ export default function MbrPage() {
         kpiId: kpi.id,
         name: kpi.name,
         currentValue: kpi.latest_value,
-        previousValue: null, // would require historical query
+        previousValue: null,
         target: kpi.target_value,
         ragStatus: kpi.latest_rag_status === 'on_track' ? 'green'
           : kpi.latest_rag_status === 'at_risk' ? 'yellow'
@@ -141,12 +192,18 @@ export default function MbrPage() {
         variationVsLastMonth: null,
         variationVsTarget: variation,
         requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
+        scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'org',
+        areaId: kpi.area_id ?? null,
+        areaName: kpi.areaName,
+        areaColor: kpi.areaColor,
+        teamId: kpi.team_id ?? null,
+        teamName: kpi.teamName,
       };
     });
 
     updateDraft({ kpiSnapshots: snapshots });
     seededKpisRef.current = true;
-  }, [orgKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
+  }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
   const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(currentBu?.id);

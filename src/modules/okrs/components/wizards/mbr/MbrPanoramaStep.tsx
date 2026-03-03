@@ -2,13 +2,16 @@
  * MbrPanoramaStep - Etapa 1: Panorama Executivo
  * 
  * Visão consolidada da saúde do negócio via KPIs mestres.
- * KPIs em risco (amarelo/vermelho) destacados no topo.
+ * KPIs agrupados por escopo: Global BU, por Área, por Time.
+ * KPIs em risco (amarelo/vermelho) destacados no topo de cada grupo.
  */
 
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AreaBadge } from '@/components/ui/area-badge';
+import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Building2, Users, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge } from '../shared';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -26,9 +29,24 @@ export interface MbrPanoramaStepProps {
   onContinue: () => void;
 }
 
+interface KpiGroup {
+  key: string;
+  label: string;
+  kpis: MbrKpiSnapshot[];
+  areaColor?: string | null;
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
+
+const RAG_PRIORITY: Record<string, number> = { red: 0, yellow: 1, green: 2 };
+
+function sortByRag(kpis: MbrKpiSnapshot[]): MbrKpiSnapshot[] {
+  return [...kpis].sort(
+    (a, b) => (RAG_PRIORITY[a.ragStatus] ?? 3) - (RAG_PRIORITY[b.ragStatus] ?? 3)
+  );
+}
 
 function ragBadgeClass(rag: string) {
   switch (rag) {
@@ -52,6 +70,103 @@ function formatVariation(value: number | null) {
 }
 
 // ============================================================
+// SUB-COMPONENTS
+// ============================================================
+
+function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {kpis.map((kpi) => (
+        <Card key={kpi.kpiId} className={cn(
+          'transition-colors',
+          kpi.ragStatus === 'red' && 'border-status-red/30',
+          kpi.ragStatus === 'yellow' && 'border-status-amber/30',
+        )}>
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium truncate flex-1">{kpi.name}</p>
+              <Badge variant="secondary" className={cn('text-xs ml-2', ragBadgeClass(kpi.ragStatus))}>
+                {kpi.ragStatus === 'green' ? 'OK' : kpi.ragStatus === 'yellow' ? 'Atenção' : 'Crítico'}
+              </Badge>
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-2xl font-bold">{kpi.currentValue ?? '—'}</p>
+                <p className="text-xs text-muted-foreground">
+                  Meta: {kpi.target ?? '—'}
+                </p>
+              </div>
+              <div className="text-right space-y-1">
+                <div className="flex items-center gap-1 justify-end">
+                  <TrendIcon value={kpi.variationVsLastMonth} />
+                  <span className="text-xs">{formatVariation(kpi.variationVsLastMonth)} vs mês ant.</span>
+                </div>
+                <div className="flex items-center gap-1 justify-end">
+                  <span className="text-xs text-muted-foreground">
+                    {formatVariation(kpi.variationVsTarget)} vs meta
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function ScopeSection({ 
+  icon: Icon, 
+  title, 
+  count, 
+  groups, 
+  accordionValue 
+}: { 
+  icon: React.ElementType; 
+  title: string; 
+  count: number; 
+  groups: KpiGroup[]; 
+  accordionValue: string;
+}) {
+  if (groups.length === 0) return null;
+
+  const hasSingleGroup = groups.length === 1 && !groups[0].label;
+
+  return (
+    <AccordionItem value={accordionValue} className="border-none">
+      <AccordionTrigger className="py-3 hover:no-underline">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold text-sm">{title}</span>
+          <Badge variant="secondary" className="text-xs">{count}</Badge>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="pb-2">
+        {hasSingleGroup ? (
+          <KpiCardGrid kpis={groups[0].kpis} />
+        ) : (
+          <div className="space-y-4">
+            {groups.map((group) => (
+              <div key={group.key} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  {group.areaColor ? (
+                    <AreaBadge area={{ name: group.label, color: group.areaColor }} size="sm" />
+                  ) : (
+                    <span className="text-xs font-medium text-muted-foreground">{group.label}</span>
+                  )}
+                  <span className="text-xs text-muted-foreground">({group.kpis.length})</span>
+                </div>
+                <KpiCardGrid kpis={group.kpis} />
+              </div>
+            ))}
+          </div>
+        )}
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -63,15 +178,58 @@ export function MbrPanoramaStep({
   lastCompletedAt,
   onContinue,
 }: MbrPanoramaStepProps) {
-  // Sort: at-risk (red, yellow) first
-  const sortedKpis = useMemo(() => {
-    const priority: Record<string, number> = { red: 0, yellow: 1, green: 2 };
-    return [...kpiSnapshots].sort(
-      (a, b) => (priority[a.ragStatus] ?? 3) - (priority[b.ragStatus] ?? 3)
-    );
+  // Group KPIs by scope
+  const { orgKpis, areaGroups, teamGroups, accordionDefaults } = useMemo(() => {
+    const org: MbrKpiSnapshot[] = [];
+    const areaMap = new Map<string, { kpis: MbrKpiSnapshot[]; color: string | null }>();
+    const teamMap = new Map<string, MbrKpiSnapshot[]>();
+
+    for (const kpi of kpiSnapshots) {
+      const scope = kpi.scope ?? 'org';
+      if (scope === 'area' && kpi.areaName) {
+        const key = kpi.areaId || kpi.areaName;
+        if (!areaMap.has(key)) areaMap.set(key, { kpis: [], color: kpi.areaColor ?? null });
+        areaMap.get(key)!.kpis.push(kpi);
+      } else if (scope === 'team' && kpi.teamName) {
+        const key = kpi.teamId || kpi.teamName;
+        if (!teamMap.has(key)) teamMap.set(key, []);
+        teamMap.get(key)!.push(kpi);
+      } else {
+        org.push(kpi);
+      }
+    }
+
+    const areaGrps: KpiGroup[] = Array.from(areaMap.entries()).map(([key, val]) => ({
+      key,
+      label: val.kpis[0]?.areaName || key,
+      kpis: sortByRag(val.kpis),
+      areaColor: val.color,
+    }));
+
+    const teamGrps: KpiGroup[] = Array.from(teamMap.entries()).map(([key, kpis]) => ({
+      key,
+      label: kpis[0]?.teamName || key,
+      kpis: sortByRag(kpis),
+    }));
+
+    const defaults: string[] = [];
+    if (org.length > 0) defaults.push('scope-org');
+    if (areaGrps.length > 0) defaults.push('scope-area');
+    if (teamGrps.length > 0) defaults.push('scope-team');
+
+    return {
+      orgKpis: sortByRag(org),
+      areaGroups: areaGrps,
+      teamGroups: teamGrps,
+      accordionDefaults: defaults,
+    };
   }, [kpiSnapshots]);
 
   const atRiskCount = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow').length;
+
+  const orgGroupForSection: KpiGroup[] = orgKpis.length > 0
+    ? [{ key: 'org', label: '', kpis: orgKpis }]
+    : [];
 
   return (
     <div className="flex flex-col h-full">
@@ -98,50 +256,36 @@ export function MbrPanoramaStep({
         </div>
       )}
 
-      {/* KPI cards */}
+      {/* KPI groups */}
       <div className="flex-1 overflow-y-auto p-6">
-        {sortedKpis.length === 0 ? (
+        {kpiSnapshots.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             Nenhum KPI organizacional carregado. Os snapshots serão preenchidos conforme a integração.
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {sortedKpis.map((kpi) => (
-              <Card key={kpi.kpiId} className={cn(
-                'transition-colors',
-                kpi.ragStatus === 'red' && 'border-status-red/30',
-                kpi.ragStatus === 'yellow' && 'border-status-amber/30',
-              )}>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium truncate flex-1">{kpi.name}</p>
-                    <Badge variant="secondary" className={cn('text-xs ml-2', ragBadgeClass(kpi.ragStatus))}>
-                      {kpi.ragStatus === 'green' ? 'OK' : kpi.ragStatus === 'yellow' ? 'Atenção' : 'Crítico'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-2xl font-bold">{kpi.currentValue ?? '—'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Meta: {kpi.target ?? '—'}
-                      </p>
-                    </div>
-                    <div className="text-right space-y-1">
-                      <div className="flex items-center gap-1 justify-end">
-                        <TrendIcon value={kpi.variationVsLastMonth} />
-                        <span className="text-xs">{formatVariation(kpi.variationVsLastMonth)} vs mês ant.</span>
-                      </div>
-                      <div className="flex items-center gap-1 justify-end">
-                        <span className="text-xs text-muted-foreground">
-                          {formatVariation(kpi.variationVsTarget)} vs meta
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Accordion type="multiple" defaultValue={accordionDefaults} className="space-y-1">
+            <ScopeSection
+              icon={Building2}
+              title="KPIs Globais da BU"
+              count={orgKpis.length}
+              groups={orgGroupForSection}
+              accordionValue="scope-org"
+            />
+            <ScopeSection
+              icon={Layers}
+              title="KPIs por Área"
+              count={areaGroups.reduce((s, g) => s + g.kpis.length, 0)}
+              groups={areaGroups}
+              accordionValue="scope-area"
+            />
+            <ScopeSection
+              icon={Users}
+              title="KPIs por Time"
+              count={teamGroups.reduce((s, g) => s + g.kpis.length, 0)}
+              groups={teamGroups}
+              accordionValue="scope-team"
+            />
+          </Accordion>
         )}
       </div>
 
