@@ -247,29 +247,43 @@ export function MbrTeamOkrsDetailStep({
 
                   {/* KRs list — aligned with TeamKrReviewStep pattern */}
                   {obj.keyResults && obj.keyResults.length > 0 && (
-                    <div className="space-y-2 ml-6 overflow-hidden">
+                    <div className="space-y-3 ml-6 overflow-hidden">
                       {obj.keyResults.map(kr => {
                         const rag = toRagKey(kr.status);
                         return (
                           <div
                             key={kr.krId}
                             className={cn(
-                              'flex items-center gap-2 py-2 px-3 rounded-md border text-xs overflow-hidden',
+                              'py-2.5 px-3 rounded-md border text-xs overflow-hidden space-y-2',
                               RAG_STATUS_COLORS[rag].border,
                             )}
                           >
-                            <div className={cn('w-2 h-2 rounded-full flex-shrink-0', RAG_STATUS_COLORS[rag].dot)} />
-                            <span className="truncate flex-1 min-w-0">{kr.title}</span>
-                            {kr.ownerName && (
-                              <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
-                            )}
-                            <Badge
-                              variant="secondary"
-                              className={cn('text-[10px] h-5 px-1.5 flex-shrink-0 whitespace-nowrap', RAG_STATUS_COLORS[rag].badge)}
-                            >
-                              {ragLabel(kr.status)}
-                            </Badge>
-                            <span className="font-medium tabular-nums flex-shrink-0">{kr.progress}%</span>
+                            {/* KR header row */}
+                            <div className="flex items-center gap-2">
+                              <div className={cn('w-2 h-2 rounded-full flex-shrink-0', RAG_STATUS_COLORS[rag].dot)} />
+                              <span className="truncate flex-1 min-w-0 font-medium">{kr.title}</span>
+                              {kr.ownerName && (
+                                <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
+                              )}
+                              <Badge
+                                variant="secondary"
+                                className={cn('text-[10px] h-5 px-1.5 flex-shrink-0 whitespace-nowrap', RAG_STATUS_COLORS[rag].badge)}
+                              >
+                                {ragLabel(kr.status)}
+                              </Badge>
+                              <span className="font-medium tabular-nums flex-shrink-0">{kr.progress}%</span>
+                            </div>
+                            {/* Progress bar with base/current/target */}
+                            <OkrProgressBar
+                              baseline={kr.baseline}
+                              current={kr.current}
+                              target={kr.target}
+                              direction={kr.direction}
+                              status={rag}
+                              unit={kr.unit}
+                              size="sm"
+                              showLabels
+                            />
                           </div>
                         );
                       })}
