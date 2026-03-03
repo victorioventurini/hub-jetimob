@@ -213,7 +213,7 @@ export default function MbrPage() {
         ragStatus: kpi.latest_rag_status === 'on_track' ? 'green'
           : kpi.latest_rag_status === 'at_risk' ? 'yellow'
           : kpi.latest_rag_status === 'off_track' ? 'red'
-          : 'green',
+          : 'no_data',
         variationVsLastMonth: null,
         variationVsTarget: variation,
         requiresStrategicDecision: kpi.latest_rag_status === 'off_track',

@@ -180,4 +180,19 @@ describe('MbrPanoramaStep', () => {
     expect(screen.getByText('KPIs Globais da Jetimob')).toBeInTheDocument();
     expect(screen.getByText('Legacy KPI')).toBeInTheDocument();
   });
+
+  it('renders "Sem dados" badge for no_data KPIs', () => {
+    const kpis = [createKpiSnapshot({ ragStatus: 'no_data' as any })];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.getByText('Sem dados')).toBeInTheDocument();
+  });
+
+  it('does not count no_data KPIs as at-risk', () => {
+    const kpis = [
+      createKpiSnapshot({ kpiId: '1', ragStatus: 'no_data' as any }),
+      createKpiSnapshot({ kpiId: '2', ragStatus: 'green' }),
+    ];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.queryByText(/em atenção/)).not.toBeInTheDocument();
+  });
 });
