@@ -76,13 +76,13 @@ export function InlineDecisionInput({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-between text-muted-foreground hover:text-foreground"
+          className="w-full justify-between text-muted-foreground hover:text-foreground min-w-0"
         >
-          <span className="flex items-center gap-2 text-xs">
-            <Lightbulb className="h-3.5 w-3.5" />
-            Registrar nota / decisão
+          <span className="flex items-center gap-2 text-xs min-w-0 flex-1">
+            <Lightbulb className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Registrar nota / decisão</span>
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 shrink-0">
             {stepDecisions.length > 0 && (
               <Badge variant="secondary" className="text-xs h-5 px-1.5">
                 {stepDecisions.length}
@@ -99,13 +99,13 @@ export function InlineDecisionInput({
       <CollapsibleContent>
         <div className="px-4 pb-4 space-y-3">
           {/* Category selector */}
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 min-w-0">
             {(Object.entries(CATEGORY_CONFIG) as [TeamCheckinDecision['category'], typeof CATEGORY_CONFIG[keyof typeof CATEGORY_CONFIG]][]).map(([cat, config]) => (
               <Badge
                 key={cat}
                 variant="outline"
                 className={cn(
-                  "cursor-pointer transition-colors text-xs",
+                  "cursor-pointer transition-colors text-xs shrink-0",
                   category === cat && config.color
                 )}
                 onClick={() => setCategory(cat)}
@@ -146,11 +146,11 @@ export function InlineDecisionInput({
                 return (
                   <div
                     key={decision.id}
-                    className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm"
+                    className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm min-w-0 max-w-full"
                   >
                     <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{decision.text}</span>
-                    <Badge variant="secondary" className={cn("text-[10px] h-4 px-1", config.color)}>
+                    <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", config.color)}>
                       {config.label}
                     </Badge>
                     <Button
