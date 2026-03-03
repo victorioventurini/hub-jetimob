@@ -3,6 +3,7 @@ import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { calculateProgress } from "../utils/progressCalculation";
+import { getEffectiveKrRagStatus } from "../utils/effectiveStatus";
 import type { OkrDirection } from "../types";
 
 export interface TeamOkrContribution {
@@ -201,7 +202,7 @@ export const useTeamContributionView = (teamId: string | undefined) => {
           return {
             id: orgKr.id,
             title: orgKr.title,
-            status: orgKr.status as 'green' | 'yellow' | 'red' | 'not_started',
+            status: getEffectiveKrRagStatus(orgKr.status as 'green' | 'yellow' | 'red' | 'not_started', Number(orgKr.baseline), Number(orgKr.current_value)),
             progress: calculateProgress(
               Number(orgKr.baseline),
               Number(orgKr.current_value),

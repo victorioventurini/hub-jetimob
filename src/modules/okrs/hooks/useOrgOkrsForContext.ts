@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { getEffectiveKrRagStatus } from '../utils/effectiveStatus';
 
 // ============================================================
 // TYPES
@@ -102,7 +103,7 @@ export function useOrgOkrsForContext(cycleId: string | null | undefined) {
             id: kr.id,
             title: kr.title,
             progress: Math.round(progress),
-            status: kr.status as OrgKrForContext['status'],
+            status: getEffectiveKrRagStatus(kr.status as OrgKrForContext['status'], kr.baseline, kr.current_value),
           };
         });
 

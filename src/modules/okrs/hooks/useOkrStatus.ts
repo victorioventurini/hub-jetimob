@@ -71,7 +71,7 @@ export function calculateAutoStatus(
 ): OkrCalculatedStatus {
   const progress = calculateProgress(baseline, currentValue, target, direction);
   
-  // If progress is 0 and current equals baseline, it's not started
+  // If progress is 0 and current equals baseline, it's genuinely not started
   if (progress === 0 && currentValue === baseline) {
     return 'not_started';
   }
