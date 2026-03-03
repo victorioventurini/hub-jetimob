@@ -114,7 +114,7 @@ export function MbrTeamOkrsDetailStep({
 
   if (totalTeams === 0 || !currentTeam) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
         <WizardStepHeader
           icon={Target}
           title="Análise por Time"
@@ -134,7 +134,7 @@ export function MbrTeamOkrsDetailStep({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <WizardStepHeader
         icon={Target}
         title={currentTeam.teamName}
@@ -177,8 +177,8 @@ export function MbrTeamOkrsDetailStep({
         className="h-1"
       />
 
-      <ScrollArea className="flex-1">
-        <div className="p-6 space-y-4">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-6 space-y-4 max-w-full">
           {/* Review status bar */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{reviewedCount} de {teamsWithOkrs.length} times revisados</span>
@@ -196,14 +196,14 @@ export function MbrTeamOkrsDetailStep({
             currentTeam.objectives.map(obj => (
               <Card
                 key={obj.objectiveId}
-                className={cn('transition-colors', obj.krsAtRisk > 0 && RAG_STATUS_COLORS.red.border)}
+                className={cn('transition-colors overflow-hidden', obj.krsAtRisk > 0 && RAG_STATUS_COLORS.red.border)}
               >
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
+                <CardContent className="p-4 space-y-3 min-w-0">
+                  <div className="flex items-start justify-between gap-2 min-w-0">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Target className="h-4 w-4 text-primary flex-shrink-0" />
-                        <p className="font-medium text-sm truncate">{obj.title}</p>
+                        <p className="font-medium text-sm truncate min-w-0">{obj.title}</p>
                       </div>
                       <span className="text-xs text-muted-foreground ml-6">
                         {obj.krCount} KRs
@@ -220,23 +220,23 @@ export function MbrTeamOkrsDetailStep({
                   </div>
 
                   {obj.keyResults && obj.keyResults.length > 0 && (
-                    <div className="space-y-2.5 ml-6 overflow-hidden">
+                    <div className="space-y-2.5 ml-6 overflow-hidden min-w-0">
                       {obj.keyResults.map(kr => {
                         const rag = toRagKey(kr.status ?? 'not_started');
                         return (
                           <div
                             key={kr.krId}
                             className={cn(
-                              'py-2.5 px-3 rounded-md border text-xs space-y-2 overflow-hidden',
+                              'py-2.5 px-3 rounded-md border text-xs space-y-2 overflow-hidden min-w-0 max-w-full',
                               RAG_STATUS_COLORS[rag].border,
                             )}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                               <span className="truncate flex-1 min-w-0 font-medium">{kr.title}</span>
                               <OkrStatusBadge status={rag} type="kr" className="flex-shrink-0" />
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-muted-foreground">
+                            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-1.5 text-muted-foreground [&>span]:min-w-0">
                               <span className="truncate">Base: {formatValueWithUnit(kr.baseline, kr.unit ?? '%')}</span>
                               <span className="truncate">Atual: {formatValueWithUnit(kr.current, kr.unit ?? '%')}</span>
                               <span className="truncate">Meta: {formatValueWithUnit(kr.target, kr.unit ?? '%')}</span>
