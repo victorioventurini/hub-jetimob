@@ -1,101 +1,108 @@
 
 
-## Fase 1 — Expansão dos OKRs Organizacionais no MBR
+## Fase 2 — Responsável e Prazo nas Decisões
 
 ### Resumo
 
-Refatorar o passo "OKRs Organizacionais" do MBR para exibir Key Results detalhados com `OkrProgressBar` e `OkrStatusBadge`, usando `WizardStepScaffold` para layout estável. Três arquivos editados, zero componentes novos.
+Adicionar `deadline` ao type `TeamCheckinDecision`, ativar o campo `owner` já existente na UI, e centralizar a lógica em um `DecisionCard` compartilhado. Três locais consomem decisões com cards: `MbrDecisionsStep`, `TeamDecisionsStep` e `InlineDecisionInput` (modo compacto).
 
 ---
 
 ### 1. Tipagem — `src/modules/okrs/types/wizard.ts`
 
-Expandir `MbrOrgOkrSnapshot` (linhas 197-204) adicionando campo `keyResults` com a mesma estrutura já usada em `MbrTeamOkrObjectiveSnapshot.keyResults`:
+Expandir `TeamCheckinDecision` (linhas 282-291):
 
 ```typescript
-export interface MbrOrgOkrSnapshot {
-  objectiveId: string;
-  title: string;
-  progress: number;
-  status: string;
-  trend: 'improving' | 'stable' | 'declining';
-  remainsStrategicPriority: boolean;
-  keyResults: Array<{
-    krId: string;
-    title: string;
-    progress: number;
-    status: string;
-    ownerName: string | null;
-    baseline: number;
-    current: number;
-    target: number;
-    direction: 'up' | 'down';
-    unit: string;
-    lastCheckinAt: string | null;
-  }>;
+export interface TeamCheckinDecision {
+  id: string;
+  text: string;
+  category: 'decision' | 'focus_adjustment' | 'next_step';
+  sourceStep?: TeamCheckinDecisionSourceStep;
+  owner?: {
+    id: string;
+    name: string;
+  };
+  deadline?: string | null; // ISO date format
 }
 ```
 
-### 2. Seeding — `src/modules/okrs/pages/MbrPage.tsx`
+Única adição: campo `deadline?: string | null`.
 
-No `useEffect` de seeding (linhas 424-457), expandir o mapeamento para incluir `keyResults` a partir de `obj.key_results` (que já vem via `useOrgObjectives` com `orgObjectiveWithKrs`):
+---
 
+### 2. Componente compartilhado — `src/modules/okrs/components/wizards/shared/DecisionCard.tsx` (novo)
+
+Extrair e centralizar a lógica de `MbrDecisionCard` (de `MbrDecisionsStep`) e `DecisionCard` (de `TeamDecisionsStep`) num único componente reutilizável:
+
+**Props:**
 ```typescript
-return {
-  objectiveId: obj.id,
-  title: obj.title,
-  progress: Math.round(avgProgress),
-  status: obj.status,
-  trend,
-  remainsStrategicPriority: true,
-  keyResults: krs.map((kr: any) => ({
-    krId: kr.id,
-    title: kr.title,
-    progress: /* calculateProgress usando baseline/current/target/direction */,
-    status: kr.status || 'not_started',
-    ownerName: kr.owner?.full_name ?? null,
-    baseline: Number(kr.baseline ?? 0),
-    current: Number(kr.current_value ?? 0),
-    target: Number(kr.target ?? 0),
-    direction: (kr.direction || 'up') as 'up' | 'down',
-    unit: kr.unit || '%',
-    lastCheckinAt: kr.last_checkin_at ?? null,
-  })),
-};
+interface DecisionCardProps {
+  decision: TeamCheckinDecision;
+  onUpdate: (id: string, updates: Partial<TeamCheckinDecision>) => void;
+  onRemove: (id: string) => void;
+  showReclassify?: boolean;       // MBR usa, team check-in não
+  showOwnerDeadline?: boolean;    // true por padrão
+  compact?: boolean;              // para uso inline (menor padding)
+}
 ```
 
-### 3. UI — `src/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep.tsx`
+**UI do card:**
+- Linha 1: Ícone da categoria + texto (editável inline via `TextareaAutoSubmit`)
+- Linha 2: Badges de reclassificação (quando `showReclassify`)
+- Linha 3 (nova): Responsável (`BuUserSelect` compacto, `allowNone`, `placeholder="Responsável"`) + Prazo (`Popover` + `Calendar` mode single, formato `dd/MM`)
+  - Quando vazio: texto sutil "Sem responsável" / "Sem prazo" em `text-muted-foreground` como incentivo
+- Botões de ação: Editar, Remover (já existentes)
 
-Refatoração completa:
+**Reclassificação preserva owner e deadline**: o `onUpdate` recebe `Partial<TeamCheckinDecision>`, então reclassificar só altera `category`.
 
-- **Layout**: Migrar de `div` + `ScrollArea` manual para `WizardStepScaffold` (header/footer fixos, scroll no meio)
-- **Por Objetivo**: Manter card com título, trend, progresso agregado e seletor Sim/Não
-- **KRs expandidos**: Dentro de cada card de objetivo, listar KRs usando:
-  - `OkrStatusBadge` (status RAG do KR)
-  - `OkrProgressBar` (baseline/current/target/direction/status/unit, `size="sm"`)
-  - Título do KR com `truncate`
-  - Owner name inline (se disponível)
-- **Gate**: Lógica inalterada — OKRs marcados "Não" exigem decisão via `InlineDecisionInput`
-- **Footer**: Via `WizardStepFooter` dentro do scaffold, com mensagem de bloqueio quando aplicável
+**Componentes reutilizados (zero criação de UI):**
+- `BuUserSelect` (canônico, de `@/components/selects`)
+- `Calendar` + `Popover` (shadcn, já instalados)
+- `TextareaAutoSubmit`, `Badge`, `Card`, `Button`
 
-### 4. Teste — `src/modules/okrs/components/wizards/mbr/__tests__/MbrOrgOkrsStep.test.tsx`
+---
 
-Atualizar `createOkr` helper para incluir `keyResults: []` por padrão. Adicionar caso de teste verificando renderização de KRs quando presentes.
+### 3. Atualização dos consumidores
+
+**`MbrDecisionsStep.tsx`:**
+- Substituir `MbrDecisionCard` local pelo `DecisionCard` compartilhado com `showReclassify={true}`
+- Atualizar `handleAdd` para incluir `owner: undefined, deadline: null`
+- Simplificar handlers: `handleUpdate`, `handleRemove` (reclassify vira parte do `onUpdate`)
+
+**`TeamDecisionsStep.tsx`:**
+- Substituir `DecisionCard` local pelo compartilhado com `showReclassify={false}`
+- Mesma simplificação de handlers
+
+**`InlineDecisionInput.tsx`:**
+- Sem alteração visual (modo compacto, sem owner/deadline inline)
+- O `handleAdd` já cria decisões sem owner/deadline, que ficam `undefined`/`null` — compatível
+
+---
+
+### 4. Exportação — `src/modules/okrs/components/wizards/shared/index.ts`
+
+Adicionar `export { DecisionCard } from './DecisionCard'`.
+
+---
+
+### 5. Testes
+
+- Atualizar `MbrDecisionsStep.test.tsx`: mock do `BuUserSelect` e `Calendar`, verificar que reclassificação preserva owner/deadline
+- Atualizar `TeamDecisionsStep.test.tsx`: verificar rendering do card compartilhado
+- Adicionar teste unitário para `DecisionCard` em `shared/__tests__/DecisionCard.test.tsx`
+
+---
 
 ### Arquivos tocados
 
 | Arquivo | Ação |
 |---|---|
-| `src/modules/okrs/types/wizard.ts` | Expandir `MbrOrgOkrSnapshot` |
-| `src/modules/okrs/pages/MbrPage.tsx` | Expandir seeding com `keyResults` |
-| `src/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep.tsx` | Refatorar UI com scaffold + componentes canônicos |
-| `src/modules/okrs/components/wizards/mbr/__tests__/MbrOrgOkrsStep.test.tsx` | Atualizar helper e adicionar teste de KRs |
-
-### Componentes reutilizados (zero criação)
-
-- `WizardStepScaffold` (shared)
-- `OkrProgressBar` (canônico)
-- `OkrStatusBadge` (canônico)
-- `InlineDecisionInput` (shared)
-- `WizardStepHeader` / `WizardStepFooter` (shared)
+| `src/modules/okrs/types/wizard.ts` | Adicionar `deadline` ao type |
+| `src/modules/okrs/components/wizards/shared/DecisionCard.tsx` | **Novo** — card compartilhado |
+| `src/modules/okrs/components/wizards/shared/index.ts` | Exportar `DecisionCard` |
+| `src/modules/okrs/components/wizards/mbr/MbrDecisionsStep.tsx` | Usar `DecisionCard` compartilhado |
+| `src/modules/okrs/components/wizards/team-checkin/TeamDecisionsStep.tsx` | Usar `DecisionCard` compartilhado |
+| `src/modules/okrs/components/wizards/shared/__tests__/DecisionCard.test.tsx` | **Novo** — testes do card |
+| `src/modules/okrs/components/wizards/mbr/__tests__/MbrDecisionsStep.test.tsx` | Atualizar mocks |
+| `src/modules/okrs/components/wizards/team-checkin/__tests__/TeamDecisionsStep.test.tsx` | Atualizar mocks |
 
