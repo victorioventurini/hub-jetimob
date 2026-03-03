@@ -5,6 +5,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
+import { areasKeys } from "@/lib/queryKeys/areas";
 import { KpiScope } from "../types";
 
 /**
@@ -17,44 +18,28 @@ interface KpiForPermission {
   owner_user_id?: string | null;
   team_id?: string | null;
   area_id?: string | null;
+  responsible_team_id?: string | null;
   scope?: KpiScope | string;
 }
 
 /**
  * Hook para verificar se o usuário atual pode editar um KPI/Métrica específico.
  * 
- * v2.90.0: Governança por Escopo + Responsabilidade Operacional
+ * v3.9.0: Hierarquia de atualização de valores (canUpdateValues)
  * 
- * Regras de permissão:
+ * Regras de permissão para EDITAR METADADOS (canEdit):
+ * - scope=org / scope=area: Apenas Admin/Super Admin
+ * - scope=team: Admin/Super Admin, Líder do time, Owner
  * 
- * **KPIs Globais (scope=org) e de Área (scope=area):**
- * - Apenas Admin/Super Admin podem criar/editar
- * 
- * **KPIs de Time (scope=team):**
- * - Admin/Super Admin
- * - Líder do time (canManageTeam)
+ * Regras de permissão para ATUALIZAR VALORES (canUpdateValues):
+ * - Admin BU: Qualquer KPI da BU (via isWildcard)
+ * - Líder de Área: KPIs com area_id da área que lidera
+ * - Líder de Time: KPIs com team_id OU responsible_team_id do time que lidera
  * - Owner do KPI
  * - Contribuidores (kpi_data_contributors)
  * 
  * @param kpi - O KPI a verificar (pode ser null/undefined durante loading)
  * @returns { canEdit, canUpdateValues, isLoading }
- * 
- * @example
- * ```tsx
- * function KpiActions({ kpi }) {
- *   const { canEdit, canUpdateValues, isLoading } = useCanEditKpi(kpi);
- *   
- *   if (isLoading) return <Skeleton />;
- *   if (!canEdit && !canUpdateValues) return null;
- *   
- *   return (
- *     <>
- *       {canEdit && <Button onClick={handleEdit}>Editar</Button>}
- *       {canUpdateValues && <Button onClick={handleUpdate}>Atualizar Valor</Button>}
- *     </>
- *   );
- * }
- * ```
  */
 export function useCanEditKpi(kpi: KpiForPermission | null | undefined) {
   const profileId = useProfileId();
@@ -85,7 +70,31 @@ export function useCanEditKpi(kpi: KpiForPermission | null | undefined) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = !isReady || permissionLoading || contributorsLoading || teamLoading;
+  // Buscar áreas onde o usuário é líder (para hierarquia de área)
+  const { data: ledAreaIds = [], isLoading: areasLoading } = useQuery({
+    queryKey: [...areasKeys.all(buId ?? null), "leader", profileId],
+    queryFn: async () => {
+      if (!client || !profileId || !buId) return [];
+
+      const { data, error } = await client
+        .from("areas")
+        .select("id")
+        .eq("bu_id", buId)
+        .eq("leader_user_id", profileId)
+        .is("deleted_at", null);
+
+      if (error) {
+        console.error("[useCanEditKpi] Error fetching led areas:", error);
+        return [];
+      }
+
+      return data?.map(a => a.id) ?? [];
+    },
+    enabled: isReady && !!profileId && !!buId && !isWildcard,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = !isReady || permissionLoading || contributorsLoading || teamLoading || areasLoading;
 
   /**
    * canEdit: Pode editar METADADOS do KPI (nome, descrição, meta, escopo, etc)
@@ -126,9 +135,12 @@ export function useCanEditKpi(kpi: KpiForPermission | null | undefined) {
   /**
    * canUpdateValues: Pode ATUALIZAR VALORES do KPI (check-ins, entries)
    * 
-   * Mais permissivo que canEdit:
-   * - Todos os que podem editar
-   * - Contribuidores (kpi_data_contributors)
+   * Hierarquia completa:
+   * 1. Admin BU (wildcard) — qualquer KPI
+   * 2. Líder de Área — KPIs com area_id da área liderada
+   * 3. Líder de Time — KPIs com team_id ou responsible_team_id do time liderado
+   * 4. Owner do KPI
+   * 5. Contribuidores (kpi_data_contributors)
    */
   const canUpdateValues = useMemo(() => {
     if (!kpi || !profileId) return false;
@@ -139,11 +151,18 @@ export function useCanEditKpi(kpi: KpiForPermission | null | undefined) {
     // É owner do KPI
     if (kpi.owner_user_id === profileId) return true;
 
+    // Líder de Time: verifica team_id e responsible_team_id
+    if (kpi.team_id && canManageTeam(kpi.team_id)) return true;
+    if (kpi.responsible_team_id && canManageTeam(kpi.responsible_team_id)) return true;
+
+    // Líder de Área: verifica area_id do KPI
+    if (kpi.area_id && ledAreaIds.includes(kpi.area_id)) return true;
+
     // É contribuidor
     if (contributors.includes(profileId)) return true;
 
     return false;
-  }, [kpi, profileId, canEdit, contributors]);
+  }, [kpi, profileId, canEdit, canManageTeam, ledAreaIds, contributors]);
 
   return { canEdit, canUpdateValues, isLoading };
 }
