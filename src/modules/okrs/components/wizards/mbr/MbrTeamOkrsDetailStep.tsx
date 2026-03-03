@@ -149,15 +149,15 @@ export function MbrTeamOkrsDetailStep({
             value={(reviewedCount / Math.max(1, totalTeams)) * 100}
             className="h-1"
           />
-          <div className="px-6 py-2 flex items-center justify-between border-b">
+          <div className="px-6 py-2 flex items-center justify-between gap-2 border-b min-w-0">
             {/* Review counter */}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground shrink-0">
               {reviewedCount}/{totalTeams} revisados
             </span>
 
             {/* Reviewed checkbox for current team */}
             {currentTeam && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <Checkbox
                   id={`reviewed-${currentTeam.teamId}`}
                   checked={currentTeam.reviewed}
@@ -167,15 +167,15 @@ export function MbrTeamOkrsDetailStep({
                 />
                 <Label
                   htmlFor={`reviewed-${currentTeam.teamId}`}
-                  className="text-xs cursor-pointer flex items-center gap-1"
+                  className="text-xs cursor-pointer flex items-center gap-1 min-w-0"
                 >
                   <CheckCircle2
                     className={cn(
-                      'h-3.5 w-3.5',
+                      'h-3.5 w-3.5 shrink-0',
                       currentTeam.reviewed ? 'text-status-green' : 'text-muted-foreground'
                     )}
                   />
-                  Marcar como revisado
+                  <span className="truncate">Marcar como revisado</span>
                 </Label>
               </div>
             )}
@@ -271,11 +271,11 @@ export function MbrTeamOkrsDetailStep({
                           />
                         </div>
 
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground min-w-0">
+                        <div className="flex items-center justify-between gap-2 mt-1 text-xs text-muted-foreground min-w-0">
                           {kr.ownerName && (
-                            <span className="truncate flex-1 min-w-0">{kr.ownerName}</span>
+                            <span className="truncate min-w-0">{kr.ownerName}</span>
                           )}
-                          <div className="shrink-0">
+                          <div className="min-w-0 max-w-full">
                             <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} />
                           </div>
                         </div>
