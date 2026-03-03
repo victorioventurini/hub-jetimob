@@ -14,6 +14,7 @@ import { AreaBadge } from '@/components/ui/area-badge';
 import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Building2, Users, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge } from '../shared';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -93,9 +94,11 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-2xl font-bold">{kpi.currentValue ?? '—'}</p>
+                <p className="text-2xl font-bold">
+                  {kpi.currentValue != null ? formatValueWithUnit(kpi.currentValue, kpi.unit ?? '%') : '—'}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Meta: {kpi.target ?? '—'}
+                  Meta: {kpi.target != null ? formatValueWithUnit(kpi.target, kpi.unit ?? '%') : '—'}
                 </p>
               </div>
               <div className="text-right space-y-1">
@@ -110,6 +113,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
                 </div>
               </div>
             </div>
+            <LastCheckinBadge lastCompletedAt={kpi.lastValueAt ?? null} />
           </CardContent>
         </Card>
       ))}
