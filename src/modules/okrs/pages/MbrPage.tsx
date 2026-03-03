@@ -17,7 +17,7 @@ import {
   useLastCompletedSession,
   useOrgObjectives,
 } from '@/modules/okrs/hooks';
-import { useManageableTeams } from '@/modules/okrs/hooks/useManageableTeams';
+
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -231,23 +231,24 @@ export default function MbrPage() {
   }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
 
   // ── Load team OKRs and seed teamOkrSnapshots ──
-  const { teams: manageableTeams, isLoading: isLoadingTeams } = useManageableTeams();
 
   const { data: allTeamObjectives, isLoading: isLoadingTeamOkrs } = useQuery({
-    queryKey: ['mbr', 'team-objectives', currentBuId],
-    enabled: !!buSupabase && !!currentBuId,
+    queryKey: ['mbr', 'team-objectives', currentBuId, quarterlyCycle?.id],
+    enabled: !!buSupabase && !!currentBuId && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await buSupabase
         .from('okr_team_objectives')
         .select(`
           id, title, status, team_id,
+          team:teams!okr_team_objectives_team_id_fkey(id, name),
           key_results:okr_team_key_results(
             id, title, status, current_value, baseline, target, direction,
-            owner_user_id,
-            owner:profiles!okr_team_key_results_owner_user_id_fkey(full_name)
+            owner_user_id, last_checkin_at,
+            owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name)
           )
         `)
+        .eq('cycle_id', quarterlyCycle!.id)
         .is('deleted_at', null)
         .is('cancelled_at', null)
         .neq('status', 'cancelled')
@@ -268,27 +269,32 @@ export default function MbrPage() {
 
   useEffect(() => {
     if (seededTeamOkrsRef.current) return;
-    if (isLoadingTeams || isLoadingTeamOkrs || !manageableTeams) return;
+    if (isLoadingTeamOkrs) return;
     if (draft.data.teamOkrSnapshots.length > 0) {
       seededTeamOkrsRef.current = true;
       return;
     }
 
-    // Group objectives by team
-    const objByTeam = new Map<string, any[]>();
+    // Group objectives by team, using team info from the objective itself
+    const objByTeam = new Map<string, { teamName: string; objectives: any[] }>();
     for (const obj of (allTeamObjectives || [])) {
       if (!obj.team_id) continue;
-      if (!objByTeam.has(obj.team_id)) objByTeam.set(obj.team_id, []);
-      objByTeam.get(obj.team_id)!.push(obj);
+      const teamData = obj.team as any;
+      if (!objByTeam.has(obj.team_id)) {
+        objByTeam.set(obj.team_id, {
+          teamName: teamData?.name || 'Time sem nome',
+          objectives: [],
+        });
+      }
+      objByTeam.get(obj.team_id)!.objectives.push(obj);
     }
 
-    const snapshots: MbrTeamOkrSnapshot[] = manageableTeams.map(team => {
-      const teamObjs = objByTeam.get(team.id) || [];
-
+    // Only create snapshots for teams that have OKRs
+    const snapshots: MbrTeamOkrSnapshot[] = Array.from(objByTeam.entries()).map(([teamId, { teamName, objectives: teamObjs }]) => {
       const objectives = teamObjs.map(obj => {
         const krs = obj.key_results || [];
         const krCount = krs.length;
-        const krsAtRisk = krs.filter((kr: any) => kr.status === 'at_risk' || kr.status === 'off_track').length;
+        const krsAtRisk = krs.filter((kr: any) => kr.status === 'at_risk' || kr.status === 'off_track' || kr.status === 'red' || kr.status === 'yellow').length;
         const krsStagnant = krs.filter((kr: any) => kr.status === 'stagnant' || kr.status === 'not_started').length;
 
         const avgProgress = krCount > 0
@@ -337,7 +343,7 @@ export default function MbrPage() {
               return Math.round(Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100)));
             })(),
             status: kr.status,
-            ownerName: (kr.owner as any)?.full_name ?? null,
+            ownerName: (kr.owner as any)?.display_name ?? null,
           })),
         };
       });
@@ -345,8 +351,8 @@ export default function MbrPage() {
       const healthScore = computeHealthScore(objectives);
 
       return {
-        teamId: team.id,
-        teamName: team.name,
+        teamId,
+        teamName,
         objectives,
         healthScore,
         healthStatus: computeHealthStatus(healthScore),
@@ -358,7 +364,7 @@ export default function MbrPage() {
       updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
     }
     seededTeamOkrsRef.current = true;
-  }, [manageableTeams, isLoadingTeams, allTeamObjectives, isLoadingTeamOkrs, draft.data.teamOkrSnapshots.length, updateDraft]);
+  }, [allTeamObjectives, isLoadingTeamOkrs, draft.data.teamOkrSnapshots.length, updateDraft]);
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
   const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(currentBu?.id);
@@ -519,7 +525,7 @@ export default function MbrPage() {
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
   // Loading
-  if (isLoadingCycles || isLoadingKpis || isLoadingOkrs || isLoadingTeams || isLoadingTeamOkrs) {
+  if (isLoadingCycles || isLoadingKpis || isLoadingOkrs || isLoadingTeamOkrs) {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
   }
 

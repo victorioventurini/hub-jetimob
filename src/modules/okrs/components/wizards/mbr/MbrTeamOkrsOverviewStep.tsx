@@ -1,17 +1,20 @@
 /**
  * MbrTeamOkrsOverviewStep - Overview consolidado das OKRs de todos os times
  * 
- * Exibe cards de resumo (saudáveis / atenção / risco) e lista de times
- * ordenados por criticidade (risco primeiro).
+ * Exibe cards de resumo (saudáveis / atenção / risco) e grid de times
+ * com progresso, contagem de OKRs e indicadores de saúde.
+ * Somente times com OKRs cadastradas são listados.
  */
 
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, Heart, AlertTriangle, XCircle, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
+import { Users, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
+import { getProgressBarStyle, TREND_COLORS } from '@/lib/colors';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -32,23 +35,13 @@ export interface MbrTeamOkrsOverviewStepProps {
 
 const HEALTH_ORDER: Record<string, number> = { risk: 0, attention: 1, healthy: 2 };
 
-function HealthBadge({ status }: { status: 'healthy' | 'attention' | 'risk' }) {
-  const config = {
-    healthy: { label: 'Saudável', className: 'bg-status-green-muted text-status-green' },
-    attention: { label: 'Atenção', className: 'bg-status-yellow-muted text-status-yellow' },
-    risk: { label: 'Risco', className: 'bg-status-red-muted text-status-red' },
-  };
-  const c = config[status];
-  return <Badge variant="secondary" className={cn('text-xs', c.className)}>{c.label}</Badge>;
-}
-
-function TrendIcon({ objectives }: { objectives: MbrTeamOkrSnapshot['objectives'] }) {
-  if (objectives.length === 0) return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
+function getTrendIcon(objectives: MbrTeamOkrSnapshot['objectives']) {
+  if (objectives.length === 0) return <Minus className={`h-4 w-4 ${TREND_COLORS.stable}`} />;
   const improving = objectives.filter(o => o.trend === 'improving').length;
   const declining = objectives.filter(o => o.trend === 'declining').length;
-  if (improving > declining) return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
-  if (declining > improving) return <TrendingDown className="h-3.5 w-3.5 text-status-red" />;
-  return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (improving > declining) return <TrendingUp className={`h-4 w-4 ${TREND_COLORS.improving}`} />;
+  if (declining > improving) return <TrendingDown className={`h-4 w-4 ${TREND_COLORS.declining}`} />;
+  return <Minus className={`h-4 w-4 ${TREND_COLORS.stable}`} />;
 }
 
 // ============================================================
@@ -62,18 +55,27 @@ export function MbrTeamOkrsOverviewStep({
   onContinue,
   onBack,
 }: MbrTeamOkrsOverviewStepProps) {
-  const { sorted, healthy, attention, risk, totalObjectives, totalKrs } = useMemo(() => {
+  const { sorted, totalAtRisk, avgProgress, totalKrs } = useMemo(() => {
     const sorted = [...teamOkrSnapshots].sort(
       (a, b) => (HEALTH_ORDER[a.healthStatus] ?? 2) - (HEALTH_ORDER[b.healthStatus] ?? 2)
     );
-    return {
-      sorted,
-      healthy: teamOkrSnapshots.filter(t => t.healthStatus === 'healthy').length,
-      attention: teamOkrSnapshots.filter(t => t.healthStatus === 'attention').length,
-      risk: teamOkrSnapshots.filter(t => t.healthStatus === 'risk').length,
-      totalObjectives: teamOkrSnapshots.reduce((s, t) => s + t.objectives.length, 0),
-      totalKrs: teamOkrSnapshots.reduce((s, t) => s + t.objectives.reduce((s2, o) => s2 + o.krCount, 0), 0),
-    };
+    const totalAtRisk = teamOkrSnapshots.reduce(
+      (s, t) => s + t.objectives.reduce((s2, o) => s2 + o.krsAtRisk, 0), 0
+    );
+    const totalKrs = teamOkrSnapshots.reduce(
+      (s, t) => s + t.objectives.reduce((s2, o) => s2 + o.krCount, 0), 0
+    );
+    const avgProgress = teamOkrSnapshots.length > 0
+      ? Math.round(
+          teamOkrSnapshots.reduce((s, t) => {
+            const teamAvg = t.objectives.length > 0
+              ? t.objectives.reduce((s2, o) => s2 + o.progress, 0) / t.objectives.length
+              : 0;
+            return s + teamAvg;
+          }, 0) / teamOkrSnapshots.length
+        )
+      : 0;
+    return { sorted, totalAtRisk, avgProgress, totalKrs };
   }, [teamOkrSnapshots]);
 
   return (
@@ -81,79 +83,74 @@ export function MbrTeamOkrsOverviewStep({
       <WizardStepHeader
         icon={Users}
         title="OKRs dos Times"
-        description="Visão consolidada de saúde e progresso"
+        description={`${teamOkrSnapshots.length} times com OKRs no ciclo`}
         variant="primary"
-        badge={`${teamOkrSnapshots.length} times`}
+        badge={`${totalKrs} KRs`}
       />
 
-      {/* Summary cards */}
-      <div className="px-6 py-4 border-b">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard
-            icon={Users}
-            label="Total de Times"
-            value={teamOkrSnapshots.length}
-            className="text-foreground"
-          />
-          <SummaryCard
-            icon={Heart}
-            label="Saudáveis"
-            value={healthy}
-            className="text-status-green"
-          />
-          <SummaryCard
-            icon={AlertTriangle}
-            label="Em Atenção"
-            value={attention}
-            className="text-status-amber"
-          />
-          <SummaryCard
-            icon={XCircle}
-            label="Em Risco"
-            value={risk}
-            className="text-status-red"
-          />
+      {/* Summary bar */}
+      <div className="px-6 py-4 border-b bg-muted/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">Progresso médio</p>
+            <p className="text-lg font-bold">{avgProgress}%</p>
+          </div>
+          {totalAtRisk > 0 && (
+            <Badge variant="destructive" className="gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              {totalAtRisk} em risco
+            </Badge>
+          )}
         </div>
+        <Progress value={avgProgress} className="h-2 mt-3" />
       </div>
 
-      {/* Team list */}
+      {/* Teams grid */}
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-3">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {sorted.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <div className="col-span-2 text-center py-12 text-muted-foreground">
               Nenhum time com OKRs encontrado para este ciclo.
-            </p>
+            </div>
           ) : (
             sorted.map(team => {
-              const teamKrs = team.objectives.reduce((s, o) => s + o.krCount, 0);
+              const teamAvgProgress = team.objectives.length > 0
+                ? Math.round(team.objectives.reduce((s, o) => s + o.progress, 0) / team.objectives.length)
+                : 0;
+              const teamAtRisk = team.objectives.reduce((s, o) => s + o.krsAtRisk, 0);
+              const teamKrCount = team.objectives.reduce((s, o) => s + o.krCount, 0);
+
               return (
-                <Card key={team.teamId} className={cn(
-                  'transition-colors',
-                  team.healthStatus === 'risk' && 'border-status-red/30',
-                  team.healthStatus === 'attention' && 'border-status-amber/30',
-                )}>
-                  <CardContent className="p-4">
+                <Card
+                  key={team.teamId}
+                  className={cn(
+                    'transition-colors',
+                    teamAtRisk > 0 && 'border-status-orange/30',
+                  )}
+                >
+                  <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={cn(
-                          'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
-                          team.healthStatus === 'healthy' ? 'bg-status-green-muted text-status-green'
-                          : team.healthStatus === 'attention' ? 'bg-status-yellow-muted text-status-yellow'
-                          : 'bg-status-red-muted text-status-red'
-                        )}>
-                          {team.healthScore}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{team.teamName}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{team.objectives.length} obj</span>
-                            <span>·</span>
-                            <span>{teamKrs} KRs</span>
-                            <TrendIcon objectives={team.objectives} />
-                          </div>
-                        </div>
+                      <CardTitle className="text-base">{team.teamName}</CardTitle>
+                      {getTrendIcon(team.objectives)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {team.objectives.length} OKRs · {teamKrCount} KRs
+                        </span>
+                        <span className="font-bold">{teamAvgProgress}%</span>
                       </div>
-                      <HealthBadge status={team.healthStatus} />
+                      <Progress
+                        value={teamAvgProgress}
+                        className={cn('h-1.5', getProgressBarStyle(teamAvgProgress))}
+                      />
+                      {teamAtRisk > 0 && (
+                        <p className="text-xs text-status-orange">
+                          {teamAtRisk} KR{teamAtRisk > 1 ? 's' : ''} em risco
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -178,27 +175,6 @@ export function MbrTeamOkrsOverviewStep({
         onPrimary={onContinue}
         primaryLabel="Analisar Times"
       />
-    </div>
-  );
-}
-
-// ============================================================
-// SUB-COMPONENTS
-// ============================================================
-
-function SummaryCard({ icon: Icon, label, value, className }: {
-  icon: React.ElementType;
-  label: string;
-  value: number;
-  className?: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-      <Icon className={cn('h-4 w-4', className)} />
-      <div>
-        <p className="text-lg font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-      </div>
     </div>
   );
 }
