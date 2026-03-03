@@ -125,15 +125,18 @@ export function LeaderDashboard() {
             />
           </div>
 
-          {/* Ritual History Quick Access */}
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/okrs/ritual-history" className="gap-2">
-                <History className="h-4 w-4" />
-                Histórico de Rituais
-              </Link>
-            </Button>
-          </div>
+        </section>
+      )}
+
+      {/* Ritual History Quick Access - visible for anyone with OKR permissions */}
+      {canViewOkrs && (
+        <section className="flex justify-end">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/okrs/ritual-history" className="gap-2">
+              <History className="h-4 w-4" />
+              Histórico de Rituais
+            </Link>
+          </Button>
         </section>
       )}
 
