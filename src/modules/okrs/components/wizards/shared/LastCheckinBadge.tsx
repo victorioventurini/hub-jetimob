@@ -23,7 +23,7 @@ export function LastCheckinBadge({ lastCompletedAt, isLoading, className }: Last
   return (
     <div className={cn('inline-flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 max-w-full', className)}>
       <Calendar className="h-3.5 w-3.5 shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="truncate block">{label}</span>
     </div>
   );
 }

@@ -271,9 +271,9 @@ export function MbrTeamOkrsDetailStep({
                           />
                         </div>
 
-                        <div className="flex items-center justify-between gap-2 mt-1 text-xs text-muted-foreground min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-muted-foreground min-w-0">
                           {kr.ownerName && (
-                            <span className="truncate min-w-0">{kr.ownerName}</span>
+                            <span className="truncate min-w-0 flex-1">{kr.ownerName}</span>
                           )}
                           <div className="min-w-0 max-w-full">
                             <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} />
