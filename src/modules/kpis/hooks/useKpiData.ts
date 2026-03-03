@@ -111,7 +111,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
           unit, direction, frequency, target_value, status, is_global,
           created_at, updated_at, deleted_at,
           indicator_type, lifecycle_status, target_source, recovery_protocol,
-          area_id, scope,
+          area_id, scope, responsible_area_id, responsible_team_id,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
           area:areas!kpi_metrics_area_id_fkey(id, name, color)
@@ -404,7 +404,7 @@ export function useKpiDetail(kpiId: string) {
           unit, direction, frequency, target_value, status, is_global,
           created_at, updated_at, deleted_at,
           indicator_type, lifecycle_status, target_source, recovery_protocol,
-          area_id, scope,
+          area_id, scope, responsible_area_id, responsible_team_id,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
           area:areas!kpi_metrics_area_id_fkey(id, name, color)
