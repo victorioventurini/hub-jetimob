@@ -1,6 +1,6 @@
 /**
  * @file MbrPanoramaStep.test.tsx
- * @description Tests for MBR Panorama Executivo step
+ * @description Tests for MBR Panorama Executivo step (grouped by scope)
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -39,6 +39,7 @@ const createKpiSnapshot = (overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnaps
   variationVsLastMonth: 20,
   variationVsTarget: -20,
   requiresStrategicDecision: false,
+  scope: 'org',
   ...overrides,
 });
 
@@ -74,19 +75,6 @@ describe('MbrPanoramaStep', () => {
     render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
     expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     expect(screen.getByText('KPI Beta')).toBeInTheDocument();
-  });
-
-  it('sorts at-risk KPIs first (red > yellow > green)', () => {
-    const kpis = [
-      createKpiSnapshot({ kpiId: '1', name: 'Green KPI', ragStatus: 'green' }),
-      createKpiSnapshot({ kpiId: '2', name: 'Red KPI', ragStatus: 'red' }),
-      createKpiSnapshot({ kpiId: '3', name: 'Yellow KPI', ragStatus: 'yellow' }),
-    ];
-    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
-    
-    const cards = screen.getAllByText(/KPI$/);
-    // Red should be first, then yellow, then green
-    expect(cards[0].textContent).toContain('Red');
   });
 
   it('shows attention banner when at-risk KPIs exist', () => {
@@ -137,5 +125,53 @@ describe('MbrPanoramaStep', () => {
     render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
     expect(screen.getByText('OK')).toBeInTheDocument();
     expect(screen.getByText('Crítico')).toBeInTheDocument();
+  });
+
+  // ============================================================
+  // Grouping tests
+  // ============================================================
+
+  it('renders Global BU section for org-scoped KPIs', () => {
+    const kpis = [createKpiSnapshot({ scope: 'org', name: 'Revenue' })];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.getByText('KPIs Globais da BU')).toBeInTheDocument();
+  });
+
+  it('renders Area section with area-scoped KPIs grouped by area', () => {
+    const kpis = [
+      createKpiSnapshot({ kpiId: '1', scope: 'area', areaId: 'a1', areaName: 'Operações', areaColor: '#10B981' }),
+      createKpiSnapshot({ kpiId: '2', scope: 'area', areaId: 'a1', areaName: 'Operações', areaColor: '#10B981' }),
+      createKpiSnapshot({ kpiId: '3', scope: 'area', areaId: 'a2', areaName: 'Comercial', areaColor: '#3B82F6' }),
+    ];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.getByText('KPIs por Área')).toBeInTheDocument();
+    expect(screen.getByText('Operações')).toBeInTheDocument();
+    expect(screen.getByText('Comercial')).toBeInTheDocument();
+  });
+
+  it('renders Team section with team-scoped KPIs grouped by team', () => {
+    const kpis = [
+      createKpiSnapshot({ kpiId: '1', scope: 'team', teamId: 't1', teamName: 'Dev Backend' }),
+      createKpiSnapshot({ kpiId: '2', scope: 'team', teamId: 't2', teamName: 'Vendas Inside' }),
+    ];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.getByText('KPIs por Time')).toBeInTheDocument();
+    expect(screen.getByText('Dev Backend')).toBeInTheDocument();
+    expect(screen.getByText('Vendas Inside')).toBeInTheDocument();
+  });
+
+  it('hides empty scope sections', () => {
+    const kpis = [createKpiSnapshot({ scope: 'org' })];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.getByText('KPIs Globais da BU')).toBeInTheDocument();
+    expect(screen.queryByText('KPIs por Área')).not.toBeInTheDocument();
+    expect(screen.queryByText('KPIs por Time')).not.toBeInTheDocument();
+  });
+
+  it('treats KPIs without scope as org', () => {
+    const kpis = [createKpiSnapshot({ scope: undefined, name: 'Legacy KPI' })];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
+    expect(screen.getByText('KPIs Globais da BU')).toBeInTheDocument();
+    expect(screen.getByText('Legacy KPI')).toBeInTheDocument();
   });
 });
