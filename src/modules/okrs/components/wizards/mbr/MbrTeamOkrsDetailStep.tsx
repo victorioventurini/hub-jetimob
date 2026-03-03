@@ -22,18 +22,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Users,
   CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
-import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -55,13 +52,7 @@ export interface MbrTeamOkrsDetailStepProps {
 // HELPERS
 // ============================================================
 
-function TrendIcon({ trend }: { trend: string }) {
-  switch (trend) {
-    case 'improving': return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
-    case 'declining': return <TrendingDown className="h-3.5 w-3.5 text-status-red" />;
-    default: return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
-  }
-}
+// Trend icon removido na versão simplificada da UI
 
 /** Map KR status to canonical RAG key */
 function toRagKey(status: string): keyof typeof RAG_STATUS_COLORS {
@@ -203,75 +194,58 @@ export function MbrTeamOkrsDetailStep({
             </div>
           ) : (
             currentTeam.objectives.map(obj => (
-              <Card key={obj.objectiveId} className={cn(
-                'transition-colors',
-                obj.krsAtRisk > 0 && RAG_STATUS_COLORS.red.border,
-              )}>
+              <Card
+                key={obj.objectiveId}
+                className={cn('transition-colors', obj.krsAtRisk > 0 && RAG_STATUS_COLORS.red.border)}
+              >
                 <CardContent className="p-4 space-y-3">
-                  {/* Objective header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <Target className="h-4 w-4 text-primary flex-shrink-0" />
-                        <p className="font-medium text-sm">{obj.title}</p>
+                        <p className="font-medium text-sm truncate">{obj.title}</p>
                       </div>
-                      <div className="flex items-center gap-2 mt-1 ml-6">
-                        <TrendIcon trend={obj.trend} />
-                        <span className="text-xs text-muted-foreground">
-                          {obj.krCount} KRs
-                          {obj.krsAtRisk > 0 && (
-                            <span className={cn('ml-1', RAG_STATUS_COLORS.red.text)}>
-                              · {obj.krsAtRisk} em risco
-                            </span>
-                          )}
-                          {obj.krsStagnant > 0 && (
-                            <span className={cn('ml-1', RAG_STATUS_COLORS.yellow.text)}>
-                              · {obj.krsStagnant} estagnados
-                            </span>
-                          )}
-                        </span>
-                      </div>
+                      <span className="text-xs text-muted-foreground ml-6">
+                        {obj.krCount} KRs
+                        {obj.krsAtRisk > 0 && (
+                          <span className={cn('ml-1', RAG_STATUS_COLORS.red.text)}>
+                            · {obj.krsAtRisk} em risco
+                          </span>
+                        )}
+                      </span>
                     </div>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs flex-shrink-0">
                       {obj.progress}%
                     </Badge>
                   </div>
 
-                  <Progress value={Math.min(100, obj.progress)} className="h-1.5" />
-
-                  {/* KRs list — aligned with TeamKrReviewStep pattern */}
                   {obj.keyResults && obj.keyResults.length > 0 && (
-                    <div className="space-y-3 ml-6 overflow-hidden">
+                    <div className="space-y-2.5 ml-6 overflow-hidden">
                       {obj.keyResults.map(kr => {
                         const rag = toRagKey(kr.status ?? 'not_started');
                         return (
                           <div
                             key={kr.krId}
                             className={cn(
-                              'py-2.5 px-3 rounded-md border text-xs overflow-hidden space-y-2',
+                              'py-2.5 px-3 rounded-md border text-xs space-y-2 overflow-hidden',
                               RAG_STATUS_COLORS[rag].border,
                             )}
                           >
-                            {/* KR header row */}
                             <div className="flex items-center gap-2">
                               <span className="truncate flex-1 min-w-0 font-medium">{kr.title}</span>
-                              {kr.ownerName && (
-                                <span className="text-muted-foreground flex-shrink-0 hidden sm:inline max-w-[10rem] truncate">{kr.ownerName}</span>
-                              )}
                               <OkrStatusBadge status={rag} type="kr" className="flex-shrink-0" />
                             </div>
-                            {/* Progress bar with base/current/target */}
-                            <OkrProgressBar
-                              baseline={Number(kr.baseline ?? 0)}
-                              current={Number(kr.current ?? 0)}
-                              target={Number(kr.target ?? 0)}
-                              direction={(kr.direction ?? 'up') as 'up' | 'down' | 'maintain'}
-                              status={rag}
-                              unit={kr.unit ?? '%'}
-                              size="sm"
-                              showLabels
-                            />
-                            {/* Last checkin date */}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-muted-foreground">
+                              <span className="truncate">Base: {formatValueWithUnit(kr.baseline, kr.unit ?? '%')}</span>
+                              <span className="truncate">Atual: {formatValueWithUnit(kr.current, kr.unit ?? '%')}</span>
+                              <span className="truncate">Meta: {formatValueWithUnit(kr.target, kr.unit ?? '%')}</span>
+                            </div>
+
+                            {kr.ownerName && (
+                              <p className="text-muted-foreground truncate">Responsável: {kr.ownerName}</p>
+                            )}
+
                             <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} />
                           </div>
                         );
