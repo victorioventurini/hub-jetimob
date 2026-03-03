@@ -17,6 +17,7 @@ import {
   useLastCompletedSession,
   useOrgObjectives,
 } from '@/modules/okrs/hooks';
+import { useManageableTeams } from '@/modules/okrs/hooks/useManageableTeams';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -26,6 +27,8 @@ import { handleError } from '@/lib/errorMessages';
 // Step components
 import { MbrPanoramaStep } from '@/modules/okrs/components/wizards/mbr/MbrPanoramaStep';
 import { MbrKpiGateStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiGateStep';
+import { MbrTeamOkrsOverviewStep } from '@/modules/okrs/components/wizards/mbr/MbrTeamOkrsOverviewStep';
+import { MbrTeamOkrsDetailStep } from '@/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep';
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
@@ -38,6 +41,7 @@ import type {
   RitualImprovementFeedback,
   MbrKpiSnapshot,
   MbrOrgOkrSnapshot,
+  MbrTeamOkrSnapshot,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -47,16 +51,20 @@ import type {
 const WIZARD_STEPS = [
   { id: 'panorama' as const, label: 'Panorama Executivo', description: 'Saúde do negócio' },
   { id: 'kpi-gate' as const, label: 'KPI Gate', description: 'KPIs críticos' },
+  { id: 'team-okrs-overview' as const, label: 'OKRs dos Times', description: 'Visão consolidada' },
+  { id: 'team-okrs-detail' as const, label: 'Análise por Time', description: 'Drill-down' },
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Prioridades estratégicas' },
   { id: 'decisions' as const, label: 'Decisões', description: 'Consolidação' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
 
-const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'org-okrs', 'decisions', 'closing'];
+const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'closing'];
 
 const DEFAULT_DATA: MbrDraftData = {
   referenceMonth: format(new Date(), 'yyyy-MM'),
   kpiSnapshots: [],
+  teamOkrSnapshots: [],
+  currentTeamIndex: 0,
   orgOkrSnapshots: [],
   decisions: [],
   checklist: {
@@ -68,6 +76,23 @@ const DEFAULT_DATA: MbrDraftData = {
   ritualFeedback: [],
   previousMbrPendingItems: [],
 };
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function computeHealthScore(objectives: MbrTeamOkrSnapshot['objectives']): number {
+  if (objectives.length === 0) return 100;
+  const avgProgress = objectives.reduce((s, o) => s + o.progress, 0) / objectives.length;
+  const atRiskRatio = objectives.reduce((s, o) => s + o.krsAtRisk, 0) / Math.max(1, objectives.reduce((s, o) => s + o.krCount, 0));
+  return Math.round(Math.max(0, Math.min(100, avgProgress * (1 - atRiskRatio * 0.5))));
+}
+
+function computeHealthStatus(score: number): 'healthy' | 'attention' | 'risk' {
+  if (score >= 70) return 'healthy';
+  if (score >= 40) return 'attention';
+  return 'risk';
+}
 
 // ============================================================
 // COMPONENT
@@ -204,6 +229,136 @@ export default function MbrPage() {
     updateDraft({ kpiSnapshots: snapshots });
     seededKpisRef.current = true;
   }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
+
+  // ── Load team OKRs and seed teamOkrSnapshots ──
+  const { teams: manageableTeams, isLoading: isLoadingTeams } = useManageableTeams();
+
+  const { data: allTeamObjectives, isLoading: isLoadingTeamOkrs } = useQuery({
+    queryKey: ['mbr', 'team-objectives', currentBuId],
+    enabled: !!buSupabase && !!currentBuId,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase
+        .from('okr_team_objectives')
+        .select(`
+          id, title, status, team_id,
+          key_results:okr_team_key_results(
+            id, title, status, current_value, baseline, target, direction,
+            owner_user_id,
+            owner:profiles!okr_team_key_results_owner_user_id_fkey(full_name)
+          )
+        `)
+        .is('deleted_at', null)
+        .is('cancelled_at', null)
+        .neq('status', 'cancelled')
+        .neq('status', 'discarded');
+
+      if (error) throw error;
+
+      return (data || []).map(obj => ({
+        ...obj,
+        key_results: (obj.key_results || []).filter(
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+        ),
+      }));
+    },
+  });
+
+  const seededTeamOkrsRef = useRef(false);
+
+  useEffect(() => {
+    if (seededTeamOkrsRef.current) return;
+    if (isLoadingTeams || isLoadingTeamOkrs || !manageableTeams) return;
+    if (draft.data.teamOkrSnapshots.length > 0) {
+      seededTeamOkrsRef.current = true;
+      return;
+    }
+
+    // Group objectives by team
+    const objByTeam = new Map<string, any[]>();
+    for (const obj of (allTeamObjectives || [])) {
+      if (!obj.team_id) continue;
+      if (!objByTeam.has(obj.team_id)) objByTeam.set(obj.team_id, []);
+      objByTeam.get(obj.team_id)!.push(obj);
+    }
+
+    const snapshots: MbrTeamOkrSnapshot[] = manageableTeams.map(team => {
+      const teamObjs = objByTeam.get(team.id) || [];
+
+      const objectives = teamObjs.map(obj => {
+        const krs = obj.key_results || [];
+        const krCount = krs.length;
+        const krsAtRisk = krs.filter((kr: any) => kr.status === 'at_risk' || kr.status === 'off_track').length;
+        const krsStagnant = krs.filter((kr: any) => kr.status === 'stagnant' || kr.status === 'not_started').length;
+
+        const avgProgress = krCount > 0
+          ? krs.reduce((sum: number, kr: any) => {
+              const baseline = Number(kr.baseline ?? 0);
+              const current = Number(kr.current_value ?? baseline);
+              const target = Number(kr.target ?? baseline);
+              const direction = kr.direction || 'up';
+              if (direction === 'up') {
+                if (target === baseline) return sum + (current >= target ? 100 : 0);
+                return sum + Math.max(0, Math.min(100, ((current - baseline) / (target - baseline)) * 100));
+              } else {
+                if (baseline === target) return sum + (current <= target ? 100 : 0);
+                return sum + Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100));
+              }
+            }, 0) / krCount
+          : 0;
+
+        const trend: 'improving' | 'stable' | 'declining' =
+          avgProgress >= 70 ? 'improving'
+          : avgProgress >= 40 ? 'stable'
+          : 'declining';
+
+        return {
+          objectiveId: obj.id,
+          title: obj.title,
+          progress: Math.round(avgProgress),
+          status: obj.status,
+          krCount,
+          krsAtRisk,
+          krsStagnant,
+          trend,
+          keyResults: krs.map((kr: any) => ({
+            krId: kr.id,
+            title: kr.title,
+            progress: (() => {
+              const baseline = Number(kr.baseline ?? 0);
+              const current = Number(kr.current_value ?? baseline);
+              const target = Number(kr.target ?? baseline);
+              const direction = kr.direction || 'up';
+              if (direction === 'up') {
+                if (target === baseline) return current >= target ? 100 : 0;
+                return Math.round(Math.max(0, Math.min(100, ((current - baseline) / (target - baseline)) * 100)));
+              }
+              if (baseline === target) return current <= target ? 100 : 0;
+              return Math.round(Math.max(0, Math.min(100, ((baseline - current) / (baseline - target)) * 100)));
+            })(),
+            status: kr.status,
+            ownerName: (kr.owner as any)?.full_name ?? null,
+          })),
+        };
+      });
+
+      const healthScore = computeHealthScore(objectives);
+
+      return {
+        teamId: team.id,
+        teamName: team.name,
+        objectives,
+        healthScore,
+        healthStatus: computeHealthStatus(healthScore),
+        reviewed: false,
+      };
+    });
+
+    if (snapshots.length > 0) {
+      updateDraft({ teamOkrSnapshots: snapshots, currentTeamIndex: 0 });
+    }
+    seededTeamOkrsRef.current = true;
+  }, [manageableTeams, isLoadingTeams, allTeamObjectives, isLoadingTeamOkrs, draft.data.teamOkrSnapshots.length, updateDraft]);
 
   // ── Load org OKRs and seed orgOkrSnapshots when draft is empty ──
   const { data: orgObjectives, isLoading: isLoadingOkrs } = useOrgObjectives(currentBu?.id);
@@ -364,7 +519,7 @@ export default function MbrPage() {
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
   // Loading
-  if (isLoadingCycles || isLoadingKpis || isLoadingOkrs) {
+  if (isLoadingCycles || isLoadingKpis || isLoadingOkrs || isLoadingTeams || isLoadingTeamOkrs) {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
   }
 
@@ -388,6 +543,31 @@ export default function MbrPage() {
           <MbrKpiGateStep
             kpiSnapshots={draft.data.kpiSnapshots}
             onKpiSnapshotsChange={(kpiSnapshots: MbrKpiSnapshot[]) => updateDraft({ kpiSnapshots })}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
+      case 'team-okrs-overview':
+        return (
+          <MbrTeamOkrsOverviewStep
+            teamOkrSnapshots={draft.data.teamOkrSnapshots}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
+      case 'team-okrs-detail':
+        return (
+          <MbrTeamOkrsDetailStep
+            teamOkrSnapshots={draft.data.teamOkrSnapshots}
+            onTeamOkrSnapshotsChange={(teamOkrSnapshots: MbrTeamOkrSnapshot[]) => updateDraft({ teamOkrSnapshots })}
+            currentTeamIndex={draft.data.currentTeamIndex}
+            onCurrentTeamIndexChange={(currentTeamIndex: number) => updateDraft({ currentTeamIndex })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}

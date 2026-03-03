@@ -159,14 +159,14 @@ export interface LeaderPrepWizardState {
 // TEAM CHECKIN WIZARD
 // ============================================================
 
-export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'org-okrs' | 'closing';
+export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing';
 
 // ============================================================
 // MBR (MONTHLY BUSINESS REVIEW) WIZARD
 // ============================================================
 
-export type MbrStep = 'panorama' | 'kpi-gate' | 'org-okrs' | 'decisions' | 'closing';
-export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'org-okrs' | 'decisions' | 'closing';
+export type MbrStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
+export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
 
 /** KPI snapshot imutável — congelado ao iniciar o MBR */
 export interface MbrKpiSnapshot {
@@ -215,10 +215,40 @@ export interface RitualImprovementFeedback {
   createdAt: string;
 }
 
+/** Snapshot de OKRs de um time para o MBR */
+export interface MbrTeamOkrObjectiveSnapshot {
+  objectiveId: string;
+  title: string;
+  progress: number;
+  status: string;
+  krCount: number;
+  krsAtRisk: number;
+  krsStagnant: number;
+  trend: 'improving' | 'stable' | 'declining';
+  keyResults: Array<{
+    krId: string;
+    title: string;
+    progress: number;
+    status: string;
+    ownerName: string | null;
+  }>;
+}
+
+export interface MbrTeamOkrSnapshot {
+  teamId: string;
+  teamName: string;
+  objectives: MbrTeamOkrObjectiveSnapshot[];
+  healthScore: number;
+  healthStatus: 'healthy' | 'attention' | 'risk';
+  reviewed: boolean;
+}
+
 /** Draft data completo do MBR */
 export interface MbrDraftData {
   referenceMonth: string; // YYYY-MM
   kpiSnapshots: MbrKpiSnapshot[];
+  teamOkrSnapshots: MbrTeamOkrSnapshot[];
+  currentTeamIndex: number;
   orgOkrSnapshots: MbrOrgOkrSnapshot[];
   decisions: TeamCheckinDecision[];
   checklist: MbrGovernanceChecklist;
@@ -576,6 +606,8 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
     steps: [
       { id: 'panorama', label: 'Panorama Executivo', shortLabel: 'Panorama' },
       { id: 'kpi-gate', label: 'KPI Gate Estratégico', shortLabel: 'KPI Gate' },
+      { id: 'team-okrs-overview', label: 'OKRs dos Times', shortLabel: 'Times' },
+      { id: 'team-okrs-detail', label: 'Análise por Time', shortLabel: 'Detalhe' },
       { id: 'org-okrs', label: 'OKRs Organizacionais', shortLabel: 'OKRs Org' },
       { id: 'decisions', label: 'Decisões Estratégicas', shortLabel: 'Decisões' },
       { id: 'closing', label: 'Encerramento', shortLabel: 'Encerrar' },

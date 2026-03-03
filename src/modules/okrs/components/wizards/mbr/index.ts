@@ -8,6 +8,12 @@ export type { MbrPanoramaStepProps } from './MbrPanoramaStep';
 export { MbrKpiGateStep } from './MbrKpiGateStep';
 export type { MbrKpiGateStepProps } from './MbrKpiGateStep';
 
+export { MbrTeamOkrsOverviewStep } from './MbrTeamOkrsOverviewStep';
+export type { MbrTeamOkrsOverviewStepProps } from './MbrTeamOkrsOverviewStep';
+
+export { MbrTeamOkrsDetailStep } from './MbrTeamOkrsDetailStep';
+export type { MbrTeamOkrsDetailStepProps } from './MbrTeamOkrsDetailStep';
+
 export { MbrOrgOkrsStep } from './MbrOrgOkrsStep';
 export type { MbrOrgOkrsStepProps } from './MbrOrgOkrsStep';
 
