@@ -3,23 +3,21 @@
  * 
  * Exibe informações contextuais de um KR durante o wizard,
  * incluindo objetivo, progresso, status e owner.
+ * 
+ * Usa componentes canônicos: OkrStatusBadge + OkrProgressBar
  */
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { 
   Target, 
-  TrendingUp, 
-  TrendingDown,
-  Equal,
   Calendar,
   User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================
 // TYPES
@@ -47,20 +45,6 @@ export interface KrContextCardProps {
 // ============================================================
 // HELPERS
 // ============================================================
-
-const STATUS_CONFIG = {
-  green: { label: 'No caminho', variant: 'default' as const, className: RAG_STATUS_COLORS.green.badge },
-  yellow: { label: 'Em risco', variant: 'default' as const, className: RAG_STATUS_COLORS.yellow.badge },
-  red: { label: 'Em perigo', variant: 'destructive' as const, className: RAG_STATUS_COLORS.red.badge },
-  not_started: { label: 'Não iniciado', variant: 'secondary' as const, className: '' },
-};
-
-function formatValue(value: number | null | undefined, unit?: string): string {
-  if (value === null || value === undefined) return '—';
-  if (unit === '%') return `${value}%`;
-  if (unit === 'R$') return `R$ ${value.toLocaleString('pt-BR')}`;
-  return value.toLocaleString('pt-BR') + (unit ? ` ${unit}` : '');
-}
 
 function getInitials(name: string): string {
   return name
@@ -93,9 +77,6 @@ export function KrContextCard({
   className,
   compact = false,
 }: KrContextCardProps) {
-  const statusConfig = STATUS_CONFIG[status];
-  const DirectionIcon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : Equal;
-
   if (compact) {
     return (
       <div className={cn("rounded-lg border bg-card p-3", className)}>
@@ -119,16 +100,8 @@ export function KrContextCard({
               showLabels={false}
               className="mt-2"
             />
-            <span className={cn("text-xs font-medium mt-1", progress > 100 && "text-status-green")}>
-              {Math.round(progress)}%
-            </span>
           </div>
-          <Badge 
-            variant={statusConfig.variant}
-            className={cn("flex-shrink-0", statusConfig.className)}
-          >
-            {statusConfig.label}
-          </Badge>
+          <OkrStatusBadge status={status} type="kr" className="flex-shrink-0" />
         </div>
       </div>
     );
@@ -152,12 +125,7 @@ export function KrContextCard({
             </p>
           )}
         </div>
-        <Badge 
-          variant={statusConfig.variant}
-          className={cn("flex-shrink-0", statusConfig.className)}
-        >
-          {statusConfig.label}
-        </Badge>
+        <OkrStatusBadge status={status} type="kr" className="flex-shrink-0" />
       </div>
 
       {/* Progress - using canonical OkrProgressBar */}
