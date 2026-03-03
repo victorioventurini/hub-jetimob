@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { PageHeader } from '@/components/ui/page-header';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -84,10 +86,23 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  const dateFromState = useUrlState<string>({
+    key: 'from',
+    defaultValue: '',
+    parse: parsers.string,
+  });
+  const dateToState = useUrlState<string>({
+    key: 'to',
+    defaultValue: '',
+    parse: parsers.string,
+  });
+
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
-  }), [typeState.value, teamState.value]);
+    dateFrom: dateFromState.value || null,
+    dateTo: dateToState.value || null,
+  }), [typeState.value, teamState.value, dateFromState.value, dateToState.value]);
 
   const { data: rituals, isLoading } = useRitualHistory(filters);
   const { teams } = useManageableTeamsFlat();
@@ -147,6 +162,65 @@ export default function RitualHistoryPage() {
                 ))}
               </SelectContent>
             </Select>
+          )}
+
+          {/* Date filters */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="default" className={cn(
+                "w-[180px] justify-start text-left font-normal",
+                !dateFromState.value && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                {dateFromState.value
+                  ? format(parseISO(dateFromState.value), 'dd/MM/yyyy', { locale: ptBR })
+                  : 'Data início'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
+                onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                className="p-3 pointer-events-auto"
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="default" className={cn(
+                "w-[180px] justify-start text-left font-normal",
+                !dateToState.value && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                {dateToState.value
+                  ? format(parseISO(dateToState.value), 'dd/MM/yyyy', { locale: ptBR })
+                  : 'Data fim'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dateToState.value ? parseISO(dateToState.value) : undefined}
+                onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                className="p-3 pointer-events-auto"
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Clear filters */}
+          {(dateFromState.value || dateToState.value) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { dateFromState.set(''); dateToState.set(''); }}
+              className="text-muted-foreground"
+            >
+              Limpar datas
+            </Button>
           )}
         </div>
 
