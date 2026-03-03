@@ -85,7 +85,7 @@ describe('MbrTeamOkrsOverviewStep', () => {
     expect(screen.getByText(/Nenhum time com OKRs/)).toBeInTheDocument();
   });
 
-  it('renders team cards with health badges', () => {
+  it('renders team cards with names and progress', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', teamName: 'Backend', healthStatus: 'healthy', healthScore: 80 }),
       createTeamSnapshot({ teamId: 't2', teamName: 'Frontend', healthStatus: 'risk', healthScore: 30 }),
@@ -95,19 +95,17 @@ describe('MbrTeamOkrsOverviewStep', () => {
     expect(screen.getByText('Backend')).toBeInTheDocument();
     expect(screen.getByText('Frontend')).toBeInTheDocument();
     expect(screen.getByText('Design')).toBeInTheDocument();
-    expect(screen.getByText('Saudável')).toBeInTheDocument();
-    expect(screen.getByText('Risco')).toBeInTheDocument();
-    expect(screen.getByText('Atenção')).toBeInTheDocument();
+    // Each card shows progress percentage
+    expect(screen.getAllByText('60%').length).toBeGreaterThanOrEqual(3);
   });
 
-  it('displays summary cards with correct counts', () => {
+  it('displays summary bar with average progress', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', healthStatus: 'healthy' }),
       createTeamSnapshot({ teamId: 't2', healthStatus: 'risk' }),
     ];
     render(<MbrTeamOkrsOverviewStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    // Total teams
-    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('Progresso médio')).toBeInTheDocument();
   });
 
   it('sorts teams risk first', () => {
