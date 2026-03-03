@@ -27,6 +27,7 @@ export interface MbrPanoramaStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   lastCompletedAt?: string | null;
   onContinue: () => void;
+  buName?: string;
 }
 
 interface KpiGroup {
@@ -177,6 +178,7 @@ export function MbrPanoramaStep({
   onDecisionsChange,
   lastCompletedAt,
   onContinue,
+  buName,
 }: MbrPanoramaStepProps) {
   // Group KPIs by scope
   const { orgKpis, areaGroups, teamGroups, accordionDefaults } = useMemo(() => {
@@ -266,7 +268,7 @@ export function MbrPanoramaStep({
           <Accordion type="multiple" defaultValue={accordionDefaults} className="space-y-1">
             <ScopeSection
               icon={Building2}
-              title="KPIs Globais da BU"
+              title={buName ? `KPIs Globais da ${buName}` : 'KPIs Globais da BU'}
               count={orgKpis.length}
               groups={orgGroupForSection}
               accordionValue="scope-org"

@@ -131,7 +131,13 @@ describe('MbrPanoramaStep', () => {
   // Grouping tests
   // ============================================================
 
-  it('renders Global BU section for org-scoped KPIs', () => {
+  it('renders Global BU section with BU name when provided', () => {
+    const kpis = [createKpiSnapshot({ scope: 'org', name: 'Revenue' })];
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} buName="Jetimob" />);
+    expect(screen.getByText('KPIs Globais da Jetimob')).toBeInTheDocument();
+  });
+
+  it('renders fallback Global BU section when no buName', () => {
     const kpis = [createKpiSnapshot({ scope: 'org', name: 'Revenue' })];
     render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
     expect(screen.getByText('KPIs Globais da BU')).toBeInTheDocument();
@@ -162,16 +168,16 @@ describe('MbrPanoramaStep', () => {
 
   it('hides empty scope sections', () => {
     const kpis = [createKpiSnapshot({ scope: 'org' })];
-    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
-    expect(screen.getByText('KPIs Globais da BU')).toBeInTheDocument();
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} buName="Jetimob" />);
+    expect(screen.getByText('KPIs Globais da Jetimob')).toBeInTheDocument();
     expect(screen.queryByText('KPIs por Área')).not.toBeInTheDocument();
     expect(screen.queryByText('KPIs por Time')).not.toBeInTheDocument();
   });
 
   it('treats KPIs without scope as org', () => {
     const kpis = [createKpiSnapshot({ scope: undefined, name: 'Legacy KPI' })];
-    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
-    expect(screen.getByText('KPIs Globais da BU')).toBeInTheDocument();
+    render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} buName="Jetimob" />);
+    expect(screen.getByText('KPIs Globais da Jetimob')).toBeInTheDocument();
     expect(screen.getByText('Legacy KPI')).toBeInTheDocument();
   });
 });

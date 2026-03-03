@@ -535,6 +535,7 @@ export default function MbrPage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             lastCompletedAt={lastCompletedAt}
             onContinue={goNext}
+            buName={currentBu?.name}
           />
         );
 
