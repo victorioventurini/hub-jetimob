@@ -5,7 +5,7 @@
  * Nível organizacional (sem seleção de time).
  */
 
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -20,6 +20,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
+import { useKpisForWizard } from '@/modules/kpis/hooks/useKpisForWizard';
 
 // Step components
 import { MbrPanoramaStep } from '@/modules/okrs/components/wizards/mbr/MbrPanoramaStep';
@@ -108,6 +109,43 @@ export default function MbrPage() {
     defaultData: DEFAULT_DATA,
     enabled: !!quarterlyCycle,
   });
+
+  // ── Load org KPIs and seed kpiSnapshots when draft is empty ──
+  const { kpis: orgKpis, isLoading: isLoadingKpis } = useKpisForWizard({});
+  const seededKpisRef = useRef(false);
+
+  useEffect(() => {
+    if (seededKpisRef.current) return;
+    if (isLoadingKpis || orgKpis.length === 0) return;
+    if (draft.data.kpiSnapshots.length > 0) {
+      seededKpisRef.current = true;
+      return;
+    }
+
+    const snapshots: MbrKpiSnapshot[] = orgKpis.map(kpi => {
+      const variation = kpi.target_value && kpi.latest_value != null
+        ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
+        : null;
+
+      return {
+        kpiId: kpi.id,
+        name: kpi.name,
+        currentValue: kpi.latest_value,
+        previousValue: null, // would require historical query
+        target: kpi.target_value,
+        ragStatus: kpi.latest_rag_status === 'on_track' ? 'green'
+          : kpi.latest_rag_status === 'at_risk' ? 'yellow'
+          : kpi.latest_rag_status === 'off_track' ? 'red'
+          : 'green',
+        variationVsLastMonth: null,
+        variationVsTarget: variation,
+        requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
+      };
+    });
+
+    updateDraft({ kpiSnapshots: snapshots });
+    seededKpisRef.current = true;
+  }, [orgKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
 
   // Load previous MBR pending items on first load
   useEffect(() => {
@@ -217,8 +255,8 @@ export default function MbrPage() {
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
   // Loading
-  if (isLoadingCycles) {
-    return <LoadingState text="Carregando..." fullPage />;
+  if (isLoadingCycles || isLoadingKpis) {
+    return <LoadingState text="Carregando dados do MBR..." fullPage />;
   }
 
   // Step render
