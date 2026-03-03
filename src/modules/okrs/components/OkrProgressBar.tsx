@@ -70,17 +70,17 @@ export function OkrProgressBar({
   return (
     <div className={cn('w-full', className)}>
       {showLabels && (
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground mb-1 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mb-1 min-w-0">
           <span className="truncate min-w-0 flex-1">
             {formatValueWithUnit(current, unit)}
           </span>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 max-w-full">
             {isOverachieved && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-status-green/15 text-status-green text-[10px] font-medium">
-                      <Rocket className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-status-green/15 text-status-green text-[10px] font-medium shrink-0">
+                      <Rocket className="h-3 w-3 shrink-0" />
                       Meta superada
                     </span>
                   </TooltipTrigger>
@@ -96,7 +96,7 @@ export function OkrProgressBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className={cn(
-                    "font-medium",
+                    "font-medium shrink-0",
                     isOverachieved ? "text-status-green" : "text-foreground"
                   )}>
                     {progress.toFixed(0)}%
@@ -121,7 +121,7 @@ export function OkrProgressBar({
         />
       </div>
       {showLabels && (
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground mt-1 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mt-1 min-w-0">
           <span className="truncate min-w-0 flex-1">Base: {formatValueWithUnit(baseline, unit)}</span>
           <span className="truncate min-w-0 flex-1 text-right">Meta: {formatValueWithUnit(target, unit)}</span>
         </div>
