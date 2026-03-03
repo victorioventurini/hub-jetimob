@@ -59,5 +59,8 @@ export type { AdminContextSwitcherProps } from './AdminContextSwitcher';
 export { InlineDecisionInput } from './InlineDecisionInput';
 export type { InlineDecisionInputProps } from './InlineDecisionInput';
 
+export { DecisionCard } from './DecisionCard';
+export type { DecisionCardProps } from './DecisionCard';
+
 export { WizardStepScaffold } from './WizardStepScaffold';
 export type { WizardStepScaffoldProps } from './WizardStepScaffold';

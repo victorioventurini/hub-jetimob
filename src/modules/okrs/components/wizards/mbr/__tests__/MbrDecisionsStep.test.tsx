@@ -16,6 +16,14 @@ vi.mock('../../shared', () => ({
       <button data-testid="primary-btn" onClick={onPrimary}>{primaryLabel}</button>
     </div>
   ),
+  DecisionCard: ({ decision, onUpdate, onRemove, showReclassify }: any) => (
+    <div data-testid={`decision-card-${decision.id}`}>
+      <span>{decision.text}</span>
+      {showReclassify && <span data-testid="reclassify-badge">Reclassify</span>}
+      <button data-testid={`remove-${decision.id}`} onClick={() => onRemove(decision.id)}>X</button>
+      <button data-testid={`update-${decision.id}`} onClick={() => onUpdate(decision.id, { text: 'updated' })}>Edit</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/ui/textarea-auto-submit', () => ({
@@ -87,9 +95,7 @@ describe('MbrDecisionsStep', () => {
     const textarea = screen.getByPlaceholderText(/realocar orçamento/i);
     fireEvent.change(textarea, { target: { value: 'Nova decisão estratégica' } });
     
-    // Click the add button
-    const addBtn = screen.getByRole('button', { name: '' }); // Plus icon button
-    // Use the explicit add logic
+    const addBtn = screen.getByRole('button', { name: '' });
     fireEvent.click(addBtn);
     
     expect(props.onDecisionsChange).toHaveBeenCalled();
@@ -138,5 +144,26 @@ describe('MbrDecisionsStep', () => {
     props.decisions = [createDecision(), createDecision({ id: '2' })];
     render(<MbrDecisionsStep {...props} />);
     expect(screen.getByText(/2 registro/)).toBeInTheDocument();
+  });
+
+  it('passes showReclassify to DecisionCard', () => {
+    const props = defaultProps();
+    props.decisions = [createDecision({ id: 'd1', text: 'Test' })];
+    render(<MbrDecisionsStep {...props} />);
+    expect(screen.getByTestId('reclassify-badge')).toBeInTheDocument();
+  });
+
+  it('preserves owner and deadline on update', () => {
+    const props = defaultProps();
+    props.decisions = [
+      createDecision({ id: 'd1', text: 'With owner', owner: { id: 'u1', name: 'John' }, deadline: '2025-12-31' }),
+    ];
+    render(<MbrDecisionsStep {...props} />);
+    
+    fireEvent.click(screen.getByTestId('update-d1'));
+    
+    const updatedDecisions = props.onDecisionsChange.mock.calls[0][0];
+    expect(updatedDecisions[0].owner).toEqual({ id: 'u1', name: 'John' });
+    expect(updatedDecisions[0].deadline).toBe('2025-12-31');
   });
 });

@@ -16,6 +16,12 @@ vi.mock('../../shared', () => ({
       <button data-testid="complete-btn" onClick={onPrimary} disabled={primaryDisabled}>Concluir</button>
     </div>
   ),
+  DecisionCard: ({ decision, onUpdate, onRemove }: any) => (
+    <div data-testid={`decision-card-${decision.id}`}>
+      <span>{decision.text}</span>
+      <button data-testid={`remove-${decision.id}`} onClick={() => onRemove(decision.id)}>X</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/ui/textarea-auto-submit', () => ({

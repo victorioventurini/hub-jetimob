@@ -288,6 +288,7 @@ export interface TeamCheckinDecision {
     id: string;
     name: string;
   };
+  deadline?: string | null; // ISO date format
 }
 
 export interface TeamCheckinChecklist {
