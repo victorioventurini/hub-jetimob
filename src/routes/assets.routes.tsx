@@ -18,6 +18,7 @@ const KeysPage = lazy(() => import('@/modules/assets/pages/KeysPage'));
 const GiftsPage = lazy(() => import('@/modules/assets/pages/GiftsPage'));
 const AssetsReportsPage = lazy(() => import('@/modules/assets/pages/AssetsReportsPage'));
 const AssetsSettingsPage = lazy(() => import('@/modules/assets/pages/AssetsSettingsPage'));
+const PhoneLinesPage = lazy(() => import('@/modules/assets/pages/PhoneLinesPage'));
 const RecommendationsPage = lazy(() => import('@/modules/assets/pages/RecommendationsPage'));
 const PublicAssetRedirect = lazy(() => import('@/pages/PublicAssetRedirect'));
 
@@ -48,6 +49,7 @@ export const assetRoutes = (
       <Route path="gifts" element={<GiftsPage />} />
       <Route path="reports" element={<AssetsReportsPage />} />
       <Route path="settings" element={<AssetsSettingsPage />} />
+      <Route path="phone-lines" element={<PhoneLinesPage />} />
     </Route>
     
     {/* Recommendations - Standalone page with own HubLayout */}

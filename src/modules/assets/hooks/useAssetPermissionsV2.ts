@@ -111,10 +111,15 @@ export function useAssetPermissionsV2() {
   const canManageSettings = hasFullAccess || has("assets.settings.manage");
   const canManageCategories = hasFullAccess || has("assets.categories.manage:bu");
 
+  // === Permissões de LINHAS TELEFÔNICAS (reusa inventory roles) ===
+  const canViewPhoneLines = canViewInventory;
+  const canManagePhoneLines = canManageInventory;
+
   // === Flags de acesso por aba ===
   const canAccessInventoryTab = canViewInventory;
   const canAccessKeysTab = canViewKeys;
   const canAccessGiftsTab = canViewGifts;
+  const canAccessPhoneLinesTab = canViewPhoneLines;
   const canAccessReportsTab = hasFullAccess || hasAny([
     "assets.inventory.view:bu",
     "assets.keys.view:bu",
@@ -173,10 +178,15 @@ export function useAssetPermissionsV2() {
     canManageSettings,
     canManageCategories,
     
+    // Phone Lines
+    canViewPhoneLines,
+    canManagePhoneLines,
+    
     // Tab access
     canAccessInventoryTab,
     canAccessKeysTab,
     canAccessGiftsTab,
+    canAccessPhoneLinesTab,
     canAccessReportsTab,
     canAccessSettingsTab,
     
@@ -210,9 +220,12 @@ export function useAssetPermissionsV2() {
     isAssetsAdmin,
     canManageSettings,
     canManageCategories,
+    canViewPhoneLines,
+    canManagePhoneLines,
     canAccessInventoryTab,
     canAccessKeysTab,
     canAccessGiftsTab,
+    canAccessPhoneLinesTab,
     canAccessReportsTab,
     canAccessSettingsTab,
     isInventoryAdmin,
