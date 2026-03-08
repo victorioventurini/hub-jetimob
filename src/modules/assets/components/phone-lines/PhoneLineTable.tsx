@@ -76,8 +76,7 @@ export function PhoneLineTable({
               <TableCell>
                 <StatusBadge
                   status={item.status}
-                  label={STATUS_LABELS[item.status] ?? item.status}
-                  variant={item.status === "available" ? "success" : "warning"}
+                  customLabel={STATUS_LABELS[item.status] ?? item.status}
                 />
               </TableCell>
               <TableCell>
