@@ -15,6 +15,8 @@ export { useGifts } from "./useGifts";
 export { useLocations, type BuLocationOption } from "./useLocations";
 export { useAssetProfiles } from "./useProfiles";
 export { useAssetPermissionsV2 } from "./useAssetPermissionsV2";
+export { usePhoneLinesQuery, usePhoneLineCarriersQuery, usePhoneLineMutations } from "./usePhoneLines";
+export type { PhoneLine, PhoneLineStatus, PhoneLinePlanType, PhoneLineFilters } from "./usePhoneLines";
 export { useAssetGroups } from "./useAssetGroups";
 export { useBrands } from "./useBrands";
 export { 
