@@ -111,9 +111,21 @@ export function useAssetPermissionsV2() {
   const canManageSettings = hasFullAccess || has("assets.settings.manage");
   const canManageCategories = hasFullAccess || has("assets.categories.manage:bu");
 
-  // === Permissões de LINHAS TELEFÔNICAS (reusa inventory roles) ===
-  const canViewPhoneLines = canViewInventory;
-  const canManagePhoneLines = canManageInventory;
+  // === Permissões de LINHAS TELEFÔNICAS ===
+  const canViewPhoneLines = hasFullAccess || hasAny([
+    "assets.phone_lines.view:bu",
+    "assets.phone_lines.read:bu",
+  ]);
+
+  const canManagePhoneLines = hasFullAccess || hasAny([
+    "assets.phone_lines.create:bu",
+    "assets.phone_lines.update:bu",
+    "assets.phone_lines.delete:bu",
+  ]);
+
+  const canLoanPhoneLines = hasFullAccess || has("assets.phone_lines.loan:bu");
+  const canReturnPhoneLines = hasFullAccess || has("assets.phone_lines.return:bu");
+  const canLinkPhoneLineAsset = hasFullAccess || has("assets.phone_lines.link_asset:bu");
 
   // === Flags de acesso por aba ===
   const canAccessInventoryTab = canViewInventory;
@@ -181,6 +193,9 @@ export function useAssetPermissionsV2() {
     // Phone Lines
     canViewPhoneLines,
     canManagePhoneLines,
+    canLoanPhoneLines,
+    canReturnPhoneLines,
+    canLinkPhoneLineAsset,
     
     // Tab access
     canAccessInventoryTab,
@@ -222,6 +237,9 @@ export function useAssetPermissionsV2() {
     canManageCategories,
     canViewPhoneLines,
     canManagePhoneLines,
+    canLoanPhoneLines,
+    canReturnPhoneLines,
+    canLinkPhoneLineAsset,
     canAccessInventoryTab,
     canAccessKeysTab,
     canAccessGiftsTab,
