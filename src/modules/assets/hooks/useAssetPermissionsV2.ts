@@ -193,6 +193,9 @@ export function useAssetPermissionsV2() {
     // Phone Lines
     canViewPhoneLines,
     canManagePhoneLines,
+    canLoanPhoneLines,
+    canReturnPhoneLines,
+    canLinkPhoneLineAsset,
     
     // Tab access
     canAccessInventoryTab,
