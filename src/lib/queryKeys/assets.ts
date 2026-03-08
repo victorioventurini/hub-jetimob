@@ -55,4 +55,13 @@ export const assetsKeys = {
     lastValue: (id: string | null) => 
       ['assets', 'recommendations', 'lastValue', id] as const,
   },
+
+  // Phone Lines
+  phoneLines: {
+    all: (buId: string | null) => ['assets', 'phone-lines', buId] as const,
+    list: (buId: string | null, filters?: Record<string, unknown>) =>
+      ['assets', 'phone-lines', 'list', buId, filters] as const,
+    detail: (id: string) => ['assets', 'phone-lines', 'detail', id] as const,
+    carriers: (buId: string | null) => ['assets', 'phone-lines', 'carriers', buId] as const,
+  },
 } as const;
