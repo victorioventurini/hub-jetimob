@@ -1,6 +1,6 @@
 import { Outlet, useLocation, Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Package, Key, Gift, FileBarChart, Settings } from "lucide-react";
+import { Package, Key, Gift, Smartphone, FileBarChart, Settings } from "lucide-react";
 import { useAssetPermissionsV2 } from "../hooks";
 
 /**
@@ -15,6 +15,7 @@ type TabDef = {
     | "canAccessInventoryTab" 
     | "canAccessKeysTab" 
     | "canAccessGiftsTab" 
+    | "canAccessPhoneLinesTab"
     | "canAccessReportsTab" 
     | "canAccessSettingsTab";
 };
@@ -23,6 +24,7 @@ const tabs: TabDef[] = [
   { name: "Inventário", href: "/assets/inventory", icon: Package, permissionKey: "canAccessInventoryTab" },
   { name: "Chaves", href: "/assets/keys", icon: Key, permissionKey: "canAccessKeysTab" },
   { name: "Brindes", href: "/assets/gifts", icon: Gift, permissionKey: "canAccessGiftsTab" },
+  { name: "Linhas", href: "/assets/phone-lines", icon: Smartphone, permissionKey: "canAccessPhoneLinesTab" },
   { name: "Relatórios", href: "/assets/reports", icon: FileBarChart, permissionKey: "canAccessReportsTab" },
   { name: "Configurações", href: "/assets/settings", icon: Settings, permissionKey: "canAccessSettingsTab" },
 ];
