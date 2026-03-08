@@ -1706,6 +1706,87 @@ export type Database = {
           },
         ]
       }
+      asset_phone_lines: {
+        Row: {
+          bu_id: string
+          carrier: string | null
+          created_at: string
+          current_user_id: string | null
+          deleted_at: string | null
+          id: string
+          linked_asset_id: string | null
+          notes: string | null
+          phone_number: string
+          plan_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          carrier?: string | null
+          created_at?: string
+          current_user_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          linked_asset_id?: string | null
+          notes?: string | null
+          phone_number: string
+          plan_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          carrier?: string | null
+          created_at?: string
+          current_user_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          linked_asset_id?: string | null
+          notes?: string | null
+          phone_number?: string
+          plan_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_phone_lines_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_current_user_id_fkey"
+            columns: ["current_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_current_user_id_fkey"
+            columns: ["current_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_current_user_id_fkey"
+            columns: ["current_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_linked_asset_id_fkey"
+            columns: ["linked_asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_recommendations: {
         Row: {
           applicable_job_title_ids: string[]
