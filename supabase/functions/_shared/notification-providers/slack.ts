@@ -1,4 +1,5 @@
 import type { SlackConfig, OutboxItem, ProviderResult } from "./types.ts";
+import { SITE_URL } from "../constants.ts";
 
 /**
  * Send notification via Slack (webhook or bot token)
@@ -11,7 +12,7 @@ export async function sendSlack(
   const title = (payload.title as string) || "Nova Notificação";
   const message = (payload.message as string) || "";
   const contextUrl = payload.context_url as string | undefined;
-  const siteUrl = Deno.env.get("SITE_URL") || "https://hub.jetimob.com";
+  const siteUrl = SITE_URL;
   
   console.log(`[Slack] Sending notification for outbox_id=${item.id}`);
 

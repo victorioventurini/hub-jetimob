@@ -1,4 +1,5 @@
 import type { WebhookConfig, OutboxItem, ProviderResult } from "./types.ts";
+import { SITE_URL } from "../constants.ts";
 
 /**
  * Send notification via custom webhook
@@ -12,7 +13,7 @@ export async function sendWebhook(
     return { success: false, error: "Webhook URL not configured" };
   }
 
-  const siteUrl = Deno.env.get("SITE_URL") || "https://hub.jetimob.com";
+  const siteUrl = SITE_URL;
   const contextUrl = payload.context_url as string | undefined;
   
   console.log(`[Webhook] Sending for outbox_id=${item.id}`);

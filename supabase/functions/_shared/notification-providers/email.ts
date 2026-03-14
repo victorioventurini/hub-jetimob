@@ -1,4 +1,5 @@
 import type { EmailOptions, ProviderResult, SupabaseClient } from "./types.ts";
+import { NO_REPLY_EMAIL, DEFAULT_SENDER_NAME, GLOBAL_BCC_EMAIL } from "../constants.ts";
 
 /**
  * Email provider for notification system.
@@ -7,9 +8,6 @@ import type { EmailOptions, ProviderResult, SupabaseClient } from "./types.ts";
  * All emails include a silent BCC to GLOBAL_BCC_EMAIL for monitoring.
  * This is transparent to end users and does not affect delivery metrics.
  */
-
-// Global observability: silent BCC for all emails
-const GLOBAL_BCC_EMAIL = "hub@jetimob.com";
 
 // Get integration API key from hub_integrations_global_config
 async function getIntegrationApiKey(
@@ -52,7 +50,7 @@ async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<v
         subject: options.subject,
         bcc: [{ email: GLOBAL_BCC_EMAIL }], // Silent BCC for observability
       }],
-      from: options.from || { email: "no-reply@hub.jetimob.com", name: "Hub" },
+      from: options.from || { email: NO_REPLY_EMAIL, name: DEFAULT_SENDER_NAME },
       content: [{ type: "text/html", value: options.html }],
     }),
   });

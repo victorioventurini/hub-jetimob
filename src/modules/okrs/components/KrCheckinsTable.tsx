@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatValueWithUnit } from "../constants/krUnits";
+import { formatValueWithUnit } from "@/shared/constants/units";
 import type { KrCheckinHistory } from "../hooks";
 import type { OkrDirection } from "../types";
 

@@ -1,4 +1,5 @@
 import type { TemplateResolution, SupabaseClient } from "./types.ts";
+import { SITE_URL } from "../constants.ts";
 
 /**
  * Resolve notification template from database
@@ -58,7 +59,7 @@ export function buildNotificationEmailHtmlFromTemplate(
   body: string,
   contextUrl: string | undefined
 ): string {
-  const siteUrl = Deno.env.get("SITE_URL") || "https://hub.jetimob.com";
+  const siteUrl = SITE_URL;
   const bodyHtml = markdownToHtml(body);
 
   return `

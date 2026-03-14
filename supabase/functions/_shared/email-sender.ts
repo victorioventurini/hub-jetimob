@@ -13,12 +13,10 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { NO_REPLY_EMAIL, DEFAULT_SENDER_NAME, GLOBAL_BCC_EMAIL } from "./constants.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-// Global observability: silent BCC for all emails
-const GLOBAL_BCC_EMAIL = "hub@jetimob.com";
 
 // Note: Resend API key is now fetched from hub_integrations_global_config
 
@@ -118,8 +116,8 @@ async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<v
         },
       ],
       from: from || {
-        email: "no-reply@hub.jetimob.com",
-        name: "Hub",
+        email: NO_REPLY_EMAIL,
+        name: DEFAULT_SENDER_NAME,
       },
       content: [
         {

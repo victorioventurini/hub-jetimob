@@ -33,6 +33,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { sendEmail, buildMagicLinkEmailHtml, formatEmailDateTime } from "../_shared/email-sender.ts";
+import { NO_REPLY_EMAIL } from "../_shared/constants.ts";
 import { corsHeaders } from "../_shared/middleware.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -160,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
       subject: `Seu link de acesso ao Hub ${buName || "Jet"} - ${formatEmailDateTime()}`,
       html,
       from: {
-        email: "no-reply@hub.jetimob.com",
+        email: NO_REPLY_EMAIL,
         name: `Hub ${buName || "Jet"}`,
       },
     });

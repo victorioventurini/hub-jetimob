@@ -14,8 +14,16 @@ export function useBuLocations(buId: string | null) {
       
       const { data, error } = await supabase
         .from("bu_locations")
-        .select("*, parent:parent_location_id(id, name)")
-        .eq("bu_id", buId)
+        .select(`
+          id, bu_id, name, type, status, is_default,
+          parent_location_id, formatted_address,
+          address_line_1, address_line_2, district,
+          city, state, country, postal_code,
+          latitude, longitude, google_place_id,
+          timezone, notes,
+          created_at, created_by, updated_at, updated_by, deleted_at,
+          parent:parent_location_id(id, name)
+        `)
         .is("deleted_at", null)
         .order("parent_location_id", { nullsFirst: true })
         .order("is_default", { ascending: false })
@@ -39,8 +47,16 @@ export function useBuLocation(locationId: string | null) {
       
       const { data, error } = await supabase
         .from("bu_locations")
-        .select("*, parent:parent_location_id(id, name)")
-        .eq("id", locationId)
+        .select(`
+          id, bu_id, name, type, status, is_default,
+          parent_location_id, formatted_address,
+          address_line_1, address_line_2, district,
+          city, state, country, postal_code,
+          latitude, longitude, google_place_id,
+          timezone, notes,
+          created_at, created_by, updated_at, updated_by, deleted_at,
+          parent:parent_location_id(id, name)
+        `)
         .is("deleted_at", null)
         .single();
 
@@ -85,10 +101,17 @@ export function useCreateBuLocation() {
           timezone: data.timezone || "America/Sao_Paulo",
           notes: data.notes || null,
         })
-        .select("*, parent:parent_location_id(id, name)")
+        .select(`
+          id, bu_id, name, type, status, is_default,
+          parent_location_id, formatted_address,
+          address_line_1, address_line_2, district,
+          city, state, country, postal_code,
+          latitude, longitude, google_place_id,
+          timezone, notes,
+          created_at, created_by, updated_at, updated_by, deleted_at,
+          parent:parent_location_id(id, name)
+        `)
         .single();
-
-      if (error) throw error;
       return result as BuLocation;
     },
     onSuccess: (_, variables) => {
@@ -126,10 +149,17 @@ export function useUpdateBuLocation() {
           notes: data.notes,
         })
         .eq("id", id)
-        .select("*, parent:parent_location_id(id, name)")
+        .select(`
+          id, bu_id, name, type, status, is_default,
+          parent_location_id, formatted_address,
+          address_line_1, address_line_2, district,
+          city, state, country, postal_code,
+          latitude, longitude, google_place_id,
+          timezone, notes,
+          created_at, created_by, updated_at, updated_by, deleted_at,
+          parent:parent_location_id(id, name)
+        `)
         .single();
-
-      if (error) throw error;
       return result as BuLocation;
     },
     onSuccess: (data, variables) => {

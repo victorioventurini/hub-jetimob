@@ -29,9 +29,9 @@ describe('OKR Components exports', () => {
       expect(KrProgressPreview).toBeDefined();
     });
 
-    it('should export KrUnitSelect', async () => {
-      const { KrUnitSelect } = await import('./KrUnitSelect');
-      expect(KrUnitSelect).toBeDefined();
+    it('should export UnitSelect from shared selects', async () => {
+      const { UnitSelect } = await import('@/components/selects/UnitSelect');
+      expect(UnitSelect).toBeDefined();
     });
   });
 
@@ -143,7 +143,7 @@ describe('Component naming conventions', () => {
   });
 
   it('should follow Kr prefix for Key Result components', () => {
-    const krComponents = ['KrProgressPreview', 'KrUnitSelect'];
+    const krComponents = ['KrProgressPreview'];
     
     krComponents.forEach(name => {
       expect(name.startsWith('Kr')).toBe(true);

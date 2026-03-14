@@ -9,6 +9,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { sendEmail } from "../_shared/email-sender.ts";
+import { NO_REPLY_EMAIL } from "../_shared/constants.ts";
 import { 
   withErrorHandling, 
   createErrorResponse,
@@ -193,7 +194,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     subject,
     html: body_html,
     from: {
-      email: "no-reply@hub.jetimob.com",
+      email: NO_REPLY_EMAIL,
       name: `Hub ${buName}`,
     },
   });
