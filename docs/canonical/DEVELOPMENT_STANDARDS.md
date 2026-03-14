@@ -1794,13 +1794,13 @@ export function useDeleteTeam() {
 
 | Documento | Descrição |
 |-----------|-----------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | Visão completa do sistema |
-| [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção auth vs profiles |
-| [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de permissões V2 |
-| [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md) | Padrão de URL state |
+| [TECHNICAL_CONTEXT_REGISTRY.md](./TECHNICAL_CONTEXT_REGISTRY.md) | Visão completa do sistema |
+| [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) | Convenção auth vs profiles |
+| [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) | Sistema de permissões V2 |
+| [URL_STATE_STANDARD.md](../guides/URL_STATE_STANDARD.md) | Padrão de URL state |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
-| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Guia de testes automatizados |
+| [TESTING_GUIDE.md](../guides/TESTING_GUIDE.md) | Guia de testes automatizados |
 | [RESPONSIBILITY_MIGRATION_POLICY.md](./RESPONSIBILITY_MIGRATION_POLICY.md) | Política de migração de responsabilidades |
 
 ---
