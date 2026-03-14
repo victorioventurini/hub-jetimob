@@ -2,7 +2,7 @@
 
 **Gerado em:** 2026-02-07T00:00:00.000Z  
 **Versão do Generator:** 1.2.2  
-**Versão do TCR:** 3.0.0  
+**Versão do TCR:** 3.9.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
 > ⚠️ **FONTE ÚNICA DE VERDADE**

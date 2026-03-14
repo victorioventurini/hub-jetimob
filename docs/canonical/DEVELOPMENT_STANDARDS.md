@@ -501,9 +501,9 @@ WITH CHECK (role_in_bu = 'admin');            -- Hardcode!
 | Self/Owner | `module.entity.action:self_or_owner` | `okrs.checkin.create:self_or_owner` |
 | Global | `module.entity.action:global` | `admin.settings.manage:global` |
 
-> 📚 Ver: [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md)
+> 📚 Ver: [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md)
 > 📚 Ver: [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md)
-> 📚 Ver: [IMPERSONATION_AWARE_COMPONENTS.md](./IMPERSONATION_AWARE_COMPONENTS.md) — **OBRIGATÓRIO para dialogs de edição**
+> 📚 Ver: [IMPERSONATION_AWARE_COMPONENTS.md](../guides/IMPERSONATION_AWARE_COMPONENTS.md) — **OBRIGATÓRIO para dialogs de edição**
 
 ---
 
@@ -613,7 +613,7 @@ const { data } = await supabase.from("profiles").select("*");
 const { data } = await supabase.from("profiles").select("id, first_name, last_name, photo_url");
 ```
 
-### D.3 Paginação Obrigatória
+### D.4 Paginação Obrigatória
 
 ```typescript
 // ✅ CORRETO: Listas com paginação
@@ -1794,13 +1794,13 @@ export function useDeleteTeam() {
 
 | Documento | Descrição |
 |-----------|-----------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../TECHNICAL_CONTEXT_REGISTRY.md) | Visão completa do sistema |
-| [IDENTITY_CONVENTION.md](../IDENTITY_CONVENTION.md) | Convenção auth vs profiles |
-| [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md) | Sistema de permissões V2 |
-| [URL_STATE_STANDARD.md](../URL_STATE_STANDARD.md) | Padrão de URL state |
+| [TECHNICAL_CONTEXT_REGISTRY.md](./TECHNICAL_CONTEXT_REGISTRY.md) | Visão completa do sistema |
+| [IDENTITY_CONVENTION.md](./IDENTITY_CONVENTION.md) | Convenção auth vs profiles |
+| [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md) | Sistema de permissões V2 |
+| [URL_STATE_STANDARD.md](../guides/URL_STATE_STANDARD.md) | Padrão de URL state |
 | [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) | Regras de cliente Supabase |
 | [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) | Padrão de query keys |
-| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Guia de testes automatizados |
+| [TESTING_GUIDE.md](../guides/TESTING_GUIDE.md) | Guia de testes automatizados |
 | [RESPONSIBILITY_MIGRATION_POLICY.md](./RESPONSIBILITY_MIGRATION_POLICY.md) | Política de migração de responsabilidades |
 
 ---
