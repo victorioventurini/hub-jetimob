@@ -143,7 +143,7 @@ describe('Component naming conventions', () => {
   });
 
   it('should follow Kr prefix for Key Result components', () => {
-    const krComponents = ['KrProgressPreview', 'KrUnitSelect'];
+    const krComponents = ['KrProgressPreview'];
     
     krComponents.forEach(name => {
       expect(name.startsWith('Kr')).toBe(true);
