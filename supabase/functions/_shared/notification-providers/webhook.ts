@@ -1,4 +1,5 @@
 import type { WebhookConfig, OutboxItem, ProviderResult } from "./types.ts";
+import { SITE_URL } from "../constants.ts";
 
 /**
  * Send notification via custom webhook

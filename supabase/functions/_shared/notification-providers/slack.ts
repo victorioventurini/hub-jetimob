@@ -1,4 +1,5 @@
 import type { SlackConfig, OutboxItem, ProviderResult } from "./types.ts";
+import { SITE_URL } from "../constants.ts";
 
 /**
  * Send notification via Slack (webhook or bot token)
