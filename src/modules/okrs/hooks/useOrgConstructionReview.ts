@@ -184,7 +184,8 @@ export function useOrgConstructionReview(year: number | null): UseOrgConstructio
         throw new Error(response.error.message || 'Erro ao avaliar objetivo');
       }
 
-      const { assessment } = response.data;
+      const responseData = response.data?.data ?? response.data;
+      const assessment = responseData?.assessment;
       if (assessment) {
         setAiAssessments((prev) => ({ ...prev, [objectiveId]: assessment }));
       }

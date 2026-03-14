@@ -311,8 +311,9 @@ export function useConstructionReview(
       });
 
       if (error) throw error;
-      if (data?.assessment) {
-        setAiAssessments(prev => ({ ...prev, [obj.id]: data.assessment }));
+      const responseData = data?.data ?? data;
+      if (responseData?.assessment) {
+        setAiAssessments(prev => ({ ...prev, [obj.id]: responseData.assessment }));
       }
     } catch (err) {
       console.error('AI assessment error:', err);
@@ -421,8 +422,9 @@ export function useConstructionReview(
       });
 
       if (error) throw error;
-      if (data?.teamAnalysis) {
-        setTeamAnalysis(data.teamAnalysis);
+      const responseData = data?.data ?? data;
+      if (responseData?.teamAnalysis) {
+        setTeamAnalysis(responseData.teamAnalysis);
       }
     } catch (err) {
       console.error('Team analysis error:', err);
