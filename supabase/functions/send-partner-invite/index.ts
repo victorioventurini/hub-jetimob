@@ -194,7 +194,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     subject,
     html: body_html,
     from: {
-      email: "no-reply@hub.jetimob.com",
+      email: NO_REPLY_EMAIL,
       name: `Hub ${buName}`,
     },
   });

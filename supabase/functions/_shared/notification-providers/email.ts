@@ -50,7 +50,7 @@ async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<v
         subject: options.subject,
         bcc: [{ email: GLOBAL_BCC_EMAIL }], // Silent BCC for observability
       }],
-      from: options.from || { email: "no-reply@hub.jetimob.com", name: "Hub" },
+      from: options.from || { email: NO_REPLY_EMAIL, name: DEFAULT_SENDER_NAME },
       content: [{ type: "text/html", value: options.html }],
     }),
   });

@@ -116,8 +116,8 @@ async function sendViaSendGrid(options: EmailOptions, apiKey: string): Promise<v
         },
       ],
       from: from || {
-        email: "no-reply@hub.jetimob.com",
-        name: "Hub",
+        email: NO_REPLY_EMAIL,
+        name: DEFAULT_SENDER_NAME,
       },
       content: [
         {

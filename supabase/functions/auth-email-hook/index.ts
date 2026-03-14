@@ -161,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
       subject: `Seu link de acesso ao Hub ${buName || "Jet"} - ${formatEmailDateTime()}`,
       html,
       from: {
-        email: "no-reply@hub.jetimob.com",
+        email: NO_REPLY_EMAIL,
         name: `Hub ${buName || "Jet"}`,
       },
     });
