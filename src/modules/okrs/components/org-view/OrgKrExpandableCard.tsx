@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { formatValueWithUnit } from '../../constants/krUnits';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import { TeamKrListItem } from './TeamKrListItem';
 import type { OrgKrWithTeamKrs } from '../../hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';

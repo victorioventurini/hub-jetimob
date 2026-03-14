@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { calculateProgress } from '../types';
-import { formatValueWithUnit } from '../constants/krUnits';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import { TrendingUp, TrendingDown, Equal, Rocket } from 'lucide-react';
 import { getProgressColor, TREND_COLORS } from '@/lib/colors';
 import {

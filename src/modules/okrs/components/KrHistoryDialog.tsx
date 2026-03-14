@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { useKrHistory } from "../hooks";
 import { KrEvolutionChart } from "./KrEvolutionChart";
 import { KrCheckinsTable } from "./KrCheckinsTable";
-import { formatValueWithUnit } from "../constants/krUnits";
+import { formatValueWithUnit } from "@/shared/constants/units";
 import { cn } from "@/lib/utils";
 import type { OkrDirection } from "../types";
 

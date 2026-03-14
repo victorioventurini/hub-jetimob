@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Loader2, HelpCircle, AlertTriangle, TrendingUp, TrendingDown, Equal, Link2, Ban } from 'lucide-react';
-import { KrUnitSelect } from './KrUnitSelect';
+import { UnitSelect } from '@/components/selects/UnitSelect';
 import { KrProgressPreview } from './KrProgressPreview';
 import { KrMetricsSection } from './KrMetricsSection';
 import { PrimaryKpiLockBanner } from './shared/PrimaryKpiLockBanner';

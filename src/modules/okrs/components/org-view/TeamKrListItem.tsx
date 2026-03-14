@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { StatusDot } from '@/components/ui/status-badge';
 import { Users, Clock, History } from 'lucide-react';
-import { formatValueWithUnit } from '../../constants/krUnits';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import { KrHistoryDialog } from '../KrHistoryDialog';
 import { KrPrimaryKpiBadge } from '../ui';
 import { usePrimaryKpiForKr } from '../../hooks';
