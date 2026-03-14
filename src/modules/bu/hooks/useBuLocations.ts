@@ -111,8 +111,7 @@ export function useCreateBuLocation() {
           created_at, created_by, updated_at, updated_by, deleted_at,
           parent:parent_location_id(id, name)
         `)
-
-      if (error) throw error;
+        .single();
       return result as BuLocation;
     },
     onSuccess: (_, variables) => {
