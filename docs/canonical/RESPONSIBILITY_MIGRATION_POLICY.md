@@ -3,7 +3,7 @@
 **Versão:** 1.0.0  
 **Última atualização:** 2026-02-05  
 **Status:** Normativo  
-**Referência:** TCR v2.69.0
+**Referência:** TCR v3.9.0
 
 ---
 
