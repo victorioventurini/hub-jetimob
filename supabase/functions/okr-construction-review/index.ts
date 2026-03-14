@@ -316,7 +316,7 @@ async function callInvokeVic(
   }
 
   const vicData = await vicResponse.json();
-  const content = vicData.response || vicData.content || vicData.message;
+  const content = vicData.data?.response || vicData.response || vicData.content || vicData.message;
 
   if (!content) {
     console.error("[okr-construction-review] Empty response from agent:", JSON.stringify(vicData));
