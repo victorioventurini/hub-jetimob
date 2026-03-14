@@ -422,8 +422,9 @@ export function useConstructionReview(
       });
 
       if (error) throw error;
-      if (data?.teamAnalysis) {
-        setTeamAnalysis(data.teamAnalysis);
+      const responseData = data?.data ?? data;
+      if (responseData?.teamAnalysis) {
+        setTeamAnalysis(responseData.teamAnalysis);
       }
     } catch (err) {
       console.error('Team analysis error:', err);
