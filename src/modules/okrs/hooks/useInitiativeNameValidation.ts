@@ -57,6 +57,10 @@ export function useInitiativeNameValidation(
   const { isEnabled } = useVicEnabled();
   const { invoke } = useVicAgent();
 
+  // Stabilize invoke ref to prevent useEffect re-fires
+  const invokeRef = useRef(invoke);
+  invokeRef.current = invoke;
+
   const reset = useCallback(() => {
     setFeedback(null);
     setIsValidating(false);
@@ -75,6 +79,8 @@ export function useInitiativeNameValidation(
       return;
     }
 
+    let cancelled = false;
+
     const validateName = async () => {
       setIsValidating(true);
       
@@ -90,7 +96,7 @@ Detecte:
 Responda APENAS com JSON válido, sem markdown:
 {"type": "warning|suggestion|success", "message": "mensagem curta", "suggestion": "sugestão de reformulação se aplicável"}`;
 
-        const response = await invoke(
+        const response = await invokeRef.current(
           'validador-metodologico-okrs',
           'okr-initiative-review',
           {
@@ -98,8 +104,11 @@ Responda APENAS com JSON válido, sem markdown:
             title: krTitle,
             additionalData: { initiativeName: debouncedName },
           },
-          userQuestion
+          userQuestion,
+          { silent: true }
         );
+
+        if (cancelled) return;
 
         if (response?.response) {
           try {
@@ -120,12 +129,18 @@ Responda APENAS com JSON válido, sem markdown:
         // Validação falhou silenciosamente - não bloqueia o usuário
         console.debug('[useInitiativeNameValidation] Validation failed:', error);
       } finally {
-        setIsValidating(false);
+        if (!cancelled) {
+          setIsValidating(false);
+        }
       }
     };
 
     validateName();
-  }, [debouncedName, krTitle, minLength, disabled, isEnabled, invoke, reset]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedName, krTitle, minLength, disabled, isEnabled, reset]);
 
   return {
     feedback,
