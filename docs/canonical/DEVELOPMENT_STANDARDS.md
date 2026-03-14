@@ -613,7 +613,7 @@ const { data } = await supabase.from("profiles").select("*");
 const { data } = await supabase.from("profiles").select("id, first_name, last_name, photo_url");
 ```
 
-### D.3 Paginação Obrigatória
+### D.4 Paginação Obrigatória
 
 ```typescript
 // ✅ CORRETO: Listas com paginação
