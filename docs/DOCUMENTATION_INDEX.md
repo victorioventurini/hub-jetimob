@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
 **Última atualização:** 2026-03-14  
-**TCR Version:** 3.9.0  
+**TCR Version:** 3.10.0  
 **System Health:** 10/10 ✅
 
 ---
@@ -29,7 +29,7 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.9.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.10.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.26.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | v1.2.2 |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.2.0 |
@@ -47,7 +47,8 @@ docs/
 
 | Documento | Descrição | Data |
 |-----------|-----------|------|
-| `COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md` | **Auditoria técnica completa** ⭐ | 2026-02-08 |
+| `HYGIENE_ANALYSIS_2026-03-14.md` | **Análise de higienização** ⭐ | 2026-03-14 |
+| `COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md` | Auditoria técnica completa | 2026-02-08 |
 | `SYSTEMIC_HEALTH_AUDIT_2026-02-08.md` | **Auditoria sistêmica de saúde** | 2026-02-08 |
 | `BACKEND_ROBUSTNESS_AUDIT_2026-02-08.md` | **Auditoria de robustez backend** | 2026-02-08 |
 | `DATABASE_OPTIMIZATION_AUDIT_2026-02-08.md` | **Otimização de banco** | 2026-02-08 |
