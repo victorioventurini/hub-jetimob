@@ -501,9 +501,9 @@ WITH CHECK (role_in_bu = 'admin');            -- Hardcode!
 | Self/Owner | `module.entity.action:self_or_owner` | `okrs.checkin.create:self_or_owner` |
 | Global | `module.entity.action:global` | `admin.settings.manage:global` |
 
-> 📚 Ver: [RBAC_TEMPLATES_V3.md](../RBAC_TEMPLATES_V3.md)
+> 📚 Ver: [RBAC_TEMPLATES_V3.md](./RBAC_TEMPLATES_V3.md)
 > 📚 Ver: [PERMISSIONS_AND_RBAC_MODEL.md](./PERMISSIONS_AND_RBAC_MODEL.md)
-> 📚 Ver: [IMPERSONATION_AWARE_COMPONENTS.md](./IMPERSONATION_AWARE_COMPONENTS.md) — **OBRIGATÓRIO para dialogs de edição**
+> 📚 Ver: [IMPERSONATION_AWARE_COMPONENTS.md](../guides/IMPERSONATION_AWARE_COMPONENTS.md) — **OBRIGATÓRIO para dialogs de edição**
 
 ---
 

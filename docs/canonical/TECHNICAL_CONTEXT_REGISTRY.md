@@ -396,6 +396,7 @@ Dados do perfil de cada usuário.
 | display_name | text | Nome de exibição |
 | work_email | text | Email corporativo |
 | job_title | text | Cargo |
+| job_title_id | uuid | FK para job_titles |
 | photo_url | text | URL da foto |
 | work_mode | enum | `remote`, `hybrid`, `onsite` |
 | city | text | Cidade |
