@@ -311,8 +311,9 @@ export function useConstructionReview(
       });
 
       if (error) throw error;
-      if (data?.assessment) {
-        setAiAssessments(prev => ({ ...prev, [obj.id]: data.assessment }));
+      const responseData = data?.data ?? data;
+      if (responseData?.assessment) {
+        setAiAssessments(prev => ({ ...prev, [obj.id]: responseData.assessment }));
       }
     } catch (err) {
       console.error('AI assessment error:', err);
