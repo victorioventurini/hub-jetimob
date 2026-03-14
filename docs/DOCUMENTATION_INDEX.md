@@ -47,7 +47,8 @@ docs/
 
 | Documento | Descrição | Data |
 |-----------|-----------|------|
-| `COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md` | **Auditoria técnica completa** ⭐ | 2026-02-08 |
+| `HYGIENE_ANALYSIS_2026-03-14.md` | **Análise de higienização** ⭐ | 2026-03-14 |
+| `COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md` | Auditoria técnica completa | 2026-02-08 |
 | `SYSTEMIC_HEALTH_AUDIT_2026-02-08.md` | **Auditoria sistêmica de saúde** | 2026-02-08 |
 | `BACKEND_ROBUSTNESS_AUDIT_2026-02-08.md` | **Auditoria de robustez backend** | 2026-02-08 |
 | `DATABASE_OPTIMIZATION_AUDIT_2026-02-08.md` | **Otimização de banco** | 2026-02-08 |
