@@ -7,7 +7,7 @@
  * Usa o agente coach-okrs com debounce de 800ms.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { useVicAgent, useVicEnabled } from '@/modules/vic/hooks';
 
