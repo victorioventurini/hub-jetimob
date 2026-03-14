@@ -457,7 +457,7 @@ export function TeamKrFormDialog({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <KrUnitSelect value={unit} onChange={setUnit} disabled={mutation.isPending || hasPrimaryKpi} />
+                <UnitSelect value={unit} onChange={setUnit} disabled={mutation.isPending || hasPrimaryKpi} showLabel={true} showCustomOption={true} />
                 <div className="space-y-2">
                   <Label htmlFor="direction">Direção *</Label>
                   <Select value={direction} onValueChange={(v) => setDirection(v as OkrDirection)} disabled={mutation.isPending}>
