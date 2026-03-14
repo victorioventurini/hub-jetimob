@@ -1,4 +1,5 @@
 import type { TemplateResolution, SupabaseClient } from "./types.ts";
+import { SITE_URL } from "../constants.ts";
 
 /**
  * Resolve notification template from database
