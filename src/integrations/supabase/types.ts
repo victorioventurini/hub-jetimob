@@ -9964,6 +9964,7 @@ export type Database = {
         Args: { p_ancestor_team_id: string; p_team_id: string }
         Returns: boolean
       }
+      ticket_status_label: { Args: { p_status: string }; Returns: string }
       update_user_global_role: {
         Args: { new_role: string; target_user_id: string }
         Returns: undefined
