@@ -9,6 +9,7 @@ export const assetsKeys = {
       ['assets', 'inventory', 'list', buId, filters] as const,
     detail: (assetId: string) => ['assets', 'inventory', 'detail', assetId] as const,
     movements: (assetId: string) => ['assets', 'inventory', 'movements', assetId] as const,
+    history: (assetId: string) => ['assets', 'inventory', 'history', assetId] as const,
   },
   
   // Groups/Kits
@@ -26,6 +27,7 @@ export const assetsKeys = {
       ['asset-keyrings', buId, filters] as const,
     clavicularies: (buId: string | null) => ['asset-clavicularies', buId] as const,
     movements: (keyringId: string) => ['assets', 'keys', 'movements', keyringId] as const,
+    history: (keyringId: string) => ['assets', 'keys', 'history', keyringId] as const,
   },
   
   // Gifts

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useKeys, useAssetPermissionsV2 } from "../../hooks";
 import { KeyringMovementDialog } from "./KeyringMovementDialog";
 import type { AssetKeyring, AssetKeyMovement, KeyMovementType } from "../../types";
+import { KeyringHistory } from "./KeyringHistory";
 import { KEYRING_STATUS_LABELS, KEY_MOVEMENT_TYPE_LABELS } from "../../types";
 import { useEffect } from "react";
 import { ASSET_STATUS_STYLES } from "@/lib/colors";
@@ -101,7 +102,8 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
             <TabsList>
               <TabsTrigger value="overview">Visão Geral</TabsTrigger>
               <TabsTrigger value="keys">Chaves ({keyringKeys.length})</TabsTrigger>
-              <TabsTrigger value="movements">Histórico</TabsTrigger>
+              <TabsTrigger value="movements">Movimentações</TabsTrigger>
+              <TabsTrigger value="history">Alterações</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
@@ -230,6 +232,10 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="history">
+              <KeyringHistory keyringId={keyring.id} />
             </TabsContent>
           </Tabs>
         </DialogContent>

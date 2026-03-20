@@ -31,6 +31,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory, useAssetPermissionsV2 } from "../../hooks";
 import { InventoryFormDialog } from "./InventoryFormDialog";
+import { InventoryHistory } from "./InventoryHistory";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import { KitSection } from "./KitSection";
 import { ResourceNotFoundState } from "@/components/ui/resource-not-found-state";
@@ -395,6 +396,7 @@ export function InventoryDetailView() {
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="kit">Kit</TabsTrigger>
           <TabsTrigger value="movements">Movimentações</TabsTrigger>
+          <TabsTrigger value="history">Histórico de Alterações</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -598,6 +600,21 @@ export function InventoryDetailView() {
                   })}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-4 w-4" />
+                Histórico de Alterações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InventoryHistory assetId={item.id} maxHeight="500px" />
             </CardContent>
           </Card>
         </TabsContent>
