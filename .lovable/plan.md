@@ -36,25 +36,33 @@
 | 4.3 | JSDoc em Edge Functions | ✅ Todas 4 já têm JSDoc completo |
 | 4.4 | Política de retenção | ✅ cron-dispatcher já limpa agent_logs (90d), cron_logs (30d), perf_snapshots (90d) |
 
-### 🔲 Wave 2 — Cobertura de Testes (P2) — PENDENTE
+### ✅ Wave 2 — Cobertura de Testes (P2) — CONCLUÍDA (Batch 1)
 
-| # | Escopo | Testes | Esforço |
-|---|--------|--------|---------|
-| 2.1 | Tickets hooks + componentes | ~10 files | 3h |
-| 2.2 | Assets hooks + componentes | ~8 files | 2h |
-| 2.3 | Auth & RBAC hooks + guards | ~6 files | 2h |
-| 2.4 | Shared/UI componentes | ~6 files | 1.5h |
-| 2.5 | E2E specs | ~4 specs | 3h |
+| # | Escopo | Arquivos criados | Testes |
+|---|--------|-----------------|--------|
+| 2.1 | Tickets — pure functions | 5 files (ticketQueryUtils, useApplyInternalRouting, useAttachmentUrl, ticketFieldDefinitions, usePinMessage) | 37 tests |
+| 2.2 | Assets — useAssetPermissionsV2 | 1 file | 9 tests |
+| 2.3 | Auth & RBAC — PermissionGuard, RequirePermission | 2 files | 15 tests |
+| 2.4 | Shared/UI — StatusBadge, EmptyState, LoadingState | 3 files | 39 tests |
+
+**Total novos:** 11 arquivos, 100 testes — todos passando ✅
+
+### 🔲 Wave 2.5 — Testes Pendentes (próxima sessão)
+
+| # | Escopo | Esforço |
+|---|--------|---------|
+| 2.5a | Hooks com Supabase mock (useTickets, useInventory, useLocations) | 3h |
+| 2.5b | E2E specs Playwright | 3h |
 
 ---
 
 ## Métricas de Sucesso
 
-| Indicador | Antes | Após Waves 1+3+4 | Meta Final |
-|-----------|-------|-------------------|------------|
+| Indicador | Antes | Atual | Meta Final |
+|-----------|-------|-------|------------|
 | `console.log` em `src/` | ~10 | 0 ✅ | 0 |
 | `select("*")` real | 12 | 0 ✅ | 0 |
 | Cores hardcoded | 1 | 0 ✅ | 0 |
 | `React.memo` | 0 | 10 ✅ | 15+ |
-| Arquivos de teste | 83+16 | 83+16 | ~115+20 |
-| **Score geral** | **8.4** | **8.7** | **9.0+** |
+| Arquivos de teste | 83+16 | **94+16** ✅ | ~115+20 |
+| **Score geral** | **8.4** | **8.8** | **9.0+** |
