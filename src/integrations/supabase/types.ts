@@ -1718,6 +1718,7 @@ export type Database = {
           notes: string | null
           phone_number: string
           plan_type: string
+          responsible_user_id: string | null
           status: string
           updated_at: string
         }
@@ -1732,6 +1733,7 @@ export type Database = {
           notes?: string | null
           phone_number: string
           plan_type?: string
+          responsible_user_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1746,6 +1748,7 @@ export type Database = {
           notes?: string | null
           phone_number?: string
           plan_type?: string
+          responsible_user_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1783,6 +1786,27 @@ export type Database = {
             columns: ["linked_asset_id"]
             isOneToOne: false
             referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
         ]
