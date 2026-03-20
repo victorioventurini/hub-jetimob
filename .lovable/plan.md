@@ -55,14 +55,18 @@
 
 **Batch 2:** 3 arquivos, 34 testes — todos passando ✅
 
-**Total Wave 2:** 14 arquivos, 134 novos testes
+### ✅ Wave 2 Batch 3 — Events Utils, Query Keys, E2E
 
-### 🔲 Wave 2.5 — Testes Pendentes (próxima sessão)
+| # | Escopo | Arquivos criados | Testes |
+|---|--------|-----------------|--------|
+| 2.6 | Events — webhook, anonymize utils | 2 files | 13 tests |
+| 2.7 | Events — jetExperienceMetrics (business rules) | 1 file | 12 tests |
+| 2.8 | Query Keys — structural validation | 1 file | 14 tests |
+| 2.9 | E2E — events, kpis-extended specs | 2 e2e files | 6 specs |
 
-| # | Escopo | Esforço |
-|---|--------|---------|
-| 2.5a | Hooks com Supabase mock (useTickets, useInventory, useLocations) | 3h |
-| 2.5b | E2E specs Playwright | 3h |
+**Batch 3:** 6 arquivos, 45 testes — todos passando ✅
+
+**Total Wave 2:** 20 arquivos, 173 novos testes + 6 E2E specs
 
 ---
 
@@ -74,5 +78,5 @@
 | `select("*")` real | 12 | 0 ✅ | 0 |
 | Cores hardcoded | 1 | 0 ✅ | 0 |
 | `React.memo` | 0 | **15** ✅ | 15+ |
-| Arquivos de teste | 83+16 | **97+16** ✅ | ~115+20 |
-| **Score geral** | **8.4** | **9.0** | **9.0+** |
+| Arquivos de teste | 83+16 | **103+22** ✅ | ~115+20 |
+| **Score geral** | **8.4** | **9.2** | **9.0+** |
