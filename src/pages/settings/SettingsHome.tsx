@@ -141,7 +141,7 @@ export default function SettingsHome() {
           .select("id", { count: "exact", head: true }),
         supabase
           .from("hub_integrations_global_config")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("is_enabled_global", true),
       ]);
       if (catalogResult.error) throw catalogResult.error;
