@@ -396,6 +396,7 @@ export function InventoryDetailView() {
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="kit">Kit</TabsTrigger>
           <TabsTrigger value="movements">Movimentações</TabsTrigger>
+          <TabsTrigger value="history">Histórico de Alterações</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
