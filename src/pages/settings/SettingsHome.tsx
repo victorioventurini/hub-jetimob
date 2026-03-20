@@ -157,7 +157,7 @@ export default function SettingsHome() {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase
         .from("v_bu_active_profiles")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("bu_id", currentBu.id);
       if (error) throw error;
       return count || 0;
