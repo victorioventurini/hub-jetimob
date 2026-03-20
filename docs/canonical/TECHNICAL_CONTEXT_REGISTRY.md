@@ -2289,6 +2289,18 @@ export type { SomeType } from './types';
   - `BACKEND_ROBUSTNESS_AUDIT_2026-02-07.md` — Robustez de Edge Functions
 - **System Health Score: 10/10** ✅
 
+### v3.12.0 (2026-03-20) — Ticket Notification Contextualisation v1.0
+- **Ticket Notification Contextualisation**:
+  - Reescrita completa dos 5 triggers de notificação de tickets para passar metadados contextuais
+  - Nova função `ticket_status_label(text)` — tradução imutável de status para pt-BR (waiting→Aguardando, in_progress→Em andamento, done→Concluído, paused→Pausado, discarded→Descartado)
+  - Triggers enriquecidos: `notify_ticket_status_changed`, `notify_ticket_created`, `notify_ticket_assigned`, `notify_ticket_message_created`, `notify_ticket_mention`
+  - Metadata agora inclui: `ticket_title`, `ticket_type` (Interno/Externo), `category_name`, `subcategory_name`, `actor_name`, `old_status`/`new_status` (labels pt-BR), `bu_name`
+  - `p_title` em `emit_notification_event` agora passa o **título real do ticket** (não string genérica)
+  - 4 templates de email atualizados: `ticket.status.changed`, `ticket.created`, `ticket.assigned`, `ticket.message.created`
+  - Subjects agora seguem padrão: `[{{bu_name}}] {{ticket_title}} — {{new_status}} - {{current_datetime}}`
+  - Bodies incluem tipo (Interno/Externo), categoria/subcategoria, ator da ação
+  - Nenhuma alteração em frontend ou Edge Functions (sistema server-side via `p_metadata` → `templateVars`)
+
 ### v2.99.0 (2026-02-07) — Comprehensive Hygiene Audit v1.0
 - **Database Hygiene**:
   - Removidas 4 funções SQL deprecated: `cleanup_old_agent_logs`, `cleanup_old_cron_logs`, `cleanup_old_perf_snapshots`, `cleanup_old_wizard_sessions`
