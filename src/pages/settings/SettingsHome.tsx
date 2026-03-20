@@ -105,7 +105,7 @@ export default function SettingsHome() {
     queryFn: async () => {
       const { count, error } = await supabase
         .from("bu_units")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("status", "active");
       if (error) throw error;
       return count || 0;
