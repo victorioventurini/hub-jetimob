@@ -335,7 +335,7 @@ export const EnhancedObjectiveCard = React.memo(function EnhancedObjectiveCard({
       </Collapsible>
     </Card>
   );
-}
+});
 
 interface EnhancedKrRowProps {
   kr: KeyResult;
