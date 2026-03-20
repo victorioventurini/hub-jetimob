@@ -392,6 +392,7 @@ Lista completa das tabelas no schema `public`:
 | Função | Retorno | Descrição |
 |--------|---------|-----------|
 | `can_view_ticket(uuid, uuid)` | `boolean` | Verifica se usuário pode ver ticket. Suporta: 1) Creator/owner, 2) Participante interno (profile_id), 3) Participante externo (auth.uid→partner_contact), 4) Profile com partner_contact participation, 5) Regras de visibilidade para não-participantes |
+| `ticket_status_label(text)` | `text` | Traduz status interno para label pt-BR (waiting→Aguardando, in_progress→Em andamento, done→Concluído, paused→Pausado, discarded→Descartado). IMMUTABLE. |
 
 ### Performance (P4)
 

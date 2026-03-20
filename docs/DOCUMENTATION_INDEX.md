@@ -117,4 +117,4 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Atualizado em 2026-03-14 — TCR v3.9.0 — Health Score 10/10*
+*Atualizado em 2026-03-20 — TCR v3.12.0 — Health Score 10/10*

@@ -2544,6 +2544,7 @@ export type { SomeType } from './types';
   - Triggers enriquecidos: `notify_ticket_message_created`, `notify_ticket_status_changed`, `notify_asset_checkout`, `notify_team_membership_changed`
   - Edge Function `process-notification-outbox` atualizado para resolver `actor_name` dinamicamente
   - Formato de data padronizado: `DD/MM às HH:MM`
+  - > **Nota:** Triggers de tickets foram **reescritos na v3.12.0** com metadata contextual completa (título, tipo, categoria, ator)
 - **Tickets Table Enhancement**:
   - Coluna "Criado por" adicionada à listagem de tickets com avatar e nome
   - Campo `created_by` já estava disponível no select, agora exibido na UI
