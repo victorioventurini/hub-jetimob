@@ -24,7 +24,7 @@
 | # | Ação | Status |
 |---|------|--------|
 | 3.1 | Virtualização de listas | ⏸️ Tabelas já têm query limits (50-100 rows). Migração para VirtualizedTable requer refator de colunas — deferido para PR dedicado |
-| 3.2 | Memoização estratégica | ✅ **10 componentes** memoizados: TicketCard, InventoryCard, OkrObjectiveCard, EnhancedObjectiveCard, OrgObjectiveCard, TeamObjectiveCard, ContributingOkrCard, OkrStatusBadge, StatusBadge, StagnantBadge |
+| 3.2 | Memoização estratégica | ✅ **15 componentes** memoizados: TicketCard, InventoryCard, OkrObjectiveCard, EnhancedObjectiveCard, OrgObjectiveCard, TeamObjectiveCard, ContributingOkrCard, OkrStatusBadge, StatusBadge, StagnantBadge, KpiCard, ObjectiveListItem, TeamOkrListItem, OrgKrContributionItem |
 | 3.3 | Suspense boundaries | ✅ Já implementado — routes 100% lazy-loaded com Suspense top-level + granular em OrgConstructionReviewPage |
 
 ### ✅ Wave 4 — Banco de Dados e Backend (P3) — JÁ IMPLEMENTADA
