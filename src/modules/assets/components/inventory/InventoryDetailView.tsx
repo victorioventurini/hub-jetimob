@@ -220,7 +220,7 @@ export function InventoryDetailView() {
 
     const cachedItem = items.find((i) => isUUID ? i.id === id : i.internal_code === id);
     if (cachedItem) {
-      console.log("[InventoryDetailView] Found in cache:", cachedItem.name);
+      
       setItem(cachedItem);
       setIsLoadingItem(false);
     }
