@@ -129,6 +129,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
         plan_type: "postpaid",
         status: "available",
         current_user_id: null,
+        responsible_user_id: null,
         linked_asset_id: null,
         notes: "",
       });
