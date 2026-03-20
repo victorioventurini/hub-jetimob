@@ -33,7 +33,7 @@ const SourceIcon = ({ type }: { type: string }) => {
   }
 };
 
-export function KpiCard({ kpi, onClick }: KpiCardProps) {
+export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProps) {
   const { openPanel } = useVic();
   const { isEnabled: vicEnabled } = useVicEnabled();
   
