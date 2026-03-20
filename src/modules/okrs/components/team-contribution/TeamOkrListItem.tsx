@@ -28,7 +28,7 @@ const statusColors = {
   off_track: 'text-danger',
 };
 
-export function TeamOkrListItem({ okr }: TeamOkrListItemProps) {
+export const TeamOkrListItem = React.memo(function TeamOkrListItem({ okr }: TeamOkrListItemProps) {
   const StatusIcon = statusIcons[okr.status];
   const statusColor = statusColors[okr.status];
 
