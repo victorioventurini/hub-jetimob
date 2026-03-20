@@ -123,7 +123,7 @@ export default function SettingsHome() {
           .eq("status", "active"),
         supabase
           .from("modules")
-          .select("*", { count: "exact", head: true }),
+          .select("id", { count: "exact", head: true }),
       ]);
       if (activeResult.error) throw activeResult.error;
       if (totalResult.error) throw totalResult.error;
