@@ -157,7 +157,7 @@ export function useMyTicketsHome(): UseMyTicketsHomeResult {
         // Overdue
         supabase
           .from("tickets")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("bu_id", buId)
           .is("deleted_at", null)
           .or(`created_by_user_id.eq.${profileId},owner_user_id.eq.${profileId}`)
