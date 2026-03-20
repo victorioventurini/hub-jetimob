@@ -26,6 +26,7 @@ export interface PhoneLine {
   plan_type: PhoneLinePlanType;
   status: PhoneLineStatus;
   current_user_id: string | null;
+  responsible_user_id: string | null;
   linked_asset_id: string | null;
   notes: string | null;
   created_at: string;
@@ -33,6 +34,7 @@ export interface PhoneLine {
   deleted_at: string | null;
   // Joined
   current_user?: { id: string; display_name: string | null; photo_url: string | null } | null;
+  responsible_user?: { id: string; display_name: string | null; photo_url: string | null } | null;
   linked_asset?: { id: string; name: string; internal_code: string; status: string } | null;
 }
 
