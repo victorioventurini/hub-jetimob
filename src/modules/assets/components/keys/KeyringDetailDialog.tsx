@@ -233,6 +233,10 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="history">
+              <KeyringHistory keyringId={keyring.id} />
+            </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>

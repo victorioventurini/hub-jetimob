@@ -603,6 +603,21 @@ export function InventoryDetailView() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-4 w-4" />
+                Histórico de Alterações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InventoryHistory assetId={item.id} maxHeight="500px" />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
