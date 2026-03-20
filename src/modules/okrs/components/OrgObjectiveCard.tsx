@@ -32,7 +32,7 @@ interface OrgObjectiveCardProps {
   };
 }
 
-export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
+export const OrgObjectiveCard = React.memo(function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
   const { currentBu } = useBu();
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
