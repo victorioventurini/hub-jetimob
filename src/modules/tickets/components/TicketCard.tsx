@@ -32,7 +32,7 @@ function getInitials(name: string | null | undefined): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export function TicketCard({ ticket }: TicketCardProps) {
+export const TicketCard = React.memo(function TicketCard({ ticket }: TicketCardProps) {
   const status = statusConfig[ticket.status];
   const type = typeConfig[ticket.type];
   const isOverdue = ticket.expected_due_at && new Date(ticket.expected_due_at) < new Date() && ticket.status !== "done" && ticket.status !== "discarded";
