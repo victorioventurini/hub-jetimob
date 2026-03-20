@@ -12,11 +12,17 @@ function makeRule(overrides: Partial<TicketInternalRoutingRule> = {}): TicketInt
     category_id: 'cat-1',
     subcategory_id: null,
     assignee_user_ids: ['user-a'],
+    assignee_team_ids: [],
+    assignee_squad_ids: [],
     watcher_user_ids: ['user-w'],
+    watcher_team_ids: [],
+    watcher_squad_ids: [],
     priority: 1,
-    is_active: true,
+    notes: null,
     created_at: '2026-01-01',
+    created_by: null,
     updated_at: '2026-01-01',
+    deleted_at: null,
     ...overrides,
   };
 }
