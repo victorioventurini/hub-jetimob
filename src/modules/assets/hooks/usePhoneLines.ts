@@ -132,6 +132,7 @@ interface CreatePhoneLineInput {
   plan_type: PhoneLinePlanType;
   status: PhoneLineStatus;
   current_user_id?: string | null;
+  responsible_user_id?: string | null;
   linked_asset_id?: string | null;
   notes?: string | null;
 }
