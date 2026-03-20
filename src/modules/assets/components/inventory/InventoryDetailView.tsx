@@ -213,7 +213,7 @@ export function InventoryDetailView() {
   useEffect(() => {
     if (!id) return;
 
-    console.log("[InventoryDetailView] Loading item:", id);
+    
 
     // Check if id is a UUID or an internal_code
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
