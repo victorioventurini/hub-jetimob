@@ -90,7 +90,7 @@ interface ObjectiveListItemProps {
   filterInitiativesForUser?: string;
 }
 
-export function ObjectiveListItem({ 
+export const ObjectiveListItem = React.memo(function ObjectiveListItem({ 
   objective, 
   keyResults = [], 
   isLoading, 
