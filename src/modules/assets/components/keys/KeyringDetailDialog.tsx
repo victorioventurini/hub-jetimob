@@ -102,7 +102,8 @@ export function KeyringDetailDialog({ open, onOpenChange, keyring }: KeyringDeta
             <TabsList>
               <TabsTrigger value="overview">Visão Geral</TabsTrigger>
               <TabsTrigger value="keys">Chaves ({keyringKeys.length})</TabsTrigger>
-              <TabsTrigger value="movements">Histórico</TabsTrigger>
+              <TabsTrigger value="movements">Movimentações</TabsTrigger>
+              <TabsTrigger value="history">Alterações</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
