@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
@@ -41,7 +42,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
 import { assetsKeys } from "@/lib/queryKeys/assets";
 import type { PhoneLine } from "../../hooks/usePhoneLines";
-
+import { PhoneLineHistory } from "./PhoneLineHistory";
 // ── Schema ────────────────────────────────────────────
 
 const phoneLineSchema = z.object({
@@ -184,170 +185,95 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Phone number */}
-            <FormField
-              control={form.control}
-              name="phone_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número</FormLabel>
-                  <FormControl>
+        {isEditing ? (
+          <Tabs defaultValue="form">
+            <TabsList className="w-full">
+              <TabsTrigger value="form" className="flex-1">Dados</TabsTrigger>
+              <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="form" className="mt-4">
+              {renderForm()}
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-4">
+              <PhoneLineHistory phoneLineId={item!.id} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          renderForm()
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+
+  function renderForm() {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Phone number */}
+          <FormField
+            control={form.control}
+            name="phone_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Número</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="+55 (51) 99999-9999"
+                    onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Carrier (autocomplete via datalist) */}
+          <FormField
+            control={form.control}
+            name="carrier"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Operadora</FormLabel>
+                <FormControl>
+                  <>
                     <Input
                       {...field}
-                      placeholder="+55 (51) 99999-9999"
-                      onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
+                      value={field.value ?? ""}
+                      placeholder="Ex: Vivo, Claro, TIM"
+                      list="carrier-options"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Carrier (autocomplete via datalist) */}
-            <FormField
-              control={form.control}
-              name="carrier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Operadora</FormLabel>
-                  <FormControl>
-                    <>
-                      <Input
-                        {...field}
-                        value={field.value ?? ""}
-                        placeholder="Ex: Vivo, Claro, TIM"
-                        list="carrier-options"
-                      />
-                      <datalist id="carrier-options">
-                        {carriers.map((c) => (
-                          <option key={c} value={c} />
-                        ))}
-                      </datalist>
-                    </>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* Plan type */}
-              <FormField
-                control={form.control}
-                name="plan_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plano</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="postpaid">Pós-pago</SelectItem>
-                        <SelectItem value="prepaid">Pré-pago</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Status */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="available">Disponível</SelectItem>
-                        <SelectItem value="loaned">Emprestado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Current user (visible when loaned) */}
-            {watchStatus === "loaned" && (
-              <FormField
-                control={form.control}
-                name="current_user_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Responsável *</FormLabel>
-                    <FormControl>
-                      <BuUserSelect
-                        value={field.value ?? undefined}
-                        onValueChange={(val) => field.onChange(val)}
-                        placeholder="Selecione o responsável"
-                        showSearch
-                        excludeExternal
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <datalist id="carrier-options">
+                      {carriers.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                  </>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            {/* Responsible user (always visible, optional) */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Plan type */}
             <FormField
               control={form.control}
-              name="responsible_user_id"
+              name="plan_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Responsável pela linha (opcional)</FormLabel>
-                  <FormControl>
-                    <BuUserSelect
-                      value={field.value ?? undefined}
-                      onValueChange={(val) => field.onChange(val || null)}
-                      placeholder="Selecione o responsável"
-                      showSearch
-                      excludeExternal
-                      
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Linked asset */}
-            <FormField
-              control={form.control}
-              name="linked_asset_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Asset vinculado (opcional)</FormLabel>
-                  <Select
-                    value={field.value ?? "none"}
-                    onValueChange={(val) => field.onChange(val === "none" ? null : val)}
-                  >
+                  <FormLabel>Plano</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Nenhum" />
+                        <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      {inventoryItems.map((inv) => (
-                        <SelectItem key={inv.id} value={inv.id}>
-                          {inv.internal_code} — {inv.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="postpaid">Pós-pago</SelectItem>
+                      <SelectItem value="prepaid">Pré-pago</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -355,37 +281,135 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
               )}
             />
 
-            {/* Notes */}
+            {/* Status */}
             <FormField
               control={form.control}
-              name="notes"
+              name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações</FormLabel>
+                  <FormLabel>Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="available">Disponível</SelectItem>
+                      <SelectItem value="loaned">Emprestado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Current user (visible when loaned) */}
+          {watchStatus === "loaned" && (
+            <FormField
+              control={form.control}
+              name="current_user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsável *</FormLabel>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      value={field.value ?? ""}
-                      placeholder="Observações opcionais..."
-                      rows={3}
+                    <BuUserSelect
+                      value={field.value ?? undefined}
+                      onValueChange={(val) => field.onChange(val)}
+                      placeholder="Selecione o responsável"
+                      showSearch
+                      excludeExternal
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : isEditing ? "Salvar" : "Cadastrar"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
+          {/* Responsible user (always visible, optional) */}
+          <FormField
+            control={form.control}
+            name="responsible_user_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Responsável pela linha (opcional)</FormLabel>
+                <FormControl>
+                  <BuUserSelect
+                    value={field.value ?? undefined}
+                    onValueChange={(val) => field.onChange(val || null)}
+                    placeholder="Selecione o responsável"
+                    showSearch
+                    excludeExternal
+                    
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Linked asset */}
+          <FormField
+            control={form.control}
+            name="linked_asset_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Asset vinculado (opcional)</FormLabel>
+                <Select
+                  value={field.value ?? "none"}
+                  onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhum" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {inventoryItems.map((inv) => (
+                      <SelectItem key={inv.id} value={inv.id}>
+                        {inv.internal_code} — {inv.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Notes */}
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Observações</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    value={field.value ?? ""}
+                    placeholder="Observações opcionais..."
+                    rows={3}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Salvando..." : isEditing ? "Salvar" : "Cadastrar"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    );
+  }
 }
