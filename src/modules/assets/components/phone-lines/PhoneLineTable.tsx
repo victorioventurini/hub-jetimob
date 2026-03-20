@@ -60,6 +60,7 @@ export function PhoneLineTable({
             <TableHead>Operadora</TableHead>
             <TableHead>Plano</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Usuário atual</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Asset Vinculado</TableHead>
             {canManage && <TableHead className="w-[60px]" />}
@@ -90,6 +91,23 @@ export function PhoneLineTable({
                     </Avatar>
                     <span className="text-sm truncate max-w-[150px]">
                       {item.current_user.display_name ?? "Sem nome"}
+                    </span>
+                  </div>
+                ) : (
+                  "—"
+                )}
+              </TableCell>
+              <TableCell>
+                {item.responsible_user ? (
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={item.responsible_user.photo_url ?? undefined} />
+                      <AvatarFallback className="text-xs">
+                        {(item.responsible_user.display_name ?? "?").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm truncate max-w-[150px]">
+                      {item.responsible_user.display_name ?? "Sem nome"}
                     </span>
                   </div>
                 ) : (

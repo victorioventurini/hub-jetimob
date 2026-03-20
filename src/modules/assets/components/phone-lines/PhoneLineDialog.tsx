@@ -53,6 +53,7 @@ const phoneLineSchema = z.object({
   plan_type: z.enum(["prepaid", "postpaid"]),
   status: z.enum(["available", "loaned"]),
   current_user_id: z.string().nullable().optional(),
+  responsible_user_id: z.string().nullable().optional(),
   linked_asset_id: z.string().nullable().optional(),
   notes: z.string().optional().nullable(),
 }).refine(
@@ -103,6 +104,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       plan_type: "postpaid",
       status: "available",
       current_user_id: null,
+      responsible_user_id: null,
       linked_asset_id: null,
       notes: "",
     },
@@ -116,6 +118,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
         plan_type: item.plan_type,
         status: item.status,
         current_user_id: item.current_user_id,
+        responsible_user_id: item.responsible_user_id,
         linked_asset_id: item.linked_asset_id,
         notes: item.notes ?? "",
       });
@@ -126,6 +129,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
         plan_type: "postpaid",
         status: "available",
         current_user_id: null,
+        responsible_user_id: null,
         linked_asset_id: null,
         notes: "",
       });
@@ -155,6 +159,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       plan_type: data.plan_type as "prepaid" | "postpaid",
       status: data.status as "available" | "loaned",
       current_user_id: data.status === "loaned" ? data.current_user_id ?? null : null,
+      responsible_user_id: data.responsible_user_id || null,
       linked_asset_id: data.linked_asset_id || null,
       notes: data.notes || null,
     };
@@ -297,6 +302,28 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
                 )}
               />
             )}
+
+            {/* Responsible user (always visible, optional) */}
+            <FormField
+              control={form.control}
+              name="responsible_user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsável pela linha (opcional)</FormLabel>
+                  <FormControl>
+                    <BuUserSelect
+                      value={field.value ?? undefined}
+                      onValueChange={(val) => field.onChange(val || null)}
+                      placeholder="Selecione o responsável"
+                      showSearch
+                      excludeExternal
+                      
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Linked asset */}
             <FormField
