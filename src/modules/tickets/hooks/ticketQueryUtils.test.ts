@@ -50,7 +50,7 @@ describe('normalizeTicketRelations', () => {
       ...baseTicket,
       created_by: [],
       owner: [],
-      partner_company: [],
+      external_company: [],
     };
     const result = normalizeTicketRelations(ticket);
     expect(result.created_by).toBeNull();
