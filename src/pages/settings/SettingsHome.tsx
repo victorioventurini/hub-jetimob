@@ -119,7 +119,7 @@ export default function SettingsHome() {
       const [activeResult, totalResult] = await Promise.all([
         supabase
           .from("modules")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("status", "active"),
         supabase
           .from("modules")
