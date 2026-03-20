@@ -100,7 +100,7 @@ interface EnhancedObjectiveCardProps {
   className?: string;
 }
 
-export function EnhancedObjectiveCard({
+export const EnhancedObjectiveCard = React.memo(function EnhancedObjectiveCard({
   id,
   title,
   description,
