@@ -236,7 +236,7 @@ export function InventoryDetailView() {
           fetchedItem = await getItemByCode(id);
         }
         
-        console.log("[InventoryDetailView] Fetched item:", fetchedItem?.name ?? "null");
+        
         
         if (fetchedItem) {
           setItem(fetchedItem);

@@ -146,7 +146,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       setStep("form");
       supabase
         .from("profiles")
-        .select("*, team_id, manager_user_id, start_date, job_title_id")
+        .select("id, first_name, last_name, work_email, job_title_id, city, state, work_mode, employment_status, team_id, manager_user_id, start_date")
         .eq("id", profile.id)
         .single()
         .then(({ data }) => {

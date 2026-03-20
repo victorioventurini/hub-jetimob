@@ -163,7 +163,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     await queryClient.refetchQueries({ queryKey: queryKeys.okrs.manageableTeams(null, null) });
     await queryClient.refetchQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
     
-    console.log("[ImpersonationContext] Impersonação encerrada, cache invalidado");
+    
   }, [queryClient]);
   
   // Limpar impersonação quando usuário sair

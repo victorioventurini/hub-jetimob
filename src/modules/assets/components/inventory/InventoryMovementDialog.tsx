@@ -374,10 +374,7 @@ export function InventoryMovementDialog({
                         <FormLabel>Autorizado por *</FormLabel>
                         <Select
                           value={field.value ?? ""}
-                          onValueChange={(v) => {
-                            console.log("[assets][InventoryMovementDialog] authorized_by_user_id", v);
-                            field.onChange(v);
-                          }}
+                          onValueChange={field.onChange}
                         >
                           <FormControl>
                             <SelectTrigger>

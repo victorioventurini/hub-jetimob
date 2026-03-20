@@ -172,7 +172,7 @@ export default function SettingsHome() {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase
         .from("teams")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("bu_id", currentBu.id)
         .eq("status", "active")
         .is("deleted_at", null);
