@@ -63,5 +63,6 @@ export const assetsKeys = {
       ['assets', 'phone-lines', 'list', buId, filters] as const,
     detail: (id: string) => ['assets', 'phone-lines', 'detail', id] as const,
     carriers: (buId: string | null) => ['assets', 'phone-lines', 'carriers', buId] as const,
+    history: (id: string) => ['assets', 'phone-lines', 'history', id] as const,
   },
 } as const;
