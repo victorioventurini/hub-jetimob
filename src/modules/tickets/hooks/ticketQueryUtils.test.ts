@@ -34,7 +34,7 @@ describe('normalizeTicketRelations', () => {
       ...baseTicket,
       created_by: [{ id: 'user-1', display_name: 'Ana Costa', photo_url: null }],
       owner: [{ id: 'user-2', display_name: 'Bruno Lima', photo_url: null }],
-      partner_company: [{ id: 'comp-1', name: 'Acme Corp' }],
+      external_company: [{ id: 'comp-1', name: 'Acme Corp' }],
       category: [{ id: 'cat-1', name: 'Suporte' }],
       subcategory: [{ id: 'sub-1', name: 'Bug' }],
       assigned_contact: [{ id: 'contact-1', name: 'Carlos', email: 'c@test.com' }],
