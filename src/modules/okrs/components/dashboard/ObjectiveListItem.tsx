@@ -481,7 +481,7 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
       )}
     </>
   );
-}
+});
 
 interface KeyResultRowProps {
   kr: KeyResult;
