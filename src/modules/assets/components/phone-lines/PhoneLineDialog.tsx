@@ -53,6 +53,7 @@ const phoneLineSchema = z.object({
   plan_type: z.enum(["prepaid", "postpaid"]),
   status: z.enum(["available", "loaned"]),
   current_user_id: z.string().nullable().optional(),
+  responsible_user_id: z.string().nullable().optional(),
   linked_asset_id: z.string().nullable().optional(),
   notes: z.string().optional().nullable(),
 }).refine(
