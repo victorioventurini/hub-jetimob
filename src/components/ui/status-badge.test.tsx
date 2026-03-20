@@ -68,9 +68,12 @@ describe('StatusBadge', () => {
   });
 
   it('should hide dot when showDot=false', () => {
+    render(<StatusBadge status="on_track" showDot={false} />);
+    // When showDot=false, the inner dot span should not be present
+    // The badge itself may have rounded-full, so check for the dot span specifically
     const { container } = render(<StatusBadge status="on_track" showDot={false} />);
-    const dots = container.querySelectorAll('.rounded-full');
-    expect(dots).toHaveLength(0);
+    const dotSpans = container.querySelectorAll('span.rounded-full.bg-status-green');
+    expect(dotSpans).toHaveLength(0);
   });
 });
 
