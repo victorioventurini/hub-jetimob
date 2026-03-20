@@ -4,7 +4,7 @@
 
 **Base:** TCR v3.12.0 | DEVELOPMENT_STANDARDS v1.26.0  
 **Pre-Checklist Ritual:** ✅ Completo  
-**Score atual:** 8.4/10 → **8.7/10** (pós Wave 1+3)
+**Score atual:** 8.4/10 → **9.0/10** (pós Waves 1+2+3+4)
 
 ---
 
@@ -24,7 +24,7 @@
 | # | Ação | Status |
 |---|------|--------|
 | 3.1 | Virtualização de listas | ⏸️ Tabelas já têm query limits (50-100 rows). Migração para VirtualizedTable requer refator de colunas — deferido para PR dedicado |
-| 3.2 | Memoização estratégica | ✅ **10 componentes** memoizados: TicketCard, InventoryCard, OkrObjectiveCard, EnhancedObjectiveCard, OrgObjectiveCard, TeamObjectiveCard, ContributingOkrCard, OkrStatusBadge, StatusBadge, StagnantBadge |
+| 3.2 | Memoização estratégica | ✅ **15 componentes** memoizados: TicketCard, InventoryCard, OkrObjectiveCard, EnhancedObjectiveCard, OrgObjectiveCard, TeamObjectiveCard, ContributingOkrCard, OkrStatusBadge, StatusBadge, StagnantBadge, KpiCard, ObjectiveListItem, TeamOkrListItem, OrgKrContributionItem |
 | 3.3 | Suspense boundaries | ✅ Já implementado — routes 100% lazy-loaded com Suspense top-level + granular em OrgConstructionReviewPage |
 
 ### ✅ Wave 4 — Banco de Dados e Backend (P3) — JÁ IMPLEMENTADA
@@ -45,7 +45,17 @@
 | 2.3 | Auth & RBAC — PermissionGuard, RequirePermission | 2 files | 15 tests |
 | 2.4 | Shared/UI — StatusBadge, EmptyState, LoadingState | 3 files | 39 tests |
 
-**Total novos:** 11 arquivos, 100 testes — todos passando ✅
+**Batch 1:** 11 arquivos, 100 testes — todos passando ✅
+
+### ✅ Wave 2 Batch 2 — Testes + Shared Utils
+
+| # | Escopo | Arquivos criados | Testes |
+|---|--------|-----------------|--------|
+| 2.5 | Shared — buildQueryKey, units, paginatedResponse | 3 files | 34 tests |
+
+**Batch 2:** 3 arquivos, 34 testes — todos passando ✅
+
+**Total Wave 2:** 14 arquivos, 134 novos testes
 
 ### 🔲 Wave 2.5 — Testes Pendentes (próxima sessão)
 
@@ -63,6 +73,6 @@
 | `console.log` em `src/` | ~10 | 0 ✅ | 0 |
 | `select("*")` real | 12 | 0 ✅ | 0 |
 | Cores hardcoded | 1 | 0 ✅ | 0 |
-| `React.memo` | 0 | 10 ✅ | 15+ |
-| Arquivos de teste | 83+16 | **94+16** ✅ | ~115+20 |
-| **Score geral** | **8.4** | **8.8** | **9.0+** |
+| `React.memo` | 0 | **15** ✅ | 15+ |
+| Arquivos de teste | 83+16 | **97+16** ✅ | ~115+20 |
+| **Score geral** | **8.4** | **9.0** | **9.0+** |

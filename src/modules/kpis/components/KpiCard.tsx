@@ -1,3 +1,4 @@
+import React from "react";
 import { TrendingUp, TrendingDown, Minus, AlertCircle, Plug, FileSpreadsheet, Database, Edit3, Webhook, Sparkles, Clock, User } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,7 @@ const SourceIcon = ({ type }: { type: string }) => {
   }
 };
 
-export function KpiCard({ kpi, onClick }: KpiCardProps) {
+export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProps) {
   const { openPanel } = useVic();
   const { isEnabled: vicEnabled } = useVicEnabled();
   
@@ -289,4 +290,4 @@ export function KpiCard({ kpi, onClick }: KpiCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

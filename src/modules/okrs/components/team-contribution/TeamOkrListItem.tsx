@@ -1,3 +1,4 @@
+import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Circle, AlertTriangle, CheckCircle2, Activity } from "lucide-react";
@@ -27,7 +28,7 @@ const statusColors = {
   off_track: 'text-danger',
 };
 
-export function TeamOkrListItem({ okr }: TeamOkrListItemProps) {
+export const TeamOkrListItem = React.memo(function TeamOkrListItem({ okr }: TeamOkrListItemProps) {
   const StatusIcon = statusIcons[okr.status];
   const statusColor = statusColors[okr.status];
 
@@ -60,4 +61,4 @@ export function TeamOkrListItem({ okr }: TeamOkrListItemProps) {
       </div>
     </div>
   );
-}
+});

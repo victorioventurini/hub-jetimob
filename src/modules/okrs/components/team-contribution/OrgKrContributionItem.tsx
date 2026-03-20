@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ChevronDown, ChevronRight, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -18,7 +18,7 @@ const statusConfig = {
   not_started: { label: 'Não Iniciado', className: 'bg-muted text-muted-foreground' },
 };
 
-export function OrgKrContributionItem({ orgKr }: OrgKrContributionItemProps) {
+export const OrgKrContributionItem = React.memo(function OrgKrContributionItem({ orgKr }: OrgKrContributionItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const status = statusConfig[orgKr.status];
 
@@ -70,4 +70,4 @@ export function OrgKrContributionItem({ orgKr }: OrgKrContributionItemProps) {
       </Collapsible>
     </div>
   );
-}
+});

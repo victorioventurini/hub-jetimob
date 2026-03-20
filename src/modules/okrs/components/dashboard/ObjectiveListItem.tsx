@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -90,7 +90,7 @@ interface ObjectiveListItemProps {
   filterInitiativesForUser?: string;
 }
 
-export function ObjectiveListItem({ 
+export const ObjectiveListItem = React.memo(function ObjectiveListItem({ 
   objective, 
   keyResults = [], 
   isLoading, 
@@ -481,7 +481,7 @@ export function ObjectiveListItem({
       )}
     </>
   );
-}
+});
 
 interface KeyResultRowProps {
   kr: KeyResult;
