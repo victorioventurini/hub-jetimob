@@ -60,6 +60,7 @@ export function PhoneLineTable({
             <TableHead>Operadora</TableHead>
             <TableHead>Plano</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Usuário atual</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Asset Vinculado</TableHead>
             {canManage && <TableHead className="w-[60px]" />}
