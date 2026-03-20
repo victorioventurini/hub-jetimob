@@ -42,7 +42,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useQuery } from "@tanstack/react-query";
 import { assetsKeys } from "@/lib/queryKeys/assets";
 import type { PhoneLine } from "../../hooks/usePhoneLines";
-
+import { PhoneLineHistory } from "./PhoneLineHistory";
 // ── Schema ────────────────────────────────────────────
 
 const phoneLineSchema = z.object({
