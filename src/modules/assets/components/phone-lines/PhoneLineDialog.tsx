@@ -159,6 +159,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       plan_type: data.plan_type as "prepaid" | "postpaid",
       status: data.status as "available" | "loaned",
       current_user_id: data.status === "loaned" ? data.current_user_id ?? null : null,
+      responsible_user_id: data.responsible_user_id || null,
       linked_asset_id: data.linked_asset_id || null,
       notes: data.notes || null,
     };
