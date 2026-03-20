@@ -27,7 +27,7 @@ const objectiveToStatusMap: Record<OkrStatus, string> = {
   discarded: 'inactive',
 };
 
-export function OkrStatusBadge({ status, type = 'objective', className }: OkrStatusBadgeProps) {
+export const OkrStatusBadge = React.memo(function OkrStatusBadge({ status, type = 'objective', className }: OkrStatusBadgeProps) {
   if (type === 'objective') {
     const objectiveStatus = status as OkrStatus;
     const mappedStatus = objectiveToStatusMap[objectiveStatus] || 'inactive';
