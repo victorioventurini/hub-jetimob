@@ -40,7 +40,8 @@ Lista completa das tabelas no schema `public`:
 | `asset_keys` | ✅ | ✅ | Chaves |
 | `asset_movements` | ✅ | ✅ | Movimentações de ativos |
 | `asset_permissions` | ✅ | ✅ | Permissões de ativos |
-| `audit_logs` | ✅ | ❌ | Logs de auditoria (global) |
+| `asset_phone_lines` | ✅ | ✅ | Linhas telefônicas corporativas |
+| `audit_logs` | ✅ | ❌ | Logs de auditoria (global, inclui field-level history de Assets) |
 | `automation_action_catalog` | ✅ | ❌ | Catálogo de ações de automação |
 | `automation_connection_events` | ✅ | ✅ | Eventos de conexões |
 | `automation_connections` | ✅ | ✅ | Conexões de automação |
