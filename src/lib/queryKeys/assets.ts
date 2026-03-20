@@ -9,6 +9,7 @@ export const assetsKeys = {
       ['assets', 'inventory', 'list', buId, filters] as const,
     detail: (assetId: string) => ['assets', 'inventory', 'detail', assetId] as const,
     movements: (assetId: string) => ['assets', 'inventory', 'movements', assetId] as const,
+    history: (assetId: string) => ['assets', 'inventory', 'history', assetId] as const,
   },
   
   // Groups/Kits
