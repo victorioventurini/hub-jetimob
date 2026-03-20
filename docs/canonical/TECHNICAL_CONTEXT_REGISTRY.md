@@ -786,7 +786,7 @@ Histórico de valores com período e confiança.
 
 ### 2.4 Módulo Assets (Patrimônio)
 
-O módulo Assets controla bens patrimoniais, chaves e brindes com **3 sub-módulos independentes**, cada um com permissões próprias.
+O módulo Assets controla bens patrimoniais, chaves, brindes e linhas telefônicas com **4 sub-módulos independentes**, cada um com permissões próprias.
 
 #### Permissões do Módulo Assets
 
