@@ -1,3 +1,4 @@
+import React from 'react';
 import { StatusBadge, StatusDot } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -26,7 +27,7 @@ const objectiveToStatusMap: Record<OkrStatus, string> = {
   discarded: 'inactive',
 };
 
-export function OkrStatusBadge({ status, type = 'objective', className }: OkrStatusBadgeProps) {
+export const OkrStatusBadge = React.memo(function OkrStatusBadge({ status, type = 'objective', className }: OkrStatusBadgeProps) {
   if (type === 'objective') {
     const objectiveStatus = status as OkrStatus;
     const mappedStatus = objectiveToStatusMap[objectiveStatus] || 'inactive';
@@ -51,4 +52,4 @@ export function OkrStatusBadge({ status, type = 'objective', className }: OkrSta
       className={className}
     />
   );
-}
+});

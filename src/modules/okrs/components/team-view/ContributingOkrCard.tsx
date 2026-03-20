@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +41,7 @@ interface ContributingOkrCardProps {
  * Card component for displaying shared OKRs where the current team
  * is a contributor (not the primary team).
  */
-export function ContributingOkrCard({
+export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   objective,
   currentTeamId,
 }: ContributingOkrCardProps) {
@@ -139,4 +140,4 @@ export function ContributingOkrCard({
       </CardContent>
     </Card>
   );
-}
+});

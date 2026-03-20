@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ interface OrgObjectiveCardProps {
   };
 }
 
-export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
+export const OrgObjectiveCard = React.memo(function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
   const { currentBu } = useBu();
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
@@ -313,4 +313,4 @@ export function OrgObjectiveCard({ objective }: OrgObjectiveCardProps) {
       )}
     </>
   );
-}
+});

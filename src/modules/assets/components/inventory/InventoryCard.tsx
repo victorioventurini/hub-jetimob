@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,7 @@ interface InventoryCardProps {
   onClone?: (item: AssetInventory) => void;
 }
 
-export function InventoryCard({ item, onClone }: InventoryCardProps) {
+export const InventoryCard = React.memo(function InventoryCard({ item, onClone }: InventoryCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer group">
       <CardHeader className="pb-2">
@@ -88,4 +89,4 @@ export function InventoryCard({ item, onClone }: InventoryCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ const calculateObjectiveProgress = (krs: KeyResult[]): number => {
   }, 0) / krs.length;
 };
 
-export function OkrObjectiveCard({
+export const OkrObjectiveCard = React.memo(function OkrObjectiveCard({
   id,
   title,
   description,
@@ -240,4 +240,4 @@ export function OkrObjectiveCard({
       )}
     </Card>
   );
-}
+});

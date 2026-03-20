@@ -259,7 +259,7 @@ export interface StatusBadgeProps extends Omit<BadgeProps, "variant"> {
   size?: "sm" | "md";
 }
 
-export function StatusBadge({
+export const StatusBadge = React.memo(function StatusBadge({
   status,
   showDot = true,
   customLabel,
@@ -294,7 +294,7 @@ export function StatusBadge({
       {label}
     </Badge>
   );
-}
+});
 
 // ============= StatusDot Component =============
 
