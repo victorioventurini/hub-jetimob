@@ -51,7 +51,7 @@ const calculateObjectiveProgress = (krs: KeyResult[]): number => {
   }, 0) / krs.length;
 };
 
-export function OkrObjectiveCard({
+export const OkrObjectiveCard = React.memo(function OkrObjectiveCard({
   id,
   title,
   description,
