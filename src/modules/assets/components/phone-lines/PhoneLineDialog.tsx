@@ -303,6 +303,28 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
               />
             )}
 
+            {/* Responsible user (always visible, optional) */}
+            <FormField
+              control={form.control}
+              name="responsible_user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsável pela linha (opcional)</FormLabel>
+                  <FormControl>
+                    <BuUserSelect
+                      value={field.value ?? undefined}
+                      onValueChange={(val) => field.onChange(val || null)}
+                      placeholder="Selecione o responsável"
+                      showSearch
+                      excludeExternal
+                      allowClear
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Linked asset */}
             <FormField
               control={form.control}
