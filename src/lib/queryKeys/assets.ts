@@ -27,6 +27,7 @@ export const assetsKeys = {
       ['asset-keyrings', buId, filters] as const,
     clavicularies: (buId: string | null) => ['asset-clavicularies', buId] as const,
     movements: (keyringId: string) => ['assets', 'keys', 'movements', keyringId] as const,
+    history: (keyringId: string) => ['assets', 'keys', 'history', keyringId] as const,
   },
   
   // Gifts
