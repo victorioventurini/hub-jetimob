@@ -61,4 +61,4 @@ export const TeamOkrListItem = React.memo(function TeamOkrListItem({ okr }: Team
       </div>
     </div>
   );
-}
+});

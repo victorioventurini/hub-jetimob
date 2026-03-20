@@ -70,4 +70,4 @@ export const OrgKrContributionItem = React.memo(function OrgKrContributionItem({
       </Collapsible>
     </div>
   );
-}
+});

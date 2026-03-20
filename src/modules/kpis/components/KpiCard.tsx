@@ -290,4 +290,4 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
       </CardContent>
     </Card>
   );
-}
+});
