@@ -342,10 +342,7 @@ export function InventoryMovementDialog({
                         </FormLabel>
                         <BuUserSelect
                           value={field.value ?? undefined}
-                          onValueChange={(v) => {
-                            console.log("[assets][InventoryMovementDialog] to_user_id", v);
-                            field.onChange(v);
-                          }}
+                          onValueChange={field.onChange}
                           placeholder="Selecione o colaborador..."
                           excludeExternal
                         />
