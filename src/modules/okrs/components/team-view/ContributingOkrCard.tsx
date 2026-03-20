@@ -41,7 +41,7 @@ interface ContributingOkrCardProps {
  * Card component for displaying shared OKRs where the current team
  * is a contributor (not the primary team).
  */
-export function ContributingOkrCard({
+export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   objective,
   currentTeamId,
 }: ContributingOkrCardProps) {
