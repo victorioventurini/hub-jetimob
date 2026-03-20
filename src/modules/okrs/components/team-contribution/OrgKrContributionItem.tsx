@@ -18,7 +18,7 @@ const statusConfig = {
   not_started: { label: 'Não Iniciado', className: 'bg-muted text-muted-foreground' },
 };
 
-export function OrgKrContributionItem({ orgKr }: OrgKrContributionItemProps) {
+export const OrgKrContributionItem = React.memo(function OrgKrContributionItem({ orgKr }: OrgKrContributionItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const status = statusConfig[orgKr.status];
 
