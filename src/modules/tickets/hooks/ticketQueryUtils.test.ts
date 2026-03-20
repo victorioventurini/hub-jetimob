@@ -24,7 +24,7 @@ describe('normalizeTicketRelations', () => {
     const result = normalizeTicketRelations(baseTicket);
     expect(result.created_by).toEqual({ id: 'user-1', display_name: 'Ana Costa', photo_url: null });
     expect(result.owner).toEqual({ id: 'user-2', display_name: 'Bruno Lima', photo_url: null });
-    expect(result.partner_company).toEqual({ id: 'comp-1', name: 'Acme Corp' });
+    expect(result.external_company).toEqual({ id: 'comp-1', name: 'Acme Corp' });
     expect(result.category).toEqual({ id: 'cat-1', name: 'Suporte' });
     expect(result.subcategory).toEqual({ id: 'sub-1', name: 'Bug' });
   });
