@@ -138,7 +138,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     await queryClient.refetchQueries({ queryKey: queryKeys.okrs.manageableTeams(null, null) });
     await queryClient.refetchQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
     
-    console.log("[ImpersonationContext] Cache invalidado e refetched para impersonação de:", userId);
+    
   }, [canImpersonate, queryClient]);
   
   const stopImpersonation = useCallback(async () => {
