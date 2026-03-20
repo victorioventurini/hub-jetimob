@@ -14,7 +14,6 @@ describe('normalizeTicketRelations', () => {
     status: 'waiting',
     created_by: { id: 'user-1', display_name: 'Ana Costa', photo_url: null },
     owner: { id: 'user-2', display_name: 'Bruno Lima', photo_url: null },
-    external_company: { id: 'comp-1', name: 'Acme Corp' },
     category: { id: 'cat-1', name: 'Suporte' },
     subcategory: { id: 'sub-1', name: 'Bug' },
     assigned_contact: { id: 'contact-1', name: 'Carlos', email: 'c@test.com' },
@@ -24,7 +23,6 @@ describe('normalizeTicketRelations', () => {
     const result = normalizeTicketRelations(baseTicket);
     expect(result.created_by).toEqual({ id: 'user-1', display_name: 'Ana Costa', photo_url: null });
     expect(result.owner).toEqual({ id: 'user-2', display_name: 'Bruno Lima', photo_url: null });
-    expect(result.external_company).toEqual({ id: 'comp-1', name: 'Acme Corp' });
     expect(result.category).toEqual({ id: 'cat-1', name: 'Suporte' });
     expect(result.subcategory).toEqual({ id: 'sub-1', name: 'Bug' });
   });
@@ -34,7 +32,6 @@ describe('normalizeTicketRelations', () => {
       ...baseTicket,
       created_by: [{ id: 'user-1', display_name: 'Ana Costa', photo_url: null }],
       owner: [{ id: 'user-2', display_name: 'Bruno Lima', photo_url: null }],
-      external_company: [{ id: 'comp-1', name: 'Acme Corp' }],
       category: [{ id: 'cat-1', name: 'Suporte' }],
       subcategory: [{ id: 'sub-1', name: 'Bug' }],
       assigned_contact: [{ id: 'contact-1', name: 'Carlos', email: 'c@test.com' }],
@@ -50,12 +47,10 @@ describe('normalizeTicketRelations', () => {
       ...baseTicket,
       created_by: [],
       owner: [],
-      external_company: [],
     };
     const result = normalizeTicketRelations(ticket);
     expect(result.created_by).toBeNull();
     expect(result.owner).toBeNull();
-    expect(result.external_company).toBeNull();
   });
 
   it('should merge messages count from map', () => {
@@ -86,5 +81,14 @@ describe('normalizeTicketRelations', () => {
   it('should default mentions to empty array', () => {
     const result = normalizeTicketRelations(baseTicket);
     expect(result.mentions_list).toEqual([]);
+  });
+
+  it('should normalize partner_company array from raw Supabase data', () => {
+    const ticket = {
+      ...baseTicket,
+      partner_company: [{ id: 'comp-1', name: 'Acme Corp' }],
+    };
+    const result = normalizeTicketRelations(ticket) as any;
+    expect(result.partner_company).toEqual({ id: 'comp-1', name: 'Acme Corp' });
   });
 });
