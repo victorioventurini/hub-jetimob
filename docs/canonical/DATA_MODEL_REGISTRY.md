@@ -413,6 +413,9 @@ Lista completa das tabelas no schema `public`:
 | `trg_set_bu_id_*` | Algumas | Específica | Auto-preenche bu_id de FK |
 | `trg_sync_manager_from_team_leader` | `profiles` | `sync_manager_from_team_leader()` | Auto-preenche `manager_user_id` com líder do time ao atribuir `team_id` (v3.7.0) |
 | `trg_propagate_leader_change` | `teams` | `propagate_leader_change_to_members()` | Propaga mudança de `leader_user_id` para `manager_user_id` dos membros (v3.7.0) |
+| `trg_audit_asset_phone_lines` | `asset_phone_lines` | `fn_audit_asset_phone_lines()` | Audit trail field-level → `audit_logs` |
+| `trg_audit_asset_inventory` | `asset_inventory` | `fn_audit_asset_inventory()` | Audit trail field-level → `audit_logs` |
+| `trg_audit_asset_keyrings` | `asset_keyrings` | `fn_audit_asset_keyrings()` | Audit trail field-level → `audit_logs` |
 
 ---
 
