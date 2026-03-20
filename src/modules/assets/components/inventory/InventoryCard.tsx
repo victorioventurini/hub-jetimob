@@ -17,7 +17,7 @@ interface InventoryCardProps {
   onClone?: (item: AssetInventory) => void;
 }
 
-export function InventoryCard({ item, onClone }: InventoryCardProps) {
+export const InventoryCard = React.memo(function InventoryCard({ item, onClone }: InventoryCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer group">
       <CardHeader className="pb-2">
