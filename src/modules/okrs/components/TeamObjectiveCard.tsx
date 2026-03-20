@@ -395,4 +395,4 @@ export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objecti
       )}
     </>
   );
-}
+});

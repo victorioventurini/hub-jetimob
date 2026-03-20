@@ -313,4 +313,4 @@ export const OrgObjectiveCard = React.memo(function OrgObjectiveCard({ objective
       )}
     </>
   );
-}
+});

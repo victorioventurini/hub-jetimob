@@ -140,4 +140,4 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
       </CardContent>
     </Card>
   );
-}
+});

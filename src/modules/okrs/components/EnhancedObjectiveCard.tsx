@@ -461,4 +461,4 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
       </div>
     </div>
   );
-}
+});
