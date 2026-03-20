@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.11.0  
-**Última atualização:** 2026-03-14 (v3.11.0 - Refactoring Wave P2 — Domain centralization em Edge Functions, select('*') fix em useBuLocations, migração de KrUnitSelect/krUnits deprecated para canônicos, índices em ai_agent_logs e cron_execution_logs)
+**Versão:** 3.12.0  
+**Última atualização:** 2026-03-20 (v3.12.0 - Ticket Notification Contextualisation — Triggers enriquecidos com metadata contextual, função `ticket_status_label()`, templates atualizados com título/tipo/categoria/ator)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2289,6 +2289,18 @@ export type { SomeType } from './types';
   - `BACKEND_ROBUSTNESS_AUDIT_2026-02-07.md` — Robustez de Edge Functions
 - **System Health Score: 10/10** ✅
 
+### v3.12.0 (2026-03-20) — Ticket Notification Contextualisation v1.0
+- **Ticket Notification Contextualisation**:
+  - Reescrita completa dos 5 triggers de notificação de tickets para passar metadados contextuais
+  - Nova função `ticket_status_label(text)` — tradução imutável de status para pt-BR (waiting→Aguardando, in_progress→Em andamento, done→Concluído, paused→Pausado, discarded→Descartado)
+  - Triggers enriquecidos: `notify_ticket_status_changed`, `notify_ticket_created`, `notify_ticket_assigned`, `notify_ticket_message_created`, `notify_ticket_mention`
+  - Metadata agora inclui: `ticket_title`, `ticket_type` (Interno/Externo), `category_name`, `subcategory_name`, `actor_name`, `old_status`/`new_status` (labels pt-BR), `bu_name`
+  - `p_title` em `emit_notification_event` agora passa o **título real do ticket** (não string genérica)
+  - 4 templates de email atualizados: `ticket.status.changed`, `ticket.created`, `ticket.assigned`, `ticket.message.created`
+  - Subjects agora seguem padrão: `[{{bu_name}}] {{ticket_title}} — {{new_status}} - {{current_datetime}}`
+  - Bodies incluem tipo (Interno/Externo), categoria/subcategoria, ator da ação
+  - Nenhuma alteração em frontend ou Edge Functions (sistema server-side via `p_metadata` → `templateVars`)
+
 ### v2.99.0 (2026-02-07) — Comprehensive Hygiene Audit v1.0
 - **Database Hygiene**:
   - Removidas 4 funções SQL deprecated: `cleanup_old_agent_logs`, `cleanup_old_cron_logs`, `cleanup_old_perf_snapshots`, `cleanup_old_wizard_sessions`
@@ -2532,6 +2544,7 @@ export type { SomeType } from './types';
   - Triggers enriquecidos: `notify_ticket_message_created`, `notify_ticket_status_changed`, `notify_asset_checkout`, `notify_team_membership_changed`
   - Edge Function `process-notification-outbox` atualizado para resolver `actor_name` dinamicamente
   - Formato de data padronizado: `DD/MM às HH:MM`
+  - > **Nota:** Triggers de tickets foram **reescritos na v3.12.0** com metadata contextual completa (título, tipo, categoria, ator)
 - **Tickets Table Enhancement**:
   - Coluna "Criado por" adicionada à listagem de tickets com avatar e nome
   - Campo `created_by` já estava disponível no select, agora exibido na UI
