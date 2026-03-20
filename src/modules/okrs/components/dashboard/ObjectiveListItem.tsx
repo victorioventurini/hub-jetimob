@@ -694,4 +694,4 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
       )}
     </div>
   );
-});
+}
