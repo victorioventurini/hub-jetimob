@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useKeys, useAssetPermissionsV2 } from "../../hooks";
 import { KeyringMovementDialog } from "./KeyringMovementDialog";
 import type { AssetKeyring, AssetKeyMovement, KeyMovementType } from "../../types";
+import { KeyringHistory } from "./KeyringHistory";
 import { KEYRING_STATUS_LABELS, KEY_MOVEMENT_TYPE_LABELS } from "../../types";
 import { useEffect } from "react";
 import { ASSET_STATUS_STYLES } from "@/lib/colors";
