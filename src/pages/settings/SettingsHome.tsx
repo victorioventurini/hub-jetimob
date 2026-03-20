@@ -105,7 +105,7 @@ export default function SettingsHome() {
     queryFn: async () => {
       const { count, error } = await supabase
         .from("bu_units")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("status", "active");
       if (error) throw error;
       return count || 0;
@@ -119,11 +119,11 @@ export default function SettingsHome() {
       const [activeResult, totalResult] = await Promise.all([
         supabase
           .from("modules")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("status", "active"),
         supabase
           .from("modules")
-          .select("*", { count: "exact", head: true }),
+          .select("id", { count: "exact", head: true }),
       ]);
       if (activeResult.error) throw activeResult.error;
       if (totalResult.error) throw totalResult.error;
@@ -138,10 +138,10 @@ export default function SettingsHome() {
       const [catalogResult, enabledResult] = await Promise.all([
         supabase
           .from("hub_integrations_catalog")
-          .select("*", { count: "exact", head: true }),
+          .select("id", { count: "exact", head: true }),
         supabase
           .from("hub_integrations_global_config")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("is_enabled_global", true),
       ]);
       if (catalogResult.error) throw catalogResult.error;
@@ -157,7 +157,7 @@ export default function SettingsHome() {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase
         .from("v_bu_active_profiles")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("bu_id", currentBu.id);
       if (error) throw error;
       return count || 0;
@@ -172,7 +172,7 @@ export default function SettingsHome() {
       if (!currentBu?.id) return 0;
       const { count, error } = await supabase
         .from("teams")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("bu_id", currentBu.id)
         .eq("status", "active")
         .is("deleted_at", null);

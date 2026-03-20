@@ -49,7 +49,7 @@ export function PhoneLink({ phone, showIcon = true, className }: PhoneLinkProps)
       title="Abrir no WhatsApp"
     >
       {showIcon && (
-        <WhatsAppIcon className="h-4 w-4 text-[#25D366] shrink-0" />
+        <WhatsAppIcon className="h-4 w-4 text-emerald-500 shrink-0" />
       )}
       <span>{formattedPhone}</span>
     </a>

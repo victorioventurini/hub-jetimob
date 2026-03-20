@@ -139,7 +139,7 @@ export function useTeam(teamId: string | undefined) {
       // Get member count (exclude terminated users)
       const { count: memberCount } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("team_id", teamId)
         .is("deleted_at", null)
         .neq("employment_status", "terminated");

@@ -213,14 +213,14 @@ export function InventoryDetailView() {
   useEffect(() => {
     if (!id) return;
 
-    console.log("[InventoryDetailView] Loading item:", id);
+    
 
     // Check if id is a UUID or an internal_code
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
     const cachedItem = items.find((i) => isUUID ? i.id === id : i.internal_code === id);
     if (cachedItem) {
-      console.log("[InventoryDetailView] Found in cache:", cachedItem.name);
+      
       setItem(cachedItem);
       setIsLoadingItem(false);
     }
@@ -236,7 +236,7 @@ export function InventoryDetailView() {
           fetchedItem = await getItemByCode(id);
         }
         
-        console.log("[InventoryDetailView] Fetched item:", fetchedItem?.name ?? "null");
+        
         
         if (fetchedItem) {
           setItem(fetchedItem);

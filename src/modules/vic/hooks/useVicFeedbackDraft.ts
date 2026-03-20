@@ -251,9 +251,6 @@ export function cleanupExpiredVicDrafts(): number {
       cleaned++;
     });
     
-    if (cleaned > 0) {
-      console.log(`[VicFeedbackDraft] Cleaned ${cleaned} expired drafts`);
-    }
   } catch (error) {
     console.warn('[VicFeedbackDraft] Cleanup failed:', error);
   }

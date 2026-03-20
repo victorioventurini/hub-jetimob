@@ -206,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error(response.data.error) };
       }
 
-      console.log('Magic link sent successfully via SendGrid to:', email);
+      
       return { error: null };
     } catch (error: any) {
       console.error('Error calling request-magic-link:', error);

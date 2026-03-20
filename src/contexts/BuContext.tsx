@@ -149,7 +149,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
       
       // Invalidate all BU-scoped queries and client cache when changing BU
       if (isChanging) {
-        console.log("[BuContext] BU changed, clearing query cache and BU client");
+        
         // Clear BU-scoped Supabase client cache to force re-creation with new BU ID
         clearBuClientCache();
         queryClient.clear();
