@@ -2309,8 +2309,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.88.0 |
-| **Data da última atualização** | 2026-02-04 |
+| **Versão do TCR** | 3.13.0 |
+| **Data da última atualização** | 2026-03-20 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
