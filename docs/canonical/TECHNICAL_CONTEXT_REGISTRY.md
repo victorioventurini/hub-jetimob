@@ -1045,6 +1045,60 @@ Entradas e saídas de brindes.
 
 ---
 
+#### **asset_phone_lines** — Linhas Telefônicas
+Linhas telefônicas corporativas da BU.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | FK para bu_units |
+| phone_number | text | Número de telefone (único por BU) |
+| carrier | text | Operadora (ex: Vivo, Claro) |
+| plan_type | text | `prepaid` ou `postpaid` |
+| status | text | `available`, `loaned` |
+| current_user_id | uuid | FK para profiles (quem usa atualmente) |
+| responsible_user_id | uuid | FK para profiles (responsável pela linha, opcional) |
+| linked_asset_id | uuid | FK para asset_inventory (vínculo opcional) |
+| notes | text | Observações |
+
+**Regras:**
+- Status `loaned` exige `current_user_id` (validado via trigger `validate_phone_line_loan`)
+- Unicidade de `phone_number` por BU (onde `deleted_at IS NULL`)
+- Soft delete obrigatório via `deleted_at`
+- `responsible_user_id` é opcional e independente do `current_user_id`
+
+**Permissões específicas:** `phone_lines_admin`, `phone_lines_manager`, `phone_lines_viewer` + chaves granulares (view, loan, link_asset, etc.)
+
+---
+
+#### Trilha de Auditoria Field-Level (Padrão Assets)
+
+O módulo Assets implementa **trilha de auditoria automática via triggers** para capturar todas as alterações de campo em entidades críticas. O padrão é escalável e deve ser usado em novos sub-módulos.
+
+**Tabelas com audit triggers:**
+
+| Tabela | entity_type | Trigger |
+|--------|-------------|---------|
+| `asset_phone_lines` | `asset_phone_line` | `trg_audit_asset_phone_lines` |
+| `asset_inventory` | `asset_inventory` | `trg_audit_asset_inventory` |
+| `asset_keyrings` | `asset_keyring` | `trg_audit_asset_keyrings` |
+
+**Arquitetura:**
+1. Trigger `AFTER INSERT/UPDATE/DELETE` na tabela de origem
+2. Grava na tabela central `audit_logs` com `entity_type` para segmentação
+3. Payload JSONB com `old_values` e `new_values` completos
+4. `user_id` via `auth.uid()` (identidade de sessão)
+
+**Frontend:**
+- Hook genérico: `useAuditHistory({ entityType, entityId, queryKey })`
+- Componente compartilhado: `AuditHistoryTimeline` (recebe `fieldLabels`, `valueLabels`, `ignoredFields`)
+- Wrappers por módulo: `InventoryHistory`, `KeyringHistory`, `PhoneLineHistory`
+- Visualização em aba "Histórico de Alterações" nos diálogos/views de detalhe
+
+**Query Keys:** `assetsKeys.inventory.history(id)`, `assetsKeys.keys.history(id)`, `assetsKeys.phoneLines.history(id)`
+
+---
+
 ### 2.5 Módulo Integrações & IA
 
 #### **ai_agents** — Agentes de IA
