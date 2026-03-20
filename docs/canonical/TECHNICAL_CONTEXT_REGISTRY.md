@@ -1919,6 +1919,7 @@ const conditions = [
 - Audit logs registram todas as alterações
 - `okr_audit_log` para OKRs, `audit_logs` para demais
 - Movimentações de Assets NUNCA são apagadas
+- **Trilha de auditoria field-level** via triggers automáticos em `asset_inventory`, `asset_keyrings` e `asset_phone_lines` (ver §2.4)
 
 ### 4.10 Modelo de Identidade (auth.users.id vs profiles.id)
 
