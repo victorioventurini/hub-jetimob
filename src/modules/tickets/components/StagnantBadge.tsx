@@ -27,7 +27,7 @@ interface StagnantBadgeProps {
  * Displays a "Estagnado" badge when a ticket has no interactions for 8+ days.
  * Returns null if the ticket is not stagnant.
  */
-export function StagnantBadge({ ticket, className }: StagnantBadgeProps) {
+export const StagnantBadge = React.memo(function StagnantBadge({ ticket, className }: StagnantBadgeProps) {
   if (!isTicketStagnant(ticket)) return null;
   
   const days = getDaysSinceLastInteraction(ticket);
