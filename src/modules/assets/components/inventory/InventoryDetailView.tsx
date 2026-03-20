@@ -31,6 +31,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useInventory, useAssetPermissionsV2 } from "../../hooks";
 import { InventoryFormDialog } from "./InventoryFormDialog";
+import { InventoryHistory } from "./InventoryHistory";
 import { InventoryMovementDialog } from "./InventoryMovementDialog";
 import { KitSection } from "./KitSection";
 import { ResourceNotFoundState } from "@/components/ui/resource-not-found-state";
