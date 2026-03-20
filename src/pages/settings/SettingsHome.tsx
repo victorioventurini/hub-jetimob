@@ -138,7 +138,7 @@ export default function SettingsHome() {
       const [catalogResult, enabledResult] = await Promise.all([
         supabase
           .from("hub_integrations_catalog")
-          .select("*", { count: "exact", head: true }),
+          .select("id", { count: "exact", head: true }),
         supabase
           .from("hub_integrations_global_config")
           .select("*", { count: "exact", head: true })
