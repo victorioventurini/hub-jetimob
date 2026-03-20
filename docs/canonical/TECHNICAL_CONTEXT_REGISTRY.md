@@ -2325,7 +2325,22 @@ export type { SomeType } from './types';
 
 ## Changelog
 
-### v3.0.0 (2026-02-07) — PII Security Hardening v1.0
+### v3.13.0 (2026-03-20) — Asset Audit History v1.0
+- **Trilha de auditoria field-level para Assets**:
+  - Triggers automáticos em `asset_inventory`, `asset_keyrings` e `asset_phone_lines` → grava diffs na tabela `audit_logs`
+  - Hook genérico `useAuditHistory` reutilizável por qualquer módulo
+  - Componente compartilhado `AuditHistoryTimeline` com suporte a `fieldLabels`, `valueLabels` e `ignoredFields`
+  - `usePhoneLineHistory` refatorado para usar hook genérico
+  - Query keys: `assetsKeys.inventory.history()`, `assetsKeys.keys.history()`
+- **Submódulo Linhas Telefônicas documentado**:
+  - Tabela `asset_phone_lines` adicionada ao TCR (§2.4)
+  - Campo `responsible_user_id` (responsável pela linha, independente do usuário atual)
+  - Permissões granulares documentadas
+- **Integração frontend**:
+  - Aba "Histórico de Alterações" no `InventoryDetailView`
+  - Aba "Alterações" no `KeyringDetailDialog`
+
+### v3.12.0 (2026-03-20) — Ticket Notification Contextualisation v1.0
 - **Security Scan Resolved — 0 Errors**:
   - Resolvidos todos os issues de nível `error` no security scan
   - Implementadas funções de privacidade field-level para dados sensíveis
