@@ -39,7 +39,7 @@ interface TeamObjectiveCardProps {
   currentTeamId?: string; // To determine if viewing team is primary or contributor
 }
 
-export function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjectiveCardProps) {
+export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objective, teams, currentTeamId }: TeamObjectiveCardProps) {
   const { currentBu } = useBu();
   const [expanded, setExpanded] = useState(false);
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
