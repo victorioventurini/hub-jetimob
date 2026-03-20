@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.12.0  
-**Última atualização:** 2026-03-20 (v3.12.0 - Ticket Notification Contextualisation — Triggers enriquecidos com metadata contextual, função `ticket_status_label()`, templates atualizados com título/tipo/categoria/ator)
+**Versão:** 3.13.0  
+**Última atualização:** 2026-03-20 (v3.13.0 - Asset Audit History — Trilha de auditoria field-level para Inventário, Chaves e Linhas Telefônicas via triggers + componente genérico AuditHistoryTimeline; Submódulo Linhas Telefônicas documentado)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -786,7 +786,7 @@ Histórico de valores com período e confiança.
 
 ### 2.4 Módulo Assets (Patrimônio)
 
-O módulo Assets controla bens patrimoniais, chaves e brindes com **3 sub-módulos independentes**, cada um com permissões próprias.
+O módulo Assets controla bens patrimoniais, chaves, brindes e linhas telefônicas com **4 sub-módulos independentes**, cada um com permissões próprias.
 
 #### Permissões do Módulo Assets
 
@@ -1042,6 +1042,60 @@ Entradas e saídas de brindes.
 | notes | text | Observações |
 
 **Regra:** Não permitir `out` se `quantity_available` insuficiente.
+
+---
+
+#### **asset_phone_lines** — Linhas Telefônicas
+Linhas telefônicas corporativas da BU.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| bu_id | uuid | FK para bu_units |
+| phone_number | text | Número de telefone (único por BU) |
+| carrier | text | Operadora (ex: Vivo, Claro) |
+| plan_type | text | `prepaid` ou `postpaid` |
+| status | text | `available`, `loaned` |
+| current_user_id | uuid | FK para profiles (quem usa atualmente) |
+| responsible_user_id | uuid | FK para profiles (responsável pela linha, opcional) |
+| linked_asset_id | uuid | FK para asset_inventory (vínculo opcional) |
+| notes | text | Observações |
+
+**Regras:**
+- Status `loaned` exige `current_user_id` (validado via trigger `validate_phone_line_loan`)
+- Unicidade de `phone_number` por BU (onde `deleted_at IS NULL`)
+- Soft delete obrigatório via `deleted_at`
+- `responsible_user_id` é opcional e independente do `current_user_id`
+
+**Permissões específicas:** `phone_lines_admin`, `phone_lines_manager`, `phone_lines_viewer` + chaves granulares (view, loan, link_asset, etc.)
+
+---
+
+#### Trilha de Auditoria Field-Level (Padrão Assets)
+
+O módulo Assets implementa **trilha de auditoria automática via triggers** para capturar todas as alterações de campo em entidades críticas. O padrão é escalável e deve ser usado em novos sub-módulos.
+
+**Tabelas com audit triggers:**
+
+| Tabela | entity_type | Trigger |
+|--------|-------------|---------|
+| `asset_phone_lines` | `asset_phone_line` | `trg_audit_asset_phone_lines` |
+| `asset_inventory` | `asset_inventory` | `trg_audit_asset_inventory` |
+| `asset_keyrings` | `asset_keyring` | `trg_audit_asset_keyrings` |
+
+**Arquitetura:**
+1. Trigger `AFTER INSERT/UPDATE/DELETE` na tabela de origem
+2. Grava na tabela central `audit_logs` com `entity_type` para segmentação
+3. Payload JSONB com `old_values` e `new_values` completos
+4. `user_id` via `auth.uid()` (identidade de sessão)
+
+**Frontend:**
+- Hook genérico: `useAuditHistory({ entityType, entityId, queryKey })`
+- Componente compartilhado: `AuditHistoryTimeline` (recebe `fieldLabels`, `valueLabels`, `ignoredFields`)
+- Wrappers por módulo: `InventoryHistory`, `KeyringHistory`, `PhoneLineHistory`
+- Visualização em aba "Histórico de Alterações" nos diálogos/views de detalhe
+
+**Query Keys:** `assetsKeys.inventory.history(id)`, `assetsKeys.keys.history(id)`, `assetsKeys.phoneLines.history(id)`
 
 ---
 
@@ -1865,6 +1919,7 @@ const conditions = [
 - Audit logs registram todas as alterações
 - `okr_audit_log` para OKRs, `audit_logs` para demais
 - Movimentações de Assets NUNCA são apagadas
+- **Trilha de auditoria field-level** via triggers automáticos em `asset_inventory`, `asset_keyrings` e `asset_phone_lines` (ver §2.4)
 
 ### 4.10 Modelo de Identidade (auth.users.id vs profiles.id)
 
@@ -2254,8 +2309,8 @@ export type { SomeType } from './types';
 
 | Campo | Valor |
 |-------|-------|
-| **Versão do TCR** | 2.88.0 |
-| **Data da última atualização** | 2026-02-04 |
+| **Versão do TCR** | 3.13.0 |
+| **Data da última atualização** | 2026-03-20 |
 | **Responsável** | Lovable AI |
 | **Supabase Project ID** | oiwnghihyqdsinouwmga |
 | **Status V1 Permissions** | ❌ Removido definitivamente (Wave 9) |
@@ -2270,7 +2325,22 @@ export type { SomeType } from './types';
 
 ## Changelog
 
-### v3.0.0 (2026-02-07) — PII Security Hardening v1.0
+### v3.13.0 (2026-03-20) — Asset Audit History v1.0
+- **Trilha de auditoria field-level para Assets**:
+  - Triggers automáticos em `asset_inventory`, `asset_keyrings` e `asset_phone_lines` → grava diffs na tabela `audit_logs`
+  - Hook genérico `useAuditHistory` reutilizável por qualquer módulo
+  - Componente compartilhado `AuditHistoryTimeline` com suporte a `fieldLabels`, `valueLabels` e `ignoredFields`
+  - `usePhoneLineHistory` refatorado para usar hook genérico
+  - Query keys: `assetsKeys.inventory.history()`, `assetsKeys.keys.history()`
+- **Submódulo Linhas Telefônicas documentado**:
+  - Tabela `asset_phone_lines` adicionada ao TCR (§2.4)
+  - Campo `responsible_user_id` (responsável pela linha, independente do usuário atual)
+  - Permissões granulares documentadas
+- **Integração frontend**:
+  - Aba "Histórico de Alterações" no `InventoryDetailView`
+  - Aba "Alterações" no `KeyringDetailDialog`
+
+### v3.12.0 (2026-03-20) — Ticket Notification Contextualisation v1.0
 - **Security Scan Resolved — 0 Errors**:
   - Resolvidos todos os issues de nível `error` no security scan
   - Implementadas funções de privacidade field-level para dados sensíveis

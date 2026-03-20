@@ -40,7 +40,8 @@ Lista completa das tabelas no schema `public`:
 | `asset_keys` | ✅ | ✅ | Chaves |
 | `asset_movements` | ✅ | ✅ | Movimentações de ativos |
 | `asset_permissions` | ✅ | ✅ | Permissões de ativos |
-| `audit_logs` | ✅ | ❌ | Logs de auditoria (global) |
+| `asset_phone_lines` | ✅ | ✅ | Linhas telefônicas corporativas |
+| `audit_logs` | ✅ | ❌ | Logs de auditoria (global, inclui field-level history de Assets) |
 | `automation_action_catalog` | ✅ | ❌ | Catálogo de ações de automação |
 | `automation_connection_events` | ✅ | ✅ | Eventos de conexões |
 | `automation_connections` | ✅ | ✅ | Conexões de automação |
@@ -412,6 +413,9 @@ Lista completa das tabelas no schema `public`:
 | `trg_set_bu_id_*` | Algumas | Específica | Auto-preenche bu_id de FK |
 | `trg_sync_manager_from_team_leader` | `profiles` | `sync_manager_from_team_leader()` | Auto-preenche `manager_user_id` com líder do time ao atribuir `team_id` (v3.7.0) |
 | `trg_propagate_leader_change` | `teams` | `propagate_leader_change_to_members()` | Propaga mudança de `leader_user_id` para `manager_user_id` dos membros (v3.7.0) |
+| `trg_audit_asset_phone_lines` | `asset_phone_lines` | `fn_audit_asset_phone_lines()` | Audit trail field-level → `audit_logs` |
+| `trg_audit_asset_inventory` | `asset_inventory` | `fn_audit_asset_inventory()` | Audit trail field-level → `audit_logs` |
+| `trg_audit_asset_keyrings` | `asset_keyrings` | `fn_audit_asset_keyrings()` | Audit trail field-level → `audit_logs` |
 
 ---
 
