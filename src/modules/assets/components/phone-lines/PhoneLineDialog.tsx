@@ -317,7 +317,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
                       placeholder="Selecione o responsável"
                       showSearch
                       excludeExternal
-                      allowClear
+                      
                     />
                   </FormControl>
                   <FormMessage />
