@@ -1,3 +1,4 @@
+import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Circle, AlertTriangle, CheckCircle2, Activity } from "lucide-react";
