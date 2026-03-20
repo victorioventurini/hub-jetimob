@@ -1,3 +1,4 @@
+import React from 'react';
 import { StatusBadge, StatusDot } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
