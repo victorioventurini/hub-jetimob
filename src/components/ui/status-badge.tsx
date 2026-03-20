@@ -294,7 +294,7 @@ export const StatusBadge = React.memo(function StatusBadge({
       {label}
     </Badge>
   );
-}
+});
 
 // ============= StatusDot Component =============
 

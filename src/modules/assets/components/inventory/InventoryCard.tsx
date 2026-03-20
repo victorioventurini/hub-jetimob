@@ -89,4 +89,4 @@ export const InventoryCard = React.memo(function InventoryCard({ item, onClone }
       </CardContent>
     </Card>
   );
-}
+});

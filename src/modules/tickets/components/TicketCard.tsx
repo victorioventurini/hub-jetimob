@@ -200,4 +200,4 @@ export const TicketCard = React.memo(function TicketCard({ ticket }: TicketCardP
       </Card>
     </Link>
   );
-}
+});

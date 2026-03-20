@@ -52,4 +52,4 @@ export const OkrStatusBadge = React.memo(function OkrStatusBadge({ status, type 
       className={className}
     />
   );
-}
+});

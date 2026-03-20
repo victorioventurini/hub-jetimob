@@ -240,4 +240,4 @@ export const OkrObjectiveCard = React.memo(function OkrObjectiveCard({
       )}
     </Card>
   );
-}
+});

@@ -45,4 +45,4 @@ export const StagnantBadge = React.memo(function StagnantBadge({ ticket, classNa
       </TooltipContent>
     </Tooltip>
   );
-}
+});
