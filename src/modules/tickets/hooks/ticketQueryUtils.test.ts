@@ -55,7 +55,7 @@ describe('normalizeTicketRelations', () => {
     const result = normalizeTicketRelations(ticket);
     expect(result.created_by).toBeNull();
     expect(result.owner).toBeNull();
-    expect(result.partner_company).toBeNull();
+    expect(result.external_company).toBeNull();
   });
 
   it('should merge messages count from map', () => {
