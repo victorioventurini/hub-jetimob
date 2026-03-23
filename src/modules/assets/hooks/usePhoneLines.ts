@@ -138,6 +138,7 @@ interface CreatePhoneLineInput {
   status: PhoneLineStatus;
   current_user_id?: string | null;
   responsible_user_id?: string | null;
+  responsible_team_id?: string | null;
   linked_asset_id?: string | null;
   notes?: string | null;
 }
