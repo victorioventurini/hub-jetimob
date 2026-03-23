@@ -1718,6 +1718,7 @@ export type Database = {
           notes: string | null
           phone_number: string
           plan_type: string
+          responsible_team_id: string | null
           responsible_user_id: string | null
           status: string
           updated_at: string
@@ -1733,6 +1734,7 @@ export type Database = {
           notes?: string | null
           phone_number: string
           plan_type?: string
+          responsible_team_id?: string | null
           responsible_user_id?: string | null
           status?: string
           updated_at?: string
@@ -1748,6 +1750,7 @@ export type Database = {
           notes?: string | null
           phone_number?: string
           plan_type?: string
+          responsible_team_id?: string | null
           responsible_user_id?: string | null
           status?: string
           updated_at?: string
@@ -1786,6 +1789,20 @@ export type Database = {
             columns: ["linked_asset_id"]
             isOneToOne: false
             referencedRelation: "asset_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_responsible_team_id_fkey"
+            columns: ["responsible_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_phone_lines_responsible_team_id_fkey"
+            columns: ["responsible_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
           {
