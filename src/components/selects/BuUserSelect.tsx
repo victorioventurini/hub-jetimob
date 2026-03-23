@@ -32,6 +32,8 @@ import { Search, User, Clock, AlertCircle } from "lucide-react";
 export interface BuUserSelectedMeta {
   id: string;
   displayName: string;
+  teamId?: string | null;
+  teamName?: string | null;
 }
 
 export interface BuUserSelectProps {
