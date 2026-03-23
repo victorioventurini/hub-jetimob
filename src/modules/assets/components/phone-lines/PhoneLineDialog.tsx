@@ -122,7 +122,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
         plan_type: item.plan_type,
         status: item.status,
         current_user_id: item.current_user_id,
-        responsible_user_id: item.responsible_user_id,
+        responsible_user_id: item.responsible_user_id ?? item.current_user_id,
         responsible_team_id: item.responsible_team_id,
         linked_asset_id: item.linked_asset_id,
         notes: item.notes ?? "",
