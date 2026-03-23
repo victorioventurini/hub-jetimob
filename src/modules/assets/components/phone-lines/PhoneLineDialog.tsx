@@ -320,7 +320,9 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
             name="responsible_user_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Responsável pela linha (opcional)</FormLabel>
+                <FormLabel>
+                  Responsável pela linha {watchStatus === "loaned" ? "*" : "(opcional)"}
+                </FormLabel>
                 <FormControl>
                   <BuUserSelect
                     value={field.value ?? undefined}
