@@ -60,8 +60,8 @@ const phoneLineSchema = z.object({
   linked_asset_id: z.string().nullable().optional(),
   notes: z.string().optional().nullable(),
 }).refine(
-  (data) => data.status !== "loaned" || (data.current_user_id != null && data.current_user_id !== ""),
-  { message: "Responsável é obrigatório quando emprestado", path: ["current_user_id"] }
+  (data) => data.status !== "loaned" || (data.responsible_user_id != null && data.responsible_user_id !== ""),
+  { message: "Responsável é obrigatório quando emprestado", path: ["responsible_user_id"] }
 );
 
 type PhoneLineFormData = z.infer<typeof phoneLineSchema>;
@@ -164,7 +164,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       carrier: data.carrier || null,
       plan_type: data.plan_type as "prepaid" | "postpaid",
       status: data.status as "available" | "loaned",
-      current_user_id: data.status === "loaned" ? data.current_user_id ?? null : null,
+      current_user_id: data.status === "loaned" ? data.responsible_user_id ?? null : null,
       responsible_user_id: data.responsible_user_id || null,
       responsible_team_id: data.responsible_team_id || null,
       linked_asset_id: data.linked_asset_id || null,
@@ -311,28 +311,8 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
             />
           </div>
 
-          {/* Current user (visible when loaned) */}
-          {watchStatus === "loaned" && (
-            <FormField
-              control={form.control}
-              name="current_user_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Responsável *</FormLabel>
-                  <FormControl>
-                    <BuUserSelect
-                      value={field.value ?? undefined}
-                      onValueChange={(val) => field.onChange(val)}
-                      placeholder="Selecione o responsável"
-                      showSearch
-                      excludeExternal
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+
+
 
           {/* Responsible user (always visible, optional) */}
           <FormField
@@ -340,7 +320,9 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
             name="responsible_user_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Responsável pela linha (opcional)</FormLabel>
+                <FormLabel>
+                  Responsável pela linha {watchStatus === "loaned" ? "*" : "(opcional)"}
+                </FormLabel>
                 <FormControl>
                   <BuUserSelect
                     value={field.value ?? undefined}
