@@ -50,13 +50,16 @@ export interface PhoneLineFilters {
 
 const PHONE_LINE_FIELDS = `
   id, bu_id, phone_number, carrier, plan_type, status,
-  current_user_id, responsible_user_id, linked_asset_id, notes,
+  current_user_id, responsible_user_id, responsible_team_id, linked_asset_id, notes,
   created_at, updated_at, deleted_at,
   current_user:profiles!asset_phone_lines_current_user_id_fkey(
     id, display_name, photo_url
   ),
   responsible_user:profiles!asset_phone_lines_responsible_user_id_fkey(
     id, display_name, photo_url
+  ),
+  responsible_team:teams!asset_phone_lines_responsible_team_id_fkey(
+    id, name
   ),
   linked_asset:asset_inventory!asset_phone_lines_linked_asset_id_fkey(
     id, name, internal_code, status
