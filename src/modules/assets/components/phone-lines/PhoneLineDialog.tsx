@@ -60,8 +60,8 @@ const phoneLineSchema = z.object({
   linked_asset_id: z.string().nullable().optional(),
   notes: z.string().optional().nullable(),
 }).refine(
-  (data) => data.status !== "loaned" || (data.current_user_id != null && data.current_user_id !== ""),
-  { message: "Responsável é obrigatório quando emprestado", path: ["current_user_id"] }
+  (data) => data.status !== "loaned" || (data.responsible_user_id != null && data.responsible_user_id !== ""),
+  { message: "Responsável é obrigatório quando emprestado", path: ["responsible_user_id"] }
 );
 
 type PhoneLineFormData = z.infer<typeof phoneLineSchema>;
