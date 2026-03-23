@@ -44,6 +44,8 @@ export interface PhoneLineFilters {
   search?: string;
   status?: PhoneLineStatus | "all";
   carrier?: string;
+  responsibleUserId?: string;
+  responsibleTeamId?: string;
 }
 
 // ── Select fields ──────────────────────────────────────
