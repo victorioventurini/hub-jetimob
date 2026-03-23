@@ -32,9 +32,11 @@ export interface PhoneLine {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  responsible_team_id: string | null;
   // Joined
   current_user?: { id: string; display_name: string | null; photo_url: string | null } | null;
   responsible_user?: { id: string; display_name: string | null; photo_url: string | null } | null;
+  responsible_team?: { id: string; name: string } | null;
   linked_asset?: { id: string; name: string; internal_code: string; status: string } | null;
 }
 
