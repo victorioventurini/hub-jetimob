@@ -1,82 +1,59 @@
 
 
-# Plano de Otimização da Plataforma — Hub da Jet
+## Plano: Auto-preenchimento de Time Responsável em Linhas Telefônicas
 
-**Base:** TCR v3.12.0 | DEVELOPMENT_STANDARDS v1.26.0  
-**Pre-Checklist Ritual:** ✅ Completo  
-**Score atual:** 8.4/10 → **9.0/10** (pós Waves 1+2+3+4)
+### Contexto técnico (validado)
 
----
+- `v_bu_active_profiles` já retorna `team_id` e `team_name` por perfil
+- `BuUserSelect` já faz query separada para o perfil selecionado (`selectedProfileData`) que inclui `team_id` e `team_name` — porém NÃO expõe esses dados via callback (apenas `id` e `displayName` via `onUserSelected`)
+- `TeamSelect` canônico existe em `src/components/selects/TeamSelect.tsx` com suporte a `disabled`, `value`, `onValueChange`
+- `PhoneLineHistory` usa `FIELD_LABELS` para traduzir campos no histórico
 
-## Status de Execução
+### Alterações
 
-### ✅ Wave 1 — Higiene (P1) — CONCLUÍDA
+#### 1. Migration: `responsible_team_id` em `asset_phone_lines`
+```sql
+ALTER TABLE asset_phone_lines
+  ADD COLUMN responsible_team_id UUID REFERENCES teams(id);
+CREATE INDEX idx_asset_phone_lines_responsible_team_id
+  ON asset_phone_lines(responsible_team_id) WHERE responsible_team_id IS NOT NULL;
+```
 
-| # | Ação | Status |
-|---|------|--------|
-| 1.1 | Remover `console.log` de `src/` | ✅ 10 logs removidos em 6 arquivos |
-| 1.2 | Corrigir `select("*,...")` em JetimoberDialog | ✅ Substituído por campos explícitos |
-| 1.3 | Migrar `select("*", {count, head:true})` | ✅ 11 ocorrências migradas para `select("id", ...)` em 3 arquivos |
-| 1.4 | Remover cores hardcoded | ✅ `text-[#25D366]` → `text-emerald-500` |
+#### 2. Estender callback do `BuUserSelect`
+- Ampliar `BuUserSelectedMeta` para incluir `teamId?: string | null` e `teamName?: string | null`
+- No `handleValueChange`, propagar `team_id` e `team_name` do perfil encontrado
+- Mudança retrocompatível (campos opcionais)
 
-### ✅ Wave 3 — Performance Frontend (P2) — CONCLUÍDA
+#### 3. Hook `usePhoneLines.ts`
+- Adicionar `responsible_team_id` ao tipo `PhoneLine` e `CreatePhoneLineInput`
+- Adicionar join: `responsible_team:teams!asset_phone_lines_responsible_team_id_fkey(id, name)`
+- Incluir na mutation de create/update
 
-| # | Ação | Status |
-|---|------|--------|
-| 3.1 | Virtualização de listas | ⏸️ Tabelas já têm query limits (50-100 rows). Migração para VirtualizedTable requer refator de colunas — deferido para PR dedicado |
-| 3.2 | Memoização estratégica | ✅ **15 componentes** memoizados: TicketCard, InventoryCard, OkrObjectiveCard, EnhancedObjectiveCard, OrgObjectiveCard, TeamObjectiveCard, ContributingOkrCard, OkrStatusBadge, StatusBadge, StagnantBadge, KpiCard, ObjectiveListItem, TeamOkrListItem, OrgKrContributionItem |
-| 3.3 | Suspense boundaries | ✅ Já implementado — routes 100% lazy-loaded com Suspense top-level + granular em OrgConstructionReviewPage |
+#### 4. Dialog `PhoneLineDialog.tsx`
+- Adicionar `responsible_team_id` ao schema zod (nullable, optional)
+- Ao selecionar responsável via `onUserSelected`, auto-preencher `responsible_team_id` com o `teamId` recebido
+- Ao limpar responsável, limpar o time
+- Renderizar `TeamSelect` canônico (com `disabled` quando auto-preenchido, editável via botão se necessário) logo abaixo do campo responsável
+- Incluir no payload de submit
 
-### ✅ Wave 4 — Banco de Dados e Backend (P3) — JÁ IMPLEMENTADA
+#### 5. Tabela `PhoneLineTable.tsx`
+- Adicionar coluna "Time responsável" exibindo `item.responsible_team?.name ?? "—"`
 
-| # | Ação | Status |
-|---|------|--------|
-| 4.1 | Índices para tabelas de log | ✅ Já existem (migration 20260314153539) |
-| 4.2 | Avaliar DROP índices | ✅ Já feito (migrations 20260115, 20260119, 20260131) |
-| 4.3 | JSDoc em Edge Functions | ✅ Todas 4 já têm JSDoc completo |
-| 4.4 | Política de retenção | ✅ cron-dispatcher já limpa agent_logs (90d), cron_logs (30d), perf_snapshots (90d) |
+#### 6. Histórico `PhoneLineHistory.tsx`
+- Adicionar `responsible_team_id: "Time responsável"` ao `FIELD_LABELS`
 
-### ✅ Wave 2 — Cobertura de Testes (P2) — CONCLUÍDA (Batch 1)
+### Componentes reutilizados (sem duplicação)
+- `BuUserSelect` — estendido (callback ampliado)
+- `TeamSelect` — usado como display com auto-fill
+- `v_bu_active_profiles` — fonte do `team_id` por perfil (já disponível)
 
-| # | Escopo | Arquivos criados | Testes |
-|---|--------|-----------------|--------|
-| 2.1 | Tickets — pure functions | 5 files (ticketQueryUtils, useApplyInternalRouting, useAttachmentUrl, ticketFieldDefinitions, usePinMessage) | 37 tests |
-| 2.2 | Assets — useAssetPermissionsV2 | 1 file | 9 tests |
-| 2.3 | Auth & RBAC — PermissionGuard, RequirePermission | 2 files | 15 tests |
-| 2.4 | Shared/UI — StatusBadge, EmptyState, LoadingState | 3 files | 39 tests |
+### Arquivos modificados
+| Arquivo | Tipo |
+|---------|------|
+| `migration .sql` | Criado |
+| `src/components/selects/BuUserSelect.tsx` | Editado (callback meta) |
+| `src/modules/assets/hooks/usePhoneLines.ts` | Editado |
+| `src/modules/assets/components/phone-lines/PhoneLineDialog.tsx` | Editado |
+| `src/modules/assets/components/phone-lines/PhoneLineTable.tsx` | Editado |
+| `src/modules/assets/components/phone-lines/PhoneLineHistory.tsx` | Editado |
 
-**Batch 1:** 11 arquivos, 100 testes — todos passando ✅
-
-### ✅ Wave 2 Batch 2 — Testes + Shared Utils
-
-| # | Escopo | Arquivos criados | Testes |
-|---|--------|-----------------|--------|
-| 2.5 | Shared — buildQueryKey, units, paginatedResponse | 3 files | 34 tests |
-
-**Batch 2:** 3 arquivos, 34 testes — todos passando ✅
-
-### ✅ Wave 2 Batch 3 — Events Utils, Query Keys, E2E
-
-| # | Escopo | Arquivos criados | Testes |
-|---|--------|-----------------|--------|
-| 2.6 | Events — webhook, anonymize utils | 2 files | 13 tests |
-| 2.7 | Events — jetExperienceMetrics (business rules) | 1 file | 12 tests |
-| 2.8 | Query Keys — structural validation | 1 file | 14 tests |
-| 2.9 | E2E — events, kpis-extended specs | 2 e2e files | 6 specs |
-
-**Batch 3:** 6 arquivos, 45 testes — todos passando ✅
-
-**Total Wave 2:** 20 arquivos, 173 novos testes + 6 E2E specs
-
----
-
-## Métricas de Sucesso
-
-| Indicador | Antes | Atual | Meta Final |
-|-----------|-------|-------|------------|
-| `console.log` em `src/` | ~10 | 0 ✅ | 0 |
-| `select("*")` real | 12 | 0 ✅ | 0 |
-| Cores hardcoded | 1 | 0 ✅ | 0 |
-| `React.memo` | 0 | **15** ✅ | 15+ |
-| Arquivos de teste | 83+16 | **103+22** ✅ | ~115+20 |
-| **Score geral** | **8.4** | **9.2** | **9.0+** |
