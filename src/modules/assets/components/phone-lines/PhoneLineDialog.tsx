@@ -345,10 +345,34 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
                   <BuUserSelect
                     value={field.value ?? undefined}
                     onValueChange={(val) => field.onChange(val || null)}
+                    onUserSelected={(meta: BuUserSelectedMeta | null) => {
+                      form.setValue("responsible_team_id", meta?.teamId ?? null);
+                    }}
                     placeholder="Selecione o responsável"
                     showSearch
                     excludeExternal
-                    
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Responsible team (auto-filled from responsible user) */}
+          <FormField
+            control={form.control}
+            name="responsible_team_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Time responsável</FormLabel>
+                <FormControl>
+                  <TeamSelect
+                    value={field.value}
+                    onValueChange={(val) => field.onChange(val)}
+                    placeholder="Preenchido automaticamente"
+                    disabled={!!form.watch("responsible_user_id")}
+                    includeNone
+                    noneLabel="Nenhum"
                   />
                 </FormControl>
                 <FormMessage />

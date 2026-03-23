@@ -116,6 +116,9 @@ export function PhoneLineTable({
                 )}
               </TableCell>
               <TableCell>
+                {item.responsible_team?.name ?? "—"}
+              </TableCell>
+              <TableCell>
                 {item.linked_asset ? (
                   <div className="flex items-center gap-1.5 text-sm">
                     <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
