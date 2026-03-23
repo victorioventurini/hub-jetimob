@@ -96,7 +96,7 @@ export default function PhoneLinesPage() {
     await returnPhoneLine.mutateAsync(item.id);
   }, [returnPhoneLine]);
 
-  const hasActiveFilters = statusState.value !== "all" || carrierState.value !== "all";
+  const hasActiveFilters = statusState.value !== "all" || carrierState.value !== "all" || userState.value !== "all" || teamState.value !== "all";
 
   if (isLoading) {
     return (
