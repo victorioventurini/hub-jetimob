@@ -134,6 +134,10 @@ export default function PhoneLinesPage() {
             carrierFilter={carrierState.value}
             onCarrierChange={carrierState.set}
             carriers={carriers}
+            responsibleUserFilter={userState.value}
+            onResponsibleUserChange={userState.set}
+            responsibleTeamFilter={teamState.value}
+            onResponsibleTeamChange={teamState.set}
           />
         </ListPageFilters>
 
