@@ -108,6 +108,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       status: "available",
       current_user_id: null,
       responsible_user_id: null,
+      responsible_team_id: null,
       linked_asset_id: null,
       notes: "",
     },
