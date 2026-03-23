@@ -173,6 +173,7 @@ export function usePhoneLineMutations() {
           status: input.status,
           current_user_id: input.status === "loaned" ? input.current_user_id ?? null : null,
           responsible_user_id: input.responsible_user_id ?? null,
+          responsible_team_id: input.responsible_team_id ?? null,
           linked_asset_id: input.linked_asset_id ?? null,
           notes: input.notes ?? null,
         })

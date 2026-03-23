@@ -163,6 +163,8 @@ export function BuUserSelect({
       onUserSelected?.({
         id: val,
         displayName: profile?.display_name || '',
+        teamId: profile?.team_id ?? null,
+        teamName: profile?.team_name ?? null,
       });
     }
     setOpen(false);
