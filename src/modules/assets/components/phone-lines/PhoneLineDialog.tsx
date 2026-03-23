@@ -311,28 +311,8 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
             />
           </div>
 
-          {/* Current user (visible when loaned) */}
-          {watchStatus === "loaned" && (
-            <FormField
-              control={form.control}
-              name="current_user_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Responsável *</FormLabel>
-                  <FormControl>
-                    <BuUserSelect
-                      value={field.value ?? undefined}
-                      onValueChange={(val) => field.onChange(val)}
-                      placeholder="Selecione o responsável"
-                      showSearch
-                      excludeExternal
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+
+
 
           {/* Responsible user (always visible, optional) */}
           <FormField
