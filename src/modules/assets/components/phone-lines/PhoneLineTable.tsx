@@ -60,7 +60,6 @@ export function PhoneLineTable({
             <TableHead>Operadora</TableHead>
             <TableHead>Plano</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Usuário atual</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Time responsável</TableHead>
             <TableHead>Asset Vinculado</TableHead>
