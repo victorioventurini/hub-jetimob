@@ -56,6 +56,7 @@ const phoneLineSchema = z.object({
   status: z.enum(["available", "loaned"]),
   current_user_id: z.string().nullable().optional(),
   responsible_user_id: z.string().nullable().optional(),
+  responsible_team_id: z.string().nullable().optional(),
   linked_asset_id: z.string().nullable().optional(),
   notes: z.string().optional().nullable(),
 }).refine(
