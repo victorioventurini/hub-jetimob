@@ -43,11 +43,15 @@ export default function PhoneLinesPage() {
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const statusState = useUrlState<string>({ key: "status", defaultValue: "all" });
   const carrierState = useUrlState<string>({ key: "carrier", defaultValue: "all" });
+  const userState = useUrlState<string>({ key: "user", defaultValue: "all" });
+  const teamState = useUrlState<string>({ key: "team", defaultValue: "all" });
 
   const filters = {
     search: searchState.value || undefined,
     status: statusState.value as PhoneLineStatus | "all",
     carrier: carrierState.value !== "all" ? carrierState.value : undefined,
+    responsibleUserId: userState.value !== "all" ? userState.value : undefined,
+    responsibleTeamId: teamState.value !== "all" ? teamState.value : undefined,
   };
 
   // Queries
@@ -92,7 +96,7 @@ export default function PhoneLinesPage() {
     await returnPhoneLine.mutateAsync(item.id);
   }, [returnPhoneLine]);
 
-  const hasActiveFilters = statusState.value !== "all" || carrierState.value !== "all";
+  const hasActiveFilters = statusState.value !== "all" || carrierState.value !== "all" || userState.value !== "all" || teamState.value !== "all";
 
   if (isLoading) {
     return (
@@ -130,6 +134,10 @@ export default function PhoneLinesPage() {
             carrierFilter={carrierState.value}
             onCarrierChange={carrierState.set}
             carriers={carriers}
+            responsibleUserFilter={userState.value}
+            onResponsibleUserChange={userState.set}
+            responsibleTeamFilter={teamState.value}
+            onResponsibleTeamChange={teamState.set}
           />
         </ListPageFilters>
 

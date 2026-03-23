@@ -44,6 +44,8 @@ export interface PhoneLineFilters {
   search?: string;
   status?: PhoneLineStatus | "all";
   carrier?: string;
+  responsibleUserId?: string;
+  responsibleTeamId?: string;
 }
 
 // ── Select fields ──────────────────────────────────────
@@ -88,6 +90,12 @@ export function usePhoneLinesQuery(filters?: PhoneLineFilters) {
       }
       if (filters?.carrier) {
         query = query.eq("carrier", filters.carrier);
+      }
+      if (filters?.responsibleUserId) {
+        query = query.eq("responsible_user_id", filters.responsibleUserId);
+      }
+      if (filters?.responsibleTeamId) {
+        query = query.eq("responsible_team_id", filters.responsibleTeamId);
       }
       if (filters?.search) {
         query = query.or(
