@@ -81,16 +81,16 @@ export function PhoneLineTable({
                 />
               </TableCell>
               <TableCell>
-                {item.current_user ? (
+                {(item.responsible_user ?? item.current_user) ? (
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={item.current_user.photo_url ?? undefined} />
+                      <AvatarImage src={(item.responsible_user ?? item.current_user)?.photo_url ?? undefined} />
                       <AvatarFallback className="text-xs">
-                        {(item.current_user.display_name ?? "?").charAt(0).toUpperCase()}
+                        {((item.responsible_user ?? item.current_user)?.display_name ?? "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm truncate max-w-[150px]">
-                      {item.current_user.display_name ?? "Sem nome"}
+                      {(item.responsible_user ?? item.current_user)?.display_name ?? "Sem nome"}
                     </span>
                   </div>
                 ) : (
