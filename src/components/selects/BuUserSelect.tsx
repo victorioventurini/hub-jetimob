@@ -32,6 +32,8 @@ import { Search, User, Clock, AlertCircle } from "lucide-react";
 export interface BuUserSelectedMeta {
   id: string;
   displayName: string;
+  teamId?: string | null;
+  teamName?: string | null;
 }
 
 export interface BuUserSelectProps {
@@ -161,6 +163,8 @@ export function BuUserSelect({
       onUserSelected?.({
         id: val,
         displayName: profile?.display_name || '',
+        teamId: profile?.team_id ?? null,
+        teamName: profile?.team_name ?? null,
       });
     }
     setOpen(false);

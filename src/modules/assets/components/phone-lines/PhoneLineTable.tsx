@@ -62,6 +62,7 @@ export function PhoneLineTable({
             <TableHead>Status</TableHead>
             <TableHead>Usuário atual</TableHead>
             <TableHead>Responsável</TableHead>
+            <TableHead>Time responsável</TableHead>
             <TableHead>Asset Vinculado</TableHead>
             {canManage && <TableHead className="w-[60px]" />}
           </TableRow>
@@ -113,6 +114,9 @@ export function PhoneLineTable({
                 ) : (
                   "—"
                 )}
+              </TableCell>
+              <TableCell>
+                {item.responsible_team?.name ?? "—"}
               </TableCell>
               <TableCell>
                 {item.linked_asset ? (

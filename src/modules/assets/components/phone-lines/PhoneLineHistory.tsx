@@ -21,6 +21,7 @@ const FIELD_LABELS: Record<string, string> = {
   current_user_id: "Usuário atual",
   responsible_user_id: "Responsável",
   linked_asset_id: "Asset vinculado",
+  responsible_team_id: "Time responsável",
   notes: "Observações",
 };
 

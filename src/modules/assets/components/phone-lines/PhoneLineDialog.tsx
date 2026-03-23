@@ -33,7 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BuUserSelect } from "@/components/selects/BuUserSelect";
+import { BuUserSelect, type BuUserSelectedMeta } from "@/components/selects/BuUserSelect";
+import { TeamSelect } from "@/components/selects/TeamSelect";
 import { useDialogFormReset } from "@/hooks/useDialogFormReset";
 import { formatPhoneInput, normalizePhone, isValidPhone } from "@/lib/phone";
 import { usePhoneLineMutations, usePhoneLineCarriersQuery } from "../../hooks/usePhoneLines";
@@ -55,6 +56,7 @@ const phoneLineSchema = z.object({
   status: z.enum(["available", "loaned"]),
   current_user_id: z.string().nullable().optional(),
   responsible_user_id: z.string().nullable().optional(),
+  responsible_team_id: z.string().nullable().optional(),
   linked_asset_id: z.string().nullable().optional(),
   notes: z.string().optional().nullable(),
 }).refine(
@@ -106,6 +108,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       status: "available",
       current_user_id: null,
       responsible_user_id: null,
+      responsible_team_id: null,
       linked_asset_id: null,
       notes: "",
     },
@@ -120,6 +123,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
         status: item.status,
         current_user_id: item.current_user_id,
         responsible_user_id: item.responsible_user_id,
+        responsible_team_id: item.responsible_team_id,
         linked_asset_id: item.linked_asset_id,
         notes: item.notes ?? "",
       });
@@ -131,6 +135,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
         status: "available",
         current_user_id: null,
         responsible_user_id: null,
+        responsible_team_id: null,
         linked_asset_id: null,
         notes: "",
       });
@@ -161,6 +166,7 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
       status: data.status as "available" | "loaned",
       current_user_id: data.status === "loaned" ? data.current_user_id ?? null : null,
       responsible_user_id: data.responsible_user_id || null,
+      responsible_team_id: data.responsible_team_id || null,
       linked_asset_id: data.linked_asset_id || null,
       notes: data.notes || null,
     };
@@ -339,10 +345,34 @@ export function PhoneLineDialog({ open, onOpenChange, item }: PhoneLineDialogPro
                   <BuUserSelect
                     value={field.value ?? undefined}
                     onValueChange={(val) => field.onChange(val || null)}
+                    onUserSelected={(meta: BuUserSelectedMeta | null) => {
+                      form.setValue("responsible_team_id", meta?.teamId ?? null);
+                    }}
                     placeholder="Selecione o responsável"
                     showSearch
                     excludeExternal
-                    
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Responsible team (auto-filled from responsible user) */}
+          <FormField
+            control={form.control}
+            name="responsible_team_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Time responsável</FormLabel>
+                <FormControl>
+                  <TeamSelect
+                    value={field.value}
+                    onValueChange={(val) => field.onChange(val)}
+                    placeholder="Preenchido automaticamente"
+                    disabled={!!form.watch("responsible_user_id")}
+                    includeNone
+                    noneLabel="Nenhum"
                   />
                 </FormControl>
                 <FormMessage />

@@ -32,9 +32,11 @@ export interface PhoneLine {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  responsible_team_id: string | null;
   // Joined
   current_user?: { id: string; display_name: string | null; photo_url: string | null } | null;
   responsible_user?: { id: string; display_name: string | null; photo_url: string | null } | null;
+  responsible_team?: { id: string; name: string } | null;
   linked_asset?: { id: string; name: string; internal_code: string; status: string } | null;
 }
 
@@ -48,13 +50,16 @@ export interface PhoneLineFilters {
 
 const PHONE_LINE_FIELDS = `
   id, bu_id, phone_number, carrier, plan_type, status,
-  current_user_id, responsible_user_id, linked_asset_id, notes,
+  current_user_id, responsible_user_id, responsible_team_id, linked_asset_id, notes,
   created_at, updated_at, deleted_at,
   current_user:profiles!asset_phone_lines_current_user_id_fkey(
     id, display_name, photo_url
   ),
   responsible_user:profiles!asset_phone_lines_responsible_user_id_fkey(
     id, display_name, photo_url
+  ),
+  responsible_team:teams!asset_phone_lines_responsible_team_id_fkey(
+    id, name
   ),
   linked_asset:asset_inventory!asset_phone_lines_linked_asset_id_fkey(
     id, name, internal_code, status
@@ -133,6 +138,7 @@ interface CreatePhoneLineInput {
   status: PhoneLineStatus;
   current_user_id?: string | null;
   responsible_user_id?: string | null;
+  responsible_team_id?: string | null;
   linked_asset_id?: string | null;
   notes?: string | null;
 }
@@ -167,6 +173,7 @@ export function usePhoneLineMutations() {
           status: input.status,
           current_user_id: input.status === "loaned" ? input.current_user_id ?? null : null,
           responsible_user_id: input.responsible_user_id ?? null,
+          responsible_team_id: input.responsible_team_id ?? null,
           linked_asset_id: input.linked_asset_id ?? null,
           notes: input.notes ?? null,
         })
