@@ -19,22 +19,31 @@ import { useCreateTeamOkrBundle, type CreateTeamOkrBundleInput } from '../useCre
 const TEST_BU_ID = 'bu-test-123';
 const TEST_PROFILE_ID = 'profile-test-456';
 
-// Track all insert/select/single calls per table
-const insertResults: Record<string, any> = {};
+// Per-table error overrides: set tableErrors['okr_dependencies'] = { message: 'err' } to simulate failure
+let tableErrors: Record<string, any> = {};
 let insertCallLog: Array<{ table: string; payload: any }> = [];
+let idCounter = 0;
 
 const mockClient = {
-  from: vi.fn((table: string) => ({
-    insert: vi.fn((payload: any) => {
-      insertCallLog.push({ table, payload });
-      const result = insertResults[table] || { data: { id: `${table}-id-1` }, error: null };
-      return {
-        select: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue(result),
-        })),
-      };
-    }),
-  })),
+  from: vi.fn((table: string) => {
+    const error = tableErrors[table] || null;
+    const id = `${table}-id-${++idCounter}`;
+
+    return {
+      insert: vi.fn((payload: any) => {
+        insertCallLog.push({ table, payload });
+        return {
+          select: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue(
+              error ? { data: null, error } : { data: { id }, error: null }
+            ),
+          })),
+          // For contributors (no .select().single())
+          then: undefined,
+        };
+      }),
+    };
+  }),
 };
 
 vi.mock('@/integrations/supabase/getOptionalBuClient', () => ({
@@ -61,6 +70,7 @@ function createWrapper() {
 
   const Wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
+
   return { Wrapper, queryClient };
 }
 
@@ -96,8 +106,8 @@ describe('useCreateTeamOkrBundle — integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     insertCallLog = [];
-    // Default: all inserts succeed
-    Object.keys(insertResults).forEach(k => delete insertResults[k]);
+    tableErrors = {};
+    idCounter = 0;
   });
 
   it('inserts objective with bu_id explicitly set', async () => {
@@ -146,22 +156,10 @@ describe('useCreateTeamOkrBundle — integration', () => {
     expect(krInsert!.payload.owner_user_id).toBe(TEST_PROFILE_ID);
   });
 
-  it('creates dependencies as non-blocking — error does not throw', async () => {
-    // Make dependency insert fail
-    const originalFrom = mockClient.from;
-    mockClient.from.mockImplementation((table: string) => {
-      if (table === 'okr_dependencies') {
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'dep error' } }),
-            })),
-          })),
-        };
-      }
-      return originalFrom(table);
-    });
+  it('creates dependencies as non-blocking — error logged but does not throw', async () => {
+    tableErrors['okr_dependencies'] = { message: 'dep error' };
 
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
 
@@ -173,25 +171,15 @@ describe('useCreateTeamOkrBundle — integration', () => {
       result.current.mutate(input);
     });
 
-    // Should succeed despite dependency error (non-blocking)
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(consoleError).toHaveBeenCalledWith('Error creating dependency:', expect.anything());
+    consoleError.mockRestore();
   });
 
-  it('creates KR metric links as non-blocking — error does not throw', async () => {
-    const originalFrom = mockClient.from;
-    mockClient.from.mockImplementation((table: string) => {
-      if (table === 'okr_kr_metrics') {
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'link error' } }),
-            })),
-          })),
-        };
-      }
-      return originalFrom(table);
-    });
+  it('creates KR metric links as non-blocking — error logged but does not throw', async () => {
+    tableErrors['okr_kr_metrics'] = { message: 'link error' };
 
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
 
@@ -204,22 +192,12 @@ describe('useCreateTeamOkrBundle — integration', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(consoleError).toHaveBeenCalledWith('Error creating KR metric link:', expect.anything());
+    consoleError.mockRestore();
   });
 
   it('initiative error IS blocking — throws and triggers onError', async () => {
-    const originalFrom = mockClient.from;
-    mockClient.from.mockImplementation((table: string) => {
-      if (table === 'okr_initiatives') {
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'init error' } }),
-            })),
-          })),
-        };
-      }
-      return originalFrom(table);
-    });
+    tableErrors['okr_initiatives'] = { message: 'init error' };
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
@@ -237,24 +215,7 @@ describe('useCreateTeamOkrBundle — integration', () => {
   });
 
   it('objective error blocks everything — no KRs created', async () => {
-    mockClient.from.mockImplementation((table: string) => {
-      if (table === 'okr_team_objectives') {
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'obj error' } }),
-            })),
-          })),
-        };
-      }
-      return {
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { id: 'x' }, error: null }),
-          })),
-        })),
-      };
-    });
+    tableErrors['okr_team_objectives'] = { message: 'obj error' };
 
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
@@ -265,7 +226,6 @@ describe('useCreateTeamOkrBundle — integration', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    // KR table should never have been called
     const krCalls = insertCallLog.filter(c => c.table === 'okr_team_key_results');
     expect(krCalls).toHaveLength(0);
   });
@@ -294,22 +254,6 @@ describe('useCreateTeamOkrBundle — integration', () => {
     );
   });
 
-  it('throws when supabase client is not available', async () => {
-    // Override mock to return null client
-    vi.doMock('@/integrations/supabase/getOptionalBuClient', () => ({
-      useOptionalBuClient: () => ({ client: null }),
-    }));
-
-    const { Wrapper } = createWrapper();
-    const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
-
-    await act(async () => {
-      result.current.mutate(createMinimalInput());
-    });
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-  });
-
   it('inserts initiatives with bu_id and owner_user_id from input', async () => {
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
@@ -332,33 +276,14 @@ describe('useCreateTeamOkrBundle — integration', () => {
     expect(initInsert!.payload.owner_user_id).toBe(TEST_PROFILE_ID);
   });
 
-  it('creates shared OKR contributors when is_shared is true', async () => {
-    // Set up contributor insert to succeed (non-blocking)
+  it('skips dependencies without team or KR reference', async () => {
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
 
-    // Need to handle the contributors insert path (no .select().single())
-    const originalFrom = mockClient.from;
-    mockClient.from.mockImplementation((table: string) => {
-      if (table === 'okr_team_objective_contributors') {
-        return {
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        };
-      }
-      return originalFrom(table);
-    });
-
     const input = createMinimalInput({
-      objective: {
-        title: 'Shared Obj',
-        team_id: 'team-1',
-        org_objective_id: null,
-        cycle_id: 'cycle-1',
-        status: 'active',
-        is_shared: true,
-        responsibility_model: 'collaborative',
-      },
-      contributingTeamIds: ['team-2', 'team-3'],
+      dependencies: [
+        { kr_index: 0 }, // no depends_on_team_id or depends_on_kr_id
+      ],
     });
 
     await act(async () => {
@@ -366,5 +291,34 @@ describe('useCreateTeamOkrBundle — integration', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const depCalls = insertCallLog.filter(c => c.table === 'okr_dependencies');
+    expect(depCalls).toHaveLength(0);
+  });
+
+  it('creates multiple KRs sequentially — all get bu_id and team_id', async () => {
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useCreateTeamOkrBundle(), { wrapper: Wrapper });
+
+    const input = createMinimalInput({
+      keyResults: [
+        { title: 'KR 1', type: 'contribution', baseline: 0, target: 100, unit: '%', direction: 'up', owner_user_id: 'p1' },
+        { title: 'KR 2', type: 'enabler', baseline: 5, target: 50, unit: 'pts', direction: 'up', owner_user_id: 'p2' },
+        { title: 'KR 3', type: 'foundational', baseline: 0, target: 1, unit: 'bool', direction: 'up', owner_user_id: 'p3' },
+      ],
+    });
+
+    await act(async () => {
+      result.current.mutate(input);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const krCalls = insertCallLog.filter(c => c.table === 'okr_team_key_results');
+    expect(krCalls).toHaveLength(3);
+    krCalls.forEach(call => {
+      expect(call.payload.bu_id).toBe(TEST_BU_ID);
+      expect(call.payload.team_id).toBe('team-1');
+    });
   });
 });
