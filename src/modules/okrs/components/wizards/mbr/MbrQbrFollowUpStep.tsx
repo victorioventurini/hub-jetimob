@@ -7,21 +7,19 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, AlertTriangle, Clock, ArrowRight, Link2, ClipboardList } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Clock, Link2, ClipboardList } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
 import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/WizardStepHeader';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-
-import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // Types
@@ -86,9 +84,7 @@ export function MbrQbrFollowUpStep({
     const snapshot = (lastQbrSession.reflection_data as any)?.data || lastQbrSession.reflection_data;
     const items: QbrFollowUpItem[] = [];
 
-    // Extract decisions
-    const decisions = snapshot?.decisions || [];
-    for (const d of decisions) {
+    for (const d of (snapshot?.decisions || [])) {
       items.push({
         id: d.id || crypto.randomUUID(),
         text: d.text,
@@ -100,9 +96,7 @@ export function MbrQbrFollowUpStep({
       });
     }
 
-    // Extract cross-area commitments
-    const commitments = snapshot?.crossCommitments || [];
-    for (const c of commitments) {
+    for (const c of (snapshot?.crossCommitments || [])) {
       items.push({
         id: c.dependencyId || crypto.randomUUID(),
         text: c.description,
@@ -120,7 +114,6 @@ export function MbrQbrFollowUpStep({
     }
   }, [lastQbrSession, followUpItems.length, onFollowUpItemsChange]);
 
-  // Handlers
   const toggleResolved = (itemId: string) => {
     onFollowUpItemsChange(
       followUpItems.map(item =>
@@ -135,97 +128,96 @@ export function MbrQbrFollowUpStep({
 
   const decisionItems = followUpItems.filter(i => i.sourceType === 'decision');
   const commitmentItems = followUpItems.filter(i => i.sourceType === 'commitment');
-
   const noQbrData = !isLoading && followUpItems.length === 0;
 
   return (
     <WizardStepScaffold
-      title="Follow-up do QBR"
-      description="Acompanhamento de decisões e compromissos do último Quarterly Business Review"
+      header={
+        <WizardStepHeader
+          icon={ClipboardList}
+          title="Follow-up do QBR"
+          description="Acompanhamento de decisões e compromissos do último Quarterly Business Review"
+          variant="primary"
+        />
+      }
       footer={
-        <div className="flex justify-between w-full">
-          <Button variant="outline" onClick={onBack}>Voltar</Button>
-          <Button onClick={onContinue}>
-            Continuar <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+        <WizardStepFooter
+          showBack
+          onBack={onBack}
+          primaryLabel="Continuar"
+          onPrimary={onContinue}
+        />
       }
     >
-      {noQbrData ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            <Link2 className="mx-auto h-10 w-10 mb-3 opacity-40" />
-            <p className="font-medium">Nenhum QBR anterior encontrado</p>
-            <p className="text-sm mt-1">
-              Não há decisões ou compromissos de QBR anteriores para acompanhar.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {/* Summary badges */}
-          <div className="flex flex-wrap gap-3">
-            <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3">
-              <Clock className="h-3.5 w-3.5" />
-              {pendingCount} pendente{pendingCount !== 1 ? 's' : ''}
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3 text-green-600 border-green-200 bg-green-50">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {resolvedCount} concluído{resolvedCount !== 1 ? 's' : ''}
-            </Badge>
-            {overdueCount > 0 && (
-              <Badge variant="destructive" className="flex items-center gap-1.5 py-1 px-3">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                {overdueCount} vencido{overdueCount !== 1 ? 's' : ''}
+      <div className="p-6 space-y-6">
+        {noQbrData ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              <Link2 className="mx-auto h-10 w-10 mb-3 opacity-40" />
+              <p className="font-medium">Nenhum QBR anterior encontrado</p>
+              <p className="text-sm mt-1">
+                Não há decisões ou compromissos de QBR anteriores para acompanhar.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Summary badges */}
+            <div className="flex flex-wrap gap-3">
+              <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3">
+                <Clock className="h-3.5 w-3.5" />
+                {pendingCount} pendente{pendingCount !== 1 ? 's' : ''}
               </Badge>
+              <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3 text-status-green border-status-green/20 bg-status-green-muted">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {resolvedCount} concluído{resolvedCount !== 1 ? 's' : ''}
+              </Badge>
+              {overdueCount > 0 && (
+                <Badge variant="destructive" className="flex items-center gap-1.5 py-1 px-3">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {overdueCount} vencido{overdueCount !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+
+            {/* Decisions section */}
+            {decisionItems.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Decisões do QBR</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="max-h-[300px]">
+                    <div className="space-y-3">
+                      {decisionItems.map(item => (
+                        <FollowUpItemRow key={item.id} item={item} onToggle={toggleResolved} />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
             )}
-          </div>
 
-          {/* Decisions section */}
-          {decisionItems.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Decisões do QBR</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="max-h-[300px]">
-                  <div className="space-y-3">
-                    {decisionItems.map(item => (
-                      <FollowUpItemRow
-                        key={item.id}
-                        item={item}
-                        onToggle={toggleResolved}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Commitments section */}
-          {commitmentItems.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Compromissos Cross-Área</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="max-h-[300px]">
-                  <div className="space-y-3">
-                    {commitmentItems.map(item => (
-                      <FollowUpItemRow
-                        key={item.id}
-                        item={item}
-                        onToggle={toggleResolved}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
+            {/* Commitments section */}
+            {commitmentItems.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Compromissos Cross-Área</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="max-h-[300px]">
+                    <div className="space-y-3">
+                      {commitmentItems.map(item => (
+                        <FollowUpItemRow key={item.id} item={item} onToggle={toggleResolved} />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </div>
     </WizardStepScaffold>
   );
 }
@@ -264,9 +256,7 @@ function FollowUpItemRow({
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-1.5">
           {item.owner && (
-            <span className="text-xs text-muted-foreground">
-              → {item.owner.name}
-            </span>
+            <span className="text-xs text-muted-foreground">→ {item.owner.name}</span>
           )}
           {item.deadline && (
             <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
