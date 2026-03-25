@@ -1,4 +1,4 @@
-import { Settings, Calendar, Scale, BookOpen, AlertTriangle } from "lucide-react";
+import { Calendar, Scale, BookOpen, Workflow } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CyclesTab } from "../components/settings/CyclesTab";
 import { LimitsTab } from "../components/settings/LimitsTab";
 import { RulesInfoTab } from "../components/settings/RulesInfoTab";
-// OkrBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
+import { RitualsTab } from "../components/settings/RitualsTab";
+import { AlertTriangle } from "lucide-react";
 
 export default function OkrsSettingsPage() {
   usePageTitle("Configurações de OKRs", {
@@ -16,7 +17,6 @@ export default function OkrsSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header com breadcrumbs integrados (padrão canônico) */}
       <PageHeader
         title="Configurações de OKRs"
         description="Configure ciclos, limites e regras de vínculo da metodologia OKR"
@@ -26,7 +26,6 @@ export default function OkrsSettingsPage() {
         ]}
       />
 
-      {/* Info Banner */}
       <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/30">
         <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
         <div className="text-sm">
@@ -44,6 +43,10 @@ export default function OkrsSettingsPage() {
             <Calendar className="h-4 w-4" />
             Ciclos
           </TabsTrigger>
+          <TabsTrigger value="rituals" className="gap-2">
+            <Workflow className="h-4 w-4" />
+            Rituais
+          </TabsTrigger>
           <TabsTrigger value="limits" className="gap-2">
             <Scale className="h-4 w-4" />
             Limites
@@ -56,6 +59,10 @@ export default function OkrsSettingsPage() {
 
         <TabsContent value="cycles">
           <CyclesTab />
+        </TabsContent>
+
+        <TabsContent value="rituals">
+          <RitualsTab />
         </TabsContent>
 
         <TabsContent value="limits">
