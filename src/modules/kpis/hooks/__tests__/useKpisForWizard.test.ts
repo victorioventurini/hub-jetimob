@@ -11,9 +11,21 @@ vi.mock('@/integrations/supabase/useBuScopedSupabase', () => ({
   useOptionalBuScopedSupabase: vi.fn(),
 }));
 
-vi.mock('@tanstack/react-query', () => ({
-  useQuery: vi.fn(),
-}));
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQuery: vi.fn(),
+  };
+});
+
+vi.mock('@/contexts/BuContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/BuContext')>();
+  return {
+    ...actual,
+    useBu: vi.fn(() => ({ currentBuId: 'test-bu' })),
+  };
+});
 
 import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useQuery } from '@tanstack/react-query';
