@@ -1114,7 +1114,7 @@ Centraliza a consulta de todas as sessões concluídas. Features:
 
 Todos incluem BCC para `hub@jetimob.com`.
 
-## 3.14 Integração com IA (Vic)
+## 3.15 Integração com IA (Vic)
 
 📁 **`src/modules/okrs/types/wizard.ts`** — `WizardVicContext`
 
