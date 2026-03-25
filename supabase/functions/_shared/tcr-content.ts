@@ -8,7 +8,7 @@
  * Updated: 2026-01-22
  */
 
-export const TCR_VERSION = "3.14.0";
+export const TCR_VERSION = "3.15.0";
 export const TCR_UPDATED_AT = "2026-03-25";
 
 export interface TcrSection {
