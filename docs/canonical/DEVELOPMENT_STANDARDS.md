@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.26.0  
-**Última atualização:** 2026-02-23  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0** | **MBR Ritual v1.0**
-**Referência:** TCR v3.9.0
+**Versão:** 1.27.0  
+**Última atualização:** 2026-03-25  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0** | **MBR Ritual v1.0** | **QBR Ritual v1.0** | **AI Agents Gemini 3 Flash Migration** | **Automated Testing Framework v1.2**
+**Referência:** TCR v3.15.0
 
 ---
 
