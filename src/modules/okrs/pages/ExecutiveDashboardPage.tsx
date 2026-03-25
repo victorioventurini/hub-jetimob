@@ -92,6 +92,7 @@ export default function ExecutiveDashboardPage() {
             lastMbrDate={lastMbrDate}
             isLoading={loadingMbr}
           />
+          <QbrWizardCard variant="executive" />
         </div>
 
         {/* Ritual History Quick Access */}
