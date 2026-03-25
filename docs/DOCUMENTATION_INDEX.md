@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-03-20  
-**TCR Version:** 3.12.0  
+**Última atualização:** 2026-03-25  
+**TCR Version:** 3.15.0  
 **System Health:** 10/10 ✅
 
 ---
@@ -29,7 +29,7 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.10.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.15.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.26.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | v1.2.2 |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.2.0 |
@@ -117,4 +117,4 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Atualizado em 2026-03-20 — TCR v3.12.0 — Health Score 10/10*
+*Atualizado em 2026-03-25 — TCR v3.15.0 — Health Score 10/10*

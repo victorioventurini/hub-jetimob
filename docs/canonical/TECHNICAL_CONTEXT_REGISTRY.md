@@ -1,14 +1,14 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.14.0  
-**Última atualização:** 2026-03-25 (v3.14.0 - QBR (Quarterly Business Review) Ritual v1.0 — 4 wizards full-page (Pre-Leaders, Pre-C-Level, Meeting, Post), 3 edge functions de resumo multi-agente, inline OKR proposal sub-flow, integração com follow-up no MBR)
+**Versão:** 3.15.0  
+**Última atualização:** 2026-03-25 (v3.15.0 - AI Agents Model Migration to Gemini 3 Flash Preview — 11 agents migrados, documentação consolidada, 26 edge functions, 140 tabelas, 218 funções SQL, 94 enums)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (218 funções)** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
 > ### Padrões de Desenvolvimento
-> - [DEVELOPMENT_STANDARDS.md v1.25.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
+> - [DEVELOPMENT_STANDARDS.md v1.27.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
 > - [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
 > - [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state para filtros e paginação
@@ -2175,7 +2175,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 ---
 
-## 8. Edge Functions
+## 8. Edge Functions (26 funções ativas)
 
 | Função | Descrição | Criticidade |
 |--------|-----------|-------------|
@@ -2184,18 +2184,25 @@ const { profileId, isLoading } = useMyProfileId();
 | `cron-dispatcher` | Dispatcher central para jobs agendados via pg_cron | 🔴 Crítica |
 | `process-notification-outbox` | Processa fila de notificações (email, push) | 🔴 Crítica |
 | `invoke-vic` | Invoca agentes Vic (IA) | 🟡 Alta |
+| `health-check` | Health check do sistema | 🟡 Alta |
 | `search-cities` | Autocomplete de cidades (Google Maps) | 🟢 Normal |
 | `search-address` | Autocomplete de endereços (Google Places) | 🟢 Normal |
 | `get-place-details` | Detalhes de endereço (Google Places) | 🟢 Normal |
 | `culture-message` | Gera mensagem de cultura (IA) | 🟢 Normal |
 | `process-agent-document` | Processa documentos para RAG | 🟢 Normal |
 | `get-tcr` | Retorna TCR para Custom GPT | 🟢 Normal |
-| `global-search` | Busca multi-contexto (ver seção 8.1) | 🟢 Normal |
 | `get-public-asset` | Retorna dados sanitizados de asset por `internal_code` (público, sem JWT) | 🟢 Normal |
 | `okr-construction-review` | Avalia qualidade de OKRs antes do ciclo (IA) | 🟢 Normal |
 | `okr-org-health-review` | Avalia saúde de OKRs organizacionais (IA) | 🟢 Normal |
 | `evaluate-notification-health` | Avalia saúde do sistema de notificações | 🟢 Normal |
 | `send-partner-invite` | Envia convite para parceiros externos | 🟢 Normal |
+| `collaborator-checkin-summary` | Resumo de check-in do colaborador (IA) | 🟢 Normal |
+| `team-checkin-summary` | Resumo de check-in do time (IA) | 🟢 Normal |
+| `clevel-checkin-summary` | Resumo de check-in C-Level (IA) | 🟢 Normal |
+| `mbr-summary` | Resumo do MBR (3 agentes IA) | 🟢 Normal |
+| `qbr-pre-summary` | Resumo do Pré-QBR (3 agentes IA) | 🟢 Normal |
+| `qbr-meeting-summary` | Resumo da Reunião QBR (3 agentes IA) | 🟢 Normal |
+| `qbr-post-summary` | Resumo Pós-QBR com ata executiva (3 agentes IA) | 🟢 Normal |
 | `audit-permissions` | Auditoria de permissões (dev-only) | ⚪ Dev |
 
 ### 8.1 Global Search
@@ -3442,6 +3449,18 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.15.0 (2026-03-25)
+- **AI Agents Model Migration — Gemini 3 Flash Preview**:
+  - Todos os 11 agentes de IA ativos migrados para `google/gemini-3-flash-preview`
+  - Agentes afetados: `alinhamento-estrategico`, `coach-okrs`, `persona-vic`, `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao`, `initiative-validator`, `kr-advisor`, `hr-onboarding-assistant`, `ticket-assistant`, `hub-admin-assistant`
+  - Modelos anteriores: `gpt-4o-mini`, `gpt-4-turbo` → unificados em `google/gemini-3-flash-preview`
+- **Documentação Consolidada v3.15.0**:
+  - TCR atualizado com contagens reais: 140 tabelas, 218 funções SQL, 94 enums, 26 edge functions
+  - Edge Functions section atualizada: adicionadas 8 funções de resumo IA (collaborator, team, clevel, mbr, qbr-pre, qbr-meeting, qbr-post) + health-check
+  - DEVELOPMENT_STANDARDS atualizado para v1.27.0 com QBR ritual e testing framework
+  - Deep Dive, DOCUMENTATION_INDEX e tcr-content.ts sincronizados
+  - Automated Testing Framework: test-utils com TooltipProvider, AuthContext, BuContext wrappers
 
 ### v3.9.0 (2026-03-03)
 - **MBR (Monthly Business Review) Ritual v1.0**:
