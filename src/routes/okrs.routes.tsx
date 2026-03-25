@@ -94,5 +94,11 @@ export const okrRoutes = (
     
     {/* Team Contribution */}
     <Route path="/okrs/team-contribution/:teamId" element={<OkrRoute><TeamContributionPage /></OkrRoute>} />
+    
+    {/* QBR — Quarterly Business Review */}
+    <Route path="/okrs/qbr-pre" element={<OkrRoute><QbrPrePage /></OkrRoute>} />
+    <Route path="/okrs/qbr-pre-clevel" element={<OkrRoute requiresBuAdmin><QbrPreCLevelPage /></OkrRoute>} />
+    <Route path="/okrs/qbr" element={<OkrRoute requiresBuAdmin><QbrMeetingPage /></OkrRoute>} />
+    <Route path="/okrs/qbr-post" element={<OkrRoute requiresBuAdmin><QbrPostPage /></OkrRoute>} />
   </>
 );
