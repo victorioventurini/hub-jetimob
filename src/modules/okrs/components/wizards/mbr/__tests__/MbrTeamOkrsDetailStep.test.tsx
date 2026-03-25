@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { MbrTeamOkrsDetailStep, MbrTeamOkrsDetailStepProps } from '../MbrTeamOkrsDetailStep';
 import type { MbrTeamOkrSnapshot } from '@/modules/okrs/types/wizard';

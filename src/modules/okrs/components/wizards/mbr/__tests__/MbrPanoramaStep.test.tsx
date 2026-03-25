@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test/test-utils';
 import { MbrPanoramaStep } from '../MbrPanoramaStep';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 

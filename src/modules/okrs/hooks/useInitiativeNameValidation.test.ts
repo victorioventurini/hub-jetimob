@@ -253,7 +253,7 @@ describe('Edge Cases', () => {
   });
 
   it('should handle very long name', () => {
-    const name = 'Implementar sistema completo de monitoramento e alertas para todas as métricas de negócio da empresa';
+    const name = 'Implementar sistema completo de monitoramento e alertas para todas as métricas de negócio da empresa inteira';
     expect(name.length).toBeGreaterThan(100);
     // Should still validate
   });

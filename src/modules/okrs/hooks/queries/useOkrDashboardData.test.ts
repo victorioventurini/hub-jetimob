@@ -137,9 +137,9 @@ describe('calculateOverallProgress', () => {
       expect(calculateOverallProgress(krs)).toBe(50);
     });
 
-    it('should clamp to 100 when exceeding target', () => {
+    it('should allow over 100 when exceeding target (no-clamp)', () => {
       const krs = [{ baseline: 0, current_value: 150, target: 100, direction: 'up' }];
-      expect(calculateOverallProgress(krs)).toBe(100);
+      expect(calculateOverallProgress(krs)).toBe(150);
     });
 
     it('should clamp to 0 when below baseline', () => {

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test/test-utils';
 import { WizardStepFooter, WizardFirstStepFooter, WizardLastStepFooter, WizardOptionalStepFooter } from '../WizardStepFooter';
 
 describe('WizardStepFooter', () => {
@@ -30,12 +30,14 @@ describe('WizardStepFooter', () => {
 
   it('disables primary when primaryDisabled', () => {
     render(<WizardStepFooter onBack={vi.fn()} onPrimary={vi.fn()} primaryDisabled />);
-    expect(screen.getByText('Continuar')).toBeDisabled();
+    const btn = screen.getByText('Continuar').closest('button');
+    expect(btn).toBeDisabled();
   });
 
   it('disables back when backDisabled', () => {
     render(<WizardStepFooter onBack={vi.fn()} onPrimary={vi.fn()} backDisabled />);
-    expect(screen.getByText('Voltar')).toBeDisabled();
+    const btn = screen.getByText('Voltar').closest('button');
+    expect(btn).toBeDisabled();
   });
 
   it('uses custom labels', () => {

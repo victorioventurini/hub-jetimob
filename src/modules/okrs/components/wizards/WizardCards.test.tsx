@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test/test-utils';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mock useNavigate

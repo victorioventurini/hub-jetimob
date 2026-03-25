@@ -4,7 +4,7 @@
  * Tests permission derivation logic for Assets module.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook } from '@/test/test-utils';
 
 // Mock dependencies
 vi.mock('@/hooks/usePermissions', () => ({

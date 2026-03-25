@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test/test-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CycleCheckinsFilters } from './cycle-checkins/CycleCheckinsFilters';
 import { BrowserRouter } from 'react-router-dom';
