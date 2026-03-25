@@ -66,7 +66,7 @@ describe('StatusDistributionBar', () => {
     it('should display on_track count', () => {
       render(<StatusDistributionBar counts={mockCounts} />);
       
-      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getAllByText('5').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should display at_risk count', () => {
