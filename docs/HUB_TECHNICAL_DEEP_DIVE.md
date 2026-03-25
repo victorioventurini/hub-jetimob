@@ -440,6 +440,10 @@ O sistema de insights classifica cada KR em um de 8 estados, cada um com semânt
 | `ManagersCheckinPage.tsx` | `/okrs/managers-checkin` | Wizard check-in gestores |
 | `CLevelCheckinPage.tsx` | `/okrs/clevel-checkin` | Wizard check-in C-Level |
 | `MbrPage.tsx` | `/okrs/mbr` | Monthly Business Review |
+| `QbrPrePage.tsx` | `/okrs/qbr-pre` | QBR Pré-Líderes (balanço + proposta OKRs) |
+| `QbrPreCLevelPage.tsx` | `/okrs/qbr-pre-clevel` | QBR Pré-C-Level (calibração + diretrizes) |
+| `QbrMeetingPage.tsx` | `/okrs/qbr` | QBR Reunião (aprovação + decisões) |
+| `QbrPostPage.tsx` | `/okrs/qbr-post` | QBR Pós (promoção + ata executiva) |
 | `RitualHistoryPage.tsx` | `/okrs/ritual-history` | Histórico de rituais |
 | `CycleCheckinsPage.tsx` | `/okrs/checkins` | Check-ins do ciclo |
 | `OkrQualityPage.tsx` | `/okrs/quality` | Qualidade dos OKRs |
@@ -447,6 +451,7 @@ O sistema de insights classifica cada KR em um de 8 estados, cada um com semânt
 | `OrgConstructionReviewPage.tsx` | `/okrs/org-construction-review` | Revisão org (BU admin) |
 | `OrgAnalysisPage.tsx` | `/okrs/analysis` | Análise org (BU admin) |
 | `OkrHealthPage.tsx` | `/okrs/health` | Saúde dos OKRs (BU admin) |
+| `OkrsSettingsPage.tsx` | — | Configurações de OKRs |
 | `OkrsSettingsPage.tsx` | — | Configurações de OKRs |
 
 ## 2.9 Rotas
