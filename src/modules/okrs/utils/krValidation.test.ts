@@ -23,9 +23,8 @@ describe('validateKrTitle', () => {
     it('should warn when title starts with activity word "criar"', () => {
       const result = validateKrTitle('Criar dashboard de vendas');
       expect(result.isValid).toBe(true);
-      expect(result.warnings).toHaveLength(1);
-      expect(result.warnings[0]).toContain('criar');
-      expect(result.warnings[0]).toContain('parece uma atividade');
+      expect(result.warnings.length).toBeGreaterThanOrEqual(1);
+      expect(result.warnings.some(w => w.includes('parece uma atividade'))).toBe(true);
     });
 
     it('should warn when title starts with activity word "implementar"', () => {

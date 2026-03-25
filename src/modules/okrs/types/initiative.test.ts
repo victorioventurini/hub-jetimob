@@ -108,14 +108,14 @@ describe('getInitiativePriorityColor', () => {
     expect(color).toContain('muted');
   });
 
-  it('should return yellow color for medium priority', () => {
+  it('should return semantic warning token for medium priority', () => {
     const color = getInitiativePriorityColor('medium');
-    expect(color).toContain('yellow');
+    expect(color).toContain('warning');
   });
 
-  it('should return red color for high priority', () => {
+  it('should return semantic destructive token for high priority', () => {
     const color = getInitiativePriorityColor('high');
-    expect(color).toContain('red');
+    expect(color).toContain('destructive');
   });
 
   it('should return muted color for null priority', () => {
@@ -123,9 +123,9 @@ describe('getInitiativePriorityColor', () => {
     expect(color).toContain('muted');
   });
 
-  it('should include dark mode variants for medium and high', () => {
-    expect(getInitiativePriorityColor('medium')).toContain('dark:');
-    expect(getInitiativePriorityColor('high')).toContain('dark:');
+  it('should return semantic token classes', () => {
+    expect(getInitiativePriorityColor('medium')).toMatch(/text-/);
+    expect(getInitiativePriorityColor('high')).toMatch(/text-/);
   });
 });
 

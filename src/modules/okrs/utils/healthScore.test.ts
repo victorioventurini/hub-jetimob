@@ -70,17 +70,17 @@ describe('calculateObjectiveHealth', () => {
       expect(progressFactor?.score).toBe(50);
     });
 
-    it('should clamp progress between 0 and 100', () => {
+    it('should allow progress above 100 for overachievement', () => {
       const result = calculateObjectiveHealth({
         krs: [
-          createMockKr({ current_value: 150, baseline: 0, target: 100, direction: 'up' }), // >100%
+          createMockKr({ current_value: 150, baseline: 0, target: 100, direction: 'up' }),
         ],
         initiatives: [],
         cycle: null,
       });
       
       const progressFactor = result.factors.find(f => f.id === 'kr_progress');
-      expect(progressFactor?.score).toBe(100);
+      expect(progressFactor?.score).toBe(150);
     });
 
     it('should handle baseline equal to target for "up" direction', () => {
