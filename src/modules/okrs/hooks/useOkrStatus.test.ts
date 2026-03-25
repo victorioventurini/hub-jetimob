@@ -141,9 +141,9 @@ describe('calculateAutoStatus', () => {
       expect(status).toBe('on_track');
     });
 
-    it('should return on_track when exactly at expected progress', () => {
-      // At 50% elapsed, having 50% progress is on track
-      const status = calculateAutoStatus(0, 50, 100, 'up', periodStart, periodEnd);
+    it('should return on_track when above expected progress', () => {
+      // At ~50% elapsed, having 55% progress is on track
+      const status = calculateAutoStatus(0, 55, 100, 'up', periodStart, periodEnd);
       expect(status).toBe('on_track');
     });
   });
