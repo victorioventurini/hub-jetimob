@@ -1,193 +1,173 @@
 
 
-# Plano de Implementação: Rito QBR (Quarterly Business Review)
+# Plano de Testes Completos — Módulo OKRs e Wizards
 
-## Resumo
+## Contexto
 
-O QBR é um ritual trimestral composto por 4 wizards conectados em cascata. O plano do Claude é sólido e altamente alinhado com a arquitetura existente. Abaixo, apresento o plano validado com ajustes baseados no conhecimento real do codebase.
+O projeto tem **547 testes passando** (0 falhas) e boa cobertura em utils (`progressCalculation`, `krValidation`, `linkingRules`, `healthScore`). Porém, há lacunas significativas:
 
----
+**Já coberto (não reimplementar):**
+- `progressCalculation.ts` — 15 testes (up, down, maintain, >100%, baseline zero, aggregated, nullable)
+- `krValidation.ts` — 22 testes (title, values, metrics, types, placeholders)
+- `linkingRules.ts` — 27 testes (objective→objective, kr→kr, kr→objective, limits)
+- `healthScore.ts` — 20 testes (6 fatores, health levels, config)
 
-## Correções ao plano do Claude
+**Lacunas identificadas (o que falta):**
+- `calculateKrState()` — **0 testes** (8 estados, priorização, filtering)
+- `analyzePace()` — **0 testes** (pace analysis, cycle elapsed, tolerance)
+- `useGenericWizardDraft` — **0 testes de integração** (draft persistence, clearDraft, session creation)
+- `useCreateTeamOkrBundle` — **0 testes** (atomic creation, rollback)
+- `useOkrMutations` — testes existentes são apenas type-checks, sem integration real
+- Wizard E2E — apenas redirect tests, nenhum fluxo funcional
+- Edge functions — **0 testes**
 
-### 1. `TeamOkrCreationFlow` não existe
-O Claude propõe um componente `TeamOkrCreationFlow` com `mode="draft"`. Esse componente **não existe** no codebase. O wizard de criação de OKRs é implementado diretamente em `OkrCreationPage.tsx`, que orquestra 11 step components individuais. A abordagem correta para o passo 4 do `qbr-pre` é **compor os mesmos step components** (`TeamOkrObjectiveStep`, `TeamOkrKrTypeStep`, `TeamOkrKrDetailStep`, etc.) dentro do `QbrPrePage`, usando o mesmo `useWizardDraft` adaptado — não invocar um "sub-flow" inexistente.
-
-### 2. `TeamCheckinDecision.category` precisa de extensão cuidadosa
-Hoje aceita `'decision' | 'focus_adjustment' | 'next_step'`. Adicionar `'strategic_proposal'` impacta `InlineDecisionInput` (que tem `CATEGORY_CONFIG` hardcoded) e `DecisionCard`. Ambos precisam de atualização.
-
-### 3. `useWizardDraft` vs `useGenericWizardDraft`
-O wizard de criação de OKRs usa `useWizardDraft` (específico, com campos flat). Os demais (MBR, check-ins) usam `useGenericWizardDraft` (genérico, com `data: TData`). Os 4 wizards QBR devem usar `useGenericWizardDraft`, como o MBR.
-
-### 4. `qbr_status` em `cycles` — validação de transições
-O Claude define transições mas não propõe trigger de validação. Recomendo uma trigger `trg_validate_qbr_status_transition` para enforcar a máquina de estados.
-
----
-
-## Fases de Implementação
-
-### Fase 1 — Schema e tipos (fundação)
-
-**Migração SQL:**
-- `cycles.qbr_status` com CHECK constraint e default `'closed'`
-- `okr_team_objectives`: campos `qbr_origin_session_id`, `qbr_approval_status`, `qbr_discard_reason`
-- `kpi_metrics`: campos `zombie_candidate`, `kpi_to_create`
-- Atualizar `okr_wizard_sessions_wizard_type_check` para incluir `'qbr-pre'`, `'qbr-pre-clevel'`, `'qbr-meeting'`, `'qbr-post'`, `'qbr-report'`
-
-**Tipos TypeScript** (`src/modules/okrs/types/wizard.ts`):
-- Adicionar 4 personas ao `WizardPersona`
-- Adicionar `'strategic_proposal'` ao `TeamCheckinDecision.category`
-- Adicionar novos source steps ao `TeamCheckinDecisionSourceStep`
-- Criar interfaces: `QbrPreDraftData`, `QbrCLevelDraftData`, `QbrMeetingDraftData`, `QbrPostDraftData` (seguindo padrão `MbrDraftData`)
-- Criar snapshots: `QbrPreSnapshot`, `QbrCLevelSnapshot`, `QbrMeetingSnapshot`, `QbrPostSnapshot`
-- Criar `QbrMeetingGovernanceChecklist`, `QbrPostGovernanceChecklist`
-
-**Atualizar `InlineDecisionInput` e `DecisionCard`:**
-- Adicionar `'strategic_proposal'` ao `CATEGORY_CONFIG`
-
-**Rotas** (`src/routes/okrs.routes.tsx`):
-- 4 novas rotas usando o helper `OkrRoute` existente
-
-### Fase 2 — Wizard `qbr-pre` (líderes de time)
-
-**Página:** `src/modules/okrs/pages/QbrPrePage.tsx`
-- Segue padrão `MbrPage.tsx`: `useGenericWizardDraft<QbrPreStep, QbrPreDraftData>`
-- 6 steps (balanço, KPIs, aprendizados, objetivo, KR details, resumo)
-- Pré-condição: verificar `cycles.qbr_status IN ('open', 'collecting')`
-
-**Step 1 — Balanço:** `QbrBalanceStep.tsx`
-- Reutiliza `useTeamPreviousCycleAnalysis` e `useKrStateInsights`
-- Reutiliza `KrContextCard`, `KrStateInsightCard`
-
-**Step 2 — KPIs:** `QbrKpiAnalysisStep.tsx`
-- Reutiliza `useKpisForWizardV2` com `scope: 'leader'`
-- Reutiliza padrão `MbrKpiSnapshot` para congelar dados
-
-**Step 3 — Aprendizados:** `QbrLearningsStep.tsx`
-- Reutiliza `ReflectionQuestions`, `VicInsightCard`
-
-**Step 4 — Proposta de OKRs:** Composição inline dos step components do wizard de criação
-- Usa `TeamOkrObjectiveStep`, `TeamOkrKrTypeStep`, `TeamOkrKrDetailStep`, `TeamOkrKrMetricsStep`, `TeamOkrDependenciesStep`, `TeamOkrInitiativesStep` diretamente
-- Dados salvos no draft QBR, não em `useWizardDraft` separado
-- Não chama `useCreateTeamOkrBundle` — apenas persiste no draft
-
-**Step 5 — Resumo:** `QbrPreSummary.tsx`
-- Congela `QbrPreSnapshot` em `reflection_data`
-- Atualiza `cycles.qbr_status`
-
-**Arquivos:**
-```
-src/modules/okrs/pages/QbrPrePage.tsx
-src/modules/okrs/components/wizards/qbr-pre/
-├── QbrBalanceStep.tsx
-├── QbrKpiAnalysisStep.tsx
-├── QbrLearningsStep.tsx
-└── QbrPreSummary.tsx
-```
-
-### Fase 3 — Wizard `qbr-pre-clevel`
-
-**Página:** `src/modules/okrs/pages/QbrPreCLevelPage.tsx`
-- Acesso: `BuAdminRoute`
-- Pré-condição: `cycles.qbr_status = 'reviewing'`
-
-**Steps:**
-1. **Leitura do sistema:** Consolida snapshots dos líderes. Reutiliza `useCompanyOkrs`, `useOrgOkrAnalysis`. IA via `useWizardAI` com agente `alinhamento-estrategico`.
-2. **Análise estratégica:** Reflexão C-Level com `VicInsightCard`.
-3. **Validação de OKRs:** Revisão das propostas dos líderes com flags de calibração. Reutiliza componentes de `MbrTeamOkrsOverviewStep` adaptados.
-4. **Direcionamentos:** `DecisionCard` + `InlineDecisionInput` com `category: 'strategic_proposal'`.
-5. **Avaliação:** `RitualImprovementFeedback` sem alteração.
-
-**Arquivos:**
-```
-src/modules/okrs/pages/QbrPreCLevelPage.tsx
-src/modules/okrs/components/wizards/qbr-pre-clevel/
-├── QbrCLevelSystemReadStep.tsx
-├── QbrCLevelStrategicStep.tsx
-├── QbrCLevelOkrValidationStep.tsx
-└── QbrCLevelDirectivesStep.tsx
-```
-
-### Fase 4 — Edge function `qbr-pre-summary`
-
-Segue padrão `mbr-summary/index.ts`:
-- Consolida todos os `qbr-pre` + `qbr-pre-clevel` do ciclo
-- 3 agentes IA em paralelo via `llmComplete`
-- Salva resultado como `wizard_type: 'qbr-report'`
-- Envia via `emit_notification_event`
-- Transiciona `qbr_status` → `ready`
-
-### Fase 5 — Wizard `qbr-meeting`
-
-**Página:** `src/modules/okrs/pages/QbrMeetingPage.tsx`
-- Padrão MBR com snapshots imutáveis + gates
-
-**Steps:**
-1. **Abertura:** Carrega relatório pré-QBR + direcionamentos C-Level via `useLastCompletedSession`
-2. **Revisão de OKRs por time (gate):** Navegação 1-de-N como `MbrTeamOkrsDetailStep`. Ações: approved/approved_with_changes/discarded/defer. Gate: todos revisados.
-3. **Decisões (gate):** `DecisionCard` com `owner` e `deadline` obrigatórios. Gate: mínimo 1 decisão.
-4. **Compromissos cross-área:** Vincula a OKRs aprovados.
-5. **Avaliação:** `RitualImprovementFeedback`.
-6. **Encerramento:** Checklist de governança. Dispara `qbr-meeting-summary`.
-
-### Fase 6 — Wizard `qbr-post`
-
-**Página:** `src/modules/okrs/pages/QbrPostPage.tsx`
-
-**Steps:**
-1. **Promoção de OKRs:** `useCreateTeamOkrBundle` para cada time com status `approved`. Seta `qbr_origin_session_id` e `qbr_approval_status`.
-2. **Decisões complementadas:** Carrega do meeting snapshot, permite completar.
-3. **Compromissos formalizados:** Salva como `okr_dependencies`.
-4. **Cadência de follow-up:** Configura alertas e pauta do próximo MBR.
-5. **Ata executiva e encerramento:** Campo de texto + checklist. Dispara `qbr-post-summary`. Transiciona `qbr_status` → `done`.
-
-### Fase 7 — Integração com rituais existentes
-
-- **MBR:** Step condicional `QbrDecisionsFollowUpStep` antes de `MbrDecisionsStep` quando existem decisões QBR pendentes no ciclo
-- **RitualHistoryPage:** Adicionar `'qbr-pre' | 'qbr-pre-clevel' | 'qbr-meeting' | 'qbr-post'` nos filtros
-- **WizardVicContext:** Adicionar 4 novos tipos de contexto
+**Correções ao documento do Claude:**
+- `okr_wizard_session_drafts` não existe — usar `okr_wizard_sessions`
+- `validateKrValues` não valida "rejeita KR sem título" nem "sem meta" (essas são responsabilidades de formulário)
+- `analyzePace` usa tolerância de 10% por padrão, não ±10% exato
+- O campo `qbr_status` tem valores `open`, `collecting`, `reviewing`, `ready`, `done`, `closed` — o Claude omitiu `reviewing` e `ready`
+- `calculateKrState` verifica `stagnant` ANTES de `at_risk` (prioridade correta)
+- Os E2E de edge functions não são viáveis no Lovable (sem `supabase start`)
 
 ---
 
-## Componentes reutilizados sem alteração
+## Plano de Implementação (6 fases)
 
-| Componente | Uso |
+### Fase 1 — Testes unitários: `calculateKrState` e `analyzePace`
+**Prioridade:** Alta | **Estimativa:** ~2 mensagens
+
+**Arquivo:** `src/modules/okrs/hooks/__tests__/useKrStateInsights.test.ts`
+
+Testes para `calculateKrState()`:
+- 8 estados: not_started, healthy, stagnant, at_risk, off_track, achieved, exceeded, not_achieved
+- Precedência: stagnant > at_risk quando daysSinceCheckin >= 14
+- Ciclo encerrado: estados finais (exceeded/achieved/not_achieved)
+- Gap > 15% com expectedProgress → at_risk
+- RAG red → off_track, RAG yellow → at_risk
+
+Testes para funções utilitárias:
+- `sortByStatePriority`: critical → warning → info
+- `filterKrsRequiringAttention`: stagnant, at_risk, off_track, not_achieved
+- `filterKrsForCelebration`: achieved, exceeded
+- `groupKrStatesBySeverity`: agrupamento correto
+- `getKrStateConfig`: retorna config completa por estado
+
+**Arquivo:** `src/modules/okrs/utils/__tests__/analyzePace.test.ts`
+
+Testes para `analyzePace()`:
+- above_pace quando gap >= tolerância (+10%)
+- on_pace quando gap entre -10% e +10%
+- below_pace quando gap <= -10%
+- completed quando progress >= 100%
+- not_started quando progress = 0 e ciclo > 10% transcorrido
+- Início do ciclo (<=15%): sempre retorna on_pace (sem julgamentos precipitados)
+- `calculateExpectedProgress`: antes/durante/após ciclo
+- `calculateCycleElapsed`: cálculo correto
+- `getPaceInterpretationText`: texto correto por status
+
+### Fase 2 — Testes de integração: hooks de mutação
+**Prioridade:** Alta | **Estimativa:** ~2 mensagens
+
+**Arquivo:** `src/modules/okrs/hooks/__tests__/useOkrMutations.integration.test.ts`
+
+Refatorar testes existentes (type-only) para integration com MSW:
+- `createObjective`: insert com bu_id explícito, owner_user_id = profileId
+- `updateObjective`: invalidação de queryKeys
+- `deleteObjective`: soft delete (deleted_at, não físico)
+- `createKeyResult`: owner_user_id = profileId
+- `deleteKeyResult`: soft delete com cancelled_at
+
+**Arquivo:** `src/modules/okrs/hooks/__tests__/useCreateCheckin.integration.test.ts`
+
+Expandir testes existentes (apenas helpers) com:
+- Criação de check-in com valor, confiança, bloqueios
+- user_id do check-in usa profileId
+
+**Arquivo:** `src/modules/okrs/hooks/__tests__/useGenericWizardDraft.test.ts`
+
+- Draft key único por tipo de wizard
+- `clearDraft()` retorna sessionId
+- Registro `completed` em okr_wizard_sessions ao concluir
+- Draft keys isolados: `qbr-pre:{cycleId}:{teamId}` não conflita com `team-okr-creation:{teamId}`
+- Rascunho recuperado ao reabrir wizard
+
+### Fase 3 — Test factories e fixtures
+**Prioridade:** Média | **Estimativa:** ~1 mensagem
+
+**Arquivo:** `src/test/factories/okr.factory.ts`
+
+Criar factories com dados realistas:
+- `createTestCycle` (com qbr_status)
+- `createTestObjective` (com owner_user_id = profileId, deleted_at, cancelled_at)
+- `createTestKeyResult` (com type, direction, unit)
+- `createTestKpi` (com scope, lifecycle_status)
+- `createTestWizardSession` (com wizard_type, reflection_data, summary_sent_at)
+- `createTestCheckin`
+
+Atualizar `src/test/mocks/fixtures/okrs.ts` com novos fixtures alinhados às factories.
+
+### Fase 4 — Testes de componentes de wizard (unitários)
+**Prioridade:** Média | **Estimativa:** ~3 mensagens
+
+Expandir testes existentes (que são majoritariamente interface/prop checks) com renderização real:
+
+- **Collaborator Check-in steps:** KrStateInsightCard presente, gate de check-in
+- **Team Check-in steps:** gate de KRs revisadas, DecisionCard com profileId
+- **MBR steps:** snapshot imutável, governance checklist, feedback
+- **QBR steps:** QbrOkrProposalStep inline, calibration flags, approval workflow
+- **Shared components:** WizardStepScaffold, navigation gates
+
+### Fase 5 — Testes de permissão e RLS (unitários)
+**Prioridade:** Média | **Estimativa:** ~1 mensagem
+
+**Arquivo:** `src/modules/okrs/hooks/__tests__/permissions.test.ts`
+
+- `useCanEditKr`: false para não-owner e não-líder
+- `useCanManageTeamOkr`: true apenas para líder ou BU Admin
+- `useCanEditInitiative`: ownership validation
+- `useCanEditTeamObjective`: ownership + leadership check
+
+**Arquivo:** `src/hooks/__tests__/useBuScope.test.ts`
+
+- Queries incluem `.eq('bu_id', currentBuId)`
+- `useBuScopedSupabase()` injeta header x-current-bu-id
+- Global client não é usado em módulos operacionais
+
+### Fase 6 — E2E: fluxos críticos
+**Prioridade:** Baixa (requer auth mock funcional) | **Estimativa:** ~2 mensagens
+
+Expandir `e2e/okr-wizards.spec.ts` e `e2e/okrs.spec.ts`:
+- Wizard redirects (já existem, manter)
+- Dashboard OKR: filtros, visualização por role
+- Ritual History: deep-link, filtros por tipo
+
+**Nota:** E2E completos de wizards e edge functions requerem auth mockada e banco local, que não estão disponíveis no ambiente Lovable. Os testes E2E serão focados em navegação e presença de UI.
+
+---
+
+## Fora de escopo (com justificativa)
+
+| Item do Claude | Razão |
 |---|---|
-| `FullPageWizardShell` | Shell de todos os 4 wizards |
-| `WizardStepper`, `WizardStepHeader`, `WizardStepFooter` | Navegação |
-| `WizardStepScaffold` | Layout estável com scroll |
-| `useGenericWizardDraft` | Persistência dos 4 wizards |
-| `useLastCompletedSession` | Carregar snapshots anteriores |
-| `useCreateTeamOkrBundle` | Promoção atômica no pós-QBR |
-| `useKpisForWizardV2` | KPIs no pré-QBR |
-| `useTeamPreviousCycleAnalysis` | Balanço do ciclo |
-| `useKrStateInsights` | Estados dos KRs |
-| `KrStateInsightCard`, `VicInsightCard` | Insights contextuais |
-| `ReflectionQuestions` | Reflexão guiada |
-| `DecisionCard`, `InlineDecisionInput` | Registro de decisões |
-| `RitualImprovementFeedback` | Avaliação do rito |
-| `TeamOkrObjectiveStep`, `TeamOkrKrDetailStep`, etc. | Sub-fluxo de criação no pré-QBR |
-
-## Componentes adaptados (modificação mínima)
-
-| Componente | Adaptação |
-|---|---|
-| `InlineDecisionInput` | Adicionar `'strategic_proposal'` ao `CATEGORY_CONFIG` |
-| `DecisionCard` | Suportar nova category |
-| `TeamCheckinDecisionSourceStep` | Adicionar source steps do QBR |
-| `MbrPage.tsx` | Step condicional de follow-up de decisões QBR |
+| Testes de edge functions com `supabase functions serve` | Ambiente Lovable não suporta `supabase start` |
+| Testes de RLS com banco real | Requer Supabase local |
+| CI pipeline YAML completo | Já existe `.github/workflows/test.yml` funcional |
+| `npm run compliance` script | Não existe no projeto e é ortogonal aos testes |
+| Scripts `package.json` adicionais | Já existem `test`, `test:unit` equivalentes |
 
 ---
 
-## Ordem de execução sugerida
+## Resumo de entregáveis
 
-1. Schema + tipos (Fase 1) — fundação necessária para tudo
-2. Wizard qbr-pre (Fase 2) — primeiro fluxo funcional
-3. Wizard qbr-pre-clevel (Fase 3) — consome dados do pré
-4. Edge function qbr-pre-summary (Fase 4) — relatório consolidado
-5. Wizard qbr-meeting (Fase 5) — rito principal
-6. Wizard qbr-post (Fase 6) — encerramento e promoção
-7. Integração (Fase 7) — conecta com rituais existentes
+| Fase | Arquivos | Testes estimados |
+|------|----------|-----------------|
+| 1 — KrState + Pace | 2 arquivos novos | ~35 testes |
+| 2 — Hooks integration | 3 arquivos novos | ~25 testes |
+| 3 — Factories | 1 arquivo novo + 1 atualizado | 0 (infra) |
+| 4 — Wizard components | 4-6 arquivos atualizados | ~40 testes |
+| 5 — Permissions | 2 arquivos novos | ~15 testes |
+| 6 — E2E | 2 arquivos atualizados | ~10 testes |
+| **Total** | **~15 arquivos** | **~125 novos testes** |
 
-Total estimado: ~20 componentes novos, 4 páginas, 3 edge functions, 1 migração SQL.
+Meta final: **670+ testes** (de 547 atuais), mantendo 100% pass rate.
 
