@@ -75,8 +75,8 @@ describe('calculateProgress', () => {
       expect(calculateProgress(100, 150, 0, 'down')).toBe(0);
     });
 
-    it('should clamp to 100 when below target', () => {
-      expect(calculateProgress(100, -50, 0, 'down')).toBe(100);
+    it('should allow values above 100 when surpassing target (no-clamp)', () => {
+      expect(calculateProgress(100, -50, 0, 'down')).toBe(150);
     });
 
     it('should handle edge case when target equals baseline', () => {
