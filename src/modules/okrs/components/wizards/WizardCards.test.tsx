@@ -12,7 +12,6 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@/test/test-utils';
-import { BrowserRouter } from 'react-router-dom';
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
@@ -25,7 +24,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 const renderWithRouter = (component: React.ReactNode) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
+  return render(<>{component}</>);
 };
 
 describe('TeamOkrCreationWizardCard interface', () => {

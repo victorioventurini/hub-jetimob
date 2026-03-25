@@ -5,7 +5,6 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@/test/test-utils';
-import { BrowserRouter } from 'react-router-dom';
 import { ManagersCheckinWizardCard } from '../ManagersCheckinWizardCard';
 
 vi.mock('@/components/ui/skeleton', () => ({
@@ -14,9 +13,7 @@ vi.mock('@/components/ui/skeleton', () => ({
 
 const renderCard = (props: Partial<Parameters<typeof ManagersCheckinWizardCard>[0]> = {}) =>
   render(
-    <BrowserRouter>
-      <ManagersCheckinWizardCard {...props} />
-    </BrowserRouter>
+    <ManagersCheckinWizardCard {...props} />
   );
 
 describe('ManagersCheckinWizardCard', () => {

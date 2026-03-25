@@ -11,25 +11,7 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@/test/test-utils';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CycleCheckinsFilters } from './cycle-checkins/CycleCheckinsFilters';
-import { BrowserRouter } from 'react-router-dom';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
-
-const renderWithProviders = (component: React.ReactNode) => {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {component}
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
-};
 
 describe('CycleCheckinsFilters', () => {
   const defaultFilters = {
