@@ -41,17 +41,35 @@ function createCompanyOkr(overrides: Partial<{ id: string; title: string; progre
   };
 }
 
-function createKpiForWizard(overrides: Record<string, unknown> = {}) {
+function createKpiForWizard(overrides: Record<string, unknown> = {}): import('@/modules/kpis/types').KpiForWizardV2 {
   return {
-    id: (overrides.id as string) ?? 'kpi-1',
-    name: (overrides.name as string) ?? 'NPS Geral',
-    unit: (overrides.unit as string) ?? 'pontos',
-    latest_value: (overrides.latest_value as number) ?? 72,
-    target_value: (overrides.target_value as number) ?? 80,
-    latest_rag_status: (overrides.latest_rag_status as string) ?? 'on_track',
-    area: (overrides.area as { name: string; color: string } | undefined) ?? null,
+    id: 'kpi-1',
+    name: 'NPS Geral',
+    unit: 'pontos',
+    target_value: 80,
+    direction: 'up' as const,
+    frequency: 'monthly' as const,
+    lifecycle_status: 'active' as const,
+    recovery_protocol: null,
+    team_id: null,
+    area_id: null,
+    owner_user_id: null,
+    scope: 'organization' as const,
+    latest_value: 72,
+    latest_reference_date: null,
+    latest_rag_status: 'on_track' as const,
+    latest_confidence: null,
+    latest_period_label: null,
+    needs_update: false,
+    userRole: 'viewer' as const,
+    isStrategic: true,
+    isGuardrailAtRisk: false,
+    linkedKrIds: [],
+    displayMode: 'strategic' as const,
+    alertReason: null,
+    area: null,
     ...overrides,
-  };
+  } as import('@/modules/kpis/types').KpiForWizardV2;
 }
 
 // ══════════════════════════════════════════════════
