@@ -1079,7 +1079,7 @@ Centraliza a consulta de todas as sessões concluídas. Features:
 - **Feedback:** Média de estrelas + lista de sugestões
 - **RLS:** Admins veem todas as sessões da BU; membros veem do seu time
 
-## 3.13 Sistema de Notificações Pós-Wizard
+## 3.14 Sistema de Notificações Pós-Wizard
 
 📁 **`supabase/functions/`** — Edge Functions de resumo
 
