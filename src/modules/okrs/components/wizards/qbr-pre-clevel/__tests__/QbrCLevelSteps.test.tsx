@@ -62,7 +62,9 @@ function createKpi(overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnapshot {
     target: 90,
     unit: '%',
     ragStatus: 'green',
-    trend: 'improving',
+    variationVsLastMonth: null,
+    variationVsTarget: null,
+    requiresStrategicDecision: false,
     ...overrides,
   };
 }
