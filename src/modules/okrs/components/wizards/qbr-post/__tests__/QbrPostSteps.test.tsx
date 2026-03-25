@@ -50,7 +50,7 @@ function createApprovedOkr(overrides: Partial<ApprovedTeamOkr> = {}): ApprovedTe
     teamName: overrides.teamName || 'Time X',
     sessionId: overrides.sessionId || `session-${id}`,
     status: 'approved',
-    proposedOkrs: { objective: { title: 'OKR do time' }, draftKrs: [] },
+    proposedOkrs: { objective: { title: 'OKR do time', description: '', org_objective_id: '', cycle_id: '' }, draftKrs: [] },
     ...overrides,
   };
 }

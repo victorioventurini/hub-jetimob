@@ -232,7 +232,7 @@ describe('QbrMeetingDecisionsStep', () => {
     const decision = {
       id: 'd1',
       text: 'Expandir time',
-      category: 'strategic_decision' as const,
+      category: 'decision' as const,
       sourceStep: 'qbr-meeting-decisions',
       owner: { id: 'u1', name: 'João' },
     };
