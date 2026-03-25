@@ -1,4 +1,4 @@
-# Hub da Jet — Deep Dive Técnico: KPIs, OKRs e Wizards
+# Hub da Jet — Deep Dive Técnico Completo
 
 > **Documento de referência para assistentes de IA.**  
 > Gerado em: 2026-03-25  
