@@ -1,129 +1,193 @@
 
 
-# Descritivo Técnico Completo: Módulos KPIs, OKRs e Wizards
+# Plano de Implementação: Rito QBR (Quarterly Business Review)
 
-Este documento será gerado como um arquivo Markdown persistente em `/mnt/documents/` para que possa ser compartilhado com o Claude ou qualquer outro assistente de IA. Ele descreverá os três módulos em formato storytelling com referências exatas aos arquivos do repositório.
+## Resumo
 
----
-
-## Estrutura do Documento
-
-O arquivo será organizado em três grandes seções narrativas:
-
-### 1. Módulo KPIs — O Sistema Nervoso da Organização
-
-**Narrativa:** KPIs são sinais contínuos de saúde organizacional. O módulo implementa um modelo de governança sofisticado que separa **Escopo** (impacto: Global/Área/Time) de **Responsabilidade Operacional** (quem cuida). KPIs não têm ciclo próprio — o tempo pertence à KR que os vincula.
-
-**Cobertura técnica:**
-- Modelo de dados: `kpi_metrics` + `kpi_values` (2 tabelas centrais)
-- Tipos e enums: `KpiScope`, `KpiIndicatorType` (kpi vs metric), `KpiLifecycleStatus`, `KpiRagStatus`, `KpiFrequency`
-- Governança: Scope vs Responsibility, com `responsible_area_id` e `responsible_team_id`
-- Hierarquia de permissões: Owner → Contributor → Area Leader → Team Leader
-- Integração com OKRs via `okr_kr_metrics` (primary + guardrail)
-- Evolução visual: `KpiEvolutionChart`, `KpiValuesTable`, `KpiHistoryDialog`
-- Contributor system: `kpi_data_contributors` para separar accountability de data entry
-- RAG calculation: trigger automático `trg_kpi_value_validation`
-
-**Arquivos-chave referenciados:**
-- `src/modules/kpis/types.ts` — Todos os tipos TypeScript
-- `src/modules/kpis/hooks/` — 14 hooks especializados
-- `src/modules/kpis/components/` — 19 componentes
-- `src/modules/kpis/pages/` — 2 páginas (Dashboard + Evolution)
-- `docs/guides/PROGRESS_INTERPRETATION_CANON.md` — Governança de interpretação
-
-### 2. Módulo OKRs — O Motor Estratégico
-
-**Narrativa:** O módulo OKRs implementa uma hierarquia de dois níveis (Organizacional → Time) com ciclos trimestrais, limites rígidos (máx 3 objetivos/time, máx 3 KRs/objetivo), e um sistema de contribuições que conecta KRs de time a KRs organizacionais respeitando tipos (`contribution` pode, `foundational`/`enabler` não pode).
-
-**Cobertura técnica:**
-- Hierarquia: `okr_org_objectives` → `okr_org_key_results` / `okr_team_objectives` → `okr_team_key_results`
-- Tipos de KR: `contribution`, `enabler`, `foundational` — cada um com regras de contribuição
-- Cálculo de progresso: `calculateProgress(baseline, current, target, direction)`
-- RAG Status: Green (≥70%), Yellow (40-70%), Red (<40%)
-- Vínculo KR↔KPI: 1 primary (obrigatório) + N guardrails via `okr_kr_metrics`
-- Check-ins: `okr_checkins` com confidence, blockers, menções
-- Iniciativas: `okr_initiatives` vinculadas a KRs
-- Dependências: `okr_dependencies` entre KRs/times
-- Contribuições: `okr_contributions` (informativas, não afetam progresso)
-- Ciclos: tabela `cycles` com validação de datas
-- Dashboards: OKR Dashboard, Executive Dashboard, Org View, Team Contribution
-- Análise: Quality, Construction Review, Health, Org Analysis
-
-**Arquivos-chave referenciados:**
-- `src/modules/okrs/types.ts` — Tipos core
-- `src/modules/okrs/types/` — Tipos especializados
-- `src/modules/okrs/hooks/` — 50+ hooks organizados por domínio
-- `src/modules/okrs/utils/progressCalculation.ts` — Cálculo canônico
-- `src/routes/okrs.routes.tsx` — 17 rotas
-
-### 3. Módulo Wizards — Os Rituais de Gestão
-
-**Narrativa:** Wizards são rituais de decisão, não formulários. Cada um guia reflexão estruturada, gera aprendizado organizacional e alimenta memória estratégica. A Regra de Ouro: todo wizard DEVE incluir insights contextuais — sem insights, são apenas termômetros.
-
-**Cobertura de cada wizard:**
-
-#### 3.1 Collaborator Check-in (Semanal, sextas)
-- Rota: `/okrs/collaborator-checkin`
-- 6 etapas: Context → KPI → Checkin → Initiatives → Reflection → Summary
-- Filtra KRs por: owner, co-responsible, ou owner de iniciativa
-- Dispara e-mail pós-conclusão com 2 agentes IA
-
-#### 3.2 Leader Prep (Semanal, segundas)
-- Rota: `/okrs/leader-prep`
-- 5 etapas: Overview → KPI Alert → Prep → Highlights → Alignment
-- Preparatório — NÃO dispara e-mail de resumo
-- Gate: pelo menos 1 KR marcada para discussão
-
-#### 3.3 Team Check-in (Semanal)
-- Rota: `/okrs/team-checkin`
-- 5 etapas: Opening → KR Review → Initiatives → Decisions → (closing)
-- Gate: todos KRs revisados antes de avançar para Iniciativas
-- Dispara e-mail com 4 agentes IA
-
-#### 3.4 Managers Check-in (Quinzenal/Mensal)
-- Rota: `/okrs/managers-checkin`
-- 4 etapas: Panorama → Systemic KPIs → Cross Issues → Adjustments
-- Alinhamento cross-time para gestores de área
-
-#### 3.5 C-Level Check-in (Mensal)
-- Rota: `/okrs/clevel-checkin`
-- 5 etapas: Insights → Company OKRs → Directives → Decisions → (closing)
-- Dispara e-mail com 3 agentes IA
-
-#### 3.6 MBR — Monthly Business Review (Mensal, BU Admin)
-- Rota: `/okrs/mbr`
-- 7 etapas: Panorama Executivo → KPI Gate → Overview Times → Análise Detalhada → OKRs Org → Decisões Estratégicas → Encerramento
-- Gate: KPI Gate exige decisões para cada KPI em alerta
-- Gate: Todos os times devem ser revisados antes de avançar
-- Auto-seeding imutável de KPIs e OKRs (snapshot histórico)
-- Dispara e-mail com 3 agentes IA
-
-#### 3.7 Team OKR Creation (Sob demanda)
-- Rota: `/okrs/create`
-- 11 etapas de criação guiada com alinhamento estratégico
-
-#### 3.8 Team KR Creation (Sob demanda)
-- Rota: `/okrs/objectives/:objectiveId/krs/create`
-- 8 etapas para adicionar KRs a objetivos existentes
-
-**Infraestrutura compartilhada:**
-- `FullPageWizardShell` — Layout full-page com interceptação de back button
-- `WizardStepper`, `WizardStepHeader`, `WizardStepFooter` — Navegação
-- `WizardStepScaffold` — Estabilidade de scroll
-- `useGenericWizardDraft` — Persistência + criação automática de sessão
-- `DecisionCard` — Registro incremental de decisões
-- `KrStateInsightCard`, `VicInsightCard` — Insights contextuais
-- `ReflectionQuestions` — Reflexão guiada
-- Histórico: `/okrs/ritual-history` com deep-linking por sessão
+O QBR é um ritual trimestral composto por 4 wizards conectados em cascata. O plano do Claude é sólido e altamente alinhado com a arquitetura existente. Abaixo, apresento o plano validado com ajustes baseados no conhecimento real do codebase.
 
 ---
 
-## Formato de Entrega
+## Correções ao plano do Claude
 
-Um documento Markdown único (~4000 linhas estimadas) em `/mnt/documents/HUB_TECHNICAL_DEEP_DIVE.md`, com:
-- Paths relativos ao repositório (ex: `src/modules/kpis/types.ts`)
-- Links no formato GitHub genérico: `blob/main/<path>`
-- Diagramas ASCII para hierarquias
-- Tabelas de referência rápida por módulo
-- Seção de "Como Explorar" para orientar o Claude sobre quais arquivos ler primeiro
+### 1. `TeamOkrCreationFlow` não existe
+O Claude propõe um componente `TeamOkrCreationFlow` com `mode="draft"`. Esse componente **não existe** no codebase. O wizard de criação de OKRs é implementado diretamente em `OkrCreationPage.tsx`, que orquestra 11 step components individuais. A abordagem correta para o passo 4 do `qbr-pre` é **compor os mesmos step components** (`TeamOkrObjectiveStep`, `TeamOkrKrTypeStep`, `TeamOkrKrDetailStep`, etc.) dentro do `QbrPrePage`, usando o mesmo `useWizardDraft` adaptado — não invocar um "sub-flow" inexistente.
+
+### 2. `TeamCheckinDecision.category` precisa de extensão cuidadosa
+Hoje aceita `'decision' | 'focus_adjustment' | 'next_step'`. Adicionar `'strategic_proposal'` impacta `InlineDecisionInput` (que tem `CATEGORY_CONFIG` hardcoded) e `DecisionCard`. Ambos precisam de atualização.
+
+### 3. `useWizardDraft` vs `useGenericWizardDraft`
+O wizard de criação de OKRs usa `useWizardDraft` (específico, com campos flat). Os demais (MBR, check-ins) usam `useGenericWizardDraft` (genérico, com `data: TData`). Os 4 wizards QBR devem usar `useGenericWizardDraft`, como o MBR.
+
+### 4. `qbr_status` em `cycles` — validação de transições
+O Claude define transições mas não propõe trigger de validação. Recomendo uma trigger `trg_validate_qbr_status_transition` para enforcar a máquina de estados.
+
+---
+
+## Fases de Implementação
+
+### Fase 1 — Schema e tipos (fundação)
+
+**Migração SQL:**
+- `cycles.qbr_status` com CHECK constraint e default `'closed'`
+- `okr_team_objectives`: campos `qbr_origin_session_id`, `qbr_approval_status`, `qbr_discard_reason`
+- `kpi_metrics`: campos `zombie_candidate`, `kpi_to_create`
+- Atualizar `okr_wizard_sessions_wizard_type_check` para incluir `'qbr-pre'`, `'qbr-pre-clevel'`, `'qbr-meeting'`, `'qbr-post'`, `'qbr-report'`
+
+**Tipos TypeScript** (`src/modules/okrs/types/wizard.ts`):
+- Adicionar 4 personas ao `WizardPersona`
+- Adicionar `'strategic_proposal'` ao `TeamCheckinDecision.category`
+- Adicionar novos source steps ao `TeamCheckinDecisionSourceStep`
+- Criar interfaces: `QbrPreDraftData`, `QbrCLevelDraftData`, `QbrMeetingDraftData`, `QbrPostDraftData` (seguindo padrão `MbrDraftData`)
+- Criar snapshots: `QbrPreSnapshot`, `QbrCLevelSnapshot`, `QbrMeetingSnapshot`, `QbrPostSnapshot`
+- Criar `QbrMeetingGovernanceChecklist`, `QbrPostGovernanceChecklist`
+
+**Atualizar `InlineDecisionInput` e `DecisionCard`:**
+- Adicionar `'strategic_proposal'` ao `CATEGORY_CONFIG`
+
+**Rotas** (`src/routes/okrs.routes.tsx`):
+- 4 novas rotas usando o helper `OkrRoute` existente
+
+### Fase 2 — Wizard `qbr-pre` (líderes de time)
+
+**Página:** `src/modules/okrs/pages/QbrPrePage.tsx`
+- Segue padrão `MbrPage.tsx`: `useGenericWizardDraft<QbrPreStep, QbrPreDraftData>`
+- 6 steps (balanço, KPIs, aprendizados, objetivo, KR details, resumo)
+- Pré-condição: verificar `cycles.qbr_status IN ('open', 'collecting')`
+
+**Step 1 — Balanço:** `QbrBalanceStep.tsx`
+- Reutiliza `useTeamPreviousCycleAnalysis` e `useKrStateInsights`
+- Reutiliza `KrContextCard`, `KrStateInsightCard`
+
+**Step 2 — KPIs:** `QbrKpiAnalysisStep.tsx`
+- Reutiliza `useKpisForWizardV2` com `scope: 'leader'`
+- Reutiliza padrão `MbrKpiSnapshot` para congelar dados
+
+**Step 3 — Aprendizados:** `QbrLearningsStep.tsx`
+- Reutiliza `ReflectionQuestions`, `VicInsightCard`
+
+**Step 4 — Proposta de OKRs:** Composição inline dos step components do wizard de criação
+- Usa `TeamOkrObjectiveStep`, `TeamOkrKrTypeStep`, `TeamOkrKrDetailStep`, `TeamOkrKrMetricsStep`, `TeamOkrDependenciesStep`, `TeamOkrInitiativesStep` diretamente
+- Dados salvos no draft QBR, não em `useWizardDraft` separado
+- Não chama `useCreateTeamOkrBundle` — apenas persiste no draft
+
+**Step 5 — Resumo:** `QbrPreSummary.tsx`
+- Congela `QbrPreSnapshot` em `reflection_data`
+- Atualiza `cycles.qbr_status`
+
+**Arquivos:**
+```
+src/modules/okrs/pages/QbrPrePage.tsx
+src/modules/okrs/components/wizards/qbr-pre/
+├── QbrBalanceStep.tsx
+├── QbrKpiAnalysisStep.tsx
+├── QbrLearningsStep.tsx
+└── QbrPreSummary.tsx
+```
+
+### Fase 3 — Wizard `qbr-pre-clevel`
+
+**Página:** `src/modules/okrs/pages/QbrPreCLevelPage.tsx`
+- Acesso: `BuAdminRoute`
+- Pré-condição: `cycles.qbr_status = 'reviewing'`
+
+**Steps:**
+1. **Leitura do sistema:** Consolida snapshots dos líderes. Reutiliza `useCompanyOkrs`, `useOrgOkrAnalysis`. IA via `useWizardAI` com agente `alinhamento-estrategico`.
+2. **Análise estratégica:** Reflexão C-Level com `VicInsightCard`.
+3. **Validação de OKRs:** Revisão das propostas dos líderes com flags de calibração. Reutiliza componentes de `MbrTeamOkrsOverviewStep` adaptados.
+4. **Direcionamentos:** `DecisionCard` + `InlineDecisionInput` com `category: 'strategic_proposal'`.
+5. **Avaliação:** `RitualImprovementFeedback` sem alteração.
+
+**Arquivos:**
+```
+src/modules/okrs/pages/QbrPreCLevelPage.tsx
+src/modules/okrs/components/wizards/qbr-pre-clevel/
+├── QbrCLevelSystemReadStep.tsx
+├── QbrCLevelStrategicStep.tsx
+├── QbrCLevelOkrValidationStep.tsx
+└── QbrCLevelDirectivesStep.tsx
+```
+
+### Fase 4 — Edge function `qbr-pre-summary`
+
+Segue padrão `mbr-summary/index.ts`:
+- Consolida todos os `qbr-pre` + `qbr-pre-clevel` do ciclo
+- 3 agentes IA em paralelo via `llmComplete`
+- Salva resultado como `wizard_type: 'qbr-report'`
+- Envia via `emit_notification_event`
+- Transiciona `qbr_status` → `ready`
+
+### Fase 5 — Wizard `qbr-meeting`
+
+**Página:** `src/modules/okrs/pages/QbrMeetingPage.tsx`
+- Padrão MBR com snapshots imutáveis + gates
+
+**Steps:**
+1. **Abertura:** Carrega relatório pré-QBR + direcionamentos C-Level via `useLastCompletedSession`
+2. **Revisão de OKRs por time (gate):** Navegação 1-de-N como `MbrTeamOkrsDetailStep`. Ações: approved/approved_with_changes/discarded/defer. Gate: todos revisados.
+3. **Decisões (gate):** `DecisionCard` com `owner` e `deadline` obrigatórios. Gate: mínimo 1 decisão.
+4. **Compromissos cross-área:** Vincula a OKRs aprovados.
+5. **Avaliação:** `RitualImprovementFeedback`.
+6. **Encerramento:** Checklist de governança. Dispara `qbr-meeting-summary`.
+
+### Fase 6 — Wizard `qbr-post`
+
+**Página:** `src/modules/okrs/pages/QbrPostPage.tsx`
+
+**Steps:**
+1. **Promoção de OKRs:** `useCreateTeamOkrBundle` para cada time com status `approved`. Seta `qbr_origin_session_id` e `qbr_approval_status`.
+2. **Decisões complementadas:** Carrega do meeting snapshot, permite completar.
+3. **Compromissos formalizados:** Salva como `okr_dependencies`.
+4. **Cadência de follow-up:** Configura alertas e pauta do próximo MBR.
+5. **Ata executiva e encerramento:** Campo de texto + checklist. Dispara `qbr-post-summary`. Transiciona `qbr_status` → `done`.
+
+### Fase 7 — Integração com rituais existentes
+
+- **MBR:** Step condicional `QbrDecisionsFollowUpStep` antes de `MbrDecisionsStep` quando existem decisões QBR pendentes no ciclo
+- **RitualHistoryPage:** Adicionar `'qbr-pre' | 'qbr-pre-clevel' | 'qbr-meeting' | 'qbr-post'` nos filtros
+- **WizardVicContext:** Adicionar 4 novos tipos de contexto
+
+---
+
+## Componentes reutilizados sem alteração
+
+| Componente | Uso |
+|---|---|
+| `FullPageWizardShell` | Shell de todos os 4 wizards |
+| `WizardStepper`, `WizardStepHeader`, `WizardStepFooter` | Navegação |
+| `WizardStepScaffold` | Layout estável com scroll |
+| `useGenericWizardDraft` | Persistência dos 4 wizards |
+| `useLastCompletedSession` | Carregar snapshots anteriores |
+| `useCreateTeamOkrBundle` | Promoção atômica no pós-QBR |
+| `useKpisForWizardV2` | KPIs no pré-QBR |
+| `useTeamPreviousCycleAnalysis` | Balanço do ciclo |
+| `useKrStateInsights` | Estados dos KRs |
+| `KrStateInsightCard`, `VicInsightCard` | Insights contextuais |
+| `ReflectionQuestions` | Reflexão guiada |
+| `DecisionCard`, `InlineDecisionInput` | Registro de decisões |
+| `RitualImprovementFeedback` | Avaliação do rito |
+| `TeamOkrObjectiveStep`, `TeamOkrKrDetailStep`, etc. | Sub-fluxo de criação no pré-QBR |
+
+## Componentes adaptados (modificação mínima)
+
+| Componente | Adaptação |
+|---|---|
+| `InlineDecisionInput` | Adicionar `'strategic_proposal'` ao `CATEGORY_CONFIG` |
+| `DecisionCard` | Suportar nova category |
+| `TeamCheckinDecisionSourceStep` | Adicionar source steps do QBR |
+| `MbrPage.tsx` | Step condicional de follow-up de decisões QBR |
+
+---
+
+## Ordem de execução sugerida
+
+1. Schema + tipos (Fase 1) — fundação necessária para tudo
+2. Wizard qbr-pre (Fase 2) — primeiro fluxo funcional
+3. Wizard qbr-pre-clevel (Fase 3) — consome dados do pré
+4. Edge function qbr-pre-summary (Fase 4) — relatório consolidado
+5. Wizard qbr-meeting (Fase 5) — rito principal
+6. Wizard qbr-post (Fase 6) — encerramento e promoção
+7. Integração (Fase 7) — conecta com rituais existentes
+
+Total estimado: ~20 componentes novos, 4 páginas, 3 edge functions, 1 migração SQL.
 
