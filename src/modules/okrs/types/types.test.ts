@@ -164,9 +164,8 @@ describe('calculateProgress', () => {
       expect(calculateProgress(50, 30, 100, 'up')).toBe(0);
     });
 
-    it('should clamp over 100% progress to 100 (up direction)', () => {
-      // Current exceeds target
-      expect(calculateProgress(0, 150, 100, 'up')).toBe(100);
+    it('should allow over 100% when exceeding target (no-clamp, up direction)', () => {
+      expect(calculateProgress(0, 150, 100, 'up')).toBe(150);
     });
 
     it('should clamp negative progress to 0 (down direction)', () => {
