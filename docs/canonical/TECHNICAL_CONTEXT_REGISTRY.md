@@ -8,7 +8,7 @@
 > 📚 **Documentação Técnica Consolidada:**
 >
 > ### Padrões de Desenvolvimento
-> - [DEVELOPMENT_STANDARDS.md v1.25.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
+> - [DEVELOPMENT_STANDARDS.md v1.27.0](./DEVELOPMENT_STANDARDS.md) — **Padrões Obrigatórios** (PRE-BU/POST-BU, Identity, RBAC, Queries, URL State, Edge Functions)
 > - [QUERY_KEYS_STANDARD.md](./QUERY_KEYS_STANDARD.md) — Padrão de query keys centralizadas
 > - [BU_SCOPED_SUPABASE_RULES.md](./BU_SCOPED_SUPABASE_RULES.md) — Regras de cliente Supabase (global vs bu-scoped)
 > - [URL_STATE_STANDARD.md](./URL_STATE_STANDARD.md) — Padrão de URL state para filtros e paginação
