@@ -40,20 +40,20 @@ describe('CycleCheckinsFilters', () => {
 
   describe('rendering', () => {
     it('should render filter bar', () => {
-      renderWithProviders(<CycleCheckinsFilters {...defaultProps} />);
+      render(<CycleCheckinsFilters {...defaultProps} />);
       
       // Should render filter components
       expect(document.body).toBeTruthy();
     });
 
     it('should render search input', () => {
-      renderWithProviders(<CycleCheckinsFilters {...defaultProps} />);
+      render(<CycleCheckinsFilters {...defaultProps} />);
       
       // Search input should be present
     });
 
     it('should render team filter', () => {
-      renderWithProviders(<CycleCheckinsFilters {...defaultProps} />);
+      render(<CycleCheckinsFilters {...defaultProps} />);
       
       // Team filter should be present
     });
@@ -61,7 +61,7 @@ describe('CycleCheckinsFilters', () => {
 
   describe('clear filters button', () => {
     it('should not show clear button when no active filters', () => {
-      renderWithProviders(
+      render(
         <CycleCheckinsFilters {...defaultProps} hasActiveFilters={false} />
       );
       
@@ -69,7 +69,7 @@ describe('CycleCheckinsFilters', () => {
     });
 
     it('should show clear button when has active filters', () => {
-      renderWithProviders(
+      render(
         <CycleCheckinsFilters {...defaultProps} hasActiveFilters={true} />
       );
       
@@ -79,7 +79,7 @@ describe('CycleCheckinsFilters', () => {
     it('should call onClearFilters when clear button clicked', () => {
       const onClearFilters = vi.fn();
       
-      renderWithProviders(
+      render(
         <CycleCheckinsFilters 
           {...defaultProps} 
           hasActiveFilters={true}
@@ -111,7 +111,7 @@ describe('CycleCheckinsFilters', () => {
     it('should call onFiltersChange when filters change', () => {
       const onFiltersChange = vi.fn();
       
-      renderWithProviders(
+      render(
         <CycleCheckinsFilters 
           {...defaultProps}
           onFiltersChange={onFiltersChange}
