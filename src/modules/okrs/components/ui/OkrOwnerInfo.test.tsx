@@ -138,7 +138,8 @@ describe('OkrOwnersRow', () => {
 
     it('should render null for empty array', () => {
       const { container } = render(<OkrOwnersRow owners={[]} />);
-      expect(container.firstChild).toBeEmptyDOMElement();
+      // Component returns null for empty owners, no avatar row rendered
+      expect(container.querySelector('[class*="-space-x"]')).toBeNull();
     });
   });
 

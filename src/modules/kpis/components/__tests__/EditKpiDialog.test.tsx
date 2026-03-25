@@ -17,12 +17,16 @@ import type { KpiMetric } from '../../types';
 
 // ---- Mocks ----
 
-vi.mock('@/contexts/BuContext', () => ({
-  useBu: () => ({
-    currentBuId: 'test-bu-id',
-    currentBu: { id: 'test-bu-id', name: 'Test BU' },
-  }),
-}));
+vi.mock('@/contexts/BuContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/BuContext')>();
+  return {
+    ...actual,
+    useBu: () => ({
+      currentBuId: 'test-bu-id',
+      currentBu: { id: 'test-bu-id', name: 'Test BU' },
+    }),
+  };
+});
 
 vi.mock('@/hooks/usePermissions', () => ({
   usePermissions: () => ({

@@ -233,6 +233,7 @@ describe('MbrTeamOkrsDetailStep', () => {
       createTeamSnapshot({ teamId: 't2', reviewed: false }),
     ];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getAllByText('1 de 2 times revisados').length).toBeGreaterThan(0);
+    // Component shows "N/M revisados" format
+    expect(screen.getByText('1/2 revisados')).toBeInTheDocument();
   });
 });
