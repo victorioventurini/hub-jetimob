@@ -42,8 +42,9 @@ describe('calculateProgress', () => {
       expect(calculateProgress(50, 15, 15, 'down')).toBe(100);
     });
 
-    it('deve limitar em 100% quando reduziu além da meta', () => {
-      expect(calculateProgress(50, 10, 15, 'down')).toBe(100);
+    it('deve permitir valores acima de 100% quando reduziu além da meta', () => {
+      // (50 - 10) / (50 - 15) = 40/35 = 114.29%
+      expect(calculateProgress(50, 10, 15, 'down')).toBeCloseTo(114.29, 1);
     });
 
     it('não deve retornar valores negativos quando aumentou ao invés de reduzir', () => {
