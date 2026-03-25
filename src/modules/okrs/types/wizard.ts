@@ -275,6 +275,19 @@ export interface MbrTeamOkrSnapshot {
   reviewed: boolean;
 }
 
+/** QBR Follow-up item tracked in MBR */
+export interface QbrFollowUpItem {
+  id: string;
+  text: string;
+  category: string;
+  owner?: { id: string; name: string };
+  deadline?: string | null;
+  resolved: boolean;
+  sourceType: 'decision' | 'commitment';
+  fromTeam?: string;
+  toTeam?: string;
+}
+
 /** Draft data completo do MBR */
 export interface MbrDraftData {
   referenceMonth: string; // YYYY-MM
@@ -286,6 +299,7 @@ export interface MbrDraftData {
   checklist: MbrGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   previousMbrPendingItems: TeamCheckinDecision[];
+  qbrFollowUpItems: QbrFollowUpItem[];
 }
 
 // ============================================================
