@@ -78,6 +78,7 @@ const DEFAULT_DATA: MbrDraftData = {
   },
   ritualFeedback: [],
   previousMbrPendingItems: [],
+  qbrFollowUpItems: [],
 };
 
 // ============================================================
