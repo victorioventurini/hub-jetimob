@@ -77,7 +77,7 @@ describe('QbrPostOkrPromotionStep', () => {
       />
     );
     expect(screen.getByText('Promoção de OKRs')).toBeInTheDocument();
-    expect(screen.getByText(/2 OKRs aprovados/)).toBeInTheDocument();
+    expect(screen.getByText('0/2 selecionados')).toBeInTheDocument();
   });
 
   it('shows checkboxes for approved and approved_with_changes only', () => {
