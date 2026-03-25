@@ -84,6 +84,17 @@ vi.mock('@/components/selects', () => ({
       <option value="area-2">Area 2</option>
     </select>
   ),
+  UnitSelect: ({ value, onValueChange }: any) => (
+    <select
+      data-testid="unit-select"
+      value={value || ''}
+      onChange={(e) => onValueChange(e.target.value || null)}
+    >
+      <option value="">Selecione...</option>
+      <option value="%">%</option>
+      <option value="R$">R$</option>
+    </select>
+  ),
 }));
 
 vi.mock('@/integrations/supabase/useBuScopedSupabase', () => ({
