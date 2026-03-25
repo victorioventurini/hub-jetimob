@@ -11,11 +11,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@/test/test-utils';
-import { BrowserRouter } from 'react-router-dom';
 import { OkrContributionLink, OkrKrTypeBadge } from './OkrContributionLink';
 
 const renderWithRouter = (component: React.ReactNode) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
+  return render(<>{component}</>);
 };
 
 describe('OkrContributionLink', () => {

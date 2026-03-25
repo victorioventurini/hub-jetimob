@@ -5,7 +5,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@/test/test-utils';
-import { BrowserRouter } from 'react-router-dom';
 import { LeaderPrepWizardCard } from '../LeaderPrepWizardCard';
 
 vi.mock('@/components/ui/skeleton', () => ({
@@ -16,9 +15,7 @@ import { vi } from 'vitest';
 
 const renderCard = (props: Partial<Parameters<typeof LeaderPrepWizardCard>[0]> = {}) =>
   render(
-    <BrowserRouter>
-      <LeaderPrepWizardCard teamId="team-1" teamName="Engenharia" {...props} />
-    </BrowserRouter>
+    <LeaderPrepWizardCard teamId="team-1" teamName="Engenharia" {...props} />
   );
 
 describe('LeaderPrepWizardCard', () => {

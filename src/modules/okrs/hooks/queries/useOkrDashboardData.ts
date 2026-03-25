@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { calculateProgressFromNullable } from '../../utils/progressCalculation';
 import type { OkrOrgObjective, OkrOrgKeyResult, OkrTeamObjective, OkrTeamKeyResult } from '../../types';
 
 export type OkrDashboardView = 'company' | 'team' | 'my';
@@ -134,8 +135,6 @@ export function calculateOverallProgress(
 ): number {
   if (!krs || krs.length === 0) return 0;
 
-  const { calculateProgressFromNullable } = require('../../utils/progressCalculation');
-  
   let totalProgress = 0;
   for (const kr of krs) {
     totalProgress += calculateProgressFromNullable(
