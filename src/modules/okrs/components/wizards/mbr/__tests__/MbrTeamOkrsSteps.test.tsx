@@ -159,14 +159,14 @@ describe('MbrTeamOkrsDetailStep', () => {
     expect(screen.getByText('Análise por Time')).toBeInTheDocument();
   });
 
-  it('renders all team names in same page', () => {
+  it('renders current team name (one team at a time)', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', teamName: 'Team A' }),
       createTeamSnapshot({ teamId: 't2', teamName: 'Team B' }),
     ];
-    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
+    // Detail shows one team at a time based on currentTeamIndex
+    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} currentTeamIndex={0} />);
     expect(screen.getByText('Team A')).toBeInTheDocument();
-    expect(screen.getByText('Team B')).toBeInTheDocument();
   });
 
   it('renders objectives and KRs', () => {
