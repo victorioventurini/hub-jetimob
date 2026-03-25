@@ -190,9 +190,10 @@ export default function QbrPrePage() {
           ? Math.floor((Date.now() - new Date(kr.last_checkin_at).getTime()) / (1000 * 60 * 60 * 24))
           : 999;
 
-        const ragStatus = kr.status === 'on_track' ? 'green'
-          : kr.status === 'at_risk' ? 'yellow'
-          : kr.status === 'off_track' ? 'red'
+        const krStatus = kr.status as string;
+        const ragStatus = krStatus === 'on_track' ? 'green'
+          : krStatus === 'at_risk' ? 'yellow'
+          : krStatus === 'off_track' ? 'red'
           : 'not_started';
 
         const state = calculateKrState({
