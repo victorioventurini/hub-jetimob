@@ -126,6 +126,14 @@ export function LeaderDashboard() {
             />
           </div>
 
+          {/* QBR Wizard - shows only when QBR is open */}
+          {canViewOkrs && (
+            <QbrWizardCard
+              variant="leader"
+              teamId={selectedTeamId}
+            />
+          )}
+
         </section>
       )}
 
