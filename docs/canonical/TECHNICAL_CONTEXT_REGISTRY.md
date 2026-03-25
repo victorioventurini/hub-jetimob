@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
 **Versão:** 3.15.0  
-**Última atualização:** 2026-03-25 (v3.15.0 - AI Agents Model Migration to Gemini 3 Flash Preview — 11 agents migrados, documentação consolidada, 26 edge functions, 140 tabelas, 218 funções SQL, 94 enums)
+**Última atualização:** 2026-03-25 (v3.15.1 - Metrics correction & test suite 100% green — 25 edge functions, 113 tabelas + 27 views, 218 funções SQL, 82 enums, 547 testes passando)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (218 funções)** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo (547 testes, 0 falhas) | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (218 funções)** | **Edge Functions Audit (25 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -2175,7 +2175,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 ---
 
-## 8. Edge Functions (26 funções ativas)
+## 8. Edge Functions (25 funções ativas)
 
 | Função | Descrição | Criticidade |
 |--------|-----------|-------------|
@@ -3450,13 +3450,22 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.15.1 (2026-03-25)
+- **Metrics Correction**:
+  - Contagens corrigidas: 113 tabelas + 27 views (antes "140 tabelas"), 82 enums (antes 94), 25 edge functions (antes 26)
+  - 218 funções SQL confirmadas (sem alteração)
+- **Test Suite 100% Green**:
+  - 547 testes passando com 0 falhas
+  - Automated Testing Framework atualizado para v1.2
+  - Fixes: EditKpiDialog (BuContext mock + UnitSelect + scope assertions), OkrOwnerInfo (null/empty assertions), MbrPanoramaStep (unit formatting), MbrTeamOkrsSteps (navigation + reviewed text + progress format)
+
 ### v3.15.0 (2026-03-25)
 - **AI Agents Model Migration — Gemini 3 Flash Preview**:
   - Todos os 11 agentes de IA ativos migrados para `google/gemini-3-flash-preview`
   - Agentes afetados: `alinhamento-estrategico`, `coach-okrs`, `persona-vic`, `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao`, `initiative-validator`, `kr-advisor`, `hr-onboarding-assistant`, `ticket-assistant`, `hub-admin-assistant`
   - Modelos anteriores: `gpt-4o-mini`, `gpt-4-turbo` → unificados em `google/gemini-3-flash-preview`
 - **Documentação Consolidada v3.15.0**:
-  - TCR atualizado com contagens reais: 140 tabelas, 218 funções SQL, 94 enums, 26 edge functions
+  - TCR atualizado com contagens reais: 113 tabelas + 27 views, 218 funções SQL, 82 enums, 25 edge functions
   - Edge Functions section atualizada: adicionadas 8 funções de resumo IA (collaborator, team, clevel, mbr, qbr-pre, qbr-meeting, qbr-post) + health-check
   - DEVELOPMENT_STANDARDS atualizado para v1.27.0 com QBR ritual e testing framework
   - Deep Dive, DOCUMENTATION_INDEX e tcr-content.ts sincronizados
