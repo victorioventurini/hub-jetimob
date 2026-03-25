@@ -20,6 +20,9 @@ export type { MbrOrgOkrsStepProps } from './MbrOrgOkrsStep';
 export { MbrDecisionsStep } from './MbrDecisionsStep';
 export type { MbrDecisionsStepProps } from './MbrDecisionsStep';
 
+export { MbrQbrFollowUpStep } from './MbrQbrFollowUpStep';
+export type { QbrFollowUpItem } from './MbrQbrFollowUpStep';
+
 export { MbrClosingStep } from './MbrClosingStep';
 export type { MbrClosingStepProps } from './MbrClosingStep';
 

@@ -173,8 +173,8 @@ export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiativ
 // MBR (MONTHLY BUSINESS REVIEW) WIZARD
 // ============================================================
 
-export type MbrStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
-export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
+export type MbrStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'qbr-followup' | 'closing';
+export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'qbr-followup' | 'closing';
 
 /** KPI snapshot imutável — congelado ao iniciar o MBR */
 export interface MbrKpiSnapshot {
@@ -275,6 +275,19 @@ export interface MbrTeamOkrSnapshot {
   reviewed: boolean;
 }
 
+/** QBR Follow-up item tracked in MBR */
+export interface QbrFollowUpItem {
+  id: string;
+  text: string;
+  category: string;
+  owner?: { id: string; name: string };
+  deadline?: string | null;
+  resolved: boolean;
+  sourceType: 'decision' | 'commitment';
+  fromTeam?: string;
+  toTeam?: string;
+}
+
 /** Draft data completo do MBR */
 export interface MbrDraftData {
   referenceMonth: string; // YYYY-MM
@@ -286,6 +299,7 @@ export interface MbrDraftData {
   checklist: MbrGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   previousMbrPendingItems: TeamCheckinDecision[];
+  qbrFollowUpItems: QbrFollowUpItem[];
 }
 
 // ============================================================

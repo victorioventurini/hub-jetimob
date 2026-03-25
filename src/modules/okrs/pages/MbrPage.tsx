@@ -32,6 +32,7 @@ import { MbrTeamOkrsDetailStep } from '@/modules/okrs/components/wizards/mbr/Mbr
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
+import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
 
 import { calculateProgress } from '@/modules/okrs/types';
 import type {
@@ -56,10 +57,11 @@ const WIZARD_STEPS = [
   { id: 'team-okrs-detail' as const, label: 'Análise por Time', description: 'Drill-down' },
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Prioridades estratégicas' },
   { id: 'decisions' as const, label: 'Decisões', description: 'Consolidação' },
+  { id: 'qbr-followup' as const, label: 'Follow-up QBR', description: 'Decisões do QBR' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
 
-const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'closing'];
+const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'closing'];
 
 const DEFAULT_DATA: MbrDraftData = {
   referenceMonth: format(new Date(), 'yyyy-MM'),
@@ -76,6 +78,7 @@ const DEFAULT_DATA: MbrDraftData = {
   },
   ritualFeedback: [],
   previousMbrPendingItems: [],
+  qbrFollowUpItems: [],
 };
 
 // ============================================================
@@ -670,6 +673,16 @@ export default function MbrPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             previousMbrPendingItems={draft.data.previousMbrPendingItems}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
+      case 'qbr-followup':
+        return (
+          <MbrQbrFollowUpStep
+            followUpItems={draft.data.qbrFollowUpItems}
+            onFollowUpItemsChange={(qbrFollowUpItems) => updateDraft({ qbrFollowUpItems })}
             onContinue={goNext}
             onBack={goBack}
           />
