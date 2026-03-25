@@ -30,7 +30,7 @@ export const TCR_SECTIONS: Record<string, TcrSection> = {
 | **Roteamento** | React Router DOM v6 |
 | **Backend** | Supabase (Lovable Cloud) |
 | **Banco de Dados** | PostgreSQL |
-| **Autenticação** | Supabase Auth (OTP Code via email) |
+| **Autenticação** | Supabase Auth (Magic Link via email) |
 | **Storage** | Supabase Storage |
 | **Funções Serverless** | Supabase Edge Functions (Deno) |
 | **IA** | Lovable AI (Google Gemini / OpenAI) |
