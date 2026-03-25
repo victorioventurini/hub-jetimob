@@ -17,8 +17,9 @@ describe('calculateProgress', () => {
       expect(calculateProgress(150, 300, 300, 'up')).toBe(100);
     });
 
-    it('deve limitar em 100% quando ultrapassou a meta', () => {
-      expect(calculateProgress(150, 350, 300, 'up')).toBe(100);
+    it('deve permitir valores acima de 100% quando ultrapassou a meta', () => {
+      // (350 - 150) / (300 - 150) = 200/150 = 133.33%
+      expect(calculateProgress(150, 350, 300, 'up')).toBeCloseTo(133.33, 1);
     });
 
     it('não deve retornar valores negativos', () => {
@@ -41,8 +42,9 @@ describe('calculateProgress', () => {
       expect(calculateProgress(50, 15, 15, 'down')).toBe(100);
     });
 
-    it('deve limitar em 100% quando reduziu além da meta', () => {
-      expect(calculateProgress(50, 10, 15, 'down')).toBe(100);
+    it('deve permitir valores acima de 100% quando reduziu além da meta', () => {
+      // (50 - 10) / (50 - 15) = 40/35 = 114.29%
+      expect(calculateProgress(50, 10, 15, 'down')).toBeCloseTo(114.29, 1);
     });
 
     it('não deve retornar valores negativos quando aumentou ao invés de reduzir', () => {
