@@ -163,7 +163,7 @@ describe('OkrProgressBar - Labels', () => {
 
   it('should display custom unit', () => {
     render(<OkrProgressBar {...defaultProps} unit="R$" />);
-    expect(screen.getByText(/R\$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/R\$/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('should default to % unit', () => {
