@@ -2175,7 +2175,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 ---
 
-## 8. Edge Functions (26 funções ativas)
+## 8. Edge Functions (25 funções ativas)
 
 | Função | Descrição | Criticidade |
 |--------|-----------|-------------|
