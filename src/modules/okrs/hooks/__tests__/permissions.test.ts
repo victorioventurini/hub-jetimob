@@ -22,10 +22,10 @@ const mockManageableTeams = vi.fn(() => ({
   isLoading: false,
 }));
 const mockPermissions = vi.fn(() => ({
-  has: (_key: string) => false,
-  hasAny: (_keys: string[]) => false,
-  hasAll: (_keys: string[]) => false,
-  isWildcard: false,
+  has: (_key: string): boolean => false,
+  hasAny: (_keys: string[]): boolean => false,
+  hasAll: (_keys: string[]): boolean => false,
+  isWildcard: false as boolean,
   isLoading: false,
   permissions: [] as string[],
   isImpersonating: false,
