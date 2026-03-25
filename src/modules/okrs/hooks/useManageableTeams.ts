@@ -122,7 +122,6 @@ export function useManageableTeams() {
         return [];
       }
 
-      console.log("[useManageableTeams] Real user can manage teams:", teams?.map(t => t.name));
       return teams || [];
     },
     enabled: isReady && !!effectiveUserId,
