@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { calculateProgressFromNullable } from '../../utils/progressCalculation';
 import type { OkrOrgObjective, OkrOrgKeyResult, OkrTeamObjective, OkrTeamKeyResult } from '../../types';
 
 export type OkrDashboardView = 'company' | 'team' | 'my';
