@@ -3450,6 +3450,15 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.15.1 (2026-03-25)
+- **Metrics Correction**:
+  - Contagens corrigidas: 113 tabelas + 27 views (antes "140 tabelas"), 82 enums (antes 94), 25 edge functions (antes 26)
+  - 218 funções SQL confirmadas (sem alteração)
+- **Test Suite 100% Green**:
+  - 547 testes passando com 0 falhas
+  - Automated Testing Framework atualizado para v1.2
+  - Fixes: EditKpiDialog (BuContext mock + UnitSelect + scope assertions), OkrOwnerInfo (null/empty assertions), MbrPanoramaStep (unit formatting), MbrTeamOkrsSteps (navigation + reviewed text + progress format)
+
 ### v3.15.0 (2026-03-25)
 - **AI Agents Model Migration — Gemini 3 Flash Preview**:
   - Todos os 11 agentes de IA ativos migrados para `google/gemini-3-flash-preview`
