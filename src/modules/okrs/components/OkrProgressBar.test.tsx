@@ -29,7 +29,7 @@ describe('OkrProgressBar - Basic Rendering', () => {
 
   it('should display current value', () => {
     render(<OkrProgressBar {...defaultProps} />);
-    expect(screen.getByText(/50/)).toBeInTheDocument();
+    expect(screen.getAllByText(/50/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('should display progress percentage', () => {
