@@ -34,3 +34,6 @@ export * from './qbr-pre';
 
 // Wizard 10: QBR Pre C-Level
 export * from './qbr-pre-clevel';
+
+// Wizard 11: QBR Meeting
+export * from './qbr-meeting';
