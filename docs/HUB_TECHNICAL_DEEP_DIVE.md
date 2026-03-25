@@ -440,6 +440,10 @@ O sistema de insights classifica cada KR em um de 8 estados, cada um com semânt
 | `ManagersCheckinPage.tsx` | `/okrs/managers-checkin` | Wizard check-in gestores |
 | `CLevelCheckinPage.tsx` | `/okrs/clevel-checkin` | Wizard check-in C-Level |
 | `MbrPage.tsx` | `/okrs/mbr` | Monthly Business Review |
+| `QbrPrePage.tsx` | `/okrs/qbr-pre` | QBR Pré-Líderes (balanço + proposta OKRs) |
+| `QbrPreCLevelPage.tsx` | `/okrs/qbr-pre-clevel` | QBR Pré-C-Level (calibração + diretrizes) |
+| `QbrMeetingPage.tsx` | `/okrs/qbr` | QBR Reunião (aprovação + decisões) |
+| `QbrPostPage.tsx` | `/okrs/qbr-post` | QBR Pós (promoção + ata executiva) |
 | `RitualHistoryPage.tsx` | `/okrs/ritual-history` | Histórico de rituais |
 | `CycleCheckinsPage.tsx` | `/okrs/checkins` | Check-ins do ciclo |
 | `OkrQualityPage.tsx` | `/okrs/quality` | Qualidade dos OKRs |
@@ -448,17 +452,18 @@ O sistema de insights classifica cada KR em um de 8 estados, cada um com semânt
 | `OrgAnalysisPage.tsx` | `/okrs/analysis` | Análise org (BU admin) |
 | `OkrHealthPage.tsx` | `/okrs/health` | Saúde dos OKRs (BU admin) |
 | `OkrsSettingsPage.tsx` | — | Configurações de OKRs |
+| `OkrsSettingsPage.tsx` | — | Configurações de OKRs |
 
 ## 2.9 Rotas
 
-📁 **`src/routes/okrs.routes.tsx`** — 21 rotas
+📁 **`src/routes/okrs.routes.tsx`** — 25 rotas
 
 Todas as rotas OKR são wrapped por:
 ```
 ProtectedRoute → BuRequiredRoute → ModuleRoute('okrs')
 ```
 
-Rotas administrativas (MBR, org-construction-review, analysis, health) adicionam `BuAdminRoute`.
+Rotas administrativas (MBR, QBR C-Level/Meeting/Post, org-construction-review, analysis, health) adicionam `BuAdminRoute`.
 
 ---
 
@@ -494,7 +499,11 @@ type WizardPersona =
   | 'clevel-checkin'     // Direção estratégica
   | 'team-okr-creation'  // Criação de OKRs
   | 'team-kr-creation'   // Criação de KRs
-  | 'mbr';               // Monthly Business Review
+  | 'mbr'                // Monthly Business Review
+  | 'qbr-pre'            // QBR Pré-Líderes
+  | 'qbr-pre-clevel'     // QBR Pré-C-Level
+  | 'qbr-meeting'        // QBR Reunião
+  | 'qbr-post';          // QBR Pós-Reunião
 ```
 
 ## 3.3 Infraestrutura Compartilhada
@@ -870,7 +879,108 @@ E-mail enviado para:
 
 Agentes IA: `analista-kpis`, `alinhamento-estrategico`, `facilitador-decisoes`
 
-## 3.10 Wizard: Team OKR Creation
+## 3.10 Wizard: QBR — Quarterly Business Review (v1.0)
+
+> **Frequência:** Trimestral (fim de ciclo)  
+> **Participantes:** Líderes de time → C-Level → BU Admin  
+> **Dispara e-mail:** ✅ Sim (3 edge functions)
+
+O QBR é um ritual de 4 fases sequenciais que encerra o ciclo trimestral e prepara o próximo. Cada fase produz um snapshot imutável que alimenta a fase seguinte.
+
+```
+┌──────────────┐    ┌───────────────────┐    ┌──────────────┐    ┌────────────┐
+│  Pré-QBR     │───►│  Pré-QBR C-Level  │───►│  Reunião QBR │───►│  Pós-QBR   │
+│  (Líderes)   │    │  (Diretores)      │    │  (Decisão)   │    │  (Ata)     │
+│  /qbr-pre    │    │  /qbr-pre-clevel  │    │  /qbr        │    │  /qbr-post │
+└──────────────┘    └───────────────────┘    └──────────────┘    └────────────┘
+```
+
+**Controle de abertura:** `cycles.qbr_status` (`open` | `collecting` | `closed`)
+
+### Fase 1: Pré-QBR (Líderes) — `QbrPrePage.tsx`
+
+📁 **`src/modules/okrs/components/wizards/qbr-pre/`**
+
+| # | Step | Componente | Descrição |
+|---|------|-----------|-----------|
+| 1 | balance | `QbrBalanceStep` | Estado final de KRs via `calculateKrState` + pace |
+| 2 | kpi-analysis | `QbrKpiAnalysisStep` | Sinalização de zombies + propostas de novos KPIs |
+| 3 | learnings | `QbrLearningsStep` | Reflexão: continuar / parar / dívidas |
+| 4 | okr-proposal | `QbrOkrProposalStep` | Sub-flow inline (Objetivo → KR Plan → KR Detail) — draft-only |
+| 5 | summary | `QbrPreSummary` | Revisão consolidada + snapshot imutável |
+
+**Sub-flow de Proposta de OKRs (`QbrOkrProposalStep`):**
+- 3 mini-etapas compostas inline (sem persistir em banco)
+- Objetivo: título + descrição
+- Plano de KRs: fundacional/contribuição/habilitador (1–5 KRs)
+- Detalhamento: título, baseline, meta, direção, unidade, responsável
+- Opção de pular a proposta (skip)
+- Dados vivem em `QbrPreDraftData.proposedOkrs`
+
+### Fase 2: Pré-QBR C-Level — `QbrPreCLevelPage.tsx`
+
+📁 **`src/modules/okrs/components/wizards/qbr-pre-clevel/`**
+
+| # | Step | Componente | Descrição |
+|---|------|-----------|-----------|
+| 1 | system-read | `QbrCLevelSystemReadStep` | Consolidação de scorecards + KPIs dos líderes |
+| 2 | strategic | `QbrCLevelStrategicStep` | Alinhamento, sinais e "o que não fazer" |
+| 3 | okr-validation | `QbrCLevelOkrValidationStep` | Calibração por time com flags |
+| 4 | directives | `QbrCLevelDirectivesStep` | Pauta obrigatória para reunião |
+| 5 | closing | `MbrClosingStep` | Feedback do rito (reutilizado) |
+
+**Flags de calibração:** `too_conservative`, `too_aggressive`, `gap`, `misaligned`, `approved`
+
+### Fase 3: Reunião QBR — `QbrMeetingPage.tsx`
+
+📁 **`src/modules/okrs/components/wizards/qbr-meeting/`**
+
+| # | Step | Componente | Descrição |
+|---|------|-----------|-----------|
+| 1 | opening | `QbrMeetingOpeningStep` | Direcionamentos + KPIs em alerta |
+| 2 | okr-review | `QbrMeetingOkrReviewStep` | Gate de aprovação (`approved`, `discarded`, `defer`) |
+| 3 | decisions | `QbrMeetingDecisionsStep` | Decisões com dono + prazo obrigatórios |
+| 4 | commitments | `QbrMeetingCommitmentsStep` | Compromissos cross-área formalizados |
+| 5 | closing | `QbrMeetingClosingStep` | Checklist de governança + rating por estrelas |
+
+### Fase 4: Pós-QBR — `QbrPostPage.tsx`
+
+📁 **`src/modules/okrs/components/wizards/qbr-post/`**
+
+| # | Step | Componente | Descrição |
+|---|------|-----------|-----------|
+| 1 | okr-promotion | `QbrPostOkrPromotionStep` | Seleção de OKRs aprovados para ativação |
+| 2 | decisions | `QbrPostDecisionsStep` | Decisões complementares |
+| 3 | commitments | `QbrPostCommitmentsStep` | Formalização com fromTeam/toTeam + prazo |
+| 4 | follow-up | `QbrPostFollowUpStep` | Cadência MBR + datas de acompanhamento |
+| 5 | minutes | `QbrPostMinutesStep` | Ata executiva + checklist de governança (4 itens) |
+
+**Checklist de governança do Pós-QBR:**
+- Foco estratégico claro (`strategicFocusClear`)
+- Decisões têm donos (`decisionsHaveOwners`)
+- Dependências formalizadas (`dependenciesFormalized`)
+- OKRs do próximo ciclo ativos (`nextCycleOkrsActive`)
+
+### Edge Functions de Resumo QBR
+
+| Function | Fase | Agentes IA |
+|----------|------|-----------|
+| `qbr-pre-summary` | Pré-QBR | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+| `qbr-meeting-summary` | Reunião | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+| `qbr-post-summary` | Pós-QBR | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+
+Idempotência garantida por `summary_sent_at`. Modelo: `google/gemini-3-flash-preview`.
+
+### Integração QBR → MBR
+
+O wizard MBR inclui o step `MbrQbrFollowUpStep` para acompanhamento de:
+- Decisões pendentes do QBR (com dono/prazo)
+- Compromissos cross-área não cumpridos
+- Tipo `QbrFollowUpItem` em `MbrDraftData.qbrFollowUpItems`
+
+---
+
+## 3.11 Wizard: Team OKR Creation
 
 > **Persona:** Líder de time  
 > **Frequência:** Sob demanda (início de ciclo)  
@@ -925,7 +1035,7 @@ interface TeamOkrCreationWizardState {
 }
 ```
 
-## 3.11 Wizard: Team KR Creation
+## 3.12 Wizard: Team KR Creation
 
 > **Persona:** Líder de time  
 > **Frequência:** Sob demanda  
@@ -952,7 +1062,7 @@ interface TeamOkrCreationWizardState {
 
 O `KrDetailStep` é um re-export direto do `TeamOkrKrDetailStep`, garantindo que o formulário de detalhamento de KRs seja idêntico em ambos os wizards.
 
-## 3.12 Histórico de Rituais
+## 3.13 Histórico de Rituais
 
 > **Rota:** `/okrs/ritual-history`  
 > **Permissão:** `okrs.view:bu` (inclui super_admins)
@@ -969,7 +1079,7 @@ Centraliza a consulta de todas as sessões concluídas. Features:
 - **Feedback:** Média de estrelas + lista de sugestões
 - **RLS:** Admins veem todas as sessões da BU; membros veem do seu time
 
-## 3.13 Sistema de Notificações Pós-Wizard
+## 3.14 Sistema de Notificações Pós-Wizard
 
 📁 **`supabase/functions/`** — Edge Functions de resumo
 
@@ -979,6 +1089,9 @@ Centraliza a consulta de todas as sessões concluídas. Features:
 | `team-checkin-summary/` | Team Check-in | `coach-okrs`, `analista-kpis`, `facilitador-decisoes`, `cultura` |
 | `clevel-checkin-summary/` | C-Level | `alinhamento-estrategico`, `analista-kpis`, `facilitador-decisoes` |
 | `mbr-summary/` | MBR | `analista-kpis`, `alinhamento-estrategico`, `facilitador-decisoes` |
+| `qbr-pre-summary/` | QBR Pré | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+| `qbr-meeting-summary/` | QBR Reunião | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+| `qbr-post-summary/` | QBR Pós | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
 
 **Modelo de IA:** `google/gemini-3-flash-preview`
 
@@ -1001,7 +1114,7 @@ Centraliza a consulta de todas as sessões concluídas. Features:
 
 Todos incluem BCC para `hub@jetimob.com`.
 
-## 3.14 Integração com IA (Vic)
+## 3.15 Integração com IA (Vic)
 
 📁 **`src/modules/okrs/types/wizard.ts`** — `WizardVicContext`
 

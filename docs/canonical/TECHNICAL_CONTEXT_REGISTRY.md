@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.13.0  
-**Última atualização:** 2026-03-20 (v3.13.0 - Asset Audit History — Trilha de auditoria field-level para Inventário, Chaves e Linhas Telefônicas via triggers + componente genérico AuditHistoryTimeline; Submódulo Linhas Telefônicas documentado)
+**Versão:** 3.14.0  
+**Última atualização:** 2026-03-25 (v3.14.0 - QBR (Quarterly Business Review) Ritual v1.0 — 4 wizards full-page (Pre-Leaders, Pre-C-Level, Meeting, Post), 3 edge functions de resumo multi-agente, inline OKR proposal sub-flow, integração com follow-up no MBR)
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.1 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (175 funções)** | **Edge Functions JSDoc Audit (18 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅
 
@@ -1851,7 +1851,9 @@ teamObjectiveWithKrs: `..., key_results:okr_team_key_results(..., owner:profiles
 
 ### 4.8 OKR Wizards — Rituais de Gestão
 
-O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósito e periodicidade específicos.
+O Hub implementa 10 wizards full-page para rituais de OKRs, cada um com propósito e periodicidade específicos.
+
+#### Rituais Semanais/Mensais (Check-in + MBR)
 
 | Wizard | Rota | Propósito | Frequência | Participante |
 |--------|------|-----------|------------|--------------|
@@ -1861,6 +1863,56 @@ O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósit
 | **Managers Check-in** | `/okrs/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
 | **C-Level Check-in** | `/okrs/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
 | **MBR (Monthly Business Review)** | `/okrs/mbr` | Revisão estratégica mensal: KPIs mestres, OKRs por time e organizacionais, decisões | Mensal | BU Admin |
+
+#### QBR — Quarterly Business Review (v1.0)
+
+O QBR é um ritual trimestral de 4 fases que fecha o ciclo e prepara o próximo, com governança progressiva (líder → C-Level → reunião → formalização).
+
+| Fase | Wizard | Rota | Propósito | Participante | Acesso |
+|------|--------|------|-----------|--------------|--------|
+| **1. Pré-QBR (Líderes)** | `QbrPrePage` | `/okrs/qbr-pre` | Balanço do ciclo, análise de KPIs, aprendizados, proposta de OKRs | Líder de time | `OkrRoute` |
+| **2. Pré-QBR (C-Level)** | `QbrPreCLevelPage` | `/okrs/qbr-pre-clevel` | Consolidação de scorecards, análise estratégica, calibração de OKRs, diretrizes | C-Level/BU Admin | `requiresBuAdmin` |
+| **3. Reunião QBR** | `QbrMeetingPage` | `/okrs/qbr` | Aprovação/rejeição de OKRs por time, decisões com dono/prazo, compromissos cross-área | BU Admin | `requiresBuAdmin` |
+| **4. Pós-QBR** | `QbrPostPage` | `/okrs/qbr-post` | Promoção de OKRs aprovados, formalização de dependências, ata executiva | BU Admin | `requiresBuAdmin` |
+
+**Controle de abertura:** Campo `qbr_status` na tabela `cycles` (`open`, `collecting`, `closed`). O wizard Pré-QBR só está disponível quando `qbr_status IN ('open', 'collecting')`.
+
+**Etapas do Pré-QBR (Líderes):**
+1. **Balanço do Ciclo** — Estado final de cada KR com `calculateKrState`, progresso e pace
+2. **Análise de KPIs** — Sinalização de KPIs zombie e propostas de novos indicadores
+3. **Aprendizados** — Reflexão estruturada (continuar, parar, dívidas)
+4. **Proposta de OKRs** — Sub-flow inline com 3 mini-etapas: Objetivo → Plano de KRs → Detalhamento (draft-only, via `QbrOkrProposalStep`)
+5. **Resumo e Envio** — Revisão consolidada com snapshot imutável
+
+**Etapas do Pré-QBR (C-Level):**
+1. **Leitura Sistêmica** — Consolidação de scorecards e KPIs dos líderes
+2. **Análise Estratégica** — Alinhamento, sinais e "o que não fazer"
+3. **Validação de OKRs** — Calibração por time com flags (`too_conservative`, `gap`, etc.)
+4. **Diretrizes** — Pauta obrigatória para a reunião
+5. **Feedback do Rito** — Avaliação do processo via `MbrClosingStep`
+
+**Etapas da Reunião QBR:**
+1. **Abertura** — Direcionamentos e KPIs em alerta
+2. **Revisão de OKRs** — Gate de aprovação por time (`approved`, `discarded`, `defer`)
+3. **Decisões** — Registro com dono e prazo obrigatórios
+4. **Compromissos** — Dependências cross-área formalizadas
+5. **Encerramento** — Checklist de governança e avaliação por estrelas
+
+**Etapas do Pós-QBR:**
+1. **Promoção de OKRs** — Seleção de OKRs aprovados para ativação
+2. **Decisões Complementares** — Registro adicional de decisões
+3. **Compromissos Cross-Área** — Formalização com `fromTeamId`, `toTeamId` e prazo
+4. **Cadência de Follow-Up** — Configuração de MBR e datas de acompanhamento
+5. **Ata Executiva** — Sumário com checklist de governança (4 itens)
+
+**Edge Functions de Resumo:**
+- `qbr-pre-summary` — 3 agentes IA (analista-kpis, facilitador-decisoes, revisor-comunicacao)
+- `qbr-meeting-summary` — Mesmo padrão multi-agente
+- `qbr-post-summary` — Mesmo padrão, com idempotência via `summary_sent_at`
+
+**Integração com MBR:**
+- Step `MbrQbrFollowUpStep` no wizard MBR para acompanhamento de decisões e compromissos pendentes do QBR
+- Tipos `qbr-followup` adicionados ao `MbrStep` e `QbrFollowUpItem[]` ao `MbrDraftData`
 
 **Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
 
