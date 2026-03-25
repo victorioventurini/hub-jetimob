@@ -65,7 +65,7 @@ function createKpiForWizard(overrides: Record<string, unknown> = {}): import('@/
     isStrategic: true,
     isGuardrailAtRisk: false,
     linkedKrIds: [],
-    displayMode: 'strategic' as const,
+    displayMode: 'readonly' as const,
     alertReason: null,
     area: null,
     ...overrides,
