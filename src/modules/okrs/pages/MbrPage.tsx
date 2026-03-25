@@ -678,6 +678,16 @@ export default function MbrPage() {
           />
         );
 
+      case 'qbr-followup':
+        return (
+          <MbrQbrFollowUpStep
+            followUpItems={draft.data.qbrFollowUpItems}
+            onFollowUpItemsChange={(qbrFollowUpItems) => updateDraft({ qbrFollowUpItems })}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
       case 'closing':
         return (
           <MbrClosingStep

@@ -1,4 +1,5 @@
-/**
+export { MbrQbrFollowUpStep } from './MbrQbrFollowUpStep';
+export type { QbrFollowUpItem } from './MbrQbrFollowUpStep';
  * MBR Wizard Components - Barrel Export
  */
 
