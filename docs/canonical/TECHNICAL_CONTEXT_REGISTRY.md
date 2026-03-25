@@ -2175,7 +2175,7 @@ const { profileId, isLoading } = useMyProfileId();
 
 ---
 
-## 8. Edge Functions
+## 8. Edge Functions (26 funções ativas)
 
 | Função | Descrição | Criticidade |
 |--------|-----------|-------------|
@@ -2184,18 +2184,25 @@ const { profileId, isLoading } = useMyProfileId();
 | `cron-dispatcher` | Dispatcher central para jobs agendados via pg_cron | 🔴 Crítica |
 | `process-notification-outbox` | Processa fila de notificações (email, push) | 🔴 Crítica |
 | `invoke-vic` | Invoca agentes Vic (IA) | 🟡 Alta |
+| `health-check` | Health check do sistema | 🟡 Alta |
 | `search-cities` | Autocomplete de cidades (Google Maps) | 🟢 Normal |
 | `search-address` | Autocomplete de endereços (Google Places) | 🟢 Normal |
 | `get-place-details` | Detalhes de endereço (Google Places) | 🟢 Normal |
 | `culture-message` | Gera mensagem de cultura (IA) | 🟢 Normal |
 | `process-agent-document` | Processa documentos para RAG | 🟢 Normal |
 | `get-tcr` | Retorna TCR para Custom GPT | 🟢 Normal |
-| `global-search` | Busca multi-contexto (ver seção 8.1) | 🟢 Normal |
 | `get-public-asset` | Retorna dados sanitizados de asset por `internal_code` (público, sem JWT) | 🟢 Normal |
 | `okr-construction-review` | Avalia qualidade de OKRs antes do ciclo (IA) | 🟢 Normal |
 | `okr-org-health-review` | Avalia saúde de OKRs organizacionais (IA) | 🟢 Normal |
 | `evaluate-notification-health` | Avalia saúde do sistema de notificações | 🟢 Normal |
 | `send-partner-invite` | Envia convite para parceiros externos | 🟢 Normal |
+| `collaborator-checkin-summary` | Resumo de check-in do colaborador (IA) | 🟢 Normal |
+| `team-checkin-summary` | Resumo de check-in do time (IA) | 🟢 Normal |
+| `clevel-checkin-summary` | Resumo de check-in C-Level (IA) | 🟢 Normal |
+| `mbr-summary` | Resumo do MBR (3 agentes IA) | 🟢 Normal |
+| `qbr-pre-summary` | Resumo do Pré-QBR (3 agentes IA) | 🟢 Normal |
+| `qbr-meeting-summary` | Resumo da Reunião QBR (3 agentes IA) | 🟢 Normal |
+| `qbr-post-summary` | Resumo Pós-QBR com ata executiva (3 agentes IA) | 🟢 Normal |
 | `audit-permissions` | Auditoria de permissões (dev-only) | ⚪ Dev |
 
 ### 8.1 Global Search
