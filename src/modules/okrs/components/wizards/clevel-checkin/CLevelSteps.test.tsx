@@ -54,7 +54,7 @@ function createKpiForWizard(overrides: Record<string, unknown> = {}): import('@/
     team_id: null,
     area_id: null,
     owner_user_id: null,
-    scope: 'organization' as const,
+    scope: 'org' as const,
     latest_value: 72,
     latest_reference_date: null,
     latest_rag_status: 'on_track' as const,
