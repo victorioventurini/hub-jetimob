@@ -96,7 +96,7 @@ export function useManageableTeams() {
         { p_bu_id: buId }
       );
 
-      console.log("[useManageableTeams] NORMAL RPC result:", { teamIdsResult, rpcError });
+      
 
       if (rpcError) {
         console.error("Error fetching manageable team IDs:", rpcError);
