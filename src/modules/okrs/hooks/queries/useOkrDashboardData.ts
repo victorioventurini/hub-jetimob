@@ -135,8 +135,6 @@ export function calculateOverallProgress(
 ): number {
   if (!krs || krs.length === 0) return 0;
 
-  const { calculateProgressFromNullable } = require('../../utils/progressCalculation');
-  
   let totalProgress = 0;
   for (const kr of krs) {
     totalProgress += calculateProgressFromNullable(
