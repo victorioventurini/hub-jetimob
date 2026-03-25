@@ -29,6 +29,7 @@ import { calculateProgress } from '@/modules/okrs/types';
 import { QbrBalanceStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrBalanceStep';
 import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep';
 import { QbrLearningsStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrLearningsStep';
+import { QbrOkrProposalStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrOkrProposalStep';
 import { QbrPreSummary } from '@/modules/okrs/components/wizards/qbr-pre/QbrPreSummary';
 
 import {
