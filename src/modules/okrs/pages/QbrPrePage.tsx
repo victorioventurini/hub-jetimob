@@ -413,18 +413,14 @@ export default function QbrPrePage() {
         );
 
       case 'okr-proposal':
-        // TODO: Fase 2.5 — Compor step components do wizard de criação inline
-        // Por ora, avança para o resumo
         return (
-          <div className="flex flex-col h-full items-center justify-center gap-4 p-6">
-            <p className="text-muted-foreground text-sm text-center">
-              Proposta de OKRs — em construção. Os step components do wizard de criação serão compostos aqui.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={goBack} className="text-sm text-muted-foreground underline">Voltar</button>
-              <button onClick={goNext} className="text-sm text-primary underline">Pular para resumo</button>
-            </div>
-          </div>
+          <QbrOkrProposalStep
+            proposedOkrs={draft.data.proposedOkrs}
+            teamId={userTeamId || ''}
+            onProposedOkrsChange={(proposedOkrs) => updateDraft({ proposedOkrs })}
+            onContinue={goNext}
+            onBack={goBack}
+          />
         );
 
       case 'summary':
