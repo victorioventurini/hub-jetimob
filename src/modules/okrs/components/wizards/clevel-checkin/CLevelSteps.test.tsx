@@ -106,7 +106,9 @@ describe('CLevelCompanyOkrsStep', () => {
 
   it('renders loading skeletons', () => {
     const { container } = render(<CLevelCompanyOkrsStep {...baseProps} isLoading />);
-    expect(container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]').length).toBeGreaterThan(0);
+    // Skeleton component renders pulse animation divs
+    const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('calls onContinue when button clicked', () => {
