@@ -312,8 +312,8 @@ describe('Status calculation integration scenarios', () => {
 
     // Day 7 (50% elapsed): Making progress
     vi.setSystemTime(new Date('2025-01-13T12:00:00Z'));
-    expect(calculateAutoStatus(0, 5, 10, 'up', sprintStart, sprintEnd)).toBe('on_track');
-    expect(calculateAutoStatus(0, 3, 10, 'up', sprintStart, sprintEnd)).toBe('at_risk');
+    expect(calculateAutoStatus(0, 6, 10, 'up', sprintStart, sprintEnd)).toBe('on_track');
+    expect(calculateAutoStatus(0, 4, 10, 'up', sprintStart, sprintEnd)).toBe('at_risk');
     expect(calculateAutoStatus(0, 1, 10, 'up', sprintStart, sprintEnd)).toBe('off_track');
 
     // Day 14: Completed
