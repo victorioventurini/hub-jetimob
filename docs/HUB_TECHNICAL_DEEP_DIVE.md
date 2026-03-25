@@ -1,4 +1,4 @@
-# Hub da Jet — Deep Dive Técnico: KPIs, OKRs e Wizards
+# Hub da Jet — Deep Dive Técnico Completo
 
 > **Documento de referência para assistentes de IA.**  
 > Gerado em: 2026-03-25  
@@ -1176,5 +1176,834 @@ supabase/functions/
 
 ---
 
+# PARTE IV — MÓDULO TICKETS: O Canal de Comunicação
+
+## 4.1 Filosofia
+
+Tickets são o canal estruturado de comunicação do Hub — tanto **interno** (entre times) quanto **externo** (com parceiros). O módulo implementa um sistema de chat contextualizado com roteamento automático, visibilidade granular e participação unificada entre usuários internos e contatos externos.
+
+> **Tickets não são e-mails. São conversas com contexto, rastreabilidade e accountability.**
+
+## 4.2 Modelo de Dados
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ARQUITETURA TICKETS                       │
+│                                                              │
+│  tickets (entidade principal)                                │
+│  ├── ticket_participants (requester/assignee/watcher)        │
+│  │   ├── internal_user (profile_id → profiles)               │
+│  │   └── partner_contact (partner_contact_id)                │
+│  ├── ticket_messages (corpo rich text)                       │
+│  │   ├── ticket_attachments (arquivos)                       │
+│  │   └── ticket_mentions (@menções)                          │
+│  ├── ticket_categories → ticket_subcategories                │
+│  └── ticket_routing_rules / ticket_internal_routing_rules    │
+│                                                              │
+│  external_companies (parceiros) → partner_contacts           │
+│  partner_service_mappings (categoria↔empresa)                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Tabelas Centrais
+
+| Tabela | Propósito |
+|--------|-----------|
+| `tickets` | Entidade principal com tipo (internal/external), status, visibilidade |
+| `ticket_participants` | Participação unificada (internos + externos) com roles |
+| `ticket_messages` | Mensagens rich text com suporte a reply e pinned |
+| `ticket_attachments` | Arquivos vinculados a mensagens |
+| `ticket_mentions` | @menções em mensagens (usuários ou contatos) |
+| `ticket_categories` / `ticket_subcategories` | Categorização com scope (internal/external/both) |
+| `ticket_routing_rules` | Roteamento automático de tickets externos |
+| `ticket_internal_routing_rules` | Roteamento automático de tickets internos |
+| `external_companies` | Empresas parceiras |
+| `partner_contacts` | Contatos externos com `profile_user_id` linkado |
+| `partner_service_mappings` | Mapeamento de serviços por empresa parceira |
+
+### Tipos e Enums
+
+| Tipo | Valores | Uso |
+|------|---------|-----|
+| `TicketType` | `internal`, `external` | Diferencia fluxos de comunicação |
+| `TicketStatus` | `waiting`, `paused`, `in_progress`, `done`, `discarded` | Ciclo de vida |
+| `TicketVisibility` | `bu_all`, `teams`, `users`, `private` | Controle de acesso granular |
+| `TicketParticipantRole` | `requester`, `assignee`, `watcher` | Papel no ticket |
+| `TicketParticipantType` | `internal_user`, `partner_contact` | Tipo de participante |
+
+### Sistema de Roteamento
+
+O Hub implementa dois sistemas de roteamento:
+
+1. **Roteamento Externo** (`ticket_routing_rules`): Baseado em empresa parceira + subcategoria → atribui contatos automaticamente
+2. **Roteamento Interno** (`ticket_internal_routing_rules`): Baseado em categoria/subcategoria → atribui usuários, times ou squads
+3. **Contact-First Routing** (v2.4+): Campo `assigned_contact_id` com `assignment_source` indicando origem (contact_capability, routing_fallback, manual)
+
+### Visibilidade e Segurança
+
+Tickets respeitam visibilidade multinível:
+- `bu_all`: Visível para toda a BU
+- `teams`: Restrito a times específicos via `visibility_team_ids`
+- `users`: Restrito a usuários específicos via `visibility_user_ids`
+- `private`: Apenas participantes do ticket
+
+### Mensagens Rich Text
+
+O sistema suporta dois formatos de rich text:
+- `SimpleTextContent`: `{ type: 'text', content: string }`
+- `TiptapContent`: `{ type: 'doc', content: RichTextNode[] }` — editor Tiptap completo
+
+Features de mensagem: **reply** (via `reply_to_message_id`), **pin** (mensagens fixadas), **menções** (@user/@contact), **anexos** com upload para Storage.
+
+## 4.3 Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/tickets/types.ts` | Todos os tipos TypeScript |
+| `src/modules/tickets/hooks/useTicketQueries.ts` | Queries de listagem e detalhe |
+| `src/modules/tickets/hooks/useTicketMutations.ts` | Mutações (criar, atualizar) |
+| `src/modules/tickets/hooks/useTicketMessageQueries.ts` | Mensagens do ticket |
+| `src/modules/tickets/hooks/useTicketMessageMutations.ts` | Enviar/editar mensagens |
+| `src/modules/tickets/hooks/useApplyInternalRouting.ts` | Aplicar roteamento interno |
+| `src/modules/tickets/hooks/useContactCapabilities.ts` | Capacidades do contato |
+| `src/modules/tickets/hooks/useRoutingRules.ts` | CRUD de regras de roteamento |
+| `src/modules/tickets/hooks/useTicketCategories.ts` | Categorias e subcategorias |
+| `src/modules/tickets/hooks/usePinMessage.ts` | Pin/unpin de mensagens |
+| `src/modules/tickets/hooks/useTransferTicket.ts` | Transferência de ticket |
+| `src/modules/tickets/components/TicketCard.tsx` | Card de preview |
+| `src/modules/tickets/components/TicketMessageBubble.tsx` | Bolha de mensagem |
+| `src/modules/tickets/components/TicketMessageComposer.tsx` | Compositor de mensagem |
+| `src/modules/tickets/components/TicketDetailSidebar.tsx` | Sidebar com metadados |
+| `src/modules/tickets/components/TicketsTable.tsx` | Tabela de listagem |
+| `src/routes/tickets.routes.tsx` | 4 rotas |
+
+### Rotas
+
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/tickets` | `TicketsListPage` | Lista com filtros por tipo/status/categoria |
+| `/tickets/new` | `CreateTicketPage` | Criação com roteamento automático |
+| `/tickets/:id` | `TicketDetailPage` | Chat + sidebar + participantes |
+| `/tickets/settings` | `TicketsSettingsPage` | Categorias, routing rules, contatos |
+
+---
+
+# PARTE V — MÓDULO ASSETS: O Patrimônio da Organização
+
+## 5.1 Filosofia
+
+O módulo de Ativos gerencia o ciclo de vida completo de itens físicos da organização. É dividido em **5 sub-módulos** independentes mas integrados: Inventário, Chaves, Brindes, Linhas Telefônicas e Recomendações. Cada um mantém sua própria trilha de auditoria via movimentações.
+
+> **Ativos não são apenas registros. São itens com dono, localização, prazo e responsabilidade.**
+
+## 5.2 Modelo de Dados
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    ARQUITETURA ASSETS                           │
+│                                                                 │
+│  ┌── INVENTÁRIO ─────────────────────────────────────────────┐  │
+│  │ asset_inventory (item principal)                          │  │
+│  │ ├── asset_movements (checkout/return/transfer/write_off)  │  │
+│  │ ├── asset_categories (hierarquia com parent_id)           │  │
+│  │ ├── asset_groups (kits/bundles) → asset_group_items       │  │
+│  │ └── asset_recommendations (catálogo por cargo/time)       │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ┌── CHAVES ─────────────────────────────────────────────────┐  │
+│  │ asset_clavicularies → asset_hooks (ganchos numerados)     │  │
+│  │ asset_keyrings (chaveiros) → asset_keys (chaves)          │  │
+│  │ asset_key_movements (checkout/return/transfer/lost)        │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ┌── BRINDES ────────────────────────────────────────────────┐  │
+│  │ asset_gift_items → asset_gift_batches (lotes)             │  │
+│  │ asset_gift_movements (in/out/adjustment por lote)         │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ┌── LINHAS TELEFÔNICAS ─────────────────────────────────────┐  │
+│  │ asset_phone_lines (operadora, plano, linked_asset)        │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  asset_permissions (controle granular por sub-módulo)            │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Sistema de Permissões
+
+O módulo implementa seu próprio RBAC via `asset_permissions` com 8 roles granulares:
+
+| Role | Escopo |
+|------|--------|
+| `assets_admin` | Acesso total a todos sub-módulos |
+| `inventory_admin` | Admin do inventário |
+| `inventory_manager` | Gestor operacional do inventário |
+| `keys_admin` | Admin do módulo de chaves |
+| `keys_manager` | Gestor operacional de chaves |
+| `gifts_admin` | Admin de brindes |
+| `gifts_manager` | Gestor de brindes |
+| `viewer` | Apenas visualização |
+
+### Sub-módulo: Inventário
+
+- **Statuses**: `available`, `loaned`, `maintenance`, `written_off`
+- **Movimentações**: `checkout`, `return`, `transfer`, `maintenance_start`, `maintenance_end`, `write_off`
+- **Holder**: Cada ativo pode estar com um `user` ou em uma `location`
+- **Kits/Bundles**: `asset_groups` agrupam itens com roles (`primary`/`accessory`)
+- **Recomendações**: Catálogo de aquisição por cargo/time com revisão periódica
+- **QR Codes**: Rota pública `/assets/:code` para lookup por código interno
+
+### Sub-módulo: Chaves
+
+Modelo hierárquico: **Claviculário** → **Ganchos** → **Chaveiros** → **Chaves**
+- Claviculários têm localização física e ganchos numerados
+- Chaveiros agrupam múltiplas chaves e podem ser emprestados
+- Movimentações rastreiam checkout/return/transfer/lost/retired
+
+### Sub-módulo: Brindes
+
+Modelo de estoque por lotes:
+- `gift_items`: Catálogo de itens de brinde
+- `gift_batches`: Lotes com quantidade e origem
+- `gift_movements`: Entrada/saída/ajuste por lote com destino (evento/campanha/pessoa)
+
+### Sub-módulo: Linhas Telefônicas
+
+Gestão de linhas corporativas com operadora, plano e vínculo com ativo (ex: celular).
+
+## 5.3 Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/assets/types.ts` | Todos os tipos (~460 linhas) |
+| `src/modules/assets/hooks/useInventory.ts` | Queries de inventário |
+| `src/modules/assets/hooks/useInventoryMutations.ts` | Mutações de inventário |
+| `src/modules/assets/hooks/useKeys.ts` | CRUD de chaves/chaveiros/claviculários |
+| `src/modules/assets/hooks/useGifts.ts` | CRUD de brindes e lotes |
+| `src/modules/assets/hooks/useAssetGroups.ts` | Gestão de kits/bundles |
+| `src/modules/assets/hooks/useRecommendations.ts` | Catálogo de recomendações |
+| `src/modules/assets/hooks/usePhoneLines.ts` | Linhas telefônicas |
+| `src/modules/assets/hooks/useAssetPermissionsV2.ts` | Verificação de permissões |
+| `src/modules/assets/hooks/useAuditHistory.ts` | Histórico de movimentações |
+| `src/routes/assets.routes.tsx` | 9 rotas |
+
+### Rotas
+
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/assets/inventory` | `InventoryPage` | Lista de ativos com filtros via URL |
+| `/assets/inventory/:id` | `InventoryDetailPage` | Detalhe com movimentações e fotos |
+| `/assets/inventory/recommendations` | `RecommendationsPage` | Catálogo de recomendações |
+| `/assets/keys` | `KeysPage` | Claviculários, chaveiros e chaves |
+| `/assets/gifts` | `GiftsPage` | Brindes e controle de estoque |
+| `/assets/phone-lines` | `PhoneLinesPage` | Linhas telefônicas |
+| `/assets/reports` | `AssetsReportsPage` | Relatórios do módulo |
+| `/assets/settings` | `AssetsSettingsPage` | Categorias, locais, permissões |
+| `/assets/:code` | Redirect público | Lookup por QR code |
+
+---
+
+# PARTE VI — MÓDULO TEAMS: A Estrutura Organizacional
+
+## 6.1 Filosofia
+
+Times são a unidade organizacional fundamental do Hub. O módulo implementa uma **árvore hierárquica** de times com suporte a **Áreas** (agrupamentos estratégicos), **Squads** (equipes transversais) e um **Organograma** visual.
+
+## 6.2 Modelo de Dados
+
+```
+┌──────────────────────────────────────────────┐
+│              HIERARQUIA ORGANIZACIONAL         │
+│                                                │
+│  areas (agrupamento estratégico)               │
+│  ├── leader_user_id                            │
+│  ├── co_leader_user_id                         │
+│  └── → teams (via area_id)                     │
+│                                                │
+│  teams (árvore hierárquica)                    │
+│  ├── parent_team_id (self-reference)           │
+│  ├── leader_user_id                            │
+│  ├── area_id → areas                           │
+│  ├── → squads (via team_id)                    │
+│  └── → bu_user_memberships (membros)           │
+│                                                │
+│  squads (equipes transversais)                 │
+│  ├── team_id → teams                           │
+│  ├── leader_user_id                            │
+│  └── → squad_members                           │
+└──────────────────────────────────────────────┘
+```
+
+### Entidades
+
+| Entidade | Descrição |
+|----------|-----------|
+| **Area** | Agrupamento estratégico (ex: Revenue, Produto). Tem leader + co_leader. NÃO tem OKRs próprios. |
+| **Team** | Unidade operacional com líder, membros, hierarquia (parent_team_id) e área |
+| **Squad** | Equipe transversal dentro de um time — membros podem ser de times diferentes |
+| **TeamTreeNode** | Representação recursiva para organograma |
+
+### Organograma
+
+O organograma usa `useOrganogramData` para construir a árvore completa de times com membros e renderiza via componentes em `src/modules/teams/components/organogram/`.
+
+## 6.3 Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/teams/types.ts` | Tipos base + re-export de squads |
+| `src/modules/teams/types/squad.ts` | Tipos de squads |
+| `src/modules/teams/hooks/useTeams.ts` | CRUD de times |
+| `src/modules/teams/hooks/useSquads.ts` | CRUD de squads |
+| `src/modules/teams/hooks/useOrganogramData.ts` | Dados do organograma |
+| `src/modules/teams/components/TeamTreeView.tsx` | Visualização em árvore |
+| `src/modules/teams/components/TeamFormDialog.tsx` | Formulário de time |
+| `src/modules/areas/types.ts` | Tipos de áreas |
+| `src/modules/areas/hooks/` | CRUD de áreas |
+| `src/routes/teams.routes.tsx` | 4 rotas |
+
+### Rotas
+
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/teams` | `TeamsPage` | Lista de times com filtros |
+| `/teams/:id` | `TeamDetailPage` | Detalhe com membros e squads |
+| `/teams/org-chart` | `OrganogramPage` | Organograma visual |
+| `/squads/:id` | `SquadDetailPage` | Detalhe do squad |
+
+---
+
+# PARTE VII — MÓDULO EVENTS (Jet Experience): ROI de Eventos
+
+## 7.1 Filosofia
+
+O módulo Events, chamado internamente de **Jet Experience**, é um módulo de **análise de ROI de eventos e patrocinadores**. É atualmente **100% mockado** — sem dependência de banco de dados — funcionando como protótipo funcional para validação de UX.
+
+> **Eventos geram oportunidades. Oportunidades geram ROI. ROI justifica patrocínio.**
+
+## 7.2 Domínios
+
+| Domínio | Descrição |
+|---------|-----------|
+| **Sponsors** | Patrocinadores com áreas de operação e LTV por lead |
+| **Events/Journeys** | Eventos individuais ou jornadas (série de eventos) |
+| **Participants** | Participantes com cargo, empresa, tipo e área de operação |
+| **Opportunities** | Oportunidades capturadas em eventos vinculadas a patrocinadores |
+| **Brand Metrics** | Recall de marca (espontâneo/estimulado), share of mind, baseline/endline |
+| **Webhooks** | Integração via webhook para ingestão de dados |
+
+### Captura Pública
+
+A rota `/p/events/capture/:eventCode` é **pública** (sem autenticação) — permite captura de oportunidades por QR code no evento.
+
+## 7.3 Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/events/types.ts` | Todos os tipos (~190 linhas) |
+| `src/modules/events/context/EventsContext.tsx` | Provider com dados mockados |
+| `src/modules/events/mocks/` | Dados de mock |
+| `src/modules/events/hooks/useAnonymize.ts` | Anonimização de dados |
+| `src/modules/events/hooks/useCsvExport.ts` | Exportação CSV |
+| `src/routes/events.routes.tsx` | 7 rotas |
+
+### Rotas
+
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/events` | `EventsDashboardPage` | Dashboard com KPIs de ROI |
+| `/events/participants` | `EventsParticipantsFullPage` | Lista completa de participantes |
+| `/events/participants/:id` | `EventsParticipantDetailPage` | Detalhe do participante |
+| `/events/opportunities` | `EventsOpportunitiesPage` | Oportunidades capturadas |
+| `/events/webhook` | `EventsWebhookPage` | Configuração de webhook |
+| `/events/settings` | `EventsSettingsPage` | Configurações do módulo |
+| `/events/settings/:eventId` | `EventSettingDetailPage` | Detalhe de evento |
+
+---
+
+# PARTE VIII — VIC: O Assistente de IA
+
+## 8.1 Filosofia
+
+Vic é o assistente de IA integrado do Hub. Não é um chatbot genérico — é um **sistema de agentes especializados** que atuam em contextos específicos da plataforma. Cada agente tem personalidade, escopo e prompt de sistema próprio.
+
+> **Vic não responde perguntas genéricas. Vic atua em contexto.**
+
+## 8.2 Agentes Disponíveis
+
+| Slug | Nome | Especialização |
+|------|------|----------------|
+| `cultura` | Guardião da Cultura | Mensagens alinhadas aos valores da empresa |
+| `coach-okrs` | Coach de OKRs | Escrita de objetivos e KRs claros |
+| `validador-metodologico-okrs` | Validador Metodológico | Aderência metodológica de OKRs |
+| `analista-kpis` | Analista de KPIs | Interpretação de métricas |
+| `facilitador-decisoes` | Facilitador de Decisões | Estruturação de decisões e trade-offs |
+| `alinhamento-estrategico` | Alinhamento Estratégico | Identificação de desalinhamentos |
+| `revisor-comunicacao` | Revisor de Comunicação | Clareza e tom de comunicados |
+| `onboarding-buddy` | Onboarding Buddy | Integração de novos membros |
+| `coach-produtividade` | Coach de Produtividade | Dicas personalizadas de produtividade |
+
+## 8.3 Arquitetura
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    VIC — FLUXO DE INVOCAÇÃO                  │
+│                                                              │
+│  Frontend                                                    │
+│  ├── VicSidepanel (global, sempre montado)                   │
+│  ├── AskToVic (botão contextual em componentes)              │
+│  ├── VicActionButton (trigger inline)                        │
+│  └── VicInsightCard (insights pré-gerados em wizards)        │
+│                                                              │
+│  Hooks                                                       │
+│  ├── useAskToVic → invoca agente com contexto                │
+│  ├── useVicStream → streaming de resposta                    │
+│  ├── useVicAgent → busca agente pelo slug                    │
+│  └── useVicFeedbackDraft → rascunho de feedback              │
+│                                                              │
+│  Backend                                                     │
+│  └── Edge Function `vic-invoke`                              │
+│      ├── Resolve agente (global ou BU override)              │
+│      ├── Monta system prompt + context                       │
+│      ├── Chama LLM (model configurável)                      │
+│      └── Loga em `ai_agent_logs`                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Controle por BU
+
+- `bu_ia_config`: Habilita/desabilita IA na BU, define limites diários por usuário e BU
+- `bu_agent_activations`: Ativa/desativa agentes individualmente por BU com prompt customizado
+- Modos: `manual` (usuário invoca) ou `assisted` (sugestões proativas)
+
+### Contextos de Ação
+
+Cada invocação leva um `VicActionContext` que define o cenário:
+- `dashboard-*`: Dashboards de KPIs, OKRs, decisões
+- `okr-*`: Criação, edição, review de OKRs
+- `kpi-*`: Criação, edição, análise de KPIs
+- `comms-*`: Revisão de comunicados
+- `onboarding-*`: Fluxo de onboarding
+
+## 8.4 Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/vic/types.ts` | Tipos, slugs e catálogo de agentes |
+| `src/modules/vic/hooks/useAskToVic.ts` | Hook principal de invocação |
+| `src/modules/vic/hooks/useVicStream.ts` | Streaming de resposta |
+| `src/modules/vic/components/VicSidepanel.tsx` | Painel lateral global |
+| `src/modules/vic/components/AskToVic.tsx` | Botão contextual |
+| `src/modules/vic/components/BuIaSettings.tsx` | Configurações de IA da BU |
+| `src/modules/vic/contexts/` | Contextos de estado |
+
+---
+
+# PARTE IX — MÓDULO HOME: O Dashboard do Líder
+
+## 9.1 Filosofia
+
+A Home do Hub não é uma landing page genérica — é um **dashboard contextualizado por papel**. Líderes de time veem OKRs, tickets e assets do seu escopo. A seleção de escopo (time direto vs sub-times) define quais dados aparecem.
+
+## 9.2 Arquitetura
+
+```
+┌───────────────────────────────────────────────┐
+│              LEADER DASHBOARD                  │
+│                                                │
+│  useLeaderTeams → times do líder               │
+│  useLeaderScope → time selecionado             │
+│  useLeaderDashboard → dados agregados          │
+│  useKpiDashboardSummary → resumo de KPIs       │
+│  useTeamHasActiveOkrs → verificação de OKRs    │
+│                                                │
+│  Cards:                                        │
+│  ├── OKR Summary (green/yellow/red)            │
+│  ├── KPI Summary (RAG + needs_update)          │
+│  ├── Ticket Summary (overdue/due_soon)         │
+│  ├── Asset Summary (loans/overdue)             │
+│  ├── Focus Items (alertas prioritários)        │
+│  └── Critical Alerts (ações imediatas)         │
+└───────────────────────────────────────────────┘
+```
+
+### Tipos Importantes
+
+| Tipo | Descrição |
+|------|-----------|
+| `LeaderTeam` | Time com contagem de membros |
+| `LeaderDashboardSummary` | Agregação completa de OKRs + Tickets + Assets + KPIs |
+| `FocusItem` | Item de foco com tipo, label, URL e CTA |
+| `CriticalAlertItem` | Alerta crítico com severidade e ação |
+
+### Dashboard Externo
+
+Usuários externos (parceiros) possuem dashboard dedicado em `/dashboard/external` com:
+- Tickets abertos e aguardando resposta
+- Contexto da empresa parceira
+- Categorias de serviço disponíveis
+
+## 9.3 Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/modules/home/types.ts` | Tipos do dashboard (~130 linhas) |
+| `src/modules/home/hooks/useLeaderDashboard.ts` | Dados agregados do líder |
+| `src/modules/home/hooks/useLeaderScope.ts` | Seleção de escopo |
+| `src/modules/home/hooks/useKpiDashboardSummary.ts` | Resumo de KPIs |
+| `src/modules/home/components/LeaderDashboard.tsx` | Componente principal |
+| `src/modules/home/components/LeaderScopeSelector.tsx` | Seletor de time |
+| `src/modules/external/types.ts` | Tipos do dashboard externo |
+| `src/modules/external/hooks/` | Hooks do dashboard externo |
+| `src/pages/ExternalDashboard.tsx` | Página do dashboard externo |
+
+---
+
+# PARTE X — O HUB: Ambiente Admin da Plataforma
+
+## 10.1 Filosofia
+
+O `/hub` é o **painel de controle global da plataforma** — acessível apenas por `super_admin` e `admin`. Aqui se configuram Business Units, módulos, integrações, permissões globais, automações e tudo que transcende uma BU individual.
+
+> **O Hub é onde a plataforma é configurada. BU Settings é onde cada unidade é personalizada.**
+
+## 10.2 Controle de Acesso
+
+```
+┌──────────────────────────────────────────────────┐
+│          GUARD: HubRoute                          │
+│                                                    │
+│  ProtectedRoute (skipBuCheck)                      │
+│  └── AdminRoute (super_admin || admin)             │
+│      └── SettingsLayout (sidebar de navegação)     │
+│          └── Conteúdo da página                    │
+└──────────────────────────────────────────────────┘
+```
+
+Todas as rotas do Hub são envolvidas pelo componente `HubRoute` que garante:
+1. Autenticação (`ProtectedRoute`)
+2. `skipBuCheck` — não exige BU selecionada
+3. `AdminRoute` — verifica `isAdmin` (super_admin ou admin)
+4. `SettingsLayout` — layout com sidebar de navegação
+
+## 10.3 Módulos do Hub
+
+### 10.3.1 Business Units (`/hub/business-units`)
+
+Gestão de todas as Business Units da plataforma:
+- CRUD de BUs com branding (logo, cores)
+- Configuração de módulos ativos por BU
+- Membros e administradores
+
+**Página**: `SettingsBusinessUnits`
+
+### 10.3.2 Módulos (`/hub/modules`)
+
+Catálogo global de módulos disponíveis na plataforma:
+- Ativar/desativar módulos
+- Configurações específicas por módulo
+
+**Página**: `SettingsModules`  
+**Sub-rota**: `/hub/modules/okrs/settings` → `OkrsSettingsPage` (configurações globais de OKRs)
+
+### 10.3.3 Integrações (`/hub/integrations`)
+
+Sistema de integrações com providers externos:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              SISTEMA DE INTEGRAÇÕES                          │
+│                                                              │
+│  hub_integrations_catalog (catálogo global)                  │
+│  ├── integration_global_configs (config global)              │
+│  └── bu_integration_configs (override por BU)                │
+│                                                              │
+│  ai_agents (agentes de IA)                                   │
+│  ├── ai_agent_instruction_sources (fontes de instrução)      │
+│  │   ├── API (fetch periódico de URLs)                       │
+│  │   ├── Document (documentos carregados)                    │
+│  │   ├── Hub Context (dados de OKRs/KPIs/Times)             │
+│  │   └── Template (template de texto)                        │
+│  ├── ai_agent_documents (documentos anexados)                │
+│  └── ai_agent_logs (logs de execução)                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Rotas de Integrações**:
+
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/hub/integrations` | `SettingsIntegrations` | Catálogo de integrações |
+| `/hub/integrations/cron-job` | `CronJobConfigPage` | Configuração de cron jobs |
+| `/hub/integrations/:integrationKey` | `GlobalIntegrationDetailPage` | Detalhe da integração |
+| `/hub/integrations/:integrationKey/agents` | `AgentsListPage` | Lista de agentes IA |
+| `/hub/integrations/:integrationKey/agents/new` | `AgentFormPage` | Criar agente |
+| `/hub/integrations/:integrationKey/agents/:agentId` | `AgentFormPage` | Editar agente |
+| `/hub/integrations/:integrationKey/logs` | `AgentLogsPage` | Logs de execução |
+
+**Conceitos-chave**:
+- **Config Mode**: `use_global` (herda config global) ou `override` (config própria por BU)
+- **Test Status**: Cada integração pode ser testada (`ok`/`error`/`pending`)
+- **Instruction Sources**: Agentes podem ter múltiplas fontes de instrução com prioridade
+
+### 10.3.4 Automações (`/hub/automations`)
+
+Sistema de automação event-driven:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              SISTEMA DE AUTOMAÇÕES                           │
+│                                                              │
+│  OUTBOUND (Hub → Externo):                                   │
+│  automation_event_catalog → eventos disponíveis              │
+│  automation_connections → webhooks de saída                  │
+│  automation_connection_events → quais eventos disparam       │
+│                                                              │
+│  INBOUND (Externo → Hub):                                    │
+│  automation_action_catalog → ações disponíveis               │
+│  automation_incoming_tokens → tokens de autenticação         │
+│                                                              │
+│  automation_logs → logs de todas as execuções                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **Eventos**: Disparados por ações no Hub (ex: `users.created`, `okrs.kr_updated`)
+- **Connections**: Webhooks de saída com retry, timeout e auth configuráveis
+- **Incoming Tokens**: Tokens para receber ações externas com rate limiting
+- **Escopo**: Automações podem ser `global` ou `bu`-scoped
+
+### 10.3.5 Permissões Globais (`/hub/permissions`)
+
+Gestão do catálogo de permissões da plataforma:
+- Visualização do catálogo completo de permission keys
+- Nomenclatura: `módulo.recurso.ação:escopo`
+- Templates de permissão (V3)
+
+**Página**: `GlobalPermissionsPage`
+
+### 10.3.6 Cargos (`/hub/job-titles`)
+
+Gestão de cargos globais com associação multi-BU:
+- CRUD de cargos
+- Campo `bu_ids[]` para associação a múltiplas BUs
+- Contagem de uso por cargo
+
+**Página**: `JobTitlesPage`  
+**Tipos**: `src/modules/settings/types.ts`
+
+### 10.3.7 Usuários Globais (`/hub/users`)
+
+Visão consolidada de todos os usuários da plataforma:
+- Filtros: tipo (interno/externo), BU, status de onboarding
+- Visualização de acessos por BU
+- Status de emprego: `active`, `vacation`, `terminated`, `external`
+
+**Página**: `GlobalUsersPage`  
+**Tipos**: `src/modules/users-global/types.ts`
+
+### 10.3.8 Parceiros Globais (`/hub/partners`)
+
+Gestão de empresas parceiras em nível global:
+- CRUD de empresas com tipo de pessoa (PF/PJ), documento (CPF/CNPJ)
+- Associações multi-BU via `partner_bu_associations`
+- Domínios permitidos para Magic Link
+
+**Rotas**:
+| Rota | Página |
+|------|--------|
+| `/hub/partners` | `HubPartnersPage` |
+| `/hub/partners/:partnerId` | `HubPartnerDetailPage` |
+
+### 10.3.9 Notificações do Hub (`/hub/notifications`)
+
+Configuração de notificações em nível de plataforma.
+
+**Página**: `HubNotifications`
+
+### 10.3.10 Performance (`/hub/performance`)
+
+Dashboard de performance da plataforma:
+- Métricas de latência de agentes IA
+- Consumo de tokens
+- Status de integrações
+
+**Página**: `PerfDashboardPage`
+
+### 10.3.11 UI Catalog (`/hub/ui`)
+
+Catálogo de componentes UI da plataforma — referência visual para design system.
+
+**Página**: `SettingsUiCatalog`
+
+## 10.4 Hub vs BU Settings
+
+| Aspecto | Hub (`/hub/*`) | BU Settings (`/settings/*`) |
+|---------|----------------|----------------------------|
+| **Acesso** | super_admin + admin | Admin da BU |
+| **Escopo** | Global / cross-BU | BU selecionada |
+| **BU Required** | Não (skipBuCheck) | Sim |
+| **Layout** | SettingsLayout | HubLayout ou standalone |
+| **Guard** | AdminRoute | BuRequiredRoute |
+
+### BU Settings — Rotas
+
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/settings` | `BuSettingsPage` | Config da BU (branding, dados) |
+| `/settings/permissions` | `BuPermissionsPage` | Permissões de usuários da BU |
+| `/settings/notifications` | `SettingsNotifications` | Notificações da BU |
+| `/settings/areas` | `AreasPage` | Áreas estratégicas da BU |
+| `/settings/partners` | `PartnersPage` | Parceiros da BU |
+| `/settings/partners/new` | `PartnerFormPage` | Novo parceiro |
+| `/settings/partners/:partnerId` | `PartnerDetailPage` | Detalhe do parceiro |
+
+## 10.5 Arquivos-Chave do Hub
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/routes/hub.routes.tsx` | Todas as 19 rotas do Hub |
+| `src/components/settings/SettingsLayout.tsx` | Layout com sidebar |
+| `src/pages/settings/SettingsHome.tsx` | Home do Hub |
+| `src/pages/settings/SettingsBusinessUnits.tsx` | Gestão de BUs |
+| `src/pages/settings/SettingsModules.tsx` | Catálogo de módulos |
+| `src/pages/settings/SettingsIntegrations.tsx` | Integrações |
+| `src/modules/integrations/types.ts` | Tipos de integrações |
+| `src/modules/integrations/hooks/useIntegrations.ts` | Hooks de integrações |
+| `src/modules/automations/types.ts` | Tipos de automações |
+| `src/modules/automations/hooks/` | Hooks de automações |
+| `src/modules/permissions/types.ts` | Tipos de permissões |
+| `src/modules/permissions/hooks/` | Hooks de permissões |
+| `src/modules/users-global/types.ts` | Tipos de usuários globais |
+| `src/modules/partners/types.ts` | Tipos de parceiros globais |
+| `src/modules/settings/types.ts` | Tipos de cargos |
+
+---
+
+# PARTE XI — INFRAESTRUTURA TRANSVERSAL
+
+## 11.1 Roteamento e Guards
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              HIERARQUIA DE GUARDS                             │
+│                                                               │
+│  ProtectedRoute                                               │
+│  ├── skipBuCheck (rotas globais: /hub, /profile, /select-bu)  │
+│  ├── skipOnboardingCheck (/onboarding, /select-bu)            │
+│  └── default → exige auth + onboarding + BU                  │
+│                                                               │
+│  AdminRoute → super_admin || admin                            │
+│  BuRequiredRoute → exige BU selecionada                       │
+│  ModuleRoute → exige módulo ativo na BU                       │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## 11.2 Context Resolver (`/go/:entity/:id`)
+
+O sistema de deep-linking universal. Qualquer entidade pode ser acessada via `/go/{entity}/{id}`:
+- Resolve a BU correta para a entidade
+- Alterna o contexto do usuário automaticamente
+- Redireciona para a rota final
+
+Entidades suportadas: `ticket`, `team`, `asset`, `okr_team_kr`, etc.
+
+## 11.3 Business Units
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              SISTEMA DE BUSINESS UNITS                        │
+│                                                               │
+│  bu_units (entidade principal)                                │
+│  ├── Logo, cores, CNPJ, membro display name                  │
+│  ├── → bu_user_memberships (membros com role_in_bu)           │
+│  ├── → bu_module_activations (módulos ativos)                 │
+│  └── → bu_ia_config (configuração de IA)                     │
+│                                                               │
+│  BuContext (React Context)                                    │
+│  ├── selectedBuId → BU ativa                                  │
+│  ├── bu → dados da BU                                         │
+│  ├── switchBu() → trocar BU                                   │
+│  └── userRole → papel do usuário na BU                        │
+│                                                               │
+│  ModuleContext (React Context)                                 │
+│  ├── activeModules → módulos ativos na BU                     │
+│  └── isModuleActive(slug) → verificação                       │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## 11.4 Autenticação e Identidade
+
+| Conceito | Implementação |
+|----------|---------------|
+| **Login** | Magic Link (sem senhas) |
+| **Interno vs Externo** | `useExternalUser` hook canônico |
+| **Onboarding** | `/onboarding` → fluxo unificado |
+| **Impersonation** | `ImpersonationContext` → "View As" |
+| **Idle Timeout** | `useIdleTimeout` → sign-out após 8h |
+| **RBAC** | 5 personas: super_admin, admin, leader, collaborator, external |
+
+## 11.5 Mapa Completo de Rotas
+
+### Rotas Públicas (sem autenticação)
+| Rota | Descrição |
+|------|-----------|
+| `/auth` | Login com Magic Link |
+| `/auth/callback` | Callback de autenticação |
+| `/p/assets/:code` | Asset público por código |
+| `/p/events/capture/:eventCode` | Captura de evento público |
+
+### Rotas Core
+| Rota | Descrição |
+|------|-----------|
+| `/` | Dashboard do líder |
+| `/onboarding` | Fluxo de onboarding |
+| `/select-bu` | Seleção de BU |
+| `/profile` | Perfil do usuário |
+| `/users` | Lista de usuários |
+| `/users/:id` | Perfil de usuário |
+| `/contacts/:contactId` | Perfil de contato externo |
+| `/modules` | Catálogo de módulos |
+| `/wizards` | Lista de wizards disponíveis |
+| `/go/:entity/:id` | Context resolver |
+| `/dashboard/external` | Dashboard externo |
+| `/kpis` | Dashboard de KPIs |
+| `/kpis/evolution` | Evolução de KPIs |
+| `/me/notifications` | Notificações do usuário |
+
+### Rotas por Módulo
+| Módulo | Prefixo | # Rotas |
+|--------|---------|---------|
+| Hub (Admin) | `/hub/*` | 19 |
+| OKRs | `/okrs/*` | 17 |
+| Tickets | `/tickets/*` | 4 |
+| Assets | `/assets/*` | 9 |
+| Teams | `/teams/*` | 4 |
+| Events | `/events/*` | 7 |
+| Settings (BU) | `/settings/*` | 7 |
+| **Total** | | **~70 rotas** |
+
+---
+
+# PARTE XII — REFERÊNCIA RÁPIDA: Prioridade de Leitura por Módulo
+
+| Módulo | Comece por | Depois leia | Para detalhes |
+|--------|-----------|-------------|---------------|
+| KPIs | `modules/kpis/types.ts` | `hooks/useKpiData.ts` | `components/KpiDashboardTable.tsx` |
+| OKRs | `modules/okrs/types.ts` | `utils/progressCalculation.ts` | `hooks/useKrStateInsights.ts` |
+| Wizards | `modules/okrs/types/wizard.ts` | `hooks/useGenericWizardDraft.ts` | Componentes de cada wizard |
+| Tickets | `modules/tickets/types.ts` | `hooks/useTicketQueries.ts` | `components/TicketDetailSidebar.tsx` |
+| Assets | `modules/assets/types.ts` | `hooks/useInventory.ts` | `hooks/useAssetPermissionsV2.ts` |
+| Teams | `modules/teams/types.ts` | `hooks/useTeams.ts` | `components/TeamTreeView.tsx` |
+| Events | `modules/events/types.ts` | `context/EventsContext.tsx` | `mocks/` |
+| Vic (IA) | `modules/vic/types.ts` | `hooks/useAskToVic.ts` | `components/VicSidepanel.tsx` |
+| Home | `modules/home/types.ts` | `hooks/useLeaderDashboard.ts` | `components/LeaderDashboard.tsx` |
+| Hub Admin | `routes/hub.routes.tsx` | `modules/integrations/types.ts` | `modules/automations/types.ts` |
+| Permissões | `modules/permissions/types.ts` | `hooks/` | Políticas RLS no banco |
+| Partners | `modules/partners/types.ts` | `hooks/` | `pages/` |
+| Users Global | `modules/users-global/types.ts` | `hooks/` | `pages/GlobalUsersPage.tsx` |
+
+---
+
 *Documento gerado automaticamente a partir do codebase do Hub da Jet.*  
+*Atualizado em: 2026-03-25 — Cobertura completa de todos os módulos.*  
 *Para contribuir, consulte `docs/engineering/DEVELOPMENT_STANDARDS.md`.*
