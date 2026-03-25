@@ -32,6 +32,7 @@ import { MbrTeamOkrsDetailStep } from '@/modules/okrs/components/wizards/mbr/Mbr
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
+import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
 
 import { calculateProgress } from '@/modules/okrs/types';
 import type {
