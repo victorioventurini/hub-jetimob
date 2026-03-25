@@ -10,11 +10,18 @@ import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // Mock heavy dependencies
 vi.mock('@/components/selects', () => ({
-  BuUserSelect: ({ value, onValueChange, placeholder }: any) => (
+  BuUserSelect: ({ value, onUserSelected, placeholder }: any) => (
     <select
       data-testid="bu-user-select"
       value={value || ''}
-      onChange={(e) => onValueChange(e.target.value || null)}
+      onChange={(e) => {
+        const val = e.target.value;
+        if (val) {
+          onUserSelected?.({ id: val, displayName: 'Mock User' });
+        } else {
+          onUserSelected?.(null);
+        }
+      }}
     >
       <option value="">{placeholder}</option>
       <option value="user-1">User 1</option>
@@ -113,7 +120,6 @@ describe('DecisionCard', () => {
     const props = defaultProps();
     render(<DecisionCard {...props} />);
     
-    // Find the X button (second ghost button)
     const buttons = screen.getAllByRole('button');
     const removeBtn = buttons.find(b => b.querySelector('.lucide-x'));
     if (removeBtn) fireEvent.click(removeBtn);
@@ -125,7 +131,6 @@ describe('DecisionCard', () => {
     const props = defaultProps();
     render(<DecisionCard {...props} />);
     
-    // Click edit button
     const buttons = screen.getAllByRole('button');
     const editBtn = buttons.find(b => b.querySelector('.lucide-pencil'));
     if (editBtn) fireEvent.click(editBtn);
@@ -133,7 +138,6 @@ describe('DecisionCard', () => {
     const textarea = screen.getByTestId('edit-textarea');
     fireEvent.change(textarea, { target: { value: 'Updated text' } });
     
-    // Click save
     const saveBtn = screen.getAllByRole('button').find(b => b.querySelector('.lucide-check'));
     if (saveBtn) fireEvent.click(saveBtn);
     
@@ -145,7 +149,7 @@ describe('DecisionCard', () => {
     render(<DecisionCard {...props} showOwnerDeadline />);
     
     fireEvent.change(screen.getByTestId('bu-user-select'), { target: { value: 'user-1' } });
-    expect(props.onUpdate).toHaveBeenCalledWith('dec-1', { owner: { id: 'user-1', name: '' } });
+    expect(props.onUpdate).toHaveBeenCalledWith('dec-1', { owner: { id: 'user-1', name: 'Mock User' } });
   });
 
   it('formats deadline date when set', () => {

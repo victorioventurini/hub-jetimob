@@ -1,13 +1,6 @@
 /**
  * @file OkrOwnerInfo.test.tsx
  * @description Tests for OkrOwnerInfo and OkrOwnersRow components
- * 
- * Coverage:
- * - Single owner display
- * - Multiple owners display
- * - Avatar rendering
- * - Tooltip behavior
- * - Size variants
  */
 
 import { describe, it, expect } from 'vitest';
@@ -22,127 +15,100 @@ describe('OkrOwnerInfo', () => {
   };
 
   describe('rendering', () => {
-    it('should render owner with display name', () => {
-      render(<OkrOwnerInfo owner={mockOwner} />);
-      
+    // Size=sm (default) only renders avatar + tooltip, NOT inline text
+    it('should render avatar for default (sm) size', () => {
+      const { container } = render(<OkrOwnerInfo owner={mockOwner} />);
+      // Avatar uses span with role="img" or AvatarFallback with initials
+      expect(container.querySelector('span')).toBeInTheDocument();
+    });
+
+    it('should render display name for md size', () => {
+      render(<OkrOwnerInfo owner={mockOwner} size="md" />);
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
-    it('should render avatar', () => {
-      const { container } = render(<OkrOwnerInfo owner={mockOwner} />);
-      
-      // Avatar component should be rendered
-      const avatar = container.querySelector('[class*="avatar"]');
-      expect(avatar).toBeInTheDocument();
+    it('should render display name for lg size', () => {
+      render(<OkrOwnerInfo owner={mockOwner} size="lg" />);
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
     it('should handle null owner', () => {
-      render(<OkrOwnerInfo owner={null} />);
-      
-      // Should render fallback or nothing
-      expect(document.body).toBeTruthy();
+      const { container } = render(<OkrOwnerInfo owner={null} />);
+      // Returns null, so container should be empty
+      expect(container.firstChild).toBeEmptyDOMElement();
     });
 
     it('should handle undefined owner', () => {
-      render(<OkrOwnerInfo owner={undefined} />);
-      
-      // Should render fallback or nothing
-      expect(document.body).toBeTruthy();
+      const { container } = render(<OkrOwnerInfo owner={undefined} />);
+      expect(container.firstChild).toBeEmptyDOMElement();
     });
   });
 
   describe('owner without photo', () => {
-    it('should render fallback when no photo_url', () => {
+    it('should render fallback initials when no photo_url', () => {
       const ownerWithoutPhoto = {
         display_name: 'Jane Smith',
         photo_url: null,
         role: 'Engineer',
       };
-      
-      render(<OkrOwnerInfo owner={ownerWithoutPhoto} />);
-      
+      // Size md shows name text
+      render(<OkrOwnerInfo owner={ownerWithoutPhoto} size="md" />);
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     });
   });
 
   describe('size variants', () => {
-    it('should render with default size', () => {
-      const { container } = render(<OkrOwnerInfo owner={mockOwner} />);
-      
-      const avatar = container.querySelector('[class*="avatar"]');
-      expect(avatar).toBeInTheDocument();
-    });
-
-    it('should render with sm size', () => {
+    it('should render with sm size (avatar only)', () => {
       const { container } = render(<OkrOwnerInfo owner={mockOwner} size="sm" />);
-      
-      const avatar = container.querySelector('[class*="avatar"]');
-      expect(avatar).toBeInTheDocument();
+      // sm renders avatar but no visible name text (tooltip only)
+      expect(container.firstChild).not.toBeEmptyDOMElement();
     });
 
-    it('should render with md size', () => {
-      const { container } = render(<OkrOwnerInfo owner={mockOwner} size="md" />);
-      
-      const avatar = container.querySelector('[class*="avatar"]');
-      expect(avatar).toBeInTheDocument();
+    it('should render with md size (avatar + name)', () => {
+      render(<OkrOwnerInfo owner={mockOwner} size="md" />);
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
-    it('should render with lg size', () => {
-      const { container } = render(<OkrOwnerInfo owner={mockOwner} size="lg" />);
-      
-      const avatar = container.querySelector('[class*="avatar"]');
-      expect(avatar).toBeInTheDocument();
+    it('should render with lg size (avatar + name)', () => {
+      render(<OkrOwnerInfo owner={mockOwner} size="lg" />);
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
   });
 
   describe('showRole prop', () => {
     it('should show role when showRole is true', () => {
       render(<OkrOwnerInfo owner={mockOwner} showRole={true} />);
-      
       expect(screen.getByText('Product Manager')).toBeInTheDocument();
     });
 
     it('should not show role by default', () => {
-      render(<OkrOwnerInfo owner={mockOwner} />);
-      
-      // Role should not be visible by default (depends on implementation)
+      render(<OkrOwnerInfo owner={mockOwner} size="md" />);
+      expect(screen.queryByText('Product Manager')).not.toBeInTheDocument();
     });
   });
 
   describe('showTooltip prop', () => {
-    it('should work with showTooltip=true', () => {
-      render(<OkrOwnerInfo owner={mockOwner} showTooltip={true} />);
-      
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    it('should work with showTooltip=true (sm)', () => {
+      const { container } = render(<OkrOwnerInfo owner={mockOwner} showTooltip={true} />);
+      expect(container.firstChild).not.toBeEmptyDOMElement();
     });
 
-    it('should work with showTooltip=false', () => {
-      render(<OkrOwnerInfo owner={mockOwner} showTooltip={false} />);
-      
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    it('should work with showTooltip=false (sm)', () => {
+      const { container } = render(<OkrOwnerInfo owner={mockOwner} showTooltip={false} />);
+      expect(container.firstChild).not.toBeEmptyDOMElement();
     });
   });
 
   describe('props interface', () => {
     it('should accept owner with all properties', () => {
-      const owner = {
-        display_name: 'Test User',
-        photo_url: 'https://example.com/photo.jpg',
-        role: 'Developer',
-      };
-      
+      const owner = { display_name: 'Test User', photo_url: 'https://example.com/photo.jpg', role: 'Developer' };
       expect(owner.display_name).toBeDefined();
       expect(owner.photo_url).toBeDefined();
       expect(owner.role).toBeDefined();
     });
 
     it('should accept owner with nullable photo_url', () => {
-      const owner = {
-        display_name: 'Test User',
-        photo_url: null,
-        role: 'Developer',
-      };
-      
+      const owner = { display_name: 'Test User', photo_url: null, role: 'Developer' };
       expect(owner.photo_url).toBeNull();
     });
   });
@@ -157,24 +123,21 @@ describe('OkrOwnersRow', () => {
 
   describe('rendering', () => {
     it('should render single owner', () => {
-      render(<OkrOwnersRow owners={[mockOwners[0]]} />);
-      
-      // Should render at least one avatar
-      expect(document.body).toBeTruthy();
+      const { container } = render(<OkrOwnersRow owners={[mockOwners[0]]} />);
+      expect(container.firstChild).not.toBeNull();
     });
 
     it('should render multiple owners', () => {
       const { container } = render(<OkrOwnersRow owners={mockOwners} />);
-      
-      // Should render multiple avatars
-      const avatars = container.querySelectorAll('[class*="avatar"]');
-      expect(avatars.length).toBeGreaterThan(0);
+      // Each owner gets an avatar with img or fallback
+      expect(container.firstChild).not.toBeNull();
+      // Check initials are rendered
+      expect(screen.getByText('AL')).toBeInTheDocument();
     });
 
-    it('should render empty array', () => {
+    it('should render null for empty array', () => {
       const { container } = render(<OkrOwnersRow owners={[]} />);
-      
-      expect(container).toBeInTheDocument();
+      expect(container.firstChild).toBeEmptyDOMElement();
     });
   });
 
@@ -185,10 +148,8 @@ describe('OkrOwnersRow', () => {
         { display_name: 'Dave', photo_url: null, role: 'QA' },
         { display_name: 'Eve', photo_url: null, role: 'Ops' },
       ];
-      
       render(<OkrOwnersRow owners={manyOwners} max={3} />);
-      
-      // Should show count of remaining
+      expect(screen.getByText('+2')).toBeInTheDocument();
     });
 
     it('should show remaining count badge', () => {
@@ -197,20 +158,8 @@ describe('OkrOwnersRow', () => {
         { display_name: 'Dave', photo_url: null, role: 'QA' },
         { display_name: 'Eve', photo_url: null, role: 'Ops' },
       ];
-      
       render(<OkrOwnersRow owners={manyOwners} max={2} />);
-      
-      // Should show +3 or similar
       expect(screen.getByText(/\+\d/)).toBeInTheDocument();
-    });
-  });
-
-  describe('avatar display', () => {
-    it('should render avatars for owners', () => {
-      const { container } = render(<OkrOwnersRow owners={mockOwners} />);
-      
-      const avatars = container.querySelectorAll('[class*="avatar"]');
-      expect(avatars.length).toBeGreaterThan(0);
     });
   });
 
