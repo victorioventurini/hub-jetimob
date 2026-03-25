@@ -39,6 +39,10 @@ function createSubmission(overrides: Partial<LeaderPreSubmission> = {}): LeaderP
     teamId: `team-${Math.random().toString(36).slice(2, 6)}`,
     teamName: 'Time Teste',
     snapshot: {
+      cycleId: 'cycle-1',
+      teamId: 'team-1',
+      submittedAt: new Date().toISOString(),
+      dependencies: [],
       krFinalStates: [
         { krId: 'kr-1', krTitle: 'KR 1', state: 'achieved', finalProgress: 100, paceStatus: 'on_pace' },
         { krId: 'kr-2', krTitle: 'KR 2', state: 'at_risk', finalProgress: 40, paceStatus: 'behind_pace' },
@@ -48,7 +52,7 @@ function createSubmission(overrides: Partial<LeaderPreSubmission> = {}): LeaderP
       kpisToCreate: [{ description: 'Novo KPI', suggestedScope: 'team', relatedKrTitle: '' }],
       learnings: { whatWorked: 'Rotinas', whatDidntWork: 'Deploys', debts: 'Testes' },
       proposedOkrs: { objective: { title: '', description: '', org_objective_id: null, cycle_id: null }, krPlan: { foundational: 1, contribution: 0, enabler: 0 }, draftKrs: [] } as any,
-    },
+    } as any,
     ...overrides,
   };
 }
