@@ -24,7 +24,11 @@ export type WizardPersona =
   | 'clevel-checkin'
   | 'team-okr-creation'
   | 'team-kr-creation'
-  | 'mbr';
+  | 'mbr'
+  | 'qbr-pre'
+  | 'qbr-pre-clevel'
+  | 'qbr-meeting'
+  | 'qbr-post';
 
 // ============================================================
 // STEP CONFIG
