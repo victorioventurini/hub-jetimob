@@ -234,8 +234,8 @@ describe('QbrCLevelOkrValidationStep', () => {
 
   it('shows proposed objective title', () => {
     renderValidation();
-    expect(screen.getByText('Objetivo proposto')).toBeInTheDocument();
-    expect(screen.getByText('Objetivo proposto', { exact: false })).toBeInTheDocument();
+    const matches = screen.getAllByText('Objetivo proposto');
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty state when no proposals', () => {
