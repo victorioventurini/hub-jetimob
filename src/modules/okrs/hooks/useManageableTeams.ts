@@ -105,7 +105,6 @@ export function useManageableTeams() {
 
       const teamIds = teamIdsResult as string[] | null;
       if (!teamIds || teamIds.length === 0) {
-        console.log("[useManageableTeams] No manageable teams for real user");
         return [];
       }
 
