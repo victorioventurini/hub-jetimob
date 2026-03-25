@@ -8,8 +8,8 @@
  * Updated: 2026-01-22
  */
 
-export const TCR_VERSION = "2.58.0";
-export const TCR_UPDATED_AT = "2026-01-22";
+export const TCR_VERSION = "3.14.0";
+export const TCR_UPDATED_AT = "2026-03-25";
 
 export interface TcrSection {
   title: string;
@@ -30,27 +30,28 @@ export const TCR_SECTIONS: Record<string, TcrSection> = {
 | **Roteamento** | React Router DOM v6 |
 | **Backend** | Supabase (Lovable Cloud) |
 | **Banco de Dados** | PostgreSQL |
-| **Autenticação** | Supabase Auth (OTP Code via email) |
+| **Autenticação** | Supabase Auth (Magic Link via email) |
 | **Storage** | Supabase Storage |
 | **Funções Serverless** | Supabase Edge Functions (Deno) |
 | **IA** | Lovable AI (Google Gemini / OpenAI) |
 
 ### 1.2 Modelo de Autenticação
 
-- **Método:** OTP Code (código de 6 dígitos via email)
+- **Método:** Magic Link (link de acesso via email)
 - **Validação de Domínio:** Usuários só podem fazer login se o domínio do email estiver cadastrado em uma BU ativa
 - **Fluxo:**
   1. Usuário insere email
   2. Sistema valida se domínio pertence a uma BU ativa
   3. **Para usuários internos:** Verifica se existe perfil pré-cadastrado em \`profiles\`
-  4. Se válido, envia código OTP de 6 dígitos via email (Supabase Auth)
-  5. Usuário insere o código na tela de verificação
-  6. Sistema verifica OTP e autentica o usuário
-  7. Profile é criado automaticamente via trigger \`handle_new_user()\` (se não existir)
+  4. Se válido, gera Magic Link via \`supabase.auth.admin.generateLink()\`
+  5. Envia link por email via SendGrid (com Resend como fallback)
+  6. Usuário clica no link e é redirecionado para \`/auth/callback\`
+  7. \`AuthCallback.tsx\` verifica o \`token_hash\` via \`supabase.auth.verifyOtp()\` para estabelecer sessão
+  8. Profile é criado automaticamente via trigger \`handle_new_user()\` (se não existir)
 
-> **Nota (v2.29.0):** Migrado de Magic Link para OTP Code para evitar problemas com scanners de email corporativos.
+> **Nota (v2.65.0):** O sistema usa Magic Link com \`token_hash\` no URL (não hash fragment) para evitar problemas com SendGrid click tracking.
 
-> **Nota (v2.43.0):** Usuários internos (domínio em \`allowed_email_domains\`) agora precisam ter perfil pré-cadastrado para receber OTP. Impede acesso não autorizado via domínio válido.
+> **Nota (v2.43.0):** Usuários internos (domínio em \`allowed_email_domains\`) agora precisam ter perfil pré-cadastrado para receber Magic Link. Impede acesso não autorizado via domínio válido.
 
 ### 1.3 Conceito Multi-BU (Business Units)
 
