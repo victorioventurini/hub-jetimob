@@ -57,3 +57,12 @@ verify_jwt = false
 
 [functions.mbr-summary]
 verify_jwt = false
+
+[functions.qbr-pre-summary]
+verify_jwt = false
+
+[functions.qbr-meeting-summary]
+verify_jwt = false
+
+[functions.qbr-post-summary]
+verify_jwt = false
