@@ -143,8 +143,8 @@ describe('QbrPostDecisionsStep', () => {
   const meetingDecision = {
     id: 'md1',
     text: 'Decisão da reunião',
-    category: 'strategic_decision' as const,
-    sourceStep: 'qbr-meeting',
+    category: 'decision' as const,
+    sourceStep: 'qbr-meeting-decisions' as const,
     owner: { id: 'u1', name: 'Ana' },
   };
 
