@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test/test-utils';
 import { TeamOpeningStep } from '../TeamOpeningStep';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 

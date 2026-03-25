@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test/test-utils';
 import { MbrTeamOkrsOverviewStep } from '../MbrTeamOkrsOverviewStep';
 import { MbrTeamOkrsDetailStep } from '../MbrTeamOkrsDetailStep';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
