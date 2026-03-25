@@ -163,7 +163,11 @@ export interface LeaderPrepWizardState {
 // TEAM CHECKIN WIZARD
 // ============================================================
 
-export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing';
+export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing'
+  | 'qbr-balance' | 'qbr-kpi-analysis' | 'qbr-learnings' | 'qbr-okr-proposal'
+  | 'qbr-clevel-system-read' | 'qbr-clevel-strategic' | 'qbr-clevel-okr-validation' | 'qbr-clevel-directives'
+  | 'qbr-meeting-opening' | 'qbr-meeting-okr-review' | 'qbr-meeting-decisions' | 'qbr-meeting-commitments' | 'qbr-meeting-closing'
+  | 'qbr-post-promotion' | 'qbr-post-decisions' | 'qbr-post-commitments' | 'qbr-post-followup' | 'qbr-post-minutes';
 
 // ============================================================
 // MBR (MONTHLY BUSINESS REVIEW) WIZARD
