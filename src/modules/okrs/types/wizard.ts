@@ -173,8 +173,8 @@ export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiativ
 // MBR (MONTHLY BUSINESS REVIEW) WIZARD
 // ============================================================
 
-export type MbrStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
-export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'closing';
+export type MbrStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'qbr-followup' | 'closing';
+export type MbrDecisionSourceStep = 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'decisions' | 'qbr-followup' | 'closing';
 
 /** KPI snapshot imutável — congelado ao iniciar o MBR */
 export interface MbrKpiSnapshot {
