@@ -58,7 +58,7 @@ export function useManageableTeams() {
           }
         );
 
-        console.log("[useManageableTeams] IMPERSONATION RPC result:", { teamIdsResult, rpcError });
+        
 
         if (rpcError) {
           console.error("Error fetching impersonated manageable team IDs:", rpcError);
