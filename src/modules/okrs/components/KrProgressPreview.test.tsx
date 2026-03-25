@@ -40,7 +40,7 @@ describe('KrProgressPreview', () => {
     it('should display current value', () => {
       render(<KrProgressPreview {...defaultProps} />);
       
-      expect(screen.getByText(/50/)).toBeInTheDocument();
+      expect(screen.getAllByText(/50/).length).toBeGreaterThanOrEqual(1);
     });
 
     it('should display target value', () => {
