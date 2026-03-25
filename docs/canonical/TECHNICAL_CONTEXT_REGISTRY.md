@@ -3456,7 +3456,7 @@ export type { SomeType } from './types';
   - Agentes afetados: `alinhamento-estrategico`, `coach-okrs`, `persona-vic`, `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao`, `initiative-validator`, `kr-advisor`, `hr-onboarding-assistant`, `ticket-assistant`, `hub-admin-assistant`
   - Modelos anteriores: `gpt-4o-mini`, `gpt-4-turbo` → unificados em `google/gemini-3-flash-preview`
 - **Documentação Consolidada v3.15.0**:
-  - TCR atualizado com contagens reais: 140 tabelas, 218 funções SQL, 94 enums, 26 edge functions
+  - TCR atualizado com contagens reais: 113 tabelas + 27 views, 218 funções SQL, 82 enums, 25 edge functions
   - Edge Functions section atualizada: adicionadas 8 funções de resumo IA (collaborator, team, clevel, mbr, qbr-pre, qbr-meeting, qbr-post) + health-check
   - DEVELOPMENT_STANDARDS atualizado para v1.27.0 com QBR ritual e testing framework
   - Deep Dive, DOCUMENTATION_INDEX e tcr-content.ts sincronizados
