@@ -1,43 +1,219 @@
 /**
  * @file CLevelSteps.test.tsx
- * @description Tests for C-Level check-in wizard step components
+ * @description Real rendering tests for C-Level check-in wizard steps
  * 
  * Coverage:
- * - CLevelDecisionsStep
- * - CLevelDirectivesStep
- * - CLevelInsightsStep
+ * - CLevelCompanyOkrsStep: OKR cards, trends, empty state, loading
+ * - CLevelInsightsStep: KPI signal categorization, OKR summary
+ * - CLevelDecisionsStep: textarea interaction, navigation
+ * - CLevelDirectivesStep: submit flow, loading state
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@/test/test-utils';
 
-describe('CLevelDecisionsStep interface', () => {
-  const defaultProps = {
+// Mock heavy dependencies
+vi.mock('../shared/WizardTooltips', () => ({
+  WizardTooltipInline: () => <span data-testid="tooltip-inline" />,
+  WizardTooltip: () => null,
+}));
+vi.mock('@/modules/vic/components/AskToVic', () => ({
+  AskToVicStepHelper: () => <span data-testid="vic-helper" />,
+}));
+vi.mock('../shared/LastCheckinBadge', () => ({
+  LastCheckinBadge: ({ lastCompletedAt }: { lastCompletedAt: string | null }) =>
+    lastCompletedAt ? <span data-testid="last-checkin">{lastCompletedAt}</span> : null,
+}));
+
+import { CLevelCompanyOkrsStep } from './CLevelCompanyOkrsStep';
+import { CLevelInsightsStep } from './CLevelInsightsStep';
+import { CLevelDecisionsStep } from './CLevelDecisionsStep';
+import { CLevelDirectivesStep } from './CLevelDirectivesStep';
+
+// ── Factories ──
+
+function createCompanyOkr(overrides: Partial<{ id: string; title: string; progress: number; trend: 'improving' | 'stable' | 'declining' }> = {}) {
+  return {
+    id: overrides.id ?? 'okr-1',
+    title: overrides.title ?? 'Aumentar receita recorrente',
+    progress: overrides.progress ?? 65,
+    trend: overrides.trend ?? ('improving' as const),
+  };
+}
+
+function createKpiForWizard(overrides: Record<string, unknown> = {}) {
+  return {
+    id: (overrides.id as string) ?? 'kpi-1',
+    name: (overrides.name as string) ?? 'NPS Geral',
+    unit: (overrides.unit as string) ?? 'pontos',
+    latest_value: (overrides.latest_value as number) ?? 72,
+    target_value: (overrides.target_value as number) ?? 80,
+    latest_rag_status: (overrides.latest_rag_status as string) ?? 'on_track',
+    area: (overrides.area as { name: string; color: string } | undefined) ?? null,
+    ...overrides,
+  };
+}
+
+// ══════════════════════════════════════════════════
+// CLevelCompanyOkrsStep
+// ══════════════════════════════════════════════════
+
+describe('CLevelCompanyOkrsStep', () => {
+  const baseProps = {
+    okrs: [createCompanyOkr()],
+    onContinue: vi.fn(),
+  };
+
+  it('renders header with title', () => {
+    render(<CLevelCompanyOkrsStep {...baseProps} />);
+    expect(screen.getByText('OKRs da Empresa')).toBeInTheDocument();
+  });
+
+  it('renders OKR cards with progress', () => {
+    const okrs = [
+      createCompanyOkr({ title: 'Receita', progress: 80 }),
+      createCompanyOkr({ id: 'okr-2', title: 'Retenção', progress: 45, trend: 'declining' }),
+    ];
+    render(<CLevelCompanyOkrsStep {...baseProps} okrs={okrs} />);
+    expect(screen.getByText('Receita')).toBeInTheDocument();
+    expect(screen.getByText('80%')).toBeInTheDocument();
+    expect(screen.getByText('Retenção')).toBeInTheDocument();
+    expect(screen.getByText('Em risco')).toBeInTheDocument();
+  });
+
+  it('renders empty state when no OKRs', () => {
+    render(<CLevelCompanyOkrsStep {...baseProps} okrs={[]} />);
+    expect(screen.getByText('Nenhum OKR organizacional')).toBeInTheDocument();
+  });
+
+  it('renders loading skeletons', () => {
+    const { container } = render(<CLevelCompanyOkrsStep {...baseProps} isLoading />);
+    expect(container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]').length).toBeGreaterThan(0);
+  });
+
+  it('calls onContinue when button clicked', () => {
+    const onContinue = vi.fn();
+    render(<CLevelCompanyOkrsStep {...baseProps} onContinue={onContinue} />);
+    fireEvent.click(screen.getByText('Continuar'));
+    expect(onContinue).toHaveBeenCalledOnce();
+  });
+
+  it('renders trend badges correctly', () => {
+    const okrs = [
+      createCompanyOkr({ id: '1', trend: 'improving' }),
+      createCompanyOkr({ id: '2', trend: 'stable', title: 'Estável OKR' }),
+    ];
+    render(<CLevelCompanyOkrsStep {...baseProps} okrs={okrs} />);
+    expect(screen.getByText('Melhorando')).toBeInTheDocument();
+    expect(screen.getByText('Estável')).toBeInTheDocument();
+  });
+});
+
+// ══════════════════════════════════════════════════
+// CLevelInsightsStep
+// ══════════════════════════════════════════════════
+
+describe('CLevelInsightsStep', () => {
+  const baseProps = {
+    kpisStrategic: [] as ReturnType<typeof createKpiForWizard>[],
+    onContinue: vi.fn(),
+    onBack: vi.fn(),
+  };
+
+  it('renders header with title', () => {
+    render(<CLevelInsightsStep {...baseProps} />);
+    expect(screen.getByText('Sinais Estratégicos')).toBeInTheDocument();
+  });
+
+  it('renders empty state when no data', () => {
+    render(<CLevelInsightsStep {...baseProps} />);
+    expect(screen.getByText('Sem indicadores estratégicos')).toBeInTheDocument();
+  });
+
+  it('categorizes KPIs by RAG status', () => {
+    const kpis = [
+      createKpiForWizard({ id: '1', name: 'KPI Bom', latest_rag_status: 'on_track' }),
+      createKpiForWizard({ id: '2', name: 'KPI Ruim', latest_rag_status: 'off_track' }),
+      createKpiForWizard({ id: '3', name: 'KPI Neutro', latest_rag_status: 'no_data' }),
+    ];
+    render(<CLevelInsightsStep {...baseProps} kpisStrategic={kpis} />);
+    expect(screen.getByText(/Tendências Positivas/)).toBeInTheDocument();
+    expect(screen.getByText(/Pontos de Atenção/)).toBeInTheDocument();
+    expect(screen.getByText(/Aguardando Dados/)).toBeInTheDocument();
+  });
+
+  it('renders OKR summary card when provided', () => {
+    const kpis = [createKpiForWizard()];
+    const okrsSummary = { total: 5, onTrack: 3, atRisk: 1, offTrack: 1 };
+    render(<CLevelInsightsStep {...baseProps} kpisStrategic={kpis} okrsSummary={okrsSummary} />);
+    expect(screen.getByText('Validação de Direção')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+  });
+
+  it('renders VicHelper', () => {
+    render(<CLevelInsightsStep {...baseProps} />);
+    expect(screen.getByTestId('vic-helper')).toBeInTheDocument();
+  });
+
+  it('calls onBack and onContinue', () => {
+    const onBack = vi.fn();
+    const onContinue = vi.fn();
+    render(<CLevelInsightsStep {...baseProps} onBack={onBack} onContinue={onContinue} />);
+    fireEvent.click(screen.getByText('Voltar'));
+    fireEvent.click(screen.getByText('Continuar'));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onContinue).toHaveBeenCalledOnce();
+  });
+});
+
+// ══════════════════════════════════════════════════
+// CLevelDecisionsStep
+// ══════════════════════════════════════════════════
+
+describe('CLevelDecisionsStep', () => {
+  const baseProps = {
     value: '',
     onChange: vi.fn(),
     onContinue: vi.fn(),
     onBack: vi.fn(),
   };
 
-  it('should define value prop as string', () => {
-    expect(typeof defaultProps.value).toBe('string');
+  it('renders header with title', () => {
+    render(<CLevelDecisionsStep {...baseProps} />);
+    expect(screen.getByText('Decisões Estratégicas')).toBeInTheDocument();
   });
 
-  it('should define onChange callback', () => {
-    expect(typeof defaultProps.onChange).toBe('function');
+  it('renders textarea with value', () => {
+    render(<CLevelDecisionsStep {...baseProps} value="Decisão X" />);
+    expect(screen.getByDisplayValue('Decisão X')).toBeInTheDocument();
   });
 
-  it('should define onContinue callback', () => {
-    expect(typeof defaultProps.onContinue).toBe('function');
+  it('calls onChange when typing', () => {
+    const onChange = vi.fn();
+    render(<CLevelDecisionsStep {...baseProps} onChange={onChange} />);
+    fireEvent.change(screen.getByPlaceholderText(/Priorizar investimento/), {
+      target: { value: 'Nova decisão' },
+    });
+    expect(onChange).toHaveBeenCalledWith('Nova decisão');
   });
 
-  it('should define onBack callback', () => {
-    expect(typeof defaultProps.onBack).toBe('function');
+  it('navigates back and forward', () => {
+    const onBack = vi.fn();
+    const onContinue = vi.fn();
+    render(<CLevelDecisionsStep {...baseProps} onBack={onBack} onContinue={onContinue} />);
+    fireEvent.click(screen.getByText('Voltar'));
+    fireEvent.click(screen.getByText('Continuar'));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onContinue).toHaveBeenCalledOnce();
   });
 });
 
-describe('CLevelDirectivesStep interface', () => {
-  const defaultProps = {
+// ══════════════════════════════════════════════════
+// CLevelDirectivesStep
+// ══════════════════════════════════════════════════
+
+describe('CLevelDirectivesStep', () => {
+  const baseProps = {
     value: '',
     onChange: vi.fn(),
     onComplete: vi.fn(),
@@ -45,113 +221,30 @@ describe('CLevelDirectivesStep interface', () => {
     isSubmitting: false,
   };
 
-  it('should define value prop as string', () => {
-    expect(typeof defaultProps.value).toBe('string');
+  it('renders header with title', () => {
+    render(<CLevelDirectivesStep {...baseProps} />);
+    expect(screen.getByText('Diretrizes para a Organização')).toBeInTheDocument();
   });
 
-  it('should define onChange callback', () => {
-    expect(typeof defaultProps.onChange).toBe('function');
+  it('renders textarea with value', () => {
+    render(<CLevelDirectivesStep {...baseProps} value="Foco Q1" />);
+    expect(screen.getByDisplayValue('Foco Q1')).toBeInTheDocument();
   });
 
-  it('should define onComplete callback', () => {
-    expect(typeof defaultProps.onComplete).toBe('function');
+  it('calls onComplete on final button click', () => {
+    const onComplete = vi.fn();
+    render(<CLevelDirectivesStep {...baseProps} onComplete={onComplete} />);
+    fireEvent.click(screen.getByText('Concluir Check-in'));
+    expect(onComplete).toHaveBeenCalledOnce();
   });
 
-  it('should define onBack callback', () => {
-    expect(typeof defaultProps.onBack).toBe('function');
+  it('disables back button when submitting', () => {
+    render(<CLevelDirectivesStep {...baseProps} isSubmitting />);
+    expect(screen.getByText('Voltar').closest('button')).toBeDisabled();
   });
 
-  it('should define isSubmitting boolean', () => {
-    expect(typeof defaultProps.isSubmitting).toBe('boolean');
-  });
-
-  it('should show loading state when isSubmitting is true', () => {
-    const submittingProps = { ...defaultProps, isSubmitting: true };
-    expect(submittingProps.isSubmitting).toBe(true);
-  });
-});
-
-describe('CLevelInsightsStep interface', () => {
-  const defaultProps = {
-    onContinue: vi.fn(),
-    onBack: vi.fn(),
-  };
-
-  it('should define onContinue callback', () => {
-    expect(typeof defaultProps.onContinue).toBe('function');
-  });
-
-  it('should define onBack callback', () => {
-    expect(typeof defaultProps.onBack).toBe('function');
-  });
-});
-
-describe('C-Level step navigation', () => {
-  it('should call onBack when back button clicked', () => {
-    const onBack = vi.fn();
-    // Component would call onBack on button click
-    onBack();
-    expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onContinue when continue button clicked', () => {
-    const onContinue = vi.fn();
-    // Component would call onContinue on button click
-    onContinue();
-    expect(onContinue).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onChange when textarea value changes', () => {
-    const onChange = vi.fn();
-    // Component would call onChange on textarea change
-    onChange('new value');
-    expect(onChange).toHaveBeenCalledWith('new value');
-  });
-});
-
-describe('C-Level step content', () => {
-  it('should render header with title', () => {
-    // Each step should have a header with title
-    const expectedTitles = [
-      'Decisões Estratégicas',
-      'Diretrizes',
-      'Insights Estratégicos',
-    ];
-    expect(expectedTitles.length).toBe(3);
-  });
-
-  it('should render description text', () => {
-    // Each step should have descriptive text
-    const hasDescription = true;
-    expect(hasDescription).toBe(true);
-  });
-
-  it('should render textarea for input steps', () => {
-    // Decisions and Directives steps have textareas
-    const stepsWithTextarea = ['decisions', 'directives'];
-    expect(stepsWithTextarea.length).toBe(2);
-  });
-
-  it('should render insight cards for insights step', () => {
-    // Insights step shows cards with strategic insights
-    const hasInsightCards = true;
-    expect(hasInsightCards).toBe(true);
-  });
-});
-
-describe('C-Level step button labels', () => {
-  it('should have "Voltar" label for back button', () => {
-    const backLabel = 'Voltar';
-    expect(backLabel).toBe('Voltar');
-  });
-
-  it('should have "Continuar" label for continue button', () => {
-    const continueLabel = 'Continuar';
-    expect(continueLabel).toBe('Continuar');
-  });
-
-  it('should have "Concluir Check-in" for final step', () => {
-    const finalLabel = 'Concluir Check-in';
-    expect(finalLabel).toBe('Concluir Check-in');
+  it('shows loading state on submit button', () => {
+    render(<CLevelDirectivesStep {...baseProps} isSubmitting />);
+    expect(screen.getByText('Concluindo...')).toBeInTheDocument();
   });
 });
