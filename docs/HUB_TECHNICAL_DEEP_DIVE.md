@@ -1089,6 +1089,9 @@ Centraliza a consulta de todas as sessões concluídas. Features:
 | `team-checkin-summary/` | Team Check-in | `coach-okrs`, `analista-kpis`, `facilitador-decisoes`, `cultura` |
 | `clevel-checkin-summary/` | C-Level | `alinhamento-estrategico`, `analista-kpis`, `facilitador-decisoes` |
 | `mbr-summary/` | MBR | `analista-kpis`, `alinhamento-estrategico`, `facilitador-decisoes` |
+| `qbr-pre-summary/` | QBR Pré | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+| `qbr-meeting-summary/` | QBR Reunião | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
+| `qbr-post-summary/` | QBR Pós | `analista-kpis`, `facilitador-decisoes`, `revisor-comunicacao` |
 
 **Modelo de IA:** `google/gemini-3-flash-preview`
 
