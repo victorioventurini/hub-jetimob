@@ -163,9 +163,9 @@ describe('QbrMeetingOkrReviewStep', () => {
     const props = {
       ...defaultProps,
       approvals: [
-        { teamId: 't1', sessionId: 'session-t1', status: 'approved' },
-        { teamId: 't2', sessionId: 'session-t2', status: 'approved_with_changes' },
-        { teamId: 't3', sessionId: 'session-t3', status: 'defer' },
+        { teamId: 't1', sessionId: 'session-t1', status: 'approved' as const },
+        { teamId: 't2', sessionId: 'session-t2', status: 'approved_with_changes' as const },
+        { teamId: 't3', sessionId: 'session-t3', status: 'defer' as const },
       ],
     };
     render(<QbrMeetingOkrReviewStep {...props} />);
