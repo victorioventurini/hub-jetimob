@@ -43,7 +43,6 @@ export function useManageableTeams() {
     queryFn: async (): Promise<ManageableTeam[]> => {
 
       if (!client || !buId) {
-        console.log("[useManageableTeams] Skipping - no client or buId");
         return [];
       }
 
