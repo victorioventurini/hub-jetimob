@@ -183,12 +183,13 @@ describe('MbrTeamOkrsDetailStep', () => {
     expect(screen.getByText(/Marcar como revisado/)).toBeInTheDocument();
   });
 
-  it('disables continue when not all teams reviewed', () => {
+  it('disables continue when not all teams reviewed (on last team)', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', reviewed: false }),
       createTeamSnapshot({ teamId: 't2', reviewed: true }),
     ];
-    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
+    // Navigate to last team (index 1) — primaryDisabled only applies on last team
+    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} currentTeamIndex={1} />);
     expect(screen.getByTestId('wizard-footer-primary')).toBeDisabled();
   });
 
