@@ -2,6 +2,7 @@
  * Tests for useKpisForWizard hook
  * 
  * Validates fail-safe behavior and data transformation.
+ * Uses dynamic import instead of require() for ESM compatibility.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -29,6 +30,7 @@ vi.mock('@/contexts/BuContext', async (importOriginal) => {
 
 import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useQuery } from '@tanstack/react-query';
+import { useKpisForWizard } from '../useKpisForWizard';
 
 // ============================================================
 // needsUpdate helper tests (extracted logic)
@@ -37,11 +39,9 @@ import { useQuery } from '@tanstack/react-query';
 describe('needsUpdate helper logic', () => {
   const needsUpdate = (frequency: string, lastDate: string | null | undefined): boolean => {
     if (!lastDate) return true;
-    
     const last = new Date(lastDate);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
-    
     switch (frequency) {
       case 'daily': return diffDays >= 1;
       case 'weekly': return diffDays >= 7;
@@ -60,17 +60,14 @@ describe('needsUpdate helper logic', () => {
   it('should correctly identify daily update needs', () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
     expect(needsUpdate('daily', yesterday.toISOString())).toBe(true);
   });
 
   it('should correctly identify weekly update needs', () => {
     const eightDaysAgo = new Date();
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
-    
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-    
     expect(needsUpdate('weekly', eightDaysAgo.toISOString())).toBe(true);
     expect(needsUpdate('weekly', twoDaysAgo.toISOString())).toBe(false);
   });
@@ -78,10 +75,8 @@ describe('needsUpdate helper logic', () => {
   it('should correctly identify monthly update needs', () => {
     const thirtyOneDaysAgo = new Date();
     thirtyOneDaysAgo.setDate(thirtyOneDaysAgo.getDate() - 31);
-    
     const twentyDaysAgo = new Date();
     twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
-    
     expect(needsUpdate('monthly', thirtyOneDaysAgo.toISOString())).toBe(true);
     expect(needsUpdate('monthly', twentyDaysAgo.toISOString())).toBe(false);
   });
@@ -89,7 +84,6 @@ describe('needsUpdate helper logic', () => {
   it('should never require update for manual frequency', () => {
     const veryOldDate = new Date();
     veryOldDate.setDate(veryOldDate.getDate() - 365);
-    
     expect(needsUpdate('manual', veryOldDate.toISOString())).toBe(false);
   });
 });
@@ -111,8 +105,6 @@ describe('useKpisForWizard hook', () => {
       isLoading: false,
     } as any);
 
-    // Import and test hook
-    const { useKpisForWizard } = require('../useKpisForWizard');
     const result = useKpisForWizard({ ownerId: 'test-user' });
 
     expect(result.kpis).toEqual([]);
@@ -136,11 +128,10 @@ describe('useKpisForWizard hook', () => {
       isLoading: false,
     } as any);
 
-    const { useKpisForWizard } = require('../useKpisForWizard');
     const result = useKpisForWizard({ ownerId: 'test-user' });
 
     expect(result.kpis).toHaveLength(2);
-    expect(result.hasAlertsToShow).toBe(true); // at_risk is not on_track
+    expect(result.hasAlertsToShow).toBe(true);
     expect(result.hasKpisNeedingUpdate).toBe(true);
   });
 
@@ -158,7 +149,6 @@ describe('useKpisForWizard hook', () => {
       isLoading: false,
     } as any);
 
-    const { useKpisForWizard } = require('../useKpisForWizard');
     const result = useKpisForWizard({ ownerId: 'test-user' });
 
     expect(result.hasAlertsToShow).toBe(false);
@@ -173,12 +163,10 @@ describe('useKpisForWizard hook', () => {
       isLoading: false,
     } as any);
 
-    const { useKpisForWizard } = require('../useKpisForWizard');
     const result = useKpisForWizard({ ownerId: 'test-user' });
 
     expect(result.kpis).toEqual([]);
     expect(result.hasError).toBe(true);
-    // Even with error, computed flags should be safe
     expect(result.hasAlertsToShow).toBe(false);
     expect(result.hasKpisNeedingUpdate).toBe(false);
   });
