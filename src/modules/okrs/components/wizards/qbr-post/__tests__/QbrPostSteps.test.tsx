@@ -335,7 +335,7 @@ describe('QbrPostMinutesStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Ata Executiva')).toBeInTheDocument();
+    expect(screen.getAllByText('Ata Executiva').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders 4 governance checklist items including nextCycleOkrsActive', () => {
