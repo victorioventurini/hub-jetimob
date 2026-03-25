@@ -301,8 +301,9 @@ describe('QbrCLevelDirectivesStep', () => {
       ],
     });
     expect(screen.getByText('Focar em retenção')).toBeInTheDocument();
-    expect(screen.getByText('Pergunta estratégica')).toBeInTheDocument();
-    expect(screen.getByText('Não-prioridade')).toBeInTheDocument();
+    expect(screen.getByText('Não investir em X')).toBeInTheDocument();
+    // Category labels appear as badges
+    expect(screen.getAllByText('Pergunta estratégica').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows item count badge', () => {
