@@ -328,8 +328,8 @@ describe('Status calculation integration scenarios', () => {
     // Mid-quarter: Reducing churn from 5% to 2%
     vi.setSystemTime(new Date('2025-02-15T12:00:00Z'));
     
-    // Good progress reducing churn
-    expect(calculateAutoStatus(5, 3.5, 2, 'down', q1Start, q1End)).toBe('on_track');
+    // Good progress reducing churn (50% progress at ~50% elapsed)
+    expect(calculateAutoStatus(5, 3, 2, 'down', q1Start, q1End)).toBe('on_track');
     
     // Churn went up - off track
     expect(calculateAutoStatus(5, 6, 2, 'down', q1Start, q1End)).toBe('off_track');

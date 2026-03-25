@@ -30,12 +30,14 @@ describe('WizardStepFooter', () => {
 
   it('disables primary when primaryDisabled', () => {
     render(<WizardStepFooter onBack={vi.fn()} onPrimary={vi.fn()} primaryDisabled />);
-    expect(screen.getByText('Continuar')).toBeDisabled();
+    const btn = screen.getByText('Continuar').closest('button');
+    expect(btn).toBeDisabled();
   });
 
   it('disables back when backDisabled', () => {
     render(<WizardStepFooter onBack={vi.fn()} onPrimary={vi.fn()} backDisabled />);
-    expect(screen.getByText('Voltar')).toBeDisabled();
+    const btn = screen.getByText('Voltar').closest('button');
+    expect(btn).toBeDisabled();
   });
 
   it('uses custom labels', () => {
