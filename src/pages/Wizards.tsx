@@ -3,7 +3,7 @@
  * 
  * Lists all available rituals organized by module and user role.
  * Visibility is controlled by user permissions and role context.
- * All wizards now navigate to full-page routes with draft support.
+ * QBR wizards appear dynamically based on the active cycle's qbr_status.
  */
 
 import { useMemo, useCallback } from 'react';
@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Target, 
   Users, 
@@ -26,15 +27,21 @@ import {
   Rocket,
   BarChart3,
   Settings2,
+  Presentation,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useActiveCycles } from '@/modules/okrs/hooks';
+import { useQuery } from '@tanstack/react-query';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
 // ============================================================
 // TYPES
 // ============================================================
+
+type QbrStatus = 'closed' | 'open' | 'collecting' | 'reviewing' | 'ready' | 'done';
 
 interface WizardDefinition {
   id: string;
@@ -58,12 +65,12 @@ interface WizardSection {
 }
 
 // ============================================================
-// WIZARD DEFINITIONS
+// STATIC WIZARD DEFINITIONS
 // ============================================================
 
 const WIZARD_SECTIONS: WizardSection[] = [
   {
-    title: 'OKRs - Colaboradores',
+    title: 'OKRs – Colaboradores',
     description: 'Rituais para check-in e atualização individual',
     icon: User,
     wizards: [
@@ -82,7 +89,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
     ],
   },
   {
-    title: 'OKRs - Líderes de Time',
+    title: 'OKRs – Líderes de Time',
     description: 'Rituais para gestão de OKRs do time',
     icon: Users,
     wizards: [
@@ -126,7 +133,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
     ],
   },
   {
-    title: 'OKRs - Gestores e Executivos',
+    title: 'OKRs – Gestores e Executivos',
     description: 'Rituais para alinhamento estratégico e cross-functional',
     icon: Crown,
     wizards: [
@@ -159,65 +166,175 @@ const WIZARD_SECTIONS: WizardSection[] = [
 ];
 
 // ============================================================
+// QBR WIZARD BUILDERS (dynamic based on qbr_status)
+// ============================================================
+
+function getQbrLeaderWizards(qbrStatus: QbrStatus): WizardDefinition[] {
+  if (qbrStatus !== 'open' && qbrStatus !== 'collecting') return [];
+  return [
+    {
+      id: 'qbr-pre',
+      name: 'QBR — Preparação',
+      description: 'Balanço do ciclo, KPIs e proposta de novos OKRs',
+      icon: Presentation,
+      module: 'okrs',
+      requiredRole: 'leader',
+      badge: 'Trimestral',
+      badgeVariant: 'secondary',
+      requiresTeam: true,
+      route: '/okrs/qbr-pre',
+    },
+  ];
+}
+
+function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
+  const wizards: WizardDefinition[] = [];
+
+  if (qbrStatus === 'collecting' || qbrStatus === 'reviewing') {
+    wizards.push({
+      id: 'qbr-pre-clevel',
+      name: 'QBR Pre — C-Level',
+      description: 'Análise estratégica consolidada e direcionamentos',
+      icon: Presentation,
+      module: 'okrs',
+      requiredRole: 'executive',
+      badge: 'Trimestral',
+      badgeVariant: 'secondary',
+      requiresTeam: false,
+      route: '/okrs/qbr-pre-clevel',
+    });
+  }
+
+  if (qbrStatus === 'reviewing') {
+    wizards.push({
+      id: 'qbr-meeting',
+      name: 'Reunião QBR',
+      description: 'Apresentação, aprovação de OKRs e decisões estratégicas',
+      icon: Presentation,
+      module: 'okrs',
+      requiredRole: 'executive',
+      badge: 'Trimestral',
+      badgeVariant: 'secondary',
+      requiresTeam: false,
+      route: '/okrs/qbr',
+    });
+  }
+
+  if (qbrStatus === 'ready') {
+    wizards.push({
+      id: 'qbr-post',
+      name: 'QBR Post',
+      description: 'Promoção de OKRs aprovados, ata e follow-up',
+      icon: Presentation,
+      module: 'okrs',
+      requiredRole: 'executive',
+      badge: 'Trimestral',
+      badgeVariant: 'secondary',
+      requiresTeam: false,
+      route: '/okrs/qbr-post',
+    });
+  }
+
+  return wizards;
+}
+
+// ============================================================
+// HOOK: useQbrStatus
+// ============================================================
+
+function useQbrStatus() {
+  const supabase = useBuScopedSupabase();
+  const { data: activeCycles } = useActiveCycles();
+  const quarterlyCycle = useMemo(
+    () => activeCycles?.find(c => c.type === 'quarter') || null,
+    [activeCycles]
+  );
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['qbr', 'cycle-status-wizards', quarterlyCycle?.id],
+    enabled: !!supabase && !!quarterlyCycle?.id,
+    queryFn: async () => {
+      const { data: row, error } = await supabase
+        .from('cycles')
+        .select('qbr_status')
+        .eq('id', quarterlyCycle!.id)
+        .single();
+      if (error) throw error;
+      return (row?.qbr_status as QbrStatus) || 'closed';
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  return { qbrStatus: (data as QbrStatus) || 'closed', isLoading };
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
 export default function WizardsPage() {
   const navigate = useNavigate();
   
-  // SEO
   usePageTitle('Rituais', {
     customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Hub.',
   });
 
-  const { has, isWildcard } = usePermissions();
+  const { has, isWildcard, isLoading: permissionsLoading } = usePermissions();
   const { isLeader, teams: leaderTeams } = useLeaderTeams();
   const { teams: allTeams } = useHierarchicalTeamList();
+  const { qbrStatus, isLoading: qbrLoading } = useQbrStatus();
 
   // Determine user role hierarchy
-  // Use isWildcard (impersonation-aware) instead of isAdmin
   const userRoles = useMemo(() => {
-    const roles: Set<string> = new Set(['collaborator']); // Everyone is at least a collaborator
-    
+    const roles: Set<string> = new Set(['collaborator']);
     if (isLeader) roles.add('leader');
     if (isWildcard) {
       roles.add('manager');
       roles.add('leader');
-      // isWildcard = admin/super_admin NOT impersonating
       roles.add('executive');
       roles.add('admin');
     }
-    
     return roles;
   }, [isLeader, isWildcard]);
 
+  // Build sections with dynamic QBR wizards injected
+  const sectionsWithQbr = useMemo(() => {
+    return WIZARD_SECTIONS.map(section => {
+      if (section.title === 'OKRs – Líderes de Time') {
+        return {
+          ...section,
+          wizards: [...section.wizards, ...getQbrLeaderWizards(qbrStatus)],
+        };
+      }
+      if (section.title === 'OKRs – Gestores e Executivos') {
+        return {
+          ...section,
+          wizards: [...section.wizards, ...getQbrExecutiveWizards(qbrStatus)],
+        };
+      }
+      return section;
+    });
+  }, [qbrStatus]);
+
   // Check if user can access a wizard
   const canAccessWizard = useCallback((wizard: WizardDefinition): boolean => {
-    // Check role requirement
     if (!userRoles.has(wizard.requiredRole)) {
-      // Wildcard (admin NOT impersonating) can access all wizards
       if (!isWildcard) return false;
     }
-    
-    // Check specific permission if required
     if (wizard.permissionKey && !has(wizard.permissionKey)) {
-      // Wildcard bypass
       if (!isWildcard) return false;
     }
-    
     return true;
   }, [userRoles, has, isWildcard]);
 
   // Filter sections based on user access
   const visibleSections = useMemo(() => {
-    return WIZARD_SECTIONS
+    return sectionsWithQbr
       .filter(section => {
-        // Hide "Líderes de Time" section for non-leaders (unless wildcard)
-        if (section.title === 'OKRs - Líderes de Time' && !userRoles.has('leader') && !isWildcard) {
+        if (section.title === 'OKRs – Líderes de Time' && !userRoles.has('leader') && !isWildcard) {
           return false;
         }
-        // Hide "Gestores e Executivos" section for non-managers (unless wildcard)
-        if (section.title === 'OKRs - Gestores e Executivos' && !userRoles.has('manager') && !isWildcard) {
+        if (section.title === 'OKRs – Gestores e Executivos' && !userRoles.has('manager') && !isWildcard) {
           return false;
         }
         return true;
@@ -226,11 +343,10 @@ export default function WizardsPage() {
         ...section,
         wizards: section.wizards.filter(canAccessWizard),
       })).filter(section => section.wizards.length > 0);
-  }, [canAccessWizard, userRoles, isWildcard]);
+  }, [canAccessWizard, userRoles, isWildcard, sectionsWithQbr]);
 
-  // Handle wizard open - navigate to full-page route
+  // Handle wizard open
   const handleWizardOpen = useCallback((wizard: WizardDefinition) => {
-    // For wizards that require team, add team param
     if (wizard.requiresTeam) {
       const firstLeaderTeam = leaderTeams?.[0];
       const firstAnyTeam = allTeams?.[0];
@@ -247,10 +363,10 @@ export default function WizardsPage() {
       }
       return;
     }
-
-    // Navigate to the wizard's full-page route
     navigate(wizard.route);
   }, [leaderTeams, allTeams, isWildcard, navigate]);
+
+  const isLoading = permissionsLoading || qbrLoading;
 
   return (
     <HubLayout>
@@ -260,7 +376,19 @@ export default function WizardsPage() {
           description="Fluxos guiados para gestão de OKRs"
         />
 
-        {visibleSections.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-8">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="h-6 w-64" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Skeleton className="h-40" />
+                  <Skeleton className="h-40" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : visibleSections.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
