@@ -93,8 +93,8 @@ export default function QbrPrePage() {
 
   usePageTitle('Pré-QBR');
 
-  // Get user's team
-  const userTeamId = profile?.team_id || null;
+  // Get user's team from profile
+  const userTeamId = (profile as any)?.team_id || null;
 
   // Cycle
   const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
