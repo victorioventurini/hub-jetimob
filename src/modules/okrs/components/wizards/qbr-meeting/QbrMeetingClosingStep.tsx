@@ -100,7 +100,9 @@ export function QbrMeetingClosingStep({
     const fb: RitualImprovementFeedback = {
       id: `fb-${Date.now()}`,
       rating: feedbackRating,
-      suggestion: feedbackText.trim() || undefined,
+      text: feedbackText.trim() || '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
     };
     onRitualFeedbackChange([...ritualFeedback, fb]);
     setFeedbackRating(0);
