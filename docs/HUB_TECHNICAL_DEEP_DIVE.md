@@ -1035,7 +1035,7 @@ interface TeamOkrCreationWizardState {
 }
 ```
 
-## 3.11 Wizard: Team KR Creation
+## 3.12 Wizard: Team KR Creation
 
 > **Persona:** Líder de time  
 > **Frequência:** Sob demanda  
