@@ -20,7 +20,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useBuScopedSupabase } from '@/hooks/useBuScopedSupabase';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useActiveCycles } from '@/modules/okrs/hooks';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
