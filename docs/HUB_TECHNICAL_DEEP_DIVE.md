@@ -456,14 +456,14 @@ O sistema de insights classifica cada KR em um de 8 estados, cada um com semânt
 
 ## 2.9 Rotas
 
-📁 **`src/routes/okrs.routes.tsx`** — 21 rotas
+📁 **`src/routes/okrs.routes.tsx`** — 25 rotas
 
 Todas as rotas OKR são wrapped por:
 ```
 ProtectedRoute → BuRequiredRoute → ModuleRoute('okrs')
 ```
 
-Rotas administrativas (MBR, org-construction-review, analysis, health) adicionam `BuAdminRoute`.
+Rotas administrativas (MBR, QBR C-Level/Meeting/Post, org-construction-review, analysis, health) adicionam `BuAdminRoute`.
 
 ---
 
