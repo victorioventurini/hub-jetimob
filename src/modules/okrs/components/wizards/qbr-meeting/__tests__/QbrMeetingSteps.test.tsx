@@ -51,7 +51,6 @@ function createKpiSnapshot(overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnaps
     unit: 'R$',
     ragStatus: 'green' as const,
     currentValue: 100,
-    targetValue: 120,
     variationVsLastMonth: 5,
     requiresStrategicDecision: false,
     ...overrides,
