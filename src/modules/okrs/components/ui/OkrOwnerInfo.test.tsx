@@ -34,13 +34,14 @@ describe('OkrOwnerInfo', () => {
 
     it('should handle null owner', () => {
       const { container } = render(<OkrOwnerInfo owner={null} />);
-      // Returns null, so container should be empty
-      expect(container.firstChild).toBeEmptyDOMElement();
+      // Component returns null, but providers still wrap the content
+      // The inner div should have no rendered OkrOwnerInfo content
+      expect(container.querySelector('[class*="flex items-center"]')).toBeNull();
     });
 
     it('should handle undefined owner', () => {
       const { container } = render(<OkrOwnerInfo owner={undefined} />);
-      expect(container.firstChild).toBeEmptyDOMElement();
+      expect(container.querySelector('[class*="flex items-center"]')).toBeNull();
     });
   });
 
