@@ -47,7 +47,7 @@ function createSubmission(overrides: Partial<LeaderPreSubmission> = {}): LeaderP
       zombieCandidates: ['zombie-1'],
       kpisToCreate: [{ description: 'Novo KPI', suggestedScope: 'team', relatedKrTitle: '' }],
       learnings: { whatWorked: 'Rotinas', whatDidntWork: 'Deploys', debts: 'Testes' },
-      proposedOkrs: { objective: { title: '', description: '', org_objective_id: null, cycle_id: null }, krPlan: { foundational: 1, contribution: 0, enabler: 0 }, draftKrs: [] },
+      proposedOkrs: { objective: { title: '', description: '', org_objective_id: null, cycle_id: null }, krPlan: { foundational: 1, contribution: 0, enabler: 0 }, draftKrs: [] } as any,
     },
     ...overrides,
   };
