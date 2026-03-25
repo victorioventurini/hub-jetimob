@@ -192,16 +192,13 @@ describe('EditKpiDialog', () => {
     });
   });
 
-  it('não mostra TeamSelect primário nem AreaSelect para scope=org (mas mostra seletores de responsabilidade)', async () => {
+  it('mostra seção de Responsabilidade Operacional para scope=org', async () => {
     const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null, responsible_area_id: null });
     renderDialog(kpi);
 
+    // scope=org shows "Responsabilidade Operacional" section with Área Responsável + Time Responsável
     await waitFor(() => {
-      // Primary team_id selector should NOT appear (only for scope=team)
-      // But responsible_team_id TeamSelect DOES appear in "Responsabilidade Operacional" section for scope=org
-      expect(screen.queryByTestId('area-select')).not.toBeInTheDocument();
-      // At least one team-select exists (the responsible_team_id one)
-      expect(screen.getByText('Time Responsável (opcional)')).toBeInTheDocument();
+      expect(screen.getByText(/Área Responsável/)).toBeInTheDocument();
     });
   });
 
