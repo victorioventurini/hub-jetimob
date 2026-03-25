@@ -170,9 +170,20 @@ export function useTeamOverviewMetrics(
         });
       });
 
-      // TODO: Fetch collaborators needing help from wizard sessions
-      // For now, return 0
-      const collaboratorsNeedingHelp = 0;
+      // Fetch collaborators who flagged helpNeeded in completed collaborator check-ins
+      const { data: helpSessions, error: helpError } = await supabase
+        .from('okr_wizard_sessions')
+        .select('started_by')
+        .eq('wizard_type', 'collaborator')
+        .eq('status', 'completed')
+        .eq('cycle_id', cycleId)
+        .not('reflection_data->helpNeeded', 'is', null);
+
+      // Count distinct collaborators needing help
+      const uniqueCollaborators = new Set(
+        (helpSessions || []).map((s: any) => s.started_by)
+      );
+      const collaboratorsNeedingHelp = uniqueCollaborators.size;
 
       return {
         metrics: {
