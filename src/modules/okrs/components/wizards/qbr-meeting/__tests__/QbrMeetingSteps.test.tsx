@@ -49,9 +49,12 @@ function createKpiSnapshot(overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnaps
     kpiId: `kpi-${Math.random().toString(36).slice(2, 6)}`,
     name: 'Revenue',
     unit: 'R$',
-    ragStatus: 'green' as const,
+    ragStatus: 'green',
     currentValue: 100,
+    previousValue: 90,
+    target: 120,
     variationVsLastMonth: 5,
+    variationVsTarget: -16,
     requiresStrategicDecision: false,
     ...overrides,
   };
