@@ -1,101 +1,94 @@
 
 
-# Fase 2 — Testes de Integração: Hooks de Mutação
+# Fase 3 — Test Factories + Fase 5 — Testes de Permissão
 
-## Análise do estado atual
+## Status atual
 
-Os hooks de mutação (`useOkrMutations`, `useCreateTeamOkrBundle`, `useCreateTeamKrBundle`, `useCreateCheckin`, `useGenericWizardDraft`) têm **0 testes de integração**. Os testes existentes no módulo OKRs são majoritariamente unitários puros (cálculos, validações) ou testes de payload estáticos sem renderHook.
+- **Fase 1:** Done (79 testes — calculateKrState + analyzePace) — requirement status needs update to `done`
+- **Fase 2:** Done (52 testes — hooks de mutação)
+- **Fases 3, 4, 5, 6:** Pendentes
 
-O padrão de mock já está estabelecido no projeto:
-- `vi.mock('@/integrations/supabase/getOptionalBuClient')` para hooks com `useOptionalBuClient`
-- `vi.mock('@/integrations/supabase/useBuScopedSupabase')` para hooks com `useBuScopedSupabase`
-- `vi.mock('@/contexts/BuContext')` para `useBu`
-- `createMockQueryBuilder` em `src/test/mocks/supabase.ts` para simular chains do Supabase
-- `renderHook` + `QueryClientProvider` via `src/test/test-utils.tsx`
+A Fase 3 (factories) e Fase 5 (permissões) são independentes e podem ser implementadas juntas. A Fase 4 (wizard components) é a mais extensa e fica para a sequência.
+
+---
+
+## O que já existe em fixtures
+
+`src/test/mocks/fixtures/okrs.ts` já tem:
+- `createMockKr`, `createMockInitiative`, `createMockCycle` — para testes de cálculo/health
+- `FIXTURES` com cenários pré-definidos (healthy, at_risk, stale, etc.)
+
+**Falta:** factories para Objectives, WizardSessions, KPIs, Check-ins, e dados com campos de identidade (`bu_id`, `owner_user_id`, `team_id`).
+
+---
 
 ## Plano de implementação
 
-### Tarefa 1 — `useOkrMutations` integration tests
-**Arquivo:** `src/modules/okrs/hooks/__tests__/useOkrMutations.integration.test.ts`
+### Tarefa 1 — Expandir factories (`src/test/factories/okr.factory.ts`)
 
-Testa os 4 hooks de cancelamento com mocks do Supabase:
-- `useCancelOrgObjective`: verifica `.update({ status: 'cancelled' })` na tabela `okr_org_objectives`
-- `useCancelOrgKeyResult`: verifica `.update({ cancelled_at })` na tabela `okr_org_key_results`
-- `useCancelTeamObjective`: verifica `.update({ status: 'cancelled' })` na tabela `okr_team_objectives`
-- `useCancelTeamKeyResult`: verifica `.update({ cancelled_at })` na tabela `okr_team_key_results`
-- Cada hook: valida que `queryClient.invalidateQueries` é chamado com as prefix keys corretas
-- Valida soft-delete pattern (cancelled_at / status: cancelled, nunca DELETE físico)
-- Valida toast.success / toast.error em success/error
+Criar arquivo com factories centralizadas usando IDs determinísticos (não `faker`, que não está no projeto):
 
-**~12 testes**
+- `createTestObjective(overrides?)` — com `bu_id`, `owner_user_id` (profileId), `deleted_at: null`, `cancelled_at: null`, `status: 'active'`
+- `createTestKeyResult(overrides?)` — com `type`, `direction`, `unit`, `co_responsibles`, `deleted_at: null`, `cancelled_at: null`
+- `createTestKpi(overrides?)` — com `scope`, `lifecycle_status`, `owner_user_id`, `responsible_area_id`
+- `createTestWizardSession(overrides?)` — com `wizard_type`, `reflection_data`, `summary_sent_at`, `status`
+- `createTestCheckin(overrides?)` — com `kr_id`, `user_id` (profileId), `confidence`
+- `createTestCycle(overrides?)` — extend existente com `qbr_status` field
 
-### Tarefa 2 — `useCreateTeamOkrBundle` integration tests
-**Arquivo:** `src/modules/okrs/hooks/__tests__/useCreateTeamOkrBundle.integration.test.ts`
+Reutiliza `createMockKr` e `createMockCycle` do fixtures existente onde aplicável.
 
-- Insert atômico: objective → KRs → contributors → dependencies → initiatives → KR metric links
-- `bu_id` explícito em todos os inserts (objetivo, KRs, iniciativas)
-- `owner_user_id` é passado conforme input (profileId, não auth user.id)
-- KR `current_value` inicializado como `baseline`
-- Dependencies non-blocking: erro em dep não interrompe o fluxo
-- KR metric links non-blocking: erro em link não interrompe
-- Erro em initiative é blocking (throw)
-- Erro em objective bloqueia tudo (throw antes dos KRs)
-- Invalidação de queryKeys: teamObjectivesPrefix, teamKeyResultsPrefix, dashboardDataPrefix, initiativesAll, cross-dependencies
+**~0 testes (infraestrutura), 1 arquivo novo**
 
-**~10 testes**
+### Tarefa 2 — Testes de permissão (`src/modules/okrs/hooks/__tests__/permissions.test.ts`)
 
-### Tarefa 3 — `useCreateCheckin` integration tests
-**Arquivo:** `src/modules/okrs/hooks/__tests__/useCreateCheckin.integration.test.ts`
+Hooks a testar (todos são hooks puros com `useMemo`, dependem de `useManageableTeams` e `useProfileId`):
 
-- Insert correto: kr_id, current_value, previous_value, confidence, user_id = profileId
-- Atualiza KR: status mapeado (high→green, medium→yellow, low→red) + current_value
-- Mention processing: extrai @[Name](userId) e chama `emit_notification_event` RPC
-- Invalidação de queryKeys: teamKeyResultsPrefix, teamObjectivesPrefix, dashboardDataPrefix, pendingCheckins, checkinSummary
-- Toast de sucesso/erro (respeitando skipToast)
-- Helper functions: `statusToConfidence` e `confidenceToStatus` (3 mapeamentos cada)
+**`useCanEditKr`:**
+- `canEdit = true` quando profileId === kr.owner_user_id
+- `canEdit = true` quando profileId está em kr.co_responsibles[]
+- `canEdit = true` quando canManageTeamOkr (líder do time)
+- `canEdit = false` quando profileId não é owner, co-responsável, nem líder
+- `canEdit = false` quando kr é null/undefined
+- `canEdit = false` quando profileId é null
 
-**~10 testes**
+**`useCanManageTeamOkr`:**
+- `canManage = true` quando isWildcard (admin)
+- `canManage = true` quando teamId está em teams gerenciáveis
+- `canManage = false` quando teamId não está na lista
+- `canManage = false` quando teamId é null
 
-### Tarefa 4 — `useGenericWizardDraft` unit/integration tests
-**Arquivo:** `src/modules/okrs/hooks/__tests__/useGenericWizardDraft.test.ts`
+**`useCanManageOrgOkr`:**
+- `canManage = true` quando isWildcard
+- `canManage = true` quando has('okrs.org_objective.update:bu')
+- `canManage = false` caso contrário
 
-Este hook é complexo (500 linhas), testa:
-- `getDraftKey`: retorna `okr-draft.{wizardType}`
-- `createEmptyDraft`: version, wizardType, teamId, cycleId, defaultStep, defaultData
-- `updateDraft`: merge parcial de data, persiste imediatamente no localStorage
-- `setStep`: atualiza currentStep, sincroniza URL via replaceState
-- `saveDraft`: persiste no localStorage + cria/atualiza `okr_wizard_sessions`
-- `clearDraft`: remove localStorage, marca session como `completed`, retorna sessionId
-- `discardDraft`: remove localStorage, marca session como `abandoned`
-- Draft key isolation: `okr-draft.qbr-pre` ≠ `okr-draft.team-checkin`
-- Hydration guard: `hasHydratedStorageRef` previne sobrescrita por estado vazio
-- `beforeunload`: flush do draft sujo no localStorage
+**`useCanEditTeamObjective`:**
+- `canEdit = true` quando owner
+- `canEdit = true` quando líder do time
+- `canEdit = false` quando nem owner nem líder
 
-**~13 testes**
+**`useCanEditInitiative`:**
+- `canEdit = true` quando owner da iniciativa
+- `canEdit = true` quando líder do time
 
-## Abordagem técnica
+Mocks: `vi.mock` de `useManageableTeams`, `useProfileId`, `usePermissions`
 
-Todos os testes usarão:
-1. `vi.mock` para os clients Supabase (getOptionalBuClient ou useBuScopedSupabase)
-2. `createMockQueryBuilder` com chains configuráveis por tabela
-3. `renderHook` com wrapper de providers (QueryClient + Auth + BuContext)
-4. Assertions em `.from(tableName)`, `.insert(payload)`, `.update(payload)` do mock
-5. `vi.spyOn(toast, 'success')` / `vi.spyOn(toast, 'error')` para toasts
+**~18 testes, 1 arquivo novo**
 
-Para `useGenericWizardDraft`, adicionalmente:
-- `vi.stubGlobal('localStorage', ...)` para simular persistência
-- Mock de `window.history.replaceState` para URL sync
-- Mock de `window.addEventListener('beforeunload', ...)`
+### Tarefa 3 — Atualizar roadmap
+
+- Fase 1 requirement → `done`
+- Criar e completar tarefas
+
+---
 
 ## Resumo
 
 | Tarefa | Arquivo | Testes |
 |--------|---------|--------|
-| useOkrMutations | `hooks/__tests__/useOkrMutations.integration.test.ts` | ~12 |
-| useCreateTeamOkrBundle | `hooks/__tests__/useCreateTeamOkrBundle.integration.test.ts` | ~10 |
-| useCreateCheckin | `hooks/__tests__/useCreateCheckin.integration.test.ts` | ~10 |
-| useGenericWizardDraft | `hooks/__tests__/useGenericWizardDraft.test.ts` | ~13 |
-| **Total** | **4 arquivos novos** | **~45 testes** |
+| Factories | `src/test/factories/okr.factory.ts` | 0 (infra) |
+| Permissões | `hooks/__tests__/permissions.test.ts` | ~18 |
+| **Total** | **2 arquivos novos** | **~18 testes** |
 
-Implementação sequencial: Tarefas 1+2 na primeira mensagem, Tarefas 3+4 na segunda.
+Meta pós-implementação: **~600+ testes**, mantendo 100% pass rate. Após isso, restam Fase 4 (wizard components, ~40 testes) e Fase 6 (E2E, ~10 testes).
 
