@@ -85,7 +85,6 @@ export function useManageableTeams() {
           return [];
         }
 
-        console.log("[useManageableTeams] Impersonated user can manage teams:", teams?.map(t => t.name));
         return teams || [];
       }
 
