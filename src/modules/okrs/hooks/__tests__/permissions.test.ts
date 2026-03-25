@@ -207,7 +207,7 @@ describe('useCanManageOrgOkr', () => {
 
   it('returns canManage=true when user has okrs.org_objective.update:bu permission', () => {
     mockPermissions.mockReturnValue({
-      has: (key: string) => key === 'okrs.org_objective.update:bu',
+      has: ((key: string) => key === 'okrs.org_objective.update:bu') as (key: string) => boolean,
       hasAny: () => false, hasAll: () => false,
       isWildcard: false, isLoading: false,
       permissions: ['okrs.org_objective.update:bu'], isImpersonating: false,

@@ -101,7 +101,7 @@ export function createTestKeyResult(overrides: Partial<TestKeyResult> = {}): Tes
     bu_id: TEST_IDS.BU_ID,
     owner_user_id: TEST_IDS.PROFILE_ID,
     co_responsibles: [],
-    type: 'number',
+    type: 'contribution',
     direction: 'up',
     unit: '%',
     baseline: 0,
