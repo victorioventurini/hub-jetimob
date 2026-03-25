@@ -183,7 +183,7 @@ export function QbrMeetingClosingStep({
                 {ritualFeedback.map((fb) => (
                   <div key={fb.id} className="flex items-center gap-2 text-xs p-1.5 rounded bg-muted/50">
                     <span className="font-medium">{fb.rating}★</span>
-                    {fb.suggestion && <span className="flex-1 truncate">{fb.suggestion}</span>}
+                    {fb.text && <span className="flex-1 truncate">{fb.text}</span>}
                     <Button
                       variant="ghost"
                       size="icon"
