@@ -17,8 +17,9 @@ describe('calculateProgress', () => {
       expect(calculateProgress(150, 300, 300, 'up')).toBe(100);
     });
 
-    it('deve limitar em 100% quando ultrapassou a meta', () => {
-      expect(calculateProgress(150, 350, 300, 'up')).toBe(100);
+    it('deve permitir valores acima de 100% quando ultrapassou a meta', () => {
+      // (350 - 150) / (300 - 150) = 200/150 = 133.33%
+      expect(calculateProgress(150, 350, 300, 'up')).toBeCloseTo(133.33, 1);
     });
 
     it('não deve retornar valores negativos', () => {
