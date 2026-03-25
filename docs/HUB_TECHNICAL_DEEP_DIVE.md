@@ -499,7 +499,11 @@ type WizardPersona =
   | 'clevel-checkin'     // Direção estratégica
   | 'team-okr-creation'  // Criação de OKRs
   | 'team-kr-creation'   // Criação de KRs
-  | 'mbr';               // Monthly Business Review
+  | 'mbr'                // Monthly Business Review
+  | 'qbr-pre'            // QBR Pré-Líderes
+  | 'qbr-pre-clevel'     // QBR Pré-C-Level
+  | 'qbr-meeting'        // QBR Reunião
+  | 'qbr-post';          // QBR Pós-Reunião
 ```
 
 ## 3.3 Infraestrutura Compartilhada

@@ -1851,7 +1851,9 @@ teamObjectiveWithKrs: `..., key_results:okr_team_key_results(..., owner:profiles
 
 ### 4.8 OKR Wizards — Rituais de Gestão
 
-O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósito e periodicidade específicos.
+O Hub implementa 10 wizards full-page para rituais de OKRs, cada um com propósito e periodicidade específicos.
+
+#### Rituais Semanais/Mensais (Check-in + MBR)
 
 | Wizard | Rota | Propósito | Frequência | Participante |
 |--------|------|-----------|------------|--------------|
@@ -1861,6 +1863,56 @@ O Hub implementa 5 wizards full-page para rituais de OKRs, cada um com propósit
 | **Managers Check-in** | `/okrs/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
 | **C-Level Check-in** | `/okrs/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
 | **MBR (Monthly Business Review)** | `/okrs/mbr` | Revisão estratégica mensal: KPIs mestres, OKRs por time e organizacionais, decisões | Mensal | BU Admin |
+
+#### QBR — Quarterly Business Review (v1.0)
+
+O QBR é um ritual trimestral de 4 fases que fecha o ciclo e prepara o próximo, com governança progressiva (líder → C-Level → reunião → formalização).
+
+| Fase | Wizard | Rota | Propósito | Participante | Acesso |
+|------|--------|------|-----------|--------------|--------|
+| **1. Pré-QBR (Líderes)** | `QbrPrePage` | `/okrs/qbr-pre` | Balanço do ciclo, análise de KPIs, aprendizados, proposta de OKRs | Líder de time | `OkrRoute` |
+| **2. Pré-QBR (C-Level)** | `QbrPreCLevelPage` | `/okrs/qbr-pre-clevel` | Consolidação de scorecards, análise estratégica, calibração de OKRs, diretrizes | C-Level/BU Admin | `requiresBuAdmin` |
+| **3. Reunião QBR** | `QbrMeetingPage` | `/okrs/qbr` | Aprovação/rejeição de OKRs por time, decisões com dono/prazo, compromissos cross-área | BU Admin | `requiresBuAdmin` |
+| **4. Pós-QBR** | `QbrPostPage` | `/okrs/qbr-post` | Promoção de OKRs aprovados, formalização de dependências, ata executiva | BU Admin | `requiresBuAdmin` |
+
+**Controle de abertura:** Campo `qbr_status` na tabela `cycles` (`open`, `collecting`, `closed`). O wizard Pré-QBR só está disponível quando `qbr_status IN ('open', 'collecting')`.
+
+**Etapas do Pré-QBR (Líderes):**
+1. **Balanço do Ciclo** — Estado final de cada KR com `calculateKrState`, progresso e pace
+2. **Análise de KPIs** — Sinalização de KPIs zombie e propostas de novos indicadores
+3. **Aprendizados** — Reflexão estruturada (continuar, parar, dívidas)
+4. **Proposta de OKRs** — Sub-flow inline com 3 mini-etapas: Objetivo → Plano de KRs → Detalhamento (draft-only, via `QbrOkrProposalStep`)
+5. **Resumo e Envio** — Revisão consolidada com snapshot imutável
+
+**Etapas do Pré-QBR (C-Level):**
+1. **Leitura Sistêmica** — Consolidação de scorecards e KPIs dos líderes
+2. **Análise Estratégica** — Alinhamento, sinais e "o que não fazer"
+3. **Validação de OKRs** — Calibração por time com flags (`too_conservative`, `gap`, etc.)
+4. **Diretrizes** — Pauta obrigatória para a reunião
+5. **Feedback do Rito** — Avaliação do processo via `MbrClosingStep`
+
+**Etapas da Reunião QBR:**
+1. **Abertura** — Direcionamentos e KPIs em alerta
+2. **Revisão de OKRs** — Gate de aprovação por time (`approved`, `discarded`, `defer`)
+3. **Decisões** — Registro com dono e prazo obrigatórios
+4. **Compromissos** — Dependências cross-área formalizadas
+5. **Encerramento** — Checklist de governança e avaliação por estrelas
+
+**Etapas do Pós-QBR:**
+1. **Promoção de OKRs** — Seleção de OKRs aprovados para ativação
+2. **Decisões Complementares** — Registro adicional de decisões
+3. **Compromissos Cross-Área** — Formalização com `fromTeamId`, `toTeamId` e prazo
+4. **Cadência de Follow-Up** — Configuração de MBR e datas de acompanhamento
+5. **Ata Executiva** — Sumário com checklist de governança (4 itens)
+
+**Edge Functions de Resumo:**
+- `qbr-pre-summary` — 3 agentes IA (analista-kpis, facilitador-decisoes, revisor-comunicacao)
+- `qbr-meeting-summary` — Mesmo padrão multi-agente
+- `qbr-post-summary` — Mesmo padrão, com idempotência via `summary_sent_at`
+
+**Integração com MBR:**
+- Step `MbrQbrFollowUpStep` no wizard MBR para acompanhamento de decisões e compromissos pendentes do QBR
+- Tipos `qbr-followup` adicionados ao `MbrStep` e `QbrFollowUpItem[]` ao `MbrDraftData`
 
 **Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
 
