@@ -79,14 +79,15 @@ export function QbrMeetingDecisionsStep({
             <DecisionCard
               key={decision.id}
               decision={decision}
-              onUpdate={(updated) => {
+              onUpdate={(id, updates) => {
                 onDecisionsChange(
-                  decisions.map(d => d.id === updated.id ? updated : d)
+                  decisions.map(d => d.id === id ? { ...d, ...updates } : d)
                 );
               }}
-              onDelete={() => {
-                onDecisionsChange(decisions.filter(d => d.id !== decision.id));
+              onRemove={(id) => {
+                onDecisionsChange(decisions.filter(d => d.id !== id));
               }}
+              showOwnerDeadline
             />
           ))
         )}
