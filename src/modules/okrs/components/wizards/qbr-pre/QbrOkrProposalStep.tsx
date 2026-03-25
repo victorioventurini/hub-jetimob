@@ -136,10 +136,10 @@ function ObjectiveSubStep({
 
       <WizardStepFooter
         onBack={onBack}
-        onContinue={onNext}
-        canContinue={canContinue}
+        onPrimary={onNext}
+        primaryDisabled={!canContinue}
         backLabel="Voltar"
-        continueLabel="Definir KRs"
+        primaryLabel="Definir KRs"
       />
     </div>
   );
@@ -234,10 +234,10 @@ function KrPlanSubStep({
 
       <WizardStepFooter
         onBack={onBack}
-        onContinue={onNext}
-        canContinue={canContinue}
+        onPrimary={onNext}
+        primaryDisabled={!canContinue}
         backLabel="Voltar ao Objetivo"
-        continueLabel="Detalhar KRs"
+        primaryLabel="Detalhar KRs"
       />
     </div>
   );
@@ -283,15 +283,15 @@ function KrDetailSubStep({
     while (krs.length < slots.length) {
       const slot = slots[krs.length];
       krs.push({
-        tempId: `kr-${Date.now()}-${krs.length}`,
+        id: `draft-kr-${Date.now()}-${krs.length}`,
         type: slot.type,
         title: '',
         unit: '%',
         baseline: 0,
         target: 100,
         direction: 'up',
-        ownerUserId: null,
-        isShared: false,
+        owner_user_id: null,
+        linked_org_kr_id: null,
       });
     }
     return krs;
@@ -402,14 +402,15 @@ function KrDetailSubStep({
               <Label className="text-xs">Unidade</Label>
               <UnitSelect
                 value={currentKr.unit}
-                onValueChange={(unit) => updateKr({ unit })}
+                onChange={(unit) => updateKr({ unit })}
+                showLabel={false}
               />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Responsável</Label>
               <BuUserSelect
-                value={currentKr.ownerUserId || ''}
-                onValueChange={(id) => updateKr({ ownerUserId: id || null })}
+                value={currentKr.owner_user_id || ''}
+                onValueChange={(id) => updateKr({ owner_user_id: id || null })}
                 teamId={teamId}
                 placeholder="Selecionar..."
               />
@@ -445,10 +446,10 @@ function KrDetailSubStep({
 
       <WizardStepFooter
         onBack={onBack}
-        onContinue={onNext}
-        canContinue={allFilled}
+        onPrimary={onNext}
+        primaryDisabled={!allFilled}
         backLabel="Voltar ao Plano"
-        continueLabel="Avançar para Resumo"
+        primaryLabel="Avançar para Resumo"
       />
     </div>
   );
@@ -461,13 +462,11 @@ function KrDetailSubStep({
 export function QbrOkrProposalStep({
   proposedOkrs,
   teamId,
-  teamName,
   onProposedOkrsChange,
   onContinue,
   onBack,
 }: QbrOkrProposalStepProps) {
   const [subStep, setSubStep] = useState<SubStep>(() => {
-    // Resume at the right sub-step based on data completeness
     if (proposedOkrs.draftKrs && proposedOkrs.draftKrs.length > 0) return 'kr-detail';
     if (proposedOkrs.objective?.title?.trim()) return 'kr-plan';
     return 'objective';
@@ -502,11 +501,7 @@ export function QbrOkrProposalStep({
           title="Proposta de OKRs"
           description="Rascunho para o próximo ciclo — será revisado no QBR"
           variant="primary"
-          badge={
-            <Badge variant="outline" className="text-xs">
-              {subStepLabel}
-            </Badge>
-          }
+          badge={subStepLabel}
         />
       }
       footer={null}
