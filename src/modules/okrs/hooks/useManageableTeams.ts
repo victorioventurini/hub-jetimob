@@ -41,14 +41,6 @@ export function useManageableTeams() {
   const query = useQuery({
     queryKey,
     queryFn: async (): Promise<ManageableTeam[]> => {
-      console.log("[useManageableTeams] queryFn called", {
-        isImpersonating,
-        impersonatedUserId,
-        buId,
-        isReady,
-        effectiveUserId,
-        queryKey,
-      });
 
       if (!client || !buId) {
         console.log("[useManageableTeams] Skipping - no client or buId");
