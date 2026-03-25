@@ -59,7 +59,7 @@ export function QbrPostCommitmentsStep({
     if (!fromTeam || !toTeam || !description.trim() || !deadline) return;
     onCommitmentsChange([
       ...commitments,
-      { fromTeamId: fromTeam, toTeamId: toTeam, description: description.trim(), deadline },
+      { fromTeamId: fromTeam, toTeamId: toTeam, description: description.trim(), deadline, dependencyId: '' },
     ]);
     setDescription('');
     setDeadline('');

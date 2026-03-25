@@ -38,8 +38,8 @@ export interface QbrPostMinutesStepProps {
 const CHECKLIST_ITEMS: { key: keyof QbrPostGovernanceChecklist; label: string }[] = [
   { key: 'strategicFocusClear', label: 'Foco estratégico do próximo ciclo está claro?' },
   { key: 'decisionsHaveOwners', label: 'Todas as decisões têm dono e prazo?' },
-  { key: 'nextStepsHaveOwners', label: 'Próximos passos estão atribuídos?' },
-  { key: 'communicateInAllHands', label: 'Resultado será comunicado em All Hands?' },
+  { key: 'dependenciesFormalized', label: 'Dependências cross-área formalizadas?' },
+  { key: 'nextCycleOkrsActive', label: 'OKRs do próximo ciclo estão ativos?' },
 ];
 
 // ============================================================

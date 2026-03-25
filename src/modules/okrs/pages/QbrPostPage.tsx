@@ -45,16 +45,14 @@ const DEFAULT_DATA: QbrPostDraftData = {
   decisions: [],
   crossCommitments: [],
   followUpCadence: {
-    checkDecisionsEvery: 'biweekly',
-    nextMbrDate: '',
-    nextMbrTopics: [],
+    mbrReviewScheduled: false,
   },
   executiveMinutes: '',
   governanceChecklist: {
     strategicFocusClear: false,
     decisionsHaveOwners: false,
-    nextStepsHaveOwners: false,
-    communicateInAllHands: false,
+    dependenciesFormalized: false,
+    nextCycleOkrsActive: false,
   },
 };
 
