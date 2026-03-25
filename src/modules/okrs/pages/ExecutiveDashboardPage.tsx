@@ -15,6 +15,7 @@ import { ProgressSummary } from '../components/ProgressSummary';
 import { YearSelect } from '@/components/selects';
 import { CLevelCheckinWizardCard } from '../components/wizards/clevel-checkin/CLevelCheckinWizardCard';
 import { MbrWizardCard } from '../components/wizards/mbr/MbrWizardCard';
+import { QbrWizardCard } from '../components/wizards/qbr/QbrWizardCard';
 import { useLastCompletedSession } from '../hooks/useLastCompletedSession';
 import { PageHeader } from '@/components/ui/page-header';
 import { Link } from 'react-router-dom';
@@ -91,6 +92,7 @@ export default function ExecutiveDashboardPage() {
             lastMbrDate={lastMbrDate}
             isLoading={loadingMbr}
           />
+          <QbrWizardCard variant="executive" />
         </div>
 
         {/* Ritual History Quick Access */}
