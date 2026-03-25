@@ -3191,6 +3191,7 @@ export type Database = {
           name: string
           parent_cycle_id: string | null
           planning_date: string | null
+          qbr_status: string
           retro_date: string | null
           review_date: string | null
           start_date: string
@@ -3205,6 +3206,7 @@ export type Database = {
           name: string
           parent_cycle_id?: string | null
           planning_date?: string | null
+          qbr_status?: string
           retro_date?: string | null
           review_date?: string | null
           start_date: string
@@ -3219,6 +3221,7 @@ export type Database = {
           name?: string
           parent_cycle_id?: string | null
           planning_date?: string | null
+          qbr_status?: string
           retro_date?: string | null
           review_date?: string | null
           start_date?: string
@@ -3628,6 +3631,7 @@ export type Database = {
           id: string
           indicator_type: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global: boolean
+          kpi_to_create: boolean
           lifecycle_status: Database["public"]["Enums"]["kpi_lifecycle_status"]
           name: string
           owner_user_id: string | null
@@ -3641,6 +3645,7 @@ export type Database = {
           team_id: string | null
           unit: string
           updated_at: string
+          zombie_candidate: boolean
         }
         Insert: {
           area_id?: string | null
@@ -3654,6 +3659,7 @@ export type Database = {
           id?: string
           indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global?: boolean
+          kpi_to_create?: boolean
           lifecycle_status?: Database["public"]["Enums"]["kpi_lifecycle_status"]
           name: string
           owner_user_id?: string | null
@@ -3667,6 +3673,7 @@ export type Database = {
           team_id?: string | null
           unit?: string
           updated_at?: string
+          zombie_candidate?: boolean
         }
         Update: {
           area_id?: string | null
@@ -3680,6 +3687,7 @@ export type Database = {
           id?: string
           indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global?: boolean
+          kpi_to_create?: boolean
           lifecycle_status?: Database["public"]["Enums"]["kpi_lifecycle_status"]
           name?: string
           owner_user_id?: string | null
@@ -3693,6 +3701,7 @@ export type Database = {
           team_id?: string | null
           unit?: string
           updated_at?: string
+          zombie_candidate?: boolean
         }
         Relationships: [
           {
@@ -5760,6 +5769,9 @@ export type Database = {
           next_review_due: string | null
           org_objective_id: string
           owner_user_id: string | null
+          qbr_approval_status: string | null
+          qbr_discard_reason: string | null
+          qbr_origin_session_id: string | null
           responsibility_model: string | null
           review_notes: string | null
           status: Database["public"]["Enums"]["okr_status"]
@@ -5790,6 +5802,9 @@ export type Database = {
           next_review_due?: string | null
           org_objective_id: string
           owner_user_id?: string | null
+          qbr_approval_status?: string | null
+          qbr_discard_reason?: string | null
+          qbr_origin_session_id?: string | null
           responsibility_model?: string | null
           review_notes?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
@@ -5820,6 +5835,9 @@ export type Database = {
           next_review_due?: string | null
           org_objective_id?: string
           owner_user_id?: string | null
+          qbr_approval_status?: string | null
+          qbr_discard_reason?: string | null
+          qbr_origin_session_id?: string | null
           responsibility_model?: string | null
           review_notes?: string | null
           status?: Database["public"]["Enums"]["okr_status"]
@@ -5869,6 +5887,13 @@ export type Database = {
             columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_qbr_origin_session_id_fkey"
+            columns: ["qbr_origin_session_id"]
+            isOneToOne: false
+            referencedRelation: "okr_wizard_sessions"
             referencedColumns: ["id"]
           },
           {
