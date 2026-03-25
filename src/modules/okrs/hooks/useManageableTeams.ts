@@ -89,7 +89,7 @@ export function useManageableTeams() {
       }
 
       // Normal flow
-      console.log("[useManageableTeams] Using NORMAL RPC for real user");
+      
       
       const { data: teamIdsResult, error: rpcError } = await client.rpc(
         "get_okr_manageable_team_ids",
