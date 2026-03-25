@@ -65,7 +65,7 @@ function StarRatingInput({ value, onChange }: { value: number; onChange: (v: num
         >
           <Star className={cn(
             'h-5 w-5',
-            star <= (hovered || value) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'
+            star <= (hovered || value) ? 'fill-warning text-warning' : 'text-muted-foreground/30'
           )} />
         </button>
       ))}
