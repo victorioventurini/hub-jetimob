@@ -68,7 +68,6 @@ export function useManageableTeams() {
         const teamIds = (teamIdsResult as unknown as string[]) || [];
         
         if (teamIds.length === 0) {
-          console.log("[useManageableTeams] No manageable teams for impersonated user");
           return [];
         }
 
