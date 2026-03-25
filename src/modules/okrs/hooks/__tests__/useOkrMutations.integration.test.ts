@@ -280,7 +280,7 @@ describe('useOkrMutations — integration', () => {
   describe('soft-delete enforcement', () => {
     it('none of the 4 hooks call .delete() — always .update()', async () => {
       const mockDelete = vi.fn();
-      mockClient.from.mockReturnValue({
+      (mockClient.from as any).mockReturnValue({
         update: mockUpdate,
         eq: mockEq,
         delete: mockDelete,
