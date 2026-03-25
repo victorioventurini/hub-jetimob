@@ -34,6 +34,10 @@ const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnal
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
 const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
 const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
+const QbrPrePage = lazy(() => import('@/modules/okrs/pages/QbrPrePage'));
+const QbrPreCLevelPage = lazy(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
+const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'));
+const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
 
 /**
  * Helper para wrapping consistente de rotas OKR
@@ -90,5 +94,11 @@ export const okrRoutes = (
     
     {/* Team Contribution */}
     <Route path="/okrs/team-contribution/:teamId" element={<OkrRoute><TeamContributionPage /></OkrRoute>} />
+    
+    {/* QBR — Quarterly Business Review */}
+    <Route path="/okrs/qbr-pre" element={<OkrRoute><QbrPrePage /></OkrRoute>} />
+    <Route path="/okrs/qbr-pre-clevel" element={<OkrRoute requiresBuAdmin><QbrPreCLevelPage /></OkrRoute>} />
+    <Route path="/okrs/qbr" element={<OkrRoute requiresBuAdmin><QbrMeetingPage /></OkrRoute>} />
+    <Route path="/okrs/qbr-post" element={<OkrRoute requiresBuAdmin><QbrPostPage /></OkrRoute>} />
   </>
 );

@@ -24,7 +24,11 @@ export type WizardPersona =
   | 'clevel-checkin'
   | 'team-okr-creation'
   | 'team-kr-creation'
-  | 'mbr';
+  | 'mbr'
+  | 'qbr-pre'
+  | 'qbr-pre-clevel'
+  | 'qbr-meeting'
+  | 'qbr-post';
 
 // ============================================================
 // STEP CONFIG
@@ -159,7 +163,11 @@ export interface LeaderPrepWizardState {
 // TEAM CHECKIN WIZARD
 // ============================================================
 
-export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing';
+export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing'
+  | 'qbr-balance' | 'qbr-kpi-analysis' | 'qbr-learnings' | 'qbr-okr-proposal'
+  | 'qbr-clevel-system-read' | 'qbr-clevel-strategic' | 'qbr-clevel-okr-validation' | 'qbr-clevel-directives'
+  | 'qbr-meeting-opening' | 'qbr-meeting-okr-review' | 'qbr-meeting-decisions' | 'qbr-meeting-commitments' | 'qbr-meeting-closing'
+  | 'qbr-post-promotion' | 'qbr-post-decisions' | 'qbr-post-commitments' | 'qbr-post-followup' | 'qbr-post-minutes';
 
 // ============================================================
 // MBR (MONTHLY BUSINESS REVIEW) WIZARD
@@ -280,10 +288,184 @@ export interface MbrDraftData {
   previousMbrPendingItems: TeamCheckinDecision[];
 }
 
+// ============================================================
+// QBR (QUARTERLY BUSINESS REVIEW) WIZARDS
+// ============================================================
+
+export type QbrPreStep = 'balance' | 'kpi-analysis' | 'learnings' | 'okr-proposal' | 'summary';
+export type QbrPreCLevelStep = 'system-read' | 'strategic-analysis' | 'okr-validation' | 'directives' | 'feedback';
+export type QbrMeetingStep = 'opening' | 'okr-review' | 'decisions' | 'commitments' | 'feedback' | 'closing';
+export type QbrPostStep = 'okr-promotion' | 'decisions' | 'commitments' | 'follow-up' | 'minutes';
+
+export type QbrApprovalStatus = 'approved' | 'approved_with_changes' | 'discarded' | 'defer';
+export type QbrCalibrationFlag = 'too_conservative' | 'too_aggressive' | 'gap' | 'overlap';
+
+/** Snapshot imutável do wizard pré-QBR — segue padrão MbrKpiSnapshot */
+export interface QbrPreSnapshot {
+  cycleId: string;
+  teamId: string;
+  submittedAt: string;
+  krFinalStates: Array<{
+    krId: string;
+    krTitle: string;
+    state: string; // KrState from useKrStateInsights
+    finalProgress: number;
+    paceStatus: string;
+  }>;
+  kpiSnapshot: MbrKpiSnapshot[];
+  zombieCandidates: string[]; // kpi_ids sinalizados pelo líder
+  kpisToCreate: Array<{
+    description: string;
+    suggestedScope: string;
+    relatedKrTitle: string;
+  }>;
+  learnings: {
+    whatWorked: string;
+    whatDidntWork: string;
+    debts: string;
+  };
+  proposedOkrs: TeamOkrCreationWizardState;
+  dependencies: DraftTeamDependency[];
+}
+
+/** Snapshot do wizard pré-QBR C-Level */
+export interface QbrCLevelSnapshot {
+  cycleId: string;
+  submittedAt: string;
+  systemPatterns: string;
+  strategicAnalysis: {
+    alignmentAssessment: string;
+    signalsTeamsMissed: string;
+    whatNotToDo: string;
+  };
+  okrCalibrationFlags: Array<{
+    teamId: string;
+    flag: QbrCalibrationFlag;
+    note: string;
+  }>;
+  directives: Array<{
+    text: string;
+    category: 'strategic_question' | 'hypothesis' | 'non_priority' | 'challenge';
+    targetTeamId?: string;
+  }>;
+  decisions: TeamCheckinDecision[];
+  ritualFeedback: RitualImprovementFeedback[];
+}
+
+/** Checklist de governança do QBR Meeting */
+export interface QbrMeetingGovernanceChecklist {
+  allTeamsReviewed: boolean;
+  decisionsHaveOwners: boolean;
+  dependenciesFormalized: boolean;
+  feedbackLinkSent: boolean;
+}
+
+/** Snapshot do wizard QBR Meeting */
+export interface QbrMeetingSnapshot {
+  cycleId: string;
+  conductedAt: string;
+  approvals: Array<{
+    teamId: string;
+    sessionId: string;
+    status: QbrApprovalStatus;
+    changes?: Partial<TeamOkrCreationWizardState>;
+    discardReason?: string;
+  }>;
+  decisions: TeamCheckinDecision[];
+  crossCommitments: Array<{
+    fromTeamId: string;
+    toTeamId: string;
+    description: string;
+    deadline: string;
+    linkedOkrId?: string;
+  }>;
+  governanceChecklist: QbrMeetingGovernanceChecklist;
+  ritualFeedback: RitualImprovementFeedback[];
+  ritualFeedbackSentAt?: string;
+}
+
+/** Checklist de governança do pós-QBR */
+export interface QbrPostGovernanceChecklist {
+  strategicFocusClear: boolean;
+  decisionsHaveOwners: boolean;
+  dependenciesFormalized: boolean;
+  nextCycleOkrsActive: boolean;
+}
+
+/** Snapshot do wizard pós-QBR */
+export interface QbrPostSnapshot {
+  cycleId: string;
+  completedAt: string;
+  promotedOkrIds: string[];
+  decisions: TeamCheckinDecision[];
+  crossCommitments: Array<{
+    fromTeamId: string;
+    toTeamId: string;
+    description: string;
+    deadline: string;
+    dependencyId: string;
+  }>;
+  followUpCadence: {
+    mbrReviewScheduled: boolean;
+    followUpMeetingDate?: string;
+  };
+  executiveMinutes: string;
+  governanceChecklist: QbrPostGovernanceChecklist;
+}
+
+/** Draft data do pré-QBR (líderes de time) */
+export interface QbrPreDraftData {
+  cycleId: string;
+  teamId: string;
+  krFinalStates: QbrPreSnapshot['krFinalStates'];
+  kpiSnapshots: MbrKpiSnapshot[];
+  zombieCandidates: string[];
+  kpisToCreate: QbrPreSnapshot['kpisToCreate'];
+  learnings: QbrPreSnapshot['learnings'];
+  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  dependencies: DraftTeamDependency[];
+  decisions: TeamCheckinDecision[];
+}
+
+/** Draft data do pré-QBR C-Level */
+export interface QbrCLevelDraftData {
+  cycleId: string;
+  systemPatterns: string;
+  strategicAnalysis: QbrCLevelSnapshot['strategicAnalysis'];
+  okrCalibrationFlags: QbrCLevelSnapshot['okrCalibrationFlags'];
+  directives: QbrCLevelSnapshot['directives'];
+  decisions: TeamCheckinDecision[];
+  ritualFeedback: RitualImprovementFeedback[];
+}
+
+/** Draft data do QBR Meeting */
+export interface QbrMeetingDraftData {
+  cycleId: string;
+  preQbrReportSessionId: string | null;
+  approvals: QbrMeetingSnapshot['approvals'];
+  currentTeamIndex: number;
+  decisions: TeamCheckinDecision[];
+  crossCommitments: QbrMeetingSnapshot['crossCommitments'];
+  governanceChecklist: QbrMeetingGovernanceChecklist;
+  ritualFeedback: RitualImprovementFeedback[];
+}
+
+/** Draft data do pós-QBR */
+export interface QbrPostDraftData {
+  cycleId: string;
+  meetingSessionId: string | null;
+  promotedOkrIds: string[];
+  decisions: TeamCheckinDecision[];
+  crossCommitments: QbrPostSnapshot['crossCommitments'];
+  followUpCadence: QbrPostSnapshot['followUpCadence'];
+  executiveMinutes: string;
+  governanceChecklist: QbrPostGovernanceChecklist;
+}
+
 export interface TeamCheckinDecision {
   id: string;
   text: string;
-  category: 'decision' | 'focus_adjustment' | 'next_step';
+  category: 'decision' | 'focus_adjustment' | 'next_step' | 'strategic_proposal';
   sourceStep?: TeamCheckinDecisionSourceStep;
   owner?: {
     id: string;
@@ -490,7 +672,7 @@ export interface WizardSession {
 // ============================================================
 
 export interface WizardVicContext extends VicContext {
-  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr';
+  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr' | 'wizard-qbr-pre' | 'wizard-qbr-pre-clevel' | 'wizard-qbr-meeting' | 'wizard-qbr-post';
   wizardStep?: string;
   krContext?: {
     krId: string;
@@ -523,6 +705,10 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'team-okr-creation': 'okr-check-alignment',
   'team-kr-creation': 'okr-check-alignment',
   'mbr': 'okr-check-alignment',
+  'qbr-pre': 'okr-check-alignment',
+  'qbr-pre-clevel': 'okr-check-alignment',
+  'qbr-meeting': 'okr-check-alignment',
+  'qbr-post': 'okr-check-alignment',
 };
 
 // ============================================================
@@ -638,5 +824,58 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
       { id: 'closing', label: 'Encerramento', shortLabel: 'Encerrar' },
     ],
     aiAgents: ['analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes'],
+  },
+  'qbr-pre': {
+    persona: 'qbr-pre',
+    title: 'Pré-QBR do Time',
+    description: 'Balanço do ciclo, análise de KPIs e proposta de OKRs para o próximo trimestre',
+    steps: [
+      { id: 'balance', label: 'Balanço do Ciclo', shortLabel: 'Balanço' },
+      { id: 'kpi-analysis', label: 'Análise de KPIs', shortLabel: 'KPIs' },
+      { id: 'learnings', label: 'Aprendizados', shortLabel: 'Aprendizados' },
+      { id: 'okr-proposal', label: 'Proposta de OKRs', shortLabel: 'OKRs' },
+      { id: 'summary', label: 'Resumo e Envio', shortLabel: 'Enviar' },
+    ],
+    aiAgents: ['coach-okrs', 'analista-kpis', 'alinhamento-estrategico'],
+  },
+  'qbr-pre-clevel': {
+    persona: 'qbr-pre-clevel',
+    title: 'Pré-QBR C-Level',
+    description: 'Análise estratégica consolidada e direcionamentos para a reunião QBR',
+    steps: [
+      { id: 'system-read', label: 'Leitura do Sistema', shortLabel: 'Sistema' },
+      { id: 'strategic-analysis', label: 'Análise Estratégica', shortLabel: 'Estratégia' },
+      { id: 'okr-validation', label: 'Validação de OKRs', shortLabel: 'Validação' },
+      { id: 'directives', label: 'Direcionamentos', shortLabel: 'Direcionamentos' },
+      { id: 'feedback', label: 'Avaliação do Rito', shortLabel: 'Feedback' },
+    ],
+    aiAgents: ['alinhamento-estrategico', 'analista-kpis', 'facilitador-decisoes'],
+  },
+  'qbr-meeting': {
+    persona: 'qbr-meeting',
+    title: 'Reunião QBR',
+    description: 'Revisão trimestral com aprovação de OKRs e decisões estratégicas',
+    steps: [
+      { id: 'opening', label: 'Abertura e Direcionamentos', shortLabel: 'Abertura' },
+      { id: 'okr-review', label: 'Revisão de OKRs por Time', shortLabel: 'OKRs' },
+      { id: 'decisions', label: 'Decisões Estratégicas', shortLabel: 'Decisões' },
+      { id: 'commitments', label: 'Compromissos Cross-Área', shortLabel: 'Compromissos' },
+      { id: 'feedback', label: 'Avaliação do Rito', shortLabel: 'Feedback' },
+      { id: 'closing', label: 'Encerramento', shortLabel: 'Encerrar' },
+    ],
+    aiAgents: ['alinhamento-estrategico', 'facilitador-decisoes'],
+  },
+  'qbr-post': {
+    persona: 'qbr-post',
+    title: 'Pós-QBR',
+    description: 'Promoção de OKRs aprovados, formalização de decisões e encerramento do ciclo',
+    steps: [
+      { id: 'okr-promotion', label: 'Promoção de OKRs', shortLabel: 'Promover' },
+      { id: 'decisions', label: 'Decisões Complementares', shortLabel: 'Decisões' },
+      { id: 'commitments', label: 'Compromissos Formalizados', shortLabel: 'Compromissos' },
+      { id: 'follow-up', label: 'Cadência de Acompanhamento', shortLabel: 'Follow-up' },
+      { id: 'minutes', label: 'Ata Executiva', shortLabel: 'Ata' },
+    ],
+    aiAgents: ['facilitador-decisoes', 'alinhamento-estrategico'],
   },
 };

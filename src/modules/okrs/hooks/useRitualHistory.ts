@@ -55,6 +55,10 @@ const WIZARD_TYPE_LABELS: Record<WizardPersona, string> = {
   'team-okr-creation': 'Criação de OKRs',
   'team-kr-creation': 'Criação de KRs',
   'mbr': 'MBR',
+  'qbr-pre': 'Pré-QBR (Líder)',
+  'qbr-pre-clevel': 'Pré-QBR (C-Level)',
+  'qbr-meeting': 'Reunião QBR',
+  'qbr-post': 'Pós-QBR',
 };
 
 export { WIZARD_TYPE_LABELS };
