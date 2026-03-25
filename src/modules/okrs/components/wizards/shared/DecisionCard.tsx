@@ -30,9 +30,10 @@ const CATEGORY_CONFIG = {
   decision: { label: 'Decisão', icon: Lightbulb, color: 'bg-status-blue-muted text-status-blue' },
   focus_adjustment: { label: 'Ajuste de Foco', icon: Target, color: 'bg-status-purple-muted text-status-purple' },
   next_step: { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' },
+  strategic_proposal: { label: 'Proposta Estratégica', icon: Target, color: 'bg-status-amber-muted text-status-amber' },
 } as const;
 
-const CATEGORIES = ['decision', 'focus_adjustment', 'next_step'] as const;
+const CATEGORIES = ['decision', 'focus_adjustment', 'next_step', 'strategic_proposal'] as const;
 
 // ============================================================
 // TYPES

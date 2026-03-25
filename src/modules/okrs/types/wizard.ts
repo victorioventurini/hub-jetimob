@@ -498,7 +498,7 @@ export interface WizardSession {
 // ============================================================
 
 export interface WizardVicContext extends VicContext {
-  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr';
+  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr' | 'wizard-qbr-pre' | 'wizard-qbr-pre-clevel' | 'wizard-qbr-meeting' | 'wizard-qbr-post';
   wizardStep?: string;
   krContext?: {
     krId: string;
