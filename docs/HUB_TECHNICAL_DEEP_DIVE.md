@@ -1062,7 +1062,7 @@ interface TeamOkrCreationWizardState {
 
 O `KrDetailStep` é um re-export direto do `TeamOkrKrDetailStep`, garantindo que o formulário de detalhamento de KRs seja idêntico em ambos os wizards.
 
-## 3.12 Histórico de Rituais
+## 3.13 Histórico de Rituais
 
 > **Rota:** `/okrs/ritual-history`  
 > **Permissão:** `okrs.view:bu` (inclui super_admins)
