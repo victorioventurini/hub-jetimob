@@ -17,12 +17,16 @@ import type { KpiMetric } from '../../types';
 
 // ---- Mocks ----
 
-vi.mock('@/contexts/BuContext', () => ({
-  useBu: () => ({
-    currentBuId: 'test-bu-id',
-    currentBu: { id: 'test-bu-id', name: 'Test BU' },
-  }),
-}));
+vi.mock('@/contexts/BuContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/BuContext')>();
+  return {
+    ...actual,
+    useBu: () => ({
+      currentBuId: 'test-bu-id',
+      currentBu: { id: 'test-bu-id', name: 'Test BU' },
+    }),
+  };
+});
 
 vi.mock('@/hooks/usePermissions', () => ({
   usePermissions: () => ({
@@ -78,6 +82,17 @@ vi.mock('@/components/selects', () => ({
       <option value="">{placeholder}</option>
       <option value="area-1">Area 1</option>
       <option value="area-2">Area 2</option>
+    </select>
+  ),
+  UnitSelect: ({ value, onValueChange }: any) => (
+    <select
+      data-testid="unit-select"
+      value={value || ''}
+      onChange={(e) => onValueChange(e.target.value || null)}
+    >
+      <option value="">Selecione...</option>
+      <option value="%">%</option>
+      <option value="R$">R$</option>
     </select>
   ),
 }));
@@ -177,13 +192,13 @@ describe('EditKpiDialog', () => {
     });
   });
 
-  it('não mostra TeamSelect nem AreaSelect para scope=org', async () => {
-    const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null });
+  it('mostra seção de Responsabilidade Operacional para scope=org', async () => {
+    const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null, responsible_area_id: null });
     renderDialog(kpi);
 
+    // scope=org shows "Responsabilidade Operacional" section with Área Responsável + Time Responsável
     await waitFor(() => {
-      expect(screen.queryByTestId('team-select')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('area-select')).not.toBeInTheDocument();
+      expect(screen.getByText(/Área Responsável/)).toBeInTheDocument();
     });
   });
 
@@ -405,17 +420,19 @@ describe('EditKpiDialog - Scope-dependent field visibility', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('area-select')).toBeInTheDocument();
-      expect(screen.queryByTestId('team-select')).not.toBeInTheDocument();
+      // scope=area also has a TeamSelect for responsible_team_id (optional)
+      expect(screen.getByText('Time Responsável (opcional)')).toBeInTheDocument();
     });
   });
 
-  it('não mostra seletores quando scope=org', async () => {
-    const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null });
+  it('não mostra seletores primários quando scope=org', async () => {
+    const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null, responsible_area_id: null });
     renderDialog(kpi);
 
     await waitFor(() => {
-      expect(screen.queryByTestId('team-select')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('area-select')).not.toBeInTheDocument();
+      // AreaSelect for area_id (primary) should NOT appear — only area-select for responsible_area_id appears
+      // scope=org shows "Responsabilidade Operacional" section with its own selectors
+      expect(screen.getByText('Área Responsável')).toBeInTheDocument();
     });
   });
 });

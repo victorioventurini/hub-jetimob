@@ -110,10 +110,11 @@ describe('MbrPanoramaStep', () => {
   });
 
   it('displays KPI values and variations', () => {
-    const kpis = [createKpiSnapshot({ currentValue: 42, target: 50, variationVsLastMonth: 5.5 })];
+    const kpis = [createKpiSnapshot({ currentValue: 42, target: 50, variationVsLastMonth: 5.5, unit: '%' })];
     render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
-    expect(screen.getByText('42')).toBeInTheDocument();
-    expect(screen.getByText('Meta: 50')).toBeInTheDocument();
+    // formatValueWithUnit(42, '%') → '42 %'
+    expect(screen.getByText('42 %')).toBeInTheDocument();
+    expect(screen.getByText('Meta: 50 %')).toBeInTheDocument();
     expect(screen.getByText('+5.5% vs mês ant.')).toBeInTheDocument();
   });
 

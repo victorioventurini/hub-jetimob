@@ -159,14 +159,14 @@ describe('MbrTeamOkrsDetailStep', () => {
     expect(screen.getByText('Análise por Time')).toBeInTheDocument();
   });
 
-  it('renders all team names in same page', () => {
+  it('renders current team name (one team at a time)', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', teamName: 'Team A' }),
       createTeamSnapshot({ teamId: 't2', teamName: 'Team B' }),
     ];
-    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
+    // Detail shows one team at a time based on currentTeamIndex
+    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} currentTeamIndex={0} />);
     expect(screen.getByText('Team A')).toBeInTheDocument();
-    expect(screen.getByText('Team B')).toBeInTheDocument();
   });
 
   it('renders objectives and KRs', () => {
@@ -180,15 +180,16 @@ describe('MbrTeamOkrsDetailStep', () => {
   it('shows reviewed checkbox per team', () => {
     const teams = [createTeamSnapshot()];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getByText(/Revisado/)).toBeInTheDocument();
+    expect(screen.getByText(/Marcar como revisado/)).toBeInTheDocument();
   });
 
-  it('disables continue when not all teams reviewed', () => {
+  it('disables continue when not all teams reviewed (on last team)', () => {
     const teams = [
       createTeamSnapshot({ teamId: 't1', reviewed: false }),
       createTeamSnapshot({ teamId: 't2', reviewed: true }),
     ];
-    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
+    // Navigate to last team (index 1) — primaryDisabled only applies on last team
+    render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} currentTeamIndex={1} />);
     expect(screen.getByTestId('wizard-footer-primary')).toBeDisabled();
   });
 
@@ -232,6 +233,7 @@ describe('MbrTeamOkrsDetailStep', () => {
       createTeamSnapshot({ teamId: 't2', reviewed: false }),
     ];
     render(<MbrTeamOkrsDetailStep {...defaultProps()} teamOkrSnapshots={teams} />);
-    expect(screen.getAllByText('1 de 2 times revisados').length).toBeGreaterThan(0);
+    // Component shows "N/M revisados" format
+    expect(screen.getByText('1/2 revisados')).toBeInTheDocument();
   });
 });
