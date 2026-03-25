@@ -428,13 +428,14 @@ describe('EditKpiDialog - Scope-dependent field visibility', () => {
     });
   });
 
-  it('não mostra seletores quando scope=org', async () => {
-    const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null });
+  it('não mostra seletores primários quando scope=org', async () => {
+    const kpi = makeKpi({ scope: 'org', team_id: null, area_id: null, responsible_area_id: null });
     renderDialog(kpi);
 
     await waitFor(() => {
-      expect(screen.queryByTestId('team-select')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('area-select')).not.toBeInTheDocument();
+      // AreaSelect for area_id (primary) should NOT appear — only area-select for responsible_area_id appears
+      // scope=org shows "Responsabilidade Operacional" section with its own selectors
+      expect(screen.getByText('Área Responsável')).toBeInTheDocument();
     });
   });
 });
