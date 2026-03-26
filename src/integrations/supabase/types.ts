@@ -9997,6 +9997,14 @@ export type Database = {
       is_current_bu: { Args: { p_bu_id: string }; Returns: boolean }
       is_email_domain_allowed: { Args: { p_email: string }; Returns: boolean }
       is_ia_enabled_for_bu: { Args: { p_bu_id: string }; Returns: boolean }
+      is_leader_of_project_owner: {
+        Args: {
+          p_bu_id: string
+          p_leader_profile_id: string
+          p_owner_profile_id: string
+        }
+        Returns: boolean
+      }
       is_module_enabled_for_bu: {
         Args: { p_bu_id: string; p_module_slug: string }
         Returns: boolean
