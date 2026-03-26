@@ -3,11 +3,13 @@
  */
 
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, ExternalLink, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import { ExternalLink, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
 import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
@@ -30,7 +32,6 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Link } from 'react-router-dom';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +49,14 @@ export default function ProjectDetailPage() {
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
   const { canEditProject, canDeleteProject, canCreateMilestone: canAddMilestone, canEditMilestone } = useProjectPermissionsV2();
+
+  const projectName = project?.name ?? 'Projeto';
+
+  usePageTitle(projectName, {
+    customDescription: project?.description
+      ? `${projectName} — ${project.description}`
+      : `Detalhes do projeto ${projectName} no Hub.`,
+  });
 
   const writerProfileId = realProfileId ?? profileId;
 
@@ -111,53 +120,52 @@ export default function ProjectDetailPage() {
     });
   };
 
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {project.external_url && (
+        <Button variant="outline" size="sm" asChild>
+          <a href={project.external_url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4 mr-1" />
+            Link externo
+          </a>
+        </Button>
+      )}
+      {canEditProject && (
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="h-4 w-4 mr-1" />
+          Editar
+        </Button>
+      )}
+      {canDeleteProject && (
+        <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <HubLayout>
       <div className="space-y-6 max-w-4xl">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/projects" className="hover:text-foreground flex items-center gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            Projetos
-          </Link>
-          <span>/</span>
-          <span className="text-foreground">{project.name}</span>
-        </div>
-
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{project.name}</h1>
+        {/* Header with breadcrumbs */}
+        <PageHeader
+          title={project.name}
+          description={
+            <div className="flex items-center gap-2 mt-1">
               <ProjectHealthBadge health={project.health} />
               <ProjectStatusBadge status={project.status} />
             </div>
-            {project.description && (
-              <p className="text-muted-foreground">{project.description}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {project.external_url && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={project.external_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  Link externo
-                </a>
-              </Button>
-            )}
-            {canEditProject && (
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="h-4 w-4 mr-1" />
-                Editar
-              </Button>
-            )}
-            {canDeleteProject && (
-              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
+          }
+          breadcrumbs={[
+            { label: "Projetos", href: "/projects" },
+            { label: project.name },
+          ]}
+          actions={headerActions}
+        />
+
+        {project.description && (
+          <p className="text-muted-foreground text-sm -mt-2">{project.description}</p>
+        )}
 
         {/* Info cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
