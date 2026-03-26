@@ -29,6 +29,7 @@ import {
   X,
   Layers,
   Network,
+  FolderKanban,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
