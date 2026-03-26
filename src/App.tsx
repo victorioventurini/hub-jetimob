@@ -41,6 +41,7 @@ import { teamRoutes } from "./routes/teams.routes";
 import { settingsRoutes } from "./routes/settings.routes";
 import { coreRoutes } from "./routes/core.routes";
 import { eventsRoutes } from "./routes/events.routes";
+import { projectRoutes } from "./routes/projects.routes";
 
 /**
  * Fallback de loading otimizado
@@ -202,6 +203,9 @@ function AuthenticatedRoutes() {
         
         {/* Events (Jet Experience) */}
         {eventsRoutes}
+        
+        {/* Projects */}
+        {projectRoutes}
         
         {/* Core (Home, Profile, Users, etc.) */}
         {coreRoutes}
