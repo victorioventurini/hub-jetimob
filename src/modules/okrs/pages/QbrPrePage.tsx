@@ -143,7 +143,7 @@ export default function QbrPrePage() {
     lastSavedAt,
   } = useGenericWizardDraft<QbrPreStep, QbrPreDraftData>({
     wizardType: 'qbr-pre',
-    teamId: userTeamId,
+    teamId: teamIdParam,
     cycleId: quarterlyCycle?.id || null,
     defaultStep: 'balance',
     defaultData: DEFAULT_DATA,
@@ -152,8 +152,8 @@ export default function QbrPrePage() {
 
   // ── Load team KRs for balance step ──
   const { data: teamObjectives, isLoading: isLoadingKrs } = useQuery({
-    queryKey: ['qbr-pre', 'team-krs', userTeamId, quarterlyCycle?.id],
-    enabled: !!buSupabase && !!userTeamId && !!quarterlyCycle?.id,
+    queryKey: ['qbr-pre', 'team-krs', teamIdParam, quarterlyCycle?.id],
+    enabled: !!buSupabase && !!teamIdParam && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await buSupabase
@@ -165,7 +165,7 @@ export default function QbrPrePage() {
             last_checkin_at
           )
         `)
-        .eq('team_id', userTeamId!)
+        .eq('team_id', teamIdParam!)
         .eq('cycle_id', quarterlyCycle!.id)
         .is('deleted_at', null)
         .is('cancelled_at', null);
@@ -223,15 +223,15 @@ export default function QbrPrePage() {
     }
 
     if (states.length > 0) {
-      updateDraft({ krFinalStates: states, cycleId: quarterlyCycle?.id || '', teamId: userTeamId || '' });
+      updateDraft({ krFinalStates: states, cycleId: quarterlyCycle?.id || '', teamId: teamIdParam || '' });
     }
     seededKrsRef.current = true;
-  }, [teamObjectives, draft.data.krFinalStates.length, updateDraft, quarterlyCycle, userTeamId]);
+  }, [teamObjectives, draft.data.krFinalStates.length, updateDraft, quarterlyCycle, teamIdParam]);
 
   // ── Load KPIs ──
   const { data: teamKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: ['qbr-pre', 'team-kpis', userTeamId, currentBuId],
-    enabled: !!buSupabase && !!currentBuId && !!userTeamId,
+    queryKey: ['qbr-pre', 'team-kpis', teamIdParam, currentBuId],
+    enabled: !!buSupabase && !!currentBuId && !!teamIdParam,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data: kpis, error } = await buSupabase
@@ -240,7 +240,7 @@ export default function QbrPrePage() {
         .eq('lifecycle_status', 'active')
         .is('deleted_at', null)
         .neq('indicator_type', 'metric')
-        .or(`team_id.eq.${userTeamId},scope.eq.org`);
+        .or(`team_id.eq.${teamIdParam},scope.eq.org`);
 
       if (error) throw error;
       if (!kpis || kpis.length === 0) return [];
@@ -424,7 +424,7 @@ export default function QbrPrePage() {
         return (
           <QbrOkrProposalStep
             proposedOkrs={draft.data.proposedOkrs}
-            teamId={userTeamId || ''}
+            teamId={teamIdParam || ''}
             onProposedOkrsChange={(proposedOkrs) => updateDraft({ proposedOkrs })}
             onContinue={goNext}
             onBack={goBack}
