@@ -14,16 +14,19 @@ import { useQuery } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import {
   useGenericWizardDraft,
   useActiveCycles,
 } from '@/modules/okrs/hooks';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { handleError } from '@/lib/errorMessages';
+import { AlertCircle } from 'lucide-react';
 import { calculateProgress } from '@/modules/okrs/types';
 
 import { QbrBalanceStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrBalanceStep';
