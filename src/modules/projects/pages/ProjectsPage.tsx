@@ -75,10 +75,12 @@ export default function ProjectsPage() {
               Gerencie projetos estratégicos e acompanhe milestones.
             </p>
           </div>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo projeto
-          </Button>
+          {canCreateProject && (
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo projeto
+            </Button>
+          )}
         </div>
 
         {/* Filters */}
