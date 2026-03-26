@@ -239,7 +239,6 @@ export default function QbrPrePage() {
         .select('id, name, unit, target_value, direction, scope, area_id, team_id, lifecycle_status')
         .eq('lifecycle_status', 'active')
         .is('deleted_at', null)
-        .neq('indicator_type', 'metric')
         .or(`team_id.eq.${teamIdParam},scope.eq.org`);
 
       if (error) throw error;
