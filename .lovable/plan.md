@@ -1,97 +1,66 @@
 
 
-# Plano: Paridade de Permissões do Módulo Projetos
+## Plano: UI de vinculação de KRs a Projetos
 
-## Diagnóstico
+### Contexto (pré-checklist ✅)
 
-O módulo Projetos tem **4 lacunas críticas** em relação aos módulos maduros (Assets, OKRs, Tickets):
+Documentação revisada:
+- **TCR v3.18.0** — Módulo Projetos v1.0, tabela `project_krs` com campos `project_id`, `key_result_id`, `impact`
+- **DATA_MODEL** — KRs vivem em `okr_team_key_results`, relação N:N via `project_krs`
+- **Identity Convention** — `owner_id` = `profiles.id`, sem comparação com `auth.uid()`
+- **RBAC** — `useProjectPermissionsV2` com `canEditProject` como gate para vincular/desvincular KRs
+- **BU Scoping** — `useOptionalBuClient` + filtro `.eq('bu_id', buId)` obrigatório
+- **Query Keys** — `projectsKeys.detail()`, `projectsKeys.byKr()` já existem
+- **Hooks prontos** — `useAddProjectKrLink` e `useRemoveProjectKrLink` já implementados e exportados
 
-| Item | Assets/OKRs | Projetos |
-|------|-------------|----------|
-| `MODULE_VIEW_PERMISSIONS` map | ✅ Mapeado | ❌ Ausente — sidebar/rota não verifica permissão |
-| Hook `useXxxPermissionsV2` | ✅ `useAssetPermissionsV2` | ❌ Não existe |
-| Templates no DB | ✅ 17 templates com keys | ❌ 8 keys no catálogo, 0 templates |
-| Guards no UI | ✅ Botões/ações condicionais | ❌ Tudo visível para todos |
+### Situação atual
 
-As 8 permission keys já existem no catálogo (`projects.project.read:bu`, `.create:bu`, `.update:bu`, `.delete:self_or_owner`, `projects.milestone.read/create/update:bu`), mas **nenhum template as distribui** e **nenhum código as consulta**.
+O backend e os hooks de mutação estão prontos. A `ProjectDetailPage` já exibe KRs vinculadas (read-only, linhas 247-264). Falta apenas a UI interativa para **adicionar e remover** vínculos.
 
----
+### Implementação (3 arquivos)
 
-## Plano de Implementação (6 passos)
+#### 1. Hook `useKrsForLinking` (novo)
+**Arquivo:** `src/modules/projects/hooks/useKrsForLinking.ts`
 
-### 1. Registrar `projects` no `MODULE_VIEW_PERMISSIONS`
-**Arquivo:** `src/hooks/useModuleAccess.ts`
+- Busca KRs disponíveis na BU atual: `okr_team_key_results` com `.eq('bu_id', buId)`, `.is('deleted_at', null)`, campos `id, title, status, objective:okr_team_objectives(title)`
+- Query key: adicionar `krsForLinking` em `projectsKeys`
+- Retorna lista flat `{ id, title, objective_title, status }`
 
-Adicionar entrada `projects` com as keys de visualização:
-```typescript
-projects: [
-  "projects.project.read:bu",
-  "projects.milestone.read:bu",
-],
-```
+#### 2. Componente `ProjectKrLinkSection` (novo)
+**Arquivo:** `src/modules/projects/components/ProjectKrLinkSection.tsx`
 
-Isso habilita o guard de sidebar e o `ModuleRoute` para o módulo.
+- **Props:** `projectId`, `linkedKrs` (array atual), `canEdit` (boolean)
+- **Read-only:** Lista KRs vinculadas com impacto traduzido (Alto/Médio/Baixo)
+- **Edição (se `canEdit`):**
+  - Botão "Vincular KR" abre Popover/Combobox com busca
+  - Lista KRs disponíveis (filtrando já vinculadas) agrupadas por objetivo
+  - Ao selecionar, pede o nível de impacto (high/medium/low) via Select inline
+  - Chama `useAddProjectKrLink().mutate()`
+  - Cada KR vinculada tem botão de remover → `useRemoveProjectKrLink().mutate()`
+- Padrão UI: consistente com `MultiTeamSelect` (Popover + lista com checkbox)
 
-### 2. Criar `useProjectPermissionsV2` hook
-**Arquivo:** `src/modules/projects/hooks/useProjectPermissionsV2.ts`
+#### 3. Integração na `ProjectDetailPage`
+**Arquivo:** `src/modules/projects/pages/ProjectDetailPage.tsx`
 
-Seguindo o padrão exato do `useAssetPermissionsV2`:
-- `hasFullAccess` (admin/wildcard/impersonação)
-- `canViewProjects` — `projects.project.read:bu`
-- `canCreateProject` — `projects.project.create:bu`
-- `canEditProject` — `projects.project.update:bu`
-- `canDeleteProject` — `projects.project.delete:self_or_owner`
-- `canViewMilestones` — `projects.milestone.read:bu`
-- `canCreateMilestone` — `projects.milestone.create:bu`
-- `canEditMilestone` — `projects.milestone.update:bu`
-- `isLoading`
+- Substituir o bloco read-only atual (linhas 247-264) pelo novo `ProjectKrLinkSection`
+- Passar `canEdit={canEditProject}` como gate de permissão
+- Remover lógica inline de renderização de KRs
 
-Exportar no barrel `src/modules/projects/hooks/index.ts`.
+#### 4. Query key (atualização menor)
+**Arquivo:** `src/lib/queryKeys/projects.ts`
 
-### 3. Criar templates no DB (migration SQL)
+- Adicionar: `krsForLinking: (buId) => ['projects', 'krs-for-linking', buId] as const`
 
-**3a.** Adicionar keys de projects ao template `collaborator_base_v2` (view-only):
-- `projects.project.read:bu`, `projects.milestone.read:bu`
+### Conformidade
 
-**3b.** Adicionar todas as 8 keys ao template `bu_admin_v2`.
-
-**3c.** Criar 2 novos templates:
-
-| Template | Slug | Keys |
-|----------|------|------|
-| Projetos: Gestor | `projects_manager` | read + create + update + milestone.* (6 keys) |
-| Projetos: Admin | `projects_admin` | Todas as 8 keys (inclui delete) |
-
-### 4. Integrar guards no UI
-
-**Componentes afetados:**
-- `ProjectsPage` — condicionar botão "Novo Projeto" a `canCreateProject`
-- `ProjectDetailPage` — condicionar edição/exclusão a `canEditProject`/`canDeleteProject`
-- `MilestoneList` — condicionar criação/status change a `canCreateMilestone`/`canEditMilestone`
-- `ProjectCard` — esconder ações de edição se não tem permissão
-
-### 5. Testes do hook
-**Arquivo:** `src/modules/projects/hooks/__tests__/useProjectPermissionsV2.test.ts`
-
-Seguindo o padrão do `useAssetPermissionsV2.test.ts`:
-- Admin → full access
-- Wildcard → full access
-- Sem permissões → tudo negado
-- View-only → só leitura
-- Impersonação → respeita permissões do impersonado
-- Loading state
-
-### 6. Atualizar documentação
-- `QA_PERMISSIONS_TEMPLATES.md` — adicionar cenários Projects Manager/Admin
-- `RBAC_TEMPLATES_V3.md` — adicionar templates na camada de responsabilidades
-- `TECHNICAL_CONTEXT_REGISTRY.md` — atualizar contagens
-
----
-
-## Detalhes Técnicos
-
-- **Padrão de impersonação**: idêntico ao Assets — durante impersonação, `hasFullAccess` usa apenas `isWildcard` (não `isAdmin`/`userRole`)
-- **Identity**: `owner_id = profiles.id` (já correto)
-- **RLS**: as policies já existem no DB, apenas os templates/frontend estão ausentes
-- **Sem breaking changes**: colaboradores base ganham view automático via `collaborator_base_v2`
+| Regra | Status |
+|-------|--------|
+| BU-scoped client (`useOptionalBuClient`) | ✅ |
+| Frontend `.eq('bu_id', buId)` | ✅ |
+| Query keys centralizadas | ✅ |
+| RBAC via `canEditProject` | ✅ |
+| Identity: `profiles.id` | ✅ |
+| Sem `select('*')` | ✅ |
+| Hooks existentes reutilizados | ✅ |
+| Invalidação de cache (detail + byKr) | ✅ já nos hooks |
 
