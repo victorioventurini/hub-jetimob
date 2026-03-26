@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.15.0  
-**Última atualização:** 2026-03-25 (v3.15.1 - Metrics correction & test suite 100% green — 25 edge functions, 113 tabelas + 27 views, 218 funções SQL, 82 enums, 547 testes passando)
+**Versão:** 3.16.0  
+**Última atualização:** 2026-03-26 (v3.16.0 - Módulo Projetos v1.0 — 118 tabelas + 27 views, 219 funções SQL, 85 enums, 1896 testes passando)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo (547 testes, 0 falhas) | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (218 funções)** | **Edge Functions Audit (25 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo (1896 testes, 0 falhas) | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (219 funções)** | **Edge Functions Audit (25 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅ | **Módulo Projetos v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1465,6 +1465,7 @@ Vínculo entre empresas externas e categorias de tickets que atendem.
 | **Vic** | `vic` | Assistente de IA contextual | ✅ Ativo |
 | **Tickets** | `tickets` | Sistema de tickets com routing e parceiros | ✅ Ativo |
 | **BU Management** | `bu` | Gerenciamento de Business Units | ✅ Ativo (admin) |
+| **Projetos** | `projects` | Gestão de projetos com milestones, vinculação a KRs, health tracking | ✅ Ativo |
 
 ### 3.2 Sub-módulos do Assets
 
@@ -1550,6 +1551,29 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - Módulos `global` estão sempre habilitados
 - Módulos `operational` dependem de config explícita por BU
 - Se não houver registro em `bu_module_configs`, módulo está desabilitado
+
+### 3.3.1 Módulo Projetos (v1.0)
+
+**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
+
+| Tabela | Descrição | RLS |
+|--------|-----------|-----|
+| `projects` | Projetos com owner, status, datas, BU scope | ✅ BU-scoped + owner/admin |
+| `project_teams` | Junction project ↔ team | ✅ Herda via JOIN |
+| `project_krs` | Junction project ↔ key_result com impacto (high/medium/low) | ✅ Herda via JOIN |
+| `project_milestones` | Marcos do projeto com status e due_date | ✅ BU-scoped |
+| `project_milestone_dependencies` | Dependências entre milestones | ✅ Herda via JOIN |
+
+**Enums:** `project_status` (planned, in_progress, paused, done, cancelled), `project_impact` (high, medium, low)
+
+**Função SQL:** `calculate_project_health(project_id uuid)` → retorna `on_track`, `at_risk` ou `late` baseado em milestones atrasados
+
+**Frontend:**
+- `src/modules/projects/` — types, hooks (useProjectQueries, useProjectMutations), utils (projectHealth), components
+- **Páginas:** `/projects` (lista com filtros por URL state), `/projects/:id` (detalhe com milestones)
+- **Integrações aditivas:** `ProjectsSummary` nos wizards (TeamCheckin, LeaderPrep, MBR), `ProjectsForKrSection` na visão de KR, `MyProjectsCard` na Home
+
+**Identity:** `owner_id` = `profiles.id` (convenção canônica)
 
 ### 3.4 Módulos em Desenvolvimento
 
@@ -3449,6 +3473,17 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.16.0 (2026-03-26)
+- **Módulo Projetos v1.0**:
+  - 5 novas tabelas: `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
+  - 2 novos enums: `project_status`, `project_impact`
+  - 1 nova função SQL: `calculate_project_health` (SECURITY DEFINER, search_path = public)
+  - RLS completa com enforce_bu_scope e updated_at triggers
+  - Frontend: types, hooks, utils, 7 componentes, 2 páginas (/projects, /projects/:id)
+  - Integrações aditivas: ProjectsSummary nos wizards (TeamCheckin, LeaderPrep, MBR), ProjectsForKrSection na visão de KR, MyProjectsCard na Home
+  - Sidebar atualizado (DynamicSidebar + MobileSidebar)
+  - Contagens atualizadas: 118 tabelas + 27 views, 219 funções SQL, 85 enums, 1896 testes passando
 
 ### v3.15.1 (2026-03-25)
 - **Metrics Correction**:
