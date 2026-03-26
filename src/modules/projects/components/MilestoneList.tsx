@@ -33,7 +33,7 @@ export function MilestoneList({ milestones, onStatusChange, compact }: Milestone
     <ul className="space-y-1">
       {milestones
         .filter((m) => !m.deleted_at)
-        .sort((a, b) => a.sort_order - b.sort_order || (a.created_at ?? '').localeCompare(b.created_at ?? ''))
+        .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '') || (a.created_at ?? '').localeCompare(b.created_at ?? ''))
         .map((m) => (
           <li
             key={m.id}

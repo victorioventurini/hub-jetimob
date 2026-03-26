@@ -12,6 +12,7 @@ import { OkrSummaryCard } from "@/components/home/OkrSummaryCard";
 import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
+import { MyProjectsCard } from "@/components/home/MyProjectsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
 import { ManagersCheckinWizardCard } from "@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard";
@@ -149,6 +150,9 @@ const Index = () => {
 
         {/* 4. My OKRs Card */}
         {canAccessOkrs && <MyOkrsCard />}
+
+        {/* 4b. My Projects Card */}
+        <MyProjectsCard />
 
         {/* 5. KPIs + OKRs Summary + Focus - Hidden for external users */}
         {showInternalOnlyCards && (
