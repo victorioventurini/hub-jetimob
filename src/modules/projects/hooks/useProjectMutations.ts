@@ -75,7 +75,7 @@ export function useUpdateProject() {
     mutationFn: async (input: UpdateProjectInput) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { id, ...updates } = input;
+      const { id, team_ids, ...updates } = input;
 
       const { data, error } = await supabase
         .from('projects')
@@ -85,6 +85,23 @@ export function useUpdateProject() {
         .single();
 
       if (error) throw error;
+
+      // Sync team links (delete + re-insert)
+      if (team_ids !== undefined) {
+        const { error: delError } = await supabase
+          .from('project_teams')
+          .delete()
+          .eq('project_id', id);
+        if (delError) throw delError;
+
+        if (team_ids.length > 0) {
+          const { error: insError } = await supabase
+            .from('project_teams')
+            .insert(team_ids.map(team_id => ({ project_id: id, team_id })));
+          if (insError) throw insError;
+        }
+      }
+
       return data;
     },
     onSuccess: (data) => {
