@@ -31,6 +31,7 @@ interface Initiative {
 
 export interface TeamInitiativesStepProps {
   initiatives: Initiative[];
+  teamId?: string;
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
