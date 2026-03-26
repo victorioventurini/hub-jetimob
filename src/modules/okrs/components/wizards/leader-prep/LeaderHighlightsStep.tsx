@@ -214,6 +214,11 @@ export function LeaderHighlightsStep({
               )}
             </>
           )}
+
+          {/* Projetos em atenção — bloco aditivo */}
+          {teamId && (
+            <ProjectsSummary teamId={teamId} mode="prep" className="mt-4" />
+          )}
         </div>
       </ScrollArea>
 
