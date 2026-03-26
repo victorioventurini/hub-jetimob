@@ -24,4 +24,6 @@ export const projectsKeys = {
     ['projects', 'gantt', buId, filters] as const,
   myProjects: (buId: string | null, profileId: string | null) =>
     ['projects', 'my', buId, profileId] as const,
+  krsForLinking: (buId: string | null) =>
+    ['projects', 'krs-for-linking', buId] as const,
 };
