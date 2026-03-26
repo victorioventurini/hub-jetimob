@@ -481,7 +481,16 @@ export default function QbrPrePage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/okrs"
+      backUrl="/wizards"
+      adminContextSwitcher={
+        <HierarchyContextSwitcher
+          type="team"
+          currentLabel={selectedTeam?.name || 'Selecionar time'}
+          selectedId={teamIdParam}
+          onSelect={handleTeamChange}
+          isLoading={isLoadingTeams}
+        />
+      }
     >
       {renderStepContent()}
     </FullPageWizardShell>
