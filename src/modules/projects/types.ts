@@ -125,10 +125,12 @@ export interface UpdateProjectInput {
   id: string;
   name?: string;
   description?: string | null;
+  owner_id?: string;
   status?: ProjectStatus;
   start_date?: string | null;
   due_date?: string | null;
   external_url?: string | null;
+  team_ids?: string[];
 }
 
 export interface CreateMilestoneInput {

@@ -61,12 +61,13 @@ export default function ProjectsPage() {
     createProject.mutate({
       name: values.name,
       description: values.description || null,
-      owner_id: writerProfileId,
+      owner_id: values.owner_id || writerProfileId,
       status: values.status,
       start_date: values.start_date || null,
       due_date: values.due_date || null,
       external_url: values.external_url || null,
       bu_id: currentBuId,
+      team_ids: values.team_ids?.length ? values.team_ids : undefined,
     }, {
       onSuccess: () => setDialogOpen(false),
     });
@@ -133,6 +134,7 @@ export default function ProjectsPage() {
         onOpenChange={setDialogOpen}
         onSubmit={handleCreate}
         isSubmitting={createProject.isPending}
+        currentOwnerId={writerProfileId ?? undefined}
       />
     </HubLayout>
   );

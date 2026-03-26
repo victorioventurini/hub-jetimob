@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -11,12 +11,16 @@ import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { MultiTeamSelect } from '@/components/selects/MultiTeamSelect';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import type { ProjectStatus } from '../types';
 
 const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   description: z.string().optional(),
+  owner_id: z.string().optional(),
+  team_ids: z.array(z.string()).optional(),
   status: z.enum(['planned', 'in_progress', 'paused', 'done', 'cancelled']).default('planned'),
   start_date: z.string().optional(),
   due_date: z.string().optional(),
@@ -32,14 +36,19 @@ interface ProjectDialogProps {
   defaultValues?: Partial<FormValues>;
   isSubmitting?: boolean;
   title?: string;
+  /** Current user profile ID — used as default owner on create */
+  currentOwnerId?: string;
 }
 
 export function ProjectDialog({
   open, onOpenChange, onSubmit, defaultValues, isSubmitting, title = 'Novo projeto',
+  currentOwnerId,
 }: ProjectDialogProps) {
   const defaults: FormValues = {
     name: '',
     description: '',
+    owner_id: currentOwnerId ?? '',
+    team_ids: [],
     status: 'planned',
     start_date: '',
     due_date: '',
@@ -79,6 +88,39 @@ export function ProjectDialog({
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
             <Textarea id="description" {...form.register('description')} placeholder="Descrição breve" rows={3} />
+          </div>
+
+          {/* Owner selector */}
+          <div className="space-y-2">
+            <Label>Responsável</Label>
+            <Controller
+              name="owner_id"
+              control={form.control}
+              render={({ field }) => (
+                <BuUserSelect
+                  value={field.value || undefined}
+                  onValueChange={(v) => field.onChange(v ?? '')}
+                  placeholder="Selecione o responsável"
+                  excludeExternal
+                />
+              )}
+            />
+          </div>
+
+          {/* Teams selector */}
+          <div className="space-y-2">
+            <Label>Times</Label>
+            <Controller
+              name="team_ids"
+              control={form.control}
+              render={({ field }) => (
+                <MultiTeamSelect
+                  value={field.value ?? []}
+                  onValueChange={field.onChange}
+                  placeholder="Selecione times"
+                />
+              )}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -105,10 +105,12 @@ export default function ProjectDetailPage() {
       id: project.id,
       name: values.name,
       description: values.description || null,
+      owner_id: values.owner_id || undefined,
       status: values.status,
       start_date: values.start_date || null,
       due_date: values.due_date || null,
       external_url: values.external_url || null,
+      team_ids: values.team_ids ?? [],
     }, {
       onSuccess: () => setEditOpen(false),
     });
@@ -269,9 +271,12 @@ export default function ProjectDetailPage() {
         onSubmit={handleEdit}
         isSubmitting={updateProject.isPending}
         title="Editar projeto"
+        currentOwnerId={project.owner_id}
         defaultValues={{
           name: project.name,
           description: project.description ?? '',
+          owner_id: project.owner_id,
+          team_ids: project.teams.map(t => t.team_id),
           status: project.status,
           start_date: project.start_date ?? '',
           due_date: project.due_date ?? '',
