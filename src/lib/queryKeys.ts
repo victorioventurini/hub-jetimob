@@ -83,6 +83,7 @@ import {
 } from './queryKeys/misc';
 import { savedLinksKeys } from './queryKeys/savedLinks';
 import { participantKeys } from './queryKeys/participantKeys';
+import { projectsKeys } from './queryKeys/projects';
 
 /**
  * Centralized TanStack Query Keys
