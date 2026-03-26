@@ -38,6 +38,7 @@ import { HIGHLIGHT_CARD_STYLES, RAG_STATUS_COLORS } from '@/lib/colors';
 export interface LeaderHighlightsStepProps {
   highlights: LeaderHighlight[];
   aiInsights: VicInsight[];
+  teamId?: string;
   isLoading?: boolean;
   onContinue: () => void;
   onBack: () => void;
