@@ -22,6 +22,7 @@ import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { ProjectProgressBar } from '../components/ProjectProgressBar';
 import { MilestoneList } from '../components/MilestoneList';
 import { ProjectDialog } from '../components/ProjectDialog';
+import { ProjectKrLinkSection } from '../components/ProjectKrLinkSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
