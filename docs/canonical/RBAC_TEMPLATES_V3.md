@@ -196,7 +196,7 @@ Resultado:
 - [x] Removidos todos os templates antigos (22 grupos)
 - [x] Removidas todas as associações antigas (435 links)
 - [x] Removidos vínculos de usuários (1 vínculo)
-- [x] Criados 17 novos templates
+- [x] Criados 19 novos templates (incluindo projects_manager e projects_admin)
 - [x] Associadas permission keys aos templates
 
 ---
