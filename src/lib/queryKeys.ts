@@ -148,6 +148,9 @@ export const queryKeys = {
   
   // Participants (Unified Layer)
   participants: participantKeys,
+
+  // Projects
+  projects: projectsKeys,
 } as const;
 
 // Helper type for extracting query key types
