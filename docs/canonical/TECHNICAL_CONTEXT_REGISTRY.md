@@ -1552,6 +1552,29 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - Módulos `operational` dependem de config explícita por BU
 - Se não houver registro em `bu_module_configs`, módulo está desabilitado
 
+### 3.3.1 Módulo Projetos (v1.0)
+
+**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
+
+| Tabela | Descrição | RLS |
+|--------|-----------|-----|
+| `projects` | Projetos com owner, status, datas, BU scope | ✅ BU-scoped + owner/admin |
+| `project_teams` | Junction project ↔ team | ✅ Herda via JOIN |
+| `project_krs` | Junction project ↔ key_result com impacto (high/medium/low) | ✅ Herda via JOIN |
+| `project_milestones` | Marcos do projeto com status e due_date | ✅ BU-scoped |
+| `project_milestone_dependencies` | Dependências entre milestones | ✅ Herda via JOIN |
+
+**Enums:** `project_status` (planned, in_progress, paused, done, cancelled), `project_impact` (high, medium, low)
+
+**Função SQL:** `calculate_project_health(project_id uuid)` → retorna `on_track`, `at_risk` ou `late` baseado em milestones atrasados
+
+**Frontend:**
+- `src/modules/projects/` — types, hooks (useProjectQueries, useProjectMutations), utils (projectHealth), components
+- **Páginas:** `/projects` (lista com filtros por URL state), `/projects/:id` (detalhe com milestones)
+- **Integrações aditivas:** `ProjectsSummary` nos wizards (TeamCheckin, LeaderPrep, MBR), `ProjectsForKrSection` na visão de KR, `MyProjectsCard` na Home
+
+**Identity:** `owner_id` = `profiles.id` (convenção canônica)
+
 ### 3.4 Módulos em Desenvolvimento
 
 | Módulo | Status | Descrição |
