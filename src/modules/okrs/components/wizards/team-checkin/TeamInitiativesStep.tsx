@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Zap, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
