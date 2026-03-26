@@ -96,9 +96,9 @@ import ProjectDetailPage from '../../pages/ProjectDetailPage';
 import { useProject } from '../../hooks/useProject';
 
 describe('ProjectDetailPage', () => {
-  it('renders project name', () => {
+  it('renders project name in heading', () => {
     renderWithProviders(<ProjectDetailPage />);
-    expect(screen.getByText('Projeto Beta')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Projeto Beta' })).toBeInTheDocument();
   });
 
   it('renders project description', () => {
