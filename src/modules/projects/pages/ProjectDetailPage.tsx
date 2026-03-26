@@ -150,18 +150,18 @@ export default function ProjectDetailPage() {
         {/* Header with breadcrumbs */}
         <PageHeader
           title={project.name}
-          description={
-            <div className="flex items-center gap-2 mt-1">
-              <ProjectHealthBadge health={project.health} />
-              <ProjectStatusBadge status={project.status} />
-            </div>
-          }
           breadcrumbs={[
             { label: "Projetos", href: "/projects" },
             { label: project.name },
           ]}
           actions={headerActions}
         />
+
+        {/* Badges + description below header */}
+        <div className="flex items-center gap-2 -mt-4">
+          <ProjectHealthBadge health={project.health} />
+          <ProjectStatusBadge status={project.status} />
+        </div>
 
         {project.description && (
           <p className="text-muted-foreground text-sm -mt-2">{project.description}</p>
