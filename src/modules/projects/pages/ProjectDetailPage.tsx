@@ -269,9 +269,12 @@ export default function ProjectDetailPage() {
         onSubmit={handleEdit}
         isSubmitting={updateProject.isPending}
         title="Editar projeto"
+        currentOwnerId={project.owner_id}
         defaultValues={{
           name: project.name,
           description: project.description ?? '',
+          owner_id: project.owner_id,
+          team_ids: project.teams.map(t => t.team_id),
           status: project.status,
           start_date: project.start_date ?? '',
           due_date: project.due_date ?? '',
