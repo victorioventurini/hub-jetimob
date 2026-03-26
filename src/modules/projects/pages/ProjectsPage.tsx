@@ -134,6 +134,7 @@ export default function ProjectsPage() {
         onOpenChange={setDialogOpen}
         onSubmit={handleCreate}
         isSubmitting={createProject.isPending}
+        currentOwnerId={writerProfileId ?? undefined}
       />
     </HubLayout>
   );
