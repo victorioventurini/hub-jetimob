@@ -151,6 +151,9 @@ const Index = () => {
         {/* 4. My OKRs Card */}
         {canAccessOkrs && <MyOkrsCard />}
 
+        {/* 4b. My Projects Card */}
+        <MyProjectsCard />
+
         {/* 5. KPIs + OKRs Summary + Focus - Hidden for external users */}
         {showInternalOnlyCards && (
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
