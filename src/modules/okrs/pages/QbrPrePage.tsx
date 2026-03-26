@@ -91,14 +91,19 @@ const DEFAULT_DATA: QbrPreDraftData = {
 
 export default function QbrPrePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamIdParam = searchParams.get('team');
   const { currentBu, currentBuId } = useBu();
-  const { profile } = useAuth();
   const buSupabase = useBuScopedSupabase();
 
-  usePageTitle('Pré-QBR');
+  // Teams for admin context switching
+  const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
+  const selectedTeam = useMemo(() => {
+    if (!teamIdParam || !teams) return null;
+    return teams.find(t => t.id === teamIdParam) || null;
+  }, [teamIdParam, teams]);
 
-  // Get user's team from profile
-  const userTeamId = (profile as any)?.team_id || null;
+  usePageTitle(selectedTeam ? `Pré-QBR - ${selectedTeam.name}` : 'Pré-QBR');
 
   // Cycle
   const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
