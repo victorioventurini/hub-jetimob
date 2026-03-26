@@ -100,6 +100,18 @@ Sistema de permissões baseado em permission keys com templates somáveis (RBAC 
 - [ ] Pode promover/rebaixar admin de BU
 - [ ] Wildcard (*) funciona corretamente
 
+### 13. Projects Gestor (`projects_manager`)
+- [ ] Pode visualizar projetos e milestones
+- [ ] Pode criar projetos
+- [ ] Pode editar projetos (próprios e da BU)
+- [ ] Pode criar e editar milestones
+- [ ] **NÃO** pode excluir projetos
+
+### 14. Projects Admin (`projects_admin`)
+- [ ] Tudo do Gestor +
+- [ ] Pode excluir projetos (próprios)
+- [ ] Acesso completo a milestones
+
 ---
 
 ## Regras de Negócio Críticas
@@ -134,6 +146,8 @@ Sistema de permissões baseado em permission keys com templates somáveis (RBAC 
 | Chaves: Admin | keys_admin | 16 | Gestão de chaves |
 | Brindes: Gestor | gifts_manager | 5 | Operação de brindes |
 | Brindes: Admin | gifts_admin | 11 | Gestão de brindes |
+| Projetos: Gestor | projects_manager | 7 | Gestão de projetos |
+| Projetos: Admin | projects_admin | 8 | Gestão completa de projetos |
 
 ---
 

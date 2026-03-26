@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, LayoutGrid, GanttChart as GanttIcon } from 'lucide-react';
 import { useProjects } from '../hooks/useProjects';
 import { useCreateProject } from '../hooks/useProjectMutations';
+import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { ProjectCard } from '../components/ProjectCard';
@@ -43,6 +44,7 @@ export default function ProjectsPage() {
 
   const { data: projects, isLoading, error } = useProjects(filters);
   const createProject = useCreateProject();
+  const { canCreateProject } = useProjectPermissionsV2();
 
   const writerProfileId = realProfileId ?? profileId;
 
@@ -73,10 +75,12 @@ export default function ProjectsPage() {
               Gerencie projetos estratégicos e acompanhe milestones.
             </p>
           </div>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo projeto
-          </Button>
+          {canCreateProject && (
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo projeto
+            </Button>
+          )}
         </div>
 
         {/* Filters */}
@@ -106,10 +110,12 @@ export default function ProjectsPage() {
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Nenhum projeto encontrado.</p>
-            <Button variant="outline" className="mt-4" onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar primeiro projeto
-            </Button>
+            {canCreateProject && (
+              <Button variant="outline" className="mt-4" onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar primeiro projeto
+              </Button>
+            )}
           </div>
         )}
       </div>

@@ -12,6 +12,7 @@ import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
 import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
 import { useCreateMilestone, useUpdateMilestone } from '../hooks/useMilestoneMutations';
+import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { ProjectHealthBadge } from '../components/ProjectHealthBadge';
@@ -46,6 +47,7 @@ export default function ProjectDetailPage() {
   const deleteProject = useSoftDeleteProject();
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
+  const { canEditProject, canDeleteProject, canCreateMilestone: canAddMilestone, canEditMilestone } = useProjectPermissionsV2();
 
   const writerProfileId = realProfileId ?? profileId;
 
@@ -143,13 +145,17 @@ export default function ProjectDetailPage() {
                 </a>
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Editar
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {canEditProject && (
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                Editar
+              </Button>
+            )}
+            {canDeleteProject && (
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -206,23 +212,25 @@ export default function ProjectDetailPage() {
           <CardContent className="space-y-3">
             <MilestoneList
               milestones={milestones || project.milestones || []}
-              onStatusChange={handleMilestoneStatusChange}
+              onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
             />
-            <div className="flex gap-2">
-              <Input
-                placeholder="Novo milestone..."
-                value={newMilestone}
-                onChange={(e) => setNewMilestone(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone()}
-              />
-              <Button
-                size="sm"
-                onClick={handleAddMilestone}
-                disabled={!newMilestone.trim() || createMilestone.isPending}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            {canAddMilestone && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Novo milestone..."
+                  value={newMilestone}
+                  onChange={(e) => setNewMilestone(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone()}
+                />
+                <Button
+                  size="sm"
+                  onClick={handleAddMilestone}
+                  disabled={!newMilestone.trim() || createMilestone.isPending}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
