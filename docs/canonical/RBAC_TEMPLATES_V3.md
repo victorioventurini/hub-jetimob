@@ -121,6 +121,13 @@ Acesso total a todos os módulos e configurações da BU.
 | Brindes: Gestor | `gifts_manager` | 5 | Movimentações, ajustes, visualizar estoque |
 | Brindes: Admin | `gifts_admin` | 11 | Tudo + cadastro, lotes, configurações |
 
+#### Projetos
+
+| Template | Slug | Keys | Descrição |
+|----------|------|------|-----------|
+| Projetos: Gestor | `projects_manager` | 7 | Criar/editar projetos e milestones. Sem exclusão. |
+| Projetos: Admin | `projects_admin` | 8 | Tudo + exclusão de projetos |
+
 ---
 
 ## Regras de Ouro
@@ -189,7 +196,7 @@ Resultado:
 - [x] Removidos todos os templates antigos (22 grupos)
 - [x] Removidas todas as associações antigas (435 links)
 - [x] Removidos vínculos de usuários (1 vínculo)
-- [x] Criados 17 novos templates
+- [x] Criados 19 novos templates (incluindo projects_manager e projects_admin)
 - [x] Associadas permission keys aos templates
 
 ---
