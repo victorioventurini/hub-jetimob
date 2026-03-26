@@ -37,21 +37,24 @@ interface ProjectDialogProps {
 export function ProjectDialog({
   open, onOpenChange, onSubmit, defaultValues, isSubmitting, title = 'Novo projeto',
 }: ProjectDialogProps) {
+  const defaults: FormValues = {
+    name: '',
+    description: '',
+    status: 'planned',
+    start_date: '',
+    due_date: '',
+    external_url: '',
+    ...defaultValues,
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: '',
-      description: '',
-      status: 'planned',
-      start_date: '',
-      due_date: '',
-      external_url: '',
-      ...defaultValues,
-    },
+    defaultValues: defaults,
   });
 
-  useDialogFormReset(open, form, {
-    name: '',
+  useDialogFormReset(open, () => {
+    form.reset(defaults);
+  });
     description: '',
     status: 'planned' as const,
     start_date: '',
