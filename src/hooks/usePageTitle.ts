@@ -102,6 +102,8 @@ function getDescriptionForPage(title: string, buName: string, pageType?: PageTyp
     "Brindes": `Gerencie brindes corporativos e controle de estoque da ${buName} no Hub.`,
     "Relatórios de Ativos": `Acompanhe métricas de inventário, chaveiros e brindes da ${buName} no Hub.`,
     "Configurações de Ativos": `Configure categorias, inventário e claviculários de ativos da ${buName}.`,
+    // Projects
+    "Projetos": `Gerencie projetos estratégicos e acompanhe milestones da ${buName} no Hub.`,
   };
 
   return descriptions[title] || `Gerencie ${title.toLowerCase()} da ${buName} no Hub.`;
