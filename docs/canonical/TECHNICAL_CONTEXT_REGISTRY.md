@@ -1465,6 +1465,7 @@ Vínculo entre empresas externas e categorias de tickets que atendem.
 | **Vic** | `vic` | Assistente de IA contextual | ✅ Ativo |
 | **Tickets** | `tickets` | Sistema de tickets com routing e parceiros | ✅ Ativo |
 | **BU Management** | `bu` | Gerenciamento de Business Units | ✅ Ativo (admin) |
+| **Projetos** | `projects` | Gestão de projetos com milestones, vinculação a KRs, health tracking | ✅ Ativo |
 
 ### 3.2 Sub-módulos do Assets
 
