@@ -55,13 +55,6 @@ export function ProjectDialog({
   useDialogFormReset(open, () => {
     form.reset(defaults);
   });
-    description: '',
-    status: 'planned' as const,
-    start_date: '',
-    due_date: '',
-    external_url: '',
-    ...defaultValues,
-  });
 
   const handleSubmit = form.handleSubmit((values) => {
     onSubmit(values);
