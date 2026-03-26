@@ -1,0 +1,1 @@
+ALTER FUNCTION public.calculate_project_health(uuid) SET search_path = public;
