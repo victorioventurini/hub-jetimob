@@ -144,6 +144,11 @@ export function TeamInitiativesStep({
               );
             })
           )}
+
+          {/* Projetos do time — bloco aditivo */}
+          {teamId && (
+            <ProjectsSummary teamId={teamId} mode="review" className="mt-4" />
+          )}
         </div>
       </ScrollArea>
 
