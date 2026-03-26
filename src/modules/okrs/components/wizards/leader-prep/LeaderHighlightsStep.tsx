@@ -85,6 +85,7 @@ const HIGHLIGHT_CONFIG = {
 export function LeaderHighlightsStep({
   highlights,
   aiInsights,
+  teamId,
   isLoading,
   onContinue,
   onBack,
