@@ -212,23 +212,25 @@ export default function ProjectDetailPage() {
           <CardContent className="space-y-3">
             <MilestoneList
               milestones={milestones || project.milestones || []}
-              onStatusChange={handleMilestoneStatusChange}
+              onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
             />
-            <div className="flex gap-2">
-              <Input
-                placeholder="Novo milestone..."
-                value={newMilestone}
-                onChange={(e) => setNewMilestone(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone()}
-              />
-              <Button
-                size="sm"
-                onClick={handleAddMilestone}
-                disabled={!newMilestone.trim() || createMilestone.isPending}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            {canAddMilestone && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Novo milestone..."
+                  value={newMilestone}
+                  onChange={(e) => setNewMilestone(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone()}
+                />
+                <Button
+                  size="sm"
+                  onClick={handleAddMilestone}
+                  disabled={!newMilestone.trim() || createMilestone.isPending}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
