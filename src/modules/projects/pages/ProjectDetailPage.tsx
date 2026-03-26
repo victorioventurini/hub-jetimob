@@ -12,6 +12,7 @@ import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
 import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
 import { useCreateMilestone, useUpdateMilestone } from '../hooks/useMilestoneMutations';
+import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { ProjectHealthBadge } from '../components/ProjectHealthBadge';
