@@ -360,9 +360,28 @@ export default function QbrPrePage() {
     clearDraft();
   }, [clearDraft]);
 
+  // Handle team change (admin only)
+  const handleTeamChange = useCallback((newTeamId: string) => {
+    discardDraft();
+    setSearchParams({ team: newTeamId });
+  }, [discardDraft, setSearchParams]);
+
   // Loading
-  if (isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis) {
     return <LoadingState text="Carregando dados do pré-QBR..." fullPage />;
+  }
+
+  // Guard: No team selected
+  if (!teamIdParam || !selectedTeam) {
+    return (
+      <EmptyState
+        icon={AlertCircle}
+        title="Time não selecionado"
+        description="Selecione um time para iniciar o pré-QBR"
+        actionLabel="Voltar"
+        onAction={() => navigate('/wizards')}
+      />
+    );
   }
 
   // Guard: QBR not open
