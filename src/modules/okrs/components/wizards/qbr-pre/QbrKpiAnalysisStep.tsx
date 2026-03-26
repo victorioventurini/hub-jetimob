@@ -210,6 +210,42 @@ export function QbrKpiAnalysisStep({
           </div>
         )}
 
+        {/* No data KPIs */}
+        {noDataKpis.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              Sem dados ({noDataKpis.length})
+            </h4>
+            {noDataKpis.map((kpi) => {
+              const isZombie = zombieCandidates.includes(kpi.kpiId);
+              return (
+                <Card key={kpi.kpiId} className={cn('border-muted', isZombie && 'border-dashed opacity-60')}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm truncate">{kpi.name}</p>
+                        <span className="text-xs text-muted-foreground">
+                          Nenhum valor registrado
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Checkbox
+                          id={`zombie-nodata-${kpi.kpiId}`}
+                          checked={isZombie}
+                          onCheckedChange={() => handleToggleZombie(kpi.kpiId)}
+                        />
+                        <Label htmlFor={`zombie-nodata-${kpi.kpiId}`} className="text-xs cursor-pointer">
+                          <Ghost className="h-3 w-3" />
+                        </Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
         {/* KPIs to create */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium flex items-center gap-2">

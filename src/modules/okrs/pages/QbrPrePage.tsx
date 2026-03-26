@@ -284,10 +284,16 @@ export default function QbrPrePage() {
     },
   });
 
-  // Seed KPI snapshots
+  // Seed KPI snapshots — reset ref when team changes
   const seededKpisRef = useRef(false);
+  const lastSeededTeamRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Reset seed flag when team changes
+    if (teamIdParam !== lastSeededTeamRef.current) {
+      seededKpisRef.current = false;
+      lastSeededTeamRef.current = teamIdParam;
+    }
     if (seededKpisRef.current) return;
     if (!teamKpis || teamKpis.length === 0) return;
     if (draft.data.kpiSnapshots.length > 0) {
@@ -296,7 +302,7 @@ export default function QbrPrePage() {
     }
     updateDraft({ kpiSnapshots: teamKpis });
     seededKpisRef.current = true;
-  }, [teamKpis, draft.data.kpiSnapshots.length, updateDraft]);
+  }, [teamKpis, draft.data.kpiSnapshots.length, updateDraft, teamIdParam]);
 
   // Navigation
   const completedSteps = useMemo(() => {
