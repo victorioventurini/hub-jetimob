@@ -105,10 +105,12 @@ export default function ProjectDetailPage() {
       id: project.id,
       name: values.name,
       description: values.description || null,
+      owner_id: values.owner_id || undefined,
       status: values.status,
       start_date: values.start_date || null,
       due_date: values.due_date || null,
       external_url: values.external_url || null,
+      team_ids: values.team_ids ?? [],
     }, {
       onSuccess: () => setEditOpen(false),
     });
