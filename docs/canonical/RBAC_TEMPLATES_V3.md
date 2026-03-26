@@ -41,7 +41,7 @@ Sistema de permissões reconstruído com foco em:
 
 ### CAMADA 0: BASE (OBRIGATÓRIA)
 
-#### Colaborador Base (`collaborator_base`) - 9 keys
+#### Colaborador Base (`collaborator_base`) - 11 keys
 Aplicado a TODO usuário interno.
 
 | Módulo | Permissões |
@@ -50,6 +50,7 @@ Aplicado a TODO usuário interno.
 | assets | general.view |
 | okrs | general.view |
 | kpis | general.view |
+| projects | project.read, milestone.read |
 | teams | team.view |
 | tickets | view, thread.create, message.create, attachment.create |
 | users | view, profile.view (self), profile.update (self) |
