@@ -84,7 +84,7 @@ function createMockProject(overrides: Partial<ProjectWithRelations> = {}): Proje
 describe('ProjectsPage', () => {
   it('renders page title', () => {
     renderWithProviders(<ProjectsPage />);
-    expect(screen.getByText('Projetos')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Projetos' })).toBeInTheDocument();
   });
 
   it('renders subtitle', () => {

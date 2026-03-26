@@ -5,10 +5,12 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
-import { Plus, LayoutGrid, GanttChart as GanttIcon } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { useUrlState, useLocalSearch } from '@/shared/url';
 import { useProjects } from '../hooks/useProjects';
 import { useCreateProject } from '../hooks/useProjectMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
@@ -17,30 +19,36 @@ import { useBu } from '@/contexts/BuContext';
 import { ProjectCard } from '../components/ProjectCard';
 import { ProjectFiltersBar } from '../components/ProjectFiltersBar';
 import { ProjectDialog } from '../components/ProjectDialog';
-import type { ProjectFilters } from '../types';
+import type { ProjectFilters, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProjectsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  usePageTitle('Projetos', {
+    customDescription: 'Gerencie projetos estratégicos, acompanhe milestones e vincule a KRs.',
+  });
+
   const navigate = useNavigate();
   const { profileId, realProfileId } = useIdentity();
   const { currentBuId } = useBu();
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // URL state — canonical pattern
+  const statusState = useUrlState<ProjectStatus | 'all'>({ key: 'status', defaultValue: 'all' });
+  const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
+  const { value: search, setValue: setSearch } = useLocalSearch('q');
+
   const filters: ProjectFilters = {
-    status: (searchParams.get('status') as ProjectFilters['status']) || 'all',
-    search: searchParams.get('q') || undefined,
-    owner_id: searchParams.get('owner') || undefined,
+    status: statusState.value,
+    search: search || undefined,
+    owner_id: ownerState.value || undefined,
   };
 
   const handleFiltersChange = useCallback((newFilters: ProjectFilters) => {
-    const params = new URLSearchParams();
-    if (newFilters.status && newFilters.status !== 'all') params.set('status', newFilters.status);
-    if (newFilters.search) params.set('q', newFilters.search);
-    if (newFilters.owner_id) params.set('owner', newFilters.owner_id);
-    setSearchParams(params, { replace: true });
-  }, [setSearchParams]);
+    statusState.set(newFilters.status ?? 'all');
+    ownerState.set(newFilters.owner_id ?? '');
+    setSearch(newFilters.search ?? '');
+  }, [statusState, ownerState, setSearch]);
 
   const { data: projects, isLoading, error } = useProjects(filters);
   const createProject = useCreateProject();
@@ -68,20 +76,19 @@ export default function ProjectsPage() {
     <HubLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Projetos</h1>
-            <p className="text-sm text-muted-foreground">
-              Gerencie projetos estratégicos e acompanhe milestones.
-            </p>
-          </div>
-          {canCreateProject && (
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo projeto
-            </Button>
-          )}
-        </div>
+        <PageHeader
+          title="Projetos"
+          description="Gerencie projetos estratégicos e acompanhe milestones."
+          breadcrumbs={[{ label: "Projetos" }]}
+          actions={
+            canCreateProject ? (
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo projeto
+              </Button>
+            ) : undefined
+          }
+        />
 
         {/* Filters */}
         <ProjectFiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
