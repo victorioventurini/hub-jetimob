@@ -8,22 +8,25 @@
  */
 
 import { useMemo, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import {
   useGenericWizardDraft,
   useActiveCycles,
 } from '@/modules/okrs/hooks';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { handleError } from '@/lib/errorMessages';
+import { AlertCircle } from 'lucide-react';
 import { calculateProgress } from '@/modules/okrs/types';
 
 import { QbrBalanceStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrBalanceStep';
@@ -88,14 +91,19 @@ const DEFAULT_DATA: QbrPreDraftData = {
 
 export default function QbrPrePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamIdParam = searchParams.get('team');
   const { currentBu, currentBuId } = useBu();
-  const { profile } = useAuth();
   const buSupabase = useBuScopedSupabase();
 
-  usePageTitle('Pré-QBR');
+  // Teams for admin context switching
+  const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
+  const selectedTeam = useMemo(() => {
+    if (!teamIdParam || !teams) return null;
+    return teams.find(t => t.id === teamIdParam) || null;
+  }, [teamIdParam, teams]);
 
-  // Get user's team from profile
-  const userTeamId = (profile as any)?.team_id || null;
+  usePageTitle(selectedTeam ? `Pré-QBR - ${selectedTeam.name}` : 'Pré-QBR');
 
   // Cycle
   const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
@@ -135,7 +143,7 @@ export default function QbrPrePage() {
     lastSavedAt,
   } = useGenericWizardDraft<QbrPreStep, QbrPreDraftData>({
     wizardType: 'qbr-pre',
-    teamId: userTeamId,
+    teamId: teamIdParam,
     cycleId: quarterlyCycle?.id || null,
     defaultStep: 'balance',
     defaultData: DEFAULT_DATA,
@@ -144,8 +152,8 @@ export default function QbrPrePage() {
 
   // ── Load team KRs for balance step ──
   const { data: teamObjectives, isLoading: isLoadingKrs } = useQuery({
-    queryKey: ['qbr-pre', 'team-krs', userTeamId, quarterlyCycle?.id],
-    enabled: !!buSupabase && !!userTeamId && !!quarterlyCycle?.id,
+    queryKey: ['qbr-pre', 'team-krs', teamIdParam, quarterlyCycle?.id],
+    enabled: !!buSupabase && !!teamIdParam && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await buSupabase
@@ -157,7 +165,7 @@ export default function QbrPrePage() {
             last_checkin_at
           )
         `)
-        .eq('team_id', userTeamId!)
+        .eq('team_id', teamIdParam!)
         .eq('cycle_id', quarterlyCycle!.id)
         .is('deleted_at', null)
         .is('cancelled_at', null);
@@ -215,15 +223,15 @@ export default function QbrPrePage() {
     }
 
     if (states.length > 0) {
-      updateDraft({ krFinalStates: states, cycleId: quarterlyCycle?.id || '', teamId: userTeamId || '' });
+      updateDraft({ krFinalStates: states, cycleId: quarterlyCycle?.id || '', teamId: teamIdParam || '' });
     }
     seededKrsRef.current = true;
-  }, [teamObjectives, draft.data.krFinalStates.length, updateDraft, quarterlyCycle, userTeamId]);
+  }, [teamObjectives, draft.data.krFinalStates.length, updateDraft, quarterlyCycle, teamIdParam]);
 
   // ── Load KPIs ──
   const { data: teamKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: ['qbr-pre', 'team-kpis', userTeamId, currentBuId],
-    enabled: !!buSupabase && !!currentBuId && !!userTeamId,
+    queryKey: ['qbr-pre', 'team-kpis', teamIdParam, currentBuId],
+    enabled: !!buSupabase && !!currentBuId && !!teamIdParam,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data: kpis, error } = await buSupabase
@@ -232,7 +240,7 @@ export default function QbrPrePage() {
         .eq('lifecycle_status', 'active')
         .is('deleted_at', null)
         .neq('indicator_type', 'metric')
-        .or(`team_id.eq.${userTeamId},scope.eq.org`);
+        .or(`team_id.eq.${teamIdParam},scope.eq.org`);
 
       if (error) throw error;
       if (!kpis || kpis.length === 0) return [];
@@ -352,9 +360,28 @@ export default function QbrPrePage() {
     clearDraft();
   }, [clearDraft]);
 
+  // Handle team change (admin only)
+  const handleTeamChange = useCallback((newTeamId: string) => {
+    discardDraft();
+    setSearchParams({ team: newTeamId });
+  }, [discardDraft, setSearchParams]);
+
   // Loading
-  if (isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis) {
     return <LoadingState text="Carregando dados do pré-QBR..." fullPage />;
+  }
+
+  // Guard: No team selected
+  if (!teamIdParam || !selectedTeam) {
+    return (
+      <EmptyState
+        icon={AlertCircle}
+        title="Time não selecionado"
+        description="Selecione um time para iniciar o pré-QBR"
+        actionLabel="Voltar"
+        onAction={() => navigate('/wizards')}
+      />
+    );
   }
 
   // Guard: QBR not open
@@ -416,7 +443,7 @@ export default function QbrPrePage() {
         return (
           <QbrOkrProposalStep
             proposedOkrs={draft.data.proposedOkrs}
-            teamId={userTeamId || ''}
+            teamId={teamIdParam || ''}
             onProposedOkrsChange={(proposedOkrs) => updateDraft({ proposedOkrs })}
             onContinue={goNext}
             onBack={goBack}
@@ -454,7 +481,16 @@ export default function QbrPrePage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/okrs"
+      backUrl="/wizards"
+      adminContextSwitcher={
+        <HierarchyContextSwitcher
+          type="team"
+          currentLabel={selectedTeam?.name || 'Selecionar time'}
+          selectedId={teamIdParam}
+          onSelect={handleTeamChange}
+          isLoading={isLoadingTeams}
+        />
+      }
     >
       {renderStepContent()}
     </FullPageWizardShell>
