@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProjectsPage() {
-  usePageTitle('Projetos', {
+  usePageTitle('Projects', {
     customDescription: 'Gerencie projetos estratégicos, acompanhe milestones e vincule a KRs.',
   });
 
