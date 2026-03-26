@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, LayoutGrid, GanttChart as GanttIcon } from 'lucide-react';
 import { useProjects } from '../hooks/useProjects';
 import { useCreateProject } from '../hooks/useProjectMutations';
+import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { ProjectCard } from '../components/ProjectCard';
