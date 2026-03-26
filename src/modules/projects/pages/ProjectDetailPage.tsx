@@ -245,23 +245,11 @@ export default function ProjectDetailPage() {
         </Card>
 
         {/* KRs vinculadas */}
-        {project.krs.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">KRs vinculadas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {project.krs.map((kr) => (
-                  <li key={kr.key_result_id} className="flex items-center justify-between text-sm">
-                    <span>{kr.kr_title}</span>
-                    <span className="text-xs text-muted-foreground capitalize">Impacto: {kr.impact === 'high' ? 'Alto' : kr.impact === 'medium' ? 'Médio' : 'Baixo'}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
+        <ProjectKrLinkSection
+          projectId={project.id}
+          linkedKrs={project.krs}
+          canEdit={canEditProject}
+        />
       </div>
 
       {/* Edit Dialog */}
