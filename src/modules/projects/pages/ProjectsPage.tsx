@@ -44,6 +44,7 @@ export default function ProjectsPage() {
 
   const { data: projects, isLoading, error } = useProjects(filters);
   const createProject = useCreateProject();
+  const { canCreateProject } = useProjectPermissionsV2();
 
   const writerProfileId = realProfileId ?? profileId;
 
