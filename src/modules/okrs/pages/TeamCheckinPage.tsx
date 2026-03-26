@@ -259,6 +259,7 @@ export default function TeamCheckinPage() {
         return (
           <TeamInitiativesStep
             initiatives={[]}
+            teamId={teamIdParam ?? undefined}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onContinue={goNext}

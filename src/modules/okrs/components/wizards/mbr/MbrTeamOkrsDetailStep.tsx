@@ -18,6 +18,7 @@ import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
+import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -287,6 +288,9 @@ export function MbrTeamOkrsDetailStep({
               </CardContent>
             </Card>
           ))}
+
+          {/* Projetos do time — bloco aditivo */}
+          <ProjectsSummary teamId={currentTeam.teamId} mode="review" className="mt-2" />
         </div>
       )}
     </WizardStepScaffold>

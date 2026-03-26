@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Zap, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -30,6 +31,7 @@ interface Initiative {
 
 export interface TeamInitiativesStepProps {
   initiatives: Initiative[];
+  teamId?: string;
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
@@ -49,6 +51,7 @@ const STATUS_CONFIG = {
 
 export function TeamInitiativesStep({
   initiatives,
+  teamId,
   decisions = [],
   onDecisionsChange,
   onContinue,
@@ -140,6 +143,11 @@ export function TeamInitiativesStep({
                 </Card>
               );
             })
+          )}
+
+          {/* Projetos do time — bloco aditivo */}
+          {teamId && (
+            <ProjectsSummary teamId={teamId} mode="review" className="mt-4" />
           )}
         </div>
       </ScrollArea>

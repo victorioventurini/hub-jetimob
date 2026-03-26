@@ -287,6 +287,7 @@ export default function LeaderPrepPage() {
           <LeaderHighlightsStep
             highlights={highlights}
             aiInsights={[]}
+            teamId={teamIdParam ?? undefined}
             isLoading={isLoadingKrs}
             onContinue={goNext}
             onBack={goBack}
