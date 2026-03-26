@@ -3474,6 +3474,17 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.16.0 (2026-03-26)
+- **Módulo Projetos v1.0**:
+  - 5 novas tabelas: `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
+  - 2 novos enums: `project_status`, `project_impact`
+  - 1 nova função SQL: `calculate_project_health` (SECURITY DEFINER, search_path = public)
+  - RLS completa com enforce_bu_scope e updated_at triggers
+  - Frontend: types, hooks, utils, 7 componentes, 2 páginas (/projects, /projects/:id)
+  - Integrações aditivas: ProjectsSummary nos wizards (TeamCheckin, LeaderPrep, MBR), ProjectsForKrSection na visão de KR, MyProjectsCard na Home
+  - Sidebar atualizado (DynamicSidebar + MobileSidebar)
+  - Contagens atualizadas: 118 tabelas + 27 views, 219 funções SQL, 85 enums, 1896 testes passando
+
 ### v3.15.1 (2026-03-25)
 - **Metrics Correction**:
   - Contagens corrigidas: 113 tabelas + 27 views (antes "140 tabelas"), 82 enums (antes 94), 25 edge functions (antes 26)
