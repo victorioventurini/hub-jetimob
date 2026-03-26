@@ -81,6 +81,21 @@ vi.mock('@/modules/projects/hooks/useMilestoneMutations', () => ({
   useUpdateMilestone: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
+vi.mock('@/modules/projects/hooks/useProjectPermissionsV2', () => ({
+  useProjectPermissionsV2: vi.fn(() => ({
+    isLoading: false,
+    hasFullAccess: true,
+    canViewProjects: true,
+    canCreateProject: true,
+    canEditProject: true,
+    canEditOwnProject: true,
+    canDeleteProject: true,
+    canViewMilestones: true,
+    canCreateMilestone: true,
+    canEditMilestone: true,
+  })),
+}));
+
 vi.mock('@/hooks/useIdentity', () => ({
   useIdentity: vi.fn(() => ({
     profileId: 'test-profile-id',
