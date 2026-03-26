@@ -1575,6 +1575,29 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 
 **Identity:** `owner_id` = `profiles.id` (convenção canônica)
 
+#### Permissões do Módulo Projects
+
+| Template | Slug | Keys | Descrição |
+|----------|------|------|-----------|
+| Projetos: Gestor | `projects_manager` | 7 | Criar/editar projetos e milestones. Sem exclusão. |
+| Projetos: Admin | `projects_admin` | 8 | Tudo + exclusão de projetos |
+
+**Permission Keys:**
+- `projects.project.read:bu`, `projects.project.create:bu`, `projects.project.update:bu`, `projects.project.delete:self_or_owner`
+- `projects.milestone.read:bu`, `projects.milestone.create:bu`, `projects.milestone.update:bu`, `projects.milestone.delete:bu`
+
+**Hook:** `useProjectPermissionsV2` — flags: `canViewProjects`, `canCreateProject`, `canEditProject`, `canDeleteProject`, `canViewMilestones`, `canCreateMilestone`, `canEditMilestone`, `hasFullAccess`, `isLoading`
+
+**Module Access:** Registrado em `MODULE_VIEW_PERMISSIONS` com keys `projects.project.read:bu` e `projects.milestone.read:bu` (sidebar + ModuleRoute guard)
+
+#### URL State Parameters (Projects)
+
+| Página | Parâmetro | Valores | Descrição |
+|--------|-----------|---------|-----------|
+| `/projects` | `status` | `all`, `planned`, `in_progress`, `paused`, `done`, `cancelled` | Filtro por status |
+| `/projects` | `owner` | UUID | Filtro por responsável |
+| `/projects` | `q` | texto | Busca local (não persistida na URL) |
+
 ### 3.4 Módulos em Desenvolvimento
 
 | Módulo | Status | Descrição |
