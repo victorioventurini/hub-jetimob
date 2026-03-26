@@ -6840,6 +6840,271 @@ export type Database = {
           },
         ]
       }
+      project_krs: {
+        Row: {
+          created_at: string
+          impact: Database["public"]["Enums"]["project_impact"]
+          key_result_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          impact?: Database["public"]["Enums"]["project_impact"]
+          key_result_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          impact?: Database["public"]["Enums"]["project_impact"]
+          key_result_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_krs_key_result_id_fkey"
+            columns: ["key_result_id"]
+            isOneToOne: false
+            referencedRelation: "okr_team_key_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_krs_key_result_id_fkey"
+            columns: ["key_result_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
+          {
+            foreignKeyName: "project_krs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_milestone_dependencies: {
+        Row: {
+          depends_on_milestone_id: string
+          milestone_id: string
+        }
+        Insert: {
+          depends_on_milestone_id: string
+          milestone_id: string
+        }
+        Update: {
+          depends_on_milestone_id?: string
+          milestone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestone_dependencies_depends_on_milestone_id_fkey"
+            columns: ["depends_on_milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestone_dependencies_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_milestones: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          due_date: string | null
+          id: string
+          name: string
+          owner_id: string | null
+          project_id: string
+          sort_order: number
+          status: Database["public"]["Enums"]["milestone_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          due_date?: string | null
+          id?: string
+          name: string
+          owner_id?: string | null
+          project_id: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["milestone_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          due_date?: string | null
+          id?: string
+          name?: string
+          owner_id?: string | null
+          project_id?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["milestone_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestones_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_teams: {
+        Row: {
+          created_at: string
+          project_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          project_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          project_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_teams_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          due_date: string | null
+          external_url: string | null
+          id: string
+          name: string
+          owner_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          external_url?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          external_url?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_memberships: {
         Row: {
           bu_id: string
@@ -9151,6 +9416,10 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_project_health: {
+        Args: { p_project_id: string }
+        Returns: string
+      }
       can_manage_asset_inventory: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
@@ -10165,6 +10434,7 @@ export type Database = {
         | "completed"
         | "failed"
         | "rolled_back"
+      milestone_status: "todo" | "in_progress" | "done"
       module_health: "healthy" | "degraded" | "down"
       module_status: "active" | "inactive" | "coming_soon"
       module_type: "global" | "operational"
@@ -10211,6 +10481,13 @@ export type Database = {
         | "bu"
         | "global"
         | "public"
+      project_impact: "high" | "medium" | "low"
+      project_status:
+        | "planned"
+        | "in_progress"
+        | "paused"
+        | "done"
+        | "cancelled"
       squad_product: "crm" | "cms" | "erp"
       squad_role: "product_owner" | "tech_lead" | "ux_ui_lead" | "member"
       team_status: "active" | "inactive"
@@ -10449,6 +10726,7 @@ export const Constants = {
         "failed",
         "rolled_back",
       ],
+      milestone_status: ["todo", "in_progress", "done"],
       module_health: ["healthy", "degraded", "down"],
       module_status: ["active", "inactive", "coming_soon"],
       module_type: ["global", "operational"],
@@ -10498,6 +10776,8 @@ export const Constants = {
         "global",
         "public",
       ],
+      project_impact: ["high", "medium", "low"],
+      project_status: ["planned", "in_progress", "paused", "done", "cancelled"],
       squad_product: ["crm", "cms", "erp"],
       squad_role: ["product_owner", "tech_lead", "ux_ui_lead", "member"],
       team_status: ["active", "inactive"],
