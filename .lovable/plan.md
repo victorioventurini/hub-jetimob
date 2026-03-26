@@ -1,101 +1,97 @@
 
 
-# Plano — Módulo Projetos
+# Plano: Paridade de Permissões do Módulo Projetos
 
-## Análise: proposta do Claude vs padrões canônicos do Hub
+## Diagnóstico
 
-Revisei o TCR, DEVELOPMENT_STANDARDS, DATA_MODEL_REGISTRY, IDENTITY_CONVENTION, PERMISSIONS_AND_RBAC_MODEL, WIZARD_DEVELOPMENT_GUIDE, BU_SCOPED_SUPABASE_RULES e o codebase. A proposta do Claude é **muito boa e alinhada** com a arquitetura do Hub. Seguem os ajustes necessários:
+O módulo Projetos tem **4 lacunas críticas** em relação aos módulos maduros (Assets, OKRs, Tickets):
 
-### Correções obrigatórias vs spec do Claude
+| Item | Assets/OKRs | Projetos |
+|------|-------------|----------|
+| `MODULE_VIEW_PERMISSIONS` map | ✅ Mapeado | ❌ Ausente — sidebar/rota não verifica permissão |
+| Hook `useXxxPermissionsV2` | ✅ `useAssetPermissionsV2` | ❌ Não existe |
+| Templates no DB | ✅ 17 templates com keys | ❌ 8 keys no catálogo, 0 templates |
+| Guards no UI | ✅ Botões/ações condicionais | ❌ Tudo visível para todos |
 
-| Item no spec do Claude | Problema | Correção |
-|---|---|---|
-| CHECK constraints em `status` e `impact` | Hub usa **validation triggers** em vez de CHECK (imutabilidade do CHECK causa problemas em restore) | Substituir por validation triggers ou usar enum types |
-| `calculate_project_health()` usa `LANGUAGE plpgsql STABLE` | OK, mas precisa de `SECURITY DEFINER` + `SET search_path = public` para ser usada em RLS/views | Adicionar security definer pattern |
-| RLS `projects_insert` usa `WITH CHECK` | Falta `to authenticated` em todas as policies | Adicionar `TO authenticated` |
-| RLS `projects_update` sem `WITH CHECK` | UPDATE policies precisam de `WITH CHECK` além de `USING` | Adicionar cláusula |
-| RLS de INSERT/UPDATE/DELETE faltam para `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies` | Claude só definiu SELECT | Criar policies completas para CUD |
-| Hooks usam `useBuScopedSupabase()` direto | Hub migrou para `useOptionalBuClient()` em muitos hooks para evitar crash em estados transitórios | Usar `useOptionalBuClient()` com gating pattern |
-| Sidebar hardcoded `buMenuItems` | Já existe no `DynamicSidebar.tsx` e `MobileSidebar.tsx` com slug/icon | Adicionar entrada `{ name: "Projetos", href: "/projects", icon: FolderKanban, slug: "projects" }` |
-| Gantt com `@dhtmlx/trial-gantt` | Lib trial não é adequada para produção. Hub não usa CDN externo | Implementar Gantt customizado com divs/CSS (padrão do Hub: zero dependências externas desnecessárias) |
-| `select('*')` implícito em alguns exemplos | Regra inquebrável: campos sempre explícitos | Garantir `.select('id, name, ...')` em todas as queries |
-
-### O que está correto e será mantido como está
-
-- Modelo de dados (5 tabelas) — estrutura correta, identity convention respeitada (`owner_id` = `profiles.id`)
-- Triggers `enforce_bu_scope` e `update_updated_at_column` — padrão canônico
-- Soft-delete com `deleted_at` — alinhado com D.7
-- Query keys em arquivo separado `src/lib/queryKeys/projects.ts` — padrão correto
-- Barrel exports em `hooks/index.ts` — regra K
-- `useDialogFormReset` nos dialogs — padrão obrigatório
-- Integração aditiva nos wizards (sem tocar na lógica existente) — correto
-- Permission keys no formato `module.entity.action:scope` — alinhado
+As 8 permission keys já existem no catálogo (`projects.project.read:bu`, `.create:bu`, `.update:bu`, `.delete:self_or_owner`, `projects.milestone.read/create/update:bu`), mas **nenhum template as distribui** e **nenhum código as consulta**.
 
 ---
 
-## Fases de implementação
+## Plano de Implementação (6 passos)
 
-### Fase 1 — Database (1 migration)
+### 1. Registrar `projects` no `MODULE_VIEW_PERMISSIONS`
+**Arquivo:** `src/hooks/useModuleAccess.ts`
 
-Uma única migration SQL com:
+Adicionar entrada `projects` com as keys de visualização:
+```typescript
+projects: [
+  "projects.project.read:bu",
+  "projects.milestone.read:bu",
+],
+```
 
-1. **5 tabelas**: `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
-   - Usar enums para status em vez de CHECK constraints quando possível (ou validation triggers)
-   - `owner_id` referencia `profiles(id)` — identity convention
-   - `bu_id NOT NULL REFERENCES bu_units(id)` — BU scope
+Isso habilita o guard de sidebar e o `ModuleRoute` para o módulo.
 
-2. **Triggers**:
-   - `enforce_bu_scope` em `projects` e `project_milestones`
-   - `update_updated_at_column` em `projects` e `project_milestones`
+### 2. Criar `useProjectPermissionsV2` hook
+**Arquivo:** `src/modules/projects/hooks/useProjectPermissionsV2.ts`
 
-3. **RLS completa** (todas as 5 tabelas):
-   - SELECT: `user_has_bu_access(auth.uid(), bu_id) AND is_current_bu(bu_id) AND deleted_at IS NULL`
-   - INSERT: `is_current_bu(bu_id) AND owner_id = my_profile_id()` (para projects)
-   - UPDATE: owner ou bu_admin
-   - DELETE (soft): owner ou bu_admin
-   - Junction tables (`project_teams`, `project_krs`, `project_milestone_dependencies`): herdam acesso via JOIN com projeto pai
+Seguindo o padrão exato do `useAssetPermissionsV2`:
+- `hasFullAccess` (admin/wildcard/impersonação)
+- `canViewProjects` — `projects.project.read:bu`
+- `canCreateProject` — `projects.project.create:bu`
+- `canEditProject` — `projects.project.update:bu`
+- `canDeleteProject` — `projects.project.delete:self_or_owner`
+- `canViewMilestones` — `projects.milestone.read:bu`
+- `canCreateMilestone` — `projects.milestone.create:bu`
+- `canEditMilestone` — `projects.milestone.update:bu`
+- `isLoading`
 
-4. **Índices**: conforme spec do Claude
+Exportar no barrel `src/modules/projects/hooks/index.ts`.
 
-5. **Função `calculate_project_health`**: com `SECURITY DEFINER SET search_path = public`
+### 3. Criar templates no DB (migration SQL)
 
-6. **Registro do módulo**: INSERT em `modules` (slug `projects`, type `operational`)
+**3a.** Adicionar keys de projects ao template `collaborator_base_v2` (view-only):
+- `projects.project.read:bu`, `projects.milestone.read:bu`
 
-7. **Permission keys**: INSERT em `permission_catalog`
+**3b.** Adicionar todas as 8 keys ao template `bu_admin_v2`.
 
-### Fase 2 — Foundation frontend
+**3c.** Criar 2 novos templates:
 
-1. `src/modules/projects/types.ts` — tipos conforme spec
-2. `src/lib/queryKeys/projects.ts` — keys centralizadas
-3. `src/modules/projects/utils/projectHealth.ts` — `computeHealth()`, `computeCompletion()`
-4. `src/modules/projects/hooks/` — todos os hooks com `useOptionalBuClient()` + gating
-5. `src/modules/projects/hooks/index.ts` — barrel export
+| Template | Slug | Keys |
+|----------|------|------|
+| Projetos: Gestor | `projects_manager` | read + create + update + milestone.* (6 keys) |
+| Projetos: Admin | `projects_admin` | Todas as 8 keys (inclui delete) |
 
-### Fase 3 — Componentes e páginas
+### 4. Integrar guards no UI
 
-1. Componentes de UI: `ProjectHealthBadge`, `ProjectProgressBar`, `ProjectCard`, `ProjectFilters`, `ProjectDialog`, `MilestoneList`, `MilestoneDialog`, `ProjectSidePanel`, `ProjectKrLinkSection`, `ProjectTeamsSection`
-2. Gantt customizado com CSS Grid/divs (sem dependência externa)
-3. `ProjectsPage` (`/projects`) com toggle lista/Gantt + filtros na URL (regra E)
-4. `ProjectDetailPage` (`/projects/:id`) com validação post-fetch de `bu_id`
-5. `projects.routes.tsx` seguindo pattern de `okrs.routes.tsx`
-6. Sidebar: adicionar em `DynamicSidebar.tsx` e `MobileSidebar.tsx`
+**Componentes afetados:**
+- `ProjectsPage` — condicionar botão "Novo Projeto" a `canCreateProject`
+- `ProjectDetailPage` — condicionar edição/exclusão a `canEditProject`/`canDeleteProject`
+- `MilestoneList` — condicionar criação/status change a `canCreateMilestone`/`canEditMilestone`
+- `ProjectCard` — esconder ações de edição se não tem permissão
 
-### Fase 4 — Integrações (aditivas)
+### 5. Testes do hook
+**Arquivo:** `src/modules/projects/hooks/__tests__/useProjectPermissionsV2.test.ts`
 
-1. `ProjectsForKrSection` na visão de KR (abaixo de `InitiativesSummary`)
-2. `ProjectsSummary` nos wizards (todos os listados no spec)
-3. Bloco "Meus projetos" na `HomePage`
+Seguindo o padrão do `useAssetPermissionsV2.test.ts`:
+- Admin → full access
+- Wildcard → full access
+- Sem permissões → tudo negado
+- View-only → só leitura
+- Impersonação → respeita permissões do impersonado
+- Loading state
+
+### 6. Atualizar documentação
+- `QA_PERMISSIONS_TEMPLATES.md` — adicionar cenários Projects Manager/Admin
+- `RBAC_TEMPLATES_V3.md` — adicionar templates na camada de responsabilidades
+- `TECHNICAL_CONTEXT_REGISTRY.md` — atualizar contagens
 
 ---
 
-## Detalhes técnicos relevantes
+## Detalhes Técnicos
 
-- **Client Supabase**: hooks usam `useOptionalBuClient()` (não `useBuScopedSupabase()` direto) para resiliência em estados transitórios
-- **Frontend BU filter**: toda query inclui `.eq('bu_id', currentBuId)` obrigatório, mesmo com RLS
-- **URL state**: filtros de status, owner, team e busca ficam em `searchParams` (regra E)
-- **Soft-delete**: `.is('deleted_at', null)` em todas as queries
-- **Identity**: `owner_id` = `profiles.id`; frontend usa `useIdentity().profileId` / `realProfileId` para mutations
-- **Mutation guard**: payload usa `writerProfileId = realProfileId ?? profileId` com validação UUID
-- **Gantt**: implementação customizada sem lib externa — CSS Grid com barras por projeto/milestone, setas de dependência via SVG overlay, linha "hoje" pontilhada
-- **Wizards**: integração é puramente aditiva — `ProjectsSummary` renderizado abaixo dos blocos existentes, sem tocar em lógica de steps, drafts ou sessões
+- **Padrão de impersonação**: idêntico ao Assets — durante impersonação, `hasFullAccess` usa apenas `isWildcard` (não `isAdmin`/`userRole`)
+- **Identity**: `owner_id = profiles.id` (já correto)
+- **RLS**: as policies já existem no DB, apenas os templates/frontend estão ausentes
+- **Sem breaking changes**: colaboradores base ganham view automático via `collaborator_base_v2`
 
