@@ -146,6 +146,8 @@ Sistema de permissões baseado em permission keys com templates somáveis (RBAC 
 | Chaves: Admin | keys_admin | 16 | Gestão de chaves |
 | Brindes: Gestor | gifts_manager | 5 | Operação de brindes |
 | Brindes: Admin | gifts_admin | 11 | Gestão de brindes |
+| Projetos: Gestor | projects_manager | 7 | Gestão de projetos |
+| Projetos: Admin | projects_admin | 8 | Gestão completa de projetos |
 
 ---
 
