@@ -41,6 +41,7 @@ import { teamRoutes } from "./routes/teams.routes";
 import { settingsRoutes } from "./routes/settings.routes";
 import { coreRoutes } from "./routes/core.routes";
 import { eventsRoutes } from "./routes/events.routes";
+import { projectRoutes } from "./routes/projects.routes";
 
 /**
  * Fallback de loading otimizado
