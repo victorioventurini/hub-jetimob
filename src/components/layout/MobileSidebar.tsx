@@ -60,7 +60,7 @@ const iconMap: Record<string, LucideIcon> = {
   metrics: BarChart3,
   kpis: BarChart3,
   cycles: Calendar,
-  projects: Briefcase,
+  projects: FolderKanban,
   docs: FileText,
   modules: LayoutGrid,
   "modules-admin": LayoutGrid,
