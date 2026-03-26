@@ -204,6 +204,9 @@ function AuthenticatedRoutes() {
         {/* Events (Jet Experience) */}
         {eventsRoutes}
         
+        {/* Projects */}
+        {projectRoutes}
+        
         {/* Core (Home, Profile, Users, etc.) */}
         {coreRoutes}
       </Routes>
