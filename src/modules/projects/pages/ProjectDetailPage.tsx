@@ -47,6 +47,7 @@ export default function ProjectDetailPage() {
   const deleteProject = useSoftDeleteProject();
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
+  const { canEditProject, canDeleteProject, canCreateMilestone: canAddMilestone, canEditMilestone } = useProjectPermissionsV2();
 
   const writerProfileId = realProfileId ?? profileId;
 
