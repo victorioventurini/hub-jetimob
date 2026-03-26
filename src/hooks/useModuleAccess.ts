@@ -47,6 +47,11 @@ const MODULE_VIEW_PERMISSIONS: Record<string, string[]> = {
     "users.view:bu",
     "users.profile.view:bu",
   ],
+  // Projects module
+  projects: [
+    "projects.project.read:bu",
+    "projects.milestone.read:bu",
+  ],
   // Events (Jet Experience module)
   events: [
     "events.view:bu",
