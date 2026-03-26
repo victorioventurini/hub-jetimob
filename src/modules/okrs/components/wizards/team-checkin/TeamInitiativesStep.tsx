@@ -51,6 +51,7 @@ const STATUS_CONFIG = {
 
 export function TeamInitiativesStep({
   initiatives,
+  teamId,
   decisions = [],
   onDecisionsChange,
   onContinue,
