@@ -110,10 +110,12 @@ export default function ProjectsPage() {
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Nenhum projeto encontrado.</p>
-            <Button variant="outline" className="mt-4" onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar primeiro projeto
-            </Button>
+            {canCreateProject && (
+              <Button variant="outline" className="mt-4" onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar primeiro projeto
+              </Button>
+            )}
           </div>
         )}
       </div>
