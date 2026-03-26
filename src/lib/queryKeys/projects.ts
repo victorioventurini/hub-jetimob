@@ -22,4 +22,6 @@ export const projectsKeys = {
   milestonesPrefix: () => ['projects', 'milestones'] as const,
   gantt: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'gantt', buId, filters] as const,
+  myProjects: (buId: string | null, profileId: string | null) =>
+    ['projects', 'my', buId, profileId] as const,
 };
