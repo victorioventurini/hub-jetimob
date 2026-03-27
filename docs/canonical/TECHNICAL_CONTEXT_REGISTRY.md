@@ -3542,6 +3542,32 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.19.0 (2026-03-27)
+- **Módulo Projetos v1.3**:
+  - Nova tabela: `milestone_krs` — vinculação granular de KRs a milestones individuais (cross-area)
+  - `project_milestones`: campo `notes` (text, opcional) adicionado
+  - Campos obrigatórios em projetos: `owner_id`, `start_date`, `due_date` — validação Zod no dialog
+  - Milestones: todos campos (due_date, owner_id, notes) permanecem opcionais
+  - Gantt charts: visualização na listagem geral (`view=gantt`) e inline no detalhe do projeto
+  - Gantt charts: validação defensiva de datas (`isValidDateStr`) para evitar crashes com `parseISO`
+  - Gantt charts: notas de milestones exibidas nos tooltips
+  - Filtros completos na listagem: status, responsável, time, vínculo a KR, busca textual
+  - Vinculação de projetos a KRs pela UI de OKRs (`ProjectsForKrLinkingSection`)
+  - Mobile UX: responsive charts, filtros empilhados, botões com ícones apenas
+  - 17 hooks, 15 componentes, 2 páginas
+  - 78 testes passando no módulo
+
+### v3.18.0 (2026-03-26)
+- **Projects Permissions Parity v1.0**:
+  - Templates de permissão: `projects_manager` (7 keys), `projects_admin` (8 keys)
+  - Hook: `useProjectPermissionsV2` com 9 flags de permissão
+  - Module Access registrado em `MODULE_VIEW_PERMISSIONS`
+
+### v3.17.0 (2026-03-26)
+- **Projects Module Documentation Parity**:
+  - Documentação TCR completa para módulo Projetos
+  - Contagens: 118 tabelas + 27 views, 219 funções SQL, 85 enums
+
 ### v3.16.0 (2026-03-26)
 - **Módulo Projetos v1.0**:
   - 5 novas tabelas: `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
