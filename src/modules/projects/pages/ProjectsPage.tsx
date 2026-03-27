@@ -134,7 +134,7 @@ export default function ProjectsPage() {
         ) : viewState.value === 'gantt' ? (
           <ProjectGanttChart items={ganttItems} excludedCount={ganttExcluded} />
         ) : projects && projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}

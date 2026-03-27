@@ -10,22 +10,35 @@ const healthConfig: Record<ProjectHealth, { label: string; className: string }> 
 interface ProjectHealthBadgeProps {
   health: ProjectHealth;
   className?: string;
+  /** Show only the colored dot without label/background */
+  dotOnly?: boolean;
 }
 
-export function ProjectHealthBadge({ health, className }: ProjectHealthBadgeProps) {
+export function ProjectHealthBadge({ health, className, dotOnly }: ProjectHealthBadgeProps) {
   const config = healthConfig[health];
+
+  const dot = (
+    <span
+      className={cn(
+        'rounded-full shrink-0',
+        dotOnly ? 'w-2.5 h-2.5' : 'w-1.5 h-1.5',
+        health === 'on_track' && 'bg-emerald-500',
+        health === 'at_risk' && 'bg-amber-500',
+        health === 'late' && 'bg-red-500',
+      )}
+      title={config.label}
+    />
+  );
+
+  if (dotOnly) return dot;
+
   return (
     <span className={cn(
       'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
       config.className,
       className,
     )}>
-      <span className={cn(
-        'w-1.5 h-1.5 rounded-full',
-        health === 'on_track' && 'bg-emerald-500',
-        health === 'at_risk' && 'bg-amber-500',
-        health === 'late' && 'bg-red-500',
-      )} />
+      {dot}
       {config.label}
     </span>
   );
