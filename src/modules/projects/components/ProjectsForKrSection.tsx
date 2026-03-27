@@ -59,7 +59,6 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
 
   if (isLoading || loadingMilestones) {
     return (
