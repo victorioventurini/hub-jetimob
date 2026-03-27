@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Circle, Clock, ChevronRight, CalendarIcon, User, Trash2 } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ChevronRight, CalendarIcon, User, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
