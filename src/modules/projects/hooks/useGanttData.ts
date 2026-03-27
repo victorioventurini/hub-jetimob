@@ -26,7 +26,7 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
     let excludedCount = 0;
 
     for (const project of projects) {
-      if (!project.start_date || !project.due_date) {
+      if (!isValidDateStr(project.start_date) || !isValidDateStr(project.due_date)) {
         excludedCount++;
         continue;
       }
