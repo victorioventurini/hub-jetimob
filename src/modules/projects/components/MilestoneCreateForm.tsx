@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface MilestoneCreateFormProps {
-  onSubmit: (data: { name: string; due_date: string | null; owner_id: string | null }) => void;
+  onSubmit: (data: { name: string; due_date: string | null; owner_id: string | null; notes: string | null }) => void;
   isPending?: boolean;
 }
 
