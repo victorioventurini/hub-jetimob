@@ -69,6 +69,7 @@ export function useRemoveMilestoneKrLink() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.key_result_id) });
     },
     onError: (error) => {
       console.error('Error unlinking KR from milestone:', error);
