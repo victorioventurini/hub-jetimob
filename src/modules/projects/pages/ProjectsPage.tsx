@@ -9,16 +9,20 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { ViewOptionsBar } from '@/components/ui/view-options-bar';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, useLocalSearch } from '@/shared/url';
 import { useProjects } from '../hooks/useProjects';
 import { useCreateProject } from '../hooks/useProjectMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
+import { useGanttData } from '../hooks/useGanttData';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { ProjectCard } from '../components/ProjectCard';
 import { ProjectFiltersBar } from '../components/ProjectFiltersBar';
 import { ProjectDialog } from '../components/ProjectDialog';
+import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectViewToggle';
+import { ProjectGanttChart } from '../components/ProjectGanttChart';
 import type { ProjectFilters, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +42,7 @@ export default function ProjectsPage() {
   const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
   const teamState = useUrlState<string>({ key: 'teamId', defaultValue: '' });
   const krLinkState = useUrlState<string>({ key: 'krLink', defaultValue: '' });
+  const viewState = useUrlState<ProjectViewMode>({ key: 'view', defaultValue: 'list' });
   const { value: search, setValue: setSearch } = useLocalSearch('q');
 
   const filters: ProjectFilters = {
@@ -59,6 +64,7 @@ export default function ProjectsPage() {
   }, [statusState, ownerState, teamState, setSearch, krLinkState]);
 
   const { data: projects, isLoading, error } = useProjects(filters);
+  const { items: ganttItems, excludedCount: ganttExcluded } = useGanttData(projects);
   const createProject = useCreateProject();
   const { canCreateProject } = useProjectPermissionsV2();
 
@@ -102,6 +108,18 @@ export default function ProjectsPage() {
         {/* Filters */}
         <ProjectFiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
 
+        {/* View options */}
+        <ViewOptionsBar
+          resultCount={projects?.length}
+          resultCountLabel="projetos encontrados"
+          resultCountLabelSingular="projeto encontrado"
+        >
+          <ProjectViewToggle
+            viewMode={viewState.value}
+            onViewModeChange={viewState.set}
+          />
+        </ViewOptionsBar>
+
         {/* Content */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -113,6 +131,8 @@ export default function ProjectsPage() {
           <div className="text-center py-12">
             <p className="text-destructive">Erro ao carregar projetos.</p>
           </div>
+        ) : viewState.value === 'gantt' ? (
+          <ProjectGanttChart items={ganttItems} excludedCount={ganttExcluded} />
         ) : projects && projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (

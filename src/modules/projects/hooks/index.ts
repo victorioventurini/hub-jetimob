@@ -22,3 +22,6 @@ export type { MilestoneKrLink } from './useMilestoneKrs';
 
 // Permissions
 export { useProjectPermissionsV2 } from './useProjectPermissionsV2';
+
+// Data transforms
+export { useGanttData } from './useGanttData';
