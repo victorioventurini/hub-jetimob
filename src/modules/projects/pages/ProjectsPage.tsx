@@ -36,19 +36,27 @@ export default function ProjectsPage() {
   // URL state — canonical pattern
   const statusState = useUrlState<ProjectStatus | 'all'>({ key: 'status', defaultValue: 'all' });
   const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
+  const teamState = useUrlState<string>({ key: 'teamId', defaultValue: '' });
+  const krLinkState = useUrlState<string>({ key: 'krLink', defaultValue: '' });
   const { value: search, setValue: setSearch } = useLocalSearch('q');
 
   const filters: ProjectFilters = {
     status: statusState.value,
     search: search || undefined,
     owner_id: ownerState.value || undefined,
+    team_id: teamState.value || undefined,
+    linked_to_kr: krLinkState.value === 'linked' ? true : krLinkState.value === 'not_linked' ? false : null,
   };
 
   const handleFiltersChange = useCallback((newFilters: ProjectFilters) => {
     statusState.set(newFilters.status ?? 'all');
     ownerState.set(newFilters.owner_id ?? '');
+    teamState.set(newFilters.team_id ?? '');
     setSearch(newFilters.search ?? '');
-  }, [statusState, ownerState, setSearch]);
+    krLinkState.set(
+      newFilters.linked_to_kr === true ? 'linked' : newFilters.linked_to_kr === false ? 'not_linked' : ''
+    );
+  }, [statusState, ownerState, teamState, setSearch, krLinkState]);
 
   const { data: projects, isLoading, error } = useProjects(filters);
   const createProject = useCreateProject();
