@@ -7,7 +7,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar, List, GanttChart } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
