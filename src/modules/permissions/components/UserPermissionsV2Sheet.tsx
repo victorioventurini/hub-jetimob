@@ -313,7 +313,7 @@ export function UserPermissionsV2Sheet({
           </SheetHeader>
           
           {/* Revoke Access Button */}
-          {user?.role_in_bu && (currentUserIsAdmin || !isAdmin) && (
+          {user?.role_in_bu && (isBuAdmin || !isAdmin) && (
             <Button
               variant="ghost"
               size="sm"
