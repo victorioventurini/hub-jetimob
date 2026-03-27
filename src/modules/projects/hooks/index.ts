@@ -14,6 +14,9 @@ export type { ProjectForKr } from './useProjectsForKr';
 export { useCreateProject, useUpdateProject, useSoftDeleteProject } from './useProjectMutations';
 export { useCreateMilestone, useUpdateMilestone, useSoftDeleteMilestone } from './useMilestoneMutations';
 export { useAddProjectKrLink, useRemoveProjectKrLink } from './useProjectKrLinks';
+export { useAddMilestoneKrLink, useRemoveMilestoneKrLink } from './useMilestoneKrLinks';
+export { useMilestoneKrs } from './useMilestoneKrs';
+export type { MilestoneKrLink } from './useMilestoneKrs';
 
 // Permissions
 export { useProjectPermissionsV2 } from './useProjectPermissionsV2';
