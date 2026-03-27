@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Plus, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
