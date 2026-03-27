@@ -164,13 +164,18 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <div style={{ minWidth: Math.max(800, totalDays * 4) }}>
+      <div
+        className="overflow-x-auto rounded-lg border bg-card"
+        ref={(el) => {
+          if (el && el.clientWidth !== containerWidth) setContainerWidth(el.clientWidth);
+        }}
+      >
+        <div style={{ minWidth: Math.max(isMobile ? 500 : 800, totalDays * (isMobile ? 2 : 4)) }}>
           <ResponsiveContainer width="100%" height={chartHeight}>
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 16, right: 24, bottom: 16, left: 0 }}
+              margin={{ top: 12, right: 16, bottom: 12, left: 0 }}
               barSize={barHeight}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
