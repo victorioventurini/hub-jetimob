@@ -92,7 +92,7 @@ export function ProjectDialog({
 
           {/* Owner selector */}
           <div className="space-y-2">
-            <Label>Responsável</Label>
+            <Label>Responsável *</Label>
             <Controller
               name="owner_id"
               control={form.control}
@@ -105,6 +105,9 @@ export function ProjectDialog({
                 />
               )}
             />
+            {form.formState.errors.owner_id && (
+              <p className="text-xs text-destructive">{form.formState.errors.owner_id.message}</p>
+            )}
           </div>
 
           {/* Teams selector */}
