@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { format, differenceInDays, min as dateMin, max as dateMax, parseISO, addDays } from 'date-fns';
+import { format, differenceInDays, min as dateMin, max as dateMax, parseISO, addDays, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { ProjectMilestone, MilestoneStatus } from '../types';
 import { AlertCircle } from 'lucide-react';
