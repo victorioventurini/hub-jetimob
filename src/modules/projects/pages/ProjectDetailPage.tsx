@@ -154,7 +154,7 @@ export default function ProjectDetailPage() {
         <PageHeader
           title={project.name}
           breadcrumbs={[
-            { label: "Projects", href: "/projects" },
+            { label: "Projetos", href: "/projects" },
             { label: project.name },
           ]}
           actions={headerActions}

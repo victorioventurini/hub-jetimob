@@ -86,9 +86,9 @@ export default function ProjectsPage() {
       <div className="space-y-6">
         {/* Header */}
         <PageHeader
-          title="Projects"
+          title="Projetos"
           description="Gerencie projetos estratégicos e acompanhe milestones."
-          breadcrumbs={[{ label: "Projects" }]}
+          breadcrumbs={[{ label: "Projetos" }]}
           actions={
             canCreateProject ? (
               <Button onClick={() => setDialogOpen(true)}>
