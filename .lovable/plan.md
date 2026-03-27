@@ -1,78 +1,86 @@
 
 
-## Plano: Visualização Gantt no Módulo de Projetos
+## Plano: Campo `notes` em Milestones
 
 ### Pré-checklist ✅
 
 | Documento | Verificado | Achados |
 |-----------|-----------|---------|
-| TCR — Módulo Projects | ✅ | `GanttItem` tipado; query key `gantt()` já registrada |
-| BU_SCOPED_RULES | ✅ | `useOptionalBuClient` + `.eq('bu_id')` |
-| QUERY_KEYS_STANDARD | ✅ | `projectsKeys.gantt(buId, filters)` já existe |
-| Dependências | ✅ | `recharts` já instalado; `date-fns` disponível |
-| Padrão de view toggle | ✅ | `ViewOptionsBar` + viewMode via URL state (padrão do OKRs/KPIs) |
+| TCR v3.18.0 | ✅ | `project_milestones` sem campo `notes`; campo não existe no schema |
+| DATA_MODEL_REGISTRY | ✅ | Confirmado: sem `notes` na tabela |
+| DEVELOPMENT_STANDARDS | ✅ | Sem `select('*')`, query keys centralizadas |
+| Identity Convention | ✅ | N/A para este campo |
+| useDialogFormReset | ✅ | Milestones usam inline form, não dialog — padrão não se aplica |
 
 ### O que será feito
 
-#### 1. Hook `useGanttData.ts`
+#### 1. Migration — adicionar coluna
 
-- Reutiliza o resultado de `useProjects(filters)` — sem query adicional ao DB
-- Transforma `ProjectWithRelations[]` em `GanttItem[]` (1 item por projeto + 1 por milestone com `parent_id`)
-- Filtra itens sem `start_date` e `due_date` (exibe aviso para projetos sem datas)
-- Query key: `projectsKeys.gantt(buId, filters)` (já existente)
-
-#### 2. Componente `ProjectGanttChart.tsx`
-
-Gráfico de timeline horizontal usando Recharts (`BarChart` com barras horizontais):
-
-```text
-┌──────────────────────────────────────────────────────┐
-│  Projeto A     ████████████████████                  │
-│    ▸ Marco 1        ██████                           │
-│    ▸ Marco 2              ████████                   │
-│  Projeto B              ██████████████████           │
-│    ▸ Marco 1                 ████                    │
-│                                                      │
-│  Jan  Fev  Mar  Abr  Mai  Jun  Jul  Ago  Set  Out   │
-└──────────────────────────────────────────────────────┘
+```sql
+ALTER TABLE public.project_milestones ADD COLUMN notes text;
 ```
 
-- Barras coloridas por status/health (reutiliza cores do `ProjectHealthBadge`)
-- Projetos em negrito, milestones indentados com tamanho menor
-- Tooltip com nome, datas, status, health
-- Responsivo com scroll horizontal em mobile
-- Click na barra navega para `/projects/:id`
+#### 2. Tipo TypeScript — `ProjectMilestone`
 
-#### 3. Toggle Lista/Gantt na `ProjectsPage.tsx`
+Adicionar `notes: string | null` à interface em `types.ts`.
 
-- Novo `ProjectViewToggle` (padrão `CycleCheckinsViewToggle`)
-- viewMode via URL state: `useUrlState({ key: 'view', defaultValue: 'list' })`
-- Integrado no `ViewOptionsBar` com contador de resultados
-- Quando `view=gantt`, renderiza `ProjectGanttChart` em vez do grid de cards
+#### 3. Selects — incluir `notes` nos hooks
 
-#### 4. Componente `ProjectViewToggle.tsx`
+| Hook | Campo adicionado |
+|------|-----------------|
+| `useProject.ts` | `notes` no select de `project_milestones(...)` |
+| `useMilestones.ts` | `notes` no `MILESTONE_FIELDS` |
+| `useProjects.ts` | Não — listagem usa campos mínimos, `notes` não é necessário |
+| `useProjectsForKr.ts` / `useProjectsForWizard.ts` | Não — selects mínimos |
 
-- 2 modos: `list` (ícone LayoutGrid) e `gantt` (ícone GanttChart)
-- Segue exatamente o padrão visual do `CycleCheckinsViewToggle`
+#### 4. Mutations — `notes` no create e update
+
+- `CreateMilestoneInput` e `UpdateMilestoneInput`: adicionar `notes?: string | null`
+- `useCreateMilestone`: incluir `notes` no insert
+- `useUpdateMilestone`: já usa spread `...updates`, funciona automaticamente
+
+#### 5. `MilestoneCreateForm.tsx` — campo de notas na criação
+
+- Adicionar `<Textarea>` opcional abaixo dos seletores de prazo/responsável
+- Placeholder: "Observações, bloqueios, contexto..."
+- Incluir `notes` no `onSubmit`
+
+#### 6. `MilestoneList.tsx` — exibição e edição inline
+
+- Ícone `FileText` (14px) ao lado do nome quando `notes` preenchido
+- Tooltip com preview das notas no hover
+- Na área expandida: `<Textarea>` para edição inline (quando `canEdit`)
+- `onUpdate` callback estendido para aceitar `notes`
+
+#### 7. `GanttItem` e Gantt tooltips
+
+- Adicionar `notes?: string | null` ao tipo `GanttItem`
+- `useGanttData.ts`: mapear `notes` dos milestones
+- `MilestoneGanttChart.tsx`: exibir notas no tooltip quando preenchidas
+- `ProjectGanttChart.tsx`: exibir notas no tooltip de milestones
 
 ### Arquivos impactados
 
 | Arquivo | Ação |
 |---------|------|
-| `src/modules/projects/hooks/useGanttData.ts` | Novo |
-| `src/modules/projects/components/ProjectGanttChart.tsx` | Novo |
-| `src/modules/projects/components/ProjectViewToggle.tsx` | Novo |
-| `src/modules/projects/pages/ProjectsPage.tsx` | Editar (toggle + conditional render) |
-| `src/modules/projects/hooks/index.ts` | Editar (export) |
+| Migration SQL | Novo |
+| `src/modules/projects/types.ts` | Editar (+`notes` em 3 interfaces) |
+| `src/modules/projects/hooks/useProject.ts` | Editar (select) |
+| `src/modules/projects/hooks/useMilestones.ts` | Editar (select) |
+| `src/modules/projects/hooks/useMilestoneMutations.ts` | Editar (insert) |
+| `src/modules/projects/hooks/useGanttData.ts` | Editar (mapear notes) |
+| `src/modules/projects/components/MilestoneCreateForm.tsx` | Editar (+textarea) |
+| `src/modules/projects/components/MilestoneList.tsx` | Editar (icon + inline edit) |
+| `src/modules/projects/components/MilestoneGanttChart.tsx` | Editar (tooltip) |
+| `src/modules/projects/components/ProjectGanttChart.tsx` | Editar (tooltip) |
 
 ### Conformidade
 
 | Regra | Status |
 |-------|--------|
-| BU-scoped (dados via `useProjects`) | ✅ |
-| Query keys centralizadas | ✅ |
-| URL state para viewMode | ✅ |
-| Sem nova dependência | ✅ recharts já instalado |
-| ViewOptionsBar canônico | ✅ |
 | Sem `select('*')` | ✅ |
+| BU-scoped client | ✅ |
+| Query keys centralizadas | ✅ |
+| Identity convention | ✅ N/A |
+| useDialogFormReset | ✅ N/A (inline forms) |
 
