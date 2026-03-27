@@ -276,6 +276,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
                   )}
                   {globalModules
                     .filter((m) => !["profile"].includes(m.slug)) // Profile fica no header
+                    .filter((m) => hasModuleAccess(m.slug))
                     .map(renderModuleItem)}
                 </div>
               )}
