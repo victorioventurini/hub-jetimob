@@ -150,20 +150,7 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
                 </div>
 
                 {selectedProjectId && (
-                  <div className="flex items-center gap-2 pt-1 border-t">
-                    <Select
-                      value={selectedImpact}
-                      onValueChange={(v) => setSelectedImpact(v as ProjectImpact)}
-                    >
-                      <SelectTrigger className="h-8 text-xs flex-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high">Alto</SelectItem>
-                        <SelectItem value="medium">Médio</SelectItem>
-                        <SelectItem value="low">Baixo</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex justify-end pt-1 border-t">
                     <Button
                       size="sm"
                       className="h-8 text-xs"
