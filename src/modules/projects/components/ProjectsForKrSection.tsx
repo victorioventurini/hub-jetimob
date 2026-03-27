@@ -77,11 +77,10 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   const handleAdd = () => {
     if (!selectedProjectId) return;
     addLink.mutate(
-      { project_id: selectedProjectId, key_result_id: krId, impact: selectedImpact },
+      { project_id: selectedProjectId, key_result_id: krId, impact: 'medium' },
       {
         onSuccess: () => {
           setSelectedProjectId(null);
-          setSelectedImpact('medium');
           setPopoverOpen(false);
           setSearch('');
         },
