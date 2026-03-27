@@ -174,7 +174,7 @@ export default function ProjectDetailPage() {
 
   return (
     <HubLayout>
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6">
         {/* Header with breadcrumbs */}
         <PageHeader
           title={project.name}
