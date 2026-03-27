@@ -2,7 +2,7 @@
  * ProjectGanttChart — Timeline horizontal de projetos e milestones
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
