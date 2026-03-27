@@ -391,7 +391,7 @@ export function UserPermissionsV2Sheet({
                 <div className="flex items-center justify-center py-8">
                   <LoadingSpinner size="sm" />
                 </div>
-              ) : isAdmin && !currentUserIsAdmin ? (
+              ) : isAdmin && !isBuAdmin ? (
                 <div className="text-center py-8">
                   <Shield className="h-10 w-10 mx-auto text-primary mb-2" />
                   <p className="font-medium text-sm">Administrador da BU</p>
