@@ -95,6 +95,7 @@ export interface GanttItem {
   owner_id?: string;
   parent_id?: string;
   dependencies?: string[];
+  notes?: string | null;
 }
 
 // ── Filters ──
