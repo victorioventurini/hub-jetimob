@@ -96,12 +96,17 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
     const tlEnd = addDays(dateMax(allEnds), 7);
     const totalDays = differenceInDays(tlEnd, tlStart);
 
+    const yAxisWidth = isMobile ? 100 : 200;
+    const maxNameLen = isMobile ? 14 : 30;
+
     const data: ChartDatum[] = validItems.map((item) => {
       const s = parseISO(item.start_date);
       const e = parseISO(item.due_date);
       const startOffset = differenceInDays(s, tlStart);
       const duration = Math.max(differenceInDays(e, s), 1);
-      const prefix = item.type === 'milestone' ? '  ▸ ' : '';
+      const prefix = item.type === 'milestone' ? '▸ ' : '';
+      const rawName = `${prefix}${item.name}`;
+      const truncatedName = rawName.length > maxNameLen ? rawName.slice(0, maxNameLen) + '…' : rawName;
 
       return {
         name: `${prefix}${item.name}`,
