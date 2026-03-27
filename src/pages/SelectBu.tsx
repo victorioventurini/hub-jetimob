@@ -74,11 +74,8 @@ export default function SelectBu() {
       // Single BU user - select and redirect
       selectBu(userBus[0].bu_id);
       navigate(returnTo, { replace: true });
-    } else if (userBus.length === 0) {
-      // No BUs - redirect to dashboard (will show appropriate error)
-      console.warn("[SelectBu] User has no BU access, redirecting to home");
-      navigate("/", { replace: true });
     }
+    // userBus.length === 0: permanece na página e exibe estado vazio
   }, [isLoading, userBus, selectBu, navigate, returnTo]);
 
   const roleLabels: Record<string, string> = {
