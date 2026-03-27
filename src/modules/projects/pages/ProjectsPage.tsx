@@ -122,9 +122,9 @@ export default function ProjectsPage() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-lg" />
+          <div className="flex flex-col gap-3">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
         ) : error ? (
@@ -134,7 +134,7 @@ export default function ProjectsPage() {
         ) : viewState.value === 'gantt' ? (
           <ProjectGanttChart items={ganttItems} excludedCount={ganttExcluded} />
         ) : projects && projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}

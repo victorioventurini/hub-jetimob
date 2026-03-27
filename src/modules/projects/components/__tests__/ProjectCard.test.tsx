@@ -35,16 +35,6 @@ describe('ProjectCard', () => {
     expect(screen.getByText('Test Project')).toBeInTheDocument();
   });
 
-  it('renders project description', () => {
-    renderWithProviders(<ProjectCard project={createMockProject()} />);
-    expect(screen.getByText('A test project')).toBeInTheDocument();
-  });
-
-  it('renders health badge', () => {
-    renderWithProviders(<ProjectCard project={createMockProject()} />);
-    expect(screen.getByText('No prazo')).toBeInTheDocument();
-  });
-
   it('renders status badge', () => {
     renderWithProviders(<ProjectCard project={createMockProject()} />);
     expect(screen.getByText('Em andamento')).toBeInTheDocument();
@@ -55,9 +45,19 @@ describe('ProjectCard', () => {
     expect(screen.getByText('João Silva')).toBeInTheDocument();
   });
 
-  it('renders progress bar label', () => {
+  it('renders progress percentage', () => {
     renderWithProviders(<ProjectCard project={createMockProject()} />);
-    expect(screen.getByText('2/5')).toBeInTheDocument();
+    expect(screen.getByText('40%')).toBeInTheDocument();
+  });
+
+  it('renders milestone count', () => {
+    renderWithProviders(<ProjectCard project={createMockProject()} />);
+    expect(screen.getByText('5 milestones')).toBeInTheDocument();
+  });
+
+  it('renders singular milestone label', () => {
+    renderWithProviders(<ProjectCard project={createMockProject({ milestones_total: 1 })} />);
+    expect(screen.getByText('1 milestone')).toBeInTheDocument();
   });
 
   it('calls onClick with project id', () => {
@@ -67,11 +67,12 @@ describe('ProjectCard', () => {
     expect(onClick).toHaveBeenCalledWith('proj-1');
   });
 
-  it('renders external link when present', () => {
+  it('renders external link with label when present', () => {
     renderWithProviders(
-      <ProjectCard project={createMockProject({ external_url: 'https://example.com' })} />
+      <ProjectCard project={createMockProject({ external_url: 'https://app.clickup.com/123' })} />
     );
-    const link = document.querySelector('a[href="https://example.com"]');
+    expect(screen.getByText('ClickUp')).toBeInTheDocument();
+    const link = document.querySelector('a[href="https://app.clickup.com/123"]');
     expect(link).toBeInTheDocument();
   });
 
@@ -81,7 +82,7 @@ describe('ProjectCard', () => {
     expect(link).not.toBeInTheDocument();
   });
 
-  it('renders KR badges when krs are present', () => {
+  it('renders KR badges with OKR prefix', () => {
     renderWithProviders(
       <ProjectCard project={createMockProject({
         krs: [
@@ -89,7 +90,7 @@ describe('ProjectCard', () => {
         ],
       })} />
     );
-    expect(screen.getByText('Aumentar conversão')).toBeInTheDocument();
+    expect(screen.getByText('OKR · Aumentar conversão')).toBeInTheDocument();
   });
 
   it('does not render owner when null', () => {
@@ -97,8 +98,21 @@ describe('ProjectCard', () => {
     expect(screen.queryByText('João Silva')).not.toBeInTheDocument();
   });
 
-  it('renders due date', () => {
+  it('renders due date with "Até" prefix', () => {
     renderWithProviders(<ProjectCard project={createMockProject()} />);
-    expect(screen.getByText('30 jun')).toBeInTheDocument();
+    expect(screen.getByText(/Até 30 jun/)).toBeInTheDocument();
+  });
+
+  it('renders team badges when teams are present', () => {
+    renderWithProviders(
+      <ProjectCard project={createMockProject({
+        teams: [
+          { team_id: 't-1', team_name: 'Produto' },
+          { team_id: 't-2', team_name: 'Engenharia' },
+        ],
+      })} />
+    );
+    expect(screen.getByText('Produto')).toBeInTheDocument();
+    expect(screen.getByText('Engenharia')).toBeInTheDocument();
   });
 });
