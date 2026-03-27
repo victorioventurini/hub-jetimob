@@ -75,10 +75,10 @@ export default function ProjectsPage() {
     createProject.mutate({
       name: values.name,
       description: values.description || null,
-      owner_id: values.owner_id || writerProfileId,
+      owner_id: values.owner_id,
       status: values.status,
-      start_date: values.start_date || null,
-      due_date: values.due_date || null,
+      start_date: values.start_date,
+      due_date: values.due_date,
       external_url: values.external_url || null,
       bu_id: currentBuId,
       team_ids: values.team_ids?.length ? values.team_ids : undefined,

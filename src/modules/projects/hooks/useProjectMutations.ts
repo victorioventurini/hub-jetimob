@@ -21,8 +21,8 @@ export function useCreateProject() {
           description: projectData.description ?? null,
           owner_id: projectData.owner_id,
           status: projectData.status ?? 'planned',
-          start_date: projectData.start_date ?? null,
-          due_date: projectData.due_date ?? null,
+          start_date: projectData.start_date,
+          due_date: projectData.due_date,
           external_url: projectData.external_url ?? null,
           bu_id: projectData.bu_id,
         })
