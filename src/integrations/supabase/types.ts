@@ -4018,6 +4018,49 @@ export type Database = {
           },
         ]
       }
+      milestone_krs: {
+        Row: {
+          created_at: string
+          impact: Database["public"]["Enums"]["project_impact"]
+          key_result_id: string
+          milestone_id: string
+        }
+        Insert: {
+          created_at?: string
+          impact?: Database["public"]["Enums"]["project_impact"]
+          key_result_id: string
+          milestone_id: string
+        }
+        Update: {
+          created_at?: string
+          impact?: Database["public"]["Enums"]["project_impact"]
+          key_result_id?: string
+          milestone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestone_krs_key_result_id_fkey"
+            columns: ["key_result_id"]
+            isOneToOne: false
+            referencedRelation: "okr_team_key_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "milestone_krs_key_result_id_fkey"
+            columns: ["key_result_id"]
+            isOneToOne: false
+            referencedRelation: "v_pending_checkins"
+            referencedColumns: ["kr_id"]
+          },
+          {
+            foreignKeyName: "milestone_krs_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           created_at: string
