@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { format, differenceInDays, min as dateMin, max as dateMax, parseISO, addDays } from 'date-fns';
+import { format, differenceInDays, min as dateMin, max as dateMax, parseISO, addDays, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { ProjectMilestone, MilestoneStatus } from '../types';
 import { AlertCircle } from 'lucide-react';
@@ -54,7 +54,7 @@ interface ChartDatum {
 
 export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDate }: MilestoneGanttChartProps) {
   const activeMilestones = useMemo(
-    () => milestones.filter((m) => !m.deleted_at && m.due_date),
+    () => milestones.filter((m) => !m.deleted_at && m.due_date && isValid(parseISO(m.due_date)) && isValid(parseISO(m.created_at))),
     [milestones]
   );
 

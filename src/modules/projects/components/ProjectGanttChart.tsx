@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { format, differenceInDays, min as dateMin, max as dateMax, parseISO, addDays } from 'date-fns';
+import { format, differenceInDays, min as dateMin, max as dateMax, parseISO, addDays, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { GanttItem, ProjectHealth, ProjectStatus, MilestoneStatus } from '../types';
 import { AlertCircle } from 'lucide-react';
@@ -78,16 +78,23 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
   const navigate = useNavigate();
 
   const { data, timelineStart, timelineEnd, monthTicks } = useMemo(() => {
-    if (!items.length) return { data: [], timelineStart: new Date(), timelineEnd: new Date(), monthTicks: [] };
+    // Filter out items with invalid dates defensively
+    const validItems = items.filter((i) => {
+      const s = parseISO(i.start_date);
+      const e = parseISO(i.due_date);
+      return isValid(s) && isValid(e);
+    });
 
-    const allStarts = items.map((i) => parseISO(i.start_date));
-    const allEnds = items.map((i) => parseISO(i.due_date));
+    if (!validItems.length) return { data: [], timelineStart: new Date(), timelineEnd: new Date(), monthTicks: [] };
+
+    const allStarts = validItems.map((i) => parseISO(i.start_date));
+    const allEnds = validItems.map((i) => parseISO(i.due_date));
 
     const tlStart = addDays(dateMin(allStarts), -7);
     const tlEnd = addDays(dateMax(allEnds), 7);
     const totalDays = differenceInDays(tlEnd, tlStart);
 
-    const data: ChartDatum[] = items.map((item) => {
+    const data: ChartDatum[] = validItems.map((item) => {
       const s = parseISO(item.start_date);
       const e = parseISO(item.due_date);
       const startOffset = differenceInDays(s, tlStart);
