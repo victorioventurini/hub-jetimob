@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History, Wand2 } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
+import { ProjectsForKrSection } from '@/modules/projects/components/ProjectsForKrSection';
 import { useKrInitiativesCount } from '../../hooks/useInitiatives';
 import { useProfileId } from '@/hooks/useIdentity';
 import { cn } from '@/lib/utils';
