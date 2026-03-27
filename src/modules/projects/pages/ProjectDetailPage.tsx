@@ -149,19 +149,19 @@ export default function ProjectDetailPage() {
   };
 
   const headerActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {project.external_url && (
         <Button variant="outline" size="sm" asChild>
           <a href={project.external_url} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-4 w-4 mr-1" />
-            Link externo
+            <ExternalLink className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Link externo</span>
           </a>
         </Button>
       )}
       {canEditProject && (
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Pencil className="h-4 w-4 mr-1" />
-          Editar
+          <Pencil className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Editar</span>
         </Button>
       )}
       {canDeleteProject && (

@@ -2,7 +2,7 @@
  * MilestoneGanttChart — Timeline horizontal dos milestones de um projeto
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -53,6 +53,8 @@ interface ChartDatum {
 }
 
 export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDate }: MilestoneGanttChartProps) {
+  const [containerWidth, setContainerWidth] = useState(0);
+  const isMobile = containerWidth > 0 && containerWidth < 640;
   const activeMilestones = useMemo(
     () => milestones.filter((m) => !m.deleted_at && m.due_date && isValid(parseISO(m.due_date)) && isValid(parseISO(m.created_at))),
     [milestones]
@@ -78,13 +80,15 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
       (a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '') || a.created_at.localeCompare(b.created_at)
     );
 
+    const maxNameLen = isMobile ? 14 : 24;
     const data: ChartDatum[] = sorted.map((m) => {
       const s = parseISO(m.created_at);
       const e = parseISO(m.due_date!);
       const isOverdue = m.status !== 'done' && e < today;
+      const truncName = m.name.length > maxNameLen ? m.name.slice(0, maxNameLen) + '…' : m.name;
 
       return {
-        name: m.name,
+        name: truncName,
         startOffset: differenceInDays(s, tlStart),
         duration: Math.max(differenceInDays(e, s), 1),
         milestone: m,
@@ -106,12 +110,18 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
     );
   }
 
-  const barHeight = 24;
+  const barHeight = isMobile ? 20 : 24;
   const chartHeight = Math.max(data.length * (barHeight + 8) + 60, 160);
+  const yAxisWidth = isMobile ? 100 : 160;
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
-      <div style={{ minWidth: Math.max(500, totalDays * 3) }}>
+      <div
+        style={{ minWidth: Math.max(isMobile ? 400 : 500, totalDays * (isMobile ? 2 : 3)) }}
+        ref={(el) => {
+          if (el && el.clientWidth !== containerWidth) setContainerWidth(el.clientWidth);
+        }}
+      >
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart
             data={data}
@@ -133,8 +143,8 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
             <YAxis
               type="category"
               dataKey="name"
-              width={160}
-              tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+              width={yAxisWidth}
+              tick={{ fontSize: isMobile ? 10 : 12, fill: 'hsl(var(--foreground))' }}
               axisLine={false}
               tickLine={false}
             />

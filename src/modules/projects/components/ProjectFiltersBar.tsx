@@ -44,7 +44,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         options={statusOptions}
         includeAllOption
         allOptionLabel="Todos os status"
-        triggerClassName="w-[170px]"
+        triggerClassName="w-full sm:w-[170px]"
       />
 
       {/* Responsável */}
@@ -53,7 +53,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         onValueChange={(v) => onFiltersChange({ ...filters, owner_id: v ?? undefined })}
         placeholder="Responsável"
         allowNone={false}
-        className="w-[200px]"
+        className="w-full sm:w-[200px]"
       />
 
       {/* Time */}
@@ -63,7 +63,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         includeAll
         allLabel="Todos os times"
         placeholder="Time"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-full sm:w-[180px]"
       />
 
       {/* Vinculação a KR */}
@@ -84,7 +84,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         options={krLinkOptions}
         includeAllOption
         allOptionLabel="KR: Todos"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-full sm:w-[180px]"
       />
     </ListPageFilters>
   );

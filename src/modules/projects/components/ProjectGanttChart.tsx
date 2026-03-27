@@ -2,7 +2,7 @@
  * ProjectGanttChart — Timeline horizontal de projetos e milestones
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
@@ -76,6 +76,8 @@ interface ChartDatum {
 
 export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartProps) {
   const navigate = useNavigate();
+  const [containerWidth, setContainerWidth] = useState(0);
+  const isMobile = containerWidth > 0 && containerWidth < 640;
 
   const { data, timelineStart, timelineEnd, monthTicks } = useMemo(() => {
     // Filter out items with invalid dates defensively
@@ -94,15 +96,20 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
     const tlEnd = addDays(dateMax(allEnds), 7);
     const totalDays = differenceInDays(tlEnd, tlStart);
 
+    const yAxisWidth = isMobile ? 100 : 200;
+    const maxNameLen = isMobile ? 14 : 30;
+
     const data: ChartDatum[] = validItems.map((item) => {
       const s = parseISO(item.start_date);
       const e = parseISO(item.due_date);
       const startOffset = differenceInDays(s, tlStart);
       const duration = Math.max(differenceInDays(e, s), 1);
-      const prefix = item.type === 'milestone' ? '  ▸ ' : '';
+      const prefix = item.type === 'milestone' ? '▸ ' : '';
+      const rawName = `${prefix}${item.name}`;
+      const truncatedName = rawName.length > maxNameLen ? rawName.slice(0, maxNameLen) + '…' : rawName;
 
       return {
-        name: `${prefix}${item.name}`,
+        name: truncatedName,
         startOffset,
         duration,
         item,
@@ -144,8 +151,9 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
   }
 
   const totalDays = differenceInDays(timelineEnd, timelineStart);
-  const barHeight = 28;
+  const barHeight = isMobile ? 22 : 28;
   const chartHeight = Math.max(data.length * (barHeight + 8) + 60, 200);
+  const yAxisWidth = isMobile ? 100 : 200;
 
   return (
     <div className="space-y-2">
@@ -156,13 +164,18 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <div style={{ minWidth: Math.max(800, totalDays * 4) }}>
+      <div
+        className="overflow-x-auto rounded-lg border bg-card"
+        ref={(el) => {
+          if (el && el.clientWidth !== containerWidth) setContainerWidth(el.clientWidth);
+        }}
+      >
+        <div style={{ minWidth: Math.max(isMobile ? 500 : 800, totalDays * (isMobile ? 2 : 4)) }}>
           <ResponsiveContainer width="100%" height={chartHeight}>
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 16, right: 24, bottom: 16, left: 0 }}
+              margin={{ top: 12, right: 16, bottom: 12, left: 0 }}
               barSize={barHeight}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
@@ -180,8 +193,8 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
               <YAxis
                 type="category"
                 dataKey="name"
-                width={200}
-                tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+                width={yAxisWidth}
+                tick={{ fontSize: isMobile ? 10 : 12, fill: 'hsl(var(--foreground))' }}
                 axisLine={false}
                 tickLine={false}
               />
