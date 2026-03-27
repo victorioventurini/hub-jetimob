@@ -128,12 +128,18 @@ export function ProjectDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Início</Label>
+              <Label htmlFor="start_date">Início *</Label>
               <Input id="start_date" type="date" {...form.register('start_date')} />
+              {form.formState.errors.start_date && (
+                <p className="text-xs text-destructive">{form.formState.errors.start_date.message}</p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due_date">Prazo</Label>
+              <Label htmlFor="due_date">Prazo *</Label>
               <Input id="due_date" type="date" {...form.register('due_date')} />
+              {form.formState.errors.due_date && (
+                <p className="text-xs text-destructive">{form.formState.errors.due_date.message}</p>
+              )}
             </div>
           </div>
 
