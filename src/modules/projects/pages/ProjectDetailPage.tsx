@@ -7,7 +7,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar, List, GanttChart } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
@@ -22,6 +23,7 @@ import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { ProjectProgressBar } from '../components/ProjectProgressBar';
 import { MilestoneList } from '../components/MilestoneList';
 import { MilestoneCreateForm } from '../components/MilestoneCreateForm';
+import { MilestoneGanttChart } from '../components/MilestoneGanttChart';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectKrLinkSection } from '../components/ProjectKrLinkSection';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,6 +43,7 @@ export default function ProjectDetailPage() {
   const { currentBuId } = useBu();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [milestoneView, setMilestoneView] = useState<'list' | 'gantt'>('list');
 
   const { data: project, isLoading } = useProject(id);
   const { data: milestones } = useMilestones(id);
@@ -240,19 +243,59 @@ export default function ProjectDetailPage() {
         {/* Milestones */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Milestones</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Milestones</CardTitle>
+              <div className="flex items-center gap-0.5 p-1 bg-muted rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMilestoneView('list')}
+                  className={cn(
+                    "h-7 px-2 gap-1 rounded-md transition-all text-xs",
+                    milestoneView === 'list'
+                      ? "bg-background shadow-sm text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                  )}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Lista</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMilestoneView('gantt')}
+                  className={cn(
+                    "h-7 px-2 gap-1 rounded-md transition-all text-xs",
+                    milestoneView === 'gantt'
+                      ? "bg-background shadow-sm text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                  )}
+                >
+                  <GanttChart className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Gantt</span>
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <MilestoneList
-              milestones={milestones || project.milestones || []}
-              projectId={project.id}
-              onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
-              onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
-              onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
-              canEditKrLinks={canEditMilestone}
-              canEdit={canEditMilestone}
-              ownerProfiles={ownerProfiles}
-            />
+            {milestoneView === 'gantt' ? (
+              <MilestoneGanttChart
+                milestones={milestones || project.milestones || []}
+                projectStartDate={project.start_date}
+                projectDueDate={project.due_date}
+              />
+            ) : (
+              <MilestoneList
+                milestones={milestones || project.milestones || []}
+                projectId={project.id}
+                onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
+                onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
+                onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
+                canEditKrLinks={canEditMilestone}
+                canEdit={canEditMilestone}
+                ownerProfiles={ownerProfiles}
+              />
+            )}
             {canAddMilestone && (
               <MilestoneCreateForm
                 onSubmit={handleAddMilestone}
