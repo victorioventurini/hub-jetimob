@@ -151,5 +151,6 @@ export interface UpdateMilestoneInput {
   owner_id?: string | null;
   status?: MilestoneStatus;
   due_date?: string | null;
+  notes?: string | null;
   sort_order?: number;
 }
