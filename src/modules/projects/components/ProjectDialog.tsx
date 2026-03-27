@@ -19,11 +19,11 @@ import type { ProjectStatus } from '../types';
 const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   description: z.string().optional(),
-  owner_id: z.string().optional(),
+  owner_id: z.string().min(1, 'Responsável obrigatório'),
   team_ids: z.array(z.string()).optional(),
   status: z.enum(['planned', 'in_progress', 'paused', 'done', 'cancelled']).default('planned'),
-  start_date: z.string().optional(),
-  due_date: z.string().optional(),
+  start_date: z.string().min(1, 'Data de início obrigatória'),
+  due_date: z.string().min(1, 'Data de prazo obrigatória'),
   external_url: z.string().url('URL inválida').optional().or(z.literal('')),
 });
 
@@ -92,7 +92,7 @@ export function ProjectDialog({
 
           {/* Owner selector */}
           <div className="space-y-2">
-            <Label>Responsável</Label>
+            <Label>Responsável *</Label>
             <Controller
               name="owner_id"
               control={form.control}
@@ -105,6 +105,9 @@ export function ProjectDialog({
                 />
               )}
             />
+            {form.formState.errors.owner_id && (
+              <p className="text-xs text-destructive">{form.formState.errors.owner_id.message}</p>
+            )}
           </div>
 
           {/* Teams selector */}
@@ -125,12 +128,18 @@ export function ProjectDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Início</Label>
+              <Label htmlFor="start_date">Início *</Label>
               <Input id="start_date" type="date" {...form.register('start_date')} />
+              {form.formState.errors.start_date && (
+                <p className="text-xs text-destructive">{form.formState.errors.start_date.message}</p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due_date">Prazo</Label>
+              <Label htmlFor="due_date">Prazo *</Label>
               <Input id="due_date" type="date" {...form.register('due_date')} />
+              {form.formState.errors.due_date && (
+                <p className="text-xs text-destructive">{form.formState.errors.due_date.message}</p>
+              )}
             </div>
           </div>
 
