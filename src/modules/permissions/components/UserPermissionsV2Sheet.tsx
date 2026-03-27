@@ -39,6 +39,7 @@ import {
 import { PermissionDiffDialog } from "./PermissionDiffDialog";
 import { RevokeAccessDialog } from "./RevokeAccessDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { SURFACE_COLORS } from "@/lib/colors";
 
 const SURFACE_ICONS = {
