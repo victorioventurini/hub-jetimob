@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History, Wand2 } from 'lucide-react';
 import { InitiativesList } from '../initiatives';
+import { ProjectsForKrSection } from '@/modules/projects/components/ProjectsForKrSection';
 import { useKrInitiativesCount } from '../../hooks/useInitiatives';
 import { useProfileId } from '@/hooks/useIdentity';
 import { cn } from '@/lib/utils';
@@ -676,7 +677,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
       
       {/* Initiatives section - expandable for team KRs */}
       {type === 'team' && showInitiatives && (
-        <div className="px-4 sm:px-6 pb-4 pt-2 bg-muted/10">
+        <div className="px-4 sm:px-6 pb-4 pt-2 bg-muted/10 space-y-4">
           <InitiativesList 
             krId={kr.id} 
             krTitle={kr.title} 
@@ -689,6 +690,10 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
             krTeamId={kr.team_id}
             canEdit={canDoEdit || canDoCheckin}
             filterForUserId={filterInitiativesForUser}
+          />
+          <ProjectsForKrSection
+            krId={kr.id}
+            canEdit={canDoEdit || canDoCheckin}
           />
         </div>
       )}
