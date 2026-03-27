@@ -64,6 +64,7 @@ export default function ProjectsPage() {
   }, [statusState, ownerState, teamState, setSearch, krLinkState]);
 
   const { data: projects, isLoading, error } = useProjects(filters);
+  const { items: ganttItems, excludedCount: ganttExcluded } = useGanttData(projects);
   const createProject = useCreateProject();
   const { canCreateProject } = useProjectPermissionsV2();
 
