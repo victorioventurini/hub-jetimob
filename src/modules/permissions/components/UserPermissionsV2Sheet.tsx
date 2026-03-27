@@ -39,6 +39,7 @@ import {
 import { PermissionDiffDialog } from "./PermissionDiffDialog";
 import { RevokeAccessDialog } from "./RevokeAccessDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { SURFACE_COLORS } from "@/lib/colors";
 
 const SURFACE_ICONS = {
@@ -73,7 +74,8 @@ export function UserPermissionsV2Sheet({
   user,
 }: UserPermissionsV2SheetProps) {
   const { isAdmin: currentUserIsAdmin, role: currentUserRole } = useAuth();
-  
+  const { isWildcard: currentUserIsWildcard } = usePermissions();
+
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
   const [permissionSearch, setPermissionSearch] = useState("");
@@ -265,11 +267,13 @@ export function UserPermissionsV2Sheet({
   const isSaving = assignTemplate.isPending || removeTemplate.isPending || isApplying;
 
   // Permission management rules:
-  // - super_admin can edit admin and member permissions
-  // - admin can only edit member permissions (not other admins)
+  // - super_admin can edit anyone's permissions
+  // - BU admin (isWildcard) can edit member permissions (not other admins)
+  // - currentUserIsAdmin includes platform-level admin/super_admin roles
   const isSuperAdmin = currentUserRole === 'super_admin';
+  const isBuAdmin = currentUserIsWildcard; // includes super_admin + BU admin
   const targetIsAdmin = user?.role_in_bu === 'admin';
-  const canEdit = isSuperAdmin || (currentUserIsAdmin && !targetIsAdmin);
+  const canEdit = isSuperAdmin || (isBuAdmin && !targetIsAdmin);
 
   return (
     <>
@@ -309,7 +313,7 @@ export function UserPermissionsV2Sheet({
           </SheetHeader>
           
           {/* Revoke Access Button */}
-          {user?.role_in_bu && (currentUserIsAdmin || !isAdmin) && (
+          {user?.role_in_bu && (isBuAdmin || !isAdmin) && (
             <Button
               variant="ghost"
               size="sm"
@@ -387,7 +391,7 @@ export function UserPermissionsV2Sheet({
                 <div className="flex items-center justify-center py-8">
                   <LoadingSpinner size="sm" />
                 </div>
-              ) : isAdmin && !currentUserIsAdmin ? (
+              ) : isAdmin && !isBuAdmin ? (
                 <div className="text-center py-8">
                   <Shield className="h-10 w-10 mx-auto text-primary mb-2" />
                   <p className="font-medium text-sm">Administrador da BU</p>
