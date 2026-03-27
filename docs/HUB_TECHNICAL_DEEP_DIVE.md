@@ -2112,6 +2112,7 @@ Entidades suportadas: `ticket`, `team`, `asset`, `okr_team_kr`, etc.
 | Home | `modules/home/types.ts` | `hooks/useLeaderDashboard.ts` | `components/LeaderDashboard.tsx` |
 | Hub Admin | `routes/hub.routes.tsx` | `modules/integrations/types.ts` | `modules/automations/types.ts` |
 | Permissões | `modules/permissions/types.ts` | `hooks/` | Políticas RLS no banco |
+| Projetos | `modules/projects/types.ts` | `hooks/useProjects.ts` | `components/ProjectGanttChart.tsx` |
 | Partners | `modules/partners/types.ts` | `hooks/` | `pages/` |
 | Users Global | `modules/users-global/types.ts` | `hooks/` | `pages/GlobalUsersPage.tsx` |
 
