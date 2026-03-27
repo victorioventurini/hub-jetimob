@@ -19,11 +19,11 @@ import type { ProjectStatus } from '../types';
 const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   description: z.string().optional(),
-  owner_id: z.string().optional(),
+  owner_id: z.string().min(1, 'Responsável obrigatório'),
   team_ids: z.array(z.string()).optional(),
   status: z.enum(['planned', 'in_progress', 'paused', 'done', 'cancelled']).default('planned'),
-  start_date: z.string().optional(),
-  due_date: z.string().optional(),
+  start_date: z.string().min(1, 'Data de início obrigatória'),
+  due_date: z.string().min(1, 'Data de prazo obrigatória'),
   external_url: z.string().url('URL inválida').optional().or(z.literal('')),
 });
 
