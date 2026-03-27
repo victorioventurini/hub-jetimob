@@ -30,4 +30,6 @@ export const projectsKeys = {
     ['projects', 'projects-for-linking', buId] as const,
   milestoneKrs: (milestoneId: string) =>
     ['projects', 'milestone-krs', milestoneId] as const,
+  milestoneKrsByKr: (krId: string) =>
+    ['projects', 'milestone-krs-by-kr', krId] as const,
 };

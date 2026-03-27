@@ -9,6 +9,8 @@ export { useMilestones } from './useMilestones';
 export { useProjectsForWizard } from './useProjectsForWizard';
 export { useProjectsForKr } from './useProjectsForKr';
 export type { ProjectForKr } from './useProjectsForKr';
+export { useMilestonesForKr } from './useMilestonesForKr';
+export type { MilestoneForKr } from './useMilestonesForKr';
 
 // Mutations
 export { useCreateProject, useUpdateProject, useSoftDeleteProject } from './useProjectMutations';
