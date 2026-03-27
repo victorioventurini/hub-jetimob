@@ -78,10 +78,17 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
   const navigate = useNavigate();
 
   const { data, timelineStart, timelineEnd, monthTicks } = useMemo(() => {
-    if (!items.length) return { data: [], timelineStart: new Date(), timelineEnd: new Date(), monthTicks: [] };
+    // Filter out items with invalid dates defensively
+    const validItems = items.filter((i) => {
+      const s = parseISO(i.start_date);
+      const e = parseISO(i.due_date);
+      return isValid(s) && isValid(e);
+    });
 
-    const allStarts = items.map((i) => parseISO(i.start_date));
-    const allEnds = items.map((i) => parseISO(i.due_date));
+    if (!validItems.length) return { data: [], timelineStart: new Date(), timelineEnd: new Date(), monthTicks: [] };
+
+    const allStarts = validItems.map((i) => parseISO(i.start_date));
+    const allEnds = validItems.map((i) => parseISO(i.due_date));
 
     const tlStart = addDays(dateMin(allStarts), -7);
     const tlEnd = addDays(dateMax(allEnds), 7);
