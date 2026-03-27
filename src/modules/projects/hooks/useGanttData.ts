@@ -41,6 +41,7 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
         status: project.status,
         health: project.health,
         owner_id: project.owner_id,
+        completion_pct: project.completion_pct,
       });
 
       // Milestone bars under project
