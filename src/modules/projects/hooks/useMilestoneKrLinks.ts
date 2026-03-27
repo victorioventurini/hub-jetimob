@@ -33,6 +33,7 @@ export function useAddMilestoneKrLink() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.key_result_id) });
       toast.success('KR vinculada ao milestone');
     },
     onError: (error) => {
