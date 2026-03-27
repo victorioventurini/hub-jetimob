@@ -80,13 +80,15 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
       (a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '') || a.created_at.localeCompare(b.created_at)
     );
 
+    const maxNameLen = isMobile ? 14 : 24;
     const data: ChartDatum[] = sorted.map((m) => {
       const s = parseISO(m.created_at);
       const e = parseISO(m.due_date!);
       const isOverdue = m.status !== 'done' && e < today;
+      const truncName = m.name.length > maxNameLen ? m.name.slice(0, maxNameLen) + '…' : m.name;
 
       return {
-        name: m.name,
+        name: truncName,
         startOffset: differenceInDays(s, tlStart),
         duration: Math.max(differenceInDays(e, s), 1),
         milestone: m,
