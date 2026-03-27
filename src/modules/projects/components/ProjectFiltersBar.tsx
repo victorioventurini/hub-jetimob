@@ -63,7 +63,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         includeAll
         allLabel="Todos os times"
         placeholder="Time"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-full sm:w-[180px]"
       />
 
       {/* Vinculação a KR */}
