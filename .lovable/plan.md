@@ -1,97 +1,78 @@
 
 
-## Plano: Vinculação de Milestones a KRs
+## Plano: Visualização Gantt no Módulo de Projetos
 
-### Pré-checklist ✅ Concluído
+### Pré-checklist ✅
 
-| Documento | Verificado | Achados relevantes |
-|-----------|-----------|-------------------|
-| TCR v3.18.0 §3.3.1 | ✅ | 5 tabelas do módulo Projects; `milestone_krs` NÃO existe; enum `project_impact` reutilizável |
-| DATA_MODEL_REGISTRY | ✅ | Confirmado: nenhuma tabela `milestone_krs` no schema |
-| IDENTITY_CONVENTION v2.2.0 | ✅ | `owner_id = profiles.id`; usar `my_profile_id()` em RLS (nunca `auth.uid()` direto) |
-| RBAC_TEMPLATES_V3 | ✅ | `projects_manager` (7 keys) e `projects_admin` (8 keys); `collaborator_base` tem `project.read` + `milestone.read` |
-| BU_SCOPED_SUPABASE_RULES | ✅ | `useOptionalBuClient` + `.eq('bu_id')` obrigatório |
-| PERMISSIONS_AND_RBAC_MODEL | ✅ | `useProjectPermissionsV2` com `canEditMilestone` como gate |
-| QUERY_KEYS_STANDARD | ✅ | Keys centralizadas em `projectsKeys` |
-| RLS existente (`project_krs`) | ✅ | Padrão: SELECT via `is_current_bu()` do projeto pai; INSERT/DELETE via owner OR `is_bu_admin` OR `is_leader_of_project_owner` |
+| Documento | Verificado | Achados |
+|-----------|-----------|---------|
+| TCR — Módulo Projects | ✅ | `GanttItem` tipado; query key `gantt()` já registrada |
+| BU_SCOPED_RULES | ✅ | `useOptionalBuClient` + `.eq('bu_id')` |
+| QUERY_KEYS_STANDARD | ✅ | `projectsKeys.gantt(buId, filters)` já existe |
+| Dependências | ✅ | `recharts` já instalado; `date-fns` disponível |
+| Padrão de view toggle | ✅ | `ViewOptionsBar` + viewMode via URL state (padrão do OKRs/KPIs) |
 
 ### O que será feito
 
-#### 1. Migration: tabela `milestone_krs`
+#### 1. Hook `useGanttData.ts`
 
-Nova junction table espelhando exatamente o padrão de `project_krs`:
+- Reutiliza o resultado de `useProjects(filters)` — sem query adicional ao DB
+- Transforma `ProjectWithRelations[]` em `GanttItem[]` (1 item por projeto + 1 por milestone com `parent_id`)
+- Filtra itens sem `start_date` e `due_date` (exibe aviso para projetos sem datas)
+- Query key: `projectsKeys.gantt(buId, filters)` (já existente)
+
+#### 2. Componente `ProjectGanttChart.tsx`
+
+Gráfico de timeline horizontal usando Recharts (`BarChart` com barras horizontais):
 
 ```text
-milestone_krs
-├── milestone_id  uuid FK → project_milestones(id) ON DELETE CASCADE
-├── key_result_id uuid FK → okr_team_key_results(id) ON DELETE CASCADE
-├── impact        project_impact NOT NULL DEFAULT 'medium'
-├── created_at    timestamptz NOT NULL DEFAULT now()
-└── PK (milestone_id, key_result_id)
+┌──────────────────────────────────────────────────────┐
+│  Projeto A     ████████████████████                  │
+│    ▸ Marco 1        ██████                           │
+│    ▸ Marco 2              ████████                   │
+│  Projeto B              ██████████████████           │
+│    ▸ Marco 1                 ████                    │
+│                                                      │
+│  Jan  Fev  Mar  Abr  Mai  Jun  Jul  Ago  Set  Out   │
+└──────────────────────────────────────────────────────┘
 ```
 
-**RLS** (espelhando `project_krs` policies exatamente):
-- **SELECT**: JOIN com `project_milestones` → `projects` para verificar `is_current_bu(bu_id)` e `deleted_at IS NULL`
-- **INSERT/DELETE**: Mesmo JOIN + `owner_id = my_profile_id() OR is_bu_admin() OR is_leader_of_project_owner()`
+- Barras coloridas por status/health (reutiliza cores do `ProjectHealthBadge`)
+- Projetos em negrito, milestones indentados com tamanho menor
+- Tooltip com nome, datas, status, health
+- Responsivo com scroll horizontal em mobile
+- Click na barra navega para `/projects/:id`
 
-Sem `bu_id` própria — herda via JOIN (mesmo padrão de `project_krs`).
+#### 3. Toggle Lista/Gantt na `ProjectsPage.tsx`
 
-#### 2. Hooks de mutação: `useMilestoneKrLinks.ts`
+- Novo `ProjectViewToggle` (padrão `CycleCheckinsViewToggle`)
+- viewMode via URL state: `useUrlState({ key: 'view', defaultValue: 'list' })`
+- Integrado no `ViewOptionsBar` com contador de resultados
+- Quando `view=gantt`, renderiza `ProjectGanttChart` em vez do grid de cards
 
-Espelha `useProjectKrLinks.ts`:
-- `useAddMilestoneKrLink()` — insert em `milestone_krs`
-- `useRemoveMilestoneKrLink()` — delete de `milestone_krs`
-- Invalidação: `milestones(projectId)`, `detail(projectId)`, `byKr(krId)`, novo `milestoneKrs(milestoneId)`
+#### 4. Componente `ProjectViewToggle.tsx`
 
-#### 3. Hook de leitura: `useMilestoneKrs.ts`
-
-- Query: `milestone_krs` JOIN `okr_team_key_results` → retorna `{ key_result_id, kr_title, impact }[]`
-- Query key: `milestoneKrs(milestoneId)` (nova entry em `projectsKeys`)
-
-#### 4. Query key
-
-Adicionar em `projectsKeys`:
-```typescript
-milestoneKrs: (milestoneId: string) => ['projects', 'milestone-krs', milestoneId] as const
-```
-
-#### 5. Componente `MilestoneKrLinkSection.tsx`
-
-Reutiliza o padrão visual do `ProjectKrLinkSection`:
-- Props: `milestoneId`, `projectId`, `canEdit`
-- Lista KRs vinculadas com badge de impacto
-- Popover com busca (reutiliza `useKrsForLinking`)
-- Seletor de impacto + vincular/desvincular
-
-#### 6. Integração na `MilestoneList.tsx`
-
-- Cada milestone ganha botão chevron para expandir
-- Ao expandir, renderiza `MilestoneKrLinkSection` inline
-- Nova prop `canEditKrLinks?: boolean` controlada por `canEditMilestone`
-- Nova prop `projectId: string` para passagem ao componente de links
-
-### Conformidade
-
-| Regra | Status |
-|-------|--------|
-| BU-scoped client (`useOptionalBuClient`) | ✅ |
-| Frontend `.eq('bu_id')` via JOIN | ✅ |
-| Query keys centralizadas | ✅ |
-| RBAC via `canEditMilestone` | ✅ |
-| Identity: `my_profile_id()` em RLS | ✅ |
-| Sem `select('*')` | ✅ |
-| Enum reutilizado (`project_impact`) | ✅ |
-| RLS espelhada de `project_krs` | ✅ |
-| Hooks de mutação existentes como referência | ✅ |
+- 2 modos: `list` (ícone LayoutGrid) e `gantt` (ícone GanttChart)
+- Segue exatamente o padrão visual do `CycleCheckinsViewToggle`
 
 ### Arquivos impactados
 
 | Arquivo | Ação |
 |---------|------|
-| Migration SQL | Novo |
-| `src/lib/queryKeys/projects.ts` | Editar (+1 key) |
-| `src/modules/projects/hooks/useMilestoneKrLinks.ts` | Novo |
-| `src/modules/projects/hooks/useMilestoneKrs.ts` | Novo |
-| `src/modules/projects/components/MilestoneKrLinkSection.tsx` | Novo |
-| `src/modules/projects/components/MilestoneList.tsx` | Editar (expandir + KR links) |
+| `src/modules/projects/hooks/useGanttData.ts` | Novo |
+| `src/modules/projects/components/ProjectGanttChart.tsx` | Novo |
+| `src/modules/projects/components/ProjectViewToggle.tsx` | Novo |
+| `src/modules/projects/pages/ProjectsPage.tsx` | Editar (toggle + conditional render) |
+| `src/modules/projects/hooks/index.ts` | Editar (export) |
+
+### Conformidade
+
+| Regra | Status |
+|-------|--------|
+| BU-scoped (dados via `useProjects`) | ✅ |
+| Query keys centralizadas | ✅ |
+| URL state para viewMode | ✅ |
+| Sem nova dependência | ✅ recharts já instalado |
+| ViewOptionsBar canônico | ✅ |
+| Sem `select('*')` | ✅ |
 
