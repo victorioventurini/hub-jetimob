@@ -79,6 +79,7 @@ vi.mock('@/modules/projects/hooks/useProjectMutations', () => ({
 vi.mock('@/modules/projects/hooks/useMilestoneMutations', () => ({
   useCreateMilestone: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useUpdateMilestone: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useSoftDeleteMilestone: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 vi.mock('@/modules/projects/hooks/useProjectPermissionsV2', () => ({
