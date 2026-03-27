@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Plus, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
@@ -14,7 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface MilestoneCreateFormProps {
-  onSubmit: (data: { name: string; due_date: string | null; owner_id: string | null }) => void;
+  onSubmit: (data: { name: string; due_date: string | null; owner_id: string | null; notes: string | null }) => void;
   isPending?: boolean;
 }
 
@@ -22,6 +23,7 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
   const [name, setName] = useState('');
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
 
   const handleSubmit = () => {
     if (!name.trim()) return;
@@ -29,10 +31,12 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
       name: name.trim(),
       due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
       owner_id: ownerId,
+      notes: notes.trim() || null,
     });
     setName('');
     setDueDate(undefined);
     setOwnerId(null);
+    setNotes('');
   };
 
   return (
@@ -92,6 +96,14 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
           />
         </div>
       </div>
+
+      <Textarea
+        placeholder="Observações, bloqueios, contexto..."
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={2}
+        className="text-sm min-h-[56px]"
+      />
     </div>
   );
 }

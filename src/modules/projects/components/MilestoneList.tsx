@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Circle, Clock, ChevronRight, CalendarIcon, User, Trash2 } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ChevronRight, CalendarIcon, User, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ProjectMilestone, MilestoneStatus } from '../types';
@@ -16,7 +17,7 @@ interface MilestoneListProps {
   milestones: ProjectMilestone[];
   projectId: string;
   onStatusChange?: (milestoneId: string, status: MilestoneStatus) => void;
-  onUpdate?: (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null }) => void;
+  onUpdate?: (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null; notes?: string | null }) => void;
   onDelete?: (milestoneId: string) => void;
   canEditKrLinks?: boolean;
   canEdit?: boolean;
@@ -91,6 +92,17 @@ export function MilestoneList({
               )}>
                 {m.name}
               </span>
+
+              {m.notes && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-xs">
+                    {m.notes}
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
               {/* Owner avatar */}
               {ownerProfile && (
@@ -180,6 +192,22 @@ export function MilestoneList({
                       </Button>
                     )}
                   </div>
+                )}
+
+                {/* Notes inline edit */}
+                {canEdit && onUpdate && (
+                  <Textarea
+                    placeholder="Observações, bloqueios, contexto..."
+                    value={m.notes ?? ''}
+                    onChange={(e) => onUpdate(m.id, { notes: e.target.value || null })}
+                    rows={2}
+                    className="text-xs min-h-[48px]"
+                  />
+                )}
+
+                {/* Notes read-only */}
+                {!canEdit && m.notes && (
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{m.notes}</p>
                 )}
 
                 {/* KR links */}

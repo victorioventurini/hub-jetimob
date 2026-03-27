@@ -52,6 +52,7 @@ export interface ProjectMilestone {
   owner_id: string | null;
   status: MilestoneStatus;
   due_date: string | null;
+  notes: string | null;
   sort_order: number;
   bu_id: string;
   created_at: string;
@@ -94,6 +95,7 @@ export interface GanttItem {
   owner_id?: string;
   parent_id?: string;
   dependencies?: string[];
+  notes?: string | null;
 }
 
 // ── Filters ──
@@ -139,6 +141,7 @@ export interface CreateMilestoneInput {
   owner_id?: string | null;
   status?: MilestoneStatus;
   due_date?: string | null;
+  notes?: string | null;
   sort_order?: number;
   bu_id: string;
 }
@@ -149,5 +152,6 @@ export interface UpdateMilestoneInput {
   owner_id?: string | null;
   status?: MilestoneStatus;
   due_date?: string | null;
+  notes?: string | null;
   sort_order?: number;
 }
