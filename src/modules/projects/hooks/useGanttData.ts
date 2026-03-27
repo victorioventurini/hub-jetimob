@@ -46,12 +46,13 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
       // Milestone bars under project
       if (project.milestones?.length) {
         for (const ms of project.milestones) {
-          if (!ms.due_date || ms.deleted_at) continue;
+          if (ms.deleted_at || !isValidDateStr(ms.due_date)) continue;
+          const msStart = isValidDateStr(ms.created_at) ? ms.created_at : project.start_date;
           items.push({
             id: ms.id,
             type: 'milestone',
             name: ms.name,
-            start_date: ms.created_at, // milestones may not have start_date, use created_at
+            start_date: msStart,
             due_date: ms.due_date,
             status: ms.status,
             owner_id: ms.owner_id ?? undefined,
