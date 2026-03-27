@@ -446,6 +446,28 @@
 
 ---
 
+## Projects
+
+### projects
+`id, bu_id, name, description, owner_id, status, start_date, due_date, external_url, created_at, updated_at, deleted_at`
+
+### project_teams
+`project_id, team_id`
+
+### project_krs
+`id, project_id, key_result_id, impact, created_at`
+
+### project_milestones
+`id, project_id, name, owner_id, status, due_date, notes, sort_order, bu_id, created_at, updated_at, deleted_at`
+
+### project_milestone_dependencies
+`id, milestone_id, depends_on_milestone_id, created_at`
+
+### milestone_krs
+`id, milestone_id, key_result_id, impact, bu_id, created_at`
+
+---
+
 ## Notas Importantes
 
 | Tabela | Observação |
@@ -454,3 +476,5 @@
 | `user_team_memberships` | ⚠️ Não possui `is_active` |
 | `profiles` | Usa `employment_status` para status, não `is_active` |
 | `bu_user_memberships` | Usa `deleted_at` para soft-delete, não `is_active` |
+| `project_milestones` | Campos `due_date`, `owner_id`, `notes` são opcionais |
+| `projects` | Campos `start_date`, `due_date`, `owner_id` são obrigatórios (validação frontend) |
