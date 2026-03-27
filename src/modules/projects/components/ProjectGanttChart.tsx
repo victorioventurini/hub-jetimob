@@ -109,7 +109,7 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
       const truncatedName = rawName.length > maxNameLen ? rawName.slice(0, maxNameLen) + '…' : rawName;
 
       return {
-        name: `${prefix}${item.name}`,
+        name: truncatedName,
         startOffset,
         duration,
         item,
