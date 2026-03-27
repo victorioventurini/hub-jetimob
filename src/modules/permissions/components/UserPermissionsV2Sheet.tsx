@@ -267,11 +267,13 @@ export function UserPermissionsV2Sheet({
   const isSaving = assignTemplate.isPending || removeTemplate.isPending || isApplying;
 
   // Permission management rules:
-  // - super_admin can edit admin and member permissions
-  // - admin can only edit member permissions (not other admins)
+  // - super_admin can edit anyone's permissions
+  // - BU admin (isWildcard) can edit member permissions (not other admins)
+  // - currentUserIsAdmin includes platform-level admin/super_admin roles
   const isSuperAdmin = currentUserRole === 'super_admin';
+  const isBuAdmin = currentUserIsWildcard; // includes super_admin + BU admin
   const targetIsAdmin = user?.role_in_bu === 'admin';
-  const canEdit = isSuperAdmin || (currentUserIsAdmin && !targetIsAdmin);
+  const canEdit = isSuperAdmin || (isBuAdmin && !targetIsAdmin);
 
   return (
     <>
