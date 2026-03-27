@@ -151,8 +151,9 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
   }
 
   const totalDays = differenceInDays(timelineEnd, timelineStart);
-  const barHeight = 28;
+  const barHeight = isMobile ? 22 : 28;
   const chartHeight = Math.max(data.length * (barHeight + 8) + 60, 200);
+  const yAxisWidth = isMobile ? 100 : 200;
 
   return (
     <div className="space-y-2">
