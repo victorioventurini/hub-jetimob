@@ -22,6 +22,7 @@ import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { ProjectProgressBar } from '../components/ProjectProgressBar';
 import { MilestoneList } from '../components/MilestoneList';
 import { MilestoneCreateForm } from '../components/MilestoneCreateForm';
+import { MilestoneGanttChart } from '../components/MilestoneGanttChart';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectKrLinkSection } from '../components/ProjectKrLinkSection';
 import { Skeleton } from '@/components/ui/skeleton';
