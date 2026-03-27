@@ -113,6 +113,12 @@ Lista completa das tabelas no schema `public`:
 | `permission_template_items_v2` | ✅ | ❌ | Items de template de permissão |
 | `permission_templates_v2` | ✅ | ❌ | Templates de permissão V2 |
 | `profiles` | ✅ | ✅ | Perfis de usuários |
+| `projects` | ✅ | ✅ | Projetos estratégicos (v3.16.0) |
+| `project_krs` | ✅ | ✅ | Junction project ↔ KR com impacto |
+| `project_milestones` | ✅ | ✅ | Marcos de projeto com notes, status, due_date |
+| `project_milestone_dependencies` | ✅ | ✅ | Dependências entre milestones |
+| `project_teams` | ✅ | ✅ | Junction project ↔ team |
+| `milestone_krs` | ✅ | ✅ | Junction milestone ↔ KR com impacto (v3.19.0) |
 | `squad_memberships` | ✅ | ✅ | Membros de squads |
 | `squad_teams` | ✅ | ✅ | Relacionamento squad ↔ teams |
 | `squads` | ✅ | ✅ | Squads |
@@ -132,7 +138,7 @@ Lista completa das tabelas no schema `public`:
 | `user_saved_links` | ✅ | ✅ | Links salvos por usuário/módulo (v2.36.0) |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 108 tabelas
+**Total:** 114 tabelas
 
 ---
 
