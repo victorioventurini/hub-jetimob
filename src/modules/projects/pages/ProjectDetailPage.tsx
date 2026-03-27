@@ -2,18 +2,18 @@
  * ProjectDetailPage — /projects/:id
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
 import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
-import { useCreateMilestone, useUpdateMilestone } from '../hooks/useMilestoneMutations';
+import { useCreateMilestone, useUpdateMilestone, useSoftDeleteMilestone } from '../hooks/useMilestoneMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
@@ -21,13 +21,13 @@ import { ProjectHealthBadge } from '../components/ProjectHealthBadge';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { ProjectProgressBar } from '../components/ProjectProgressBar';
 import { MilestoneList } from '../components/MilestoneList';
+import { MilestoneCreateForm } from '../components/MilestoneCreateForm';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectKrLinkSection } from '../components/ProjectKrLinkSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Input } from '@/components/ui/input';
 import type { MilestoneStatus } from '../types';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -41,7 +41,6 @@ export default function ProjectDetailPage() {
   const { currentBuId } = useBu();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [newMilestone, setNewMilestone] = useState('');
 
   const { data: project, isLoading } = useProject(id);
   const { data: milestones } = useMilestones(id);
@@ -49,6 +48,7 @@ export default function ProjectDetailPage() {
   const deleteProject = useSoftDeleteProject();
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
+  const deleteMilestone = useSoftDeleteMilestone();
   const { canEditProject, canDeleteProject, canCreateMilestone: canAddMilestone, canEditMilestone } = useProjectPermissionsV2();
 
   const projectName = project?.name ?? 'Projeto';
@@ -60,6 +60,18 @@ export default function ProjectDetailPage() {
   });
 
   const writerProfileId = realProfileId ?? profileId;
+
+  // Build owner profiles map from project owner + any future sources
+  const ownerProfiles = useMemo(() => {
+    const map: Record<string, { display_name: string | null; photo_url: string | null }> = {};
+    if (project?.owner) {
+      map[project.owner.id] = {
+        display_name: project.owner.display_name,
+        photo_url: project.owner.photo_url,
+      };
+    }
+    return map;
+  }, [project?.owner]);
 
   if (isLoading) {
     return (
@@ -85,20 +97,30 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const handleAddMilestone = () => {
-    if (!newMilestone.trim() || !currentBuId || !id) return;
+  const handleAddMilestone = (data: { name: string; due_date: string | null; owner_id: string | null }) => {
+    if (!currentBuId || !id) return;
     createMilestone.mutate({
       project_id: id,
-      name: newMilestone.trim(),
+      name: data.name,
+      due_date: data.due_date,
+      owner_id: data.owner_id,
       bu_id: currentBuId,
-    }, {
-      onSuccess: () => setNewMilestone(''),
     });
   };
 
   const handleMilestoneStatusChange = (milestoneId: string, status: MilestoneStatus) => {
     if (!id) return;
     updateMilestone.mutate({ id: milestoneId, project_id: id, status });
+  };
+
+  const handleMilestoneUpdate = (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null }) => {
+    if (!id) return;
+    updateMilestone.mutate({ id: milestoneId, project_id: id, ...updates });
+  };
+
+  const handleMilestoneDelete = (milestoneId: string) => {
+    if (!id) return;
+    deleteMilestone.mutate({ id: milestoneId, project_id: id });
   };
 
   const handleEdit = (values: any) => {
@@ -225,24 +247,17 @@ export default function ProjectDetailPage() {
               milestones={milestones || project.milestones || []}
               projectId={project.id}
               onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
+              onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
+              onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
               canEditKrLinks={canEditMilestone}
+              canEdit={canEditMilestone}
+              ownerProfiles={ownerProfiles}
             />
             {canAddMilestone && (
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Novo milestone..."
-                  value={newMilestone}
-                  onChange={(e) => setNewMilestone(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone()}
-                />
-                <Button
-                  size="sm"
-                  onClick={handleAddMilestone}
-                  disabled={!newMilestone.trim() || createMilestone.isPending}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <MilestoneCreateForm
+                onSubmit={handleAddMilestone}
+                isPending={createMilestone.isPending}
+              />
             )}
           </CardContent>
         </Card>
