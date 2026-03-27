@@ -74,7 +74,8 @@ export function UserPermissionsV2Sheet({
   user,
 }: UserPermissionsV2SheetProps) {
   const { isAdmin: currentUserIsAdmin, role: currentUserRole } = useAuth();
-  
+  const { isWildcard: currentUserIsWildcard } = usePermissions();
+
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [templateSearch, setTemplateSearch] = useState("");
   const [permissionSearch, setPermissionSearch] = useState("");
