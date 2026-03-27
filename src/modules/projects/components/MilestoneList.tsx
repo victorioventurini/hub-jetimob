@@ -17,7 +17,7 @@ interface MilestoneListProps {
   milestones: ProjectMilestone[];
   projectId: string;
   onStatusChange?: (milestoneId: string, status: MilestoneStatus) => void;
-  onUpdate?: (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null }) => void;
+  onUpdate?: (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null; notes?: string | null }) => void;
   onDelete?: (milestoneId: string) => void;
   canEditKrLinks?: boolean;
   canEdit?: boolean;
