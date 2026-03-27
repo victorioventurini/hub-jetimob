@@ -242,19 +242,59 @@ export default function ProjectDetailPage() {
         {/* Milestones */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Milestones</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Milestones</CardTitle>
+              <div className="flex items-center gap-0.5 p-1 bg-muted rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMilestoneView('list')}
+                  className={cn(
+                    "h-7 px-2 gap-1 rounded-md transition-all text-xs",
+                    milestoneView === 'list'
+                      ? "bg-background shadow-sm text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                  )}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Lista</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMilestoneView('gantt')}
+                  className={cn(
+                    "h-7 px-2 gap-1 rounded-md transition-all text-xs",
+                    milestoneView === 'gantt'
+                      ? "bg-background shadow-sm text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                  )}
+                >
+                  <GanttChart className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Gantt</span>
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <MilestoneList
-              milestones={milestones || project.milestones || []}
-              projectId={project.id}
-              onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
-              onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
-              onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
-              canEditKrLinks={canEditMilestone}
-              canEdit={canEditMilestone}
-              ownerProfiles={ownerProfiles}
-            />
+            {milestoneView === 'gantt' ? (
+              <MilestoneGanttChart
+                milestones={milestones || project.milestones || []}
+                projectStartDate={project.start_date}
+                projectDueDate={project.due_date}
+              />
+            ) : (
+              <MilestoneList
+                milestones={milestones || project.milestones || []}
+                projectId={project.id}
+                onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
+                onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
+                onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
+                canEditKrLinks={canEditMilestone}
+                canEdit={canEditMilestone}
+                ownerProfiles={ownerProfiles}
+              />
+            )}
             {canAddMilestone && (
               <MilestoneCreateForm
                 onSubmit={handleAddMilestone}
