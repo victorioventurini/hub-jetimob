@@ -76,6 +76,8 @@ interface ChartDatum {
 
 export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartProps) {
   const navigate = useNavigate();
+  const [containerWidth, setContainerWidth] = useState(0);
+  const isMobile = containerWidth > 0 && containerWidth < 640;
 
   const { data, timelineStart, timelineEnd, monthTicks } = useMemo(() => {
     // Filter out items with invalid dates defensively
