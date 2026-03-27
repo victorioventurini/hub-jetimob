@@ -23,6 +23,7 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
   const [name, setName] = useState('');
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
 
   const handleSubmit = () => {
     if (!name.trim()) return;
@@ -30,10 +31,12 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
       name: name.trim(),
       due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
       owner_id: ownerId,
+      notes: notes.trim() || null,
     });
     setName('');
     setDueDate(undefined);
     setOwnerId(null);
+    setNotes('');
   };
 
   return (
