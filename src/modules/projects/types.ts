@@ -96,6 +96,7 @@ export interface GanttItem {
   parent_id?: string;
   dependencies?: string[];
   notes?: string | null;
+  completion_pct?: number;
 }
 
 // ── Filters ──
