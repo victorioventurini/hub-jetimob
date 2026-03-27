@@ -42,6 +42,7 @@ export default function ProjectDetailPage() {
   const { currentBuId } = useBu();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [milestoneView, setMilestoneView] = useState<'list' | 'gantt'>('list');
 
   const { data: project, isLoading } = useProject(id);
   const { data: milestones } = useMilestones(id);
