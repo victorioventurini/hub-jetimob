@@ -194,6 +194,22 @@ export function MilestoneList({
                   </div>
                 )}
 
+                {/* Notes inline edit */}
+                {canEdit && onUpdate && (
+                  <Textarea
+                    placeholder="Observações, bloqueios, contexto..."
+                    value={m.notes ?? ''}
+                    onChange={(e) => onUpdate(m.id, { notes: e.target.value || null })}
+                    rows={2}
+                    className="text-xs min-h-[48px]"
+                  />
+                )}
+
+                {/* Notes read-only */}
+                {!canEdit && m.notes && (
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{m.notes}</p>
+                )}
+
                 {/* KR links */}
                 <MilestoneKrLinkSection
                   milestoneId={m.id}

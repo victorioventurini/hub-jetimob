@@ -162,6 +162,9 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
                       Entrega: {format(parseISO(m.due_date!), 'dd/MM/yyyy')}
                     </p>
                     <p className="text-muted-foreground">Status: {statusLabel(m.status)}</p>
+                    {m.notes && (
+                      <p className="text-xs text-muted-foreground mt-1 max-w-xs whitespace-pre-wrap">{m.notes}</p>
+                    )}
                     {datum.isOverdue && (
                       <p className="text-destructive text-xs font-medium">⚠ Atrasado</p>
                     )}

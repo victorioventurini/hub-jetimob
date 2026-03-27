@@ -57,6 +57,7 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
             status: ms.status,
             owner_id: ms.owner_id ?? undefined,
             parent_id: project.id,
+            notes: ms.notes,
           });
         }
       }

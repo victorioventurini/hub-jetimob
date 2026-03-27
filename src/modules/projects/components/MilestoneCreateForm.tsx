@@ -96,6 +96,14 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
           />
         </div>
       </div>
+
+      <Textarea
+        placeholder="Observações, bloqueios, contexto..."
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={2}
+        className="text-sm min-h-[56px]"
+      />
     </div>
   );
 }

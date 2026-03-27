@@ -215,6 +215,9 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
                       {item.health && (
                         <p className="text-muted-foreground">Saúde: {healthLabel(item.health)}</p>
                       )}
+                      {item.notes && (
+                        <p className="text-xs text-muted-foreground mt-1 max-w-xs whitespace-pre-wrap">{item.notes}</p>
+                      )}
                     </div>
                   );
                 }}
