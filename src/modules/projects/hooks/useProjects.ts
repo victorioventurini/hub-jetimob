@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { computeHealth, computeCompletion } from '../utils/projectHealth';
-import type { ProjectFilters, ProjectWithRelations, ProjectHealth } from '../types';
+import type { ProjectFilters, ProjectWithRelations } from '../types';
 
 const PROJECT_LIST_FIELDS = `
   id, name, description, status, start_date, due_date,
@@ -10,7 +10,7 @@ const PROJECT_LIST_FIELDS = `
   owner:profiles!projects_owner_id_fkey(id, display_name, photo_url),
   project_teams(team_id, teams:teams!project_teams_team_id_fkey(id, name)),
   project_krs(key_result_id, impact, kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title)),
-  project_milestones(id, status, due_date, deleted_at)
+  project_milestones(id, name, status, due_date, deleted_at)
 ` as const;
 
 export function useProjects(filters: ProjectFilters = {}) {
@@ -28,20 +28,18 @@ export function useProjects(filters: ProjectFilters = {}) {
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
+      // Server-side filters
       if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
       }
       if (filters.owner_id) {
         query = query.eq('owner_id', filters.owner_id);
       }
-      if (filters.search) {
-        query = query.ilike('name', `%${filters.search}%`);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map((p: any) => {
+      let results = (data || []).map((p: any) => {
         const milestones = p.project_milestones || [];
         const completion = computeCompletion(milestones);
         const health = computeHealth(milestones);
@@ -80,6 +78,35 @@ export function useProjects(filters: ProjectFilters = {}) {
           completion_pct: completion.pct,
         } as ProjectWithRelations;
       });
+
+      // Client-side filters (PostgREST can't filter parent by nested relations)
+
+      // Text search: project name OR milestone name
+      if (filters.search) {
+        const term = filters.search.toLowerCase();
+        results = results.filter((p) => {
+          if (p.name.toLowerCase().includes(term)) return true;
+          return p.milestones.some((m: any) =>
+            m.name && m.name.toLowerCase().includes(term)
+          );
+        });
+      }
+
+      // Team filter
+      if (filters.team_id) {
+        results = results.filter((p) =>
+          p.teams.some((t) => t.team_id === filters.team_id)
+        );
+      }
+
+      // KR link filter
+      if (filters.linked_to_kr === true) {
+        results = results.filter((p) => p.krs.length > 0);
+      } else if (filters.linked_to_kr === false) {
+        results = results.filter((p) => p.krs.length === 0);
+      }
+
+      return results;
     },
     enabled: isReady && !!supabase && !!buId,
   });
