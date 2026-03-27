@@ -42,6 +42,7 @@ export default function ProjectsPage() {
   const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
   const teamState = useUrlState<string>({ key: 'teamId', defaultValue: '' });
   const krLinkState = useUrlState<string>({ key: 'krLink', defaultValue: '' });
+  const viewState = useUrlState<ProjectViewMode>({ key: 'view', defaultValue: 'list' });
   const { value: search, setValue: setSearch } = useLocalSearch('q');
 
   const filters: ProjectFilters = {
