@@ -94,7 +94,7 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
     const tlEnd = addDays(dateMax(allEnds), 7);
     const totalDays = differenceInDays(tlEnd, tlStart);
 
-    const data: ChartDatum[] = items.map((item) => {
+    const data: ChartDatum[] = validItems.map((item) => {
       const s = parseISO(item.start_date);
       const e = parseISO(item.due_date);
       const startOffset = differenceInDays(s, tlStart);
