@@ -1,5 +1,5 @@
 /**
- * ProjectsForKrSection - Projetos vinculados a um KR
+ * ProjectsForKrSection - Projetos e milestones vinculados a um KR
  * 
  * Exibido abaixo de InitiativesSummary na visão de detalhe do KR.
  * Suporta modo read-only e edição (vincular/desvincular).
@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { ExternalLink, FolderKanban, Plus, Search, X } from 'lucide-react';
+import { ExternalLink, FolderKanban, Plus, Search, X, Milestone } from 'lucide-react';
 import { useProjectsForKr, type ProjectForKr } from '../hooks/useProjectsForKr';
+import { useMilestonesForKr } from '../hooks/useMilestonesForKr';
 import { useProjectsForLinking } from '../hooks/useProjectsForLinking';
 import { useAddProjectKrLink, useRemoveProjectKrLink } from '../hooks/useProjectKrLinks';
 import { ProjectHealthBadge } from './ProjectHealthBadge';
@@ -21,7 +22,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { ProjectImpact } from '../types';
+import type { ProjectImpact, MilestoneStatus } from '../types';
+import { CheckCircle2, Circle, Clock } from 'lucide-react';
 
 interface ProjectsForKrSectionProps {
   krId: string;
@@ -35,8 +37,21 @@ const impactLabel: Record<string, string> = {
   low: 'Baixo',
 };
 
+const IMPACT_COLORS: Record<string, string> = {
+  high: 'bg-destructive/10 text-destructive',
+  medium: 'bg-warning/10 text-warning-foreground',
+  low: 'bg-muted text-muted-foreground',
+};
+
+const milestoneStatusIcon: Record<MilestoneStatus, React.ReactNode> = {
+  todo: <Circle className="h-3.5 w-3.5 text-muted-foreground" />,
+  in_progress: <Clock className="h-3.5 w-3.5 text-blue-500" />,
+  done: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />,
+};
+
 export function ProjectsForKrSection({ krId, canEdit = false, className }: ProjectsForKrSectionProps) {
   const { data: projects, isLoading } = useProjectsForKr(krId);
+  const { data: milestones, isLoading: loadingMilestones } = useMilestonesForKr(krId);
   const { data: availableProjects = [], isLoading: loadingProjects } = useProjectsForLinking();
   const addLink = useAddProjectKrLink();
   const removeLink = useRemoveProjectKrLink();
@@ -46,7 +61,7 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
 
-  if (isLoading) {
+  if (isLoading || loadingMilestones) {
     return (
       <div className={cn('space-y-2', className)}>
         <Skeleton className="h-5 w-40" />
@@ -79,7 +94,10 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
     removeLink.mutate({ project_id: projectId, key_result_id: krId });
   };
 
-  if (!canEdit && (!projects || projects.length === 0)) return null;
+  const hasProjects = projects && projects.length > 0;
+  const hasMilestones = milestones && milestones.length > 0;
+
+  if (!canEdit && !hasProjects && !hasMilestones) return null;
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -87,8 +105,10 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
         <div className="flex items-center gap-2">
           <FolderKanban className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Projetos vinculados</span>
-          {projects && projects.length > 0 && (
-            <Badge variant="outline" className="text-xs">{projects.length}</Badge>
+          {(hasProjects || hasMilestones) && (
+            <Badge variant="outline" className="text-xs">
+              {(projects?.length ?? 0) + (milestones?.length ?? 0)}
+            </Badge>
           )}
         </div>
 
@@ -162,11 +182,10 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
         )}
       </div>
 
-      {(!projects || projects.length === 0) ? (
-        <p className="text-sm text-muted-foreground">Nenhum projeto vinculado</p>
-      ) : (
+      {/* Projects linked directly */}
+      {hasProjects && (
         <div className="space-y-2">
-          {projects.map((project) => (
+          {projects!.map((project) => (
             <div
               key={project.id}
               className="rounded-lg border p-3 space-y-2"
@@ -220,6 +239,45 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
             </div>
           ))}
         </div>
+      )}
+
+      {/* Milestones linked directly (not via project) */}
+      {hasMilestones && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+            <Milestone className="h-3 w-3" />
+            <span>Marcos vinculados diretamente</span>
+          </div>
+          {milestones!.map((ms) => (
+            <div
+              key={ms.id}
+              className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors"
+            >
+              {milestoneStatusIcon[ms.status]}
+              <span className={cn(
+                'text-sm flex-1 truncate',
+                ms.status === 'done' && 'line-through text-muted-foreground',
+              )}>
+                {ms.name}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                {ms.project_name}
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${IMPACT_COLORS[ms.impact]}`}>
+                {impactLabel[ms.impact]}
+              </span>
+              {ms.due_date && (
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {format(parseISO(ms.due_date), "dd MMM", { locale: ptBR })}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!hasProjects && !hasMilestones && (
+        <p className="text-sm text-muted-foreground">Nenhum projeto vinculado</p>
       )}
     </div>
   );
