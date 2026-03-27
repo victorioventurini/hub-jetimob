@@ -93,6 +93,17 @@ export function MilestoneList({
                 {m.name}
               </span>
 
+              {m.notes && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-xs">
+                    {m.notes}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               {/* Owner avatar */}
               {ownerProfile && (
                 <Tooltip>
