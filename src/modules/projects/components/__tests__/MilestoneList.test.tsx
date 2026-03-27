@@ -20,14 +20,16 @@ function createMilestone(overrides: Partial<ProjectMilestone> = {}): ProjectMile
   };
 }
 
+const defaultProps = { projectId: 'proj-1' };
+
 describe('MilestoneList', () => {
   it('renders empty state when no milestones', () => {
-    renderWithProviders(<MilestoneList milestones={[]} />);
+    renderWithProviders(<MilestoneList milestones={[]} {...defaultProps} />);
     expect(screen.getByText('Nenhum milestone cadastrado.')).toBeInTheDocument();
   });
 
   it('renders milestone name', () => {
-    renderWithProviders(<MilestoneList milestones={[createMilestone()]} />);
+    renderWithProviders(<MilestoneList milestones={[createMilestone()]} {...defaultProps} />);
     expect(screen.getByText('Milestone 1')).toBeInTheDocument();
   });
 
@@ -36,7 +38,7 @@ describe('MilestoneList', () => {
       <MilestoneList milestones={[
         createMilestone({ id: 'ms-1', name: 'Active', deleted_at: null }),
         createMilestone({ id: 'ms-2', name: 'Deleted', deleted_at: '2026-01-01T00:00:00Z' }),
-      ]} />
+      ]} {...defaultProps} />
     );
     expect(screen.getByText('Active')).toBeInTheDocument();
     expect(screen.queryByText('Deleted')).not.toBeInTheDocument();
@@ -45,10 +47,11 @@ describe('MilestoneList', () => {
   it('calls onStatusChange with next status on click (todo → in_progress)', () => {
     const onStatusChange = vi.fn();
     renderWithProviders(
-      <MilestoneList milestones={[createMilestone()]} onStatusChange={onStatusChange} />
+      <MilestoneList milestones={[createMilestone()]} onStatusChange={onStatusChange} {...defaultProps} />
     );
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    // Status button is the second button (first is chevron)
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[1]);
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'in_progress');
   });
 
@@ -58,9 +61,11 @@ describe('MilestoneList', () => {
       <MilestoneList
         milestones={[createMilestone({ status: 'in_progress' })]}
         onStatusChange={onStatusChange}
+        {...defaultProps}
       />
     );
-    fireEvent.click(screen.getByRole('button'));
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[1]);
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'done');
   });
 
@@ -70,15 +75,17 @@ describe('MilestoneList', () => {
       <MilestoneList
         milestones={[createMilestone({ status: 'done' })]}
         onStatusChange={onStatusChange}
+        {...defaultProps}
       />
     );
-    fireEvent.click(screen.getByRole('button'));
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[1]);
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'todo');
   });
 
   it('applies line-through style to done milestones', () => {
     renderWithProviders(
-      <MilestoneList milestones={[createMilestone({ status: 'done', name: 'Completed' })]} />
+      <MilestoneList milestones={[createMilestone({ status: 'done', name: 'Completed' })]} {...defaultProps} />
     );
     const text = screen.getByText('Completed');
     expect(text).toHaveClass('line-through');
@@ -86,7 +93,7 @@ describe('MilestoneList', () => {
 
   it('renders due date when present', () => {
     renderWithProviders(
-      <MilestoneList milestones={[createMilestone({ due_date: '2026-06-15' })]} />
+      <MilestoneList milestones={[createMilestone({ due_date: '2026-06-15' })]} {...defaultProps} />
     );
     expect(screen.getByText('15 jun')).toBeInTheDocument();
   });
@@ -96,9 +103,7 @@ describe('MilestoneList', () => {
       createMilestone({ id: 'ms-a', name: 'Later', due_date: '2026-06-30', created_at: '2026-01-01T00:00:00Z' }),
       createMilestone({ id: 'ms-b', name: 'Earlier', due_date: '2026-03-01', created_at: '2026-01-01T00:00:00Z' }),
     ];
-    renderWithProviders(<MilestoneList milestones={milestones} />);
-    const items = screen.getAllByRole('button');
-    // Earlier should come first
+    renderWithProviders(<MilestoneList milestones={milestones} {...defaultProps} />);
     const listItems = screen.getAllByText(/Earlier|Later/);
     expect(listItems[0]).toHaveTextContent('Earlier');
     expect(listItems[1]).toHaveTextContent('Later');

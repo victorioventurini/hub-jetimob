@@ -223,7 +223,9 @@ export default function ProjectDetailPage() {
           <CardContent className="space-y-3">
             <MilestoneList
               milestones={milestones || project.milestones || []}
+              projectId={project.id}
               onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
+              canEditKrLinks={canEditMilestone}
             />
             {canAddMilestone && (
               <div className="flex gap-2">
