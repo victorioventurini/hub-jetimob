@@ -1552,28 +1552,70 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - Módulos `operational` dependem de config explícita por BU
 - Se não houver registro em `bu_module_configs`, módulo está desabilitado
 
-### 3.3.1 Módulo Projetos (v1.0)
+### 3.3.1 Módulo Projetos (v1.3)
 
-**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`
+**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`, `milestone_krs`
 
 | Tabela | Descrição | RLS |
 |--------|-----------|-----|
-| `projects` | Projetos com owner, status, datas, BU scope | ✅ BU-scoped + owner/admin |
+| `projects` | Projetos com owner, status, datas (start_date e due_date obrigatórias), BU scope | ✅ BU-scoped + owner/admin |
 | `project_teams` | Junction project ↔ team | ✅ Herda via JOIN |
 | `project_krs` | Junction project ↔ key_result com impacto (high/medium/low) | ✅ Herda via JOIN |
-| `project_milestones` | Marcos do projeto com status e due_date | ✅ BU-scoped |
+| `project_milestones` | Marcos do projeto com status, due_date, notes (texto livre) e owner_id (opcionais) | ✅ BU-scoped |
 | `project_milestone_dependencies` | Dependências entre milestones | ✅ Herda via JOIN |
+| `milestone_krs` | Junction milestone ↔ key_result com impacto (high/medium/low) — permite vinculação granular de KRs a marcos individuais (cross-area) | ✅ BU-scoped |
 
 **Enums:** `project_status` (planned, in_progress, paused, done, cancelled), `project_impact` (high, medium, low)
 
 **Função SQL:** `calculate_project_health(project_id uuid)` → retorna `on_track`, `at_risk` ou `late` baseado em milestones atrasados
 
 **Frontend:**
-- `src/modules/projects/` — types, hooks (useProjectQueries, useProjectMutations), utils (projectHealth), components
-- **Páginas:** `/projects` (lista com filtros por URL state), `/projects/:id` (detalhe com milestones)
-- **Integrações aditivas:** `ProjectsSummary` nos wizards (TeamCheckin, LeaderPrep, MBR), `ProjectsForKrSection` na visão de KR, `MyProjectsCard` na Home
+- `src/modules/projects/` — types, hooks (17 hooks), utils (projectHealth), components (15 componentes)
+- **Páginas:** `/projects` (lista com filtros por URL state + toggle lista/gantt), `/projects/:id` (detalhe com milestones, gantt inline, KR links)
+- **Integrações aditivas:** `ProjectsSummary` nos wizards (TeamCheckin, LeaderPrep, MBR), `ProjectsForKrSection` na visão de KR, `ProjectsForKrLinkingSection` na expansão de KR no dashboard OKR, `MyProjectsCard` na Home
 
 **Identity:** `owner_id` = `profiles.id` (convenção canônica)
+
+**Campos obrigatórios (Projeto):** `name`, `owner_id`, `start_date`, `due_date` — validação via Zod no `ProjectDialog`
+**Campos opcionais (Milestone):** `due_date`, `owner_id`, `notes` — todos opcionais
+
+**Hooks (17):**
+| Hook | Propósito |
+|------|-----------|
+| `useProjects` | Listagem com filtros (status, owner, team, KR link, search) |
+| `useProject` | Detalhe com relações (owner, teams, KRs, milestones) |
+| `useProjectMutations` | CRUD de projetos (create, update, soft-delete) |
+| `useMilestones` | Listagem de milestones por projeto |
+| `useMilestoneMutations` | CRUD de milestones (create, update, soft-delete) |
+| `useMilestoneKrLinks` | Mutations para vincular/desvincular KRs a milestones |
+| `useMilestoneKrs` | Leitura de KRs vinculadas a um milestone |
+| `useMilestonesForKr` | Milestones vinculados a uma KR específica |
+| `useProjectKrLinks` | Mutations para vincular/desvincular KRs a projetos |
+| `useKrsForLinking` | KRs disponíveis para vincular (combobox) |
+| `useProjectsForLinking` | Projetos disponíveis para vincular a KRs |
+| `useProjectsForKr` | Projetos vinculados a uma KR (read) |
+| `useProjectsForWizard` | Projetos para contexto de wizard |
+| `useProjectPermissionsV2` | Flags de permissão (canView, canCreate, canEdit, canDelete) |
+| `useGanttData` | Transforma projetos em GanttItem[] para timeline |
+
+**Componentes (15):**
+| Componente | Propósito |
+|------------|-----------|
+| `ProjectCard` | Card na listagem |
+| `ProjectDialog` | Dialog de criação/edição com validação |
+| `ProjectFiltersBar` | Filtros (status, owner, team, KR link, search) |
+| `ProjectGanttChart` | Gantt de projetos + milestones (Recharts) |
+| `ProjectViewToggle` | Toggle lista/gantt |
+| `ProjectHealthBadge` | Badge de saúde (on_track/at_risk/late) |
+| `ProjectStatusBadge` | Badge de status |
+| `ProjectProgressBar` | Barra de progresso de milestones |
+| `ProjectKrLinkSection` | Seção de KRs vinculadas a projeto |
+| `MilestoneCreateForm` | Form inline para criar milestone com notes |
+| `MilestoneList` | Lista de milestones com edição inline (status, due_date, owner, notes) |
+| `MilestoneGanttChart` | Gantt de milestones dentro do projeto |
+| `MilestoneKrLinkSection` | Seção de KRs vinculadas a milestone |
+| `ProjectsForKrSection` | Projetos vinculados a uma KR (read + link) |
+| `ProjectsSummary` | Resumo para wizards |
 
 #### Permissões do Módulo Projects
 
@@ -1596,7 +1638,10 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 |--------|-----------|---------|-----------|
 | `/projects` | `status` | `all`, `planned`, `in_progress`, `paused`, `done`, `cancelled` | Filtro por status |
 | `/projects` | `owner` | UUID | Filtro por responsável |
-| `/projects` | `q` | texto | Busca local (não persistida na URL) |
+| `/projects` | `teamId` | UUID | Filtro por time |
+| `/projects` | `krLink` | `linked`, `not_linked` | Filtro por vinculação a KR |
+| `/projects` | `q` | texto | Busca local (nome do projeto e milestone) |
+| `/projects` | `view` | `list`, `gantt` | Toggle de visualização |
 
 ### 3.4 Módulos em Desenvolvimento
 
