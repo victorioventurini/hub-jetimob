@@ -193,8 +193,8 @@ export function ProjectGanttChart({ items, excludedCount }: ProjectGanttChartPro
               <YAxis
                 type="category"
                 dataKey="name"
-                width={200}
-                tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+                width={yAxisWidth}
+                tick={{ fontSize: isMobile ? 10 : 12, fill: 'hsl(var(--foreground))' }}
                 axisLine={false}
                 tickLine={false}
               />

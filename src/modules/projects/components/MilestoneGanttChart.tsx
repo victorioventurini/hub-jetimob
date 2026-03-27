@@ -141,8 +141,8 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
             <YAxis
               type="category"
               dataKey="name"
-              width={160}
-              tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+              width={yAxisWidth}
+              tick={{ fontSize: isMobile ? 10 : 12, fill: 'hsl(var(--foreground))' }}
               axisLine={false}
               tickLine={false}
             />

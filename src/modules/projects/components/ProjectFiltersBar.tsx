@@ -84,7 +84,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         options={krLinkOptions}
         includeAllOption
         allOptionLabel="KR: Todos"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-full sm:w-[180px]"
       />
     </ListPageFilters>
   );
