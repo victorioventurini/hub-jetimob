@@ -44,7 +44,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         options={statusOptions}
         includeAllOption
         allOptionLabel="Todos os status"
-        triggerClassName="w-[170px]"
+        triggerClassName="w-full sm:w-[170px]"
       />
 
       {/* Responsável */}
