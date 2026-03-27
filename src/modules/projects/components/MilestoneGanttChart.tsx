@@ -53,6 +53,8 @@ interface ChartDatum {
 }
 
 export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDate }: MilestoneGanttChartProps) {
+  const [containerWidth, setContainerWidth] = useState(0);
+  const isMobile = containerWidth > 0 && containerWidth < 640;
   const activeMilestones = useMemo(
     () => milestones.filter((m) => !m.deleted_at && m.due_date && isValid(parseISO(m.due_date)) && isValid(parseISO(m.created_at))),
     [milestones]
