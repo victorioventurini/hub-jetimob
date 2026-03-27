@@ -89,7 +89,6 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
             placeholder="Responsável"
             allowNone
             noneLabel="Sem responsável"
-            size="sm"
           />
         </div>
       </div>

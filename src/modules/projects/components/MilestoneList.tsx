@@ -165,7 +165,6 @@ export function MilestoneList({
                         placeholder="Responsável"
                         allowNone
                         noneLabel="Sem responsável"
-                        size="sm"
                       />
                     </div>
 
