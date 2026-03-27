@@ -53,7 +53,7 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         onValueChange={(v) => onFiltersChange({ ...filters, owner_id: v ?? undefined })}
         placeholder="Responsável"
         allowNone={false}
-        className="w-[200px]"
+        className="w-full sm:w-[200px]"
       />
 
       {/* Time */}
