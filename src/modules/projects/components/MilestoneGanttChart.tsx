@@ -108,12 +108,18 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
     );
   }
 
-  const barHeight = 24;
+  const barHeight = isMobile ? 20 : 24;
   const chartHeight = Math.max(data.length * (barHeight + 8) + 60, 160);
+  const yAxisWidth = isMobile ? 100 : 160;
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
-      <div style={{ minWidth: Math.max(500, totalDays * 3) }}>
+      <div
+        style={{ minWidth: Math.max(isMobile ? 400 : 500, totalDays * (isMobile ? 2 : 3)) }}
+        ref={(el) => {
+          if (el && el.clientWidth !== containerWidth) setContainerWidth(el.clientWidth);
+        }}
+      >
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart
             data={data}
