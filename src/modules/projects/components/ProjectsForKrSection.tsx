@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { ProjectImpact, MilestoneStatus } from '../types';
+import type { MilestoneStatus } from '../types';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
 
 interface ProjectsForKrSectionProps {
