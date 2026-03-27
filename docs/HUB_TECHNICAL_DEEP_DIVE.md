@@ -2112,11 +2112,112 @@ Entidades suportadas: `ticket`, `team`, `asset`, `okr_team_kr`, etc.
 | Home | `modules/home/types.ts` | `hooks/useLeaderDashboard.ts` | `components/LeaderDashboard.tsx` |
 | Hub Admin | `routes/hub.routes.tsx` | `modules/integrations/types.ts` | `modules/automations/types.ts` |
 | Permissões | `modules/permissions/types.ts` | `hooks/` | Políticas RLS no banco |
+| Projetos | `modules/projects/types.ts` | `hooks/useProjects.ts` | `components/ProjectGanttChart.tsx` |
 | Partners | `modules/partners/types.ts` | `hooks/` | `pages/` |
 | Users Global | `modules/users-global/types.ts` | `hooks/` | `pages/GlobalUsersPage.tsx` |
 
 ---
 
 *Documento gerado automaticamente a partir do codebase do Hub da Jet.*  
-*Atualizado em: 2026-03-25 — Cobertura completa de todos os módulos.*  
+*Atualizado em: 2026-03-27 — Cobertura completa de todos os módulos.*  
 *Para contribuir, consulte `docs/engineering/DEVELOPMENT_STANDARDS.md`.*
+
+---
+
+# PARTE XIII — MÓDULO PROJETOS: Gestão Estratégica de Iniciativas
+
+## 13.1 Filosofia
+
+O módulo Projetos complementa OKRs ao permitir gestão de iniciativas concretas com timeline, milestones e vinculação a Key Results. A distinção fundamental:
+
+> **OKRs definem O QUE alcançar. Projetos definem COMO executar.**
+
+Um projeto pode ser cross-area (vinculado a múltiplos times) e seus milestones podem ser individualmente vinculados a KRs diferentes, permitindo granularidade na contribuição estratégica.
+
+## 13.2 Modelo de Dados
+
+```
+┌─────────────┐     project_teams      ┌──────────┐
+│  projects   │◄──────────────────────►│  teams   │
+│             │     project_krs        ┌──────────────────┐
+│             │◄──────────────────────►│ okr_team_key_    │
+│             │                        │ results          │
+└──────┬──────┘                        └──────────────────┘
+       │ 1:N                                    ▲
+┌──────▼──────────────┐    milestone_krs        │
+│ project_milestones  │◄────────────────────────┘
+│ (notes, due_date,   │
+│  owner_id, status)  │
+└──────┬──────────────┘
+       │ N:N
+┌──────▼──────────────────────┐
+│ project_milestone_           │
+│ dependencies                │
+└─────────────────────────────┘
+```
+
+### Tabelas (6)
+
+| Tabela | Propósito |
+|--------|-----------|
+| `projects` | Projeto com name, owner_id, status, start_date (obrigatório), due_date (obrigatório), description, external_url |
+| `project_teams` | Junction N:N project ↔ team |
+| `project_krs` | Junction N:N project ↔ KR com campo `impact` (high/medium/low) |
+| `project_milestones` | Marcos com name, status, due_date, owner_id, notes (todos opcionais exceto name), sort_order |
+| `project_milestone_dependencies` | Dependências entre milestones |
+| `milestone_krs` | Junction N:N milestone ↔ KR com campo `impact` — vinculação granular cross-area |
+
+### Saúde do Projeto (Health)
+
+Calculada pela função SQL `calculate_project_health(project_id)`:
+- **`late`**: milestone com due_date no passado e status ≠ done
+- **`at_risk`**: milestone vence em < 7 dias e status ≠ done
+- **`on_track`**: todos milestones dentro do prazo ou concluídos
+
+### Campos Obrigatórios vs Opcionais
+
+| Entidade | Campo | Obrigatório? | Validação |
+|----------|-------|-------------|-----------|
+| Projeto | `name` | ✅ | Zod `min(1)` |
+| Projeto | `owner_id` | ✅ | Zod `min(1)` |
+| Projeto | `start_date` | ✅ | Zod `min(1)` |
+| Projeto | `due_date` | ✅ | Zod `min(1)` |
+| Milestone | `name` | ✅ | Inline validation |
+| Milestone | `due_date` | ❌ | Opcional |
+| Milestone | `owner_id` | ❌ | Opcional |
+| Milestone | `notes` | ❌ | Texto livre |
+
+## 13.3 Visualizações
+
+### Listagem (`/projects`)
+- **Lista**: cards em grid responsivo
+- **Gantt**: timeline horizontal via Recharts (toggle `view=gantt` na URL)
+- **Filtros**: status, responsável, time, vínculo a KR, busca textual (nome do projeto e milestone)
+
+### Detalhe (`/projects/:id`)
+- Informações do projeto, KR links, milestones com edição inline
+- Gantt chart inline dos milestones (toggle local)
+- Cada milestone pode ter KRs vinculadas individualmente
+
+### Gantt Charts
+- Implementados com Recharts `BarChart` horizontal
+- Validação defensiva de datas (`isValidDateStr`) para evitar crashes
+- Responsive: truncamento de nomes, eixos reduzidos em mobile
+- Today line como referência visual
+- Tooltips com status, saúde e notas
+
+## 13.4 Integrações
+
+| Integração | Localização | Descrição |
+|------------|-------------|-----------|
+| Wizards OKR | TeamCheckin, LeaderPrep, MBR | `ProjectsSummary` — resumo de projetos do time |
+| Dashboard OKR | Expansão de KR | `ProjectsForKrLinkingSection` — vincular projetos a KRs |
+| Home | Dashboard do líder | `MyProjectsCard` — projetos do usuário |
+
+## 13.5 Referência Rápida
+
+📁 **Tipos:** `src/modules/projects/types.ts`  
+📁 **Hooks (17):** `src/modules/projects/hooks/`  
+📁 **Componentes (15):** `src/modules/projects/components/`  
+📁 **Páginas (2):** `src/modules/projects/pages/`  
+📁 **Utils:** `src/modules/projects/utils/projectHealth.ts`
