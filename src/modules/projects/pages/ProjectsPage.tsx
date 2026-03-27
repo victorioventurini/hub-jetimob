@@ -108,6 +108,18 @@ export default function ProjectsPage() {
         {/* Filters */}
         <ProjectFiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
 
+        {/* View options */}
+        <ViewOptionsBar
+          resultCount={projects?.length}
+          resultCountLabel="projetos encontrados"
+          resultCountLabelSingular="projeto encontrado"
+        >
+          <ProjectViewToggle
+            viewMode={viewState.value}
+            onViewModeChange={viewState.set}
+          />
+        </ViewOptionsBar>
+
         {/* Content */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -119,6 +131,8 @@ export default function ProjectsPage() {
           <div className="text-center py-12">
             <p className="text-destructive">Erro ao carregar projetos.</p>
           </div>
+        ) : viewState.value === 'gantt' ? (
+          <ProjectGanttChart items={ganttItems} excludedCount={ganttExcluded} />
         ) : projects && projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
