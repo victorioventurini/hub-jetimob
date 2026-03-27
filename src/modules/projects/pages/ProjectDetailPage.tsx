@@ -196,7 +196,7 @@ export default function ProjectDetailPage() {
         )}
 
         {/* Info cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="text-xs text-muted-foreground mb-1">Responsável</div>
@@ -209,6 +209,26 @@ export default function ProjectDetailPage() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium">{project.owner.display_name}</span>
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">—</span>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground mb-1">Times</div>
+              {project.teams.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {project.teams.map((t) => (
+                    <span
+                      key={t.team_id}
+                      className="inline-flex items-center px-2 py-0.5 rounded border border-border text-xs font-medium"
+                    >
+                      {t.team_name}
+                    </span>
+                  ))}
                 </div>
               ) : (
                 <span className="text-sm text-muted-foreground">—</span>
