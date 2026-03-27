@@ -217,9 +217,6 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
                   pct={project.completion_pct}
                   className="flex-1"
                 />
-                <span className="text-xs text-muted-foreground shrink-0">
-                  Impacto: {impactLabel[project.impact] ?? project.impact}
-                </span>
               </div>
             </div>
           ))}

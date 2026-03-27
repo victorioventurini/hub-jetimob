@@ -24,7 +24,7 @@ export function useProjectsForLinking() {
         .select('id, name, status')
         .eq('bu_id', currentBuId)
         .is('deleted_at', null)
-        .neq('status', 'cancelled')
+        .not('status', 'in', '("cancelled","done")')
         .order('name');
 
       if (error) throw error;
