@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Input } from '@/components/ui/input';
 import { ExternalLink, FolderKanban, Plus, Search, X, Milestone } from 'lucide-react';
 import { useProjectsForKr, type ProjectForKr } from '../hooks/useProjectsForKr';
@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { ProjectImpact, MilestoneStatus } from '../types';
+import type { MilestoneStatus } from '../types';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
 
 interface ProjectsForKrSectionProps {
@@ -59,7 +59,6 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
 
   if (isLoading || loadingMilestones) {
     return (
@@ -78,11 +77,10 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   const handleAdd = () => {
     if (!selectedProjectId) return;
     addLink.mutate(
-      { project_id: selectedProjectId, key_result_id: krId, impact: selectedImpact },
+      { project_id: selectedProjectId, key_result_id: krId, impact: 'medium' },
       {
         onSuccess: () => {
           setSelectedProjectId(null);
-          setSelectedImpact('medium');
           setPopoverOpen(false);
           setSearch('');
         },
@@ -152,20 +150,7 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
                 </div>
 
                 {selectedProjectId && (
-                  <div className="flex items-center gap-2 pt-1 border-t">
-                    <Select
-                      value={selectedImpact}
-                      onValueChange={(v) => setSelectedImpact(v as ProjectImpact)}
-                    >
-                      <SelectTrigger className="h-8 text-xs flex-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high">Alto</SelectItem>
-                        <SelectItem value="medium">Médio</SelectItem>
-                        <SelectItem value="low">Baixo</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex justify-end pt-1 border-t">
                     <Button
                       size="sm"
                       className="h-8 text-xs"
@@ -232,9 +217,6 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
                   pct={project.completion_pct}
                   className="flex-1"
                 />
-                <span className="text-xs text-muted-foreground shrink-0">
-                  Impacto: {impactLabel[project.impact] ?? project.impact}
-                </span>
               </div>
             </div>
           ))}
