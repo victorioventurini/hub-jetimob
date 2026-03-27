@@ -3,7 +3,14 @@
  */
 
 import { useMemo } from 'react';
+import { parseISO, isValid } from 'date-fns';
 import type { ProjectWithRelations, GanttItem } from '../types';
+
+function isValidDateStr(d: string | null | undefined): d is string {
+  if (!d) return false;
+  const parsed = parseISO(d);
+  return isValid(parsed);
+}
 
 interface UseGanttDataResult {
   items: GanttItem[];
