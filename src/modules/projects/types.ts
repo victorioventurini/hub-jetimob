@@ -115,8 +115,8 @@ export interface CreateProjectInput {
   description?: string | null;
   owner_id: string;
   status?: ProjectStatus;
-  start_date?: string | null;
-  due_date?: string | null;
+  start_date: string;
+  due_date: string;
   external_url?: string | null;
   bu_id: string;
   team_ids?: string[];
