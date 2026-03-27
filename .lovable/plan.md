@@ -1,86 +1,84 @@
 
 
-## Plano: Campo `notes` em Milestones
+## Redesign da Lista de Projetos — Layout Horizontal
 
-### Pré-checklist ✅
+### Situação Atual
+A listagem usa um **grid 3 colunas** de cards compactos (99 linhas). Cada card empilha: nome, barra de progresso, footer com owner + data, e KR pills.
 
-| Documento | Verificado | Achados |
-|-----------|-----------|---------|
-| TCR v3.18.0 | ✅ | `project_milestones` sem campo `notes`; campo não existe no schema |
-| DATA_MODEL_REGISTRY | ✅ | Confirmado: sem `notes` na tabela |
-| DEVELOPMENT_STANDARDS | ✅ | Sem `select('*')`, query keys centralizadas |
-| Identity Convention | ✅ | N/A para este campo |
-| useDialogFormReset | ✅ | Milestones usam inline form, não dialog — padrão não se aplica |
+### Design Alvo (referência)
+Cada projeto é uma **linha horizontal full-width** com duas fileiras internas:
 
-### O que será feito
-
-#### 1. Migration — adicionar coluna
-
-```sql
-ALTER TABLE public.project_milestones ADD COLUMN notes text;
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│  ● Nome do Projeto        Em andamento       OKR · Retenção  ↗ ClickUp │
+│  👤 Lucas Costa  │  Produto │ Eng  │  📅 Até 30 abr  ━━━━ 65%  4 milestones │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 2. Tipo TypeScript — `ProjectMilestone`
+### Plano de Implementação
 
-Adicionar `notes: string | null` à interface em `types.ts`.
+#### 1. Helper `getExternalUrlLabel` (novo utilitário)
+Arquivo: `src/modules/projects/utils/externalUrlLabel.ts`
 
-#### 3. Selects — incluir `notes` nos hooks
+Extrai nome amigável da URL do projeto externo:
+- `clickup.com` → "ClickUp"
+- `notion.so` → "Notion"  
+- `jira` (no hostname) → "Jira"
+- `linear.app` → "Linear"
+- `asana.com` → "Asana"
+- `trello.com` → "Trello"
+- `monday.com` → "Monday"
+- Fallback → "Link externo"
 
-| Hook | Campo adicionado |
-|------|-----------------|
-| `useProject.ts` | `notes` no select de `project_milestones(...)` |
-| `useMilestones.ts` | `notes` no `MILESTONE_FIELDS` |
-| `useProjects.ts` | Não — listagem usa campos mínimos, `notes` não é necessário |
-| `useProjectsForKr.ts` / `useProjectsForWizard.ts` | Não — selects mínimos |
+Reutilizável em `ProjectCard`, `ProjectDetailPage` e `ProjectsSummary`.
 
-#### 4. Mutations — `notes` no create e update
+#### 2. Refatorar `ProjectCard.tsx` (arquivo existente — reescrever)
+Manter a mesma interface `ProjectCardProps` e nome de componente.
 
-- `CreateMilestoneInput` e `UpdateMilestoneInput`: adicionar `notes?: string | null`
-- `useCreateMilestone`: incluir `notes` no insert
-- `useUpdateMilestone`: já usa spread `...updates`, funciona automaticamente
+**Linha 1 (header):**
+- Dot de health colorido (sem badge completo, apenas o dot como na referência)
+- Nome do projeto (font-semibold)
+- `ProjectStatusBadge` (badge existente reutilizado)
+- KR pills alinhados à direita (reutilizar estilo existente, prefixar "OKR · ")
+- External link com label extraído pelo helper + ícone `ExternalLink`
 
-#### 5. `MilestoneCreateForm.tsx` — campo de notas na criação
+**Linha 2 (meta):**
+- Avatar + nome do owner (componentes Avatar existentes)
+- Separador `|`
+- Team badges (novo: iterar `project.teams`, badge outline por time)
+- Separador `|`
+- `📅 Até {data}` com indicação de atraso se `due_date < today`
+- `ProjectProgressBar` (componente existente, estender para aceitar `pct` inline como texto)
+- Label `{total} milestones`
 
-- Adicionar `<Textarea>` opcional abaixo dos seletores de prazo/responsável
-- Placeholder: "Observações, bloqueios, contexto..."
-- Incluir `notes` no `onSubmit`
+**Layout:** Card com `p-5`, sem grid — usa flexbox com `flex-wrap` para responsividade mobile.
 
-#### 6. `MilestoneList.tsx` — exibição e edição inline
+#### 3. Atualizar `ProjectsPage.tsx` — layout da listagem
+- Trocar `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4` por `flex flex-col gap-3` (stack vertical)
+- Skeleton loading: trocar grid por 4 skeletons full-width `h-24`
 
-- Ícone `FileText` (14px) ao lado do nome quando `notes` preenchido
-- Tooltip com preview das notas no hover
-- Na área expandida: `<Textarea>` para edição inline (quando `canEdit`)
-- `onUpdate` callback estendido para aceitar `notes`
+#### 4. Estender `ProjectProgressBar` (opcional)
+Adicionar prop `showPct?: boolean` para exibir porcentagem ao lado da barra, mantendo retrocompatibilidade.
 
-#### 7. `GanttItem` e Gantt tooltips
+#### 5. Atualizar testes `ProjectCard.test.tsx`
+Ajustar seletores para a nova estrutura DOM. Manter todos os cenários de teste existentes (nome, owner, health, status, KRs, external link, onClick).
 
-- Adicionar `notes?: string | null` ao tipo `GanttItem`
-- `useGanttData.ts`: mapear `notes` dos milestones
-- `MilestoneGanttChart.tsx`: exibir notas no tooltip quando preenchidas
-- `ProjectGanttChart.tsx`: exibir notas no tooltip de milestones
+### Componentes reutilizados (sem duplicação)
+| Componente | Uso |
+|---|---|
+| `ProjectHealthBadge` | Adaptar para modo "dot only" via prop |
+| `ProjectStatusBadge` | Sem alteração |
+| `ProjectProgressBar` | Estender com `showPct` |
+| `Avatar/AvatarFallback` | Sem alteração |
+| `Card/CardContent` | Sem alteração |
 
 ### Arquivos impactados
-
 | Arquivo | Ação |
-|---------|------|
-| Migration SQL | Novo |
-| `src/modules/projects/types.ts` | Editar (+`notes` em 3 interfaces) |
-| `src/modules/projects/hooks/useProject.ts` | Editar (select) |
-| `src/modules/projects/hooks/useMilestones.ts` | Editar (select) |
-| `src/modules/projects/hooks/useMilestoneMutations.ts` | Editar (insert) |
-| `src/modules/projects/hooks/useGanttData.ts` | Editar (mapear notes) |
-| `src/modules/projects/components/MilestoneCreateForm.tsx` | Editar (+textarea) |
-| `src/modules/projects/components/MilestoneList.tsx` | Editar (icon + inline edit) |
-| `src/modules/projects/components/MilestoneGanttChart.tsx` | Editar (tooltip) |
-| `src/modules/projects/components/ProjectGanttChart.tsx` | Editar (tooltip) |
-
-### Conformidade
-
-| Regra | Status |
-|-------|--------|
-| Sem `select('*')` | ✅ |
-| BU-scoped client | ✅ |
-| Query keys centralizadas | ✅ |
-| Identity convention | ✅ N/A |
-| useDialogFormReset | ✅ N/A (inline forms) |
+|---|---|
+| `src/modules/projects/utils/externalUrlLabel.ts` | Novo |
+| `src/modules/projects/components/ProjectCard.tsx` | Reescrever layout |
+| `src/modules/projects/components/ProjectProgressBar.tsx` | Estender (prop `showPct`) |
+| `src/modules/projects/components/ProjectHealthBadge.tsx` | Adicionar prop `dotOnly` |
+| `src/modules/projects/pages/ProjectsPage.tsx` | Layout + skeleton |
+| `src/modules/projects/components/__tests__/ProjectCard.test.tsx` | Atualizar seletores |
 
