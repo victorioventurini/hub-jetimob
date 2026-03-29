@@ -1564,6 +1564,8 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `project_milestones` | Marcos do projeto com status, due_date, notes (texto livre) e owner_id (opcionais) | ✅ BU-scoped |
 | `project_milestone_dependencies` | Dependências entre milestones | ✅ Herda via JOIN |
 | `milestone_krs` | Junction milestone ↔ key_result com impacto (high/medium/low) — permite vinculação granular de KRs a marcos individuais (cross-area) | ✅ BU-scoped |
+| `project_comments` | Comentários de projeto com body_richtext, reply, pin, soft-delete | ✅ BU-scoped + author/admin |
+| `project_comment_attachments` | Arquivos anexados a comentários de projeto | ✅ BU-scoped + author |
 
 **Enums:** `project_status` (planned, in_progress, paused, done, cancelled), `project_impact` (high, medium, low)
 
