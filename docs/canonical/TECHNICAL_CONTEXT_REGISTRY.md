@@ -1552,9 +1552,9 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - Módulos `operational` dependem de config explícita por BU
 - Se não houver registro em `bu_module_configs`, módulo está desabilitado
 
-### 3.3.1 Módulo Projetos (v1.3)
+### 3.3.1 Módulo Projetos (v1.4)
 
-**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`, `milestone_krs`
+**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`, `milestone_krs`, `project_comments`, `project_comment_attachments`
 
 | Tabela | Descrição | RLS |
 |--------|-----------|-----|
