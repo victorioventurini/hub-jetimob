@@ -1620,6 +1620,7 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `MilestoneList` | Lista de milestones com edição inline (status, due_date, owner, notes) |
 | `MilestoneGanttChart` | Gantt de milestones dentro do projeto |
 | `MilestoneKrLinkSection` | Seção de KRs vinculadas a milestone |
+| `ProjectCommentsSection` | Thread de comentários com menções, reply, pin e anexos |
 | `ProjectsForKrSection` | Projetos vinculados a uma KR (read + link) |
 | `ProjectsSummary` | Resumo para wizards |
 
