@@ -26,6 +26,7 @@ import { MilestoneCreateForm } from '../components/MilestoneCreateForm';
 import { MilestoneGanttChart } from '../components/MilestoneGanttChart';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectKrLinkSection } from '../components/ProjectKrLinkSection';
+import { ProjectCommentsSection } from '../components/ProjectCommentsSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
