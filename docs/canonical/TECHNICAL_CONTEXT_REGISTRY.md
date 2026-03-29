@@ -1571,9 +1571,11 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 
 **Função SQL:** `calculate_project_health(project_id uuid)` → retorna `on_track`, `at_risk` ou `late` baseado em milestones atrasados
 
+**Storage Bucket:** `project-attachments` (privado, signed URLs)
+
 **Frontend:**
-- `src/modules/projects/` — types, hooks (17 hooks), utils (projectHealth), components (15 componentes)
-- **Páginas:** `/projects` (lista com filtros por URL state + toggle lista/gantt), `/projects/:id` (detalhe com milestones, gantt inline, KR links)
+- `src/modules/projects/` — types (2 arquivos), hooks (19 hooks), utils (2 arquivos), components (16 componentes)
+- **Páginas:** `/projects` (lista com filtros por URL state + toggle lista/gantt + filtros salvos), `/projects/:id` (detalhe com milestones, gantt inline, KR links, comentários)
 - **Integrações aditivas:** `ProjectsSummary` nos wizards (TeamCheckin, LeaderPrep, MBR), `ProjectsForKrSection` na visão de KR, `ProjectsForKrLinkingSection` na expansão de KR no dashboard OKR, `MyProjectsCard` na Home
 
 **Identity:** `owner_id` = `profiles.id` (convenção canônica)
