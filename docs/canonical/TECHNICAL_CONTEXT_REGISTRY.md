@@ -1583,7 +1583,7 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 **Campos obrigatórios (Projeto):** `name`, `owner_id`, `start_date`, `due_date` — validação via Zod no `ProjectDialog`
 **Campos opcionais (Milestone):** `due_date`, `owner_id`, `notes` — todos opcionais
 
-**Hooks (17):**
+**Hooks (19):**
 | Hook | Propósito |
 |------|-----------|
 | `useProjects` | Listagem com filtros (status, owner, team, KR link, search) |
@@ -1601,8 +1601,10 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `useProjectsForWizard` | Projetos para contexto de wizard |
 | `useProjectPermissionsV2` | Flags de permissão (canView, canCreate, canEdit, canDelete) |
 | `useGanttData` | Transforma projetos em GanttItem[] para timeline |
+| `useProjectComments` | Listagem de comentários e anexos por projeto |
+| `useProjectCommentMutations` | CRUD de comentários (create, edit, delete, pin) |
 
-**Componentes (15):**
+**Componentes (16):**
 | Componente | Propósito |
 |------------|-----------|
 | `ProjectCard` | Card na listagem |
