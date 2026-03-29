@@ -108,6 +108,10 @@ vi.mock('@/components/layout/HubLayout', () => ({
   HubLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock('@/modules/projects/components/ProjectCommentsSection', () => ({
+  ProjectCommentsSection: () => <div data-testid="comments-section" />,
+}));
+
 import ProjectDetailPage from '../../pages/ProjectDetailPage';
 import { useProject } from '../../hooks/useProject';
 

@@ -47,6 +47,10 @@ vi.mock('@/hooks/useIdentity', () => ({
   })),
 }));
 
+vi.mock('@/shared/saved-links', () => ({
+  SavedLinksPopover: () => <div data-testid="saved-links-popover" />,
+}));
+
 vi.mock('@/components/layout/HubLayout', () => ({
   HubLayout: ({ children }: { children: React.ReactNode }) => <div data-testid="hub-layout">{children}</div>,
 }));

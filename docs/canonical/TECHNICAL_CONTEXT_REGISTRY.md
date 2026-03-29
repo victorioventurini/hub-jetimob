@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.19.0  
-**Última atualização:** 2026-03-27 (v3.19.0 - Projects Module v1.3 — milestone notes, KR linking, Gantt charts, required fields, mobile UX — 119 tabelas + 27 views, 219 funções SQL, 85 enums)
+**Versão:** 3.20.0  
+**Última atualização:** 2026-03-29 (v3.20.0 - Projects Module v1.4 — Comments system, saved filters, test coverage 112 — 121 tabelas + 27 views, 219 funções SQL, 85 enums)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo (1974 testes, 0 falhas) | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (219 funções)** | **Edge Functions Audit (25 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅ | **Módulo Projetos v1.3** ✅ | **Projects Permissions Parity v1.0** ✅ | **Milestone Notes v1.0** ✅ | **Milestone KR Linking v1.0** ✅ | **Project Gantt Charts v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo (1974 testes, 0 falhas) | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (219 funções)** | **Edge Functions Audit (25 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅ | **Módulo Projetos v1.4** ✅ | **Project Comments System v1.0** ✅ | **Projects Saved Filters v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1552,9 +1552,9 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - Módulos `operational` dependem de config explícita por BU
 - Se não houver registro em `bu_module_configs`, módulo está desabilitado
 
-### 3.3.1 Módulo Projetos (v1.3)
+### 3.3.1 Módulo Projetos (v1.4)
 
-**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`, `milestone_krs`
+**Tabelas:** `projects`, `project_teams`, `project_krs`, `project_milestones`, `project_milestone_dependencies`, `milestone_krs`, `project_comments`, `project_comment_attachments`
 
 | Tabela | Descrição | RLS |
 |--------|-----------|-----|
@@ -1564,14 +1564,18 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `project_milestones` | Marcos do projeto com status, due_date, notes (texto livre) e owner_id (opcionais) | ✅ BU-scoped |
 | `project_milestone_dependencies` | Dependências entre milestones | ✅ Herda via JOIN |
 | `milestone_krs` | Junction milestone ↔ key_result com impacto (high/medium/low) — permite vinculação granular de KRs a marcos individuais (cross-area) | ✅ BU-scoped |
+| `project_comments` | Comentários de projeto com body_richtext, reply, pin, soft-delete | ✅ BU-scoped + author/admin |
+| `project_comment_attachments` | Arquivos anexados a comentários de projeto | ✅ BU-scoped + author |
 
 **Enums:** `project_status` (planned, in_progress, paused, done, cancelled), `project_impact` (high, medium, low)
 
 **Função SQL:** `calculate_project_health(project_id uuid)` → retorna `on_track`, `at_risk` ou `late` baseado em milestones atrasados
 
+**Storage Bucket:** `project-attachments` (privado, signed URLs)
+
 **Frontend:**
-- `src/modules/projects/` — types, hooks (17 hooks), utils (projectHealth), components (15 componentes)
-- **Páginas:** `/projects` (lista com filtros por URL state + toggle lista/gantt), `/projects/:id` (detalhe com milestones, gantt inline, KR links)
+- `src/modules/projects/` — types (2 arquivos), hooks (19 hooks), utils (2 arquivos), components (16 componentes)
+- **Páginas:** `/projects` (lista com filtros por URL state + toggle lista/gantt + filtros salvos), `/projects/:id` (detalhe com milestones, gantt inline, KR links, comentários)
 - **Integrações aditivas:** `ProjectsSummary` nos wizards (TeamCheckin, LeaderPrep, MBR), `ProjectsForKrSection` na visão de KR, `ProjectsForKrLinkingSection` na expansão de KR no dashboard OKR, `MyProjectsCard` na Home
 
 **Identity:** `owner_id` = `profiles.id` (convenção canônica)
@@ -1579,7 +1583,7 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 **Campos obrigatórios (Projeto):** `name`, `owner_id`, `start_date`, `due_date` — validação via Zod no `ProjectDialog`
 **Campos opcionais (Milestone):** `due_date`, `owner_id`, `notes` — todos opcionais
 
-**Hooks (17):**
+**Hooks (19):**
 | Hook | Propósito |
 |------|-----------|
 | `useProjects` | Listagem com filtros (status, owner, team, KR link, search) |
@@ -1597,8 +1601,10 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `useProjectsForWizard` | Projetos para contexto de wizard |
 | `useProjectPermissionsV2` | Flags de permissão (canView, canCreate, canEdit, canDelete) |
 | `useGanttData` | Transforma projetos em GanttItem[] para timeline |
+| `useProjectComments` | Listagem de comentários e anexos por projeto |
+| `useProjectCommentMutations` | CRUD de comentários (create, edit, delete, pin) |
 
-**Componentes (15):**
+**Componentes (16):**
 | Componente | Propósito |
 |------------|-----------|
 | `ProjectCard` | Card na listagem |
@@ -1614,6 +1620,7 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `MilestoneList` | Lista de milestones com edição inline (status, due_date, owner, notes) |
 | `MilestoneGanttChart` | Gantt de milestones dentro do projeto |
 | `MilestoneKrLinkSection` | Seção de KRs vinculadas a milestone |
+| `ProjectCommentsSection` | Thread de comentários com menções, reply, pin e anexos |
 | `ProjectsForKrSection` | Projetos vinculados a uma KR (read + link) |
 | `ProjectsSummary` | Resumo para wizards |
 
@@ -3541,6 +3548,20 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.20.0 (2026-03-29)
+- **Módulo Projetos v1.4 — Comments System & Test Coverage**:
+  - Novas tabelas: `project_comments`, `project_comment_attachments` — sistema de comentários completo
+  - Storage bucket: `project-attachments` (privado, signed URLs)
+  - Realtime habilitado para `project_comments`
+  - Funcionalidades: texto rico, menções (@), anexos, reply, pin/unpin
+  - Reutiliza sistema genérico de messaging (`MessageBubble`, `ReplyPreview`)
+  - Filtros salvos (`SavedLinksPopover`) adicionados à listagem
+  - RLS: author/admin para update/delete, BU-scoped para select/insert
+  - Fix: `project_teams` RLS alinhada com `projects` (adicionado `is_leader_of_project_owner`)
+  - 19 hooks, 16 componentes, 2 páginas
+  - 112 testes passando no módulo (era 78)
+  - Novos testes: externalUrlLabel, useGanttData, ProjectViewToggle, comment types
 
 ### v3.19.0 (2026-03-27)
 - **Módulo Projetos v1.3**:
