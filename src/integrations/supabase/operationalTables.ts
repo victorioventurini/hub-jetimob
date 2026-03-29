@@ -85,6 +85,10 @@ export const OPERATIONAL_TABLES: string[] = [
   "notification_endpoints",
   "notification_deliveries",
 
+  // Projects - Comments
+  "project_comments",
+  "project_comment_attachments",
+
   // Automations / Integrations (if BU-scoped)
   "automation_connections",
   "integration_configs",
