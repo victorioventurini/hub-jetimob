@@ -164,7 +164,7 @@ export function ProjectCommentsSection({ projectId }: ProjectCommentsSectionProp
         data: {
           body_richtext: { type: 'text', content: content.trim() },
           reply_to_comment_id: replyingTo?.id ?? null,
-          mentions: mentions.map((m) => ({ user_id: m.user_id, contact_id: m.contact_id })),
+          mentions: mentions.map((m) => ({ user_id: m.userId, contact_id: m.contactId })),
           attachments: selectedFiles.map((sf) => sf.file),
         },
       });
