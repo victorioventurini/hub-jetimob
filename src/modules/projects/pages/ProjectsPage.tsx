@@ -25,6 +25,7 @@ import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectVi
 import { ProjectGanttChart } from '../components/ProjectGanttChart';
 import type { ProjectFilters, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SavedLinksPopover } from '@/shared/saved-links';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProjectsPage() {
