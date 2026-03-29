@@ -3549,6 +3549,20 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.20.0 (2026-03-29)
+- **Módulo Projetos v1.4 — Comments System & Test Coverage**:
+  - Novas tabelas: `project_comments`, `project_comment_attachments` — sistema de comentários completo
+  - Storage bucket: `project-attachments` (privado, signed URLs)
+  - Realtime habilitado para `project_comments`
+  - Funcionalidades: texto rico, menções (@), anexos, reply, pin/unpin
+  - Reutiliza sistema genérico de messaging (`MessageBubble`, `ReplyPreview`)
+  - Filtros salvos (`SavedLinksPopover`) adicionados à listagem
+  - RLS: author/admin para update/delete, BU-scoped para select/insert
+  - Fix: `project_teams` RLS alinhada com `projects` (adicionado `is_leader_of_project_owner`)
+  - 19 hooks, 16 componentes, 2 páginas
+  - 112 testes passando no módulo (era 78)
+  - Novos testes: externalUrlLabel, useGanttData, ProjectViewToggle, comment types
+
 ### v3.19.0 (2026-03-27)
 - **Módulo Projetos v1.3**:
   - Nova tabela: `milestone_krs` — vinculação granular de KRs a milestones individuais (cross-area)
