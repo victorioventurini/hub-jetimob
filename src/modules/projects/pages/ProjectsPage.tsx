@@ -25,6 +25,7 @@ import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectVi
 import { ProjectGanttChart } from '../components/ProjectGanttChart';
 import type { ProjectFilters, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SavedLinksPopover } from '@/shared/saved-links';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProjectsPage() {
@@ -96,12 +97,15 @@ export default function ProjectsPage() {
           description="Gerencie projetos estratégicos e acompanhe milestones."
           breadcrumbs={[{ label: "Projetos" }]}
           actions={
-            canCreateProject ? (
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo projeto
-              </Button>
-            ) : undefined
+            <div className="flex items-center gap-2">
+              <SavedLinksPopover moduleSlug="projects" />
+              {canCreateProject && (
+                <Button onClick={() => setDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo projeto
+                </Button>
+              )}
+            </div>
           }
         />
 
