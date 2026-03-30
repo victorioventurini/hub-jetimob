@@ -158,27 +158,31 @@ export function QbrMeetingOkrReviewStep({
           </div>
         )}
 
-        {/* Proposed OKR */}
-        {current?.hasSubmission && current.proposedOkrs?.objective?.title ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Proposta de OKR</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm font-medium">{current.proposedOkrs.objective.title}</p>
-              {current.proposedOkrs.draftKrs && current.proposedOkrs.draftKrs.length > 0 && (
-                <div className="space-y-1">
-                  {current.proposedOkrs.draftKrs.map((kr, i) => (
-                    <div key={kr.id || i} className="flex items-center gap-2 text-xs">
-                      <Badge variant="outline" className="text-[10px]">{kr.type}</Badge>
-                      <span className="truncate flex-1">{kr.title}</span>
-                      <span className="text-muted-foreground">{kr.baseline} → {kr.target} {kr.unit}</span>
+        {/* Proposed OKRs */}
+        {current?.hasSubmission && current.proposedOkrs.length > 0 ? (
+          <div className="space-y-3">
+            {current.proposedOkrs.map((entry) => (
+              <Card key={entry.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Proposta de OKR</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm font-medium">{entry.objective.title}</p>
+                  {entry.draftKrs.length > 0 && (
+                    <div className="space-y-1">
+                      {entry.draftKrs.map((kr, i) => (
+                        <div key={kr.id || i} className="flex items-center gap-2 text-xs">
+                          <Badge variant="outline" className="text-[10px]">{kr.type}</Badge>
+                          <span className="truncate flex-1">{kr.title}</span>
+                          <span className="text-muted-foreground">{kr.baseline} → {kr.target} {kr.unit}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : (
           <Card className="border-dashed">
             <CardContent className="p-4 text-center text-sm text-muted-foreground">

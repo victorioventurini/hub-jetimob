@@ -169,8 +169,8 @@ export function QbrPostOkrPromotionStep({
                 <div key={okr.sessionId} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>{okr.teamName}</span>
-                  {okr.proposedOkrs?.objective?.title && (
-                    <span className="truncate flex-1">— {okr.proposedOkrs.objective.title}</span>
+                  {okr.proposedOkrs.length > 0 && (
+                    <span className="truncate flex-1">— {okr.proposedOkrs[0].objective.title}{okr.proposedOkrs.length > 1 ? ` +${okr.proposedOkrs.length - 1}` : ''}</span>
                   )}
                 </div>
               ))}
