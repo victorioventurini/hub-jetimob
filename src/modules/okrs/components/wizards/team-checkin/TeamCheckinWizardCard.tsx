@@ -79,7 +79,7 @@ export function TeamCheckinWizardCard({
           asChild
           className="w-full gap-2"
         >
-          <Link to={`/okrs/team-checkin?team=${teamId}`}>
+          <Link to={`/rituals/team-checkin?team=${teamId}`}>
             <Play className="h-4 w-4" />
             Iniciar Ritual
           </Link>

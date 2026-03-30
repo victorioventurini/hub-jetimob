@@ -22,22 +22,11 @@ const TeamContributionPage = lazy(() => import('@/modules/okrs/pages/TeamContrib
 const CycleCheckinsPage = lazy(() => import('@/modules/okrs/pages/CycleCheckinsPage'));
 const OkrCreationPage = lazy(() => import('@/modules/okrs/pages/OkrCreationPage'));
 const TeamKrCreationPage = lazy(() => import('@/modules/okrs/pages/TeamKrCreationPage'));
-const CollaboratorCheckinPage = lazy(() => import('@/modules/okrs/pages/CollaboratorCheckinPage'));
-const LeaderPrepPage = lazy(() => import('@/modules/okrs/pages/LeaderPrepPage'));
-const TeamCheckinPage = lazy(() => import('@/modules/okrs/pages/TeamCheckinPage'));
-const ManagersCheckinPage = lazy(() => import('@/modules/okrs/pages/ManagersCheckinPage'));
-const CLevelCheckinPage = lazy(() => import('@/modules/okrs/pages/CLevelCheckinPage'));
 const OkrQualityPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrQualityPage'));
 const OkrConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrConstructionReviewPage'));
 const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgConstructionReviewPage'));
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
-const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
-const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
-const QbrPrePage = lazy(() => import('@/modules/okrs/pages/QbrPrePage'));
-const QbrPreCLevelPage = lazy(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
-const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'));
-const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
 
 /**
  * Helper para wrapping consistente de rotas OKR
@@ -69,17 +58,8 @@ export const okrRoutes = (
     <Route path="/okrs/create" element={<OkrRoute><OkrCreationPage /></OkrRoute>} />
     <Route path="/okrs/objectives/:objectiveId/krs/create" element={<OkrRoute><TeamKrCreationPage /></OkrRoute>} />
     
-    {/* MBR */}
-    <Route path="/okrs/mbr" element={<OkrRoute requiresBuAdmin><MbrPage /></OkrRoute>} />
-    
-    {/* Check-ins */}
-    <Route path="/okrs/collaborator-checkin" element={<OkrRoute><CollaboratorCheckinPage /></OkrRoute>} />
-    <Route path="/okrs/leader-prep" element={<OkrRoute><LeaderPrepPage /></OkrRoute>} />
-    <Route path="/okrs/team-checkin" element={<OkrRoute><TeamCheckinPage /></OkrRoute>} />
-    <Route path="/okrs/managers-checkin" element={<OkrRoute><ManagersCheckinPage /></OkrRoute>} />
-    <Route path="/okrs/clevel-checkin" element={<OkrRoute><CLevelCheckinPage /></OkrRoute>} />
+    {/* Check-ins (non-ritual) */}
     <Route path="/okrs/checkins" element={<OkrRoute><CycleCheckinsPage /></OkrRoute>} />
-    <Route path="/okrs/ritual-history" element={<OkrRoute><RitualHistoryPage /></OkrRoute>} />
     
     {/* Quality & Analysis */}
     <Route path="/okrs/quality" element={<OkrRoute><OkrQualityPage /></OkrRoute>} />
@@ -94,11 +74,5 @@ export const okrRoutes = (
     
     {/* Team Contribution */}
     <Route path="/okrs/team-contribution/:teamId" element={<OkrRoute><TeamContributionPage /></OkrRoute>} />
-    
-    {/* QBR — Quarterly Business Review */}
-    <Route path="/okrs/qbr-pre" element={<OkrRoute><QbrPrePage /></OkrRoute>} />
-    <Route path="/okrs/qbr-pre-clevel" element={<OkrRoute requiresBuAdmin><QbrPreCLevelPage /></OkrRoute>} />
-    <Route path="/okrs/qbr" element={<OkrRoute requiresBuAdmin><QbrMeetingPage /></OkrRoute>} />
-    <Route path="/okrs/qbr-post" element={<OkrRoute requiresBuAdmin><QbrPostPage /></OkrRoute>} />
   </>
 );

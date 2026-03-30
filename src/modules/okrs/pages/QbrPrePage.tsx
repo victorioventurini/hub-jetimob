@@ -491,7 +491,7 @@ export default function QbrPrePage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/wizards"
+      backUrl="/rituals"
       adminContextSwitcher={
         <HierarchyContextSwitcher
           type="team"

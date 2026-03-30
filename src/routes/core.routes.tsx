@@ -19,7 +19,6 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const Modules = lazy(() => import('@/pages/Modules'));
 const SelectBu = lazy(() => import('@/pages/SelectBu'));
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
-const WizardsPage = lazy(() => import('@/pages/Wizards'));
 const VicTestPage = lazy(() => import('@/pages/VicTestPage'));
 const DevDocsPage = lazy(() => import('@/pages/DevDocsPage'));
 const NotificationsPage = lazy(() => import('@/pages/me/NotificationsPage'));
@@ -116,18 +115,6 @@ export const coreRoutes = (
       element={
         <ProtectedRoute skipBuCheck>
           <Modules />
-        </ProtectedRoute>
-      }
-    />
-
-    {/* Wizards - All OKR Wizards */}
-    <Route
-      path="/wizards"
-      element={
-        <ProtectedRoute>
-          <BuRequiredRoute>
-            <WizardsPage />
-          </BuRequiredRoute>
         </ProtectedRoute>
       }
     />

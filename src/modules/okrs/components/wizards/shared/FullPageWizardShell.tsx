@@ -55,7 +55,7 @@ export interface FullPageWizardShellProps {
   isLoading?: boolean;
   /** Callback ao fechar/cancelar */
   onClose: () => void;
-  /** URL para voltar (default: /wizards) */
+  /** URL para voltar (default: /rituals) */
   backUrl?: string;
   /** Conteúdo do passo atual */
   children: React.ReactNode;
@@ -86,7 +86,7 @@ export function FullPageWizardShell({
   onDiscardDraft,
   isLoading = false,
   onClose,
-  backUrl = '/wizards',
+  backUrl = '/rituals',
   children,
   contextLabel,
   adminContextSwitcher,

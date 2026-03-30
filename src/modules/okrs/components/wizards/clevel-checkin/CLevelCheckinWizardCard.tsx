@@ -70,7 +70,7 @@ export function CLevelCheckinWizardCard({
           asChild
           className="w-full gap-2 bg-status-purple hover:bg-status-purple/90"
         >
-          <Link to="/okrs/clevel-checkin">
+          <Link to="/rituals/clevel-checkin">
             <Play className="h-4 w-4" />
             Iniciar Revisão Estratégica
           </Link>

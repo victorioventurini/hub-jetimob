@@ -49,10 +49,21 @@ export const ROUTES = {
   // OKRs
   okrs: '/okrs',
   okrsDashboard: '/okrs/dashboard',
-  teamCheckin: '/okrs/team-checkin',
-  leaderPrep: '/okrs/leader-prep',
-  managersCheckin: '/okrs/managers-checkin',
   constructionReview: '/okrs/construction-review',
+  
+  // Rituals
+  rituals: '/rituals',
+  collaboratorCheckin: '/rituals/collaborator-checkin',
+  teamCheckinPre: '/rituals/team-checkin-pre',
+  teamCheckin: '/rituals/team-checkin',
+  managersCheckin: '/rituals/managers-checkin',
+  clevelCheckin: '/rituals/clevel-checkin',
+  mbr: '/rituals/mbr',
+  qbrPre: '/rituals/qbr-pre',
+  qbrClevel: '/rituals/qbr-clevel',
+  qbr: '/rituals/qbr',
+  qbrPost: '/rituals/qbr-post',
+  ritualHistory: '/rituals/history',
   
   // Assets
   assets: '/assets',

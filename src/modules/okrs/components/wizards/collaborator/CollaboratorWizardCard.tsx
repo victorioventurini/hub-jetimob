@@ -50,7 +50,7 @@ export function CollaboratorWizardCard({ className }: CollaboratorWizardCardProp
   }
 
   return (
-    <Link to="/okrs/collaborator-checkin" className="block">
+    <Link to="/rituals/collaborator-checkin" className="block">
       <Card 
         className={cn(
           "animate-fade-in overflow-hidden transition-all hover:shadow-md cursor-pointer group",

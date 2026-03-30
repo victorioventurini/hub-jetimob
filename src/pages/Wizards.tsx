@@ -85,7 +85,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Sexta-feira',
         badgeVariant: 'outline',
         requiresTeam: false,
-        route: '/okrs/collaborator-checkin',
+        route: '/rituals/collaborator-checkin',
       },
     ],
   },
@@ -109,7 +109,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
       },
       {
         id: 'leader-prep',
-        name: 'Preparação do Check-in',
+        name: 'Pré Check-in do Time',
         description: 'Prepare-se para conduzir um bom check-in com seu time',
         icon: Settings2,
         module: 'okrs',
@@ -117,7 +117,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Segunda-feira',
         badgeVariant: 'outline',
         requiresTeam: true,
-        route: '/okrs/leader-prep',
+        route: '/rituals/team-checkin-pre',
       },
       {
         id: 'team-checkin',
@@ -129,7 +129,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Durante reunião',
         badgeVariant: 'outline',
         requiresTeam: true,
-        route: '/okrs/team-checkin',
+        route: '/rituals/team-checkin',
       },
     ],
   },
@@ -148,7 +148,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'C-Level',
         badgeVariant: 'secondary',
         requiresTeam: false,
-        route: '/okrs/clevel-checkin',
+        route: '/rituals/clevel-checkin',
       },
       {
         id: 'mbr',
@@ -160,7 +160,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Mensal',
         badgeVariant: 'secondary',
         requiresTeam: false,
-        route: '/okrs/mbr',
+        route: '/rituals/mbr',
       },
     ],
   },
@@ -183,7 +183,7 @@ function getQbrLeaderWizards(qbrStatus: QbrStatus): WizardDefinition[] {
       badge: 'Trimestral',
       badgeVariant: 'secondary',
       requiresTeam: true,
-      route: '/okrs/qbr-pre',
+      route: '/rituals/qbr-pre',
     },
   ];
 }
@@ -202,7 +202,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
       badge: 'Trimestral',
       badgeVariant: 'secondary',
       requiresTeam: false,
-      route: '/okrs/qbr-pre-clevel',
+      route: '/rituals/qbr-clevel',
     });
   }
 
@@ -217,7 +217,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
       badge: 'Trimestral',
       badgeVariant: 'secondary',
       requiresTeam: false,
-      route: '/okrs/qbr',
+      route: '/rituals/qbr',
     });
   }
 
@@ -232,7 +232,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
       badge: 'Trimestral',
       badgeVariant: 'secondary',
       requiresTeam: false,
-      route: '/okrs/qbr-post',
+      route: '/rituals/qbr-post',
     });
   }
 
@@ -378,7 +378,7 @@ export default function WizardsPage() {
             description="Fluxos guiados para gestão de OKRs"
           />
           <Button variant="outline" size="sm" asChild>
-            <Link to="/okrs/ritual-history" className="gap-2">
+            <Link to="/rituals/history" className="gap-2">
               <History className="h-4 w-4" />
               Histórico de Rituais
             </Link>

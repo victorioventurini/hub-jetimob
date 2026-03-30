@@ -3195,6 +3195,7 @@ export type Database = {
           retro_date: string | null
           review_date: string | null
           start_date: string
+          status: Database["public"]["Enums"]["cycle_status"]
           type: Database["public"]["Enums"]["cycle_type"]
           updated_at: string
         }
@@ -3210,6 +3211,7 @@ export type Database = {
           retro_date?: string | null
           review_date?: string | null
           start_date: string
+          status?: Database["public"]["Enums"]["cycle_status"]
           type: Database["public"]["Enums"]["cycle_type"]
           updated_at?: string
         }
@@ -3225,6 +3227,7 @@ export type Database = {
           retro_date?: string | null
           review_date?: string | null
           start_date?: string
+          status?: Database["public"]["Enums"]["cycle_status"]
           type?: Database["public"]["Enums"]["cycle_type"]
           updated_at?: string
         }
@@ -10833,6 +10836,7 @@ export type Database = {
       bu_status: "active" | "inactive"
       catalog_status: "active" | "inactive" | "deprecated"
       cron_status: "started" | "success" | "failed" | "error" | "timeout"
+      cycle_status: "planning" | "active" | "closed"
       cycle_type: "year" | "quarter" | "month" | "sprint" | "custom"
       document_processing_status:
         | "pending"
@@ -11121,6 +11125,7 @@ export const Constants = {
       bu_status: ["active", "inactive"],
       catalog_status: ["active", "inactive", "deprecated"],
       cron_status: ["started", "success", "failed", "error", "timeout"],
+      cycle_status: ["planning", "active", "closed"],
       cycle_type: ["year", "quarter", "month", "sprint", "custom"],
       document_processing_status: [
         "pending",

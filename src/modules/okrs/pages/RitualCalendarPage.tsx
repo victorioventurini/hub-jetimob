@@ -809,7 +809,7 @@ function OccurrenceSheet({
 
           {occurrence.sessionId && (
             <Button variant="outline" className="w-full" asChild>
-              <Link to={`/okrs/ritual-history?session=${occurrence.sessionId}`}>
+              <Link to={`/rituals/history?session=${occurrence.sessionId}`}>
                 Ver no histórico
               </Link>
             </Button>

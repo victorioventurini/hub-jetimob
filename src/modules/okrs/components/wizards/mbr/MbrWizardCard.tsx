@@ -64,7 +64,7 @@ export function MbrWizardCard({
           </div>
         </div>
         <Button asChild className="w-full gap-2">
-          <Link to="/okrs/mbr">
+          <Link to="/rituals/mbr">
             <Play className="h-4 w-4" />
             Iniciar MBR
           </Link>

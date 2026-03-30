@@ -484,7 +484,7 @@ export default function CollaboratorCheckinPage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/wizards"
+      backUrl="/rituals"
       adminContextSwitcher={
         canSwitchUser ? (
           <AdminContextSwitcher

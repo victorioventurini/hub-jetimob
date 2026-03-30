@@ -243,7 +243,7 @@ export default function ManagersCheckinPage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/wizards"
+      backUrl="/rituals"
     >
       {renderStepContent()}
     </FullPageWizardShell>

@@ -414,7 +414,7 @@ export default function QbrPreCLevelPage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/okrs"
+      backUrl="/rituals"
     >
       {renderStepContent()}
     </FullPageWizardShell>

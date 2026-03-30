@@ -408,7 +408,7 @@ serve(async (req) => {
 
     // Build notification metadata
     const currentDatetime = formatDate(new Date());
-    const contextUrl = `/okrs/ritual-history?session=${sessionId}`;
+    const contextUrl = `/rituals/history?session=${sessionId}`;
 
     const metadata = {
       bu_name: buName,
