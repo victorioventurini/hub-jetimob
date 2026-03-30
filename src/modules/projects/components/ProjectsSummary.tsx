@@ -152,6 +152,16 @@ function ProjectDetailItem({ project }: { project: ProjectForWizard }) {
                 <span className="text-xs text-muted-foreground">{project.owner_name}</span>
               </div>
             )}
+            {project.teams && project.teams.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                {project.teams.map((t) => (
+                  <Badge key={t.team_id} variant="secondary" className="text-[10px] font-normal">
+                    {t.team_name}
+                  </Badge>
+                ))}
+              </div>
+            )}
             <ProjectProgressBar
               total={project.milestones_total}
               done={project.milestones_done}
