@@ -270,6 +270,15 @@ export default function LeaderPrepPage() {
           />
         );
       
+      case 'projects':
+        return (
+          <LeaderProjectsStep
+            teamId={teamIdParam}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
       case 'highlights': {
         // Generate highlights from KRs
         const highlights = krs
