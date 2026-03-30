@@ -196,14 +196,34 @@ Deno.serve(async (req) => {
     // Generate planned dates
     const plannedDates = generateDates(cadence as CadenceConfig);
 
+    // For global cadences (team_id = null), generate one occurrence per
+    // active team in the BU so each team can be tracked independently.
+    const isGlobalCadence = !cadence.team_id;
+    let teamIds: (string | null)[] = [cadence.team_id]; // default: single entry
+
+    if (isGlobalCadence) {
+      const { data: teams } = await serviceClient
+        .from("teams")
+        .select("id")
+        .eq("bu_id", buId)
+        .is("deleted_at", null)
+        .eq("status", "active");
+
+      if (teams && teams.length > 0) {
+        teamIds = teams.map((t: any) => t.id);
+      }
+      // else fallback to [null] so at least one set of occurrences is created
+    }
+
     // Fetch existing occurrences for this cadence
     const { data: existing } = await serviceClient
       .from("ritual_occurrences")
-      .select("id, planned_date, session_id, status")
+      .select("id, planned_date, team_id, session_id, status")
       .eq("cadence_id", cadenceId);
 
+    // Build composite key: "planned_date|team_id"
     const existingMap = new Map(
-      (existing ?? []).map((o: any) => [o.planned_date, o])
+      (existing ?? []).map((o: any) => [`${o.planned_date}|${o.team_id ?? "null"}`, o])
     );
 
     const plannedDateStrings = new Set(plannedDates.map(formatDate));
@@ -211,12 +231,19 @@ Deno.serve(async (req) => {
     let preserved = 0;
     let removed = 0;
 
-    // Remove future orphans (no session, not in new dates)
-    const toRemove = (existing ?? []).filter((o: any) => 
-      !plannedDateStrings.has(o.planned_date) && 
-      !o.session_id && 
-      o.status === "scheduled"
-    );
+    // Build the full set of expected keys
+    const expectedKeys = new Set<string>();
+    for (const d of plannedDates) {
+      for (const tid of teamIds) {
+        expectedKeys.add(`${formatDate(d)}|${tid ?? "null"}`);
+      }
+    }
+
+    // Remove future orphans (not in expected set, no session, still scheduled)
+    const toRemove = (existing ?? []).filter((o: any) => {
+      const key = `${o.planned_date}|${o.team_id ?? "null"}`;
+      return !expectedKeys.has(key) && !o.session_id && o.status === "scheduled";
+    });
 
     if (toRemove.length > 0) {
       const { error: delErr } = await serviceClient
@@ -227,17 +254,23 @@ Deno.serve(async (req) => {
       if (!delErr) removed = toRemove.length;
     }
 
-    // Insert new dates (skip existing)
-    const toInsert = plannedDates
-      .filter(d => !existingMap.has(formatDate(d)))
-      .map(d => ({
-        bu_id: cadence.bu_id,
-        cadence_id: cadenceId,
-        wizard_type: cadence.wizard_type,
-        team_id: cadence.team_id,
-        planned_date: formatDate(d),
-        status: "scheduled",
-      }));
+    // Insert new date+team combinations (skip existing)
+    const toInsert: any[] = [];
+    for (const d of plannedDates) {
+      for (const tid of teamIds) {
+        const key = `${formatDate(d)}|${tid ?? "null"}`;
+        if (!existingMap.has(key)) {
+          toInsert.push({
+            bu_id: cadence.bu_id,
+            cadence_id: cadenceId,
+            wizard_type: cadence.wizard_type,
+            team_id: tid,
+            planned_date: formatDate(d),
+            status: "scheduled",
+          });
+        }
+      }
+    }
 
     if (toInsert.length > 0) {
       const { error: insErr } = await serviceClient
