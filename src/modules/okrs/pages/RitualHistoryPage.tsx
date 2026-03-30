@@ -135,7 +135,7 @@ export default function RitualHistoryPage() {
       <div className="space-y-6">
         <PageHeader
           title="Histórico de Rituais"
-          description="Consulte rituais concluídos, decisões registradas e acompanhe pendências."
+          description="Consulte rituais concluídos e rascunhos, decisões registradas e acompanhe pendências."
           breadcrumbs={[
             { label: 'OKRs', href: '/okrs' },
             { label: 'Histórico de Rituais' },
