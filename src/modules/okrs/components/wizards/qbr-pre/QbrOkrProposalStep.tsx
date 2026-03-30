@@ -498,6 +498,7 @@ function KrDetailSubStep({
 export function QbrOkrProposalStep({
   proposedOkrs,
   teamId,
+  teamName,
   onProposedOkrsChange,
   onContinue,
   onBack,
