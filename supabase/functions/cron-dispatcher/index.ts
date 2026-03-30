@@ -233,6 +233,17 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     console.log("[cron-dispatcher] process_recommendation_expiry_notifications RPC not available");
   }
 
+  // Mark missed ritual occurrences
+  try {
+    const { data: missedCount, error: missedErr } = await supabase.rpc("mark_missed_ritual_occurrences");
+    if (!missedErr) {
+      result.ritual_occurrences_missed = missedCount || 0;
+      console.log(`[cron-dispatcher] Marked ${result.ritual_occurrences_missed} ritual occurrences as missed`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] mark_missed_ritual_occurrences RPC not available");
+  }
+
   return result;
 }
 
