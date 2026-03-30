@@ -18,14 +18,18 @@ import {
   ClipboardList,
   SkipForward,
   Lightbulb,
+  FolderKanban,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { projectsKeys } from '@/lib/queryKeys/projects';
 import { InitiativesSummary } from '../shared/InitiativesSummary';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
+import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { Initiative } from '@/modules/okrs/types/initiative';
+import type { ProjectHealth } from '@/modules/projects/types';
 
 // ============================================================
 // TYPES
