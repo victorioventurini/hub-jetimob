@@ -116,6 +116,8 @@ Lista completa das tabelas no schema `public`:
 | `permission_template_items_v2` | ✅ | ❌ | Items de template de permissão |
 | `permission_templates_v2` | ✅ | ❌ | Templates de permissão V2 |
 | `profiles` | ✅ | ✅ | Perfis de usuários |
+| `project_comment_attachments` | ✅ | ✅ | Anexos de comentários de projetos (v3.20.0) |
+| `project_comments` | ✅ | ✅ | Comentários de projetos (v3.20.0) |
 | `projects` | ✅ | ✅ | Projetos estratégicos (v3.16.0) |
 | `project_krs` | ✅ | ✅ | Junction project ↔ KR com impacto |
 | `project_milestones` | ✅ | ✅ | Marcos de projeto com notes, status, due_date |
