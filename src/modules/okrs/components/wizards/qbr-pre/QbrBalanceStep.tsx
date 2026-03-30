@@ -19,6 +19,7 @@ import {
   WizardFirstStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
+  KrLinkedDetails,
 } from '../shared';
 import {
   KR_STATE_CONFIG,
@@ -155,6 +156,8 @@ export function QbrBalanceStep({
                       </div>
                     </div>
                   </div>
+                  {/* Linked initiatives & projects — colapsado por padrão */}
+                  <KrLinkedDetails krId={kr.krId} />
                 </CardContent>
               </Card>
             );
