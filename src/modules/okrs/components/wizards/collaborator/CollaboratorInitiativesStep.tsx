@@ -78,6 +78,56 @@ export function CollaboratorInitiativesStep({
     enabled: krIds.length > 0,
   });
 
+  // Fetch projects linked to KRs
+  const { data: projectsByKrData = [] } = useQuery({
+    queryKey: [...projectsKeys.all, 'by-krs', krIds],
+    queryFn: async () => {
+      if (krIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('project_krs')
+        .select(`
+          key_result_id,
+          project:projects!project_krs_project_id_fkey(
+            id, name, status, due_date,
+            project_milestones(id, status, due_date, deleted_at)
+          )
+        `)
+        .in('key_result_id', krIds);
+
+      if (error) throw error;
+      return (data || []).filter((r: any) => r.project);
+    },
+    enabled: krIds.length > 0,
+  });
+
+  // Group projects by KR
+  const projectsByKr = useMemo(() => {
+    const grouped = new Map<string, Array<{ id: string; name: string; health: ProjectHealth; completion_pct: number }>>();
+    for (const row of projectsByKrData as any[]) {
+      const p = row.project;
+      const milestones = (p.project_milestones || []).filter((m: any) => !m.deleted_at);
+      const total = milestones.length;
+      const done = milestones.filter((m: any) => m.status === 'done').length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      let health: ProjectHealth = 'on_track';
+      if (p.due_date) {
+        const daysLeft = (new Date(p.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+        if (daysLeft < 0) health = 'late';
+        else if (pct < 50 && daysLeft < 14) health = 'at_risk';
+      }
+
+      const krId = row.key_result_id;
+      const existing = grouped.get(krId) || [];
+      if (!existing.find(x => x.id === p.id)) {
+        existing.push({ id: p.id, name: p.name, health, completion_pct: pct });
+      }
+      grouped.set(krId, existing);
+    }
+    return grouped;
+  }, [projectsByKrData]);
+
   // Group initiatives by KR
   const initiativesByKr = useMemo(() => {
     const grouped = new Map<string, Initiative[]>();
