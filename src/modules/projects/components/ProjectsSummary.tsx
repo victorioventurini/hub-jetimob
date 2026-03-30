@@ -8,9 +8,10 @@
  * - checkin: compacto (nome, health, progresso, milestone próximo)
  * - prep: médio (adiciona owner e data)
  * - review: completo (todos os campos + KRs vinculadas)
- * - detail: completo + milestones inline com MilestoneStatusSelect
+ * - detail: completo + milestones inline com MilestoneStatusSelect + owner
  */
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -140,6 +141,17 @@ function ProjectDetailItem({ project }: { project: ProjectForWizard }) {
               <ProjectHealthBadge health={project.health} />
               <ProjectStatusBadge status={project.status} />
             </div>
+            {project.owner_name && (
+              <div className="flex items-center gap-1.5">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={project.owner_photo_url ?? undefined} />
+                  <AvatarFallback className="text-[10px]">
+                    {project.owner_name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground">{project.owner_name}</span>
+              </div>
+            )}
             <ProjectProgressBar
               total={project.milestones_total}
               done={project.milestones_done}
@@ -185,6 +197,24 @@ function ProjectDetailItem({ project }: { project: ProjectForWizard }) {
                   onValueChange={(s) => handleStatusChange(ms.id, s)}
                 />
                 <span className="text-sm truncate flex-1 min-w-0">{ms.name}</span>
+
+                {ms.owner_name && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className="h-5 w-5 shrink-0">
+                          <AvatarImage src={ms.owner_photo_url ?? undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {ms.owner_name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p className="text-xs">{ms.owner_name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
 
                 {ms.due_date && (
                   <span className={cn(

@@ -19,8 +19,11 @@ export function useProjectsForWizard(teamId: string | undefined) {
       const { data, error } = await supabase
         .from('projects')
         .select(`
-          id, name, status, due_date, external_url,
-          project_milestones(id, name, status, due_date, owner_id, notes, deleted_at),
+          id, name, status, due_date, external_url, owner_id,
+          owner:profiles!projects_owner_id_fkey(display_name, photo_url),
+          project_milestones(id, name, status, due_date, owner_id, notes, deleted_at,
+            milestone_owner:profiles!project_milestones_owner_id_fkey(display_name, photo_url)
+          ),
           project_teams!inner(team_id)
         `)
         .eq('bu_id', buId)
@@ -36,6 +39,7 @@ export function useProjectsForWizard(teamId: string | undefined) {
           (m: any) => !m.deleted_at
         );
         const completion = computeCompletion(allMilestones);
+        const owner = p.owner as any;
 
         return {
           id: p.id,
@@ -47,12 +51,16 @@ export function useProjectsForWizard(teamId: string | undefined) {
           milestones_total: completion.total,
           milestones_done: completion.done,
           completion_pct: completion.pct,
+          owner_name: owner?.display_name ?? null,
+          owner_photo_url: owner?.photo_url ?? null,
           milestones: allMilestones.map((m: any) => ({
             id: m.id,
             name: m.name,
             status: m.status,
             due_date: m.due_date,
             owner_id: m.owner_id,
+            owner_name: m.milestone_owner?.display_name ?? null,
+            owner_photo_url: m.milestone_owner?.photo_url ?? null,
             notes: m.notes,
           })),
         } as ProjectForWizard;

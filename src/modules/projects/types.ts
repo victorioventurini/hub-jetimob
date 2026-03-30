@@ -80,12 +80,16 @@ export interface ProjectForWizard {
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  owner_name: string | null;
+  owner_photo_url: string | null;
   milestones?: Array<{
     id: string;
     name: string;
     status: MilestoneStatus;
     due_date: string | null;
     owner_id: string | null;
+    owner_name: string | null;
+    owner_photo_url: string | null;
     notes: string | null;
   }>;
 }
