@@ -847,51 +847,49 @@ function HealthTab() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {/* Date range - start */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Data início</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    locale={ptBR}
-                    className="p-3 pointer-events-auto"
-                    disabled={(date) => date > new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Date range - end */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Data fim</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    locale={ptBR}
-                    className="p-3 pointer-events-auto"
-                    disabled={(date) => date > new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Date range */}
+            <div className="sm:col-span-2 lg:col-span-1 space-y-1">
+              <Label className="text-xs text-muted-foreground">Período</Label>
+              <div className="flex items-center gap-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left font-normal h-9", !startDate && "text-muted-foreground")}>
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                      {startDate ? format(startDate, 'dd/MM/yy', { locale: ptBR }) : 'Início'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      locale={ptBR}
+                      className="p-3 pointer-events-auto"
+                      disabled={(date) => date > new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground">–</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left font-normal h-9", !endDate && "text-muted-foreground")}>
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                      {endDate ? format(endDate, 'dd/MM/yy', { locale: ptBR }) : 'Fim'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      locale={ptBR}
+                      className="p-3 pointer-events-auto"
+                      disabled={(date) => date > new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             {/* Rito filter */}
