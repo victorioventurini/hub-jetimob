@@ -414,6 +414,7 @@ export default function QbrPrePage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
+            teamId={teamIdParam || undefined}
           />
         );
 

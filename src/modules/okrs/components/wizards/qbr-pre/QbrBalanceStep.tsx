@@ -7,6 +7,7 @@
  */
 
 import { useMemo } from 'react';
+import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +38,7 @@ export interface QbrBalanceStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  teamId?: string;
 }
 
 // ============================================================
@@ -48,6 +50,7 @@ export function QbrBalanceStep({
   decisions,
   onDecisionsChange,
   onContinue,
+  teamId,
 }: QbrBalanceStepProps) {
   // Group by state for summary
   const stateSummary = useMemo(() => {
@@ -161,6 +164,9 @@ export function QbrBalanceStep({
             </p>
           )}
         </div>
+
+        {/* Projetos do time — bloco aditivo */}
+        {teamId && <ProjectsSummary teamId={teamId} mode="detail" className="mt-2" />}
       </div>
     </WizardStepScaffold>
   );
