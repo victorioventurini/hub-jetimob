@@ -141,8 +141,8 @@ export default function QbrPrePage() {
 
   // ── Load team KRs for balance step ──
   const { data: teamObjectives, isLoading: isLoadingKrs } = useQuery({
-    queryKey: ['qbr-pre', 'team-krs', teamIdParam, quarterlyCycle?.id],
-    enabled: !!buSupabase && !!teamIdParam && !!quarterlyCycle?.id,
+    queryKey: ['qbr-pre', 'team-krs', currentBuId, teamIdParam, quarterlyCycle?.id],
+    enabled: !!buSupabase && !!currentBuId && !!teamIdParam && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!currentBuId) return [];
