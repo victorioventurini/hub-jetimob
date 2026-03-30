@@ -17,6 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { PageHeader } from '@/components/ui/page-header';
+import { ListPageFilters } from '@/components/ui/list-page-filters';
+import { ViewOptionsBar } from '@/components/ui/view-options-bar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -141,7 +143,7 @@ export default function RitualHistoryPage() {
         />
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3">
+        <ListPageFilters hideSearch>
           <Select value={typeState.value || 'all'} onValueChange={typeState.set}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Tipo de ritual" />
@@ -225,7 +227,15 @@ export default function RitualHistoryPage() {
               Limpar datas
             </Button>
           )}
-        </div>
+        </ListPageFilters>
+
+        {/* Result count */}
+        {!anyLoading && mergedRituals && (
+          <ViewOptionsBar
+            resultCount={mergedRituals.length}
+            resultCountLabel="rituais encontrados"
+          />
+        )}
 
         {/* List */}
         {anyLoading ? (
