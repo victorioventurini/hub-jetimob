@@ -54,6 +54,7 @@ interface MaintenanceResult {
   perf_metrics_collected: boolean;
   recommendation_notifications_sent: number;
   recommendation_notifications_checked: number;
+  ritual_occurrences_missed: number;
 }
 
 interface ExecutionResult {
