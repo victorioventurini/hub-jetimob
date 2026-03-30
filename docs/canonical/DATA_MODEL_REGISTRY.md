@@ -66,6 +66,8 @@ Lista completa das tabelas no schema `public`:
 | `hub_integrations_global_config` | ✅ | ❌ | Config global de integrações |
 | `job_titles` | ✅ | ✅ | Cargos |
 | `kpi_metrics` | ✅ | ✅ | Métricas KPI |
+| `kpi_data_contributors` | ✅ | ✅ | Contribuidores de dados de KPI (v2.83.0) |
+| `kpi_target_history` | ✅ | ✅ | Histórico de metas de KPI |
 | `kpi_values` | ✅ | ✅ | Valores de KPI |
 | `mentions` | ✅ | ✅ | Menções (entity_type + entity_id) |
 | `modules` | ✅ | ❌ | Módulos do sistema |
