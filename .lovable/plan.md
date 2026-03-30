@@ -1,65 +1,77 @@
 
 
-# Relatório Visual de Sessões de Rituais
+## Problema
 
-## Contexto
-O `RitualHistoryPage` exibe dados de `reflection_data` como JSON bruto. O objetivo é renderizar esses dados como relatórios formatados e legíveis, com seções específicas por tipo de wizard.
+A sessão do Pré-QBR foi preenchida em 30/03 mas a ocorrência planejada era 18/03 — 12 dias de diferença. A janela de associação automática é fixa em **±7 dias**, insuficiente para ritos de menor frequência (quarterly, semester).
 
-## Pré-checklist verificado
-- TCR v3.20.0 consultado — snapshot imutável em `reflection_data` (JSONB) na `okr_wizard_sessions`
-- Development Standards v1.27.0 — layout `max-w-5xl mx-auto` (já correto na página), componentes canônicos
-- Identity Convention — não se aplica (leitura read-only de snapshots existentes)
-- Data Model — `okr_wizard_sessions.reflection_data` é o campo-fonte; sem alterações no banco
-- Componentes existentes — Card, Badge, Table, Progress, Collapsible do shadcn
+**Dados confirmados:**
+- Ocorrência `45e28e21` → planned_date: `2026-03-18`, status: `missed`
+- Sessões `806b7e79` e `a3ac50ee` → completed em `2026-03-30`, sem vínculo
 
-## Estrutura de dados por wizard_type
+---
 
-| Wizard | Draft Type | Campos principais |
-|---|---|---|
-| collaborator | `CollaboratorDraftData` | results (KR check-ins), kpiResults, reflection, initiativesMarkedAtRisk |
-| leader-prep | `LeaderPrepDraftData` | krActions, meetingNotes, kpisForDiscussion, kpisForFollowup |
-| team-checkin | `TeamCheckinDraftData` | reviewedKrs, decisions, checklist |
-| managers-checkin | `ManagersDraftData` | adjustments, resolvedDependencies, kpisMarkedForFollowup |
-| clevel-checkin | `CLevelDraftData` | strategicDecisions, directives, reviewedOkrs |
-| mbr | `MbrDraftData` | referenceMonth, kpiSnapshots, teamOkrSnapshots, orgOkrSnapshots, decisions, checklist, ritualFeedback, qbrFollowUpItems |
-| qbr-pre | `QbrPreDraftData` | krFinalStates, kpiSnapshots, learnings, proposedOkrs, dependencies, decisions |
-| qbr-pre-clevel | `QbrCLevelDraftData` | systemPatterns, strategicAnalysis, okrCalibrationFlags, directives, decisions |
-| qbr-meeting | `QbrMeetingDraftData` | approvals, decisions, crossCommitments, governanceChecklist |
-| qbr-post | `QbrPostDraftData` | promotedOkrIds, decisions, crossCommitments, executiveMinutes |
+## Solução: Janela dinâmica por frequência
 
-## Arquivos a criar
+Em vez de fixar ±7 dias para todos os ritos, a janela de associação será proporcional à frequência da cadência:
 
-### 1. `src/modules/okrs/components/ritual-report/SnapshotReportView.tsx`
-Dispatcher: recebe `wizardType: WizardPersona` + `data: Record<string, any>` e renderiza o renderer correto. Fallback: mensagem "Formato não suportado" + raw JSON.
+| Frequência | Janela |
+|---|---|
+| weekly | ±7 dias |
+| biweekly | ±10 dias |
+| monthly | ±15 dias |
+| quarterly | ±30 dias |
+| semester | ±45 dias |
 
-### 2. Renderers em `src/modules/okrs/components/ritual-report/renderers/`
-- **CollaboratorReport.tsx** — Tabela de KRs (objetivo, anterior→novo, confiança, comentário). Tabela de KPIs. Seção reflexão (impacto + ajuda). Lista de iniciativas em risco.
-- **LeaderPrepReport.tsx** — Tabela ações por KR (tipo + notas). KPIs marcados para discussão/followup. Notas da reunião.
-- **TeamCheckinReport.tsx** — Lista KRs revisados. Checklist (sabe no que focar? etc). Decisões já renderizadas pelo componente pai.
-- **ManagersCheckinReport.tsx** — Ajustes. Dependências resolvidas. KPIs para followup.
-- **CLevelCheckinReport.tsx** — Decisões estratégicas (text). Diretrizes (text). OKRs revisados.
-- **MbrReport.tsx** — Mês referência. Tabela KPIs (nome, valor, meta, RAG badge). Cards times com progress. OKRs org. Checklist governança. QBR follow-up items.
-- **QbrPreReport.tsx** — Estado final KRs. KPIs snapshot. Learnings (3 campos). OKRs propostos. Dependências.
-- **QbrCLevelReport.tsx** — Padrões sistêmicos. Análise estratégica. Flags calibração. Diretrizes.
-- **QbrMeetingReport.tsx** — Aprovações por time. Compromissos cross-team. Checklist governança.
-- **QbrPostReport.tsx** — OKRs promovidos. Compromissos. Ata executiva. Cadência follow-up.
+---
 
-### 3. `src/modules/okrs/components/ritual-report/index.ts`
-Barrel export de `SnapshotReportView`.
+## Plano de implementação
 
-## Arquivo a editar
+### 1. Atualizar lógica de auto-associação em `useWizardSession.ts`
 
-### `src/modules/okrs/pages/RitualHistoryPage.tsx`
-- No `SnapshotSummary`, substituir o conteúdo principal por `<SnapshotReportView wizardType={ritual.wizardType} data={rd} />`.
-- Manter JSON bruto como Collapsible "Ver dados brutos" abaixo (debug).
-- Remover a lógica de `summaryParts` que ficará redundante.
+No `onSuccess` da mutation `completeSession` (linhas 231-284):
+
+- Após obter `session.wizard_type` e `session.bu_id`, buscar a `ritual_cadences.frequency` da cadência correspondente
+- Calcular a janela dinamicamente com base na frequência
+- Usar essa janela no filtro `gte/lte` do `planned_date` (substituindo o hardcoded ±7)
+- Priorizar a ocorrência mais próxima da data atual (já faz isso via `order + limit 1`)
+
+```text
+Fluxo atual:
+  session completa → busca occurrence ±7d → vincula
+
+Fluxo novo:
+  session completa → busca cadence.frequency → calcula janela → busca occurrence ±Nd → vincula
+```
+
+### 2. Corrigir dados existentes
+
+- Vincular manualmente as sessões de Pré-QBR (`806b7e79`, `a3ac50ee`) à ocorrência de março (`45e28e21`) — via update direto
+- Atualizar status da ocorrência de `missed` para `completed_late`
+
+### 3. Arquivos modificados
+
+- `src/modules/okrs/hooks/useWizardSession.ts` — janela dinâmica na auto-associação
+
+---
 
 ## Detalhes técnicos
-- Cada renderer recebe `data: Record<string, any>` (conteúdo de `reflection_data.data`).
-- Renderização 100% defensiva: todo campo é optional com fallback "Sem dados registrados".
-- Usa componentes canônicos: Card, Table, Badge, Progress — sem novos componentes UI.
-- KPIs: tabela com nome, valor atual formatado, meta, badge RAG colorido.
-- OKRs: progress bar + status badge.
-- Sem `select('*')`, sem queries novas, sem alterações de banco — tudo vem do snapshot já carregado.
-- Sem rota nova — integrado na página existente.
+
+A lookup da frequência será feita com uma query adicional leve:
+
+```typescript
+const { data: cadence } = await supabase
+  .from('ritual_cadences')
+  .select('frequency')
+  .eq('wizard_type', session.wizard_type)
+  .eq('bu_id', session.bu_id)
+  .eq('is_active', true)
+  .maybeSingle();
+
+const windowDays = {
+  weekly: 7, biweekly: 10, monthly: 15,
+  quarterly: 30, semester: 45
+}[cadence?.frequency] ?? 7;
+```
+
+Isso mantém o comportamento atual para ritos semanais e amplia a janela proporcionalmente para ritos menos frequentes.
 
