@@ -182,8 +182,6 @@ export default function RitualHistoryPage() {
             value={userState.value || undefined}
             onValueChange={(v) => userState.set(v || '')}
             placeholder="Usuário"
-            showNoneOption
-            noneLabel="Todos os usuários"
             className="w-[220px]"
           />
 
