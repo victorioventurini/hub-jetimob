@@ -38,7 +38,6 @@ import { TeamOkrInitiativesStep } from '../components/wizards/team-okr-creation/
 const WIZARD_STEPS: KrWizardStep[] = [
   'kr-context',
   'kr-alignment',
-  'kr-type',
   'kr-detail',
   'kr-shared-check',
   'kr-dependencies',

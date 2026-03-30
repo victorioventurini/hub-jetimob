@@ -172,7 +172,6 @@ export function QbrMeetingOkrReviewStep({
                     <div className="space-y-1">
                       {entry.draftKrs.map((kr, i) => (
                         <div key={kr.id || i} className="flex items-center gap-2 text-xs">
-                          <Badge variant="outline" className="text-[10px]">{kr.type}</Badge>
                           <span className="truncate flex-1">{kr.title}</span>
                           <span className="text-muted-foreground">{kr.baseline} → {kr.target} {kr.unit}</span>
                         </div>

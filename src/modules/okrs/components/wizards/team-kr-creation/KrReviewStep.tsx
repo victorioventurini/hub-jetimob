@@ -98,11 +98,7 @@ export function KrReviewStep({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge className={cn("text-xs", TYPE_COLORS[kr.type])}>
-                          {TYPE_LABELS[kr.type]}
-                        </Badge>
-                      </div>
+                      {/* Tipo de KR oculto */}
                       <p className="text-sm font-medium">{kr.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {kr.direction === 'up' ? 'Aumentar' : kr.direction === 'down' ? 'Diminuir' : 'Manter'} de {kr.baseline} para {kr.target} {kr.unit}

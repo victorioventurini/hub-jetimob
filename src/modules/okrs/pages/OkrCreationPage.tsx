@@ -61,7 +61,6 @@ const WIZARD_STEPS: { id: WizardStep; label: string; description?: string }[] = 
   { id: 'retrospective', label: 'Retrospectiva', description: 'Ciclo anterior' },
   { id: 'objective', label: 'Objetivo', description: 'O que queremos alcançar' },
   { id: 'sharing', label: 'Compartilhamento', description: 'Objetivo compartilhado?' },
-  { id: 'kr-type', label: 'Tipos de KR', description: 'Planejamento' },
   { id: 'kr-detail', label: 'KRs', description: 'Detalhamento' },
   { id: 'kr-metrics', label: 'Indicadores', description: 'Vincular KPIs (opcional)' },
   { id: 'dependencies', label: 'Dependências', description: 'Riscos e bloqueios' },

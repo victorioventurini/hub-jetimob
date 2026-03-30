@@ -383,7 +383,7 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-medium">{kr.title}</p>
-                {kr.type && <OkrKrTypeBadge type={kr.type} />}
+                {/* Tipo de KR oculto */}
                 {/* v3.4.2: Primary KPI indicator badge */}
                 {hasPrimaryKpi && primaryKpiInfo && (
                   <KrPrimaryKpiBadge

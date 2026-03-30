@@ -255,11 +255,8 @@ export function TeamOkrShareStep({
               
               <div className="space-y-2">
                 {draftKrs.map((kr, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
+                    <div key={i} className="flex items-center justify-between text-sm">
                     <span>{kr.title}</span>
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {kr.type}
-                    </Badge>
                   </div>
                 ))}
               </div>

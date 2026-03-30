@@ -349,20 +349,7 @@ export function TeamKrFormDialog({
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="type">Tipo de KR</Label>
-                <Select value={type} onValueChange={(v) => setType(v as OkrKrType)} disabled={mutation.isPending}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="contribution">Contribuição</SelectItem>
-                    <SelectItem value="enabler">Habilitador</SelectItem>
-                    <SelectItem value="foundational">Fundacional</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">{getTypeDescription(type)}</p>
-              </div>
+              {/* Tipo de KR oculto — mantido internamente como 'foundational' */}
 
               <div className="space-y-2">
                 <Label htmlFor="kr-owner">
