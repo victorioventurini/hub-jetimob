@@ -6,7 +6,7 @@
  * Does NOT persist to database — the QBR Post wizard handles promotion.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,8 @@ import {
   WizardStepScaffold,
 } from '../shared';
 import { BuUserSelect, UnitSelect } from '@/components/selects';
+import { useProposalValidation } from '@/modules/okrs/hooks/useProposalValidation';
+import { ProposalValidationCard } from './ProposalValidationCard';
 import type {
   TeamOkrCreationWizardState,
   DraftTeamKr,
@@ -249,17 +251,21 @@ function KrPlanSubStep({
 
 function KrDetailSubStep({
   objectiveTitle,
+  objectiveDescription,
   krPlan,
   draftKrs,
   teamId,
+  teamName,
   onChange,
   onNext,
   onBack,
 }: {
   objectiveTitle: string;
+  objectiveDescription?: string;
   krPlan: TeamOkrCreationWizardState['krPlan'];
   draftKrs: DraftTeamKr[];
   teamId: string;
+  teamName?: string;
   onChange: (krs: DraftTeamKr[]) => void;
   onNext: () => void;
   onBack: () => void;
@@ -308,6 +314,24 @@ function KrDetailSubStep({
   }, [ensuredKrs, activeSlot, onChange]);
 
   const allFilled = ensuredKrs.slice(0, slots.length).every(kr => kr.title.trim().length >= 5);
+
+  // AI Validation
+  const { assessment, isLoading: validationLoading, error: validationError, validate, reset: resetValidation } = useProposalValidation();
+
+  // Reset validation when KRs change
+  useEffect(() => {
+    if (assessment) resetValidation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKrs]);
+
+  const handleValidate = useCallback(() => {
+    validate({
+      objectiveTitle,
+      objectiveDescription,
+      teamName,
+      draftKrs: ensuredKrs.slice(0, slots.length),
+    });
+  }, [validate, objectiveTitle, objectiveDescription, teamName, ensuredKrs, slots.length]);
 
   if (!currentSlot || !currentKr) return null;
 
@@ -444,6 +468,18 @@ function KrDetailSubStep({
 
       <Separator />
 
+      {/* AI Validation */}
+      {allFilled && (
+        <ProposalValidationCard
+          assessment={assessment}
+          isLoading={validationLoading}
+          error={validationError}
+          onValidate={handleValidate}
+          onReset={resetValidation}
+          canValidate={allFilled}
+        />
+      )}
+
       <WizardStepFooter
         onBack={onBack}
         onPrimary={onNext}
@@ -462,6 +498,7 @@ function KrDetailSubStep({
 export function QbrOkrProposalStep({
   proposedOkrs,
   teamId,
+  teamName,
   onProposedOkrsChange,
   onContinue,
   onBack,
@@ -543,9 +580,11 @@ export function QbrOkrProposalStep({
         {subStep === 'kr-detail' && (
           <KrDetailSubStep
             objectiveTitle={objective.title}
+            objectiveDescription={objective.description}
             krPlan={krPlan}
             draftKrs={draftKrs}
             teamId={teamId}
+            teamName={teamName}
             onChange={(krs) => updateField('draftKrs', krs)}
             onNext={onContinue}
             onBack={() => setSubStep('kr-plan')}
