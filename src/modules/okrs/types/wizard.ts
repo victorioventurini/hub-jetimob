@@ -314,6 +314,49 @@ export type QbrPostStep = 'okr-promotion' | 'decisions' | 'commitments' | 'follo
 export type QbrApprovalStatus = 'approved' | 'approved_with_changes' | 'discarded' | 'defer';
 export type QbrCalibrationFlag = 'too_conservative' | 'too_aggressive' | 'gap' | 'overlap';
 
+/**
+ * Entrada de objetivo proposto no QBR Pre — suporta múltiplos objetivos por time.
+ * Cada entrada contém o objetivo, plano de KRs e KRs rascunho.
+ */
+export interface ProposedObjectiveEntry {
+  id: string; // client-side UUID para tracking do rascunho
+  objective: {
+    title: string;
+    description: string;
+    org_objective_id: string | null;
+    cycle_id: string | null;
+  };
+  krPlan: {
+    foundational: number;
+    contribution: number;
+    enabler: number;
+  };
+  draftKrs: DraftTeamKr[];
+}
+
+/**
+ * Normaliza proposedOkrs para o formato de array.
+ * Garante backward compatibility com dados antigos (single-objective).
+ */
+export function normalizeProposedOkrs(
+  data: ProposedObjectiveEntry[] | Partial<TeamOkrCreationWizardState> | undefined | null,
+): ProposedObjectiveEntry[] {
+  if (!data) return [];
+  // Already an array
+  if (Array.isArray(data)) return data;
+  // Old single-objective format
+  const old = data as Partial<TeamOkrCreationWizardState>;
+  if (old.objective?.title?.trim()) {
+    return [{
+      id: `migrated-${Date.now()}`,
+      objective: old.objective,
+      krPlan: old.krPlan || { foundational: 1, contribution: 0, enabler: 0 },
+      draftKrs: old.draftKrs || [],
+    }];
+  }
+  return [];
+}
+
 /** Snapshot imutável do wizard pré-QBR — segue padrão MbrKpiSnapshot */
 export interface QbrPreSnapshot {
   cycleId: string;
@@ -338,7 +381,7 @@ export interface QbrPreSnapshot {
     whatDidntWork: string;
     debts: string;
   };
-  proposedOkrs: TeamOkrCreationWizardState;
+  proposedOkrs: ProposedObjectiveEntry[];
   dependencies: DraftTeamDependency[];
 }
 
