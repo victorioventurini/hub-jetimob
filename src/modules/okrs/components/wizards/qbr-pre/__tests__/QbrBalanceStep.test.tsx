@@ -18,6 +18,11 @@ vi.mock('../../shared', () => ({
     <div>{header}{bottomFixed}{children}{footer}</div>
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
+  KrLinkedDetails: ({ krId }: { krId: string }) => <div data-testid={`kr-linked-${krId}`} />,
+}));
+
+vi.mock('../UnlinkedProjectsList', () => ({
+  UnlinkedProjectsList: () => null,
 }));
 
 vi.mock('@/modules/okrs/hooks/useKrStateInsights', () => ({
