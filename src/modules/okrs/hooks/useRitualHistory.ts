@@ -50,7 +50,7 @@ export interface RitualDetail extends RitualHistoryItem {
 
 const WIZARD_TYPE_LABELS: Record<WizardPersona, string> = {
   'collaborator': 'Check-in Colaborador',
-  'leader-prep': 'Preparação do Líder',
+  'leader-prep': 'Pré Check-in do Time',
   'team-checkin': 'Check-in do Time',
   'managers-checkin': 'Check-in de Gestores',
   'clevel-checkin': 'Check-in C-Level',

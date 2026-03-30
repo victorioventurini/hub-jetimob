@@ -21,6 +21,7 @@ import { NotificationCenter } from "@/components/notifications";
 import { UserImpersonationDialog } from "@/components/impersonation";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
+import { ActiveCycleIndicator } from "./ActiveCycleIndicator";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;

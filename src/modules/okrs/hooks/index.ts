@@ -77,6 +77,10 @@ export {
   type Cycle,
 } from './useCycleData';
 
+// Active cycle (status-based)
+export { useActiveCycle, type CycleWithStatus } from './useActiveCycle';
+export { useCycleActions } from './useCycleActions';
+
 // =========================
 // MUTATIONS
 // =========================

@@ -790,7 +790,7 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
   },
   'leader-prep': {
     persona: 'leader-prep',
-    title: 'Preparação do Check-in',
+    title: 'Pré Check-in do Time',
     description: 'Prepare-se para conduzir um bom check-in com seu time',
     steps: [
       { id: 'overview', label: 'Visão Geral do Time', shortLabel: 'Visão' },
