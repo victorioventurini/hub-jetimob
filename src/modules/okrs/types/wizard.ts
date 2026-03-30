@@ -365,6 +365,8 @@ export interface QbrPreSnapshot {
   krFinalStates: Array<{
     krId: string;
     krTitle: string;
+    objectiveId: string;
+    objectiveTitle: string;
     state: string; // KrState from useKrStateInsights
     finalProgress: number;
     paceStatus: string;
