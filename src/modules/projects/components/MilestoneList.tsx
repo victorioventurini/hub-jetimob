@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CheckCircle2, Circle, Clock, ChevronRight, CalendarIcon, User, Trash2, FileText } from 'lucide-react';
+import { ChevronRight, CalendarIcon, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO, isPast, isValid } from 'date-fns';
+import { format, parseISO, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ProjectMilestone, MilestoneStatus } from '../types';
 import { MilestoneKrLinkSection } from './MilestoneKrLinkSection';
+import { MilestoneStatusSelect } from './MilestoneStatusSelect';
 
 interface MilestoneListProps {
   milestones: ProjectMilestone[];
@@ -25,18 +26,6 @@ interface MilestoneListProps {
   /** Map of owner_id → { display_name, photo_url } for displaying avatars */
   ownerProfiles?: Record<string, { display_name: string | null; photo_url: string | null }>;
 }
-
-const statusIcon: Record<MilestoneStatus, React.ReactNode> = {
-  todo: <Circle className="h-4 w-4 text-muted-foreground" />,
-  in_progress: <Clock className="h-4 w-4 text-blue-500" />,
-  done: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-};
-
-const nextStatus: Record<MilestoneStatus, MilestoneStatus> = {
-  todo: 'in_progress',
-  in_progress: 'done',
-  done: 'todo',
-};
 
 export function MilestoneList({
   milestones, projectId, onStatusChange, onUpdate, onDelete,
@@ -77,14 +66,11 @@ export function MilestoneList({
                 <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', isExpanded && 'rotate-90')} />
               </button>
 
-              <button
-                type="button"
-                onClick={() => onStatusChange?.(m.id, nextStatus[m.status])}
-                className="shrink-0"
+              <MilestoneStatusSelect
+                value={m.status}
+                onValueChange={(status) => onStatusChange?.(m.id, status)}
                 disabled={!onStatusChange}
-              >
-                {statusIcon[m.status]}
-              </button>
+              />
 
               <span className={cn(
                 'text-sm flex-1 truncate',
