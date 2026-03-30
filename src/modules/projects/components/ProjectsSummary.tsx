@@ -8,7 +8,7 @@
  * - checkin: compacto (nome, health, progresso, milestone próximo)
  * - prep: médio (adiciona owner e data)
  * - review: completo (todos os campos + KRs vinculadas)
- * - detail: completo + milestones inline com MilestoneStatusSelect
+ * - detail: completo + milestones inline com MilestoneStatusSelect + owner
  */
 
 import { Badge } from '@/components/ui/badge';
