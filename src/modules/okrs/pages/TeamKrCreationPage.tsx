@@ -38,7 +38,6 @@ import { TeamOkrInitiativesStep } from '../components/wizards/team-okr-creation/
 const WIZARD_STEPS: KrWizardStep[] = [
   'kr-context',
   'kr-alignment',
-  'kr-type',
   'kr-detail',
   'kr-shared-check',
   'kr-dependencies',
@@ -264,7 +263,7 @@ export default function TeamKrCreationPage() {
     if (draft.strategicReflection || WIZARD_STEPS.indexOf(draft.currentStep) > 1) {
       completed.push('kr-alignment');
     }
-    if (draft.krPlan.foundational > 0 && WIZARD_STEPS.indexOf(draft.currentStep) > 2) {
+    if (draft.krPlan.foundational > 0 && WIZARD_STEPS.indexOf(draft.currentStep) > 1) {
       completed.push('kr-type');
     }
     if (draft.draftKrs.length > 0 && draft.draftKrs.every(kr => kr.title && kr.owner_user_id)) {
@@ -338,16 +337,9 @@ export default function TeamKrCreationPage() {
         );
 
       case 'kr-type':
-        return (
-          <KrTypeStep
-            objectiveTitle={objective.title}
-            isSharedObjective={objective.is_shared || false}
-            krPlan={draft.krPlan}
-            onKrPlanChange={(plan) => updateDraft({ krPlan: plan })}
-            onContinue={goNext}
-            onBack={goBack}
-          />
-        );
+        // Step oculto — pular para kr-detail
+        goNext();
+        return null;
 
       case 'kr-detail':
         return (

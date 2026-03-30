@@ -101,9 +101,6 @@ export function TeamKrListItem({ teamKr }: TeamKrListItemProps) {
 
           {/* Footer: Type badge, owner, last checkin, history button */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {typeLabels[teamKr.type]}
-            </Badge>
             
             {teamKr.owner_name && (
               <div className="flex items-center gap-1">

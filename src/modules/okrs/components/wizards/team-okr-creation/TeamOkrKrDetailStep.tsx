@@ -239,23 +239,20 @@ export function TeamOkrKrDetailStep({
       {/* Content */}
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
-          {/* KR Type Header */}
+          {/* KR Header */}
           <div className="flex items-center gap-3">
-            <div className={cn("p-2 rounded-lg", config.bgColor)}>
-              <Icon className={cn("h-5 w-5", config.color)} />
+            <div className={cn("p-2 rounded-lg bg-primary/10")}>
+              <Target className={cn("h-5 w-5 text-primary")} />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold">KR {config.title}</h2>
+                <h2 className="text-lg font-semibold">KR {currentKrIndex + 1}</h2>
                 <AskToVicStepHelper
                   context={{
                     module: 'okrs',
                     wizard: 'creation',
                     step: 'kr-detail',
                     objectiveTitle,
-                    krType: currentSlot.type === 'foundational' ? 'fundacional' 
-                      : currentSlot.type === 'contribution' ? 'contribuicao' 
-                      : 'habilitador',
                     krTitle: currentKr.title,
                   }}
                 />

@@ -184,7 +184,6 @@ export function QbrCLevelOkrValidationStep({
                       <p className="text-xs font-medium text-muted-foreground">Key Results:</p>
                       {entry.draftKrs.map((kr, i) => (
                         <div key={kr.id || i} className="flex items-center gap-2 text-xs">
-                          <Badge variant="outline" className="text-[10px]">{kr.type}</Badge>
                           <span className="truncate">{kr.title}</span>
                           <span className="text-muted-foreground shrink-0">
                             {kr.baseline} → {kr.target} {kr.unit}

@@ -146,50 +146,7 @@ export function RulesInfoTab() {
         </CardContent>
       </Card>
 
-      {/* KR Types */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Info className="h-5 w-5" />
-            Tipos de Key Results
-          </CardTitle>
-          <CardDescription>
-            Cada tipo tem regras específicas de vínculo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {krTypes.map((kr) => (
-              <div
-                key={kr.type}
-                className="flex items-start gap-4 p-4 rounded-lg border"
-              >
-                <Badge className={kr.color}>{kr.label}</Badge>
-                <div className="flex-1">
-                  <p className="text-sm">{kr.description}</p>
-                  <div className="mt-2 flex items-center gap-2 text-xs">
-                    {kr.canLinkToOrg ? (
-                      <>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                        <span className="text-success">
-                          Pode vincular a KR organizacional
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-3.5 w-3.5 text-destructive" />
-                        <span className="text-destructive">
-                          Não pode vincular a KR organizacional
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Seção de tipos de KR oculta */}
 
       {/* Validation Note */}
       <Card className="border-warning/30 bg-warning-muted/50 dark:border-warning/30 dark:bg-warning-muted/20">
