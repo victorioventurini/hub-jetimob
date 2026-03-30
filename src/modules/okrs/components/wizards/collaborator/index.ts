@@ -21,5 +21,8 @@ export type { CollaboratorReflectionStepProps } from './CollaboratorReflectionSt
 export { CollaboratorSummary } from './CollaboratorSummary';
 export type { CollaboratorSummaryProps } from './CollaboratorSummary';
 
+export { CollaboratorProjectsStep } from './CollaboratorProjectsStep';
+export type { CollaboratorProjectsStepProps } from './CollaboratorProjectsStep';
+
 export { CollaboratorWizardCard } from './CollaboratorWizardCard';
 export type { CollaboratorWizardCardProps } from './CollaboratorWizardCard';

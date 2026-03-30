@@ -1,0 +1,297 @@
+/**
+ * CollaboratorProjectsStep - Etapa de atualização de Projetos/Milestones
+ *
+ * Exibe projetos onde o colaborador é owner do projeto OU owner de milestones
+ * pendentes. Permite atualizar status de milestones inline (fire-and-forget).
+ *
+ * Segue padrão wizard-ritual-integration-standard: integração aditiva,
+ * sem alterar draft state. Mutations são persistidas imediatamente.
+ */
+
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { FolderKanban } from 'lucide-react';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useBu } from '@/contexts/BuContext';
+import { projectsKeys } from '@/lib/queryKeys/projects';
+import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
+import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
+import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
+import { MilestoneStatusSelect } from '@/modules/projects/components/MilestoneStatusSelect';
+import { WizardStepHeader } from '../shared/WizardStepHeader';
+import { WizardStepFooter } from '../shared/WizardStepFooter';
+import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import type { MilestoneStatus, ProjectHealth } from '@/modules/projects/types';
+
+// ============================================================
+// TYPES
+// ============================================================
+
+export interface CollaboratorProjectsStepProps {
+  effectiveUserId: string | null;
+  onContinue: () => void;
+  onBack: () => void;
+  onSkip: () => void;
+}
+
+interface ProjectWithMilestones {
+  id: string;
+  name: string;
+  status: string;
+  due_date: string | null;
+  health: ProjectHealth;
+  milestones_total: number;
+  milestones_done: number;
+  completion_pct: number;
+  milestones: Array<{
+    id: string;
+    name: string;
+    status: MilestoneStatus;
+    due_date: string | null;
+    owner_id: string | null;
+    notes: string | null;
+  }>;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function computeHealth(status: string, dueDate: string | null, completionPct: number): ProjectHealth {
+  if (status === 'done' || status === 'cancelled') return 'on_track';
+  if (!dueDate) return 'on_track';
+  const now = new Date();
+  const due = new Date(dueDate);
+  const totalDays = Math.max(1, (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (totalDays < 0) return 'late';
+  if (completionPct < 50 && totalDays < 14) return 'at_risk';
+  return 'on_track';
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
+export function CollaboratorProjectsStep({
+  effectiveUserId,
+  onContinue,
+  onBack,
+  onSkip,
+}: CollaboratorProjectsStepProps) {
+  const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
+  const updateMilestone = useUpdateMilestone();
+
+  // Query: projects where user owns milestones
+  const { data: milestoneProjects, isLoading: isLoadingMilestones } = useQuery({
+    queryKey: projectsKeys.myMilestones(buId, effectiveUserId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, status, due_date, project_milestones!inner(id, name, status, due_date, owner_id, notes, deleted_at)')
+        .eq('bu_id', buId!)
+        .eq('project_milestones.owner_id', effectiveUserId!)
+        .in('status', ['planned', 'in_progress', 'paused'])
+        .is('deleted_at', null);
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!buId && !!effectiveUserId,
+  });
+
+  // Query: projects where user is project owner
+  const { data: ownedProjects, isLoading: isLoadingOwned } = useQuery({
+    queryKey: projectsKeys.myProjects(buId, effectiveUserId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, status, due_date, project_milestones(id, name, status, due_date, owner_id, notes, deleted_at)')
+        .eq('bu_id', buId!)
+        .eq('owner_id', effectiveUserId!)
+        .in('status', ['planned', 'in_progress', 'paused'])
+        .is('deleted_at', null);
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!buId && !!effectiveUserId,
+  });
+
+  const isLoading = isLoadingMilestones || isLoadingOwned;
+
+  // Merge and deduplicate by project id
+  const projects: ProjectWithMilestones[] = useMemo(() => {
+    const map = new Map<string, ProjectWithMilestones>();
+
+    const processProject = (p: any) => {
+      if (map.has(p.id)) return;
+      const rawMilestones = (p.project_milestones ?? []).filter(
+        (m: any) => !m.deleted_at
+      );
+      const total = rawMilestones.length;
+      const done = rawMilestones.filter((m: any) => m.status === 'done').length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      map.set(p.id, {
+        id: p.id,
+        name: p.name,
+        status: p.status,
+        due_date: p.due_date,
+        health: computeHealth(p.status, p.due_date, pct),
+        milestones_total: total,
+        milestones_done: done,
+        completion_pct: pct,
+        milestones: rawMilestones
+          .filter((m: any) => m.status !== 'done')
+          .map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            status: m.status as MilestoneStatus,
+            due_date: m.due_date,
+            owner_id: m.owner_id,
+            notes: m.notes,
+          })),
+      });
+    };
+
+    (milestoneProjects ?? []).forEach(processProject);
+    (ownedProjects ?? []).forEach(processProject);
+
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [milestoneProjects, ownedProjects]);
+
+  // Handle milestone status change (fire-and-forget, fail-safe)
+  const handleMilestoneStatusChange = (milestoneId: string, projectId: string, newStatus: MilestoneStatus) => {
+    try {
+      updateMilestone.mutate({
+        id: milestoneId,
+        project_id: projectId,
+        status: newStatus,
+      });
+    } catch (error) {
+      console.warn('[CollaboratorProjectsStep] Milestone update failed:', error);
+      toast.warning('Não foi possível atualizar o milestone. Tente novamente pelo módulo de Projetos.');
+    }
+  };
+
+  const pendingMilestonesCount = projects.reduce((acc, p) => acc + p.milestones.length, 0);
+
+  return (
+    <WizardStepScaffold
+      header={
+        <WizardStepHeader
+          icon={FolderKanban}
+          title="Projetos"
+          description="Atualize o status dos marcos sob sua responsabilidade"
+          variant="purple"
+          badge={!isLoading && projects.length > 0 ? `${pendingMilestonesCount} pendente${pendingMilestonesCount !== 1 ? 's' : ''}` : undefined}
+        />
+      }
+      footer={
+        <WizardStepFooter
+          showBack
+          onBack={onBack}
+          primaryLabel="Continuar"
+          onPrimary={onContinue}
+          showSkip
+          skipLabel="Pular"
+          onSkip={onSkip}
+        />
+      }
+    >
+      <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2].map(i => (
+              <div key={i} className="rounded-lg border border-border p-4 space-y-3">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center py-12 space-y-3">
+            <FolderKanban className="h-12 w-12 mx-auto text-muted-foreground/40" />
+            <p className="text-muted-foreground text-sm">
+              Nenhum projeto sob sua responsabilidade neste momento.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {projects.map(project => (
+              <div
+                key={project.id}
+                className="rounded-lg border border-border bg-card p-4 space-y-3 min-w-0"
+              >
+                {/* Project header */}
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground truncate flex-1 min-w-0">
+                    {project.name}
+                  </h3>
+                  <ProjectHealthBadge health={project.health} />
+                </div>
+
+                {/* Progress */}
+                <ProjectProgressBar
+                  total={project.milestones_total}
+                  done={project.milestones_done}
+                  pct={project.completion_pct}
+                  showPct
+                />
+
+                {/* Pending milestones */}
+                {project.milestones.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Marcos pendentes
+                    </p>
+                    {project.milestones.map(milestone => (
+                      <div
+                        key={milestone.id}
+                        className="flex items-center gap-2 py-1 min-w-0"
+                      >
+                        <MilestoneStatusSelect
+                          value={milestone.status}
+                          onValueChange={(newStatus) =>
+                            handleMilestoneStatusChange(milestone.id, project.id, newStatus)
+                          }
+                        />
+                        <span className="text-sm text-foreground truncate flex-1 min-w-0">
+                          {milestone.name}
+                        </span>
+                        {milestone.due_date && (
+                          <span className={cn(
+                            'text-xs whitespace-nowrap shrink-0',
+                            new Date(milestone.due_date) < new Date()
+                              ? 'text-destructive'
+                              : 'text-muted-foreground'
+                          )}>
+                            {new Date(milestone.due_date).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: 'short',
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">
+                    Todos os marcos concluídos ✓
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </WizardStepScaffold>
+  );
+}

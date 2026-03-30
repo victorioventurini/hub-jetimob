@@ -417,6 +417,16 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
+      case 'projects':
+        return (
+          <CollaboratorProjectsStep
+            effectiveUserId={effectiveUserId}
+            onContinue={goNext}
+            onBack={goBack}
+            onSkip={goNext}
+          />
+        );
+
       case 'initiatives':
         return (
           <CollaboratorInitiativesStep

@@ -32,6 +32,8 @@ export const projectsKeys = {
     ['projects', 'milestone-krs', milestoneId] as const,
   milestoneKrsByKr: (krId: string) =>
     ['projects', 'milestone-krs-by-kr', krId] as const,
+  myMilestones: (buId: string | null, profileId: string | null) =>
+    ['projects', 'my-milestones', buId, profileId] as const,
   comments: (projectId: string) =>
     ['projects', 'comments', projectId] as const,
   commentAttachments: (projectId: string) =>
