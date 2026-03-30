@@ -156,10 +156,12 @@ Lista completa das tabelas no schema `public`:
 | `identity_rls_violations` | Violações de identity em RLS |
 | `users_without_v2_permissions` | Usuários sem permissões V2 |
 | `v_ai_agents_public` | Agentes IA públicos |
+| `v_all_participants` | Todos participantes (internos + externos) unificados (v3.21.0) |
 | `v_bu_active_profiles` | Perfis ativos por BU (view canônica para User Directory) |
 | `v_bu_all_profiles_admin` | Todos os perfis da BU (admin) |
 | `v_bu_id_null_report` | Relatório de bu_id NULL |
 | `v_bu_memberships_active` | Memberships ativas |
+| `v_identity_health_check` | Verificação de saúde de identidades (v3.21.0) |
 | `v_notification_delivery_health` | Saúde de entregas |
 | `v_notification_failures` | Falhas de notificação |
 | `v_notification_slo_by_channel_daily` | SLO por canal (diário) |
