@@ -28,6 +28,7 @@ import { AlertCircle } from 'lucide-react';
 import { LeaderOverviewStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderOverviewStep';
 import { LeaderKpiAlertStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderKpiAlertStep';
 import { LeaderHighlightsStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderHighlightsStep';
+import { LeaderProjectsStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderProjectsStep';
 import { LeaderPrepStep } from '@/modules/okrs/components/wizards/leader-prep/LeaderPrepStep';
 import { LeaderAlignmentStep, type ParentObjective } from '@/modules/okrs/components/wizards/leader-prep/LeaderAlignmentStep';
 
