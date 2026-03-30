@@ -1,7 +1,7 @@
 /**
  * QbrOkrProposalStep - Inline OKR creation sub-flow for QBR Pre wizard
  * 
- * Composes 3 mini-steps: Objective → KR Plan → KR Detail
+ * Supports MULTIPLE objectives, each with its own KR plan and KR details.
  * All changes are draft-only (stored in proposedOkrs within QbrPreDraftData).
  * Does NOT persist to database — the QBR Post wizard handles promotion.
  */
@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
   Target, Plus, Minus, Wrench, Link2, TrendingUp, TrendingDown, Equal,
-  ChevronRight, ChevronLeft, SkipForward, CheckCircle2,
+  ChevronRight, ChevronLeft, SkipForward, CheckCircle2, Pencil, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -28,23 +28,23 @@ import { BuUserSelect, UnitSelect } from '@/components/selects';
 import { useProposalValidation } from '@/modules/okrs/hooks/useProposalValidation';
 import { ProposalValidationCard } from './ProposalValidationCard';
 import type {
-  TeamOkrCreationWizardState,
   DraftTeamKr,
   OkrKrType,
   OkrDirection,
+  ProposedObjectiveEntry,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
 // ============================================================
 
-type SubStep = 'objective' | 'kr-plan' | 'kr-detail';
+type EditSubStep = 'objective' | 'kr-plan' | 'kr-detail';
 
 export interface QbrOkrProposalStepProps {
-  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  proposedOkrs: ProposedObjectiveEntry[];
   teamId: string;
   teamName?: string;
-  onProposedOkrsChange: (okrs: Partial<TeamOkrCreationWizardState>) => void;
+  onProposedOkrsChange: (okrs: ProposedObjectiveEntry[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -86,6 +86,33 @@ const DIRECTION_OPTIONS: { value: OkrDirection; label: string; icon: typeof Tren
 ];
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+function createEmptyEntry(): ProposedObjectiveEntry {
+  return {
+    id: `obj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    objective: { title: '', description: '', org_objective_id: null, cycle_id: null },
+    krPlan: { foundational: 1, contribution: 0, enabler: 0 },
+    draftKrs: [],
+  };
+}
+
+function getKrTotal(plan: ProposedObjectiveEntry['krPlan']): number {
+  return plan.foundational + plan.contribution + plan.enabler;
+}
+
+function isEntryComplete(entry: ProposedObjectiveEntry): boolean {
+  const total = getKrTotal(entry.krPlan);
+  return (
+    entry.objective.title.trim().length >= 10 &&
+    total >= 1 &&
+    entry.draftKrs.length >= total &&
+    entry.draftKrs.slice(0, total).every(kr => kr.title.trim().length >= 5)
+  );
+}
+
+// ============================================================
 // SUB-STEP: OBJECTIVE
 // ============================================================
 
@@ -95,8 +122,8 @@ function ObjectiveSubStep({
   onNext,
   onBack,
 }: {
-  objective: TeamOkrCreationWizardState['objective'];
-  onChange: (obj: TeamOkrCreationWizardState['objective']) => void;
+  objective: ProposedObjectiveEntry['objective'];
+  onChange: (obj: ProposedObjectiveEntry['objective']) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -159,12 +186,12 @@ function KrPlanSubStep({
   onBack,
 }: {
   objectiveTitle: string;
-  krPlan: TeamOkrCreationWizardState['krPlan'];
-  onChange: (plan: TeamOkrCreationWizardState['krPlan']) => void;
+  krPlan: ProposedObjectiveEntry['krPlan'];
+  onChange: (plan: ProposedObjectiveEntry['krPlan']) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
-  const total = krPlan.foundational + krPlan.contribution + krPlan.enabler;
+  const total = getKrTotal(krPlan);
   const canContinue = total >= 1 && total <= 5 && krPlan.foundational >= 1;
 
   const adjustCount = (type: keyof typeof krPlan, delta: number) => {
@@ -262,7 +289,7 @@ function KrDetailSubStep({
 }: {
   objectiveTitle: string;
   objectiveDescription?: string;
-  krPlan: TeamOkrCreationWizardState['krPlan'];
+  krPlan: ProposedObjectiveEntry['krPlan'];
   draftKrs: DraftTeamKr[];
   teamId: string;
   teamName?: string;
@@ -485,7 +512,115 @@ function KrDetailSubStep({
         onPrimary={onNext}
         primaryDisabled={!allFilled}
         backLabel="Voltar ao Plano"
-        primaryLabel="Avançar para Resumo"
+        primaryLabel="Concluir Objetivo"
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// OBJECTIVE LIST VIEW
+// ============================================================
+
+function ObjectiveListView({
+  entries,
+  onEdit,
+  onRemove,
+  onAdd,
+  onContinue,
+  onBack,
+}: {
+  entries: ProposedObjectiveEntry[];
+  onEdit: (index: number) => void;
+  onRemove: (index: number) => void;
+  onAdd: () => void;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  const hasEntries = entries.length > 0;
+  const allComplete = entries.length > 0 && entries.every(isEntryComplete);
+
+  return (
+    <div className="space-y-4">
+      {entries.map((entry, idx) => {
+        const total = getKrTotal(entry.krPlan);
+        const filledKrs = entry.draftKrs.filter(kr => kr.title.trim().length >= 5).length;
+        const complete = isEntryComplete(entry);
+
+        return (
+          <Card key={entry.id} className={cn(complete && 'border-primary/30')}>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {complete ? (
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    ) : (
+                      <Target className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
+                    <p className="text-sm font-medium truncate">
+                      {entry.objective.title || 'Objetivo sem título'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-6">
+                    <Badge variant="outline" className="text-[10px]">
+                      {filledKrs}/{total} KR{total !== 1 ? 's' : ''}
+                    </Badge>
+                    {!complete && (
+                      <Badge variant="secondary" className="text-[10px] text-status-amber">
+                        Incompleto
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => onEdit(idx)}
+                    title="Editar"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={() => onRemove(idx)}
+                    title="Remover"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {/* Add objective button */}
+      <Button
+        variant="outline"
+        className="w-full gap-2 border-dashed text-sm"
+        onClick={onAdd}
+      >
+        <Plus className="h-4 w-4" />
+        Adicionar Objetivo
+      </Button>
+
+      {!hasEntries && (
+        <p className="text-xs text-center text-muted-foreground">
+          Adicione pelo menos 1 objetivo para o próximo ciclo, ou pule esta etapa.
+        </p>
+      )}
+
+      <WizardStepFooter
+        onBack={onBack}
+        onPrimary={onContinue}
+        primaryDisabled={hasEntries && !allComplete}
+        backLabel="Voltar"
+        primaryLabel={hasEntries ? 'Avançar para Resumo' : 'Pular proposta'}
       />
     </div>
   );
@@ -503,32 +638,86 @@ export function QbrOkrProposalStep({
   onContinue,
   onBack,
 }: QbrOkrProposalStepProps) {
-  const [subStep, setSubStep] = useState<SubStep>(() => {
-    if (proposedOkrs.draftKrs && proposedOkrs.draftKrs.length > 0) return 'kr-detail';
-    if (proposedOkrs.objective?.title?.trim()) return 'kr-plan';
-    return 'objective';
-  });
+  // Which objective is being edited (null = list view)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editSubStep, setEditSubStep] = useState<EditSubStep>('objective');
 
-  const objective = useMemo(() => proposedOkrs.objective || {
-    title: '', description: '', org_objective_id: null, cycle_id: null,
-  }, [proposedOkrs.objective]);
+  // If there are no entries and we start fresh, go directly to creating the first one
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!initialized && proposedOkrs.length === 0) {
+      setInitialized(true);
+      // Don't auto-create — show empty list with add button
+    } else {
+      setInitialized(true);
+    }
+  }, [initialized, proposedOkrs.length]);
 
-  const krPlan = useMemo(() => proposedOkrs.krPlan || {
-    foundational: 1, contribution: 0, enabler: 0,
-  }, [proposedOkrs.krPlan]);
+  const currentEntry = editingIndex !== null ? proposedOkrs[editingIndex] : null;
 
-  const draftKrs = useMemo(() => proposedOkrs.draftKrs || [], [proposedOkrs.draftKrs]);
-
-  const updateField = useCallback(<K extends keyof TeamOkrCreationWizardState>(
-    key: K,
-    value: TeamOkrCreationWizardState[K],
-  ) => {
-    onProposedOkrsChange({ ...proposedOkrs, [key]: value });
+  const handleAdd = useCallback(() => {
+    const newEntry = createEmptyEntry();
+    const updated = [...proposedOkrs, newEntry];
+    onProposedOkrsChange(updated);
+    setEditingIndex(updated.length - 1);
+    setEditSubStep('objective');
   }, [proposedOkrs, onProposedOkrsChange]);
 
-  const subStepLabel = subStep === 'objective' ? '1/3 — Objetivo'
-    : subStep === 'kr-plan' ? '2/3 — Plano de KRs'
-    : '3/3 — Detalhamento';
+  const handleEdit = useCallback((index: number) => {
+    const entry = proposedOkrs[index];
+    if (!entry) return;
+    // Determine starting sub-step based on completion
+    if (entry.objective.title.trim().length < 10) {
+      setEditSubStep('objective');
+    } else if (getKrTotal(entry.krPlan) < 1) {
+      setEditSubStep('kr-plan');
+    } else {
+      setEditSubStep('kr-detail');
+    }
+    setEditingIndex(index);
+  }, [proposedOkrs]);
+
+  const handleRemove = useCallback((index: number) => {
+    const updated = proposedOkrs.filter((_, i) => i !== index);
+    onProposedOkrsChange(updated);
+  }, [proposedOkrs, onProposedOkrsChange]);
+
+  const updateCurrentEntry = useCallback((updates: Partial<ProposedObjectiveEntry>) => {
+    if (editingIndex === null) return;
+    const updated = proposedOkrs.map((entry, i) =>
+      i === editingIndex ? { ...entry, ...updates } : entry
+    );
+    onProposedOkrsChange(updated);
+  }, [editingIndex, proposedOkrs, onProposedOkrsChange]);
+
+  const finishEditing = useCallback(() => {
+    // If current entry has no title, remove it
+    if (editingIndex !== null) {
+      const entry = proposedOkrs[editingIndex];
+      if (entry && !entry.objective.title.trim()) {
+        handleRemove(editingIndex);
+      }
+    }
+    setEditingIndex(null);
+    setEditSubStep('objective');
+  }, [editingIndex, proposedOkrs, handleRemove]);
+
+  const handleBackFromObjective = useCallback(() => {
+    // If entry is empty (new), remove it and go back to list
+    if (editingIndex !== null) {
+      const entry = proposedOkrs[editingIndex];
+      if (entry && !entry.objective.title.trim()) {
+        handleRemove(editingIndex);
+      }
+    }
+    setEditingIndex(null);
+    setEditSubStep('objective');
+  }, [editingIndex, proposedOkrs, handleRemove]);
+
+  // Determine badge label
+  const badgeLabel = editingIndex !== null
+    ? `Objetivo ${editingIndex + 1} — ${editSubStep === 'objective' ? '1/3 Objetivo' : editSubStep === 'kr-plan' ? '2/3 Plano' : '3/3 KRs'}`
+    : `${proposedOkrs.length} objetivo${proposedOkrs.length !== 1 ? 's' : ''}`;
 
   return (
     <WizardStepScaffold
@@ -537,57 +726,59 @@ export function QbrOkrProposalStep({
           icon={Target}
           title="Proposta de OKRs"
           tooltip="qbr-okr-proposal"
-          description="Rascunho para o próximo ciclo — será revisado no QBR"
+          description="Rascunhos para o próximo ciclo — serão revisados no QBR"
           variant="primary"
-          badge={subStepLabel}
+          badge={badgeLabel}
         />
       }
       footer={null}
     >
       <div className="p-6 space-y-4">
-        {/* Skip option */}
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onContinue}
-            className="text-xs gap-1 text-muted-foreground"
-          >
-            <SkipForward className="h-3 w-3" />
-            Pular proposta
-          </Button>
-        </div>
-
-        {subStep === 'objective' && (
-          <ObjectiveSubStep
-            objective={objective}
-            onChange={(obj) => updateField('objective', obj)}
-            onNext={() => setSubStep('kr-plan')}
+        {/* List view */}
+        {editingIndex === null && (
+          <ObjectiveListView
+            entries={proposedOkrs}
+            onEdit={handleEdit}
+            onRemove={handleRemove}
+            onAdd={handleAdd}
+            onContinue={onContinue}
             onBack={onBack}
           />
         )}
 
-        {subStep === 'kr-plan' && (
-          <KrPlanSubStep
-            objectiveTitle={objective.title}
-            krPlan={krPlan}
-            onChange={(plan) => updateField('krPlan', plan)}
-            onNext={() => setSubStep('kr-detail')}
-            onBack={() => setSubStep('objective')}
+        {/* Editing view: Objective */}
+        {editingIndex !== null && currentEntry && editSubStep === 'objective' && (
+          <ObjectiveSubStep
+            objective={currentEntry.objective}
+            onChange={(obj) => updateCurrentEntry({ objective: obj })}
+            onNext={() => setEditSubStep('kr-plan')}
+            onBack={handleBackFromObjective}
           />
         )}
 
-        {subStep === 'kr-detail' && (
+        {/* Editing view: KR Plan */}
+        {editingIndex !== null && currentEntry && editSubStep === 'kr-plan' && (
+          <KrPlanSubStep
+            objectiveTitle={currentEntry.objective.title}
+            krPlan={currentEntry.krPlan}
+            onChange={(plan) => updateCurrentEntry({ krPlan: plan })}
+            onNext={() => setEditSubStep('kr-detail')}
+            onBack={() => setEditSubStep('objective')}
+          />
+        )}
+
+        {/* Editing view: KR Detail */}
+        {editingIndex !== null && currentEntry && editSubStep === 'kr-detail' && (
           <KrDetailSubStep
-            objectiveTitle={objective.title}
-            objectiveDescription={objective.description}
-            krPlan={krPlan}
-            draftKrs={draftKrs}
+            objectiveTitle={currentEntry.objective.title}
+            objectiveDescription={currentEntry.objective.description}
+            krPlan={currentEntry.krPlan}
+            draftKrs={currentEntry.draftKrs}
             teamId={teamId}
             teamName={teamName}
-            onChange={(krs) => updateField('draftKrs', krs)}
-            onNext={onContinue}
-            onBack={() => setSubStep('kr-plan')}
+            onChange={(krs) => updateCurrentEntry({ draftKrs: krs })}
+            onNext={finishEditing}
+            onBack={() => setEditSubStep('kr-plan')}
           />
         )}
       </div>
