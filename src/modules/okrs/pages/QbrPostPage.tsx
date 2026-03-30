@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft, useActiveCycles } from '@/modules/okrs/hooks';
+import { useGenericWizardDraft, useActiveCycle } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
