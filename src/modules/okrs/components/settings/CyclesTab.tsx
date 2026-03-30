@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays } from "lucide-react";
+import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle } from "lucide-react";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CycleFormDialog } from "./CycleFormDialog";
+import { useCycleActions } from "@/modules/okrs/hooks/useCycleActions";
 
 interface Cycle {
   id: string;
@@ -24,14 +35,25 @@ interface Cycle {
   retro_date: string | null;
   parent_cycle_id: string | null;
   created_at: string;
+  status: 'planning' | 'active' | 'closed';
+  qbr_status?: string;
 }
+
+const STATUS_CONFIG = {
+  planning: { label: 'Planejamento', variant: 'outline' as const, className: 'border-warning/50 text-warning' },
+  active: { label: 'Em execução', variant: 'default' as const, className: 'bg-success/10 text-success border-success/30' },
+  closed: { label: 'Encerrado', variant: 'secondary' as const, className: 'text-muted-foreground' },
+};
 
 export function CyclesTab() {
   const { client: supabase, buId } = useOptionalBuClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
   const [deleteDialogCycle, setDeleteDialogCycle] = useState<Cycle | null>(null);
+  const [activateDialogCycle, setActivateDialogCycle] = useState<Cycle | null>(null);
+  const [closeDialogCycle, setCloseDialogCycle] = useState<Cycle | null>(null);
   const queryClient = useQueryClient();
+  const { activateCycle, closeCycle } = useCycleActions();
 
   // Fetch all cycles
   const { data: cycles, isLoading } = useQuery({
@@ -41,7 +63,7 @@ export function CyclesTab() {
 
       const { data, error } = await supabase
         .from("cycles")
-        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, bu_id, created_at")
+        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, bu_id, created_at, status, qbr_status")
         .order("start_date", { ascending: false });
       if (error) throw error;
       return data as Cycle[];
@@ -50,38 +72,58 @@ export function CyclesTab() {
   });
 
   // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (cycleId: string) => {
-      if (!supabase || !buId) throw new Error('Nenhuma BU selecionada');
+  const handleDelete = async (cycleId: string) => {
+    if (!supabase || !buId) return;
+    const cycle = cycles?.find(c => c.id === cycleId);
+    if (cycle?.status === 'active') {
+      toast.error('Não é possível remover um ciclo ativo. Encerre-o primeiro.');
+      return;
+    }
+    try {
       const { error } = await supabase.from("cycles").delete().eq("id", cycleId);
       if (error) throw error;
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(null) });
       toast.success("Ciclo removido com sucesso");
       setDeleteDialogCycle(null);
-    },
-    onError: (error) => {
+    } catch {
       toast.error("Erro ao remover ciclo");
-      console.error(error);
-    },
-  });
+    }
+  };
+
+  const handleActivate = () => {
+    if (!activateDialogCycle) return;
+    activateCycle.mutate(activateDialogCycle.id, {
+      onSettled: () => setActivateDialogCycle(null),
+    });
+  };
+
+  const handleClose = () => {
+    if (!closeDialogCycle) return;
+    closeCycle.mutate(closeDialogCycle.id, {
+      onSettled: () => setCloseDialogCycle(null),
+    });
+  };
+
+  // Check for existing active cycle of same type
+  const getActiveOfType = (type: string) => cycles?.find(c => c.status === 'active' && c.type === type);
 
   const yearCycles = cycles?.filter((c) => c.type === "year") ?? [];
   const quarterCycles = cycles?.filter((c) => c.type === "quarter") ?? [];
 
+  // Sort: active first, then planning, then closed
+  const statusOrder = { active: 0, planning: 1, closed: 2 };
+  const sortedYearCycles = [...yearCycles].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+
   const getQuartersForYear = (yearCycleId: string) => {
-    return quarterCycles.filter((q) => q.parent_cycle_id === yearCycleId);
+    return quarterCycles
+      .filter((q) => q.parent_cycle_id === yearCycleId)
+      .sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
   };
 
   const formatDate = (dateStr: string) => {
     return format(parseISO(dateStr), "dd/MM/yyyy", { locale: ptBR });
-  };
-
-  const isCurrentCycle = (startDate: string, endDate: string) => {
-    const now = new Date();
-    return now >= parseISO(startDate) && now <= parseISO(endDate);
   };
 
   const handleEdit = (cycle: Cycle) => {
@@ -93,6 +135,55 @@ export function CyclesTab() {
     setIsFormOpen(false);
     setEditingCycle(null);
   };
+
+  const renderStatusBadge = (status: 'planning' | 'active' | 'closed') => {
+    const config = STATUS_CONFIG[status];
+    return (
+      <Badge variant={config.variant} className={config.className}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const renderCycleActions = (cycle: Cycle) => (
+    <div className="flex items-center gap-1">
+      {cycle.status === 'planning' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 text-success hover:text-success"
+          onClick={() => setActivateDialogCycle(cycle)}
+        >
+          <Play className="h-3.5 w-3.5" />
+          Ativar
+        </Button>
+      )}
+      {cycle.status === 'active' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 text-warning hover:text-warning"
+          onClick={() => setCloseDialogCycle(cycle)}
+        >
+          <Square className="h-3.5 w-3.5" />
+          Encerrar
+        </Button>
+      )}
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(cycle)}>
+        <Edit2 className="h-3.5 w-3.5" />
+      </Button>
+      {cycle.status !== 'active' && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive"
+          onClick={() => setDeleteDialogCycle(cycle)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -128,7 +219,7 @@ export function CyclesTab() {
                 <Skeleton key={i} className="h-20 w-full" />
               ))}
             </div>
-          ) : yearCycles.length === 0 ? (
+          ) : sortedYearCycles.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="h-10 w-10 mx-auto mb-2 opacity-50" />
               <p>Nenhum ciclo anual configurado</p>
@@ -142,14 +233,13 @@ export function CyclesTab() {
             </div>
           ) : (
             <div className="space-y-4">
-              {yearCycles.map((cycle) => {
+              {sortedYearCycles.map((cycle) => {
                 const quarters = getQuartersForYear(cycle.id);
-                const isCurrent = isCurrentCycle(cycle.start_date, cycle.end_date);
 
                 return (
                   <div
                     key={cycle.id}
-                    className="border rounded-lg overflow-hidden"
+                    className={`border rounded-lg overflow-hidden ${cycle.status === 'active' ? 'border-success/40 ring-1 ring-success/20' : ''}`}
                   >
                     {/* Year Header */}
                     <div className="p-4 bg-muted/30 flex items-center justify-between">
@@ -160,92 +250,42 @@ export function CyclesTab() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{cycle.name}</span>
-                            {isCurrent && (
-                              <Badge className="bg-success/10 text-success">
-                                Atual
-                              </Badge>
-                            )}
+                            {renderStatusBadge(cycle.status)}
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {formatDate(cycle.start_date)} - {formatDate(cycle.end_date)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(cycle)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteDialogCycle(cycle)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {renderCycleActions(cycle)}
                     </div>
 
                     {/* Quarters */}
                     {quarters.length > 0 && (
                       <div className="divide-y">
-                        {quarters.map((quarter) => {
-                          const isQuarterCurrent = isCurrentCycle(
-                            quarter.start_date,
-                            quarter.end_date
-                          );
-                          return (
-                            <div
-                              key={quarter.id}
-                              className="px-4 py-3 flex items-center justify-between hover:bg-muted/20"
-                            >
-                              <div className="flex items-center gap-3">
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">
-                                      {quarter.name}
-                                    </span>
-                                    {isQuarterCurrent && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-success border-success/30"
-                                      >
-                                        Atual
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    {formatDate(quarter.start_date)} -{" "}
-                                    {formatDate(quarter.end_date)}
-                                  </p>
+                        {quarters.map((quarter) => (
+                          <div
+                            key={quarter.id}
+                            className={`px-4 py-3 flex items-center justify-between hover:bg-muted/20 ${quarter.status === 'active' ? 'bg-success/5' : ''}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">
+                                    {quarter.name}
+                                  </span>
+                                  {renderStatusBadge(quarter.status)}
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleEdit(quarter)}
-                                >
-                                  <Edit2 className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => setDeleteDialogCycle(quarter)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDate(quarter.start_date)} -{" "}
+                                  {formatDate(quarter.end_date)}
+                                </p>
                               </div>
                             </div>
-                          );
-                        })}
+                            {renderCycleActions(quarter)}
+                          </div>
+                        ))}
                       </div>
                     )}
 
@@ -278,35 +318,23 @@ export function CyclesTab() {
             <div className="space-y-2">
               {quarterCycles
                 .filter((q) => !q.parent_cycle_id)
+                .sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
                 .map((quarter) => (
                   <div
                     key={quarter.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className={`flex items-center justify-between p-3 border rounded-lg ${quarter.status === 'active' ? 'border-success/40 bg-success/5' : ''}`}
                   >
                     <div>
-                      <span className="font-medium">{quarter.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{quarter.name}</span>
+                        {renderStatusBadge(quarter.status)}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {formatDate(quarter.start_date)} -{" "}
                         {formatDate(quarter.end_date)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(quarter)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteDialogCycle(quarter)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {renderCycleActions(quarter)}
                   </div>
                 ))}
             </div>
@@ -328,9 +356,71 @@ export function CyclesTab() {
         onOpenChange={(open) => !open && setDeleteDialogCycle(null)}
         title="Remover ciclo"
         description={`Tem certeza que deseja remover o ciclo "${deleteDialogCycle?.name}"? Esta ação não pode ser desfeita.`}
-        onConfirm={() => deleteDialogCycle && deleteMutation.mutate(deleteDialogCycle.id)}
-        isLoading={deleteMutation.isPending}
+        onConfirm={() => deleteDialogCycle && handleDelete(deleteDialogCycle.id)}
       />
+
+      {/* Activate Confirmation */}
+      <AlertDialog open={!!activateDialogCycle} onOpenChange={(open) => !open && setActivateDialogCycle(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ativar ciclo</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span>
+                Deseja ativar o ciclo <strong>{activateDialogCycle?.name}</strong>?
+              </span>
+              {activateDialogCycle && getActiveOfType(activateDialogCycle.type) && (
+                <span className="flex items-center gap-2 text-warning mt-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  Já existe um ciclo {activateDialogCycle.type === 'quarter' ? 'trimestral' : 'anual'} ativo: <strong>{getActiveOfType(activateDialogCycle.type)?.name}</strong>. Ele será encerrado automaticamente ao ativar este.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleActivate}
+              disabled={activateCycle.isPending}
+              className="bg-success hover:bg-success/90"
+            >
+              {activateCycle.isPending ? 'Ativando...' : 'Ativar ciclo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Close Confirmation */}
+      <AlertDialog open={!!closeDialogCycle} onOpenChange={(open) => !open && setCloseDialogCycle(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encerrar ciclo</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span>
+                Deseja encerrar o ciclo <strong>{closeDialogCycle?.name}</strong>?
+              </span>
+              {closeDialogCycle?.qbr_status && closeDialogCycle.qbr_status !== 'done' && closeDialogCycle.type === 'quarter' && (
+                <span className="flex items-center gap-2 text-warning mt-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  O QBR deste ciclo ainda não foi concluído. Encerrar mesmo assim?
+                </span>
+              )}
+              <span className="block text-sm">
+                Dados históricos serão preservados. Nenhum novo OKR ou check-in será vinculado a este ciclo.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClose}
+              disabled={closeCycle.isPending}
+              className="bg-warning hover:bg-warning/90 text-warning-foreground"
+            >
+              {closeCycle.isPending ? 'Encerrando...' : 'Encerrar ciclo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
