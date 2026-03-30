@@ -225,8 +225,63 @@ export function useWizardSession() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.wizardSession(realProfileId || '') });
+
+      // Auto-associate with nearest ritual occurrence (fire-and-forget)
+      try {
+        // Get session details to know wizard_type and team_id
+        const { data: session } = await supabase
+          .from('okr_wizard_sessions')
+          .select('wizard_type, team_id, bu_id')
+          .eq('id', variables.sessionId)
+          .single();
+
+        if (session) {
+          const now = new Date();
+          const sevenDaysAgo = new Date(now);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          const sevenDaysAhead = new Date(now);
+          sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
+
+          let query = supabase
+            .from('ritual_occurrences')
+            .select('id, planned_date')
+            .eq('wizard_type', session.wizard_type)
+            .eq('bu_id', session.bu_id)
+            .eq('status', 'scheduled')
+            .gte('planned_date', sevenDaysAgo.toISOString().split('T')[0])
+            .lte('planned_date', sevenDaysAhead.toISOString().split('T')[0])
+            .order('planned_date', { ascending: true })
+            .limit(1);
+
+          if (session.team_id) {
+            query = query.eq('team_id', session.team_id);
+          } else {
+            query = query.is('team_id', null);
+          }
+
+          const { data: occ } = await query.maybeSingle();
+
+          if (occ) {
+            const plannedDate = new Date(occ.planned_date);
+            const todayStr = now.toISOString().split('T')[0];
+            const isLate = now > plannedDate && todayStr !== occ.planned_date;
+
+            await supabase
+              .from('ritual_occurrences')
+              .update({
+                session_id: variables.sessionId,
+                actual_date: todayStr,
+                status: isLate ? 'completed_late' : 'completed_on_time',
+              })
+              .eq('id', occ.id);
+          }
+        }
+      } catch (err) {
+        // Silent — auto-association should never block the wizard flow
+        console.warn('[useWizardSession] Auto-association with ritual occurrence failed:', err);
+      }
     },
   });
 
