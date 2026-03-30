@@ -85,7 +85,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Sexta-feira',
         badgeVariant: 'outline',
         requiresTeam: false,
-        route: '/okrs/collaborator-checkin',
+        route: '/rituals/collaborator-checkin',
       },
     ],
   },
