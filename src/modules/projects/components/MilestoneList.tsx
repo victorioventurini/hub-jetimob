@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CheckCircle2, Circle, Clock, ChevronRight, CalendarIcon, User, Trash2, FileText } from 'lucide-react';
+import { ChevronRight, CalendarIcon, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO, isPast, isValid } from 'date-fns';
+import { format, parseISO, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ProjectMilestone, MilestoneStatus } from '../types';
 import { MilestoneKrLinkSection } from './MilestoneKrLinkSection';
+import { MilestoneStatusSelect } from './MilestoneStatusSelect';
 
 interface MilestoneListProps {
   milestones: ProjectMilestone[];
