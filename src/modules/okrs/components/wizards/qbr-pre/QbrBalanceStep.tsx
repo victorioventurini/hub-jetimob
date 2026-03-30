@@ -156,6 +156,8 @@ export function QbrBalanceStep({
                       </div>
                     </div>
                   </div>
+                  {/* Linked initiatives & projects — colapsado por padrão */}
+                  <KrLinkedDetails krId={kr.krId} />
                 </CardContent>
               </Card>
             );
