@@ -94,8 +94,9 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         .from('okr_wizard_sessions')
         .select(HISTORY_FIELDS)
         .eq('bu_id', currentBu.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
+        .in('status', ['completed', 'in_progress'])
+        .order('completed_at', { ascending: false, nullsFirst: false })
+        .order('started_at', { ascending: false })
         .limit(100);
 
       // Visibility is enforced by RLS policies:
