@@ -1,23 +1,27 @@
 /**
- * QbrOkrProposalStep - Inline OKR creation sub-flow for QBR Pre wizard
- * 
- * Supports MULTIPLE objectives, each with its own KRs.
- * All changes are draft-only (stored in proposedOkrs within QbrPreDraftData).
- * Does NOT persist to database — the QBR Post wizard handles promotion.
+ * QbrOkrProposalStep - Inline OKR creation for QBR Pre wizard
+ *
+ * Single-screen flow: each objective is an expandable card showing
+ * title, description, KR count selector and all KR forms inline.
+ * Max 3 objectives × 3 KRs each.
+ *
+ * AI validation via useProposalValidation / ProposalValidationCard
+ * is embedded per-objective card.
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Target, Plus, Minus,
   TrendingUp, TrendingDown, Equal,
-  ChevronRight, ChevronLeft, CheckCircle2, Pencil, Trash2,
+  CheckCircle2, Trash2, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -38,8 +42,6 @@ import type {
 // TYPES
 // ============================================================
 
-type EditSubStep = 'objective' | 'kr-detail';
-
 export interface QbrOkrProposalStepProps {
   proposedOkrs: ProposedObjectiveEntry[];
   teamId: string;
@@ -52,6 +54,9 @@ export interface QbrOkrProposalStepProps {
 // ============================================================
 // CONSTANTS
 // ============================================================
+
+const MAX_OBJECTIVES = 3;
+const MAX_KRS_PER_OBJECTIVE = 3;
 
 const DIRECTION_OPTIONS: { value: OkrDirection; label: string; icon: typeof TrendingUp }[] = [
   { value: 'up', label: 'Aumentar', icon: TrendingUp },
@@ -86,444 +91,345 @@ function isEntryComplete(entry: ProposedObjectiveEntry): boolean {
   );
 }
 
+function ensureKrs(draftKrs: DraftTeamKr[], count: number): DraftTeamKr[] {
+  const krs = [...draftKrs];
+  while (krs.length < count) {
+    krs.push({
+      id: `draft-kr-${Date.now()}-${krs.length}`,
+      type: 'foundational',
+      title: '',
+      unit: '%',
+      baseline: 0,
+      target: 100,
+      direction: 'up',
+      owner_user_id: null,
+      linked_org_kr_id: null,
+    });
+  }
+  return krs;
+}
+
 // ============================================================
-// SUB-STEP: OBJECTIVE (includes KR count)
+// INLINE KR FORM
 // ============================================================
 
-function ObjectiveSubStep({
-  objective,
-  krCount,
+function InlineKrForm({
+  kr,
+  index,
+  teamId,
   onChange,
-  onKrCountChange,
-  onNext,
-  onBack,
 }: {
-  objective: ProposedObjectiveEntry['objective'];
-  krCount: number;
-  onChange: (obj: ProposedObjectiveEntry['objective']) => void;
-  onKrCountChange: (count: number) => void;
-  onNext: () => void;
-  onBack: () => void;
+  kr: DraftTeamKr;
+  index: number;
+  teamId: string;
+  onChange: (updates: Partial<DraftTeamKr>) => void;
 }) {
-  const canContinue = objective.title.trim().length >= 10 && krCount >= 1;
-
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="obj-title" className="text-sm font-medium">
-            Título do Objetivo
-          </Label>
+    <Card className="bg-muted/30 border-muted">
+      <CardContent className="p-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] shrink-0">KR {index + 1}</Badge>
+          {kr.title.trim().length >= 5 && (
+            <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Título do Key Result</Label>
           <Input
-            id="obj-title"
-            placeholder="Ex: Consolidar presença digital no segmento de locação"
-            value={objective.title}
-            onChange={(e) => onChange({ ...objective, title: e.target.value })}
-            className="text-sm"
-          />
-          <p className="text-xs text-muted-foreground">
-            Mínimo 10 caracteres. Descreva o resultado desejado, não a atividade.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="obj-desc" className="text-sm font-medium">
-            Descrição <span className="text-muted-foreground">(opcional)</span>
-          </Label>
-          <Textarea
-            id="obj-desc"
-            placeholder="Contexto adicional sobre por que este objetivo é prioritário..."
-            value={objective.description}
-            onChange={(e) => onChange({ ...objective, description: e.target.value })}
-            rows={3}
-            className="text-sm resize-none"
+            placeholder="Ex: Atingir 85% de satisfação em NPS de locação"
+            value={kr.title}
+            onChange={(e) => onChange({ title: e.target.value })}
+            className="text-sm h-8"
           />
         </div>
 
-        {/* KR count selector */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Quantos Key Results?</Label>
-          <Card>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">
-                    Defina quantos KRs este objetivo terá (1 a 5)
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Direção</Label>
+            <div className="flex gap-1">
+              {DIRECTION_OPTIONS.map((opt) => {
+                const DirIcon = opt.icon;
+                return (
                   <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => onKrCountChange(Math.max(1, krCount - 1))}
-                    disabled={krCount <= 1}
+                    key={opt.value}
+                    variant={kr.direction === opt.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-7 text-xs flex-1 gap-0.5 px-1"
+                    onClick={() => onChange({ direction: opt.value })}
+                    title={opt.label}
                   >
-                    <Minus className="h-3 w-3" />
+                    <DirIcon className="h-3 w-3" />
                   </Button>
-                  <span className="w-6 text-center text-sm font-medium">{krCount}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => onKrCountChange(Math.min(5, krCount + 1))}
-                    disabled={krCount >= 5}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                );
+              })}
+            </div>
+          </div>
 
-      <WizardStepFooter
-        onBack={onBack}
-        onPrimary={onNext}
-        primaryDisabled={!canContinue}
-        backLabel="Voltar"
-        primaryLabel="Detalhar KRs"
-      />
-    </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Baseline</Label>
+            <Input
+              type="number"
+              value={kr.baseline}
+              onChange={(e) => onChange({ baseline: Number(e.target.value) })}
+              className="text-sm h-7"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Meta</Label>
+            <Input
+              type="number"
+              value={kr.target}
+              onChange={(e) => onChange({ target: Number(e.target.value) })}
+              className="text-sm h-7"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Unidade</Label>
+            <UnitSelect
+              value={kr.unit}
+              onChange={(unit) => onChange({ unit })}
+              showLabel={false}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Responsável</Label>
+            <BuUserSelect
+              value={kr.owner_user_id || ''}
+              onValueChange={(id) => onChange({ owner_user_id: id || null })}
+              teamId={teamId}
+              placeholder="Selecionar..."
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 // ============================================================
-// SUB-STEP: KR DETAIL
+// INLINE OBJECTIVE CARD
 // ============================================================
 
-function KrDetailSubStep({
-  objectiveTitle,
-  objectiveDescription,
-  krCount,
-  draftKrs,
+function InlineObjectiveCard({
+  entry,
+  index,
   teamId,
   teamName,
-  onChange,
-  onNext,
-  onBack,
+  isOpen,
+  onToggle,
+  onUpdate,
+  onRemove,
 }: {
-  objectiveTitle: string;
-  objectiveDescription?: string;
-  krCount: number;
-  draftKrs: DraftTeamKr[];
+  entry: ProposedObjectiveEntry;
+  index: number;
   teamId: string;
   teamName?: string;
-  onChange: (krs: DraftTeamKr[]) => void;
-  onNext: () => void;
-  onBack: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  onUpdate: (updates: Partial<ProposedObjectiveEntry>) => void;
+  onRemove: () => void;
 }) {
-  const [activeSlot, setActiveSlot] = useState(0);
+  const krCount = getKrCount(entry);
+  const complete = isEntryComplete(entry);
+  const ensuredKrs = useMemo(() => ensureKrs(entry.draftKrs, krCount), [entry.draftKrs, krCount]);
 
-  // Ensure draftKrs has enough entries
-  const ensuredKrs = useMemo(() => {
-    const krs = [...draftKrs];
-    while (krs.length < krCount) {
-      krs.push({
-        id: `draft-kr-${Date.now()}-${krs.length}`,
-        type: 'foundational',
-        title: '',
-        unit: '%',
-        baseline: 0,
-        target: 100,
-        direction: 'up',
-        owner_user_id: null,
-        linked_org_kr_id: null,
-      });
-    }
-    return krs;
-  }, [draftKrs, krCount]);
-
-  const currentKr = ensuredKrs[activeSlot];
-
-  const updateKr = useCallback((updates: Partial<DraftTeamKr>) => {
-    const next = ensuredKrs.map((kr, i) =>
-      i === activeSlot ? { ...kr, ...updates } : kr
-    );
-    onChange(next);
-  }, [ensuredKrs, activeSlot, onChange]);
-
-  const allFilled = ensuredKrs.slice(0, krCount).every(kr => kr.title.trim().length >= 5);
-
-  // AI Validation
-  const { assessment, isLoading: validationLoading, error: validationError, validate, reset: resetValidation } = useProposalValidation();
+  // AI Validation — independent per objective
+  const {
+    assessment,
+    isLoading: validationLoading,
+    error: validationError,
+    validate,
+    reset: resetValidation,
+  } = useProposalValidation();
 
   // Reset validation when KRs change
   useEffect(() => {
     if (assessment) resetValidation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftKrs]);
+  }, [entry.draftKrs]);
+
+  const allKrsFilled = ensuredKrs.slice(0, krCount).every(kr => kr.title.trim().length >= 5);
 
   const handleValidate = useCallback(() => {
     validate({
-      objectiveTitle,
-      objectiveDescription,
+      objectiveTitle: entry.objective.title,
+      objectiveDescription: entry.objective.description,
       teamName,
       draftKrs: ensuredKrs.slice(0, krCount),
     });
-  }, [validate, objectiveTitle, objectiveDescription, teamName, ensuredKrs, krCount]);
+  }, [validate, entry.objective.title, entry.objective.description, teamName, ensuredKrs, krCount]);
 
-  if (!currentKr) return null;
+  const handleKrCountChange = useCallback((count: number) => {
+    onUpdate({
+      krPlan: { foundational: count, contribution: 0, enabler: 0 },
+    });
+  }, [onUpdate]);
+
+  const handleKrChange = useCallback((krIndex: number, updates: Partial<DraftTeamKr>) => {
+    const next = ensuredKrs.map((kr, i) =>
+      i === krIndex ? { ...kr, ...updates } : kr
+    );
+    onUpdate({ draftKrs: next });
+  }, [ensuredKrs, onUpdate]);
+
+  const filledKrs = ensuredKrs.filter(kr => kr.title.trim().length >= 5).length;
 
   return (
-    <div className="space-y-4">
-      {/* Slot navigation */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {Array.from({ length: krCount }).map((_, idx) => {
-          const kr = ensuredKrs[idx];
-          const filled = kr?.title?.trim().length >= 5;
-          return (
-            <Button
-              key={idx}
-              variant={idx === activeSlot ? 'default' : 'outline'}
-              size="sm"
-              className={cn('h-7 text-xs gap-1', filled && idx !== activeSlot && 'border-primary/40')}
-              onClick={() => setActiveSlot(idx)}
-            >
-              {filled && <CheckCircle2 className="h-3 w-3" />}
-              KR {idx + 1}
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* Current KR form */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Target className="h-4 w-4 text-primary" />
-            KR {activeSlot + 1}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs">Título do Key Result</Label>
-            <Input
-              placeholder="Ex: Atingir 85% de satisfação em NPS de locação"
-              value={currentKr.title}
-              onChange={(e) => updateKr({ title: e.target.value })}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Direção</Label>
-              <div className="flex gap-1">
-                {DIRECTION_OPTIONS.map((opt) => {
-                  const DirIcon = opt.icon;
-                  return (
-                    <Button
-                      key={opt.value}
-                      variant={currentKr.direction === opt.value ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-7 text-xs flex-1 gap-1"
-                      onClick={() => updateKr({ direction: opt.value })}
-                    >
-                      <DirIcon className="h-3 w-3" />
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Baseline</Label>
-              <Input
-                type="number"
-                value={currentKr.baseline}
-                onChange={(e) => updateKr({ baseline: Number(e.target.value) })}
-                className="text-sm h-8"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Meta</Label>
-              <Input
-                type="number"
-                value={currentKr.target}
-                onChange={(e) => updateKr({ target: Number(e.target.value) })}
-                className="text-sm h-8"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Unidade</Label>
-              <UnitSelect
-                value={currentKr.unit}
-                onChange={(unit) => updateKr({ unit })}
-                showLabel={false}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Responsável</Label>
-              <BuUserSelect
-                value={currentKr.owner_user_id || ''}
-                onValueChange={(id) => updateKr({ owner_user_id: id || null })}
-                teamId={teamId}
-                placeholder="Selecionar..."
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Navigation between slots */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setActiveSlot(Math.max(0, activeSlot - 1))}
-          disabled={activeSlot === 0}
-          className="text-xs gap-1"
-        >
-          <ChevronLeft className="h-3 w-3" /> Anterior
-        </Button>
-        {activeSlot < krCount - 1 ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setActiveSlot(activeSlot + 1)}
-            className="text-xs gap-1"
+    <Collapsible open={isOpen} onOpenChange={onToggle}>
+      <Card className={cn('transition-colors', complete && 'border-primary/30')}>
+        {/* Collapsed header */}
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full p-4 flex items-center gap-3 text-left hover:bg-muted/30 transition-colors rounded-t-lg"
           >
-            Próximo <ChevronRight className="h-3 w-3" />
-          </Button>
-        ) : null}
-      </div>
-
-      <Separator />
-
-      {/* AI Validation */}
-      {allFilled && (
-        <ProposalValidationCard
-          assessment={assessment}
-          isLoading={validationLoading}
-          error={validationError}
-          onValidate={handleValidate}
-          onReset={resetValidation}
-          canValidate={allFilled}
-        />
-      )}
-
-      <WizardStepFooter
-        onBack={onBack}
-        onPrimary={onNext}
-        primaryDisabled={!allFilled}
-        backLabel="Voltar ao Objetivo"
-        primaryLabel="Concluir Objetivo"
-      />
-    </div>
-  );
-}
-
-// ============================================================
-// OBJECTIVE LIST VIEW
-// ============================================================
-
-function ObjectiveListView({
-  entries,
-  onEdit,
-  onRemove,
-  onAdd,
-  onContinue,
-  onBack,
-}: {
-  entries: ProposedObjectiveEntry[];
-  onEdit: (index: number) => void;
-  onRemove: (index: number) => void;
-  onAdd: () => void;
-  onContinue: () => void;
-  onBack: () => void;
-}) {
-  const hasEntries = entries.length > 0;
-  const allComplete = entries.length > 0 && entries.every(isEntryComplete);
-
-  return (
-    <div className="space-y-4">
-      {entries.map((entry, idx) => {
-        const total = getKrCount(entry);
-        const filledKrs = entry.draftKrs.filter(kr => kr.title.trim().length >= 5).length;
-        const complete = isEntryComplete(entry);
-
-        return (
-          <Card key={entry.id} className={cn(complete && 'border-primary/30')}>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    {complete ? (
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    ) : (
-                      <Target className="h-4 w-4 text-muted-foreground shrink-0" />
-                    )}
-                    <p className="text-sm font-medium truncate">
-                      {entry.objective.title || 'Objetivo sem título'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 ml-6">
-                    <Badge variant="outline" className="text-[10px]">
-                      {filledKrs}/{total} KR{total !== 1 ? 's' : ''}
-                    </Badge>
-                    {!complete && (
-                      <Badge variant="secondary" className="text-[10px] text-status-amber">
-                        Incompleto
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => onEdit(idx)}
-                    title="Editar"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => onRemove(idx)}
-                    title="Remover"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                {complete ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                ) : (
+                  <Target className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
+                <span className="text-sm font-medium truncate">
+                  {entry.objective.title || `Objetivo ${index + 1}`}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+              <div className="flex items-center gap-2 ml-6">
+                <Badge variant="outline" className="text-[10px]">
+                  {filledKrs}/{krCount} KR{krCount !== 1 ? 's' : ''}
+                </Badge>
+                {!complete && entry.objective.title.trim().length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] text-status-amber">
+                    Incompleto
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform shrink-0',
+                isOpen && 'rotate-180',
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
 
-      {/* Add objective button */}
-      <Button
-        variant="outline"
-        className="w-full gap-2 border-dashed text-sm"
-        onClick={onAdd}
-      >
-        <Plus className="h-4 w-4" />
-        Adicionar Objetivo
-      </Button>
+        {/* Expanded content */}
+        <CollapsibleContent>
+          <CardContent className="px-4 pb-4 pt-0 space-y-4">
+            <Separator />
 
-      {!hasEntries && (
-        <p className="text-xs text-center text-muted-foreground">
-          Adicione pelo menos 1 objetivo para o próximo ciclo, ou pule esta etapa.
-        </p>
-      )}
+            {/* Objective fields */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Objetivo
+                </Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs text-destructive hover:text-destructive gap-1"
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                >
+                  <Trash2 className="h-3 w-3" /> Remover
+                </Button>
+              </div>
 
-      <WizardStepFooter
-        onBack={onBack}
-        onPrimary={onContinue}
-        primaryDisabled={hasEntries && !allComplete}
-        backLabel="Voltar"
-        primaryLabel={hasEntries ? 'Avançar para Resumo' : 'Pular proposta'}
-      />
-    </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Título do Objetivo</Label>
+                <Input
+                  placeholder="Ex: Consolidar presença digital no segmento de locação"
+                  value={entry.objective.title}
+                  onChange={(e) =>
+                    onUpdate({ objective: { ...entry.objective, title: e.target.value } })
+                  }
+                  className="text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Mínimo 10 caracteres. Descreva o resultado desejado, não a atividade.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  Descrição <span className="text-muted-foreground">(opcional)</span>
+                </Label>
+                <Textarea
+                  placeholder="Contexto adicional sobre por que este objetivo é prioritário..."
+                  value={entry.objective.description}
+                  onChange={(e) =>
+                    onUpdate({ objective: { ...entry.objective, description: e.target.value } })
+                  }
+                  rows={2}
+                  className="text-sm resize-none"
+                />
+              </div>
+            </div>
+
+            {/* KR count selector */}
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+              <p className="text-xs text-muted-foreground">
+                Quantos Key Results? (1 a {MAX_KRS_PER_OBJECTIVE})
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => handleKrCountChange(Math.max(1, krCount - 1))}
+                  disabled={krCount <= 1}
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <span className="w-5 text-center text-sm font-medium">{krCount}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => handleKrCountChange(Math.min(MAX_KRS_PER_OBJECTIVE, krCount + 1))}
+                  disabled={krCount >= MAX_KRS_PER_OBJECTIVE}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Inline KR forms */}
+            <div className="space-y-3">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Key Results
+              </Label>
+              {Array.from({ length: krCount }).map((_, krIdx) => (
+                <InlineKrForm
+                  key={ensuredKrs[krIdx]?.id ?? krIdx}
+                  kr={ensuredKrs[krIdx]}
+                  index={krIdx}
+                  teamId={teamId}
+                  onChange={(updates) => handleKrChange(krIdx, updates)}
+                />
+              ))}
+            </div>
+
+            {/* AI Validation */}
+            {entry.objective.title.trim().length >= 10 && (
+              <ProposalValidationCard
+                assessment={assessment}
+                isLoading={validationLoading}
+                error={validationError}
+                onValidate={handleValidate}
+                onReset={resetValidation}
+                canValidate={allKrsFilled}
+              />
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 
@@ -539,78 +445,40 @@ export function QbrOkrProposalStep({
   onContinue,
   onBack,
 }: QbrOkrProposalStepProps) {
-  // Which objective is being edited (null = list view)
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editSubStep, setEditSubStep] = useState<EditSubStep>('objective');
-
-  const currentEntry = editingIndex !== null ? proposedOkrs[editingIndex] : null;
+  // Track which objective card is open (auto-expand newly added)
+  const [openIndex, setOpenIndex] = useState<number | null>(
+    proposedOkrs.length > 0 ? 0 : null,
+  );
 
   const handleAdd = useCallback(() => {
+    if (proposedOkrs.length >= MAX_OBJECTIVES) return;
     const newEntry = createEmptyEntry();
     const updated = [...proposedOkrs, newEntry];
     onProposedOkrsChange(updated);
-    setEditingIndex(updated.length - 1);
-    setEditSubStep('objective');
+    setOpenIndex(updated.length - 1);
   }, [proposedOkrs, onProposedOkrsChange]);
-
-  const handleEdit = useCallback((index: number) => {
-    const entry = proposedOkrs[index];
-    if (!entry) return;
-    if (entry.objective.title.trim().length < 10) {
-      setEditSubStep('objective');
-    } else {
-      setEditSubStep('kr-detail');
-    }
-    setEditingIndex(index);
-  }, [proposedOkrs]);
 
   const handleRemove = useCallback((index: number) => {
     const updated = proposedOkrs.filter((_, i) => i !== index);
     onProposedOkrsChange(updated);
-  }, [proposedOkrs, onProposedOkrsChange]);
+    if (openIndex === index) {
+      setOpenIndex(updated.length > 0 ? Math.min(index, updated.length - 1) : null);
+    } else if (openIndex !== null && openIndex > index) {
+      setOpenIndex(openIndex - 1);
+    }
+  }, [proposedOkrs, onProposedOkrsChange, openIndex]);
 
-  const updateCurrentEntry = useCallback((updates: Partial<ProposedObjectiveEntry>) => {
-    if (editingIndex === null) return;
+  const handleUpdate = useCallback((index: number, updates: Partial<ProposedObjectiveEntry>) => {
     const updated = proposedOkrs.map((entry, i) =>
-      i === editingIndex ? { ...entry, ...updates } : entry
+      i === index ? { ...entry, ...updates } : entry
     );
     onProposedOkrsChange(updated);
-  }, [editingIndex, proposedOkrs, onProposedOkrsChange]);
+  }, [proposedOkrs, onProposedOkrsChange]);
 
-  const handleKrCountChange = useCallback((count: number) => {
-    if (editingIndex === null) return;
-    // Store all KRs in foundational count (type is hidden)
-    updateCurrentEntry({
-      krPlan: { foundational: count, contribution: 0, enabler: 0 },
-    });
-  }, [editingIndex, updateCurrentEntry]);
+  const hasEntries = proposedOkrs.length > 0;
+  const allComplete = hasEntries && proposedOkrs.every(isEntryComplete);
 
-  const finishEditing = useCallback(() => {
-    if (editingIndex !== null) {
-      const entry = proposedOkrs[editingIndex];
-      if (entry && !entry.objective.title.trim()) {
-        handleRemove(editingIndex);
-      }
-    }
-    setEditingIndex(null);
-    setEditSubStep('objective');
-  }, [editingIndex, proposedOkrs, handleRemove]);
-
-  const handleBackFromObjective = useCallback(() => {
-    if (editingIndex !== null) {
-      const entry = proposedOkrs[editingIndex];
-      if (entry && !entry.objective.title.trim()) {
-        handleRemove(editingIndex);
-      }
-    }
-    setEditingIndex(null);
-    setEditSubStep('objective');
-  }, [editingIndex, proposedOkrs, handleRemove]);
-
-  // Determine badge label
-  const badgeLabel = editingIndex !== null
-    ? `Objetivo ${editingIndex + 1} — ${editSubStep === 'objective' ? '1/2 Objetivo' : '2/2 KRs'}`
-    : `${proposedOkrs.length} objetivo${proposedOkrs.length !== 1 ? 's' : ''}`;
+  const badgeLabel = `${proposedOkrs.length} objetivo${proposedOkrs.length !== 1 ? 's' : ''}`;
 
   return (
     <WizardStepScaffold
@@ -624,46 +492,48 @@ export function QbrOkrProposalStep({
           badge={badgeLabel}
         />
       }
-      footer={null}
+      footer={
+        <WizardStepFooter
+          onBack={onBack}
+          onPrimary={onContinue}
+          primaryDisabled={hasEntries && !allComplete}
+          backLabel="Voltar"
+          primaryLabel={hasEntries ? 'Avançar para Resumo' : 'Pular proposta'}
+        />
+      }
     >
       <div className="p-6 space-y-4">
-        {/* List view */}
-        {editingIndex === null && (
-          <ObjectiveListView
-            entries={proposedOkrs}
-            onEdit={handleEdit}
-            onRemove={handleRemove}
-            onAdd={handleAdd}
-            onContinue={onContinue}
-            onBack={onBack}
-          />
-        )}
-
-        {/* Editing view: Objective */}
-        {editingIndex !== null && currentEntry && editSubStep === 'objective' && (
-          <ObjectiveSubStep
-            objective={currentEntry.objective}
-            krCount={getKrCount(currentEntry)}
-            onChange={(obj) => updateCurrentEntry({ objective: obj })}
-            onKrCountChange={handleKrCountChange}
-            onNext={() => setEditSubStep('kr-detail')}
-            onBack={handleBackFromObjective}
-          />
-        )}
-
-        {/* Editing view: KR Detail */}
-        {editingIndex !== null && currentEntry && editSubStep === 'kr-detail' && (
-          <KrDetailSubStep
-            objectiveTitle={currentEntry.objective.title}
-            objectiveDescription={currentEntry.objective.description}
-            krCount={getKrCount(currentEntry)}
-            draftKrs={currentEntry.draftKrs}
+        {/* Objective cards */}
+        {proposedOkrs.map((entry, idx) => (
+          <InlineObjectiveCard
+            key={entry.id}
+            entry={entry}
+            index={idx}
             teamId={teamId}
             teamName={teamName}
-            onChange={(krs) => updateCurrentEntry({ draftKrs: krs })}
-            onNext={finishEditing}
-            onBack={() => setEditSubStep('objective')}
+            isOpen={openIndex === idx}
+            onToggle={() => setOpenIndex(openIndex === idx ? null : idx)}
+            onUpdate={(updates) => handleUpdate(idx, updates)}
+            onRemove={() => handleRemove(idx)}
           />
+        ))}
+
+        {/* Add objective button */}
+        {proposedOkrs.length < MAX_OBJECTIVES && (
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-dashed text-sm"
+            onClick={handleAdd}
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar Objetivo {proposedOkrs.length > 0 && `(${proposedOkrs.length}/${MAX_OBJECTIVES})`}
+          </Button>
+        )}
+
+        {!hasEntries && (
+          <p className="text-xs text-center text-muted-foreground">
+            Adicione pelo menos 1 objetivo para o próximo ciclo, ou pule esta etapa.
+          </p>
         )}
       </div>
     </WizardStepScaffold>
