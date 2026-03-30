@@ -78,6 +78,7 @@ export function MbrKpiGateStep({
         <WizardStepHeader
           icon={ShieldAlert}
           title="KPI Gate Estratégico"
+        tooltip="mbr-kpi-gate"
           description={`${criticalKpis.length} KPI${criticalKpis.length !== 1 ? 's' : ''} em atenção`}
           variant="amber"
         />

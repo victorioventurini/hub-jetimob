@@ -105,6 +105,7 @@ export function MbrDecisionsStep({
       <WizardStepHeader
         icon={LayoutDashboard}
         title="Decisões Estratégicas"
+        tooltip="mbr-decisions"
         description={`${decisions.length} registro${decisions.length !== 1 ? 's' : ''} consolidados`}
         variant="green"
       />

@@ -116,6 +116,7 @@ export function TeamDecisionsStep({
       <WizardStepHeader
         icon={CheckCircle2}
         title="Decisões e Próximos Passos"
+        tooltip="team-decisions"
         description={`${decisions.length} registro${decisions.length !== 1 ? 's' : ''} no total`}
         variant="green"
       />

@@ -88,6 +88,7 @@ export function MbrTeamOkrsOverviewStep({
         <WizardStepHeader
           icon={Users}
           title="OKRs dos Times"
+          tooltip="mbr-team-okrs-overview"
           description={`${teamOkrSnapshots.length} times com OKRs no ciclo`}
           variant="primary"
           badge={`${totalKrs} KRs`}

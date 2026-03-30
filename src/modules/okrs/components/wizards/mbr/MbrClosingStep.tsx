@@ -151,6 +151,7 @@ export function MbrClosingStep({
       <WizardStepHeader
         icon={ShieldCheck}
         title="Encerramento & Governança"
+        tooltip="mbr-closing"
         description="Confirme o alinhamento antes de finalizar"
         variant="green"
       />
