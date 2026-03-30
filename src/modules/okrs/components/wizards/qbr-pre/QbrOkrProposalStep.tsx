@@ -315,6 +315,24 @@ function KrDetailSubStep({
 
   const allFilled = ensuredKrs.slice(0, slots.length).every(kr => kr.title.trim().length >= 5);
 
+  // AI Validation
+  const { assessment, isLoading: validationLoading, error: validationError, validate, reset: resetValidation } = useProposalValidation();
+
+  // Reset validation when KRs change
+  useEffect(() => {
+    if (assessment) resetValidation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKrs]);
+
+  const handleValidate = useCallback(() => {
+    validate({
+      objectiveTitle,
+      objectiveDescription,
+      teamName,
+      draftKrs: ensuredKrs.slice(0, slots.length),
+    });
+  }, [validate, objectiveTitle, objectiveDescription, teamName, ensuredKrs, slots.length]);
+
   if (!currentSlot || !currentKr) return null;
 
   const config = KR_TYPE_CONFIG[currentSlot.type];
