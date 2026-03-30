@@ -20,7 +20,7 @@ export function useProjectsForWizard(teamId: string | undefined) {
         .from('projects')
         .select(`
           id, name, status, due_date, external_url,
-          project_milestones(id, status, due_date, deleted_at),
+          project_milestones(id, name, status, due_date, owner_id, notes, deleted_at),
           project_teams!inner(team_id)
         `)
         .eq('bu_id', buId)
@@ -32,8 +32,10 @@ export function useProjectsForWizard(teamId: string | undefined) {
       if (error) throw error;
 
       return (data || []).map((p: any) => {
-        const milestones = p.project_milestones || [];
-        const completion = computeCompletion(milestones);
+        const allMilestones = (p.project_milestones || []).filter(
+          (m: any) => !m.deleted_at
+        );
+        const completion = computeCompletion(allMilestones);
 
         return {
           id: p.id,
@@ -41,10 +43,18 @@ export function useProjectsForWizard(teamId: string | undefined) {
           status: p.status,
           due_date: p.due_date,
           external_url: p.external_url,
-          health: computeHealth(milestones),
+          health: computeHealth(allMilestones),
           milestones_total: completion.total,
           milestones_done: completion.done,
           completion_pct: completion.pct,
+          milestones: allMilestones.map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            status: m.status,
+            due_date: m.due_date,
+            owner_id: m.owner_id,
+            notes: m.notes,
+          })),
         } as ProjectForWizard;
       });
     },
