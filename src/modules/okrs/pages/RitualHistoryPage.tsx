@@ -135,7 +135,7 @@ export default function RitualHistoryPage() {
       <div className="space-y-6">
         <PageHeader
           title="Histórico de Rituais"
-          description="Consulte rituais concluídos, decisões registradas e acompanhe pendências."
+          description="Consulte rituais concluídos e rascunhos, decisões registradas e acompanhe pendências."
           breadcrumbs={[
             { label: 'OKRs', href: '/okrs' },
             { label: 'Histórico de Rituais' },
@@ -307,6 +307,13 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                 {label}
               </Badge>
 
+              {/* Draft badge */}
+              {ritual.status === 'in_progress' && (
+                <Badge variant="outline" className="shrink-0 text-[10px] border-status-yellow text-status-yellow">
+                  Rascunho
+                </Badge>
+              )}
+
               {/* Team */}
               {ritual.teamName && (
                 <span className="flex items-center gap-1 text-sm text-muted-foreground shrink-0">
@@ -340,12 +347,17 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
               )}
 
               {/* Date */}
-              {ritual.completedAt && (
+              {ritual.completedAt ? (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                   <CalendarIcon className="h-3 w-3" />
                   {format(parseISO(ritual.completedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </span>
-              )}
+              ) : ritual.startedAt ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                  <Clock className="h-3 w-3" />
+                  Iniciado {format(parseISO(ritual.startedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </span>
+              ) : null}
 
               {/* Author */}
               {ritual.startedByName && (
