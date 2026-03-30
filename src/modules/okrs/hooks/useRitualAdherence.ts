@@ -1,11 +1,14 @@
 /**
  * useRitualAdherence - Hook for ritual adherence/health metrics
+ * 
+ * Supports filtering by date range, team, wizard type, and user.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { subDays, format } from 'date-fns';
 
 // ============================================================
 // TYPES
@@ -20,39 +23,88 @@ export interface TeamAdherence {
   adherencePercent: number;
 }
 
+export interface AdherenceFilters {
+  startDate?: string; // 'YYYY-MM-DD'
+  endDate?: string;   // 'YYYY-MM-DD'
+  teamId?: string | null;
+  wizardType?: string | null;
+  userId?: string | null;
+}
+
 // ============================================================
 // HOOK
 // ============================================================
 
-export function useRitualAdherence(days = 90) {
+export function useRitualAdherence(filters: AdherenceFilters = {}) {
   const { currentBu } = useBu();
   const buSupabase = useBuScopedSupabase();
 
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const defaultStart = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+
+  const startDate = filters.startDate || defaultStart;
+  const endDate = filters.endDate || today;
+
   return useQuery({
-    queryKey: queryKeys.okrs.ritualAdherence(currentBu?.id ?? null, days),
+    queryKey: queryKeys.okrs.ritualAdherence(currentBu?.id ?? null, { startDate, endDate, teamId: filters.teamId, wizardType: filters.wizardType, userId: filters.userId }),
     queryFn: async () => {
       if (!currentBu?.id) return [];
 
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
-
-      const { data, error } = await buSupabase
+      let query = buSupabase
         .from('ritual_occurrences')
         .select(`
-          team_id, status,
+          id, team_id, status, wizard_type, session_id,
           teams!ritual_occurrences_team_id_fkey ( name )
         `)
         .eq('bu_id', currentBu.id)
-        .gte('planned_date', cutoff.toISOString().split('T')[0])
-        .lte('planned_date', new Date().toISOString().split('T')[0])
+        .gte('planned_date', startDate)
+        .lte('planned_date', endDate)
         .in('status', ['completed_on_time', 'completed_late', 'missed', 'scheduled']);
 
+      if (filters.teamId) {
+        query = query.eq('team_id', filters.teamId);
+      }
+      if (filters.wizardType) {
+        query = query.eq('wizard_type', filters.wizardType);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
+
+      let rows = (data ?? []) as any[];
+
+      // If user filter is active, we need to check which occurrences
+      // have sessions started by that user
+      if (filters.userId) {
+        const sessionIds = rows
+          .map(r => r.session_id)
+          .filter(Boolean) as string[];
+
+        if (sessionIds.length > 0) {
+          const { data: sessions } = await buSupabase
+            .from('okr_wizard_sessions')
+            .select('id, started_by')
+            .in('id', sessionIds);
+
+          const userSessionIds = new Set(
+            (sessions ?? [])
+              .filter((s: any) => s.started_by === filters.userId)
+              .map((s: any) => s.id)
+          );
+
+          // Keep occurrences that either:
+          // - have a session by this user (completed)
+          // - have no session (missed/scheduled) — still relevant for the user
+          rows = rows.filter(r =>
+            !r.session_id || userSessionIds.has(r.session_id)
+          );
+        }
+      }
 
       // Group by team
       const teamMap = new Map<string, { name: string; total: number; completed: number; missed: number }>();
 
-      for (const row of (data ?? []) as any[]) {
+      for (const row of rows) {
         const teamId = row.team_id || '__bu__';
         const teamName = row.teams?.name || 'BU (sem time)';
 

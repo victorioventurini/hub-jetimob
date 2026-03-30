@@ -256,8 +256,8 @@ export const okrsKeys = {
     ['ritual-occurrences', buId, filters] as const,
   ritualOccurrenceBySession: (sessionId: string | null) =>
     ['ritual-occurrence-by-session', sessionId] as const,
-  ritualAdherence: (buId: string | null, days?: number) =>
-    ['ritual-adherence', buId, days] as const,
+  ritualAdherence: (buId: string | null, filters?: Record<string, unknown>) =>
+    ['ritual-adherence', buId, filters] as const,
   collaboratorCheckinExpected: (buId: string | null, teamId: string | null, cycleId: string | null) =>
     ['collaborator-checkin-expected', buId, teamId, cycleId] as const,
   collaboratorSessionsByDate: (buId: string | null, teamId: string | null, startDate: string, endDate: string) =>
