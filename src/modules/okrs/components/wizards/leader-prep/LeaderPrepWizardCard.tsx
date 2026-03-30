@@ -52,7 +52,7 @@ export function LeaderPrepWizardCard({
   }
 
   return (
-    <Link to={`/okrs/leader-prep?team=${teamId}`} className="block">
+    <Link to={`/rituals/team-checkin-pre?team=${teamId}`} className="block">
       <Card 
         className={cn(
           "animate-fade-in overflow-hidden transition-all hover:shadow-md cursor-pointer group",
