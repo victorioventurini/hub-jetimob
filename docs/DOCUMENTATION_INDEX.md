@@ -20,7 +20,10 @@ docs/
 │   ├── fixes/
 │   └── perf/
 ├── qa/            → Checklists de QA (por feature)
-└── permissions/   → Relatórios de waves de permissões
+├── permissions/   → Relatórios de waves de permissões
+├── HUB_ADMIN_DEEP_DIVE.md        → Deep dive área /hub (admin)
+├── BU_SETTINGS_DEEP_DIVE.md      → Deep dive BU Settings + módulos operacionais
+└── HUB_TECHNICAL_DEEP_DIVE.md    → Deep dive técnico geral (KPIs, OKRs, Wizards, etc.)
 ```
 
 ---
