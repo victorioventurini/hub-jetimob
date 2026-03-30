@@ -125,7 +125,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Segunda-feira',
         badgeVariant: 'outline',
         requiresTeam: true,
-        route: '/okrs/leader-prep',
+        route: '/rituals/team-checkin-pre',
       },
       {
         id: 'team-checkin',
