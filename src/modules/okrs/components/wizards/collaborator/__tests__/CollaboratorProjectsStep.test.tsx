@@ -9,7 +9,7 @@
  * - Loading state
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within } from '@/test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { CollaboratorProjectsStep } from '../CollaboratorProjectsStep';
