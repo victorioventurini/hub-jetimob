@@ -45,7 +45,7 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 // TYPES
 // ============================================================
 
-type WizardStep = 'context' | 'checkin' | 'kpis' | 'initiatives' | 'reflection' | 'summary';
+type WizardStep = 'context' | 'checkin' | 'kpis' | 'projects' | 'initiatives' | 'reflection' | 'summary';
 
 interface CollaboratorDraftData {
   currentKrIndex: number;
