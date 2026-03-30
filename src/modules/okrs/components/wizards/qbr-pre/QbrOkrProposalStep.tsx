@@ -579,9 +579,11 @@ export function QbrOkrProposalStep({
         {subStep === 'kr-detail' && (
           <KrDetailSubStep
             objectiveTitle={objective.title}
+            objectiveDescription={objective.description}
             krPlan={krPlan}
             draftKrs={draftKrs}
             teamId={teamId}
+            teamName={teamName}
             onChange={(krs) => updateField('draftKrs', krs)}
             onNext={onContinue}
             onBack={() => setSubStep('kr-plan')}
