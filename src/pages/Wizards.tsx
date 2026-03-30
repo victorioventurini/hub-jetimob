@@ -160,7 +160,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Mensal',
         badgeVariant: 'secondary',
         requiresTeam: false,
-        route: '/okrs/mbr',
+        route: '/rituals/mbr',
       },
     ],
   },
