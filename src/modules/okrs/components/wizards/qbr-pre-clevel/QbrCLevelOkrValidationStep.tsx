@@ -39,7 +39,7 @@ import type {
 export interface TeamOkrProposal {
   teamId: string;
   teamName: string;
-  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  proposedOkrs: ProposedObjectiveEntry[];
   hasSubmission: boolean;
 }
 
