@@ -6,9 +6,9 @@
  */
 
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,9 +88,8 @@ export default function RitualCalendarPage() {
   const [activeTab, setActiveTab] = useUrlTab('cadences');
 
   return (
-    <HubLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <PageHeader
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <PageHeader
           title="Calendário de Ritos"
           description="Configure cadências de rituais e acompanhe a aderência dos times."
           breadcrumbs={[
@@ -117,9 +116,8 @@ export default function RitualCalendarPage() {
           <TabsContent value="health">
             <HealthTab />
           </TabsContent>
-        </Tabs>
-      </div>
-    </HubLayout>
+      </Tabs>
+    </div>
   );
 }
 
@@ -632,9 +630,9 @@ function OccurrenceSheet({
 
           {occurrence.sessionId && (
             <Button variant="outline" className="w-full" asChild>
-              <a href={`/okrs/ritual-history?session=${occurrence.sessionId}`}>
+              <Link to={`/okrs/ritual-history?session=${occurrence.sessionId}`}>
                 Ver no histórico
-              </a>
+              </Link>
             </Button>
           )}
         </div>
