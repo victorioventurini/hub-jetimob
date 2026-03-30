@@ -38,6 +38,8 @@ function createKrState(overrides: Partial<QbrBalanceStepProps['krFinalStates'][0
   return {
     krId: `kr-${Math.random().toString(36).slice(2, 8)}`,
     krTitle: 'Test KR',
+    objectiveId: 'obj-1',
+    objectiveTitle: 'Test Objective',
     state: 'healthy' as const,
     finalProgress: 50,
     paceStatus: 'on_pace',

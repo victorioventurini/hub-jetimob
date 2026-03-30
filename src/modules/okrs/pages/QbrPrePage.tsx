@@ -204,6 +204,8 @@ export default function QbrPrePage() {
         states.push({
           krId: kr.id,
           krTitle: kr.title,
+          objectiveId: obj.id,
+          objectiveTitle: obj.title,
           state,
           finalProgress: Math.round(progress),
           paceStatus: progress >= 70 ? 'No ritmo' : progress >= 40 ? 'Atenção' : 'Atrasado',

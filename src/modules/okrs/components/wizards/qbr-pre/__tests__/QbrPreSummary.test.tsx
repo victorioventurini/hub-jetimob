@@ -109,8 +109,8 @@ describe('QbrPreSummary', () => {
     it('renders balance section with KR counts', () => {
       const draftData = createBaseDraftData({
         krFinalStates: [
-          { krId: 'kr-1', krTitle: 'KR achieved', state: 'achieved', finalProgress: 100, paceStatus: 'on_pace' },
-          { krId: 'kr-2', krTitle: 'KR healthy', state: 'healthy', finalProgress: 60, paceStatus: 'on_pace' },
+          { krId: 'kr-1', krTitle: 'KR achieved', objectiveId: 'obj-1', objectiveTitle: 'Obj 1', state: 'achieved', finalProgress: 100, paceStatus: 'on_pace' },
+          { krId: 'kr-2', krTitle: 'KR healthy', objectiveId: 'obj-1', objectiveTitle: 'Obj 1', state: 'healthy', finalProgress: 60, paceStatus: 'on_pace' },
         ],
       });
       renderSummary({ draftData });
