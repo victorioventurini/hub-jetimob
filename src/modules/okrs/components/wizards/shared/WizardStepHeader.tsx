@@ -98,6 +98,7 @@ export function WizardStepHeader({
   variant = 'default',
   badge,
   badgeVariant = 'secondary',
+  tooltip,
   rightContent,
   className,
 }: WizardStepHeaderProps) {
