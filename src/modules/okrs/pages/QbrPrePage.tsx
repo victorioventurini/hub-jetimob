@@ -17,7 +17,7 @@ import {
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import {
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
