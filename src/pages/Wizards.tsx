@@ -378,7 +378,7 @@ export default function WizardsPage() {
             description="Fluxos guiados para gestão de OKRs"
           />
           <Button variant="outline" size="sm" asChild>
-            <Link to="/okrs/ritual-history" className="gap-2">
+            <Link to="/rituals/history" className="gap-2">
               <History className="h-4 w-4" />
               Histórico de Rituais
             </Link>
