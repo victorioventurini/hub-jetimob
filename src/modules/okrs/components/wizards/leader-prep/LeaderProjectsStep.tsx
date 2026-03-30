@@ -25,6 +25,8 @@ import {
 
 import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
 import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { projectsKeys } from '@/lib/queryKeys/projects';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { ProjectStatusBadge } from '@/modules/projects/components/ProjectStatusBadge';
 import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
