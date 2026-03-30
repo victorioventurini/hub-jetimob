@@ -286,7 +286,7 @@ export function MbrTeamOkrsDetailStep({
                         </div>
 
                         {/* Linked initiatives & projects */}
-                        <KrLinkedDetails krId={kr.krId} />
+                        <KrLinkedDetails krId={kr.krId} defaultExpanded />
                       </div>
                     );
                   })}
