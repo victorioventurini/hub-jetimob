@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.20.0  
-**Última atualização:** 2026-03-29 (v3.20.0 - Projects Module v1.4 — Comments system, saved filters, test coverage 112 — 121 tabelas + 27 views, 219 funções SQL, 85 enums)
+**Versão:** 3.21.0  
+**Última atualização:** 2026-03-30 (v3.21.0 - Documentation Update — handle_new_user fix, Ritual Calendar Health filters, 123 tabelas + 27 views, 157 funções SQL expostas, 85 enums, 26 edge functions)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo (1974 testes, 0 falhas) | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit (219 funções)** | **Edge Functions Audit (25 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **KPI KR Link Filter v1.0** ✅ | **KR Primary KPI Visual Indicator v1.0** ✅ | **UnitSelect Canonical Component v1.0** ✅ | **Frontend BU Isolation Enforcement v1.0** ✅ | **Manager Auto-Assignment v1.0** ✅ | **Null-Safe Sort Standard v1.0** ✅ | **Domain Centralization v1.0** ✅ | **Refactoring Wave P2 v1.0** ✅ | **Ticket Notification Contextualisation v1.0** ✅ | **Asset Audit History v1.0** ✅ | **QBR Ritual v1.0** ✅ | **AI Agents Gemini 3 Flash Migration** ✅ | **Módulo Projetos v1.4** ✅ | **Project Comments System v1.0** ✅ | **Projects Saved Filters v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -3548,6 +3548,19 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.21.0 (2026-03-30)
+- **Documentation Update v1.0**:
+  - `docs/HUB_ADMIN_DEEP_DIVE.md` — Deep dive técnico da área `/hub` (19 rotas, 12 wizard_types, QBR state machine, RBAC V3)
+  - `docs/BU_SETTINGS_DEEP_DIVE.md` — Deep dive técnico de BU Settings e todos os módulos operacionais (~95 rotas totais)
+  - Contagens atualizadas: 123 tabelas + 27 views, 157 funções SQL (via types), 85 enums, 26 edge functions
+  - Novas tabelas desde v3.20.0: `ritual_cadences`, `ritual_occurrences`, `asset_recommendations`, `kpi_data_contributors`, `kpi_target_history`, `project_comments`, `project_comment_attachments`
+  - Novas views: `v_all_participants`, `v_identity_health_check`, `v_partner_services_by_bu`, `v_teams_clean`
+- **handle_new_user Deterministic BU Fix v1.0**:
+  - Profile pré-existente (importado por admin) preserva `bu_id` original em vez de sobrescrever com domínio
+  - Domínio `jetimob.com` removido da BU Jet Experience para resolução determinística
+- **Ritual Calendar Health Filters v1.0**:
+  - Filtros da aba Saúde agora usam mesmo layout da aba Calendário (grid 4 cols, período inline)
 
 ### v3.20.0 (2026-03-29)
 - **Módulo Projetos v1.4 — Comments System & Test Coverage**:

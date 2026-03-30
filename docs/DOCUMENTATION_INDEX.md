@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-03-26  
-**TCR Version:** 3.18.0  
+**Última atualização:** 2026-03-30  
+**TCR Version:** 3.21.0  
 **System Health:** 10/10 ✅
 
 ---
@@ -20,7 +20,10 @@ docs/
 │   ├── fixes/
 │   └── perf/
 ├── qa/            → Checklists de QA (por feature)
-└── permissions/   → Relatórios de waves de permissões
+├── permissions/   → Relatórios de waves de permissões
+├── HUB_ADMIN_DEEP_DIVE.md        → Deep dive área /hub (admin)
+├── BU_SETTINGS_DEEP_DIVE.md      → Deep dive BU Settings + módulos operacionais
+└── HUB_TECHNICAL_DEEP_DIVE.md    → Deep dive técnico geral (KPIs, OKRs, Wizards, etc.)
 ```
 
 ---
@@ -29,9 +32,9 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.18.0 |
-| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.26.0 |
-| `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | v1.2.2 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.21.0 |
+| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.27.0 |
+| `DATA_MODEL_REGISTRY.md` | Schema canônico (123 tabelas, 27 views, 85 enums) | v1.3.0 |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.2.0 |
 | `PERMISSIONS_AND_RBAC_MODEL.md` | Modelo completo de permissões V2 | v1.5.0 |
 | `RBAC_TEMPLATES_V3.md` | Sistema de templates de permissão | v3.0 |
@@ -40,6 +43,16 @@ docs/
 | `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.7.0 |
 | `SCHEMA_QUICK_REFERENCE.md` | Referência rápida de schema | v1.0.0 |
 | `RESPONSIBILITY_MIGRATION_POLICY.md` | Política de migração de responsabilidades | v1.0.0 |
+
+---
+
+## 🔍 Deep Dives Técnicos (`docs/`)
+
+| Documento | Descrição | Data |
+|-----------|-----------|------|
+| `HUB_ADMIN_DEEP_DIVE.md` | **Deep dive da área `/hub`** — 19 rotas, 12 wizard_types, QBR state machine, RBAC V3 | 2026-03-30 |
+| `BU_SETTINGS_DEEP_DIVE.md` | **Deep dive de BU Settings + módulos** — ~95 rotas totais, guards, todos os módulos | 2026-03-30 |
+| `HUB_TECHNICAL_DEEP_DIVE.md` | Deep dive técnico geral (KPIs, OKRs, Wizards, Hub) | 2026-03-25 |
 
 ---
 
@@ -117,4 +130,4 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Atualizado em 2026-03-26 — TCR v3.18.0 — Health Score 10/10*
+*Atualizado em 2026-03-30 — TCR v3.21.0 — Health Score 10/10*

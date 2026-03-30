@@ -1,8 +1,8 @@
 # Data Model Registry — Hub da Jet
 
-**Gerado em:** 2026-02-07T00:00:00.000Z  
-**Versão do Generator:** 1.2.2  
-**Versão do TCR:** 3.9.0  
+**Gerado em:** 2026-03-30T00:00:00.000Z  
+**Versão do Generator:** 1.3.0  
+**Versão do TCR:** 3.21.0  
 **Project ID:** oiwnghihyqdsinouwmga
 
 > ⚠️ **FONTE ÚNICA DE VERDADE**
@@ -41,6 +41,7 @@ Lista completa das tabelas no schema `public`:
 | `asset_movements` | ✅ | ✅ | Movimentações de ativos |
 | `asset_permissions` | ✅ | ✅ | Permissões de ativos |
 | `asset_phone_lines` | ✅ | ✅ | Linhas telefônicas corporativas |
+| `asset_recommendations` | ✅ | ✅ | Recomendações de ativos por cargo/time (v3.21.0) |
 | `audit_logs` | ✅ | ❌ | Logs de auditoria (global, inclui field-level history de Assets) |
 | `automation_action_catalog` | ✅ | ❌ | Catálogo de ações de automação |
 | `automation_connection_events` | ✅ | ✅ | Eventos de conexões |
@@ -65,6 +66,8 @@ Lista completa das tabelas no schema `public`:
 | `hub_integrations_global_config` | ✅ | ❌ | Config global de integrações |
 | `job_titles` | ✅ | ✅ | Cargos |
 | `kpi_metrics` | ✅ | ✅ | Métricas KPI |
+| `kpi_data_contributors` | ✅ | ✅ | Contribuidores de dados de KPI (v2.83.0) |
+| `kpi_target_history` | ✅ | ✅ | Histórico de metas de KPI |
 | `kpi_values` | ✅ | ✅ | Valores de KPI |
 | `mentions` | ✅ | ✅ | Menções (entity_type + entity_id) |
 | `modules` | ✅ | ❌ | Módulos do sistema |
@@ -113,12 +116,16 @@ Lista completa das tabelas no schema `public`:
 | `permission_template_items_v2` | ✅ | ❌ | Items de template de permissão |
 | `permission_templates_v2` | ✅ | ❌ | Templates de permissão V2 |
 | `profiles` | ✅ | ✅ | Perfis de usuários |
+| `project_comment_attachments` | ✅ | ✅ | Anexos de comentários de projetos (v3.20.0) |
+| `project_comments` | ✅ | ✅ | Comentários de projetos (v3.20.0) |
 | `projects` | ✅ | ✅ | Projetos estratégicos (v3.16.0) |
 | `project_krs` | ✅ | ✅ | Junction project ↔ KR com impacto |
 | `project_milestones` | ✅ | ✅ | Marcos de projeto com notes, status, due_date |
 | `project_milestone_dependencies` | ✅ | ✅ | Dependências entre milestones |
 | `project_teams` | ✅ | ✅ | Junction project ↔ team |
 | `milestone_krs` | ✅ | ✅ | Junction milestone ↔ KR com impacto (v3.19.0) |
+| `ritual_cadences` | ✅ | ✅ | Cadências de rituais recorrentes (v3.21.0) |
+| `ritual_occurrences` | ✅ | ✅ | Ocorrências planejadas de rituais (v3.21.0) |
 | `squad_memberships` | ✅ | ✅ | Membros de squads |
 | `squad_teams` | ✅ | ✅ | Relacionamento squad ↔ teams |
 | `squads` | ✅ | ✅ | Squads |
@@ -138,7 +145,7 @@ Lista completa das tabelas no schema `public`:
 | `user_saved_links` | ✅ | ✅ | Links salvos por usuário/módulo (v2.36.0) |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 114 tabelas
+**Total:** 123 tabelas
 
 ---
 
@@ -149,10 +156,12 @@ Lista completa das tabelas no schema `public`:
 | `identity_rls_violations` | Violações de identity em RLS |
 | `users_without_v2_permissions` | Usuários sem permissões V2 |
 | `v_ai_agents_public` | Agentes IA públicos |
+| `v_all_participants` | Todos participantes (internos + externos) unificados (v3.21.0) |
 | `v_bu_active_profiles` | Perfis ativos por BU (view canônica para User Directory) |
 | `v_bu_all_profiles_admin` | Todos os perfis da BU (admin) |
 | `v_bu_id_null_report` | Relatório de bu_id NULL |
 | `v_bu_memberships_active` | Memberships ativas |
+| `v_identity_health_check` | Verificação de saúde de identidades (v3.21.0) |
 | `v_notification_delivery_health` | Saúde de entregas |
 | `v_notification_failures` | Falhas de notificação |
 | `v_notification_slo_by_channel_daily` | SLO por canal (diário) |
@@ -161,6 +170,7 @@ Lista completa das tabelas no schema `public`:
 | `v_objective_health` | Saúde de objetivos |
 | `v_okr_insights_active` | Insights ativos |
 | `v_partner_services` | Serviços de parceiros |
+| `v_partner_services_by_bu` | Serviços de parceiros por BU (v3.21.0) |
 | `v_pending_checkins` | Check-ins pendentes |
 | `v_perf_indexes_report` | Relatório de índices |
 | `v_permission_risk_report` | Relatório de riscos de permissão |
@@ -168,9 +178,10 @@ Lista completa das tabelas no schema `public`:
 | `v_profiles_directory` | Diretório de perfis |
 | `v_shared_okrs_summary` | Resumo de OKRs compartilhados |
 | `v_team_contributed_okrs` | OKRs com contribuição de times |
+| `v_teams_clean` | Times ativos sem soft-delete (v3.21.0) |
 | `v_users_without_templates` | Usuários sem templates |
 
-**Total:** 23 views
+**Total:** 27 views
 
 ---
 
@@ -211,11 +222,18 @@ Lista completa das tabelas no schema `public`:
 | `key_status` | `in_claviculary`, `loaned`, `lost`, `retired` |
 | `keyring_status` | `available`, `loaned`, `lost`, `retired` |
 | `kpi_category` | `financeiro`, `growth`, `cs`, `produto`, `operacoes`, `pessoas` |
+| `kpi_confidence_level` | `high`, `medium`, `low` |
+| `kpi_contributor_role` | `data_entry`, `reviewer` |
 | `kpi_direction` | `up`, `down` |
 | `kpi_frequency` | `daily`, `weekly`, `monthly`, `quarterly` |
+| `kpi_indicator_type` | `kpi`, `metric` |
+| `kpi_lifecycle_status` | `active`, `paused`, `deprecated`, `archived` |
+| `kpi_rag_status` | `green`, `yellow`, `red`, `not_started` |
+| `kpi_scope` | `org`, `area`, `team` |
 | `kpi_status` | `active`, `inactive` |
 | `kpi_value_source` | `manual`, `integration`, `calculation` |
 | `migration_status` | `pending`, `in_progress`, `completed`, `failed`, `rolled_back` |
+| `milestone_status` | `not_started`, `in_progress`, `completed`, `cancelled` |
 | `module_health` | `healthy`, `degraded`, `down` |
 | `module_status` | `active`, `inactive`, `coming_soon` |
 | `module_type` | `global`, `operational` |
@@ -239,7 +257,10 @@ Lista completa das tabelas no schema `public`:
 | `partner_contact_status` | `active`, `inactive` |
 | `partner_service_status` | `active`, `inactive` |
 | `permission_effect` | `allow`, `deny` |
+| `permission_migration_status` | `pending`, `migrated`, `failed` |
 | `permission_scope` | `self`, `self_or_owner`, `team`, `team_tree`, `squad`, `bu`, `global`, `public` |
+| `project_impact` | `high`, `medium`, `low` |
+| `project_status` | `planning`, `in_progress`, `completed`, `on_hold`, `cancelled` |
 | `squad_product` | `crm`, `cms`, `erp` |
 | `squad_role` | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
 | `team_status` | `active`, `inactive` |
@@ -248,9 +269,12 @@ Lista completa das tabelas no schema `public`:
 | `ticket_participant_role` | `requester`, `assignee`, `watcher` |
 | `ticket_participant_type` | `internal_user`, `partner_contact` |
 | `ticket_status` | `waiting_client`, `open`, `in_progress`, `waiting`, `resolved`, `closed` |
+| `ticket_type` | `request`, `incident`, `question` |
+| `ticket_visibility` | `public`, `internal` |
+| `wizard_session_status` | `in_progress`, `completed` |
 | `work_mode` | `remote`, `hybrid`, `onsite` |
 
-**Total:** 70 enums
+**Total:** 85 enums
 
 ---
 
@@ -301,6 +325,9 @@ Lista completa das tabelas no schema `public`:
 | `bu_user_permission_templates_v2` | `user_id` | ✅ → `profiles.id` | Usuário |
 | `bu_user_permission_templates_v2` | `created_by` | ✅ → `profiles.id` | Criador |
 | `permission_audit_log` | `target_user_id` | ❌ (inferido) | Alvo |
+| `projects` | `owner_id` | ✅ → `profiles.id` | Owner do projeto (v3.16.0) |
+| `project_comments` | `author_user_id` | ✅ → `profiles.id` | Autor do comentário (v3.20.0) |
+| `ritual_cadences` | `responsible_profile_id` | ✅ → `profiles.id` | Responsável pela cadência (v3.21.0) |
 
 ### Colunas que armazenam `auth.users.id` (AUTH_USER_ID)
 
@@ -461,4 +488,4 @@ O script:
 
 ---
 
-*Gerado automaticamente do banco de dados em 2026-01-21. Não edite manualmente.*
+*Atualizado em 2026-03-30 com base no schema types.ts. Para regenerar do banco: `npx tsx scripts/generate-data-model-registry.ts`*
