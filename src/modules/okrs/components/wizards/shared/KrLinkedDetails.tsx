@@ -10,14 +10,20 @@
  */
 
 import { useState } from 'react';
-import { ChevronDown, Lightbulb, FolderKanban, Milestone, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Lightbulb, FolderKanban, CheckCircle2, Circle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useKrInitiatives } from '@/modules/okrs/hooks/useInitiatives';
 import { useProjectsForKr } from '@/modules/projects/hooks/useProjectsForKr';
 import { InitiativeStatusBadge } from '@/modules/okrs/components/initiatives/InitiativeStatusBadge';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
-import { MilestoneStatusIcon } from '@/modules/projects/components/MilestoneStatusIcon';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { MilestoneStatus } from '@/modules/projects/types';
+
+const MILESTONE_ICON: Record<MilestoneStatus, React.ReactNode> = {
+  todo: <Circle className="h-3 w-3 text-muted-foreground shrink-0" />,
+  in_progress: <Clock className="h-3 w-3 text-status-amber shrink-0" />,
+  done: <CheckCircle2 className="h-3 w-3 text-status-green shrink-0" />,
+};
 
 export interface KrLinkedDetailsProps {
   krId: string;
