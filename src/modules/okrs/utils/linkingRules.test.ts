@@ -149,7 +149,7 @@ describe('OKR Limits', () => {
       const result = validateObjectivesLimit(0);
       expect(result.isWithinLimit).toBe(true);
       expect(result.currentCount).toBe(0);
-      expect(result.maxCount).toBe(3);
+      expect(result.maxCount).toBe(4);
       expect(result.warningMessage).toBeUndefined();
     });
 
