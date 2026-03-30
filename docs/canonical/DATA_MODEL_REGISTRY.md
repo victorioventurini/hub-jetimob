@@ -233,6 +233,7 @@ Lista completa das tabelas no schema `public`:
 | `kpi_status` | `active`, `inactive` |
 | `kpi_value_source` | `manual`, `integration`, `calculation` |
 | `migration_status` | `pending`, `in_progress`, `completed`, `failed`, `rolled_back` |
+| `milestone_status` | `not_started`, `in_progress`, `completed`, `cancelled` |
 | `module_health` | `healthy`, `degraded`, `down` |
 | `module_status` | `active`, `inactive`, `coming_soon` |
 | `module_type` | `global`, `operational` |
