@@ -38,7 +38,7 @@ import type { KrAction, VicInsight } from '@/modules/okrs/types/wizard';
 // TYPES
 // ============================================================
 
-type WizardStep = 'overview' | 'kpi-alerts' | 'highlights' | 'prep' | 'alignment';
+type WizardStep = 'overview' | 'kpi-alerts' | 'projects' | 'highlights' | 'prep' | 'alignment';
 
 interface LeaderPrepDraftData {
   krActions: KrAction[];
