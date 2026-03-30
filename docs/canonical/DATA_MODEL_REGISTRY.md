@@ -488,4 +488,4 @@ O script:
 
 ---
 
-*Gerado automaticamente do banco de dados em 2026-01-21. Não edite manualmente.*
+*Atualizado em 2026-03-30 com base no schema types.ts. Para regenerar do banco: `npx tsx scripts/generate-data-model-registry.ts`*
