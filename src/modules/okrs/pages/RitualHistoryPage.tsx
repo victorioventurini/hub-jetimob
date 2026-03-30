@@ -307,6 +307,13 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                 {label}
               </Badge>
 
+              {/* Draft badge */}
+              {ritual.status === 'in_progress' && (
+                <Badge variant="outline" className="shrink-0 text-[10px] border-status-yellow text-status-yellow">
+                  Rascunho
+                </Badge>
+              )}
+
               {/* Team */}
               {ritual.teamName && (
                 <span className="flex items-center gap-1 text-sm text-muted-foreground shrink-0">

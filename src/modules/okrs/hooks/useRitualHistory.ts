@@ -163,6 +163,7 @@ export function useRitualDetail(sessionId: string | null) {
       return {
         id: row.id,
         wizardType: row.wizard_type as WizardPersona,
+        status: row.status as 'completed' | 'in_progress',
         teamId: row.team_id,
         teamName: row.teams?.name ?? null,
         cycleId: row.cycle_id,
