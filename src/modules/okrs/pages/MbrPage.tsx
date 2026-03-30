@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import {
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
   useLastCompletedSession,
   useOrgObjectives,
 } from '@/modules/okrs/hooks';
