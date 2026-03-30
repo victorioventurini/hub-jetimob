@@ -155,6 +155,25 @@ export function LeaderProjectsStep({ teamId, onContinue, onBack }: LeaderProject
                       pct={project.completion_pct}
                       showPct
                     />
+                    {/* KR badges */}
+                    {(() => {
+                      const linkedKrs = krLinksByProject.get(project.id) || [];
+                      return (
+                        <div className="flex items-center gap-1 flex-wrap mt-1">
+                          {linkedKrs.length > 0 ? (
+                            linkedKrs.map(link => (
+                              <Badge key={link.krId} variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                                KR: {link.krTitle}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-5 text-muted-foreground">
+                              Sem OKR
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 text-xs text-muted-foreground">
