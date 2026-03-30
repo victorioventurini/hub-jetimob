@@ -45,6 +45,7 @@ import {
   type OccurrenceStatus,
 } from '../hooks/useRitualOccurrences';
 import { useRitualAdherence } from '../hooks/useRitualAdherence';
+import { useCollaboratorCheckinCounts } from '../hooks/useCollaboratorCheckinCounts';
 import type { WizardPersona } from '../types/wizard';
 
 // ============================================================
