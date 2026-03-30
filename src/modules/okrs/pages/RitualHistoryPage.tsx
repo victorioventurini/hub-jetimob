@@ -36,6 +36,7 @@ import {
   type RitualHistoryItem,
   type RitualHistoryFilters,
 } from '../hooks/useRitualHistory';
+import { useOccurrenceBySession } from '../hooks/useRitualOccurrences';
 import { useManageableTeamsFlat } from '../hooks';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
