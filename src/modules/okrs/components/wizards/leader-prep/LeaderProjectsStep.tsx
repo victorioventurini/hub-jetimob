@@ -50,7 +50,35 @@ export interface LeaderProjectsStepProps {
 
 export function LeaderProjectsStep({ teamId, onContinue, onBack }: LeaderProjectsStepProps) {
   const { data: projects, isLoading } = useProjectsForWizard(teamId || undefined);
+  const supabase = useBuScopedSupabase();
   const updateMilestone = useUpdateMilestone();
+
+  // Fetch KR links for all projects
+  const projectIds = useMemo(() => (projects || []).map(p => p.id), [projects]);
+  const { data: krLinksData } = useQuery({
+    queryKey: [...projectsKeys.allPrefix(), 'kr-links', projectIds],
+    queryFn: async () => {
+      if (projectIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('project_krs')
+        .select('project_id, key_result_id, kr:okr_team_key_results!project_krs_key_result_id_fkey(title)')
+        .in('project_id', projectIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: projectIds.length > 0,
+  });
+
+  // Map project_id -> KR titles
+  const krLinksByProject = useMemo(() => {
+    const map = new Map<string, Array<{ krId: string; krTitle: string }>>();
+    for (const row of (krLinksData || []) as any[]) {
+      const existing = map.get(row.project_id) || [];
+      existing.push({ krId: row.key_result_id, krTitle: row.kr?.title ?? '' });
+      map.set(row.project_id, existing);
+    }
+    return map;
+  }, [krLinksData]);
 
   // Pending milestones per project (status !== 'done')
   const projectsWithPending = useMemo(() => {
