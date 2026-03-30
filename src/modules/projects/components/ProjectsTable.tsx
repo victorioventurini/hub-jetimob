@@ -40,6 +40,7 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
             <TableHead>Responsável</TableHead>
             <TableHead>Times</TableHead>
             <TableHead>Progresso</TableHead>
+            <TableHead className="text-center">Marcos</TableHead>
             <TableHead>Prazo</TableHead>
             <TableHead className="text-right">KRs</TableHead>
           </TableRow>
