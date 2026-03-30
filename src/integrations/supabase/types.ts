@@ -10352,6 +10352,7 @@ export type Database = {
         }
         Returns: string
       }
+      milestone_status_label: { Args: { p_status: string }; Returns: string }
       my_profile_id: { Args: never; Returns: string }
       my_profile_id_strict: { Args: never; Returns: string }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
@@ -10367,6 +10368,7 @@ export type Database = {
         Returns: boolean
       }
       profile_id_from_user_id: { Args: { p_user_id: string }; Returns: string }
+      project_status_label: { Args: { p_status: string }; Returns: string }
       reactivate_user: {
         Args: { target_profile_id: string }
         Returns: undefined
