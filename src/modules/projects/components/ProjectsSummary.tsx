@@ -141,6 +141,17 @@ function ProjectDetailItem({ project }: { project: ProjectForWizard }) {
               <ProjectHealthBadge health={project.health} />
               <ProjectStatusBadge status={project.status} />
             </div>
+            {project.owner_name && (
+              <div className="flex items-center gap-1.5">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={project.owner_photo_url ?? undefined} />
+                  <AvatarFallback className="text-[10px]">
+                    {project.owner_name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground">{project.owner_name}</span>
+              </div>
+            )}
             <ProjectProgressBar
               total={project.milestones_total}
               done={project.milestones_done}
