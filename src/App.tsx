@@ -190,6 +190,9 @@ function AuthenticatedRoutes() {
         {/* OKRs */}
         {okrRoutes}
         
+        {/* Rituals */}
+        {ritualRoutes}
+        
         {/* Tickets */}
         {ticketRoutes}
         

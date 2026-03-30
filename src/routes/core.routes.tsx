@@ -120,18 +120,6 @@ export const coreRoutes = (
       }
     />
 
-    {/* Wizards - All OKR Wizards */}
-    <Route
-      path="/wizards"
-      element={
-        <ProtectedRoute>
-          <BuRequiredRoute>
-            <WizardsPage />
-          </BuRequiredRoute>
-        </ProtectedRoute>
-      }
-    />
-
     {/* Context Resolver - resolves BU from resource and redirects */}
     <Route
       path="/go/:entity/:id"
