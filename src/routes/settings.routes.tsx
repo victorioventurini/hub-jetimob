@@ -10,6 +10,7 @@ import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
 
 const HubLayout = lazy(() => import('@/components/layout/HubLayout').then(m => ({ default: m.HubLayout })));
 const BuSettingsPage = lazy(() => import('@/pages/settings/BuSettingsPage'));
@@ -19,6 +20,7 @@ const AreasPage = lazy(() => import('@/modules/areas/pages/AreasPage'));
 const PartnersPage = lazy(() => import('@/modules/partners/pages/PartnersPage'));
 const PartnerFormPage = lazy(() => import('@/modules/partners/pages/PartnerFormPage'));
 const PartnerDetailPage = lazy(() => import('@/modules/partners/pages/PartnerDetailPage'));
+const RitualCalendarPage = lazy(() => import('@/modules/okrs/pages/RitualCalendarPage'));
 
 /**
  * Helper para wrapping consistente de rotas Settings
