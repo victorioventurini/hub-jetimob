@@ -1,194 +1,65 @@
 
 
-# Calendário de Ritos — Plano de Implementação
+# Relatório Visual de Sessões de Rituais
 
-## Visao Geral
+## Contexto
+O `RitualHistoryPage` exibe dados de `reflection_data` como JSON bruto. O objetivo é renderizar esses dados como relatórios formatados e legíveis, com seções específicas por tipo de wizard.
 
-Adicionar calendarização de rituais ao Hub: cadências configuráveis por admin da BU, ocorrências geradas automaticamente, associação silenciosa com sessões de wizard, e visão de saúde/aderência.
+## Pré-checklist verificado
+- TCR v3.20.0 consultado — snapshot imutável em `reflection_data` (JSONB) na `okr_wizard_sessions`
+- Development Standards v1.27.0 — layout `max-w-5xl mx-auto` (já correto na página), componentes canônicos
+- Identity Convention — não se aplica (leitura read-only de snapshots existentes)
+- Data Model — `okr_wizard_sessions.reflection_data` é o campo-fonte; sem alterações no banco
+- Componentes existentes — Card, Badge, Table, Progress, Collapsible do shadcn
 
----
+## Estrutura de dados por wizard_type
 
-## 1. Database — Duas novas tabelas
+| Wizard | Draft Type | Campos principais |
+|---|---|---|
+| collaborator | `CollaboratorDraftData` | results (KR check-ins), kpiResults, reflection, initiativesMarkedAtRisk |
+| leader-prep | `LeaderPrepDraftData` | krActions, meetingNotes, kpisForDiscussion, kpisForFollowup |
+| team-checkin | `TeamCheckinDraftData` | reviewedKrs, decisions, checklist |
+| managers-checkin | `ManagersDraftData` | adjustments, resolvedDependencies, kpisMarkedForFollowup |
+| clevel-checkin | `CLevelDraftData` | strategicDecisions, directives, reviewedOkrs |
+| mbr | `MbrDraftData` | referenceMonth, kpiSnapshots, teamOkrSnapshots, orgOkrSnapshots, decisions, checklist, ritualFeedback, qbrFollowUpItems |
+| qbr-pre | `QbrPreDraftData` | krFinalStates, kpiSnapshots, learnings, proposedOkrs, dependencies, decisions |
+| qbr-pre-clevel | `QbrCLevelDraftData` | systemPatterns, strategicAnalysis, okrCalibrationFlags, directives, decisions |
+| qbr-meeting | `QbrMeetingDraftData` | approvals, decisions, crossCommitments, governanceChecklist |
+| qbr-post | `QbrPostDraftData` | promotedOkrIds, decisions, crossCommitments, executiveMinutes |
 
-### `ritual_cadences` (BU-scoped, RLS)
+## Arquivos a criar
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | |
-| bu_id | uuid NOT NULL FK bu_units | Trigger `set_bu_id` |
-| wizard_type | text NOT NULL | Valor de `WizardPersona` |
-| team_id | uuid FK teams | NULL para ritos BU-level (MBR, QBR) |
-| frequency | text NOT NULL | `weekly`, `biweekly`, `monthly`, `quarterly` |
-| day_of_week | int | 0-6, para weekly/biweekly |
-| day_of_month | int | 1-28, para monthly |
-| month_week_ordinal | int | 1-4 (ex: "primeira segunda") |
-| start_date | date NOT NULL | |
-| end_date | date | NULL = indefinido |
-| responsible_profile_id | uuid FK profiles | Quem garante o rito |
-| is_active | boolean DEFAULT true | |
-| created_at/updated_at | timestamptz | |
+### 1. `src/modules/okrs/components/ritual-report/SnapshotReportView.tsx`
+Dispatcher: recebe `wizardType: WizardPersona` + `data: Record<string, any>` e renderiza o renderer correto. Fallback: mensagem "Formato não suportado" + raw JSON.
 
-### `ritual_occurrences` (BU-scoped, RLS)
+### 2. Renderers em `src/modules/okrs/components/ritual-report/renderers/`
+- **CollaboratorReport.tsx** — Tabela de KRs (objetivo, anterior→novo, confiança, comentário). Tabela de KPIs. Seção reflexão (impacto + ajuda). Lista de iniciativas em risco.
+- **LeaderPrepReport.tsx** — Tabela ações por KR (tipo + notas). KPIs marcados para discussão/followup. Notas da reunião.
+- **TeamCheckinReport.tsx** — Lista KRs revisados. Checklist (sabe no que focar? etc). Decisões já renderizadas pelo componente pai.
+- **ManagersCheckinReport.tsx** — Ajustes. Dependências resolvidas. KPIs para followup.
+- **CLevelCheckinReport.tsx** — Decisões estratégicas (text). Diretrizes (text). OKRs revisados.
+- **MbrReport.tsx** — Mês referência. Tabela KPIs (nome, valor, meta, RAG badge). Cards times com progress. OKRs org. Checklist governança. QBR follow-up items.
+- **QbrPreReport.tsx** — Estado final KRs. KPIs snapshot. Learnings (3 campos). OKRs propostos. Dependências.
+- **QbrCLevelReport.tsx** — Padrões sistêmicos. Análise estratégica. Flags calibração. Diretrizes.
+- **QbrMeetingReport.tsx** — Aprovações por time. Compromissos cross-team. Checklist governança.
+- **QbrPostReport.tsx** — OKRs promovidos. Compromissos. Ata executiva. Cadência follow-up.
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | |
-| bu_id | uuid NOT NULL FK bu_units | |
-| cadence_id | uuid FK ritual_cadences | NULL para ocorrências avulsas |
-| wizard_type | text NOT NULL | |
-| team_id | uuid FK teams | |
-| planned_date | date NOT NULL | |
-| status | text DEFAULT 'scheduled' | `scheduled`, `completed_on_time`, `completed_late`, `missed`, `rescheduled` |
-| actual_date | date | Data real de execução |
-| rescheduled_from | date | Original se reagendado |
-| rescheduled_to | date | Nova data |
-| session_id | uuid FK okr_wizard_sessions | Vinculo com execução |
-| notes | text | |
-| created_at/updated_at | timestamptz | |
+### 3. `src/modules/okrs/components/ritual-report/index.ts`
+Barrel export de `SnapshotReportView`.
 
-### RLS Policies
-- **Admin BU**: CRUD completo via `is_bu_admin(auth.uid()::text, bu_id)` ou `is_platform_admin(auth.uid()::text)`
-- **Líderes**: SELECT em cadences/occurrences do próprio time via `is_team_leader(my_profile_id(), team_id)`
-- **Membros**: SELECT em occurrences do próprio time via `user_team_memberships`
+## Arquivo a editar
 
-### Indexes
-- `(bu_id, wizard_type, team_id, planned_date)` em occurrences — para busca de associação automática
-- `(cadence_id, status)` em occurrences
+### `src/modules/okrs/pages/RitualHistoryPage.tsx`
+- No `SnapshotSummary`, substituir o conteúdo principal por `<SnapshotReportView wizardType={ritual.wizardType} data={rd} />`.
+- Manter JSON bruto como Collapsible "Ver dados brutos" abaixo (debug).
+- Remover a lógica de `summaryParts` que ficará redundante.
 
----
-
-## 2. Edge Function — `generate-ritual-occurrences`
-
-Chamada via `supabase.functions.invoke()` quando admin cria/atualiza cadência. Recebe `cadence_id`, faz:
-
-1. Lê cadência do banco (frequency, day_of_week, etc.)
-2. Calcula todas as datas de `start_date` até `end_date` (ou fim do ano + 1 trimestre)
-3. Upsert: preserva occurrences com `session_id` (já executadas), remove futuras órfãs
-4. Retorna contagem de ocorrências geradas
-
-Usa `withMiddleware` + validação JWT + BU header conforme padrão `_shared/middleware.ts`.
-
----
-
-## 3. Associação Automática — `onSuccess` do `completeSessionMutation`
-
-Em `useWizardSession.ts`, no `onSuccess` do `completeSessionMutation`:
-
-1. Query `ritual_occurrences` com status `scheduled` para `wizard_type` + `team_id` + `bu_id` onde `planned_date BETWEEN now() - 7 days AND now() + 7 days`
-2. Se encontrar, UPDATE: `session_id = sessionId`, `actual_date = now()`, `status = completed_on_time | completed_late` (baseado em `planned_date` vs `actual_date`)
-3. Fire-and-forget (não bloqueia o fluxo do wizard)
-4. Se nao encontrar, nada — sessão fica avulsa
-
----
-
-## 4. Frontend — Nova página `/settings/rituals`
-
-### Rota
-Em `settings.routes.tsx`: rota protegida com `BuAdminRoute` + `HubLayout`.
-
-### Card em BuSettingsPage
-Novo `SettingsCard` com icone `CalendarDays`, titulo "Calendario de Ritos".
-
-### Página `RitualCalendarPage.tsx`
-
-Tres abas usando `Tabs` + `useUrlTab`:
-
-#### Aba "Cadencias"
-- Lista cadências agrupadas por `wizard_type` (usa `WIZARD_TYPE_LABELS` existente)
-- Cada cadência mostra: time (via `TeamSelect`), frequência, dia, responsável
-- Dialog de criação/edição reutilizando: `TeamSelect`, `BuUserSelect`, `SimpleSelect` (frequência), `Calendar` (date picker)
-- CRUD via hooks `useRitualCadences` (TanStack Query)
-- Ao salvar, chama `generate-ritual-occurrences`
-
-#### Aba "Calendario"
-- Grid mensal com seletor de mês
-- Filtros: `TeamSelect` + `SimpleSelect` (wizard_type)
-- Cada dia mostra dots coloridos por status:
-  - Cinza = scheduled
-  - Verde = completed_on_time
-  - Amarelo = completed_late
-  - Vermelho = missed
-  - Azul = rescheduled
-- Click em ocorrência abre `Sheet` lateral com detalhes e ações (reagendar, link para histórico)
-
-#### Bloco "Saude"
-- Cards por time com barra de progresso
-- Query: `COUNT(*) FILTER (WHERE status IN ('completed_on_time','completed_late')) / COUNT(*)` nos últimos 90 dias
-- Ordenação por menor aderência
-
-### Componentes reutilizados (sem duplicação)
-`TeamSelect`, `BuUserSelect`, `SimpleSelect`, `WIZARD_TYPE_LABELS`, `PageHeader`, `Tabs/TabsList/TabsTrigger/TabsContent`, `Card`, `Badge`, `Calendar`, `Sheet`, `useUrlTab`
-
----
-
-## 5. Enriquecimento do Historico
-
-Em `RitualHistoryPage.tsx`, para cada `RitualHistoryItem`:
-- Query join com `ritual_occurrences` via `session_id`
-- Se vinculada: badge `"Previsto 17/03 · Realizado 19/03"`
-- Se avulsa: badge `"Execução avulsa"` em cinza
-
-Alteração mínima — apenas badge visual no card.
-
----
-
-## 6. Visão do Líder/Membro
-
-Componente `TeamRitualCalendar` (reutilizável) para embedding no dashboard do time ou sidebar:
-- Próximas 5 ocorrências do time
-- Histórico recente com status
-- Leitura only, mesmo query filtrado por `team_id`
-
----
-
-## 7. Cron para marcar `missed`
-
-Edge function `cron-dispatcher` já existe. Adicionar lógica diária:
-- `UPDATE ritual_occurrences SET status = 'missed' WHERE status = 'scheduled' AND planned_date < CURRENT_DATE - 1 AND session_id IS NULL`
-- Integrar no cron existente para evitar nova função
-
----
-
-## Registros Canônicos
-
-| Item | Ação |
-|------|------|
-| `operationalTables.ts` | Adicionar `ritual_cadences`, `ritual_occurrences` |
-| `queryKeys/okrs.ts` | Adicionar `ritualCadences`, `ritualOccurrences`, `ritualAdherence` |
-| `WizardPersona` type | Sem alteração (já cobre todos os tipos) |
-
----
-
-## Ordem de Execução
-
-1. Migration SQL (tabelas + RLS + trigger `set_bu_id` + indexes)
-2. Edge function `generate-ritual-occurrences`
-3. Hooks: `useRitualCadences`, `useRitualOccurrences`, `useRitualAdherence`
-4. Página `RitualCalendarPage` com 3 abas
-5. Rota + card em BuSettingsPage
-6. Associação automática em `useWizardSession.ts`
-7. Cron `missed` no dispatcher
-8. Enriquecimento do histórico
-9. Componente `TeamRitualCalendar` para dashboards
-
----
-
-## Arquivos Impactados
-
-| Arquivo | Ação |
-|---------|------|
-| Nova migration SQL | Criar |
-| `supabase/functions/generate-ritual-occurrences/index.ts` | Criar |
-| `src/pages/settings/RitualCalendarPage.tsx` | Criar |
-| `src/modules/okrs/hooks/useRitualCadences.ts` | Criar |
-| `src/modules/okrs/hooks/useRitualOccurrences.ts` | Criar |
-| `src/modules/okrs/hooks/useRitualAdherence.ts` | Criar |
-| `src/modules/okrs/components/ritual-calendar/` | Criar (subcomponentes das abas) |
-| `src/pages/settings/BuSettingsPage.tsx` | Adicionar card |
-| `src/routes/settings.routes.tsx` | Adicionar rota |
-| `src/modules/okrs/hooks/useWizardSession.ts` | Estender `onSuccess` |
-| `src/modules/okrs/pages/RitualHistoryPage.tsx` | Badge de data prevista |
-| `src/integrations/supabase/operationalTables.ts` | Registrar tabelas |
-| `src/lib/queryKeys/okrs.ts` | Adicionar keys |
-| `supabase/config.toml` | Registrar nova function |
+## Detalhes técnicos
+- Cada renderer recebe `data: Record<string, any>` (conteúdo de `reflection_data.data`).
+- Renderização 100% defensiva: todo campo é optional com fallback "Sem dados registrados".
+- Usa componentes canônicos: Card, Table, Badge, Progress — sem novos componentes UI.
+- KPIs: tabela com nome, valor atual formatado, meta, badge RAG colorido.
+- OKRs: progress bar + status badge.
+- Sem `select('*')`, sem queries novas, sem alterações de banco — tudo vem do snapshot já carregado.
+- Sem rota nova — integrado na página existente.
 
