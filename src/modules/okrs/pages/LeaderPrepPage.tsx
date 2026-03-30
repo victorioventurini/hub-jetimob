@@ -354,7 +354,7 @@ export default function LeaderPrepPage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
-      backUrl="/wizards"
+      backUrl="/rituals"
       adminContextSwitcher={
         <HierarchyContextSwitcher
           type="team"

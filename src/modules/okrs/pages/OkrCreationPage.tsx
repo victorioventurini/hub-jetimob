@@ -544,7 +544,7 @@ export default function OkrCreationPage() {
         onDiscardDraft={handleDiscardDraft}
         isLoading={createBundle.isPending}
         onClose={handleClose}
-        backUrl="/wizards"
+        backUrl="/rituals"
         adminContextSwitcher={
           <HierarchyContextSwitcher
             type="team"

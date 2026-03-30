@@ -262,7 +262,7 @@ export default function QbrPostPage() {
       isResumingDraft={isResumingDraft}
       onDiscardDraft={handleDiscard}
       onClose={handleClose}
-      backUrl="/okrs"
+      backUrl="/rituals"
     >
       {renderStep()}
     </FullPageWizardShell>
