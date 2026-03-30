@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
-import { Shield, Bell, ChevronRight, Building2, Handshake } from "lucide-react";
+import { Shield, Bell, ChevronRight, Building2, Handshake, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
