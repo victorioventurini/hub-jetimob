@@ -371,16 +371,35 @@ function CalendarTab() {
   const [selectedOccurrence, setSelectedOccurrence] = useState<RitualOccurrence | null>(null);
   const [teamFilter, setTeamFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
+  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
-  const { data: occurrences, isLoading } = useRitualOccurrences({
+  const { data: occurrences, isLoading, error } = useRitualOccurrences({
     year,
     month,
     teamId: teamFilter || undefined,
     wizardType: typeFilter || undefined,
   });
+
+  // Auto-navigate to next month with data if current month is empty
+  const shouldAutoNav = !isLoading && !hasAutoNavigated && (occurrences ?? []).length === 0;
+  
+  // Check next month for data when current is empty
+  const nextMonth = addMonths(currentMonth, 1);
+  const { data: nextMonthOccs } = useRitualOccurrences({
+    year: nextMonth.getFullYear(),
+    month: nextMonth.getMonth(),
+    teamId: teamFilter || undefined,
+    wizardType: typeFilter || undefined,
+  });
+
+  // Auto-navigate once if current month empty but next month has data
+  if (shouldAutoNav && (nextMonthOccs ?? []).length > 0) {
+    setCurrentMonth(nextMonth);
+    setHasAutoNavigated(true);
+  }
 
   // Group occurrences by date
   const byDate = useMemo(() => {
@@ -405,13 +424,13 @@ function CalendarTab() {
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
+          <Button variant="ghost" size="icon" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setHasAutoNavigated(true); }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-lg font-semibold min-w-[180px] text-center">
             {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
           </span>
-          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
+          <Button variant="ghost" size="icon" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -433,12 +452,31 @@ function CalendarTab() {
         </div>
       </div>
 
+      {/* Error state */}
+      {error && (
+        <Card>
+          <CardContent className="py-6 text-center">
+            <XCircle className="h-8 w-8 mx-auto text-destructive mb-2" />
+            <p className="text-sm text-destructive">Erro ao carregar ocorrências do calendário.</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Calendar Grid */}
       {isLoading ? (
         <Skeleton className="h-[400px] w-full" />
       ) : (
         <Card>
           <CardContent className="p-4">
+            {/* Empty month hint */}
+            {(occurrences ?? []).length === 0 && !error && (
+              <div className="text-center py-4 mb-3 rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma ocorrência neste mês. Use as setas para navegar entre meses.
+                </p>
+              </div>
+            )}
+
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {DAY_LABELS.map(d => (
@@ -452,7 +490,7 @@ function CalendarTab() {
             <div className="grid grid-cols-7 gap-1">
               {/* Empty cells for alignment */}
               {Array.from({ length: startDow }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-16" />
+                <div key={`empty-${i}`} className="h-20" />
               ))}
 
               {days.map(day => {
@@ -464,7 +502,7 @@ function CalendarTab() {
                   <div
                     key={dateStr}
                     className={cn(
-                      'h-16 rounded-lg border p-1 text-xs',
+                      'h-20 rounded-lg border p-1.5 text-xs overflow-hidden',
                       isToday && 'border-primary/50 bg-primary/5',
                       dayOccs.length > 0 && 'cursor-pointer hover:bg-muted/50'
                     )}
@@ -473,15 +511,28 @@ function CalendarTab() {
                     <span className={cn('font-medium', isToday && 'text-primary')}>
                       {format(day, 'd')}
                     </span>
-                    {/* Status dots */}
-                    <div className="flex flex-wrap gap-0.5 mt-1">
-                      {dayOccs.map(occ => (
+                    {/* Occurrence pills */}
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      {dayOccs.slice(0, 2).map(occ => (
                         <div
                           key={occ.id}
-                          className={cn('h-2 w-2 rounded-full', STATUS_CONFIG[occ.status].dotColor)}
+                          className={cn(
+                            'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] leading-tight truncate',
+                            STATUS_CONFIG[occ.status].color
+                          )}
                           title={`${WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona] || occ.wizardType} — ${STATUS_CONFIG[occ.status].label}`}
-                        />
+                        >
+                          <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_CONFIG[occ.status].dotColor)} />
+                          <span className="truncate">
+                            {WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona]?.split(' ')[0] || occ.wizardType}
+                          </span>
+                        </div>
                       ))}
+                      {dayOccs.length > 2 && (
+                        <span className="text-[10px] text-muted-foreground pl-1">
+                          +{dayOccs.length - 2} mais
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
