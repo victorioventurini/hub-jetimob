@@ -148,7 +148,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'C-Level',
         badgeVariant: 'secondary',
         requiresTeam: false,
-        route: '/okrs/clevel-checkin',
+        route: '/rituals/clevel-checkin',
       },
       {
         id: 'mbr',
