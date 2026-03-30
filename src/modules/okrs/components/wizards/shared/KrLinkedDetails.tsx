@@ -132,7 +132,7 @@ export function KrLinkedDetails({ krId, defaultExpanded = false }: KrLinkedDetai
                       <ul className="pl-4 space-y-0.5">
                         {pendingMilestones.map((ms) => (
                           <li key={ms.id} className="flex items-center gap-1.5 text-[11px]">
-                            <MilestoneStatusIcon status={ms.status} className="h-3 w-3 shrink-0" />
+                            {MILESTONE_ICON[ms.status as MilestoneStatus] ?? MILESTONE_ICON.todo}
                             <span className="truncate">{ms.name}</span>
                             {ms.due_date && (
                               <span className="text-muted-foreground shrink-0 text-[10px]">
