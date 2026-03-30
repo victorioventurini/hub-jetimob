@@ -145,22 +145,35 @@ export default function QbrPrePage() {
     enabled: !!buSupabase && !!teamIdParam && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      if (!currentBuId) return [];
+
       const { data, error } = await buSupabase
         .from('okr_team_objectives')
         .select(`
           id, title, status,
-          key_results:okr_team_key_results(
+          key_results:okr_team_key_results!okr_team_key_results_team_objective_id_fkey(
             id, title, status, current_value, baseline, target, direction, unit,
-            last_checkin_at
+            last_checkin_at, deleted_at, cancelled_at
           )
         `)
+        .eq('bu_id', currentBuId)
         .eq('team_id', teamIdParam!)
         .eq('cycle_id', quarterlyCycle!.id)
         .is('deleted_at', null)
         .is('cancelled_at', null);
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error('[QbrPre] Error fetching team objectives:', error);
+        throw error;
+      }
+
+      // Filter out deleted/cancelled KRs from nested results
+      return (data || []).map(obj => ({
+        ...obj,
+        key_results: (obj.key_results || []).filter(
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+        ),
+      }));
     },
   });
 
