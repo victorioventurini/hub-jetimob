@@ -29,7 +29,7 @@ import {
 import type {
   QbrCLevelSnapshot,
   QbrCalibrationFlag,
-  TeamOkrCreationWizardState,
+  ProposedObjectiveEntry,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
