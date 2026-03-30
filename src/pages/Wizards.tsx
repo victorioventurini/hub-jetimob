@@ -129,7 +129,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badge: 'Durante reunião',
         badgeVariant: 'outline',
         requiresTeam: true,
-        route: '/okrs/team-checkin',
+        route: '/rituals/team-checkin',
       },
     ],
   },
