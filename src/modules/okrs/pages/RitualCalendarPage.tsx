@@ -7,6 +7,8 @@
 
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PageHeader } from '@/components/ui/page-header';
@@ -383,8 +385,9 @@ function CreateCadenceDialog({ open, onOpenChange }: { open: boolean; onOpenChan
 function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedOccurrence, setSelectedOccurrence] = useState<RitualOccurrence | null>(null);
-  const [teamFilter, setTeamFilter] = useState<string>('');
+  const [teamFilter, setTeamFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('');
+  const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
 
   const year = currentMonth.getFullYear();
@@ -402,9 +405,39 @@ function CalendarTab() {
     wizardType: typeFilter || undefined,
   });
 
+  // Client-side user filter: filter occurrences by session started_by
+  const buSupabase = useBuScopedSupabase();
+  const sessionIds = useMemo(() => {
+    if (!userFilter || !occurrences) return [];
+    return occurrences.map(o => o.sessionId).filter(Boolean) as string[];
+  }, [userFilter, occurrences]);
+
+  const { data: userSessionIds } = useQuery({
+    queryKey: ['calendar-user-sessions', userFilter, sessionIds],
+    queryFn: async () => {
+      if (!userFilter || sessionIds.length === 0) return new Set<string>();
+      const { data } = await buSupabase
+        .from('okr_wizard_sessions')
+        .select('id, started_by')
+        .in('id', sessionIds)
+        .eq('started_by', userFilter);
+      return new Set((data ?? []).map((s: any) => s.id as string));
+    },
+    enabled: !!userFilter && sessionIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const filteredOccurrences = useMemo(() => {
+    if (!occurrences) return [];
+    if (!userFilter) return occurrences;
+    return occurrences.filter(o =>
+      !o.sessionId || (userSessionIds?.has(o.sessionId) ?? false)
+    );
+  }, [occurrences, userFilter, userSessionIds]);
+
   // Auto-navigate to next month with data if current month is empty
-  const shouldAutoNav = !isLoading && !hasAutoNavigated && (occurrences ?? []).length === 0;
-  
+  const shouldAutoNav = !isLoading && !hasAutoNavigated && filteredOccurrences.length === 0;
+
   // Check next month for data when current is empty
   const nextMonth = addMonths(currentMonth, 1);
   const { data: nextMonthOccs } = useRitualOccurrences({
@@ -422,9 +455,9 @@ function CalendarTab() {
 
   // Resolve collaborator check-in team_id for counts
   const collaboratorTeamId = useMemo(() => {
-    const collabOcc = (occurrences ?? []).find(o => o.wizardType === 'collaborator');
+    const collabOcc = filteredOccurrences.find(o => o.wizardType === 'collaborator');
     return collabOcc?.teamId ?? null;
-  }, [occurrences]);
+  }, [filteredOccurrences]);
 
   const {
     expectedCount,
@@ -434,13 +467,13 @@ function CalendarTab() {
   // Group occurrences by date
   const byDate = useMemo(() => {
     const map = new Map<string, RitualOccurrence[]>();
-    for (const occ of occurrences ?? []) {
+    for (const occ of filteredOccurrences) {
       const list = map.get(occ.plannedDate) || [];
       list.push(occ);
       map.set(occ.plannedDate, list);
     }
     return map;
-  }, [occurrences]);
+  }, [filteredOccurrences]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -458,36 +491,67 @@ function CalendarTab() {
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setHasAutoNavigated(true); }}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-lg font-semibold min-w-[180px] text-center">
-            {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
-          </span>
-          <Button variant="ghost" size="icon" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Month nav */}
+            <div className="flex items-center gap-1 sm:col-span-2 lg:col-span-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setHasAutoNavigated(true); }}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-semibold flex-1 text-center capitalize">
+                {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+              </span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
 
-        <div className="flex gap-2">
-          <Select value={typeFilter || 'all'} onValueChange={v => setTypeFilter(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Tipo de rito" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os ritos</SelectItem>
-              {RECURRENT_WIZARD_TYPES.map(wt => (
-                <SelectItem key={wt} value={wt}>
-                  {WIZARD_TYPE_LABELS[wt] || wt}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            {/* Rito filter */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Rito</Label>
+              <Select value={typeFilter || 'all'} onValueChange={v => setTypeFilter(v === 'all' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os ritos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os ritos</SelectItem>
+                  {RECURRENT_WIZARD_TYPES.map(wt => (
+                    <SelectItem key={wt} value={wt}>
+                      {WIZARD_TYPE_LABELS[wt] || wt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Team filter */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Time</Label>
+              <TeamSelect
+                value={teamFilter ?? undefined}
+                onValueChange={setTeamFilter}
+                includeAll
+                allLabel="Todos os times"
+                placeholder="Todos os times"
+              />
+            </div>
+
+            {/* User filter */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Usuário</Label>
+              <BuUserSelect
+                value={userFilter}
+                onValueChange={(v) => setUserFilter(v ?? undefined)}
+                placeholder="Todos os usuários"
+                allowNone
+                noneLabel="Todos os usuários"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error state */}
       {error && (
@@ -506,7 +570,7 @@ function CalendarTab() {
         <Card>
           <CardContent className="p-4">
             {/* Empty month hint */}
-            {(occurrences ?? []).length === 0 && !error && (
+            {filteredOccurrences.length === 0 && !error && (
               <div className="text-center py-4 mb-3 rounded-lg bg-muted/30">
                 <p className="text-sm text-muted-foreground">
                   Nenhuma ocorrência neste mês. Use as setas para navegar entre meses.
