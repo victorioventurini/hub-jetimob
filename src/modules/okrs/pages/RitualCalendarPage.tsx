@@ -868,7 +868,8 @@ function HealthTab() {
               value={userFilter}
               onValueChange={(v) => setUserFilter(v ?? undefined)}
               placeholder="Todos os usuários"
-              allowClear
+              allowNone
+              noneLabel="Todos os usuários"
             />
           </div>
         </CardContent>
