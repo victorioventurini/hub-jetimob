@@ -139,13 +139,15 @@ export function QbrPostOkrPromotionStep({
                             {cfg.label}
                           </Badge>
                         </div>
-                        {okr.proposedOkrs?.objective?.title && (
-                          <p className="text-sm text-muted-foreground">{okr.proposedOkrs.objective.title}</p>
-                        )}
-                        {okr.proposedOkrs?.draftKrs && okr.proposedOkrs.draftKrs.length > 0 && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {okr.proposedOkrs.draftKrs.length} KR{okr.proposedOkrs.draftKrs.length > 1 ? 's' : ''}
-                          </p>
+                        {okr.proposedOkrs.length > 0 && (
+                          <div className="space-y-1">
+                            {okr.proposedOkrs.map(entry => (
+                              <p key={entry.id} className="text-sm text-muted-foreground">{entry.objective.title}</p>
+                            ))}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {okr.proposedOkrs.reduce((sum, e) => sum + e.draftKrs.length, 0)} KRs total
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
