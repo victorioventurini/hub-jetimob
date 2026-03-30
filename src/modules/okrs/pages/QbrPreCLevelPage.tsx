@@ -16,7 +16,7 @@ import {
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import {
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
 } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
