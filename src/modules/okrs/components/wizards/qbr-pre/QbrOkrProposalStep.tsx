@@ -25,6 +25,8 @@ import {
   WizardStepScaffold,
 } from '../shared';
 import { BuUserSelect, UnitSelect } from '@/components/selects';
+import { useProposalValidation } from '@/modules/okrs/hooks/useProposalValidation';
+import { ProposalValidationCard } from './ProposalValidationCard';
 import type {
   TeamOkrCreationWizardState,
   DraftTeamKr,
