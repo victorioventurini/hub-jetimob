@@ -198,6 +198,24 @@ function ProjectDetailItem({ project }: { project: ProjectForWizard }) {
                 />
                 <span className="text-sm truncate flex-1 min-w-0">{ms.name}</span>
 
+                {ms.owner_name && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className="h-5 w-5 shrink-0">
+                          <AvatarImage src={ms.owner_photo_url ?? undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {ms.owner_name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p className="text-xs">{ms.owner_name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
                 {ms.due_date && (
                   <span className={cn(
                     'text-xs text-muted-foreground shrink-0',
