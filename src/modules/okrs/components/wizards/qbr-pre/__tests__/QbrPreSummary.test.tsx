@@ -192,8 +192,8 @@ describe('QbrPreSummary', () => {
   describe('decisions section', () => {
     it('displays decisions when present', () => {
       const decisions = [
-        { id: 'd-1', text: 'Priorizar feature X', createdAt: new Date().toISOString() },
-        { id: 'd-2', text: 'Cancelar projeto Y', createdAt: new Date().toISOString() },
+        { id: 'd-1', text: 'Priorizar feature X', category: 'decision' as const, createdAt: new Date().toISOString() },
+        { id: 'd-2', text: 'Cancelar projeto Y', category: 'next_step' as const, createdAt: new Date().toISOString() },
       ];
       renderSummary({ decisions });
       expect(screen.getByText('Notas e decisões (2)')).toBeInTheDocument();
