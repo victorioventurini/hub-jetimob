@@ -479,7 +479,7 @@ export interface QbrPreDraftData {
   zombieCandidates: string[];
   kpisToCreate: QbrPreSnapshot['kpisToCreate'];
   learnings: QbrPreSnapshot['learnings'];
-  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  proposedOkrs: ProposedObjectiveEntry[];
   dependencies: DraftTeamDependency[];
   decisions: TeamCheckinDecision[];
 }
