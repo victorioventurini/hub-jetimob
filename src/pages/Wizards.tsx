@@ -372,10 +372,18 @@ export default function WizardsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        <PageHeader
-          title="Rituais"
-          description="Fluxos guiados para gestão de OKRs"
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader
+            title="Rituais"
+            description="Fluxos guiados para gestão de OKRs"
+          />
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/okrs/ritual-history" className="gap-2">
+              <History className="h-4 w-4" />
+              Histórico de Rituais
+            </Link>
+          </Button>
+        </div>
 
         {isLoading ? (
           <div className="space-y-8">
