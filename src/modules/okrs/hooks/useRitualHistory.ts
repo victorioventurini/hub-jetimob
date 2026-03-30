@@ -124,6 +124,8 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
       return (data ?? []).map((row: any): RitualHistoryItem => ({
         id: row.id,
         wizardType: row.wizard_type as WizardPersona,
+        status: row.status as 'completed' | 'in_progress',
+        wizardType: row.wizard_type as WizardPersona,
         teamId: row.team_id,
         teamName: row.teams?.name ?? null,
         cycleId: row.cycle_id,
