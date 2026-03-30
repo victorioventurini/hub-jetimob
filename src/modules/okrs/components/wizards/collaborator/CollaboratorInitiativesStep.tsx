@@ -246,7 +246,8 @@ export function CollaboratorInitiativesStep({
           {/* Initiatives by KR */}
           {krs.map(kr => {
             const krInitiatives = initiativesByKr.get(kr.id) || [];
-            if (krInitiatives.length === 0) return null;
+            const krProjects = projectsByKr.get(kr.id) || [];
+            if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
               <div key={kr.id} className="space-y-3">
