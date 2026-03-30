@@ -175,9 +175,10 @@ Lista completa das tabelas no schema `public`:
 | `v_profiles_directory` | Diretório de perfis |
 | `v_shared_okrs_summary` | Resumo de OKRs compartilhados |
 | `v_team_contributed_okrs` | OKRs com contribuição de times |
+| `v_teams_clean` | Times ativos sem soft-delete (v3.21.0) |
 | `v_users_without_templates` | Usuários sem templates |
 
-**Total:** 23 views
+**Total:** 27 views
 
 ---
 
