@@ -25,7 +25,7 @@ export function useProjectsForKr(krId: string | undefined) {
           impact,
           project:projects!project_krs_project_id_fkey(
             id, name, status, due_date, external_url, bu_id,
-            project_milestones(id, status, due_date, deleted_at)
+            project_milestones(id, name, status, due_date, deleted_at)
           )
         `)
         .eq('key_result_id', krId);
@@ -35,8 +35,10 @@ export function useProjectsForKr(krId: string | undefined) {
       return (data || [])
         .filter((row: any) => row.project && row.project.bu_id === buId)
         .map((row: any) => {
-          const milestones = row.project.project_milestones || [];
-          const completion = computeCompletion(milestones);
+          const allMilestones = (row.project.project_milestones || []).filter(
+            (m: any) => !m.deleted_at
+          );
+          const completion = computeCompletion(allMilestones);
 
           return {
             id: row.project.id,
@@ -44,11 +46,21 @@ export function useProjectsForKr(krId: string | undefined) {
             status: row.project.status,
             due_date: row.project.due_date,
             external_url: row.project.external_url,
-            health: computeHealth(milestones),
+            health: computeHealth(allMilestones),
             milestones_total: completion.total,
             milestones_done: completion.done,
             completion_pct: completion.pct,
             impact: row.impact,
+            milestones: allMilestones.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              status: m.status,
+              due_date: m.due_date,
+              owner_id: null,
+              owner_name: null,
+              owner_photo_url: null,
+              notes: null,
+            })),
           } as ProjectForKr;
         });
     },

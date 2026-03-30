@@ -297,7 +297,7 @@ export function TeamKrReviewStep({
               )}
 
               {/* Linked initiatives & projects */}
-              <KrLinkedDetails krId={currentKr.id} />
+              <KrLinkedDetails krId={currentKr.id} defaultExpanded />
             </CardContent>
           </Card>
 

@@ -18,6 +18,11 @@ vi.mock('../../shared', () => ({
     <div>{header}{bottomFixed}{children}{footer}</div>
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
+  KrLinkedDetails: ({ krId }: { krId: string }) => <div data-testid={`kr-linked-${krId}`} />,
+}));
+
+vi.mock('../UnlinkedProjectsList', () => ({
+  UnlinkedProjectsList: () => null,
 }));
 
 vi.mock('@/modules/okrs/hooks/useKrStateInsights', () => ({
@@ -38,6 +43,8 @@ function createKrState(overrides: Partial<QbrBalanceStepProps['krFinalStates'][0
   return {
     krId: `kr-${Math.random().toString(36).slice(2, 8)}`,
     krTitle: 'Test KR',
+    objectiveId: 'obj-1',
+    objectiveTitle: 'Test Objective',
     state: 'healthy' as const,
     finalProgress: 50,
     paceStatus: 'on_pace',
@@ -65,7 +72,8 @@ describe('QbrBalanceStep', () => {
 
   it('shows KR count badge', () => {
     renderStep({ krFinalStates: [createKrState(), createKrState()] });
-    expect(screen.getByText('2 KRs')).toBeInTheDocument();
+    const badges = screen.getAllByText('2 KRs');
+    expect(badges.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty message when no KRs', () => {
