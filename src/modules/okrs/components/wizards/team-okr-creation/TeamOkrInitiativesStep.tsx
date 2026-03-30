@@ -19,11 +19,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Lightbulb, Plus, Trash2, Sparkles } from 'lucide-react';
+import { Lightbulb, Plus, Trash2, Sparkles, FolderKanban } from 'lucide-react';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { WizardOptionalStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
+import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -64,6 +66,7 @@ export function TeamOkrInitiativesStep({
   onSkip,
 }: TeamOkrInitiativesStepProps) {
   const [expandedKrs, setExpandedKrs] = useState<string[]>([]);
+  const { data: teamProjects } = useProjectsForWizard(teamId);
 
   // Group initiatives by KR
   const initiativesByKr = useMemo(() => {
@@ -177,6 +180,30 @@ export function TeamOkrInitiativesStep({
               </div>
             </CardContent>
           </Card>
+
+          {/* Existing team projects — context for linking later */}
+          {(teamProjects && teamProjects.length > 0) && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4" />
+                  Projetos existentes do time
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Após criar o OKR, vincule estes projetos aos KRs no módulo de Projetos.
+                </p>
+                {teamProjects.map(proj => (
+                  <div key={proj.id} className="flex items-center gap-2 text-sm">
+                    <ProjectHealthBadge health={proj.health} dotOnly />
+                    <span className="truncate flex-1">{proj.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">{proj.completion_pct}%</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* KRs with initiative suggestions */}
           <div className="space-y-4">

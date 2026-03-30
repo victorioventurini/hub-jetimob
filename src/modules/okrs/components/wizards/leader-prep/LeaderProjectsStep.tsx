@@ -4,7 +4,9 @@
  */
 
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FolderKanban, ExternalLink, CalendarDays, StickyNote } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format, isPast, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -24,6 +26,8 @@ import {
 
 import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
 import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { projectsKeys } from '@/lib/queryKeys/projects';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { ProjectStatusBadge } from '@/modules/projects/components/ProjectStatusBadge';
 import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
@@ -47,7 +51,35 @@ export interface LeaderProjectsStepProps {
 
 export function LeaderProjectsStep({ teamId, onContinue, onBack }: LeaderProjectsStepProps) {
   const { data: projects, isLoading } = useProjectsForWizard(teamId || undefined);
+  const supabase = useBuScopedSupabase();
   const updateMilestone = useUpdateMilestone();
+
+  // Fetch KR links for all projects
+  const projectIds = useMemo(() => (projects || []).map(p => p.id), [projects]);
+  const { data: krLinksData } = useQuery({
+    queryKey: [...projectsKeys.allPrefix(), 'kr-links', projectIds],
+    queryFn: async () => {
+      if (projectIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('project_krs')
+        .select('project_id, key_result_id, kr:okr_team_key_results!project_krs_key_result_id_fkey(title)')
+        .in('project_id', projectIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: projectIds.length > 0,
+  });
+
+  // Map project_id -> KR titles
+  const krLinksByProject = useMemo(() => {
+    const map = new Map<string, Array<{ krId: string; krTitle: string }>>();
+    for (const row of (krLinksData || []) as any[]) {
+      const existing = map.get(row.project_id) || [];
+      existing.push({ krId: row.key_result_id, krTitle: row.kr?.title ?? '' });
+      map.set(row.project_id, existing);
+    }
+    return map;
+  }, [krLinksData]);
 
   // Pending milestones per project (status !== 'done')
   const projectsWithPending = useMemo(() => {
@@ -124,6 +156,25 @@ export function LeaderProjectsStep({ teamId, onContinue, onBack }: LeaderProject
                       pct={project.completion_pct}
                       showPct
                     />
+                    {/* KR badges */}
+                    {(() => {
+                      const linkedKrs = krLinksByProject.get(project.id) || [];
+                      return (
+                        <div className="flex items-center gap-1 flex-wrap mt-1">
+                          {linkedKrs.length > 0 ? (
+                            linkedKrs.map(link => (
+                              <Badge key={link.krId} variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                                KR: {link.krTitle}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-5 text-muted-foreground">
+                              Sem OKR
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 text-xs text-muted-foreground">

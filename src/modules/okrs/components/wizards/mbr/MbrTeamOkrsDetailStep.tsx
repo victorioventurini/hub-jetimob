@@ -17,6 +17,7 @@ import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
+import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -283,6 +284,9 @@ export function MbrTeamOkrsDetailStep({
                             <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} className="w-full min-w-0 max-w-full" />
                           </div>
                         </div>
+
+                        {/* Linked initiatives & projects */}
+                        <KrLinkedDetails krId={kr.krId} />
                       </div>
                     );
                   })}

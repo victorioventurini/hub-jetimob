@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -188,6 +189,11 @@ export function QbrMeetingOkrReviewStep({
               {current?.hasSubmission ? 'Nenhum OKR proposto' : 'Pré-QBR não submetido'}
             </CardContent>
           </Card>
+        )}
+
+        {/* Active projects of the team — read-only context for approval */}
+        {current && (
+          <ProjectsSummary teamId={current.teamId} mode="checkin" className="mt-2" />
         )}
 
         {/* Current status */}

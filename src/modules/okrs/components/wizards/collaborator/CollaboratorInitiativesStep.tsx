@@ -18,14 +18,18 @@ import {
   ClipboardList,
   SkipForward,
   Lightbulb,
+  FolderKanban,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { projectsKeys } from '@/lib/queryKeys/projects';
 import { InitiativesSummary } from '../shared/InitiativesSummary';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
+import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { Initiative } from '@/modules/okrs/types/initiative';
+import type { ProjectHealth } from '@/modules/projects/types';
 
 // ============================================================
 // TYPES
@@ -73,6 +77,56 @@ export function CollaboratorInitiativesStep({
     },
     enabled: krIds.length > 0,
   });
+
+  // Fetch projects linked to KRs
+  const { data: projectsByKrData = [] } = useQuery({
+    queryKey: [...projectsKeys.allPrefix(), 'by-krs', krIds],
+    queryFn: async () => {
+      if (krIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('project_krs')
+        .select(`
+          key_result_id,
+          project:projects!project_krs_project_id_fkey(
+            id, name, status, due_date,
+            project_milestones(id, status, due_date, deleted_at)
+          )
+        `)
+        .in('key_result_id', krIds);
+
+      if (error) throw error;
+      return (data || []).filter((r: any) => r.project);
+    },
+    enabled: krIds.length > 0,
+  });
+
+  // Group projects by KR
+  const projectsByKr = useMemo(() => {
+    const grouped = new Map<string, Array<{ id: string; name: string; health: ProjectHealth; completion_pct: number }>>();
+    for (const row of projectsByKrData as any[]) {
+      const p = row.project;
+      const milestones = (p.project_milestones || []).filter((m: any) => !m.deleted_at);
+      const total = milestones.length;
+      const done = milestones.filter((m: any) => m.status === 'done').length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      let health: ProjectHealth = 'on_track';
+      if (p.due_date) {
+        const daysLeft = (new Date(p.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+        if (daysLeft < 0) health = 'late';
+        else if (pct < 50 && daysLeft < 14) health = 'at_risk';
+      }
+
+      const krId = row.key_result_id;
+      const existing = grouped.get(krId) || [];
+      if (!existing.find(x => x.id === p.id)) {
+        existing.push({ id: p.id, name: p.name, health, completion_pct: pct });
+      }
+      grouped.set(krId, existing);
+    }
+    return grouped;
+  }, [projectsByKrData]);
 
   // Group initiatives by KR
   const initiativesByKr = useMemo(() => {
@@ -192,7 +246,8 @@ export function CollaboratorInitiativesStep({
           {/* Initiatives by KR */}
           {krs.map(kr => {
             const krInitiatives = initiativesByKr.get(kr.id) || [];
-            if (krInitiatives.length === 0) return null;
+            const krProjects = projectsByKr.get(kr.id) || [];
+            if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
               <div key={kr.id} className="space-y-3">
@@ -211,6 +266,24 @@ export function CollaboratorInitiativesStep({
                   onMarkAtRisk={handleMarkAtRisk}
                   editable
                 />
+
+                {/* Projects linked to this KR */}
+                {krProjects.length > 0 && (
+                  <div className="space-y-1 pl-1">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                      <FolderKanban className="h-3 w-3" /> Projetos ({krProjects.length})
+                    </p>
+                    <ul className="space-y-1">
+                      {krProjects.map(proj => (
+                        <li key={proj.id} className="flex items-center gap-2 text-xs">
+                          <ProjectHealthBadge health={proj.health} dotOnly />
+                          <span className="truncate">{proj.name}</span>
+                          <span className="text-muted-foreground shrink-0">{proj.completion_pct}%</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             );
           })}
