@@ -66,7 +66,7 @@ function createTeamForReview(overrides: Partial<TeamForReview> = {}): TeamForRev
     teamId: id,
     teamName: overrides.teamName || 'Time Alpha',
     sessionId: `session-${id}`,
-    proposedOkrs: { objective: { title: 'OKR proposto', description: '', org_objective_id: '', cycle_id: '' }, draftKrs: [] },
+    proposedOkrs: [{ id: 'obj-1', objective: { title: 'OKR proposto', description: '', org_objective_id: '', cycle_id: '' }, krPlan: { foundational: 1, contribution: 0, enabler: 0 }, draftKrs: [] }],
     hasSubmission: true,
     ...overrides,
   };

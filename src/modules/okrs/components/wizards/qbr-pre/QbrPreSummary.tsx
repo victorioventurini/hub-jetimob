@@ -45,7 +45,7 @@ export function QbrPreSummary({
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
   const hasLearnings = learnings.whatWorked.trim() || learnings.whatDidntWork.trim() || learnings.debts.trim();
-  const hasProposedOkrs = proposedOkrs?.objective?.title?.trim();
+  const hasProposedOkrs = proposedOkrs.length > 0;
 
   return (
     <WizardStepScaffold
@@ -168,16 +168,23 @@ export function QbrPreSummary({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Target className="h-4 w-4" />
-                Proposta de OKRs
+                Proposta de OKRs ({proposedOkrs.length})
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm font-medium">{proposedOkrs.objective.title}</p>
-              {proposedOkrs.draftKrs?.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {proposedOkrs.draftKrs.length} KR{proposedOkrs.draftKrs.length > 1 ? 's' : ''} definido{proposedOkrs.draftKrs.length > 1 ? 's' : ''}
-                </p>
-              )}
+            <CardContent className="space-y-3">
+              {proposedOkrs.map((entry) => {
+                const totalKrs = entry.draftKrs.filter(kr => kr.title.trim()).length;
+                return (
+                  <div key={entry.id} className="space-y-1">
+                    <p className="text-sm font-medium">{entry.objective.title}</p>
+                    {totalKrs > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {totalKrs} KR{totalKrs > 1 ? 's' : ''} definido{totalKrs > 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         )}

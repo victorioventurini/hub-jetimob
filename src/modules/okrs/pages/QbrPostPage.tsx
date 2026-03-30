@@ -24,8 +24,9 @@ import { QbrPostFollowUpStep } from '@/modules/okrs/components/wizards/qbr-post/
 import { QbrPostMinutesStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
 
 import type { ApprovedTeamOkr } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
-import type {
-  QbrPostStep, QbrPostDraftData, TeamCheckinDecision, QbrMeetingSnapshot,
+import {
+  normalizeProposedOkrs,
+  type QbrPostStep, type QbrPostDraftData, type TeamCheckinDecision, type QbrMeetingSnapshot,
 } from '@/modules/okrs/types/wizard';
 
 const WIZARD_STEPS = [
@@ -145,7 +146,7 @@ export default function QbrPostPage() {
         teamName: teamMap.get(approval.teamId) || 'Time',
         sessionId: approval.sessionId,
         status: approval.status,
-        proposedOkrs: snapshot?.data?.proposedOkrs || {},
+        proposedOkrs: normalizeProposedOkrs(snapshot?.data?.proposedOkrs),
       };
     });
   }, [meetingApprovals, leaderSessions, teamMap]);

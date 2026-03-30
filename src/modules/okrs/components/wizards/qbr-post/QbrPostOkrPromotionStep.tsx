@@ -16,7 +16,7 @@ import {
   WizardFirstStepFooter,
   WizardStepScaffold,
 } from '../shared';
-import type { QbrApprovalStatus, TeamOkrCreationWizardState } from '@/modules/okrs/types/wizard';
+import type { QbrApprovalStatus, ProposedObjectiveEntry } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -27,7 +27,7 @@ export interface ApprovedTeamOkr {
   teamName: string;
   sessionId: string;
   status: QbrApprovalStatus;
-  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  proposedOkrs: ProposedObjectiveEntry[];
 }
 
 export interface QbrPostOkrPromotionStepProps {
@@ -139,13 +139,15 @@ export function QbrPostOkrPromotionStep({
                             {cfg.label}
                           </Badge>
                         </div>
-                        {okr.proposedOkrs?.objective?.title && (
-                          <p className="text-sm text-muted-foreground">{okr.proposedOkrs.objective.title}</p>
-                        )}
-                        {okr.proposedOkrs?.draftKrs && okr.proposedOkrs.draftKrs.length > 0 && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {okr.proposedOkrs.draftKrs.length} KR{okr.proposedOkrs.draftKrs.length > 1 ? 's' : ''}
-                          </p>
+                        {okr.proposedOkrs.length > 0 && (
+                          <div className="space-y-1">
+                            {okr.proposedOkrs.map(entry => (
+                              <p key={entry.id} className="text-sm text-muted-foreground">{entry.objective.title}</p>
+                            ))}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {okr.proposedOkrs.reduce((sum, e) => sum + e.draftKrs.length, 0)} KRs total
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -167,8 +169,8 @@ export function QbrPostOkrPromotionStep({
                 <div key={okr.sessionId} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>{okr.teamName}</span>
-                  {okr.proposedOkrs?.objective?.title && (
-                    <span className="truncate flex-1">— {okr.proposedOkrs.objective.title}</span>
+                  {okr.proposedOkrs.length > 0 && (
+                    <span className="truncate flex-1">— {okr.proposedOkrs[0].objective.title}{okr.proposedOkrs.length > 1 ? ` +${okr.proposedOkrs.length - 1}` : ''}</span>
                   )}
                 </div>
               ))}

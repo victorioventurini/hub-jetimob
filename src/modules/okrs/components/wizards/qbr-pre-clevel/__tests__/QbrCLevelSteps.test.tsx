@@ -51,7 +51,7 @@ function createSubmission(overrides: Partial<LeaderPreSubmission> = {}): LeaderP
       zombieCandidates: ['zombie-1'],
       kpisToCreate: [{ description: 'Novo KPI', suggestedScope: 'team', relatedKrTitle: '' }],
       learnings: { whatWorked: 'Rotinas', whatDidntWork: 'Deploys', debts: 'Testes' },
-      proposedOkrs: { objective: { title: '', description: '', org_objective_id: null, cycle_id: null }, krPlan: { foundational: 1, contribution: 0, enabler: 0 }, draftKrs: [] } as any,
+      proposedOkrs: [] as any,
     } as any,
     ...overrides,
   };
@@ -78,10 +78,12 @@ function createTeamProposal(overrides: Partial<TeamOkrProposal> = {}): TeamOkrPr
     teamId: `team-${Math.random().toString(36).slice(2, 6)}`,
     teamName: 'Time Alpha',
     hasSubmission: true,
-    proposedOkrs: {
+    proposedOkrs: [{
+      id: 'obj-1',
       objective: { title: 'Objetivo proposto', description: 'Desc', org_objective_id: null, cycle_id: null },
+      krPlan: { foundational: 1, contribution: 0, enabler: 0 },
       draftKrs: [{ id: 'kr-d1', type: 'foundational', title: 'KR Draft', unit: '%', baseline: 0, target: 100, direction: 'up', owner_user_id: null, linked_org_kr_id: null }],
-    },
+    }],
     ...overrides,
   };
 }
