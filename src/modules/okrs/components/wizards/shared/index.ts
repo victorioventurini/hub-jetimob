@@ -64,3 +64,6 @@ export type { DecisionCardProps } from './DecisionCard';
 
 export { WizardStepScaffold } from './WizardStepScaffold';
 export type { WizardStepScaffoldProps } from './WizardStepScaffold';
+
+export { KrLinkedDetails } from './KrLinkedDetails';
+export type { KrLinkedDetailsProps } from './KrLinkedDetails';

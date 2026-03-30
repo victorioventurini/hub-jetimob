@@ -19,6 +19,7 @@ import {
   WizardFirstStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
+  KrLinkedDetails,
 } from '../shared';
 import {
   KR_STATE_CONFIG,
