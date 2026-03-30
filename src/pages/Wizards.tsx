@@ -8,7 +8,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { HubLayout } from '@/components/layout/HubLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,7 @@ import {
   BarChart3,
   Settings2,
   Presentation,
+  History,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
@@ -371,10 +372,18 @@ export default function WizardsPage() {
   return (
     <HubLayout>
       <div className="space-y-6">
-        <PageHeader
-          title="Rituais"
-          description="Fluxos guiados para gestão de OKRs"
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader
+            title="Rituais"
+            description="Fluxos guiados para gestão de OKRs"
+          />
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/okrs/ritual-history" className="gap-2">
+              <History className="h-4 w-4" />
+              Histórico de Rituais
+            </Link>
+          </Button>
+        </div>
 
         {isLoading ? (
           <div className="space-y-8">
