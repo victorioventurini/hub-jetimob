@@ -132,7 +132,7 @@ export default function RitualHistoryPage() {
 
   return (
     <HubLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="space-y-6">
         <PageHeader
           title="Histórico de Rituais"
           description="Consulte rituais concluídos, decisões registradas e acompanhe pendências."
@@ -234,6 +234,7 @@ export default function RitualHistoryPage() {
           <ViewOptionsBar
             resultCount={mergedRituals.length}
             resultCountLabel="rituais encontrados"
+            resultCountLabelSingular="ritual encontrado"
           />
         )}
 
