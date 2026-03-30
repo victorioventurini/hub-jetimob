@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, LatestCheckinSummary, InlineDecisionInput } from '../shared';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { KrLinkedKpiCard, type KpiLinkReason } from './KrLinkedKpiCard';
+import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
