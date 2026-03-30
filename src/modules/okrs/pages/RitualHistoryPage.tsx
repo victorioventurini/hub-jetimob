@@ -43,6 +43,7 @@ import { useManageableTeamsFlat } from '../hooks';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import { SnapshotReportView } from '../components/ritual-report';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 
 // ============================================================
 // CONSTANTS
@@ -91,6 +92,12 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  const userState = useUrlState<string>({
+    key: 'user',
+    defaultValue: '',
+    parse: parsers.string,
+  });
+
   const dateFromState = useUrlState<string>({
     key: 'from',
     defaultValue: '',
@@ -105,9 +112,10 @@ export default function RitualHistoryPage() {
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
+    userId: userState.value || null,
     dateFrom: dateFromState.value || null,
     dateTo: dateToState.value || null,
-  }), [typeState.value, teamState.value, dateFromState.value, dateToState.value]);
+  }), [typeState.value, teamState.value, userState.value, dateFromState.value, dateToState.value]);
 
   const { data: rituals, isLoading } = useRitualHistory(filters);
   const { teams } = useManageableTeamsFlat();
@@ -168,6 +176,14 @@ export default function RitualHistoryPage() {
               </SelectContent>
             </Select>
           )}
+
+          {/* User filter */}
+          <BuUserSelect
+            value={userState.value || undefined}
+            onValueChange={(v) => userState.set(v || '')}
+            placeholder="Usuário"
+            className="w-[220px]"
+          />
 
           {/* Date filters */}
           <Popover>

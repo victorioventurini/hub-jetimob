@@ -19,6 +19,7 @@ import type { WizardPersona, TeamCheckinDecision } from '../types/wizard';
 export interface RitualHistoryFilters {
   wizardType?: WizardPersona | 'all';
   teamId?: string | null;
+  userId?: string | null;
   dateFrom?: string | null;
   dateTo?: string | null;
 }
@@ -110,6 +111,9 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
       }
       if (filters.teamId) {
         query = query.eq('team_id', filters.teamId);
+      }
+      if (filters.userId) {
+        query = query.eq('started_by', filters.userId);
       }
       if (filters.dateFrom) {
         query = query.gte('completed_at', filters.dateFrom);
