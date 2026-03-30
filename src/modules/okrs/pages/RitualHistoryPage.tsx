@@ -92,6 +92,12 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  const userState = useUrlState<string>({
+    key: 'user',
+    defaultValue: '',
+    parse: parsers.string,
+  });
+
   const dateFromState = useUrlState<string>({
     key: 'from',
     defaultValue: '',
@@ -106,9 +112,10 @@ export default function RitualHistoryPage() {
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
+    userId: userState.value || null,
     dateFrom: dateFromState.value || null,
     dateTo: dateToState.value || null,
-  }), [typeState.value, teamState.value, dateFromState.value, dateToState.value]);
+  }), [typeState.value, teamState.value, userState.value, dateFromState.value, dateToState.value]);
 
   const { data: rituals, isLoading } = useRitualHistory(filters);
   const { teams } = useManageableTeamsFlat();
