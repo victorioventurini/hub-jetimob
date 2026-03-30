@@ -3,7 +3,7 @@
 **Versão:** 1.5.0  
 **Data:** 2026-02-12  
 **Status:** Normativo (V2-only mode) | RLS 100% migrado | Wave 8 Audit Complete | **users_admin_v2 membership fix** | **Manager Auto-Assignment v1.0**  
-**Referência:** TCR v3.7.0, RBAC_TEMPLATES_V3.md
+**Referência:** TCR v3.21.0, RBAC_TEMPLATES_V3.md
 
 ---
 
