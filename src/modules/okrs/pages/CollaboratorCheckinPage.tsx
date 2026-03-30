@@ -60,6 +60,7 @@ const WIZARD_STEPS = [
   { id: 'context' as const, label: 'Contexto', description: 'Visão geral dos KRs e KPIs' },
   { id: 'checkin' as const, label: 'Check-in', description: 'Atualização dos KRs' },
   { id: 'kpis' as const, label: 'KPIs', description: 'Atualização dos indicadores' },
+  { id: 'projects' as const, label: 'Projetos', description: 'Atualização de marcos' },
   { id: 'initiatives' as const, label: 'Iniciativas', description: 'Revisão de atividades' },
   { id: 'reflection' as const, label: 'Reflexão', description: 'Aprendizados' },
   { id: 'summary' as const, label: 'Resumo', description: 'Visão consolidada' },
