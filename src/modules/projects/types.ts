@@ -82,6 +82,7 @@ export interface ProjectForWizard {
   completion_pct: number;
   owner_name: string | null;
   owner_photo_url: string | null;
+  teams?: Array<{ team_id: string; team_name: string }>;
   milestones?: Array<{
     id: string;
     name: string;

@@ -24,7 +24,7 @@ export function useProjectsForWizard(teamId: string | undefined) {
           project_milestones(id, name, status, due_date, owner_id, notes, deleted_at,
             milestone_owner:profiles!project_milestones_owner_id_fkey(display_name, photo_url)
           ),
-          project_teams!inner(team_id)
+          project_teams!inner(team_id, team:teams!project_teams_team_id_fkey(name))
         `)
         .eq('bu_id', buId)
         .eq('project_teams.team_id', teamId)
