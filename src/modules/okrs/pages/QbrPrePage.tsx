@@ -437,7 +437,7 @@ export default function QbrPrePage() {
       case 'okr-proposal':
         return (
           <QbrOkrProposalStep
-            proposedOkrs={draft.data.proposedOkrs}
+            proposedOkrs={normalizeProposedOkrs(draft.data.proposedOkrs)}
             teamId={teamIdParam || ''}
             onProposedOkrsChange={(proposedOkrs) => updateDraft({ proposedOkrs })}
             onContinue={goNext}
