@@ -66,7 +66,7 @@ const WIZARD_STEPS = [
   { id: 'summary' as const, label: 'Resumo', description: 'Visão consolidada' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'initiatives', 'reflection', 'summary'];
+const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'projects', 'initiatives', 'reflection', 'summary'];
 
 const DEFAULT_DATA: CollaboratorDraftData = {
   currentKrIndex: 0,
