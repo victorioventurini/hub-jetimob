@@ -318,7 +318,7 @@ serve(async (req) => {
     console.log(`[${requestId}] Orchestrating AI agents for QBR Post summary...`);
     const sections = await orchestrateAgents(serviceClient, buId, agentContext, requestId);
 
-    const contextUrl = `/okrs/ritual-history?session=${sessionId}`;
+    const contextUrl = `/rituals/history?session=${sessionId}`;
     const metadata = {
       bu_name: buName,
       cycle_name: cycleName,

@@ -341,7 +341,7 @@ serve(async (req) => {
       return successResponse({ skipped: true, reason: 'no_recipients' });
     }
 
-    const contextUrl = `/okrs/ritual-history?session=${sessionId}`;
+    const contextUrl = `/rituals/history?session=${sessionId}`;
     const metadata = {
       bu_name: buName,
       team_name: teamName,
