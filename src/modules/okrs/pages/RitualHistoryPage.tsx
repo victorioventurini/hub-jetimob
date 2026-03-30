@@ -43,6 +43,7 @@ import { useManageableTeamsFlat } from '../hooks';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import { SnapshotReportView } from '../components/ritual-report';
+import { BuUserSelect } from '@/components/selects/BuUserSelect';
 
 // ============================================================
 // CONSTANTS
