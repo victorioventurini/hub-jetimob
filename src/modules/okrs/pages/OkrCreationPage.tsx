@@ -341,15 +341,19 @@ export default function OkrCreationPage() {
     );
   }
   
-  // No cycle available
+  // No cycle available — check for planning cycles
   if (!quarterlyCycle) {
+    const hasPlanningCycle = planningCycles.length > 0;
     return (
       <EmptyState
         icon={Target}
-        title="Nenhum ciclo ativo"
-        description="Não há ciclo de OKRs ativo para criar objetivos"
-        actionLabel="Voltar para Wizards"
-        onAction={() => navigate('/wizards')}
+        title={hasPlanningCycle ? "Ciclo ainda não ativado" : "Nenhum ciclo disponível"}
+        description={hasPlanningCycle
+          ? `O ciclo "${planningCycles[0].name}" está em planejamento. Solicite ao admin que ative o ciclo nas configurações de OKRs para criar objetivos.`
+          : "Não há ciclo de OKRs ativo ou em planejamento. Um admin precisa criar e ativar um ciclo nas configurações de OKRs."
+        }
+        actionLabel="Voltar para Rituais"
+        onAction={() => navigate('/rituals')}
       />
     );
   }
