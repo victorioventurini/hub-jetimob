@@ -125,12 +125,18 @@ export default function ProjectsPage() {
           />
         </ViewOptionsBar>
 
+        {/* Status Summary */}
+        {!isLoading && !error && projects && projects.length > 0 && (
+          <ProjectStatusSummary projects={projects} />
+        )}
+
         {/* Content */}
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-lg" />
-            ))}
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -139,15 +145,7 @@ export default function ProjectsPage() {
         ) : viewState.value === 'gantt' ? (
           <ProjectGanttChart items={ganttItems} excludedCount={ganttExcluded} />
         ) : projects && projects.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={(id) => navigate(`/projects/${id}`)}
-              />
-            ))}
-          </div>
+          <ProjectsTable projects={projects} />
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Nenhum projeto encontrado.</p>
