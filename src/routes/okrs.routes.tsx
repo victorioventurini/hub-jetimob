@@ -22,22 +22,11 @@ const TeamContributionPage = lazy(() => import('@/modules/okrs/pages/TeamContrib
 const CycleCheckinsPage = lazy(() => import('@/modules/okrs/pages/CycleCheckinsPage'));
 const OkrCreationPage = lazy(() => import('@/modules/okrs/pages/OkrCreationPage'));
 const TeamKrCreationPage = lazy(() => import('@/modules/okrs/pages/TeamKrCreationPage'));
-const CollaboratorCheckinPage = lazy(() => import('@/modules/okrs/pages/CollaboratorCheckinPage'));
-const LeaderPrepPage = lazy(() => import('@/modules/okrs/pages/LeaderPrepPage'));
-const TeamCheckinPage = lazy(() => import('@/modules/okrs/pages/TeamCheckinPage'));
-const ManagersCheckinPage = lazy(() => import('@/modules/okrs/pages/ManagersCheckinPage'));
-const CLevelCheckinPage = lazy(() => import('@/modules/okrs/pages/CLevelCheckinPage'));
 const OkrQualityPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrQualityPage'));
 const OkrConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrConstructionReviewPage'));
 const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgConstructionReviewPage'));
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
-const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
-const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
-const QbrPrePage = lazy(() => import('@/modules/okrs/pages/QbrPrePage'));
-const QbrPreCLevelPage = lazy(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
-const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'));
-const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
 
 /**
  * Helper para wrapping consistente de rotas OKR
