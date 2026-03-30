@@ -27,18 +27,6 @@ interface MilestoneListProps {
   ownerProfiles?: Record<string, { display_name: string | null; photo_url: string | null }>;
 }
 
-const statusIcon: Record<MilestoneStatus, React.ReactNode> = {
-  todo: <Circle className="h-4 w-4 text-muted-foreground" />,
-  in_progress: <Clock className="h-4 w-4 text-blue-500" />,
-  done: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-};
-
-const nextStatus: Record<MilestoneStatus, MilestoneStatus> = {
-  todo: 'in_progress',
-  in_progress: 'done',
-  done: 'todo',
-};
-
 export function MilestoneList({
   milestones, projectId, onStatusChange, onUpdate, onDelete,
   canEditKrLinks, canEdit, compact, ownerProfiles,
@@ -78,14 +66,11 @@ export function MilestoneList({
                 <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', isExpanded && 'rotate-90')} />
               </button>
 
-              <button
-                type="button"
-                onClick={() => onStatusChange?.(m.id, nextStatus[m.status])}
-                className="shrink-0"
+              <MilestoneStatusSelect
+                value={m.status}
+                onValueChange={(status) => onStatusChange?.(m.id, status)}
                 disabled={!onStatusChange}
-              >
-                {statusIcon[m.status]}
-              </button>
+              />
 
               <span className={cn(
                 'text-sm flex-1 truncate',
