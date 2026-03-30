@@ -847,9 +847,9 @@ function HealthTab() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Date range - start */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Data início</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -872,7 +872,7 @@ function HealthTab() {
             </div>
 
             {/* Date range - end */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Data fim</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -894,20 +894,8 @@ function HealthTab() {
               </Popover>
             </div>
 
-            {/* Team filter */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Time</Label>
-              <TeamSelect
-                value={teamFilter ?? undefined}
-                onValueChange={setTeamFilter}
-                includeAll
-                allLabel="Todos os times"
-                placeholder="Todos os times"
-              />
-            </div>
-
-            {/* Wizard type filter */}
-            <div className="space-y-1.5">
+            {/* Rito filter */}
+            <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Rito</Label>
               <Select value={typeFilter || 'all'} onValueChange={v => setTypeFilter(v === 'all' ? '' : v)}>
                 <SelectTrigger>
@@ -923,18 +911,30 @@ function HealthTab() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {/* User filter - separate row for visibility */}
-          <div className="mt-3 max-w-sm">
-            <Label className="text-xs text-muted-foreground">Usuário</Label>
-            <BuUserSelect
-              value={userFilter}
-              onValueChange={(v) => setUserFilter(v ?? undefined)}
-              placeholder="Todos os usuários"
-              allowNone
-              noneLabel="Todos os usuários"
-            />
+            {/* Team filter */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Time</Label>
+              <TeamSelect
+                value={teamFilter ?? undefined}
+                onValueChange={setTeamFilter}
+                includeAll
+                allLabel="Todos os times"
+                placeholder="Todos os times"
+              />
+            </div>
+
+            {/* User filter */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Usuário</Label>
+              <BuUserSelect
+                value={userFilter}
+                onValueChange={(v) => setUserFilter(v ?? undefined)}
+                placeholder="Todos os usuários"
+                allowNone
+                noneLabel="Todos os usuários"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
