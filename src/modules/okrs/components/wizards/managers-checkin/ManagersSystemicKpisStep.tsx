@@ -200,6 +200,7 @@ export function ManagersSystemicKpisStep({
       <WizardStepHeader
         icon={Building2}
         title="Indicadores Sistêmicos"
+        tooltip="managers-systemic-kpis"
         description="Visão cross-team de KPIs estratégicos"
         variant="purple"
         rightContent={

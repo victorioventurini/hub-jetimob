@@ -81,6 +81,7 @@ export function TeamOpeningStep({
       <WizardStepHeader
         icon={Users}
         title={`Check-in: ${teamName}`}
+        tooltip="team-opening"
         description={cycleName}
         variant="primary"
         rightContent={

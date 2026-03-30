@@ -76,6 +76,7 @@ export function LeaderProjectsStep({ teamId, onContinue, onBack }: LeaderProject
       icon={FolderKanban}
       variant="purple"
       title="Projetos do Time"
+      tooltip="leader-projects"
       description="Marcos e entregas em andamento"
       badge={projects?.length ? `${projects.length}` : undefined}
     />

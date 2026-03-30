@@ -82,6 +82,7 @@ export function QbrLearningsStep({
         <WizardStepHeader
           icon={BookOpen}
           title="Aprendizados do Ciclo"
+          tooltip="qbr-learnings"
           description="Reflexão estruturada sobre o que levar e o que deixar"
           variant="purple"
         />

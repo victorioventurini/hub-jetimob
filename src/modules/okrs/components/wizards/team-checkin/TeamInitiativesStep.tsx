@@ -75,6 +75,7 @@ export function TeamInitiativesStep({
       <WizardStepHeader
         icon={Zap}
         title="Iniciativas Relevantes"
+        tooltip="team-initiatives"
         description={`${initiatives.length} iniciativas no ciclo`}
         variant="primary"
         rightContent={

@@ -136,6 +136,7 @@ export function MbrQbrFollowUpStep({
         <WizardStepHeader
           icon={ClipboardList}
           title="Follow-up do QBR"
+          tooltip="mbr-qbr-followup"
           description="Acompanhamento de decisões e compromissos do último Quarterly Business Review"
           variant="primary"
         />

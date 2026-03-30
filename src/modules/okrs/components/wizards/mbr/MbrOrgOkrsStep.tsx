@@ -87,6 +87,7 @@ export function MbrOrgOkrsStep({
         <WizardStepHeader
           icon={Target}
           title="OKRs Organizacionais"
+          tooltip="mbr-org-okrs"
           description="Validação de prioridades estratégicas"
           variant="purple"
           badge={`${orgOkrSnapshots.length}`}

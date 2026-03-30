@@ -45,6 +45,7 @@ export function QbrPostFollowUpStep({
         <WizardStepHeader
           icon={CalendarClock}
           title="Cadência de Acompanhamento"
+          tooltip="qbr-post-followup"
           description="Configure o acompanhamento pós-QBR"
           variant="amber"
         />

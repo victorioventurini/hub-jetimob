@@ -11,6 +11,7 @@ import { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { WizardTooltipInline, type WizardTooltipKey } from './WizardTooltips';
 
 // ============================================================
 // TYPES
@@ -37,6 +38,8 @@ export interface WizardStepHeaderProps {
   badge?: string;
   /** Badge variant */
   badgeVariant?: 'default' | 'secondary' | 'destructive' | 'outline';
+  /** Tooltip key from WIZARD_TOOLTIPS */
+  tooltip?: WizardTooltipKey;
   /** Right content (e.g., counter, actions) */
   rightContent?: ReactNode;
   /** Additional class */
@@ -95,6 +98,7 @@ export function WizardStepHeader({
   variant = 'default',
   badge,
   badgeVariant = 'secondary',
+  tooltip,
   rightContent,
   className,
 }: WizardStepHeaderProps) {
@@ -114,6 +118,7 @@ export function WizardStepHeader({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="font-semibold text-lg truncate">{title}</h3>
+              {tooltip && <WizardTooltipInline tooltipKey={tooltip} />}
               {badge && (
                 <Badge variant={badgeVariant} className="shrink-0">{badge}</Badge>
               )}

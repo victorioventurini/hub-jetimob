@@ -86,6 +86,7 @@ export function QbrPostOkrPromotionStep({
         <WizardStepHeader
           icon={Rocket}
           title="Promoção de OKRs"
+          tooltip="qbr-post-okr-promotion"
           description={`${promotable.length} OKR${promotable.length !== 1 ? 's' : ''} aprovados para promoção`}
           variant="green"
           badge={`${promotedSessionIds.length}/${promotable.length} selecionados`}

@@ -187,6 +187,7 @@ export function CollaboratorProjectsStep({
         <WizardStepHeader
           icon={FolderKanban}
           title="Projetos"
+          tooltip="collaborator-projects"
           description="Atualize o status dos marcos sob sua responsabilidade"
           variant="purple"
           badge={!isLoading && projects.length > 0 ? `${pendingMilestonesCount} pendente${pendingMilestonesCount !== 1 ? 's' : ''}` : undefined}

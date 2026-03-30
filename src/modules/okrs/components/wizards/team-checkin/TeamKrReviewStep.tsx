@@ -187,6 +187,7 @@ export function TeamKrReviewStep({
       <WizardStepHeader
         icon={Target}
         title="Revisão dos KRs"
+        tooltip="team-kr-review"
         description={`${reviewedCount} de ${totalCount} revisados`}
         variant="primary"
         rightContent={

@@ -111,6 +111,7 @@ export function QbrCLevelSystemReadStep({
         <WizardStepHeader
           icon={Eye}
           title="Leitura do Sistema"
+          tooltip="qbr-clevel-system-read"
           description={`${leaderSubmissions.length} time${leaderSubmissions.length !== 1 ? 's' : ''} submeteram o pré-QBR`}
           variant="primary"
           badge={`${leaderSubmissions.length} submissions`}

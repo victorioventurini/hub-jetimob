@@ -262,6 +262,7 @@ export function MbrPanoramaStep({
       <WizardStepHeader
         icon={BarChart3}
         title="Panorama Executivo"
+        tooltip="mbr-panorama"
         description="Saúde consolidada do negócio"
         variant="primary"
         rightContent={

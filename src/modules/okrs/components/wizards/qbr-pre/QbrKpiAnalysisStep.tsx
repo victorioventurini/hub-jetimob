@@ -105,6 +105,7 @@ export function QbrKpiAnalysisStep({
         <WizardStepHeader
           icon={Activity}
           title="Análise de KPIs"
+          tooltip="qbr-kpi-analysis"
           description="Revise a saúde dos indicadores e sinalize oportunidades"
           variant="amber"
           badge={`${kpiSnapshots.length} KPIs`}

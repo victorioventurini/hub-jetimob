@@ -215,9 +215,17 @@ export const WIZARD_TOOLTIPS = {
   // ============================================================
   // CHECK-IN DE TIME
   // ============================================================
-  'team-review': {
+  'team-opening': {
+    content: 'Panorama inicial para alinhar o time antes de discutir KRs.',
+    icon: 'info',
+  },
+  'team-kr-review': {
     content: 'Revisar juntos cria alinhamento e responsabilidade compartilhada.',
     icon: 'info',
+  },
+  'team-initiatives': {
+    content: 'Iniciativas bloqueadas ou em risco merecem decisão imediata.',
+    icon: 'help',
   },
   'team-decisions': {
     content: 'Decisões registradas viram compromissos do time.',
@@ -243,6 +251,10 @@ export const WIZARD_TOOLTIPS = {
     content: 'Ajustes devem ser comunicados para todos os afetados.',
     icon: 'lightbulb',
   },
+  'managers-systemic-kpis': {
+    content: 'KPIs sistêmicos refletem a saúde operacional entre áreas.',
+    icon: 'info',
+  },
   
   // ============================================================
   // CHECK-IN C-LEVEL
@@ -262,6 +274,170 @@ export const WIZARD_TOOLTIPS = {
   'clevel-directives': {
     content: 'Diretrizes são mensagens que cascateiam para toda a organização.',
     icon: 'lightbulb',
+  },
+  
+  // ============================================================
+  // MBR (Monthly Business Review)
+  // ============================================================
+  'mbr-panorama': {
+    content: 'Visão consolidada da saúde dos indicadores para tomada de decisão.',
+    icon: 'info',
+  },
+  'mbr-kpi-gate': {
+    content: 'KPIs em alerta exigem decisão antes de prosseguir.',
+    icon: 'help',
+  },
+  'mbr-team-okrs-overview': {
+    content: 'Visão geral do progresso dos times ajuda a priorizar a análise detalhada.',
+    icon: 'info',
+  },
+  'mbr-team-okrs-detail': {
+    content: 'Analise KRs críticos e registre decisões por time.',
+    icon: 'info',
+  },
+  'mbr-org-okrs': {
+    content: 'OKRs organizacionais devem refletir as prioridades estratégicas da BU.',
+    icon: 'info',
+  },
+  'mbr-decisions': {
+    content: 'Consolide todas as decisões com dono e prazo antes de encerrar.',
+    icon: 'lightbulb',
+  },
+  'mbr-closing': {
+    content: 'Checklist de governança garante que nada ficou sem responsável.',
+    icon: 'help',
+  },
+  'mbr-qbr-followup': {
+    content: 'Acompanhe decisões e compromissos do último QBR antes de seguir.',
+    icon: 'info',
+  },
+  
+  // ============================================================
+  // QBR PRE-WORK (Líder de Time)
+  // ============================================================
+  'qbr-balance': {
+    content: 'Revise o desempenho do ciclo para embasar a proposta do próximo.',
+    icon: 'info',
+  },
+  'qbr-kpi-analysis': {
+    content: 'Indicadores em alerta podem indicar necessidade de ajuste nos OKRs.',
+    icon: 'help',
+  },
+  'qbr-learnings': {
+    content: 'Aprendizados do ciclo alimentam melhores OKRs no próximo.',
+    icon: 'lightbulb',
+  },
+  'qbr-okr-proposal': {
+    content: 'Rascunho de OKRs para o próximo ciclo — será validado no QBR.',
+    icon: 'info',
+  },
+  'qbr-pre-summary': {
+    content: 'Revise antes de submeter — os dados serão congelados.',
+    icon: 'help',
+  },
+  
+  // ============================================================
+  // QBR PRE-WORK C-LEVEL
+  // ============================================================
+  'qbr-clevel-system-read': {
+    content: 'Leitura sistêmica da organização para calibrar direcionamentos.',
+    icon: 'info',
+  },
+  'qbr-clevel-strategic': {
+    content: 'Análise estratégica para definir prioridades do próximo ciclo.',
+    icon: 'info',
+  },
+  'qbr-clevel-okr-validation': {
+    content: 'Valide se os OKRs propostos estão alinhados à estratégia.',
+    icon: 'help',
+  },
+  'qbr-clevel-directives': {
+    content: 'Direcionamentos e decisões que guiarão o próximo ciclo.',
+    icon: 'lightbulb',
+  },
+  
+  // ============================================================
+  // QBR MEETING
+  // ============================================================
+  'qbr-meeting-opening': {
+    content: 'Contexto inicial e direcionamentos para alinhar todos os participantes.',
+    icon: 'info',
+  },
+  'qbr-meeting-okr-review': {
+    content: 'Revise os OKRs de cada time para decidir ajustes e prioridades.',
+    icon: 'info',
+  },
+  'qbr-meeting-decisions': {
+    content: 'Toda decisão precisa de dono e prazo para virar ação.',
+    icon: 'lightbulb',
+  },
+  'qbr-meeting-commitments': {
+    content: 'Compromissos cross-área formalizam dependências entre times.',
+    icon: 'help',
+  },
+  'qbr-meeting-closing': {
+    content: 'Checklist de governança e feedback garantem qualidade do rito.',
+    icon: 'help',
+  },
+  
+  // ============================================================
+  // QBR POST
+  // ============================================================
+  'qbr-post-decisions': {
+    content: 'Decisões complementares registradas após o QBR.',
+    icon: 'info',
+  },
+  'qbr-post-commitments': {
+    content: 'Formalize compromissos entre times com prazos e responsáveis.',
+    icon: 'help',
+  },
+  'qbr-post-okr-promotion': {
+    content: 'Promova rascunhos aprovados para OKRs oficiais do ciclo.',
+    icon: 'lightbulb',
+  },
+  'qbr-post-minutes': {
+    content: 'Ata executiva documenta o que foi decidido para referência futura.',
+    icon: 'info',
+  },
+  'qbr-post-followup': {
+    content: 'Defina a cadência de acompanhamento para manter o ritmo.',
+    icon: 'info',
+  },
+  
+  // ============================================================
+  // COLLABORATOR CHECK-IN
+  // ============================================================
+  'collaborator-context': {
+    content: 'Contexto antes de atualizar: veja onde o time e a organização estão.',
+    icon: 'info',
+  },
+  'collaborator-checkin': {
+    content: 'Atualize progresso, confiança e bloqueadores de cada KR.',
+    icon: 'info',
+  },
+  'collaborator-kpis': {
+    content: 'Registre os valores dos KPIs operacionais sob sua responsabilidade.',
+    icon: 'info',
+  },
+  'collaborator-initiatives': {
+    content: 'Revise iniciativas vinculadas e sinalize riscos ou bloqueios.',
+    icon: 'help',
+  },
+  'collaborator-projects': {
+    content: 'Atualize o status dos marcos dos projetos sob sua responsabilidade.',
+    icon: 'info',
+  },
+  'collaborator-reflection': {
+    content: 'Reflexão final: o que impactou seus resultados e onde precisa de ajuda.',
+    icon: 'lightbulb',
+  },
+  
+  // ============================================================
+  // LEADER PREP
+  // ============================================================
+  'leader-projects': {
+    content: 'Revise projetos e marcos do time antes da reunião.',
+    icon: 'info',
   },
 } as const;
 

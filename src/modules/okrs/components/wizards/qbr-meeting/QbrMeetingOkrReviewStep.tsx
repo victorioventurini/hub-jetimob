@@ -116,6 +116,7 @@ export function QbrMeetingOkrReviewStep({
         <WizardStepHeader
           icon={ClipboardCheck}
           title="Revisão de OKRs por Time"
+          tooltip="qbr-meeting-okr-review"
           description={`${reviewedCount}/${teamsForReview.length} times revisados`}
           variant="amber"
           badge={allReviewed ? '✓ Todos revisados' : `${teamsForReview.length - reviewedCount} pendentes`}

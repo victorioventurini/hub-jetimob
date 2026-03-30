@@ -499,6 +499,7 @@ export function QbrOkrProposalStep({
         <WizardStepHeader
           icon={Target}
           title="Proposta de OKRs"
+          tooltip="qbr-okr-proposal"
           description="Rascunho para o próximo ciclo — será revisado no QBR"
           variant="primary"
           badge={subStepLabel}

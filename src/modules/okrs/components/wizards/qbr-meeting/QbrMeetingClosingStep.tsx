@@ -115,6 +115,7 @@ export function QbrMeetingClosingStep({
         <WizardStepHeader
           icon={ShieldCheck}
           title="Encerramento"
+          tooltip="qbr-meeting-closing"
           description="Checklist de governança e feedback do rito"
           variant="green"
         />

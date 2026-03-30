@@ -110,6 +110,7 @@ export function MbrTeamOkrsDetailStep({
           <WizardStepHeader
             icon={Target}
             title="Análise por Time"
+          tooltip="mbr-team-okrs-detail"
             description="Nenhum time disponível"
             variant="primary"
           />
@@ -139,6 +140,7 @@ export function MbrTeamOkrsDetailStep({
         <WizardStepHeader
           icon={Target}
           title="Análise por Time"
+          tooltip="mbr-team-okrs-detail"
           description={`Time ${safeIndex + 1} de ${totalTeams} — ${currentTeam?.teamName ?? ''}`}
           variant="primary"
         />
