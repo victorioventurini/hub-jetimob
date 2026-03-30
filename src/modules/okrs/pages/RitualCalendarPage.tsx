@@ -116,9 +116,8 @@ export default function RitualCalendarPage() {
           <TabsContent value="health">
             <HealthTab />
           </TabsContent>
-        </Tabs>
-      </div>
-    </HubLayout>
+      </Tabs>
+    </div>
   );
 }
 
