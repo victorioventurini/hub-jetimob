@@ -170,6 +170,7 @@ Lista completa das tabelas no schema `public`:
 | `v_objective_health` | Saúde de objetivos |
 | `v_okr_insights_active` | Insights ativos |
 | `v_partner_services` | Serviços de parceiros |
+| `v_partner_services_by_bu` | Serviços de parceiros por BU (v3.21.0) |
 | `v_pending_checkins` | Check-ins pendentes |
 | `v_perf_indexes_report` | Relatório de índices |
 | `v_permission_risk_report` | Relatório de riscos de permissão |
