@@ -337,16 +337,9 @@ export default function TeamKrCreationPage() {
         );
 
       case 'kr-type':
-        return (
-          <KrTypeStep
-            objectiveTitle={objective.title}
-            isSharedObjective={objective.is_shared || false}
-            krPlan={draft.krPlan}
-            onKrPlanChange={(plan) => updateDraft({ krPlan: plan })}
-            onContinue={goNext}
-            onBack={goBack}
-          />
-        );
+        // Step oculto — pular para kr-detail
+        goNext();
+        return null;
 
       case 'kr-detail':
         return (

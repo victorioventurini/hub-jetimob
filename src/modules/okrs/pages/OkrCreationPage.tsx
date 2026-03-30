@@ -448,15 +448,9 @@ export default function OkrCreationPage() {
         );
         
       case 'kr-type':
-        return (
-          <TeamOkrKrTypeStep
-            objectiveTitle={draft.objectiveTitle}
-            krPlan={draft.krPlan}
-            onKrPlanChange={(value) => updateDraft({ krPlan: value })}
-            onContinue={goNext}
-            onBack={goBack}
-          />
-        );
+        // Step oculto — pular para kr-detail
+        goNext();
+        return null;
         
       case 'kr-detail':
         return (
