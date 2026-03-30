@@ -118,6 +118,7 @@ export function WizardStepHeader({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="font-semibold text-lg truncate">{title}</h3>
+              {tooltip && <WizardTooltipInline tooltipKey={tooltip} />}
               {badge && (
                 <Badge variant={badgeVariant} className="shrink-0">{badge}</Badge>
               )}
