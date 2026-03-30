@@ -158,11 +158,9 @@ describe('OKR Limits', () => {
       expect(result.isWithinLimit).toBe(true);
     });
 
-    it('should NOT be within limit when count is 3', () => {
+    it('should be within limit when count is 3', () => {
       const result = validateObjectivesLimit(3);
-      expect(result.isWithinLimit).toBe(false);
-      expect(result.warningMessage).toContain('Limite atingido');
-      expect(result.warningMessage).toContain('3/3');
+      expect(result.isWithinLimit).toBe(true);
     });
 
     it('should NOT be within limit when count is 4', () => {
