@@ -145,7 +145,7 @@ Lista completa das tabelas no schema `public`:
 | `user_saved_links` | ✅ | ✅ | Links salvos por usuário/módulo (v2.36.0) |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 114 tabelas
+**Total:** 123 tabelas
 
 ---
 
