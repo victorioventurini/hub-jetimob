@@ -251,17 +251,21 @@ function KrPlanSubStep({
 
 function KrDetailSubStep({
   objectiveTitle,
+  objectiveDescription,
   krPlan,
   draftKrs,
   teamId,
+  teamName,
   onChange,
   onNext,
   onBack,
 }: {
   objectiveTitle: string;
+  objectiveDescription?: string;
   krPlan: TeamOkrCreationWizardState['krPlan'];
   draftKrs: DraftTeamKr[];
   teamId: string;
+  teamName?: string;
   onChange: (krs: DraftTeamKr[]) => void;
   onNext: () => void;
   onBack: () => void;
