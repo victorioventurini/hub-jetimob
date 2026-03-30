@@ -28,6 +28,7 @@ import {
   BarChart3,
   Settings2,
   Presentation,
+  History,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
