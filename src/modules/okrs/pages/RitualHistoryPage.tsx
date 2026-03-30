@@ -473,49 +473,29 @@ function DecisionFollowUpRow({
 // ============================================================
 
 function SnapshotSummary({ ritual }: { ritual: RitualHistoryItem }) {
-  const [showSnapshot, setShowSnapshot] = useState(false);
+  const [showRawSnapshot, setShowRawSnapshot] = useState(false);
   const rd = ritual.reflectionData;
 
   if (!rd) return null;
 
-  // Extract high-level info from reflection_data
   const data = (rd as any)?.data;
-  const summaryParts: { label: string; value: string }[] = [];
-
-  if (data?.referenceMonth) {
-    summaryParts.push({ label: 'Mês de Referência', value: data.referenceMonth });
-  }
-  if (Array.isArray(data?.kpiSnapshots)) {
-    summaryParts.push({ label: 'KPIs analisados', value: String(data.kpiSnapshots.length) });
-  }
-  if (Array.isArray(data?.teamOkrSnapshots)) {
-    summaryParts.push({ label: 'Times revisados', value: String(data.teamOkrSnapshots.length) });
-  }
-  if (Array.isArray(data?.orgOkrSnapshots)) {
-    summaryParts.push({ label: 'OKRs Org.', value: String(data.orgOkrSnapshots.length) });
-  }
-
-  if (summaryParts.length === 0) return null;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <Separator />
-      <div className="flex flex-wrap gap-4">
-        {summaryParts.map((part, i) => (
-          <div key={i} className="text-xs">
-            <span className="text-muted-foreground">{part.label}: </span>
-            <span className="font-medium">{part.value}</span>
-          </div>
-        ))}
-      </div>
 
-      {/* Expandable raw snapshot */}
-      <Collapsible open={showSnapshot} onOpenChange={setShowSnapshot}>
+      {/* Formatted report */}
+      {data && (
+        <SnapshotReportView wizardType={ritual.wizardType} data={data} />
+      )}
+
+      {/* Raw JSON (debug) */}
+      <Collapsible open={showRawSnapshot} onOpenChange={setShowRawSnapshot}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground">
             <FileText className="h-3 w-3" />
-            {showSnapshot ? 'Ocultar snapshot completo' : 'Ver snapshot completo'}
-            <ChevronDown className={cn('h-3 w-3 transition-transform', showSnapshot && 'rotate-180')} />
+            {showRawSnapshot ? 'Ocultar dados brutos' : 'Ver dados brutos'}
+            <ChevronDown className={cn('h-3 w-3 transition-transform', showRawSnapshot && 'rotate-180')} />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
