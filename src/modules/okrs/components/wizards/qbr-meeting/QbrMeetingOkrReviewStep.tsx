@@ -24,7 +24,7 @@ import type {
   QbrMeetingSnapshot,
   QbrApprovalStatus,
   QbrCLevelSnapshot,
-  TeamOkrCreationWizardState,
+  ProposedObjectiveEntry,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
