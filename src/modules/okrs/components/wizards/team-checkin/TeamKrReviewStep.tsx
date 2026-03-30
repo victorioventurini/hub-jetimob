@@ -295,6 +295,9 @@ export function TeamKrReviewStep({
               {currentKr.latest_checkin && (
                 <LatestCheckinSummary checkin={currentKr.latest_checkin} className="mt-2" />
               )}
+
+              {/* Linked initiatives & projects */}
+              <KrLinkedDetails krId={currentKr.id} />
             </CardContent>
           </Card>
 

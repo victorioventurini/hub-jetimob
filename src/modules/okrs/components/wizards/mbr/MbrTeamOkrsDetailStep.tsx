@@ -284,6 +284,9 @@ export function MbrTeamOkrsDetailStep({
                             <LastCheckinBadge lastCompletedAt={kr.lastCheckinAt ?? null} className="w-full min-w-0 max-w-full" />
                           </div>
                         </div>
+
+                        {/* Linked initiatives & projects */}
+                        <KrLinkedDetails krId={kr.krId} />
                       </div>
                     );
                   })}
