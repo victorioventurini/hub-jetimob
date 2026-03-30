@@ -35,7 +35,7 @@ export interface TeamForReview {
   teamId: string;
   teamName: string;
   sessionId: string;
-  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  proposedOkrs: ProposedObjectiveEntry[];
   hasSubmission: boolean;
 }
 
