@@ -26,6 +26,7 @@ export interface RitualHistoryFilters {
 export interface RitualHistoryItem {
   id: string;
   wizardType: WizardPersona;
+  status: 'completed' | 'in_progress';
   teamId: string | null;
   teamName: string | null;
   cycleId: string | null;
