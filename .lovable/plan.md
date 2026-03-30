@@ -1,61 +1,83 @@
 
 
-# Plano: Step "Projetos" no Collaborator Check-in Wizard
+# Plano: Step "Projetos" no Leader Prep Wizard
 
 ## Validação TCR & Docs Canônicos ✓
 
 | Doc | Status | Notas |
 |-----|--------|-------|
-| TCR v3.20.0 | ✓ | Projects v1.4, `milestone_status` enum existe |
-| WIZARD_DEVELOPMENT_GUIDE | ✓ | `WizardStepHeader` + `WizardStepFooter`, optional step pattern |
-| BU_SCOPED_SUPABASE_RULES | ✓ | Usar `useBuScopedSupabase()` + `.eq('bu_id', buId)` |
-| QUERY_KEYS_STANDARD | ✓ | Nova key em `projectsKeys` |
-| IDENTITY_CONVENTION | ✓ | `effectiveUserId` = `profiles.id` |
+| TCR v3.20.0 | ✓ | Projects v1.4, milestone_status enum, project_teams join |
+| WIZARD_DEVELOPMENT_GUIDE | ✓ | WizardStepHeader + WizardStepFooter + WizardStepScaffold |
+| BU_SCOPED_SUPABASE_RULES | ✓ | useOptionalBuClient já usado em useProjectsForWizard |
+| QUERY_KEYS_STANDARD | ✓ | Reutiliza projectsKeys.forWizard() existente |
+| IDENTITY_CONVENTION | ✓ | owner_id = profiles.id |
 | wizard-ritual-integration-standard | ✓ | Integração aditiva, sem alterar draft |
+
+## Contexto Atual
+
+- `LeaderHighlightsStep` renderiza `<ProjectsSummary teamId={teamId} mode="prep" />` como bloco colapsável — visão compacta (nome, health, progresso, prazo)
+- O hook `useProjectsForWizard` já busca projetos ativos do time com milestones, mas só retorna contagens agregadas
+- O `CollaboratorProjectsStep` já implementa o padrão completo com milestones inline e MilestoneStatusSelect
 
 ## Alterações
 
-### 1. `src/lib/queryKeys/projects.ts`
-Adicionar key:
+### 1. Expandir `useProjectsForWizard` para retornar milestones individuais
+
+Adicionar campo `milestones` ao retorno (id, name, status, due_date, owner_id, notes). O tipo `ProjectForWizard` ganha campo opcional `milestones?` para não quebrar consumidores existentes.
+
+**Arquivo:** `src/modules/projects/hooks/useProjectsForWizard.ts`
+- Expandir select para incluir `name, owner_id, notes` nos milestones
+- Mapear milestones individuais (filtrando deleted_at) no retorno
+
+**Arquivo:** `src/modules/projects/types.ts`
+- Adicionar campo opcional ao `ProjectForWizard`:
 ```ts
-myMilestones: (buId: string | null, profileId: string | null) =>
-  ['projects', 'my-milestones', buId, profileId] as const,
+milestones?: Array<{
+  id: string; name: string; status: MilestoneStatus;
+  due_date: string | null; owner_id: string | null; notes: string | null;
+}>;
 ```
 
-### 2. Novo: `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
+### 2. Novo componente: `LeaderProjectsStep.tsx`
 
-**Props:** `effectiveUserId`, `onContinue`, `onBack`, `onSkip`
+**Arquivo:** `src/modules/okrs/components/wizards/leader-prep/LeaderProjectsStep.tsx`
 
-**Query:** Busca projetos ativos onde o usuário é owner do projeto OU owner de milestones pendentes. Duas queries paralelas + merge/deduplica por `project.id`. Usa `useBuScopedSupabase()` + `useBu()` para BU filtering.
+**Comportamento:**
+- Usa `useProjectsForWizard(teamId)` para buscar projetos do time
+- Exibe cada projeto com: nome, ProjectHealthBadge, ProjectStatusBadge, ProjectProgressBar, prazo, link externo
+- Lista milestones pendentes (status !== 'done') com MilestoneStatusSelect inline (fire-and-forget via useUpdateMilestone)
+- Milestones done ficam ocultos
+- Empty state: "Nenhum projeto ativo neste time"
+- Notas de milestone visíveis via tooltip (se existirem)
 
-**UI:**
-- `WizardStepHeader` — ícone `FolderKanban`, variant `purple`, título "Projetos"
-- Para cada projeto: nome + `ProjectHealthBadge` + `ProjectProgressBar`
-- Dentro de cada projeto: milestones pendentes com `MilestoneStatusSelect` inline
-- Milestones `done` são colapsados/ocultos
-- Empty state: "Nenhum projeto sob sua responsabilidade"
+**UI:** WizardStepScaffold + WizardStepHeader (ícone FolderKanban, variant purple, título "Projetos do Time") + WizardStepFooter (back + continuar)
 
-**Mutation:** `useUpdateMilestone` (fire-and-forget com fail-safe — try/catch + toast.warning)
+### 3. Integrar no `LeaderPrepPage.tsx`
 
-**Footer:** `WizardOptionalStepFooter` (skip allowed)
+**Arquivo:** `src/modules/okrs/pages/LeaderPrepPage.tsx`
 
-**Cache invalidation:** `useUpdateMilestone` já invalida `projectsKeys.milestones()`, `listPrefix()`, `detail()`. Adicionar invalidação de `projectsKeys.forWizard()` no onSuccess.
+- Tipo WizardStep: `'overview' | 'kpi-alerts' | 'projects' | 'highlights' | 'prep' | 'alignment'`
+- WIZARD_STEPS: inserir `{ id: 'projects', label: 'Projetos', description: 'Marcos e entregas do time' }` entre kpi-alerts e highlights
+- STEP_ORDER: `['overview', 'kpi-alerts', 'projects', 'highlights', 'prep', 'alignment']`
+- renderStepContent: case 'projects' renderiza `<LeaderProjectsStep teamId={teamIdParam} onContinue={goNext} onBack={goBack} />`
 
-### 3. Editar: `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
+### 4. Remover ProjectsSummary do LeaderHighlightsStep
 
-- Tipo `WizardStep`: adicionar `'projects'`
-- `WIZARD_STEPS`: inserir `{ id: 'projects', label: 'Projetos', description: 'Atualização de marcos' }` entre `kpis` e `initiatives`
-- `STEP_ORDER`: `['context', 'checkin', 'kpis', 'projects', 'initiatives', 'reflection', 'summary']`
-- Import `CollaboratorProjectsStep`
-- `renderStepContent()`: case `'projects'` renderiza `<CollaboratorProjectsStep effectiveUserId={effectiveUserId} onContinue={goNext} onBack={goBack} onSkip={goNext} />`
+**Arquivo:** `src/modules/okrs/components/wizards/leader-prep/LeaderHighlightsStep.tsx`
 
-### 4. Editar: `src/modules/okrs/components/wizards/collaborator/index.ts`
+- Remover o bloco `{teamId && <ProjectsSummary .../>}` (linhas 218-221)
+- Remover import de ProjectsSummary
+- Evita duplicação — projetos passam a ter step dedicado
 
-Adicionar export do `CollaboratorProjectsStep`.
+### 5. Atualizar barrel export
+
+**Arquivo:** `src/modules/okrs/components/wizards/leader-prep/index.ts`
+
+- Adicionar export do LeaderProjectsStep
 
 ## Não altera
 
-- Draft state (`CollaboratorDraftData`) — sem campos novos, mudanças de milestone são persistidas imediatamente
-- Steps existentes — nenhuma modificação
-- Testes existentes — steps anteriores não mudam de índice (são referenciados por id)
+- Draft state (LeaderPrepDraftData) — sem campos novos
+- Steps existentes — nenhuma modificação de lógica
+- useProjectsForWizard — campo milestones é opcional, consumidores existentes continuam funcionando
 
