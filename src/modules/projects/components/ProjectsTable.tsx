@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AlertTriangle, Clock, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Clock, ExternalLink, Milestone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProjectHealthBadge } from './ProjectHealthBadge';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
