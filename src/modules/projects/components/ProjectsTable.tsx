@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AlertTriangle, Clock, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Clock, ExternalLink, Milestone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProjectHealthBadge } from './ProjectHealthBadge';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
@@ -40,6 +40,7 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
             <TableHead>Responsável</TableHead>
             <TableHead>Times</TableHead>
             <TableHead>Progresso</TableHead>
+            <TableHead className="text-center">Marcos</TableHead>
             <TableHead>Prazo</TableHead>
             <TableHead className="text-right">KRs</TableHead>
           </TableRow>
@@ -150,6 +151,16 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                       showLabel={false}
                       showPct
                     />
+                  </div>
+                </TableCell>
+
+                {/* Milestones count */}
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                    <Milestone className="h-3.5 w-3.5" />
+                    <span>
+                      {project.milestones_done}/{project.milestones_total}
+                    </span>
                   </div>
                 </TableCell>
 
