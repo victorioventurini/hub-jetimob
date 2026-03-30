@@ -37,6 +37,7 @@ export interface QbrBalanceStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  teamId?: string;
 }
 
 // ============================================================

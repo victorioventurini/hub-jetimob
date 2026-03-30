@@ -290,7 +290,7 @@ export function MbrTeamOkrsDetailStep({
           ))}
 
           {/* Projetos do time — bloco aditivo */}
-          <ProjectsSummary teamId={currentTeam.teamId} mode="review" className="mt-2" />
+          <ProjectsSummary teamId={currentTeam.teamId} mode="detail" className="mt-2" />
         </div>
       )}
     </WizardStepScaffold>
