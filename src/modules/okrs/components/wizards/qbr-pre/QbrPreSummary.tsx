@@ -16,7 +16,7 @@ import {
   WizardStepScaffold,
 } from '../shared';
 import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks/useKrStateInsights';
-import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import { normalizeProposedOkrs, type QbrPreDraftData, type TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -41,7 +41,8 @@ export function QbrPreSummary({
   onComplete,
   onBack,
 }: QbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, zombieCandidates, kpisToCreate, learnings, proposedOkrs } = draftData;
+  const { krFinalStates, kpiSnapshots, zombieCandidates, kpisToCreate, learnings, proposedOkrs: rawProposedOkrs } = draftData;
+  const proposedOkrs = normalizeProposedOkrs(rawProposedOkrs);
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
   const hasLearnings = learnings.whatWorked.trim() || learnings.whatDidntWork.trim() || learnings.debts.trim();

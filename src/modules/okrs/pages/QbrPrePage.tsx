@@ -28,6 +28,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { handleError } from '@/lib/errorMessages';
 import { AlertCircle } from 'lucide-react';
 import { calculateProgress } from '@/modules/okrs/types';
+import { normalizeProposedOkrs } from '@/modules/okrs/types/wizard';
 
 import { QbrBalanceStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrBalanceStep';
 import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep';
@@ -436,7 +437,7 @@ export default function QbrPrePage() {
       case 'okr-proposal':
         return (
           <QbrOkrProposalStep
-            proposedOkrs={draft.data.proposedOkrs}
+            proposedOkrs={normalizeProposedOkrs(draft.data.proposedOkrs)}
             teamId={teamIdParam || ''}
             onProposedOkrsChange={(proposedOkrs) => updateDraft({ proposedOkrs })}
             onContinue={goNext}
