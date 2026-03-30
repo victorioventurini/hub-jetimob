@@ -217,7 +217,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
       badge: 'Trimestral',
       badgeVariant: 'secondary',
       requiresTeam: false,
-      route: '/okrs/qbr',
+      route: '/rituals/qbr',
     });
   }
 
