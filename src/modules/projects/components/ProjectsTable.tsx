@@ -57,7 +57,7 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                 key={project.id}
                 className={cn(
                   'cursor-pointer hover:bg-muted/50',
-                  isOverdue && 'bg-red-50/50 dark:bg-red-950/10',
+                  isOverdue && 'bg-destructive/5',
                 )}
               >
                 {/* Name */}
