@@ -9913,6 +9913,22 @@ export type Database = {
       cleanup_orphan_memberships: { Args: never; Returns: Json }
       collect_perf_metrics: { Args: never; Returns: Json }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
+      count_collaborator_checkin_expected: {
+        Args: { p_bu_id: string; p_cycle_id: string; p_team_id: string }
+        Returns: number
+      }
+      count_collaborator_sessions_by_date: {
+        Args: {
+          p_bu_id: string
+          p_end_date: string
+          p_start_date: string
+          p_team_id: string
+        }
+        Returns: {
+          completed_count: number
+          session_date: string
+        }[]
+      }
       count_user_calls_today: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: number

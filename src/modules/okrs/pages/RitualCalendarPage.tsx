@@ -45,6 +45,7 @@ import {
   type OccurrenceStatus,
 } from '../hooks/useRitualOccurrences';
 import { useRitualAdherence } from '../hooks/useRitualAdherence';
+import { useCollaboratorCheckinCounts } from '../hooks/useCollaboratorCheckinCounts';
 import type { WizardPersona } from '../types/wizard';
 
 // ============================================================
@@ -387,6 +388,11 @@ function CalendarTab() {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
+  const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+  const endMonth = month === 11 ? 0 : month + 1;
+  const endYear = month === 11 ? year + 1 : year;
+  const endDate = `${endYear}-${String(endMonth + 1).padStart(2, '0')}-01`;
+
   const { data: occurrences, isLoading, error } = useRitualOccurrences({
     year,
     month,
@@ -412,6 +418,17 @@ function CalendarTab() {
     setHasAutoNavigated(true);
   }
 
+  // Resolve collaborator check-in team_id for counts
+  const collaboratorTeamId = useMemo(() => {
+    const collabOcc = (occurrences ?? []).find(o => o.wizardType === 'collaborator');
+    return collabOcc?.teamId ?? null;
+  }, [occurrences]);
+
+  const {
+    expectedCount,
+    completedByDate,
+  } = useCollaboratorCheckinCounts(collaboratorTeamId, startDate, endDate);
+
   // Group occurrences by date
   const byDate = useMemo(() => {
     const map = new Map<string, RitualOccurrence[]>();
@@ -429,6 +446,13 @@ function CalendarTab() {
 
   // Pad start for alignment
   const startDow = getDay(monthStart);
+
+  /** Build tooltip/label for collaborator pills showing "X de Y" */
+  function getCollaboratorLabel(occ: RitualOccurrence): string | null {
+    if (occ.wizardType !== 'collaborator' || expectedCount === 0) return null;
+    const completed = completedByDate.get(occ.plannedDate) ?? 0;
+    return `${completed}/${expectedCount}`;
+  }
 
   return (
     <div className="space-y-4">
@@ -524,21 +548,27 @@ function CalendarTab() {
                     </span>
                     {/* Occurrence pills */}
                     <div className="flex flex-col gap-0.5 mt-1">
-                      {dayOccs.slice(0, 2).map(occ => (
-                        <div
-                          key={occ.id}
-                          className={cn(
-                            'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] leading-tight truncate',
-                            STATUS_CONFIG[occ.status].color
-                          )}
-                          title={`${WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona] || occ.wizardType} — ${STATUS_CONFIG[occ.status].label}`}
-                        >
-                          <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_CONFIG[occ.status].dotColor)} />
-                          <span className="truncate">
-                            {WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona]?.split(' ')[0] || occ.wizardType}
-                          </span>
-                        </div>
-                      ))}
+                      {dayOccs.slice(0, 2).map(occ => {
+                        const collabLabel = getCollaboratorLabel(occ);
+                        return (
+                          <div
+                            key={occ.id}
+                            className={cn(
+                              'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] leading-tight truncate',
+                              STATUS_CONFIG[occ.status].color
+                            )}
+                            title={`${WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona] || occ.wizardType} — ${STATUS_CONFIG[occ.status].label}${collabLabel ? ` (${collabLabel})` : ''}`}
+                          >
+                            <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_CONFIG[occ.status].dotColor)} />
+                            <span className="truncate">
+                              {WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona]?.split(' ')[0] || occ.wizardType}
+                            </span>
+                            {collabLabel && (
+                              <span className="ml-auto shrink-0 font-medium">{collabLabel}</span>
+                            )}
+                          </div>
+                        );
+                      })}
                       {dayOccs.length > 2 && (
                         <span className="text-[10px] text-muted-foreground pl-1">
                           +{dayOccs.length - 2} mais
@@ -569,12 +599,13 @@ function CalendarTab() {
           occurrence={selectedOccurrence}
           open={!!selectedOccurrence}
           onOpenChange={open => !open && setSelectedOccurrence(null)}
+          expectedCount={selectedOccurrence.wizardType === 'collaborator' ? expectedCount : undefined}
+          completedCount={selectedOccurrence.wizardType === 'collaborator' ? (completedByDate.get(selectedOccurrence.plannedDate) ?? 0) : undefined}
         />
       )}
     </div>
   );
 }
-
 // ============================================================
 // OCCURRENCE DETAIL SHEET
 // ============================================================
@@ -583,10 +614,14 @@ function OccurrenceSheet({
   occurrence,
   open,
   onOpenChange,
+  expectedCount,
+  completedCount,
 }: {
   occurrence: RitualOccurrence;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  expectedCount?: number;
+  completedCount?: number;
 }) {
   const { mutate: reschedule, isPending } = useRescheduleOccurrence();
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>();
@@ -612,6 +647,22 @@ function OccurrenceSheet({
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
               {occurrence.teamName}
+            </div>
+          )}
+
+          {/* Collaborator check-in participant counts */}
+          {expectedCount != null && expectedCount > 0 && (
+            <div className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Participantes esperados</span>
+                <span className="font-medium">{completedCount ?? 0} de {expectedCount}</span>
+              </div>
+              <Progress value={((completedCount ?? 0) / expectedCount) * 100} className="h-2" />
+              {(completedCount ?? 0) < expectedCount && occurrence.status === 'missed' && (
+                <p className="text-xs text-destructive">
+                  {expectedCount - (completedCount ?? 0)} colaborador(es) não realizou(aram) o check-in.
+                </p>
+              )}
             </div>
           )}
 

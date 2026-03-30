@@ -258,6 +258,10 @@ export const okrsKeys = {
     ['ritual-occurrence-by-session', sessionId] as const,
   ritualAdherence: (buId: string | null, days?: number) =>
     ['ritual-adherence', buId, days] as const,
+  collaboratorCheckinExpected: (buId: string | null, teamId: string | null, cycleId: string | null) =>
+    ['collaborator-checkin-expected', buId, teamId, cycleId] as const,
+  collaboratorSessionsByDate: (buId: string | null, teamId: string | null, startDate: string, endDate: string) =>
+    ['collaborator-sessions-by-date', buId, teamId, startDate, endDate] as const,
 } as const;
 
 export const kpisKeys = {
