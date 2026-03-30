@@ -629,9 +629,9 @@ function OccurrenceSheet({
 
           {occurrence.sessionId && (
             <Button variant="outline" className="w-full" asChild>
-              <a href={`/okrs/ritual-history?session=${occurrence.sessionId}`}>
+              <Link to={`/okrs/ritual-history?session=${occurrence.sessionId}`}>
                 Ver no histórico
-              </a>
+              </Link>
             </Button>
           )}
         </div>
