@@ -19,6 +19,7 @@ import type { WizardPersona, TeamCheckinDecision } from '../types/wizard';
 export interface RitualHistoryFilters {
   wizardType?: WizardPersona | 'all';
   teamId?: string | null;
+  userId?: string | null;
   dateFrom?: string | null;
   dateTo?: string | null;
 }
