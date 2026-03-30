@@ -570,7 +570,7 @@ function CalendarTab() {
         <Card>
           <CardContent className="p-4">
             {/* Empty month hint */}
-            {(occurrences ?? []).length === 0 && !error && (
+            {filteredOccurrences.length === 0 && !error && (
               <div className="text-center py-4 mb-3 rounded-lg bg-muted/30">
                 <p className="text-sm text-muted-foreground">
                   Nenhuma ocorrência neste mês. Use as setas para navegar entre meses.
