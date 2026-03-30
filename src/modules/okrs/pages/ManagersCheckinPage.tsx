@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { 
   useGenericWizardDraft,
-  useActiveCycles, 
+  useActiveCycle, 
   useManagersPanorama, 
   useCrossDependencies,
   useLastCompletedSession,
