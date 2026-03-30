@@ -130,4 +130,4 @@ Documentos históricos organizados por tipo:
 
 ---
 
-*Atualizado em 2026-03-26 — TCR v3.18.0 — Health Score 10/10*
+*Atualizado em 2026-03-30 — TCR v3.21.0 — Health Score 10/10*
