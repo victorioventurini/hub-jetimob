@@ -239,19 +239,38 @@ export function useWizardSession() {
 
         if (session) {
           const now = new Date();
-          const sevenDaysAgo = new Date(now);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          const sevenDaysAhead = new Date(now);
-          sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
+
+          // Fetch cadence frequency to determine association window
+          const { data: cadence } = await supabase
+            .from('ritual_cadences')
+            .select('frequency')
+            .eq('wizard_type', session.wizard_type)
+            .eq('bu_id', session.bu_id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          const windowDaysMap: Record<string, number> = {
+            weekly: 7,
+            biweekly: 10,
+            monthly: 15,
+            quarterly: 30,
+            semester: 45,
+          };
+          const windowDays = windowDaysMap[cadence?.frequency ?? ''] ?? 7;
+
+          const windowStart = new Date(now);
+          windowStart.setDate(windowStart.getDate() - windowDays);
+          const windowEnd = new Date(now);
+          windowEnd.setDate(windowEnd.getDate() + windowDays);
 
           let query = supabase
             .from('ritual_occurrences')
             .select('id, planned_date')
             .eq('wizard_type', session.wizard_type)
             .eq('bu_id', session.bu_id)
-            .eq('status', 'scheduled')
-            .gte('planned_date', sevenDaysAgo.toISOString().split('T')[0])
-            .lte('planned_date', sevenDaysAhead.toISOString().split('T')[0])
+            .in('status', ['scheduled', 'missed'])
+            .gte('planned_date', windowStart.toISOString().split('T')[0])
+            .lte('planned_date', windowEnd.toISOString().split('T')[0])
             .order('planned_date', { ascending: true })
             .limit(1);
 
