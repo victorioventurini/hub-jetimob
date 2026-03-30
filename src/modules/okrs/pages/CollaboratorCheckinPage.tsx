@@ -33,6 +33,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { CollaboratorContextStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorContextStep';
 import { CollaboratorCheckinStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep';
 import { CollaboratorKpiStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep';
+import { CollaboratorProjectsStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep';
 import { CollaboratorInitiativesStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep';
 import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep';
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
@@ -44,7 +45,7 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 // TYPES
 // ============================================================
 
-type WizardStep = 'context' | 'checkin' | 'kpis' | 'initiatives' | 'reflection' | 'summary';
+type WizardStep = 'context' | 'checkin' | 'kpis' | 'projects' | 'initiatives' | 'reflection' | 'summary';
 
 interface CollaboratorDraftData {
   currentKrIndex: number;
@@ -59,12 +60,13 @@ const WIZARD_STEPS = [
   { id: 'context' as const, label: 'Contexto', description: 'Visão geral dos KRs e KPIs' },
   { id: 'checkin' as const, label: 'Check-in', description: 'Atualização dos KRs' },
   { id: 'kpis' as const, label: 'KPIs', description: 'Atualização dos indicadores' },
+  { id: 'projects' as const, label: 'Projetos', description: 'Atualização de marcos' },
   { id: 'initiatives' as const, label: 'Iniciativas', description: 'Revisão de atividades' },
   { id: 'reflection' as const, label: 'Reflexão', description: 'Aprendizados' },
   { id: 'summary' as const, label: 'Resumo', description: 'Visão consolidada' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'initiatives', 'reflection', 'summary'];
+const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'projects', 'initiatives', 'reflection', 'summary'];
 
 const DEFAULT_DATA: CollaboratorDraftData = {
   currentKrIndex: 0,
@@ -415,6 +417,16 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
+      case 'projects':
+        return (
+          <CollaboratorProjectsStep
+            effectiveUserId={effectiveUserId}
+            onContinue={goNext}
+            onBack={goBack}
+            onSkip={goNext}
+          />
+        );
+
       case 'initiatives':
         return (
           <CollaboratorInitiativesStep
