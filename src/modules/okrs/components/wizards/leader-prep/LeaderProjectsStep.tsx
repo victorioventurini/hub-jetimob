@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FolderKanban, ExternalLink, CalendarDays, StickyNote } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format, isPast, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
