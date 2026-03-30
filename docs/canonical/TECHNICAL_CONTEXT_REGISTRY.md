@@ -3549,6 +3549,19 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.21.0 (2026-03-30)
+- **Documentation Update v1.0**:
+  - `docs/HUB_ADMIN_DEEP_DIVE.md` — Deep dive técnico da área `/hub` (19 rotas, 12 wizard_types, QBR state machine, RBAC V3)
+  - `docs/BU_SETTINGS_DEEP_DIVE.md` — Deep dive técnico de BU Settings e todos os módulos operacionais (~95 rotas totais)
+  - Contagens atualizadas: 123 tabelas + 27 views, 157 funções SQL (via types), 85 enums, 26 edge functions
+  - Novas tabelas desde v3.20.0: `ritual_cadences`, `ritual_occurrences`, `asset_recommendations`, `kpi_data_contributors`, `kpi_target_history`, `project_comments`, `project_comment_attachments`
+  - Novas views: `v_all_participants`, `v_identity_health_check`, `v_partner_services_by_bu`, `v_teams_clean`
+- **handle_new_user Deterministic BU Fix v1.0**:
+  - Profile pré-existente (importado por admin) preserva `bu_id` original em vez de sobrescrever com domínio
+  - Domínio `jetimob.com` removido da BU Jet Experience para resolução determinística
+- **Ritual Calendar Health Filters v1.0**:
+  - Filtros da aba Saúde agora usam mesmo layout da aba Calendário (grid 4 cols, período inline)
+
 ### v3.20.0 (2026-03-29)
 - **Módulo Projetos v1.4 — Comments System & Test Coverage**:
   - Novas tabelas: `project_comments`, `project_comment_attachments` — sistema de comentários completo
