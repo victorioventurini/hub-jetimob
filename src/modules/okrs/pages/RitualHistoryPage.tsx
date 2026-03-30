@@ -347,12 +347,17 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
               )}
 
               {/* Date */}
-              {ritual.completedAt && (
+              {ritual.completedAt ? (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                   <CalendarIcon className="h-3 w-3" />
                   {format(parseISO(ritual.completedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </span>
-              )}
+              ) : ritual.startedAt ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                  <Clock className="h-3 w-3" />
+                  Iniciado {format(parseISO(ritual.startedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </span>
+              ) : null}
 
               {/* Author */}
               {ritual.startedByName && (
