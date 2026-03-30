@@ -27,7 +27,7 @@ export interface ApprovedTeamOkr {
   teamName: string;
   sessionId: string;
   status: QbrApprovalStatus;
-  proposedOkrs: Partial<TeamOkrCreationWizardState>;
+  proposedOkrs: ProposedObjectiveEntry[];
 }
 
 export interface QbrPostOkrPromotionStepProps {
