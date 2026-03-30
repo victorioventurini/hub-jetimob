@@ -63,8 +63,7 @@ export default function QbrPostPage() {
   const buSupabase = useBuScopedSupabase();
   usePageTitle('Pós-QBR');
 
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null, [activeCycles]);
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
   // Check qbr_status = 'done' or 'ready' (post can happen after meeting)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({

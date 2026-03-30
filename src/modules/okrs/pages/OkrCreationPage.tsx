@@ -96,12 +96,9 @@ export default function OkrCreationPage() {
     return teams.find(t => t.id === teamIdParam) || null;
   }, [teamIdParam, teams]);
   
-  // Get cycles
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get cycles (status-based)
+  const { activeQuarterlyCycle, activeCycle, planningCycles, isLoading: isLoadingCycles } = useActiveCycle();
+  const quarterlyCycle = activeQuarterlyCycle || activeCycle;
   
   // Page title
   usePageTitle(selectedTeam ? `Criar OKRs - ${selectedTeam.name}` : 'Criar OKRs');

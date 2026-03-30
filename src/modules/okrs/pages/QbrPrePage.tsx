@@ -94,12 +94,8 @@ export default function QbrPrePage() {
 
   usePageTitle(selectedTeam ? `Pré-QBR - ${selectedTeam.name}` : 'Pré-QBR');
 
-  // Cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(
-    () => activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
   // Validate qbr_status
   const { data: cycleData, isLoading: isLoadingCycleStatus } = useQuery({

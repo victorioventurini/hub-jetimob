@@ -109,12 +109,8 @@ export default function MbrPage() {
 
   usePageTitle('Monthly Business Review');
 
-  // Cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(
-    () => activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
   // Last completed MBR (for pending items)
   const { lastCompletedAt } = useLastCompletedSession('mbr');

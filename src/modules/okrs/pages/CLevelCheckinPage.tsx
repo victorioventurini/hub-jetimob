@@ -7,7 +7,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft, useLastCompletedSession, useActiveCycles } from '@/modules/okrs/hooks';
+import { useGenericWizardDraft, useLastCompletedSession, useActiveCycle } from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';

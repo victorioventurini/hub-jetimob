@@ -85,12 +85,8 @@ export default function LeaderPrepPage() {
   
   usePageTitle(selectedTeam ? `Preparação - ${selectedTeam.name}` : 'Preparação do Check-in');
   
-  // Get cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   
   // Draft persistence
   const {
