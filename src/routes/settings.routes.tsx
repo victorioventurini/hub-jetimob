@@ -63,6 +63,17 @@ export const settingsRoutes = (
     {/* BU Areas */}
     <Route path="/settings/areas" element={<SettingsRoute layout><AreasPage /></SettingsRoute>} />
     
+    {/* Ritual Calendar (BU Admin only) */}
+    <Route path="/settings/rituals" element={
+      <ProtectedRoute>
+        <BuRequiredRoute>
+          <BuAdminRoute>
+            <HubLayout><RitualCalendarPage /></HubLayout>
+          </BuAdminRoute>
+        </BuRequiredRoute>
+      </ProtectedRoute>
+    } />
+    
     {/* Partners (BU-scoped) */}
     <Route path="/settings/partners" element={<PartnersRoute><PartnersPage /></PartnersRoute>} />
     <Route path="/settings/partners/new" element={<PartnersRoute><PartnerFormPage /></PartnersRoute>} />

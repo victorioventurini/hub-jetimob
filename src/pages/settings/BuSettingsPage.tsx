@@ -81,6 +81,13 @@ export default function BuSettingsPage() {
                 title="Parceiros"
                 description="Gerenciar empresas parceiras ativas nesta unidade de negócio"
               />
+              <SettingsCard
+                to="/settings/rituals"
+                icon={CalendarDays}
+                iconBgColor="bg-status-blue-muted text-status-blue"
+                title="Calendário de Ritos"
+                description="Configurar cadências e acompanhar a aderência dos rituais de gestão"
+              />
             </div>
           </div>
         </div>
