@@ -88,6 +88,9 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
+        {/* Active Cycle Indicator */}
+        {!isHubPage && <ActiveCycleIndicator />}
+
         {/* Spacer */}
         <div className="flex-1" />
 
