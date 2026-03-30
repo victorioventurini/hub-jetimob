@@ -1,18 +1,14 @@
 /**
  * QbrBalanceStep - Step 1: Balanço do Ciclo
  * 
- * Exibe KRs do ciclo atual com estados finais (8 estados de KR).
- * Líder vê progresso, estado e análise de pace para cada KR.
- * Registra reflexão guiada sobre entregas e lacunas.
+ * Hierarchical view: Objectives → KRs → Linked Initiatives/Projects/Milestones.
+ * Unlinked projects appear at the bottom.
  */
 
 import { useMemo } from 'react';
-import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
@@ -23,10 +19,9 @@ import {
 } from '../shared';
 import {
   KR_STATE_CONFIG,
-  calculateKrState,
   type KrState,
-  type CalculateKrStateParams,
 } from '@/modules/okrs/hooks/useKrStateInsights';
+import { UnlinkedProjectsList } from './UnlinkedProjectsList';
 import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -42,6 +37,12 @@ export interface QbrBalanceStepProps {
   teamId?: string;
 }
 
+interface ObjectiveGroup {
+  objectiveId: string;
+  objectiveTitle: string;
+  krs: QbrPreDraftData['krFinalStates'];
+}
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -53,7 +54,24 @@ export function QbrBalanceStep({
   onContinue,
   teamId,
 }: QbrBalanceStepProps) {
-  // Group by state for summary
+  // Group KRs by objective
+  const objectiveGroups = useMemo(() => {
+    const map = new Map<string, ObjectiveGroup>();
+    for (const kr of krFinalStates) {
+      const key = kr.objectiveId || 'unknown';
+      if (!map.has(key)) {
+        map.set(key, {
+          objectiveId: kr.objectiveId,
+          objectiveTitle: kr.objectiveTitle || 'Objetivo',
+          krs: [],
+        });
+      }
+      map.get(key)!.krs.push(kr);
+    }
+    return Array.from(map.values());
+  }, [krFinalStates]);
+
+  // State summary for score cards
   const stateSummary = useMemo(() => {
     const summary: Record<KrState, number> = {
       not_started: 0, healthy: 0, stagnant: 0, at_risk: 0,
@@ -68,6 +86,9 @@ export function QbrBalanceStep({
 
   const totalKrs = krFinalStates.length;
   const achievedCount = stateSummary.achieved + stateSummary.exceeded;
+
+  // Collect all KR ids for unlinked projects filtering
+  const allKrIds = useMemo(() => krFinalStates.map(kr => kr.krId), [krFinalStates]);
 
   return (
     <WizardStepScaffold
@@ -124,44 +145,60 @@ export function QbrBalanceStep({
           </Card>
         </div>
 
-        {/* KR list */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground">Key Results</h4>
-          {krFinalStates.map((kr) => {
-            const state = (kr.state as KrState) || 'not_started';
-            const config = KR_STATE_CONFIG[state];
-            const Icon = config.icon;
+        {/* Objectives → KRs hierarchy */}
+        <div className="space-y-4">
+          {objectiveGroups.map((group) => (
+            <Card key={group.objectiveId}>
+              <CardContent className="p-4 space-y-3">
+                {/* Objective header */}
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary shrink-0" />
+                  <p className="text-sm font-semibold truncate">{group.objectiveTitle}</p>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {group.krs.length} KR{group.krs.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
 
-            return (
-              <Card key={kr.krId}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className={cn('p-1.5 rounded-md shrink-0', config.bgClass)}>
-                      <Icon className={cn('h-4 w-4', config.colorClass)} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{kr.krTitle}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="outline" className={cn('text-xs', config.colorClass)}>
-                          {config.label}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {Math.round(kr.finalProgress)}% progresso
-                        </span>
-                        {kr.paceStatus && (
-                          <span className="text-xs text-muted-foreground">
-                            · {kr.paceStatus}
-                          </span>
-                        )}
+                {/* KRs for this objective */}
+                <div className="space-y-2 pl-2 border-l-2 border-primary/20 ml-2">
+                  {group.krs.map((kr) => {
+                    const state = (kr.state as KrState) || 'not_started';
+                    const config = KR_STATE_CONFIG[state];
+                    const Icon = config.icon;
+
+                    return (
+                      <div key={kr.krId} className="pl-3 py-2">
+                        <div className="flex items-start gap-3">
+                          <div className={cn('p-1.5 rounded-md shrink-0', config.bgClass)}>
+                            <Icon className={cn('h-4 w-4', config.colorClass)} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{kr.krTitle}</p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <Badge variant="outline" className={cn('text-xs', config.colorClass)}>
+                                {config.label}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {Math.round(kr.finalProgress)}% progresso
+                              </span>
+                              {kr.paceStatus && (
+                                <span className="text-xs text-muted-foreground">
+                                  · {kr.paceStatus}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Linked initiatives, projects & milestones — expanded by default */}
+                        <KrLinkedDetails krId={kr.krId} defaultExpanded />
                       </div>
-                    </div>
-                  </div>
-                  {/* Linked initiatives & projects — colapsado por padrão */}
-                  <KrLinkedDetails krId={kr.krId} />
-                </CardContent>
-              </Card>
-            );
-          })}
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
           {krFinalStates.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">
               Nenhum KR encontrado para o ciclo atual.
@@ -169,8 +206,10 @@ export function QbrBalanceStep({
           )}
         </div>
 
-        {/* Projetos do time — bloco aditivo */}
-        {teamId && <ProjectsSummary teamId={teamId} mode="detail" className="mt-2" />}
+        {/* Unlinked projects & milestones */}
+        {teamId && (
+          <UnlinkedProjectsList teamId={teamId} linkedKrIds={allKrIds} />
+        )}
       </div>
     </WizardStepScaffold>
   );
