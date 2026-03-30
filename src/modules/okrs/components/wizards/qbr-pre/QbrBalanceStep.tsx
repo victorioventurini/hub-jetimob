@@ -164,6 +164,9 @@ export function QbrBalanceStep({
             </p>
           )}
         </div>
+
+        {/* Projetos do time — bloco aditivo */}
+        {teamId && <ProjectsSummary teamId={teamId} mode="detail" className="mt-2" />}
       </div>
     </WizardStepScaffold>
   );
