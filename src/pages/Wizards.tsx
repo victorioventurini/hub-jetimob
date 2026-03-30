@@ -8,7 +8,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { HubLayout } from '@/components/layout/HubLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
