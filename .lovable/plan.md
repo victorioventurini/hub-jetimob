@@ -1,46 +1,61 @@
 
 
-## Correção: Loop infinito para usuários sem BU
+# Plano: Step "Projetos" no Collaborator Check-in Wizard
 
-### Problema
+## Validação TCR & Docs Canônicos ✓
 
-No `SelectBu.tsx` (linhas 77-80), quando `userBus.length === 0`, o `useEffect` redireciona para `/`. Porém `/` usa `BuRequiredRoute` que redireciona de volta para `/select-bu` → **loop infinito**.
+| Doc | Status | Notas |
+|-----|--------|-------|
+| TCR v3.20.0 | ✓ | Projects v1.4, `milestone_status` enum existe |
+| WIZARD_DEVELOPMENT_GUIDE | ✓ | `WizardStepHeader` + `WizardStepFooter`, optional step pattern |
+| BU_SCOPED_SUPABASE_RULES | ✓ | Usar `useBuScopedSupabase()` + `.eq('bu_id', buId)` |
+| QUERY_KEYS_STANDARD | ✓ | Nova key em `projectsKeys` |
+| IDENTITY_CONVENTION | ✓ | `effectiveUserId` = `profiles.id` |
+| wizard-ritual-integration-standard | ✓ | Integração aditiva, sem alterar draft |
 
-```text
-/  →  BuRequiredRoute (sem BU)  →  /select-bu  →  useEffect (0 BUs)  →  /  →  ...
+## Alterações
+
+### 1. `src/lib/queryKeys/projects.ts`
+Adicionar key:
+```ts
+myMilestones: (buId: string | null, profileId: string | null) =>
+  ['projects', 'my-milestones', buId, profileId] as const,
 ```
 
-A página já possui o estado vazio correto (linhas 314-323) com a mensagem "Entre em contato com um administrador", mas nunca é exibido por causa do redirect.
+### 2. Novo: `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
 
-### Confirmação via TCR
+**Props:** `effectiveUserId`, `onContinue`, `onBack`, `onSkip`
 
-- **Modelo de autenticação (TCR §1.2):** Login via Magic Link valida domínio + perfil pré-cadastrado. Usuários sem membership em nenhuma BU são um caso válido (perfil existe mas sem `bu_user_memberships`).
-- **Fluxo BU (BuContext):** `BuRequiredRoute` já trata corretamente o caso `userBus.length === 0` redirecionando para `/select-bu`. A página deve permanecer lá.
+**Query:** Busca projetos ativos onde o usuário é owner do projeto OU owner de milestones pendentes. Duas queries paralelas + merge/deduplica por `project.id`. Usa `useBuScopedSupabase()` + `useBu()` para BU filtering.
 
-### Alteração
+**UI:**
+- `WizardStepHeader` — ícone `FolderKanban`, variant `purple`, título "Projetos"
+- Para cada projeto: nome + `ProjectHealthBadge` + `ProjectProgressBar`
+- Dentro de cada projeto: milestones pendentes com `MilestoneStatusSelect` inline
+- Milestones `done` são colapsados/ocultos
+- Empty state: "Nenhum projeto sob sua responsabilidade"
 
-**Arquivo:** `src/pages/SelectBu.tsx` — linhas 70-82
+**Mutation:** `useUpdateMilestone` (fire-and-forget com fail-safe — try/catch + toast.warning)
 
-Remover o bloco `else if (userBus.length === 0)` do `useEffect`:
+**Footer:** `WizardOptionalStepFooter` (skip allowed)
 
-```typescript
-useEffect(() => {
-  if (isLoading) return;
-  if (userBus.length === 1) {
-    selectBu(userBus[0].bu_id);
-    navigate(returnTo, { replace: true });
-  }
-  // userBus.length === 0: permanece na página e exibe estado vazio
-}, [isLoading, userBus, selectBu, navigate, returnTo]);
-```
+**Cache invalidation:** `useUpdateMilestone` já invalida `projectsKeys.milestones()`, `listPrefix()`, `detail()`. Adicionar invalidação de `projectsKeys.forWizard()` no onSuccess.
 
-Nenhum outro arquivo precisa ser alterado.
+### 3. Editar: `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
 
-### Resultado
+- Tipo `WizardStep`: adicionar `'projects'`
+- `WIZARD_STEPS`: inserir `{ id: 'projects', label: 'Projetos', description: 'Atualização de marcos' }` entre `kpis` e `initiatives`
+- `STEP_ORDER`: `['context', 'checkin', 'kpis', 'projects', 'initiatives', 'reflection', 'summary']`
+- Import `CollaboratorProjectsStep`
+- `renderStepContent()`: case `'projects'` renderiza `<CollaboratorProjectsStep effectiveUserId={effectiveUserId} onContinue={goNext} onBack={goBack} onSkip={goNext} />`
 
-| Cenário | Comportamento |
-|---------|--------------|
-| 0 BUs | Permanece em `/select-bu` com mensagem de contato |
-| 1 BU | Auto-seleciona e redireciona (sem mudança) |
-| N BUs | Exibe lista de seleção (sem mudança) |
+### 4. Editar: `src/modules/okrs/components/wizards/collaborator/index.ts`
+
+Adicionar export do `CollaboratorProjectsStep`.
+
+## Não altera
+
+- Draft state (`CollaboratorDraftData`) — sem campos novos, mudanças de milestone são persistidas imediatamente
+- Steps existentes — nenhuma modificação
+- Testes existentes — steps anteriores não mudam de índice (são referenciados por id)
 
