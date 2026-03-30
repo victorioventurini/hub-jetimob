@@ -14,7 +14,7 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { AdminContextSwitcher } from '@/modules/okrs/components/wizards/shared/AdminContextSwitcher';
 import { 
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
   useUserKrsForWizard,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
