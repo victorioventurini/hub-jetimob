@@ -158,12 +158,8 @@ export default function CLevelCheckinPage() {
     }
   }, [discardDraft]);
   
-  // Get active cycles for summary trigger
-  const { data: activeCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get active cycles for summary trigger (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
 
   const handleComplete = useCallback(async () => {
     const completedSessionId = await clearDraft();
