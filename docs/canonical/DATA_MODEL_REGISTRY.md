@@ -257,7 +257,10 @@ Lista completa das tabelas no schema `public`:
 | `partner_contact_status` | `active`, `inactive` |
 | `partner_service_status` | `active`, `inactive` |
 | `permission_effect` | `allow`, `deny` |
+| `permission_migration_status` | `pending`, `migrated`, `failed` |
 | `permission_scope` | `self`, `self_or_owner`, `team`, `team_tree`, `squad`, `bu`, `global`, `public` |
+| `project_impact` | `high`, `medium`, `low` |
+| `project_status` | `planning`, `in_progress`, `completed`, `on_hold`, `cancelled` |
 | `squad_product` | `crm`, `cms`, `erp` |
 | `squad_role` | `product_owner`, `tech_lead`, `ux_ui_lead`, `member` |
 | `team_status` | `active`, `inactive` |
@@ -266,9 +269,12 @@ Lista completa das tabelas no schema `public`:
 | `ticket_participant_role` | `requester`, `assignee`, `watcher` |
 | `ticket_participant_type` | `internal_user`, `partner_contact` |
 | `ticket_status` | `waiting_client`, `open`, `in_progress`, `waiting`, `resolved`, `closed` |
+| `ticket_type` | `request`, `incident`, `question` |
+| `ticket_visibility` | `public`, `internal` |
+| `wizard_session_status` | `in_progress`, `completed` |
 | `work_mode` | `remote`, `hybrid`, `onsite` |
 
-**Total:** 70 enums
+**Total:** 85 enums
 
 ---
 
