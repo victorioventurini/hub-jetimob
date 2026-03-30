@@ -33,7 +33,7 @@ export default function ProjectsPage() {
     customDescription: 'Gerencie projetos estratégicos, acompanhe milestones e vincule a KRs.',
   });
 
-  const navigate = useNavigate();
+  
   const { profileId, realProfileId } = useIdentity();
   const { currentBuId } = useBu();
   const [dialogOpen, setDialogOpen] = useState(false);
