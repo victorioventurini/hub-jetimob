@@ -18,22 +18,22 @@ import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useGanttData } from '../hooks/useGanttData';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
-import { ProjectCard } from '../components/ProjectCard';
 import { ProjectFiltersBar } from '../components/ProjectFiltersBar';
+import { ProjectsTable } from '../components/ProjectsTable';
+import { ProjectStatusSummary } from '../components/ProjectStatusSummary';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectViewToggle';
 import { ProjectGanttChart } from '../components/ProjectGanttChart';
 import type { ProjectFilters, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SavedLinksPopover } from '@/shared/saved-links';
-import { useNavigate } from 'react-router-dom';
 
 export default function ProjectsPage() {
   usePageTitle('Projetos', {
     customDescription: 'Gerencie projetos estratégicos, acompanhe milestones e vincule a KRs.',
   });
 
-  const navigate = useNavigate();
+  
   const { profileId, realProfileId } = useIdentity();
   const { currentBuId } = useBu();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -124,12 +124,18 @@ export default function ProjectsPage() {
           />
         </ViewOptionsBar>
 
+        {/* Status Summary */}
+        {!isLoading && !error && projects && projects.length > 0 && (
+          <ProjectStatusSummary projects={projects} />
+        )}
+
         {/* Content */}
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-lg" />
-            ))}
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -138,15 +144,7 @@ export default function ProjectsPage() {
         ) : viewState.value === 'gantt' ? (
           <ProjectGanttChart items={ganttItems} excludedCount={ganttExcluded} />
         ) : projects && projects.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={(id) => navigate(`/projects/${id}`)}
-              />
-            ))}
-          </div>
+          <ProjectsTable projects={projects} />
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Nenhum projeto encontrado.</p>
