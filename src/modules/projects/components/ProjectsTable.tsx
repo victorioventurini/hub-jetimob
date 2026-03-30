@@ -154,6 +154,16 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                   </div>
                 </TableCell>
 
+                {/* Milestones count */}
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                    <Milestone className="h-3.5 w-3.5" />
+                    <span>
+                      {project.milestones_done}/{project.milestones_total}
+                    </span>
+                  </div>
+                </TableCell>
+
                 {/* Due date */}
                 <TableCell>
                   {project.due_date ? (
