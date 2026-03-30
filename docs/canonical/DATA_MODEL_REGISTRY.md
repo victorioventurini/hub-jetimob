@@ -325,6 +325,9 @@ Lista completa das tabelas no schema `public`:
 | `bu_user_permission_templates_v2` | `user_id` | ✅ → `profiles.id` | Usuário |
 | `bu_user_permission_templates_v2` | `created_by` | ✅ → `profiles.id` | Criador |
 | `permission_audit_log` | `target_user_id` | ❌ (inferido) | Alvo |
+| `projects` | `owner_id` | ✅ → `profiles.id` | Owner do projeto (v3.16.0) |
+| `project_comments` | `author_user_id` | ✅ → `profiles.id` | Autor do comentário (v3.20.0) |
+| `ritual_cadences` | `responsible_profile_id` | ✅ → `profiles.id` | Responsável pela cadência (v3.21.0) |
 
 ### Colunas que armazenam `auth.users.id` (AUTH_USER_ID)
 
