@@ -1,77 +1,64 @@
 
 
-## Problema
+## Problema: `jetimob.com` está em duas BUs
 
-A sessão do Pré-QBR foi preenchida em 30/03 mas a ocorrência planejada era 18/03 — 12 dias de diferença. A janela de associação automática é fixa em **±7 dias**, insuficiente para ritos de menor frequência (quarterly, semester).
+A função `get_bu_by_email_domain` retorna `LIMIT 1` sem `ORDER BY`, e o domínio `jetimob.com` está nas `allowed_email_domains` de **ambas** Jetimob e Jet Experience. O resultado é não-determinístico — qualquer uma pode ser retornada.
 
-**Dados confirmados:**
-- Ocorrência `45e28e21` → planned_date: `2026-03-18`, status: `missed`
-- Sessões `806b7e79` e `a3ac50ee` → completed em `2026-03-30`, sem vínculo
+Além disso, o `handle_new_user` sobrescreve o `bu_id` do profile pré-existente com o valor retornado pela função, **ignorando a BU original** que foi atribuída na importação.
 
 ---
 
-## Solução: Janela dinâmica por frequência
+## Solução (2 partes)
 
-Em vez de fixar ±7 dias para todos os ritos, a janela de associação será proporcional à frequência da cadência:
+### 1. Corrigir `handle_new_user`: respeitar BU do profile pré-existente
 
-| Frequência | Janela |
-|---|---|
-| weekly | ±7 dias |
-| biweekly | ±10 dias |
-| monthly | ±15 dias |
-| quarterly | ±30 dias |
-| semester | ±45 dias |
+Quando um profile já existe (importado antes do primeiro login), o trigger **não deve sobrescrever** o `bu_id`. O profile foi criado com uma BU específica por um admin — essa é a fonte de verdade.
 
----
+**Mudança na linha 81 do trigger:**
+```sql
+-- ANTES:
+SET user_id = NEW.id,
+    onboarding_completed = false,
+    bu_id = v_bu_id,  -- ← sobrescreve sempre
 
-## Plano de implementação
-
-### 1. Atualizar lógica de auto-associação em `useWizardSession.ts`
-
-No `onSuccess` da mutation `completeSession` (linhas 231-284):
-
-- Após obter `session.wizard_type` e `session.bu_id`, buscar a `ritual_cadences.frequency` da cadência correspondente
-- Calcular a janela dinamicamente com base na frequência
-- Usar essa janela no filtro `gte/lte` do `planned_date` (substituindo o hardcoded ±7)
-- Priorizar a ocorrência mais próxima da data atual (já faz isso via `order + limit 1`)
-
-```text
-Fluxo atual:
-  session completa → busca occurrence ±7d → vincula
-
-Fluxo novo:
-  session completa → busca cadence.frequency → calcula janela → busca occurrence ±Nd → vincula
+-- DEPOIS:
+SET user_id = NEW.id,
+    onboarding_completed = false,
+    bu_id = profiles.bu_id,  -- ← mantém o original do profile
 ```
 
-### 2. Corrigir dados existentes
+E o membership criado na sequência deve usar o `bu_id` **do profile existente**, não o da função de domínio:
 
-- Vincular manualmente as sessões de Pré-QBR (`806b7e79`, `a3ac50ee`) à ocorrência de março (`45e28e21`) — via update direto
-- Atualizar status da ocorrência de `missed` para `completed_late`
+```sql
+-- Buscar bu_id do profile existente
+SELECT bu_id INTO v_bu_id FROM profiles WHERE id = v_existing_profile_id;
+```
 
-### 3. Arquivos modificados
+### 2. Remover `jetimob.com` das domains de Jet Experience
 
-- `src/modules/okrs/hooks/useWizardSession.ts` — janela dinâmica na auto-associação
+O domínio `jetimob.com` não deveria estar em Jet Experience. Jet Experience tem seu próprio domínio `jetxp.com.br`.
+
+**Migration:**
+```sql
+UPDATE bu_units 
+SET allowed_email_domains = ARRAY['jetxp.com.br']
+WHERE id = 'f3d2d8a5-2143-42f0-8738-9b51fb74b49f';
+```
+
+Isso elimina a ambiguidade na raiz, garantindo que `jetimob.com` → Jetimob sempre.
 
 ---
 
-## Detalhes técnicos
+## Arquivos modificados
 
-A lookup da frequência será feita com uma query adicional leve:
+1. **Migration SQL** — corrige `handle_new_user` + remove domínio duplicado de Jet Experience
+2. Nenhuma mudança no frontend
 
-```typescript
-const { data: cadence } = await supabase
-  .from('ritual_cadences')
-  .select('frequency')
-  .eq('wizard_type', session.wizard_type)
-  .eq('bu_id', session.bu_id)
-  .eq('is_active', true)
-  .maybeSingle();
+---
 
-const windowDays = {
-  weekly: 7, biweekly: 10, monthly: 15,
-  quarterly: 30, semester: 45
-}[cadence?.frequency] ?? 7;
-```
+## Impacto
 
-Isso mantém o comportamento atual para ritos semanais e amplia a janela proporcionalmente para ritos menos frequentes.
+- Futuros logins de profiles importados manterão a BU correta
+- `jetimob.com` terá resolução determinística (apenas Jetimob)
+- Nenhum dado existente precisa correção adicional (Lívia já foi corrigida manualmente)
 
