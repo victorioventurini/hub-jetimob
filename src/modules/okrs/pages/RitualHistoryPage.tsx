@@ -36,6 +36,7 @@ import {
   type RitualHistoryItem,
   type RitualHistoryFilters,
 } from '../hooks/useRitualHistory';
+import { useOccurrenceBySession } from '../hooks/useRitualOccurrences';
 import { useManageableTeamsFlat } from '../hooks';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
@@ -263,6 +264,7 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
   const [isExpanded, setIsExpanded] = useState(autoExpand);
   const hasDecisions = ritual.decisions.length > 0;
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
+  const { data: occurrence } = useOccurrenceBySession(ritual.id);
 
   // Auto-expand when deep-linked
   useEffect(() => {
@@ -300,6 +302,19 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                   <span className="truncate max-w-[150px]">{ritual.teamName}</span>
                 </span>
               )}
+
+              {/* Planned date badge */}
+              {occurrence ? (
+                <Badge variant="outline" className="shrink-0 text-[10px] gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  Previsto {format(parseISO(occurrence.planned_date), 'dd/MM', { locale: ptBR })}
+                  {occurrence.actual_date && ` · Realizado ${format(parseISO(occurrence.actual_date), 'dd/MM', { locale: ptBR })}`}
+                </Badge>
+              ) : ritual.completedAt ? (
+                <Badge variant="outline" className="shrink-0 text-[10px] text-muted-foreground">
+                  Execução avulsa
+                </Badge>
+              ) : null}
 
               {/* Spacer */}
               <div className="flex-1 min-w-0" />

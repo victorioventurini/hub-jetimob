@@ -7345,6 +7345,187 @@ export type Database = {
           },
         ]
       }
+      ritual_cadences: {
+        Row: {
+          bu_id: string
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          end_date: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          month_week_ordinal: number | null
+          responsible_profile_id: string | null
+          start_date: string
+          team_id: string | null
+          updated_at: string
+          wizard_type: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          month_week_ordinal?: number | null
+          responsible_profile_id?: string | null
+          start_date: string
+          team_id?: string | null
+          updated_at?: string
+          wizard_type: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          month_week_ordinal?: number | null
+          responsible_profile_id?: string | null
+          start_date?: string
+          team_id?: string | null
+          updated_at?: string
+          wizard_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_cadences_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_cadences_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_cadences_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_cadences_responsible_profile_id_fkey"
+            columns: ["responsible_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_cadences_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_cadences_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ritual_occurrences: {
+        Row: {
+          actual_date: string | null
+          bu_id: string
+          cadence_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          planned_date: string
+          rescheduled_from: string | null
+          rescheduled_to: string | null
+          session_id: string | null
+          status: string
+          team_id: string | null
+          updated_at: string
+          wizard_type: string
+        }
+        Insert: {
+          actual_date?: string | null
+          bu_id: string
+          cadence_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          planned_date: string
+          rescheduled_from?: string | null
+          rescheduled_to?: string | null
+          session_id?: string | null
+          status?: string
+          team_id?: string | null
+          updated_at?: string
+          wizard_type: string
+        }
+        Update: {
+          actual_date?: string | null
+          bu_id?: string
+          cadence_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          planned_date?: string
+          rescheduled_from?: string | null
+          rescheduled_to?: string | null
+          session_id?: string | null
+          status?: string
+          team_id?: string | null
+          updated_at?: string
+          wizard_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_occurrences_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_occurrences_cadence_id_fkey"
+            columns: ["cadence_id"]
+            isOneToOne: false
+            referencedRelation: "ritual_cadences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_occurrences_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "okr_wizard_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_occurrences_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_occurrences_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_memberships: {
         Row: {
           bu_id: string
@@ -10338,6 +10519,7 @@ export type Database = {
         Returns: string
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      mark_missed_ritual_occurrences: { Args: never; Returns: number }
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean

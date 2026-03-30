@@ -54,6 +54,7 @@ interface MaintenanceResult {
   perf_metrics_collected: boolean;
   recommendation_notifications_sent: number;
   recommendation_notifications_checked: number;
+  ritual_occurrences_missed: number;
 }
 
 interface ExecutionResult {
@@ -150,7 +151,8 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     perf_snapshots_cleaned: 0,
     perf_metrics_collected: false,
     recommendation_notifications_sent: 0,
-    recommendation_notifications_checked: 0
+    recommendation_notifications_checked: 0,
+    ritual_occurrences_missed: 0,
   };
 
   try {
@@ -229,6 +231,17 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     }
   } catch {
     console.log("[cron-dispatcher] process_recommendation_expiry_notifications RPC not available");
+  }
+
+  // Mark missed ritual occurrences
+  try {
+    const { data: missedCount, error: missedErr } = await supabase.rpc("mark_missed_ritual_occurrences");
+    if (!missedErr) {
+      result.ritual_occurrences_missed = missedCount || 0;
+      console.log(`[cron-dispatcher] Marked ${result.ritual_occurrences_missed} ritual occurrences as missed`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] mark_missed_ritual_occurrences RPC not available");
   }
 
   return result;

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
-import { Shield, Bell, ChevronRight, Building2, Handshake } from "lucide-react";
+import { Shield, Bell, ChevronRight, Building2, Handshake, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -80,6 +80,13 @@ export default function BuSettingsPage() {
                 iconBgColor="bg-status-purple-muted text-status-purple"
                 title="Parceiros"
                 description="Gerenciar empresas parceiras ativas nesta unidade de negócio"
+              />
+              <SettingsCard
+                to="/settings/rituals"
+                icon={CalendarDays}
+                iconBgColor="bg-status-blue-muted text-status-blue"
+                title="Calendário de Ritos"
+                description="Configurar cadências e acompanhar a aderência dos rituais de gestão"
               />
             </div>
           </div>
