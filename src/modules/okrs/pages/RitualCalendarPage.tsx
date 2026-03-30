@@ -614,10 +614,14 @@ function OccurrenceSheet({
   occurrence,
   open,
   onOpenChange,
+  expectedCount,
+  completedCount,
 }: {
   occurrence: RitualOccurrence;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  expectedCount?: number;
+  completedCount?: number;
 }) {
   const { mutate: reschedule, isPending } = useRescheduleOccurrence();
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>();
