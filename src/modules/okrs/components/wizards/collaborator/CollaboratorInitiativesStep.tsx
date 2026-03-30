@@ -80,7 +80,7 @@ export function CollaboratorInitiativesStep({
 
   // Fetch projects linked to KRs
   const { data: projectsByKrData = [] } = useQuery({
-    queryKey: [...projectsKeys.all, 'by-krs', krIds],
+    queryKey: [...projectsKeys.allPrefix(), 'by-krs', krIds],
     queryFn: async () => {
       if (krIds.length === 0) return [];
 
