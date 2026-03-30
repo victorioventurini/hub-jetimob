@@ -53,6 +53,7 @@ export function QbrPreSummary({
         <WizardStepHeader
           icon={Send}
           title="Resumo e Envio"
+          tooltip="qbr-pre-summary"
           description="Revise antes de submeter — os dados serão congelados"
           variant="green"
         />

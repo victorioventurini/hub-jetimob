@@ -74,6 +74,7 @@ export function QbrBalanceStep({
         <WizardStepHeader
           icon={BarChart3}
           title="Balanço do Ciclo"
+          tooltip="qbr-balance"
           description="Revise o desempenho dos KRs do ciclo que está encerrando"
           variant="primary"
           badge={`${totalKrs} KRs`}

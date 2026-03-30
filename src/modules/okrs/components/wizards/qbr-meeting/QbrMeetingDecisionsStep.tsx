@@ -45,6 +45,7 @@ export function QbrMeetingDecisionsStep({
         <WizardStepHeader
           icon={Gavel}
           title="Decisões Estratégicas"
+          tooltip="qbr-meeting-decisions"
           description="Toda decisão precisa de dono e prazo"
           variant="primary"
           badge={`${decisions.length} decisão(ões)`}

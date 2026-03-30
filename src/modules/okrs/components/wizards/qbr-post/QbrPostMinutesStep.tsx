@@ -67,6 +67,7 @@ export function QbrPostMinutesStep({
         <WizardStepHeader
           icon={FileText}
           title="Ata Executiva"
+          tooltip="qbr-post-minutes"
           description="Registre a síntese e encerre o ciclo QBR"
           variant="green"
         />

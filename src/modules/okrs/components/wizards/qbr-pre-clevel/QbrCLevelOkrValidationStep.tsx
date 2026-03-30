@@ -109,6 +109,7 @@ export function QbrCLevelOkrValidationStep({
           <WizardStepHeader
             icon={ClipboardCheck}
             title="Validação de OKRs"
+            tooltip="qbr-clevel-okr-validation"
             description="Nenhuma proposta de OKR encontrada"
             variant="amber"
           />
@@ -128,6 +129,7 @@ export function QbrCLevelOkrValidationStep({
         <WizardStepHeader
           icon={ClipboardCheck}
           title="Validação de OKRs"
+            tooltip="qbr-clevel-okr-validation"
           description={`Time ${currentIndex + 1} de ${teamProposals.length}`}
           variant="amber"
           badge={`${calibrationFlags.length} flags`}

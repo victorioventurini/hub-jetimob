@@ -63,6 +63,7 @@ export function QbrMeetingOpeningStep({
         <WizardStepHeader
           icon={Presentation}
           title="Abertura do QBR"
+          tooltip="qbr-meeting-opening"
           description="Contexto e direcionamentos estratégicos"
           variant="primary"
           badge={`${leaderSummaryCount} times`}

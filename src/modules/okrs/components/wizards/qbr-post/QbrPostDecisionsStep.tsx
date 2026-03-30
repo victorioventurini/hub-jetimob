@@ -48,6 +48,7 @@ export function QbrPostDecisionsStep({
         <WizardStepHeader
           icon={Gavel}
           title="Decisões Complementares"
+          tooltip="qbr-post-decisions"
           description="Decisões da reunião + novas decisões pós-QBR"
           variant="primary"
           badge={`${totalDecisions} total`}

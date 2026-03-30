@@ -77,6 +77,7 @@ export function QbrPostCommitmentsStep({
         <WizardStepHeader
           icon={Handshake}
           title="Compromissos Formalizados"
+          tooltip="qbr-post-commitments"
           description="Dependências cross-área com prazo definido"
           variant="purple"
           badge={`${commitments.length} compromisso(s)`}
