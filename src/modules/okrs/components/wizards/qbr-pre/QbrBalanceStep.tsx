@@ -7,6 +7,7 @@
  */
 
 import { useMemo } from 'react';
+import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
