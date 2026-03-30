@@ -77,7 +77,7 @@ const fixedItems = [
 
 // Itens condicionais baseados em acesso a módulos
 const conditionalItems = [
-  { name: "Rituais", href: "/wizards", icon: Rocket, requiresModule: "okrs" },
+  { name: "Rituais", href: "/rituals", icon: Rocket, requiresModule: "okrs" },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)

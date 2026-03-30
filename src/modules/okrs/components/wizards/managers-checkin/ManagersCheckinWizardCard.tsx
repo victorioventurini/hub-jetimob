@@ -78,7 +78,7 @@ export function ManagersCheckinWizardCard({
           className="w-full gap-2"
           variant="secondary"
         >
-          <Link to="/okrs/managers-checkin">
+          <Link to="/rituals/managers-checkin">
             <Play className="h-4 w-4" />
             Iniciar Alinhamento
           </Link>

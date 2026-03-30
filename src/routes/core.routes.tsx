@@ -20,7 +20,6 @@ const Modules = lazy(() => import('@/pages/Modules'));
 const SelectBu = lazy(() => import('@/pages/SelectBu'));
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
 const VicTestPage = lazy(() => import('@/pages/VicTestPage'));
-const VicTestPage = lazy(() => import('@/pages/VicTestPage'));
 const DevDocsPage = lazy(() => import('@/pages/DevDocsPage'));
 const NotificationsPage = lazy(() => import('@/pages/me/NotificationsPage'));
 const ResolveContextPage = lazy(() => import('@/pages/ResolveContextPage'));
