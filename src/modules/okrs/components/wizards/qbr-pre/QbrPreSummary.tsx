@@ -45,7 +45,7 @@ export function QbrPreSummary({
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
   const hasLearnings = learnings.whatWorked.trim() || learnings.whatDidntWork.trim() || learnings.debts.trim();
-  const hasProposedOkrs = proposedOkrs?.objective?.title?.trim();
+  const hasProposedOkrs = proposedOkrs.length > 0;
 
   return (
     <WizardStepScaffold
