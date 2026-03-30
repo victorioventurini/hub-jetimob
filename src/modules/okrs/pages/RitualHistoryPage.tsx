@@ -303,6 +303,19 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                 </span>
               )}
 
+              {/* Planned date badge */}
+              {occurrence ? (
+                <Badge variant="outline" className="shrink-0 text-[10px] gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  Previsto {format(parseISO(occurrence.planned_date), 'dd/MM', { locale: ptBR })}
+                  {occurrence.actual_date && ` · Realizado ${format(parseISO(occurrence.actual_date), 'dd/MM', { locale: ptBR })}`}
+                </Badge>
+              ) : ritual.completedAt ? (
+                <Badge variant="outline" className="shrink-0 text-[10px] text-muted-foreground">
+                  Execução avulsa
+                </Badge>
+              ) : null}
+
               {/* Spacer */}
               <div className="flex-1 min-w-0" />
 
