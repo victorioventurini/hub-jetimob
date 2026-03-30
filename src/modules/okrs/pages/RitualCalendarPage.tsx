@@ -88,9 +88,8 @@ export default function RitualCalendarPage() {
   const [activeTab, setActiveTab] = useUrlTab('cadences');
 
   return (
-    <HubLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <PageHeader
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <PageHeader
           title="Calendário de Ritos"
           description="Configure cadências de rituais e acompanhe a aderência dos times."
           breadcrumbs={[
