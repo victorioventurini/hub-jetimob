@@ -131,8 +131,8 @@ describe('validateKrToKr', () => {
 
 describe('OKR Limits', () => {
   describe('OKR_LIMITS constants', () => {
-    it('should have MAX_OBJECTIVES_PER_TEAM = 3', () => {
-      expect(OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM).toBe(3);
+    it('should have MAX_OBJECTIVES_PER_TEAM = 4', () => {
+      expect(OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM).toBe(4);
     });
 
     it('should have MAX_KRS_PER_OBJECTIVE = 3', () => {
@@ -149,7 +149,7 @@ describe('OKR Limits', () => {
       const result = validateObjectivesLimit(0);
       expect(result.isWithinLimit).toBe(true);
       expect(result.currentCount).toBe(0);
-      expect(result.maxCount).toBe(3);
+      expect(result.maxCount).toBe(4);
       expect(result.warningMessage).toBeUndefined();
     });
 
@@ -158,11 +158,9 @@ describe('OKR Limits', () => {
       expect(result.isWithinLimit).toBe(true);
     });
 
-    it('should NOT be within limit when count is 3', () => {
+    it('should be within limit when count is 3', () => {
       const result = validateObjectivesLimit(3);
-      expect(result.isWithinLimit).toBe(false);
-      expect(result.warningMessage).toContain('Limite atingido');
-      expect(result.warningMessage).toContain('3/3');
+      expect(result.isWithinLimit).toBe(true);
     });
 
     it('should NOT be within limit when count is 4', () => {

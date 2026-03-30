@@ -149,7 +149,7 @@ export function validateKrToKr(
  * Based on best practices to maintain focus
  */
 export const OKR_LIMITS = {
-  MAX_OBJECTIVES_PER_TEAM: 3,
+  MAX_OBJECTIVES_PER_TEAM: 4,
   MAX_KRS_PER_OBJECTIVE: 3,
   MAX_CONTRIBUTIONS_PER_KR: 3,
 } as const;
