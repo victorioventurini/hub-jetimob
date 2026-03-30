@@ -650,6 +650,22 @@ function OccurrenceSheet({
             </div>
           )}
 
+          {/* Collaborator check-in participant counts */}
+          {expectedCount != null && expectedCount > 0 && (
+            <div className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Participantes esperados</span>
+                <span className="font-medium">{completedCount ?? 0} de {expectedCount}</span>
+              </div>
+              <Progress value={((completedCount ?? 0) / expectedCount) * 100} className="h-2" />
+              {(completedCount ?? 0) < expectedCount && occurrence.status === 'missed' && (
+                <p className="text-xs text-destructive">
+                  {expectedCount - (completedCount ?? 0)} colaborador(es) não realizou(aram) o check-in.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Data prevista</span>
