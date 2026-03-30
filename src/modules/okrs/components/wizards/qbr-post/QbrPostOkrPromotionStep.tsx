@@ -16,7 +16,7 @@ import {
   WizardFirstStepFooter,
   WizardStepScaffold,
 } from '../shared';
-import type { QbrApprovalStatus, TeamOkrCreationWizardState } from '@/modules/okrs/types/wizard';
+import type { QbrApprovalStatus, ProposedObjectiveEntry } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
