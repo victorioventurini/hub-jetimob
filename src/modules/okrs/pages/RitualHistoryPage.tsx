@@ -177,6 +177,16 @@ export default function RitualHistoryPage() {
             </Select>
           )}
 
+          {/* User filter */}
+          <BuUserSelect
+            value={userState.value || undefined}
+            onValueChange={(v) => userState.set(v || '')}
+            placeholder="Usuário"
+            showNoneOption
+            noneLabel="Todos os usuários"
+            className="w-[220px]"
+          />
+
           {/* Date filters */}
           <Popover>
             <PopoverTrigger asChild>
