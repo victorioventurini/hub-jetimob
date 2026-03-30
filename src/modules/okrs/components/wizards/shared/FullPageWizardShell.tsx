@@ -86,7 +86,7 @@ export function FullPageWizardShell({
   onDiscardDraft,
   isLoading = false,
   onClose,
-  backUrl = '/wizards',
+  backUrl = '/rituals',
   children,
   contextLabel,
   adminContextSwitcher,
