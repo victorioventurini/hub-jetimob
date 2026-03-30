@@ -131,8 +131,8 @@ describe('validateKrToKr', () => {
 
 describe('OKR Limits', () => {
   describe('OKR_LIMITS constants', () => {
-    it('should have MAX_OBJECTIVES_PER_TEAM = 3', () => {
-      expect(OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM).toBe(3);
+    it('should have MAX_OBJECTIVES_PER_TEAM = 4', () => {
+      expect(OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM).toBe(4);
     });
 
     it('should have MAX_KRS_PER_OBJECTIVE = 3', () => {
