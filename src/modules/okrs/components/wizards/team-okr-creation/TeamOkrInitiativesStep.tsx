@@ -19,11 +19,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Lightbulb, Plus, Trash2, Sparkles } from 'lucide-react';
+import { Lightbulb, Plus, Trash2, Sparkles, FolderKanban } from 'lucide-react';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { WizardOptionalStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
+import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
 
 // ============================================================
