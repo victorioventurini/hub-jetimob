@@ -10,7 +10,7 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { 
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
   useTeamOverviewMetrics,
   useTeamPendingKrs,
   useLastCompletedSession,
