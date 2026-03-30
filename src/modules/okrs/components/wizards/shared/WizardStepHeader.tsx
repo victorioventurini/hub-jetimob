@@ -11,6 +11,7 @@ import { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { WizardTooltipInline, type WizardTooltipKey } from './WizardTooltips';
 
 // ============================================================
 // TYPES
@@ -37,6 +38,8 @@ export interface WizardStepHeaderProps {
   badge?: string;
   /** Badge variant */
   badgeVariant?: 'default' | 'secondary' | 'destructive' | 'outline';
+  /** Tooltip key from WIZARD_TOOLTIPS */
+  tooltip?: WizardTooltipKey;
   /** Right content (e.g., counter, actions) */
   rightContent?: ReactNode;
   /** Additional class */
