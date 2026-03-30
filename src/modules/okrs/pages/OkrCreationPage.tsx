@@ -532,7 +532,7 @@ export default function OkrCreationPage() {
     <VicTypewriterQueueProvider>
       <FullPageWizardShell
         title="Criar OKRs do Time"
-        subtitle="Defina objetivos e resultados-chave com alinhamento estratégico"
+        subtitle={`Criando para: ${quarterlyCycle.name} · ${format(parseISO(quarterlyCycle.start_date), "dd MMM", { locale: ptBR })} → ${format(parseISO(quarterlyCycle.end_date), "dd MMM", { locale: ptBR })}`}
         steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
         currentStepId={draft.currentStep}
         completedSteps={completedSteps}
