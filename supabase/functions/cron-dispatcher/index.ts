@@ -151,7 +151,8 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     perf_snapshots_cleaned: 0,
     perf_metrics_collected: false,
     recommendation_notifications_sent: 0,
-    recommendation_notifications_checked: 0
+    recommendation_notifications_checked: 0,
+    ritual_occurrences_missed: 0,
   };
 
   try {
