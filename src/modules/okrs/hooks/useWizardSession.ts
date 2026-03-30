@@ -240,10 +240,10 @@ export function useWizardSession() {
         if (session) {
           const now = new Date();
 
-          // Fetch cadence frequency to determine association window
+          // Fetch cadence frequency and team scope to determine association window
           const { data: cadence } = await supabase
             .from('ritual_cadences')
-            .select('frequency')
+            .select('frequency, team_id')
             .eq('wizard_type', session.wizard_type)
             .eq('bu_id', session.bu_id)
             .eq('is_active', true)
@@ -269,12 +269,19 @@ export function useWizardSession() {
             .eq('wizard_type', session.wizard_type)
             .eq('bu_id', session.bu_id)
             .in('status', ['scheduled', 'missed'])
+            .is('session_id', null)
             .gte('planned_date', windowStart.toISOString().split('T')[0])
             .lte('planned_date', windowEnd.toISOString().split('T')[0])
             .order('planned_date', { ascending: true })
             .limit(1);
 
-          if (session.team_id) {
+          // If the cadence is global (team_id = null), match occurrences with
+          // team_id = null regardless of the session's team_id.
+          // If the cadence is team-scoped, match by the session's team_id.
+          const cadenceIsGlobal = !cadence?.team_id;
+          if (cadenceIsGlobal) {
+            query = query.is('team_id', null);
+          } else if (session.team_id) {
             query = query.eq('team_id', session.team_id);
           } else {
             query = query.is('team_id', null);
