@@ -37,13 +37,14 @@ import type { TeamOkrProposal } from '@/modules/okrs/components/wizards/qbr-pre-
 // MBR Closing reused for feedback step
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
 
-import type {
-  QbrPreCLevelStep,
-  QbrCLevelDraftData,
-  MbrKpiSnapshot,
-  TeamCheckinDecision,
-  RitualImprovementFeedback,
-  QbrPreSnapshot,
+import {
+  normalizeProposedOkrs,
+  type QbrPreCLevelStep,
+  type QbrCLevelDraftData,
+  type MbrKpiSnapshot,
+  type TeamCheckinDecision,
+  type RitualImprovementFeedback,
+  type QbrPreSnapshot,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================

@@ -145,7 +145,7 @@ export default function QbrPostPage() {
         teamName: teamMap.get(approval.teamId) || 'Time',
         sessionId: approval.sessionId,
         status: approval.status,
-        proposedOkrs: snapshot?.data?.proposedOkrs || {},
+        proposedOkrs: normalizeProposedOkrs(snapshot?.data?.proposedOkrs),
       };
     });
   }, [meetingApprovals, leaderSessions, teamMap]);
