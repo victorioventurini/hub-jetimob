@@ -112,6 +112,9 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
       if (filters.teamId) {
         query = query.eq('team_id', filters.teamId);
       }
+      if (filters.userId) {
+        query = query.eq('started_by', filters.userId);
+      }
       if (filters.dateFrom) {
         query = query.gte('completed_at', filters.dateFrom);
       }
