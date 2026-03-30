@@ -227,7 +227,7 @@ export default function QbrPreCLevelPage() {
       return {
         teamId: t.id,
         teamName: t.name,
-        proposedOkrs: sub?.snapshot?.proposedOkrs || {},
+        proposedOkrs: normalizeProposedOkrs(sub?.snapshot?.proposedOkrs),
         hasSubmission: !!sub,
       };
     });
