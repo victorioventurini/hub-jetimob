@@ -264,6 +264,7 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
   const [isExpanded, setIsExpanded] = useState(autoExpand);
   const hasDecisions = ritual.decisions.length > 0;
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
+  const { data: occurrence } = useOccurrenceBySession(ritual.id);
 
   // Auto-expand when deep-linked
   useEffect(() => {
