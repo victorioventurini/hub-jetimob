@@ -51,12 +51,13 @@ interface LeaderPrepDraftData {
 const WIZARD_STEPS = [
   { id: 'overview' as const, label: 'Panorama', description: 'Visão geral do time' },
   { id: 'kpi-alerts' as const, label: 'Indicadores', description: 'KPIs em atenção' },
+  { id: 'projects' as const, label: 'Projetos', description: 'Marcos e entregas do time' },
   { id: 'highlights' as const, label: 'Destaques', description: 'Insights automáticos' },
   { id: 'prep' as const, label: 'Preparação', description: 'Marcar para discussão' },
   { id: 'alignment' as const, label: 'Alinhamento', description: 'OKRs do nível superior' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['overview', 'kpi-alerts', 'highlights', 'prep', 'alignment'];
+const STEP_ORDER: WizardStep[] = ['overview', 'kpi-alerts', 'projects', 'highlights', 'prep', 'alignment'];
 
 const DEFAULT_DATA: LeaderPrepDraftData = {
   krActions: [],
