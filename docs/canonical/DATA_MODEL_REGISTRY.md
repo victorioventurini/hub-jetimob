@@ -222,8 +222,14 @@ Lista completa das tabelas no schema `public`:
 | `key_status` | `in_claviculary`, `loaned`, `lost`, `retired` |
 | `keyring_status` | `available`, `loaned`, `lost`, `retired` |
 | `kpi_category` | `financeiro`, `growth`, `cs`, `produto`, `operacoes`, `pessoas` |
+| `kpi_confidence_level` | `high`, `medium`, `low` |
+| `kpi_contributor_role` | `data_entry`, `reviewer` |
 | `kpi_direction` | `up`, `down` |
 | `kpi_frequency` | `daily`, `weekly`, `monthly`, `quarterly` |
+| `kpi_indicator_type` | `kpi`, `metric` |
+| `kpi_lifecycle_status` | `active`, `paused`, `deprecated`, `archived` |
+| `kpi_rag_status` | `green`, `yellow`, `red`, `not_started` |
+| `kpi_scope` | `org`, `area`, `team` |
 | `kpi_status` | `active`, `inactive` |
 | `kpi_value_source` | `manual`, `integration`, `calculation` |
 | `migration_status` | `pending`, `in_progress`, `completed`, `failed`, `rolled_back` |
