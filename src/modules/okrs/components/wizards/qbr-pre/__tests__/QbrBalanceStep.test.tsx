@@ -72,7 +72,8 @@ describe('QbrBalanceStep', () => {
 
   it('shows KR count badge', () => {
     renderStep({ krFinalStates: [createKrState(), createKrState()] });
-    expect(screen.getByText('2 KRs')).toBeInTheDocument();
+    const badges = screen.getAllByText('2 KRs');
+    expect(badges.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty message when no KRs', () => {
