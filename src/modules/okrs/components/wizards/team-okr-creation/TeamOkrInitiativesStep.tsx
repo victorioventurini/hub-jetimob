@@ -66,6 +66,7 @@ export function TeamOkrInitiativesStep({
   onSkip,
 }: TeamOkrInitiativesStepProps) {
   const [expandedKrs, setExpandedKrs] = useState<string[]>([]);
+  const { data: teamProjects } = useProjectsForWizard(teamId);
 
   // Group initiatives by KR
   const initiativesByKr = useMemo(() => {
