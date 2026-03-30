@@ -80,6 +80,14 @@ export interface ProjectForWizard {
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  milestones?: Array<{
+    id: string;
+    name: string;
+    status: MilestoneStatus;
+    due_date: string | null;
+    owner_id: string | null;
+    notes: string | null;
+  }>;
 }
 
 // ── Gantt ──

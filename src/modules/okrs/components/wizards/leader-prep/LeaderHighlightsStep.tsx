@@ -30,7 +30,7 @@ import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import type { LeaderHighlight, VicInsight } from '@/modules/okrs/types/wizard';
 import { HIGHLIGHT_CARD_STYLES, RAG_STATUS_COLORS } from '@/lib/colors';
-import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
+
 
 // ============================================================
 // TYPES
@@ -215,10 +215,6 @@ export function LeaderHighlightsStep({
             </>
           )}
 
-          {/* Projetos em atenção — bloco aditivo */}
-          {teamId && (
-            <ProjectsSummary teamId={teamId} mode="prep" className="mt-4" />
-          )}
         </div>
       </ScrollArea>
 
