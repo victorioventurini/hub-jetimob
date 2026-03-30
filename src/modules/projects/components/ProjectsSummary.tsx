@@ -26,7 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ExternalLink, ChevronDown, ChevronUp, FolderKanban, CalendarDays, StickyNote } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp, FolderKanban, CalendarDays, StickyNote, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { format, isPast, parseISO } from 'date-fns';
