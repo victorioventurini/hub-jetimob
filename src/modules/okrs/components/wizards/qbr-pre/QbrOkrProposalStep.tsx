@@ -468,6 +468,18 @@ function KrDetailSubStep({
 
       <Separator />
 
+      {/* AI Validation */}
+      {allFilled && (
+        <ProposalValidationCard
+          assessment={assessment}
+          isLoading={validationLoading}
+          error={validationError}
+          onValidate={handleValidate}
+          onReset={resetValidation}
+          canValidate={allFilled}
+        />
+      )}
+
       <WizardStepFooter
         onBack={onBack}
         onPrimary={onNext}
