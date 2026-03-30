@@ -84,38 +84,49 @@ const RECURRENT_WIZARD_TYPES: WizardPersona[] = [
 // ============================================================
 
 export default function RitualCalendarPage() {
-  usePageTitle('Calendário de Ritos');
+  usePageTitle('Calendário de Ritos', {
+    customDescription: 'Configure cadências de rituais e acompanhe a aderência dos times.',
+  });
   const [activeTab, setActiveTab] = useUrlTab('cadences');
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
-          title="Calendário de Ritos"
-          description="Configure cadências de rituais e acompanhe a aderência dos times."
-          breadcrumbs={[
-            { label: 'Configurações', href: '/settings' },
-            { label: 'Calendário de Ritos' },
-          ]}
-        />
+        title="Calendário de Ritos"
+        description="Configure cadências de rituais e acompanhe a aderência dos times."
+        breadcrumbs={[
+          { label: 'Configurações', href: '/settings' },
+          { label: 'Calendário de Ritos' },
+        ]}
+      />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="cadences">Cadências</TabsTrigger>
-            <TabsTrigger value="calendar">Calendário</TabsTrigger>
-            <TabsTrigger value="health">Saúde</TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="cadences" className="gap-2">
+            <Clock className="h-4 w-4" />
+            Cadências
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Calendário
+          </TabsTrigger>
+          <TabsTrigger value="health" className="gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Saúde
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="cadences">
-            <CadencesTab />
-          </TabsContent>
+        <TabsContent value="cadences">
+          <CadencesTab />
+        </TabsContent>
 
-          <TabsContent value="calendar">
-            <CalendarTab />
-          </TabsContent>
+        <TabsContent value="calendar">
+          <CalendarTab />
+        </TabsContent>
 
-          <TabsContent value="health">
-            <HealthTab />
-          </TabsContent>
+        <TabsContent value="health">
+          <HealthTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
