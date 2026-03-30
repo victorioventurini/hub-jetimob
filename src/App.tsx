@@ -35,6 +35,7 @@ const EventsCapturePage = lazy(() => import("./modules/events/pages/EventsCaptur
 // Rotas modularizadas
 import { hubRoutes } from "./routes/hub.routes";
 import { okrRoutes } from "./routes/okrs.routes";
+import { ritualRoutes } from "./routes/rituals.routes";
 import { ticketRoutes } from "./routes/tickets.routes";
 import { assetRoutes } from "./routes/assets.routes";
 import { teamRoutes } from "./routes/teams.routes";
