@@ -1,83 +1,68 @@
 
 
-# Plano: Step "Projetos" no Leader Prep Wizard
+# Plano: Projetos e Milestones detalhados nos wizards MBR, QBR Pre e C-Level
 
 ## Validação TCR & Docs Canônicos ✓
 
 | Doc | Status | Notas |
 |-----|--------|-------|
 | TCR v3.20.0 | ✓ | Projects v1.4, milestone_status enum, project_teams join |
-| WIZARD_DEVELOPMENT_GUIDE | ✓ | WizardStepHeader + WizardStepFooter + WizardStepScaffold |
-| BU_SCOPED_SUPABASE_RULES | ✓ | useOptionalBuClient já usado em useProjectsForWizard |
-| QUERY_KEYS_STANDARD | ✓ | Reutiliza projectsKeys.forWizard() existente |
-| IDENTITY_CONVENTION | ✓ | owner_id = profiles.id |
-| wizard-ritual-integration-standard | ✓ | Integração aditiva, sem alterar draft |
+| WIZARD_DEVELOPMENT_GUIDE | ✓ | WizardStepScaffold + WizardStepHeader + WizardStepFooter |
+| wizard-ritual-integration-standard | ✓ | Integração aditiva via ProjectsSummary, sem alterar draft |
+| BU_SCOPED_SUPABASE_RULES | ✓ | useOptionalBuClient no useProjectsForWizard |
+| component-reuse-philosophy | ✓ | Reutilizar ProjectsSummary estendido, não duplicar |
+| mbr-ritual-specification | ✓ | MBR opera sem seleção de time; detail step navega 1-de-N |
+| qbr-ritual-standard | ✓ | QBR Pre é team-scoped via ?team=UUID |
 
-## Contexto Atual
+## Análise de Pertinência por Wizard
 
-- `LeaderHighlightsStep` renderiza `<ProjectsSummary teamId={teamId} mode="prep" />` como bloco colapsável — visão compacta (nome, health, progresso, prazo)
-- O hook `useProjectsForWizard` já busca projetos ativos do time com milestones, mas só retorna contagens agregadas
-- O `CollaboratorProjectsStep` já implementa o padrão completo com milestones inline e MilestoneStatusSelect
+| Wizard | Team context? | Já tem projetos? | Ação |
+|--------|--------------|-------------------|------|
+| **MBR** (team-okrs-detail) | Sim (1-de-N) | `ProjectsSummary mode="review"` (compacto) | **Expandir** para mostrar milestones inline |
+| **QBR Pre** (líder) | Sim (?team=UUID) | Nenhum | **Adicionar** bloco aditivo no step "Balanço" |
+| **C-Level Check-in** | Não (org-level) | Nenhum | **Não implementar** — sem team_id, projetos são team-scoped |
+| QBR Pre C-Level | Não (consolidação) | Nenhum | Não implementar — lê submissions dos líderes |
+| QBR Meeting | Stub | Nenhum | Não implementar — em construção |
+| QBR Post | Não (promoção) | Nenhum | Não implementar — operacional |
+
+**Decisão:** Implementar em **MBR** e **QBR Pre**. C-Level Check-in não tem `teamId` — adicionar projetos sem escopo de time violaria o modelo de dados (projects são vinculados via `project_teams`). Forçar exibição de todos os projetos da BU no C-Level seria ruidoso e fora do propósito estratégico do rito.
+
+## Estratégia de Implementação
+
+Ao invés de criar componentes separados para cada wizard, a abordagem é **estender o `ProjectsSummary` existente** com um novo modo `"detail"` que exibe milestones inline com `MilestoneStatusSelect` — reutilizando o padrão já implementado no `LeaderProjectsStep`. Isso segue o `component-reuse-philosophy`.
 
 ## Alterações
 
-### 1. Expandir `useProjectsForWizard` para retornar milestones individuais
+### 1. Estender `ProjectsSummary` com modo `"detail"`
 
-Adicionar campo `milestones` ao retorno (id, name, status, due_date, owner_id, notes). O tipo `ProjectForWizard` ganha campo opcional `milestones?` para não quebrar consumidores existentes.
+**Arquivo:** `src/modules/projects/components/ProjectsSummary.tsx`
 
-**Arquivo:** `src/modules/projects/hooks/useProjectsForWizard.ts`
-- Expandir select para incluir `name, owner_id, notes` nos milestones
-- Mapear milestones individuais (filtrando deleted_at) no retorno
+- Adicionar modo `"detail"` ao tipo de `mode`
+- Quando `mode="detail"`, renderizar para cada projeto:
+  - `ProjectHealthBadge` + `ProjectStatusBadge` + nome
+  - `ProjectProgressBar` com percentual
+  - Prazo (com destaque se vencido)
+  - Link externo
+  - **Milestones pendentes** com `MilestoneStatusSelect` inline (fire-and-forget via `useUpdateMilestone`)
+  - Notas de milestone via tooltip
+  - Empty state para projetos sem milestones
+- Modos existentes (`checkin`, `prep`, `review`) permanecem inalterados
 
-**Arquivo:** `src/modules/projects/types.ts`
-- Adicionar campo opcional ao `ProjectForWizard`:
-```ts
-milestones?: Array<{
-  id: string; name: string; status: MilestoneStatus;
-  due_date: string | null; owner_id: string | null; notes: string | null;
-}>;
-```
+### 2. Atualizar MBR Team Detail Step
 
-### 2. Novo componente: `LeaderProjectsStep.tsx`
+**Arquivo:** `src/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep.tsx`
 
-**Arquivo:** `src/modules/okrs/components/wizards/leader-prep/LeaderProjectsStep.tsx`
+- Trocar `mode="review"` por `mode="detail"` na chamada a `ProjectsSummary` (linha 293)
+- Resultado: milestones agora visíveis e editáveis inline dentro do drill-down de cada time
 
-**Comportamento:**
-- Usa `useProjectsForWizard(teamId)` para buscar projetos do time
-- Exibe cada projeto com: nome, ProjectHealthBadge, ProjectStatusBadge, ProjectProgressBar, prazo, link externo
-- Lista milestones pendentes (status !== 'done') com MilestoneStatusSelect inline (fire-and-forget via useUpdateMilestone)
-- Milestones done ficam ocultos
-- Empty state: "Nenhum projeto ativo neste time"
-- Notas de milestone visíveis via tooltip (se existirem)
+### 3. Adicionar ProjectsSummary ao QBR Pre — step "Balanço"
 
-**UI:** WizardStepScaffold + WizardStepHeader (ícone FolderKanban, variant purple, título "Projetos do Time") + WizardStepFooter (back + continuar)
+**Arquivo:** `src/modules/okrs/components/wizards/qbr-pre/QbrBalanceStep.tsx`
 
-### 3. Integrar no `LeaderPrepPage.tsx`
+- Receber novo prop opcional `teamId?: string`
+- Adicionar `<ProjectsSummary teamId={teamId} mode="detail" />` como bloco aditivo ao final do conteúdo scrollável
+- Integração aditiva: não altera draft, não altera flow
 
-**Arquivo:** `src/modules/okrs/pages/LeaderPrepPage.tsx`
+**Arquivo:** `src/modules/okrs/pages/QbrPrePage.tsx`
 
-- Tipo WizardStep: `'overview' | 'kpi-alerts' | 'projects' | 'highlights' | 'prep' | 'alignment'`
-- WIZARD_STEPS: inserir `{ id: 'projects', label: 'Projetos', description: 'Marcos e entregas do time' }` entre kpi-alerts e highlights
-- STEP_ORDER: `['overview', 'kpi-alerts', 'projects', 'highlights', 'prep', 'alignment']`
-- renderStepContent: case 'projects' renderiza `<LeaderProjectsStep teamId={teamIdParam} onContinue={goNext} onBack={goBack} />`
-
-### 4. Remover ProjectsSummary do LeaderHighlightsStep
-
-**Arquivo:** `src/modules/okrs/components/wizards/leader-prep/LeaderHighlightsStep.tsx`
-
-- Remover o bloco `{teamId && <ProjectsSummary .../>}` (linhas 218-221)
-- Remover import de ProjectsSummary
-- Evita duplicação — projetos passam a ter step dedicado
-
-### 5. Atualizar barrel export
-
-**Arquivo:** `src/modules/okrs/components/wizards/leader-prep/index.ts`
-
-- Adicionar export do LeaderProjectsStep
-
-## Não altera
-
-- Draft state (LeaderPrepDraftData) — sem campos novos
-- Steps existentes — nenhuma modificação de lógica
-- useProjectsForWizard — campo milestones é opcional, consumidores existentes continuam funcionando
-
+- Passar `teamId={teamIdParam}` ao `Q
