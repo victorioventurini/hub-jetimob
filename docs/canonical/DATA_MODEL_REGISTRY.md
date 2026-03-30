@@ -124,6 +124,8 @@ Lista completa das tabelas no schema `public`:
 | `project_milestone_dependencies` | ✅ | ✅ | Dependências entre milestones |
 | `project_teams` | ✅ | ✅ | Junction project ↔ team |
 | `milestone_krs` | ✅ | ✅ | Junction milestone ↔ KR com impacto (v3.19.0) |
+| `ritual_cadences` | ✅ | ✅ | Cadências de rituais recorrentes (v3.21.0) |
+| `ritual_occurrences` | ✅ | ✅ | Ocorrências planejadas de rituais (v3.21.0) |
 | `squad_memberships` | ✅ | ✅ | Membros de squads |
 | `squad_teams` | ✅ | ✅ | Relacionamento squad ↔ teams |
 | `squads` | ✅ | ✅ | Squads |
