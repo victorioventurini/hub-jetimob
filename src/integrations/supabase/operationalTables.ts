@@ -92,6 +92,10 @@ export const OPERATIONAL_TABLES: string[] = [
   // Automations / Integrations (if BU-scoped)
   "automation_connections",
   "integration_configs",
+
+  // Ritual Calendar
+  "ritual_cadences",
+  "ritual_occurrences",
 ].filter(Boolean);
 
 /**

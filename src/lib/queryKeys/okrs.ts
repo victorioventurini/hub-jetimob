@@ -246,6 +246,18 @@ export const okrsKeys = {
   // Org Construction Review (avaliação de qualidade de OKRs organizacionais)
   orgConstructionReview: (buId: string | null, year: number | null) =>
     ['okr-org-construction-review', buId, year] as const,
+
+  // Ritual Calendar
+  ritualCadences: (buId: string | null) =>
+    ['ritual-cadences', buId] as const,
+  ritualOccurrencesPrefix: (buId: string | null) =>
+    ['ritual-occurrences', buId] as const,
+  ritualOccurrences: (buId: string | null, filters?: Record<string, unknown>) =>
+    ['ritual-occurrences', buId, filters] as const,
+  ritualOccurrenceBySession: (sessionId: string | null) =>
+    ['ritual-occurrence-by-session', sessionId] as const,
+  ritualAdherence: (buId: string | null, days?: number) =>
+    ['ritual-adherence', buId, days] as const,
 } as const;
 
 export const kpisKeys = {
