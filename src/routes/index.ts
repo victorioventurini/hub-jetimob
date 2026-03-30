@@ -8,6 +8,7 @@
 export { publicRoutes } from './public.routes';
 export { hubRoutes } from './hub.routes';
 export { okrRoutes } from './okrs.routes';
+export { ritualRoutes } from './rituals.routes';
 export { ticketRoutes } from './tickets.routes';
 export { assetRoutes } from './assets.routes';
 export { teamRoutes } from './teams.routes';

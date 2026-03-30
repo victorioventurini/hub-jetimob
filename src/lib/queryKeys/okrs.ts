@@ -104,6 +104,7 @@ export const okrsKeys = {
   settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,
   cyclesList: (buId: string | null) => ['cycles-list', buId] as const,
   cycleDetail: (cycleId: string | null) => ['okr-cycle', cycleId] as const,
+  activeCycle: (buId: string | null) => ['okr-active-cycle', buId] as const,
   
   // Health & Insights
   health: (buId: string | null, objectiveType: string, objectiveId: string | null) =>

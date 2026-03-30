@@ -61,14 +61,8 @@ export const okrRoutes = (
     {/* MBR */}
     <Route path="/okrs/mbr" element={<OkrRoute requiresBuAdmin><MbrPage /></OkrRoute>} />
     
-    {/* Check-ins */}
-    <Route path="/okrs/collaborator-checkin" element={<OkrRoute><CollaboratorCheckinPage /></OkrRoute>} />
-    <Route path="/okrs/leader-prep" element={<OkrRoute><LeaderPrepPage /></OkrRoute>} />
-    <Route path="/okrs/team-checkin" element={<OkrRoute><TeamCheckinPage /></OkrRoute>} />
-    <Route path="/okrs/managers-checkin" element={<OkrRoute><ManagersCheckinPage /></OkrRoute>} />
-    <Route path="/okrs/clevel-checkin" element={<OkrRoute><CLevelCheckinPage /></OkrRoute>} />
+    {/* Check-ins (non-ritual) */}
     <Route path="/okrs/checkins" element={<OkrRoute><CycleCheckinsPage /></OkrRoute>} />
-    <Route path="/okrs/ritual-history" element={<OkrRoute><RitualHistoryPage /></OkrRoute>} />
     
     {/* Quality & Analysis */}
     <Route path="/okrs/quality" element={<OkrRoute><OkrQualityPage /></OkrRoute>} />
