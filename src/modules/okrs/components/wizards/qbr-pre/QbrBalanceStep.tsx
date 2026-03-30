@@ -50,6 +50,7 @@ export function QbrBalanceStep({
   decisions,
   onDecisionsChange,
   onContinue,
+  teamId,
 }: QbrBalanceStepProps) {
   // Group by state for summary
   const stateSummary = useMemo(() => {
