@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { format, formatDistanceToNowStrict, isAfter, isBefore, parseISO, subDays } from 'date-fns';
+import { format, isAfter, isBefore, parseISO, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   TrendingUp,
@@ -347,6 +347,9 @@ export default function ExecutiveQuarterReviewPage() {
       const healthScore = krs.length ? Math.round((healthyCount / krs.length) * 100) : 0;
       const healthStatus = redYellowCount > healthyCount ? 'risk' : healthScore >= 70 ? 'healthy' : 'attention';
 
+      const healthStatus: 'healthy' | 'attention' | 'risk' =
+        redYellowCount > healthyCount ? 'risk' : healthScore >= 70 ? 'healthy' : 'attention';
+
       return {
         objective,
         krs,
@@ -584,10 +587,12 @@ export default function ExecutiveQuarterReviewPage() {
                 <CardContent className="space-y-2">
                   {group.items.map((kpi) => {
                     const rag = statusToKpiBadge(kpi.rag_status);
+                    const ragValue = String(kpi.rag_status ?? '');
+
                     return (
                       <div
                         key={kpi.id}
-                        className={`rounded-md border p-3 flex items-center justify-between gap-3 ${kpi.rag_status === 'red' ? 'border-status-red/50' : kpi.rag_status === 'yellow' ? 'border-status-yellow/50' : ''}`}
+                        className={`rounded-md border p-3 flex items-center justify-between gap-3 ${ragValue === 'red' ? 'border-status-red/50' : ragValue === 'yellow' ? 'border-status-yellow/50' : ''}`}
                       >
                         <div className="min-w-0">
                           <p className="font-medium truncate">{kpi.name}</p>
