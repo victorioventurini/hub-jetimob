@@ -129,6 +129,107 @@ export function CyclesTab() {
     enabled: !!buId && !!supabase,
   });
 
+  // ── Auto-generation logic ──
+  const currentYear = new Date().getFullYear();
+  const targetYears = [currentYear, currentYear + 1, currentYear + 2];
+
+  const existingAnnualYears = useMemo(() => {
+    if (!cycles) return [];
+    return cycles
+      .filter(c => c.type === 'year')
+      .map(c => {
+        const match = c.name.match(/^(\d{4})/);
+        return match ? parseInt(match[1], 10) : null;
+      })
+      .filter((y): y is number => y !== null);
+  }, [cycles]);
+
+  const missingYears = useMemo(() => {
+    const existingSet = new Set(existingAnnualYears);
+    return targetYears.filter(y => !existingSet.has(y));
+  }, [existingAnnualYears, targetYears]);
+
+  const showGenerateButton = !isLoading && missingYears.length > 0;
+
+  const cyclesToGenerate = useMemo(() => {
+    if (missingYears.length === 0) return [];
+    return filterNewCycles(
+      generateCyclesForYears(currentYear, 3),
+      existingAnnualYears,
+    );
+  }, [missingYears, existingAnnualYears, currentYear]);
+
+  const generateCyclesMutation = useMutation({
+    mutationFn: async () => {
+      if (!supabase || !buId || cyclesToGenerate.length === 0) throw new Error('No data');
+
+      // Separate annuals and quarters
+      const annuals = cyclesToGenerate.filter(c => c.type === 'year');
+      const quarters = cyclesToGenerate.filter(c => c.type === 'quarter');
+
+      // Insert annuals first
+      const annualInserts = annuals.map(c => ({
+        bu_id: buId,
+        name: c.name,
+        type: c.type,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        planning_date: c.planning_date,
+        review_date: c.review_date,
+        retro_date: c.retro_date,
+        status: c.status,
+      }));
+
+      const { data: insertedAnnuals, error: annualError } = await supabase
+        .from('cycles')
+        .insert(annualInserts)
+        .select('id, name');
+
+      if (annualError) throw annualError;
+
+      // Build parent map: _tempKey → real id
+      const parentMap = new Map<string, string>();
+      for (const inserted of insertedAnnuals || []) {
+        const match = inserted.name.match(/^(\d{4})-Annual$/);
+        if (match) {
+          parentMap.set(`annual-${match[1]}`, inserted.id);
+        }
+      }
+
+      // Insert quarters with real parent_cycle_id
+      if (quarters.length > 0) {
+        const quarterInserts = quarters.map(c => ({
+          bu_id: buId,
+          name: c.name,
+          type: c.type,
+          start_date: c.start_date,
+          end_date: c.end_date,
+          planning_date: c.planning_date,
+          review_date: c.review_date,
+          retro_date: c.retro_date,
+          status: c.status,
+          parent_cycle_id: c._tempParentKey ? parentMap.get(c._tempParentKey) || null : null,
+        }));
+
+        const { error: quarterError } = await supabase
+          .from('cycles')
+          .insert(quarterInserts);
+
+        if (quarterError) throw quarterError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(null) });
+      toast.success(`Ciclos gerados com sucesso para ${missingYears.join(', ')}!`);
+      setShowGenerateDialog(false);
+    },
+    onError: () => {
+      toast.error('Erro ao gerar ciclos automaticamente');
+    },
+  });
+
   // Delete mutation
   const handleDelete = async (cycleId: string) => {
     if (!supabase || !buId) return;
