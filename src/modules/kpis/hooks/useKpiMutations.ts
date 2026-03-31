@@ -83,6 +83,17 @@ export function useKpiMutations() {
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.id), refetchType: 'active' });
       // Also invalidate values and target history for complete reactivity
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
+      
+      // CRITICAL: KPI changes may drive KR effective values (primary KPI source of truth)
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi-batch'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-effective-values'], refetchType: 'active' });
+
       toast({
         title: "KPI atualizado",
         description: "As alterações foram salvas com sucesso.",
