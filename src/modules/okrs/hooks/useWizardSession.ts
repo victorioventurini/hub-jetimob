@@ -263,27 +263,46 @@ export function useWizardSession() {
           const windowEnd = new Date(now);
           windowEnd.setDate(windowEnd.getDate() + windowDays);
 
-          let query = supabase
-            .from('ritual_occurrences')
-            .select('id, planned_date')
-            .eq('wizard_type', session.wizard_type)
-            .eq('bu_id', session.bu_id)
-            .in('status', ['scheduled', 'missed'])
-            .is('session_id', null)
-            .gte('planned_date', windowStart.toISOString().split('T')[0])
-            .lte('planned_date', windowEnd.toISOString().split('T')[0])
-            .order('planned_date', { ascending: true })
-            .limit(1);
+          const windowStartStr = windowStart.toISOString().split('T')[0];
+          const windowEndStr = windowEnd.toISOString().split('T')[0];
 
-          // For global cadences, occurrences are now generated per-team,
-          // so always match by the session's team_id when available.
+          // Helper to build occurrence query
+          const buildOccQuery = (teamFilter: 'match' | 'null') => {
+            let q = supabase
+              .from('ritual_occurrences')
+              .select('id, planned_date')
+              .eq('wizard_type', session.wizard_type)
+              .eq('bu_id', session.bu_id)
+              .in('status', ['scheduled', 'missed'])
+              .is('session_id', null)
+              .gte('planned_date', windowStartStr)
+              .lte('planned_date', windowEndStr)
+              .order('planned_date', { ascending: true })
+              .limit(1);
+
+            if (teamFilter === 'match' && session.team_id) {
+              q = q.eq('team_id', session.team_id);
+            } else {
+              q = q.is('team_id', null);
+            }
+            return q;
+          };
+
+          // Try matching by team_id first, then fallback to team_id IS NULL
+          // (handles legacy global cadence occurrences that weren't regenerated per-team)
+          let occ: { id: string; planned_date: string } | null = null;
+
           if (session.team_id) {
-            query = query.eq('team_id', session.team_id);
+            const { data: teamOcc } = await buildOccQuery('match').maybeSingle();
+            occ = teamOcc;
+            if (!occ) {
+              const { data: globalOcc } = await buildOccQuery('null').maybeSingle();
+              occ = globalOcc;
+            }
           } else {
-            query = query.is('team_id', null);
+            const { data: nullOcc } = await buildOccQuery('null').maybeSingle();
+            occ = nullOcc;
           }
-
-          const { data: occ } = await query.maybeSingle();
 
           if (occ) {
             const plannedDate = new Date(occ.planned_date);

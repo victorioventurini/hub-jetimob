@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -98,9 +98,11 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  // Default: last 30 days
+  const default30DaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const dateFromState = useUrlState<string>({
     key: 'from',
-    defaultValue: '',
+    defaultValue: default30DaysAgo,
     parse: parsers.string,
   });
   const dateToState = useUrlState<string>({
@@ -109,28 +111,39 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  // Pagination
+  const pageState = useUrlState<number>({
+    key: 'page',
+    defaultValue: 1,
+    parse: parsers.numberWithDefault(1),
+  });
+  const pageSize = 25;
+
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
     userId: userState.value || null,
     dateFrom: dateFromState.value || null,
     dateTo: dateToState.value || null,
-  }), [typeState.value, teamState.value, userState.value, dateFromState.value, dateToState.value]);
+    page: pageState.value,
+    pageSize,
+  }), [typeState.value, teamState.value, userState.value, dateFromState.value, dateToState.value, pageState.value]);
 
-  const { data: rituals, isLoading } = useRitualHistory(filters);
+  const { data: result, isLoading } = useRitualHistory(filters);
+  const rituals = result?.items ?? [];
+  const totalCount = result?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
   const { teams } = useManageableTeamsFlat();
 
-  // Deep-link: fetch the specific session if not in the list (e.g. user is recipient but not author)
+  // Deep-link: fetch the specific session if not in the list
   const { data: deepLinkSession, isLoading: isLoadingDeepLink } = useRitualDetail(
-    // Only fetch if we have a deep-link ID and it's NOT already in the list
-    deepLinkSessionId && rituals && !rituals.some(r => r.id === deepLinkSessionId)
+    deepLinkSessionId && !rituals.some(r => r.id === deepLinkSessionId)
       ? deepLinkSessionId
       : null
   );
 
   // Merge: if deep-link session exists and isn't in the list, prepend it
   const mergedRituals = useMemo(() => {
-    if (!rituals) return rituals;
     if (!deepLinkSession) return rituals;
     if (rituals.some(r => r.id === deepLinkSession.id)) return rituals;
     return [deepLinkSession, ...rituals];
@@ -152,7 +165,7 @@ export default function RitualHistoryPage() {
 
         {/* Filters */}
         <ListPageFilters hideSearch>
-          <Select value={typeState.value || 'all'} onValueChange={typeState.set}>
+          <Select value={typeState.value || 'all'} onValueChange={(v) => { typeState.set(v); pageState.set(1); }}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Tipo de ritual" />
             </SelectTrigger>
@@ -164,7 +177,7 @@ export default function RitualHistoryPage() {
           </Select>
 
           {teams && teams.length > 0 && (
-            <Select value={teamState.value || 'all'} onValueChange={(v) => teamState.set(v === 'all' ? '' : v)}>
+            <Select value={teamState.value || 'all'} onValueChange={(v) => { teamState.set(v === 'all' ? '' : v); pageState.set(1); }}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Time" />
               </SelectTrigger>
@@ -180,7 +193,7 @@ export default function RitualHistoryPage() {
           {/* User filter */}
           <BuUserSelect
             value={userState.value || undefined}
-            onValueChange={(v) => userState.set(v || '')}
+            onValueChange={(v) => { userState.set(v || ''); pageState.set(1); }}
             placeholder="Usuário"
             className="w-[220px]"
           />
@@ -202,7 +215,7 @@ export default function RitualHistoryPage() {
               <Calendar
                 mode="single"
                 selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
-                onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                onSelect={(date) => { dateFromState.set(date ? format(date, 'yyyy-MM-dd') : ''); pageState.set(1); }}
                 className="p-3 pointer-events-auto"
                 locale={ptBR}
               />
@@ -225,7 +238,7 @@ export default function RitualHistoryPage() {
               <Calendar
                 mode="single"
                 selected={dateToState.value ? parseISO(dateToState.value) : undefined}
-                onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                onSelect={(date) => { dateToState.set(date ? format(date, 'yyyy-MM-dd') : ''); pageState.set(1); }}
                 className="p-3 pointer-events-auto"
                 locale={ptBR}
               />
@@ -233,11 +246,11 @@ export default function RitualHistoryPage() {
           </Popover>
 
           {/* Clear filters */}
-          {(dateFromState.value || dateToState.value) && (
+          {(dateFromState.value !== default30DaysAgo || dateToState.value) && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { dateFromState.set(''); dateToState.set(''); }}
+              onClick={() => { dateFromState.set(default30DaysAgo); dateToState.set(''); }}
               className="text-muted-foreground"
             >
               Limpar datas
@@ -246,9 +259,9 @@ export default function RitualHistoryPage() {
         </ListPageFilters>
 
         {/* Result count */}
-        {!anyLoading && mergedRituals && (
+        {!anyLoading && (
           <ViewOptionsBar
-            resultCount={mergedRituals.length}
+            resultCount={totalCount}
             resultCountLabel="rituais encontrados"
             resultCountLabelSingular="ritual encontrado"
           />
@@ -261,7 +274,7 @@ export default function RitualHistoryPage() {
               <Skeleton key={i} className="h-20 w-full rounded-lg" />
             ))}
           </div>
-        ) : !mergedRituals || mergedRituals.length === 0 ? (
+        ) : mergedRituals.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <History className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
@@ -277,6 +290,31 @@ export default function RitualHistoryPage() {
                 autoExpand={ritual.id === deepLinkSessionId}
               />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageState.value <= 1}
+              onClick={() => pageState.set(pageState.value - 1)}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {pageState.value} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageState.value >= totalPages}
+              onClick={() => pageState.set(pageState.value + 1)}
+            >
+              Próxima
+            </Button>
           </div>
         )}
       </div>
