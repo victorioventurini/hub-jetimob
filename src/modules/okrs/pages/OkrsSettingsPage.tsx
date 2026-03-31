@@ -76,6 +76,10 @@ export default function OkrsSettingsPage() {
         <TabsContent value="rules">
           <RulesInfoTab />
         </TabsContent>
+
+        <TabsContent value="guide">
+          <CyclesRitualsGuideTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
