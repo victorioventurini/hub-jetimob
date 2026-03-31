@@ -3,10 +3,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { toast } from 'sonner';
+import { useSyncRitualCalendar } from './useSyncRitualCalendar';
+import { ALL_RITUAL_WIZARD_TYPES } from '../constants/ritualWizardTypes';
 
 // ============================================================
 // TYPES
@@ -91,8 +94,29 @@ function mapCadence(row: any): RitualCadence {
 export function useRitualCadences() {
   const { currentBu } = useBu();
   const buSupabase = useBuScopedSupabase();
+  const { syncRitualCalendar } = useSyncRitualCalendar();
+  const autoHealTriggeredByBu = useRef<Record<string, boolean>>({});
 
-  return useQuery({
+  const { data: hasQuarterCycle } = useQuery({
+    queryKey: [...queryKeys.okrs.settingsCycles(currentBu?.id ?? null), 'has-quarter-cycle'],
+    queryFn: async () => {
+      if (!currentBu?.id) return false;
+
+      const { data, error } = await buSupabase
+        .from('cycles')
+        .select('id')
+        .eq('bu_id', currentBu.id)
+        .eq('type', 'quarter')
+        .limit(1);
+
+      if (error) throw error;
+      return (data ?? []).length > 0;
+    },
+    enabled: !!currentBu?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const cadencesQuery = useQuery({
     queryKey: queryKeys.okrs.ritualCadences(currentBu?.id ?? null),
     queryFn: async () => {
       if (!currentBu?.id) return [];
@@ -109,6 +133,22 @@ export function useRitualCadences() {
     },
     enabled: !!currentBu?.id,
   });
+
+  useEffect(() => {
+    const buId = currentBu?.id;
+    if (!buId || !hasQuarterCycle || !cadencesQuery.data) return;
+    if (autoHealTriggeredByBu.current[buId]) return;
+
+    const availableTypes = new Set(cadencesQuery.data.map((cadence) => cadence.wizardType));
+    const missingTypes = ALL_RITUAL_WIZARD_TYPES.filter((wizardType) => !availableTypes.has(wizardType));
+
+    if (missingTypes.length === 0) return;
+
+    autoHealTriggeredByBu.current[buId] = true;
+    void syncRitualCalendar({ silent: true });
+  }, [currentBu?.id, hasQuarterCycle, cadencesQuery.data, syncRitualCalendar]);
+
+  return cadencesQuery;
 }
 
 export function useCreateCadence() {
