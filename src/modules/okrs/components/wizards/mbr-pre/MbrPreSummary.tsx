@@ -53,7 +53,6 @@ export function MbrPreSummary({
         <WizardStepHeader
           icon={Send}
           title="Resumo e Envio"
-          tooltip="mbr-pre-summary"
           description="Revise antes de submeter — os dados serão congelados"
           variant="green"
         />

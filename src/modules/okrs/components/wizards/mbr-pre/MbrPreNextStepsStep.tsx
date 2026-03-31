@@ -97,9 +97,8 @@ export function MbrPreNextStepsStep({
         <WizardStepHeader
           icon={Compass}
           title="Próximos Passos"
-          tooltip="mbr-pre-next-steps"
           description="O que o time planeja executar nas próximas semanas"
-          variant="blue"
+          variant="primary"
         />
       }
       bottomFixed={
