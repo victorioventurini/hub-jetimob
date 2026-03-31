@@ -499,7 +499,14 @@ interface KeyResultRowProps {
   /** v3.4.2: Se a KR tem KPI primária vinculada */
   hasPrimaryKpi?: boolean;
   /** v3.4.2: Dados da KPI primária */
-  primaryKpiInfo?: { kpiId: string; kpiName: string; direction: 'up' | 'down' | 'maintain' };
+  primaryKpiInfo?: {
+    kpiId: string;
+    kpiName: string;
+    direction: 'up' | 'down' | 'maintain';
+    currentValue: number | null;
+    targetValue: number | null;
+    ragStatus: 'green' | 'yellow' | 'red' | 'no_data';
+  };
   onEdit: () => void;
   onCheckin: () => void;
   onShowHistory: () => void;
@@ -523,14 +530,26 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
   // Pode fazer check-in se: já tem permissão via prop OU é o responsável/co-responsável pela KR
   const canDoCheckin = canCheckin || isKrOwnerOrCoResponsible;
   
+  const effectiveCurrent = hasPrimaryKpi && primaryKpiInfo?.currentValue !== null && primaryKpiInfo?.currentValue !== undefined
+    ? primaryKpiInfo.currentValue
+    : Number(kr.current_value) || 0;
+
+  const effectiveTarget = hasPrimaryKpi && primaryKpiInfo?.targetValue !== null && primaryKpiInfo?.targetValue !== undefined
+    ? primaryKpiInfo.targetValue
+    : Number(kr.target) || 0;
+
+  const effectiveStatus = hasPrimaryKpi && primaryKpiInfo?.ragStatus && primaryKpiInfo.ragStatus !== 'no_data'
+    ? primaryKpiInfo.ragStatus
+    : kr.status;
+
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
-    Number(kr.current_value) || 0,
-    Number(kr.target) || 0,
+    effectiveCurrent,
+    effectiveTarget,
     kr.direction || 'up'
   );
   
-  const calculatedStatus = mapRagToCalculated(kr.status);
+  const calculatedStatus = mapRagToCalculated(effectiveStatus);
   const statusConfig = STATUS_CONFIG[calculatedStatus];
 
   const formatValue = (value: number | null | undefined, unit: string) => {
@@ -584,7 +603,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
                   </span>
                   <span className="hidden sm:inline">•</span>
                   <span>
-                    {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
+                    {formatValue(effectiveCurrent, kr.unit)} / {formatValue(effectiveTarget, kr.unit)}
                   </span>
                   {type === 'team' && initiativesCount > 0 && (
                     <>
