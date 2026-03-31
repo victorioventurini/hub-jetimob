@@ -31,6 +31,7 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const { profile, role, signOut, isAdmin } = useAuth();
+  const { theme, setTheme } = useTheme();
   const { userRole, hasMultipleBus } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
