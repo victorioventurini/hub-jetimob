@@ -18,6 +18,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { BuProvider } from "@/contexts/BuContext";
 import { ModuleProvider } from "@/contexts/ModuleContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
