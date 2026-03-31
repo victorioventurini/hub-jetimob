@@ -15,6 +15,7 @@ import { MessageSquarePlus, Send, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useIdentity } from '@/hooks/useIdentity';
+import { queryKeys } from '@/lib/queryKeys';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -60,7 +61,7 @@ export function AddendumSection({ sessionId, addendums: initialAddendums }: Adde
       setAddendums(updated);
       setText('');
       toast.success('Adendo registrado com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['completed-session-cycle'] });
+      queryClient.invalidateQueries({ queryKey: ['okr-completed-session-cycle'] });
     },
     onError: () => {
       toast.error('Erro ao enviar adendo. Tente novamente.');

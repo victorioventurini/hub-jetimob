@@ -30,7 +30,7 @@ export function useCompletedSessionForCycle(
   const { profile } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['completed-session-cycle', wizardType, teamId ?? 'none', cycleId ?? 'none', profile?.id],
+    queryKey: queryKeys.okrs.completedSessionForCycle(wizardType, teamId, cycleId, profile?.id),
     enabled: !!profile?.id && !!cycleId,
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
