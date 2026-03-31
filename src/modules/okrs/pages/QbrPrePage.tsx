@@ -45,6 +45,8 @@ import type {
   QbrPreDraftData,
   MbrKpiSnapshot,
   TeamCheckinDecision,
+  ProposedObjectiveEntry,
+  DraftTeamKr,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
