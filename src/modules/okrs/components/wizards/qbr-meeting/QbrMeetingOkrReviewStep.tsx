@@ -163,6 +163,11 @@ export function QbrMeetingOkrReviewStep({
           </div>
         )}
 
+        {/* Addendum from qbr-pre */}
+        {current && teamAddendums[current.teamId]?.length > 0 && (
+          <AddendumBadge addendums={teamAddendums[current.teamId]} />
+        )}
+
         {/* Proposed OKRs */}
         {current?.hasSubmission && current.proposedOkrs.length > 0 ? (
           <div className="space-y-3">
