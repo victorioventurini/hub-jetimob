@@ -62,6 +62,7 @@ export function createMockCycle(overrides: Partial<Cycle> = {}): Cycle {
     end_date: quarterEnd.toISOString().split('T')[0],
     planning_date: null,
     review_date: null,
+    review_date_first_month: null,
     retro_date: null,
     parent_cycle_id: null,
     ...overrides,
