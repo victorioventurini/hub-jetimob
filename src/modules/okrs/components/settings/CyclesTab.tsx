@@ -634,6 +634,42 @@ export function CyclesTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Generate Cycles Confirmation */}
+      <AlertDialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gerar ciclos automaticamente</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Serão criados ciclos para os anos <strong>{missingYears.join(', ')}</strong> com todas as datas de rituais pré-preenchidas.
+                </p>
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+                  {missingYears.map(year => (
+                    <div key={year}>
+                      <span className="font-medium">{year}:</span>{' '}
+                      1 anual + 4 trimestrais (Q1–Q4)
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Todos os ciclos serão criados com status "Planejamento". As datas podem ser editadas manualmente depois.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => generateCyclesMutation.mutate()}
+              disabled={generateCyclesMutation.isPending}
+            >
+              {generateCyclesMutation.isPending ? 'Gerando...' : `Gerar ${cyclesToGenerate.length} ciclos`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
