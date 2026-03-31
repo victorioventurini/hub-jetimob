@@ -421,7 +421,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     window.history.replaceState(window.history.state, '', url.toString());
     
     queryClient.invalidateQueries({ 
-      queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType) 
+      queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId) 
     });
   }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft]);
   
