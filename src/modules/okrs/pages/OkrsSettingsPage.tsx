@@ -55,6 +55,10 @@ export default function OkrsSettingsPage() {
             <BookOpen className="h-4 w-4" />
             Regras de Vínculo
           </TabsTrigger>
+          <TabsTrigger value="guide" className="gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Guia
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="cycles">
