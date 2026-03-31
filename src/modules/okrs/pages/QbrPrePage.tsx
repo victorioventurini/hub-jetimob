@@ -102,6 +102,7 @@ export default function QbrPrePage() {
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('qbr-pre', quarterlyCycle);
 
   // Validate qbr_status
   const { data: cycleData, isLoading: isLoadingCycleStatus } = useQuery({
