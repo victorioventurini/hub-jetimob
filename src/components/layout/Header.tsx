@@ -22,6 +22,7 @@ import { UserImpersonationDialog } from "@/components/impersonation";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { ActiveCycleIndicator } from "./ActiveCycleIndicator";
+import { useTheme, type Theme } from "@/contexts/ThemeContext";
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
