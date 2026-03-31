@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
