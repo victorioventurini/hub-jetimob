@@ -208,6 +208,7 @@ export function CyclesTab() {
           end_date: c.end_date,
           planning_date: c.planning_date,
           review_date: c.review_date,
+          review_date_first_month: c.review_date_first_month,
           retro_date: c.retro_date,
           status: c.status,
           parent_cycle_id: c._tempParentKey ? parentMap.get(c._tempParentKey) || null : null,
