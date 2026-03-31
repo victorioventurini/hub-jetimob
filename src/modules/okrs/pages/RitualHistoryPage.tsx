@@ -246,11 +246,11 @@ export default function RitualHistoryPage() {
           </Popover>
 
           {/* Clear filters */}
-          {(dateFromState.value || dateToState.value) && (
+          {(dateFromState.value !== default30DaysAgo || dateToState.value) && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { dateFromState.set(''); dateToState.set(''); }}
+              onClick={() => { dateFromState.set(default30DaysAgo); dateToState.set(''); }}
               className="text-muted-foreground"
             >
               Limpar datas
