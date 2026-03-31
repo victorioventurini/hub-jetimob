@@ -10,8 +10,41 @@ import { successResponse, errorResponse } from '../_shared/response.ts';
 
 type RebuildMode = 'incremental' | 'full';
 
+type CadenceTemplate = {
+  wizard_type: string;
+  frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly';
+  month_week_ordinal: number | null;
+  day_of_week: number | null;
+  day_of_month: number | null;
+  start_date: string;
+  cycle_derived: boolean;
+};
+
+const ALL_WIZARD_TYPES = [
+  'collaborator',
+  'leader-prep',
+  'team-checkin',
+  'managers-checkin',
+  'clevel-checkin',
+  'team-okr-creation',
+  'team-kr-creation',
+  'mbr',
+  'mbr-pre',
+  'mbr-first',
+  'mbr-pre-first',
+  'qbr-pre',
+  'qbr-pre-clevel',
+  'qbr-meeting',
+  'qbr-post',
+] as const;
+
 function dayOfMonth(dateStr: string): number {
   return Number(dateStr.split('-')[2] ?? '1');
+}
+
+function clampDay(day: number): number {
+  if (Number.isNaN(day)) return 1;
+  return Math.min(28, Math.max(1, day));
 }
 
 Deno.serve(async (req) => {
@@ -31,7 +64,7 @@ Deno.serve(async (req) => {
 
     const { data: quarterCycles, error: cycleErr } = await serviceClient
       .from('cycles')
-      .select('id, bu_id, start_date, planning_date')
+      .select('id, bu_id, start_date, planning_date, review_date, review_date_first_month, retro_date')
       .eq('bu_id', buId)
       .eq('type', 'quarter')
       .order('start_date', { ascending: true });
@@ -50,9 +83,81 @@ Deno.serve(async (req) => {
 
     const firstQuarterStart = quarterCycles[0].start_date;
     const firstPlanning = quarterCycles.find((c: any) => !!c.planning_date)?.planning_date ?? firstQuarterStart;
-    const qbrPreDay = dayOfMonth(firstPlanning);
+    const firstReview = quarterCycles.find((c: any) => !!c.review_date)?.review_date ?? firstQuarterStart;
+    const firstReviewMonth1 = quarterCycles.find((c: any) => !!c.review_date_first_month)?.review_date_first_month ?? firstReview;
+    const firstRetro = quarterCycles.find((c: any) => !!c.retro_date)?.retro_date ?? firstReview;
 
-    const desiredCadences = [
+    const qbrPreDay = clampDay(dayOfMonth(firstPlanning));
+    const mbrFirstDay = clampDay(dayOfMonth(firstReviewMonth1));
+    const qbrMeetingDay = clampDay(dayOfMonth(firstReview));
+    const qbrPostDay = clampDay(dayOfMonth(firstRetro));
+    const mbrPreFirstDay = clampDay(mbrFirstDay - 2);
+    const qbrPreClevelDay = clampDay(qbrPreDay + 3);
+
+    const desiredCadences: CadenceTemplate[] = [
+      {
+        wizard_type: 'collaborator',
+        frequency: 'weekly',
+        month_week_ordinal: null,
+        day_of_week: 5,
+        day_of_month: null,
+        start_date: firstQuarterStart,
+        cycle_derived: false,
+      },
+      {
+        wizard_type: 'leader-prep',
+        frequency: 'weekly',
+        month_week_ordinal: null,
+        day_of_week: 1,
+        day_of_month: null,
+        start_date: firstQuarterStart,
+        cycle_derived: false,
+      },
+      {
+        wizard_type: 'team-checkin',
+        frequency: 'weekly',
+        month_week_ordinal: null,
+        day_of_week: 1,
+        day_of_month: null,
+        start_date: firstQuarterStart,
+        cycle_derived: false,
+      },
+      {
+        wizard_type: 'managers-checkin',
+        frequency: 'monthly',
+        month_week_ordinal: 1,
+        day_of_week: 2,
+        day_of_month: null,
+        start_date: firstQuarterStart,
+        cycle_derived: false,
+      },
+      {
+        wizard_type: 'clevel-checkin',
+        frequency: 'monthly',
+        month_week_ordinal: 1,
+        day_of_week: 2,
+        day_of_month: null,
+        start_date: firstQuarterStart,
+        cycle_derived: false,
+      },
+      {
+        wizard_type: 'team-okr-creation',
+        frequency: 'quarterly',
+        month_week_ordinal: null,
+        day_of_week: null,
+        day_of_month: qbrPreDay,
+        start_date: firstPlanning,
+        cycle_derived: true,
+      },
+      {
+        wizard_type: 'team-kr-creation',
+        frequency: 'monthly',
+        month_week_ordinal: 1,
+        day_of_week: 2,
+        day_of_month: null,
+        start_date: firstQuarterStart,
+        cycle_derived: false,
+      },
       {
         wizard_type: 'mbr',
         frequency: 'monthly',
@@ -60,6 +165,7 @@ Deno.serve(async (req) => {
         day_of_week: 2,
         day_of_month: null,
         start_date: firstQuarterStart,
+        cycle_derived: true,
       },
       {
         wizard_type: 'mbr-pre',
@@ -68,6 +174,25 @@ Deno.serve(async (req) => {
         day_of_week: 2,
         day_of_month: null,
         start_date: firstQuarterStart,
+        cycle_derived: true,
+      },
+      {
+        wizard_type: 'mbr-first',
+        frequency: 'quarterly',
+        month_week_ordinal: null,
+        day_of_week: null,
+        day_of_month: mbrFirstDay,
+        start_date: firstReviewMonth1,
+        cycle_derived: true,
+      },
+      {
+        wizard_type: 'mbr-pre-first',
+        frequency: 'quarterly',
+        month_week_ordinal: null,
+        day_of_week: null,
+        day_of_month: mbrPreFirstDay,
+        start_date: firstReviewMonth1,
+        cycle_derived: true,
       },
       {
         wizard_type: 'qbr-pre',
@@ -76,32 +201,94 @@ Deno.serve(async (req) => {
         day_of_week: null,
         day_of_month: qbrPreDay,
         start_date: firstPlanning,
+        cycle_derived: true,
       },
-    ] as const;
+      {
+        wizard_type: 'qbr-pre-clevel',
+        frequency: 'quarterly',
+        month_week_ordinal: null,
+        day_of_week: null,
+        day_of_month: qbrPreClevelDay,
+        start_date: firstPlanning,
+        cycle_derived: true,
+      },
+      {
+        wizard_type: 'qbr-meeting',
+        frequency: 'quarterly',
+        month_week_ordinal: null,
+        day_of_week: null,
+        day_of_month: qbrMeetingDay,
+        start_date: firstReview,
+        cycle_derived: true,
+      },
+      {
+        wizard_type: 'qbr-post',
+        frequency: 'quarterly',
+        month_week_ordinal: null,
+        day_of_week: null,
+        day_of_month: qbrPostDay,
+        start_date: firstRetro,
+        cycle_derived: true,
+      },
+    ];
+
+    const templateByType = new Map<string, CadenceTemplate>(
+      desiredCadences.map((cadence) => [cadence.wizard_type, cadence])
+    );
 
     const { data: existingCadences } = await serviceClient
       .from('ritual_cadences')
-      .select('id, wizard_type, team_id, responsible_profile_id')
+      .select('id, wizard_type, team_id, responsible_profile_id, frequency, month_week_ordinal, day_of_week, day_of_month, start_date, is_active')
       .eq('bu_id', buId)
-      .in('wizard_type', ['mbr', 'mbr-pre', 'qbr-pre'])
+      .in('wizard_type', [...ALL_WIZARD_TYPES])
       .is('team_id', null)
       .order('created_at', { ascending: true });
 
     const byType = new Map<string, any>((existingCadences ?? []).map((c: any) => [c.wizard_type, c]));
 
-    const cadenceIds: string[] = [];
+    const cadenceIds = new Set<string>();
+    const createdWizardTypes: string[] = [];
+    const reactivatedWizardTypes: string[] = [];
+    const updatedWizardTypes: string[] = [];
+
     for (const cadence of desiredCadences) {
       const existing = byType.get(cadence.wizard_type);
 
       if (existing) {
+        const shouldApplyTemplate = cadence.cycle_derived;
+        const nextValues = shouldApplyTemplate
+          ? {
+              frequency: cadence.frequency,
+              month_week_ordinal: cadence.month_week_ordinal,
+              day_of_week: cadence.day_of_week,
+              day_of_month: cadence.day_of_month,
+              start_date: cadence.start_date,
+            }
+          : {
+              frequency: existing.frequency,
+              month_week_ordinal: existing.month_week_ordinal,
+              day_of_week: existing.day_of_week,
+              day_of_month: existing.day_of_month,
+              start_date: existing.start_date,
+            };
+
+        const changed =
+          existing.frequency !== nextValues.frequency ||
+          existing.month_week_ordinal !== nextValues.month_week_ordinal ||
+          existing.day_of_week !== nextValues.day_of_week ||
+          existing.day_of_month !== nextValues.day_of_month ||
+          existing.start_date !== nextValues.start_date ||
+          existing.is_active !== true;
+
+        if (changed) {
         const { error: updateErr } = await serviceClient
           .from('ritual_cadences')
           .update({
-            frequency: cadence.frequency,
-            month_week_ordinal: cadence.month_week_ordinal,
-            day_of_week: cadence.day_of_week,
-            day_of_month: cadence.day_of_month,
-            start_date: cadence.start_date,
+            frequency: nextValues.frequency,
+            month_week_ordinal: nextValues.month_week_ordinal,
+            day_of_week: nextValues.day_of_week,
+            day_of_month: nextValues.day_of_month,
+            start_date: nextValues.start_date,
             end_date: null,
             is_active: true,
           })
@@ -111,7 +298,14 @@ Deno.serve(async (req) => {
           return errorResponse('Failed to update cadence', 500, 'CADENCE_UPDATE_FAILED');
         }
 
-        cadenceIds.push(existing.id);
+          if (!existing.is_active) {
+            reactivatedWizardTypes.push(cadence.wizard_type);
+          } else {
+            updatedWizardTypes.push(cadence.wizard_type);
+          }
+        }
+
+        cadenceIds.add(existing.id);
       } else {
         const { data: created, error: insertErr } = await serviceClient
           .from('ritual_cadences')
@@ -134,7 +328,49 @@ Deno.serve(async (req) => {
           return errorResponse('Failed to create cadence', 500, 'CADENCE_INSERT_FAILED');
         }
 
-        cadenceIds.push(created.id);
+        cadenceIds.add(created.id);
+        createdWizardTypes.push(cadence.wizard_type);
+      }
+    }
+
+    const { data: verifiedCadences } = await serviceClient
+      .from('ritual_cadences')
+      .select('id, wizard_type')
+      .eq('bu_id', buId)
+      .in('wizard_type', [...ALL_WIZARD_TYPES])
+      .is('team_id', null);
+
+    const verifiedByType = new Map<string, string>((verifiedCadences ?? []).map((c: any) => [c.wizard_type, c.id]));
+    const missingAfterUpsert = ALL_WIZARD_TYPES.filter((type) => !verifiedByType.has(type));
+
+    if (missingAfterUpsert.length > 0) {
+      for (const wizardType of missingAfterUpsert) {
+        const template = templateByType.get(wizardType);
+        if (!template) continue;
+
+        const { data: created, error: insertErr } = await serviceClient
+          .from('ritual_cadences')
+          .insert({
+            bu_id: buId,
+            wizard_type: template.wizard_type,
+            team_id: null,
+            frequency: template.frequency,
+            month_week_ordinal: template.month_week_ordinal,
+            day_of_week: template.day_of_week,
+            day_of_month: template.day_of_month,
+            start_date: template.start_date,
+            end_date: null,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (insertErr || !created?.id) {
+          return errorResponse('Failed to heal missing cadence', 500, 'CADENCE_HEAL_FAILED');
+        }
+
+        cadenceIds.add(created.id);
+        createdWizardTypes.push(template.wizard_type);
       }
     }
 
@@ -169,13 +405,16 @@ Deno.serve(async (req) => {
     logRequestCompletion(
       context,
       'success',
-      `Synced ${cadenceIds.length} cadences with rebuild_mode=${rebuildMode}; generated=${generatedTotal}`
+      `Synced ${cadenceIds.size} cadences with rebuild_mode=${rebuildMode}; generated=${generatedTotal}`
     );
 
     return successResponse({
-      cadences_synced: cadenceIds.length,
+      cadences_synced: cadenceIds.size,
       occurrences_generated: generatedTotal,
       rebuild_mode: rebuildMode,
+      created_wizard_types: createdWizardTypes,
+      reactivated_wizard_types: reactivatedWizardTypes,
+      updated_wizard_types: updatedWizardTypes,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -51,6 +51,7 @@ import {
 import { useRitualAdherence } from '../hooks/useRitualAdherence';
 import { useCollaboratorCheckinCounts } from '../hooks/useCollaboratorCheckinCounts';
 import type { WizardPersona } from '../types/wizard';
+import { ALL_RITUAL_WIZARD_TYPES } from '../constants/ritualWizardTypes';
 
 // ============================================================
 // CONSTANTS
@@ -73,16 +74,8 @@ const STATUS_CONFIG: Record<OccurrenceStatus, { label: string; color: string; do
   rescheduled: { label: 'Reagendado', color: 'bg-status-blue-muted text-status-blue', dotColor: 'bg-status-blue' },
 };
 
-/** Rituais recorrentes (exclui criação de OKRs/KRs) */
-const RECURRENT_WIZARD_TYPES: WizardPersona[] = [
-  'collaborator',
-  'leader-prep',
-  'team-checkin',
-  'managers-checkin',
-  'clevel-checkin',
-  'mbr',
-  'qbr-pre',
-];
+/** Catálogo canônico de ritos exibidos em filtros e criação manual */
+const RECURRENT_WIZARD_TYPES: WizardPersona[] = ALL_RITUAL_WIZARD_TYPES;
 
 // ============================================================
 // PAGE
