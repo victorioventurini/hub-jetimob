@@ -494,7 +494,7 @@ export function CyclesTab() {
                                   review_date={quarter.review_date}
                                   retro_date={quarter.retro_date}
                                 />
-                            </div>
+                              </div>
                             {renderCycleActions(quarter)}
                           </div>
                         ))}
