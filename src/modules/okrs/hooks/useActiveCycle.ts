@@ -35,7 +35,7 @@ export function useActiveCycle() {
 
       const { data: cycles, error } = await supabase
         .from('cycles')
-        .select('id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, status, qbr_status')
+        .select('id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id, status, qbr_status')
         .eq('bu_id', buId)
         .in('status', ['active', 'planning'])
         .order('start_date', { ascending: true });

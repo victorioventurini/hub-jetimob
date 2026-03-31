@@ -90,7 +90,7 @@ export function useCycle(cycleId: string | null | undefined) {
       
       const { data, error } = await supabase
         .from("cycles")
-        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id")
+        .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id")
         .eq("id", cycleId)
         .maybeSingle();
 
