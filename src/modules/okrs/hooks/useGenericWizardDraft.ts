@@ -85,7 +85,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const buSupabase = useBuScopedSupabase();
   
   
-  const storageKey = getDraftKey(wizardType);
+  const storageKey = getDraftKey(wizardType, teamId);
   
   // Session ID for database sync
   const [sessionId, setSessionId] = useState<string | null>(null);
