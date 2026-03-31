@@ -184,7 +184,7 @@ export default function RitualHistoryPage() {
 
         {/* Filters */}
         <ListPageFilters hideSearch>
-          <Select value={typeState.value || 'all'} onValueChange={(v) => { typeState.set(v); pageState.set(1); }}>
+          <Select value={typeState.value || 'all'} onValueChange={(v) => typeState.set(v)}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Tipo de ritual" />
             </SelectTrigger>
