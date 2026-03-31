@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useMemo } from "react";
-import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval } from "date-fns";
+import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { queryKeys } from "@/lib/queryKeys";
 
 export interface Cycle {
@@ -52,8 +52,8 @@ export function useActiveCycles() {
     
     const today = new Date();
     const active = allCycles.filter(cycle => {
-      const start = parseISO(cycle.start_date);
-      const end = parseISO(cycle.end_date);
+      const start = startOfDay(parseISO(cycle.start_date));
+      const end = endOfDay(parseISO(cycle.end_date));
       return isWithinInterval(today, { start, end });
     });
     
