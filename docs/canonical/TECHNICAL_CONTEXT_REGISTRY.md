@@ -1969,10 +1969,10 @@ O QBR é um ritual trimestral de 4 fases que fecha o ciclo e prepara o próximo,
 
 | Fase | Wizard | Rota | Propósito | Participante | Acesso |
 |------|--------|------|-----------|--------------|--------|
-| **1. Pré-QBR (Líderes)** | `QbrPrePage` | `/okrs/qbr-pre` | Balanço do ciclo, análise de KPIs, aprendizados, proposta de OKRs | Líder de time | `OkrRoute` |
-| **2. Pré-QBR (C-Level)** | `QbrPreCLevelPage` | `/okrs/qbr-pre-clevel` | Consolidação de scorecards, análise estratégica, calibração de OKRs, diretrizes | C-Level/BU Admin | `requiresBuAdmin` |
-| **3. Reunião QBR** | `QbrMeetingPage` | `/okrs/qbr` | Aprovação/rejeição de OKRs por time, decisões com dono/prazo, compromissos cross-área | BU Admin | `requiresBuAdmin` |
-| **4. Pós-QBR** | `QbrPostPage` | `/okrs/qbr-post` | Promoção de OKRs aprovados, formalização de dependências, ata executiva | BU Admin | `requiresBuAdmin` |
+| **1. Pré-QBR (Líderes)** | `QbrPrePage` | `/rituals/qbr-pre` | Balanço do ciclo, análise de KPIs, aprendizados, proposta de OKRs | Líder de time | `RitualRoute` |
+| **2. Pré-QBR (C-Level)** | `QbrPreCLevelPage` | `/rituals/qbr-clevel` | Consolidação de scorecards, análise estratégica, calibração de OKRs, diretrizes | C-Level/BU Admin | `requiresBuAdmin` |
+| **3. Reunião QBR** | `QbrMeetingPage` | `/rituals/qbr` | Aprovação/rejeição de OKRs por time, decisões com dono/prazo, compromissos cross-área | BU Admin | `requiresBuAdmin` |
+| **4. Pós-QBR** | `QbrPostPage` | `/rituals/qbr-post` | Promoção de OKRs aprovados, formalização de dependências, ata executiva | BU Admin | `requiresBuAdmin` |
 
 **Controle de abertura:** Campo `qbr_status` na tabela `cycles` (`open`, `collecting`, `closed`). O wizard Pré-QBR só está disponível quando `qbr_status IN ('open', 'collecting')`.
 
