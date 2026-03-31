@@ -137,17 +137,32 @@ export const EnhancedObjectiveCard = React.memo(function EnhancedObjectiveCard({
     }
 
     const total = keyResults.reduce((acc, kr) => {
-      return acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
+      const primaryKpi = getKrPrimaryKpi(kr.id);
+      const effectiveCurrent = hasKrPrimaryKpi(kr.id) && primaryKpi?.currentValue !== null && primaryKpi?.currentValue !== undefined
+        ? primaryKpi.currentValue
+        : kr.current_value;
+      const effectiveTarget = hasKrPrimaryKpi(kr.id) && primaryKpi?.targetValue !== null && primaryKpi?.targetValue !== undefined
+        ? primaryKpi.targetValue
+        : kr.target;
+
+      return acc + calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction);
     }, 0);
+
+    const effectiveStatuses = keyResults.map((kr) => {
+      const primaryKpi = getKrPrimaryKpi(kr.id);
+      return hasKrPrimaryKpi(kr.id) && primaryKpi?.ragStatus && primaryKpi.ragStatus !== 'no_data'
+        ? primaryKpi.ragStatus
+        : kr.status;
+    });
 
     return {
       avgProgress: total / keyResults.length,
-      greenCount: keyResults.filter(kr => kr.status === 'green').length,
-      yellowCount: keyResults.filter(kr => kr.status === 'yellow').length,
-      redCount: keyResults.filter(kr => kr.status === 'red').length,
-      notStartedCount: keyResults.filter(kr => kr.status === 'not_started').length,
+      greenCount: effectiveStatuses.filter(status => status === 'green').length,
+      yellowCount: effectiveStatuses.filter(status => status === 'yellow').length,
+      redCount: effectiveStatuses.filter(status => status === 'red').length,
+      notStartedCount: effectiveStatuses.filter(status => status === 'not_started').length,
     };
-  }, [keyResults]);
+  }, [keyResults, hasKrPrimaryKpi, getKrPrimaryKpi]);
 
   // Determine border color based on worst KR status
   const getBorderColor = () => {
@@ -344,13 +359,29 @@ interface EnhancedKrRowProps {
   /** v3.4.2: Se a KR tem KPI primária vinculada */
   hasPrimaryKpi?: boolean;
   /** v3.4.2: Dados da KPI primária */
-  primaryKpiInfo?: { kpiId: string; kpiName: string; direction: 'up' | 'down' | 'maintain' };
+  primaryKpiInfo?: {
+    kpiId: string;
+    kpiName: string;
+    direction: 'up' | 'down' | 'maintain';
+    currentValue: number | null;
+    targetValue: number | null;
+    ragStatus: 'green' | 'yellow' | 'red' | 'no_data';
+  };
   onEdit?: () => void;
   onCheckin?: () => void;
 }
 
 function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit, onCheckin }: EnhancedKrRowProps) {
-  const progress = calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
+  const effectiveCurrent = hasPrimaryKpi && primaryKpiInfo?.currentValue !== null && primaryKpiInfo?.currentValue !== undefined
+    ? primaryKpiInfo.currentValue
+    : kr.current_value;
+  const effectiveTarget = hasPrimaryKpi && primaryKpiInfo?.targetValue !== null && primaryKpiInfo?.targetValue !== undefined
+    ? primaryKpiInfo.targetValue
+    : kr.target;
+  const effectiveStatus = hasPrimaryKpi && primaryKpiInfo?.ragStatus && primaryKpiInfo.ragStatus !== 'no_data'
+    ? primaryKpiInfo.ragStatus
+    : kr.status;
+  const progress = calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction);
 
   const formatValue = (value: number | null | undefined, unit: string) => {
     if (value === null || value === undefined) return '—';
@@ -361,7 +392,7 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
   };
 
   const getStatusColor = () => {
-    switch (kr.status) {
+    switch (effectiveStatus) {
       case 'green': return 'text-success';
       case 'yellow': return 'text-warning';
       case 'red': return 'text-danger';
@@ -446,7 +477,7 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
             <div className="flex-1">
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-muted-foreground">
-                  {formatValue(kr.current_value, kr.unit)} / {formatValue(kr.target, kr.unit)}
+                  {formatValue(effectiveCurrent, kr.unit)} / {formatValue(effectiveTarget, kr.unit)}
                 </span>
                 <span className={cn('font-medium', getStatusColor(), progress > 100 && 'text-status-green')}>
                   {progress.toFixed(0)}%
