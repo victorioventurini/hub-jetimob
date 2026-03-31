@@ -226,9 +226,9 @@ export function CyclesTab() {
       await syncRitualCalendar({ silent: true });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(buId) });
       toast.success(`Ciclos gerados com sucesso para ${missingYears.join(', ')}!`);
       setShowGenerateDialog(false);
     },
@@ -249,9 +249,9 @@ export function CyclesTab() {
       const { error } = await supabase.from("cycles").delete().eq("id", cycleId);
       if (error) throw error;
       await syncRitualCalendar({ silent: true });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(buId) });
       toast.success("Ciclo removido com sucesso");
       setDeleteDialogCycle(null);
     } catch {
