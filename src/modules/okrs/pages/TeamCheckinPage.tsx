@@ -203,6 +203,10 @@ export default function TeamCheckinPage() {
   if (isLoadingTeams || isLoadingCycles) {
     return <LoadingState text="Carregando..." fullPage />;
   }
+
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="team-checkin" availability={availability} backUrl="/wizards" />;
+  }
   
   // No team
   if (!teamIdParam || !selectedTeam) {

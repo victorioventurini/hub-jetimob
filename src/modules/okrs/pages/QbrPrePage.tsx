@@ -479,6 +479,11 @@ export default function QbrPrePage() {
     );
   }
 
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="qbr-pre" availability={availability} />;
+  }
+
   // Guard: Already completed → show read-only view with addendum
   if (sessionState === 'completed' && completedSession) {
     return (

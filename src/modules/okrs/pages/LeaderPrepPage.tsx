@@ -222,6 +222,10 @@ export default function LeaderPrepPage() {
   if (isLoadingTeams || isLoadingCycles) {
     return <LoadingState text="Carregando..." fullPage />;
   }
+
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="leader-prep" availability={availability} backUrl="/wizards" />;
+  }
   
   // No team
   if (!teamIdParam || !selectedTeam) {

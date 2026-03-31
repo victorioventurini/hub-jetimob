@@ -68,6 +68,7 @@ export default function ManagersCheckinPage() {
   
   // Get active quarterly cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('managers-checkin', quarterlyCycle);
   
   // Fetch real data
   const { data: panoramaData, isLoading: isLoadingPanorama } = useManagersPanorama(quarterlyCycle?.id);
