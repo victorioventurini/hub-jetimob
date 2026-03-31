@@ -116,10 +116,11 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         query = query.eq('started_by', filters.userId);
       }
       if (filters.dateFrom) {
-        query = query.gte('completed_at', filters.dateFrom);
+        // Use OR to include in_progress sessions (completed_at is null) via started_at fallback
+        query = query.or(`completed_at.gte.${filters.dateFrom},and(status.eq.in_progress,started_at.gte.${filters.dateFrom})`);
       }
       if (filters.dateTo) {
-        query = query.lte('completed_at', filters.dateTo + 'T23:59:59.999Z');
+        query = query.or(`completed_at.lte.${filters.dateTo}T23:59:59.999Z,and(status.eq.in_progress,started_at.lte.${filters.dateTo}T23:59:59.999Z)`);
       }
 
       // Pagination
