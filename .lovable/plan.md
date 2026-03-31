@@ -1,42 +1,37 @@
 
-Sim — agora está confirmado: o plano **passa a contemplar backfill de todos os wizard types** (não só `mbr/mbr-pre/qbr-pre`), conforme sua resposta.
-
-Também confirmei o pré-checklist canônico antes de seguir:
+Pré-checklist obrigatório: concluído agora nesta sessão, com leitura dos docs canônicos relevantes:
 - `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
 - `docs/canonical/IDENTITY_CONVENTION.md`
 - `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`
 - `docs/canonical/DATA_MODEL_REGISTRY.md`
-- revisão da implementação existente em `sync-ritual-calendar-from-cycles`, `generate-ritual-occurrences`, `useRitualCadences`, `RitualCalendarPage`.
+- E verificação de implementação similar no codebase (`useOkrStatus.ts`, `ObjectiveListItem.tsx`, `EnhancedObjectiveCard.tsx`, `OkrObjectiveCard.tsx`).
 
-Plano objetivo (revisado com seu escopo):
+Vou prosseguir com este plano de ação para corrigir o erro em `/okrs` (`undefined.color`):
 
-1) Catálogo canônico de wizard types (fonte única)
-- Criar um catálogo único no frontend/backend com todos os wizard types aceitos no módulo de ritos.
-- Usar esse catálogo na UI (`RECURRENT_WIZARD_TYPES` + labels) para garantir que `mbr-pre` e demais tipos apareçam nos filtros/listas.
+1) Blindar mapeamento de status na origem
+- Arquivo: `src/modules/okrs/hooks/useOkrStatus.ts`
+- Ajustar `mapRagToCalculated` para sempre retornar um status válido (fallback explícito).
+- Objetivo: impedir retorno `undefined` quando vier status inesperado de KR/KPI.
 
-2) Backfill “todos os wizard types” por BU (auto-healing)
-- Evoluir a sync function para:
-  - identificar wizard types esperados;
-  - detectar ausentes em `ritual_cadences` da BU;
-  - criar/reativar cadências faltantes de forma idempotente;
-  - para tipos derivados de ciclo (MBR/QBR), recalcular datas com base em `cycles`;
-  - para tipos não derivados de ciclo, aplicar defaults canônicos (sem sobrescrever customizações existentes).
+2) Blindar consumo de `STATUS_CONFIG` no dashboard
+- Arquivo: `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx`
+- Nos pontos onde há `STATUS_CONFIG[status]` e `STATUS_CONFIG[calculatedStatus]`, aplicar `safeStatus` com fallback canônico antes de acessar `.color/.label/.borderColor`.
+- Objetivo: eliminar crash em runtime mesmo com dado fora de contrato.
 
-3) Rebuild completo de ocorrências para os tipos afetados
-- Após o backfill/upsert, disparar `generate-ritual-occurrences` em `rebuild_mode='full'` para cada cadence impactada.
-- Manter política atual de reconstrução total para consistência entre `/hub/modules/okrs/settings` e `/settings/rituals`.
+3) Padronizar proteção em pontos correlatos de OKRs
+- Revisar componentes que também fazem lookup dinâmico de status (especialmente cards/listas de objetivo/KR) para repetir o mesmo padrão defensivo.
+- Objetivo: evitar regressão em outras telas que compartilham a mesma lógica.
 
-4) Trigger automático + proteção anti-loop
-- Em `useRitualCadences`, se detectar lacuna de wizard types esperados, disparar sync silencioso uma vez por BU/sessão (auto-healing).
-- Preservar invalidação de cache canônica (`queryKeys.okrs`) após sync.
+4) Cobertura de testes
+- Arquivo: `src/modules/okrs/hooks/useOkrStatus.test.ts`
+- Adicionar caso de fallback para status inválido/inesperado.
+- Ajustar/estender teste de componente do dashboard para garantir que renderiza sem quebrar quando status vier inválido.
 
-5) Conformidade obrigatória (TCR/standards)
-- Manter cliente BU-scoped + filtro explícito `.eq('bu_id', currentBuId)` nas queries operacionais.
-- Sem `select('*')`.
-- Sem alteração estrutural de schema, apenas correção de fluxo e dados.
+5) Validação final
+- Verificar build/typecheck e abrir fluxo de `/okrs` para confirmar:
+  - sem erro de `undefined.color`;
+  - badges e labels continuam coerentes;
+  - KRs com KPI primária e `ragStatus` não mapeado não derrubam a página.
 
-Critérios de aceite
-- Em BU com lacunas, ao abrir `/settings/rituals` os wizard types faltantes passam a aparecer automaticamente.
-- `mbr-pre` e demais tipos esperados listados em Cadências/Filtros.
-- Sem duplicações após múltiplas aberturas/syncs.
-- Sincronização continua imediata após mutações de ciclos/status no Hub.
+Detalhe técnico chave
+- Causa raiz confirmada no código atual: `mapRagToCalculated` pode retornar `undefined` (sem `default`) e esse valor é usado para indexar `STATUS_CONFIG`, resultando em `statusConfig` indefinido e crash ao ler `.color`.
