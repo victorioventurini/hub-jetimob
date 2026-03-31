@@ -1,88 +1,33 @@
 
 
-# Implementação: Auto-gestão de Ciclos + Disponibilidade Automática de Rituais
+# Plano: Página Tutorial — Ciclos e Rituais no Hub
 
-## Resumo
+## O que será criado
 
-Três entregas: (1) migration SQL com coluna `config` e função RPC, (2) integração no cron-dispatcher, (3) toggle na CyclesTab.
+Uma nova aba **"Guia"** na página de Configurações de OKRs (`/hub/modules/okrs/settings?tab=guide`), seguindo o padrão visual da `RulesInfoTab` (cards informativos com ícones e badges).
 
-## Dados verificados
+## Conteúdo do tutorial
 
-- Tabela de módulos: `modules` (slug `okrs`, id `3bafb730-...`)
-- `bu_module_configs`: **não possui** coluna `config` — precisa de migration
-- Ciclos atuais: sem sobreposição (Q1 termina 31/03, Q2 começa 01/04) — safe to apply
-- Cron-dispatcher: roda a cada 1 minuto — frequência suficiente
+O guia será dividido em seções visuais (cards) cobrindo:
 
----
+1. **Ciclo de vida dos Ciclos** — Diagrama dos 3 estados (`Planejamento → Em execução → Encerrado`) com explicação de cada transição e quem pode executar
+2. **Transição automática** — Como funciona o toggle de auto-gestão, quando o cron ativa/encerra, e o comportamento opt-in
+3. **Rituais e disponibilidade** — Tabela dos 6 rituais (Colaborador, Líder, Time, Gestores, C-Level, MBR) com frequência sugerida e pré-requisito (ciclo ativo)
+4. **QBR — Fluxo especial** — Máquina de estados do QBR (closed → open → collecting → reviewing → ready → done) e por que a abertura é manual
+5. **Fluxo recomendado** — Passo a passo visual: criar ciclos → ativar toggle (ou ativar manual) → rituais ficam disponíveis → executar rituais → encerrar ciclo
+6. **Dicas e boas práticas** — Criar ciclos com antecedência em `planning`, não sobrepor ciclos do mesmo tipo, usar o calendário de rituais para acompanhamento
 
-## Parte 1: Migration SQL
+## Arquivos modificados
 
-### a) Adicionar coluna `config` em `bu_module_configs`
+| Arquivo | Mudança |
+|---------|---------|
+| `src/modules/okrs/components/settings/CyclesRitualsGuideTab.tsx` | **Novo** — Componente com o conteúdo do tutorial |
+| `src/modules/okrs/pages/OkrsSettingsPage.tsx` | Adicionar aba "Guia" com ícone `BookOpen` ou `GraduationCap` |
 
-```sql
-ALTER TABLE bu_module_configs 
-  ADD COLUMN IF NOT EXISTS config jsonb DEFAULT '{}';
-```
+## Detalhes técnicos
 
-### b) Criar função `auto_transition_cycle_statuses()`
-
-Lógica em passagem única:
-
-1. **Loop:** para cada ciclo `planning` com `start_date <= today` em BUs habilitadas (`JOIN modules m ON m.id = bmc.module_id WHERE m.slug = 'okrs' AND (bmc.config->>'auto_cycle_transition')::boolean = true`):
-   - Fecha o `active` do mesmo tipo/BU (incrementa `v_closed` via `GET DIAGNOSTICS`)
-   - Ativa o novo (`v_activated++`)
-2. **Cleanup final:** fecha `active` com `end_date < today` sem sucessor (soma ao `v_closed`)
-3. Retorna `jsonb_build_object('activated', v_activated, 'closed', v_closed)`
-
-Atributos: `SECURITY DEFINER`, `SET search_path = public`.
-
----
-
-## Parte 2: Integração no `cron-dispatcher`
-
-**Arquivo:** `supabase/functions/cron-dispatcher/index.ts`
-
-- Adicionar campos `cycles_activated` e `cycles_closed` ao `MaintenanceResult` (default `0`)
-- Adicionar bloco RPC em `runMaintenance()` (após `mark_missed_ritual_occurrences`):
-
-```typescript
-try {
-  const { data, error } = await supabase.rpc("auto_transition_cycle_statuses");
-  if (!error && data) {
-    result.cycles_activated = data.activated || 0;
-    result.cycles_closed = data.closed || 0;
-    console.log(`[cron-dispatcher] Cycle transitions: ${result.cycles_activated} activated, ${result.cycles_closed} closed`);
-  }
-} catch {
-  console.log("[cron-dispatcher] auto_transition_cycle_statuses RPC not available");
-}
-```
-
-- Atualizar o objeto de fallback na linha 326 para incluir os novos campos
-
----
-
-## Parte 3: Toggle na CyclesTab
-
-**Arquivo:** `src/modules/okrs/components/settings/CyclesTab.tsx`
-
-Adicionar no topo da `CyclesTab` (antes do header "Gerenciar Ciclos"):
-
-- **Card** com `Switch` "Transição automática de ciclos"
-- Descrição: "Ciclos em planejamento serão ativados automaticamente na data de início. Ciclos ativos serão encerrados na data final."
-- **Query** para ler `bu_module_configs.config->>'auto_cycle_transition'` da BU atual (join com `modules` por `slug = 'okrs'`)
-- **Mutation** para atualizar `config = jsonb_set(coalesce(config, '{}'), '{auto_cycle_transition}', 'true/false')` via update
-- Imports adicionais: `Switch` de `@/components/ui/switch`
-
----
-
-## Rituais
-
-Nenhuma mudança. `useActiveCycle()` já filtra `status = 'active'` — quando o cron ativa o ciclo, rituais ficam automaticamente disponíveis.
-
----
-
-## Comportamento padrão
-
-Toggle inicia **desligado** (opt-in). `config` default `'{}'` → `(config->>'auto_cycle_transition')::boolean = true` retorna `false`. Nenhuma BU é afetada sem ação explícita do admin.
+- Componente puramente visual (sem queries, sem estado) — apenas cards, badges, ícones e texto
+- Segue o padrão da `RulesInfoTab` (cards com `CardHeader`/`CardContent`, badges coloridos, ícones Lucide)
+- O diagrama de estados será feito com flexbox + setas (ícones `ChevronRight`/`ArrowRight`)
+- Responsivo por padrão via Tailwind grid
 
