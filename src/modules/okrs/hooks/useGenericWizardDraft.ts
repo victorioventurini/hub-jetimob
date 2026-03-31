@@ -107,16 +107,24 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   
   // Check for existing draft session in DB (global per user per wizard type)
   const existingSessionQuery = useQuery({
-    queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType),
+    queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId),
     queryFn: async () => {
       if (!profile?.id) return null;
       
-      const { data, error } = await buSupabase
+      let query = buSupabase
         .from('okr_wizard_sessions')
         .select('id, team_id, cycle_id, reflection_data, updated_at')
         .eq('started_by', profile.id)
         .eq('wizard_type', wizardType)
-        .eq('status', 'in_progress')
+        .eq('status', 'in_progress');
+
+      if (teamId) {
+        query = query.eq('team_id', teamId);
+      } else {
+        query = query.is('team_id', null);
+      }
+
+      const { data, error } = await query
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
