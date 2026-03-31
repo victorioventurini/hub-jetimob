@@ -63,8 +63,8 @@ const DRAFT_VERSION = 1;
 // STORAGE KEY HELPER
 // ============================================================
 
-function getDraftKey(wizardType: WizardPersona): string {
-  return `okr-draft.${wizardType}`;
+function getDraftKey(wizardType: WizardPersona, teamId?: string | null): string {
+  return teamId ? `okr-draft.${wizardType}.${teamId}` : `okr-draft.${wizardType}`;
 }
 
 // ============================================================
