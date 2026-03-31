@@ -91,17 +91,19 @@ const App = () => {
   useRadixFocusRecovery();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
