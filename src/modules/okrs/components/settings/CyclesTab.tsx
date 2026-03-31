@@ -489,7 +489,11 @@ export function CyclesTab() {
                                   {formatDate(quarter.start_date)} -{" "}
                                   {formatDate(quarter.end_date)}
                                 </p>
-                              </div>
+                                <CycleRitualDates
+                                  planning_date={quarter.planning_date}
+                                  review_date={quarter.review_date}
+                                  retro_date={quarter.retro_date}
+                                />
                             </div>
                             {renderCycleActions(quarter)}
                           </div>
