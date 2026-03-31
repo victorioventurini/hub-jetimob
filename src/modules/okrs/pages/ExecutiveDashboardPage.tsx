@@ -97,12 +97,19 @@ export default function ExecutiveDashboardPage() {
 
         {/* Ritual History Quick Access */}
         <div className="flex justify-end">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/rituals/history" className="gap-2">
-              <History className="h-4 w-4" />
-              Histórico de Rituais
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/okrs/executive/quarter-review" className="gap-2">
+                Análise do Quarter
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/rituals/history" className="gap-2">
+                <History className="h-4 w-4" />
+                Histórico de Rituais
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* KPI Cards */}
