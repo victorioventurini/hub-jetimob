@@ -131,6 +131,9 @@ export default function CollaboratorCheckinPage() {
   // Get cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   
+  // Ritual availability window
+  const availability = useRitualAvailability('collaborator', quarterlyCycle);
+  
   // Draft persistence
   const {
     draft,
