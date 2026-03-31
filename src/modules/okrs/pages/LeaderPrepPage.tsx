@@ -89,6 +89,7 @@ export default function LeaderPrepPage() {
   
   // Get cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('leader-prep', quarterlyCycle);
   
   // Draft persistence
   const {
