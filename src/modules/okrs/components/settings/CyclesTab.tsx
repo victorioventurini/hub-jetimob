@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle, RefreshCw } from "lucide-react";
+import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle, RefreshCw, Sparkles } from "lucide-react";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CycleFormDialog } from "./CycleFormDialog";
+import { CycleRitualDates } from "./CycleRitualDates";
 import { useCycleActions } from "@/modules/okrs/hooks/useCycleActions";
+import { generateCyclesForYears, filterNewCycles } from "@/modules/okrs/utils/generateCycles";
 
 interface Cycle {
   id: string;
