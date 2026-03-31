@@ -21,10 +21,10 @@ export interface Cycle {
  * Fetches all cycles ordered by start date (newest first).
  */
 export function useCycles() {
-  const { client: supabase, isReady } = useOptionalBuClient();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.cyclesList(null),
+    queryKey: queryKeys.okrs.cyclesList(buId),
     queryFn: async () => {
       if (!supabase) return [];
       
@@ -36,7 +36,7 @@ export function useCycles() {
       if (error) throw error;
       return data as Cycle[];
     },
-    enabled: isReady && !!supabase,
+    enabled: isReady && !!supabase && !!buId,
   });
 }
 
