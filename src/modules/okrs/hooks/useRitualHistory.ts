@@ -82,6 +82,11 @@ const HISTORY_FIELDS = `
   profiles!okr_wizard_sessions_started_by_fkey ( display_name, first_name, last_name )
 `;
 
+const HISTORY_FIELDS_WITH_OCCURRENCE = `
+  ${HISTORY_FIELDS},
+  ritual_occurrences!inner ( id )
+`;
+
 // ============================================================
 // HOOKS
 // ============================================================
@@ -99,9 +104,14 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
     queryFn: async () => {
       if (!currentBu?.id || !profile?.id || !buSupabase) return { items: [], totalCount: 0 };
 
+      const shouldExcludeStandaloneQbrPre = filters.wizardType === 'qbr-pre';
+      const historyFields = shouldExcludeStandaloneQbrPre
+        ? HISTORY_FIELDS_WITH_OCCURRENCE
+        : HISTORY_FIELDS;
+
       let query = buSupabase
         .from('okr_wizard_sessions')
-        .select(HISTORY_FIELDS, { count: 'exact' })
+        .select(historyFields, { count: 'exact' })
         .eq('bu_id', currentBu.id)
         .in('status', ['completed', 'in_progress'])
         .order('completed_at', { ascending: false, nullsFirst: false })
