@@ -414,7 +414,7 @@ function BrandingSide() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="text-4xl font-bold text-primary-foreground mb-4"
+          className="text-4xl font-bold text-white mb-4"
         >
           Hub
         </motion.h1>
@@ -422,7 +422,7 @@ function BrandingSide() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
-          className="text-lg text-primary-foreground/80"
+          className="text-lg text-white/80"
         >
           O ponto de encontro dos Jetimobers para evoluir, executar e...
           simplificar o morar!
