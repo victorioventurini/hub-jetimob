@@ -788,6 +788,8 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'team-kr-creation': 'okr-check-alignment',
   'mbr-pre': 'okr-check-alignment',
   'mbr': 'okr-check-alignment',
+  'mbr-pre-first': 'okr-check-alignment',
+  'mbr-first': 'okr-check-alignment',
   'qbr-pre': 'okr-check-alignment',
   'qbr-pre-clevel': 'okr-check-alignment',
   'qbr-meeting': 'okr-check-alignment',

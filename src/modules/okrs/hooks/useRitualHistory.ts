@@ -60,6 +60,8 @@ const WIZARD_TYPE_LABELS: Record<WizardPersona, string> = {
   'team-kr-creation': 'Criação de KRs',
   'mbr': 'MBR',
   'mbr-pre': 'Pré-MBR',
+  'mbr-first': 'MBR (1º mês)',
+  'mbr-pre-first': 'Pré-MBR (1º mês)',
   'qbr-pre': 'Pré-QBR (Líder)',
   'qbr-pre-clevel': 'Pré-QBR (C-Level)',
   'qbr-meeting': 'Reunião QBR',
