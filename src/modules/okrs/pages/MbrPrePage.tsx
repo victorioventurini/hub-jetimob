@@ -18,10 +18,12 @@ import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
+import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
