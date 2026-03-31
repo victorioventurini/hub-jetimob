@@ -22,6 +22,8 @@ export interface RitualHistoryFilters {
   userId?: string | null;
   dateFrom?: string | null;
   dateTo?: string | null;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface RitualHistoryItem {
