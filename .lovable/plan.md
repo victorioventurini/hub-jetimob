@@ -1,122 +1,76 @@
 
 
-# Plano: Novo Ritual Pré-MBR (mbr-pre)
+# Plano: Unicidade de Rascunhos por Time + Melhorias no Histórico
 
-## Resumo
+## Problema
 
-Wizard de preparação mensal para líderes de time (5 steps), seguindo o padrão exato do Pré-QBR. Máxima reutilização de componentes existentes — os steps de balanço e KPI reutilizam `QbrBalanceStep` e `QbrKpiAnalysisStep` diretamente (mesma interface de props). Os steps 3 e 4 são novos (diferentes do QBR) e o step 5 (summary) é novo.
-
----
-
-## Arquivos a criar (6)
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep.tsx` | Step 3 — Destaques e riscos (3 textareas + ReflectionQuestions colapsado; gate: ≥1 campo) |
-| `src/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep.tsx` | Step 4 — Próximos passos (textarea foco + lista prioridades + dependências cross-team) |
-| `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx` | Step 5 — Resumo read-only + botão Enviar |
-| `src/modules/okrs/components/wizards/mbr-pre/index.ts` | Barrel export |
-| `src/modules/okrs/pages/MbrPrePage.tsx` | Page (padrão QbrPrePage: useGenericWizardDraft + FullPageWizardShell + seed KRs/KPIs) |
-| `src/modules/okrs/components/ritual-report/renderers/MbrPreReport.tsx` | Renderer para histórico |
-
-## Arquivos a modificar (5)
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/modules/okrs/types/wizard.ts` | Adicionar `'mbr-pre'` a `WizardPersona`, `TeamCheckinDecisionSourceStep`; criar types `MbrPreStep`, `MbrPreDraftData`; adicionar config a `WIZARD_CONFIGS` e `WIZARD_VIC_ACTION_CONTEXTS` |
-| `src/modules/okrs/components/wizards/index.ts` | Barrel export `mbr-pre` |
-| `src/routes/rituals.routes.tsx` | Rota `/rituals/mbr-pre` + legacy redirect `/okrs/mbr-pre` |
-| `src/pages/Wizards.tsx` | Card "Pré-MBR" na seção "Líderes de Time", badge "Mensal" |
-| `src/modules/okrs/components/ritual-report/SnapshotReportView.tsx` | Registrar `MbrPreReport` |
-
-## Detalhes técnicos
-
-### Types (wizard.ts)
-
-```typescript
-// Adicionar a WizardPersona
-| 'mbr-pre'
-
-// Adicionar a TeamCheckinDecisionSourceStep  
-| 'mbr-pre-balance' | 'mbr-pre-kpi' | 'mbr-pre-highlights' | 'mbr-pre-next-steps'
-
-export type MbrPreStep = 'balance' | 'kpi-analysis' | 'highlights' | 'next-steps' | 'summary';
-
-export interface MbrPreDraftData {
-  cycleId: string;
-  teamId: string;
-  krFinalStates: QbrPreDraftData['krFinalStates']; // reutiliza shape existente
-  kpiSnapshots: MbrKpiSnapshot[];
-  zombieCandidates: string[];
-  kpisToCreate: QbrPreDraftData['kpisToCreate'];
-  highlights: { accelerated: string; blocked: string; needsDecision: string };
-  nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
-  decisions: TeamCheckinDecision[];
-}
-```
-
-### Reutilização direta de steps existentes
-
-- **Step 1 (Balanço):** Usa `QbrBalanceStep` diretamente — mesma interface de props (krFinalStates, decisions, onContinue, teamId). O sourceStep será `'mbr-pre-balance'`.
-- **Step 2 (KPIs):** Usa `QbrKpiAnalysisStep` diretamente — mesma interface (kpiSnapshots, zombieCandidates, kpisToCreate, decisions).
-
-### Steps novos (3, 4, 5)
-
-**Step 3 — MbrPreHighlightsStep:** Segue layout do `QbrLearningsStep` mas com campos adaptados:
-- "O que acelerou" (✓ verde)
-- "O que travou" (✗ vermelho)  
-- "O que precisa de decisão na reunião" (⚠ âmbar)
-- `ReflectionQuestions` colapsado no topo com perguntas mensais
-- Gate: pelo menos 1 campo preenchido
-
-**Step 4 — MbrPreNextStepsStep:** Novo, sem equivalente QBR:
-- Textarea "foco do próximo mês"
-- Lista dinâmica de itens priorizados (add/remove, texto livre)
-- Lista de dependências cross-team (add/remove, texto livre)
-
-**Step 5 — MbrPreSummary:** Segue padrão `QbrPreSummary`:
-- Cards read-only para cada seção
-- Botão "Enviar" congela snapshot em `okr_wizard_sessions` com `wizard_type = 'mbr-pre'`
-
-### Page (MbrPrePage.tsx)
-
-Segue exatamente o padrão `QbrPrePage`:
-- `useActiveCycle()` para obter ciclo ativo (qualquer tipo, não apenas quarter)
-- **Sem gate de qbr_status** — disponível sempre que houver ciclo ativo
-- `useGenericWizardDraft<MbrPreStep, MbrPreDraftData>` com `wizardType: 'mbr-pre'`
-- Seed de KRs e KPIs idêntico ao QbrPrePage
-- Draft key: `mbr-pre:{cycleId}:{teamId}`
-- `handleComplete` congela snapshot e navega para `/rituals`
-
-### Integração no MBR (NÃO inclusa neste PR)
-
-A modificação do `MbrTeamOkrsDetailStep` para consumir o snapshot do Pré-MBR será feita em etapa subsequente, pois o componente de detalhe por time possui lógica de navegação complexa que merece atenção isolada. O Pré-MBR funciona de forma independente como ritual standalone.
-
-### Wizards.tsx
-
-Adicionar na seção "Líderes de Time" (após "Check-in do Time"):
-```typescript
-{
-  id: 'mbr-pre',
-  name: 'Pré-MBR',
-  description: 'Prepare o contexto do seu time para o Monthly Business Review',
-  icon: Briefcase,
-  module: 'okrs',
-  requiredRole: 'leader',
-  badge: 'Mensal',
-  badgeVariant: 'secondary',
-  requiresTeam: true,
-  route: '/rituals/mbr-pre',
-}
-```
-
-### Report Renderer
-
-Segue padrão `QbrPreReport` com seções adaptadas: Balanço KRs, KPIs, Destaques e Riscos, Próximos Passos, Notas.
+1. **localStorage key** (`okr-draft.${wizardType}`) não inclui `teamId` — líder com 2 times sobrescreve rascunho do Time A ao abrir ritual para Time B
+2. **DB query** para sessão existente não filtra por `team_id` — pode retornar rascunho do time errado
+3. **saveDraftMutation** não verifica duplicatas antes de inserir
+4. **WIZARD_TYPE_OPTIONS** no filtro do histórico está incompleto — faltam `qbr-pre`, `qbr-pre-clevel`, `qbr-meeting`, `qbr-post`, `mbr-pre`
 
 ---
 
-## O que é reutilizado sem alteração
+## Arquivos a modificar (3)
 
-`FullPageWizardShell`, `useGenericWizardDraft`, `QbrBalanceStep`, `QbrKpiAnalysisStep`, `InlineDecisionInput`, `KrLinkedDetails`, `UnlinkedProjectsList`, `ReflectionQuestions`, `WizardStepScaffold`, `WizardStepHeader/Footer`, `HierarchyContextSwitcher`, `calculateKrState`, `useLastCompletedSession`, `useActiveCycle`
+### 1. `src/modules/okrs/hooks/useGenericWizardDraft.ts`
+
+**a) `getDraftKey` com escopo de time:**
+```typescript
+function getDraftKey(wizardType: WizardPersona, teamId?: string | null): string {
+  return teamId ? `okr-draft.${wizardType}.${teamId}` : `okr-draft.${wizardType}`;
+}
+```
+Atualizar `storageKey` para usar `getDraftKey(wizardType, teamId)`.
+
+**b) `existingSessionQuery` — filtrar por teamId:**
+```typescript
+// Após .eq('status', 'in_progress')
+if (teamId) {
+  query = query.eq('team_id', teamId);
+} else {
+  query = query.is('team_id', null);
+}
+```
+Atualizar `queryKey` para incluir `teamId`: `wizardDraftGeneric(profile?.id, wizardType, teamId)`.
+
+**c) `saveDraftMutation` — check antes de inserir:**
+No branch `else` (criação), verificar se já existe uma sessão `in_progress` para o mesmo `(wizard_type, started_by, team_id)`. Se existir, reutilizar o `id` em vez de inserir nova linha.
+
+### 2. `src/lib/queryKeys/okrs.ts`
+
+Atualizar a assinatura de `wizardDraftGeneric` para aceitar `teamId` opcional:
+```typescript
+wizardDraftGeneric: (userId: string, wizardType: string, teamId?: string | null) =>
+  ['okr-wizard-draft-generic', userId, wizardType, teamId ?? 'global'] as const,
+```
+
+### 3. `src/modules/okrs/pages/RitualHistoryPage.tsx`
+
+Adicionar os tipos faltantes em `WIZARD_TYPE_OPTIONS`:
+```typescript
+{ value: 'mbr-pre', label: 'Pré-MBR' },
+{ value: 'qbr-pre', label: 'Pré-QBR (Líder)' },
+{ value: 'qbr-pre-clevel', label: 'Pré-QBR (C-Level)' },
+{ value: 'qbr-meeting', label: 'Reunião QBR' },
+{ value: 'qbr-post', label: 'Pós-QBR' },
+```
+
+### 4. `src/modules/okrs/hooks/__tests__/useGenericWizardDraft.test.ts`
+
+Atualizar testes para refletir novo formato de chave com `teamId`:
+- `okr-draft.team-checkin.team-123` (com team)
+- `okr-draft.clevel-checkin` (sem team)
+
+### 5. `src/lib/queryKeys/okrs.test.ts`
+
+Atualizar teste de `wizardDraftGeneric` para incluir `teamId`.
+
+---
+
+## O que não muda
+
+- Nenhum componente de wizard — todos já passam `teamId` como prop
+- Nenhuma migração de banco — lógica puramente no hook
+- Rascunhos antigos no localStorage (key antiga) serão ignorados; o líder recomeça o rascunho (aceitável pois não há `in_progress` ativos relevantes)
 
