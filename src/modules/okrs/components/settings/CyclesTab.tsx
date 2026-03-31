@@ -122,7 +122,7 @@ export function CyclesTab() {
 
       const { data, error } = await supabase
         .from("cycles")
-        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, bu_id, created_at, status, qbr_status")
+        .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id, bu_id, created_at, status, qbr_status")
         .order("start_date", { ascending: false });
       if (error) throw error;
       return data as Cycle[];
