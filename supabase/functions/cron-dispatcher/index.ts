@@ -248,6 +248,18 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     console.log("[cron-dispatcher] mark_missed_ritual_occurrences RPC not available");
   }
 
+  // Auto-transition cycle statuses
+  try {
+    const { data: cycleData, error: cycleErr } = await supabase.rpc("auto_transition_cycle_statuses");
+    if (!cycleErr && cycleData) {
+      result.cycles_activated = cycleData.activated || 0;
+      result.cycles_closed = cycleData.closed || 0;
+      console.log(`[cron-dispatcher] Cycle transitions: ${result.cycles_activated} activated, ${result.cycles_closed} closed`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] auto_transition_cycle_statuses RPC not available");
+  }
+
   return result;
 }
 
