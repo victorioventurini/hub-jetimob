@@ -14,6 +14,7 @@ import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { AddendumBadge } from '../shared/AddendumBadge';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
