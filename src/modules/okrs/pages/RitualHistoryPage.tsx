@@ -5,7 +5,7 @@
  * Suporta deep-link via ?session={id} para abrir automaticamente uma sessão específica.
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { format, parseISO, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { HubLayout } from '@/components/layout/HubLayout';
@@ -124,6 +124,20 @@ export default function RitualHistoryPage() {
   });
   const pageSize = 25;
 
+  // Atomic page reset: track filter changes and reset page via effect
+  // (avoids race condition when two useUrlState.set() calls happen in the same handler)
+  const filterFingerprint = `${typeState.value}|${teamState.value}|${userState.value}|${dateFromState.value}|${dateToState.value}`;
+  const prevFilterRef = useRef(filterFingerprint);
+
+  useEffect(() => {
+    if (prevFilterRef.current !== filterFingerprint) {
+      prevFilterRef.current = filterFingerprint;
+      if (pageState.value !== 1) {
+        pageState.set(1);
+      }
+    }
+  }, [filterFingerprint, pageState]);
+
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
@@ -170,7 +184,7 @@ export default function RitualHistoryPage() {
 
         {/* Filters */}
         <ListPageFilters hideSearch>
-          <Select value={typeState.value || 'all'} onValueChange={(v) => { typeState.set(v); pageState.set(1); }}>
+          <Select value={typeState.value || 'all'} onValueChange={(v) => typeState.set(v)}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Tipo de ritual" />
             </SelectTrigger>
@@ -182,7 +196,7 @@ export default function RitualHistoryPage() {
           </Select>
 
           {teams && teams.length > 0 && (
-            <Select value={teamState.value || 'all'} onValueChange={(v) => { teamState.set(v === 'all' ? '' : v); pageState.set(1); }}>
+            <Select value={teamState.value || 'all'} onValueChange={(v) => teamState.set(v === 'all' ? '' : v)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Time" />
               </SelectTrigger>
@@ -198,7 +212,7 @@ export default function RitualHistoryPage() {
           {/* User filter */}
           <BuUserSelect
             value={userState.value || undefined}
-            onValueChange={(v) => { userState.set(v || ''); pageState.set(1); }}
+            onValueChange={(v) => userState.set(v || '')}
             placeholder="Usuário"
             className="w-[220px]"
           />
@@ -220,7 +234,7 @@ export default function RitualHistoryPage() {
               <Calendar
                 mode="single"
                 selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
-                onSelect={(date) => { dateFromState.set(date ? format(date, 'yyyy-MM-dd') : ''); pageState.set(1); }}
+                onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
                 className="p-3 pointer-events-auto"
                 locale={ptBR}
               />
@@ -243,7 +257,7 @@ export default function RitualHistoryPage() {
               <Calendar
                 mode="single"
                 selected={dateToState.value ? parseISO(dateToState.value) : undefined}
-                onSelect={(date) => { dateToState.set(date ? format(date, 'yyyy-MM-dd') : ''); pageState.set(1); }}
+                onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
                 className="p-3 pointer-events-auto"
                 locale={ptBR}
               />
