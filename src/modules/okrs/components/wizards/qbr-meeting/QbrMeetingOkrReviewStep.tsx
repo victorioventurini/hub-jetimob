@@ -21,6 +21,7 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
 } from '../shared';
+import { AddendumBadge } from '../shared/AddendumBadge';
 import type {
   QbrMeetingSnapshot,
   QbrApprovalStatus,
