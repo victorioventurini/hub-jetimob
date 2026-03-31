@@ -9,7 +9,7 @@ import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/Fu
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { 
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
   useTeamPendingKrs,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
@@ -82,12 +82,8 @@ export default function TeamCheckinPage() {
   
   usePageTitle(selectedTeam ? `Check-in - ${selectedTeam.name}` : 'Check-in do Time');
   
-  // Get cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   
   // Draft persistence
   const {

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { 
   useGenericWizardDraft,
-  useActiveCycles, 
+  useActiveCycle, 
   useManagersPanorama, 
   useCrossDependencies,
   useLastCompletedSession,
@@ -64,12 +64,8 @@ export default function ManagersCheckinPage() {
   
   usePageTitle('Check-in de Gestores');
   
-  // Get active quarterly cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get active quarterly cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   
   // Fetch real data
   const { data: panoramaData, isLoading: isLoadingPanorama } = useManagersPanorama(quarterlyCycle?.id);

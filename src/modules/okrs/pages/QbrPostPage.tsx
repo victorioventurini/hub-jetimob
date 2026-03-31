@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft, useActiveCycles } from '@/modules/okrs/hooks';
+import { useGenericWizardDraft, useActiveCycle } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -63,8 +63,7 @@ export default function QbrPostPage() {
   const buSupabase = useBuScopedSupabase();
   usePageTitle('Pós-QBR');
 
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null, [activeCycles]);
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
   // Check qbr_status = 'done' or 'ready' (post can happen after meeting)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({

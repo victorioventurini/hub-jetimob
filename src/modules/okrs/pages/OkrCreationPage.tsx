@@ -11,12 +11,14 @@
 
 import { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { 
   useWizardDraft, 
-  useActiveCycles,
+  useActiveCycle,
   useTeamPreviousCycleAnalysis,
   useOrgOkrsForContext,
   useCreateTeamOkrBundle,
@@ -96,12 +98,9 @@ export default function OkrCreationPage() {
     return teams.find(t => t.id === teamIdParam) || null;
   }, [teamIdParam, teams]);
   
-  // Get cycles
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get cycles (status-based)
+  const { activeQuarterlyCycle, activeCycle, planningCycles, isLoading: isLoadingCycles } = useActiveCycle();
+  const quarterlyCycle = activeQuarterlyCycle || activeCycle;
   
   // Page title
   usePageTitle(selectedTeam ? `Criar OKRs - ${selectedTeam.name}` : 'Criar OKRs');
@@ -344,15 +343,19 @@ export default function OkrCreationPage() {
     );
   }
   
-  // No cycle available
+  // No cycle available — check for planning cycles
   if (!quarterlyCycle) {
+    const hasPlanningCycle = planningCycles.length > 0;
     return (
       <EmptyState
         icon={Target}
-        title="Nenhum ciclo ativo"
-        description="Não há ciclo de OKRs ativo para criar objetivos"
-        actionLabel="Voltar para Wizards"
-        onAction={() => navigate('/wizards')}
+        title={hasPlanningCycle ? "Ciclo ainda não ativado" : "Nenhum ciclo disponível"}
+        description={hasPlanningCycle
+          ? `O ciclo "${planningCycles[0].name}" está em planejamento. Solicite ao admin que ative o ciclo nas configurações de OKRs para criar objetivos.`
+          : "Não há ciclo de OKRs ativo ou em planejamento. Um admin precisa criar e ativar um ciclo nas configurações de OKRs."
+        }
+        actionLabel="Voltar para Rituais"
+        onAction={() => navigate('/rituals')}
       />
     );
   }
@@ -531,7 +534,7 @@ export default function OkrCreationPage() {
     <VicTypewriterQueueProvider>
       <FullPageWizardShell
         title="Criar OKRs do Time"
-        subtitle="Defina objetivos e resultados-chave com alinhamento estratégico"
+        subtitle={`Criando para: ${quarterlyCycle.name} · ${format(parseISO(quarterlyCycle.start_date), "dd MMM", { locale: ptBR })} → ${format(parseISO(quarterlyCycle.end_date), "dd MMM", { locale: ptBR })}`}
         steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
         currentStepId={draft.currentStep}
         completedSteps={completedSteps}

@@ -221,6 +221,7 @@ Lista completa das tabelas no schema `public`:
 | `key_movement_type` | `checkout`, `return`, `transfer`, `lost`, `retired` |
 | `key_status` | `in_claviculary`, `loaned`, `lost`, `retired` |
 | `keyring_status` | `available`, `loaned`, `lost`, `retired` |
+| `cycle_status` | `planning`, `active`, `closed` |
 | `kpi_category` | `financeiro`, `growth`, `cs`, `produto`, `operacoes`, `pessoas` |
 | `kpi_confidence_level` | `high`, `medium`, `low` |
 | `kpi_contributor_role` | `data_entry`, `reviewer` |

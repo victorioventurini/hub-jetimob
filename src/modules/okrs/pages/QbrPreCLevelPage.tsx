@@ -16,7 +16,7 @@ import {
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import {
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
 } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -86,12 +86,8 @@ export default function QbrPreCLevelPage() {
 
   usePageTitle('Pré-QBR C-Level');
 
-  // Cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(
-    () => activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
   // Validate qbr_status = 'reviewing'
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({

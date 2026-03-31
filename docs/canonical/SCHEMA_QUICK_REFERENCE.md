@@ -150,7 +150,7 @@
 ## Cycles
 
 ### cycles
-`id, name, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, created_at, updated_at, bu_id, type`
+`id, name, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, created_at, updated_at, bu_id, type, status (cycle_status), qbr_status`
 
 ---
 

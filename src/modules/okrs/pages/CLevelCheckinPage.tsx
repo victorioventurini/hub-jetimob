@@ -7,7 +7,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { useGenericWizardDraft, useLastCompletedSession, useActiveCycles } from '@/modules/okrs/hooks';
+import { useGenericWizardDraft, useLastCompletedSession, useActiveCycle } from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
@@ -158,12 +158,8 @@ export default function CLevelCheckinPage() {
     }
   }, [discardDraft]);
   
-  // Get active cycles for summary trigger
-  const { data: activeCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(() => 
-    activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Get active cycles for summary trigger (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
 
   const handleComplete = useCallback(async () => {
     const completedSessionId = await clearDraft();

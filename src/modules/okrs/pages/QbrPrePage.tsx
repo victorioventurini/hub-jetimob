@@ -17,7 +17,7 @@ import {
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import {
   useGenericWizardDraft,
-  useActiveCycles,
+  useActiveCycle,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
@@ -94,12 +94,8 @@ export default function QbrPrePage() {
 
   usePageTitle(selectedTeam ? `Pré-QBR - ${selectedTeam.name}` : 'Pré-QBR');
 
-  // Cycle
-  const { data: activeCycles, isLoading: isLoadingCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(
-    () => activeCycles?.find(c => c.type === 'quarter') || activeCycles?.[0] || null,
-    [activeCycles]
-  );
+  // Cycle (status-based)
+  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
   // Validate qbr_status
   const { data: cycleData, isLoading: isLoadingCycleStatus } = useQuery({
