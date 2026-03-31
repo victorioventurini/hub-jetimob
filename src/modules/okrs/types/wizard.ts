@@ -784,6 +784,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'clevel-checkin': 'okr-check-alignment',
   'team-okr-creation': 'okr-check-alignment',
   'team-kr-creation': 'okr-check-alignment',
+  'mbr-pre': 'okr-check-alignment',
   'mbr': 'okr-check-alignment',
   'qbr-pre': 'okr-check-alignment',
   'qbr-pre-clevel': 'okr-check-alignment',
