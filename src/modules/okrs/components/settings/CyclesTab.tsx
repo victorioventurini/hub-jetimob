@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle } from "lucide-react";
+import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle, RefreshCw } from "lucide-react";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import {
   AlertDialog,
