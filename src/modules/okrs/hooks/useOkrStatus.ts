@@ -103,7 +103,7 @@ export function calculateAutoStatus(
 /**
  * Maps RAG status from database to calculated status
  */
-export function mapRagToCalculated(ragStatus: OkrRagStatus): OkrCalculatedStatus {
+export function mapRagToCalculated(ragStatus: OkrRagStatus | string | null | undefined): OkrCalculatedStatus {
   switch (ragStatus) {
     case 'green':
       return 'on_track';
@@ -112,6 +112,8 @@ export function mapRagToCalculated(ragStatus: OkrRagStatus): OkrCalculatedStatus
     case 'red':
       return 'off_track';
     case 'not_started':
+      return 'not_started';
+    default:
       return 'not_started';
   }
 }

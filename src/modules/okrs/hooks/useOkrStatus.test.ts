@@ -222,6 +222,12 @@ describe('mapRagToCalculated', () => {
       expect(mapRagToCalculated(rag)).toBe(expectedCalcStatuses[index]);
     });
   });
+
+  it('should fallback to not_started for unknown status', () => {
+    expect(mapRagToCalculated('no_data')).toBe('not_started');
+    expect(mapRagToCalculated(undefined)).toBe('not_started');
+    expect(mapRagToCalculated(null)).toBe('not_started');
+  });
 });
 
 // ============================================================
