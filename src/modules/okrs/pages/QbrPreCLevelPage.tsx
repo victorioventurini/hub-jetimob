@@ -90,6 +90,7 @@ export default function QbrPreCLevelPage() {
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('qbr-pre-clevel', quarterlyCycle);
 
   // Validate qbr_status = 'reviewing'
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
