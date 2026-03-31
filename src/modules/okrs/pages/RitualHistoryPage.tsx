@@ -193,7 +193,7 @@ export default function RitualHistoryPage() {
           {/* User filter */}
           <BuUserSelect
             value={userState.value || undefined}
-            onValueChange={(v) => userState.set(v || '')}
+            onValueChange={(v) => { userState.set(v || ''); pageState.set(1); }}
             placeholder="Usuário"
             className="w-[220px]"
           />
