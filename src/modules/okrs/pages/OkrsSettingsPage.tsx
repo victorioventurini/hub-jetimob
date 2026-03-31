@@ -1,4 +1,4 @@
-import { Calendar, Scale, BookOpen, Workflow } from "lucide-react";
+import { Calendar, Scale, BookOpen, Workflow, GraduationCap, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -7,7 +7,7 @@ import { CyclesTab } from "../components/settings/CyclesTab";
 import { LimitsTab } from "../components/settings/LimitsTab";
 import { RulesInfoTab } from "../components/settings/RulesInfoTab";
 import { RitualsTab } from "../components/settings/RitualsTab";
-import { AlertTriangle } from "lucide-react";
+import { CyclesRitualsGuideTab } from "../components/settings/CyclesRitualsGuideTab";
 
 export default function OkrsSettingsPage() {
   usePageTitle("Configurações de OKRs", {
