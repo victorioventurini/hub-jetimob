@@ -16,6 +16,7 @@ import {
   useCrossDependencies,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useIdentity } from '@/hooks/useIdentity';
 import { usePageTitle } from '@/hooks/usePageTitle';
