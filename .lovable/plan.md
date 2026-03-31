@@ -1,76 +1,130 @@
 
 
-# Plano: Unicidade de Rascunhos por Time + Melhorias no Histórico
+# Plano: Geração Automática de Ciclos + Janelas de Acesso a Rituais
 
-## Problema
+## Auditoria TCR/Canonical Realizada
 
-1. **localStorage key** (`okr-draft.${wizardType}`) não inclui `teamId` — líder com 2 times sobrescreve rascunho do Time A ao abrir ritual para Time B
-2. **DB query** para sessão existente não filtra por `team_id` — pode retornar rascunho do time errado
-3. **saveDraftMutation** não verifica duplicatas antes de inserir
-4. **WIZARD_TYPE_OPTIONS** no filtro do histórico está incompleto — faltam `qbr-pre`, `qbr-pre-clevel`, `qbr-meeting`, `qbr-post`, `mbr-pre`
+| Doc | Versão | Impacto no Plano |
+|-----|--------|-----------------|
+| TCR v3.21.0 | ✅ Revisado | Schema `cycles` confirmado com `planning_date`, `review_date`, `retro_date` (nullable) |
+| DEVELOPMENT_STANDARDS v1.27.0 | ✅ Revisado | POST-BU: `useOptionalBuClient()` para CyclesTab (já usado). Sem `select('*')` |
+| BU_SCOPED_SUPABASE_RULES v4.1.0 | ✅ Revisado | CyclesTab usa `useOptionalBuClient` (correto — settings page, pré-BU safe) |
+| QUERY_KEYS_STANDARD | ✅ Revisado | Registrar nova key. Nota: CyclesTab tem inline key `['okr-auto-cycle-transition']` (pré-existente, fora do escopo) |
+| IDENTITY_CONVENTION | ✅ N/A | Nenhuma operação de identidade neste plano |
+| PERMISSIONS_AND_RBAC_MODEL | ✅ Revisado | Permissão `okrs.settings.manage:bu` já usada no CycleFormDialog — reusar para geração |
+
+**Violação pré-existente identificada (fora do escopo):** Múltiplas inline query keys `['qbr', ...]` em QbrPrePage, QbrPostPage, QbrPreCLevelPage. Não serão corrigidas neste plano.
+
+---
+
+## Parte 1 — Geração Automática de Ciclos
+
+### 1.1 Função pura de geração
+
+**Novo:** `src/modules/okrs/utils/generateCycles.ts`
+
+Função `generateCyclesForYears(startYear, count)` — sem dependências externas, testável:
+
+- Para cada ano: 1 anual + 4 trimestrais
+- Datas conforme fórmulas do prompt (Q planning = start + 63d, review = start + 35d, retro = start + 77d)
+- Retorna objetos com `_tempParentKey` para vinculação parent→child após insert
+- Todos com `status: 'planning'`
+
+### 1.2 Botão na CyclesTab
+
+**Editar:** `src/modules/okrs/components/settings/CyclesTab.tsx`
+
+- Verificar se existem ciclos anuais para `currentYear`, `currentYear+1`, `currentYear+2`
+- Se faltam anos → exibir card com botão **"Gerar ciclos automaticamente"** + `AlertDialog` de confirmação com preview
+- Mutation: gerar → filtrar anos existentes → inserir anuais → obter IDs → inserir trimestrais com `parent_cycle_id` real
+- Invalidar `settingsCycles` e `cyclesList`
+
+### 1.3 Exibição de datas de rituais por ciclo
+
+**Novo:** `src/modules/okrs/components/settings/CycleRitualDates.tsx`
+
+Sub-linha compacta abaixo de cada trimestre mostrando:
+```text
+MBR: 03/fev  ·  Pré-QBR: 09/mar  ·  QBR: 23/mar
+```
+Badges: cinza (futuro), verde-claro (passado). Fase 2 para status de execução.
+
+**Editar:** `CyclesTab.tsx` para renderizar `CycleRitualDates` dentro de cada quarter row.
 
 ---
 
-## Arquivos a modificar (3)
+## Parte 2 — Janelas de Acesso a Rituais
 
-### 1. `src/modules/okrs/hooks/useGenericWizardDraft.ts`
+### 2.1 Hook centralizado
 
-**a) `getDraftKey` com escopo de time:**
+**Novo:** `src/modules/okrs/hooks/useRitualAvailability.ts`
+
 ```typescript
-function getDraftKey(wizardType: WizardPersona, teamId?: string | null): string {
-  return teamId ? `okr-draft.${wizardType}.${teamId}` : `okr-draft.${wizardType}`;
+interface RitualAvailability {
+  isAvailable: boolean;
+  opensAt: Date | null;
+  closesAt: Date | null;
+  reason: 'not_yet' | 'expired' | 'no_cycle' | 'no_dates' | 'available';
+  message: string;
 }
 ```
-Atualizar `storageKey` para usar `getDraftKey(wizardType, teamId)`.
 
-**b) `existingSessionQuery` — filtrar por teamId:**
+Mapeamento conforme tabela do prompt. Fallback permissivo quando datas são null (`reason: 'no_dates'`, `isAvailable: true`).
+
+Hook é puramente computacional — sem query ao banco.
+
+### 2.2 Tela informativa
+
+**Novo:** `src/modules/okrs/components/wizards/shared/RitualUnavailableScreen.tsx`
+
+- Usa `FullPageWizardShell` como container (reutiliza componente existente)
+- Ícone + nome do rito + mensagem contextual + botão "Voltar"
+- Mensagens em PT-BR conforme cenário (não abriu / expirou / ciclo encerrado)
+
+### 2.3 Integração nas páginas
+
+Guard adicionado em **11 páginas** de rituais, após guards existentes (ciclo ativo, team selecionado):
+
+| Página | Ciclo de referência |
+|--------|-------------------|
+| `CollaboratorCheckinPage` | `activeCycle` |
+| `LeaderPrepPage` | `activeCycle` |
+| `TeamCheckinPage` | `activeCycle` |
+| `ManagersCheckinPage` | `activeCycle` |
+| `CLevelCheckinPage` | `activeCycle` |
+| `MbrPrePage` | `activeCycle` |
+| `MbrPage` | `activeCycle` |
+| `QbrPrePage` | `activeQuarterlyCycle` |
+| `QbrPreCLevelPage` | `activeQuarterlyCycle` |
+| `QbrMeetingPage` | `activeQuarterlyCycle` |
+| `QbrPostPage` | `activeQuarterlyCycle` |
+
+Padrão:
 ```typescript
-// Após .eq('status', 'in_progress')
-if (teamId) {
-  query = query.eq('team_id', teamId);
-} else {
-  query = query.is('team_id', null);
+const availability = useRitualAvailability('qbr-pre', quarterlyCycle);
+if (!availability.isAvailable) {
+  return <RitualUnavailableScreen wizardType="qbr-pre" availability={availability} />;
 }
 ```
-Atualizar `queryKey` para incluir `teamId`: `wizardDraftGeneric(profile?.id, wizardType, teamId)`.
-
-**c) `saveDraftMutation` — check antes de inserir:**
-No branch `else` (criação), verificar se já existe uma sessão `in_progress` para o mesmo `(wizard_type, started_by, team_id)`. Se existir, reutilizar o `id` em vez de inserir nova linha.
-
-### 2. `src/lib/queryKeys/okrs.ts`
-
-Atualizar a assinatura de `wizardDraftGeneric` para aceitar `teamId` opcional:
-```typescript
-wizardDraftGeneric: (userId: string, wizardType: string, teamId?: string | null) =>
-  ['okr-wizard-draft-generic', userId, wizardType, teamId ?? 'global'] as const,
-```
-
-### 3. `src/modules/okrs/pages/RitualHistoryPage.tsx`
-
-Adicionar os tipos faltantes em `WIZARD_TYPE_OPTIONS`:
-```typescript
-{ value: 'mbr-pre', label: 'Pré-MBR' },
-{ value: 'qbr-pre', label: 'Pré-QBR (Líder)' },
-{ value: 'qbr-pre-clevel', label: 'Pré-QBR (C-Level)' },
-{ value: 'qbr-meeting', label: 'Reunião QBR' },
-{ value: 'qbr-post', label: 'Pós-QBR' },
-```
-
-### 4. `src/modules/okrs/hooks/__tests__/useGenericWizardDraft.test.ts`
-
-Atualizar testes para refletir novo formato de chave com `teamId`:
-- `okr-draft.team-checkin.team-123` (com team)
-- `okr-draft.clevel-checkin` (sem team)
-
-### 5. `src/lib/queryKeys/okrs.test.ts`
-
-Atualizar teste de `wizardDraftGeneric` para incluir `teamId`.
 
 ---
+
+## Resumo de arquivos
+
+| Arquivo | Tipo | Mudança |
+|---------|------|---------|
+| `src/modules/okrs/utils/generateCycles.ts` | **Novo** | Função pura de geração |
+| `src/modules/okrs/hooks/useRitualAvailability.ts` | **Novo** | Hook de janela de disponibilidade |
+| `src/modules/okrs/components/wizards/shared/RitualUnavailableScreen.tsx` | **Novo** | Tela informativa |
+| `src/modules/okrs/components/settings/CycleRitualDates.tsx` | **Novo** | Datas de rituais inline |
+| `src/modules/okrs/components/settings/CyclesTab.tsx` | **Editar** | Botão geração + CycleRitualDates |
+| 11 páginas de rituais | **Editar** | Guard `useRitualAvailability` |
 
 ## O que não muda
 
-- Nenhum componente de wizard — todos já passam `teamId` como prop
-- Nenhuma migração de banco — lógica puramente no hook
-- Rascunhos antigos no localStorage (key antiga) serão ignorados; o líder recomeça o rascunho (aceitável pois não há `in_progress` ativos relevantes)
+- Nenhuma migration (colunas já existem)
+- `qbr_status` e máquina de estados intactos
+- Ciclos gerados com `status = 'planning'` — ativação via fluxo normal
+- `CycleFormDialog` não muda (edição manual continua)
+- Ciclos existentes não são sobrescritos
 
