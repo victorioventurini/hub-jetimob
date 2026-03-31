@@ -258,6 +258,8 @@ export const okrsKeys = {
     ['ritual-cadences', buId] as const,
   ritualOccurrencesPrefix: (buId: string | null) =>
     ['ritual-occurrences', buId] as const,
+  ritualAdherencePrefix: (buId: string | null) =>
+    ['ritual-adherence', buId] as const,
   ritualOccurrences: (buId: string | null, filters?: Record<string, unknown>) =>
     ['ritual-occurrences', buId, filters] as const,
   ritualOccurrenceBySession: (sessionId: string | null) =>
