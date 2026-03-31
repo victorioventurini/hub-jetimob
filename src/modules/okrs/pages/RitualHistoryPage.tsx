@@ -58,11 +58,16 @@ const CATEGORY_CONFIG = {
 const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos os rituais' },
   { value: 'mbr', label: 'MBR' },
+  { value: 'mbr-pre', label: 'Pré-MBR' },
   { value: 'team-checkin', label: 'Check-in do Time' },
   { value: 'collaborator', label: 'Check-in Colaborador' },
   { value: 'leader-prep', label: 'Preparação do Líder' },
   { value: 'clevel-checkin', label: 'Check-in C-Level' },
   { value: 'managers-checkin', label: 'Check-in de Gestores' },
+  { value: 'qbr-pre', label: 'Pré-QBR (Líder)' },
+  { value: 'qbr-pre-clevel', label: 'Pré-QBR (C-Level)' },
+  { value: 'qbr-meeting', label: 'Reunião QBR' },
+  { value: 'qbr-post', label: 'Pós-QBR' },
 ];
 
 // ============================================================

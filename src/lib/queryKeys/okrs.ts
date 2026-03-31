@@ -169,8 +169,8 @@ export const okrsKeys = {
     ['okr-wizard-draft', userId] as const,
 
   // Generic wizard drafts (global per user per wizard type)
-  wizardDraftGeneric: (userId: string, wizardType: string) =>
-    ['okr-wizard-draft-generic', userId, wizardType] as const,
+  wizardDraftGeneric: (userId: string, wizardType: string, teamId?: string | null) =>
+    ['okr-wizard-draft-generic', userId, wizardType, teamId ?? 'global'] as const,
 
   // Ritual history (completed wizard sessions)
   ritualHistory: (buId: string | null, filters?: Record<string, unknown>) =>

@@ -16,10 +16,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // The getDraftKey function is not exported, so we test the pattern
 describe('getDraftKey pattern', () => {
-  it('produces okr-draft.{wizardType} format', () => {
-    // The convention is `okr-draft.${wizardType}`
-    const key = `okr-draft.${'team-checkin'}`;
-    expect(key).toBe('okr-draft.team-checkin');
+  it('produces okr-draft.{wizardType} format without teamId', () => {
+    const key = `okr-draft.${'clevel-checkin'}`;
+    expect(key).toBe('okr-draft.clevel-checkin');
+  });
+
+  it('produces okr-draft.{wizardType}.{teamId} format with teamId', () => {
+    const wizardType = 'team-checkin';
+    const teamId = 'team-123';
+    const key = teamId ? `okr-draft.${wizardType}.${teamId}` : `okr-draft.${wizardType}`;
+    expect(key).toBe('okr-draft.team-checkin.team-123');
+  });
+
+  it('produces unique keys for same wizard different teams', () => {
+    const keyA = `okr-draft.team-checkin.team-A`;
+    const keyB = `okr-draft.team-checkin.team-B`;
+    expect(keyA).not.toBe(keyB);
   });
 
   it('produces unique keys for different wizard types', () => {
@@ -30,6 +42,7 @@ describe('getDraftKey pattern', () => {
       'managers-checkin',
       'clevel-checkin',
       'mbr',
+      'mbr-pre',
       'qbr-pre',
       'qbr-pre-clevel',
       'qbr-meeting',

@@ -63,8 +63,8 @@ const DRAFT_VERSION = 1;
 // STORAGE KEY HELPER
 // ============================================================
 
-function getDraftKey(wizardType: WizardPersona): string {
-  return `okr-draft.${wizardType}`;
+function getDraftKey(wizardType: WizardPersona, teamId?: string | null): string {
+  return teamId ? `okr-draft.${wizardType}.${teamId}` : `okr-draft.${wizardType}`;
 }
 
 // ============================================================
@@ -85,7 +85,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const buSupabase = useBuScopedSupabase();
   
   
-  const storageKey = getDraftKey(wizardType);
+  const storageKey = getDraftKey(wizardType, teamId);
   
   // Session ID for database sync
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -107,16 +107,24 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   
   // Check for existing draft session in DB (global per user per wizard type)
   const existingSessionQuery = useQuery({
-    queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType),
+    queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId),
     queryFn: async () => {
       if (!profile?.id) return null;
       
-      const { data, error } = await buSupabase
+      let query = buSupabase
         .from('okr_wizard_sessions')
         .select('id, team_id, cycle_id, reflection_data, updated_at')
         .eq('started_by', profile.id)
         .eq('wizard_type', wizardType)
-        .eq('status', 'in_progress')
+        .eq('status', 'in_progress');
+
+      if (teamId) {
+        query = query.eq('team_id', teamId);
+      } else {
+        query = query.is('team_id', null);
+      }
+
+      const { data, error } = await query
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -284,6 +292,38 @@ export function useGenericWizardDraft<TStep extends string, TData>({
         if (error) throw error;
         return sessionId;
       } else {
+        // Check for existing in_progress session to prevent duplicates
+        let existingQuery = buSupabase
+          .from('okr_wizard_sessions')
+          .select('id')
+          .eq('started_by', profile.id)
+          .eq('wizard_type', wizardType)
+          .eq('status', 'in_progress');
+
+        if (draftToSave.teamId) {
+          existingQuery = existingQuery.eq('team_id', draftToSave.teamId);
+        } else {
+          existingQuery = existingQuery.is('team_id', null);
+        }
+
+        const { data: existing } = await existingQuery.maybeSingle();
+
+        if (existing) {
+          // Reuse existing session
+          const { error: updateError } = await buSupabase
+            .from('okr_wizard_sessions')
+            .update({
+              reflection_data: reflectionData,
+              team_id: draftToSave.teamId,
+              cycle_id: draftToSave.cycleId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
+
+          if (updateError) throw updateError;
+          return existing.id;
+        }
+
         // Create new session
         const { data, error } = await buSupabase
           .from('okr_wizard_sessions')
@@ -307,7 +347,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       setLastSavedAt(new Date().toISOString());
       setIsDirty(false);
       queryClient.invalidateQueries({ 
-        queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType) 
+        queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId) 
       });
     },
   });
@@ -381,7 +421,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     window.history.replaceState(window.history.state, '', url.toString());
     
     queryClient.invalidateQueries({ 
-      queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType) 
+      queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId) 
     });
   }, [storageKey, sessionId, profile?.id, wizardType, queryClient, createEmptyDraft]);
   
