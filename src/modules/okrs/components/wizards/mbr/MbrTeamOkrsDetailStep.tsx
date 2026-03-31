@@ -227,7 +227,15 @@ export function MbrTeamOkrsDetailStep({
             <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">
               {currentTeam.objectives.length} OKRs · {currentTeam.objectives.reduce((sum, obj) => sum + obj.krCount, 0)} KRs
             </span>
+            {teamAddendums[currentTeam.teamId]?.length > 0 && (
+              <AddendumBadge addendums={teamAddendums[currentTeam.teamId]} badgeOnly />
+            )}
           </div>
+
+          {/* Addendum from mbr-pre */}
+          {teamAddendums[currentTeam.teamId]?.length > 0 && (
+            <AddendumBadge addendums={teamAddendums[currentTeam.teamId]} />
+          )}
 
           {/* OKRs for current team */}
           {currentTeam.objectives.map((objective) => (
