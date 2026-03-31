@@ -177,6 +177,30 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              {/* Theme toggle */}
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground cursor-default">
+                Aparência
+              </DropdownMenuLabel>
+              <div className="flex items-center gap-1 px-2 py-1.5">
+                {([
+                  { value: 'light' as Theme, icon: Sun, label: 'Claro' },
+                  { value: 'dark' as Theme, icon: Moon, label: 'Escuro' },
+                  { value: 'system' as Theme, icon: Monitor, label: 'Sistema' },
+                ] as const).map(({ value, icon: Icon, label }) => (
+                  <Button
+                    key={value}
+                    variant={theme === value ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="flex-1 gap-1.5 h-8 text-xs"
+                    onClick={() => setTheme(value)}
+                    title={label}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive cursor-pointer"
                 onClick={handleSignOut}
