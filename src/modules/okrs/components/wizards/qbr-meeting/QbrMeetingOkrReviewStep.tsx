@@ -74,6 +74,7 @@ export function QbrMeetingOkrReviewStep({
   approvals,
   onApprovalsChange,
   calibrationFlags = [],
+  teamAddendums = {},
   currentTeamIndex,
   onCurrentTeamIndexChange,
   onContinue,
