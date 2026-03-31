@@ -207,6 +207,7 @@ export default function QbrPreCLevelPage() {
         teamId: s.team_id!,
         teamName: teamMap.get(s.team_id!) || 'Time desconhecido',
         snapshot: (s.reflection_data as any)?.data as QbrPreSnapshot,
+        addendums: Array.isArray(s.addendums) ? s.addendums as Array<{ text: string; created_at: string; created_by: string }> : [],
       }))
       .filter(s => s.snapshot);
   }, [leaderSessions, teamMap]);
