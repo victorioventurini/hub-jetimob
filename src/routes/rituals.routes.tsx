@@ -72,6 +72,7 @@ export const ritualRoutes = (
     <Route path="/rituals/clevel-checkin" element={<RitualRoute><CLevelCheckinPage /></RitualRoute>} />
     
     {/* MBR */}
+    <Route path="/rituals/mbr-pre" element={<RitualRoute><MbrPrePage /></RitualRoute>} />
     <Route path="/rituals/mbr" element={<RitualRoute requiresBuAdmin><MbrPage /></RitualRoute>} />
     
     {/* QBR */}
