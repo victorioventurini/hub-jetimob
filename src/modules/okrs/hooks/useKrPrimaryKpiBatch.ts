@@ -28,6 +28,12 @@ export interface KrPrimaryKpiInfo {
   kpiName: string;
   /** Direção da KPI */
   direction: 'up' | 'down' | 'maintain';
+  /** Valor atual da KPI (último valor registrado) */
+  currentValue: number | null;
+  /** Meta da KPI */
+  targetValue: number | null;
+  /** RAG atual da KPI */
+  ragStatus: 'green' | 'yellow' | 'red' | 'no_data';
 }
 
 export interface UseKrPrimaryKpiBatchResult {
@@ -86,7 +92,13 @@ export function useKrPrimaryKpiBatch(
           kpi:kpi_metrics(
             id,
             name,
-            direction
+            direction,
+            target_value,
+            kpi_values(
+              value,
+              reference_date,
+              rag_status
+            )
           )
         `)
         .in('kr_id', krIds)
@@ -103,12 +115,20 @@ export function useKrPrimaryKpiBatch(
         const kpi = link.kpi as any;
         if (!kpi) continue;
 
+        const values = Array.isArray(kpi.kpi_values) ? kpi.kpi_values : [];
+        const latestValue = values.length
+          ? values.sort((a: any, b: any) => new Date(b.reference_date).getTime() - new Date(a.reference_date).getTime())[0]
+          : null;
+
         result.set(link.kr_id, {
           krId: link.kr_id,
           krType: link.kr_type as 'org' | 'team',
           kpiId: kpi.id,
           kpiName: kpi.name,
           direction: kpi.direction || 'up',
+          currentValue: latestValue?.value ?? null,
+          targetValue: kpi.target_value ?? null,
+          ragStatus: latestValue?.rag_status || 'no_data',
         });
       }
 
