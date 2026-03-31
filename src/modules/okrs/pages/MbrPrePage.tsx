@@ -104,6 +104,7 @@ export default function MbrPrePage() {
 
   // Cycle (status-based) — any active cycle, not just quarter
   const { activeCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('mbr-pre', activeCycle);
 
   // Detect already-completed session for this cycle+team
   const {
