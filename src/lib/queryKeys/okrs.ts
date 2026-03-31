@@ -164,6 +164,10 @@ export const okrsKeys = {
   lastCompletedSession: (wizardType: string, teamId?: string | null) =>
     ['okr-wizard-last-completed', wizardType, teamId] as const,
 
+  /** Sessão completada para ciclo específico (detecção de rito já submetido) */
+  completedSessionForCycle: (wizardType: string, teamId?: string | null, cycleId?: string | null, userId?: string | null) =>
+    ['okr-completed-session-cycle', wizardType, teamId ?? 'none', cycleId ?? 'none', userId] as const,
+
   // Wizard drafts (global per user for team OKR creation)
   wizardDraft: (userId: string) =>
     ['okr-wizard-draft', userId] as const,
