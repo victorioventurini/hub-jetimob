@@ -259,9 +259,9 @@ export default function RitualHistoryPage() {
         </ListPageFilters>
 
         {/* Result count */}
-        {!anyLoading && mergedRituals && (
+        {!anyLoading && (
           <ViewOptionsBar
-            resultCount={mergedRituals.length}
+            resultCount={totalCount}
             resultCountLabel="rituais encontrados"
             resultCountLabelSingular="ritual encontrado"
           />
@@ -274,7 +274,7 @@ export default function RitualHistoryPage() {
               <Skeleton key={i} className="h-20 w-full rounded-lg" />
             ))}
           </div>
-        ) : !mergedRituals || mergedRituals.length === 0 ? (
+        ) : mergedRituals.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <History className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
@@ -290,6 +290,31 @@ export default function RitualHistoryPage() {
                 autoExpand={ritual.id === deepLinkSessionId}
               />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageState.value <= 1}
+              onClick={() => pageState.set(pageState.value - 1)}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {pageState.value} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageState.value >= totalPages}
+              onClick={() => pageState.set(pageState.value + 1)}
+            >
+              Próxima
+            </Button>
           </div>
         )}
       </div>
