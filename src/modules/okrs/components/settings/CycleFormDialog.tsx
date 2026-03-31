@@ -156,8 +156,8 @@ export function CycleFormDialog({
       await syncRitualCalendar({ silent: true });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(buId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(buId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualCadences(buId ?? null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(buId ?? null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualAdherencePrefix(buId ?? null) });
