@@ -21,6 +21,7 @@ import {
   WizardFirstStepFooter,
   WizardStepScaffold,
 } from '../shared';
+import { AddendumBadge } from '../shared/AddendumBadge';
 import type { QbrPreSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -31,6 +32,7 @@ export interface LeaderPreSubmission {
   teamId: string;
   teamName: string;
   snapshot: QbrPreSnapshot;
+  addendums?: Array<{ text: string; created_at: string; created_by: string }>;
 }
 
 export interface QbrCLevelSystemReadStepProps {
@@ -104,6 +106,12 @@ export function QbrCLevelSystemReadStep({
   }), [leaderSubmissions]);
 
   const achievementRate = krAgg.total > 0 ? Math.round((krAgg.achieved / krAgg.total) * 100) : 0;
+
+  // Teams with addendums
+  const teamsWithAddendums = useMemo(() => 
+    leaderSubmissions.filter(s => s.addendums && s.addendums.length > 0),
+    [leaderSubmissions]
+  );
 
   return (
     <WizardStepScaffold
@@ -228,6 +236,31 @@ export function QbrCLevelSystemReadStep({
             </Card>
           )}
         </div>
+
+        {/* Adendos dos líderes — section after signals */}
+        {teamsWithAddendums.length > 0 && (
+          <Card className="border-status-amber/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                📝 Adendos dos Líderes
+                <Badge variant="outline" className="text-[10px] text-status-amber border-status-amber/30">
+                  {teamsWithAddendums.length} time{teamsWithAddendums.length > 1 ? 's' : ''}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {teamsWithAddendums.map(sub => (
+                <div key={sub.teamId} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{sub.teamName}</span>
+                    <AddendumBadge addendums={sub.addendums!} badgeOnly />
+                  </div>
+                  <AddendumBadge addendums={sub.addendums!} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Aprendizados consolidados */}
         <Card>

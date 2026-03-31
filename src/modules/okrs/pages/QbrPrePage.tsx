@@ -15,10 +15,12 @@ import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
+import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -116,7 +118,14 @@ export default function QbrPrePage() {
 
   const qbrOpen = cycleData?.qbr_status === 'open' || cycleData?.qbr_status === 'collecting';
 
-  // Draft persistence
+  // Detect already-completed session for this cycle+team
+  const {
+    sessionState,
+    completedSession,
+    isLoading: isLoadingCompletedCheck,
+  } = useCompletedSessionForCycle('qbr-pre', teamIdParam, quarterlyCycle?.id);
+
+  // Draft persistence (only if not already completed)
   const {
     draft,
     updateDraft,
@@ -134,7 +143,7 @@ export default function QbrPrePage() {
     cycleId: quarterlyCycle?.id || null,
     defaultStep: 'balance',
     defaultData: DEFAULT_DATA,
-    enabled: !!quarterlyCycle && qbrOpen,
+    enabled: !!quarterlyCycle && qbrOpen && sessionState !== 'completed',
   });
 
   // ── Load team KRs for balance step ──
@@ -450,7 +459,7 @@ export default function QbrPrePage() {
   }, [discardDraft, setSearchParams]);
 
   // Loading
-  if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {
     return <LoadingState text="Carregando dados do pré-QBR..." fullPage />;
   }
 
@@ -463,6 +472,19 @@ export default function QbrPrePage() {
         description="Selecione um time para iniciar o pré-QBR"
         actionLabel="Voltar"
         onAction={() => navigate('/wizards')}
+      />
+    );
+  }
+
+  // Guard: Already completed → show read-only view with addendum
+  if (sessionState === 'completed' && completedSession) {
+    return (
+      <CompletedRitualView
+        title="Pré-QBR"
+        teamName={selectedTeam.name}
+        wizardType="qbr-pre"
+        session={completedSession}
+        backUrl="/rituals"
       />
     );
   }

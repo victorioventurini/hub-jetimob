@@ -18,10 +18,12 @@ import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
+import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -101,7 +103,14 @@ export default function MbrPrePage() {
   // Cycle (status-based) — any active cycle, not just quarter
   const { activeCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
-  // Draft persistence
+  // Detect already-completed session for this cycle+team
+  const {
+    sessionState,
+    completedSession,
+    isLoading: isLoadingCompletedCheck,
+  } = useCompletedSessionForCycle('mbr-pre', teamIdParam, activeCycle?.id);
+
+  // Draft persistence (only if not already completed)
   const {
     draft,
     updateDraft,
@@ -119,7 +128,7 @@ export default function MbrPrePage() {
     cycleId: activeCycle?.id || null,
     defaultStep: 'balance',
     defaultData: DEFAULT_DATA,
-    enabled: !!activeCycle,
+    enabled: !!activeCycle && sessionState !== 'completed',
   });
 
   // ── Load team KRs for balance step ──
@@ -356,7 +365,7 @@ export default function MbrPrePage() {
   }, [discardDraft, setSearchParams]);
 
   // Loading
-  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {
     return <LoadingState text="Carregando dados do pré-MBR..." fullPage />;
   }
 
@@ -369,6 +378,19 @@ export default function MbrPrePage() {
         description="Selecione um time para iniciar o pré-MBR"
         actionLabel="Voltar"
         onAction={() => navigate('/rituals')}
+      />
+    );
+  }
+
+  // Guard: Already completed → show read-only view with addendum
+  if (sessionState === 'completed' && completedSession) {
+    return (
+      <CompletedRitualView
+        title="Pré-MBR"
+        teamName={selectedTeam.name}
+        wizardType="mbr-pre"
+        session={completedSession}
+        backUrl="/rituals"
       />
     );
   }

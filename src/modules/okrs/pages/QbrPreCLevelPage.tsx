@@ -114,7 +114,7 @@ export default function QbrPreCLevelPage() {
     queryFn: async () => {
       const { data, error } = await buSupabase
         .from('okr_wizard_sessions')
-        .select('id, team_id, reflection_data, completed_at')
+        .select('id, team_id, reflection_data, completed_at, addendums')
         .eq('wizard_type', 'qbr-pre')
         .eq('cycle_id', quarterlyCycle!.id)
         .eq('status', 'completed')
@@ -207,6 +207,7 @@ export default function QbrPreCLevelPage() {
         teamId: s.team_id!,
         teamName: teamMap.get(s.team_id!) || 'Time desconhecido',
         snapshot: (s.reflection_data as any)?.data as QbrPreSnapshot,
+        addendums: Array.isArray(s.addendums) ? s.addendums as Array<{ text: string; created_at: string; created_by: string }> : [],
       }))
       .filter(s => s.snapshot);
   }, [leaderSessions, teamMap]);

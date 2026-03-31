@@ -1,0 +1,92 @@
+/**
+ * CompletedRitualView - Read-only view for already-submitted rituals
+ * 
+ * Shows the snapshot report + addendum section.
+ * Used by QbrPrePage and MbrPrePage when a completed session exists.
+ */
+
+import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { CheckCircle2, ArrowLeft } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { SnapshotReportView } from '@/modules/okrs/components/ritual-report';
+import { AddendumSection } from './AddendumSection';
+import type { WizardPersona } from '@/modules/okrs/types/wizard';
+import type { CompletedSessionData } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+
+interface CompletedRitualViewProps {
+  title: string;
+  teamName?: string;
+  wizardType: WizardPersona;
+  session: CompletedSessionData;
+  backUrl: string;
+}
+
+const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
+  'qbr-pre': 'Pré-QBR',
+  'mbr-pre': 'Pré-MBR',
+};
+
+export function CompletedRitualView({
+  title,
+  teamName,
+  wizardType,
+  session,
+  backUrl,
+}: CompletedRitualViewProps) {
+  const navigate = useNavigate();
+  const ritualLabel = RITUAL_LABELS[wizardType] ?? title;
+  const rd = session.reflection_data;
+  const snapshotData = (rd as any)?.data;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="max-w-4xl mx-auto px-4 py-6 space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground -ml-2"
+            onClick={() => navigate(backUrl)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-xl font-semibold">{ritualLabel}</h1>
+            {teamName && (
+              <span className="text-sm text-muted-foreground">— {teamName}</span>
+            )}
+            {session.completed_at && (
+              <Badge variant="outline" className="text-status-green border-status-green/30 gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Enviado em {format(new Date(session.completed_at), 'dd/MM/yyyy', { locale: ptBR })}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        {/* Snapshot report */}
+        {snapshotData && (
+          <SnapshotReportView wizardType={wizardType} data={snapshotData} />
+        )}
+
+        <Separator />
+
+        {/* Addendum section */}
+        <AddendumSection
+          sessionId={session.id}
+          addendums={session.addendums}
+        />
+      </div>
+    </div>
+  );
+}

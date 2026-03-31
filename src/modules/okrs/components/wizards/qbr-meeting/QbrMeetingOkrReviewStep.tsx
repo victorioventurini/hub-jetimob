@@ -21,6 +21,7 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
 } from '../shared';
+import { AddendumBadge } from '../shared/AddendumBadge';
 import type {
   QbrMeetingSnapshot,
   QbrApprovalStatus,
@@ -45,6 +46,8 @@ export interface QbrMeetingOkrReviewStepProps {
   approvals: QbrMeetingSnapshot['approvals'];
   onApprovalsChange: (approvals: QbrMeetingSnapshot['approvals']) => void;
   calibrationFlags?: QbrCLevelSnapshot['okrCalibrationFlags'];
+  /** Addendums from qbr-pre sessions, keyed by teamId */
+  teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
   currentTeamIndex: number;
   onCurrentTeamIndexChange: (index: number) => void;
   onContinue: () => void;
@@ -71,6 +74,7 @@ export function QbrMeetingOkrReviewStep({
   approvals,
   onApprovalsChange,
   calibrationFlags = [],
+  teamAddendums = {},
   currentTeamIndex,
   onCurrentTeamIndexChange,
   onContinue,
@@ -157,6 +161,11 @@ export function QbrMeetingOkrReviewStep({
               </div>
             ))}
           </div>
+        )}
+
+        {/* Addendum from qbr-pre */}
+        {current && teamAddendums[current.teamId]?.length > 0 && (
+          <AddendumBadge addendums={teamAddendums[current.teamId]} />
         )}
 
         {/* Proposed OKRs */}

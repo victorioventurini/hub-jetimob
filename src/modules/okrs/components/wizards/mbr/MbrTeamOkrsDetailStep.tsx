@@ -14,6 +14,7 @@ import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { AddendumBadge } from '../shared/AddendumBadge';
 import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
@@ -33,6 +34,8 @@ export interface MbrTeamOkrsDetailStepProps {
   onCurrentTeamIndexChange: (index: number) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** Addendums from mbr-pre sessions, keyed by teamId */
+  teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -59,6 +62,7 @@ export function MbrTeamOkrsDetailStep({
   onCurrentTeamIndexChange,
   decisions,
   onDecisionsChange,
+  teamAddendums = {},
   onContinue,
   onBack,
 }: MbrTeamOkrsDetailStepProps) {
@@ -223,7 +227,15 @@ export function MbrTeamOkrsDetailStep({
             <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">
               {currentTeam.objectives.length} OKRs · {currentTeam.objectives.reduce((sum, obj) => sum + obj.krCount, 0)} KRs
             </span>
+            {teamAddendums[currentTeam.teamId]?.length > 0 && (
+              <AddendumBadge addendums={teamAddendums[currentTeam.teamId]} badgeOnly />
+            )}
           </div>
+
+          {/* Addendum from mbr-pre */}
+          {teamAddendums[currentTeam.teamId]?.length > 0 && (
+            <AddendumBadge addendums={teamAddendums[currentTeam.teamId]} />
+          )}
 
           {/* OKRs for current team */}
           {currentTeam.objectives.map((objective) => (
