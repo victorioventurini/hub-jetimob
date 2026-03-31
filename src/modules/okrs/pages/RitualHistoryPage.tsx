@@ -177,7 +177,7 @@ export default function RitualHistoryPage() {
           </Select>
 
           {teams && teams.length > 0 && (
-            <Select value={teamState.value || 'all'} onValueChange={(v) => teamState.set(v === 'all' ? '' : v)}>
+            <Select value={teamState.value || 'all'} onValueChange={(v) => { teamState.set(v === 'all' ? '' : v); pageState.set(1); }}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Time" />
               </SelectTrigger>
