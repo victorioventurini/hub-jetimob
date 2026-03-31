@@ -66,6 +66,7 @@ export default function QbrPostPage() {
   usePageTitle('Pós-QBR');
 
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('qbr-post', quarterlyCycle);
 
   // Check qbr_status = 'done' or 'ready' (post can happen after meeting)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
