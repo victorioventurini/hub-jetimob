@@ -238,7 +238,7 @@ export default function RitualHistoryPage() {
               <Calendar
                 mode="single"
                 selected={dateToState.value ? parseISO(dateToState.value) : undefined}
-                onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                onSelect={(date) => { dateToState.set(date ? format(date, 'yyyy-MM-dd') : ''); pageState.set(1); }}
                 className="p-3 pointer-events-auto"
                 locale={ptBR}
               />
