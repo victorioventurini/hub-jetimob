@@ -145,7 +145,9 @@ export function useRitualCadences() {
     if (missingTypes.length === 0) return;
 
     autoHealTriggeredByBu.current[buId] = true;
-    void syncRitualCalendar({ silent: true });
+    void syncRitualCalendar({ silent: true }).catch(() => {
+      autoHealTriggeredByBu.current[buId] = false;
+    });
   }, [currentBu?.id, hasQuarterCycle, cadencesQuery.data, syncRitualCalendar]);
 
   return cadencesQuery;
