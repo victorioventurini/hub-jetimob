@@ -493,6 +493,7 @@ export function CyclesTab() {
                                   planning_date={quarter.planning_date}
                                   review_date={quarter.review_date}
                                   retro_date={quarter.retro_date}
+                                  end_date={quarter.end_date}
                                 />
                               </div>
                             </div>

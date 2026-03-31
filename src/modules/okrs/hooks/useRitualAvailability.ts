@@ -20,7 +20,7 @@ export interface RitualAvailability {
   isAvailable: boolean;
   opensAt: Date | null;
   closesAt: Date | null;
-  reason: 'not_yet' | 'expired' | 'no_cycle' | 'no_dates' | 'available';
+  reason: 'not_yet' | 'expired' | 'no_cycle' | 'no_dates' | 'qbr_period' | 'available';
   message: string;
 }
 
@@ -192,6 +192,30 @@ export function useRitualAvailability(
         reason: 'available',
         message: '',
       };
+    }
+
+    // ── QBR period block for MBR/MBR-pre ──────────────────────
+    // Nos meses de QBR (entre retro_date e end_date+7d), o MBR e o MBR-pre
+    // ficam bloqueados — o QBR já cumpre o papel de revisão mensal.
+    if (wizardType === 'mbr' || wizardType === 'mbr-pre') {
+      const retroDate = parseDate(cycle.retro_date);
+      const endDate = parseDate(cycle.end_date);
+
+      if (retroDate && endDate) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const qbrWindowEnd = addDays(endDate, 7);
+
+        if (today >= retroDate && today <= qbrWindowEnd) {
+          return {
+            isAvailable: false,
+            opensAt: null,
+            closesAt: null,
+            reason: 'qbr_period',
+            message: 'Este mês é de QBR. O MBR não é realizado no mês de encerramento do quarter.',
+          };
+        }
+      }
     }
 
     const { opens, closes } = windowDef.getWindow(cycle);
