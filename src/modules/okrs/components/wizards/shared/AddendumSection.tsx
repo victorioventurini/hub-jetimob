@@ -15,6 +15,7 @@ import { MessageSquarePlus, Send, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useIdentity } from '@/hooks/useIdentity';
+import { queryKeys } from '@/lib/queryKeys';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
