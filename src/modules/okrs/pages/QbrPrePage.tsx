@@ -118,7 +118,14 @@ export default function QbrPrePage() {
 
   const qbrOpen = cycleData?.qbr_status === 'open' || cycleData?.qbr_status === 'collecting';
 
-  // Draft persistence
+  // Detect already-completed session for this cycle+team
+  const {
+    sessionState,
+    completedSession,
+    isLoading: isLoadingCompletedCheck,
+  } = useCompletedSessionForCycle('qbr-pre', teamIdParam, quarterlyCycle?.id);
+
+  // Draft persistence (only if not already completed)
   const {
     draft,
     updateDraft,
@@ -136,7 +143,7 @@ export default function QbrPrePage() {
     cycleId: quarterlyCycle?.id || null,
     defaultStep: 'balance',
     defaultData: DEFAULT_DATA,
-    enabled: !!quarterlyCycle && qbrOpen,
+    enabled: !!quarterlyCycle && qbrOpen && sessionState !== 'completed',
   });
 
   // ── Load team KRs for balance step ──

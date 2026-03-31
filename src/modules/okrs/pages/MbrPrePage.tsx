@@ -103,7 +103,14 @@ export default function MbrPrePage() {
   // Cycle (status-based) — any active cycle, not just quarter
   const { activeCycle, isLoading: isLoadingCycles } = useActiveCycle();
 
-  // Draft persistence
+  // Detect already-completed session for this cycle+team
+  const {
+    sessionState,
+    completedSession,
+    isLoading: isLoadingCompletedCheck,
+  } = useCompletedSessionForCycle('mbr-pre', teamIdParam, activeCycle?.id);
+
+  // Draft persistence (only if not already completed)
   const {
     draft,
     updateDraft,
@@ -121,7 +128,7 @@ export default function MbrPrePage() {
     cycleId: activeCycle?.id || null,
     defaultStep: 'balance',
     defaultData: DEFAULT_DATA,
-    enabled: !!activeCycle,
+    enabled: !!activeCycle && sessionState !== 'completed',
   });
 
   // ── Load team KRs for balance step ──
