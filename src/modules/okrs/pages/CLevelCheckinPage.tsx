@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useGenericWizardDraft, useLastCompletedSession, useActiveCycle } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
@@ -161,9 +162,8 @@ export default function CLevelCheckinPage() {
       toast.error('Erro ao descartar rascunho');
     }
   }, [discardDraft]);
-  
-  // Get active cycles for summary trigger (status-based)
-  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
+   
+   // quarterlyCycle already declared above (line 67) via useActiveCycle()
 
   const handleComplete = useCallback(async () => {
     const completedSessionId = await clearDraft();
