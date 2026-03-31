@@ -1,71 +1,42 @@
 
-Objetivo
-- Garantir que os ritos exibidos em `/settings/rituals` sejam sempre populados e reajustados automaticamente conforme alterações feitas em `/hub/modules/okrs/settings`.
-- Regras confirmadas por você:
-  - Sincronização: automática imediata
-  - Ajuste de dados existentes: regerar tudo
+Sim — agora está confirmado: o plano **passa a contemplar backfill de todos os wizard types** (não só `mbr/mbr-pre/qbr-pre`), conforme sua resposta.
 
-Contexto técnico validado (canônico)
-- PRE/POST-BU e isolamento BU: seguir `useBuScopedSupabase` + filtro explícito `bu_id`.
-- Query keys centralizadas em `queryKeys.okrs`.
-- Modelo de ciclos/rituais já existente: `cycles`, `ritual_cadences`, `ritual_occurrences`.
-- Função atual `generate-ritual-occurrences` gera por cadência, mas hoje não cobre bem o fluxo “hub settings -> rituals” em todas as mutações.
+Também confirmei o pré-checklist canônico antes de seguir:
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
+- `docs/canonical/IDENTITY_CONVENTION.md`
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`
+- `docs/canonical/DATA_MODEL_REGISTRY.md`
+- revisão da implementação existente em `sync-ritual-calendar-from-cycles`, `generate-ritual-occurrences`, `useRitualCadences`, `RitualCalendarPage`.
 
-Diagnóstico do que falta hoje
-1) Sincronização incompleta
-- `CyclesTab` sincroniza parcialmente (foco em MBR/mbr-pre no auto-generate), mas não cobre todos os cenários de edição/ativação/encerramento.
-- `CycleFormDialog` salva ciclo e invalida cache, porém não força regeneração do calendário de ritos.
-- `useCycleActions` (ativar/encerrar) não dispara regeneração de ocorrências.
+Plano objetivo (revisado com seu escopo):
 
-2) Regeneração “total” não implementada
-- A função `generate-ritual-occurrences` hoje remove apenas órfãos `scheduled` sem sessão.
-- Não existe modo explícito para “regerar tudo” conforme sua decisão.
+1) Catálogo canônico de wizard types (fonte única)
+- Criar um catálogo único no frontend/backend com todos os wizard types aceitos no módulo de ritos.
+- Usar esse catálogo na UI (`RECURRENT_WIZARD_TYPES` + labels) para garantir que `mbr-pre` e demais tipos apareçam nos filtros/listas.
 
-Plano de implementação
+2) Backfill “todos os wizard types” por BU (auto-healing)
+- Evoluir a sync function para:
+  - identificar wizard types esperados;
+  - detectar ausentes em `ritual_cadences` da BU;
+  - criar/reativar cadências faltantes de forma idempotente;
+  - para tipos derivados de ciclo (MBR/QBR), recalcular datas com base em `cycles`;
+  - para tipos não derivados de ciclo, aplicar defaults canônicos (sem sobrescrever customizações existentes).
 
-1) Criar orquestração única de sincronização de ritos por BU
-- Adicionar uma nova edge function (ex.: `sync-ritual-calendar-from-cycles`) para:
-  - Ler ciclos trimestrais/anuais da BU;
-  - Upsert padronizado de `ritual_cadences` derivadas dos ciclos (MBR/MBR-pre/QBR-pre e ritos trimestrais aplicáveis);
-  - Invocar geração de ocorrências para cada cadência relevante em modo de rebuild total.
-- Benefício: regra de negócio centralizada no backend e reaproveitada por qualquer tela.
+3) Rebuild completo de ocorrências para os tipos afetados
+- Após o backfill/upsert, disparar `generate-ritual-occurrences` em `rebuild_mode='full'` para cada cadence impactada.
+- Manter política atual de reconstrução total para consistência entre `/hub/modules/okrs/settings` e `/settings/rituals`.
 
-2) Evoluir `generate-ritual-occurrences` para modo “full rebuild”
-- Incluir parâmetro de estratégia (ex.: `rebuild_mode: 'full' | 'incremental'`), usando `full` para o fluxo do Hub.
-- Em `full`:
-  - Recalcular completamente o conjunto esperado da cadência;
-  - Recriar ocorrências conforme as datas atuais da cadência.
-- Manter validações de BU/JWT e padrões de middleware existentes.
+4) Trigger automático + proteção anti-loop
+- Em `useRitualCadences`, se detectar lacuna de wizard types esperados, disparar sync silencioso uma vez por BU/sessão (auto-healing).
+- Preservar invalidação de cache canônica (`queryKeys.okrs`) após sync.
 
-3) Disparar sincronização automática em todos os pontos de mudança no Hub
-- Em `/hub/modules/okrs/settings`:
-  - Após criar/editar/remover/ativar/encerrar ciclos;
-  - Após auto-generate de ciclos;
-  - Após mudanças de estado que impactam ritos (quando aplicável no `RitualsTab`).
-- Implementar via helper único no frontend (hook utilitário) para evitar duplicação de `supabase.functions.invoke(...)`.
-
-4) Garantir atualização imediata do `/settings/rituals`
-- Invalidar caches canônicos após sincronização:
-  - `queryKeys.okrs.ritualCadences(buId)`
-  - `queryKeys.okrs.ritualOccurrencesPrefix(buId)`
-  - `queryKeys.okrs.ritualAdherence(buId, ...)`
-- Resultado esperado: calendário e saúde refletem mudanças sem ação manual.
-
-5) Ajustes de consistência e conformidade
-- Corrigir uso de cliente não canônico em hooks operacionais de ritos (onde houver `@/integrations/supabase/client` em contexto POST-BU).
-- Preservar BU scope em todas as queries.
-- Sem mudança de schema de banco (não exige migration estrutural).
-
-Arquivos principais impactados
-- `supabase/functions/generate-ritual-occurrences/index.ts` (novo modo full rebuild)
-- `supabase/functions/sync-ritual-calendar-from-cycles/index.ts` (nova orquestração)
-- `src/modules/okrs/components/settings/CyclesTab.tsx` (disparo de sync pós mutações)
-- `src/modules/okrs/components/settings/CycleFormDialog.tsx` (disparo de sync pós save)
-- `src/modules/okrs/hooks/useCycleActions.ts` (disparo de sync pós activate/close)
-- `src/modules/okrs/hooks/useRitualCadences.ts` (ajuste de cliente/camada de invocação se necessário)
+5) Conformidade obrigatória (TCR/standards)
+- Manter cliente BU-scoped + filtro explícito `.eq('bu_id', currentBuId)` nas queries operacionais.
+- Sem `select('*')`.
+- Sem alteração estrutural de schema, apenas correção de fluxo e dados.
 
 Critérios de aceite
-- Alterar ciclos em `/hub/modules/okrs/settings` atualiza automaticamente `/settings/rituals` (cadências + calendário + saúde).
-- Regra “regerar tudo” aplicada: dados de ocorrências são reconstruídos conforme configuração vigente.
-- Nenhum botão manual de sincronização é necessário.
-- Sem vazamento entre BUs, sem query key inline, sem regressão nas rotas existentes.
+- Em BU com lacunas, ao abrir `/settings/rituals` os wizard types faltantes passam a aparecer automaticamente.
+- `mbr-pre` e demais tipos esperados listados em Cadências/Filtros.
+- Sem duplicações após múltiplas aberturas/syncs.
+- Sincronização continua imediata após mutações de ciclos/status no Hub.
