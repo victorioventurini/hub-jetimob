@@ -459,7 +459,7 @@ export default function QbrPrePage() {
   }, [discardDraft, setSearchParams]);
 
   // Loading
-  if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingCycleStatus || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {
     return <LoadingState text="Carregando dados do pré-QBR..." fullPage />;
   }
 
@@ -472,6 +472,19 @@ export default function QbrPrePage() {
         description="Selecione um time para iniciar o pré-QBR"
         actionLabel="Voltar"
         onAction={() => navigate('/wizards')}
+      />
+    );
+  }
+
+  // Guard: Already completed → show read-only view with addendum
+  if (sessionState === 'completed' && completedSession) {
+    return (
+      <CompletedRitualView
+        title="Pré-QBR"
+        teamName={selectedTeam.name}
+        wizardType="qbr-pre"
+        session={completedSession}
+        backUrl="/rituals"
       />
     );
   }

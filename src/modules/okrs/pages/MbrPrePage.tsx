@@ -365,7 +365,7 @@ export default function MbrPrePage() {
   }, [discardDraft, setSearchParams]);
 
   // Loading
-  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {
     return <LoadingState text="Carregando dados do pré-MBR..." fullPage />;
   }
 
@@ -378,6 +378,19 @@ export default function MbrPrePage() {
         description="Selecione um time para iniciar o pré-MBR"
         actionLabel="Voltar"
         onAction={() => navigate('/rituals')}
+      />
+    );
+  }
+
+  // Guard: Already completed → show read-only view with addendum
+  if (sessionState === 'completed' && completedSession) {
+    return (
+      <CompletedRitualView
+        title="Pré-MBR"
+        teamName={selectedTeam.name}
+        wizardType="mbr-pre"
+        session={completedSession}
+        backUrl="/rituals"
       />
     );
   }
