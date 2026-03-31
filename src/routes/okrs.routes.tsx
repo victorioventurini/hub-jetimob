@@ -16,6 +16,7 @@ import { lazyWithRetry } from '@/lib/lazyWithRetry';
 const OkrsPage = lazy(() => import('@/modules/okrs/pages/OkrsPage'));
 const OkrDashboardPage = lazy(() => import('@/modules/okrs/pages/OkrDashboardPage'));
 const ExecutiveDashboardPage = lazy(() => import('@/modules/okrs/pages/ExecutiveDashboardPage'));
+const ExecutiveQuarterReviewPage = lazy(() => import('@/modules/okrs/pages/ExecutiveQuarterReviewPage'));
 const OrgViewListPage = lazy(() => import('@/modules/okrs/pages/OrgViewListPage'));
 const OrgObjectiveViewPage = lazy(() => import('@/modules/okrs/pages/OrgObjectiveViewPage'));
 const TeamContributionPage = lazy(() => import('@/modules/okrs/pages/TeamContributionPage'));
@@ -53,6 +54,7 @@ export const okrRoutes = (
     <Route path="/okrs" element={<OkrRoute><OkrDashboardPage /></OkrRoute>} />
     <Route path="/okrs/manage" element={<OkrRoute><OkrsPage /></OkrRoute>} />
     <Route path="/okrs/executive" element={<OkrRoute><ExecutiveDashboardPage /></OkrRoute>} />
+    <Route path="/okrs/executive/quarter-review" element={<OkrRoute requiresBuAdmin><ExecutiveQuarterReviewPage /></OkrRoute>} />
     
     {/* Creation */}
     <Route path="/okrs/create" element={<OkrRoute><OkrCreationPage /></OkrRoute>} />
