@@ -86,6 +86,7 @@ export default function TeamCheckinPage() {
   
   // Get cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('team-checkin', quarterlyCycle);
   
   // Draft persistence
   const {
