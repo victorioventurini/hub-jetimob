@@ -910,10 +910,38 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
     ],
     aiAgents: ['analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes'],
   },
+  'mbr-first': {
+    persona: 'mbr-first',
+    title: 'MBR (1º mês)',
+    description: 'Revisão mensal do 1º mês do quarter',
+    steps: [
+      { id: 'panorama', label: 'Panorama Executivo', shortLabel: 'Panorama' },
+      { id: 'kpi-gate', label: 'KPI Gate Estratégico', shortLabel: 'KPI Gate' },
+      { id: 'team-okrs-overview', label: 'OKRs dos Times', shortLabel: 'Times' },
+      { id: 'team-okrs-detail', label: 'Análise por Time', shortLabel: 'Detalhe' },
+      { id: 'org-okrs', label: 'OKRs Organizacionais', shortLabel: 'OKRs Org' },
+      { id: 'decisions', label: 'Decisões Estratégicas', shortLabel: 'Decisões' },
+      { id: 'closing', label: 'Encerramento', shortLabel: 'Encerrar' },
+    ],
+    aiAgents: ['analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes'],
+  },
   'mbr-pre': {
     persona: 'mbr-pre',
     title: 'Pré-MBR',
     description: 'Preparação individual do líder para o Monthly Business Review',
+    steps: [
+      { id: 'balance', label: 'Balanço do Mês', shortLabel: 'Balanço' },
+      { id: 'kpi-analysis', label: 'KPIs do Time', shortLabel: 'KPIs' },
+      { id: 'highlights', label: 'Destaques e Riscos', shortLabel: 'Destaques' },
+      { id: 'next-steps', label: 'Próximos Passos', shortLabel: 'Próximos' },
+      { id: 'summary', label: 'Resumo e Envio', shortLabel: 'Enviar' },
+    ],
+    aiAgents: ['coach-okrs', 'analista-kpis'],
+  },
+  'mbr-pre-first': {
+    persona: 'mbr-pre-first',
+    title: 'Pré-MBR (1º mês)',
+    description: 'Preparação individual do líder para o MBR do 1º mês do quarter',
     steps: [
       { id: 'balance', label: 'Balanço do Mês', shortLabel: 'Balanço' },
       { id: 'kpi-analysis', label: 'KPIs do Time', shortLabel: 'KPIs' },
