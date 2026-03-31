@@ -12,6 +12,7 @@ import { TeamCheckinReport } from './renderers/TeamCheckinReport';
 import { ManagersCheckinReport } from './renderers/ManagersCheckinReport';
 import { CLevelCheckinReport } from './renderers/CLevelCheckinReport';
 import { MbrReport } from './renderers/MbrReport';
+import { MbrPreReport } from './renderers/MbrPreReport';
 import { QbrPreReport } from './renderers/QbrPreReport';
 import { QbrCLevelReport } from './renderers/QbrCLevelReport';
 import { QbrMeetingReport } from './renderers/QbrMeetingReport';
