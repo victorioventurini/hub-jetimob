@@ -165,6 +165,7 @@ export interface LeaderPrepWizardState {
 // ============================================================
 
 export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing'
+  | 'mbr-pre-balance' | 'mbr-pre-kpi' | 'mbr-pre-highlights' | 'mbr-pre-next-steps'
   | 'qbr-balance' | 'qbr-kpi-analysis' | 'qbr-learnings' | 'qbr-okr-proposal'
   | 'qbr-clevel-system-read' | 'qbr-clevel-strategic' | 'qbr-clevel-okr-validation' | 'qbr-clevel-directives'
   | 'qbr-meeting-opening' | 'qbr-meeting-okr-review' | 'qbr-meeting-decisions' | 'qbr-meeting-commitments' | 'qbr-meeting-closing'
