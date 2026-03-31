@@ -242,6 +242,28 @@ export function CyclesTab() {
 
   return (
     <div className="space-y-6">
+      {/* Auto-transition toggle */}
+      <Card>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <RefreshCw className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Transição automática de ciclos</p>
+              <p className="text-xs text-muted-foreground">
+                Ciclos em planejamento serão ativados automaticamente na data de início. Ciclos ativos serão encerrados na data final.
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={autoTransitionEnabled ?? false}
+            onCheckedChange={(checked) => toggleAutoTransition.mutate(checked)}
+            disabled={isLoadingToggle || toggleAutoTransition.isPending}
+          />
+        </CardContent>
+      </Card>
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>
