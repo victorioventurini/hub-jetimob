@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { useMemo } from "react";
-import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval } from "date-fns";
+import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { queryKeys } from "@/lib/queryKeys";
 
 export interface Cycle {
@@ -21,22 +21,23 @@ export interface Cycle {
  * Fetches all cycles ordered by start date (newest first).
  */
 export function useCycles() {
-  const { client: supabase, isReady } = useOptionalBuClient();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.cyclesList(null),
+    queryKey: queryKeys.okrs.cyclesList(buId),
     queryFn: async () => {
-      if (!supabase) return [];
+      if (!supabase || !buId) return [];
       
       const { data, error } = await supabase
         .from("cycles")
         .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id")
+        .eq("bu_id", buId)
         .order("start_date", { ascending: false });
 
       if (error) throw error;
       return data as Cycle[];
     },
-    enabled: isReady && !!supabase,
+    enabled: isReady && !!supabase && !!buId,
   });
 }
 
@@ -52,8 +53,8 @@ export function useActiveCycles() {
     
     const today = new Date();
     const active = allCycles.filter(cycle => {
-      const start = parseISO(cycle.start_date);
-      const end = parseISO(cycle.end_date);
+      const start = startOfDay(parseISO(cycle.start_date));
+      const end = endOfDay(parseISO(cycle.end_date));
       return isWithinInterval(today, { start, end });
     });
     
@@ -81,23 +82,24 @@ export function useActiveCycles() {
  * Fetches a single cycle by ID.
  */
 export function useCycle(cycleId: string | null | undefined) {
-  const { client: supabase, isReady } = useOptionalBuClient();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
     queryKey: queryKeys.okrs.cycleDetail(cycleId ?? null),
     queryFn: async () => {
-      if (!cycleId || !supabase) return null;
+      if (!cycleId || !supabase || !buId) return null;
       
       const { data, error } = await supabase
         .from("cycles")
         .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id")
         .eq("id", cycleId)
+        .eq("bu_id", buId)
         .maybeSingle();
 
       if (error) throw error;
       return data as Cycle | null;
     },
-    enabled: !!cycleId && isReady && !!supabase,
+    enabled: !!cycleId && isReady && !!supabase && !!buId,
   });
 }
 
