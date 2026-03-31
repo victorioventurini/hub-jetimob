@@ -165,6 +165,7 @@ export function RitualsTab() {
       const { data, error } = await supabase
         .from('cycles')
         .select('id, name, type, start_date, end_date, qbr_status')
+        .eq('bu_id', buId)
         .eq('type', 'quarter')
         .order('start_date', { ascending: false })
         .limit(8);
@@ -184,8 +185,12 @@ export function RitualsTab() {
   // ── Current quarter ──
   const currentQuarter = useMemo(() => {
     if (!quarterCycles) return null;
-    const now = new Date();
-    return quarterCycles.find(c => now >= parseISO(c.start_date) && now <= parseISO(c.end_date)) ?? quarterCycles[0] ?? null;
+    const today = new Date().toISOString().slice(0, 10);
+    return (
+      quarterCycles.find(c => c.start_date <= today && c.end_date >= today) ??
+      quarterCycles[0] ??
+      null
+    );
   }, [quarterCycles]);
 
   const currentStatus = currentQuarter?.qbr_status as QbrStatus | undefined;
