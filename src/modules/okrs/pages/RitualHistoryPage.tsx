@@ -124,6 +124,20 @@ export default function RitualHistoryPage() {
   });
   const pageSize = 25;
 
+  // Atomic page reset: track filter changes and reset page via effect
+  // (avoids race condition when two useUrlState.set() calls happen in the same handler)
+  const filterFingerprint = `${typeState.value}|${teamState.value}|${userState.value}|${dateFromState.value}|${dateToState.value}`;
+  const prevFilterRef = useRef(filterFingerprint);
+
+  useEffect(() => {
+    if (prevFilterRef.current !== filterFingerprint) {
+      prevFilterRef.current = filterFingerprint;
+      if (pageState.value !== 1) {
+        pageState.set(1);
+      }
+    }
+  }, [filterFingerprint, pageState]);
+
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
