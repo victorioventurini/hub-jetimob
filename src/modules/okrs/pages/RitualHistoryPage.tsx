@@ -98,9 +98,11 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  // Default: last 30 days
+  const default30DaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const dateFromState = useUrlState<string>({
     key: 'from',
-    defaultValue: '',
+    defaultValue: default30DaysAgo,
     parse: parsers.string,
   });
   const dateToState = useUrlState<string>({
@@ -109,28 +111,39 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  // Pagination
+  const pageState = useUrlState<number>({
+    key: 'page',
+    defaultValue: 1,
+    parse: parsers.numberWithDefault(1),
+  });
+  const pageSize = 25;
+
   const filters: RitualHistoryFilters = useMemo(() => ({
     wizardType: (typeState.value || 'all') as WizardPersona | 'all',
     teamId: teamState.value || null,
     userId: userState.value || null,
     dateFrom: dateFromState.value || null,
     dateTo: dateToState.value || null,
-  }), [typeState.value, teamState.value, userState.value, dateFromState.value, dateToState.value]);
+    page: pageState.value,
+    pageSize,
+  }), [typeState.value, teamState.value, userState.value, dateFromState.value, dateToState.value, pageState.value]);
 
-  const { data: rituals, isLoading } = useRitualHistory(filters);
+  const { data: result, isLoading } = useRitualHistory(filters);
+  const rituals = result?.items ?? [];
+  const totalCount = result?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
   const { teams } = useManageableTeamsFlat();
 
-  // Deep-link: fetch the specific session if not in the list (e.g. user is recipient but not author)
+  // Deep-link: fetch the specific session if not in the list
   const { data: deepLinkSession, isLoading: isLoadingDeepLink } = useRitualDetail(
-    // Only fetch if we have a deep-link ID and it's NOT already in the list
-    deepLinkSessionId && rituals && !rituals.some(r => r.id === deepLinkSessionId)
+    deepLinkSessionId && !rituals.some(r => r.id === deepLinkSessionId)
       ? deepLinkSessionId
       : null
   );
 
   // Merge: if deep-link session exists and isn't in the list, prepend it
   const mergedRituals = useMemo(() => {
-    if (!rituals) return rituals;
     if (!deepLinkSession) return rituals;
     if (rituals.some(r => r.id === deepLinkSession.id)) return rituals;
     return [deepLinkSession, ...rituals];
