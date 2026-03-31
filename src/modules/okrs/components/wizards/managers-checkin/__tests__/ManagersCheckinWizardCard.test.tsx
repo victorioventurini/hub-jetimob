@@ -44,7 +44,7 @@ describe('ManagersCheckinWizardCard', () => {
 
   it('renders link to route', () => {
     renderCard();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/okrs/managers-checkin');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/rituals/managers-checkin');
   });
 
   it('shows loading skeleton', () => {

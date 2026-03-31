@@ -23,8 +23,8 @@ vi.mock('../../shared', () => ({
       <button data-testid="btn-primary" onClick={onPrimary} disabled={primaryDisabled}>{primaryLabel || 'Continuar'}</button>
     </div>
   ),
-  WizardStepScaffold: ({ header, children }: any) => (
-    <div>{header}{children}</div>
+  WizardStepScaffold: ({ header, footer, children }: any) => (
+    <div>{header}{children}{footer}</div>
   ),
 }));
 

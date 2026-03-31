@@ -61,14 +61,13 @@ describe('MilestoneList', () => {
     expect(screen.queryByText('Deleted')).not.toBeInTheDocument();
   });
 
-  it('calls onStatusChange with next status on click (todo → in_progress)', () => {
+  it('calls onStatusChange with next status on click (todo → in_progress)', async () => {
     const onStatusChange = vi.fn();
     renderWithProviders(
       <MilestoneList milestones={[createMilestone()]} onStatusChange={onStatusChange} {...defaultProps} />
     );
-    // Status button is the second button (first is chevron)
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[1]);
+    const statusBtn = screen.getByTestId('status-btn-todo');
+    statusBtn.click();
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'in_progress');
   });
 
@@ -81,8 +80,7 @@ describe('MilestoneList', () => {
         {...defaultProps}
       />
     );
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[1]);
+    screen.getByTestId('status-btn-in_progress').click();
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'done');
   });
 
@@ -95,8 +93,7 @@ describe('MilestoneList', () => {
         {...defaultProps}
       />
     );
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[1]);
+    screen.getByTestId('status-btn-done').click();
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'todo');
   });
 

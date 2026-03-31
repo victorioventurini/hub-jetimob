@@ -37,7 +37,7 @@ describe('LeaderPrepWizardCard', () => {
   it('renders link to leader-prep route', () => {
     renderCard();
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/okrs/leader-prep?team=team-1');
+    expect(link).toHaveAttribute('href', '/rituals/team-checkin-pre?team=team-1');
   });
 
   it('shows loading state', () => {
