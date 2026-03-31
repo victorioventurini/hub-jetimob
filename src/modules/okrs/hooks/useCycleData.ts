@@ -26,11 +26,12 @@ export function useCycles() {
   return useQuery({
     queryKey: queryKeys.okrs.cyclesList(buId),
     queryFn: async () => {
-      if (!supabase) return [];
+      if (!supabase || !buId) return [];
       
       const { data, error } = await supabase
         .from("cycles")
         .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id")
+        .eq("bu_id", buId)
         .order("start_date", { ascending: false });
 
       if (error) throw error;
@@ -81,23 +82,24 @@ export function useActiveCycles() {
  * Fetches a single cycle by ID.
  */
 export function useCycle(cycleId: string | null | undefined) {
-  const { client: supabase, isReady } = useOptionalBuClient();
+  const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
     queryKey: queryKeys.okrs.cycleDetail(cycleId ?? null),
     queryFn: async () => {
-      if (!cycleId || !supabase) return null;
+      if (!cycleId || !supabase || !buId) return null;
       
       const { data, error } = await supabase
         .from("cycles")
         .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id")
         .eq("id", cycleId)
+        .eq("bu_id", buId)
         .maybeSingle();
 
       if (error) throw error;
       return data as Cycle | null;
     },
-    enabled: !!cycleId && isReady && !!supabase,
+    enabled: !!cycleId && isReady && !!supabase && !!buId,
   });
 }
 
