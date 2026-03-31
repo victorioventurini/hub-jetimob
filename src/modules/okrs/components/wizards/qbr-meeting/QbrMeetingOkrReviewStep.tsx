@@ -46,6 +46,8 @@ export interface QbrMeetingOkrReviewStepProps {
   approvals: QbrMeetingSnapshot['approvals'];
   onApprovalsChange: (approvals: QbrMeetingSnapshot['approvals']) => void;
   calibrationFlags?: QbrCLevelSnapshot['okrCalibrationFlags'];
+  /** Addendums from qbr-pre sessions, keyed by teamId */
+  teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
   currentTeamIndex: number;
   onCurrentTeamIndexChange: (index: number) => void;
   onContinue: () => void;
