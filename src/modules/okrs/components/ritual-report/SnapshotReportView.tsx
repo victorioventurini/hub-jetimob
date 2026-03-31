@@ -30,6 +30,7 @@ const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Recor
   'managers-checkin': ManagersCheckinReport,
   'clevel-checkin': CLevelCheckinReport,
   'mbr': MbrReport,
+  'mbr-pre': MbrPreReport,
   'qbr-pre': QbrPreReport,
   'qbr-pre-clevel': QbrCLevelReport,
   'qbr-meeting': QbrMeetingReport,

@@ -94,6 +94,7 @@ export const ritualRoutes = (
     <Route path="/okrs/managers-checkin" element={<RedirectWithParams to="/rituals/managers-checkin" />} />
     <Route path="/okrs/clevel-checkin" element={<RedirectWithParams to="/rituals/clevel-checkin" />} />
     <Route path="/okrs/mbr" element={<RedirectWithParams to="/rituals/mbr" />} />
+    <Route path="/okrs/mbr-pre" element={<RedirectWithParams to="/rituals/mbr-pre" />} />
     <Route path="/okrs/qbr-pre" element={<RedirectWithParams to="/rituals/qbr-pre" />} />
     <Route path="/okrs/qbr-pre-clevel" element={<RedirectWithParams to="/rituals/qbr-clevel" />} />
     <Route path="/okrs/qbr" element={<RedirectWithParams to="/rituals/qbr" />} />

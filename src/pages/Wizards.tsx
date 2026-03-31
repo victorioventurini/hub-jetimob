@@ -131,6 +131,18 @@ const WIZARD_SECTIONS: WizardSection[] = [
         requiresTeam: true,
         route: '/rituals/team-checkin',
       },
+      {
+        id: 'mbr-pre',
+        name: 'Pré-MBR',
+        description: 'Prepare o contexto do seu time para o Monthly Business Review',
+        icon: Briefcase,
+        module: 'okrs',
+        requiredRole: 'leader',
+        badge: 'Mensal',
+        badgeVariant: 'secondary',
+        requiresTeam: true,
+        route: '/rituals/mbr-pre',
+      },
     ],
   },
   {
