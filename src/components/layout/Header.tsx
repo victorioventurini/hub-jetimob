@@ -21,7 +21,7 @@ import { NotificationCenter } from "@/components/notifications";
 import { UserImpersonationDialog } from "@/components/impersonation";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
-import { ActiveCycleIndicator } from "./ActiveCycleIndicator";
+import { CycleProgressHeader } from "./CycleProgressHeader";
 import { useTheme, type Theme } from "@/contexts/ThemeContext";
 
 interface HeaderProps {
@@ -32,7 +32,7 @@ interface HeaderProps {
 export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const { profile, role, signOut, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { userRole, hasMultipleBus } = useBu();
+  const { userRole, hasMultipleBus, currentBuId } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
   const isHubPage = location.pathname.startsWith("/hub");
@@ -91,8 +91,8 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Active Cycle Indicator */}
-        {!isHubPage && <ActiveCycleIndicator />}
+        {/* Cycle Progress Indicator */}
+        {!isHubPage && currentBuId && <CycleProgressHeader variant="segmented" />}
 
         {/* Spacer */}
         <div className="flex-1" />
