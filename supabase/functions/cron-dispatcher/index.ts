@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: { processed: 0, sent: 0, failed: 0 },
       health: { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 },
-      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false },
+      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false, recommendation_notifications_sent: 0, recommendation_notifications_checked: 0, ritual_occurrences_missed: 0, cycles_activated: 0, cycles_closed: 0 },
       duration_ms: Date.now() - startTime,
       ran_at: new Date().toISOString(),
     };
