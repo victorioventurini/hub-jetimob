@@ -21,6 +21,7 @@ const TeamCheckinPage = lazy(() => import('@/modules/okrs/pages/TeamCheckinPage'
 const ManagersCheckinPage = lazy(() => import('@/modules/okrs/pages/ManagersCheckinPage'));
 const CLevelCheckinPage = lazy(() => import('@/modules/okrs/pages/CLevelCheckinPage'));
 const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
+const MbrPrePage = lazy(() => import('@/modules/okrs/pages/MbrPrePage'));
 const QbrPrePage = lazy(() => import('@/modules/okrs/pages/QbrPrePage'));
 const QbrPreCLevelPage = lazy(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
 const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'));
