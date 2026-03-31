@@ -1,4 +1,4 @@
-import { Calendar, Scale, BookOpen, Workflow } from "lucide-react";
+import { Calendar, Scale, BookOpen, Workflow, GraduationCap, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlTab } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -7,7 +7,7 @@ import { CyclesTab } from "../components/settings/CyclesTab";
 import { LimitsTab } from "../components/settings/LimitsTab";
 import { RulesInfoTab } from "../components/settings/RulesInfoTab";
 import { RitualsTab } from "../components/settings/RitualsTab";
-import { AlertTriangle } from "lucide-react";
+import { CyclesRitualsGuideTab } from "../components/settings/CyclesRitualsGuideTab";
 
 export default function OkrsSettingsPage() {
   usePageTitle("Configurações de OKRs", {
@@ -55,6 +55,10 @@ export default function OkrsSettingsPage() {
             <BookOpen className="h-4 w-4" />
             Regras de Vínculo
           </TabsTrigger>
+          <TabsTrigger value="guide" className="gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Guia
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="cycles">
@@ -71,6 +75,10 @@ export default function OkrsSettingsPage() {
 
         <TabsContent value="rules">
           <RulesInfoTab />
+        </TabsContent>
+
+        <TabsContent value="guide">
+          <CyclesRitualsGuideTab />
         </TabsContent>
       </Tabs>
     </div>
