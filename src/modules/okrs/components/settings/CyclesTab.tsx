@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle } from "lucide-react";
+import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle, RefreshCw } from "lucide-react";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import {
   AlertDialog,
@@ -54,6 +55,60 @@ export function CyclesTab() {
   const [closeDialogCycle, setCloseDialogCycle] = useState<Cycle | null>(null);
   const queryClient = useQueryClient();
   const { activateCycle, closeCycle } = useCycleActions();
+
+  // Auto-transition toggle query
+  const { data: autoTransitionEnabled, isLoading: isLoadingToggle } = useQuery({
+    queryKey: ['okr-auto-cycle-transition', buId],
+    queryFn: async () => {
+      if (!supabase || !buId) return false;
+      const { data, error } = await supabase
+        .from('bu_module_configs')
+        .select('config')
+        .eq('bu_id', buId)
+        .eq('module_id', (
+          await supabase.from('modules').select('id').eq('slug', 'okrs').single()
+        ).data?.id ?? '')
+        .maybeSingle();
+      if (error) return false;
+      return (data?.config as Record<string, unknown>)?.auto_cycle_transition === true;
+    },
+    enabled: !!buId && !!supabase,
+  });
+
+  // Auto-transition toggle mutation
+  const toggleAutoTransition = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!supabase || !buId) throw new Error('No BU');
+      const { data: mod } = await supabase.from('modules').select('id').eq('slug', 'okrs').single();
+      if (!mod) throw new Error('Module not found');
+
+      // Get current config
+      const { data: existing } = await supabase
+        .from('bu_module_configs')
+        .select('config')
+        .eq('bu_id', buId)
+        .eq('module_id', mod.id)
+        .maybeSingle();
+
+      const currentConfig = (existing?.config as Record<string, unknown>) ?? {};
+      const newConfig = { ...currentConfig, auto_cycle_transition: enabled };
+
+      const { error } = await supabase
+        .from('bu_module_configs')
+        .update({ config: newConfig } as any)
+        .eq('bu_id', buId)
+        .eq('module_id', mod.id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['okr-auto-cycle-transition', buId] });
+      toast.success(enabled ? 'Transição automática ativada' : 'Transição automática desativada');
+    },
+    onError: () => {
+      toast.error('Erro ao salvar configuração');
+    },
+  });
 
   // Fetch all cycles
   const { data: cycles, isLoading } = useQuery({
@@ -187,6 +242,28 @@ export function CyclesTab() {
 
   return (
     <div className="space-y-6">
+      {/* Auto-transition toggle */}
+      <Card>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <RefreshCw className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Transição automática de ciclos</p>
+              <p className="text-xs text-muted-foreground">
+                Ciclos em planejamento serão ativados automaticamente na data de início. Ciclos ativos serão encerrados na data final.
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={autoTransitionEnabled ?? false}
+            onCheckedChange={(checked) => toggleAutoTransition.mutate(checked)}
+            disabled={isLoadingToggle || toggleAutoTransition.isPending}
+          />
+        </CardContent>
+      </Card>
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>

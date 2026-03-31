@@ -55,6 +55,8 @@ interface MaintenanceResult {
   recommendation_notifications_sent: number;
   recommendation_notifications_checked: number;
   ritual_occurrences_missed: number;
+  cycles_activated: number;
+  cycles_closed: number;
 }
 
 interface ExecutionResult {
@@ -153,6 +155,8 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     recommendation_notifications_sent: 0,
     recommendation_notifications_checked: 0,
     ritual_occurrences_missed: 0,
+    cycles_activated: 0,
+    cycles_closed: 0,
   };
 
   try {
@@ -244,6 +248,18 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     console.log("[cron-dispatcher] mark_missed_ritual_occurrences RPC not available");
   }
 
+  // Auto-transition cycle statuses
+  try {
+    const { data: cycleData, error: cycleErr } = await supabase.rpc("auto_transition_cycle_statuses");
+    if (!cycleErr && cycleData) {
+      result.cycles_activated = cycleData.activated || 0;
+      result.cycles_closed = cycleData.closed || 0;
+      console.log(`[cron-dispatcher] Cycle transitions: ${result.cycles_activated} activated, ${result.cycles_closed} closed`);
+    }
+  } catch {
+    console.log("[cron-dispatcher] auto_transition_cycle_statuses RPC not available");
+  }
+
   return result;
 }
 
@@ -323,7 +339,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: { processed: 0, sent: 0, failed: 0 },
       health: { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 },
-      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false },
+      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false, recommendation_notifications_sent: 0, recommendation_notifications_checked: 0, ritual_occurrences_missed: 0, cycles_activated: 0, cycles_closed: 0 },
       duration_ms: Date.now() - startTime,
       ran_at: new Date().toISOString(),
     };
