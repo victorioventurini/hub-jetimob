@@ -150,7 +150,8 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
     };
   }, [keyResults]);
 
-  const statusConfig = STATUS_CONFIG[status];
+  const safeObjectiveStatus = STATUS_CONFIG[status] ? status : 'not_started';
+  const statusConfig = STATUS_CONFIG[safeObjectiveStatus];
 
   if (isLoading) {
     return (
@@ -550,7 +551,8 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
   );
   
   const calculatedStatus = mapRagToCalculated(effectiveStatus);
-  const statusConfig = STATUS_CONFIG[calculatedStatus];
+  const safeCalculatedStatus = STATUS_CONFIG[calculatedStatus] ? calculatedStatus : 'not_started';
+  const statusConfig = STATUS_CONFIG[safeCalculatedStatus];
 
   const formatValue = (value: number | null | undefined, unit: string) => {
     if (value === null || value === undefined) return '—';
