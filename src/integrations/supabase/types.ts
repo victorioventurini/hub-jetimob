@@ -6013,6 +6013,7 @@ export type Database = {
       okr_wizard_sessions: {
         Row: {
           action_items: Json | null
+          addendums: Json | null
           ai_insights_shown: Json | null
           bu_id: string
           completed_at: string | null
@@ -6032,6 +6033,7 @@ export type Database = {
         }
         Insert: {
           action_items?: Json | null
+          addendums?: Json | null
           ai_insights_shown?: Json | null
           bu_id: string
           completed_at?: string | null
@@ -6051,6 +6053,7 @@ export type Database = {
         }
         Update: {
           action_items?: Json | null
+          addendums?: Json | null
           ai_insights_shown?: Json | null
           bu_id?: string
           completed_at?: string | null
