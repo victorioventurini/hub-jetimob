@@ -497,6 +497,7 @@ export function CyclesTab() {
                               </div>
                             </div>
                             {renderCycleActions(quarter)}
+                          </div>
                         ))}
                       </div>
                     )}
