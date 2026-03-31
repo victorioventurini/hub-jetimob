@@ -306,6 +306,82 @@ export default function QbrPrePage() {
     seededKpisRef.current = true;
   }, [teamKpis, draft.data.kpiSnapshots.length, updateDraft, teamIdParam]);
 
+  // ── Load draft OKRs from planning cycle (next quarter) ──
+  const { planningCycles } = useActiveCycle();
+  const planningQuarter = useMemo(() => {
+    return planningCycles.find(c => c.type === 'quarter') ?? null;
+  }, [planningCycles]);
+
+  const { data: draftOkrsFromPlanning } = useQuery({
+    queryKey: ['qbr-pre', 'draft-okrs', teamIdParam, planningQuarter?.id],
+    enabled: !!buSupabase && !!teamIdParam && !!planningQuarter?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase
+        .from('okr_team_objectives')
+        .select(`
+          id, title, description, status, org_objective_id,
+          key_results:okr_team_key_results!okr_team_key_results_team_objective_id_fkey(
+            id, title, baseline, target, unit, direction, owner_user_id,
+            linked_org_kr_id, deleted_at, cancelled_at
+          )
+        `)
+        .eq('team_id', teamIdParam!)
+        .eq('cycle_id', planningQuarter!.id)
+        .eq('status', 'draft')
+        .is('deleted_at', null)
+        .is('cancelled_at', null);
+
+      if (error) throw error;
+
+      return (data || []).map(obj => ({
+        ...obj,
+        key_results: (obj.key_results || []).filter(
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+        ),
+      }));
+    },
+  });
+
+  // Seed proposedOkrs from planning cycle draft OKRs
+  const seededProposedRef = useRef(false);
+
+  useEffect(() => {
+    if (seededProposedRef.current) return;
+    if (!draftOkrsFromPlanning || draftOkrsFromPlanning.length === 0) return;
+    if (normalizeProposedOkrs(draft.data.proposedOkrs).length > 0) {
+      seededProposedRef.current = true;
+      return;
+    }
+
+    const entries: ProposedObjectiveEntry[] = draftOkrsFromPlanning.map(obj => ({
+      id: obj.id, // use real ID for tracking
+      objective: {
+        title: obj.title || '',
+        description: obj.description || '',
+        org_objective_id: obj.org_objective_id || null,
+        cycle_id: planningQuarter?.id || null,
+      },
+      krPlan: { foundational: 1, contribution: 0, enabler: 0 },
+      draftKrs: (obj.key_results || []).map((kr: any): DraftTeamKr => ({
+        id: kr.id,
+        type: 'foundational' as const,
+        title: kr.title || '',
+        baseline: Number(kr.baseline ?? 0),
+        target: Number(kr.target ?? 0),
+        unit: kr.unit || '%',
+        direction: (kr.direction || 'up') as 'up' | 'down' | 'maintain',
+        owner_user_id: kr.owner_user_id || null,
+        linked_org_kr_id: kr.linked_org_kr_id || null,
+      })),
+    }));
+
+    if (entries.length > 0) {
+      updateDraft({ proposedOkrs: entries });
+    }
+    seededProposedRef.current = true;
+  }, [draftOkrsFromPlanning, draft.data.proposedOkrs, updateDraft, planningQuarter]);
+
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
