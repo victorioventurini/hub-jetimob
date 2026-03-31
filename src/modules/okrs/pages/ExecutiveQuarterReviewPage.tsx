@@ -345,8 +345,6 @@ export default function ExecutiveQuarterReviewPage() {
       const healthyCount = krs.filter((kr) => kr.status === 'green').length;
       const redYellowCount = krs.filter((kr) => kr.status === 'red' || kr.status === 'yellow').length;
       const healthScore = krs.length ? Math.round((healthyCount / krs.length) * 100) : 0;
-      const healthStatus = redYellowCount > healthyCount ? 'risk' : healthScore >= 70 ? 'healthy' : 'attention';
-
       const healthStatus: 'healthy' | 'attention' | 'risk' =
         redYellowCount > healthyCount ? 'risk' : healthScore >= 70 ? 'healthy' : 'attention';
 
