@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle, RefreshCw } from "lucide-react";
+import { Plus, Calendar, Edit2, Trash2, ChevronRight, CalendarDays, Play, Square, AlertTriangle, RefreshCw, Sparkles } from "lucide-react";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CycleFormDialog } from "./CycleFormDialog";
+import { CycleRitualDates } from "./CycleRitualDates";
 import { useCycleActions } from "@/modules/okrs/hooks/useCycleActions";
+import { generateCyclesForYears, filterNewCycles } from "@/modules/okrs/utils/generateCycles";
 
 interface Cycle {
   id: string;
@@ -53,6 +55,7 @@ export function CyclesTab() {
   const [deleteDialogCycle, setDeleteDialogCycle] = useState<Cycle | null>(null);
   const [activateDialogCycle, setActivateDialogCycle] = useState<Cycle | null>(null);
   const [closeDialogCycle, setCloseDialogCycle] = useState<Cycle | null>(null);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const queryClient = useQueryClient();
   const { activateCycle, closeCycle } = useCycleActions();
 
@@ -124,6 +127,107 @@ export function CyclesTab() {
       return data as Cycle[];
     },
     enabled: !!buId && !!supabase,
+  });
+
+  // ── Auto-generation logic ──
+  const currentYear = new Date().getFullYear();
+  const targetYears = [currentYear, currentYear + 1, currentYear + 2];
+
+  const existingAnnualYears = useMemo(() => {
+    if (!cycles) return [];
+    return cycles
+      .filter(c => c.type === 'year')
+      .map(c => {
+        const match = c.name.match(/^(\d{4})/);
+        return match ? parseInt(match[1], 10) : null;
+      })
+      .filter((y): y is number => y !== null);
+  }, [cycles]);
+
+  const missingYears = useMemo(() => {
+    const existingSet = new Set(existingAnnualYears);
+    return targetYears.filter(y => !existingSet.has(y));
+  }, [existingAnnualYears, targetYears]);
+
+  const showGenerateButton = !isLoading && missingYears.length > 0;
+
+  const cyclesToGenerate = useMemo(() => {
+    if (missingYears.length === 0) return [];
+    return filterNewCycles(
+      generateCyclesForYears(currentYear, 3),
+      existingAnnualYears,
+    );
+  }, [missingYears, existingAnnualYears, currentYear]);
+
+  const generateCyclesMutation = useMutation({
+    mutationFn: async () => {
+      if (!supabase || !buId || cyclesToGenerate.length === 0) throw new Error('No data');
+
+      // Separate annuals and quarters
+      const annuals = cyclesToGenerate.filter(c => c.type === 'year');
+      const quarters = cyclesToGenerate.filter(c => c.type === 'quarter');
+
+      // Insert annuals first
+      const annualInserts = annuals.map(c => ({
+        bu_id: buId,
+        name: c.name,
+        type: c.type,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        planning_date: c.planning_date,
+        review_date: c.review_date,
+        retro_date: c.retro_date,
+        status: c.status,
+      }));
+
+      const { data: insertedAnnuals, error: annualError } = await supabase
+        .from('cycles')
+        .insert(annualInserts)
+        .select('id, name');
+
+      if (annualError) throw annualError;
+
+      // Build parent map: _tempKey → real id
+      const parentMap = new Map<string, string>();
+      for (const inserted of insertedAnnuals || []) {
+        const match = inserted.name.match(/^(\d{4})-Annual$/);
+        if (match) {
+          parentMap.set(`annual-${match[1]}`, inserted.id);
+        }
+      }
+
+      // Insert quarters with real parent_cycle_id
+      if (quarters.length > 0) {
+        const quarterInserts = quarters.map(c => ({
+          bu_id: buId,
+          name: c.name,
+          type: c.type,
+          start_date: c.start_date,
+          end_date: c.end_date,
+          planning_date: c.planning_date,
+          review_date: c.review_date,
+          retro_date: c.retro_date,
+          status: c.status,
+          parent_cycle_id: c._tempParentKey ? parentMap.get(c._tempParentKey) || null : null,
+        }));
+
+        const { error: quarterError } = await supabase
+          .from('cycles')
+          .insert(quarterInserts);
+
+        if (quarterError) throw quarterError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(null) });
+      toast.success(`Ciclos gerados com sucesso para ${missingYears.join(', ')}!`);
+      setShowGenerateDialog(false);
+    },
+    onError: () => {
+      toast.error('Erro ao gerar ciclos automaticamente');
+    },
   });
 
   // Delete mutation
@@ -264,6 +368,33 @@ export function CyclesTab() {
         </CardContent>
       </Card>
 
+      {/* Auto-generate cycles */}
+      {showGenerateButton && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Gerar ciclos automaticamente</p>
+                <p className="text-xs text-muted-foreground">
+                  Criar ciclos para {missingYears.join(', ')} com todas as datas de rituais pré-preenchidas
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={() => setShowGenerateDialog(true)}
+            >
+              <Sparkles className="h-4 w-4" />
+              Gerar
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>
@@ -358,6 +489,11 @@ export function CyclesTab() {
                                   {formatDate(quarter.start_date)} -{" "}
                                   {formatDate(quarter.end_date)}
                                 </p>
+                                <CycleRitualDates
+                                  planning_date={quarter.planning_date}
+                                  review_date={quarter.review_date}
+                                  retro_date={quarter.retro_date}
+                                />
                               </div>
                             </div>
                             {renderCycleActions(quarter)}
@@ -494,6 +630,42 @@ export function CyclesTab() {
               className="bg-warning hover:bg-warning/90 text-warning-foreground"
             >
               {closeCycle.isPending ? 'Encerrando...' : 'Encerrar ciclo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Generate Cycles Confirmation */}
+      <AlertDialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gerar ciclos automaticamente</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Serão criados ciclos para os anos <strong>{missingYears.join(', ')}</strong> com todas as datas de rituais pré-preenchidas.
+                </p>
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+                  {missingYears.map(year => (
+                    <div key={year}>
+                      <span className="font-medium">{year}:</span>{' '}
+                      1 anual + 4 trimestrais (Q1–Q4)
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Todos os ciclos serão criados com status "Planejamento". As datas podem ser editadas manualmente depois.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => generateCyclesMutation.mutate()}
+              disabled={generateCyclesMutation.isPending}
+            >
+              {generateCyclesMutation.isPending ? 'Gerando...' : `Gerar ${cyclesToGenerate.length} ciclos`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

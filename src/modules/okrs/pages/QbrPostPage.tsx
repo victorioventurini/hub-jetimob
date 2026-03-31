@@ -10,7 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useGenericWizardDraft, useActiveCycle } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -64,6 +66,7 @@ export default function QbrPostPage() {
   usePageTitle('Pós-QBR');
 
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('qbr-post', quarterlyCycle);
 
   // Check qbr_status = 'done' or 'ready' (post can happen after meeting)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
@@ -178,6 +181,10 @@ export default function QbrPostPage() {
   const handleClose = useCallback(() => { clearDraft(); }, [clearDraft]);
 
   if (isLoadingCycles || isLoadingStatus) return <LoadingState text="Carregando pós-QBR..." fullPage />;
+
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="qbr-post" availability={availability} />;
+  }
 
   if (!canAccessPost) {
     return (

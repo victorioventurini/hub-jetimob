@@ -8,6 +8,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { 
   useGenericWizardDraft,
   useActiveCycle, 
@@ -15,6 +16,7 @@ import {
   useCrossDependencies,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useIdentity } from '@/hooks/useIdentity';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -66,6 +68,7 @@ export default function ManagersCheckinPage() {
   
   // Get active quarterly cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('managers-checkin', quarterlyCycle);
   
   // Fetch real data
   const { data: panoramaData, isLoading: isLoadingPanorama } = useManagersPanorama(quarterlyCycle?.id);
@@ -174,6 +177,11 @@ export default function ManagersCheckinPage() {
     }
   }, [draft.data.kpisMarkedForFollowup, updateDraft]);
   
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="managers-checkin" availability={availability} backUrl="/wizards" />;
+  }
+
   // Render step content
   const renderStepContent = () => {
     switch (draft.currentStep) {

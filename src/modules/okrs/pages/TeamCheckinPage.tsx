@@ -6,6 +6,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { 
   useGenericWizardDraft,
@@ -13,6 +14,7 @@ import {
   useTeamPendingKrs,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -84,6 +86,7 @@ export default function TeamCheckinPage() {
   
   // Get cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('team-checkin', quarterlyCycle);
   
   // Draft persistence
   const {
@@ -199,6 +202,10 @@ export default function TeamCheckinPage() {
   // Loading
   if (isLoadingTeams || isLoadingCycles) {
     return <LoadingState text="Carregando..." fullPage />;
+  }
+
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="team-checkin" availability={availability} backUrl="/wizards" />;
   }
   
   // No team

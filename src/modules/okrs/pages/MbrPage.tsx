@@ -11,12 +11,14 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import {
   useGenericWizardDraft,
   useActiveCycle,
   useLastCompletedSession,
   useOrgObjectives,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -111,6 +113,7 @@ export default function MbrPage() {
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('mbr', quarterlyCycle);
 
   // Last completed MBR (for pending items)
   const { lastCompletedAt } = useLastCompletedSession('mbr');
@@ -596,6 +599,10 @@ export default function MbrPage() {
   // Loading
   if (isLoadingCycles || isLoadingKpis || isLoadingOkrs || isLoadingTeamOkrs) {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
+  }
+
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="mbr" availability={availability} />;
   }
 
   // Step render

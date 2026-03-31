@@ -7,6 +7,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useGenericWizardDraft, useLastCompletedSession, useActiveCycle } from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCompanyOkrs } from '@/modules/okrs/hooks/useCompanyOkrs';
@@ -63,6 +64,9 @@ export default function CLevelCheckinPage() {
   
   usePageTitle('Check-in Estratégico');
   
+  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
+  const availability = useRitualAvailability('clevel-checkin', quarterlyCycle);
+
   // Fetch real company OKRs data
   const { data: companyData, isLoading: isLoadingOkrs } = useCompanyOkrs();
   const okrs = companyData?.okrs ?? [];
@@ -179,6 +183,11 @@ export default function CLevelCheckinPage() {
     navigate('/okrs');
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
   
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="clevel-checkin" availability={availability} backUrl="/wizards" />;
+  }
+
   // Render step content
   const renderStepContent = () => {
     switch (draft.currentStep) {

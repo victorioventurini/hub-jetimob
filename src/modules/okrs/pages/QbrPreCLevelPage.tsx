@@ -14,10 +14,12 @@ import { useQuery } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -88,6 +90,7 @@ export default function QbrPreCLevelPage() {
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('qbr-pre-clevel', quarterlyCycle);
 
   // Validate qbr_status = 'reviewing'
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
@@ -313,6 +316,10 @@ export default function QbrPreCLevelPage() {
 
   // Guard
   if (!qbrReviewing) {
+    // Check ritual window first
+    if (!availability.isAvailable) {
+      return <RitualUnavailableScreen wizardType="qbr-pre-clevel" availability={availability} />;
+    }
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center space-y-2">

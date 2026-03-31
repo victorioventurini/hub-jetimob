@@ -18,6 +18,8 @@ import {
   useUserKrsForWizard,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
@@ -128,6 +130,9 @@ export default function CollaboratorCheckinPage() {
   
   // Get cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  
+  // Ritual availability window
+  const availability = useRitualAvailability('collaborator', quarterlyCycle);
   
   // Draft persistence
   const {
@@ -281,6 +286,11 @@ export default function CollaboratorCheckinPage() {
   // Loading - include auth loading to ensure profile is available
   if (isAuthLoading || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
     return <LoadingState text="Carregando..." fullPage />;
+  }
+  
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="collaborator" availability={availability} backUrl="/wizards" />;
   }
   
   // Render step content

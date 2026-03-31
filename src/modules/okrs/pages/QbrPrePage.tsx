@@ -14,12 +14,14 @@ import { useQuery } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
@@ -100,6 +102,7 @@ export default function QbrPrePage() {
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('qbr-pre', quarterlyCycle);
 
   // Validate qbr_status
   const { data: cycleData, isLoading: isLoadingCycleStatus } = useQuery({
@@ -474,6 +477,11 @@ export default function QbrPrePage() {
         onAction={() => navigate('/wizards')}
       />
     );
+  }
+
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="qbr-pre" availability={availability} />;
   }
 
   // Guard: Already completed → show read-only view with addendum
