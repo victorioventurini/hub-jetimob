@@ -2709,6 +2709,7 @@ export type Database = {
       bu_module_configs: {
         Row: {
           bu_id: string
+          config: Json | null
           created_at: string
           disabled_at: string | null
           disabled_by: string | null
@@ -2721,6 +2722,7 @@ export type Database = {
         }
         Insert: {
           bu_id: string
+          config?: Json | null
           created_at?: string
           disabled_at?: string | null
           disabled_by?: string | null
@@ -2733,6 +2735,7 @@ export type Database = {
         }
         Update: {
           bu_id?: string
+          config?: Json | null
           created_at?: string
           disabled_at?: string | null
           disabled_by?: string | null
@@ -9823,6 +9826,7 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: boolean
       }
+      auto_transition_cycle_statuses: { Args: never; Returns: Json }
       calculate_kr_progress: {
         Args: {
           p_baseline: number
