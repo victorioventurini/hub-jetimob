@@ -1,0 +1,2 @@
+ALTER TABLE public.cycles ADD COLUMN review_date_first_month date;
+COMMENT ON COLUMN public.cycles.review_date_first_month IS 'Data da reunião MBR do 1º mês do quarter (1ª terça-feira do mês seguinte ao M1)';

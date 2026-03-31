@@ -3197,6 +3197,7 @@ export type Database = {
           qbr_status: string
           retro_date: string | null
           review_date: string | null
+          review_date_first_month: string | null
           start_date: string
           status: Database["public"]["Enums"]["cycle_status"]
           type: Database["public"]["Enums"]["cycle_type"]
@@ -3213,6 +3214,7 @@ export type Database = {
           qbr_status?: string
           retro_date?: string | null
           review_date?: string | null
+          review_date_first_month?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["cycle_status"]
           type: Database["public"]["Enums"]["cycle_type"]
@@ -3229,6 +3231,7 @@ export type Database = {
           qbr_status?: string
           retro_date?: string | null
           review_date?: string | null
+          review_date_first_month?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["cycle_status"]
           type?: Database["public"]["Enums"]["cycle_type"]
