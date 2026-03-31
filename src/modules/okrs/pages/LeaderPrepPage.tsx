@@ -16,6 +16,7 @@ import {
   useTeamPendingKrs,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
+import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
 import { useAuth } from '@/hooks/useAuth';
