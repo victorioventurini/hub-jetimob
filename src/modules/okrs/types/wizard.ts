@@ -25,6 +25,7 @@ export type WizardPersona =
   | 'team-okr-creation'
   | 'team-kr-creation'
   | 'mbr'
+  | 'mbr-pre'
   | 'qbr-pre'
   | 'qbr-pre-clevel'
   | 'qbr-meeting'
