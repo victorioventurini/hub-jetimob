@@ -21,7 +21,7 @@ const renderCard = (props: Partial<Parameters<typeof LeaderPrepWizardCard>[0]> =
 describe('LeaderPrepWizardCard', () => {
   it('renders title', () => {
     renderCard();
-    expect(screen.getByText('Preparar Check-in do Time')).toBeInTheDocument();
+    expect(screen.getByText('Pré Check-in do Time')).toBeInTheDocument();
   });
 
   it('renders team name in description', () => {
@@ -37,7 +37,7 @@ describe('LeaderPrepWizardCard', () => {
   it('renders link to leader-prep route', () => {
     renderCard();
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/okrs/leader-prep?team=team-1');
+    expect(link).toHaveAttribute('href', '/rituals/team-checkin-pre?team=team-1');
   });
 
   it('shows loading state', () => {

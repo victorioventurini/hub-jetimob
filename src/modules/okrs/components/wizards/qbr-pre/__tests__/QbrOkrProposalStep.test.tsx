@@ -23,8 +23,8 @@ vi.mock('../../shared', () => ({
       <button data-testid="btn-primary" onClick={onPrimary} disabled={primaryDisabled}>{primaryLabel || 'Continuar'}</button>
     </div>
   ),
-  WizardStepScaffold: ({ header, children }: any) => (
-    <div>{header}{children}</div>
+  WizardStepScaffold: ({ header, footer, children }: any) => (
+    <div>{header}{children}{footer}</div>
   ),
 }));
 
@@ -192,7 +192,7 @@ describe('QbrOkrProposalStep', () => {
       const entries = [createEntry(), createEntry()];
       const { props } = renderStep({ proposedOkrs: entries });
 
-      const removeButtons = screen.getAllByTitle('Remover');
+      const removeButtons = screen.getAllByText('Remover');
       await user.click(removeButtons[0]);
 
       expect(props.onProposedOkrsChange).toHaveBeenCalledTimes(1);

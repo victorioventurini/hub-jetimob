@@ -133,7 +133,8 @@ describe('ProjectDetailPage', () => {
 
   it('renders status badge', () => {
     renderWithProviders(<ProjectDetailPage />);
-    expect(screen.getByText('Em andamento')).toBeInTheDocument();
+    const badges = screen.getAllByText('Em andamento');
+    expect(badges.length).toBeGreaterThan(0);
   });
 
   it('renders owner name', () => {

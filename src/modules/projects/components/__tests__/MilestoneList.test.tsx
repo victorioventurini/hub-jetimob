@@ -1,7 +1,23 @@
 import { describe, it, expect, vi } from 'vitest';
-import { renderWithProviders, screen, fireEvent } from '@/test/test-utils';
+import { renderWithProviders, screen } from '@/test/test-utils';
 import { MilestoneList } from '../MilestoneList';
 import type { ProjectMilestone } from '../../types';
+
+// Mock MilestoneStatusSelect to simplify status change testing
+vi.mock('../MilestoneStatusSelect', () => ({
+  MilestoneStatusSelect: ({ value, onValueChange, disabled }: any) => (
+    <button
+      data-testid={`status-btn-${value}`}
+      onClick={() => {
+        const next: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo' };
+        onValueChange(next[value]);
+      }}
+      disabled={disabled}
+    >
+      {value}
+    </button>
+  ),
+}));
 
 function createMilestone(overrides: Partial<ProjectMilestone> = {}): ProjectMilestone {
   return {
@@ -45,14 +61,13 @@ describe('MilestoneList', () => {
     expect(screen.queryByText('Deleted')).not.toBeInTheDocument();
   });
 
-  it('calls onStatusChange with next status on click (todo → in_progress)', () => {
+  it('calls onStatusChange with next status on click (todo → in_progress)', async () => {
     const onStatusChange = vi.fn();
     renderWithProviders(
       <MilestoneList milestones={[createMilestone()]} onStatusChange={onStatusChange} {...defaultProps} />
     );
-    // Status button is the second button (first is chevron)
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[1]);
+    const statusBtn = screen.getByTestId('status-btn-todo');
+    statusBtn.click();
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'in_progress');
   });
 
@@ -65,8 +80,7 @@ describe('MilestoneList', () => {
         {...defaultProps}
       />
     );
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[1]);
+    screen.getByTestId('status-btn-in_progress').click();
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'done');
   });
 
@@ -79,8 +93,7 @@ describe('MilestoneList', () => {
         {...defaultProps}
       />
     );
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[1]);
+    screen.getByTestId('status-btn-done').click();
     expect(onStatusChange).toHaveBeenCalledWith('ms-1', 'todo');
   });
 

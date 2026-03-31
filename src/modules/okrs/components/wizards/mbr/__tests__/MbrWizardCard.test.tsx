@@ -43,7 +43,7 @@ describe('MbrWizardCard', () => {
   it('renders start button with link to /okrs/mbr', () => {
     renderWithRouter(<MbrWizardCard />);
     const link = screen.getByRole('link', { name: /iniciar mbr/i });
-    expect(link).toHaveAttribute('href', '/okrs/mbr');
+    expect(link).toHaveAttribute('href', '/rituals/mbr');
   });
 
   it('shows skeleton when loading', () => {
