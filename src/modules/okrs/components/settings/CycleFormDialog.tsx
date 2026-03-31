@@ -83,11 +83,6 @@ export function CycleFormDialog({
   const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
   const canManageCycles = isWildcard || has('okrs.settings.manage:bu');
   
-  // Don't render if user doesn't have permission
-  if (!isLoadingPermissions && !canManageCycles) {
-    return null;
-  }
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -178,6 +173,11 @@ export function CycleFormDialog({
   const onSubmit = (values: FormValues) => {
     mutation.mutate(values);
   };
+
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermissions && !canManageCycles) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
