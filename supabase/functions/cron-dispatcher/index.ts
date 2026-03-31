@@ -55,6 +55,8 @@ interface MaintenanceResult {
   recommendation_notifications_sent: number;
   recommendation_notifications_checked: number;
   ritual_occurrences_missed: number;
+  cycles_activated: number;
+  cycles_closed: number;
 }
 
 interface ExecutionResult {
