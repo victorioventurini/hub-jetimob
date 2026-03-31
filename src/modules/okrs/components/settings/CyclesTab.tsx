@@ -56,6 +56,60 @@ export function CyclesTab() {
   const queryClient = useQueryClient();
   const { activateCycle, closeCycle } = useCycleActions();
 
+  // Auto-transition toggle query
+  const { data: autoTransitionEnabled, isLoading: isLoadingToggle } = useQuery({
+    queryKey: ['okr-auto-cycle-transition', buId],
+    queryFn: async () => {
+      if (!supabase || !buId) return false;
+      const { data, error } = await supabase
+        .from('bu_module_configs')
+        .select('config')
+        .eq('bu_id', buId)
+        .eq('module_id', (
+          await supabase.from('modules').select('id').eq('slug', 'okrs').single()
+        ).data?.id ?? '')
+        .maybeSingle();
+      if (error) return false;
+      return (data?.config as Record<string, unknown>)?.auto_cycle_transition === true;
+    },
+    enabled: !!buId && !!supabase,
+  });
+
+  // Auto-transition toggle mutation
+  const toggleAutoTransition = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!supabase || !buId) throw new Error('No BU');
+      const { data: mod } = await supabase.from('modules').select('id').eq('slug', 'okrs').single();
+      if (!mod) throw new Error('Module not found');
+
+      // Get current config
+      const { data: existing } = await supabase
+        .from('bu_module_configs')
+        .select('config')
+        .eq('bu_id', buId)
+        .eq('module_id', mod.id)
+        .maybeSingle();
+
+      const currentConfig = (existing?.config as Record<string, unknown>) ?? {};
+      const newConfig = { ...currentConfig, auto_cycle_transition: enabled };
+
+      const { error } = await supabase
+        .from('bu_module_configs')
+        .update({ config: newConfig } as any)
+        .eq('bu_id', buId)
+        .eq('module_id', mod.id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['okr-auto-cycle-transition', buId] });
+      toast.success(enabled ? 'Transição automática ativada' : 'Transição automática desativada');
+    },
+    onError: () => {
+      toast.error('Erro ao salvar configuração');
+    },
+  });
+
   // Fetch all cycles
   const { data: cycles, isLoading } = useQuery({
     queryKey: queryKeys.okrs.settingsCycles(buId ?? null),
