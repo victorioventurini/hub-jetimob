@@ -906,6 +906,19 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
     ],
     aiAgents: ['analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes'],
   },
+  'mbr-pre': {
+    persona: 'mbr-pre',
+    title: 'Pré-MBR',
+    description: 'Preparação individual do líder para o Monthly Business Review',
+    steps: [
+      { id: 'balance', label: 'Balanço do Mês', shortLabel: 'Balanço' },
+      { id: 'kpi-analysis', label: 'KPIs do Time', shortLabel: 'KPIs' },
+      { id: 'highlights', label: 'Destaques e Riscos', shortLabel: 'Destaques' },
+      { id: 'next-steps', label: 'Próximos Passos', shortLabel: 'Próximos' },
+      { id: 'summary', label: 'Resumo e Envio', shortLabel: 'Enviar' },
+    ],
+    aiAgents: ['coach-okrs', 'analista-kpis'],
+  },
   'qbr-pre': {
     persona: 'qbr-pre',
     title: 'Pré-QBR do Time',
