@@ -347,7 +347,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
       setLastSavedAt(new Date().toISOString());
       setIsDirty(false);
       queryClient.invalidateQueries({ 
-        queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType) 
+        queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId) 
       });
     },
   });
