@@ -18,6 +18,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { BuProvider } from "@/contexts/BuContext";
 import { ModuleProvider } from "@/contexts/ModuleContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { VicProvider, VicSidepanel } from "@/modules/vic";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,17 +91,19 @@ const App = () => {
   useRadixFocusRecovery();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider disableHoverableContent skipDelayDuration={0} delayDuration={300}>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
