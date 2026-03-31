@@ -64,6 +64,9 @@ export default function CLevelCheckinPage() {
   
   usePageTitle('Check-in Estratégico');
   
+  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
+  const availability = useRitualAvailability('clevel-checkin', quarterlyCycle);
+
   // Fetch real company OKRs data
   const { data: companyData, isLoading: isLoadingOkrs } = useCompanyOkrs();
   const okrs = companyData?.okrs ?? [];
