@@ -89,24 +89,21 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
   const { profile } = useAuth();
   const buSupabase = useOptionalBuScopedSupabase();
 
+  const page = filters.page ?? 1;
+  const pageSize = filters.pageSize ?? 25;
+
   return useQuery({
     queryKey: queryKeys.okrs.ritualHistory(currentBu?.id ?? null, filters as unknown as Record<string, unknown>),
     queryFn: async () => {
-      if (!currentBu?.id || !profile?.id || !buSupabase) return [];
+      if (!currentBu?.id || !profile?.id || !buSupabase) return { items: [], totalCount: 0 };
 
       let query = buSupabase
         .from('okr_wizard_sessions')
-        .select(HISTORY_FIELDS)
+        .select(HISTORY_FIELDS, { count: 'exact' })
         .eq('bu_id', currentBu.id)
         .in('status', ['completed', 'in_progress'])
         .order('completed_at', { ascending: false, nullsFirst: false })
-        .order('started_at', { ascending: false })
-        .limit(100);
-
-      // Visibility is enforced by RLS policies:
-      // - Own sessions: started_by = profile_id
-      // - Team sessions: team members via user_team_memberships
-      // - BU admin/super_admin: all sessions in BU
+        .order('started_at', { ascending: false });
 
       // Filters
       if (filters.wizardType && filters.wizardType !== 'all') {
@@ -122,13 +119,18 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         query = query.gte('completed_at', filters.dateFrom);
       }
       if (filters.dateTo) {
-        query = query.lte('completed_at', filters.dateTo);
+        query = query.lte('completed_at', filters.dateTo + 'T23:59:59.999Z');
       }
 
-      const { data, error } = await query;
+      // Pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
       if (error) throw error;
 
-      return (data ?? []).map((row: any): RitualHistoryItem => ({
+      const items = (data ?? []).map((row: any): RitualHistoryItem => ({
         id: row.id,
         wizardType: row.wizard_type as WizardPersona,
         status: row.status as 'completed' | 'in_progress',
@@ -145,6 +147,8 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
       }));
+
+      return { items, totalCount: count ?? 0 };
     },
     enabled: !!currentBu?.id && !!profile?.id,
   });
