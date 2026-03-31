@@ -161,9 +161,8 @@ export default function CLevelCheckinPage() {
       toast.error('Erro ao descartar rascunho');
     }
   }, [discardDraft]);
-  
-  // Get active cycles for summary trigger (status-based)
-  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
+   
+   // quarterlyCycle already declared above (line 67) via useActiveCycle()
 
   const handleComplete = useCallback(async () => {
     const completedSessionId = await clearDraft();
