@@ -55,6 +55,7 @@ export function CyclesTab() {
   const [deleteDialogCycle, setDeleteDialogCycle] = useState<Cycle | null>(null);
   const [activateDialogCycle, setActivateDialogCycle] = useState<Cycle | null>(null);
   const [closeDialogCycle, setCloseDialogCycle] = useState<Cycle | null>(null);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const queryClient = useQueryClient();
   const { activateCycle, closeCycle } = useCycleActions();
 
