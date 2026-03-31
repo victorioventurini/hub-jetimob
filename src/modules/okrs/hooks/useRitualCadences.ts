@@ -6,7 +6,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // ============================================================
@@ -141,8 +140,8 @@ export function useCreateCadence() {
       if (error) throw error;
 
       // Generate occurrences
-      await supabase.functions.invoke('generate-ritual-occurrences', {
-        body: { cadence_id: data.id, bu_id: currentBu.id },
+      await buSupabase.functions.invoke('generate-ritual-occurrences', {
+        body: { cadence_id: data.id, bu_id: currentBu.id, rebuild_mode: 'incremental' },
       });
 
       return data;
@@ -150,6 +149,7 @@ export function useCreateCadence() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualCadences(currentBu?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualAdherencePrefix(currentBu?.id ?? null) });
       toast.success('Cadência criada com sucesso');
     },
     onError: () => {
@@ -185,13 +185,14 @@ export function useUpdateCadence() {
       if (error) throw error;
 
       // Regenerate occurrences
-      await supabase.functions.invoke('generate-ritual-occurrences', {
-        body: { cadence_id: params.id, bu_id: currentBu.id },
+      await buSupabase.functions.invoke('generate-ritual-occurrences', {
+        body: { cadence_id: params.id, bu_id: currentBu.id, rebuild_mode: 'incremental' },
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualCadences(currentBu?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualAdherencePrefix(currentBu?.id ?? null) });
       toast.success('Cadência atualizada');
     },
     onError: () => {
@@ -217,6 +218,7 @@ export function useDeleteCadence() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualCadences(currentBu?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(currentBu?.id ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualAdherencePrefix(currentBu?.id ?? null) });
       toast.success('Cadência removida');
     },
     onError: () => {
