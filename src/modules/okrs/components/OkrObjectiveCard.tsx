@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from './OkrStatusBadge';
 import { OkrProgressBar } from './OkrProgressBar';
 import { calculateProgress } from '../utils/progressCalculation';
+import { usePrimaryKpiForKr } from '../hooks/usePrimaryKpiForKr';
 import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
 import {
   DropdownMenu,
@@ -50,6 +51,34 @@ const calculateObjectiveProgress = (krs: KeyResult[]): number => {
     return acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
   }, 0) / krs.length;
 };
+
+function KrProgressRow({ kr, objectiveType }: { kr: KeyResult; objectiveType: 'org' | 'team' }) {
+  const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, objectiveType);
+
+  const effectiveCurrent = hasPrimaryKpi && primaryKpi?.currentValue !== null && primaryKpi?.currentValue !== undefined
+    ? primaryKpi.currentValue
+    : kr.current_value;
+
+  const effectiveTarget = hasPrimaryKpi && primaryKpi?.targetValue !== null && primaryKpi?.targetValue !== undefined
+    ? primaryKpi.targetValue
+    : kr.target;
+
+  const effectiveStatus: OkrRagStatus = hasPrimaryKpi && primaryKpi?.ragStatus && primaryKpi.ragStatus !== 'no_data'
+    ? primaryKpi.ragStatus
+    : kr.status;
+
+  return (
+    <OkrProgressBar
+      baseline={kr.baseline}
+      current={effectiveCurrent}
+      target={effectiveTarget}
+      direction={kr.direction}
+      status={effectiveStatus}
+      unit={kr.unit}
+      size="sm"
+    />
+  );
+}
 
 export const OkrObjectiveCard = React.memo(function OkrObjectiveCard({
   id,
@@ -208,15 +237,7 @@ export const OkrObjectiveCard = React.memo(function OkrObjectiveCard({
                       <p className="text-sm font-medium leading-tight">{kr.title}</p>
                       <OkrStatusBadge status={kr.status} type="kr" />
                     </div>
-                    <OkrProgressBar
-                      baseline={kr.baseline}
-                      current={kr.current_value}
-                      target={kr.target}
-                      direction={kr.direction}
-                      status={kr.status}
-                      unit={kr.unit}
-                      size="sm"
-                    />
+                    <KrProgressRow kr={kr} objectiveType={type} />
                   </div>
                 </div>
               </div>
