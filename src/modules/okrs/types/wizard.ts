@@ -488,6 +488,25 @@ export interface QbrPreDraftData {
   decisions: TeamCheckinDecision[];
 }
 
+// ============================================================
+// MBR PRE (MONTHLY BUSINESS REVIEW - LEADER PREP)
+// ============================================================
+
+export type MbrPreStep = 'balance' | 'kpi-analysis' | 'highlights' | 'next-steps' | 'summary';
+
+/** Draft data do pré-MBR (líderes de time) */
+export interface MbrPreDraftData {
+  cycleId: string;
+  teamId: string;
+  krFinalStates: QbrPreSnapshot['krFinalStates'];
+  kpiSnapshots: MbrKpiSnapshot[];
+  zombieCandidates: string[];
+  kpisToCreate: QbrPreSnapshot['kpisToCreate'];
+  highlights: { accelerated: string; blocked: string; needsDecision: string };
+  nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
+  decisions: TeamCheckinDecision[];
+}
+
 /** Draft data do pré-QBR C-Level */
 export interface QbrCLevelDraftData {
   cycleId: string;
