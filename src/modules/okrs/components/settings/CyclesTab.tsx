@@ -368,6 +368,33 @@ export function CyclesTab() {
         </CardContent>
       </Card>
 
+      {/* Auto-generate cycles */}
+      {showGenerateButton && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Gerar ciclos automaticamente</p>
+                <p className="text-xs text-muted-foreground">
+                  Criar ciclos para {missingYears.join(', ')} com todas as datas de rituais pré-preenchidas
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={() => setShowGenerateDialog(true)}
+            >
+              <Sparkles className="h-4 w-4" />
+              Gerar
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>
