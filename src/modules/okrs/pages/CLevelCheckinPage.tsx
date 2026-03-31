@@ -183,6 +183,11 @@ export default function CLevelCheckinPage() {
     navigate('/okrs');
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
   
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="clevel-checkin" availability={availability} backUrl="/wizards" />;
+  }
+
   // Render step content
   const renderStepContent = () => {
     switch (draft.currentStep) {

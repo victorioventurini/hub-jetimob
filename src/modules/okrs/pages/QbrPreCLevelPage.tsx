@@ -316,6 +316,10 @@ export default function QbrPreCLevelPage() {
 
   // Guard
   if (!qbrReviewing) {
+    // Check ritual window first
+    if (!availability.isAvailable) {
+      return <RitualUnavailableScreen wizardType="qbr-pre-clevel" availability={availability} />;
+    }
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center space-y-2">

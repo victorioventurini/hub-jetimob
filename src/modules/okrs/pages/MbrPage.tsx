@@ -601,6 +601,10 @@ export default function MbrPage() {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
   }
 
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="mbr" availability={availability} />;
+  }
+
   // Step render
   const renderStepContent = () => {
     switch (draft.currentStep) {

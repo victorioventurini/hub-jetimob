@@ -177,6 +177,11 @@ export default function ManagersCheckinPage() {
     }
   }, [draft.data.kpisMarkedForFollowup, updateDraft]);
   
+  // Guard: Ritual window
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="managers-checkin" availability={availability} backUrl="/wizards" />;
+  }
+
   // Render step content
   const renderStepContent = () => {
     switch (draft.currentStep) {

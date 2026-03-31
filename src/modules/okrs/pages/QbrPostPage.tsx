@@ -182,6 +182,10 @@ export default function QbrPostPage() {
 
   if (isLoadingCycles || isLoadingStatus) return <LoadingState text="Carregando pós-QBR..." fullPage />;
 
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="qbr-post" availability={availability} />;
+  }
+
   if (!canAccessPost) {
     return (
       <div className="flex items-center justify-center h-screen">
