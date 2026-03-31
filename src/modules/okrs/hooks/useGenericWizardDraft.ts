@@ -292,6 +292,38 @@ export function useGenericWizardDraft<TStep extends string, TData>({
         if (error) throw error;
         return sessionId;
       } else {
+        // Check for existing in_progress session to prevent duplicates
+        let existingQuery = buSupabase
+          .from('okr_wizard_sessions')
+          .select('id')
+          .eq('started_by', profile.id)
+          .eq('wizard_type', wizardType)
+          .eq('status', 'in_progress');
+
+        if (draftToSave.teamId) {
+          existingQuery = existingQuery.eq('team_id', draftToSave.teamId);
+        } else {
+          existingQuery = existingQuery.is('team_id', null);
+        }
+
+        const { data: existing } = await existingQuery.maybeSingle();
+
+        if (existing) {
+          // Reuse existing session
+          const { error: updateError } = await buSupabase
+            .from('okr_wizard_sessions')
+            .update({
+              reflection_data: reflectionData,
+              team_id: draftToSave.teamId,
+              cycle_id: draftToSave.cycleId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
+
+          if (updateError) throw updateError;
+          return existing.id;
+        }
+
         // Create new session
         const { data, error } = await buSupabase
           .from('okr_wizard_sessions')
