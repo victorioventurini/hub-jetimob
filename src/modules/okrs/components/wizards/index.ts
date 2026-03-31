@@ -29,6 +29,9 @@ export * from './team-kr-creation';
 // Wizard 8: MBR (Monthly Business Review)
 export * from './mbr';
 
+// Wizard 8.5: MBR Pre (Leader Prep)
+export * from './mbr-pre';
+
 // Wizard 9: QBR Pre (Quarterly Business Review - Leaders)
 export * from './qbr-pre';
 

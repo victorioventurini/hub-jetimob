@@ -25,6 +25,7 @@ export type WizardPersona =
   | 'team-okr-creation'
   | 'team-kr-creation'
   | 'mbr'
+  | 'mbr-pre'
   | 'qbr-pre'
   | 'qbr-pre-clevel'
   | 'qbr-meeting'
@@ -164,6 +165,7 @@ export interface LeaderPrepWizardState {
 // ============================================================
 
 export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiatives' | 'decisions' | 'panorama' | 'kpi-gate' | 'team-okrs-overview' | 'team-okrs-detail' | 'org-okrs' | 'closing'
+  | 'mbr-pre-balance' | 'mbr-pre-kpi' | 'mbr-pre-highlights' | 'mbr-pre-next-steps'
   | 'qbr-balance' | 'qbr-kpi-analysis' | 'qbr-learnings' | 'qbr-okr-proposal'
   | 'qbr-clevel-system-read' | 'qbr-clevel-strategic' | 'qbr-clevel-okr-validation' | 'qbr-clevel-directives'
   | 'qbr-meeting-opening' | 'qbr-meeting-okr-review' | 'qbr-meeting-decisions' | 'qbr-meeting-commitments' | 'qbr-meeting-closing'
@@ -486,6 +488,25 @@ export interface QbrPreDraftData {
   decisions: TeamCheckinDecision[];
 }
 
+// ============================================================
+// MBR PRE (MONTHLY BUSINESS REVIEW - LEADER PREP)
+// ============================================================
+
+export type MbrPreStep = 'balance' | 'kpi-analysis' | 'highlights' | 'next-steps' | 'summary';
+
+/** Draft data do pré-MBR (líderes de time) */
+export interface MbrPreDraftData {
+  cycleId: string;
+  teamId: string;
+  krFinalStates: QbrPreSnapshot['krFinalStates'];
+  kpiSnapshots: MbrKpiSnapshot[];
+  zombieCandidates: string[];
+  kpisToCreate: QbrPreSnapshot['kpisToCreate'];
+  highlights: { accelerated: string; blocked: string; needsDecision: string };
+  nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
+  decisions: TeamCheckinDecision[];
+}
+
 /** Draft data do pré-QBR C-Level */
 export interface QbrCLevelDraftData {
   cycleId: string;
@@ -731,7 +752,7 @@ export interface WizardSession {
 // ============================================================
 
 export interface WizardVicContext extends VicContext {
-  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr' | 'wizard-qbr-pre' | 'wizard-qbr-pre-clevel' | 'wizard-qbr-meeting' | 'wizard-qbr-post';
+  type: 'wizard-collaborator' | 'wizard-leader-prep' | 'wizard-team-checkin' | 'wizard-managers' | 'wizard-clevel' | 'wizard-team-okr-creation' | 'wizard-team-kr-creation' | 'wizard-mbr-pre' | 'wizard-mbr' | 'wizard-qbr-pre' | 'wizard-qbr-pre-clevel' | 'wizard-qbr-meeting' | 'wizard-qbr-post';
   wizardStep?: string;
   krContext?: {
     krId: string;
@@ -763,6 +784,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
   'clevel-checkin': 'okr-check-alignment',
   'team-okr-creation': 'okr-check-alignment',
   'team-kr-creation': 'okr-check-alignment',
+  'mbr-pre': 'okr-check-alignment',
   'mbr': 'okr-check-alignment',
   'qbr-pre': 'okr-check-alignment',
   'qbr-pre-clevel': 'okr-check-alignment',
@@ -883,6 +905,19 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
       { id: 'closing', label: 'Encerramento', shortLabel: 'Encerrar' },
     ],
     aiAgents: ['analista-kpis', 'alinhamento-estrategico', 'facilitador-decisoes'],
+  },
+  'mbr-pre': {
+    persona: 'mbr-pre',
+    title: 'Pré-MBR',
+    description: 'Preparação individual do líder para o Monthly Business Review',
+    steps: [
+      { id: 'balance', label: 'Balanço do Mês', shortLabel: 'Balanço' },
+      { id: 'kpi-analysis', label: 'KPIs do Time', shortLabel: 'KPIs' },
+      { id: 'highlights', label: 'Destaques e Riscos', shortLabel: 'Destaques' },
+      { id: 'next-steps', label: 'Próximos Passos', shortLabel: 'Próximos' },
+      { id: 'summary', label: 'Resumo e Envio', shortLabel: 'Enviar' },
+    ],
+    aiAgents: ['coach-okrs', 'analista-kpis'],
   },
   'qbr-pre': {
     persona: 'qbr-pre',
