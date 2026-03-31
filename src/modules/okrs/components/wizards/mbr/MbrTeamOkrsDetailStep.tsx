@@ -34,6 +34,8 @@ export interface MbrTeamOkrsDetailStepProps {
   onCurrentTeamIndexChange: (index: number) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** Addendums from mbr-pre sessions, keyed by teamId */
+  teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
   onContinue: () => void;
   onBack: () => void;
 }
