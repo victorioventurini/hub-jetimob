@@ -113,6 +113,7 @@ export default function MbrPage() {
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const availability = useRitualAvailability('mbr', quarterlyCycle);
 
   // Last completed MBR (for pending items)
   const { lastCompletedAt } = useLastCompletedSession('mbr');
