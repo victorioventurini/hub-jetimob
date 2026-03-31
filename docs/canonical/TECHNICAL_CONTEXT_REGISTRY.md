@@ -1956,12 +1956,12 @@ O Hub implementa 10 wizards full-page para rituais de OKRs, cada um com propósi
 
 | Wizard | Rota | Propósito | Frequência | Participante |
 |--------|------|-----------|------------|--------------|
-| **Collaborator Check-in** | `/okrs/collaborator-checkin` | Atualização individual de KRs, iniciativas e reflexão | Semanal (sextas) | Colaborador |
-| **Leader Prep** | `/okrs/leader-prep` | Preparação do líder para rituais do time | Semanal (segundas) | Líder de time |
-| **Team Check-in** | `/okrs/team-checkin` | Ritual síncrono de revisão coletiva | Semanal | Líder + membros |
-| **Managers Check-in** | `/okrs/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
-| **C-Level Check-in** | `/okrs/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
-| **MBR (Monthly Business Review)** | `/okrs/mbr` | Revisão estratégica mensal: KPIs mestres, OKRs por time e organizacionais, decisões | Mensal | BU Admin |
+| **Collaborator Check-in** | `/rituals/collaborator-checkin` | Atualização individual de KRs, iniciativas e reflexão | Semanal (sextas) | Colaborador |
+| **Pré Check-in do Time** | `/rituals/team-checkin-pre` | Preparação do líder para rituais do time | Semanal (segundas) | Líder de time |
+| **Team Check-in** | `/rituals/team-checkin` | Ritual síncrono de revisão coletiva | Semanal | Líder + membros |
+| **Managers Check-in** | `/rituals/managers-checkin` | Alinhamento cross-time e resolução de dependências | Quinzenal/Mensal | Gestores de área |
+| **C-Level Check-in** | `/rituals/clevel-checkin` | Revisão estratégica de OKRs organizacionais | Mensal | C-Level/Diretores |
+| **MBR (Monthly Business Review)** | `/rituals/mbr` | Revisão estratégica mensal: KPIs mestres, OKRs por time e organizacionais, decisões | Mensal | BU Admin |
 
 #### QBR — Quarterly Business Review (v1.0)
 
