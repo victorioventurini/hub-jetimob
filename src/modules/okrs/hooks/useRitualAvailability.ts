@@ -20,7 +20,7 @@ export interface RitualAvailability {
   isAvailable: boolean;
   opensAt: Date | null;
   closesAt: Date | null;
-  reason: 'not_yet' | 'expired' | 'no_cycle' | 'no_dates' | 'available';
+  reason: 'not_yet' | 'expired' | 'no_cycle' | 'no_dates' | 'qbr_period' | 'available';
   message: string;
 }
 
