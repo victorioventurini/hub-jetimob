@@ -26,6 +26,7 @@ import { CycleFormDialog } from "./CycleFormDialog";
 import { CycleRitualDates } from "./CycleRitualDates";
 import { useCycleActions } from "@/modules/okrs/hooks/useCycleActions";
 import { generateCyclesForYears, filterNewCycles } from "@/modules/okrs/utils/generateCycles";
+import { useSyncRitualCalendar } from "@/modules/okrs/hooks/useSyncRitualCalendar";
 
 interface Cycle {
   id: string;
@@ -59,6 +60,7 @@ export function CyclesTab() {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const queryClient = useQueryClient();
   const { activateCycle, closeCycle } = useCycleActions();
+  const { syncRitualCalendar } = useSyncRitualCalendar();
 
   // Auto-transition toggle query
   const { data: autoTransitionEnabled, isLoading: isLoadingToggle } = useQuery({
@@ -221,58 +223,7 @@ export function CyclesTab() {
         if (quarterError) throw quarterError;
       }
 
-      // ── Unification: Upsert ritual cadences for MBR (1st Tuesday) ──
-      // Update existing MBR cadence to use month_week_ordinal=1, day_of_week=2 (1st Tuesday)
-      const { data: existingMbr } = await supabase
-        .from('ritual_cadences')
-        .select('id')
-        .eq('bu_id', buId)
-        .eq('wizard_type', 'mbr')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (existingMbr) {
-        await supabase
-          .from('ritual_cadences')
-          .update({ month_week_ordinal: 1, day_of_week: 2, day_of_month: null } as any)
-          .eq('id', existingMbr.id);
-
-        // Regenerate occurrences
-        await supabase.functions.invoke('generate-ritual-occurrences', {
-          body: { cadence_id: existingMbr.id, bu_id: buId },
-        });
-      }
-
-      // Ensure mbr-pre cadence exists (if not, create it)
-      const { data: existingMbrPre } = await supabase
-        .from('ritual_cadences')
-        .select('id')
-        .eq('bu_id', buId)
-        .eq('wizard_type', 'mbr-pre')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (!existingMbrPre) {
-        const { data: newMbrPre } = await supabase
-          .from('ritual_cadences')
-          .insert({
-            bu_id: buId,
-            wizard_type: 'mbr-pre',
-            frequency: 'monthly',
-            month_week_ordinal: 1,
-            day_of_week: 2,
-            start_date: new Date().toISOString().split('T')[0],
-            is_active: true,
-          })
-          .select('id')
-          .single();
-
-        if (newMbrPre) {
-          await supabase.functions.invoke('generate-ritual-occurrences', {
-            body: { cadence_id: newMbrPre.id, bu_id: buId },
-          });
-        }
-      }
+      await syncRitualCalendar({ silent: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
@@ -297,6 +248,7 @@ export function CyclesTab() {
     try {
       const { error } = await supabase.from("cycles").delete().eq("id", cycleId);
       if (error) throw error;
+      await syncRitualCalendar({ silent: true });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.activeCycle(null) });

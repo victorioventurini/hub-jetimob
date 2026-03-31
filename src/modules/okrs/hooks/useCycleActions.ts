@@ -8,12 +8,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { useSyncRitualCalendar } from '@/modules/okrs/hooks/useSyncRitualCalendar';
 import { toast } from 'sonner';
 
 export function useCycleActions() {
   const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
+  const { syncRitualCalendar } = useSyncRitualCalendar();
   const buId = currentBu?.id ?? null;
 
   const invalidateAll = () => {
@@ -35,6 +37,8 @@ export function useCycleActions() {
         }
         throw error;
       }
+
+      await syncRitualCalendar({ silent: true });
     },
     onSuccess: () => {
       invalidateAll();
@@ -53,6 +57,8 @@ export function useCycleActions() {
         .eq('id', cycleId);
 
       if (error) throw error;
+
+      await syncRitualCalendar({ silent: true });
     },
     onSuccess: () => {
       invalidateAll();

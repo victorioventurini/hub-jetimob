@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSyncRitualCalendar } from "@/modules/okrs/hooks/useSyncRitualCalendar";
 import { DIALOG_SIZES } from "@/lib/dialog-sizes";
 import {
   Dialog,
@@ -75,17 +76,13 @@ export function CycleFormDialog({
 }: CycleFormDialogProps) {
   const queryClient = useQueryClient();
   const { client: supabase, buId } = useOptionalBuClient();
+  const { syncRitualCalendar } = useSyncRitualCalendar();
   const isEditing = !!cycle;
   
   // Defense in depth: check if user can manage OKR settings
   const { has, isWildcard, isLoading: isLoadingPermissions } = usePermissions();
   const canManageCycles = isWildcard || has('okrs.settings.manage:bu');
   
-  // Don't render if user doesn't have permission
-  if (!isLoadingPermissions && !canManageCycles) {
-    return null;
-  }
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -155,10 +152,15 @@ export function CycleFormDialog({
         const { error } = await supabase.from("cycles").insert(payload as any);
         if (error) throw error;
       }
+
+      await syncRitualCalendar({ silent: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.cyclesList(null), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualCadences(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(buId ?? null) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualAdherencePrefix(buId ?? null) });
       toast.success(isEditing ? "Ciclo atualizado" : "Ciclo criado");
       onOpenChange(false);
     },
@@ -171,6 +173,11 @@ export function CycleFormDialog({
   const onSubmit = (values: FormValues) => {
     mutation.mutate(values);
   };
+
+  // Don't render if user doesn't have permission
+  if (!isLoadingPermissions && !canManageCycles) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

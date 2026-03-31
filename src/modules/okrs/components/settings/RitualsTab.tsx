@@ -27,6 +27,7 @@ import { ptBR } from 'date-fns/locale';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useSyncRitualCalendar } from '@/modules/okrs/hooks/useSyncRitualCalendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -150,6 +151,7 @@ function getStateConfig(status: string) {
 export function RitualsTab() {
   const { client: supabase, buId } = useOptionalBuClient();
   const queryClient = useQueryClient();
+  const { syncRitualCalendar } = useSyncRitualCalendar();
   const { has, isWildcard } = usePermissions();
   const canManage = isWildcard || has('okrs.settings.manage:bu');
 
@@ -198,6 +200,8 @@ export function RitualsTab() {
         .update({ qbr_status: newStatus })
         .eq('id', cycleId);
       if (error) throw error;
+
+      await syncRitualCalendar({ silent: true });
     },
     onSuccess: (_, { newStatus }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null) });

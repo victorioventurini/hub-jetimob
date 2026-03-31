@@ -9,7 +9,7 @@
  * 
  * ## Request
  * - Method: POST
- * - Body: { cadence_id: string, bu_id: string }
+ * - Body: { cadence_id: string, bu_id: string, rebuild_mode?: 'incremental' | 'full' }
  * - Auth: JWT required
  * 
  * ## Response
@@ -170,6 +170,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const cadenceId = body.cadence_id;
+    const rebuildMode = body.rebuild_mode === 'full' ? 'full' : 'incremental';
 
     if (!cadenceId) {
       return errorResponse("cadence_id is required", 400, "MISSING_PARAM");
@@ -220,6 +221,50 @@ Deno.serve(async (req) => {
       .from("ritual_occurrences")
       .select("id, planned_date, team_id, session_id, status")
       .eq("cadence_id", cadenceId);
+
+    if (rebuildMode === 'full') {
+      const existingIds = (existing ?? []).map((o: any) => o.id as string);
+
+      if (existingIds.length > 0) {
+        const { error: delErr } = await serviceClient
+          .from('ritual_occurrences')
+          .delete()
+          .in('id', existingIds);
+
+        if (delErr) {
+          return errorResponse('Failed to rebuild occurrences', 500, 'REBUILD_DELETE_FAILED');
+        }
+      }
+
+      const toInsert: any[] = [];
+      for (const d of plannedDates) {
+        for (const tid of teamIds) {
+          toInsert.push({
+            bu_id: cadence.bu_id,
+            cadence_id: cadenceId,
+            wizard_type: cadence.wizard_type,
+            team_id: tid,
+            planned_date: formatDate(d),
+            status: 'scheduled',
+          });
+        }
+      }
+
+      if (toInsert.length > 0) {
+        const { error: insErr } = await serviceClient
+          .from('ritual_occurrences')
+          .insert(toInsert);
+
+        if (insErr) {
+          return errorResponse('Failed to rebuild occurrences', 500, 'REBUILD_INSERT_FAILED');
+        }
+      }
+
+      const removed = existingIds.length;
+      const generated = toInsert.length;
+      logRequestCompletion(context, 'success', `Rebuild full: generated ${generated}, removed ${removed}`);
+      return successResponse({ generated, preserved: 0, removed, rebuild_mode: 'full' });
+    }
 
     // Build composite key: "planned_date|team_id"
     const existingMap = new Map(
