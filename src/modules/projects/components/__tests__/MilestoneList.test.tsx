@@ -1,7 +1,23 @@
 import { describe, it, expect, vi } from 'vitest';
-import { renderWithProviders, screen, fireEvent } from '@/test/test-utils';
+import { renderWithProviders, screen } from '@/test/test-utils';
 import { MilestoneList } from '../MilestoneList';
 import type { ProjectMilestone } from '../../types';
+
+// Mock MilestoneStatusSelect to simplify status change testing
+vi.mock('../MilestoneStatusSelect', () => ({
+  MilestoneStatusSelect: ({ value, onValueChange, disabled }: any) => (
+    <button
+      data-testid={`status-btn-${value}`}
+      onClick={() => {
+        const next: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo' };
+        onValueChange(next[value]);
+      }}
+      disabled={disabled}
+    >
+      {value}
+    </button>
+  ),
+}));
 
 function createMilestone(overrides: Partial<ProjectMilestone> = {}): ProjectMilestone {
   return {
