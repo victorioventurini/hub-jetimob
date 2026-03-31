@@ -4,13 +4,14 @@
  * Verifica se um rito está dentro da sua janela de acesso com base nas datas do ciclo.
  * Puramente computacional — sem queries ao banco.
  * 
- * Fallback permissivo: se as datas de referência forem null, retorna isAvailable = true
- * (não bloquear se admin não preencheu datas).
+ * Janelas contam em DIAS ÚTEIS (seg–sex).
+ * Fallback permissivo: se as datas de referência forem null, retorna isAvailable = true.
  */
 
 import { useMemo } from 'react';
 import type { WizardPersona } from '../types/wizard';
 import type { CycleWithStatus } from './useActiveCycle';
+import { addBusinessDaysToDate } from '../utils/generateCycles';
 
 // ============================================================
 // TYPES
@@ -34,6 +35,8 @@ const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
   'team-checkin': 'Check-in do Time',
   'managers-checkin': 'Check-in de Gestores',
   'clevel-checkin': 'Check-in Estratégico',
+  'mbr-pre-first': 'Pré-MBR (1º mês)',
+  'mbr-first': 'MBR (1º mês)',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
   'qbr-pre': 'Pré-QBR',
@@ -46,12 +49,6 @@ const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
 // DATE HELPERS
 // ============================================================
 
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
 function parseDate(dateStr: string | null | undefined): Date | null {
   if (!dateStr) return null;
   const d = new Date(dateStr + 'T00:00:00');
@@ -63,7 +60,7 @@ function formatDateBR(date: Date): string {
 }
 
 // ============================================================
-// WINDOW DEFINITIONS
+// WINDOW DEFINITIONS — ALL WINDOWS USE BUSINESS DAYS
 // ============================================================
 
 interface WindowDef {
@@ -71,6 +68,7 @@ interface WindowDef {
 }
 
 const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
+  // Check-ins: available throughout the cycle
   'collaborator': {
     getWindow: (c) => ({
       opens: parseDate(c.start_date),
@@ -101,13 +99,37 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       closes: parseDate(c.end_date),
     }),
   },
+
+  // MBR₁ (1st month review)
+  'mbr-pre-first': {
+    getWindow: (c) => {
+      const review = parseDate(c.review_date_first_month);
+      if (!review) return { opens: null, closes: null };
+      return {
+        opens: addBusinessDaysToDate(review, -5),
+        closes: addBusinessDaysToDate(review, -1),
+      };
+    },
+  },
+  'mbr-first': {
+    getWindow: (c) => {
+      const review = parseDate(c.review_date_first_month);
+      if (!review) return { opens: null, closes: null };
+      return {
+        opens: review,
+        closes: addBusinessDaysToDate(review, 2),
+      };
+    },
+  },
+
+  // MBR₂ (2nd month review)
   'mbr-pre': {
     getWindow: (c) => {
       const review = parseDate(c.review_date);
       if (!review) return { opens: null, closes: null };
       return {
-        opens: addDays(review, -3),
-        closes: addDays(review, 1),
+        opens: addBusinessDaysToDate(review, -5),
+        closes: addBusinessDaysToDate(review, -1),
       };
     },
   },
@@ -117,23 +139,29 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       if (!review) return { opens: null, closes: null };
       return {
         opens: review,
-        closes: addDays(review, 2),
+        closes: addBusinessDaysToDate(review, 2),
       };
     },
   },
+
+  // QBR phases
   'qbr-pre': {
-    getWindow: (c) => ({
-      opens: parseDate(c.planning_date),
-      closes: parseDate(c.retro_date),
-    }),
+    getWindow: (c) => {
+      const retro = parseDate(c.retro_date);
+      return {
+        opens: parseDate(c.planning_date),
+        closes: retro ? addBusinessDaysToDate(retro, -1) : null,
+      };
+    },
   },
   'qbr-pre-clevel': {
     getWindow: (c) => {
       const planning = parseDate(c.planning_date);
+      const retro = parseDate(c.retro_date);
       if (!planning) return { opens: null, closes: null };
       return {
-        opens: addDays(planning, 7),
-        closes: parseDate(c.retro_date),
+        opens: addBusinessDaysToDate(planning, 5),
+        closes: retro ? addBusinessDaysToDate(retro, -1) : null,
       };
     },
   },
@@ -143,18 +171,17 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       if (!retro) return { opens: null, closes: null };
       return {
         opens: retro,
-        closes: addDays(retro, 3),
+        closes: addBusinessDaysToDate(retro, 2),
       };
     },
   },
   'qbr-post': {
     getWindow: (c) => {
       const retro = parseDate(c.retro_date);
-      const end = parseDate(c.end_date);
       if (!retro) return { opens: null, closes: null };
       return {
         opens: retro,
-        closes: end ? addDays(end, 7) : null,
+        closes: addBusinessDaysToDate(retro, 5),
       };
     },
   },
@@ -195,24 +222,22 @@ export function useRitualAvailability(
     }
 
     // ── QBR period block for MBR/MBR-pre ──────────────────────
-    // Nos meses de QBR (entre retro_date e end_date+7d), o MBR e o MBR-pre
-    // ficam bloqueados — o QBR já cumpre o papel de revisão mensal.
-    if (wizardType === 'mbr' || wizardType === 'mbr-pre') {
-      const retroDate = parseDate(cycle.retro_date);
-      const endDate = parseDate(cycle.end_date);
+    // When today >= planning_date, MBR and MBR-pre are blocked
+    // because QBR takes over the review function for the 3rd month.
+    if (['mbr', 'mbr-pre', 'mbr-first', 'mbr-pre-first'].includes(wizardType)) {
+      const planningDate = parseDate(cycle.planning_date);
 
-      if (retroDate && endDate) {
+      if (planningDate) {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const qbrWindowEnd = addDays(endDate, 7);
 
-        if (today >= retroDate && today <= qbrWindowEnd) {
+        if (today >= planningDate) {
           return {
             isAvailable: false,
             opensAt: null,
             closesAt: null,
             reason: 'qbr_period',
-            message: 'Este mês é de QBR. O MBR não é realizado no mês de encerramento do quarter.',
+            message: 'Este período é de QBR. O MBR não é realizado no mês de encerramento do quarter.',
           };
         }
       }
@@ -232,7 +257,6 @@ export function useRitualAvailability(
     }
 
     const now = new Date();
-    // Normalize to start of day for comparison
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // Not yet open

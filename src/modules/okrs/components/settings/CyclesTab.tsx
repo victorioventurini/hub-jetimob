@@ -35,6 +35,7 @@ interface Cycle {
   end_date: string;
   planning_date: string | null;
   review_date: string | null;
+  review_date_first_month: string | null;
   retro_date: string | null;
   parent_cycle_id: string | null;
   created_at: string;
@@ -121,7 +122,7 @@ export function CyclesTab() {
 
       const { data, error } = await supabase
         .from("cycles")
-        .select("id, name, type, start_date, end_date, planning_date, review_date, retro_date, parent_cycle_id, bu_id, created_at, status, qbr_status")
+        .select("id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id, bu_id, created_at, status, qbr_status")
         .order("start_date", { ascending: false });
       if (error) throw error;
       return data as Cycle[];
@@ -176,6 +177,7 @@ export function CyclesTab() {
         end_date: c.end_date,
         planning_date: c.planning_date,
         review_date: c.review_date,
+        review_date_first_month: c.review_date_first_month,
         retro_date: c.retro_date,
         status: c.status,
       }));
@@ -206,6 +208,7 @@ export function CyclesTab() {
           end_date: c.end_date,
           planning_date: c.planning_date,
           review_date: c.review_date,
+          review_date_first_month: c.review_date_first_month,
           retro_date: c.retro_date,
           status: c.status,
           parent_cycle_id: c._tempParentKey ? parentMap.get(c._tempParentKey) || null : null,
@@ -216,6 +219,59 @@ export function CyclesTab() {
           .insert(quarterInserts);
 
         if (quarterError) throw quarterError;
+      }
+
+      // ── Unification: Upsert ritual cadences for MBR (1st Tuesday) ──
+      // Update existing MBR cadence to use month_week_ordinal=1, day_of_week=2 (1st Tuesday)
+      const { data: existingMbr } = await supabase
+        .from('ritual_cadences')
+        .select('id')
+        .eq('bu_id', buId)
+        .eq('wizard_type', 'mbr')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (existingMbr) {
+        await supabase
+          .from('ritual_cadences')
+          .update({ month_week_ordinal: 1, day_of_week: 2, day_of_month: null } as any)
+          .eq('id', existingMbr.id);
+
+        // Regenerate occurrences
+        await supabase.functions.invoke('generate-ritual-occurrences', {
+          body: { cadence_id: existingMbr.id, bu_id: buId },
+        });
+      }
+
+      // Ensure mbr-pre cadence exists (if not, create it)
+      const { data: existingMbrPre } = await supabase
+        .from('ritual_cadences')
+        .select('id')
+        .eq('bu_id', buId)
+        .eq('wizard_type', 'mbr-pre')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!existingMbrPre) {
+        const { data: newMbrPre } = await supabase
+          .from('ritual_cadences')
+          .insert({
+            bu_id: buId,
+            wizard_type: 'mbr-pre',
+            frequency: 'monthly',
+            month_week_ordinal: 1,
+            day_of_week: 2,
+            start_date: new Date().toISOString().split('T')[0],
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (newMbrPre) {
+          await supabase.functions.invoke('generate-ritual-occurrences', {
+            body: { cadence_id: newMbrPre.id, bu_id: buId },
+          });
+        }
       }
     },
     onSuccess: () => {
@@ -490,10 +546,10 @@ export function CyclesTab() {
                                   {formatDate(quarter.end_date)}
                                 </p>
                                 <CycleRitualDates
+                                  review_date_first_month={quarter.review_date_first_month}
                                   planning_date={quarter.planning_date}
                                   review_date={quarter.review_date}
                                   retro_date={quarter.retro_date}
-                                  end_date={quarter.end_date}
                                 />
                               </div>
                             </div>

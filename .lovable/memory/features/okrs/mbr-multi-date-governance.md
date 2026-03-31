@@ -1,0 +1,4 @@
+# Memory: features/okrs/mbr-multi-date-governance
+Updated: 2026-03-31
+
+A metodologia de governança prevê a realização de dois rituais MBR por trimestre (nos meses 1 e 2 do quarter). Para suportar essa cadência, a tabela 'cycles' possui a coluna 'review_date_first_month' (MBR₁) além de 'review_date' (MBR₂). As reuniões ocorrem sempre na **1ª terça-feira do mês seguinte** ao período revisado, calculada via `firstTuesdayOfMonth()`. Janelas de preparação e execução são contabilizadas em **dias úteis (seg–sex)** usando `addBusinessDaysToDate()`. O sistema de disponibilidade ('useRitualAvailability') valida janelas de acesso para ambos os períodos com os wizard types 'mbr-pre-first'/'mbr-first' e 'mbr-pre'/'mbr'. O 3º mês do quarter é reservado exclusivamente para o rito de QBR — MBR/MBR-pre ficam bloqueados quando `today >= planning_date`.

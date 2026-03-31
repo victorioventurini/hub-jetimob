@@ -1,4 +1,6 @@
 # Memory: features/rituals/comprehensive-calendar-architecture-v2
-Updated: 2026-03-30
+Updated: 2026-03-31
 
 A calendarização de rituais conecta execuções de wizards a cadências planejadas ('ritual_cadences'). O sistema gera ocorrências ('ritual_occurrences') automaticamente via edge function 'generate-ritual-occurrences'. Para cadências globais (team_id = null, como qbr-pre), o sistema gera uma ocorrência por time ativo da BU, permitindo rastreamento independente por time. A associação silenciosa com sessões de wizard usa uma janela dinâmica baseada na frequência: semanal (±7 dias), quinzenal (±10), mensal (±15), trimestral (±30) e semestral (±45). O algoritmo de matching prioriza a ocorrência mais próxima, filtra por team_id da sessão, e inclui ocorrências com status 'missed' para suportar execuções tardias. A aba Calendário exibe 'pills' coloridos (com contagens de participantes para ritos individuais) e possui navegação automática para o próximo mês com dados caso o atual esteja vazio. A aba Saúde monitora a aderência com filtros avançados por período, time, rito e usuário.
+
+**Unificação com ciclos OKR**: A geração automática de ciclos (`CyclesTab`) agora faz upsert de `ritual_cadences` (MBR = monthly com `month_week_ordinal=1, day_of_week=2` = 1ª terça-feira) e invoca `generate-ritual-occurrences` para cada cadência, populando automaticamente a página `/settings/rituals`. Cadências de check-ins semanais (collaborator, leader-prep, team-checkin) permanecem independentes e configuráveis manualmente.
