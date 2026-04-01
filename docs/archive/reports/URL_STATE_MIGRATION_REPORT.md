@@ -43,6 +43,11 @@ Data de início: 2024-01-07
 | Módulo | Página | Status | Parâmetros |
 |--------|--------|--------|------------|
 | Permissions | BuPermissionsPage | ✅ | `tab`, `q` |
+| Tickets | TicketsListPage | ✅ | `q`, `type`, `status`, `category`, `partner`, `responsible`, `overdue`, `due_today` |
+| Tickets | TicketsSettingsPage | ✅ | `tab` |
+| Tickets | CreateTicketPage | ✅ | `type` (read-only from URL) |
+| Tickets | TicketDetailPage | ✅ | N/A (detalhe por `:id`) |
+| Tickets | PartnerContactProfilePage | ✅ | N/A (detalhe por `:contactId`) |
 
 ## Parâmetros Padronizados
 
