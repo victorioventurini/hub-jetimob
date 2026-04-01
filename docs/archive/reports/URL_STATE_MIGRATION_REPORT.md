@@ -87,7 +87,7 @@ Páginas com possíveis problemas: Pendente
 
 ## Próximos Passos
 
-1. [ ] Migrar módulo Tickets
+1. [x] Migrar módulo Tickets
 2. [ ] Migrar módulo OKRs
 3. [ ] Migrar módulo Assets
 4. [ ] Migrar módulo KPIs
