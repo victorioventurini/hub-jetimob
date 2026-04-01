@@ -230,7 +230,12 @@ export default function PartnerContactProfilePage() {
   const { contactId } = useParams<{ contactId: string }>();
   const { data: profile, isLoading } = usePartnerContactProfile(contactId);
 
-  usePageTitle(profile?.name ? `${profile.name}` : "Contato Parceiro");
+  usePageTitle(profile?.name ? `${profile.name}` : "Contato Parceiro", {
+    pageType: "subpage",
+    customDescription: profile?.name
+      ? `Perfil do contato parceiro ${profile.name} — capacidades, tickets e informações de contato.`
+      : "Visualize o perfil de um contato parceiro externo.",
+  });
 
   const getInitials = (name: string) =>
     name

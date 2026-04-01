@@ -43,6 +43,11 @@ Data de início: 2024-01-07
 | Módulo | Página | Status | Parâmetros |
 |--------|--------|--------|------------|
 | Permissions | BuPermissionsPage | ✅ | `tab`, `q` |
+| Tickets | TicketsListPage | ✅ | `q`, `type`, `status`, `category`, `partner`, `responsible`, `overdue`, `due_today` |
+| Tickets | TicketsSettingsPage | ✅ | `tab` |
+| Tickets | CreateTicketPage | ✅ | `type` (read-only from URL) |
+| Tickets | TicketDetailPage | ✅ | N/A (detalhe por `:id`) |
+| Tickets | PartnerContactProfilePage | ✅ | N/A (detalhe por `:contactId`) |
 
 ## Parâmetros Padronizados
 
@@ -82,7 +87,7 @@ Páginas com possíveis problemas: Pendente
 
 ## Próximos Passos
 
-1. [ ] Migrar módulo Tickets
+1. [x] Migrar módulo Tickets
 2. [ ] Migrar módulo OKRs
 3. [ ] Migrar módulo Assets
 4. [ ] Migrar módulo KPIs

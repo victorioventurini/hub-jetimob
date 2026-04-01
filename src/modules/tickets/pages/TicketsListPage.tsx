@@ -10,9 +10,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch, parsers } from "@/shared/url";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import type { TicketStatus, TicketType } from "../types";
 
 export default function TicketsListPage() {
+  usePageTitle("Tickets", {
+    customDescription: "Gerencie tickets internos e externos, acompanhe status, prazos e mensagens.",
+  });
   const navigate = useNavigate();
   const { isExternal } = useExternalUser();
   const { isImpersonating, impersonatedUser } = useOptionalImpersonation();
