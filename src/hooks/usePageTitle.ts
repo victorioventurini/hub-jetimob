@@ -104,6 +104,9 @@ function getDescriptionForPage(title: string, buName: string, pageType?: PageTyp
     "Configurações de Ativos": `Configure categorias, inventário e claviculários de ativos da ${buName}.`,
     // Projects
     "Projetos": `Gerencie projetos estratégicos e acompanhe milestones da ${buName} no Hub.`,
+    // Tickets
+    "Tickets": `Gerencie tickets internos e externos, acompanhe status, prazos e mensagens da ${buName} no Hub.`,
+    "Configurações de Tickets": `Configure empresas parceiras, categorias e regras de roteamento de tickets da ${buName}.`,
   };
 
   return descriptions[title] || `Gerencie ${title.toLowerCase()} da ${buName} no Hub.`;
