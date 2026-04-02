@@ -21,10 +21,11 @@ interface OkrFilters {
   year: number;
   teamId?: string;
   parentTeamId?: string;
+  cycleId?: string;
   statuses: OkrCalculatedStatus[];
   sharedFilter?: 'all' | 'shared' | 'exclusive';
-  primaryTeamId?: string;      // Filter by primary team (for shared OKRs)
-  contributorTeamId?: string;  // Filter by contributing team
+  primaryTeamId?: string;
+  contributorTeamId?: string;
 }
 
 interface OkrDashboardFiltersProps {
