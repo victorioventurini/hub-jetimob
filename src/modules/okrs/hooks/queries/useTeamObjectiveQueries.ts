@@ -16,6 +16,7 @@ import { OKR_FIELDS, OKR_STALE_TIME } from './okrFieldDefinitions';
 export interface UseTeamObjectivesOptions {
   buId?: string | null;
   teamId?: string;
+  cycleId?: string;
   includeAllStatuses?: boolean;
 }
 
