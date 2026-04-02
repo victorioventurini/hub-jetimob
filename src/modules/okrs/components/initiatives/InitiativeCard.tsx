@@ -19,7 +19,7 @@ interface InitiativeCardProps {
   showKrInfo?: boolean;
 }
 
-export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, showKrInfo }: InitiativeCardProps) {
+export function InitiativeCard({ initiative, isDraft = false, onQuickUpdate, onEdit, onDelete, showKrInfo }: InitiativeCardProps) {
   const getOwnerName = () => {
     if (initiative.owner?.display_name) return initiative.owner.display_name;
     if (initiative.owner?.first_name) {
