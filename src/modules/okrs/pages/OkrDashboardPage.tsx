@@ -45,6 +45,7 @@ interface OkrFiltersState {
   year: number;
   teamId?: string;
   parentTeamId?: string;
+  cycleId?: string;
   statuses: OkrCalculatedStatus[];
   sharedFilter?: 'all' | 'shared' | 'exclusive';
 }
