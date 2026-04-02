@@ -79,6 +79,9 @@ function useTeamKeyResultsImpl(options: UseTeamKeyResultsOptions = {}) {
       if (objectiveIds) {
         query = query.in('team_objective_id', objectiveIds);
       }
+      
+      if (!includeCancelled) {
+        query = query.is('cancelled_at', null);
       }
 
       const { data, error } = await query;
