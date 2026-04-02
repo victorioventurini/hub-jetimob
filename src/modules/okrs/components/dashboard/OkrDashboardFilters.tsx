@@ -51,10 +51,23 @@ export function OkrDashboardFilters({
   teams,
   years,
   showSharedFilter = true,
+  activeView = 'company',
 }: OkrDashboardFiltersProps) {
+  // Fetch quarter cycles for team/my views
+  const { data: allCycles } = useCycles();
+  const quarterCycles = useMemo(() => {
+    if (!allCycles) return [];
+    return allCycles
+      .filter(c => c.type === 'quarter')
+      .map(c => ({ value: c.id, label: c.name }));
+  }, [allCycles]);
+
+  const showQuarterFilter = activeView !== 'company' && quarterCycles.length > 0;
+
   const activeFilterCount = [
     filters.teamId,
     filters.parentTeamId,
+    filters.cycleId,
     filters.statuses.length < STATUS_OPTIONS.length && filters.statuses.length > 0,
     filters.sharedFilter && filters.sharedFilter !== 'all',
     filters.primaryTeamId,
@@ -74,6 +87,7 @@ export function OkrDashboardFilters({
       year: filters.year,
       teamId: undefined,
       parentTeamId: undefined,
+      cycleId: undefined,
       statuses: [],
       sharedFilter: 'all',
       primaryTeamId: undefined,
