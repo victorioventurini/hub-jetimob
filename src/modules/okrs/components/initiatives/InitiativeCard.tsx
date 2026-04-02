@@ -12,6 +12,7 @@ import { UserLink } from "@/components/links";
 
 interface InitiativeCardProps {
   initiative: Initiative;
+  isDraft?: boolean;
   onQuickUpdate?: (initiative: Initiative) => void;
   onEdit?: (initiative: Initiative) => void;
   onDelete?: (initiative: Initiative) => void;
