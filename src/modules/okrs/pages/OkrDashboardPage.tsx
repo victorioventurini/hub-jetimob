@@ -124,9 +124,14 @@ export default function OkrDashboardPage() {
   const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectives({
     buId: currentBuId,
     teamId: activeView === 'team' ? normalizedTeamId : undefined,
+    cycleId: activeView !== 'company' ? filters.cycleId : undefined,
   });
   const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBuId });
-  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, normalizedTeamId);
+  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults({
+    buId: currentBuId,
+    teamId: normalizedTeamId,
+    cycleId: activeView !== 'company' ? filters.cycleId : undefined,
+  });
   
   // "Meus OKRs" queries - only fetch when in 'my' view
   // Usa effectiveProfileId diretamente para respeitar impersonação imediatamente
