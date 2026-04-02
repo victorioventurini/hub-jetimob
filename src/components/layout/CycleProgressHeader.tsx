@@ -55,7 +55,7 @@ function QuarterMiniBlock({ quarter }: { quarter: HeaderQuarterProgress }) {
   if (!quarter.cycleId) return block;
 
   return (
-    <Link to={`/okrs?cycle_id=${quarter.cycleId}`} className="no-underline">
+    <Link to={`/okrs?cycle_id=${quarter.cycleId}&view=team`} className="no-underline">
       {block}
     </Link>
   );
