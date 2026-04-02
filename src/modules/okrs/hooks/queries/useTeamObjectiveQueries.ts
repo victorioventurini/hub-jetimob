@@ -41,11 +41,11 @@ export function useTeamObjectives(
 }
 
 function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
-  const { buId, teamId, includeAllStatuses = false } = options;
+  const { buId, teamId, cycleId, includeAllStatuses = false } = options;
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: queryKeys.okrs.teamObjectives(buId, teamId),
+    queryKey: queryKeys.okrs.teamObjectives(buId, teamId, cycleId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
@@ -59,6 +59,10 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
 
       if (teamId) {
         query = query.eq('team_id', teamId);
+      }
+      
+      if (cycleId) {
+        query = query.eq('cycle_id', cycleId);
       }
       
       if (!includeAllStatuses) {

@@ -42,23 +42,32 @@ export function useTeamKeyResults(
 }
 
 function useTeamKeyResultsImpl(options: UseTeamKeyResultsOptions = {}) {
-  const { buId, teamId, includeCancelled = false } = options;
+  const { buId, teamId, cycleId, includeCancelled = false } = options;
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: queryKeys.okrs.teamKeyResults(buId, teamId),
+    queryKey: queryKeys.okrs.teamKeyResults(buId, teamId, cycleId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
       
+      // If filtering by cycle, join through team_objective to get cycle_id
+      const selectFields = cycleId 
+        ? `${OKR_FIELDS.teamKr}, team_objective:okr_team_objectives!inner(cycle_id)`
+        : OKR_FIELDS.teamKr;
+      
       let query = supabase
         .from('okr_team_key_results')
-        .select(OKR_FIELDS.teamKr)
+        .select(selectFields)
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (teamId) {
         query = query.eq('team_id', teamId);
+      }
+      
+      if (cycleId) {
+        query = query.eq('team_objective.cycle_id' as any, cycleId);
       }
       
       if (!includeCancelled) {

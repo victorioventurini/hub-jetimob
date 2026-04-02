@@ -30,14 +30,14 @@ export const okrsKeys = {
     ['all-org-objectives-view', year, buId] as const,
   
   // Team level
-  teamObjectives: (buId: string | null, teamId?: string) => 
-    ['okr-team-objectives', buId, teamId] as const,
+  teamObjectives: (buId: string | null, teamId?: string, cycleId?: string) => 
+    ['okr-team-objectives', buId, teamId, cycleId] as const,
   teamObjectivesWithKrs: (buId: string | null, teamId?: string) => 
     ['okr-team-objectives-with-krs', buId, teamId] as const,
   teamObjectivesWithShared: (buId: string | null, teamId?: string) => 
     ['okr-team-objectives-with-shared', buId, teamId] as const,
-  teamKeyResults: (buId: string | null, teamId?: string) => 
-    ['okr-team-key-results', buId, teamId] as const,
+  teamKeyResults: (buId: string | null, teamId?: string, cycleId?: string) => 
+    ['okr-team-key-results', buId, teamId, cycleId] as const,
   myTeamKeyResults: (buId: string | null, userId?: string) => 
     ['okr-my-team-key-results', buId, userId] as const,
   myTeamObjectives: (buId: string | null, userId?: string) => 
