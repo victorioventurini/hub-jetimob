@@ -26,9 +26,11 @@ interface InitiativesListProps {
   canEdit?: boolean;
   /** Se presente, filtra apenas iniciativas deste usuário (usado na view "Minhas OKRs") */
   filterForUserId?: string;
+  /** Se o objetivo pai está em rascunho */
+  isDraft?: boolean;
 }
 
-export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = true, filterForUserId }: InitiativesListProps) {
+export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = true, filterForUserId, isDraft = false }: InitiativesListProps) {
   const profileId = useProfileId();
   const { data: initiatives, isLoading } = useKrInitiatives(krId);
   const deleteMutation = useDeleteInitiative();
@@ -155,6 +157,7 @@ export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = 
               <InitiativeCard
                 key={initiative.id}
                 initiative={initiative}
+                isDraft={isDraft}
                 onQuickUpdate={canManageThis ? setQuickUpdateInitiative : undefined}
                 onEdit={canManageThis ? handleEdit : undefined}
                 onDelete={canManageThis ? setDeletingInitiative : undefined}

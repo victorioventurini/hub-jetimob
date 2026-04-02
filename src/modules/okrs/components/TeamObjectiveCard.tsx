@@ -108,16 +108,27 @@ export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objecti
   const yellowCount = objectiveKrs.filter(kr => kr.status === 'yellow').length;
   const redCount = objectiveKrs.filter(kr => kr.status === 'red').length;
 
+  const isDraft = objective.status === 'draft';
+
   return (
     <>
       <Card className={cn(
         'group transition-all border-l-4',
-        redCount > 0 && 'border-l-danger',
-        redCount === 0 && yellowCount > 0 && 'border-l-warning',
-        redCount === 0 && yellowCount === 0 && greenCount > 0 && 'border-l-success',
-        objectiveKrs.length === 0 && 'border-l-muted',
+        isDraft && 'opacity-80 border-l-muted border-dashed',
+        !isDraft && redCount > 0 && 'border-l-danger',
+        !isDraft && redCount === 0 && yellowCount > 0 && 'border-l-warning',
+        !isDraft && redCount === 0 && yellowCount === 0 && greenCount > 0 && 'border-l-success',
+        !isDraft && objectiveKrs.length === 0 && 'border-l-muted',
         objective.is_shared && 'ring-1 ring-purple-200 dark:ring-purple-800'
       )}>
+        {isDraft && (
+          <div className="bg-status-gray-muted border-b border-dashed border-status-gray/30 px-4 py-1.5 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-status-gray animate-pulse" />
+            <span className="text-xs font-medium text-status-gray-muted-foreground">
+              Objetivo em rascunho — KRs e Iniciativas ainda não estão ativos
+            </span>
+          </div>
+        )}
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -301,7 +312,14 @@ export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objecti
                         {index + 1}.
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{kr.title}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{kr.title}</p>
+                          {isDraft && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20">
+                              Rascunho
+                            </Badge>
+                          )}
+                        </div>
                         <OkrProgressBar
                           baseline={kr.baseline}
                           current={kr.current_value}

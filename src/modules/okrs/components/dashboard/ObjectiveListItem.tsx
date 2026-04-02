@@ -172,12 +172,23 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
     );
   }
 
+  const isObjectiveDraft = objective.status === 'draft';
+
   return (
     <>
       <Card className={cn(
         "transition-all duration-200",
-        isExpanded && "ring-1 ring-border shadow-md"
+        isExpanded && "ring-1 ring-border shadow-md",
+        isObjectiveDraft && "opacity-80 border-dashed"
       )}>
+        {isObjectiveDraft && (
+          <div className="bg-status-gray-muted border-b border-dashed border-status-gray/30 px-4 py-1.5 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-status-gray animate-pulse" />
+            <span className="text-xs font-medium text-status-gray-muted-foreground">
+              Objetivo em rascunho — KRs e Iniciativas ainda não estão ativos
+            </span>
+          </div>
+        )}
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
           <CollapsibleTrigger asChild>
             <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
@@ -330,6 +341,7 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
                       kr={kr} 
                       type={type}
                       objectiveTitle={objective.title}
+                      objectiveStatus={objective.status}
                       teamName={teamName}
                       canEdit={canEdit}
                       canCheckin={canCheckin || canEdit}
@@ -489,6 +501,7 @@ interface KeyResultRowProps {
   kr: KeyResult;
   type: 'org' | 'team';
   objectiveTitle?: string;
+  objectiveStatus?: string;
   teamName?: string;
   canEdit?: boolean;
   /** Se o usuário pode fazer check-in (responsável mesmo sem ser líder) */
@@ -513,7 +526,7 @@ interface KeyResultRowProps {
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, hasPrimaryKpi = false, primaryKpiInfo, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, objectiveStatus, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, hasPrimaryKpi = false, primaryKpiInfo, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(defaultInitiativesExpanded);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   const currentProfileId = useProfileId();
@@ -588,6 +601,11 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <p className="text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
+                  {objectiveStatus === 'draft' && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20 shrink-0">
+                      Rascunho
+                    </Badge>
+                  )}
                   {/* v3.4.2: Primary KPI indicator badge */}
                   {hasPrimaryKpi && primaryKpiInfo && (
                     <KrPrimaryKpiBadge
@@ -711,6 +729,7 @@ function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, can
             krTeamId={kr.team_id}
             canEdit={canDoEdit || canDoCheckin}
             filterForUserId={filterInitiativesForUser}
+            isDraft={objectiveStatus === 'draft'}
           />
           <ProjectsForKrSection
             krId={kr.id}

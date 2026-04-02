@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,14 @@ import { UserLink } from "@/components/links";
 
 interface InitiativeCardProps {
   initiative: Initiative;
+  isDraft?: boolean;
   onQuickUpdate?: (initiative: Initiative) => void;
   onEdit?: (initiative: Initiative) => void;
   onDelete?: (initiative: Initiative) => void;
   showKrInfo?: boolean;
 }
 
-export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, showKrInfo }: InitiativeCardProps) {
+export function InitiativeCard({ initiative, isDraft = false, onQuickUpdate, onEdit, onDelete, showKrInfo }: InitiativeCardProps) {
   const getOwnerName = () => {
     if (initiative.owner?.display_name) return initiative.owner.display_name;
     if (initiative.owner?.first_name) {
@@ -43,6 +45,11 @@ export function InitiativeCard({ initiative, onQuickUpdate, onEdit, onDelete, sh
             {/* Status badge row */}
             <div className="flex items-center gap-2">
               <InitiativeStatusBadge status={initiative.status} />
+              {isDraft && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20">
+                  Rascunho
+                </Badge>
+              )}
               {initiative.priority && initiative.priority !== 'medium' && (
                 <span className={`flex items-center text-xs ${getInitiativePriorityColor(initiative.priority)}`}>
                   <Flag className="w-3 h-3 mr-0.5" />
