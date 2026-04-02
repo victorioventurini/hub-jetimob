@@ -120,6 +120,46 @@ export default function OkrDashboardPage() {
   const { data: userProfile } = useUserProfile(effectiveUserId ?? undefined); // Usa userId que respeita impersonação
   const { data: latestCheckinDate } = useLatestCheckinDate();
   const { data: pendingCheckins } = usePendingCheckins();
+  
+  // Fetch cycles for year list + active quarter default
+  const { data: allCycles } = useCycles();
+  const { data: activeCycles } = useActiveCycles();
+  
+  // Build years list: current year + past years that have cycles, no future years
+  const years = useMemo(() => {
+    const yearSet = new Set<number>([currentYear]);
+    if (allCycles) {
+      for (const cycle of allCycles) {
+        const y = parseISO(cycle.start_date).getFullYear();
+        if (y <= currentYear) yearSet.add(y);
+      }
+    }
+    return Array.from(yearSet).sort((a, b) => b - a); // descending
+  }, [allCycles, currentYear]);
+
+  // Auto-set active quarter when entering team/my view without a saved cycle_id
+  const hasAppliedDefaultCycle = useRef(false);
+  useEffect(() => {
+    if (activeView === 'company') return;
+    // Only apply default if no cycle_id is in URL (user hasn't set one)
+    if (filters.cycleId) return;
+    if (hasAppliedDefaultCycle.current) return;
+    if (!activeCycles || activeCycles.length === 0) return;
+    
+    // Find active quarter cycle
+    const activeQuarter = activeCycles.find(c => c.type === 'quarter');
+    if (activeQuarter) {
+      hasAppliedDefaultCycle.current = true;
+      setFilters({ ...filters, cycleId: activeQuarter.id });
+    }
+  }, [activeView, activeCycles, filters.cycleId]);
+  
+  // Reset default-cycle flag when view changes back to company
+  useEffect(() => {
+    if (activeView === 'company') {
+      hasAppliedDefaultCycle.current = false;
+    }
+  }, [activeView]);
 
   // IMPORTANT: use currentBuId for BU-scoped queries (currentBu may be null if bu_unit data isn't loaded yet)
   const { data: orgObjectives, isLoading: orgLoading } = useOrgObjectives({ buId: currentBuId, year: filters.year });
@@ -190,7 +230,6 @@ export default function OkrDashboardPage() {
   // Determine what to display
   const isLoading = orgLoading || teamLoading || krsLoading || teamsLoading || 
     (activeView === 'my' && (myObjLoading || myKrsLoading));
-  const years = [currentYear, currentYear + 1];
   
   const displayObjectives = useMemo(() => {
     if (activeView === 'company') {
