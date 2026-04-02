@@ -285,6 +285,7 @@ export default function OkrDashboardPage() {
             onFiltersChange={setFilters}
             teams={teams || []}
             years={years}
+            activeView={activeView}
           />
         </div>
 
