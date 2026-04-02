@@ -73,6 +73,7 @@ export default function OkrDashboardPage() {
     year: { key: 'year', defaultValue: currentYear, parse: parsers.number },
     teamId: { key: 'team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     parentTeamId: { key: 'parent_team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
+    cycleId: { key: 'cycle_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     statuses: { key: 'statuses', defaultValue: [] as OkrCalculatedStatus[], parse: (v) => v.split(',').filter(Boolean) as OkrCalculatedStatus[] },
     sharedFilter: { key: 'shared', defaultValue: 'all' as 'all' | 'shared' | 'exclusive', parse: (v) => v as 'all' | 'shared' | 'exclusive' },
   });
