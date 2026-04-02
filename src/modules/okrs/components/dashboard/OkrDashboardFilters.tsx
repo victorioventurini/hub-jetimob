@@ -10,6 +10,7 @@ import { YearSelect, TeamSelect } from '@/components/selects';
 import { SimpleSelect } from '@/components/selects';
 import type { FlatTeamItem } from '@/modules/teams/hooks';
 import { useCycles } from '../../hooks/useCycleData';
+import { parseISO } from 'date-fns';
 
 interface Team {
   id: string;
@@ -55,14 +56,23 @@ export function OkrDashboardFilters({
 }: OkrDashboardFiltersProps) {
   // Fetch quarter cycles for team/my views
   const { data: allCycles } = useCycles();
+  
+  // Filter quarters by selected year
   const quarterCycles = useMemo(() => {
     if (!allCycles) return [];
     return allCycles
-      .filter(c => c.type === 'quarter')
+      .filter(c => {
+        if (c.type !== 'quarter') return false;
+        // Filter by selected year: quarter belongs to a year if its start_date falls in that year
+        const startYear = parseISO(c.start_date).getFullYear();
+        return startYear === filters.year;
+      })
+      .sort((a, b) => parseISO(a.start_date).getTime() - parseISO(b.start_date).getTime())
       .map(c => ({ value: c.id, label: c.name }));
-  }, [allCycles]);
+  }, [allCycles, filters.year]);
 
-  const showQuarterFilter = activeView !== 'company' && quarterCycles.length > 0;
+  const isCompanyView = activeView === 'company';
+  const showQuarterFilter = !isCompanyView;
 
   const activeFilterCount = [
     filters.teamId,
@@ -92,6 +102,20 @@ export function OkrDashboardFilters({
       sharedFilter: 'all',
       primaryTeamId: undefined,
       contributorTeamId: undefined,
+    });
+  };
+
+  // When year changes, clear cycleId if it no longer belongs to the new year
+  const handleYearChange = (year: number) => {
+    const cycleStillValid = allCycles?.some(c => {
+      if (c.type !== 'quarter' || c.id !== filters.cycleId) return false;
+      return parseISO(c.start_date).getFullYear() === year;
+    });
+    
+    onFiltersChange({
+      ...filters,
+      year,
+      cycleId: cycleStillValid ? filters.cycleId : undefined,
     });
   };
 
@@ -128,7 +152,7 @@ export function OkrDashboardFilters({
       {/* Year selector */}
       <YearSelect
         value={filters.year}
-        onValueChange={(year) => onFiltersChange({ ...filters, year })}
+        onValueChange={handleYearChange}
         years={years}
         triggerClassName="w-[90px] sm:w-[100px]"
       />
@@ -140,6 +164,7 @@ export function OkrDashboardFilters({
           onValueChange={(value) => onFiltersChange({ ...filters, cycleId: value === 'all' ? undefined : value })}
           options={[{ value: 'all', label: 'Todos os quarters' }, ...quarterCycles]}
           triggerClassName="w-[160px] sm:w-[180px]"
+          disabled={quarterCycles.length === 0}
         />
       )}
 
