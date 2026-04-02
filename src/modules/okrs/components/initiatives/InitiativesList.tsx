@@ -157,6 +157,7 @@ export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = 
               <InitiativeCard
                 key={initiative.id}
                 initiative={initiative}
+                isDraft={isDraft}
                 onQuickUpdate={canManageThis ? setQuickUpdateInitiative : undefined}
                 onEdit={canManageThis ? handleEdit : undefined}
                 onDelete={canManageThis ? setDeletingInitiative : undefined}
