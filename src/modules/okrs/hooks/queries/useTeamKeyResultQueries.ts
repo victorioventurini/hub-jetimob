@@ -16,6 +16,7 @@ import { OKR_FIELDS, OKR_STALE_TIME } from './okrFieldDefinitions';
 export interface UseTeamKeyResultsOptions {
   buId?: string | null;
   teamId?: string;
+  cycleId?: string;
   userId?: string;
   includeCancelled?: boolean;
 }
@@ -41,13 +42,28 @@ export function useTeamKeyResults(
 }
 
 function useTeamKeyResultsImpl(options: UseTeamKeyResultsOptions = {}) {
-  const { buId, teamId, includeCancelled = false } = options;
+  const { buId, teamId, cycleId, includeCancelled = false } = options;
   const { client: supabase } = useOptionalBuClient();
   
   return useQuery({
-    queryKey: queryKeys.okrs.teamKeyResults(buId, teamId),
+    queryKey: queryKeys.okrs.teamKeyResults(buId, teamId, cycleId),
     queryFn: async () => {
       if (!buId || !supabase) return [];
+      
+      // If filtering by cycle, first get objective IDs for that cycle
+      let objectiveIds: string[] | null = null;
+      if (cycleId) {
+        const { data: objs, error: objError } = await supabase
+          .from('okr_team_objectives')
+          .select('id')
+          .eq('bu_id', buId)
+          .eq('cycle_id', cycleId)
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
+        if (objError) throw objError;
+        objectiveIds = objs?.map(o => o.id) || [];
+        if (objectiveIds.length === 0) return [];
+      }
       
       let query = supabase
         .from('okr_team_key_results')
@@ -58,6 +74,10 @@ function useTeamKeyResultsImpl(options: UseTeamKeyResultsOptions = {}) {
 
       if (teamId) {
         query = query.eq('team_id', teamId);
+      }
+      
+      if (objectiveIds) {
+        query = query.in('team_objective_id', objectiveIds);
       }
       
       if (!includeCancelled) {

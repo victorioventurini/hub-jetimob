@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,7 +7,9 @@ import { Filter, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CONFIG, type OkrCalculatedStatus } from "../../hooks";
 import { YearSelect, TeamSelect } from '@/components/selects';
+import { SimpleSelect } from '@/components/selects';
 import type { FlatTeamItem } from '@/modules/teams/hooks';
+import { useCycles } from '../../hooks/useCycleData';
 
 interface Team {
   id: string;
@@ -18,10 +21,11 @@ interface OkrFilters {
   year: number;
   teamId?: string;
   parentTeamId?: string;
+  cycleId?: string;
   statuses: OkrCalculatedStatus[];
   sharedFilter?: 'all' | 'shared' | 'exclusive';
-  primaryTeamId?: string;      // Filter by primary team (for shared OKRs)
-  contributorTeamId?: string;  // Filter by contributing team
+  primaryTeamId?: string;
+  contributorTeamId?: string;
 }
 
 interface OkrDashboardFiltersProps {
@@ -30,6 +34,7 @@ interface OkrDashboardFiltersProps {
   teams: Team[];
   years: number[];
   showSharedFilter?: boolean;
+  activeView?: 'company' | 'team' | 'my';
 }
 
 const STATUS_OPTIONS: OkrCalculatedStatus[] = ['on_track', 'at_risk', 'off_track', 'not_started', 'completed'];
@@ -46,10 +51,23 @@ export function OkrDashboardFilters({
   teams,
   years,
   showSharedFilter = true,
+  activeView = 'company',
 }: OkrDashboardFiltersProps) {
+  // Fetch quarter cycles for team/my views
+  const { data: allCycles } = useCycles();
+  const quarterCycles = useMemo(() => {
+    if (!allCycles) return [];
+    return allCycles
+      .filter(c => c.type === 'quarter')
+      .map(c => ({ value: c.id, label: c.name }));
+  }, [allCycles]);
+
+  const showQuarterFilter = activeView !== 'company' && quarterCycles.length > 0;
+
   const activeFilterCount = [
     filters.teamId,
     filters.parentTeamId,
+    filters.cycleId,
     filters.statuses.length < STATUS_OPTIONS.length && filters.statuses.length > 0,
     filters.sharedFilter && filters.sharedFilter !== 'all',
     filters.primaryTeamId,
@@ -69,6 +87,7 @@ export function OkrDashboardFilters({
       year: filters.year,
       teamId: undefined,
       parentTeamId: undefined,
+      cycleId: undefined,
       statuses: [],
       sharedFilter: 'all',
       primaryTeamId: undefined,
@@ -113,6 +132,16 @@ export function OkrDashboardFilters({
         years={years}
         triggerClassName="w-[90px] sm:w-[100px]"
       />
+
+      {/* Quarter filter - only for team/my views */}
+      {showQuarterFilter && (
+        <SimpleSelect
+          value={filters.cycleId ?? 'all'}
+          onValueChange={(value) => onFiltersChange({ ...filters, cycleId: value === 'all' ? undefined : value })}
+          options={[{ value: 'all', label: 'Todos os quarters' }, ...quarterCycles]}
+          triggerClassName="w-[160px] sm:w-[180px]"
+        />
+      )}
 
       {/* Team filter */}
       <TeamSelect

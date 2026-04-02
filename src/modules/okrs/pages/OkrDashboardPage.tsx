@@ -45,6 +45,7 @@ interface OkrFiltersState {
   year: number;
   teamId?: string;
   parentTeamId?: string;
+  cycleId?: string;
   statuses: OkrCalculatedStatus[];
   sharedFilter?: 'all' | 'shared' | 'exclusive';
 }
@@ -72,6 +73,7 @@ export default function OkrDashboardPage() {
     year: { key: 'year', defaultValue: currentYear, parse: parsers.number },
     teamId: { key: 'team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     parentTeamId: { key: 'parent_team_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
+    cycleId: { key: 'cycle_id', defaultValue: undefined as string | undefined, parse: parsers.stringOrUndefined },
     statuses: { key: 'statuses', defaultValue: [] as OkrCalculatedStatus[], parse: (v) => v.split(',').filter(Boolean) as OkrCalculatedStatus[] },
     sharedFilter: { key: 'shared', defaultValue: 'all' as 'all' | 'shared' | 'exclusive', parse: (v) => v as 'all' | 'shared' | 'exclusive' },
   });
@@ -122,9 +124,14 @@ export default function OkrDashboardPage() {
   const { data: teamObjectives, isLoading: teamLoading } = useTeamObjectives({
     buId: currentBuId,
     teamId: activeView === 'team' ? normalizedTeamId : undefined,
+    cycleId: activeView !== 'company' ? filters.cycleId : undefined,
   });
   const { data: allOrgKrs } = useOrgKeyResults({ buId: currentBuId });
-  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults(currentBuId, normalizedTeamId);
+  const { data: allTeamKrs, isLoading: krsLoading } = useTeamKeyResults({
+    buId: currentBuId,
+    teamId: normalizedTeamId,
+    cycleId: activeView !== 'company' ? filters.cycleId : undefined,
+  });
   
   // "Meus OKRs" queries - only fetch when in 'my' view
   // Usa effectiveProfileId diretamente para respeitar impersonação imediatamente
@@ -278,6 +285,7 @@ export default function OkrDashboardPage() {
             onFiltersChange={setFilters}
             teams={teams || []}
             years={years}
+            activeView={activeView}
           />
         </div>
 

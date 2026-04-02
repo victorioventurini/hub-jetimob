@@ -34,12 +34,12 @@ export const OKR_FIELDS = {
   ` as const,
   
   teamObjective: `
-    id, bu_id, team_id, title, description, year, status, org_objective_id,
+    id, bu_id, team_id, cycle_id, title, description, year, status, org_objective_id,
     is_shared, responsibility_model, created_at, updated_at, deleted_at
   ` as const,
   
   teamObjectiveWithKrs: `
-    id, bu_id, team_id, title, description, year, status, org_objective_id,
+    id, bu_id, team_id, cycle_id, title, description, year, status, org_objective_id,
     is_shared, responsibility_model, created_at, updated_at, deleted_at,
     team:teams!okr_team_objectives_team_id_fkey(id, name),
     key_results:okr_team_key_results(
