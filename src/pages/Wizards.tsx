@@ -34,7 +34,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useActiveCycles } from '@/modules/okrs/hooks';
+import { useActiveCycle } from '@/modules/okrs/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
