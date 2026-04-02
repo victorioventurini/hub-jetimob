@@ -729,6 +729,7 @@ function KeyResultRow({ kr, type, objectiveTitle, objectiveStatus, teamName, can
             krTeamId={kr.team_id}
             canEdit={canDoEdit || canDoCheckin}
             filterForUserId={filterInitiativesForUser}
+            isDraft={objectiveStatus === 'draft'}
           />
           <ProjectsForKrSection
             krId={kr.id}
