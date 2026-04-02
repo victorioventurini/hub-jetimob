@@ -257,11 +257,9 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
 
 function useQbrStatus() {
   const supabase = useBuScopedSupabase();
-  const { data: activeCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(
-    () => activeCycles?.find(c => c.type === 'quarter') || null,
-    [activeCycles]
-  );
+  // Use status-based active cycle (not date-based) to correctly detect
+  // cycles that are still formally active even after their end_date (e.g., during QBR period)
+  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
 
   const { data, isLoading } = useQuery({
     queryKey: ['qbr', 'cycle-status-wizards', quarterlyCycle?.id],
