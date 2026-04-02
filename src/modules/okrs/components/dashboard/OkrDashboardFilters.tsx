@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,7 +7,9 @@ import { Filter, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CONFIG, type OkrCalculatedStatus } from "../../hooks";
 import { YearSelect, TeamSelect } from '@/components/selects';
+import { SimpleSelect } from '@/components/selects';
 import type { FlatTeamItem } from '@/modules/teams/hooks';
+import { useCycles } from '../../hooks/useCycleData';
 
 interface Team {
   id: string;
