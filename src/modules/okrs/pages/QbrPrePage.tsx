@@ -443,13 +443,83 @@ export default function QbrPrePage() {
 
   const handleComplete = useCallback(async () => {
     try {
+      // Persist proposed OKRs as draft objectives for the planning quarter
+      const proposedOkrs = normalizeProposedOkrs(draft.data.proposedOkrs);
+      if (proposedOkrs.length > 0 && planningQuarter?.id && teamIdParam && buSupabase && currentBuId) {
+        // Get existing draft objective IDs for this team+cycle to avoid duplicates
+        const { data: existingDrafts } = await buSupabase
+          .from('okr_team_objectives')
+          .select('id')
+          .eq('team_id', teamIdParam)
+          .eq('cycle_id', planningQuarter.id)
+          .eq('status', 'draft')
+          .is('deleted_at', null);
+
+        const existingIds = new Set((existingDrafts || []).map(d => d.id));
+
+        for (const entry of proposedOkrs) {
+          const objTitle = entry.objective?.title?.trim();
+          if (!objTitle) continue;
+
+          // If this entry was seeded from an existing draft (has real UUID), skip creation
+          if (existingIds.has(entry.id)) continue;
+
+          // Create draft objective
+          const { data: newObj, error: objError } = await buSupabase
+            .from('okr_team_objectives')
+            .insert({
+              bu_id: currentBuId,
+              team_id: teamIdParam,
+              title: objTitle,
+              description: entry.objective.description || null,
+              org_objective_id: entry.objective.org_objective_id || null,
+              cycle_id: planningQuarter.id,
+              year: new Date().getFullYear(),
+              status: 'draft',
+            })
+            .select('id')
+            .single();
+
+          if (objError) {
+            console.error('[QbrPre] Error creating draft objective:', objError);
+            continue;
+          }
+
+          // Create draft KRs
+          const validKrs = (entry.draftKrs || []).filter(kr => kr.title?.trim());
+          for (const kr of validKrs) {
+            const { error: krError } = await buSupabase
+              .from('okr_team_key_results')
+              .insert({
+                bu_id: currentBuId,
+                team_id: teamIdParam,
+                team_objective_id: newObj.id,
+                title: kr.title.trim(),
+                baseline: kr.baseline ?? 0,
+                current_value: kr.baseline ?? 0,
+                target: kr.target ?? 0,
+                unit: kr.unit || '%',
+                direction: kr.direction || 'up',
+                status: 'not_started',
+                type: kr.type || 'foundational',
+                owner_user_id: kr.owner_user_id || null,
+                linked_org_kr_id: kr.linked_org_kr_id || null,
+              });
+
+            if (krError) {
+              console.error('[QbrPre] Error creating draft KR:', krError);
+            }
+          }
+        }
+      }
+
       await clearDraft();
       toast.success('Pré-QBR concluído!');
       navigate('/okrs');
     } catch (error) {
       handleError(error, { context: 'QBR Pre Complete' });
     }
-  }, [clearDraft, navigate]);
+  }, [clearDraft, navigate, draft.data.proposedOkrs, planningQuarter, teamIdParam, buSupabase, currentBuId]);
 
   const handleClose = useCallback(() => {
     clearDraft();
