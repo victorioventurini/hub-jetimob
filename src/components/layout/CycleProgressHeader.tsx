@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useHeaderCycleProgress, type HeaderQuarterProgress } from "@/modules/okrs/hooks/useHeaderCycleProgress";
@@ -31,11 +32,15 @@ function QuarterMiniBlock({ quarter }: { quarter: HeaderQuarterProgress }) {
   const styles = quarterStateStyles[quarter.state];
   const stateLabel = quarter.state === "done" ? "concluído" : quarter.state === "active" ? "ativo" : "futuro";
 
-  return (
+  const block = (
     <div
-      className={cn("rounded-md border px-2 py-1 min-w-[50px]", styles.container)}
+      className={cn(
+        "rounded-md border px-2 py-1 min-w-[50px]",
+        styles.container,
+        quarter.cycleId && "cursor-pointer hover:opacity-80 transition-opacity",
+      )}
       aria-label={`${quarter.label} ${stateLabel} ${quarter.percent}%`}
-      title={`${quarter.label} · ${stateLabel} · ${quarter.percent}%`}
+      title={`${quarter.label} · ${stateLabel} · ${quarter.percent}% — Clique para ver OKRs`}
     >
       <div className="text-[10px] font-semibold leading-none">{quarter.label}</div>
       <div className={cn("mt-1 h-[3px] w-full overflow-hidden rounded-full", styles.track)}>
@@ -45,6 +50,14 @@ function QuarterMiniBlock({ quarter }: { quarter: HeaderQuarterProgress }) {
         />
       </div>
     </div>
+  );
+
+  if (!quarter.cycleId) return block;
+
+  return (
+    <Link to={`/okrs?cycle_id=${quarter.cycleId}`} className="no-underline">
+      {block}
+    </Link>
   );
 }
 
