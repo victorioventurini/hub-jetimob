@@ -133,6 +133,16 @@ export function OkrDashboardFilters({
         triggerClassName="w-[90px] sm:w-[100px]"
       />
 
+      {/* Quarter filter - only for team/my views */}
+      {showQuarterFilter && (
+        <SimpleSelect
+          value={filters.cycleId ?? 'all'}
+          onValueChange={(value) => onFiltersChange({ ...filters, cycleId: value === 'all' ? undefined : value })}
+          options={[{ value: 'all', label: 'Todos os quarters' }, ...quarterCycles]}
+          triggerClassName="w-[160px] sm:w-[180px]"
+        />
+      )}
+
       {/* Team filter */}
       <TeamSelect
         value={filters.teamId}
