@@ -8,13 +8,13 @@ O acesso aos rituais de gestão é controlado por janelas temporais rigorosas ba
 - MBR₂ (`review_date`): Revisão do 2º mês — 1ª terça-feira do 3º mês do quarter
 - O 3º mês é dedicado ao QBR (sem MBR)
 
-**Mapeamento de janelas (dias úteis):**
+**Mapeamento de janelas (dias úteis salvo indicação):**
 - `mbr-pre-first`: review_date_first_month -5du a -1du
 - `mbr-first`: review_date_first_month a +2du
 - `mbr-pre`: review_date -5du a -1du
 - `mbr`: review_date a +2du
-- `qbr-pre`: planning_date a retro_date -1du
-- `qbr-pre-clevel`: planning_date +5du a retro_date -1du
+- `qbr-pre`: planning_date a retro_date -2 dias corridos
+- `qbr-pre-clevel`: planning_date +5du a retro_date -2 dias corridos
 - `qbr-meeting`: retro_date a +2du
 - `qbr-post`: retro_date a +5du
 - Check-ins: start_date a end_date
