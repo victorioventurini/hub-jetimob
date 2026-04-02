@@ -501,6 +501,7 @@ interface KeyResultRowProps {
   kr: KeyResult;
   type: 'org' | 'team';
   objectiveTitle?: string;
+  objectiveStatus?: string;
   teamName?: string;
   canEdit?: boolean;
   /** Se o usuário pode fazer check-in (responsável mesmo sem ser líder) */
@@ -525,7 +526,7 @@ interface KeyResultRowProps {
   onShowHistory: () => void;
 }
 
-function KeyResultRow({ kr, type, objectiveTitle, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, hasPrimaryKpi = false, primaryKpiInfo, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
+function KeyResultRow({ kr, type, objectiveTitle, objectiveStatus, teamName, canEdit = false, canCheckin = false, filterInitiativesForUser, defaultInitiativesExpanded = false, hasPrimaryKpi = false, primaryKpiInfo, onEdit, onCheckin, onShowHistory }: KeyResultRowProps) {
   const [showInitiatives, setShowInitiatives] = useState(defaultInitiativesExpanded);
   const { data: initiativesCount = 0 } = useKrInitiativesCount(type === 'team' ? kr.id : undefined);
   const currentProfileId = useProfileId();
