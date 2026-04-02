@@ -341,6 +341,7 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
                       kr={kr} 
                       type={type}
                       objectiveTitle={objective.title}
+                      objectiveStatus={objective.status}
                       teamName={teamName}
                       canEdit={canEdit}
                       canCheckin={canCheckin || canEdit}
