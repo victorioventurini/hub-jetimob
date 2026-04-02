@@ -34,7 +34,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useActiveCycles } from '@/modules/okrs/hooks';
+import { useActiveCycle } from '@/modules/okrs/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
@@ -257,11 +257,9 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
 
 function useQbrStatus() {
   const supabase = useBuScopedSupabase();
-  const { data: activeCycles } = useActiveCycles();
-  const quarterlyCycle = useMemo(
-    () => activeCycles?.find(c => c.type === 'quarter') || null,
-    [activeCycles]
-  );
+  // Use status-based active cycle (not date-based) to correctly detect
+  // cycles that are still formally active even after their end_date (e.g., during QBR period)
+  const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
 
   const { data, isLoading } = useQuery({
     queryKey: ['qbr', 'cycle-status-wizards', quarterlyCycle?.id],
