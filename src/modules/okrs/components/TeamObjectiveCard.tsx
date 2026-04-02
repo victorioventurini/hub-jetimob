@@ -312,7 +312,14 @@ export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objecti
                         {index + 1}.
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{kr.title}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{kr.title}</p>
+                          {isDraft && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20">
+                              Rascunho
+                            </Badge>
+                          )}
+                        </div>
                         <OkrProgressBar
                           baseline={kr.baseline}
                           current={kr.current_value}
