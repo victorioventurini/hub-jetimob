@@ -44,6 +44,11 @@ export function InitiativeCard({ initiative, isDraft = false, onQuickUpdate, onE
             {/* Status badge row */}
             <div className="flex items-center gap-2">
               <InitiativeStatusBadge status={initiative.status} />
+              {isDraft && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20">
+                  Rascunho
+                </Badge>
+              )}
               {initiative.priority && initiative.priority !== 'medium' && (
                 <span className={`flex items-center text-xs ${getInitiativePriorityColor(initiative.priority)}`}>
                   <Flag className="w-3 h-3 mr-0.5" />
