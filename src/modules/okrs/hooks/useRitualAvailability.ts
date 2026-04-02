@@ -55,6 +55,12 @@ function parseDate(dateStr: string | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function calendarDaysOffset(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 function formatDateBR(date: Date): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
@@ -150,7 +156,7 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       const retro = parseDate(c.retro_date);
       return {
         opens: parseDate(c.planning_date),
-        closes: retro ? addBusinessDaysToDate(retro, -1) : null,
+        closes: retro ? calendarDaysOffset(retro, -2) : null,
       };
     },
   },
@@ -161,7 +167,7 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       if (!planning) return { opens: null, closes: null };
       return {
         opens: addBusinessDaysToDate(planning, 5),
-        closes: retro ? addBusinessDaysToDate(retro, -1) : null,
+        closes: retro ? calendarDaysOffset(retro, -2) : null,
       };
     },
   },
