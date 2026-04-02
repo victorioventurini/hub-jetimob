@@ -34,6 +34,7 @@ interface OkrDashboardFiltersProps {
   teams: Team[];
   years: number[];
   showSharedFilter?: boolean;
+  activeView?: 'company' | 'team' | 'my';
 }
 
 const STATUS_OPTIONS: OkrCalculatedStatus[] = ['on_track', 'at_risk', 'off_track', 'not_started', 'completed'];
