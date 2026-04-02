@@ -29,7 +29,6 @@ import { calculateProgress } from '../types';
 import { KrHistoryDialog } from '../components/KrHistoryDialog';
 import { useActiveCycles, useCycles } from '../hooks/useCycleData';
 import { parseISO } from 'date-fns';
-import { KrHistoryDialog } from '../components/KrHistoryDialog';
 
 import { OkrViewSelector, OkrView } from '../components/dashboard/OkrViewSelector';
 import { OkrDashboardFilters } from '../components/dashboard/OkrDashboardFilters';
