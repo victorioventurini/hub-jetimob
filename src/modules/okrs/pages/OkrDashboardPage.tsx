@@ -246,7 +246,14 @@ export default function OkrDashboardPage() {
         }))
         .filter(obj => obj.key_results.length > 0);
     }
-    return teamObjectives || [];
+    // Sort team objectives by team name (alphabetical), then by created_at desc
+    return [...(teamObjectives || [])].sort((a, b) => {
+      const teamA = (a as any).team?.name?.toLowerCase() || '';
+      const teamB = (b as any).team?.name?.toLowerCase() || '';
+      if (teamA !== teamB) return teamA.localeCompare(teamB, 'pt-BR');
+      // Same team: keep created_at desc (already from query)
+      return 0;
+    });
   }, [activeView, orgObjectives, teamObjectives, myObjectives, myKrs]);
 
   // Risk count for alert
