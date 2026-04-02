@@ -172,12 +172,23 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
     );
   }
 
+  const isObjectiveDraft = objective.status === 'draft';
+
   return (
     <>
       <Card className={cn(
         "transition-all duration-200",
-        isExpanded && "ring-1 ring-border shadow-md"
+        isExpanded && "ring-1 ring-border shadow-md",
+        isObjectiveDraft && "opacity-80 border-dashed"
       )}>
+        {isObjectiveDraft && (
+          <div className="bg-status-gray-muted border-b border-dashed border-status-gray/30 px-4 py-1.5 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-status-gray animate-pulse" />
+            <span className="text-xs font-medium text-status-gray-muted-foreground">
+              Objetivo em rascunho — KRs e Iniciativas ainda não estão ativos
+            </span>
+          </div>
+        )}
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
           <CollapsibleTrigger asChild>
             <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
