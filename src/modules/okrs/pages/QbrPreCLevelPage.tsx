@@ -29,6 +29,7 @@ import { handleError } from '@/lib/errorMessages';
 // Step components
 import {
   QbrCLevelSystemReadStep,
+  QbrCLevelQuarterBalanceStep,
   QbrCLevelStrategicStep,
   QbrCLevelOkrValidationStep,
   QbrCLevelDirectivesStep,
@@ -55,13 +56,14 @@ import {
 
 const WIZARD_STEPS = [
   { id: 'system-read' as const, label: 'Leitura do Sistema', description: 'Consolidação dos pré-QBRs' },
+  { id: 'quarter-balance' as const, label: 'Balanço do Quarter', description: 'Desempenho do ciclo' },
   { id: 'strategic-analysis' as const, label: 'Análise Estratégica', description: 'Reflexão C-Level' },
   { id: 'okr-validation' as const, label: 'Validação de OKRs', description: 'Calibração das propostas' },
   { id: 'directives' as const, label: 'Direcionamentos', description: 'Pauta do QBR' },
   { id: 'feedback' as const, label: 'Avaliação do Rito', description: 'Feedback' },
 ];
 
-const STEP_ORDER: QbrPreCLevelStep[] = ['system-read', 'strategic-analysis', 'okr-validation', 'directives', 'feedback'];
+const STEP_ORDER: QbrPreCLevelStep[] = ['system-read', 'quarter-balance', 'strategic-analysis', 'okr-validation', 'directives', 'feedback'];
 
 const DEFAULT_DATA: QbrCLevelDraftData = {
   cycleId: '',
@@ -340,6 +342,16 @@ export default function QbrPreCLevelPage() {
             orgKpiSnapshots={orgKpis || []}
             teamsWithoutSubmission={teamsWithoutSubmission}
             onContinue={goNext}
+          />
+        );
+
+      case 'quarter-balance':
+        return (
+          <QbrCLevelQuarterBalanceStep
+            cycleId={quarterlyCycle!.id}
+            year={new Date(quarterlyCycle!.start_date).getFullYear()}
+            onContinue={goNext}
+            onBack={goBack}
           />
         );
 
