@@ -5,7 +5,7 @@
  * @see docs/HUB_TECHNICAL_DEEP_DIVE.md — QBR Ritual
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
