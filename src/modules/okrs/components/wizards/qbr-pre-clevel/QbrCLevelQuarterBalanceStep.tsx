@@ -412,7 +412,7 @@ export function QbrCLevelQuarterBalanceStep({
               {teamScorecards.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhum time tem KRs vinculadas a OKRs organizacionais neste quarter.</p>
+                  <p className="text-sm">Nenhum time tem KRs vinculadas a OKRs organizacionais no {cycleName}.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
