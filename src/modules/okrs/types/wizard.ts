@@ -531,6 +531,8 @@ export interface QbrMeetingDraftData {
   crossCommitments: QbrMeetingSnapshot['crossCommitments'];
   governanceChecklist: QbrMeetingGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
+  /** IDs de KRs org marcadas como "gap intencional" no mapa de cobertura */
+  intentionalGaps?: string[];
 }
 
 /** Draft data do pós-QBR */
