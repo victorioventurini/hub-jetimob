@@ -2,23 +2,31 @@
  * QbrMeetingOpeningStep - Step 1: Abertura e Direcionamentos do C-Level
  * 
  * Carrega relatório pré-QBR e direcionamentos do C-Level como pauta pré-definida.
- * Inclui scorecard do quarter, pauta obrigatória e agenda da reunião.
+ * Inclui scorecard do quarter, OKRs org, pauta obrigatória e agenda da reunião.
  */
 
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import {
   Presentation, Megaphone, Target, Activity, HelpCircle, Lightbulb, Ban, Swords,
-  TrendingUp, AlertTriangle, XCircle, Users, ListChecks, CheckCircle2,
+  TrendingUp, AlertTriangle, XCircle, Users, ListChecks, CheckCircle2, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
 } from '../shared';
-import type { QbrCLevelSnapshot, QbrPreSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
+import { OkrProgressBar } from '../../OkrProgressBar';
+import { OkrStatusBadge } from '../../OkrStatusBadge';
+import type { QbrCLevelSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
 // ============================================================
 // TYPES
@@ -37,6 +45,7 @@ export interface QbrMeetingOpeningStepProps {
   cLevelSessionExists: boolean;
   leaderSummaryCount: number;
   orgKpiSnapshots: MbrKpiSnapshot[];
+  orgObjectives: OrgObjectiveWithKrs[];
   scorecardMetrics: QbrMeetingScorecardMetrics;
   currentStepIndex: number;
   onContinue: () => void;
@@ -67,6 +76,12 @@ const MEETING_AGENDA = [
   { title: 'Compromissos cross-área', subtitle: 'Formalizar dependências' },
   { title: 'Encerramento e governança', subtitle: 'Checklist e feedback' },
 ];
+
+const AGG_STATUS_CONFIG = {
+  on_track: { label: 'No ritmo', className: 'bg-status-green-muted text-status-green' },
+  at_risk: { label: 'Em risco', className: 'bg-status-amber-muted text-status-amber' },
+  off_track: { label: 'Fora da meta', className: 'bg-status-red-muted text-status-red' },
+} as const;
 
 // ============================================================
 // SUB-COMPONENTS
@@ -101,6 +116,67 @@ function ScorecardGrid({ metrics }: { metrics: QbrMeetingScorecardMetrics }) {
             );
           })}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function OrgOkrsSummary({ objectives }: { objectives: OrgObjectiveWithKrs[] }) {
+  if (objectives.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Target className="h-4 w-4" />
+          OKRs da Empresa neste Quarter ({objectives.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {objectives.map(obj => (
+          <Collapsible key={obj.id} defaultOpen={false}>
+            <CollapsibleTrigger className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/30 transition-colors text-left">
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
+              <span className="font-medium truncate flex-1 min-w-0">{obj.title}</span>
+              <Badge variant="outline" className={cn('text-[10px] shrink-0', AGG_STATUS_CONFIG[obj.aggregatedStatus]?.className)}>
+                {AGG_STATUS_CONFIG[obj.aggregatedStatus]?.label || obj.aggregatedStatus}
+              </Badge>
+              <span className="text-xs text-muted-foreground shrink-0">{obj.aggregatedProgress.toFixed(0)}%</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-6 space-y-2 pt-1">
+              {obj.orgKrs.map(orgKr => (
+                <div key={orgKr.id} className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <OkrStatusBadge status={orgKr.status} type="kr" className="shrink-0" />
+                    <span className="text-xs truncate flex-1">{orgKr.title}</span>
+                  </div>
+                  <OkrProgressBar
+                    baseline={orgKr.baseline}
+                    current={orgKr.current_value}
+                    target={orgKr.target}
+                    direction={orgKr.direction}
+                    status={orgKr.status}
+                    size="sm"
+                  />
+                  {orgKr.linkedTeamKrs.length > 0 ? (
+                    <div className="pl-3 space-y-0.5 border-l-2 border-primary/20">
+                      {orgKr.linkedTeamKrs.map(tkr => (
+                        <div key={tkr.id} className="flex items-center gap-2 text-xs">
+                          <OkrStatusBadge status={tkr.status} type="kr" className="shrink-0 scale-75" />
+                          <span className="text-muted-foreground truncate">{tkr.team_name}</span>
+                          <span className="truncate flex-1">{tkr.title}</span>
+                          <span className="text-muted-foreground shrink-0">{tkr.progress.toFixed(0)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground italic pl-3">Sem contribuição neste quarter</p>
+                  )}
+                </div>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
       </CardContent>
     </Card>
   );
@@ -161,6 +237,7 @@ export function QbrMeetingOpeningStep({
   cLevelSessionExists,
   leaderSummaryCount,
   orgKpiSnapshots,
+  orgObjectives,
   scorecardMetrics,
   currentStepIndex,
   onContinue,
@@ -187,12 +264,15 @@ export function QbrMeetingOpeningStep({
         {/* Bloco 1 — Scorecard do quarter */}
         <ScorecardGrid metrics={scorecardMetrics} />
 
-        {/* Bloco 2 — Pauta obrigatória do C-Level */}
+        {/* Bloco 2 — OKRs da empresa neste quarter */}
+        <OrgOkrsSummary objectives={orgObjectives} />
+
+        {/* Bloco 3 — Pauta obrigatória do C-Level */}
         {cLevelStrategicAnalysis?.whatNotToDo && (
           <Card className="border-status-red/20">
             <CardContent className="p-3">
               <p className="text-xs font-medium text-status-red mb-1 flex items-center gap-1">
-                <Ban className="h-3 w-3" /> O que NÃO fazer
+                <Ban className="h-3 w-3" /> Veto do C-Level
               </p>
               <p className="text-sm text-muted-foreground">{cLevelStrategicAnalysis.whatNotToDo}</p>
             </CardContent>
@@ -233,7 +313,7 @@ export function QbrMeetingOpeningStep({
           </Card>
         )}
 
-        {/* KPIs em alerta (mantido) */}
+        {/* Bloco 4 — KPIs em alerta (mantido) */}
         {alertKpis.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
@@ -258,7 +338,7 @@ export function QbrMeetingOpeningStep({
           </Card>
         )}
 
-        {/* Bloco 3 — Agenda da reunião */}
+        {/* Bloco 5 — Agenda da reunião */}
         <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
       </div>
     </WizardStepScaffold>
