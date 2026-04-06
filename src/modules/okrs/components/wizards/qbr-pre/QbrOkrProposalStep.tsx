@@ -56,8 +56,8 @@ export interface QbrOkrProposalStepProps {
 // CONSTANTS
 // ============================================================
 
-const MAX_OBJECTIVES = 3;
-const MAX_KRS_PER_OBJECTIVE = 3;
+const MAX_OBJECTIVES = OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM;
+const MAX_KRS_PER_OBJECTIVE = OKR_LIMITS.MAX_KRS_PER_OBJECTIVE;
 
 const DIRECTION_OPTIONS: { value: OkrDirection; label: string; icon: typeof TrendingUp }[] = [
   { value: 'up', label: 'Aumentar', icon: TrendingUp },
