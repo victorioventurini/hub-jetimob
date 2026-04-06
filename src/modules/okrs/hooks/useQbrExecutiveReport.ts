@@ -86,19 +86,17 @@ export function useQbrExecutiveReport(cycleId: string | null) {
         .eq('cycle_id', cycleId!)
         .eq('bu_id', currentBuId!);
 
-      const sessionRow: Database['public']['Tables']['okr_wizard_sessions']['Insert'] = {
-        wizard_type: 'qbr-executive-report',
-        cycle_id: cycleId!,
-        bu_id: currentBuId!,
-        user_id: profile?.id ?? null,
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        reflection_data: reportData as unknown as Database['public']['Enums'] extends never ? any : any,
-      };
-
       const { error: insertError } = await supabase
         .from('okr_wizard_sessions')
-        .insert(sessionRow);
+        .insert({
+          wizard_type: 'qbr-executive-report',
+          cycle_id: cycleId!,
+          bu_id: currentBuId!,
+          started_by: profile?.id ?? '',
+          status: 'completed' as const,
+          completed_at: new Date().toISOString(),
+          reflection_data: reportData as unknown as Json,
+        });
 
       if (insertError) {
         console.warn('Failed to persist report, displaying without persistence:', insertError);
