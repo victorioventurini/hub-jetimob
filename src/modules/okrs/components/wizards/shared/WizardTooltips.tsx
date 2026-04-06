@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { HelpCircle, Info, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 
 // ============================================================
 // TOOLTIP DEFINITIONS
