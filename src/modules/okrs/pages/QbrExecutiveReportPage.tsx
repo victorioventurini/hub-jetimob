@@ -244,7 +244,7 @@ function ReportDisplay({
                     <td className="py-2 text-right text-muted-foreground">{krCount} KRs</td>
                   </tr>
                   );
-                ))}
+                })}
               </tbody>
             </table>
           </div>
