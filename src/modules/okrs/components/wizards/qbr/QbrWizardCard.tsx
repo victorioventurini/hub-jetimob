@@ -51,7 +51,7 @@ const QBR_PHASES: QbrPhase[] = [
     audience: 'leader',
   },
   {
-    status: ['collecting', 'reviewing'],
+    status: ['open', 'collecting', 'reviewing'],
     label: 'QBR Pre — C-Level',
     description: 'Análise estratégica consolidada e direcionamentos',
     route: '/okrs/qbr-pre-clevel',

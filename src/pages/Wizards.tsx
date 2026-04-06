@@ -203,7 +203,7 @@ function getQbrLeaderWizards(qbrStatus: QbrStatus): WizardDefinition[] {
 function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
   const wizards: WizardDefinition[] = [];
 
-  if (qbrStatus === 'collecting' || qbrStatus === 'reviewing') {
+  if (qbrStatus === 'open' || qbrStatus === 'collecting' || qbrStatus === 'reviewing') {
     wizards.push({
       id: 'qbr-pre-clevel',
       name: 'QBR Pre — C-Level',
