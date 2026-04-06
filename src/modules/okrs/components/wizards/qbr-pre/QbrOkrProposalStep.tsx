@@ -32,6 +32,7 @@ import {
 import { BuUserSelect, UnitSelect } from '@/components/selects';
 import { useProposalValidation } from '@/modules/okrs/hooks/useProposalValidation';
 import { ProposalValidationCard } from './ProposalValidationCard';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 import type {
   DraftTeamKr,
   OkrDirection,
@@ -55,8 +56,8 @@ export interface QbrOkrProposalStepProps {
 // CONSTANTS
 // ============================================================
 
-const MAX_OBJECTIVES = 3;
-const MAX_KRS_PER_OBJECTIVE = 3;
+const MAX_OBJECTIVES = OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM;
+const MAX_KRS_PER_OBJECTIVE = OKR_LIMITS.MAX_KRS_PER_OBJECTIVE;
 
 const DIRECTION_OPTIONS: { value: OkrDirection; label: string; icon: typeof TrendingUp }[] = [
   { value: 'up', label: 'Aumentar', icon: TrendingUp },
