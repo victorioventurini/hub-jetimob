@@ -4,7 +4,7 @@
  * Seção A: OKRs Organizacionais com contribuições dos times
  * Seção B: Scorecard de entrega por time
  *
- * Usa hooks existentes: useAllOrgObjectivesView, useTeamOverviewMetrics
+ * Usa hook existente: useAllOrgObjectivesView
  * Sem campos de input — step puramente informativo.
  */
 
@@ -41,7 +41,7 @@ import { useBu } from '@/contexts/BuContext';
 import { useQuery } from '@tanstack/react-query';
 import { differenceInDays, parseISO } from 'date-fns';
 import { LoadingState } from '@/components/ui/loading-state';
-import type { OrgObjectiveWithKrs, OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggregateTypes';
+import type { OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggregateTypes';
 
 // ============================================================
 // TYPES
@@ -52,6 +52,33 @@ interface QbrCLevelQuarterBalanceStepProps {
   year: number;
   onContinue: () => void;
   onBack: () => void;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+/** Build CalculateKrStateParams from a KR-like object */
+function buildKrStateParams(kr: {
+  baseline: number;
+  current_value: number;
+  target: number;
+  direction: string;
+  status: string;
+  last_checkin_at: string | null;
+}) {
+  const now = new Date();
+  const progress = calculateProgress(kr.baseline ?? 0, kr.current_value ?? 0, kr.target ?? 0, kr.direction as any);
+  const daysSinceCheckin = kr.last_checkin_at
+    ? differenceInDays(now, parseISO(kr.last_checkin_at))
+    : 999;
+
+  return {
+    progress,
+    status: (kr.status || 'not_started') as 'green' | 'yellow' | 'red' | 'not_started',
+    daysSinceCheckin,
+    cycleEnded: false, // QBR Pre happens while cycle is still active/closing
+  };
 }
 
 // ============================================================
@@ -69,14 +96,7 @@ function AggregatedStatusBadge({ status }: { status: 'on_track' | 'at_risk' | 'o
 }
 
 function TeamKrRow({ tkr }: { tkr: TeamKrLinked }) {
-  const krState = calculateKrState({
-    currentValue: tkr.current_value,
-    target: tkr.target,
-    baseline: tkr.baseline,
-    ragStatus: tkr.status,
-    lastCheckinAt: tkr.last_checkin_at,
-    direction: tkr.direction,
-  });
+  const krState = calculateKrState(buildKrStateParams(tkr));
 
   return (
     <div className="flex items-center gap-3 py-1.5 pl-6 text-sm min-w-0">
@@ -94,14 +114,10 @@ function TeamKrRow({ tkr }: { tkr: TeamKrLinked }) {
 }
 
 function OrgKrCard({ orgKr }: { orgKr: OrgKrWithTeamKrs }) {
-  const krState = calculateKrState({
-    currentValue: orgKr.current_value,
-    target: orgKr.target,
-    baseline: orgKr.baseline,
-    ragStatus: orgKr.status,
-    lastCheckinAt: null,
-    direction: orgKr.direction,
-  });
+  const krState = calculateKrState(buildKrStateParams({
+    ...orgKr,
+    last_checkin_at: null,
+  }));
 
   return (
     <div className="space-y-2">
@@ -133,7 +149,7 @@ function OrgKrCard({ orgKr }: { orgKr: OrgKrWithTeamKrs }) {
   );
 }
 
-function OrgObjectiveCard({ objective }: { objective: OrgObjectiveWithKrs }) {
+function OrgObjectiveCard({ objective }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs }) {
   return (
     <Collapsible defaultOpen>
       <div className="border rounded-lg overflow-hidden">
@@ -178,7 +194,6 @@ function getHealthScore(metrics: {
   totalKrs: number;
   krsAtRisk: number;
   krsStagnant: number;
-  krsUpdatedOnTime: number;
 }): 'healthy' | 'attention' | 'risk' {
   if (metrics.totalKrs === 0) return 'attention';
   const riskRatio = (metrics.krsAtRisk + metrics.krsStagnant) / metrics.totalKrs;
@@ -272,27 +287,12 @@ export function QbrCLevelQuarterBalanceStep({
     },
   });
 
-  const teamIds = useMemo(() => (teams || []).map(t => t.id), [teams]);
-
   // Section A: Org OKRs with team contributions
   const { data: orgObjectives, isLoading: isLoadingOrg } = useAllOrgObjectivesView(year, cycleId);
 
-  // Section B: Team metrics
-  const { data: teamMetricsData, isLoading: isLoadingMetrics } = useTeamOverviewMetrics(cycleId, teamIds);
-
-  // Build scorecard data
+  // Build scorecard data from orgObjectives (derive per-team metrics)
   const teamScorecards: TeamScorecardData[] = useMemo(() => {
-    if (!teams || !teamMetricsData) return [];
-
-    const metrics = teamMetricsData.metrics;
-    // useTeamOverviewMetrics returns aggregated metrics for all teams
-    // We need per-team breakdown — for now, show aggregated as a single view
-    // since the hook aggregates across all teamIds
-    // For per-team cards, we'd need to call the hook per team or refactor
-    // Workaround: show one card per team with proportional estimates from aggregated data
-    // Better approach: since we have orgObjectives data, derive per-team metrics from there
-
-    if (!orgObjectives) return [];
+    if (!teams || !orgObjectives) return [];
 
     const teamMap = new Map<string, TeamScorecardData>();
     for (const t of teams) {
@@ -318,14 +318,7 @@ export function QbrCLevelQuarterBalanceStep({
 
           entry.totalKrs++;
 
-          const state = calculateKrState({
-            currentValue: tkr.current_value,
-            target: tkr.target,
-            baseline: tkr.baseline,
-            ragStatus: tkr.status,
-            lastCheckinAt: tkr.last_checkin_at,
-            direction: tkr.direction,
-          });
+          const state = calculateKrState(buildKrStateParams(tkr));
 
           if (state === 'achieved' || state === 'exceeded') entry.achieved++;
           else if (state === 'healthy') entry.onTrack++;
@@ -343,14 +336,13 @@ export function QbrCLevelQuarterBalanceStep({
         totalKrs: entry.totalKrs,
         krsAtRisk: entry.atRisk,
         krsStagnant: entry.stagnant,
-        krsUpdatedOnTime: entry.onTrack + entry.achieved,
       });
     }
 
     return Array.from(teamMap.values()).filter(t => t.totalKrs > 0);
-  }, [teams, orgObjectives, teamMetricsData]);
+  }, [teams, orgObjectives]);
 
-  const isLoading = isLoadingTeams || isLoadingOrg || isLoadingMetrics;
+  const isLoading = isLoadingTeams || isLoadingOrg;
 
   return (
     <WizardStepScaffold
