@@ -64,12 +64,12 @@ describe('okrsKeys', () => {
   describe('team level keys', () => {
     it('should create teamObjectives key with buId and teamId', () => {
       const key = okrsKeys.teamObjectives('bu-123', 'team-456');
-      expect(key).toEqual(['okr-team-objectives', 'bu-123', 'team-456']);
+      expect(key).toEqual(['okr-team-objectives', 'bu-123', 'team-456', undefined]);
     });
 
     it('should create teamKeyResults key', () => {
       const key = okrsKeys.teamKeyResults('bu-123', 'team-456');
-      expect(key).toEqual(['okr-team-key-results', 'bu-123', 'team-456']);
+      expect(key).toEqual(['okr-team-key-results', 'bu-123', 'team-456', undefined]);
     });
 
     it('should create myTeamKeyResults key with userId', () => {
