@@ -166,7 +166,6 @@ export function useQbrExecutiveReport(cycleId: string | null) {
         report: data,
         generatedAt: new Date().toISOString(),
       });
-      queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: any) => {
       console.error('Failed to generate QBR report:', error);
