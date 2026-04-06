@@ -549,6 +549,13 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   // Clear draft (after successful completion)
   // Returns the sessionId (existing or newly created) for post-completion actions
   const clearDraft = useCallback(async (): Promise<string | null> => {
+    // Guard against double-invocation (e.g. double-click on Complete button)
+    if (isCompletingRef.current) {
+      console.warn('[useGenericWizardDraft] clearDraft already in progress, skipping duplicate call');
+      return null;
+    }
+    isCompletingRef.current = true;
+
     // Clear localStorage
     try {
       localStorage.removeItem(storageKey);
