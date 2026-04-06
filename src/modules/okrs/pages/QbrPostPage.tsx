@@ -29,7 +29,9 @@ import type { ApprovedTeamOkr } from '@/modules/okrs/components/wizards/qbr-post
 import {
   normalizeProposedOkrs,
   type QbrPostStep, type QbrPostDraftData, type TeamCheckinDecision, type QbrMeetingSnapshot,
+  type QbrCLevelSnapshot,
 } from '@/modules/okrs/types/wizard';
+import type { QbrPostMinutesSummaryData } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
 
 const WIZARD_STEPS = [
   { id: 'okr-promotion' as const, label: 'Promoção de OKRs', description: 'Criar OKRs aprovados' },
