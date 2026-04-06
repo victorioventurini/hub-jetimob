@@ -97,7 +97,11 @@ export function useQbrExecutiveReport(cycleId: string | null) {
 
       return reportData as QbrExecutiveReportData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, {
+        report: data,
+        generatedAt: new Date().toISOString(),
+      });
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: any) => {
