@@ -312,22 +312,9 @@ export default function QbrPreCLevelPage() {
     return <LoadingState text="Carregando dados do pré-QBR C-Level..." fullPage />;
   }
 
-  // Guard
-  if (!qbrReviewing) {
-    // Check ritual window first
-    if (!availability.isAvailable) {
-      return <RitualUnavailableScreen wizardType="qbr-pre-clevel" availability={availability} />;
-    }
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center space-y-2">
-          <p className="text-lg font-medium">Pré-QBR C-Level não disponível</p>
-          <p className="text-sm text-muted-foreground">
-            O ciclo QBR precisa estar na fase de revisão (todos os líderes submeteram ou prazo expirou).
-          </p>
-        </div>
-      </div>
-    );
+  // Guard: only check ritual window availability
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="qbr-pre-clevel" availability={availability} />;
   }
 
   // Step render
