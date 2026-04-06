@@ -28,7 +28,7 @@ const OkrConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pag
 const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgConstructionReviewPage'));
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
-
+const QbrExecutiveReportPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrExecutiveReportPage'));
 /**
  * Helper para wrapping consistente de rotas OKR
  */
