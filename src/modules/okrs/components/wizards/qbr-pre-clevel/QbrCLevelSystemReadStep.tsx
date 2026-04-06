@@ -69,7 +69,13 @@ function aggregateZombieKpis(submissions: LeaderPreSubmission[]) {
 }
 
 function aggregateKpisToCreate(submissions: LeaderPreSubmission[]) {
-  return submissions.reduce((acc, sub) => acc + sub.snapshot.kpisToCreate.length, 0);
+  const items: Array<{ description: string; suggestedScope: string; relatedKrTitle: string; teamName: string }> = [];
+  for (const sub of submissions) {
+    for (const kpi of sub.snapshot.kpisToCreate) {
+      items.push({ ...kpi, teamName: sub.teamName });
+    }
+  }
+  return items;
 }
 
 function extractTopLearnings(submissions: LeaderPreSubmission[], field: 'whatWorked' | 'whatDidntWork' | 'debts'): string[] {
