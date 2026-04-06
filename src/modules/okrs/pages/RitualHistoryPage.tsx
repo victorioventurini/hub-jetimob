@@ -185,7 +185,7 @@ export default function RitualHistoryPage() {
         {/* Filters */}
         <ListPageFilters hideSearch>
           <Select value={typeState.value || 'all'} onValueChange={(v) => typeState.set(v)}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-full sm:w-[220px]">
               <SelectValue placeholder="Tipo de ritual" />
             </SelectTrigger>
             <SelectContent>
@@ -197,7 +197,7 @@ export default function RitualHistoryPage() {
 
           {teams && teams.length > 0 && (
             <Select value={teamState.value || 'all'} onValueChange={(v) => teamState.set(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Time" />
               </SelectTrigger>
               <SelectContent>
@@ -214,55 +214,57 @@ export default function RitualHistoryPage() {
             value={userState.value || undefined}
             onValueChange={(v) => userState.set(v || '')}
             placeholder="Usuário"
-            className="w-[220px]"
+            className="w-full sm:w-[220px]"
           />
 
           {/* Date filters */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="default" className={cn(
-                "w-[180px] justify-start text-left font-normal",
-                !dateFromState.value && "text-muted-foreground"
-              )}>
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                {dateFromState.value
-                  ? format(parseISO(dateFromState.value), 'dd/MM/yyyy', { locale: ptBR })
-                  : 'Data início'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
-                onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
-                className="p-3 pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="default" className={cn(
+                  "flex-1 sm:flex-none sm:w-[180px] justify-start text-left font-normal",
+                  !dateFromState.value && "text-muted-foreground"
+                )}>
+                  <CalendarIcon className="h-4 w-4 mr-2 shrink-0" />
+                  {dateFromState.value
+                    ? format(parseISO(dateFromState.value), 'dd/MM/yyyy', { locale: ptBR })
+                    : 'Data início'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
+                  onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                  className="p-3 pointer-events-auto"
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="default" className={cn(
-                "w-[180px] justify-start text-left font-normal",
-                !dateToState.value && "text-muted-foreground"
-              )}>
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                {dateToState.value
-                  ? format(parseISO(dateToState.value), 'dd/MM/yyyy', { locale: ptBR })
-                  : 'Data fim'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateToState.value ? parseISO(dateToState.value) : undefined}
-                onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
-                className="p-3 pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="default" className={cn(
+                  "flex-1 sm:flex-none sm:w-[180px] justify-start text-left font-normal",
+                  !dateToState.value && "text-muted-foreground"
+                )}>
+                  <CalendarIcon className="h-4 w-4 mr-2 shrink-0" />
+                  {dateToState.value
+                    ? format(parseISO(dateToState.value), 'dd/MM/yyyy', { locale: ptBR })
+                    : 'Data fim'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateToState.value ? parseISO(dateToState.value) : undefined}
+                  onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                  className="p-3 pointer-events-auto"
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Clear filters */}
           {(dateFromState.value !== default30DaysAgo || dateToState.value) && (
