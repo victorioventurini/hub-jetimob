@@ -104,7 +104,7 @@ export function QbrCLevelSystemReadStep({
 }: QbrCLevelSystemReadStepProps) {
   const krAgg = useMemo(() => aggregateKrStates(leaderSubmissions), [leaderSubmissions]);
   const zombieCount = useMemo(() => aggregateZombieKpis(leaderSubmissions), [leaderSubmissions]);
-  const kpisToCreateCount = useMemo(() => aggregateKpisToCreate(leaderSubmissions), [leaderSubmissions]);
+  const kpisToCreate = useMemo(() => aggregateKpisToCreate(leaderSubmissions), [leaderSubmissions]);
   const topLearnings = useMemo(() => ({
     worked: extractTopLearnings(leaderSubmissions, 'whatWorked'),
     didntWork: extractTopLearnings(leaderSubmissions, 'whatDidntWork'),
