@@ -358,9 +358,9 @@ export default function MbrPrePage() {
     }
   }, [clearDraft, navigate]);
 
-  const handleClose = useCallback(() => {
-    clearDraft();
-  }, [clearDraft]);
+  // handleClose is a no-op: FullPageWizardShell handles navigation.
+  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
+  const handleClose = useCallback(() => {}, []);
 
   const handleTeamChange = useCallback((newTeamId: string) => {
     discardDraft();

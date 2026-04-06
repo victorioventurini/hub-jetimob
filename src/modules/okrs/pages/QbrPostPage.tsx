@@ -178,7 +178,9 @@ export default function QbrPostPage() {
       navigate('/okrs');
     } catch (e) { handleError(e, { context: 'QBR Post Complete' }); }
   }, [clearDraft, navigate]);
-  const handleClose = useCallback(() => { clearDraft(); }, [clearDraft]);
+  // handleClose is a no-op: FullPageWizardShell handles navigation.
+  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
+  const handleClose = useCallback(() => {}, []);
 
   if (isLoadingCycles || isLoadingStatus) return <LoadingState text="Carregando pós-QBR..." fullPage />;
 

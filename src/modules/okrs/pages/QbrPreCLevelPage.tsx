@@ -305,9 +305,9 @@ export default function QbrPreCLevelPage() {
     }
   }, [clearDraft, navigate]);
 
-  const handleClose = useCallback(() => {
-    clearDraft();
-  }, [clearDraft]);
+  // handleClose is a no-op: FullPageWizardShell handles navigation.
+  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
+  const handleClose = useCallback(() => {}, []);
 
   // Loading
   if (isLoadingCycles || isLoadingStatus || isLoadingSessions) {
