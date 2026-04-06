@@ -970,6 +970,7 @@ export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
     description: 'Análise estratégica consolidada e direcionamentos para a reunião QBR',
     steps: [
       { id: 'system-read', label: 'Leitura do Sistema', shortLabel: 'Sistema' },
+      { id: 'quarter-balance', label: 'Balanço do Quarter', shortLabel: 'Balanço' },
       { id: 'strategic-analysis', label: 'Análise Estratégica', shortLabel: 'Estratégia' },
       { id: 'okr-validation', label: 'Validação de OKRs', shortLabel: 'Validação' },
       { id: 'directives', label: 'Direcionamentos', shortLabel: 'Direcionamentos' },
