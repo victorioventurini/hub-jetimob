@@ -7,15 +7,18 @@
  * - KPIs organizacionais com evolução
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   Eye, Target, Activity, BookOpen, Ghost, AlertTriangle,
-  TrendingUp, TrendingDown, Minus,
+  TrendingUp, TrendingDown, Minus, Sparkles, Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import {
   WizardStepHeader,
   WizardFirstStepFooter,
@@ -41,6 +44,12 @@ export interface QbrCLevelSystemReadStepProps {
   teamsWithoutSubmission: Array<{ teamId: string; teamName: string }>;
   isLoading?: boolean;
   onContinue: () => void;
+}
+
+interface LearningSummaries {
+  workedSummary: string;
+  didntWorkSummary: string;
+  debtsSummary: string;
 }
 
 // ============================================================
@@ -118,6 +127,40 @@ export function QbrCLevelSystemReadStep({
     leaderSubmissions.filter(s => s.addendums && s.addendums.length > 0),
     [leaderSubmissions]
   );
+
+  // AI Summary state
+  const [summaries, setSummaries] = useState<LearningSummaries | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
+  const hasLearnings = topLearnings.worked.length > 0 || topLearnings.didntWork.length > 0 || topLearnings.debts.length > 0;
+
+  const generateSummaries = useCallback(async () => {
+    if (isSummarizing) return;
+    setIsSummarizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('qbr-clevel-learnings-summary', {
+        body: {
+          worked: topLearnings.worked,
+          didntWork: topLearnings.didntWork,
+          debts: topLearnings.debts,
+        },
+      });
+
+      if (error) throw error;
+
+      const result = data?.data || data;
+      setSummaries({
+        workedSummary: result.workedSummary || '',
+        didntWorkSummary: result.didntWorkSummary || '',
+        debtsSummary: result.debtsSummary || '',
+      });
+    } catch (err) {
+      console.error('Failed to generate learnings summary:', err);
+      toast.error('Erro ao gerar resumo dos aprendizados');
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [topLearnings, isSummarizing]);
 
   return (
     <WizardStepScaffold
@@ -302,15 +345,41 @@ export function QbrCLevelSystemReadStep({
         {/* Aprendizados consolidados */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Aprendizados Consolidados
+            <CardTitle className="text-sm flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Aprendizados Consolidados
+              </div>
+              {hasLearnings && !summaries && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={generateSummaries}
+                  disabled={isSummarizing}
+                  className="gap-1.5 text-xs"
+                >
+                  {isSummarizing ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  {isSummarizing ? 'Gerando...' : 'Resumir com IA'}
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {topLearnings.worked.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
+                {summaries?.workedSummary && (
+                  <div className="mb-2 p-2 rounded-md bg-status-green/5 border border-status-green/20">
+                    <div className="flex items-start gap-1.5">
+                      <Sparkles className="h-3 w-3 text-status-green shrink-0 mt-0.5" />
+                      <p className="text-xs text-foreground">{summaries.workedSummary}</p>
+                    </div>
+                  </div>
+                )}
                 {topLearnings.worked.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
@@ -322,6 +391,14 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.didntWork.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
+                {summaries?.didntWorkSummary && (
+                  <div className="mb-2 p-2 rounded-md bg-status-red/5 border border-status-red/20">
+                    <div className="flex items-start gap-1.5">
+                      <Sparkles className="h-3 w-3 text-status-red shrink-0 mt-0.5" />
+                      <p className="text-xs text-foreground">{summaries.didntWorkSummary}</p>
+                    </div>
+                  </div>
+                )}
                 {topLearnings.didntWork.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
@@ -333,6 +410,14 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.debts.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
+                {summaries?.debtsSummary && (
+                  <div className="mb-2 p-2 rounded-md bg-status-amber/5 border border-status-amber/20">
+                    <div className="flex items-start gap-1.5">
+                      <Sparkles className="h-3 w-3 text-status-amber shrink-0 mt-0.5" />
+                      <p className="text-xs text-foreground">{summaries.debtsSummary}</p>
+                    </div>
+                  </div>
+                )}
                 {topLearnings.debts.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
