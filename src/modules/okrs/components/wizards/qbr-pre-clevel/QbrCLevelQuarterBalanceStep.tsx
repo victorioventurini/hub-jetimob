@@ -49,6 +49,7 @@ import type { OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggr
 
 interface QbrCLevelQuarterBalanceStepProps {
   cycleId: string;
+  cycleName: string;
   year: number;
   onContinue: () => void;
   onBack: () => void;
@@ -263,6 +264,7 @@ function TeamScorecardCard({ team }: { team: TeamScorecardData }) {
 
 export function QbrCLevelQuarterBalanceStep({
   cycleId,
+  cycleName,
   year,
   onContinue,
   onBack,
@@ -348,10 +350,10 @@ export function QbrCLevelQuarterBalanceStep({
   return (
     <WizardStepScaffold
       header={
-        <WizardStepHeader
+         <WizardStepHeader
           icon={BarChart3}
-          title="Balanço do Quarter"
-          description="Desempenho dos OKRs organizacionais e entrega dos times neste ciclo"
+          title={`Balanço do Quarter — ${cycleName}`}
+          description={`Desempenho dos OKRs organizacionais e entrega dos times no ${cycleName}`}
           variant="primary"
         />
       }
@@ -374,14 +376,14 @@ export function QbrCLevelQuarterBalanceStep({
               <div className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-base">
-                  Como foram os OKRs da empresa neste quarter
+                  Como foram os OKRs da empresa no {cycleName}
                 </h3>
               </div>
 
               {(!orgObjectives || orgObjectives.length === 0) ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhum OKR organizacional cadastrado para este ciclo.</p>
+                  <p className="text-sm">Nenhum OKR organizacional cadastrado para {year}.</p>
                   <Link
                     to="/okrs/org-view"
                     className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2"
@@ -410,7 +412,7 @@ export function QbrCLevelQuarterBalanceStep({
               {teamScorecards.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhum time tem KRs vinculadas a OKRs organizacionais neste quarter.</p>
+                  <p className="text-sm">Nenhum time tem KRs vinculadas a OKRs organizacionais no {cycleName}.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -163,9 +163,9 @@ export function useConstructionReview(
         .single();
 
       if (error) throw error;
-      // Extrair o ano do start_date ou do name (ex: "2026-Q1" -> 2026)
+      // Extrair o ano do start_date (substring para evitar bug de timezone)
       const year = data?.start_date 
-        ? new Date(data.start_date).getFullYear()
+        ? parseInt(data.start_date.substring(0, 4), 10)
         : parseInt(data?.name?.slice(0, 4) || '0');
       return { ...data, year };
     },
