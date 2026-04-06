@@ -104,6 +104,12 @@ export default function ExecutiveDashboardPage() {
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
+              <Link to="/okrs/executive/qbr-report" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Relatório QBR
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
               <Link to="/rituals/history" className="gap-2">
                 <History className="h-4 w-4" />
                 Histórico de Rituais

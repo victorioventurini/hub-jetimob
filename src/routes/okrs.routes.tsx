@@ -55,6 +55,7 @@ export const okrRoutes = (
     <Route path="/okrs/manage" element={<OkrRoute><OkrsPage /></OkrRoute>} />
     <Route path="/okrs/executive" element={<OkrRoute><ExecutiveDashboardPage /></OkrRoute>} />
     <Route path="/okrs/executive/quarter-review" element={<OkrRoute requiresBuAdmin><ExecutiveQuarterReviewPage /></OkrRoute>} />
+    <Route path="/okrs/executive/qbr-report" element={<OkrRoute requiresBuAdmin><QbrExecutiveReportPage /></OkrRoute>} />
     
     {/* Creation */}
     <Route path="/okrs/create" element={<OkrRoute><OkrCreationPage /></OkrRoute>} />
