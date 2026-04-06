@@ -29,6 +29,7 @@ import { handleError } from '@/lib/errorMessages';
 // Step components
 import {
   QbrCLevelSystemReadStep,
+  QbrCLevelQuarterBalanceStep,
   QbrCLevelStrategicStep,
   QbrCLevelOkrValidationStep,
   QbrCLevelDirectivesStep,
