@@ -311,7 +311,7 @@ export interface MbrDraftData {
 // ============================================================
 
 export type QbrPreStep = 'balance' | 'kpi-analysis' | 'learnings' | 'okr-proposal' | 'summary';
-export type QbrPreCLevelStep = 'system-read' | 'strategic-analysis' | 'okr-validation' | 'directives' | 'feedback';
+export type QbrPreCLevelStep = 'system-read' | 'quarter-balance' | 'strategic-analysis' | 'okr-validation' | 'directives' | 'feedback';
 export type QbrMeetingStep = 'opening' | 'okr-review' | 'decisions' | 'commitments' | 'feedback' | 'closing';
 export type QbrPostStep = 'okr-promotion' | 'decisions' | 'commitments' | 'follow-up' | 'minutes';
 
