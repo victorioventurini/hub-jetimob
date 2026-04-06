@@ -102,6 +102,27 @@ export default function QbrPostPage() {
     },
   });
 
+  // Load C-Level session for calibration flags
+  const { data: cLevelSession } = useQuery({
+    queryKey: ['qbr', 'clevel-session-post', quarterlyCycle?.id],
+    enabled: !!buSupabase && !!quarterlyCycle?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase.from('okr_wizard_sessions')
+        .select('id, reflection_data')
+        .eq('wizard_type', 'qbr-pre-clevel')
+        .eq('cycle_id', quarterlyCycle!.id)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.reflection_data) return null;
+      const snapshot = (data.reflection_data as any)?.data as QbrCLevelSnapshot | undefined;
+      return snapshot ? { sessionId: data.id, snapshot } : null;
+    },
+  });
+
   // Load leader sessions for OKR proposals
   const { data: leaderSessions } = useQuery({
     queryKey: ['qbr', 'leader-sessions-post', quarterlyCycle?.id],
