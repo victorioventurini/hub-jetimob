@@ -113,7 +113,7 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         .from('okr_wizard_sessions')
         .select(historyFields, { count: 'exact' })
         .eq('bu_id', currentBu.id)
-        .in('status', ['completed', 'in_progress'])
+        .eq('status', 'completed')
         .order('completed_at', { ascending: false, nullsFirst: false })
         .order('started_at', { ascending: false });
 
@@ -128,11 +128,10 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         query = query.eq('started_by', filters.userId);
       }
       if (filters.dateFrom) {
-        // Use OR to include in_progress sessions (completed_at is null) via started_at fallback
-        query = query.or(`completed_at.gte.${filters.dateFrom},and(status.eq.in_progress,started_at.gte.${filters.dateFrom})`);
+        query = query.gte('completed_at', `${filters.dateFrom}T00:00:00.000Z`);
       }
       if (filters.dateTo) {
-        query = query.or(`completed_at.lte.${filters.dateTo}T23:59:59.999Z,and(status.eq.in_progress,started_at.lte.${filters.dateTo}T23:59:59.999Z)`);
+        query = query.lte('completed_at', `${filters.dateTo}T23:59:59.999Z`);
       }
 
       // Pagination
@@ -179,9 +178,11 @@ export function useRitualDetail(sessionId: string | null) {
         .from('okr_wizard_sessions')
         .select(HISTORY_FIELDS)
         .eq('id', sessionId)
-        .single();
+        .eq('status', 'completed')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) return null;
 
       const row = data as any;
       return {
