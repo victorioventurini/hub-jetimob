@@ -264,6 +264,7 @@ function TeamScorecardCard({ team }: { team: TeamScorecardData }) {
 
 export function QbrCLevelQuarterBalanceStep({
   cycleId,
+  cycleName,
   year,
   onContinue,
   onBack,
