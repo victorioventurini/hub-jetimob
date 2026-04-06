@@ -59,6 +59,7 @@ const DEFAULT_DATA: QbrPostDraftData = {
     dependenciesFormalized: false,
     nextCycleOkrsActive: false,
   },
+  adjustmentNotes: {},
 };
 
 export default function QbrPostPage() {

@@ -430,6 +430,10 @@ export default function QbrMeetingPage() {
             onChecklistChange={(governanceChecklist: QbrMeetingGovernanceChecklist) => updateDraft({ governanceChecklist })}
             ritualFeedback={draft.data.ritualFeedback}
             onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
+            approvals={draft.data.approvals}
+            decisions={draft.data.decisions}
+            crossCommitments={draft.data.crossCommitments}
+            totalTeamsForReview={teamsForReview.length}
             isCompleting={isCompletingRef.current}
             onComplete={handleComplete}
             onBack={goBack}
