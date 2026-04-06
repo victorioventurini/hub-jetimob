@@ -26,8 +26,8 @@ export const okrsKeys = {
     ['okr-org-key-results', buId, objectiveId] as const,
   orgKeyResultsAllBu: (buId: string | null) => 
     ['okr-all-org-key-results', buId] as const,
-  allOrgObjectivesView: (year: number, buId: string | null) => 
-    ['all-org-objectives-view', year, buId] as const,
+  allOrgObjectivesView: (year: number, buId: string | null, cycleId?: string | null) => 
+    ['all-org-objectives-view', year, buId, cycleId ?? null] as const,
   
   // Team level
   teamObjectives: (buId: string | null, teamId?: string, cycleId?: string) => 
