@@ -73,7 +73,7 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
       
       let teamKrsData: any[] = [];
       if (orgKrIds.length > 0) {
-        const { data: teamKrs, error: teamKrsError } = await supabase
+        let teamKrQuery = supabase
           .from('okr_team_key_results')
           .select(`
             id, title, team_id, team_objective_id, linked_org_kr_id, type,
@@ -81,7 +81,7 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
             last_checkin_at, owner_user_id,
             teams:team_id (name),
             team_objective:team_objective_id!inner (
-              id, title, status, cancelled_at, deleted_at
+              id, title, status, cancelled_at, deleted_at, cycle_id
             ),
             owner:owner_user_id (display_name)
           `)
@@ -91,6 +91,12 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
           .is('team_objective.cancelled_at', null)
           .is('team_objective.deleted_at', null)
           .not('team_objective.status', 'in', '(cancelled,discarded)');
+
+        if (cycleId) {
+          teamKrQuery = teamKrQuery.eq('team_objective.cycle_id', cycleId);
+        }
+
+        const { data: teamKrs, error: teamKrsError } = await teamKrQuery;
 
         if (teamKrsError) {
           console.error('Error fetching team KRs:', teamKrsError);
