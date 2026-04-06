@@ -345,6 +345,10 @@ describe('QbrMeetingClosingStep', () => {
         onChecklistChange={vi.fn()}
         ritualFeedback={[]}
         onRitualFeedbackChange={vi.fn()}
+        approvals={[]}
+        decisions={[]}
+        crossCommitments={[]}
+        totalTeamsForReview={0}
         onComplete={vi.fn()}
         onBack={vi.fn()}
       />
