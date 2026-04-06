@@ -414,12 +414,8 @@ export default function QbrMeetingPage() {
             cLevelSessionExists={!!cLevelSession}
             leaderSummaryCount={teamsForReview.length}
             orgKpiSnapshots={orgKpiSnapshots}
-            scorecardMetrics={{
-              healthy: teamsForReview.filter(t => t.hasSubmission).length,
-              atRisk: 0,
-              offTrack: 0,
-              noSubmission: (buTeams?.length || 0) - teamsForReview.length,
-            }}
+            orgObjectives={orgObjectives || []}
+            scorecardMetrics={scorecardMetrics}
             currentStepIndex={STEP_ORDER.indexOf(draft.currentStep)}
             onContinue={goNext}
           />
