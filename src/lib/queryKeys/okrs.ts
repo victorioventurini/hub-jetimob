@@ -270,6 +270,10 @@ export const okrsKeys = {
     ['collaborator-checkin-expected', buId, teamId, cycleId] as const,
   collaboratorSessionsByDate: (buId: string | null, teamId: string | null, startDate: string, endDate: string) =>
     ['collaborator-sessions-by-date', buId, teamId, startDate, endDate] as const,
+
+  // QBR Executive Report (AI-generated)
+  qbrExecutiveReport: (buId: string | null, cycleId: string | null) =>
+    ['qbr-executive-report', buId, cycleId] as const,
 } as const;
 
 export const kpisKeys = {

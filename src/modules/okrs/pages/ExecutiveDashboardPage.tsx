@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle, FileText } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
 import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams, useOrgKeyResults } from '../hooks';
@@ -101,6 +101,12 @@ export default function ExecutiveDashboardPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/okrs/executive/quarter-review" className="gap-2">
                 Análise do Quarter
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/okrs/executive/qbr-report" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Relatório QBR
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>

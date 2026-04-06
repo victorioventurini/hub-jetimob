@@ -14,8 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   Eye, Target, Activity, BookOpen, Ghost, AlertTriangle,
-  TrendingUp, TrendingDown, Minus, Sparkles, Loader2,
+  TrendingUp, TrendingDown, Minus, Sparkles, Loader2, FileText,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -192,6 +193,15 @@ export function QbrCLevelSystemReadStep({
       }
     >
       <div className="p-6 space-y-6">
+        {/* Quick link to executive report */}
+        <div className="flex justify-end">
+          <Button variant="ghost" size="sm" asChild className="gap-1.5 text-xs text-muted-foreground">
+            <Link to="/okrs/executive/qbr-report">
+              <FileText className="h-3.5 w-3.5" />
+              Ver Relatório Executivo
+            </Link>
+          </Button>
+        </div>
         {/* Teams submission status */}
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-3">
