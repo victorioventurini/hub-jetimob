@@ -166,7 +166,7 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       const retro = parseDate(c.retro_date);
       if (!planning) return { opens: null, closes: null };
       return {
-        opens: addBusinessDaysToDate(planning, 5),
+        opens: planning,
         closes: retro ? calendarDaysOffset(retro, -2) : null,
       };
     },

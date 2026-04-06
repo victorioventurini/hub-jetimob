@@ -92,7 +92,7 @@ export default function QbrPreCLevelPage() {
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   const availability = useRitualAvailability('qbr-pre-clevel', quarterlyCycle);
 
-  // Validate qbr_status = 'reviewing'
+  // Load qbr_status for informational display (no longer a hard gate)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
     queryKey: ['qbr', 'cycle-status', quarterlyCycle?.id],
     enabled: !!buSupabase && !!quarterlyCycle?.id,
@@ -106,8 +106,6 @@ export default function QbrPreCLevelPage() {
       return data;
     },
   });
-
-  const qbrReviewing = cycleData?.qbr_status === 'reviewing';
 
   // Load leader submissions
   const { data: leaderSessions, isLoading: isLoadingSessions } = useQuery({
@@ -252,7 +250,7 @@ export default function QbrPreCLevelPage() {
     cycleId: quarterlyCycle?.id || null,
     defaultStep: 'system-read',
     defaultData: DEFAULT_DATA,
-    enabled: !!quarterlyCycle && qbrReviewing,
+    enabled: !!quarterlyCycle,
   });
 
   // Navigation
@@ -314,22 +312,9 @@ export default function QbrPreCLevelPage() {
     return <LoadingState text="Carregando dados do pré-QBR C-Level..." fullPage />;
   }
 
-  // Guard
-  if (!qbrReviewing) {
-    // Check ritual window first
-    if (!availability.isAvailable) {
-      return <RitualUnavailableScreen wizardType="qbr-pre-clevel" availability={availability} />;
-    }
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center space-y-2">
-          <p className="text-lg font-medium">Pré-QBR C-Level não disponível</p>
-          <p className="text-sm text-muted-foreground">
-            O ciclo QBR precisa estar na fase de revisão (todos os líderes submeteram ou prazo expirou).
-          </p>
-        </div>
-      </div>
-    );
+  // Guard: only check ritual window availability
+  if (!availability.isAvailable) {
+    return <RitualUnavailableScreen wizardType="qbr-pre-clevel" availability={availability} />;
   }
 
   // Step render

@@ -14,7 +14,7 @@ O acesso aos rituais de gestão é controlado por janelas temporais rigorosas ba
 - `mbr-pre`: review_date -5du a -1du
 - `mbr`: review_date a +2du
 - `qbr-pre`: planning_date a retro_date -2 dias corridos
-- `qbr-pre-clevel`: planning_date +5du a retro_date -2 dias corridos
+- `qbr-pre-clevel`: planning_date a retro_date -2 dias corridos (sem exigência de qbr_status = 'reviewing')
 - `qbr-meeting`: retro_date a +2du
 - `qbr-post`: retro_date a +5du
 - Check-ins: start_date a end_date
