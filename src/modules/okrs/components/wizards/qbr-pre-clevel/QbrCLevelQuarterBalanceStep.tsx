@@ -14,14 +14,11 @@ import {
   BarChart3,
   Users,
   Target,
-  TrendingUp,
-  TrendingDown,
-  ArrowRight,
   AlertTriangle,
   CheckCircle2,
   Clock,
   ChevronDown,
-  ChevronRight,
+  ArrowRight,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -37,11 +34,12 @@ import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { KrStateInline } from '../../insights';
 import { calculateKrState } from '../../../hooks/useKrStateInsights';
+import { calculateProgress } from '../../../types';
 import { useAllOrgObjectivesView } from '../../../hooks/queries/useOrgObjectiveViewQueries';
-import { useTeamOverviewMetrics } from '../../../hooks/useTeamOverviewMetrics';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { useQuery } from '@tanstack/react-query';
+import { differenceInDays, parseISO } from 'date-fns';
 import { LoadingState } from '@/components/ui/loading-state';
 import type { OrgObjectiveWithKrs, OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggregateTypes';
 
