@@ -49,6 +49,7 @@ import type { OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggr
 
 interface QbrCLevelQuarterBalanceStepProps {
   cycleId: string;
+  cycleName: string;
   year: number;
   onContinue: () => void;
   onBack: () => void;

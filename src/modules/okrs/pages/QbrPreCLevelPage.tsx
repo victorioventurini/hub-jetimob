@@ -350,7 +350,8 @@ export default function QbrPreCLevelPage() {
         return (
           <QbrCLevelQuarterBalanceStep
             cycleId={quarterlyCycle!.id}
-            year={new Date(quarterlyCycle!.start_date).getFullYear()}
+            cycleName={quarterlyCycle!.name}
+            year={parseInt(quarterlyCycle!.start_date.substring(0, 4), 10)}
             onContinue={goNext}
             onBack={goBack}
           />
