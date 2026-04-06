@@ -85,6 +85,7 @@ describe('QbrMeetingOpeningStep', () => {
     cLevelSessionExists: true,
     leaderSummaryCount: 5,
     orgKpiSnapshots: [] as MbrKpiSnapshot[],
+    orgObjectives: [],
     scorecardMetrics: { healthy: 3, atRisk: 1, offTrack: 1, noSubmission: 0 },
     currentStepIndex: 0,
     onContinue: vi.fn(),

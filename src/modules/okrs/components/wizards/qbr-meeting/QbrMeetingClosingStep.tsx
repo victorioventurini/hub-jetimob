@@ -1,17 +1,20 @@
 /**
  * QbrMeetingClosingStep - Step 5: Checklist de governança e encerramento
  * 
- * Resumo da reunião + checklist dinâmico + feedback do rito via estrelas.
+ * Mapa de cobertura org + resumo da reunião + checklist dinâmico + feedback.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShieldCheck, Star, Plus, X, MessageSquare, BarChart3, Check, Pencil, Clock, Ban } from 'lucide-react';
+import {
+  ShieldCheck, Star, Plus, X, MessageSquare, BarChart3, Check, Pencil, Clock, Ban,
+  Target, AlertTriangle, CheckCircle2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
@@ -24,6 +27,8 @@ import type {
   QbrMeetingSnapshot,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
+import type { TeamForReview } from './QbrMeetingOkrReviewStep';
 
 // ============================================================
 // TYPES
@@ -38,6 +43,10 @@ export interface QbrMeetingClosingStepProps {
   decisions: TeamCheckinDecision[];
   crossCommitments: QbrMeetingSnapshot['crossCommitments'];
   totalTeamsForReview: number;
+  orgObjectives?: OrgObjectiveWithKrs[];
+  teamsForReview?: TeamForReview[];
+  intentionalGaps?: string[];
+  onIntentionalGapsChange?: (gaps: string[]) => void;
   isCompleting?: boolean;
   onComplete: () => void;
   onBack: () => void;
@@ -66,6 +75,124 @@ function StarRatingInput({ value, onChange }: { value: number; onChange: (v: num
         </button>
       ))}
     </div>
+  );
+}
+
+// ============================================================
+// ORG COVERAGE MAP
+// ============================================================
+
+function OrgCoverageMap({
+  orgObjectives,
+  approvals,
+  teamsForReview,
+  intentionalGaps,
+  onIntentionalGapsChange,
+}: {
+  orgObjectives: OrgObjectiveWithKrs[];
+  approvals: QbrMeetingSnapshot['approvals'];
+  teamsForReview: TeamForReview[];
+  intentionalGaps: string[];
+  onIntentionalGapsChange: (gaps: string[]) => void;
+}) {
+  const coverageData = useMemo(() => {
+    const approvedTeamIds = new Set(
+      approvals
+        .filter(a => a.status === 'approved' || a.status === 'approved_with_changes')
+        .map(a => a.teamId)
+    );
+
+    // Map org KR id → covering team names
+    const orgKrCoverage = new Map<string, string[]>();
+    for (const team of teamsForReview) {
+      if (!approvedTeamIds.has(team.teamId)) continue;
+      for (const entry of team.proposedOkrs) {
+        for (const kr of entry.draftKrs) {
+          const linkedId = (kr as any).linkedOrgKrId;
+          if (linkedId) {
+            const existing = orgKrCoverage.get(linkedId) || [];
+            if (!existing.includes(team.teamName)) {
+              orgKrCoverage.set(linkedId, [...existing, team.teamName]);
+            }
+          }
+        }
+      }
+    }
+
+    return orgObjectives.map(obj => ({
+      objTitle: obj.title,
+      krs: obj.orgKrs.map(kr => ({
+        krId: kr.id,
+        krTitle: kr.title,
+        coveringTeams: orgKrCoverage.get(kr.id) || [],
+        isIntentional: intentionalGaps.includes(kr.id),
+      })),
+    }));
+  }, [orgObjectives, approvals, teamsForReview, intentionalGaps]);
+
+  if (coverageData.length === 0) return null;
+
+  const toggleIntentional = (krId: string) => {
+    if (intentionalGaps.includes(krId)) {
+      onIntentionalGapsChange(intentionalGaps.filter(id => id !== krId));
+    } else {
+      onIntentionalGapsChange([...intentionalGaps, krId]);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Target className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Cobertura de OKRs Organizacionais</span>
+        </div>
+
+        {coverageData.map((obj, i) => (
+          <div key={i} className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">{obj.objTitle}</p>
+            {obj.krs.map(kr => {
+              const isCovered = kr.coveringTeams.length > 0;
+              return (
+                <div key={kr.krId} className="flex items-center gap-2 text-xs pl-2">
+                  {isCovered ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-status-green shrink-0" />
+                  ) : kr.isIntentional ? (
+                    <AlertTriangle className="h-3.5 w-3.5 text-status-amber shrink-0" />
+                  ) : (
+                    <X className="h-3.5 w-3.5 text-status-red shrink-0" />
+                  )}
+                  <span className={cn('flex-1 truncate', !isCovered && !kr.isIntentional && 'text-status-red')}>
+                    {kr.krTitle}
+                  </span>
+                  {isCovered ? (
+                    <span className="text-muted-foreground shrink-0">
+                      — {kr.coveringTeams.join(', ')}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => toggleIntentional(kr.krId)}
+                      className={cn(
+                        'text-[10px] px-1.5 py-0.5 rounded border shrink-0 transition-colors',
+                        kr.isIntentional
+                          ? 'bg-status-amber/10 border-status-amber/30 text-status-amber'
+                          : 'border-muted-foreground/30 text-muted-foreground hover:bg-muted/50'
+                      )}
+                    >
+                      {kr.isIntentional ? '✓ Intencional' : 'Marcar como intencional'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+
+        <p className="text-[10px] text-muted-foreground pt-1 border-t">
+          ✅ coberta / ⚠️ intencional / ❌ sem cobertura
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -138,6 +265,10 @@ export function QbrMeetingClosingStep({
   decisions,
   crossCommitments,
   totalTeamsForReview,
+  orgObjectives = [],
+  teamsForReview = [],
+  intentionalGaps = [],
+  onIntentionalGapsChange,
   isCompleting,
   onComplete,
   onBack,
@@ -148,6 +279,40 @@ export function QbrMeetingClosingStep({
   // Dynamic conditions
   const allTeamsReviewed = approvals.length >= totalTeamsForReview && totalTeamsForReview > 0;
   const allDecisionsHaveOwners = decisions.length === 0 || decisions.every(d => d.owner?.id);
+
+  // Org coverage condition
+  const orgCoverageComplete = useMemo(() => {
+    if (orgObjectives.length === 0) return true;
+
+    const approvedTeamIds = new Set(
+      approvals
+        .filter(a => a.status === 'approved' || a.status === 'approved_with_changes')
+        .map(a => a.teamId)
+    );
+
+    for (const obj of orgObjectives) {
+      for (const kr of obj.orgKrs) {
+        if (intentionalGaps.includes(kr.id)) continue;
+        // Check if any approved team covers this KR
+        let covered = false;
+        for (const team of teamsForReview) {
+          if (!approvedTeamIds.has(team.teamId)) continue;
+          for (const entry of team.proposedOkrs) {
+            for (const draftKr of entry.draftKrs) {
+              if ((draftKr as any).linkedOrgKrId === kr.id) {
+                covered = true;
+                break;
+              }
+            }
+            if (covered) break;
+          }
+          if (covered) break;
+        }
+        if (!covered) return false;
+      }
+    }
+    return true;
+  }, [orgObjectives, approvals, teamsForReview, intentionalGaps]);
 
   const checklistItems: Array<{
     key: keyof QbrMeetingGovernanceChecklist;
@@ -160,6 +325,12 @@ export function QbrMeetingClosingStep({
       label: 'Todos os times tiveram OKRs revisados?',
       disabled: !allTeamsReviewed,
       tooltip: !allTeamsReviewed ? `${approvals.length}/${totalTeamsForReview} times revisados` : undefined,
+    },
+    {
+      key: 'orgCoverageClear',
+      label: 'OKRs organizacionais cobertos ou gaps intencionais?',
+      disabled: !orgCoverageComplete,
+      tooltip: !orgCoverageComplete ? 'Há KRs organizacionais sem cobertura e sem confirmação intencional' : undefined,
     },
     {
       key: 'decisionsHaveOwners',
@@ -220,6 +391,17 @@ export function QbrMeetingClosingStep({
       }
     >
       <div className="p-6 space-y-6">
+        {/* Org coverage map */}
+        {orgObjectives.length > 0 && onIntentionalGapsChange && (
+          <OrgCoverageMap
+            orgObjectives={orgObjectives}
+            approvals={approvals}
+            teamsForReview={teamsForReview}
+            intentionalGaps={intentionalGaps}
+            onIntentionalGapsChange={onIntentionalGapsChange}
+          />
+        )}
+
         {/* Governance summary */}
         <GovernanceSummary
           approvals={approvals}
