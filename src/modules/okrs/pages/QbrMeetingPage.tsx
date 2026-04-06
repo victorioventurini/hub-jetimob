@@ -255,6 +255,10 @@ export default function QbrMeetingPage() {
   const cLevelStrategicAnalysis = cLevelSession?.snapshot?.strategicAnalysis;
   const calibrationFlags = cLevelSession?.snapshot?.okrCalibrationFlags || [];
 
+  // ── Load org objectives for coverage map ──
+  const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
+  const { data: orgObjectives } = useAllOrgObjectivesView(cycleYear, quarterlyCycle?.id);
+
   // ── Build org KPI snapshots from pre-QBR data ──
   const orgKpiSnapshots: MbrKpiSnapshot[] = useMemo(() => {
     if (!preQbrSessions) return [];
@@ -270,6 +274,35 @@ export default function QbrMeetingPage() {
     }
     return Array.from(allKpis.values());
   }, [preQbrSessions]);
+
+  // ── Compute real scorecard metrics from org objectives ──
+  const scorecardMetrics = useMemo(() => {
+    let healthy = 0;
+    let atRisk = 0;
+    let offTrack = 0;
+    const noSubmission = (buTeams?.length || 0) - teamsForReview.length;
+
+    if (orgObjectives) {
+      for (const obj of orgObjectives) {
+        for (const orgKr of obj.orgKrs) {
+          const progress = calculateProgress(
+            orgKr.baseline ?? 0, orgKr.current_value ?? 0, orgKr.target ?? 0, orgKr.direction as any
+          );
+          const state = calculateKrState({
+            progress,
+            status: (orgKr.status || 'not_started') as any,
+            daysSinceCheckin: 999,
+            cycleEnded: false,
+          });
+          if (state === 'healthy' || state === 'achieved' || state === 'exceeded') healthy++;
+          else if (state === 'at_risk' || state === 'stagnant') atRisk++;
+          else if (state === 'off_track' || state === 'not_achieved') offTrack++;
+        }
+      }
+    }
+
+    return { healthy, atRisk, offTrack, noSubmission };
+  }, [orgObjectives, buTeams, teamsForReview]);
 
   // Seed cycleId in draft
   const seededCycleRef = useRef(false);
