@@ -315,7 +315,7 @@ export function TeamKrFormDialog({
             </div>
             {!isEditing && (
               <DialogDescription>
-                Defina um resultado-chave mensurável. Cada objetivo pode ter no máximo 3 KRs.
+                Defina um resultado-chave mensurável. Cada objetivo pode ter no máximo {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs.
               </DialogDescription>
             )}
           </DialogHeader>
