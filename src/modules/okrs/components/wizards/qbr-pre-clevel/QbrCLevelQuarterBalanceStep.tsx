@@ -376,7 +376,7 @@ export function QbrCLevelQuarterBalanceStep({
               <div className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-base">
-                  Como foram os OKRs da empresa neste quarter
+                  Como foram os OKRs da empresa no {cycleName}
                 </h3>
               </div>
 
