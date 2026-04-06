@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 import {
   Dialog,
   DialogContent,
@@ -180,8 +181,8 @@ export function OrgKrFormDialog({
     },
     onError: (error: Error) => {
       console.error('Error saving KR:', error);
-      if (error.message.includes('Limite atingido') || error.message.includes('more than 3') || error.message.includes('máximo 3')) {
-        toast.error('Limite atingido: um Objetivo Organizacional pode ter no máximo 3 KRs ativos.');
+      if (error.message.includes('Limite atingido') || error.message.includes('more than') || error.message.includes('máximo')) {
+        toast.error(`Limite atingido: um Objetivo Organizacional pode ter no máximo ${OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs ativos.`);
       } else {
         toast.error(isEditing ? 'Erro ao atualizar KR.' : 'Erro ao criar Key Result.');
       }

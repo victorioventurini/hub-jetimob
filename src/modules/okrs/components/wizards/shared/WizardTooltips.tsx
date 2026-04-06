@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { HelpCircle, Info, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 
 // ============================================================
 // TOOLTIP DEFINITIONS
@@ -100,7 +101,7 @@ export const WIZARD_TOOLTIPS = {
     icon: 'info',
   },
   'kr-limit': {
-    content: 'Times com até 3 KRs têm maior foco. Mais que isso pode dispersar energia.',
+    content: `Times com até ${OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs têm maior foco. Mais que isso pode dispersar energia.`,
     icon: 'lightbulb',
   },
   

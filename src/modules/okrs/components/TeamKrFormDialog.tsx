@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 import {
   Dialog,
   DialogContent,
@@ -239,8 +240,8 @@ export function TeamKrFormDialog({
     },
     onError: (error: Error) => {
       console.error('Error saving KR:', error);
-      if (error.message.includes('Limite atingido') || error.message.includes('more than 3') || error.message.includes('máximo 3')) {
-        toast.error('Limite atingido: um Objetivo de Time pode ter no máximo 3 KRs ativos.');
+      if (error.message.includes('Limite atingido') || error.message.includes('more than') || error.message.includes('máximo')) {
+        toast.error(`Limite atingido: um Objetivo de Time pode ter no máximo ${OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs ativos.`);
       } else {
         toast.error(isEditing ? 'Erro ao atualizar KR.' : 'Erro ao criar Key Result.');
       }
@@ -305,7 +306,7 @@ export function TeamKrFormDialog({
                     <TooltipContent className="max-w-xs">
                       <p className="text-sm">
                         <strong>KR de Time</strong> contribui para um objetivo organizacional.
-                        Cada objetivo pode ter no máximo 3 KRs.
+                        Cada objetivo pode ter no máximo {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -314,7 +315,7 @@ export function TeamKrFormDialog({
             </div>
             {!isEditing && (
               <DialogDescription>
-                Defina um resultado-chave mensurável. Cada objetivo pode ter no máximo 3 KRs.
+                Defina um resultado-chave mensurável. Cada objetivo pode ter no máximo {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs.
               </DialogDescription>
             )}
           </DialogHeader>
