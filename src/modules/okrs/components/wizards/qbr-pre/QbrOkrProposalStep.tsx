@@ -32,6 +32,7 @@ import {
 import { BuUserSelect, UnitSelect } from '@/components/selects';
 import { useProposalValidation } from '@/modules/okrs/hooks/useProposalValidation';
 import { ProposalValidationCard } from './ProposalValidationCard';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 import type {
   DraftTeamKr,
   OkrDirection,
