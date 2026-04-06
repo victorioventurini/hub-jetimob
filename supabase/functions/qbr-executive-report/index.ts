@@ -174,137 +174,156 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     return errorResponse("Method not allowed", 405, { requestId });
   }
 
-  let body: ReportRequest;
   try {
-    const raw = await req.clone().json();
-    body = { cycleId: raw.cycleId };
-  } catch {
-    return errorResponse("Invalid JSON body", 400, { requestId });
-  }
+    let body: ReportRequest;
+    try {
+      const raw = await req.json() as Partial<ReportRequest>;
+      body = {
+        cycleId: typeof raw?.cycleId === "string" ? raw.cycleId : "",
+      };
+    } catch (parseError) {
+      console.error(`[${requestId}] Invalid JSON body:`, parseError);
+      return errorResponse("Invalid JSON body", 400, { requestId });
+    }
 
-  if (!body.cycleId) {
-    return errorResponse("cycleId is required", 400, { requestId });
-  }
+    if (!body.cycleId) {
+      return errorResponse("cycleId is required", 400, { requestId });
+    }
 
-  const sc = ctx.serviceClient;
+    console.log(`[${requestId}] Generating QBR executive report for cycle ${body.cycleId}`);
 
-  // 1. Fetch cycle info
-  const { data: cycle, error: cycleErr } = await sc
-    .from("cycles")
-    .select("id, name, start_date, end_date, type, status")
-    .eq("id", body.cycleId)
-    .eq("bu_id", buId)
-    .single();
+    const sc = ctx.serviceClient;
 
-  if (cycleErr || !cycle) {
-    console.error(`[${requestId}] Cycle query error:`, cycleErr?.message);
-    return errorResponse("Cycle not found", 404, { requestId });
-  }
+    const { data: cycle, error: cycleErr } = await sc
+      .from("cycles")
+      .select("id, name, start_date, end_date, type, status")
+      .eq("id", body.cycleId)
+      .eq("bu_id", buId)
+      .single();
 
-  const cycleYear = parseInt(cycle.start_date.substring(0, 4), 10);
+    if (cycleErr || !cycle) {
+      console.error(`[${requestId}] Cycle query error:`, cycleErr?.message);
+      return errorResponse("Cycle not found", 404, { requestId });
+    }
 
-  // 2. Team objectives + KRs
-  const { data: teamObjectives } = await sc
-    .from("okr_team_objectives")
-    .select(`
-      id, title, status, team_id,
-      key_results:okr_team_key_results(
-        id, title, current_value, target, baseline,
-        direction, status, deleted_at, cancelled_at
-      )
-    `)
-    .eq("cycle_id", body.cycleId)
-    .eq("bu_id", buId)
-    .is("deleted_at", null)
-    .neq("status", "cancelled");
+    const cycleYear = parseInt(String(cycle.start_date).substring(0, 4), 10);
+    console.log(`[${requestId}] Loaded cycle ${cycle.name} (${cycleYear})`);
 
-  // 3. Teams lookup
-  const { data: teamsData } = await sc
-    .from("teams")
-    .select("id, name")
-    .eq("bu_id", buId)
-    .is("deleted_at", null);
+    const [
+      { data: teamObjectives, error: teamObjectivesErr },
+      { data: teamsData, error: teamsErr },
+      { data: qbrPreSessions, error: qbrPreErr },
+      { data: cLevelSession, error: cLevelErr },
+      { data: orgKpis, error: orgKpisErr },
+      { data: orgObjectives, error: orgObjectivesErr },
+      { data: decisionSessions, error: decisionSessionsErr },
+    ] = await Promise.all([
+      sc
+        .from("okr_team_objectives")
+        .select(`
+          id, title, status, team_id,
+          key_results:okr_team_key_results(
+            id, title, current_value, target, baseline,
+            direction, status, deleted_at, cancelled_at
+          )
+        `)
+        .eq("cycle_id", body.cycleId)
+        .eq("bu_id", buId)
+        .is("deleted_at", null)
+        .is("cancelled_at", null)
+        .neq("status", "cancelled")
+        .neq("status", "discarded"),
+      sc
+        .from("teams")
+        .select("id, name")
+        .eq("bu_id", buId)
+        .is("deleted_at", null),
+      sc
+        .from("okr_wizard_sessions")
+        .select("team_id, reflection_data, completed_at")
+        .eq("wizard_type", "qbr-pre")
+        .eq("cycle_id", body.cycleId)
+        .eq("bu_id", buId)
+        .eq("status", "completed"),
+      sc
+        .from("okr_wizard_sessions")
+        .select("reflection_data")
+        .eq("wizard_type", "qbr-pre-clevel")
+        .eq("cycle_id", body.cycleId)
+        .eq("bu_id", buId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      sc
+        .from("kpi_metrics")
+        .select(`
+          id, name, category, unit, direction, target_value,
+          values:kpi_values(value, rag_status, period_label, created_at)
+        `)
+        .eq("bu_id", buId)
+        .eq("scope", "org")
+        .eq("status", "active")
+        .is("deleted_at", null),
+      sc
+        .from("okr_org_objectives")
+        .select(`
+          id, title,
+          key_results:okr_org_key_results(
+            id, title, current_value, target, baseline, direction, status
+          )
+        `)
+        .eq("bu_id", buId)
+        .eq("year", cycleYear)
+        .is("deleted_at", null)
+        .is("cancelled_at", null)
+        .neq("status", "cancelled")
+        .neq("status", "discarded"),
+      sc
+        .from("okr_wizard_sessions")
+        .select("reflection_data, wizard_type, team_id, completed_at")
+        .eq("cycle_id", body.cycleId)
+        .eq("bu_id", buId)
+        .eq("status", "completed")
+        .in("wizard_type", ["team-checkin", "mbr", "qbr-pre", "qbr-pre-clevel"]),
+    ]);
 
-  const teamsMap = new Map((teamsData || []).map((t: any) => [t.id, t.name]));
+    if (teamObjectivesErr) console.error(`[${requestId}] Team objectives query error:`, teamObjectivesErr.message);
+    if (teamsErr) console.error(`[${requestId}] Teams query error:`, teamsErr.message);
+    if (qbrPreErr) console.error(`[${requestId}] QBR-pre sessions query error:`, qbrPreErr.message);
+    if (cLevelErr) console.error(`[${requestId}] QBR-pre-clevel session query error:`, cLevelErr.message);
+    if (orgKpisErr) console.error(`[${requestId}] Org KPIs query error:`, orgKpisErr.message);
+    if (orgObjectivesErr) console.error(`[${requestId}] Org objectives query error:`, orgObjectivesErr.message);
+    if (decisionSessionsErr) console.error(`[${requestId}] Decision sessions query error:`, decisionSessionsErr.message);
 
-  // 4. QBR-pre snapshots
-  const { data: qbrPreSessions } = await sc
-    .from("okr_wizard_sessions")
-    .select("team_id, reflection_data, completed_at")
-    .eq("wizard_type", "qbr-pre")
-    .eq("cycle_id", body.cycleId)
-    .eq("bu_id", buId)
-    .eq("status", "completed");
+    const teamsMap = new Map((teamsData || []).map((t: any) => [t.id, t.name]));
+    const teamHealthSummary = buildTeamHealthSummary(teamObjectives || [], teamsMap);
+    const kpisSummary = buildKpiSummary(orgKpis || []);
+    const leaderLearnings = extractLearnings(qbrPreSessions || []);
+    const nextCycleProposals = extractNextCycleProposals(qbrPreSessions || [], teamsMap);
+    const cLevelFlags = extractCLevelFlags(cLevelSession);
+    const pendingDecisions = extractDecisions(decisionSessions || []);
 
-  // 5. QBR-pre-clevel snapshot
-  const { data: cLevelSession } = await sc
-    .from("okr_wizard_sessions")
-    .select("reflection_data")
-    .eq("wizard_type", "qbr-pre-clevel")
-    .eq("cycle_id", body.cycleId)
-    .eq("bu_id", buId)
-    .eq("status", "completed")
-    .order("completed_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    console.log(
+      `[${requestId}] Prompt data ready: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, proposals=${nextCycleProposals.length}, decisions=${pendingDecisions.length}`
+    );
 
-  // 6. Org KPIs with latest values
-  const { data: orgKpis } = await sc
-    .from("kpi_metrics")
-    .select(`
-      id, name, category, unit, direction, target_value,
-      values:kpi_values(value, rag_status, period_label, created_at)
-    `)
-    .eq("bu_id", buId)
-    .eq("scope", "org")
-    .eq("status", "active")
-    .is("deleted_at", null);
+    const llmConfig = await resolveLLMConfig(sc, "google/gemini-3-flash-preview");
+    if (!llmConfig) {
+      console.error(`[${requestId}] AI service not configured`);
+      return errorResponse("AI service not configured", 500, { requestId, error: "AI_NOT_CONFIGURED" });
+    }
 
-  // 7. Org objectives
-  const { data: orgObjectives } = await sc
-    .from("okr_org_objectives")
-    .select(`
-      id, title,
-      key_results:okr_org_key_results(
-        id, title, current_value, target, baseline, direction, status
-      )
-    `)
-    .eq("bu_id", buId)
-    .eq("year", cycleYear)
-    .is("deleted_at", null);
+    llmConfig.maxTokens = 2000;
+    llmConfig.temperature = 0.4;
 
-  // 8. Pending decisions from rituals
-  const { data: decisionSessions } = await sc
-    .from("okr_wizard_sessions")
-    .select("reflection_data, wizard_type, team_id, completed_at")
-    .eq("cycle_id", body.cycleId)
-    .eq("bu_id", buId)
-    .eq("status", "completed")
-    .in("wizard_type", ["team-checkin", "mbr", "qbr-pre", "qbr-pre-clevel"]);
-
-  // Build summaries for prompt
-  const teamHealthSummary = buildTeamHealthSummary(teamObjectives || [], teamsMap);
-  const kpisSummary = buildKpiSummary(orgKpis || []);
-  const leaderLearnings = extractLearnings(qbrPreSessions || []);
-  const nextCycleProposals = extractNextCycleProposals(qbrPreSessions || [], teamsMap);
-  const cLevelFlags = extractCLevelFlags(cLevelSession);
-  const pendingDecisions = extractDecisions(decisionSessions || []);
-
-  // Resolve LLM
-  const llmConfig = await resolveLLMConfig(sc, "google/gemini-3-flash-preview");
-  if (!llmConfig) {
-    return errorResponse("AI service not configured", 500, { requestId, error: "AI_NOT_CONFIGURED" });
-  }
-  llmConfig.maxTokens = 2000;
-  llmConfig.temperature = 0.4;
-
-  const systemPrompt = `Você é um consultor estratégico preparando um relatório executivo de QBR para o CEO de uma empresa.
+    const systemPrompt = `Você é um consultor estratégico preparando um relatório executivo de QBR para o CEO de uma empresa.
 Escreva em português brasileiro, tom executivo e direto.
 NUNCA use linguagem punitiva — use "abaixo do ritmo esperado" em vez de "atrasado" ou "fracasso".
 Nunca limite progresso a 100% — 156% é uma superação real e deve ser celebrada.
 Responda APENAS com JSON válido, sem markdown, sem explicações adicionais.`;
 
-  const userPrompt = `Gere o relatório executivo para o ciclo "${cycle.name}".
+    const userPrompt = `Gere o relatório executivo para o ciclo "${cycle.name}".
 
 === ENTREGA DOS TIMES ===
 ${JSON.stringify(teamHealthSummary)}
@@ -325,7 +344,7 @@ ${JSON.stringify(cLevelFlags)}
 ${JSON.stringify(pendingDecisions.slice(0, 10))}
 
 === OKRs ORGANIZACIONAIS ===
-${JSON.stringify((orgObjectives || []).map(o => ({
+${JSON.stringify((orgObjectives || []).map((o: any) => ({
   title: o.title,
   krs: (o.key_results || []).map((kr: any) => ({
     title: kr.title,
@@ -349,56 +368,64 @@ Gere o relatório em JSON com exatamente esta estrutura:
   ]
 }`;
 
-  const messages: LLMMessage[] = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ];
+    console.log(`[${requestId}] Calling LLM for QBR executive report...`);
 
-  try {
-    const response = await llmComplete(llmConfig, messages, {
-      maxTokens: 2000,
-      temperature: 0.4,
-    });
+    const messages: LLMMessage[] = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ];
 
-    if (!response.content) {
-      return errorResponse("Empty AI response", 500, { requestId });
-    }
-
-    let parsed: any;
     try {
-      let jsonStr = response.content.trim();
-      if (jsonStr.startsWith("```")) {
-        jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+      const response = await llmComplete(llmConfig, messages, {
+        maxTokens: 2000,
+        temperature: 0.4,
+      });
+
+      if (!response.content) {
+        return errorResponse("Empty AI response", 500, { requestId });
       }
-      parsed = JSON.parse(jsonStr);
-    } catch {
-      console.error(`[${requestId}] Failed to parse LLM JSON:`, response.content);
-      return errorResponse("Failed to parse AI response", 500, { requestId });
+
+      let parsed: any;
+      try {
+        let jsonStr = response.content.trim();
+        if (jsonStr.startsWith("```")) {
+          jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+        }
+        parsed = JSON.parse(jsonStr);
+      } catch {
+        console.error(`[${requestId}] Failed to parse LLM JSON:`, response.content);
+        return errorResponse("Failed to parse AI response", 500, { requestId });
+      }
+
+      const reportData: ReportResponse = {
+        quarterNarrative: parsed.quarterNarrative || "",
+        proposalsAnalysis: parsed.proposalsAnalysis || "",
+        kpiInsights: {
+          healthy: parsed.kpiInsights?.healthy || "",
+          atRisk: parsed.kpiInsights?.atRisk || "",
+          critical: parsed.kpiInsights?.critical || "",
+        },
+        decisionsNeeded: Array.isArray(parsed.decisionsNeeded) ? parsed.decisionsNeeded : [],
+        teamProposals: nextCycleProposals,
+      };
+
+      console.log(`[${requestId}] QBR executive report generated successfully`);
+      return successResponse(reportData);
+    } catch (err: unknown) {
+      const error = err as Error & { status?: number };
+      console.error(`[${requestId}] LLM call failed:`, error.message);
+
+      if (error.status) {
+        const mapped = mapLLMError(error.status, requestId);
+        return errorResponse(mapped.message, mapped.httpStatus, { requestId, error: mapped.code });
+      }
+
+      return errorResponse("AI service error", 500, { requestId, error: error.message });
     }
-
-    const reportData: ReportResponse = {
-      quarterNarrative: parsed.quarterNarrative || "",
-      proposalsAnalysis: parsed.proposalsAnalysis || "",
-      kpiInsights: {
-        healthy: parsed.kpiInsights?.healthy || "",
-        atRisk: parsed.kpiInsights?.atRisk || "",
-        critical: parsed.kpiInsights?.critical || "",
-      },
-      decisionsNeeded: Array.isArray(parsed.decisionsNeeded) ? parsed.decisionsNeeded : [],
-      teamProposals: nextCycleProposals,
-    };
-
-    return successResponse(reportData);
   } catch (err: unknown) {
-    const error = err as Error & { status?: number };
-    console.error(`[${requestId}] LLM call failed:`, error.message);
-
-    if (error.status) {
-      const mapped = mapLLMError(error.status, requestId);
-      return errorResponse(mapped.message, mapped.httpStatus, { requestId, error: mapped.code });
-    }
-
-    return errorResponse("AI service error", 500, { requestId, error: error.message });
+    const error = err as Error;
+    console.error(`[${requestId}] Unhandled error in qbr-executive-report:`, error?.message || err);
+    return errorResponse("Internal error", 500, { requestId, error: error?.message || "UNKNOWN_ERROR" });
   }
 }
 
