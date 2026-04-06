@@ -28,12 +28,12 @@ import type {
 // SINGLE OBJECTIVE VIEW
 // ============================================================
 
-export function useOrgObjectiveView(objectiveId: string) {
+export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null) {
   const { currentBu } = useBu();
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.orgObjectiveView(objectiveId, currentBu?.id ?? null),
+    queryKey: queryKeys.okrs.orgObjectiveView(objectiveId, currentBu?.id ?? null, cycleId),
     queryFn: async (): Promise<OrgObjectiveWithKrs | null> => {
       if (!supabase) return null;
       
