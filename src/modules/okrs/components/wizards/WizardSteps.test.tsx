@@ -7,7 +7,10 @@ import { describe, it, expect, vi } from 'vitest';
 
 // Mock heavy dependencies to avoid timeout
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: vi.fn(), auth: { getUser: vi.fn() } },
+  supabase: { from: vi.fn(), auth: { getUser: vi.fn(), getSession: vi.fn(), onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })) } },
+}));
+vi.mock('@/lib/supabase/buScopedClient', () => ({
+  getBuScopedClient: vi.fn(() => ({ from: vi.fn() })),
 }));
 vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
@@ -15,6 +18,12 @@ vi.mock('@/modules/okrs/components/wizards/shared/WizardTooltips', () => ({
 }));
 vi.mock('@/modules/vic/components/AskToVic', () => ({
   AskToVicStepHelper: () => null,
+}));
+vi.mock('@/contexts/BuContext', () => ({
+  useBu: () => ({ currentBuId: 'test-bu', buList: [] }),
+}));
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'test' }, session: null }),
 }));
 
 describe('KrDetailStep', () => {

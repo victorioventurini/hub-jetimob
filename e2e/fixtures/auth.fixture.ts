@@ -33,26 +33,26 @@ async function performLogin(page: Page, email: string): Promise<void> {
 }
 
 export const test = base.extend<AuthFixture>({
-  loginAsAdmin: async ({ page }, use) => {
-    await use(async () => {
+  loginAsAdmin: async ({ page }, callback) => {
+    await callback(async () => {
       await performLogin(page, TEST_USERS.admin.email);
     });
   },
   
-  loginAsLeader: async ({ page }, use) => {
-    await use(async () => {
+  loginAsLeader: async ({ page }, callback) => {
+    await callback(async () => {
       await performLogin(page, TEST_USERS.leader.email);
     });
   },
   
-  loginAsMember: async ({ page }, use) => {
-    await use(async () => {
+  loginAsMember: async ({ page }, callback) => {
+    await callback(async () => {
       await performLogin(page, TEST_USERS.member.email);
     });
   },
   
-  logout: async ({ page }, use) => {
-    await use(async () => {
+  logout: async ({ page }, callback) => {
+    await callback(async () => {
       // Click user menu and logout
       const userMenu = page.locator('[data-testid="user-menu"]');
       if (await userMenu.isVisible()) {
