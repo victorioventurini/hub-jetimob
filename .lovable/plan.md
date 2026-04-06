@@ -1,180 +1,124 @@
 
+## Plano: Melhorias QBR v1.2 — Itens Pendentes
 
-## Plano Revisado: Melhorias nos Rituais QBR (Meeting + Post)
+### Análise: O que já existe vs. O que falta
 
-**Pre-checklist concluído:**
-- [x] TCR v3.21.0 consultado (seção 4.8 QBR Wizards, seções de Edge Functions, modelo de dados)
-- [x] DEVELOPMENT_STANDARDS v1.27.0 consultado (PRE-BU/POST-BU, query keys, wizard patterns)
-- [x] DATA_MODEL_REGISTRY consultado (tabelas `okr_wizard_sessions`, `cycles`, `teams`)
-- [x] IDENTITY_CONVENTION — não impactada (sem manipulação de `user_id` vs `profile_id`)
-- [x] PERMISSIONS_AND_RBAC_MODEL — não impactado (acesso já é `requiresBuAdmin`)
-- [x] Codebase verificado — Item 1 (Balanço do Quarter) e Item 3 (flags/adendos) confirmados como implementados
+**✅ Já implementado (v1.1 anterior):**
+- Item 1 (qbr-pre-clevel Step 2 Balanço do Quarter) → `QbrCLevelQuarterBalanceStep.tsx` existe e funciona
+- Scorecard no Opening → `ScorecardGrid` existe
+- Pauta C-Level no Opening → Directives + fallback existem
+- Agenda no Opening → `MeetingAgenda` existe
+- Flags de calibração no OKR Review → Já renderiza `calibrationFlags`
+- Adendos do líder no OKR Review → Já usa `AddendumBadge`
+- Resumo de governança no Closing → `GovernanceSummary` existe
+- Checklist dinâmico no Closing → 4 itens com condições
+- Flags C-Level + campo ajuste + dependências no Post Promotion → Tudo implementado
+- Resumo automático na Ata → `AutoSummary` existe
 
-**Itens já implementados (sem alteração):**
-- Item 1: `QbrCLevelQuarterBalanceStep` existe em `qbr-pre-clevel/`
-- Item 3: `QbrMeetingOkrReviewStep` já recebe e renderiza `calibrationFlags` e `teamAddendums`
-
-**Escopo: Itens 2, 4, 5 e 6** — 7 arquivos, sem mudança de schema, sem edge functions, sem RLS.
+**🔧 O que falta implementar (delta desta solicitação):**
 
 ---
 
-### Item 2 — QbrMeetingOpeningStep: Scorecard + Pauta C-Level + Agenda
+### 1. QbrMeetingOpeningStep — Bloco 2: OKRs da empresa neste quarter (NOVO)
 
-**Arquivo:** `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingOpeningStep.tsx`
+**Arquivo:** `QbrMeetingOpeningStep.tsx`
 
-Três novos blocos antes dos KPIs em alerta (que se mantêm intactos, apenas reposicionados):
+Inserir entre o Scorecard (Bloco 1) e a Pauta C-Level (Bloco 2 atual) um novo bloco com cards colapsáveis (colapsados por padrão) para cada OKR organizacional do ciclo:
+- Header: título + badge RAG agregado + progresso
+- Dentro: cada KR org com barra de progresso + contribuições por time
 
-**Bloco 1 — Scorecard do quarter (4 metric cards em grid 2x2):**
-- OKRs no ritmo (`healthy`) — verde
-- OKRs em risco (`at_risk`) — amarelo
-- OKRs fora da meta (`off_track`) — vermelho
-- Times sem submissão qbr-pre — cinza
-- Dados via nova prop `scorecardMetrics: { healthy: number; atRisk: number; offTrack: number; noSubmission: number }`
-
-**Bloco 2 — Pauta obrigatória do C-Level (já parcialmente implementado):**
-- Manter renderização existente de `cLevelDirectives` e `cLevelStrategicAnalysis.whatNotToDo`
-- Adicionar fallback: quando `cLevelSessionExists === false`, exibir `Card` com borda tracejada e texto "O Pré-QBR C-Level não foi submetido. A pauta obrigatória não está disponível."
-- Nova prop `cLevelSessionExists: boolean`
-
-**Bloco 3 — Agenda da reunião:**
-- Lista visual fixa dos 5 steps com número, título, subtítulo descritivo
-- Indicador do step atual via nova prop `currentStepIndex: number`
-- Sem interação — read-only
-
-**Alteração de props (additive):**
+**Nova prop:**
 ```typescript
-export interface QbrMeetingOpeningStepProps {
-  // ... existentes mantidas ...
-  scorecardMetrics: { healthy: number; atRisk: number; offTrack: number; noSubmission: number };
-  cLevelSessionExists: boolean;
-  currentStepIndex: number;
+orgObjectives?: OrgObjectiveWithKrs[];
+```
+
+**Arquivo:** `QbrMeetingPage.tsx`
+- Importar e chamar `useAllOrgObjectivesView(year, cycleId)` 
+- Passar `orgObjectives` ao Opening step
+- Usar os dados para computar `scorecardMetrics` reais (healthy/atRisk/offTrack) em vez dos placeholders atuais
+
+---
+
+### 2. QbrMeetingOpeningStep — Scorecard com dados reais (FIX)
+
+**Arquivo:** `QbrMeetingPage.tsx`
+
+Atualmente o scorecard usa valores placeholder:
+```typescript
+scorecardMetrics: {
+  healthy: teamsForReview.filter(t => t.hasSubmission).length,  // ← errado
+  atRisk: 0,  // ← placeholder
+  offTrack: 0,  // ← placeholder
+  ...
 }
 ```
 
-**Arquivo:** `src/modules/okrs/pages/QbrMeetingPage.tsx`
-- Computar `scorecardMetrics` a partir dos dados já carregados:
-  - `teamsForReview` (contagem de submissões) vs `buTeams` (total de times ativos)
-  - Contagem de aprovações por status dos KRs (derivada de `preQbrSessions` → `krFinalStates`)
-- Passar `cLevelSessionExists: !!cLevelSession`
-- Passar `currentStepIndex: STEP_ORDER.indexOf(draft.currentStep)`
-
-**Padrões respeitados:**
-- `useBuScopedSupabase()` para queries (POST-BU) ✅
-- Sem `select('*')` — queries existentes já usam campos explícitos ✅
-- Dados derivados de snapshots existentes (sem queries adicionais) ✅
+Corrigir para computar a partir dos OKRs org reais via `orgObjectives` + `calculateKrState`:
+- healthy = KRs org com state healthy/achieved/exceeded
+- atRisk = KRs org com state at_risk/stagnant
+- offTrack = KRs org com state off_track/not_achieved
+- noSubmission = times sem submissão qbr-pre (mantém)
 
 ---
 
-### Item 4 — QbrMeetingClosingStep: Resumo + Checklist dinâmico
+### 3. QbrMeetingOkrReviewStep — Cobertura de KRs organizacionais (NOVO)
 
-**Arquivo:** `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingClosingStep.tsx`
+**Arquivo:** `QbrMeetingOkrReviewStep.tsx`
 
-**Novas props (additive):**
-```typescript
-export interface QbrMeetingClosingStepProps {
-  // ... existentes mantidas ...
-  approvals: QbrMeetingSnapshot['approvals'];
-  decisions: TeamCheckinDecision[];
-  crossCommitments: QbrMeetingSnapshot['crossCommitments'];
-  totalTeamsForReview: number;
-}
-```
+Adicionar duas seções após os addendums e antes das ações de aprovação:
 
-**Resumo antes do checklist (Card read-only):**
-- OKRs aprovados / com ajuste / diferidos / descartados — contadores derivados de `approvals`
-- Total de decisões com dono — contagem de `decisions.filter(d => d.owner?.id)`
-- Total de compromissos cross-área — `crossCommitments.length`
+**Seção 1 — KRs org que o time propõe cobrir:**
+Para cada proposta com KR tipo contribution (se `linkedOrgKrId` existe), mostrar:
+- Objetivo proposto → KR → "Contribui para → KR Org: [título]"
+- Se nenhuma KR vinculada: aviso "Nenhuma KR desta proposta contribui para os OKRs organizacionais"
 
-**Checklist dinâmico — cada item recebe `disabled` condicional:**
-| Item | Condição para habilitar |
-|------|------------------------|
-| `allTeamsReviewed` | `approvals.length >= totalTeamsForReview` |
-| `decisionsHaveOwners` | `decisions.every(d => d.owner?.id)` ou `decisions.length === 0` |
-| `dependenciesFormalized` | Livre (confirmação manual) |
-| `feedbackLinkSent` | Livre (confirmação manual) |
-
-- Quando `disabled`, o `Checkbox` mostra tooltip explicando a pendência
-- Item auto-checked quando condição atendida
-
-**Arquivo:** `src/modules/okrs/pages/QbrMeetingPage.tsx`
-- Passar as 4 novas props ao `QbrMeetingClosingStep` (dados já disponíveis no `draft.data`)
-
----
-
-### Item 5 — QbrPostOkrPromotionStep: Flags C-Level + Campo de ajuste + Dependências
-
-**Arquivo:** `src/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep.tsx`
+**Seção 2 — Cobertura reversa (tempo real):**
+KRs org sem cobertura por nenhum time aprovado. Atualizada conforme `approvals` mudam.
 
 **Novas props:**
 ```typescript
-export interface QbrPostOkrPromotionStepProps {
-  // ... existentes mantidas ...
-  calibrationFlags?: QbrCLevelSnapshot['okrCalibrationFlags'];
-  crossCommitments?: QbrMeetingSnapshot['crossCommitments'];
-  adjustmentNotes: Record<string, string>;
-  onAdjustmentNotesChange: (notes: Record<string, string>) => void;
-}
+orgObjectives?: OrgObjectiveWithKrs[];  // Para resolver nomes de KRs org
 ```
 
-**Flags do C-Level:**
-- Dentro de cada card de time, abaixo do status badge, exibir `calibrationFlags.filter(f => f.teamId === okr.teamId)`
-- Reutilizar o mesmo padrão visual do `QbrMeetingOkrReviewStep` (ícone `Flag` + `bg-status-amber-muted/30`)
-
-**Campo de ajuste inline:**
-- Para OKRs com `status === 'approved_with_changes'`, renderizar `Textarea` abaixo dos OKRs propostos
-- Placeholder: "Descreva os ajustes necessários antes de promover..."
-- Valor: `adjustmentNotes[okr.sessionId]`
-- onChange: `onAdjustmentNotesChange({ ...adjustmentNotes, [sessionId]: value })`
-
-**Indicador de dependências:**
-- Para cada time, verificar se `crossCommitments` contém `toTeamId === okr.teamId`
-- Se sim, exibir `Badge` âmbar: "Depende de: [nome do time origin]"
-- Resolver nome via `buTeams` (já disponível no `QbrPostPage`)
-
-**Arquivo:** `src/modules/okrs/types/wizard.ts`
-- Adicionar `adjustmentNotes?: Record<string, string>` ao `QbrPostDraftData`
-
-**Arquivo:** `src/modules/okrs/pages/QbrPostPage.tsx`
-- Carregar sessão C-Level (mesma query pattern do `QbrMeetingPage` — reutilizar)
-- Extrair `calibrationFlags` do snapshot
-- Passar `crossCommitments` do meeting snapshot (já carregado como `meetingCommitments`)
-- Adicionar `adjustmentNotes: {}` ao `DEFAULT_DATA`
-- Passar as novas props e handlers ao componente
+**Arquivo:** `QbrMeetingPage.tsx` — Passar `orgObjectives` ao OKR Review step.
 
 ---
 
-### Item 6 — QbrPostMinutesStep: Resumo automático antes da ata
+### 4. QbrMeetingClosingStep — Mapa de cobertura org (NOVO)
 
-**Arquivo:** `src/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep.tsx`
+**Arquivo:** `QbrMeetingClosingStep.tsx`
+
+Antes do resumo de governança, inserir card "Cobertura de OKRs Organizacionais":
+- Para cada KR org: ✅ coberta (por quais times) / ⚠️ intencional (checkbox) / ❌ sem cobertura
+- Permite marcar KRs não cobertas como "intencional"
+
+**Novo campo no draft:**
+```typescript
+// QbrMeetingGovernanceChecklist
+orgCoverageClear: boolean;
+
+// QbrMeetingDraftData
+intentionalGaps?: string[];  // IDs de KRs org marcadas como intencionais
+```
+
+**Novo item no checklist:**
+- "OKRs organizacionais cobertos" → enabled quando todas as KRs org têm cobertura OU estão marcadas como intencionais
 
 **Novas props:**
 ```typescript
-export interface QbrPostMinutesStepProps {
-  // ... existentes mantidas ...
-  summaryData?: {
-    promotedOkrs: Array<{ teamName: string; objectiveTitle: string; krCount: number }>;
-    decisions: Array<{ text: string; ownerName?: string; deadline?: string }>;
-    crossCommitments: Array<{ fromTeamName: string; toTeamName: string; description: string; deadline: string }>;
-    teamsWithoutPromotion: string[];
-  };
-}
+orgObjectives?: OrgObjectiveWithKrs[];
+intentionalGaps: string[];
+onIntentionalGapsChange: (gaps: string[]) => void;
 ```
 
-**Card read-only antes do campo de texto (dados estruturados, sem IA):**
-- **OKRs promovidos:** lista por time com objetivo e quantidade de KRs
-- **Decisões:** lista com dono e prazo
-- **Compromissos cross-área:** "De → Para" com prazo
-- **Times sem OKR promovido:** lista para visibilidade
+**Arquivo:** `QbrMeetingPage.tsx` — Passar dados + handler. Adicionar `intentionalGaps: []` ao DEFAULT_DATA.
 
-- Renderizado com `Collapsible` (expandido por padrão) para não ocupar espaço excessivo
-- Label: "Resumo do QBR (dados consolidados)"
+---
 
-**Arquivo:** `src/modules/okrs/pages/QbrPostPage.tsx`
-- Computar `summaryData` a partir dos dados já carregados:
-  - `approvedOkrs` + `draft.data.promotedOkrIds` para OKRs promovidos
-  - `meetingDecisions` + `draft.data.decisions` para decisões
-  - `meetingCommitments` + `draft.data.crossCommitments` para compromissos
-  - `teams` — `approvedOkrs.map(o => o.teamId)` para times sem promoção
+### 5. Tipos (wizard.ts)
+
+- `QbrMeetingGovernanceChecklist`: adicionar `orgCoverageClear: boolean`
+- `QbrMeetingDraftData`: adicionar `intentionalGaps?: string[]`
 
 ---
 
@@ -182,13 +126,29 @@ export interface QbrPostMinutesStepProps {
 
 | Arquivo | Mudança |
 |---------|---------|
-| `QbrMeetingOpeningStep.tsx` | +Scorecard +Fallback C-Level +Agenda |
-| `QbrMeetingClosingStep.tsx` | +Resumo +Checklist dinâmico |
-| `QbrMeetingPage.tsx` | Novas props para Opening e Closing |
-| `QbrPostOkrPromotionStep.tsx` | +Flags C-Level +Campo ajuste +Dependências |
-| `QbrPostMinutesStep.tsx` | +Resumo automático antes da ata |
-| `QbrPostPage.tsx` | +Query C-Level session +Novas props |
-| `types/wizard.ts` | `adjustmentNotes` no `QbrPostDraftData` |
+| `types/wizard.ts` | +`orgCoverageClear` no checklist, +`intentionalGaps` no draft |
+| `QbrMeetingOpeningStep.tsx` | +Bloco OKRs org (colapsáveis) |
+| `QbrMeetingOkrReviewStep.tsx` | +Cobertura org + cobertura reversa |
+| `QbrMeetingClosingStep.tsx` | +Mapa de cobertura org + novo checklist item |
+| `QbrMeetingPage.tsx` | +useAllOrgObjectivesView + scorecard real + novas props |
 
-7 arquivos. Sem mudanças de banco, edge functions ou RLS. Todas as props são aditivas (backward-compatible). Dados derivados de snapshots imutáveis em `reflection_data`.
+5 arquivos. Sem mudança de schema, edge functions ou RLS.
 
+### O que NÃO muda
+
+- `qbr-pre` — intocado
+- `QbrCLevelQuarterBalanceStep` — já implementado, sem alteração
+- `QbrPostOkrPromotionStep` — já tem flags + ajuste + dependências
+- `QbrPostMinutesStep` — já tem resumo automático
+- Lógica de gates de navegação
+- Snapshots `reflection_data`
+- `QbrPreCLevelPage` — já tem 6 steps com quarter-balance
+
+### Padrões respeitados
+
+- `useBuScopedSupabase()` para queries (POST-BU) ✅
+- Sem `select('*')` — campos explícitos ✅
+- Hooks existentes reutilizados (`useAllOrgObjectivesView`, `calculateKrState`) ✅
+- Props aditivas (backward-compatible) ✅
+- Tokens semânticos do design system ✅
+- Dados derivados de queries e snapshots existentes ✅
