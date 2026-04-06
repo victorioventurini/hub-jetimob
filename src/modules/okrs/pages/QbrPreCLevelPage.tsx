@@ -137,6 +137,7 @@ export default function QbrPreCLevelPage() {
       const { data, error } = await buSupabase
         .from('teams')
         .select('id, name')
+        .eq('bu_id', currentBuId!)
         .is('deleted_at', null)
         .is('parent_team_id', null)
         .eq('status', 'active');

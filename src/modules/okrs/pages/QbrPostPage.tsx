@@ -121,7 +121,7 @@ export default function QbrPostPage() {
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
-      const { data, error } = await buSupabase.from('teams').select('id, name').is('deleted_at', null).eq('status', 'active');
+      const { data, error } = await buSupabase.from('teams').select('id, name').eq('bu_id', currentBuId!).is('deleted_at', null).eq('status', 'active');
       if (error) throw error;
       return data || [];
     },
