@@ -1,0 +1,4 @@
+# Memory: features/rituals/qbr-meeting-ritual-standard
+Updated: 2026-04-06
+
+O ritual QBR Meeting ('/rituals/qbr') é o rito de fechamento e planejamento trimestral, consolidando dados de preparação dos líderes e do C-Level. Estrutura: 1) 5 Steps: Abertura (scorecard do quarter + pauta C-Level com fallback + agenda visual + KPIs em alerta), Revisão de OKRs (aprovação de propostas dos times com flags de calibração C-Level e adendos do líder), Decisões (estratégicas e operacionais), Compromissos (cross-área) e Encerramento (resumo de governança + checklist dinâmico com habilitação condicional); 2) Janela de Acesso: Abre na 'retro_date' do ciclo e permanece disponível por até 2 dias úteis; 3) Integração: Consome automaticamente diretrizes, flags de calibração e snapshots de KPIs/propostas capturados nos ritos 'qbr-pre' e 'qbr-pre-clevel'; 4) Finalização: O fechamento dispara a edge function 'qbr-meeting-summary' para geração de relatórios e distribuição de resultados.

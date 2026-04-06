@@ -1,0 +1,4 @@
+# Memory: features/rituals/qbr-post-ritual-standard
+Updated: 2026-04-06
+
+O ritual QBR Post ('/rituals/qbr-post') é a fase de formalização pós-reunião do QBR, operando em 5 etapas: 1) Promoção de OKRs — exibe OKRs aprovados com flags de calibração do C-Level por time, campo de ajuste inline (`adjustmentNotes: Record<string, string>`) para OKRs aprovados 'com ajuste' (`approved_with_changes`), e badge de dependências cross-área ("Depende de: [time]") derivado dos compromissos do qbr-meeting; 2) Decisões Complementares; 3) Compromissos Cross-Área com fromTeamId/toTeamId e prazo; 4) Cadência de Follow-Up; 5) Ata Executiva — resumo automático read-only (dados estruturados, não IA) com OKRs promovidos por time, decisões com dono/prazo, compromissos cross-área e times sem promoção, exibido em Collapsible acima do campo de ata narrativa. O campo `adjustmentNotes` persiste no `QbrPostDraftData` em `types/wizard.ts`.
