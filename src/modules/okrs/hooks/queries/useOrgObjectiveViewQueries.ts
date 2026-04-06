@@ -216,12 +216,12 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
 // ALL OBJECTIVES VIEW
 // ============================================================
 
-export function useAllOrgObjectivesView(year?: number) {
+export function useAllOrgObjectivesView(year?: number, cycleId?: string | null) {
   const currentYear = year || new Date().getFullYear();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, buId ?? null),
+    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, buId ?? null, cycleId),
     queryFn: async (): Promise<OrgObjectiveWithKrs[]> => {
       if (!supabase || !buId) return [];
       
