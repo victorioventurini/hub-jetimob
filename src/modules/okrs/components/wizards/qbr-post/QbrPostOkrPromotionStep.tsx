@@ -44,7 +44,7 @@ export interface QbrPostOkrPromotionStepProps {
 const STATUS_LABELS: Record<QbrApprovalStatus, { label: string; icon: typeof Check; color: string }> = {
   approved: { label: 'Aprovado', icon: Check, color: 'text-status-green' },
   approved_with_changes: { label: 'Com ajustes', icon: Pencil, color: 'text-status-amber' },
-  defer: { label: 'Diferido', icon: Clock, color: 'text-muted-foreground' },
+  defer: { label: 'Standby', icon: Clock, color: 'text-muted-foreground' },
   discarded: { label: 'Descartado', icon: X, color: 'text-status-red' },
 };
 
@@ -162,7 +162,7 @@ export function QbrPostOkrPromotionStep({
         {deferred.length > 0 && (
           <Card className="border-dashed">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground">Diferidos ({deferred.length})</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground">Standby ({deferred.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
               {deferred.map(okr => (

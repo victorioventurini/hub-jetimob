@@ -62,7 +62,7 @@ const STATUS_CONFIG: Record<QbrApprovalStatus, { label: string; icon: typeof Che
   approved: { label: 'Aprovado', icon: Check, color: 'text-status-green', bg: 'bg-status-green-muted' },
   approved_with_changes: { label: 'Aprovado c/ ajustes', icon: Pencil, color: 'text-status-amber', bg: 'bg-status-amber-muted' },
   discarded: { label: 'Descartado', icon: X, color: 'text-status-red', bg: 'bg-status-red-muted' },
-  defer: { label: 'Diferido', icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted' },
+  defer: { label: 'Standby', icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted' },
 };
 
 // ============================================================
