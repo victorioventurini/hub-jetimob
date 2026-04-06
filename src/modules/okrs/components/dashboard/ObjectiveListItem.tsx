@@ -244,7 +244,7 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
                       </div>
                       
                       {/* Title */}
-                      <h3 className="font-semibold text-base sm:text-lg leading-snug line-clamp-2">
+                      <h3 className="font-semibold text-base sm:text-lg leading-snug line-clamp-2" title={objective.title}>
                         {objective.title}
                       </h3>
                       
