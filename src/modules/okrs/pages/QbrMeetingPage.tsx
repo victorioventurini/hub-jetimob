@@ -186,14 +186,14 @@ export default function QbrMeetingPage() {
     enabled: preQbrSessionIds.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data, error } = await buSupabase
+      const { data, error } = await (buSupabase as any)
         .from('okr_wizard_addendums')
         .select('session_id, text, created_at, created_by')
         .in('session_id', preQbrSessionIds)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as Array<{ session_id: string; text: string; created_at: string; created_by: string }>;
     },
   });
 
