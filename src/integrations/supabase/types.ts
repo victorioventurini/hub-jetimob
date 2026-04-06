@@ -5819,7 +5819,7 @@ export type Database = {
           last_health_calculated_at: string | null
           last_reviewed_at: string | null
           next_review_due: string | null
-          org_objective_id: string
+          org_objective_id: string | null
           owner_user_id: string | null
           qbr_approval_status: string | null
           qbr_discard_reason: string | null
@@ -5852,7 +5852,7 @@ export type Database = {
           last_health_calculated_at?: string | null
           last_reviewed_at?: string | null
           next_review_due?: string | null
-          org_objective_id: string
+          org_objective_id?: string | null
           owner_user_id?: string | null
           qbr_approval_status?: string | null
           qbr_discard_reason?: string | null
@@ -5885,7 +5885,7 @@ export type Database = {
           last_health_calculated_at?: string | null
           last_reviewed_at?: string | null
           next_review_due?: string | null
-          org_objective_id?: string
+          org_objective_id?: string | null
           owner_user_id?: string | null
           qbr_approval_status?: string | null
           qbr_discard_reason?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.okr_team_objectives ALTER COLUMN org_objective_id DROP NOT NULL;
