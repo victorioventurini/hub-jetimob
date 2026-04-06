@@ -311,24 +311,33 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.worked.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
-                {topLearnings.worked.map((t, i) => (
-                  <p key={i} className="text-xs text-muted-foreground line-clamp-2">• {t}</p>
+                {topLearnings.worked.map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
+                    <span className="line-clamp-2 flex-1">• {item.text}</span>
+                    <Badge variant="secondary" className="text-[10px] shrink-0">{item.teamName}</Badge>
+                  </div>
                 ))}
               </div>
             )}
             {topLearnings.didntWork.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
-                {topLearnings.didntWork.map((t, i) => (
-                  <p key={i} className="text-xs text-muted-foreground line-clamp-2">• {t}</p>
+                {topLearnings.didntWork.map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
+                    <span className="line-clamp-2 flex-1">• {item.text}</span>
+                    <Badge variant="secondary" className="text-[10px] shrink-0">{item.teamName}</Badge>
+                  </div>
                 ))}
               </div>
             )}
             {topLearnings.debts.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
-                {topLearnings.debts.map((t, i) => (
-                  <p key={i} className="text-xs text-muted-foreground line-clamp-2">• {t}</p>
+                {topLearnings.debts.map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
+                    <span className="line-clamp-2 flex-1">• {item.text}</span>
+                    <Badge variant="secondary" className="text-[10px] shrink-0">{item.teamName}</Badge>
+                  </div>
                 ))}
               </div>
             )}
