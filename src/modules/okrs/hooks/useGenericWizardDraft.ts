@@ -211,6 +211,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isResumingDraft, setIsResumingDraft] = useState(false);
+  const isCompletingRef = useRef(false);
   const hasHydratedStorageRef = useRef(false);
   
   // Create empty draft
