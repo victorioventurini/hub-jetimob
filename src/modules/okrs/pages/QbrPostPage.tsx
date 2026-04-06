@@ -231,6 +231,11 @@ export default function QbrPostPage() {
             approvedOkrs={approvedOkrs}
             promotedSessionIds={draft.data.promotedOkrIds}
             onPromotedSessionIdsChange={(promotedOkrIds) => updateDraft({ promotedOkrIds })}
+            calibrationFlags={cLevelSession?.snapshot?.okrCalibrationFlags}
+            crossCommitments={meetingCommitments}
+            adjustmentNotes={draft.data.adjustmentNotes || {}}
+            onAdjustmentNotesChange={(adjustmentNotes) => updateDraft({ adjustmentNotes })}
+            teams={teams || []}
             onContinue={goNext}
           />
         );
