@@ -250,7 +250,7 @@ export default function QbrPreCLevelPage() {
     cycleId: quarterlyCycle?.id || null,
     defaultStep: 'system-read',
     defaultData: DEFAULT_DATA,
-    enabled: !!quarterlyCycle && qbrReviewing,
+    enabled: !!quarterlyCycle,
   });
 
   // Navigation
