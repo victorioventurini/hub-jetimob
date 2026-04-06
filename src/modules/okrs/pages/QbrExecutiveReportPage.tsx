@@ -231,14 +231,19 @@ function ReportDisplay({
                 </tr>
               </thead>
               <tbody>
-                {report.teamProposals.map((proposal, i) => (
+                {report.teamProposals.map((proposal, i) => {
+                  const teamName = typeof proposal === 'object' ? (proposal.teamName || '—') : String(proposal);
+                  const objTitle = typeof proposal === 'object' ? (proposal.objectiveTitle || proposal.title || '—') : '';
+                  const krCount = typeof proposal === 'object' ? (proposal.krCount ?? '—') : '';
+                  return (
                   <tr key={i} className="border-b last:border-0">
                     <td className="py-2 pr-4">
-                      <Badge variant="secondary" className="text-xs">{proposal.teamName}</Badge>
+                      <Badge variant="secondary" className="text-xs">{teamName}</Badge>
                     </td>
-                    <td className="py-2 pr-4">{proposal.objectiveTitle}</td>
-                    <td className="py-2 text-right text-muted-foreground">{proposal.krCount} KRs</td>
+                    <td className="py-2 pr-4">{objTitle}</td>
+                    <td className="py-2 text-right text-muted-foreground">{krCount} KRs</td>
                   </tr>
+                  );
                 ))}
               </tbody>
             </table>
