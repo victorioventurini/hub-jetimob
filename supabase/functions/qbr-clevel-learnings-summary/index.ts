@@ -161,6 +161,6 @@ ${debts.length > 0 ? formatItems(debts) : "(nenhum registro)"}`;
 serve((req: Request) =>
   withMiddleware(req, (r, ctx) => handler(r, ctx), {
     requireAuth: true,
-    requireBu: true,
+    requireBu: false,
   })
 );
