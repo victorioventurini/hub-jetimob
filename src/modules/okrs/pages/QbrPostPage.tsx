@@ -275,6 +275,34 @@ export default function QbrPostPage() {
             onExecutiveMinutesChange={(executiveMinutes) => updateDraft({ executiveMinutes })}
             checklist={draft.data.governanceChecklist}
             onChecklistChange={(governanceChecklist) => updateDraft({ governanceChecklist })}
+            summaryData={(() => {
+              const promoted = approvedOkrs.filter(o => draft.data.promotedOkrIds.includes(o.sessionId));
+              const promotedTeamIds = new Set(promoted.map(o => o.teamId));
+              const allTeamIds = new Set(approvedOkrs.map(o => o.teamId));
+              const teamsWithoutPromotion = Array.from(allTeamIds)
+                .filter(id => !promotedTeamIds.has(id))
+                .map(id => teamMap.get(id) || 'Time');
+
+              return {
+                promotedOkrs: promoted.flatMap(o => o.proposedOkrs.map(p => ({
+                  teamName: o.teamName,
+                  objectiveTitle: p.objective.title,
+                  krCount: p.draftKrs.length,
+                }))),
+                decisions: [...meetingDecisions, ...draft.data.decisions].map(d => ({
+                  text: d.text,
+                  ownerName: d.owner?.name,
+                  deadline: d.deadline || undefined,
+                })),
+                crossCommitments: (draft.data.crossCommitments || []).map(c => ({
+                  fromTeamName: teamMap.get(c.fromTeamId) || 'Time',
+                  toTeamName: teamMap.get(c.toTeamId) || 'Time',
+                  description: c.description,
+                  deadline: c.deadline,
+                })),
+                teamsWithoutPromotion,
+              };
+            })()}
             onComplete={handleComplete}
             onBack={goBack}
           />
