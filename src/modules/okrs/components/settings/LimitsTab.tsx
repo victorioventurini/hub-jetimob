@@ -113,7 +113,7 @@ export function LimitsTab() {
               <span>
                 <strong className="text-foreground">KRs cancelados não contam:</strong>{" "}
                 Quando uma KR é cancelada (com motivo registrado), ela não é contabilizada
-                no limite de 3 KRs por objetivo.
+                no limite de {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs por objetivo.
               </span>
             </li>
             <li className="flex items-start gap-2">
