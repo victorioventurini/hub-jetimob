@@ -428,14 +428,6 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.didntWork.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
-                {summaries?.didntWorkSummary && (
-                  <div className="mb-2 p-2 rounded-md bg-status-red/5 border border-status-red/20">
-                    <div className="flex items-start gap-1.5">
-                      <Sparkles className="h-3 w-3 text-status-red shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground">{summaries.didntWorkSummary}</p>
-                    </div>
-                  </div>
-                )}
                 {topLearnings.didntWork.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
@@ -447,14 +439,6 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.debts.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
-                {summaries?.debtsSummary && (
-                  <div className="mb-2 p-2 rounded-md bg-status-amber/5 border border-status-amber/20">
-                    <div className="flex items-start gap-1.5">
-                      <Sparkles className="h-3 w-3 text-status-amber shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground">{summaries.debtsSummary}</p>
-                    </div>
-                  </div>
-                )}
                 {topLearnings.debts.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
