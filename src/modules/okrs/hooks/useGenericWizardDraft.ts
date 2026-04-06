@@ -211,6 +211,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isResumingDraft, setIsResumingDraft] = useState(false);
+  const isCompletingRef = useRef(false);
   const hasHydratedStorageRef = useRef(false);
   
   // Create empty draft
@@ -548,6 +549,13 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   // Clear draft (after successful completion)
   // Returns the sessionId (existing or newly created) for post-completion actions
   const clearDraft = useCallback(async (): Promise<string | null> => {
+    // Guard against double-invocation (e.g. double-click on Complete button)
+    if (isCompletingRef.current) {
+      console.warn('[useGenericWizardDraft] clearDraft already in progress, skipping duplicate call');
+      return null;
+    }
+    isCompletingRef.current = true;
+
     // Clear localStorage
     try {
       localStorage.removeItem(storageKey);
@@ -631,6 +639,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     url.searchParams.delete('step');
     window.history.replaceState(window.history.state, '', url.toString());
     
+    // Note: do NOT reset isCompletingRef — once completed, prevent any further calls
     return resultId;
   }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId]);
   
