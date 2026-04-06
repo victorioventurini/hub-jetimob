@@ -521,9 +521,9 @@ export default function QbrPrePage() {
     }
   }, [clearDraft, navigate, draft.data.proposedOkrs, planningQuarter, teamIdParam, buSupabase, currentBuId]);
 
-  const handleClose = useCallback(() => {
-    clearDraft();
-  }, [clearDraft]);
+  // handleClose is a no-op: FullPageWizardShell handles navigation.
+  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
+  const handleClose = useCallback(() => {}, []);
 
   // Handle team change (admin only)
   const handleTeamChange = useCallback((newTeamId: string) => {

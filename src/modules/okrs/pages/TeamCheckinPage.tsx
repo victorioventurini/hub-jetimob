@@ -144,9 +144,9 @@ export default function TeamCheckinPage() {
   }, [draft.currentStep, setStep]);
   
   // Handlers
-  const handleClose = useCallback(() => {
-    clearDraft();
-  }, [clearDraft]);
+  // handleClose is a no-op: FullPageWizardShell handles navigation.
+  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
+  const handleClose = useCallback(() => {}, []);
   
   const handleSaveDraft = useCallback(async () => {
     try {
