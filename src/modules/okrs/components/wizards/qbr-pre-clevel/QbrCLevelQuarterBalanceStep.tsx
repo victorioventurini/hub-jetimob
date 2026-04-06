@@ -383,7 +383,7 @@ export function QbrCLevelQuarterBalanceStep({
               {(!orgObjectives || orgObjectives.length === 0) ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhum OKR organizacional cadastrado para este ciclo.</p>
+                  <p className="text-sm">Nenhum OKR organizacional cadastrado para {year}.</p>
                   <Link
                     to="/okrs/org-view"
                     className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2"
