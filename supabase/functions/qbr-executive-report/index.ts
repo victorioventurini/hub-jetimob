@@ -191,16 +191,17 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
   // 1. Fetch cycle info
   const { data: cycle, error: cycleErr } = await sc
     .from("cycles")
-    .select("id, name, start_date, end_date, type, year, status")
+    .select("id, name, start_date, end_date, type, status")
     .eq("id", body.cycleId)
     .eq("bu_id", buId)
     .single();
 
   if (cycleErr || !cycle) {
+    console.error(`[${requestId}] Cycle query error:`, cycleErr?.message);
     return errorResponse("Cycle not found", 404, { requestId });
   }
 
-  const cycleYear = cycle.year ?? parseInt(cycle.start_date.substring(0, 4), 10);
+  const cycleYear = parseInt(cycle.start_date.substring(0, 4), 10);
 
   // 2. Team objectives + KRs
   const { data: teamObjectives } = await sc
