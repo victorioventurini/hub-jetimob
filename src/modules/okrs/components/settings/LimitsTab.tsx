@@ -121,7 +121,7 @@ export function LimitsTab() {
               <span>
                 <strong className="text-foreground">Objetivos cancelados não contam:</strong>{" "}
                 Objetivos com status 'cancelled' ou 'discarded' não são contabilizados
-                no limite de 3 objetivos por time.
+                no limite de {OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM} objetivos por time.
               </span>
             </li>
             <li className="flex items-start gap-2">

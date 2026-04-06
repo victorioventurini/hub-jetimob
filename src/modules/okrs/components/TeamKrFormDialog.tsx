@@ -239,8 +239,8 @@ export function TeamKrFormDialog({
     },
     onError: (error: Error) => {
       console.error('Error saving KR:', error);
-      if (error.message.includes('Limite atingido') || error.message.includes('more than 3') || error.message.includes('máximo 3')) {
-        toast.error('Limite atingido: um Objetivo de Time pode ter no máximo 3 KRs ativos.');
+      if (error.message.includes('Limite atingido') || error.message.includes('more than') || error.message.includes('máximo')) {
+        toast.error(`Limite atingido: um Objetivo de Time pode ter no máximo ${OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs ativos.`);
       } else {
         toast.error(isEditing ? 'Erro ao atualizar KR.' : 'Erro ao criar Key Result.');
       }
