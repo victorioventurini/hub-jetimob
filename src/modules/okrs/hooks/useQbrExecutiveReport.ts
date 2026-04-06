@@ -26,6 +26,7 @@ export interface QbrExecutiveReportData {
     teamName: string;
     objectiveTitle: string;
     krCount: number;
+    krs: string[];
   }>;
 }
 
