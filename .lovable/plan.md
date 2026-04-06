@@ -1,82 +1,114 @@
 
 
-# Filtro de Quarter na Visão Organizacional
+# Novo Step "Balanço do Quarter" no QBR Pre C-Level
 
 ## Pré-checklist verificado
 
-- [x] TCR v3.21.0 — arquitetura multi-BU, stack, auth
-- [x] DEVELOPMENT_STANDARDS v1.27.0 — PRE-BU/POST-BU (hooks usam `useOptionalBuClient` corretamente), query keys centralizadas, URL state via `@/shared/url`
-- [x] DATA_MODEL_REGISTRY — tabelas `cycles` (BU-scoped, type/name/start_date/end_date), `okr_team_objectives` (tem `cycle_id`), `okr_team_key_results` (join via `team_objective_id`)
-- [x] Memory: dashboard-quarterly-filtering — Visão Org filtra só por Ano (Quarters bloqueados no dashboard). Esta feature adiciona Quarter especificamente nas páginas org-view, que são separadas do dashboard
-- [x] Verificação de implementação similar — OrgViewFilters já existe com status/team; YearSelect já usado no header
+- [x] TCR v3.21.0 — arquitetura multi-BU, stack, auth, wizard patterns
+- [x] DEVELOPMENT_STANDARDS v1.27.0 — POST-BU (`useBuScopedSupabase`), query keys centralizadas, URL state
+- [x] DATA_MODEL_REGISTRY — `cycles` (BU-scoped), `okr_team_objectives` (cycle_id), `okr_team_key_results`, `okr_org_objectives`
+- [x] WIZARD_DEVELOPMENT_GUIDE v1.0 — `FullPageWizardShell`, `WizardStepScaffold`, `WizardStepHeader`, `WizardStepFooter`, insights obrigatórios
+- [x] Memory: wizard-development — `useGenericWizardDraft`, race condition guard, `handleClose` = no-op
+- [x] Memory: qbr-pre-clevel-ritual-standard — steps atuais, snapshot, edge function de resumo
+- [x] Memory: org-view-quarter-filter-standard — `useAllOrgObjectivesView(year, cycleId)` já aceita cycleId
+- [x] Verificação de implementação similar — `QbrBalanceStep` (qbr-pre do time) existe como referência de layout
 
 ## Resumo
 
-Adicionar seletor de quarter nas páginas `/okrs/org-view` e `/okrs/org-view/:objectiveId`. Quando selecionado, filtra team KRs e team objectives pelo `cycle_id` do quarter correspondente.
+Inserir step read-only "Balanço do Quarter" entre "Leitura do Sistema" e "Análise Estratégica". Wizard passa de 5 para 6 steps. Sem novos campos no `QbrCLevelDraftData`.
 
 ## Mudanças por arquivo
 
-### 1. `src/lib/queryKeys/okrs.ts`
+### 1. `src/modules/okrs/types/wizard.ts`
 
-Adicionar `cycleId` como parâmetro opcional nas duas keys:
-
+**Tipo `QbrPreCLevelStep`** — adicionar `'quarter-balance'`:
 ```typescript
-allOrgObjectivesView: (year: number, buId: string | null, cycleId?: string | null) =>
-  ['all-org-objectives-view', year, buId, cycleId ?? null] as const,
-
-orgObjectiveView: (objectiveId: string, buId: string | null, cycleId?: string | null) =>
-  ['org-objective-view', objectiveId, buId, cycleId ?? null] as const,
+export type QbrPreCLevelStep = 'system-read' | 'quarter-balance' | 'strategic-analysis' | 'okr-validation' | 'directives' | 'feedback';
 ```
 
-### 2. `src/modules/okrs/hooks/queries/useOrgObjectiveViewQueries.ts`
+**`WIZARD_CONFIGS['qbr-pre-clevel'].steps`** — inserir na posição 2:
+```typescript
+{ id: 'quarter-balance', label: 'Balanço do Quarter', shortLabel: 'Balanço' },
+```
 
-**`useAllOrgObjectivesView(year?, cycleId?)`**:
-- Aceitar `cycleId?: string | null`
-- Na query de `okr_team_key_results`, quando `cycleId` definido: adicionar filtro na subquery do join `team_objective`: `.eq('team_objective.cycle_id', cycleId)`
-- Atualizar queryKey para incluir cycleId
+### 2. `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelQuarterBalanceStep.tsx` (NOVO)
 
-**`useOrgObjectiveView(objectiveId, cycleId?)`**:
-- Aceitar `cycleId?: string | null`
-- Mesmo filtro de `team_objective.cycle_id` na query de team KRs
-- Na query de `okr_team_objectives` (linkedTeamObjectives): adicionar `.eq('cycle_id', cycleId)` quando definido
-- Atualizar queryKey para incluir cycleId
+Componente read-only com duas seções usando `WizardStepScaffold`:
 
-### 3. `src/modules/okrs/pages/OrgViewListPage.tsx`
+**Props:**
+```typescript
+interface QbrCLevelQuarterBalanceStepProps {
+  cycleId: string;
+  year: number;
+  onContinue: () => void;
+  onBack: () => void;
+}
+```
 
-- Importar `useCycles` de `../hooks`
-- Adicionar URL state: `useUrlState<string>({ key: 'quarter', defaultValue: 'all' })`
-- Derivar `cycleId` via useMemo: filtrar ciclos por `type === 'quarter'` e ano correspondente, match pelo quarter selecionado (Q1/Q2/Q3/Q4 via nome ou posição temporal)
-- Ao mudar ano, resetar quarter para "all"
-- Renderizar `SimpleSelect` com opções `[all, Q1, Q2, Q3, Q4]` ao lado do `YearSelect` no `actions` do PageHeader
-- Se quarter selecionado mas ciclo não encontrado, exibir aviso inline
-- Passar `cycleId` para `useAllOrgObjectivesView(selectedYear, cycleId)`
+**Seção A — OKRs Organizacionais:**
+- Usa `useAllOrgObjectivesView(year, cycleId)` (hook existente, já aceita cycleId)
+- Para cada objetivo org: card com título, badge RAG agregado, barra de progresso
+- Dentro: KRs org com `OkrProgressBar`, RAG badge, `calculateKrState` + `KrStateInline`
+- Sub-lista de team KRs vinculados (via `linkedTeamKrs` no retorno do hook)
+- Estado vazio: mensagem + link para `/okrs/org-view`
 
-### 4. `src/modules/okrs/pages/OrgObjectiveViewPage.tsx`
+**Seção B — Scorecard por Time:**
+- Usa `useTeamOverviewMetrics(cycleId, teamIds)` (hook existente)
+- Grid de cards por time com: nome, health badge, contadores (achieved/on_track/at_risk/off_track/sem check-in)
+- Tendência vs quarter anterior: buscar ciclo anterior via `useCycles()`, comparar métricas
+- Estado vazio: mensagem informativa
 
-- Mesmo URL state `quarter` e resolução de `cycleId` via `useCycles`
-- Adicionar seletor de quarter + badge informativo quando quarter ativo (ex: "Mostrando Q1 2026 · 01 jan → 31 mar" com botão "Limpar")
-- Passar `cycleId` para `useOrgObjectiveView(objectiveId, cycleId)`
-- `LinkedTeamObjectivesSection` recebe dados já filtrados (sem mudança no componente)
+**Footer:** `WizardStepFooter` com back + continuar (sem validação).
 
-### 5. Barrel export (se necessário)
+### 3. `src/modules/okrs/components/wizards/qbr-pre-clevel/index.ts`
 
-Verificar se `useCycles` já está exportado via `src/modules/okrs/hooks/index.ts`. Se não, adicionar export.
+Adicionar export:
+```typescript
+export { QbrCLevelQuarterBalanceStep } from './QbrCLevelQuarterBalanceStep';
+```
+
+### 4. `src/modules/okrs/pages/QbrPreCLevelPage.tsx`
+
+**WIZARD_STEPS** — inserir na posição 2:
+```typescript
+{ id: 'quarter-balance' as const, label: 'Balanço do Quarter', description: 'Desempenho do ciclo' },
+```
+
+**STEP_ORDER** — atualizar:
+```typescript
+const STEP_ORDER: QbrPreCLevelStep[] = ['system-read', 'quarter-balance', 'strategic-analysis', 'okr-validation', 'directives', 'feedback'];
+```
+
+**renderStepContent** — adicionar case:
+```typescript
+case 'quarter-balance':
+  return (
+    <QbrCLevelQuarterBalanceStep
+      cycleId={quarterlyCycle!.id}
+      year={quarterlyCycle!.year ?? new Date().getFullYear()}
+      onContinue={goNext}
+      onBack={goBack}
+    />
+  );
+```
+
+Import do novo componente no topo.
 
 ## Decisões técnicas
 
 | Decisão | Justificativa |
 |---------|---------------|
-| Usar `SimpleSelect` (já canônico) | Não criar componente novo para 5 opções fixas |
-| Filtro no Supabase (não client-side) | Team KRs podem ser numerosos; filtrar na query evita buscar dados desnecessários |
-| Progresso = `current_value` atual | Não buscar check-ins por período (complexidade alta, fora de escopo) |
-| Resolver quarter→cycleId pelo `name` do ciclo | Convenção existente: nomes como "2026-Q1" |
-| Resetar quarter ao mudar ano | Evita estado inconsistente (Q2 selecionado em ano sem Q2) |
-| URL param `?quarter=Q1` | Padrão `useUrlState` do projeto, compartilhável |
+| Step read-only, sem campos no draft | Prompt especifica: "não adiciona campos de input ao snapshot" |
+| Reusar `useAllOrgObjectivesView(year, cycleId)` | Hook já existe e aceita cycleId (feature anterior) |
+| Reusar `useTeamOverviewMetrics(cycleId, teamIds)` | Hook existente, já retorna métricas consolidadas |
+| `WizardStepScaffold` + `WizardStepHeader` | Padrão obrigatório do WIZARD_DEVELOPMENT_GUIDE |
+| `KrStateInline` para estado de KR | Padrão de insights obrigatório |
+| Tendência vs quarter anterior = comparação simplificada | Buscar ciclo anterior pelo `start_date` menor mais próximo, tipo `quarter` |
 
 ## O que NÃO muda
 
-- Filtros de status RAG e time existentes na página de detalhe
-- Deep-linking `?kr=`
-- Comportamento padrão "Todos" = idêntico ao atual
-- Componentes internos (OrgKrExpandableCard, TeamKrListItem, OrgViewInsights, LinkedTeamObjectivesSection)
+- Steps existentes (1, 3-6) — sem alteração funcional, apenas renumerados
+- `QbrCLevelDraftData` — sem novos campos
+- Lógica de rascunho e conclusão — sem alteração
+- Edge function `qbr-clevel-learnings-summary` — sem alteração
 
