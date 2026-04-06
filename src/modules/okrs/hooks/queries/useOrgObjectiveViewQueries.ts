@@ -106,7 +106,7 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
       }
 
       // Fetch team objectives linked to this org objective via org_objective_id
-      const { data: teamObjectivesData, error: teamObjError } = await supabase
+      let teamObjQuery = supabase
         .from('okr_team_objectives')
         .select(AGGREGATE_FIELDS.teamObjectiveWithKrsForView)
         .eq('org_objective_id', objectiveId)
@@ -114,6 +114,12 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
         .is('cancelled_at', null)
         .neq('status', 'cancelled')
         .neq('status', 'discarded');
+
+      if (cycleId) {
+        teamObjQuery = teamObjQuery.eq('cycle_id', cycleId);
+      }
+
+      const { data: teamObjectivesData, error: teamObjError } = await teamObjQuery;
 
       if (teamObjError) {
         console.error('Error fetching team objectives:', teamObjError);
