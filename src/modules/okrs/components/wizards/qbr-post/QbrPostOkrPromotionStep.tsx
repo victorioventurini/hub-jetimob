@@ -44,7 +44,7 @@ export interface QbrPostOkrPromotionStepProps {
 const STATUS_LABELS: Record<QbrApprovalStatus, { label: string; icon: typeof Check; color: string }> = {
   approved: { label: 'Aprovado', icon: Check, color: 'text-status-green' },
   approved_with_changes: { label: 'Com ajustes', icon: Pencil, color: 'text-status-amber' },
-  defer: { label: 'Diferido', icon: Clock, color: 'text-muted-foreground' },
+  defer: { label: 'Standby', icon: Clock, color: 'text-muted-foreground' },
   discarded: { label: 'Descartado', icon: X, color: 'text-status-red' },
 };
 
