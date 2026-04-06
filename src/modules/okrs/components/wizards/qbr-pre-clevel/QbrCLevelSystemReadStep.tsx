@@ -78,11 +78,11 @@ function aggregateKpisToCreate(submissions: LeaderPreSubmission[]) {
   return items;
 }
 
-function extractTopLearnings(submissions: LeaderPreSubmission[], field: 'whatWorked' | 'whatDidntWork' | 'debts'): string[] {
+function extractTopLearnings(submissions: LeaderPreSubmission[], field: 'whatWorked' | 'whatDidntWork' | 'debts'): Array<{ text: string; teamName: string }> {
   return submissions
-    .map(s => s.snapshot.learnings[field])
-    .filter(t => t.trim().length > 0)
-    .slice(0, 5);
+    .filter(s => s.snapshot.learnings[field].trim().length > 0)
+    .map(s => ({ text: s.snapshot.learnings[field], teamName: s.teamName }))
+    .slice(0, 10);
 }
 
 const TREND_ICON = {
