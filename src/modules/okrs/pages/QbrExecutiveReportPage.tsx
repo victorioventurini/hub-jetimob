@@ -227,17 +227,27 @@ function ReportDisplay({
                 <tr className="border-b">
                   <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Time</th>
                   <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Objetivo proposto</th>
-                  <th className="text-right py-2 font-medium text-muted-foreground">KRs</th>
                 </tr>
               </thead>
               <tbody>
                 {report.teamProposals.map((proposal, i) => (
                   <tr key={i} className="border-b last:border-0">
-                    <td className="py-2 pr-4">
+                    <td className="py-2 pr-4 align-top">
                       <Badge variant="secondary" className="text-xs">{proposal.teamName}</Badge>
                     </td>
-                    <td className="py-2 pr-4">{proposal.objectiveTitle}</td>
-                    <td className="py-2 text-right text-muted-foreground">{proposal.krCount} KRs</td>
+                    <td className="py-2 pr-4">
+                      <span>{proposal.objectiveTitle}</span>
+                      {proposal.krs && proposal.krs.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {proposal.krs.map((kr, idx) => (
+                            <div key={idx} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                              <span className="mt-px shrink-0">·</span>
+                              <span>{kr}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

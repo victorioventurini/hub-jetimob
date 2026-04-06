@@ -144,17 +144,19 @@ function extractCLevelFlags(session: any) {
 }
 
 function extractNextCycleProposals(sessions: any[], teams: Map<string, string>) {
-  const proposals: Array<{ teamName: string; objectiveTitle: string; krCount: number }> = [];
+  const proposals: Array<{ teamName: string; objectiveTitle: string; krCount: number; krs: string[] }> = [];
   for (const session of sessions) {
     const data = session.reflection_data?.data ?? session.reflection_data ?? {};
     const nextOkrs = data.nextCycleOkrs || data.proposedOkrs || [];
     const teamName = teams.get(session.team_id) || 'Time';
     if (Array.isArray(nextOkrs)) {
       for (const okr of nextOkrs) {
+        const rawKrs = okr.keyResults || okr.krs || [];
         proposals.push({
           teamName,
           objectiveTitle: okr.title || okr.objective || 'Sem título',
-          krCount: (okr.keyResults || okr.krs || []).length,
+          krCount: rawKrs.length,
+          krs: rawKrs.map((kr: any) => kr.title || kr.name || 'Sem título'),
         });
       }
     }
