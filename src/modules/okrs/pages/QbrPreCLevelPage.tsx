@@ -345,6 +345,16 @@ export default function QbrPreCLevelPage() {
           />
         );
 
+      case 'quarter-balance':
+        return (
+          <QbrCLevelQuarterBalanceStep
+            cycleId={quarterlyCycle!.id}
+            year={quarterlyCycle!.year ?? new Date().getFullYear()}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
       case 'strategic-analysis':
         return (
           <QbrCLevelStrategicStep
