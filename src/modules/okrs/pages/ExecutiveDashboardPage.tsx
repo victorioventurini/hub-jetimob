@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Target, Users, Building2, ChevronRight, AlertCircle, FileText } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
 import { useOrgObjectives, useTeamObjectives, useTeamKeyResults, useTeams, useOrgKeyResults } from '../hooks';
