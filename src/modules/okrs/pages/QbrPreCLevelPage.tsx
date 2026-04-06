@@ -92,7 +92,7 @@ export default function QbrPreCLevelPage() {
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   const availability = useRitualAvailability('qbr-pre-clevel', quarterlyCycle);
 
-  // Validate qbr_status = 'reviewing'
+  // Load qbr_status for informational display (no longer a hard gate)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
     queryKey: ['qbr', 'cycle-status', quarterlyCycle?.id],
     enabled: !!buSupabase && !!quarterlyCycle?.id,
@@ -106,8 +106,6 @@ export default function QbrPreCLevelPage() {
       return data;
     },
   });
-
-  const qbrReviewing = cycleData?.qbr_status === 'reviewing';
 
   // Load leader submissions
   const { data: leaderSessions, isLoading: isLoadingSessions } = useQuery({
