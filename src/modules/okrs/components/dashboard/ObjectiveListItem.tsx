@@ -600,7 +600,7 @@ function KeyResultRow({ kr, type, objectiveTitle, objectiveStatus, teamName, can
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <p className="text-sm font-medium line-clamp-2 sm:truncate">{kr.title}</p>
+                  <p className="text-sm font-medium line-clamp-2 sm:truncate" title={kr.title}>{kr.title}</p>
                   {objectiveStatus === 'draft' && (
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-status-gray-muted text-status-gray-muted-foreground border-status-gray/20 shrink-0">
                       Rascunho
