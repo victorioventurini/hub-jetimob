@@ -32,8 +32,8 @@ docs/
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.21.0 |
-| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.27.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras | v3.22.0 |
+| `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.28.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (123 tabelas, 27 views, 85 enums) | v1.3.0 |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.2.0 |
 | `PERMISSIONS_AND_RBAC_MODEL.md` | Modelo completo de permissões V2 | v1.5.0 |
