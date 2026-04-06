@@ -484,9 +484,32 @@ export default function ExecutiveQuarterReviewPage() {
   }
 
   if (hasError) {
+    const failedSources = [
+      cyclesError && 'Ciclos',
+      objectivesError && 'Objetivos',
+      ritualError && 'Rituais',
+      kpiError && 'KPIs',
+      projectsError && 'Projetos',
+    ].filter(Boolean);
+
+    const errorDetail = (cyclesError || objectivesError || ritualError || kpiError || projectsError) as Error | null;
+
+    console.error('[QuarterReview] Query errors:', {
+      cycles: cyclesError,
+      objectives: objectivesError,
+      rituals: ritualError,
+      kpis: kpiError,
+      projects: projectsError,
+    });
+
     return (
       <HubLayout>
-        <ErrorState title="Erro ao carregar análise" description="Não foi possível consolidar os dados do quarter." />
+        <ErrorState
+          title="Erro ao carregar análise"
+          description={`Falha ao buscar: ${failedSources.join(', ')}. ${errorDetail?.message || 'Tente novamente.'}`}
+          retryLabel="Tentar novamente"
+          onRetry={() => window.location.reload()}
+        />
       </HubLayout>
     );
   }
