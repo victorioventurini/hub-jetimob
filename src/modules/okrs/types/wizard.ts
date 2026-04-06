@@ -418,6 +418,7 @@ export interface QbrCLevelSnapshot {
 /** Checklist de governança do QBR Meeting */
 export interface QbrMeetingGovernanceChecklist {
   allTeamsReviewed: boolean;
+  orgCoverageClear: boolean;
   decisionsHaveOwners: boolean;
   dependenciesFormalized: boolean;
   feedbackLinkSent: boolean;
