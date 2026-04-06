@@ -20,8 +20,8 @@ export const okrsKeys = {
   orgObjectivesWithKrs: (buId: string | null, year?: number) => 
     ['okr-org-objectives-with-krs', buId, year] as const,
   orgObjective: (id: string) => ['okr-org-objective', id] as const,
-  orgObjectiveView: (objectiveId: string, buId: string | null) => 
-    ['org-objective-view', objectiveId, buId] as const,
+  orgObjectiveView: (objectiveId: string, buId: string | null, cycleId?: string | null) => 
+    ['org-objective-view', objectiveId, buId, cycleId ?? null] as const,
   orgKeyResults: (buId: string | null, objectiveId?: string) => 
     ['okr-org-key-results', buId, objectiveId] as const,
   orgKeyResultsAllBu: (buId: string | null) => 
