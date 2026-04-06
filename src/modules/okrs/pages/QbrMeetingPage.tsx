@@ -469,6 +469,10 @@ export default function QbrMeetingPage() {
             decisions={draft.data.decisions}
             crossCommitments={draft.data.crossCommitments}
             totalTeamsForReview={teamsForReview.length}
+            orgObjectives={orgObjectives || []}
+            teamsForReview={teamsForReview}
+            intentionalGaps={draft.data.intentionalGaps || []}
+            onIntentionalGapsChange={(intentionalGaps) => updateDraft({ intentionalGaps })}
             isCompleting={isCompletingRef.current}
             onComplete={handleComplete}
             onBack={goBack}
