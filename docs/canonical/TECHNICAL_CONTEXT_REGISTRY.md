@@ -3550,6 +3550,28 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.22.0 (2026-04-06)
+- **QBR Rituals Enhancement v1.1** — Melhorias aditivas nos rituais QBR Meeting e QBR Post:
+  - **QBR Meeting — Opening Step (Item 2):**
+    - Scorecard do quarter: 4 metric cards (OKRs healthy/at_risk/off_track + times sem submissão)
+    - Pauta obrigatória do C-Level com fallback visual ("sessão C-Level não submetida")
+    - Agenda visual da reunião (5 steps com indicador de progresso)
+    - KPIs em alerta mantidos (reposicionados após novos blocos)
+  - **QBR Meeting — Closing Step (Item 4):**
+    - Resumo de governança: contadores de OKRs aprovados/ajustados/diferidos/descartados, decisões com dono, compromissos
+    - Checklist dinâmico: itens habilitados condicionalmente (`allTeamsReviewed`, `decisionsHaveOwners`) com tooltip de pendência
+  - **QBR Post — Promotion Step (Item 5):**
+    - Flags de calibração do C-Level exibidas por time
+    - Campo de ajuste inline (`adjustmentNotes`) para OKRs aprovados "com ajuste" (`approved_with_changes`)
+    - Indicador de dependências cross-área (badge "Depende de: [time]")
+  - **QBR Post — Minutes Step (Item 6):**
+    - Resumo automático read-only (dados estruturados, sem IA): OKRs promovidos por time, decisões com dono/prazo, compromissos cross-área, times sem promoção
+    - Collapsible expandido por padrão, acima do campo de ata narrativa
+  - **Tipo `QbrPostDraftData`:** Novo campo `adjustmentNotes?: Record<string, string>`
+  - **Arquivos impactados:** `QbrMeetingOpeningStep`, `QbrMeetingClosingStep`, `QbrMeetingPage`, `QbrPostOkrPromotionStep`, `QbrPostMinutesStep`, `QbrPostPage`, `types/wizard.ts`
+  - Sem alteração de schema, edge functions ou RLS — dados derivados de snapshots imutáveis em `reflection_data`
+  - Items já implementados previamente: Step Balanço do Quarter (qbr-pre-clevel) e Flags/Adendos no OKR Review (qbr-meeting)
+
 ### v3.21.0 (2026-03-30)
 - **Documentation Update v1.0**:
   - `docs/HUB_ADMIN_DEEP_DIVE.md` — Deep dive técnico da área `/hub` (19 rotas, 12 wizard_types, QBR state machine, RBAC V3)
