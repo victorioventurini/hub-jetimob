@@ -32,27 +32,28 @@ async function performLogin(page: Page, email: string): Promise<void> {
   // For now, this sets up the flow - actual auth would need backend mocking
 }
 
+// eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture API, not a React hook
 export const test = base.extend<AuthFixture>({
-  loginAsAdmin: async ({ page }, use) => {
-    await use(async () => {
+  loginAsAdmin: async ({ page }, callback) => {
+    await callback(async () => {
       await performLogin(page, TEST_USERS.admin.email);
     });
   },
   
-  loginAsLeader: async ({ page }, use) => {
-    await use(async () => {
+  loginAsLeader: async ({ page }, callback) => {
+    await callback(async () => {
       await performLogin(page, TEST_USERS.leader.email);
     });
   },
   
-  loginAsMember: async ({ page }, use) => {
-    await use(async () => {
+  loginAsMember: async ({ page }, callback) => {
+    await callback(async () => {
       await performLogin(page, TEST_USERS.member.email);
     });
   },
   
-  logout: async ({ page }, use) => {
-    await use(async () => {
+  logout: async ({ page }, callback) => {
+    await callback(async () => {
       // Click user menu and logout
       const userMenu = page.locator('[data-testid="user-menu"]');
       if (await userMenu.isVisible()) {
