@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { okrsKeys } from '@/lib/queryKeys/okrs';
+import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
