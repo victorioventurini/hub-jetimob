@@ -118,6 +118,8 @@ describe('QbrPostOkrPromotionStep', () => {
         approvedOkrs={approvedOkrs}
         promotedSessionIds={[]}
         onPromotedSessionIdsChange={vi.fn()}
+        adjustmentNotes={{}}
+        onAdjustmentNotesChange={vi.fn()}
         onContinue={vi.fn()}
       />
     );
