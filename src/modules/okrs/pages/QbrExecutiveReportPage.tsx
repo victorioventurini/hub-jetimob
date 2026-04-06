@@ -231,15 +231,20 @@ function ReportDisplay({
                 </tr>
               </thead>
               <tbody>
-                {report.teamProposals.map((proposal, i) => (
+                {report.teamProposals.map((proposal, i) => {
+                  const teamName = typeof proposal === 'object' ? (proposal.teamName || '—') : String(proposal);
+                  const objTitle = typeof proposal === 'object' ? (proposal.objectiveTitle || proposal.title || '—') : '';
+                  const krCount = typeof proposal === 'object' ? (proposal.krCount ?? '—') : '';
+                  return (
                   <tr key={i} className="border-b last:border-0">
                     <td className="py-2 pr-4">
-                      <Badge variant="secondary" className="text-xs">{proposal.teamName}</Badge>
+                      <Badge variant="secondary" className="text-xs">{teamName}</Badge>
                     </td>
-                    <td className="py-2 pr-4">{proposal.objectiveTitle}</td>
-                    <td className="py-2 text-right text-muted-foreground">{proposal.krCount} KRs</td>
+                    <td className="py-2 pr-4">{objTitle}</td>
+                    <td className="py-2 text-right text-muted-foreground">{krCount} KRs</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -294,12 +299,17 @@ function ReportDisplay({
       <ReportSection icon={MessageSquare} title="O que precisa de decisão na reunião">
         {report.decisionsNeeded.length > 0 ? (
           <div className="space-y-2">
-            {report.decisionsNeeded.map((decision, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm">
-                <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>{decision}</span>
-              </div>
-            ))}
+            {report.decisionsNeeded.map((decision, i) => {
+              const text = typeof decision === 'string'
+                ? decision
+                : (decision as any)?.title || (decision as any)?.description || JSON.stringify(decision);
+              return (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>{text}</span>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">Nenhuma decisão pendente identificada.</p>
