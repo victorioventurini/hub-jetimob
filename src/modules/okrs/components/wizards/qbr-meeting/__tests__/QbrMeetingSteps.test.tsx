@@ -181,7 +181,7 @@ describe('QbrMeetingOkrReviewStep', () => {
     expect(screen.getByText('Aprovado')).toBeInTheDocument();
     expect(screen.getByText('Aprovado c/ ajustes')).toBeInTheDocument();
     expect(screen.getByText('Descartado')).toBeInTheDocument();
-    expect(screen.getByText('Diferido')).toBeInTheDocument();
+    expect(screen.getByText('Standby')).toBeInTheDocument();
   });
 
   it('discard button is disabled without justification', () => {

@@ -115,7 +115,7 @@ describe('QbrPostOkrPromotionStep', () => {
         onContinue={vi.fn()}
       />
     );
-    expect(screen.getByText(/Diferidos/)).toBeInTheDocument();
+    expect(screen.getByText(/Standby/)).toBeInTheDocument();
   });
 
   it('calls onPromotedSessionIdsChange on checkbox toggle', () => {

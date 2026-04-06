@@ -162,7 +162,7 @@ export function QbrPostOkrPromotionStep({
         {deferred.length > 0 && (
           <Card className="border-dashed">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground">Diferidos ({deferred.length})</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground">Standby ({deferred.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
               {deferred.map(okr => (
