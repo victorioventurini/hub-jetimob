@@ -139,7 +139,18 @@ export function QbrCLevelSystemReadStep({
       }
     >
       <div className="p-6 space-y-6">
-        {/* Teams without submission warning */}
+        {/* Teams submission status */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Eye className="h-4 w-4 text-primary shrink-0" />
+              <span>
+                {leaderSubmissions.length} time{leaderSubmissions.length !== 1 ? 's' : ''} submeteram: {leaderSubmissions.map(s => s.teamName).join(', ')}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
         {teamsWithoutSubmission.length > 0 && (
           <Card className="border-status-amber/30 bg-status-amber-muted/20">
             <CardContent className="p-3">
