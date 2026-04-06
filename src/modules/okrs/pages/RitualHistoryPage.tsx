@@ -185,7 +185,7 @@ export default function RitualHistoryPage() {
         {/* Filters */}
         <ListPageFilters hideSearch>
           <Select value={typeState.value || 'all'} onValueChange={(v) => typeState.set(v)}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-full sm:w-[220px]">
               <SelectValue placeholder="Tipo de ritual" />
             </SelectTrigger>
             <SelectContent>
@@ -197,7 +197,7 @@ export default function RitualHistoryPage() {
 
           {teams && teams.length > 0 && (
             <Select value={teamState.value || 'all'} onValueChange={(v) => teamState.set(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Time" />
               </SelectTrigger>
               <SelectContent>
@@ -214,55 +214,57 @@ export default function RitualHistoryPage() {
             value={userState.value || undefined}
             onValueChange={(v) => userState.set(v || '')}
             placeholder="Usuário"
-            className="w-[220px]"
+            className="w-full sm:w-[220px]"
           />
 
           {/* Date filters */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="default" className={cn(
-                "w-[180px] justify-start text-left font-normal",
-                !dateFromState.value && "text-muted-foreground"
-              )}>
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                {dateFromState.value
-                  ? format(parseISO(dateFromState.value), 'dd/MM/yyyy', { locale: ptBR })
-                  : 'Data início'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
-                onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
-                className="p-3 pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="default" className={cn(
+                  "flex-1 sm:flex-none sm:w-[180px] justify-start text-left font-normal",
+                  !dateFromState.value && "text-muted-foreground"
+                )}>
+                  <CalendarIcon className="h-4 w-4 mr-2 shrink-0" />
+                  {dateFromState.value
+                    ? format(parseISO(dateFromState.value), 'dd/MM/yyyy', { locale: ptBR })
+                    : 'Data início'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
+                  onSelect={(date) => dateFromState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                  className="p-3 pointer-events-auto"
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="default" className={cn(
-                "w-[180px] justify-start text-left font-normal",
-                !dateToState.value && "text-muted-foreground"
-              )}>
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                {dateToState.value
-                  ? format(parseISO(dateToState.value), 'dd/MM/yyyy', { locale: ptBR })
-                  : 'Data fim'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateToState.value ? parseISO(dateToState.value) : undefined}
-                onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
-                className="p-3 pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="default" className={cn(
+                  "flex-1 sm:flex-none sm:w-[180px] justify-start text-left font-normal",
+                  !dateToState.value && "text-muted-foreground"
+                )}>
+                  <CalendarIcon className="h-4 w-4 mr-2 shrink-0" />
+                  {dateToState.value
+                    ? format(parseISO(dateToState.value), 'dd/MM/yyyy', { locale: ptBR })
+                    : 'Data fim'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateToState.value ? parseISO(dateToState.value) : undefined}
+                  onSelect={(date) => dateToState.set(date ? format(date, 'yyyy-MM-dd') : '')}
+                  className="p-3 pointer-events-auto"
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Clear filters */}
           {(dateFromState.value !== default30DaysAgo || dateToState.value) && (
@@ -364,81 +366,86 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
         autoExpand && 'ring-2 ring-primary/30',
       )}>
         <CollapsibleTrigger asChild>
-          <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-            <div className="flex items-center gap-3 min-w-0">
-              {/* Expand icon */}
-              <div className="shrink-0">
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0">
+              {/* Row 1: Type badge + team + expand icon */}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="shrink-0">
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+
+                <Badge variant="secondary" className="shrink-0 text-xs">
+                  {label}
+                </Badge>
+
+                {ritual.status === 'in_progress' && (
+                  <Badge variant="outline" className="shrink-0 text-[10px] border-status-yellow text-status-yellow">
+                    Rascunho
+                  </Badge>
+                )}
+
+                {ritual.teamName && (
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+                    <Users className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{ritual.teamName}</span>
+                  </span>
+                )}
+
+                {/* Desktop spacer + decisions count */}
+                <div className="hidden sm:flex flex-1 min-w-0" />
+
+                {hasDecisions && (
+                  <Badge variant="outline" className="shrink-0 text-xs gap-1 hidden sm:inline-flex">
+                    <Lightbulb className="h-3 w-3" />
+                    {ritual.decisions.length}
+                  </Badge>
                 )}
               </div>
 
-              {/* Type badge */}
-              <Badge variant="secondary" className="shrink-0 text-xs">
-                {label}
-              </Badge>
+              {/* Row 2 (mobile) / inline (desktop): metadata */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 sm:pl-0">
+                {occurrence ? (
+                  <Badge variant="outline" className="shrink-0 text-[10px] gap-1">
+                    <CalendarIcon className="h-3 w-3" />
+                    Previsto {format(parseISO(occurrence.planned_date), 'dd/MM', { locale: ptBR })}
+                    {occurrence.actual_date && ` · Realizado ${format(parseISO(occurrence.actual_date), 'dd/MM', { locale: ptBR })}`}
+                  </Badge>
+                ) : ritual.completedAt ? (
+                  <Badge variant="outline" className="shrink-0 text-[10px] text-muted-foreground">
+                    Execução avulsa
+                  </Badge>
+                ) : null}
 
-              {/* Draft badge */}
-              {ritual.status === 'in_progress' && (
-                <Badge variant="outline" className="shrink-0 text-[10px] border-status-yellow text-status-yellow">
-                  Rascunho
-                </Badge>
-              )}
+                {hasDecisions && (
+                  <Badge variant="outline" className="shrink-0 text-xs gap-1 sm:hidden">
+                    <Lightbulb className="h-3 w-3" />
+                    {ritual.decisions.length}
+                  </Badge>
+                )}
 
-              {/* Team */}
-              {ritual.teamName && (
-                <span className="flex items-center gap-1 text-sm text-muted-foreground shrink-0">
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="truncate max-w-[150px]">{ritual.teamName}</span>
-                </span>
-              )}
+                {ritual.completedAt ? (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                    <CalendarIcon className="h-3 w-3" />
+                    {format(parseISO(ritual.completedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                ) : ritual.startedAt ? (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                    <Clock className="h-3 w-3" />
+                    Iniciado {format(parseISO(ritual.startedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                ) : null}
 
-              {/* Planned date badge */}
-              {occurrence ? (
-                <Badge variant="outline" className="shrink-0 text-[10px] gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  Previsto {format(parseISO(occurrence.planned_date), 'dd/MM', { locale: ptBR })}
-                  {occurrence.actual_date && ` · Realizado ${format(parseISO(occurrence.actual_date), 'dd/MM', { locale: ptBR })}`}
-                </Badge>
-              ) : ritual.completedAt ? (
-                <Badge variant="outline" className="shrink-0 text-[10px] text-muted-foreground">
-                  Execução avulsa
-                </Badge>
-              ) : null}
-
-              {/* Spacer */}
-              <div className="flex-1 min-w-0" />
-
-              {/* Decisions count */}
-              {hasDecisions && (
-                <Badge variant="outline" className="shrink-0 text-xs gap-1">
-                  <Lightbulb className="h-3 w-3" />
-                  {ritual.decisions.length}
-                </Badge>
-              )}
-
-              {/* Date */}
-              {ritual.completedAt ? (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                  <CalendarIcon className="h-3 w-3" />
-                  {format(parseISO(ritual.completedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </span>
-              ) : ritual.startedAt ? (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                  <Clock className="h-3 w-3" />
-                  Iniciado {format(parseISO(ritual.startedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </span>
-              ) : null}
-
-              {/* Author */}
-              {ritual.startedByName && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                  <User className="h-3 w-3" />
-                  <span className="truncate max-w-[120px]">{ritual.startedByName}</span>
-                </span>
-              )}
+                {ritual.startedByName && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                    <User className="h-3 w-3 shrink-0" />
+                    <span className="truncate max-w-[120px]">{ritual.startedByName}</span>
+                  </span>
+                )}
+              </div>
             </div>
           </CardContent>
         </CollapsibleTrigger>
