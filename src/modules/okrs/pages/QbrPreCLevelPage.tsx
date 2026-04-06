@@ -136,6 +136,7 @@ export default function QbrPreCLevelPage() {
         .from('teams')
         .select('id, name')
         .is('deleted_at', null)
+        .is('parent_team_id', null)
         .eq('status', 'active');
       if (error) throw error;
       return data || [];
