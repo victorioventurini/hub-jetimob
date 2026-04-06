@@ -29,6 +29,72 @@ export interface QbrExecutiveReportData {
   }>;
 }
 
+type ReportRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is ReportRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function toText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+
+  if (isRecord(value)) {
+    const preferredKeys = ['title', 'description', 'text', 'name', 'objectiveTitle', 'teamName'] as const;
+
+    for (const key of preferredKeys) {
+      const candidate = value[key];
+      if (typeof candidate === 'string' && candidate.trim()) return candidate;
+    }
+  }
+
+  return '';
+}
+
+function toInteger(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  return 0;
+}
+
+function normalizeQbrExecutiveReportData(input: unknown): QbrExecutiveReportData {
+  const root = isRecord(input) ? input : {};
+  const source = typeof root.quarterNarrative !== 'string' && isRecord(root.data) ? root.data : root;
+  const kpiInsights = isRecord(source.kpiInsights) ? source.kpiInsights : {};
+
+  return {
+    quarterNarrative: toText(source.quarterNarrative),
+    proposalsAnalysis: toText(source.proposalsAnalysis),
+    kpiInsights: {
+      healthy: toText(kpiInsights.healthy),
+      atRisk: toText(kpiInsights.atRisk),
+      critical: toText(kpiInsights.critical),
+    },
+    decisionsNeeded: Array.isArray(source.decisionsNeeded)
+      ? source.decisionsNeeded.map(toText).filter(Boolean)
+      : [],
+    teamProposals: Array.isArray(source.teamProposals)
+      ? source.teamProposals.map((proposal) => {
+          const proposalRecord = isRecord(proposal) ? proposal : {};
+
+          return {
+            teamName: toText(proposalRecord.teamName) || 'Time não informado',
+            objectiveTitle:
+              toText(proposalRecord.objectiveTitle) ||
+              toText(proposalRecord.title) ||
+              'Objetivo não informado',
+            krCount: toInteger(proposalRecord.krCount),
+          };
+        })
+      : [],
+  };
+}
+
 export function useQbrExecutiveReport(cycleId: string | null) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
@@ -55,7 +121,7 @@ export function useQbrExecutiveReport(cycleId: string | null) {
       if (!data) return null;
 
       return {
-        report: data.reflection_data as unknown as QbrExecutiveReportData,
+        report: normalizeQbrExecutiveReportData(data.reflection_data),
         generatedAt: data.completed_at,
       };
     },
@@ -65,7 +131,6 @@ export function useQbrExecutiveReport(cycleId: string | null) {
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      // 1. Call edge function
       const { data: fnData, error: fnError } = await supabase.functions.invoke(
         'qbr-executive-report',
         { body: { cycleId, bu_id: currentBuId } }
@@ -73,12 +138,11 @@ export function useQbrExecutiveReport(cycleId: string | null) {
 
       if (fnError) throw fnError;
 
-      const reportData = fnData?.data || fnData;
-      if (!reportData?.quarterNarrative) {
+      const reportData = normalizeQbrExecutiveReportData(fnData?.data || fnData);
+      if (!reportData.quarterNarrative) {
         throw new Error('Invalid report response');
       }
 
-      // 2. Persist as wizard session (insert only — no DELETE due to RLS)
       const { error: insertError } = await supabase
         .from('okr_wizard_sessions')
         .insert({
@@ -95,7 +159,7 @@ export function useQbrExecutiveReport(cycleId: string | null) {
         console.warn('Failed to persist report, displaying without persistence:', insertError);
       }
 
-      return reportData as QbrExecutiveReportData;
+      return reportData;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(queryKey, {
@@ -107,7 +171,6 @@ export function useQbrExecutiveReport(cycleId: string | null) {
     onError: (error: any) => {
       console.error('Failed to generate QBR report:', error);
 
-      // Handle rate limit / credits errors from edge function
       const message = error?.message || '';
       if (message.includes('429') || message.includes('Rate limit')) {
         toast.error('Limite de requisições atingido. Tente novamente em alguns minutos.');
