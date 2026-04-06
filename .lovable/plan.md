@@ -1,21 +1,45 @@
 
 
-## Plano: Renomear "Diferido" → "Standby"
+## Plano: Exibir KRs abaixo dos Objetivos no Relatório QBR
 
-Alteração puramente textual em 4 arquivos:
+Atualmente a tabela de propostas mostra apenas "N KRs" por objetivo. A mudança faz os títulos individuais das KRs aparecerem abaixo de cada objetivo.
 
-1. **`src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingOkrReviewStep.tsx`** (linha 65)
-   - `'Diferido'` → `'Standby'`
+---
 
-2. **`src/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep.tsx`** (linhas 47, 165)
-   - `'Diferido'` → `'Standby'`
-   - `'Diferidos'` → `'Standby'`
+### Alterações
 
-3. **`src/modules/okrs/components/wizards/qbr-meeting/__tests__/QbrMeetingSteps.test.tsx`** (linha 184)
-   - `'Diferido'` → `'Standby'`
+**1. Edge Function (`supabase/functions/qbr-executive-report/index.ts`)**
+- Na função `extractNextCycleProposals` (linha ~146), incluir os títulos das KRs no retorno além do `krCount`:
+  ```ts
+  krs: (okr.keyResults || okr.krs || []).map(kr => kr.title || kr.name || 'Sem título')
+  ```
 
-4. **`src/modules/okrs/components/wizards/qbr-post/__tests__/QbrPostSteps.test.tsx`** (linha 118)
-   - `'Diferidos'` → `'Standby'`
+**2. Hook + Tipos (`src/modules/okrs/hooks/useQbrExecutiveReport.ts`)**
+- Adicionar `krs: string[]` ao tipo `teamProposals` na interface `QbrExecutiveReportData`
+- Atualizar `normalizeQbrExecutiveReportData` para mapear o array `krs` (com fallback `[]`)
 
-Nenhuma alteração de lógica, banco ou chaves internas — apenas labels de exibição.
+**3. UI — Tabela de Propostas (`src/modules/okrs/pages/QbrExecutiveReportPage.tsx`)**
+- Na seção "O que os times propõem", expandir cada linha da tabela para listar as KRs logo abaixo do título do objetivo, com bullet points em texto menor e cor `muted-foreground`
+- Remover a coluna "KRs" (contagem numérica) já que os itens estarão visíveis
+
+---
+
+### Resultado Visual
+
+```text
+┌─────────┬──────────────────────────────────┐
+│ Time    │ Objetivo proposto                │
+├─────────┼──────────────────────────────────┤
+│ Growth  │ Expandir base de clientes        │
+│         │  · MRR de R$ 500k               │
+│         │  · 200 novos logos               │
+│         │  · Churn < 2%                    │
+├─────────┼──────────────────────────────────┤
+│ Produto │ Lançar módulo X                  │
+│         │  · 90% de adoção                 │
+│         │  · NPS > 50                      │
+└─────────┴──────────────────────────────────┘
+```
+
+3 arquivos alterados, sem mudança de schema de banco.
 
