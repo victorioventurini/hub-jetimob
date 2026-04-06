@@ -1,22 +1,29 @@
 /**
  * QbrPostOkrPromotionStep - Step 1: Promoção de OKRs aprovados
  * 
- * Lista OKRs aprovados na reunião QBR. Permite marcar quais serão promovidos
- * (criados como OKRs reais no próximo ciclo).
+ * Lista OKRs aprovados na reunião QBR. Permite marcar quais serão promovidos.
+ * Exibe flags de calibração C-Level, campo de ajuste e indicador de dependências.
  */
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Rocket, Check, Pencil, Clock, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Rocket, Check, Pencil, Clock, X, Flag, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
 } from '../shared';
-import type { QbrApprovalStatus, ProposedObjectiveEntry } from '@/modules/okrs/types/wizard';
+import type {
+  QbrApprovalStatus,
+  ProposedObjectiveEntry,
+  QbrCLevelSnapshot,
+  QbrMeetingSnapshot,
+  QbrCalibrationFlag,
+} from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -34,6 +41,11 @@ export interface QbrPostOkrPromotionStepProps {
   approvedOkrs: ApprovedTeamOkr[];
   promotedSessionIds: string[];
   onPromotedSessionIdsChange: (ids: string[]) => void;
+  calibrationFlags?: QbrCLevelSnapshot['okrCalibrationFlags'];
+  crossCommitments?: QbrMeetingSnapshot['crossCommitments'];
+  adjustmentNotes: Record<string, string>;
+  onAdjustmentNotesChange: (notes: Record<string, string>) => void;
+  teams?: Array<{ id: string; name: string }>;
   onContinue: () => void;
 }
 
@@ -48,6 +60,13 @@ const STATUS_LABELS: Record<QbrApprovalStatus, { label: string; icon: typeof Che
   discarded: { label: 'Descartado', icon: X, color: 'text-status-red' },
 };
 
+const FLAG_LABELS: Record<QbrCalibrationFlag, string> = {
+  too_conservative: '🐢 Muito conservador',
+  too_aggressive: '🔥 Muito agressivo',
+  gap: '🕳️ Gap estratégico',
+  overlap: '🔄 Sobreposição',
+};
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -56,6 +75,11 @@ export function QbrPostOkrPromotionStep({
   approvedOkrs,
   promotedSessionIds,
   onPromotedSessionIdsChange,
+  calibrationFlags = [],
+  crossCommitments = [],
+  adjustmentNotes,
+  onAdjustmentNotesChange,
+  teams = [],
   onContinue,
 }: QbrPostOkrPromotionStepProps) {
   const promotable = approvedOkrs.filter(o => o.status === 'approved' || o.status === 'approved_with_changes');
@@ -78,6 +102,14 @@ export function QbrPostOkrPromotionStep({
     } else {
       onPromotedSessionIdsChange(promotable.map(o => o.sessionId));
     }
+  };
+
+  const getTeamFlags = (teamId: string) => calibrationFlags.filter(f => f.teamId === teamId);
+  const getTeamDependencies = (teamId: string) => {
+    return crossCommitments.filter(c => c.toTeamId === teamId).map(c => {
+      const fromTeam = teams.find(t => t.id === c.fromTeamId);
+      return fromTeam?.name || 'Time';
+    });
   };
 
   return (
@@ -121,6 +153,9 @@ export function QbrPostOkrPromotionStep({
               const cfg = STATUS_LABELS[okr.status];
               const Icon = cfg.icon;
               const isSelected = promotedSessionIds.includes(okr.sessionId);
+              const teamFlags = getTeamFlags(okr.teamId);
+              const dependencies = getTeamDependencies(okr.teamId);
+              const needsAdjustment = okr.status === 'approved_with_changes';
 
               return (
                 <Card key={okr.sessionId} className={cn(isSelected && 'border-primary/50 bg-primary/5')}>
@@ -131,14 +166,43 @@ export function QbrPostOkrPromotionStep({
                         onCheckedChange={() => togglePromotion(okr.sessionId)}
                         className="mt-0.5"
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium">{okr.teamName}</span>
                           <Badge variant="outline" className={cn('text-[10px]', cfg.color)}>
                             <Icon className="h-3 w-3 mr-0.5" />
                             {cfg.label}
                           </Badge>
                         </div>
+
+                        {/* C-Level calibration flags */}
+                        {teamFlags.length > 0 && (
+                          <div className="space-y-1">
+                            {teamFlags.map((f, i) => (
+                              <div key={i} className="flex items-start gap-1.5 text-xs bg-status-amber/10 rounded px-2 py-1">
+                                <Flag className="h-3 w-3 text-status-amber mt-0.5 shrink-0" />
+                                <div>
+                                  <span className="font-medium">{FLAG_LABELS[f.flag]}</span>
+                                  {f.note && <span className="text-muted-foreground"> — {f.note}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Dependency indicators */}
+                        {dependencies.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {dependencies.map((name, i) => (
+                              <Badge key={i} variant="outline" className="text-[10px] text-status-amber border-status-amber/30">
+                                <AlertTriangle className="h-3 w-3 mr-0.5" />
+                                Depende de: {name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Proposed OKRs */}
                         {okr.proposedOkrs.length > 0 && (
                           <div className="space-y-1">
                             {okr.proposedOkrs.map(entry => (
@@ -148,6 +212,19 @@ export function QbrPostOkrPromotionStep({
                               {okr.proposedOkrs.reduce((sum, e) => sum + e.draftKrs.length, 0)} KRs total
                             </p>
                           </div>
+                        )}
+
+                        {/* Adjustment notes for approved_with_changes */}
+                        {needsAdjustment && (
+                          <Textarea
+                            value={adjustmentNotes[okr.sessionId] || ''}
+                            onChange={(e) => onAdjustmentNotesChange({
+                              ...adjustmentNotes,
+                              [okr.sessionId]: e.target.value,
+                            })}
+                            placeholder="Descreva os ajustes necessários antes de promover..."
+                            className="text-xs min-h-[60px] mt-1"
+                          />
                         )}
                       </div>
                     </div>

@@ -373,8 +373,16 @@ export default function QbrMeetingPage() {
           <QbrMeetingOpeningStep
             cLevelDirectives={cLevelDirectives}
             cLevelStrategicAnalysis={cLevelStrategicAnalysis}
+            cLevelSessionExists={!!cLevelSession}
             leaderSummaryCount={teamsForReview.length}
             orgKpiSnapshots={orgKpiSnapshots}
+            scorecardMetrics={{
+              healthy: teamsForReview.filter(t => t.hasSubmission).length,
+              atRisk: 0,
+              offTrack: 0,
+              noSubmission: (buTeams?.length || 0) - teamsForReview.length,
+            }}
+            currentStepIndex={STEP_ORDER.indexOf(draft.currentStep)}
             onContinue={goNext}
           />
         );
@@ -422,6 +430,10 @@ export default function QbrMeetingPage() {
             onChecklistChange={(governanceChecklist: QbrMeetingGovernanceChecklist) => updateDraft({ governanceChecklist })}
             ritualFeedback={draft.data.ritualFeedback}
             onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
+            approvals={draft.data.approvals}
+            decisions={draft.data.decisions}
+            crossCommitments={draft.data.crossCommitments}
+            totalTeamsForReview={teamsForReview.length}
             isCompleting={isCompletingRef.current}
             onComplete={handleComplete}
             onBack={goBack}

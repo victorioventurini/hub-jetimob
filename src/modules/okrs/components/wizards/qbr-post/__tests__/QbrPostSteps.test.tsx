@@ -73,6 +73,8 @@ describe('QbrPostOkrPromotionStep', () => {
         approvedOkrs={approvedOkrs}
         promotedSessionIds={[]}
         onPromotedSessionIdsChange={vi.fn()}
+        adjustmentNotes={{}}
+        onAdjustmentNotesChange={vi.fn()}
         onContinue={vi.fn()}
       />
     );
@@ -86,6 +88,8 @@ describe('QbrPostOkrPromotionStep', () => {
         approvedOkrs={approvedOkrs}
         promotedSessionIds={[]}
         onPromotedSessionIdsChange={vi.fn()}
+        adjustmentNotes={{}}
+        onAdjustmentNotesChange={vi.fn()}
         onContinue={vi.fn()}
       />
     );
@@ -99,6 +103,8 @@ describe('QbrPostOkrPromotionStep', () => {
         approvedOkrs={approvedOkrs}
         promotedSessionIds={[]}
         onPromotedSessionIdsChange={vi.fn()}
+        adjustmentNotes={{}}
+        onAdjustmentNotesChange={vi.fn()}
         onContinue={vi.fn()}
       />
     );
@@ -112,6 +118,8 @@ describe('QbrPostOkrPromotionStep', () => {
         approvedOkrs={approvedOkrs}
         promotedSessionIds={[]}
         onPromotedSessionIdsChange={vi.fn()}
+        adjustmentNotes={{}}
+        onAdjustmentNotesChange={vi.fn()}
         onContinue={vi.fn()}
       />
     );
@@ -125,6 +133,8 @@ describe('QbrPostOkrPromotionStep', () => {
         approvedOkrs={approvedOkrs}
         promotedSessionIds={[]}
         onPromotedSessionIdsChange={onChange}
+        adjustmentNotes={{}}
+        onAdjustmentNotesChange={vi.fn()}
         onContinue={vi.fn()}
       />
     );

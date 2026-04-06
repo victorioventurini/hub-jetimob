@@ -5,7 +5,7 @@
  * @see docs/HUB_TECHNICAL_DEEP_DIVE.md — QBR Ritual
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -29,7 +29,9 @@ import type { ApprovedTeamOkr } from '@/modules/okrs/components/wizards/qbr-post
 import {
   normalizeProposedOkrs,
   type QbrPostStep, type QbrPostDraftData, type TeamCheckinDecision, type QbrMeetingSnapshot,
+  type QbrCLevelSnapshot,
 } from '@/modules/okrs/types/wizard';
+import type { QbrPostMinutesSummaryData } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
 
 const WIZARD_STEPS = [
   { id: 'okr-promotion' as const, label: 'Promoção de OKRs', description: 'Criar OKRs aprovados' },
@@ -57,6 +59,7 @@ const DEFAULT_DATA: QbrPostDraftData = {
     dependenciesFormalized: false,
     nextCycleOkrsActive: false,
   },
+  adjustmentNotes: {},
 };
 
 export default function QbrPostPage() {
@@ -96,6 +99,27 @@ export default function QbrPostPage() {
         .maybeSingle();
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Load C-Level session for calibration flags
+  const { data: cLevelSession } = useQuery({
+    queryKey: ['qbr', 'clevel-session-post', quarterlyCycle?.id],
+    enabled: !!buSupabase && !!quarterlyCycle?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase.from('okr_wizard_sessions')
+        .select('id, reflection_data')
+        .eq('wizard_type', 'qbr-pre-clevel')
+        .eq('cycle_id', quarterlyCycle!.id)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.reflection_data) return null;
+      const snapshot = (data.reflection_data as any)?.data as QbrCLevelSnapshot | undefined;
+      return snapshot ? { sessionId: data.id, snapshot } : null;
     },
   });
 
@@ -207,6 +231,11 @@ export default function QbrPostPage() {
             approvedOkrs={approvedOkrs}
             promotedSessionIds={draft.data.promotedOkrIds}
             onPromotedSessionIdsChange={(promotedOkrIds) => updateDraft({ promotedOkrIds })}
+            calibrationFlags={cLevelSession?.snapshot?.okrCalibrationFlags}
+            crossCommitments={meetingCommitments}
+            adjustmentNotes={draft.data.adjustmentNotes || {}}
+            onAdjustmentNotesChange={(adjustmentNotes) => updateDraft({ adjustmentNotes })}
+            teams={teams || []}
             onContinue={goNext}
           />
         );
@@ -246,6 +275,34 @@ export default function QbrPostPage() {
             onExecutiveMinutesChange={(executiveMinutes) => updateDraft({ executiveMinutes })}
             checklist={draft.data.governanceChecklist}
             onChecklistChange={(governanceChecklist) => updateDraft({ governanceChecklist })}
+            summaryData={(() => {
+              const promoted = approvedOkrs.filter(o => draft.data.promotedOkrIds.includes(o.sessionId));
+              const promotedTeamIds = new Set(promoted.map(o => o.teamId));
+              const allTeamIds = new Set(approvedOkrs.map(o => o.teamId));
+              const teamsWithoutPromotion = Array.from(allTeamIds)
+                .filter(id => !promotedTeamIds.has(id))
+                .map(id => teamMap.get(id) || 'Time');
+
+              return {
+                promotedOkrs: promoted.flatMap(o => o.proposedOkrs.map(p => ({
+                  teamName: o.teamName,
+                  objectiveTitle: p.objective.title,
+                  krCount: p.draftKrs.length,
+                }))),
+                decisions: [...meetingDecisions, ...draft.data.decisions].map(d => ({
+                  text: d.text,
+                  ownerName: d.owner?.name,
+                  deadline: d.deadline || undefined,
+                })),
+                crossCommitments: (draft.data.crossCommitments || []).map(c => ({
+                  fromTeamName: teamMap.get(c.fromTeamId) || 'Time',
+                  toTeamName: teamMap.get(c.toTeamId) || 'Time',
+                  description: c.description,
+                  deadline: c.deadline,
+                })),
+                teamsWithoutPromotion,
+              };
+            })()}
             onComplete={handleComplete}
             onBack={goBack}
           />

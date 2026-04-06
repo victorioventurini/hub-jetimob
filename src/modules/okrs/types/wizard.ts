@@ -542,6 +542,8 @@ export interface QbrPostDraftData {
   followUpCadence: QbrPostSnapshot['followUpCadence'];
   executiveMinutes: string;
   governanceChecklist: QbrPostGovernanceChecklist;
+  /** Notas de ajuste por sessionId — para OKRs aprovados "com ajustes" */
+  adjustmentNotes?: Record<string, string>;
 }
 
 export interface TeamCheckinDecision {
