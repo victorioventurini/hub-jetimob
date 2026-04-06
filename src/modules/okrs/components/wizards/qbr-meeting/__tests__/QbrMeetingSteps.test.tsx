@@ -82,8 +82,11 @@ describe('QbrMeetingOpeningStep', () => {
       { category: 'strategic_question' as const, text: 'Revisar metas Q2' },
       { category: 'challenge' as const, text: 'Concorrência agressiva' },
     ],
+    cLevelSessionExists: true,
     leaderSummaryCount: 5,
     orgKpiSnapshots: [] as MbrKpiSnapshot[],
+    scorecardMetrics: { healthy: 3, atRisk: 1, offTrack: 1, noSubmission: 0 },
+    currentStepIndex: 0,
     onContinue: vi.fn(),
   };
 
