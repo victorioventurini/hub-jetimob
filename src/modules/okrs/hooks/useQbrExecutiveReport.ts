@@ -78,14 +78,7 @@ export function useQbrExecutiveReport(cycleId: string | null) {
         throw new Error('Invalid report response');
       }
 
-      // 2. Persist as wizard session — delete previous then insert
-      await supabase
-        .from('okr_wizard_sessions')
-        .delete()
-        .eq('wizard_type', 'qbr-executive-report')
-        .eq('cycle_id', cycleId!)
-        .eq('bu_id', currentBuId!);
-
+      // 2. Persist as wizard session (insert only — no DELETE due to RLS)
       const { error: insertError } = await supabase
         .from('okr_wizard_sessions')
         .insert({
@@ -104,7 +97,11 @@ export function useQbrExecutiveReport(cycleId: string | null) {
 
       return reportData as QbrExecutiveReportData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, {
+        report: data,
+        generatedAt: new Date().toISOString(),
+      });
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: any) => {
