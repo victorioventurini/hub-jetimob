@@ -28,12 +28,12 @@ import type {
 // SINGLE OBJECTIVE VIEW
 // ============================================================
 
-export function useOrgObjectiveView(objectiveId: string) {
+export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null) {
   const { currentBu } = useBu();
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.orgObjectiveView(objectiveId, currentBu?.id ?? null),
+    queryKey: queryKeys.okrs.orgObjectiveView(objectiveId, currentBu?.id ?? null, cycleId),
     queryFn: async (): Promise<OrgObjectiveWithKrs | null> => {
       if (!supabase) return null;
       
@@ -73,7 +73,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       
       let teamKrsData: any[] = [];
       if (orgKrIds.length > 0) {
-        const { data: teamKrs, error: teamKrsError } = await supabase
+        let teamKrQuery = supabase
           .from('okr_team_key_results')
           .select(`
             id, title, team_id, team_objective_id, linked_org_kr_id, type,
@@ -81,7 +81,7 @@ export function useOrgObjectiveView(objectiveId: string) {
             last_checkin_at, owner_user_id,
             teams:team_id (name),
             team_objective:team_objective_id!inner (
-              id, title, status, cancelled_at, deleted_at
+              id, title, status, cancelled_at, deleted_at, cycle_id
             ),
             owner:owner_user_id (display_name)
           `)
@@ -92,6 +92,12 @@ export function useOrgObjectiveView(objectiveId: string) {
           .is('team_objective.deleted_at', null)
           .not('team_objective.status', 'in', '(cancelled,discarded)');
 
+        if (cycleId) {
+          teamKrQuery = teamKrQuery.eq('team_objective.cycle_id', cycleId);
+        }
+
+        const { data: teamKrs, error: teamKrsError } = await teamKrQuery;
+
         if (teamKrsError) {
           console.error('Error fetching team KRs:', teamKrsError);
         } else {
@@ -100,7 +106,7 @@ export function useOrgObjectiveView(objectiveId: string) {
       }
 
       // Fetch team objectives linked to this org objective via org_objective_id
-      const { data: teamObjectivesData, error: teamObjError } = await supabase
+      let teamObjQuery = supabase
         .from('okr_team_objectives')
         .select(AGGREGATE_FIELDS.teamObjectiveWithKrsForView)
         .eq('org_objective_id', objectiveId)
@@ -108,6 +114,12 @@ export function useOrgObjectiveView(objectiveId: string) {
         .is('cancelled_at', null)
         .neq('status', 'cancelled')
         .neq('status', 'discarded');
+
+      if (cycleId) {
+        teamObjQuery = teamObjQuery.eq('cycle_id', cycleId);
+      }
+
+      const { data: teamObjectivesData, error: teamObjError } = await teamObjQuery;
 
       if (teamObjError) {
         console.error('Error fetching team objectives:', teamObjError);
@@ -204,12 +216,12 @@ export function useOrgObjectiveView(objectiveId: string) {
 // ALL OBJECTIVES VIEW
 // ============================================================
 
-export function useAllOrgObjectivesView(year?: number) {
+export function useAllOrgObjectivesView(year?: number, cycleId?: string | null) {
   const currentYear = year || new Date().getFullYear();
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, buId ?? null),
+    queryKey: queryKeys.okrs.allOrgObjectivesView(currentYear, buId ?? null, cycleId),
     queryFn: async (): Promise<OrgObjectiveWithKrs[]> => {
       if (!supabase || !buId) return [];
       
@@ -251,7 +263,7 @@ export function useAllOrgObjectivesView(year?: number) {
       let teamKrsData: any[] = [];
       if (orgKrIds.length > 0) {
         // Must exclude KRs from cancelled/deleted objectives
-        const { data: teamKrs, error: teamKrsError } = await supabase
+        let teamKrQuery = supabase
           .from('okr_team_key_results')
           .select(`
             id, title, team_id, team_objective_id, linked_org_kr_id, type,
@@ -259,7 +271,7 @@ export function useAllOrgObjectivesView(year?: number) {
             last_checkin_at, owner_user_id,
             teams:team_id (name),
             team_objective:team_objective_id!inner (
-              id, title, status, cancelled_at, deleted_at
+              id, title, status, cancelled_at, deleted_at, cycle_id
             ),
             owner:owner_user_id (display_name)
           `)
@@ -269,6 +281,12 @@ export function useAllOrgObjectivesView(year?: number) {
           .is('team_objective.cancelled_at', null)
           .is('team_objective.deleted_at', null)
           .not('team_objective.status', 'in', '(cancelled,discarded)');
+
+        if (cycleId) {
+          teamKrQuery = teamKrQuery.eq('team_objective.cycle_id', cycleId);
+        }
+
+        const { data: teamKrs, error: teamKrsError } = await teamKrQuery;
 
         if (!teamKrsError) {
           teamKrsData = teamKrs || [];

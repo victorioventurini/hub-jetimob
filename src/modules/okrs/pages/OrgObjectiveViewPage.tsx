@@ -1,24 +1,57 @@
 import { useMemo, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Building2 } from 'lucide-react';
+import { ArrowLeft, Building2, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useOrgObjectiveView } from '../hooks';
+import { useOrgObjectiveView, useCyclesList } from '../hooks';
 import { OrgObjectiveHeader } from '../components/org-view/OrgObjectiveHeader';
 import { OrgKrExpandableCard } from '../components/org-view/OrgKrExpandableCard';
 import { OrgViewInsights } from '../components/org-view/OrgViewInsights';
 import { OrgViewFilters, StatusFilter, TeamFilter } from '../components/org-view/OrgViewFilters';
 import { LinkedTeamObjectivesSection } from '../components/org-view/LinkedTeamObjectivesSection';
+import { SimpleSelect } from '@/components/selects';
 import { useUrlState } from '@/shared/url';
 import { PageHeader } from '@/components/ui/page-header';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 // OkrOrgObjectiveDetailBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
+
+const QUARTER_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'Q1', label: 'Q1' },
+  { value: 'Q2', label: 'Q2' },
+  { value: 'Q3', label: 'Q3' },
+  { value: 'Q4', label: 'Q4' },
+];
 
 export default function OrgObjectiveViewPage() {
   const { objectiveId } = useParams<{ objectiveId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: objective, isLoading, error } = useOrgObjectiveView(objectiveId || '');
+
+  // Quarter filter
+  const quarterState = useUrlState<string>({ key: 'quarter', defaultValue: 'all' });
+  const selectedQuarter = quarterState.value;
+  const setSelectedQuarter = quarterState.set;
+
+  // Resolve quarter → cycleId
+  const { data: allCycles } = useCyclesList();
+
+  const resolvedCycle = useMemo(() => {
+    if (selectedQuarter === 'all' || !allCycles) return null;
+    // Try to find by name pattern (e.g. "2026-Q1") — use objective year if available
+    return allCycles.find(c =>
+      c.type === 'quarter' &&
+      c.name.includes(selectedQuarter)
+    ) ?? null;
+  }, [selectedQuarter, allCycles]);
+
+  const resolvedCycleId = resolvedCycle?.id ?? null;
+  const quarterNotFound = selectedQuarter !== 'all' && allCycles && !resolvedCycleId;
+
+  const { data: objective, isLoading, error } = useOrgObjectiveView(objectiveId || '', resolvedCycleId);
   
   // Deep-linking: Read ?kr= from URL for highlight/scroll
   const highlightedKrId = searchParams.get('kr');
@@ -111,6 +144,14 @@ export default function OrgObjectiveViewPage() {
     });
   }, [objective, statusFilter, teamFilter]);
 
+  // Format cycle period for badge
+  const cyclePeriodLabel = useMemo(() => {
+    if (!resolvedCycle) return null;
+    const start = format(parseISO(resolvedCycle.start_date), "dd MMM", { locale: ptBR });
+    const end = format(parseISO(resolvedCycle.end_date), "dd MMM", { locale: ptBR });
+    return `${selectedQuarter} ${objective?.year ?? ''} · ${start} → ${end}`;
+  }, [resolvedCycle, selectedQuarter, objective?.year]);
+
   if (isLoading) {
     return (
       <HubLayout>
@@ -156,7 +197,43 @@ export default function OrgObjectiveViewPage() {
             { label: "Visão Organizacional", href: "/okrs/org-view" },
             { label: objective.title }
           ]}
+          actions={
+            <SimpleSelect
+              value={selectedQuarter}
+              onValueChange={setSelectedQuarter}
+              options={QUARTER_OPTIONS}
+              placeholder="Quarter"
+              triggerClassName="w-[100px]"
+            />
+          }
         />
+
+        {/* Quarter active badge */}
+        {cyclePeriodLabel && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+            <Info className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-foreground">
+              Mostrando contribuições de: <span className="font-medium">{cyclePeriodLabel}</span>
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-7 px-2 text-xs"
+              onClick={() => setSelectedQuarter('all')}
+            >
+              <X className="w-3 h-3 mr-1" />
+              Limpar filtro
+            </Button>
+          </div>
+        )}
+
+        {/* Quarter not found warning */}
+        {quarterNotFound && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted text-muted-foreground text-sm">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>Nenhum ciclo cadastrado para {selectedQuarter} {objective.year}.</span>
+          </div>
+        )}
 
         {/* Objective Summary Card */}
         <OrgObjectiveHeader objective={objective} />

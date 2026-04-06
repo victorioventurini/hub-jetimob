@@ -20,14 +20,14 @@ export const okrsKeys = {
   orgObjectivesWithKrs: (buId: string | null, year?: number) => 
     ['okr-org-objectives-with-krs', buId, year] as const,
   orgObjective: (id: string) => ['okr-org-objective', id] as const,
-  orgObjectiveView: (objectiveId: string, buId: string | null) => 
-    ['org-objective-view', objectiveId, buId] as const,
+  orgObjectiveView: (objectiveId: string, buId: string | null, cycleId?: string | null) => 
+    ['org-objective-view', objectiveId, buId, cycleId ?? null] as const,
   orgKeyResults: (buId: string | null, objectiveId?: string) => 
     ['okr-org-key-results', buId, objectiveId] as const,
   orgKeyResultsAllBu: (buId: string | null) => 
     ['okr-all-org-key-results', buId] as const,
-  allOrgObjectivesView: (year: number, buId: string | null) => 
-    ['all-org-objectives-view', year, buId] as const,
+  allOrgObjectivesView: (year: number, buId: string | null, cycleId?: string | null) => 
+    ['all-org-objectives-view', year, buId, cycleId ?? null] as const,
   
   // Team level
   teamObjectives: (buId: string | null, teamId?: string, cycleId?: string) => 
