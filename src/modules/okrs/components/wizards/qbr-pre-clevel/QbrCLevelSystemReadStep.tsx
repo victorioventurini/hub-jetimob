@@ -352,6 +352,41 @@ export function QbrCLevelSystemReadStep({
           </Card>
         )}
 
+        {/* AI Summary (above learnings) */}
+        {(isSummarizing || summaries) && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Resumo Executivo (IA)
+                {isSummarizing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+              </CardTitle>
+            </CardHeader>
+            {summaries && (
+              <CardContent className="space-y-3">
+                {summaries.workedSummary && (
+                  <div className="p-2 rounded-md bg-status-green/5 border border-status-green/20">
+                    <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
+                    <p className="text-xs text-foreground">{summaries.workedSummary}</p>
+                  </div>
+                )}
+                {summaries.didntWorkSummary && (
+                  <div className="p-2 rounded-md bg-status-red/5 border border-status-red/20">
+                    <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
+                    <p className="text-xs text-foreground">{summaries.didntWorkSummary}</p>
+                  </div>
+                )}
+                {summaries.debtsSummary && (
+                  <div className="p-2 rounded-md bg-status-amber/5 border border-status-amber/20">
+                    <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
+                    <p className="text-xs text-foreground">{summaries.debtsSummary}</p>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         {/* Aprendizados consolidados */}
         <Card>
           <CardHeader className="pb-2">
@@ -360,7 +395,7 @@ export function QbrCLevelSystemReadStep({
                 <BookOpen className="h-4 w-4" />
                 Aprendizados Consolidados
               </div>
-              {hasLearnings && !summaries && (
+              {hasLearnings && summaries && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -373,7 +408,7 @@ export function QbrCLevelSystemReadStep({
                   ) : (
                     <Sparkles className="h-3.5 w-3.5" />
                   )}
-                  {isSummarizing ? 'Gerando...' : 'Resumir com IA'}
+                  {isSummarizing ? 'Gerando...' : 'Regenerar resumo'}
                 </Button>
               )}
             </CardTitle>
