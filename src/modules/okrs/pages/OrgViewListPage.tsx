@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, ChevronRight, Target, TrendingUp, AlertTriangle, XCircle } from 'lucide-react';
+import { Building2, ChevronRight, Target, TrendingUp, AlertTriangle, XCircle, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -8,8 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useAllOrgObjectivesView } from '../hooks';
-import { YearSelect } from '@/components/selects';
+import { useAllOrgObjectivesView, useCyclesList } from '../hooks';
+import { YearSelect, SimpleSelect } from '@/components/selects';
 import { useUrlState, parsers } from '@/shared/url';
 // OkrBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
 import { RAG_STATUS_COLORS } from '@/lib/colors';
@@ -32,6 +32,14 @@ const statusConfig = {
   },
 };
 
+const QUARTER_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'Q1', label: 'Q1' },
+  { value: 'Q2', label: 'Q2' },
+  { value: 'Q3', label: 'Q3' },
+  { value: 'Q4', label: 'Q4' },
+];
+
 export default function OrgViewListPage() {
   usePageTitle('Visão Organizacional');
   
@@ -41,8 +49,32 @@ export default function OrgViewListPage() {
   const yearState = useUrlState<number>({ key: 'year', defaultValue: currentYear, parse: parsers.number });
   const selectedYear = yearState.value;
   const setSelectedYear = yearState.set;
+
+  const quarterState = useUrlState<string>({ key: 'quarter', defaultValue: 'all' });
+  const selectedQuarter = quarterState.value;
+  const setSelectedQuarter = quarterState.set;
+
+  // Reset quarter when year changes
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    setSelectedQuarter('all');
+  };
+
+  // Resolve quarter → cycleId
+  const { data: allCycles } = useCyclesList();
+
+  const resolvedCycleId = useMemo(() => {
+    if (selectedQuarter === 'all' || !allCycles) return null;
+    const match = allCycles.find(c =>
+      c.type === 'quarter' &&
+      c.name.includes(`${selectedYear}-${selectedQuarter}`)
+    );
+    return match?.id ?? null;
+  }, [selectedQuarter, selectedYear, allCycles]);
+
+  const quarterNotFound = selectedQuarter !== 'all' && allCycles && !resolvedCycleId;
   
-  const { data: objectives, isLoading } = useAllOrgObjectivesView(selectedYear);
+  const { data: objectives, isLoading } = useAllOrgObjectivesView(selectedYear, resolvedCycleId);
 
   const years = [currentYear - 1, currentYear, currentYear + 1];
 
@@ -69,14 +101,31 @@ export default function OrgViewListPage() {
             { label: 'Visão Organizacional' },
           ]}
           actions={
-            <YearSelect
-              value={selectedYear}
-              onValueChange={setSelectedYear}
-              years={years}
-              triggerClassName="w-[120px]"
-            />
+            <div className="flex items-center gap-2">
+              <YearSelect
+                value={selectedYear}
+                onValueChange={handleYearChange}
+                years={years}
+                triggerClassName="w-[120px]"
+              />
+              <SimpleSelect
+                value={selectedQuarter}
+                onValueChange={setSelectedQuarter}
+                options={QUARTER_OPTIONS}
+                placeholder="Quarter"
+                triggerClassName="w-[100px]"
+              />
+            </div>
           }
         />
+
+        {/* Quarter not found warning */}
+        {quarterNotFound && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted text-muted-foreground text-sm">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>Nenhum ciclo cadastrado para {selectedQuarter} {selectedYear}.</span>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -121,7 +170,7 @@ export default function OrgViewListPage() {
               const totalTeamKrs = objective.orgKrs.reduce((sum, kr) => sum + kr.linkedTeamKrs.length, 0);
 
               return (
-                <Link key={objective.id} to={`/okrs/org-view/${objective.id}`} className="block">
+                <Link key={objective.id} to={`/okrs/org-view/${objective.id}${selectedQuarter !== 'all' ? `?quarter=${selectedQuarter}` : ''}`} className="block">
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
