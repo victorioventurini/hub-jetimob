@@ -429,6 +429,7 @@ export default function QbrMeetingPage() {
             onApprovalsChange={(approvals) => updateDraft({ approvals })}
             calibrationFlags={calibrationFlags}
             teamAddendums={teamAddendums}
+            orgObjectives={orgObjectives || []}
             currentTeamIndex={draft.data.currentTeamIndex}
             onCurrentTeamIndexChange={(currentTeamIndex) => updateDraft({ currentTeamIndex })}
             onContinue={goNext}
