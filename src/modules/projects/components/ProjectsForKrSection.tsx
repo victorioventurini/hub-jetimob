@@ -187,16 +187,12 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
                       até {format(parseISO(project.due_date), "dd MMM", { locale: ptBR })}
                     </span>
                   )}
-                  {project.external_url && (
-                    <a
-                      href={project.external_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
+                  <Link
+                    to={`/projects/${project.id}`}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
                   {canEdit && (
                     <Button
                       variant="ghost"
