@@ -202,8 +202,20 @@ export default function QbrPreCLevelPage() {
 
   const leaderSubmissions: LeaderPreSubmission[] = useMemo(() => {
     if (!leaderSessions) return [];
-    return leaderSessions
-      .filter(s => s.team_id && s.reflection_data)
+
+    // Deduplicate by team_id, keeping the most recent submission
+    const filtered = leaderSessions.filter(s => s.team_id && s.reflection_data);
+    const sorted = [...filtered].sort(
+      (a, b) => new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime()
+    );
+    const latestByTeam = new Map<string, (typeof sorted)[number]>();
+    for (const s of sorted) {
+      if (!latestByTeam.has(s.team_id!)) {
+        latestByTeam.set(s.team_id!, s);
+      }
+    }
+
+    return Array.from(latestByTeam.values())
       .map(s => ({
         teamId: s.team_id!,
         teamName: teamMap.get(s.team_id!) || 'Time desconhecido',
