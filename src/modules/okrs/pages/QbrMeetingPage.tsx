@@ -15,7 +15,10 @@ import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/share
 import {
   useGenericWizardDraft,
   useActiveCycle,
+  useAllOrgObjectivesView,
 } from '@/modules/okrs/hooks';
+import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
+import { calculateProgress } from '@/modules/okrs/types';
 import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -70,11 +73,13 @@ const DEFAULT_DATA: QbrMeetingDraftData = {
   crossCommitments: [],
   governanceChecklist: {
     allTeamsReviewed: false,
+    orgCoverageClear: false,
     decisionsHaveOwners: false,
     dependenciesFormalized: false,
     feedbackLinkSent: false,
   },
   ritualFeedback: [],
+  intentionalGaps: [],
 };
 
 // ============================================================
@@ -250,6 +255,10 @@ export default function QbrMeetingPage() {
   const cLevelStrategicAnalysis = cLevelSession?.snapshot?.strategicAnalysis;
   const calibrationFlags = cLevelSession?.snapshot?.okrCalibrationFlags || [];
 
+  // ── Load org objectives for coverage map ──
+  const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
+  const { data: orgObjectives } = useAllOrgObjectivesView(cycleYear, quarterlyCycle?.id);
+
   // ── Build org KPI snapshots from pre-QBR data ──
   const orgKpiSnapshots: MbrKpiSnapshot[] = useMemo(() => {
     if (!preQbrSessions) return [];
@@ -265,6 +274,35 @@ export default function QbrMeetingPage() {
     }
     return Array.from(allKpis.values());
   }, [preQbrSessions]);
+
+  // ── Compute real scorecard metrics from org objectives ──
+  const scorecardMetrics = useMemo(() => {
+    let healthy = 0;
+    let atRisk = 0;
+    let offTrack = 0;
+    const noSubmission = (buTeams?.length || 0) - teamsForReview.length;
+
+    if (orgObjectives) {
+      for (const obj of orgObjectives) {
+        for (const orgKr of obj.orgKrs) {
+          const progress = calculateProgress(
+            orgKr.baseline ?? 0, orgKr.current_value ?? 0, orgKr.target ?? 0, orgKr.direction as any
+          );
+          const state = calculateKrState({
+            progress,
+            status: (orgKr.status || 'not_started') as any,
+            daysSinceCheckin: 999,
+            cycleEnded: false,
+          });
+          if (state === 'healthy' || state === 'achieved' || state === 'exceeded') healthy++;
+          else if (state === 'at_risk' || state === 'stagnant') atRisk++;
+          else if (state === 'off_track' || state === 'not_achieved') offTrack++;
+        }
+      }
+    }
+
+    return { healthy, atRisk, offTrack, noSubmission };
+  }, [orgObjectives, buTeams, teamsForReview]);
 
   // Seed cycleId in draft
   const seededCycleRef = useRef(false);
@@ -376,12 +414,8 @@ export default function QbrMeetingPage() {
             cLevelSessionExists={!!cLevelSession}
             leaderSummaryCount={teamsForReview.length}
             orgKpiSnapshots={orgKpiSnapshots}
-            scorecardMetrics={{
-              healthy: teamsForReview.filter(t => t.hasSubmission).length,
-              atRisk: 0,
-              offTrack: 0,
-              noSubmission: (buTeams?.length || 0) - teamsForReview.length,
-            }}
+            orgObjectives={orgObjectives || []}
+            scorecardMetrics={scorecardMetrics}
             currentStepIndex={STEP_ORDER.indexOf(draft.currentStep)}
             onContinue={goNext}
           />
@@ -395,6 +429,7 @@ export default function QbrMeetingPage() {
             onApprovalsChange={(approvals) => updateDraft({ approvals })}
             calibrationFlags={calibrationFlags}
             teamAddendums={teamAddendums}
+            orgObjectives={orgObjectives || []}
             currentTeamIndex={draft.data.currentTeamIndex}
             onCurrentTeamIndexChange={(currentTeamIndex) => updateDraft({ currentTeamIndex })}
             onContinue={goNext}
@@ -434,6 +469,10 @@ export default function QbrMeetingPage() {
             decisions={draft.data.decisions}
             crossCommitments={draft.data.crossCommitments}
             totalTeamsForReview={teamsForReview.length}
+            orgObjectives={orgObjectives || []}
+            teamsForReview={teamsForReview}
+            intentionalGaps={draft.data.intentionalGaps || []}
+            onIntentionalGapsChange={(intentionalGaps) => updateDraft({ intentionalGaps })}
             isCompleting={isCompletingRef.current}
             onComplete={handleComplete}
             onBack={goBack}

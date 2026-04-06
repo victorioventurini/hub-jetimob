@@ -3,9 +3,10 @@
  * 
  * Navegação 1-de-N com ações: approved, approved_with_changes, discarded, defer.
  * Gate: não avança sem que todos os times tenham sido revisados.
+ * Inclui: flags C-Level, adendos, cobertura de KRs org e cobertura reversa.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import {
   ClipboardCheck, ChevronLeft, ChevronRight, Check, X, Pencil, Clock,
-  AlertTriangle, Flag,
+  AlertTriangle, Flag, Target, Link2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -28,6 +29,7 @@ import type {
   QbrCLevelSnapshot,
   ProposedObjectiveEntry,
 } from '@/modules/okrs/types/wizard';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
 // ============================================================
 // TYPES
@@ -48,6 +50,8 @@ export interface QbrMeetingOkrReviewStepProps {
   calibrationFlags?: QbrCLevelSnapshot['okrCalibrationFlags'];
   /** Addendums from qbr-pre sessions, keyed by teamId */
   teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
+  /** Org objectives for coverage analysis */
+  orgObjectives?: OrgObjectiveWithKrs[];
   currentTeamIndex: number;
   onCurrentTeamIndexChange: (index: number) => void;
   onContinue: () => void;
@@ -66,6 +70,144 @@ const STATUS_CONFIG: Record<QbrApprovalStatus, { label: string; icon: typeof Che
 };
 
 // ============================================================
+// SUB-COMPONENTS
+// ============================================================
+
+/** Shows which org KRs this team's proposals cover */
+function OrgKrCoverageSection({
+  proposedOkrs,
+  orgObjectives,
+}: {
+  proposedOkrs: ProposedObjectiveEntry[];
+  orgObjectives: OrgObjectiveWithKrs[];
+}) {
+  // Find KRs with linkedOrgKrId in the proposals
+  const linkedOrgKrIds = new Set<string>();
+  for (const entry of proposedOkrs) {
+    for (const kr of entry.draftKrs) {
+      if ((kr as any).linkedOrgKrId) {
+        linkedOrgKrIds.add((kr as any).linkedOrgKrId);
+      }
+    }
+  }
+
+  // Build org KR name map
+  const orgKrMap = new Map<string, { krTitle: string; objTitle: string }>();
+  for (const obj of orgObjectives) {
+    for (const kr of obj.orgKrs) {
+      orgKrMap.set(kr.id, { krTitle: kr.title, objTitle: obj.title });
+    }
+  }
+
+  if (linkedOrgKrIds.size === 0 && orgObjectives.length > 0) {
+    return (
+      <div className="flex items-start gap-2 text-xs bg-status-amber/10 rounded px-2 py-1.5">
+        <AlertTriangle className="h-3 w-3 text-status-amber mt-0.5 shrink-0" />
+        <span className="text-muted-foreground">
+          Nenhuma KR desta proposta contribui para os OKRs organizacionais.
+        </span>
+      </div>
+    );
+  }
+
+  if (linkedOrgKrIds.size === 0) return null;
+
+  return (
+    <Card className="border-dashed">
+      <CardHeader className="pb-1 pt-2 px-3">
+        <CardTitle className="text-xs flex items-center gap-1.5 text-muted-foreground">
+          <Link2 className="h-3 w-3" />
+          Contribuições para OKRs organizacionais
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-3 pb-2 space-y-1">
+        {Array.from(linkedOrgKrIds).map(orgKrId => {
+          const info = orgKrMap.get(orgKrId);
+          if (!info) return null;
+          return (
+            <div key={orgKrId} className="text-xs flex items-start gap-1.5">
+              <Target className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+              <span className="text-muted-foreground">
+                Contribui para → <span className="font-medium text-foreground">{info.krTitle}</span>
+              </span>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Shows org KRs not yet covered by any approved team */
+function ReverseCoverageSection({
+  orgObjectives,
+  approvals,
+  teamsForReview,
+}: {
+  orgObjectives: OrgObjectiveWithKrs[];
+  approvals: QbrMeetingSnapshot['approvals'];
+  teamsForReview: TeamForReview[];
+}) {
+  const uncoveredOrgKrs = useMemo(() => {
+    if (orgObjectives.length === 0) return [];
+
+    // Collect all linkedOrgKrIds from approved teams
+    const coveredOrgKrIds = new Set<string>();
+    const approvedTeamIds = new Set(
+      approvals
+        .filter(a => a.status === 'approved' || a.status === 'approved_with_changes')
+        .map(a => a.teamId)
+    );
+
+    for (const team of teamsForReview) {
+      if (!approvedTeamIds.has(team.teamId)) continue;
+      for (const entry of team.proposedOkrs) {
+        for (const kr of entry.draftKrs) {
+          if ((kr as any).linkedOrgKrId) {
+            coveredOrgKrIds.add((kr as any).linkedOrgKrId);
+          }
+        }
+      }
+    }
+
+    // Find uncovered
+    const uncovered: Array<{ krId: string; krTitle: string; objTitle: string }> = [];
+    for (const obj of orgObjectives) {
+      for (const kr of obj.orgKrs) {
+        if (!coveredOrgKrIds.has(kr.id)) {
+          uncovered.push({ krId: kr.id, krTitle: kr.title, objTitle: obj.title });
+        }
+      }
+    }
+    return uncovered;
+  }, [orgObjectives, approvals, teamsForReview]);
+
+  if (uncoveredOrgKrs.length === 0) return null;
+
+  return (
+    <Card className="border-dashed border-status-amber/30">
+      <CardHeader className="pb-1 pt-2 px-3">
+        <CardTitle className="text-xs flex items-center gap-1.5 text-status-amber">
+          <AlertTriangle className="h-3 w-3" />
+          KRs org sem cobertura até agora ({uncoveredOrgKrs.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-3 pb-2 space-y-0.5">
+        {uncoveredOrgKrs.slice(0, 5).map(kr => (
+          <div key={kr.krId} className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
+            <span className="truncate">{kr.krTitle}</span>
+          </div>
+        ))}
+        {uncoveredOrgKrs.length > 5 && (
+          <p className="text-[10px] text-muted-foreground">+{uncoveredOrgKrs.length - 5} mais</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -75,6 +217,7 @@ export function QbrMeetingOkrReviewStep({
   onApprovalsChange,
   calibrationFlags = [],
   teamAddendums = {},
+  orgObjectives = [],
   currentTeamIndex,
   onCurrentTeamIndexChange,
   onContinue,
@@ -168,6 +311,14 @@ export function QbrMeetingOkrReviewStep({
           <AddendumBadge addendums={teamAddendums[current.teamId]} />
         )}
 
+        {/* Org KR coverage for this team */}
+        {current?.hasSubmission && orgObjectives.length > 0 && (
+          <OrgKrCoverageSection
+            proposedOkrs={current.proposedOkrs}
+            orgObjectives={orgObjectives}
+          />
+        )}
+
         {/* Proposed OKRs */}
         {current?.hasSubmission && current.proposedOkrs.length > 0 ? (
           <div className="space-y-3">
@@ -203,6 +354,15 @@ export function QbrMeetingOkrReviewStep({
         {/* Active projects of the team — read-only context for approval */}
         {current && (
           <ProjectsSummary teamId={current.teamId} mode="checkin" className="mt-2" />
+        )}
+
+        {/* Reverse coverage — org KRs not covered by approved teams */}
+        {orgObjectives.length > 0 && (
+          <ReverseCoverageSection
+            orgObjectives={orgObjectives}
+            approvals={approvals}
+            teamsForReview={teamsForReview}
+          />
         )}
 
         {/* Current status */}

@@ -85,6 +85,7 @@ describe('QbrMeetingOpeningStep', () => {
     cLevelSessionExists: true,
     leaderSummaryCount: 5,
     orgKpiSnapshots: [] as MbrKpiSnapshot[],
+    orgObjectives: [],
     scorecardMetrics: { healthy: 3, atRisk: 1, offTrack: 1, noSubmission: 0 },
     currentStepIndex: 0,
     onContinue: vi.fn(),
@@ -326,6 +327,7 @@ describe('QbrMeetingCommitmentsStep', () => {
 describe('QbrMeetingClosingStep', () => {
   const emptyChecklist = {
     allTeamsReviewed: false,
+    orgCoverageClear: false,
     decisionsHaveOwners: false,
     dependenciesFormalized: false,
     feedbackLinkSent: false,
@@ -333,6 +335,7 @@ describe('QbrMeetingClosingStep', () => {
 
   const fullChecklist = {
     allTeamsReviewed: true,
+    orgCoverageClear: true,
     decisionsHaveOwners: true,
     dependenciesFormalized: true,
     feedbackLinkSent: true,

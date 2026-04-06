@@ -418,6 +418,7 @@ export interface QbrCLevelSnapshot {
 /** Checklist de governança do QBR Meeting */
 export interface QbrMeetingGovernanceChecklist {
   allTeamsReviewed: boolean;
+  orgCoverageClear: boolean;
   decisionsHaveOwners: boolean;
   dependenciesFormalized: boolean;
   feedbackLinkSent: boolean;
@@ -530,6 +531,8 @@ export interface QbrMeetingDraftData {
   crossCommitments: QbrMeetingSnapshot['crossCommitments'];
   governanceChecklist: QbrMeetingGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
+  /** IDs de KRs org marcadas como "gap intencional" no mapa de cobertura */
+  intentionalGaps?: string[];
 }
 
 /** Draft data do pós-QBR */
