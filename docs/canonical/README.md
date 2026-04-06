@@ -1,6 +1,6 @@
 # 📐 Documentos Canônicos — Hub da Jet
 
-**Última atualização:** 2026-03-25  
+**Última atualização:** 2026-04-06  
 **Categoria:** NORMATIVO
 
 ---
