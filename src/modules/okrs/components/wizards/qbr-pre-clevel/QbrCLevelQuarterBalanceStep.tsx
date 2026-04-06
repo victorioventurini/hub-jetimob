@@ -350,10 +350,10 @@ export function QbrCLevelQuarterBalanceStep({
   return (
     <WizardStepScaffold
       header={
-        <WizardStepHeader
+         <WizardStepHeader
           icon={BarChart3}
-          title="Balanço do Quarter"
-          description="Desempenho dos OKRs organizacionais e entrega dos times neste ciclo"
+          title={`Balanço do Quarter — ${cycleName}`}
+          description={`Desempenho dos OKRs organizacionais e entrega dos times no ${cycleName}`}
           variant="primary"
         />
       }
