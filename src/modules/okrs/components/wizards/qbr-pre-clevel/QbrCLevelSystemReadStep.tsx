@@ -111,6 +111,7 @@ export function QbrCLevelSystemReadStep({
   isLoading,
   onContinue,
 }: QbrCLevelSystemReadStepProps) {
+  const buSupabase = useBuScopedSupabase();
   const krAgg = useMemo(() => aggregateKrStates(leaderSubmissions), [leaderSubmissions]);
   const zombieCount = useMemo(() => aggregateZombieKpis(leaderSubmissions), [leaderSubmissions]);
   const kpisToCreate = useMemo(() => aggregateKpisToCreate(leaderSubmissions), [leaderSubmissions]);
@@ -131,6 +132,7 @@ export function QbrCLevelSystemReadStep({
   // AI Summary state
   const [summaries, setSummaries] = useState<LearningSummaries | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const hasTriggeredRef = useRef(false);
 
   const hasLearnings = topLearnings.worked.length > 0 || topLearnings.didntWork.length > 0 || topLearnings.debts.length > 0;
 
@@ -138,7 +140,7 @@ export function QbrCLevelSystemReadStep({
     if (isSummarizing) return;
     setIsSummarizing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('qbr-clevel-learnings-summary', {
+      const { data, error } = await buSupabase.functions.invoke('qbr-clevel-learnings-summary', {
         body: {
           worked: topLearnings.worked,
           didntWork: topLearnings.didntWork,
@@ -160,7 +162,15 @@ export function QbrCLevelSystemReadStep({
     } finally {
       setIsSummarizing(false);
     }
-  }, [topLearnings, isSummarizing]);
+  }, [topLearnings, isSummarizing, buSupabase]);
+
+  // Auto-trigger AI summary on mount when there are learnings
+  useEffect(() => {
+    if (hasLearnings && !summaries && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      generateSummaries();
+    }
+  }, [hasLearnings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <WizardStepScaffold
