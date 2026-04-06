@@ -417,14 +417,6 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.worked.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
-                {summaries?.workedSummary && (
-                  <div className="mb-2 p-2 rounded-md bg-status-green/5 border border-status-green/20">
-                    <div className="flex items-start gap-1.5">
-                      <Sparkles className="h-3 w-3 text-status-green shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground">{summaries.workedSummary}</p>
-                    </div>
-                  </div>
-                )}
                 {topLearnings.worked.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
