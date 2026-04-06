@@ -639,6 +639,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     url.searchParams.delete('step');
     window.history.replaceState(window.history.state, '', url.toString());
     
+    // Note: do NOT reset isCompletingRef — once completed, prevent any further calls
     return resultId;
   }, [storageKey, sessionId, createEmptyDraft, profile?.id, currentBu?.id, buSupabase, draft, wizardType, teamId, cycleId]);
   
