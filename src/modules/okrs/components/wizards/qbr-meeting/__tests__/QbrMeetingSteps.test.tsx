@@ -326,6 +326,7 @@ describe('QbrMeetingCommitmentsStep', () => {
 describe('QbrMeetingClosingStep', () => {
   const emptyChecklist = {
     allTeamsReviewed: false,
+    orgCoverageClear: false,
     decisionsHaveOwners: false,
     dependenciesFormalized: false,
     feedbackLinkSent: false,
@@ -333,6 +334,7 @@ describe('QbrMeetingClosingStep', () => {
 
   const fullChecklist = {
     allTeamsReviewed: true,
+    orgCoverageClear: true,
     decisionsHaveOwners: true,
     dependenciesFormalized: true,
     feedbackLinkSent: true,

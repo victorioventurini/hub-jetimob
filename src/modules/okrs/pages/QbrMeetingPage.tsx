@@ -70,11 +70,13 @@ const DEFAULT_DATA: QbrMeetingDraftData = {
   crossCommitments: [],
   governanceChecklist: {
     allTeamsReviewed: false,
+    orgCoverageClear: false,
     decisionsHaveOwners: false,
     dependenciesFormalized: false,
     feedbackLinkSent: false,
   },
   ritualFeedback: [],
+  intentionalGaps: [],
 };
 
 // ============================================================
