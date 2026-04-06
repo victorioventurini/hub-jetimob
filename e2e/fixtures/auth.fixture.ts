@@ -32,7 +32,6 @@ async function performLogin(page: Page, email: string): Promise<void> {
   // For now, this sets up the flow - actual auth would need backend mocking
 }
 
-// eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture API, not a React hook
 export const test = base.extend<AuthFixture>({
   loginAsAdmin: async ({ page }, callback) => {
     await callback(async () => {
