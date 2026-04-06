@@ -158,9 +158,18 @@ ${debts.length > 0 ? formatItems(debts) : "(nenhum registro)"}`;
 // Serve
 // ============================================================================
 
-serve((req: Request) =>
-  withMiddleware(req, (r, ctx) => handler(r, ctx), {
+serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const mw = await withMiddleware(req, {
     requireAuth: true,
-    requireBu: true,
-  })
-);
+    requireBu: false,
+  });
+
+  if (!mw.success) return mw.error!;
+
+  return handler(req, mw.context!);
+});

@@ -7,7 +7,7 @@
  * - KPIs organizacionais com evolução
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import {
   WizardStepHeader,
   WizardFirstStepFooter,
@@ -111,6 +111,7 @@ export function QbrCLevelSystemReadStep({
   isLoading,
   onContinue,
 }: QbrCLevelSystemReadStepProps) {
+  const buSupabase = useBuScopedSupabase();
   const krAgg = useMemo(() => aggregateKrStates(leaderSubmissions), [leaderSubmissions]);
   const zombieCount = useMemo(() => aggregateZombieKpis(leaderSubmissions), [leaderSubmissions]);
   const kpisToCreate = useMemo(() => aggregateKpisToCreate(leaderSubmissions), [leaderSubmissions]);
@@ -131,6 +132,7 @@ export function QbrCLevelSystemReadStep({
   // AI Summary state
   const [summaries, setSummaries] = useState<LearningSummaries | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const hasTriggeredRef = useRef(false);
 
   const hasLearnings = topLearnings.worked.length > 0 || topLearnings.didntWork.length > 0 || topLearnings.debts.length > 0;
 
@@ -138,7 +140,7 @@ export function QbrCLevelSystemReadStep({
     if (isSummarizing) return;
     setIsSummarizing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('qbr-clevel-learnings-summary', {
+      const { data, error } = await buSupabase.functions.invoke('qbr-clevel-learnings-summary', {
         body: {
           worked: topLearnings.worked,
           didntWork: topLearnings.didntWork,
@@ -160,7 +162,15 @@ export function QbrCLevelSystemReadStep({
     } finally {
       setIsSummarizing(false);
     }
-  }, [topLearnings, isSummarizing]);
+  }, [topLearnings, isSummarizing, buSupabase]);
+
+  // Auto-trigger AI summary on mount when there are learnings
+  useEffect(() => {
+    if (hasLearnings && !summaries && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      generateSummaries();
+    }
+  }, [hasLearnings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <WizardStepScaffold
@@ -342,6 +352,41 @@ export function QbrCLevelSystemReadStep({
           </Card>
         )}
 
+        {/* AI Summary (above learnings) */}
+        {(isSummarizing || summaries) && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Resumo Executivo (IA)
+                {isSummarizing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+              </CardTitle>
+            </CardHeader>
+            {summaries && (
+              <CardContent className="space-y-3">
+                {summaries.workedSummary && (
+                  <div className="p-2 rounded-md bg-status-green/5 border border-status-green/20">
+                    <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
+                    <p className="text-xs text-foreground">{summaries.workedSummary}</p>
+                  </div>
+                )}
+                {summaries.didntWorkSummary && (
+                  <div className="p-2 rounded-md bg-status-red/5 border border-status-red/20">
+                    <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
+                    <p className="text-xs text-foreground">{summaries.didntWorkSummary}</p>
+                  </div>
+                )}
+                {summaries.debtsSummary && (
+                  <div className="p-2 rounded-md bg-status-amber/5 border border-status-amber/20">
+                    <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
+                    <p className="text-xs text-foreground">{summaries.debtsSummary}</p>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         {/* Aprendizados consolidados */}
         <Card>
           <CardHeader className="pb-2">
@@ -350,7 +395,7 @@ export function QbrCLevelSystemReadStep({
                 <BookOpen className="h-4 w-4" />
                 Aprendizados Consolidados
               </div>
-              {hasLearnings && !summaries && (
+              {hasLearnings && summaries && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -363,7 +408,7 @@ export function QbrCLevelSystemReadStep({
                   ) : (
                     <Sparkles className="h-3.5 w-3.5" />
                   )}
-                  {isSummarizing ? 'Gerando...' : 'Resumir com IA'}
+                  {isSummarizing ? 'Gerando...' : 'Regenerar resumo'}
                 </Button>
               )}
             </CardTitle>
@@ -372,14 +417,6 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.worked.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
-                {summaries?.workedSummary && (
-                  <div className="mb-2 p-2 rounded-md bg-status-green/5 border border-status-green/20">
-                    <div className="flex items-start gap-1.5">
-                      <Sparkles className="h-3 w-3 text-status-green shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground">{summaries.workedSummary}</p>
-                    </div>
-                  </div>
-                )}
                 {topLearnings.worked.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
@@ -391,14 +428,6 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.didntWork.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
-                {summaries?.didntWorkSummary && (
-                  <div className="mb-2 p-2 rounded-md bg-status-red/5 border border-status-red/20">
-                    <div className="flex items-start gap-1.5">
-                      <Sparkles className="h-3 w-3 text-status-red shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground">{summaries.didntWorkSummary}</p>
-                    </div>
-                  </div>
-                )}
                 {topLearnings.didntWork.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
@@ -410,14 +439,6 @@ export function QbrCLevelSystemReadStep({
             {topLearnings.debts.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
-                {summaries?.debtsSummary && (
-                  <div className="mb-2 p-2 rounded-md bg-status-amber/5 border border-status-amber/20">
-                    <div className="flex items-start gap-1.5">
-                      <Sparkles className="h-3 w-3 text-status-amber shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground">{summaries.debtsSummary}</p>
-                    </div>
-                  </div>
-                )}
                 {topLearnings.debts.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
                     <span className="line-clamp-2 flex-1">• {item.text}</span>
