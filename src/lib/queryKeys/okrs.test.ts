@@ -169,7 +169,7 @@ describe('okrsKeys', () => {
 
     it('should create wizardDraftGeneric key', () => {
       const key = okrsKeys.wizardDraftGeneric('user-123', 'team-okr');
-      expect(key).toEqual(['okr-wizard-draft-generic', 'user-123', 'team-okr']);
+      expect(key).toEqual(['okr-wizard-draft-generic', 'user-123', 'team-okr', 'global']);
     });
 
     it('should create wizardUserKrs key', () => {

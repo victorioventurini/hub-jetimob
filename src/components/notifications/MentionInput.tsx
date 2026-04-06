@@ -331,8 +331,8 @@ export function MentionInput({
     // Delete the "@searchTerm" by moving range back and deleting
     const deleteRange = document.createRange();
     let charsToDelete = searchLength;
-    let currentNode = range.startContainer;
-    let currentOffset = range.startOffset;
+    const currentNode = range.startContainer;
+    const currentOffset = range.startOffset;
 
     // Walk backwards to find where @ starts
     const deleteStart = { node: currentNode, offset: currentOffset };
