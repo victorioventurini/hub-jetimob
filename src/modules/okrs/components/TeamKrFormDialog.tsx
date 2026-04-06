@@ -306,7 +306,7 @@ export function TeamKrFormDialog({
                     <TooltipContent className="max-w-xs">
                       <p className="text-sm">
                         <strong>KR de Time</strong> contribui para um objetivo organizacional.
-                        Cada objetivo pode ter no máximo 3 KRs.
+                        Cada objetivo pode ter no máximo {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs.
                       </p>
                     </TooltipContent>
                   </Tooltip>
