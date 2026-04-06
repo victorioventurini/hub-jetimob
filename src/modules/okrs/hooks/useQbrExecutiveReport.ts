@@ -26,6 +26,7 @@ export interface QbrExecutiveReportData {
     teamName: string;
     objectiveTitle: string;
     krCount: number;
+    krs: string[];
   }>;
 }
 
@@ -89,6 +90,9 @@ function normalizeQbrExecutiveReportData(input: unknown): QbrExecutiveReportData
               toText(proposalRecord.title) ||
               'Objetivo não informado',
             krCount: toInteger(proposalRecord.krCount),
+            krs: Array.isArray(proposalRecord.krs)
+              ? proposalRecord.krs.map(toText).filter(Boolean)
+              : [],
           };
         })
       : [],
