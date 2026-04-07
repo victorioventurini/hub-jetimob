@@ -294,6 +294,10 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                   unit={kpi.unit}
                   direction={kpi.direction}
                   isLoading={isLoading}
+                  kpiName={kpi.name}
+                  canEdit={canUpdateValues}
+                  onUpdateValue={handleUpdateValue}
+                  onDeleteValue={handleDeleteValue}
                 />
               </TabsContent>
             </Tabs>
