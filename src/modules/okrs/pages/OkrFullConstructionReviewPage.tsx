@@ -293,7 +293,7 @@ function TeamSection({
               Score Médio
             </Badge>
           </div>
-        </CollapsibleTrigger>
+        </button>
 
         <CollapsibleContent>
           <div className="border-t p-4 space-y-4">
