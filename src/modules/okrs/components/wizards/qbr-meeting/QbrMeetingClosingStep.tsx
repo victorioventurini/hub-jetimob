@@ -223,8 +223,6 @@ function GovernanceSummary({
   const deferred = approvals.filter(a => a.status === 'defer').length;
   const discarded = approvals.filter(a => a.status === 'discarded').length;
   const decisionsWithOwner = decisions.filter(d => d.owner?.id).length;
-  const strategicCount = decisions.filter(d => d.decisionType === 'strategic').length;
-  const tacticalCount = decisions.filter(d => d.decisionType === 'tactical').length;
   const commitmentsWithResponsible = crossCommitments.filter(c => c.responsibleUserId).length;
 
   // Org KR coverage
@@ -289,10 +287,6 @@ function GovernanceSummary({
         <div className="space-y-1 pt-2 border-t">
           <p className="text-xs font-medium text-muted-foreground">Decisões:</p>
           <p className="text-xs">{decisions.length} decisões registradas</p>
-          <div className="flex gap-3 text-xs text-muted-foreground">
-            {strategicCount > 0 && <span>· {strategicCount} estratégica{strategicCount !== 1 ? 's' : ''}</span>}
-            {tacticalCount > 0 && <span>· {tacticalCount} tática{tacticalCount !== 1 ? 's' : ''}</span>}
-          </div>
           <div className="flex gap-3 text-xs text-muted-foreground">
             <span>· {decisionsWithOwner} com dono definido</span>
             {decisions.length - decisionsWithOwner > 0 && (

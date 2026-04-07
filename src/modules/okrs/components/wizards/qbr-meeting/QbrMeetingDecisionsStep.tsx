@@ -3,10 +3,9 @@
  * 
  * owner_user_id obrigatório. deadline obrigatório.
  * Gate: mínimo de uma decisão registrada.
- * Inclui: vínculo a diretivas C-Level e tipo de decisão (strategic/tactical).
+ * Inclui: vínculo a diretivas C-Level.
  */
 
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Gavel, Zap, Target } from 'lucide-react';
+import { Gavel } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardStepFooter,
@@ -52,20 +51,6 @@ export function QbrMeetingDecisionsStep({
   const hasMinimumDecisions = decisions.length >= 1;
   const allHaveOwners = decisions.every(d => d.owner?.id);
 
-  // Default decision type for new decisions
-  const [defaultDecisionType, setDefaultDecisionType] = useState<'strategic' | 'tactical'>('strategic');
-
-  // Wrap onDecisionsChange to inject decisionType on new decisions
-  const handleDecisionsChange = (newDecisions: TeamCheckinDecision[]) => {
-    const updated = newDecisions.map(d => {
-      if (!d.decisionType) return { ...d, decisionType: defaultDecisionType };
-      return d;
-    });
-    onDecisionsChange(updated);
-  };
-
-  const strategicCount = decisions.filter(d => d.decisionType === 'strategic').length;
-  const tacticalCount = decisions.filter(d => d.decisionType === 'tactical').length;
 
   return (
     <WizardStepScaffold
@@ -80,33 +65,11 @@ export function QbrMeetingDecisionsStep({
         />
       }
       bottomFixed={
-        <div className="space-y-2">
-          {/* Decision type toggle */}
-          <div className="flex items-center gap-2 px-4 pt-2">
-            <span className="text-xs text-muted-foreground">Tipo:</span>
-            <Badge
-              variant="outline"
-              className={`text-[10px] cursor-pointer transition-colors ${defaultDecisionType === 'strategic' ? 'bg-primary/10 text-primary border-primary/30' : ''}`}
-              onClick={() => setDefaultDecisionType('strategic')}
-            >
-              <Zap className="h-2.5 w-2.5 mr-0.5" />
-              Estratégica
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`text-[10px] cursor-pointer transition-colors ${defaultDecisionType === 'tactical' ? 'bg-muted text-foreground border-foreground/30' : ''}`}
-              onClick={() => setDefaultDecisionType('tactical')}
-            >
-              <Target className="h-2.5 w-2.5 mr-0.5" />
-              Tática
-            </Badge>
-          </div>
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={handleDecisionsChange}
-            sourceStep="qbr-meeting-decisions"
-          />
-        </div>
+        <InlineDecisionInput
+          decisions={decisions}
+          onDecisionsChange={onDecisionsChange}
+          sourceStep="qbr-meeting-decisions"
+        />
       }
       footer={
         <WizardStepFooter
@@ -118,21 +81,6 @@ export function QbrMeetingDecisionsStep({
       }
     >
       <div className="p-6 space-y-4">
-        {/* Summary badges */}
-        {decisions.length > 0 && (
-          <div className="flex items-center gap-2">
-            {strategicCount > 0 && (
-              <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary">
-                {strategicCount} estratégica{strategicCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
-            {tacticalCount > 0 && (
-              <Badge variant="outline" className="text-[10px] bg-muted text-foreground">
-                {tacticalCount} tática{tacticalCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
-        )}
 
         {decisions.length === 0 ? (
           <div className="text-center py-12">
@@ -157,19 +105,7 @@ export function QbrMeetingDecisionsStep({
                 showOwnerDeadline
               />
 
-              {/* Decision type badge */}
               <div className="flex items-center gap-2 pl-7">
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] cursor-pointer ${decision.decisionType === 'strategic' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'}`}
-                  onClick={() => onDecisionsChange(decisions.map(d => d.id === decision.id ? { ...d, decisionType: d.decisionType === 'strategic' ? 'tactical' : 'strategic' } : d))}
-                >
-                  {decision.decisionType === 'strategic' ? (
-                    <><Zap className="h-2.5 w-2.5 mr-0.5" /> Estratégica</>
-                  ) : (
-                    <><Target className="h-2.5 w-2.5 mr-0.5" /> Tática</>
-                  )}
-                </Badge>
 
                 {/* Related directive select */}
                 {cLevelDirectives.length > 0 && (
