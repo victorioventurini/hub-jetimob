@@ -412,7 +412,7 @@ export function QbrCLevelQuarterBalanceStep({
               ) : (
                 <div className="space-y-3">
                   {orgObjectives.map(obj => (
-                    <OrgObjectiveCard key={obj.id} objective={obj} />
+                    <OrgObjectiveCard key={obj.id} objective={obj} showTeamKrs={showTeamKrs} />
                   ))}
                 </div>
               )}

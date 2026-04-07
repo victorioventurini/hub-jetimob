@@ -67,3 +67,6 @@ export type { WizardStepScaffoldProps } from './WizardStepScaffold';
 
 export { KrLinkedDetails } from './KrLinkedDetails';
 export type { KrLinkedDetailsProps } from './KrLinkedDetails';
+
+export { TeamKrsToggle } from './TeamKrsToggle';
+export type { TeamKrsToggleProps } from './TeamKrsToggle';
