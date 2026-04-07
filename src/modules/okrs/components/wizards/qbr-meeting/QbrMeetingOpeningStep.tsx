@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { TeamKrsToggle } from '../shared/TeamKrsToggle';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
