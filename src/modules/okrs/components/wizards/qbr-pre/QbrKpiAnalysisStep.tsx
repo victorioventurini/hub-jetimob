@@ -123,7 +123,7 @@ export function QbrKpiAnalysisStep({
                   <CardContent className="p-3">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{kpi.name}</p>
+                        <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm font-medium" />
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge variant="outline" className={cn('text-xs', rag.color)}>
                             {rag.label}
