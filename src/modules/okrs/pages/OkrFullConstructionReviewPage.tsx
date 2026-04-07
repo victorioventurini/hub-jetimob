@@ -8,10 +8,10 @@
  */
 
 import { useMemo, useEffect, useCallback, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
-  ChevronLeft, Sparkles, Users, ChevronDown, ChevronRight, 
+  ChevronLeft, Sparkles, Users, ChevronDown, ChevronRight, ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
