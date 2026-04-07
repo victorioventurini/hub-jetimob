@@ -256,12 +256,15 @@ export function QbrCLevelQuarterBalanceStep({
           <>
             {/* Section A — OKRs Organizacionais */}
             <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-base">
-                  Como foram os OKRs da empresa no {cycleName}
-                </h3>
-                <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-base">
+                    OKRs da empresa neste quarter
+                  </h3>
+                  <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+                </div>
+                <p className="text-xs text-muted-foreground ml-7">Progresso real de cada KR org e quais times contribuíram.</p>
               </div>
 
               {(!orgObjectives || orgObjectives.length === 0) ? (
