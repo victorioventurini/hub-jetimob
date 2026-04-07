@@ -199,7 +199,9 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
     auth: {
       storage: localStorage,
       persistSession: true,
-      autoRefreshToken: true,
+      // CRITICAL: Only globalClient handles token refresh to prevent 429 storms.
+      // buScopedClient piggybacks on globalClient's session via shared localStorage key.
+      autoRefreshToken: false,
       // CRITICAL: Disable URL detection to prevent competing with global client
       detectSessionInUrl: false,
       // CRITICAL: Disable Navigator Lock to prevent timeout conflict with globalClient.
