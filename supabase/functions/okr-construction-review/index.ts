@@ -56,6 +56,8 @@ interface RequestBody {
     description?: string;
     orgObjectiveId?: string;
     orgObjectiveTitle?: string;
+    teamId?: string;
+    teamName?: string;
     keyResults: Array<{
       id: string;
       title: string;
