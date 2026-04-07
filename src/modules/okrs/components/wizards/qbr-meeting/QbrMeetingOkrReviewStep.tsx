@@ -3,18 +3,23 @@
  * 
  * Navegação 1-de-N com ações: approved, approved_with_changes, discarded, defer.
  * Gate: não avança sem que todos os times tenham sido revisados.
- * Inclui: flags C-Level, adendos, cobertura de KRs org e cobertura reversa.
+ * Inclui: flags C-Level, adendos, cobertura de KRs org, timer por time e ajustes estruturados.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { BuUserSelect } from '@/components/selects';
+import { toast } from 'sonner';
 import {
   ClipboardCheck, ChevronLeft, ChevronRight, Check, X, Pencil, Clock,
-  AlertTriangle, Flag, Target, Link2,
+  AlertTriangle, Flag, Target, Link2, Play, Square, Users2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -43,6 +48,14 @@ export interface TeamForReview {
   hasSubmission: boolean;
 }
 
+interface StructuredChange {
+  krIndex: number;
+  newTitle?: string;
+  newTarget?: string;
+  newOwnerId?: string;
+  newOwnerName?: string;
+}
+
 export interface QbrMeetingOkrReviewStepProps {
   teamsForReview: TeamForReview[];
   approvals: QbrMeetingSnapshot['approvals'];
@@ -69,9 +82,179 @@ const STATUS_CONFIG: Record<QbrApprovalStatus, { label: string; icon: typeof Che
   defer: { label: 'Standby', icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted' },
 };
 
+const TIMER_DURATION = 540; // 9 minutes in seconds
+const TIMER_WARNING = 120; // 2 minutes remaining
+
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================
+
+/** Timer local por time — não persiste no draft */
+function ReviewTimer({ teamName, teamId }: { teamName: string; teamId: string }) {
+  const [isRunning, setIsRunning] = useState(false);
+  const [seconds, setSeconds] = useState(TIMER_DURATION);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasToastedRef = useRef(false);
+
+  // Reset on team change
+  useEffect(() => {
+    setIsRunning(false);
+    setSeconds(TIMER_DURATION);
+    hasToastedRef.current = false;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }, [teamId]);
+
+  useEffect(() => {
+    if (isRunning && seconds > 0) {
+      intervalRef.current = setInterval(() => {
+        setSeconds(s => {
+          if (s <= 1) {
+            setIsRunning(false);
+            if (!hasToastedRef.current) {
+              toast.warning(`Tempo esgotado para ${teamName}`);
+              hasToastedRef.current = true;
+            }
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isRunning, seconds, teamName]);
+
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const isWarning = seconds <= TIMER_WARNING && seconds > 0;
+  const isExpired = seconds === 0;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 text-xs gap-1"
+        onClick={() => setIsRunning(!isRunning)}
+      >
+        {isRunning ? <Square className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+        {isRunning ? 'Pausar' : seconds < TIMER_DURATION ? 'Retomar' : 'Iniciar timer'}
+      </Button>
+      {(isRunning || seconds < TIMER_DURATION) && (
+        <span className={cn(
+          'text-xs font-mono font-medium tabular-nums',
+          isExpired ? 'text-status-red' : isWarning ? 'text-status-amber' : 'text-muted-foreground',
+        )}>
+          {String(minutes).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Formulário de ajustes estruturados por KR */
+function StructuredChangesForm({
+  proposedOkrs,
+  changes,
+  onChangesUpdate,
+}: {
+  proposedOkrs: ProposedObjectiveEntry[];
+  changes: StructuredChange[];
+  onChangesUpdate: (changes: StructuredChange[]) => void;
+}) {
+  const allKrs = useMemo(() => {
+    const result: Array<{ krIndex: number; title: string; target: string; unit: string }> = [];
+    let idx = 0;
+    for (const entry of proposedOkrs) {
+      for (const kr of entry.draftKrs) {
+        result.push({ krIndex: idx, title: kr.title, target: String(kr.target), unit: kr.unit });
+        idx++;
+      }
+    }
+    return result;
+  }, [proposedOkrs]);
+
+  const getChange = (krIndex: number) => changes.find(c => c.krIndex === krIndex);
+  const isChecked = (krIndex: number) => !!getChange(krIndex);
+
+  const toggleKr = (krIndex: number) => {
+    if (isChecked(krIndex)) {
+      onChangesUpdate(changes.filter(c => c.krIndex !== krIndex));
+    } else {
+      onChangesUpdate([...changes, { krIndex }]);
+    }
+  };
+
+  const updateChange = (krIndex: number, updates: Partial<StructuredChange>) => {
+    onChangesUpdate(changes.map(c => c.krIndex === krIndex ? { ...c, ...updates } : c));
+  };
+
+  if (allKrs.length === 0) return null;
+
+  return (
+    <Card className="border-status-amber/30">
+      <CardHeader className="pb-2 pt-3 px-3">
+        <CardTitle className="text-xs flex items-center gap-1.5 text-status-amber">
+          <Pencil className="h-3 w-3" />
+          Ajustes por KR
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-3 pb-3 space-y-2">
+        {allKrs.map(kr => {
+          const change = getChange(kr.krIndex);
+          return (
+            <div key={kr.krIndex} className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={`kr-change-${kr.krIndex}`}
+                  checked={isChecked(kr.krIndex)}
+                  onCheckedChange={() => toggleKr(kr.krIndex)}
+                />
+                <Label htmlFor={`kr-change-${kr.krIndex}`} className="text-xs cursor-pointer flex-1 truncate">
+                  {kr.title} ({kr.target} {kr.unit})
+                </Label>
+              </div>
+              {change && (
+                <div className="pl-6 space-y-1.5">
+                  <Input
+                    value={change.newTitle || ''}
+                    onChange={e => updateChange(kr.krIndex, { newTitle: e.target.value })}
+                    placeholder="Novo título (opcional)"
+                    className="text-xs h-7"
+                  />
+                  <Input
+                    value={change.newTarget || ''}
+                    onChange={e => updateChange(kr.krIndex, { newTarget: e.target.value })}
+                    placeholder="Nova meta (opcional)"
+                    className="text-xs h-7"
+                  />
+                  <div className="w-[180px]">
+                    <BuUserSelect
+                      value={change.newOwnerId}
+                      onValueChange={() => {}}
+                      onUserSelected={(user) => {
+                        if (user) {
+                          updateChange(kr.krIndex, { newOwnerId: user.id, newOwnerName: user.displayName });
+                        } else {
+                          updateChange(kr.krIndex, { newOwnerId: undefined, newOwnerName: undefined });
+                        }
+                      }}
+                      placeholder="Novo responsável"
+                      allowNone
+                      noneLabel="Sem alteração"
+                      showSearch
+                      showBadges={false}
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
 
 /** Shows which org KRs this team's proposals cover */
 function OrgKrCoverageSection({
@@ -81,7 +264,6 @@ function OrgKrCoverageSection({
   proposedOkrs: ProposedObjectiveEntry[];
   orgObjectives: OrgObjectiveWithKrs[];
 }) {
-  // Find KRs with linkedOrgKrId in the proposals
   const linkedOrgKrIds = new Set<string>();
   for (const entry of proposedOkrs) {
     for (const kr of entry.draftKrs) {
@@ -91,7 +273,6 @@ function OrgKrCoverageSection({
     }
   }
 
-  // Build org KR name map
   const orgKrMap = new Map<string, { krTitle: string; objTitle: string }>();
   for (const obj of orgObjectives) {
     for (const kr of obj.orgKrs) {
@@ -151,7 +332,6 @@ function ReverseCoverageSection({
   const uncoveredOrgKrs = useMemo(() => {
     if (orgObjectives.length === 0) return [];
 
-    // Collect all linkedOrgKrIds from approved teams
     const coveredOrgKrIds = new Set<string>();
     const approvedTeamIds = new Set(
       approvals
@@ -170,7 +350,6 @@ function ReverseCoverageSection({
       }
     }
 
-    // Find uncovered
     const uncovered: Array<{ krId: string; krTitle: string; objTitle: string }> = [];
     for (const obj of orgObjectives) {
       for (const kr of obj.orgKrs) {
@@ -229,12 +408,36 @@ export function QbrMeetingOkrReviewStep({
   const reviewedCount = approvals.length;
   const allReviewed = reviewedCount >= teamsForReview.length;
 
+  // Compute shared OKR map across all teams
+  const sharedOrgKrMap = useMemo(() => {
+    const orgKrTeams = new Map<string, string[]>();
+    for (const team of teamsForReview) {
+      for (const entry of team.proposedOkrs) {
+        for (const kr of entry.draftKrs) {
+          const linkedId = (kr as any).linkedOrgKrId;
+          if (linkedId) {
+            const existing = orgKrTeams.get(linkedId) || [];
+            if (!existing.includes(team.teamName)) {
+              orgKrTeams.set(linkedId, [...existing, team.teamName]);
+            }
+          }
+        }
+      }
+    }
+    // Only keep entries with 2+ teams
+    const shared = new Map<string, string[]>();
+    orgKrTeams.forEach((teams, id) => {
+      if (teams.length >= 2) shared.set(id, teams);
+    });
+    return shared;
+  }, [teamsForReview]);
+
   const handleSetStatus = (status: QbrApprovalStatus) => {
     if (!current) return;
 
     if (status === 'discarded' && !discardReason.trim()) return;
 
-    const newApproval = {
+    const newApproval: QbrMeetingSnapshot['approvals'][number] = {
       teamId: current.teamId,
       sessionId: current.sessionId,
       status,
@@ -251,9 +454,37 @@ export function QbrMeetingOkrReviewStep({
     }
   };
 
+  const handleStructuredChangesUpdate = (changes: StructuredChange[]) => {
+    if (!current) return;
+    const existing = approvals.filter(a => a.teamId !== current.teamId);
+    const currentApp = approvals.find(a => a.teamId === current.teamId);
+    if (currentApp) {
+      onApprovalsChange([...existing, { ...currentApp, changes }]);
+    }
+  };
+
   const goToTeam = (idx: number) => {
     if (idx >= 0 && idx < teamsForReview.length) onCurrentTeamIndexChange(idx);
   };
+
+  // Get shared teams for a given KR (excluding current team)
+  const getSharedTeams = useCallback((kr: any): string[] => {
+    const linkedId = kr.linkedOrgKrId;
+    if (!linkedId || !current) return [];
+    const teams = sharedOrgKrMap.get(linkedId);
+    if (!teams) return [];
+    return teams.filter(t => t !== current.teamName);
+  }, [sharedOrgKrMap, current]);
+
+  // Get current structured changes
+  const currentChanges = useMemo(() => {
+    if (!currentApproval?.changes) return [];
+    if (Array.isArray(currentApproval.changes)) return currentApproval.changes as StructuredChange[];
+    return [];
+  }, [currentApproval]);
+
+  // Timer border style
+  // (Timer border handled inside ReviewTimer via CSS — not needed at card level for simplicity)
 
   return (
     <WizardStepScaffold
@@ -277,16 +508,21 @@ export function QbrMeetingOkrReviewStep({
       }
     >
       <div className="p-6 space-y-6">
-        {/* Team navigation */}
+        {/* Team navigation + timer */}
         {current && (
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => goToTeam(currentTeamIndex - 1)} disabled={currentTeamIndex === 0}>
-              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-            </Button>
-            <h4 className="text-sm font-semibold">{current.teamName}</h4>
-            <Button variant="ghost" size="sm" onClick={() => goToTeam(currentTeamIndex + 1)} disabled={currentTeamIndex >= teamsForReview.length - 1}>
-              Próximo <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" size="sm" onClick={() => goToTeam(currentTeamIndex - 1)} disabled={currentTeamIndex === 0}>
+                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+              </Button>
+              <h4 className="text-sm font-semibold">{current.teamName}</h4>
+              <Button variant="ghost" size="sm" onClick={() => goToTeam(currentTeamIndex + 1)} disabled={currentTeamIndex >= teamsForReview.length - 1}>
+                Próximo <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="flex justify-center">
+              <ReviewTimer teamName={current.teamName} teamId={current.teamId} />
+            </div>
           </div>
         )}
 
@@ -328,12 +564,25 @@ export function QbrMeetingOkrReviewStep({
                   <p className="text-sm font-medium">{entry.objective.title}</p>
                   {entry.draftKrs.length > 0 && (
                     <div className="space-y-1">
-                      {entry.draftKrs.map((kr, i) => (
-                        <div key={kr.id || i} className="flex items-center gap-2 text-xs">
-                          <span className="truncate flex-1">{kr.title}</span>
-                          <span className="text-muted-foreground">{kr.baseline} → {kr.target} {kr.unit}</span>
-                        </div>
-                      ))}
+                      {entry.draftKrs.map((kr, i) => {
+                        const shared = getSharedTeams(kr);
+                        return (
+                          <div key={kr.id || i} className="space-y-0.5">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="truncate flex-1">{kr.title}</span>
+                              <span className="text-muted-foreground">{kr.baseline} → {kr.target} {kr.unit}</span>
+                            </div>
+                            {shared.length > 0 && (
+                              <div className="flex items-center gap-1 pl-1">
+                                <Badge variant="outline" className="text-[10px] h-5 gap-1 text-primary">
+                                  <Users2 className="h-2.5 w-2.5" />
+                                  🤝 Compartilhado com: {shared.join(', ')}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -370,6 +619,15 @@ export function QbrMeetingOkrReviewStep({
               {STATUS_CONFIG[currentApproval.status].label}
             </Badge>
           </div>
+        )}
+
+        {/* Structured changes form for approved_with_changes */}
+        {currentApproval?.status === 'approved_with_changes' && current?.hasSubmission && (
+          <StructuredChangesForm
+            proposedOkrs={current.proposedOkrs}
+            changes={currentChanges}
+            onChangesUpdate={handleStructuredChangesUpdate}
+          />
         )}
 
         {/* Action buttons */}

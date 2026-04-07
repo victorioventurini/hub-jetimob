@@ -2,7 +2,7 @@
  * QbrMeetingOpeningStep - Step 1: Abertura e Direcionamentos do C-Level
  * 
  * Carrega relatório pré-QBR e direcionamentos do C-Level como pauta pré-definida.
- * Inclui scorecard do quarter, OKRs org, pauta obrigatória e agenda da reunião.
+ * Inclui scorecard do quarter, retrospectiva, OKRs org, pauta obrigatória e agenda da reunião.
  */
 
 import { useState } from 'react';
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Presentation, Megaphone, Target, Activity, HelpCircle, Lightbulb, Ban, Swords,
   TrendingUp, AlertTriangle, XCircle, Users, ListChecks, CheckCircle2, ChevronDown,
+  ArrowUp, ArrowDown, Minus, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -40,6 +41,13 @@ export interface QbrMeetingScorecardMetrics {
   noSubmission: number;
 }
 
+export interface PreviousQuarterTeamData {
+  teamId: string;
+  teamName: string;
+  previousHealth: 'healthy' | 'attention' | 'risk' | null;
+  currentHealth: 'healthy' | 'attention' | 'risk' | null;
+}
+
 export interface QbrMeetingOpeningStepProps {
   cLevelDirectives: QbrCLevelSnapshot['directives'];
   cLevelStrategicAnalysis?: QbrCLevelSnapshot['strategicAnalysis'];
@@ -49,6 +57,8 @@ export interface QbrMeetingOpeningStepProps {
   orgObjectives: OrgObjectiveWithKrs[];
   scorecardMetrics: QbrMeetingScorecardMetrics;
   currentStepIndex: number;
+  /** Dados de retrospectiva do quarter anterior */
+  previousQuarterData?: PreviousQuarterTeamData[];
   onContinue: () => void;
 }
 
@@ -70,18 +80,18 @@ const DIRECTIVE_COLORS = {
   challenge: 'text-purple-600',
 } as const;
 
-const MEETING_AGENDA = [
-  { title: 'Abertura', subtitle: 'Pauta e direcionamentos' },
-  { title: 'Revisão de OKRs', subtitle: 'N times para revisar' },
-  { title: 'Decisões estratégicas', subtitle: 'Registrar decisões-chave' },
-  { title: 'Compromissos cross-área', subtitle: 'Formalizar dependências' },
-  { title: 'Encerramento e governança', subtitle: 'Checklist e feedback' },
-];
+const AGENDA_TIME_FIXED = [5, 0, 15, 10, 10]; // Step 2 is dynamic
 
 const AGG_STATUS_CONFIG = {
   on_track: { label: 'No ritmo', className: 'bg-status-green-muted text-status-green' },
   at_risk: { label: 'Em risco', className: 'bg-status-amber-muted text-status-amber' },
   off_track: { label: 'Fora da meta', className: 'bg-status-red-muted text-status-red' },
+} as const;
+
+const HEALTH_CONFIG = {
+  healthy: { label: '🟢 healthy', className: 'text-status-green' },
+  attention: { label: '🟡 attention', className: 'text-status-amber' },
+  risk: { label: '🔴 risk', className: 'text-status-red' },
 } as const;
 
 // ============================================================
@@ -116,6 +126,73 @@ function ScorecardGrid({ metrics }: { metrics: QbrMeetingScorecardMetrics }) {
               </div>
             );
           })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function QuarterRetrospective({ data }: { data: PreviousQuarterTeamData[] }) {
+  if (data.length === 0) return null;
+
+  const getTrend = (prev: string | null, curr: string | null) => {
+    if (!prev || !curr) return null;
+    const order = { healthy: 3, attention: 2, risk: 1 };
+    const diff = (order[curr as keyof typeof order] || 0) - (order[prev as keyof typeof order] || 0);
+    if (diff > 0) return { label: '↑ Melhorou', icon: ArrowUp, className: 'text-status-green' };
+    if (diff < 0) return { label: '↓ Piorou', icon: ArrowDown, className: 'text-status-red' };
+    return { label: '→ Estável', icon: Minus, className: 'text-muted-foreground' };
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          Como Chegamos Aqui
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-1.5 pr-2 font-medium text-muted-foreground">Time</th>
+                <th className="text-center py-1.5 px-2 font-medium text-muted-foreground">Quarter anterior</th>
+                <th className="text-center py-1.5 px-2 font-medium text-muted-foreground">Quarter atual</th>
+                <th className="text-center py-1.5 pl-2 font-medium text-muted-foreground">Tendência</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map(team => {
+                const trend = getTrend(team.previousHealth, team.currentHealth);
+                return (
+                  <tr key={team.teamId} className="border-b last:border-b-0">
+                    <td className="py-1.5 pr-2 font-medium">{team.teamName}</td>
+                    <td className="text-center py-1.5 px-2">
+                      {team.previousHealth ? (
+                        <span className={HEALTH_CONFIG[team.previousHealth]?.className}>
+                          {HEALTH_CONFIG[team.previousHealth]?.label}
+                        </span>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </td>
+                    <td className="text-center py-1.5 px-2">
+                      {team.currentHealth ? (
+                        <span className={HEALTH_CONFIG[team.currentHealth]?.className}>
+                          {HEALTH_CONFIG[team.currentHealth]?.label}
+                        </span>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </td>
+                    <td className="text-center py-1.5 pl-2">
+                      {trend ? (
+                        <span className={trend.className}>{trend.label}</span>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
@@ -191,6 +268,23 @@ function OrgOkrsSummary({ objectives }: { objectives: OrgObjectiveWithKrs[] }) {
 }
 
 function MeetingAgenda({ currentStepIndex, leaderCount }: { currentStepIndex: number; leaderCount: number }) {
+  const agendaItems = [
+    { title: 'Abertura', subtitle: 'Pauta e direcionamentos' },
+    { title: 'Revisão de OKRs', subtitle: `${leaderCount} times para revisar` },
+    { title: 'Decisões estratégicas', subtitle: 'Registrar decisões-chave' },
+    { title: 'Compromissos cross-área', subtitle: 'Formalizar dependências' },
+    { title: 'Encerramento e governança', subtitle: 'Checklist e feedback' },
+  ];
+
+  const times = [
+    AGENDA_TIME_FIXED[0],
+    leaderCount * 9,
+    AGENDA_TIME_FIXED[2],
+    AGENDA_TIME_FIXED[3],
+    AGENDA_TIME_FIXED[4],
+  ];
+  const totalMinutes = times.reduce((a, b) => a + b, 0);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -200,10 +294,10 @@ function MeetingAgenda({ currentStepIndex, leaderCount }: { currentStepIndex: nu
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
-        {MEETING_AGENDA.map((item, i) => {
+        {agendaItems.map((item, i) => {
           const isActive = i === currentStepIndex;
           const isDone = i < currentStepIndex;
-          const subtitle = i === 1 ? `${leaderCount} times para revisar` : item.subtitle;
+          const timeLabel = i === 1 ? `~${times[i]} min` : `${times[i]} min`;
 
           return (
             <div
@@ -222,14 +316,22 @@ function MeetingAgenda({ currentStepIndex, leaderCount }: { currentStepIndex: nu
               </span>
               <div className="min-w-0 flex-1">
                 <p className={cn('text-sm', isActive && 'text-primary')}>{item.title}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{item.subtitle}</p>
               </div>
+              <Badge variant="outline" className="text-[10px] shrink-0 text-muted-foreground">
+                {timeLabel}
+              </Badge>
               {isActive && (
                 <Badge variant="outline" className="text-[10px] text-primary shrink-0">Atual</Badge>
               )}
             </div>
           );
         })}
+        <div className="flex items-center justify-end pt-2 border-t mt-2">
+          <span className="text-xs text-muted-foreground">
+            Tempo total estimado: <span className="font-medium text-foreground">~{totalMinutes} min</span>
+          </span>
+        </div>
       </CardContent>
     </Card>
   );
@@ -248,6 +350,7 @@ export function QbrMeetingOpeningStep({
   orgObjectives,
   scorecardMetrics,
   currentStepIndex,
+  previousQuarterData,
   onContinue,
 }: QbrMeetingOpeningStepProps) {
   const alertKpis = orgKpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
@@ -272,10 +375,15 @@ export function QbrMeetingOpeningStep({
         {/* Bloco 1 — Scorecard do quarter */}
         <ScorecardGrid metrics={scorecardMetrics} />
 
-        {/* Bloco 2 — OKRs da empresa neste quarter */}
+        {/* Bloco 2 — Retrospectiva do quarter anterior */}
+        {previousQuarterData && previousQuarterData.length > 0 && (
+          <QuarterRetrospective data={previousQuarterData} />
+        )}
+
+        {/* Bloco 3 — OKRs da empresa neste quarter */}
         <OrgOkrsSummary objectives={orgObjectives} />
 
-        {/* Bloco 3 — Pauta obrigatória do C-Level */}
+        {/* Bloco 4 — Pauta obrigatória do C-Level */}
         {cLevelStrategicAnalysis?.whatNotToDo && (
           <Card className="border-status-red/20">
             <CardContent className="p-3">
@@ -321,7 +429,7 @@ export function QbrMeetingOpeningStep({
           </Card>
         )}
 
-        {/* Bloco 4 — KPIs em alerta (mantido) */}
+        {/* Bloco 5 — KPIs em alerta */}
         {alertKpis.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
@@ -346,6 +454,8 @@ export function QbrMeetingOpeningStep({
           </Card>
         )}
 
+        {/* Bloco 6 — Agenda da reunião */}
+        <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
       </div>
     </WizardStepScaffold>
   );
