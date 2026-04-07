@@ -89,6 +89,8 @@ export function useActiveCycle() {
     activeCycle,
     /** Ciclo trimestral ativo especificamente */
     activeQuarterlyCycle,
+    /** Último quarter fechado (para rituais de revisão) */
+    lastClosedQuarterlyCycle: data?.lastClosedQuarter ?? null,
     /** Todos os ciclos ativos */
     activeCycles: data?.active ?? [],
     /** Ciclos em planejamento */
