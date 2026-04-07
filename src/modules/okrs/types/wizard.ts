@@ -404,7 +404,8 @@ export interface QbrCLevelSnapshot {
   submittedAt: string;
   systemPatterns: string;
   strategicAnalysis: {
-    alignmentAssessment: string;
+    alignmentPastQuarter: string;
+    alignmentNextQuarter: string;
     signalsTeamsMissed: string;
     whatNotToDo: string;
   };

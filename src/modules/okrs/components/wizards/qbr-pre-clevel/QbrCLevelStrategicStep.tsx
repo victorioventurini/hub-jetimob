@@ -48,7 +48,8 @@ export function QbrCLevelStrategicStep({
   };
 
   const hasContent =
-    strategicAnalysis.alignmentAssessment.trim() ||
+    (strategicAnalysis.alignmentPastQuarter?.trim()) ||
+    (strategicAnalysis.alignmentNextQuarter?.trim()) ||
     strategicAnalysis.signalsTeamsMissed.trim() ||
     strategicAnalysis.whatNotToDo.trim();
 
@@ -85,12 +86,22 @@ export function QbrCLevelStrategicStep({
             <CheckCircle2 className="h-4 w-4 text-primary" />
             Alinhamento estratégico
           </Label>
+
+          {/* Past quarter */}
           <div className="space-y-1">
             <p className="text-xs font-medium text-foreground">Sobre o quarter que encerrou</p>
             <p className="text-xs text-muted-foreground">
               Os OKRs executados moveram a empresa na direção certa? O que ficou desalinhado com a estratégia?
             </p>
           </div>
+          <Textarea
+            value={strategicAnalysis.alignmentPastQuarter}
+            onChange={(e) => updateField('alignmentPastQuarter', e.target.value)}
+            placeholder="O que foi na direção certa e o que ficou desalinhado..."
+            className="min-h-[100px] text-sm"
+          />
+
+          {/* Next quarter */}
           <div className="space-y-1">
             <p className="text-xs font-medium text-foreground">Sobre o próximo quarter</p>
             <p className="text-xs text-muted-foreground">
@@ -98,8 +109,8 @@ export function QbrCLevelStrategicStep({
             </p>
           </div>
           <Textarea
-            value={strategicAnalysis.alignmentAssessment}
-            onChange={(e) => updateField('alignmentAssessment', e.target.value)}
+            value={strategicAnalysis.alignmentNextQuarter}
+            onChange={(e) => updateField('alignmentNextQuarter', e.target.value)}
             placeholder="Avalie se as prioridades dos times estão alinhadas com a visão estratégica..."
             className="min-h-[100px] text-sm"
           />

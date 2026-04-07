@@ -69,7 +69,8 @@ const DEFAULT_DATA: QbrCLevelDraftData = {
   cycleId: '',
   systemPatterns: '',
   strategicAnalysis: {
-    alignmentAssessment: '',
+    alignmentPastQuarter: '',
+    alignmentNextQuarter: '',
     signalsTeamsMissed: '',
     whatNotToDo: '',
   },

@@ -41,10 +41,17 @@ export function QbrCLevelReport({ data }: { data: Record<string, any> }) {
       {Object.values(strategicAnalysis).some(Boolean) && (
         <ReportSection title="Análise estratégica" icon={<Target className="h-4 w-4" />}>
           <div className="space-y-2">
-            {strategicAnalysis.alignmentAssessment && (
+            {/* Retrocompatibilidade: formato antigo (alignmentAssessment) ou novo (past/next) */}
+            {(strategicAnalysis.alignmentPastQuarter || strategicAnalysis.alignmentAssessment) && (
               <div className="p-3 rounded-lg border space-y-1">
-                <span className="text-xs font-medium text-muted-foreground">Avaliação de alinhamento</span>
-                <p className="text-sm">{strategicAnalysis.alignmentAssessment}</p>
+                <span className="text-xs font-medium text-muted-foreground">Alinhamento — quarter encerrado</span>
+                <p className="text-sm">{strategicAnalysis.alignmentPastQuarter ?? strategicAnalysis.alignmentAssessment}</p>
+              </div>
+            )}
+            {strategicAnalysis.alignmentNextQuarter && (
+              <div className="p-3 rounded-lg border space-y-1">
+                <span className="text-xs font-medium text-muted-foreground">Alinhamento — próximo quarter</span>
+                <p className="text-sm">{strategicAnalysis.alignmentNextQuarter}</p>
               </div>
             )}
             {strategicAnalysis.signalsTeamsMissed && (
