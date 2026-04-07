@@ -312,10 +312,23 @@ export const WIZARD_TOOLTIPS = {
     content: 'Acompanhe decisões e compromissos do último QBR antes de seguir.',
     icon: 'info',
   },
-  
+
   // ============================================================
-  // QBR PRE-WORK (Líder de Time)
+  // MBR PRE-WORK (Líder de Time)
   // ============================================================
+  'mbr-pre-highlights': {
+    content: 'Destaque o que acelerou, o que travou e o que precisa de decisão coletiva.',
+    icon: 'help',
+  },
+  'mbr-pre-next-steps': {
+    content: 'Defina as ações prioritárias do time para as próximas semanas.',
+    icon: 'lightbulb',
+  },
+  'mbr-pre-summary': {
+    content: 'Revise antes de submeter — os dados serão congelados para o MBR.',
+    icon: 'help',
+  },
+
   'qbr-balance': {
     content: 'Revise o desempenho do ciclo para embasar a proposta do próximo.',
     icon: 'info',

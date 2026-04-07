@@ -90,6 +90,7 @@ export function MbrPreHighlightsStep({
         <WizardStepHeader
           icon={AlertTriangle}
           title="Destaques e Riscos"
+          tooltip="mbr-pre-highlights"
           description="O que acelerou, o que travou e o que precisa de decisão coletiva"
           variant="amber"
         />
