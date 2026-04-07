@@ -26,6 +26,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
+  KpiStatusBlocks,
 } from '../shared';
 import { AddendumBadge } from '../shared/AddendumBadge';
 import type { QbrPreSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
