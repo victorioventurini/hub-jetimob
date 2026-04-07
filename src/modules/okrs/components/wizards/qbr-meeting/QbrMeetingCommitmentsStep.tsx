@@ -60,6 +60,8 @@ export function QbrMeetingCommitmentsStep({
   teams,
   approvals = [],
   teamsForReview = [],
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: QbrMeetingCommitmentsStepProps) {
