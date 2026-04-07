@@ -198,10 +198,67 @@ export function useKpiMutations() {
     },
   });
 
+  // Update KPI value entry
+  const updateKpiValue = useMutation({
+    mutationFn: async (data: { id: string; kpi_id: string; value: number; reference_date: string; notes?: string }) => {
+      const client = assertSupabaseClient(supabase, "updateKpiValue");
+      const { id, kpi_id, ...updateData } = data;
+      const { data: result, error } = await client
+        .from("kpi_values")
+        .update({ value: updateData.value, reference_date: updateData.reference_date, notes: updateData.notes || null })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { ...result, kpi_id };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
+      // Invalidate OKR queries for primary KPI reactivity
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi-batch'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-effective-values'], refetchType: 'active' });
+      toast({ title: "Valor atualizado", description: "O valor foi atualizado com sucesso." });
+    },
+    onError: (error) => {
+      toast({ title: "Erro ao atualizar valor", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Delete KPI value entry
+  const deleteKpiValue = useMutation({
+    mutationFn: async (data: { id: string; kpi_id: string }) => {
+      const client = assertSupabaseClient(supabase, "deleteKpiValue");
+      const { error } = await client.from("kpi_values").delete().eq("id", data.id);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi-batch'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['okr-kr-effective-values'], refetchType: 'active' });
+      toast({ title: "Valor excluído", description: "O valor foi removido com sucesso." });
+    },
+    onError: (error) => {
+      toast({ title: "Erro ao excluir valor", description: error.message, variant: "destructive" });
+    },
+  });
+
   return {
     updateKpi,
     deleteKpi,
     archiveKpi,
     reactivateKpi,
+    updateKpiValue,
+    deleteKpiValue,
   };
 }
