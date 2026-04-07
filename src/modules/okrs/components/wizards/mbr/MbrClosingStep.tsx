@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2, Star, BarChart3, Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardLastStepFooter } from '../shared';
+import { WizardStepHeader, WizardLastStepFooter, InlineDecisionInput } from '../shared';
 import type {
   MbrGovernanceChecklist,
   RitualImprovementFeedback,
@@ -32,6 +32,7 @@ import type {
 
 export interface MbrClosingStepProps {
   decisions: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   checklist: MbrGovernanceChecklist;
   onChecklistChange: (checklist: MbrGovernanceChecklist) => void;
   ritualFeedback: RitualImprovementFeedback[];
@@ -110,6 +111,7 @@ function StarRatingDisplay({ rating, size = 14 }: { rating: number; size?: numbe
 
 export function MbrClosingStep({
   decisions,
+  onDecisionsChange,
   checklist,
   onChecklistChange,
   ritualFeedback,
@@ -392,6 +394,16 @@ export function MbrClosingStep({
           </div>
         </div>
       </ScrollArea>
+
+      {onDecisionsChange && (
+        <div className="border-t">
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="mbr-closing"
+          />
+        </div>
+      )}
 
       <WizardLastStepFooter
         onBack={onBack}

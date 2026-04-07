@@ -24,13 +24,14 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
   KpiStatusBlocks,
 } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import type { QbrCLevelSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
-
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
 // TYPES
 // ============================================================
@@ -60,6 +61,9 @@ export interface QbrMeetingOpeningStepProps {
   currentStepIndex: number;
   /** Dados de retrospectiva do quarter anterior */
   previousQuarterData?: PreviousQuarterTeamData[];
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
 }
 
@@ -352,6 +356,8 @@ export function QbrMeetingOpeningStep({
   scorecardMetrics,
   currentStepIndex,
   previousQuarterData,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
 }: QbrMeetingOpeningStepProps) {
   const alertKpis = orgKpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
@@ -367,6 +373,15 @@ export function QbrMeetingOpeningStep({
           variant="primary"
           badge={`${leaderSummaryCount} times`}
         />
+      }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-opening"
+          />
+        ) : undefined
       }
       footer={
         <WizardFirstStepFooter onPrimary={onContinue} primaryLabel="Iniciar Revisão de OKRs" />

@@ -418,6 +418,8 @@ export default function QbrMeetingPage() {
             orgObjectives={orgObjectives || []}
             scorecardMetrics={scorecardMetrics}
             currentStepIndex={STEP_ORDER.indexOf(draft.currentStep)}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
           />
         );
@@ -433,6 +435,8 @@ export default function QbrMeetingPage() {
             orgObjectives={orgObjectives || []}
             currentTeamIndex={draft.data.currentTeamIndex}
             onCurrentTeamIndexChange={(currentTeamIndex) => updateDraft({ currentTeamIndex })}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -457,6 +461,8 @@ export default function QbrMeetingPage() {
             teams={buTeams || []}
             approvals={draft.data.approvals}
             teamsForReview={teamsForReview}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -471,6 +477,7 @@ export default function QbrMeetingPage() {
             onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
             approvals={draft.data.approvals}
             decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             crossCommitments={draft.data.crossCommitments}
             totalTeamsForReview={teamsForReview.length}
             orgObjectives={orgObjectives || []}

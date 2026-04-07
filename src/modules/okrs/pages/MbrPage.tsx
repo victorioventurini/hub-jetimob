@@ -729,6 +729,8 @@ export default function MbrPage() {
           <MbrQbrFollowUpStep
             followUpItems={draft.data.qbrFollowUpItems}
             onFollowUpItemsChange={(qbrFollowUpItems) => updateDraft({ qbrFollowUpItems })}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -738,6 +740,7 @@ export default function MbrPage() {
         return (
           <MbrClosingStep
             decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             checklist={draft.data.checklist}
             onChecklistChange={(checklist: MbrGovernanceChecklist) => updateDraft({ checklist })}
             ritualFeedback={draft.data.ritualFeedback}

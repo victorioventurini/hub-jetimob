@@ -13,6 +13,8 @@ import { ptBR } from 'date-fns/locale';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
 import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/WizardStepHeader';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
+import { InlineDecisionInput } from '@/modules/okrs/components/wizards/shared/InlineDecisionInput';
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,6 +42,9 @@ export interface QbrFollowUpItem {
 interface MbrQbrFollowUpStepProps {
   followUpItems: QbrFollowUpItem[];
   onFollowUpItemsChange: (items: QbrFollowUpItem[]) => void;
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -73,6 +78,8 @@ function sortByUrgency(items: QbrFollowUpItem[]): QbrFollowUpItem[] {
 export function MbrQbrFollowUpStep({
   followUpItems,
   onFollowUpItemsChange,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: MbrQbrFollowUpStepProps) {
@@ -172,6 +179,15 @@ export function MbrQbrFollowUpStep({
           description={headerDesc}
           variant="primary"
         />
+      }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="mbr-qbr-followup"
+          />
+        ) : undefined
       }
       footer={
         <WizardStepFooter

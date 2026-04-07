@@ -26,6 +26,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
 } from '../shared';
 import { AddendumBadge } from '../shared/AddendumBadge';
 import type {
@@ -33,6 +34,7 @@ import type {
   QbrApprovalStatus,
   QbrCLevelSnapshot,
   ProposedObjectiveEntry,
+  TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
@@ -67,6 +69,9 @@ export interface QbrMeetingOkrReviewStepProps {
   orgObjectives?: OrgObjectiveWithKrs[];
   currentTeamIndex: number;
   onCurrentTeamIndexChange: (index: number) => void;
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -396,6 +401,8 @@ export function QbrMeetingOkrReviewStep({
   orgObjectives = [],
   currentTeamIndex,
   onCurrentTeamIndexChange,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: QbrMeetingOkrReviewStepProps) {
@@ -497,6 +504,15 @@ export function QbrMeetingOkrReviewStep({
           variant="amber"
           badge={allReviewed ? '✓ Todos revisados' : `${teamsForReview.length - reviewedCount} pendentes`}
         />
+      }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-okr-review"
+          />
+        ) : undefined
       }
       footer={
         <WizardStepFooter

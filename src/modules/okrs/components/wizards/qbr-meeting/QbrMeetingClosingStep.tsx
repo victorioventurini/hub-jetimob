@@ -21,6 +21,7 @@ import {
   WizardStepHeader,
   WizardLastStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
 } from '../shared';
 import type {
   QbrMeetingGovernanceChecklist,
@@ -42,6 +43,7 @@ export interface QbrMeetingClosingStepProps {
   onRitualFeedbackChange: (feedback: RitualImprovementFeedback[]) => void;
   approvals: QbrMeetingSnapshot['approvals'];
   decisions: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   crossCommitments: QbrMeetingSnapshot['crossCommitments'];
   totalTeamsForReview: number;
   orgObjectives?: OrgObjectiveWithKrs[];
@@ -375,6 +377,7 @@ export function QbrMeetingClosingStep({
   onRitualFeedbackChange,
   approvals,
   decisions,
+  onDecisionsChange,
   crossCommitments,
   totalTeamsForReview,
   orgObjectives = [],
@@ -493,6 +496,15 @@ export function QbrMeetingClosingStep({
           description="Checklist de governança e feedback do rito"
           variant="green"
         />
+      }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-closing"
+          />
+        ) : undefined
       }
       footer={
         <WizardLastStepFooter

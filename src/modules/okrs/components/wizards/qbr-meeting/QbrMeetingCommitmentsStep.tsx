@@ -24,8 +24,9 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
 } from '../shared';
-import type { QbrMeetingSnapshot, ProposedObjectiveEntry } from '@/modules/okrs/types/wizard';
+import type { QbrMeetingSnapshot, ProposedObjectiveEntry, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { TeamForReview } from './QbrMeetingOkrReviewStep';
 
 // ============================================================
@@ -42,6 +43,9 @@ export interface QbrMeetingCommitmentsStepProps {
   approvals?: QbrMeetingSnapshot['approvals'];
   /** Times com suas propostas para exibir OKRs aprovados */
   teamsForReview?: TeamForReview[];
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -56,6 +60,8 @@ export function QbrMeetingCommitmentsStep({
   teams,
   approvals = [],
   teamsForReview = [],
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: QbrMeetingCommitmentsStepProps) {
@@ -128,6 +134,15 @@ export function QbrMeetingCommitmentsStep({
           variant="purple"
           badge={`${commitments.length} compromisso(s)`}
         />
+      }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-commitments"
+          />
+        ) : undefined
       }
       footer={
         <WizardStepFooter
