@@ -95,7 +95,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
       let userMap: Record<string, { id: string; display_name: string; photo_url: string | null }> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('v_profiles_directory')
           .select('id, display_name, photo_url')
           .in('id', userIds);
 
