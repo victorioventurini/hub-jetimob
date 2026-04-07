@@ -193,15 +193,12 @@ function ReverseCoverageSection({
         </CardTitle>
       </CardHeader>
       <CardContent className="px-3 pb-2 space-y-0.5">
-        {uncoveredOrgKrs.slice(0, 5).map(kr => (
+        {uncoveredOrgKrs.map(kr => (
           <div key={kr.krId} className="text-xs text-muted-foreground flex items-center gap-1.5">
             <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
             <span className="truncate">{kr.krTitle}</span>
           </div>
         ))}
-        {uncoveredOrgKrs.length > 5 && (
-          <p className="text-[10px] text-muted-foreground">+{uncoveredOrgKrs.length - 5} mais</p>
-        )}
       </CardContent>
     </Card>
   );
