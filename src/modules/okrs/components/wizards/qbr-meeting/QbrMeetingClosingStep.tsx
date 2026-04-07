@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ShieldCheck, Star, Plus, X, MessageSquare, BarChart3, Check, Pencil, Clock, Ban,
-  Target, AlertTriangle, CheckCircle2, Zap, Calendar, Users, Handshake,
+  Target, AlertTriangle, CheckCircle2, Users, Handshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -50,9 +50,6 @@ export interface QbrMeetingClosingStepProps {
   teamsForReview?: TeamForReview[];
   intentionalGaps?: string[];
   onIntentionalGapsChange?: (gaps: string[]) => void;
-  /** Próximos 30 dias */
-  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
-  onNextThirtyDaysChange?: (data: { ceo?: string; coo?: string; cpto?: string }) => void;
   isCompleting?: boolean;
   onComplete: () => void;
   onBack: () => void;
@@ -326,45 +323,6 @@ function GovernanceSummary({
   );
 }
 
-// ============================================================
-// NEXT 30 DAYS
-// ============================================================
-
-function NextThirtyDaysSection({
-  data,
-  onChange,
-}: {
-  data: { ceo?: string; coo?: string; cpto?: string };
-  onChange: (data: { ceo?: string; coo?: string; cpto?: string }) => void;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">O que acontece nos próximos 30 dias</span>
-        </div>
-        {[
-          { key: 'ceo' as const, label: 'CEO' },
-          { key: 'coo' as const, label: 'COO' },
-          { key: 'cpto' as const, label: 'CPTO' },
-        ].map(item => (
-          <div key={item.key} className="space-y-1">
-            <Label className="text-xs font-medium">{item.label}:</Label>
-            <Input
-              value={data[item.key] || ''}
-              onChange={e => onChange({ ...data, [item.key]: e.target.value })}
-              placeholder={`Prioridade do ${item.label} nos próximos 30 dias...`}
-              maxLength={200}
-              className="text-xs"
-            />
-          </div>
-        ))}
-        <p className="text-[10px] text-muted-foreground">Opcional — não bloqueia o encerramento.</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ============================================================
 // COMPONENT
@@ -384,8 +342,6 @@ export function QbrMeetingClosingStep({
   teamsForReview = [],
   intentionalGaps = [],
   onIntentionalGapsChange,
-  nextThirtyDays,
-  onNextThirtyDaysChange,
   isCompleting,
   onComplete,
   onBack,
@@ -581,14 +537,6 @@ export function QbrMeetingClosingStep({
             </TooltipProvider>
           </CardContent>
         </Card>
-
-        {/* Next 30 days */}
-        {onNextThirtyDaysChange && (
-          <NextThirtyDaysSection
-            data={nextThirtyDays || {}}
-            onChange={onNextThirtyDaysChange}
-          />
-        )}
 
         {/* Ritual feedback */}
         <Card>
