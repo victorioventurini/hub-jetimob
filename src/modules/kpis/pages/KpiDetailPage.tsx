@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useSafeBack } from '@/hooks/useSafeBack';
+import { useKpiDetail } from '@/modules/kpis/hooks';
 import { useKpiDetail } from '@/modules/kpis/hooks';
 import { KpiDetailContent } from '../components/KpiDetailContent';
 import { EmptyState } from '@/components/ui/empty-state';
