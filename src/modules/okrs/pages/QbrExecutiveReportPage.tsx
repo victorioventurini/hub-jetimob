@@ -150,12 +150,14 @@ function ReportSection({
 function ReportDisplay({
   report,
   cycleName,
+  cycleId,
   generatedAt,
   onRegenerate,
   isRegenerating,
 }: {
   report: QbrExecutiveReportData;
   cycleName: string;
+  cycleId: string | null;
   generatedAt: string | null;
   onRegenerate: () => void;
   isRegenerating: boolean;
