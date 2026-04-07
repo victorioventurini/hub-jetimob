@@ -187,6 +187,7 @@ interface TeamScorecardData {
   onTrack: number;
   atRisk: number;
   offTrack: number;
+  notStarted: number;
   stagnant: number;
   healthScore: 'healthy' | 'attention' | 'risk';
 }
@@ -195,9 +196,10 @@ function getHealthScore(metrics: {
   totalKrs: number;
   krsAtRisk: number;
   krsStagnant: number;
+  krsNotStarted: number;
 }): 'healthy' | 'attention' | 'risk' {
   if (metrics.totalKrs === 0) return 'attention';
-  const riskRatio = (metrics.krsAtRisk + metrics.krsStagnant) / metrics.totalKrs;
+  const riskRatio = (metrics.krsAtRisk + metrics.krsStagnant + metrics.krsNotStarted) / metrics.totalKrs;
   if (riskRatio >= 0.5) return 'risk';
   if (riskRatio >= 0.25) return 'attention';
   return 'healthy';
@@ -243,6 +245,13 @@ function TeamScorecardCard({ team }: { team: TeamScorecardData }) {
           <span className="text-muted-foreground">Fora da meta:</span>
           <span className="font-medium">{team.offTrack}</span>
         </div>
+        {team.notStarted > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/50 shrink-0" />
+            <span className="text-muted-foreground">Não iniciadas:</span>
+            <span className="font-medium">{team.notStarted}</span>
+          </div>
+        )}
         {team.stagnant > 0 && (
           <div className="flex items-center gap-1.5 col-span-2">
             <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -307,6 +316,7 @@ export function QbrCLevelQuarterBalanceStep({
         onTrack: 0,
         atRisk: 0,
         offTrack: 0,
+        notStarted: 0,
         stagnant: 0,
         healthScore: 'healthy',
       });
@@ -325,8 +335,9 @@ export function QbrCLevelQuarterBalanceStep({
 
           if (state === 'achieved' || state === 'exceeded') entry.achieved++;
           else if (state === 'healthy') entry.onTrack++;
-          else if (state === 'at_risk') entry.atRisk++;
+          else if (state === 'at_risk' || state === 'stagnant') entry.atRisk++;
           else if (state === 'off_track' || state === 'not_achieved') entry.offTrack++;
+          else if (state === 'not_started') entry.notStarted++;
 
           if (state === 'stagnant') entry.stagnant++;
         }
@@ -339,6 +350,7 @@ export function QbrCLevelQuarterBalanceStep({
         totalKrs: entry.totalKrs,
         krsAtRisk: entry.atRisk,
         krsStagnant: entry.stagnant,
+        krsNotStarted: entry.notStarted,
       });
     }
 
