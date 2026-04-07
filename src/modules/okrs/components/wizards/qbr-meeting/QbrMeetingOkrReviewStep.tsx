@@ -305,8 +305,9 @@ function OrgKrCoverageSection({
       <CardHeader className="pb-1 pt-2 px-3">
         <CardTitle className="text-xs flex items-center gap-1.5 text-muted-foreground">
           <Link2 className="h-3 w-3" />
-          Contribuições para OKRs organizacionais
+          KRs organizacionais que esta proposta cobre
         </CardTitle>
+        <p className="text-[10px] text-muted-foreground">Aprovando esta proposta, estes objetivos da empresa ganham contribuição.</p>
       </CardHeader>
       <CardContent className="px-3 pb-2 space-y-1">
         {Array.from(linkedOrgKrIds).map(orgKrId => {
