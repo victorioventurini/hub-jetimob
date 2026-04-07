@@ -253,6 +253,10 @@ export const okrsKeys = {
   orgConstructionReview: (buId: string | null, year: number | null) =>
     ['okr-org-construction-review', buId, year] as const,
 
+  // Full Construction Review (all teams in a cycle)
+  fullConstructionReview: (buId: string | null, cycleId: string | null) =>
+    ['okr-full-construction-review', buId, cycleId] as const,
+
   // Ritual Calendar
   ritualCadences: (buId: string | null) =>
     ['ritual-cadences', buId] as const,
