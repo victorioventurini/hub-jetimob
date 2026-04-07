@@ -500,7 +500,7 @@ export function QbrMeetingOkrReviewStep({
       header={
         <WizardStepHeader
           icon={ClipboardCheck}
-          title="Revisão de OKRs por Time"
+          title="Aprovação de OKRs — time por time"
           tooltip="qbr-meeting-okr-review"
           description={`${reviewedCount}/${teamsForReview.length} times revisados`}
           variant="amber"
