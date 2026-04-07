@@ -16,6 +16,8 @@ import type { OkrKrType, OkrDirection } from '../types/wizard';
 // ============================================================
 
 export interface CreateTeamOkrBundleInput {
+  /** If provided, updates existing draft objective instead of creating new one */
+  existingObjectiveId?: string;
   objective: {
     title: string;
     description?: string;
