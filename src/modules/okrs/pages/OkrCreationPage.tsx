@@ -52,7 +52,8 @@ import { VicTypewriterQueueProvider } from '@/modules/vic';
 // Loading/Error states
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Target } from 'lucide-react';
+import { Target, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // ============================================================
 // STEP DEFINITIONS
