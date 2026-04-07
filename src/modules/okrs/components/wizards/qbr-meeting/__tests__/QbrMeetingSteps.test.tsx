@@ -220,7 +220,7 @@ describe('QbrMeetingDecisionsStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Decisões Estratégicas')).toBeInTheDocument();
+    expect(screen.getByText('Decisões da reunião')).toBeInTheDocument();
   });
 
   it('gate: disables continue with no decisions', () => {
