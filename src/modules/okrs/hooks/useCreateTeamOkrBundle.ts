@@ -139,7 +139,6 @@ export function useCreateTeamOkrBundle() {
       }
 
       const krIds: string[] = [];
-      const krIds: string[] = [];
       const dependencyIds: string[] = [];
       const initiativeIds: string[] = [];
       const krMetricLinkIds: string[] = [];
