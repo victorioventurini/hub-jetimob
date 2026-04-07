@@ -407,14 +407,12 @@ export function useFullConstructionReview(cycleId: string | null) {
 
   useEffect(() => {
     if (crossAnalysisTriggered.current) return;
-    if (!rawObjectives?.length) return;
+    if (!rawObjectives?.length || !orgObjectives) return;
     
-    const allDone = rawObjectives.every(obj => aiAssessments[obj.id] || aiErrors[obj.id]);
-    if (allDone && orgObjectives) {
-      crossAnalysisTriggered.current = true;
-      setTimeout(() => evaluateCrossTeam(), 500);
-    }
-  }, [rawObjectives, aiAssessments, aiErrors, orgObjectives, evaluateCrossTeam]);
+    crossAnalysisTriggered.current = true;
+    const timer = setTimeout(() => evaluateCrossTeam(), 5000);
+    return () => clearTimeout(timer);
+  }, [rawObjectives, orgObjectives, evaluateCrossTeam]);
 
   // Re-evaluate
   const reEvaluateObjective = useCallback((objectiveId: string) => {
