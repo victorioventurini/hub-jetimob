@@ -477,6 +477,7 @@ export default function QbrMeetingPage() {
             onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
             approvals={draft.data.approvals}
             decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             crossCommitments={draft.data.crossCommitments}
             totalTeamsForReview={teamsForReview.length}
             orgObjectives={orgObjectives || []}
