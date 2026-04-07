@@ -428,19 +428,23 @@ export function MbrPanoramaStep({
           )}
 
           {/* ── Bloco 2: OKRs da empresa neste mês ── */}
-          {orgObjectives && orgObjectives.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                OKRs da Empresa
-              </h4>
+          {orgObjectives && orgObjectives.length > 0 && (() => {
+            const [showTeamKrs, setShowTeamKrs] = useState(true);
+            return (
               <div className="space-y-2">
-                {orgObjectives.map((obj) => (
-                  <OrgObjectiveCard key={obj.id} objective={obj} />
-                ))}
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  <h4 className="text-sm font-semibold">OKRs da Empresa</h4>
+                  <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+                </div>
+                <div className="space-y-2">
+                  {orgObjectives.map((obj) => (
+                    <OrgObjectiveCard key={obj.id} objective={obj} showTeamKrs={showTeamKrs} />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ── Bloco 3: Agenda da reunião ── */}
           <div className="space-y-2">

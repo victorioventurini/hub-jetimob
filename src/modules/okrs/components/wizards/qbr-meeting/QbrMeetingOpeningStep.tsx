@@ -123,15 +123,20 @@ function ScorecardGrid({ metrics }: { metrics: QbrMeetingScorecardMetrics }) {
 }
 
 function OrgOkrsSummary({ objectives }: { objectives: OrgObjectiveWithKrs[] }) {
+  const [showTeamKrs, setShowTeamKrs] = useState(true);
+
   if (objectives.length === 0) return null;
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Target className="h-4 w-4" />
-          OKRs da Empresa neste Quarter ({objectives.length})
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            OKRs da Empresa neste Quarter ({objectives.length})
+          </CardTitle>
+          <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {objectives.map(obj => (
@@ -159,19 +164,21 @@ function OrgOkrsSummary({ objectives }: { objectives: OrgObjectiveWithKrs[] }) {
                     status={orgKr.status}
                     size="sm"
                   />
-                  {orgKr.linkedTeamKrs.length > 0 ? (
-                    <div className="pl-3 space-y-0.5 border-l-2 border-primary/20">
-                      {orgKr.linkedTeamKrs.map(tkr => (
-                        <div key={tkr.id} className="flex items-center gap-2 text-xs">
-                          <OkrStatusBadge status={tkr.status} type="kr" className="shrink-0 scale-75" />
-                          <span className="text-muted-foreground truncate">{tkr.team_name}</span>
-                          <span className="truncate flex-1">{tkr.title}</span>
-                          <span className="text-muted-foreground shrink-0">{tkr.progress.toFixed(0)}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-muted-foreground italic pl-3">Sem contribuição neste quarter</p>
+                  {showTeamKrs && (
+                    orgKr.linkedTeamKrs.length > 0 ? (
+                      <div className="pl-3 space-y-0.5 border-l-2 border-primary/20">
+                        {orgKr.linkedTeamKrs.map(tkr => (
+                          <div key={tkr.id} className="flex items-center gap-2 text-xs">
+                            <OkrStatusBadge status={tkr.status} type="kr" className="shrink-0 scale-75" />
+                            <span className="text-muted-foreground truncate">{tkr.team_name}</span>
+                            <span className="truncate flex-1">{tkr.title}</span>
+                            <span className="text-muted-foreground shrink-0">{tkr.progress.toFixed(0)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground italic pl-3">Sem contribuição neste quarter</p>
+                    )
                   )}
                 </div>
               ))}
