@@ -209,7 +209,7 @@ export function QbrKpiAnalysisStep({
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm truncate">{kpi.name}</p>
+                        <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm" />
                         <span className="text-xs text-muted-foreground">
                           Nenhum valor registrado
                         </span>

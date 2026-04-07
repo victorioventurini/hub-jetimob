@@ -149,7 +149,7 @@ export function PendingKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; m
       <CardContent className="space-y-1">
         {visible.map(kpi => (
           <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
-            <span className="truncate flex-1">{kpi.name}</span>
+            <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="flex-1 text-xs" />
             <Badge variant="outline" className="text-[10px] text-muted-foreground">
               Sem valor
             </Badge>
