@@ -395,6 +395,16 @@ export function MbrClosingStep({
         </div>
       </ScrollArea>
 
+      {onDecisionsChange && (
+        <div className="border-t">
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="mbr-closing"
+          />
+        </div>
+      )}
+
       <WizardLastStepFooter
         onBack={onBack}
         onPrimary={onComplete}

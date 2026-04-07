@@ -135,6 +135,15 @@ export function QbrMeetingCommitmentsStep({
           badge={`${commitments.length} compromisso(s)`}
         />
       }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-commitments"
+          />
+        ) : undefined
+      }
       footer={
         <WizardStepFooter
           onBack={onBack}

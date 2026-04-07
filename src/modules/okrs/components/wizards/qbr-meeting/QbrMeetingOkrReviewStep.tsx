@@ -505,6 +505,15 @@ export function QbrMeetingOkrReviewStep({
           badge={allReviewed ? '✓ Todos revisados' : `${teamsForReview.length - reviewedCount} pendentes`}
         />
       }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-okr-review"
+          />
+        ) : undefined
+      }
       footer={
         <WizardStepFooter
           onBack={onBack}

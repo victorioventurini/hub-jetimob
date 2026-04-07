@@ -178,6 +178,15 @@ export function MbrQbrFollowUpStep({
           variant="primary"
         />
       }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="mbr-qbr-followup"
+          />
+        ) : undefined
+      }
       footer={
         <WizardStepFooter
           showBack

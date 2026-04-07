@@ -496,6 +496,15 @@ export function QbrMeetingClosingStep({
           variant="green"
         />
       }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-closing"
+          />
+        ) : undefined
+      }
       footer={
         <WizardLastStepFooter
           onBack={onBack}
