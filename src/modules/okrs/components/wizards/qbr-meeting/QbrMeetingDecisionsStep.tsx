@@ -52,20 +52,6 @@ export function QbrMeetingDecisionsStep({
   const hasMinimumDecisions = decisions.length >= 1;
   const allHaveOwners = decisions.every(d => d.owner?.id);
 
-  // Default decision type for new decisions
-  const [defaultDecisionType, setDefaultDecisionType] = useState<'strategic' | 'tactical'>('strategic');
-
-  // Wrap onDecisionsChange to inject decisionType on new decisions
-  const handleDecisionsChange = (newDecisions: TeamCheckinDecision[]) => {
-    const updated = newDecisions.map(d => {
-      if (!d.decisionType) return { ...d, decisionType: defaultDecisionType };
-      return d;
-    });
-    onDecisionsChange(updated);
-  };
-
-  const strategicCount = decisions.filter(d => d.decisionType === 'strategic').length;
-  const tacticalCount = decisions.filter(d => d.decisionType === 'tactical').length;
 
   return (
     <WizardStepScaffold
