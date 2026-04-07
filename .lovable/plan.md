@@ -1,30 +1,11 @@
 
 
-## Plano: Exibir relatório cacheado ao acessar a página
+## Plano: Pré-carregar OKRs rascunho do QBR-pre no Wizard de Criação — ✅ IMPLEMENTADO
 
-### Problema
-O hook `useQbrExecutiveReport` já busca relatórios persistidos no banco (`okr_wizard_sessions`), mas enquanto a query carrega (`isLoading = true`), a página mostra o card "Gerar relatório" em vez de um loading spinner. Isso faz parecer que não existe cache.
+### Resumo das mudanças
 
-### Solução
-Adicionar tratamento do estado `isLoadingReport` na página para mostrar um loading enquanto a query busca o relatório cacheado.
-
-### Arquivo a editar
-
-**`src/modules/okrs/pages/QbrExecutiveReportPage.tsx`**
-
-Na seção de renderização condicional (linha ~394), adicionar o estado `isLoadingReport` antes do check de `report`:
-
-```
-{isLoadingReport ? (
-  <LoadingState />
-) : isGenerating ? (
-  <GeneratingState />
-) : report ? (
-  <ReportDisplay ... />
-) : (
-  /* Card "Gerar relatório" */
-)}
-```
-
-Isso é a única mudança necessária — a infraestrutura de cache (query ao banco + staleTime de 5min) já existe e funciona.
-
+1. **`useDraftObjectivesForCycle`** (novo hook) — busca objetivos `draft` por team+cycle com KRs aninhados
+2. **`okrsKeys.draftObjectives`** — nova query key no registry
+3. **`TeamOkrDraft.sourceDraftObjectiveId`** — campo para rastrear objetivo de origem (DRAFT_VERSION → 6)
+4. **`useCreateTeamOkrBundle`** — suporte a `existingObjectiveId` para upsert (update + delete KRs antigos + insert novos)
+5. **`OkrCreationPage`** — fallback para ciclo `planning`, hidratação automática do primeiro draft, banner informativo para drafts restantes, status baseado no tipo de ciclo
