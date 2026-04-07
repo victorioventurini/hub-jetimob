@@ -92,8 +92,10 @@ export function useKpiStatusClassification(kpiSnapshots: MbrKpiSnapshot[]) {
 // ============================================================
 
 /** Block: KPIs desatualizados */
-export function OutdatedKpisBlock({ kpis, maxItems = 5 }: { kpis: MbrKpiSnapshot[]; maxItems?: number }) {
+export function OutdatedKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; maxItems?: number }) {
   if (kpis.length === 0) return null;
+  const visible = maxItems != null ? kpis.slice(0, maxItems) : kpis;
+  const remaining = maxItems != null ? kpis.length - maxItems : 0;
 
   return (
     <Card className="border-muted-foreground/20">
@@ -104,7 +106,7 @@ export function OutdatedKpisBlock({ kpis, maxItems = 5 }: { kpis: MbrKpiSnapshot
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
-        {kpis.slice(0, maxItems).map(kpi => (
+        {visible.map(kpi => (
           <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
             <span className="truncate flex-1">{kpi.name}</span>
             <div className="flex items-center gap-2 shrink-0">
@@ -119,9 +121,9 @@ export function OutdatedKpisBlock({ kpis, maxItems = 5 }: { kpis: MbrKpiSnapshot
             </div>
           </div>
         ))}
-        {kpis.length > maxItems && (
+        {remaining > 0 && (
           <p className="text-[10px] text-muted-foreground pt-1">
-            + {kpis.length - maxItems} outros
+            + {remaining} outros
           </p>
         )}
       </CardContent>
