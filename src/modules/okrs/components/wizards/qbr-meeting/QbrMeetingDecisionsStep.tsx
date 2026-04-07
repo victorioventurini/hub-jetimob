@@ -82,21 +82,6 @@ export function QbrMeetingDecisionsStep({
       }
     >
       <div className="p-6 space-y-4">
-        {/* Summary badges */}
-        {decisions.length > 0 && (
-          <div className="flex items-center gap-2">
-            {strategicCount > 0 && (
-              <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary">
-                {strategicCount} estratégica{strategicCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
-            {tacticalCount > 0 && (
-              <Badge variant="outline" className="text-[10px] bg-muted text-foreground">
-                {tacticalCount} tática{tacticalCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
-        )}
 
         {decisions.length === 0 ? (
           <div className="text-center py-12">
