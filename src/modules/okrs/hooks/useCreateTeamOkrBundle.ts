@@ -85,28 +85,60 @@ export function useCreateTeamOkrBundle() {
         throw new Error('Cliente não disponível');
       }
 
-      // 1. Create the team objective
-      const { data: objective, error: objError } = await supabase
-        .from('okr_team_objectives')
-        .insert({
-          bu_id: currentBuId,
-          team_id: input.objective.team_id,
-          title: input.objective.title,
-          description: input.objective.description || null,
-          org_objective_id: input.objective.org_objective_id,
-          cycle_id: input.objective.cycle_id,
-          year: new Date().getFullYear(),
-          status: input.objective.status,
-          // Shared OKR fields
-          is_shared: input.objective.is_shared || false,
-          responsibility_model: input.objective.responsibility_model || null,
-        })
-        .select('id')
-        .single();
+      let objectiveId: string;
 
-      if (objError) throw objError;
+      if (input.existingObjectiveId) {
+        // UPSERT: Update existing draft objective
+        const { error: updateError } = await supabase
+          .from('okr_team_objectives')
+          .update({
+            title: input.objective.title,
+            description: input.objective.description || null,
+            org_objective_id: input.objective.org_objective_id,
+            status: input.objective.status,
+            is_shared: input.objective.is_shared || false,
+            responsibility_model: input.objective.responsibility_model || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', input.existingObjectiveId);
 
-      const objectiveId = objective.id;
+        if (updateError) throw updateError;
+        objectiveId = input.existingObjectiveId;
+
+        // Delete old KRs from draft (they'll be replaced)
+        const { error: deleteKrsError } = await supabase
+          .from('okr_team_key_results')
+          .delete()
+          .eq('team_objective_id', objectiveId);
+
+        if (deleteKrsError) {
+          console.error('Error deleting old draft KRs:', deleteKrsError);
+          // Non-blocking: proceed with new KR creation
+        }
+      } else {
+        // INSERT: Create new team objective
+        const { data: objective, error: objError } = await supabase
+          .from('okr_team_objectives')
+          .insert({
+            bu_id: currentBuId,
+            team_id: input.objective.team_id,
+            title: input.objective.title,
+            description: input.objective.description || null,
+            org_objective_id: input.objective.org_objective_id,
+            cycle_id: input.objective.cycle_id,
+            year: new Date().getFullYear(),
+            status: input.objective.status,
+            is_shared: input.objective.is_shared || false,
+            responsibility_model: input.objective.responsibility_model || null,
+          })
+          .select('id')
+          .single();
+
+        if (objError) throw objError;
+        objectiveId = objective.id;
+      }
+
+      const krIds: string[] = [];
       const krIds: string[] = [];
       const dependencyIds: string[] = [];
       const initiativeIds: string[] = [];
