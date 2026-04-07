@@ -31,21 +31,33 @@ export function useActiveCycle() {
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.okrs.activeCycle(buId),
     queryFn: async () => {
-      if (!supabase || !buId) return { active: [], planning: [] };
+      if (!supabase || !buId) return { active: [], planning: [], lastClosedQuarter: null };
 
-      const { data: cycles, error } = await supabase
-        .from('cycles')
-        .select('id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id, status, qbr_status')
-        .eq('bu_id', buId)
-        .in('status', ['active', 'planning'])
-        .order('start_date', { ascending: true });
+      // Fetch active, planning AND the most-recently-closed quarter
+      const [activeRes, closedRes] = await Promise.all([
+        supabase
+          .from('cycles')
+          .select('id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id, status, qbr_status')
+          .eq('bu_id', buId)
+          .in('status', ['active', 'planning'])
+          .order('start_date', { ascending: true }),
+        supabase
+          .from('cycles')
+          .select('id, name, type, start_date, end_date, planning_date, review_date, review_date_first_month, retro_date, parent_cycle_id, status, qbr_status')
+          .eq('bu_id', buId)
+          .eq('status', 'closed')
+          .eq('type', 'quarter')
+          .order('end_date', { ascending: false })
+          .limit(1),
+      ]);
 
-      if (error) throw error;
+      if (activeRes.error) throw activeRes.error;
 
-      const active = (cycles || []).filter((c: any) => c.status === 'active') as CycleWithStatus[];
-      const planning = (cycles || []).filter((c: any) => c.status === 'planning') as CycleWithStatus[];
+      const active = (activeRes.data || []).filter((c: any) => c.status === 'active') as CycleWithStatus[];
+      const planning = (activeRes.data || []).filter((c: any) => c.status === 'planning') as CycleWithStatus[];
+      const lastClosedQuarter = (closedRes.data?.[0] ?? null) as CycleWithStatus | null;
 
-      return { active, planning };
+      return { active, planning, lastClosedQuarter };
     },
     enabled: isReady && !!supabase && !!buId,
     staleTime: 2 * 60 * 1000,
@@ -77,6 +89,8 @@ export function useActiveCycle() {
     activeCycle,
     /** Ciclo trimestral ativo especificamente */
     activeQuarterlyCycle,
+    /** Último quarter fechado (para rituais de revisão) */
+    lastClosedQuarterlyCycle: data?.lastClosedQuarter ?? null,
     /** Todos os ciclos ativos */
     activeCycles: data?.active ?? [],
     /** Ciclos em planejamento */
