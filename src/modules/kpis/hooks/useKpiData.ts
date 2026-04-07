@@ -498,7 +498,7 @@ export function useKpiDetail(kpiId: string) {
       scope: kpi.scope || 'team',
       area: kpi.area,
     } : null,
-    values: mappedValues,
+    values: values || [],
     isLoading,
   };
 }
