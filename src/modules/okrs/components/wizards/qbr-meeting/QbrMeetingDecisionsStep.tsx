@@ -3,10 +3,9 @@
  * 
  * owner_user_id obrigatório. deadline obrigatório.
  * Gate: mínimo de uma decisão registrada.
- * Inclui: vínculo a diretivas C-Level e tipo de decisão (strategic/tactical).
+ * Inclui: vínculo a diretivas C-Level.
  */
 
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
