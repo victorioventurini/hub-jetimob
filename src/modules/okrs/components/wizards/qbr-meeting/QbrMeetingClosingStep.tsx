@@ -21,6 +21,7 @@ import {
   WizardStepHeader,
   WizardLastStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
 } from '../shared';
 import type {
   QbrMeetingGovernanceChecklist,

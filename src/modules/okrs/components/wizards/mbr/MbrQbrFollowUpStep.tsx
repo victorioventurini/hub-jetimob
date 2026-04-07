@@ -78,6 +78,8 @@ function sortByUrgency(items: QbrFollowUpItem[]): QbrFollowUpItem[] {
 export function MbrQbrFollowUpStep({
   followUpItems,
   onFollowUpItemsChange,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: MbrQbrFollowUpStepProps) {
