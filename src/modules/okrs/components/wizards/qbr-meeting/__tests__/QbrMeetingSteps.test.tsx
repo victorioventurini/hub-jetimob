@@ -93,7 +93,7 @@ describe('QbrMeetingOpeningStep', () => {
 
   it('renders header with title', () => {
     render(<QbrMeetingOpeningStep {...defaultProps} />);
-    expect(screen.getByText('Abertura do QBR')).toBeInTheDocument();
+    expect(screen.getByText('Contexto da reunião')).toBeInTheDocument();
   });
 
   it('shows leader summary count badge', () => {
@@ -152,7 +152,7 @@ describe('QbrMeetingOkrReviewStep', () => {
 
   it('renders header with review count', () => {
     render(<QbrMeetingOkrReviewStep {...defaultProps} />);
-    expect(screen.getByText('Revisão de OKRs por Time')).toBeInTheDocument();
+    expect(screen.getByText('Aprovação de OKRs — time por time')).toBeInTheDocument();
     expect(screen.getByText('3 pendentes')).toBeInTheDocument();
   });
 
@@ -220,7 +220,7 @@ describe('QbrMeetingDecisionsStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Decisões Estratégicas')).toBeInTheDocument();
+    expect(screen.getByText('Decisões da reunião')).toBeInTheDocument();
   });
 
   it('gate: disables continue with no decisions', () => {
@@ -287,7 +287,7 @@ describe('QbrMeetingCommitmentsStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Compromissos Cross-Área')).toBeInTheDocument();
+    expect(screen.getByText('Compromissos entre times')).toBeInTheDocument();
   });
 
   it('shows empty state when no commitments', () => {

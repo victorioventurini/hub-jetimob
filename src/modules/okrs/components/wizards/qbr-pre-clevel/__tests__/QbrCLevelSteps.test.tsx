@@ -102,7 +102,7 @@ describe('QbrCLevelSystemReadStep', () => {
         onContinue={vi.fn()}
       />
     );
-    expect(screen.getByText('Leitura do Sistema')).toBeInTheDocument();
+    expect(screen.getByText('O que os times reportaram')).toBeInTheDocument();
   });
 
   it('shows submission count in badge', () => {
@@ -189,7 +189,7 @@ describe('QbrCLevelStrategicStep', () => {
 
   it('renders header with title', () => {
     renderStrategic();
-    expect(screen.getByText('Análise Estratégica')).toBeInTheDocument();
+    expect(screen.getByText('Sua análise — o que só você vê daqui')).toBeInTheDocument();
   });
 
   it('renders three strategic textareas', () => {
@@ -231,7 +231,7 @@ describe('QbrCLevelOkrValidationStep', () => {
 
   it('renders header with title', () => {
     renderValidation();
-    expect(screen.getByText('Validação de OKRs')).toBeInTheDocument();
+    expect(screen.getByText('Calibração das propostas')).toBeInTheDocument();
   });
 
   it('shows proposed objective title', () => {
@@ -287,7 +287,7 @@ describe('QbrCLevelDirectivesStep', () => {
 
   it('renders header with title', () => {
     renderDirectives();
-    expect(screen.getByText('Direcionamentos e Decisões')).toBeInTheDocument();
+    expect(screen.getByText('Pauta obrigatória da reunião')).toBeInTheDocument();
   });
 
   it('shows empty state when no directives', () => {

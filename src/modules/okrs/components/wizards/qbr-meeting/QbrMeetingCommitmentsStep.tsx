@@ -128,9 +128,9 @@ export function QbrMeetingCommitmentsStep({
       header={
         <WizardStepHeader
           icon={Handshake}
-          title="Compromissos Cross-Área"
+          title="Compromissos entre times"
           tooltip="qbr-meeting-commitments"
-          description="Dependências formalizadas entre times"
+          description="O que um time precisa do outro para cumprir o que foi aprovado."
           variant="purple"
           badge={`${commitments.length} compromisso(s)`}
         />

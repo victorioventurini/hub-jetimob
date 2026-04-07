@@ -1,171 +1,155 @@
 
+## Plano: Ajuste de Microcopy — Análise no Pré-QBR C-Level, Decisão na Reunião QBR
 
-## Plano: Melhorias no Ritual QBR Meeting — 11 adições em 5 steps
+### Princípio
+O **qbr-pre-clevel** é onde a **análise** acontece (individualmente, antes da reunião). O **qbr-meeting** é onde a **decisão** acontece (coletivamente, com a sala toda). Todo microcopy deve reforçar essa distinção.
 
-### Pré-checklist ✅
-- TCR consultado — padrão `FullPageWizardShell`, `useGenericWizardDraft`, persistência em `okr_wizard_sessions`
-- DEVELOPMENT_STANDARDS — sem anti-patterns; componentes shared no barrel
-- DATA_MODEL_REGISTRY — `TeamCheckinDecision` é tipo compartilhado entre 8+ wizards
-- Codebase verificado — tipos existentes, componentes existentes, nenhuma duplicação
-
-### Conflito detectado
-A **Adição 1 do Step 1** (estimativa de tempo na agenda) refere-se ao card "Agenda da Reunião" que foi **removido do JSX** na mensagem anterior a pedido do usuário. O componente `MeetingAgenda` ainda existe no arquivo mas não é renderizado. **Recomendação**: pular esta adição ou reativar o card. O plano abaixo **reativa a MeetingAgenda** com as estimativas de tempo, pois é um requisito explícito do documento. Se preferir manter removido, basta dizer.
+### Escopo
+Apenas textos — **zero alteração de lógica, gates, snapshots ou componentes visuais**.
 
 ---
 
-### Mudanças nos tipos (wizard.ts)
+### 1. QbrPreCLevelPage.tsx — Header do wizard
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Pré-QBR C-Level" | "Pré-QBR C-Level" *(mantém — é label do shell)* |
+| `subtitle` | "Análise estratégica consolidada e direcionamentos" | "Análise estratégica do quarter — sua visão antes da reunião" |
 
-**1. Estender `TeamCheckinDecision`** — adicionar 2 campos opcionais:
-```ts
-relatedDirectiveId?: string;
-decisionType?: 'strategic' | 'tactical';
-```
-Como este tipo é compartilhado por todos os wizards, os campos são opcionais e não quebram nada.
+Adicionar subtítulo descritivo abaixo: *"Registre sua análise agora. Na reunião, a sala decide com base no que você preparou aqui."*
+> **Nota:** O `FullPageWizardShell` aceita `subtitle` como string. O subtítulo adicional será concatenado.
 
-**2. Estender `QbrMeetingSnapshot.crossCommitments[]`** — adicionar:
-```ts
-responsibleUserId?: string;  // novo
-responsibleUserName?: string; // para snapshot imutável
-```
-(`linkedOkrId` já existe no tipo)
+### 2. QbrCLevelSystemReadStep.tsx — Step 1
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Leitura do Sistema" | "O que os times reportaram" |
+| `description` | Dynamic count | "Leia os dados dos líderes antes de registrar sua análise. Essa é a matéria-prima da sua preparação." |
 
-**3. Adicionar `nextThirtyDays` ao `QbrMeetingSnapshot` e `QbrMeetingDraftData`**:
-```ts
-nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string; };
-```
+### 3. QbrCLevelQuarterBalanceStep.tsx — Step 2
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Balanço do Quarter — {cycleName}" | "Como o quarter foi na prática — {cycleName}" |
+| `description` | "Desempenho dos OKRs..." | "OKRs organizacionais e entrega de cada time. Analise antes de calibrar as propostas." |
+| Bloco A título | "Como foram os OKRs da empresa no {cycleName}" | "OKRs da empresa neste quarter" |
+| Bloco A subtítulo | *(nenhum)* | "Progresso real de cada KR org e quais times contribuíram." |
+| Bloco B título | "O que cada time entregou" | *(mantém)* |
+| Bloco B subtítulo | *(nenhum)* | "Use isso para calibrar as propostas do próximo ciclo." |
 
----
+### 4. QbrCLevelStrategicStep.tsx — Step 3
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Análise Estratégica" | "Sua análise — o que só você vê daqui" |
+| `description` | "Reflexão exclusiva do C-Level sobre direção e prioridades" | "Registre o que a visão consolidada revelou. Esses insights pautam a reunião." |
 
-### Step 1 — Abertura (QbrMeetingOpeningStep.tsx) — 2 adições
+### 5. QbrCLevelOkrValidationStep.tsx — Step 4
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` (2 ocorrências) | "Validação de OKRs" | "Calibração das propostas" |
+| `description` (empty state) | "Nenhuma proposta de OKR encontrada" | "Nenhuma proposta de OKR encontrada" *(mantém)* |
+| `description` (normal) | "Time X de Y" | *(mantém — é informação contextual)* |
+| Texto de instrução | *(nenhum)* | Adicionar `<p>` antes do conteúdo: "Adicione flags onde a proposta precisa de ajuste. Na reunião, a sala vai ver sua análise antes de votar." |
 
-**Adição 1 — Estimativa de tempo na agenda**
-- Reativar `<MeetingAgenda />` no JSX
-- Adicionar prop `teamsForReview: number` ao componente
-- Calcular tempo: Step 2 = `teamsForReview × 9 min`, demais fixos (5, 15, 10, 10)
-- Exibir badge de tempo ao lado de cada item + total no rodapé
-- Prop `leaderSummaryCount` já existe e pode ser usada
+### 6. QbrCLevelDirectivesStep.tsx — Step 5
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Direcionamentos e Decisões" | "Pauta obrigatória da reunião" |
+| `description` | "Pauta obrigatória para a reunião QBR" | "Defina o que a sala precisa debater e decidir. Esses itens abrem a reunião." |
+| Texto instrução interno | "Defina os temas que devem ser debatidos..." | "Cada item aqui vira pauta obrigatória na Reunião QBR. A sala não avança sem endereçar o que você registrar." |
 
-**Adição 2 — Retrospectiva do quarter anterior**
-- Novo sub-componente `QuarterRetrospective` entre Scorecard e OrgOkrsSummary
-- Props: `teams: Array<{id, name}>`, `previousCycleMetrics`, `currentCycleMetrics`
-- Tabela comparativa: Time | Quarter anterior | Quarter atual | Tendência
-- Dados: a QbrMeetingPage já carrega `teamsForReview` — precisa de uma nova query no Page para buscar health do ciclo anterior
-- Na Page: query adicional para `lastClosedQuarterlyCycle` (já disponível via `useActiveCycle`) e buscar métricas via uma query leve de KRs por time
-- Se não há ciclo anterior, o bloco é omitido silenciosamente
-
-**Impacto na Page**: adicionar prop `previousQuarterData` ao `QbrMeetingOpeningStepProps`
-
----
-
-### Step 2 — Revisão de OKRs (QbrMeetingOkrReviewStep.tsx) — 3 adições
-
-**Adição 1 — Timer por time**
-- Novo sub-componente `ReviewTimer` (local ao arquivo, não compartilhado)
-- `useState` para `timerActive`, `secondsRemaining` (540s = 9min)
-- `useEffect` com `setInterval` de 1s quando ativo
-- Botão "▶ Iniciar timer" ao lado do nome do time no header
-- Aos 120s restantes: `cn('border-status-amber')` no card wrapper
-- Ao zerar: `cn('border-status-red')` + `toast('Tempo esgotado para [nome]')`
-- Timer é local — reseta ao trocar de time, não persiste no draft
-
-**Adição 2 — Campo de ajuste estruturado para `approved_with_changes`**
-- Quando status = `approved_with_changes`, exibir formulário por KR:
-  - Checkbox "Esta KR tem ajuste"
-  - Campos condicionais: novo título (Input), nova meta (Input), novo responsável (BuUserSelect)
-- Persistir em `approvals[].changes` como `Array<{ krIndex, newTitle?, newTarget?, newOwnerId?, newOwnerName? }>`
-- Novo sub-componente `StructuredChangesForm` no mesmo arquivo
-
-**Adição 3 — Badge de OKR compartilhado**
-- No card de cada proposta, cruzar `linkedOrgKrId` de todas as `teamsForReview`
-- Se 2+ times cobrem a mesma KR org, exibir badge "🤝 Compartilhado com: [time]"
-- Usar `useMemo` para computar `sharedOrgKrMap: Map<orgKrId, teamName[]>` uma vez
-- Badge inline no card de proposta, sem usar `SharedOkrBadge` (contexto diferente)
+### 7. WIZARD_STEPS no QbrPreCLevelPage.tsx
+| Step | label atual | label novo | description atual | description novo |
+|------|-------------|------------|-------------------|-----------------|
+| system-read | "Leitura do Sistema" | "Dados dos Times" | "Consolidação dos pré-QBRs" | "O que os times reportaram" |
+| quarter-balance | "Balanço do Quarter" | "Balanço do Quarter" | "Desempenho do ciclo" | "Como foi na prática" |
+| strategic-analysis | "Análise Estratégica" | "Sua Análise" | "Reflexão C-Level" | "O que só você vê" |
+| okr-validation | "Validação de OKRs" | "Calibração" | "Calibração das propostas" | "Flags nas propostas" |
+| directives | "Direcionamentos" | "Pauta da Reunião" | "Pauta do QBR" | "O que a sala decide" |
 
 ---
 
-### Step 3 — Decisões (QbrMeetingDecisionsStep.tsx) — 2 adições
+### 8. QbrMeetingPage.tsx — Header do wizard
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Reunião QBR" | "Reunião QBR" *(mantém)* |
+| `subtitle` | "Revisão e aprovação de OKRs — decisões estratégicas e compromissos cross-área" | "Reunião QBR — decisões com base na análise do C-Level. A análise já foi feita. Agora a sala decide, aprova e compromete." |
 
-**Adição 1 — Vínculo decisão → item de pauta**
-- Adicionar prop `cLevelDirectives` ao step
-- No `InlineDecisionInput` ou em uma extensão local, adicionar Select "Relacionado a" com as directives
-- Persistir como `decisions[].relatedDirectiveId` (ID = index ou hash da directive)
-- Exibir badge "Ref: [texto truncado]" no `DecisionCard`
-- Como `DecisionCard` é compartilhado, a exibição do badge é condicional via nova prop `showDirectiveRef`
+### 9. WIZARD_STEPS no QbrMeetingPage.tsx
+| Step | label atual | label novo | description atual | description novo |
+|------|-------------|------------|-------------------|-----------------|
+| opening | "Abertura" | "Contexto" | "Pauta e direcionamentos" | "Análise do C-Level" |
+| okr-review | "Revisão OKRs" | "Aprovação OKRs" | "Aprovação por time" | "Time por time" |
+| decisions | "Decisões" | "Decisões" | "Decisões estratégicas" | "Dono e prazo" |
+| commitments | "Compromissos" | "Compromissos" | "Cross-área" | "Entre times" |
+| closing | "Encerramento" | "Encerramento" | "Governança" | "Governança" |
 
-**Adição 2 — Tipo de decisão (strategic/tactical)**
-- Adicionar toggle de 2 badges no formulário de criação (inline no step, acima do `InlineDecisionInput`)
-- Persistir como `decisions[].decisionType`
-- Badge colorido no `DecisionCard` via prop `showDecisionType`
-- Strategic = azul escuro, Tactical = cinza
+### 10. QbrMeetingOpeningStep.tsx — Step 1
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Abertura do QBR" | "Contexto da reunião" |
+| `description` | "Contexto e direcionamentos estratégicos" | "O C-Level analisou o quarter e definiu a pauta. Aqui está o que você precisa saber antes de começar." |
+| Bloco Scorecard título | "Scorecard do Quarter" | *(mantém — informacional)* |
+| Bloco retrospectiva título | "Como Chegamos Aqui" | "Entrega do quarter por time" |
+| Bloco retrospectiva subtítulo | *(nenhum)* | "Contexto pré-analisado. A sala usa isso para calibrar as aprovações." |
+| Bloco OKRs org título | "OKRs da Empresa neste Quarter" | "Como chegamos aqui — OKRs da empresa" |
+| Bloco OKRs org subtítulo | *(nenhum)* | "Analisado pelo C-Level no Pré-QBR. Use como contexto, não para reanalisar." |
+| Bloco vetos label | "Vetos estratégicos" | "Vetos do C-Level — não entra no próximo ciclo" |
+| Bloco pauta título | "Pauta Obrigatória" | "O que o C-Level quer que a sala decida" |
+| Bloco pauta subtítulo | *(nenhum)* | "Cada item abaixo é pauta obrigatória. Não saia da reunião sem endereçar." |
 
-**Impacto na Page**: passar `cLevelDirectives` para `QbrMeetingDecisionsStep`
+### 11. QbrMeetingOkrReviewStep.tsx — Step 2
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Revisão de OKRs por Time" | "Aprovação de OKRs — time por time" |
+| `description` | Dynamic count | *(mantém — contextual)* |
+| Bloco flags título | *(inline, sem título)* | *(manter como está — são badges inline)* |
+| Bloco cobertura título | "Contribuições para OKRs organizacionais" | "KRs organizacionais que esta proposta cobre" |
+| Bloco cobertura subtítulo | *(nenhum)* | "Aprovando esta proposta, estes objetivos da empresa ganham contribuição." |
+| Bloco cobertura reversa título | "KRs org sem cobertura até agora" | *(mantém)* |
+| Bloco cobertura reversa subtítulo | *(nenhum)* | "Atualizado em tempo real conforme as aprovações avançam." |
 
----
+### 12. QbrMeetingDecisionsStep.tsx — Step 3
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Decisões Estratégicas" | "Decisões da reunião" |
+| `description` | "Toda decisão precisa de dono e prazo" | "Cada decisão precisa de dono e prazo. Sem isso, não é decisão — é intenção." |
 
-### Step 4 — Compromissos (QbrMeetingCommitmentsStep.tsx) — 2 adições
+### 13. QbrMeetingCommitmentsStep.tsx — Step 4
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Compromissos Cross-Área" | "Compromissos entre times" |
+| `description` | "Dependências formalizadas entre times" | "O que um time precisa do outro para cumprir o que foi aprovado." |
 
-**Adição 1 — Responsável no compromisso**
-- Adicionar `BuUserSelect` ao formulário, após "Para (time)"
-- Persistir como `crossCommitments[].responsibleUserId` + `responsibleUserName`
-- Exibir nome/avatar no card do compromisso
-
-**Adição 2 — Vínculo compromisso → OKR aprovado**
-- Adicionar prop `approvals` e `teamsForReview` ao step
-- Select "OKR vinculado" listando apenas objetivos com status `approved` ou `approved_with_changes`
-- Persistir no `linkedOkrId` (campo já existe no tipo)
-- Badge com título do OKR no card
-
-**Impacto na Page**: passar `approvals` e `teamsForReview` para `QbrMeetingCommitmentsStep`
-
----
-
-### Step 5 — Encerramento (QbrMeetingClosingStep.tsx) — 2 adições
-
-**Adição 1 — Resumo detalhado da reunião**
-- Estender o `GovernanceSummary` existente com contadores de:
-  - Decisões estratégicas vs táticas (usando `decisionType`)
-  - Decisões com/sem dono
-  - Compromissos com/sem responsável
-  - KRs org com/sem cobertura
-- Layout read-only, antes do checklist (já está nesta posição)
-
-**Adição 2 — Campo "Próximos 30 dias"**
-- Novo bloco após checklist, antes do feedback
-- 3 campos `Input` (max 200 chars): CEO, COO, CPTO
-- Props: `nextThirtyDays` + `onNextThirtyDaysChange`
-- Campos opcionais — não bloqueiam "Concluir"
-- Persistir no draft e snapshot
-
-**Impacto na Page**: passar `nextThirtyDays` e handler
-
----
-
-### Report (QbrMeetingReport.tsx)
-- Adicionar seção "Próximos 30 dias" ao final do relatório
-- Exibir 3 itens (CEO/COO/CPTO) somente se pelo menos um estiver preenchido
+### 14. QbrMeetingClosingStep.tsx — Step 5
+| Campo | Atual | Novo |
+|-------|-------|------|
+| `title` | "Encerramento" | "Encerramento e governança" |
+| `description` | "Checklist de governança e feedback do rito" | "Confirme que a reunião gerou o que precisa antes de fechar." |
 
 ---
 
-### Arquivos impactados (resumo)
+### Arquivos impactados (13 arquivos, apenas texto)
+1. `src/modules/okrs/pages/QbrPreCLevelPage.tsx`
+2. `src/modules/okrs/pages/QbrMeetingPage.tsx`
+3. `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelSystemReadStep.tsx`
+4. `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelQuarterBalanceStep.tsx`
+5. `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelStrategicStep.tsx`
+6. `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelOkrValidationStep.tsx`
+7. `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelDirectivesStep.tsx`
+8. `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingOpeningStep.tsx`
+9. `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingOkrReviewStep.tsx`
+10. `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingDecisionsStep.tsx`
+11. `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingCommitmentsStep.tsx`
+12. `src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingClosingStep.tsx`
 
-| Arquivo | Mudanças |
-|---------|----------|
-| `wizard.ts` | +3 campos em `TeamCheckinDecision`, +2 campos em crossCommitments, +`nextThirtyDays` em Draft e Snapshot |
-| `QbrMeetingOpeningStep.tsx` | Reativar agenda com tempo + bloco retrospectiva |
-| `QbrMeetingOkrReviewStep.tsx` | Timer + ajuste estruturado + badge compartilhado |
-| `QbrMeetingDecisionsStep.tsx` | Vínculo directive + tipo decisão |
-| `QbrMeetingCommitmentsStep.tsx` | Responsável + vínculo OKR |
-| `QbrMeetingClosingStep.tsx` | Resumo expandido + próximos 30 dias |
-| `QbrMeetingReport.tsx` | Seção nextThirtyDays |
-| `QbrMeetingPage.tsx` | Novas props passadas aos steps + query ciclo anterior |
-| `DecisionCard.tsx` | Props `showDirectiveRef` + `showDecisionType` (opcionais) |
-| `InlineDecisionInput.tsx` | Suporte a `decisionType` default |
+### O que NÃO muda
+- Lógica de nenhum step
+- Gates de navegação
+- Snapshots e reflection_data
+- Componentes visuais
+- Testes (textos nos testes serão atualizados onde necessário para manter coerência)
 
-### O que não muda
-- Gates de navegação existentes
-- `OrgCoverageMap` — sem alteração
-- Checklist de governança — mesmos 5 itens
-- Edge function `qbr-meeting-summary`
-- Rituais `qbr-pre`, `qbr-pre-clevel` — intocados
-- Lógica de aprovação/rejeição de OKRs
-
+### Conformidade TCR
+- ✅ Sem alteração de lógica, queries, RLS ou schema
+- ✅ Sem novos componentes ou hooks
+- ✅ Sem alteração de identity/RBAC
+- ✅ Semantic tokens preservados
+- ✅ Barrel exports intactos

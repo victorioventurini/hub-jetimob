@@ -86,9 +86,9 @@ export function QbrCLevelDirectivesStep({
       header={
         <WizardStepHeader
           icon={Megaphone}
-          title="Direcionamentos e Decisões"
+          title="Pauta obrigatória da reunião"
           tooltip="qbr-clevel-directives"
-          description="Pauta obrigatória para a reunião QBR"
+          description="Defina o que a sala precisa debater e decidir. Esses itens abrem a reunião."
           variant="amber"
           badge={`${directives.length} itens`}
         />
@@ -109,7 +109,7 @@ export function QbrCLevelDirectivesStep({
     >
       <div className="p-6 space-y-6">
         <p className="text-sm text-muted-foreground">
-          Defina os temas que devem ser debatidos na reunião QBR. Cada item entra como pauta obrigatória.
+          Cada item aqui vira pauta obrigatória na Reunião QBR. A sala não avança sem endereçar o que você registrar.
         </p>
 
         {/* Add new directive */}

@@ -154,8 +154,9 @@ function QuarterRetrospective({ data }: { data: PreviousQuarterTeamData[] }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          Como Chegamos Aqui
+          Entrega do quarter por time
         </CardTitle>
+        <p className="text-xs text-muted-foreground">Contexto pré-analisado. A sala usa isso para calibrar as aprovações.</p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -215,10 +216,11 @@ function OrgOkrsSummary({ objectives }: { objectives: OrgObjectiveWithKrs[] }) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Target className="h-4 w-4" />
-            OKRs da Empresa neste Quarter ({objectives.length})
+            Como chegamos aqui — OKRs da empresa ({objectives.length})
           </CardTitle>
           <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
         </div>
+        <p className="text-xs text-muted-foreground">Analisado pelo C-Level no Pré-QBR. Use como contexto, não para reanalisar.</p>
       </CardHeader>
       <CardContent className="space-y-2">
         {objectives.map(obj => (
@@ -367,9 +369,9 @@ export function QbrMeetingOpeningStep({
       header={
         <WizardStepHeader
           icon={Presentation}
-          title="Abertura do QBR"
+          title="Contexto da reunião"
           tooltip="qbr-meeting-opening"
-          description="Contexto e direcionamentos estratégicos"
+          description="O C-Level analisou o quarter e definiu a pauta. Aqui está o que você precisa saber antes de começar."
           variant="primary"
           badge={`${leaderSummaryCount} times`}
         />
@@ -407,7 +409,7 @@ export function QbrMeetingOpeningStep({
           <Card className="border-status-red/20">
             <CardContent className="p-3">
               <p className="text-xs font-medium text-status-red mb-1 flex items-center gap-1">
-                <Ban className="h-3 w-3" /> Vetos estratégicos
+                <Ban className="h-3 w-3" /> Vetos do C-Level — não entra no próximo ciclo
               </p>
               <p className="text-sm text-muted-foreground">{cLevelStrategicAnalysis.whatNotToDo}</p>
             </CardContent>
@@ -419,8 +421,9 @@ export function QbrMeetingOpeningStep({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Megaphone className="h-4 w-4" />
-                Pauta Obrigatória ({cLevelDirectives.length})
+                O que o C-Level quer que a sala decida ({cLevelDirectives.length})
               </CardTitle>
+              <p className="text-xs text-muted-foreground">Cada item abaixo é pauta obrigatória. Não saia da reunião sem endereçar.</p>
             </CardHeader>
             <CardContent className="space-y-2">
               {cLevelDirectives.map((d, i) => {

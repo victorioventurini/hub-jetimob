@@ -234,9 +234,9 @@ export function QbrCLevelQuarterBalanceStep({
       header={
          <WizardStepHeader
           icon={BarChart3}
-          title={`Balanço do Quarter — ${cycleName}`}
+          title={`Como o quarter foi na prática — ${cycleName}`}
           tooltip="qbr-clevel-balance"
-          description={`Desempenho dos OKRs organizacionais e entrega dos times no ${cycleName}`}
+          description="OKRs organizacionais e entrega de cada time. Analise antes de calibrar as propostas."
           variant="primary"
         />
       }
@@ -256,12 +256,15 @@ export function QbrCLevelQuarterBalanceStep({
           <>
             {/* Section A — OKRs Organizacionais */}
             <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-base">
-                  Como foram os OKRs da empresa no {cycleName}
-                </h3>
-                <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-base">
+                    OKRs da empresa neste quarter
+                  </h3>
+                  <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+                </div>
+                <p className="text-xs text-muted-foreground ml-7">Progresso real de cada KR org e quais times contribuíram.</p>
               </div>
 
               {(!orgObjectives || orgObjectives.length === 0) ? (
@@ -286,11 +289,14 @@ export function QbrCLevelQuarterBalanceStep({
 
             {/* Section B — Scorecard por Time */}
             <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-base">
-                  O que cada time entregou
-                </h3>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-base">
+                    O que cada time entregou
+                  </h3>
+                </div>
+                <p className="text-xs text-muted-foreground ml-7">Use isso para calibrar as propostas do próximo ciclo.</p>
               </div>
 
               {teamScorecards.length === 0 ? (

@@ -108,7 +108,7 @@ export function QbrCLevelOkrValidationStep({
         header={
           <WizardStepHeader
             icon={ClipboardCheck}
-            title="Validação de OKRs"
+            title="Calibração das propostas"
             tooltip="qbr-clevel-okr-validation"
             description="Nenhuma proposta de OKR encontrada"
             variant="amber"
@@ -128,8 +128,8 @@ export function QbrCLevelOkrValidationStep({
       header={
         <WizardStepHeader
           icon={ClipboardCheck}
-          title="Validação de OKRs"
-            tooltip="qbr-clevel-okr-validation"
+          title="Calibração das propostas"
+          tooltip="qbr-clevel-okr-validation"
           description={`Time ${currentIndex + 1} de ${teamProposals.length}`}
           variant="amber"
           badge={`${calibrationFlags.length} flags`}
@@ -143,6 +143,9 @@ export function QbrCLevelOkrValidationStep({
       }
     >
       <div className="p-6 space-y-6">
+        <p className="text-sm text-muted-foreground">
+          Adicione flags onde a proposta precisa de ajuste. Na reunião, a sala vai ver sua análise antes de votar.
+        </p>
         {/* Team navigation */}
         <div className="flex items-center justify-between">
           <Button
