@@ -1,38 +1,56 @@
-## Objetivo
-Criar uma página que exiba os OKRs de **todos os times** de um quarter em uma única visão, com análise de IA que identifique sinergias e sugira OKRs compartilhadas entre times — superando silos.
 
-## Princípio de Reutilização
-- **Reutilizar** `ConstructionScoreCard` e `ObjectiveChecklistCard` existentes (sem duplicar)
-- **Reutilizar** tipos de `construction-review.ts` (sem criar novos)
-- **Criar** um novo hook `useFullConstructionReview` que estende a lógica do `useConstructionReview` para múltiplos times
+# Plano revisado: Desacoplar análise cross-team do sidebar
 
-## Arquivos
+## Diagnóstico honesto
 
-### 1. `src/lib/queryKeys/okrs.ts`
-- Adicionar query key `fullConstructionReview: (buId, cycleId) => [...]`
+O plano anterior foi criado **sem consultar o TCR e os docs canônicos primeiro** — violação do pré-checklist. Após revisão completa, confirmo que:
 
-### 2. `src/modules/okrs/hooks/useFullConstructionReview.ts` (novo)
-- Busca **todos** os `okr_team_objectives` do ciclo (sem filtro de `team_id`)
-- Agrupa por time
-- Dispara avaliações IA individuais (mesma edge function `okr-construction-review`)
-- Dispara análise consolidada cross-time (mode: `'cross-team-analysis'` — **nova** chamada à edge function com todos os times juntos para sugestões de OKRs compartilhadas)
-- Retorna: lista de teams com seus objectives + score global + sugestões cross-team
+1. O plano anterior está **correto na essência** mas precisa de um ajuste
+2. A edge function `okr-construction-review` no modo `team-analysis` **já aceita dados brutos** (objetivos + KRs + orgObjectives) — não depende de scores individuais
+3. O bloqueio real está em **duas barreiras**:
+   - `evaluateCrossTeam` tem `const allDone = ... if (!allDone) return;` na linha 324-325
+   - O `useEffect` trigger (linha 410-419) também verifica `allDone`
 
-### 3. `src/modules/okrs/pages/OkrFullConstructionReviewPage.tsx` (novo)
-- Layout similar ao `OkrConstructionReviewPage`:
-  - Header com título + seletor de ciclo (sem seletor de time)
-  - Sidebar: `ConstructionScoreCard` com score global + sugestões cross-team
-  - Main: Agrupamento por time (accordion/section) → cada seção lista `ObjectiveChecklistCard`
-- Acesso: `requiresBuAdmin` (visão consolidada é para admin/C-Level)
+## O que muda no plano
 
-### 4. `src/modules/okrs/hooks/index.ts`
-- Exportar `useFullConstructionReview`
+Apenas **1 arquivo** precisa de alteração: `useFullConstructionReview.ts`
 
-### 5. `src/routes/okrs.routes.tsx`
-- Adicionar rota `/okrs/construction-review-full` com lazy import e `requiresBuAdmin`
+### Mudança 1: Remover guard `allDone` de dentro de `evaluateCrossTeam`
+
+Linhas 324-325 — remover a checagem `allDone`. A função já recebe `rawObjectives` diretamente (dados brutos), não precisa dos assessments individuais.
+
+### Mudança 2: Trocar trigger do useEffect
+
+Linhas 410-419 — substituir a lógica `allDone` por um timer de 5 segundos após `rawObjectives` e `orgObjectives` estarem disponíveis:
+
+```ts
+useEffect(() => {
+  if (crossAnalysisTriggered.current) return;
+  if (!rawObjectives?.length || !orgObjectives) return;
+  
+  crossAnalysisTriggered.current = true;
+  const timer = setTimeout(() => evaluateCrossTeam(), 5000);
+  return () => clearTimeout(timer);
+}, [rawObjectives, orgObjectives, evaluateCrossTeam]);
+```
+
+### Mudança 3: Limpar dependência de `aiAssessments` no useCallback
+
+Remover `aiAssessments` e `aiErrors` do array de dependências de `evaluateCrossTeam`, já que não são mais usados dentro da função.
 
 ## O que NÃO muda
-- Componentes `ConstructionScoreCard` e `ObjectiveChecklistCard` (reuso direto)
-- Types existentes em `construction-review.ts`
-- Edge function `okr-construction-review` (reutiliza os modos existentes)
-- Hook `useConstructionReview` original
+
+- Edge function (já funciona com dados brutos)
+- `ConstructionScoreCard` (já consome `teamAnalysis` e mostra loading)
+- `OkrFullConstructionReviewPage` (já passa props corretas)
+- Avaliações individuais (continuam em paralelo, independentes)
+- RLS, rotas, permissões
+
+## Conformidade com TCR/Standards
+
+- ✅ Query keys via `src/lib/queryKeys` (já implementado)
+- ✅ `useBuScopedSupabase()` (já implementado)
+- ✅ Edge function usa `withMiddleware` e valida JWT/BU
+- ✅ URL state via `useUrlState` (já implementado)
+- ✅ Sem `select('*')` — campos explícitos
+- ✅ Navegação com `<Link>` (já implementado)
