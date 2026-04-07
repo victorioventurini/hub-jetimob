@@ -405,14 +405,18 @@ export function useFullConstructionReview(cycleId: string | null) {
     }
   }, [crossAnalysisLoading, crossAnalysis, currentBuId, rawObjectives, orgObjectives, buSupabase, cycleId]);
 
+  // Store evaluateCrossTeam in a ref to avoid effect re-runs
+  const evaluateCrossTeamRef = useRef(evaluateCrossTeam);
+  evaluateCrossTeamRef.current = evaluateCrossTeam;
+
   useEffect(() => {
     if (crossAnalysisTriggered.current) return;
     if (!rawObjectives?.length || !orgObjectives) return;
     
     crossAnalysisTriggered.current = true;
-    const timer = setTimeout(() => evaluateCrossTeam(), 5000);
+    const timer = setTimeout(() => evaluateCrossTeamRef.current(), 5000);
     return () => clearTimeout(timer);
-  }, [rawObjectives, orgObjectives, evaluateCrossTeam]);
+  }, [rawObjectives, orgObjectives]);
 
   // Re-evaluate
   const reEvaluateObjective = useCallback((objectiveId: string) => {
