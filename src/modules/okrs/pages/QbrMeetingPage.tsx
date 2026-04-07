@@ -55,10 +55,10 @@ import { normalizeProposedOkrs } from '@/modules/okrs/types/wizard';
 type QbrMeetingStep = 'opening' | 'okr-review' | 'decisions' | 'commitments' | 'closing';
 
 const WIZARD_STEPS = [
-  { id: 'opening' as const, label: 'Abertura', description: 'Pauta e direcionamentos' },
-  { id: 'okr-review' as const, label: 'Revisão OKRs', description: 'Aprovação por time' },
-  { id: 'decisions' as const, label: 'Decisões', description: 'Decisões estratégicas' },
-  { id: 'commitments' as const, label: 'Compromissos', description: 'Cross-área' },
+  { id: 'opening' as const, label: 'Contexto', description: 'Análise do C-Level' },
+  { id: 'okr-review' as const, label: 'Aprovação OKRs', description: 'Time por time' },
+  { id: 'decisions' as const, label: 'Decisões', description: 'Dono e prazo' },
+  { id: 'commitments' as const, label: 'Compromissos', description: 'Entre times' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
 
