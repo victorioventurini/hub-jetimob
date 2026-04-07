@@ -169,6 +169,10 @@ export const okrsKeys = {
   completedSessionForCycle: (wizardType: string, teamId?: string | null, cycleId?: string | null, userId?: string | null) =>
     ['okr-completed-session-cycle', wizardType, teamId ?? 'none', cycleId ?? 'none', userId] as const,
 
+  // Draft objectives from QBR-pre (for wizard hydration)
+  draftObjectives: (teamId: string, cycleId: string) =>
+    ['okr-draft-objectives', teamId, cycleId] as const,
+
   // Wizard drafts (global per user for team OKR creation)
   wizardDraft: (userId: string) =>
     ['okr-wizard-draft', userId] as const,
