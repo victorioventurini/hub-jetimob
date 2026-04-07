@@ -77,7 +77,7 @@ export const ritualRoutes = (
     
     {/* QBR */}
     <Route path="/rituals/qbr-pre" element={<RitualRoute><QbrPrePage /></RitualRoute>} />
-    <Route path="/rituals/qbr-clevel" element={<RitualRoute requiresBuAdmin><QbrPreCLevelPage /></RitualRoute>} />
+    <Route path="/rituals/qbr-clevel" element={<RitualRoute><QbrPreCLevelPage /></RitualRoute>} />
     <Route path="/rituals/qbr" element={<RitualRoute requiresBuAdmin><QbrMeetingPage /></RitualRoute>} />
     <Route path="/rituals/qbr-post" element={<RitualRoute requiresBuAdmin><QbrPostPage /></RitualRoute>} />
     
