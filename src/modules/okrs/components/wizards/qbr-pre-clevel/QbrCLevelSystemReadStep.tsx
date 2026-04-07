@@ -26,6 +26,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
+  KpiStatusBlocks,
 } from '../shared';
 import { AddendumBadge } from '../shared/AddendumBadge';
 import type { QbrPreSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
@@ -310,6 +311,9 @@ export function QbrCLevelSystemReadStep({
             </CardContent>
           </Card>
         )}
+
+        {/* KPIs desatualizados e pendentes */}
+        <KpiStatusBlocks kpiSnapshots={orgKpiSnapshots} />
 
         {/* Sinalizações dos líderes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

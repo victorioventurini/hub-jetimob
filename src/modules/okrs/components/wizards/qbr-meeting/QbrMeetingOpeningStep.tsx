@@ -24,6 +24,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
+  KpiStatusBlocks,
 } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
@@ -453,6 +454,9 @@ export function QbrMeetingOpeningStep({
             </CardContent>
           </Card>
         )}
+
+        {/* Bloco 5b — KPIs desatualizados e pendentes */}
+        <KpiStatusBlocks kpiSnapshots={orgKpiSnapshots} />
 
         {/* Bloco 6 — Agenda da reunião */}
         <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />

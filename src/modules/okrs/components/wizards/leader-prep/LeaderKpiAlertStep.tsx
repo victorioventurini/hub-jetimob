@@ -332,6 +332,52 @@ export function LeaderKpiAlertStep({
                     ))}
                 </div>
               )}
+
+              {/* KPIs desatualizados (needs_update but not in alert) */}
+              {(() => {
+                const outdatedKpis = allAlertKpis.filter(k => k.alertReason === 'outdated');
+                const pendingKpis = allAlertKpis.filter(k => k.latest_value === null);
+                return (
+                  <>
+                    {outdatedKpis.length > 0 && (
+                      <div className="space-y-3 mt-6">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          KPIs Desatualizados ({outdatedKpis.length})
+                        </div>
+                        {outdatedKpis.map(kpi => (
+                          <KpiAlertItem
+                            key={`outdated-${kpi.id}`}
+                            kpi={kpi}
+                            markedForDiscussion={markedForDiscussion.includes(kpi.id)}
+                            markedForFollowup={markedForFollowup.includes(kpi.id)}
+                            onMarkDiscussion={(m) => onMarkForDiscussion(kpi.id, m)}
+                            onMarkFollowup={(m) => onMarkForFollowup(kpi.id, m)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {pendingKpis.length > 0 && (
+                      <div className="space-y-3 mt-6">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Activity className="h-4 w-4" />
+                          KPIs Pendentes ({pendingKpis.length})
+                        </div>
+                        {pendingKpis.map(kpi => (
+                          <KpiAlertItem
+                            key={`pending-${kpi.id}`}
+                            kpi={kpi}
+                            markedForDiscussion={markedForDiscussion.includes(kpi.id)}
+                            markedForFollowup={markedForFollowup.includes(kpi.id)}
+                            onMarkDiscussion={(m) => onMarkForDiscussion(kpi.id, m)}
+                            onMarkFollowup={(m) => onMarkForFollowup(kpi.id, m)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </>
           )}
         </div>

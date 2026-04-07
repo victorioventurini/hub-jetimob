@@ -22,6 +22,7 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
+  KpiStatusBlocks,
 } from '../shared';
 import type {
   MbrKpiSnapshot,
@@ -174,6 +175,9 @@ export function QbrKpiAnalysisStep({
             })}
           </div>
         )}
+
+        {/* KPIs desatualizados e pendentes */}
+        <KpiStatusBlocks kpiSnapshots={kpiSnapshots} />
 
         {/* Healthy KPIs */}
         {healthyKpis.length > 0 && (

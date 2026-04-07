@@ -70,3 +70,6 @@ export type { KrLinkedDetailsProps } from './KrLinkedDetails';
 
 export { TeamKrsToggle } from './TeamKrsToggle';
 export type { TeamKrsToggleProps } from './TeamKrsToggle';
+
+export { KpiStatusBlocks, OutdatedKpisBlock, PendingKpisBlock, useKpiStatusClassification } from './KpiStatusBlocks';
+export type { KpiStatusBlocksProps } from './KpiStatusBlocks';

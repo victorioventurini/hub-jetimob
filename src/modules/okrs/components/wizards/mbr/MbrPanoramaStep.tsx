@@ -26,7 +26,7 @@ import {
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge, TeamKrsToggle } from '../shared';
+import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge, TeamKrsToggle, KpiStatusBlocks } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { formatValueWithUnit } from '@/shared/constants/units';
@@ -487,6 +487,9 @@ export function MbrPanoramaStep({
               <span className="font-medium">{atRiskCount} KPI{atRiskCount !== 1 ? 's' : ''} em atenção</span>
             </div>
           )}
+
+          {/* KPIs desatualizados e pendentes */}
+          <KpiStatusBlocks kpiSnapshots={kpiSnapshots} />
 
           {kpiSnapshots.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
