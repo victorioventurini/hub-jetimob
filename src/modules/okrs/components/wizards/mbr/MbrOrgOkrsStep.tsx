@@ -114,6 +114,10 @@ export function MbrOrgOkrsStep({
           description="Validação de prioridades estratégicas"
           variant="purple"
           badge={`${orgOkrSnapshots.length}`}
+          rightContent={
+            <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+          }
+        />
         />
       }
       bottomFixed={
