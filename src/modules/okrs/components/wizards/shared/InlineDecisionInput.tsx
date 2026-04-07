@@ -145,18 +145,20 @@ export function InlineDecisionInput({
 
           {/* Step decisions list — using DecisionCard with owner/deadline */}
           {stepDecisions.length > 0 && (
-            <div className="space-y-2">
-              {stepDecisions.map((decision) => (
-                <DecisionCard
-                  key={decision.id}
-                  decision={decision}
-                  onUpdate={handleUpdate}
-                  onRemove={handleRemove}
-                  showReclassify
-                  showOwnerDeadline
-                />
-              ))}
-            </div>
+            <ScrollArea className="max-h-[40vh]">
+              <div className="space-y-2 pr-2">
+                {stepDecisions.map((decision) => (
+                  <DecisionCard
+                    key={decision.id}
+                    decision={decision}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    showReclassify
+                    showOwnerDeadline
+                  />
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </div>
       </CollapsibleContent>
