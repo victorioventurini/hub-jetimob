@@ -283,7 +283,7 @@ export function QbrCLevelSystemReadStep({
                 const isAlert = kpi.ragStatus === 'red' || kpi.ragStatus === 'yellow';
                 return (
                   <div key={kpi.kpiId} className="flex items-center justify-between gap-2 text-sm">
-                    <span className={cn('truncate flex-1', isAlert && 'font-medium')}>{kpi.name}</span>
+                    <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className={cn('flex-1 text-sm', isAlert && 'font-medium')} />
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-muted-foreground">
                         {kpi.currentValue != null ? kpi.currentValue : '—'}{kpi.target != null ? ` / ${kpi.target}` : ''} {kpi.unit}

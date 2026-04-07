@@ -154,7 +154,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
         )}>
           <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium truncate flex-1">{kpi.name}</p>
+              <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm font-medium flex-1" />
               <Badge variant="secondary" className={cn('text-xs ml-2', ragBadgeClass(kpi.ragStatus))}>
                 {kpi.ragStatus === 'green' ? 'OK' : kpi.ragStatus === 'yellow' ? 'Atenção' : kpi.ragStatus === 'red' ? 'Crítico' : 'Sem dados'}
               </Badge>

@@ -130,7 +130,7 @@ export function MbrKpiGateStep({
                         kpi.ragStatus === 'red' ? 'text-status-red' : 'text-status-amber'
                       )}
                     />
-                    <p className="font-medium text-sm truncate">{kpi.name}</p>
+                    <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="font-medium text-sm" />
                   </div>
                   <Badge
                     variant="secondary"

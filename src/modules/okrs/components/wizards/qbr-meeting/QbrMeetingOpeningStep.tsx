@@ -464,7 +464,7 @@ export function QbrMeetingOpeningStep({
             <CardContent className="space-y-1">
               {alertKpis.slice(0, 5).map(kpi => (
                 <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
-                  <span className="truncate flex-1">{kpi.name}</span>
+                  <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="flex-1 text-xs" />
                   <span className="text-muted-foreground shrink-0">
                     {kpi.currentValue != null ? kpi.currentValue : '—'}{kpi.target != null ? ` / ${kpi.target}` : ''} {kpi.unit}
                   </span>
