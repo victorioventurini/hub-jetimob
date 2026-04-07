@@ -542,6 +542,14 @@ export function QbrMeetingOkrReviewStep({
           </div>
         )}
 
+        {/* Team delivery scorecard */}
+        {current && orgObjectives.length > 0 && (
+          <TeamDeliveryScorecard
+            data={buildTeamScorecardFromOrgObjectives(current.teamId, current.teamName, orgObjectives)}
+            compact
+          />
+        )}
+
         {/* Calibration flags */}
         {teamCalibrationFlags.length > 0 && (
           <div className="space-y-1">
