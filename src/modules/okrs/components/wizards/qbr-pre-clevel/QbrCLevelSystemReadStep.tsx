@@ -312,6 +312,9 @@ export function QbrCLevelSystemReadStep({
           </Card>
         )}
 
+        {/* KPIs desatualizados e pendentes */}
+        <KpiStatusBlocks kpiSnapshots={orgKpiSnapshots} />
+
         {/* Sinalizações dos líderes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {zombieCount > 0 && (
