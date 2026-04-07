@@ -395,6 +395,7 @@ export function QbrCLevelQuarterBalanceStep({
                 <h3 className="font-semibold text-base">
                   Como foram os OKRs da empresa no {cycleName}
                 </h3>
+                <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
               </div>
 
               {(!orgObjectives || orgObjectives.length === 0) ? (
