@@ -8,8 +8,18 @@
  * - Loading states
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, SkipForward, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -150,14 +160,47 @@ export function WizardFirstStepFooter(props: Omit<WizardStepFooterProps, 'showBa
   return <WizardStepFooter {...props} showBack={false} />;
 }
 
-/** Footer for last step (complete button) */
+/** Footer for last step (complete button) with confirmation dialog */
 export function WizardLastStepFooter(props: Omit<WizardStepFooterProps, 'primaryLabel' | 'primaryVariant'>) {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handlePrimaryClick = () => {
+    setShowConfirm(true);
+  };
+
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    props.onPrimary?.();
+  };
+
   return (
-    <WizardStepFooter 
-      {...props} 
-      primaryLabel={props.primaryLoading ? 'Concluindo...' : 'Concluir'} 
-      primaryVariant="success" 
-    />
+    <>
+      <WizardStepFooter 
+        {...props} 
+        primaryLabel={props.primaryLoading ? 'Concluindo...' : 'Concluir'} 
+        primaryVariant="success"
+        onPrimary={handlePrimaryClick}
+      />
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir ritual</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao confirmar, os dados serão salvos e o ritual será marcado como concluído. 
+              Tem certeza de que deseja prosseguir?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Confirmar conclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
