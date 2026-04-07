@@ -217,6 +217,34 @@ export default function MbrPage() {
         : null;
 
 
+      return {
+        kpiId: kpi.id,
+        name: kpi.name,
+        currentValue: kpi.latest_value,
+        previousValue: null,
+        target: kpi.target_value,
+        ragStatus: kpi.latest_rag_status === 'on_track' ? 'green'
+          : kpi.latest_rag_status === 'at_risk' ? 'yellow'
+          : kpi.latest_rag_status === 'off_track' ? 'red'
+          : 'no_data',
+        variationVsLastMonth: null,
+        variationVsTarget: variation,
+        requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
+        unit: kpi.unit ?? '%',
+        lastValueAt: kpi.latest_reference_date ?? null,
+        scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'org',
+        areaId: kpi.area_id ?? null,
+        areaName: kpi.areaName,
+        areaColor: kpi.areaColor,
+        teamId: kpi.team_id ?? null,
+        teamName: kpi.teamName,
+      };
+    });
+
+    updateDraft({ kpiSnapshots: snapshots });
+    seededKpisRef.current = true;
+  }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
+
   // ── v1.2: Org objectives view + scorecard metrics ──
   const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
   const { data: orgObjView } = useAllOrgObjectivesView(cycleYear, quarterlyCycle?.id);
@@ -247,35 +275,6 @@ export default function MbrPage() {
     const noSubmission = snapshots.filter(t => t.objectives.length === 0).length;
     return { healthy, atRisk, offTrack, noSubmission };
   }, [draft.data.teamOkrSnapshots, quarterlyCycle]);
-
-
-      return {
-        kpiId: kpi.id,
-        name: kpi.name,
-        currentValue: kpi.latest_value,
-        previousValue: null,
-        target: kpi.target_value,
-        ragStatus: kpi.latest_rag_status === 'on_track' ? 'green'
-          : kpi.latest_rag_status === 'at_risk' ? 'yellow'
-          : kpi.latest_rag_status === 'off_track' ? 'red'
-          : 'no_data',
-        variationVsLastMonth: null,
-        variationVsTarget: variation,
-        requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
-        unit: kpi.unit ?? '%',
-        lastValueAt: kpi.latest_reference_date ?? null,
-        scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'org',
-        areaId: kpi.area_id ?? null,
-        areaName: kpi.areaName,
-        areaColor: kpi.areaColor,
-        teamId: kpi.team_id ?? null,
-        teamName: kpi.teamName,
-      };
-    });
-
-    updateDraft({ kpiSnapshots: snapshots });
-    seededKpisRef.current = true;
-  }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
 
   // ── Load team OKRs and seed teamOkrSnapshots ──
 

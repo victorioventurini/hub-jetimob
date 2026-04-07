@@ -13,6 +13,10 @@ import type { WizardPersona } from '../types/wizard';
 import type { CycleWithStatus } from './useActiveCycle';
 import { addBusinessDaysToDate } from '../utils/generateCycles';
 
+// ⚠️ TEMPORARY DEV FLAG — remove after QBR flow testing
+const DEV_FORCE_QBR_AVAILABLE = true;
+const DEV_QBR_TYPES: WizardPersona[] = ['qbr-pre', 'qbr-pre-clevel', 'qbr-meeting', 'qbr-post'];
+
 // ============================================================
 // TYPES
 // ============================================================
@@ -202,6 +206,17 @@ export function useRitualAvailability(
   cycle: CycleWithStatus | null | undefined,
 ): RitualAvailability {
   return useMemo((): RitualAvailability => {
+    // ⚠️ TEMPORARY: Force all QBR rituals available for testing
+    if (DEV_FORCE_QBR_AVAILABLE && DEV_QBR_TYPES.includes(wizardType)) {
+      return {
+        isAvailable: true,
+        opensAt: null,
+        closesAt: null,
+        reason: 'available',
+        message: '',
+      };
+    }
+
     const label = RITUAL_LABELS[wizardType] || wizardType;
 
     // No cycle active
