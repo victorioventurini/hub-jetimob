@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -145,18 +146,20 @@ export function InlineDecisionInput({
 
           {/* Step decisions list — using DecisionCard with owner/deadline */}
           {stepDecisions.length > 0 && (
-            <div className="space-y-2">
-              {stepDecisions.map((decision) => (
-                <DecisionCard
-                  key={decision.id}
-                  decision={decision}
-                  onUpdate={handleUpdate}
-                  onRemove={handleRemove}
-                  showReclassify
-                  showOwnerDeadline
-                />
-              ))}
-            </div>
+            <ScrollArea className="max-h-[40vh]">
+              <div className="space-y-2 pr-2">
+                {stepDecisions.map((decision) => (
+                  <DecisionCard
+                    key={decision.id}
+                    decision={decision}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    showReclassify
+                    showOwnerDeadline
+                  />
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </div>
       </CollapsibleContent>
