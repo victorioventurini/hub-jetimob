@@ -115,7 +115,7 @@ function TeamKrRow({ tkr }: { tkr: TeamKrLinked }) {
   );
 }
 
-function OrgKrCard({ orgKr }: { orgKr: OrgKrWithTeamKrs }) {
+function OrgKrCard({ orgKr, showTeamKrs }: { orgKr: OrgKrWithTeamKrs; showTeamKrs: boolean }) {
   const krState = calculateKrState(buildKrStateParams({
     ...orgKr,
     last_checkin_at: null,
@@ -136,16 +136,18 @@ function OrgKrCard({ orgKr }: { orgKr: OrgKrWithTeamKrs }) {
         status={orgKr.status}
         size="sm"
       />
-      {orgKr.linkedTeamKrs.length > 0 ? (
-        <div className="border-l-2 border-primary/20 ml-2 space-y-0.5">
-          {orgKr.linkedTeamKrs.map(tkr => (
-            <TeamKrRow key={tkr.id} tkr={tkr} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground pl-6 italic">
-          Nenhum time contribuiu para esta KR neste quarter
-        </p>
+      {showTeamKrs && (
+        orgKr.linkedTeamKrs.length > 0 ? (
+          <div className="border-l-2 border-primary/20 ml-2 space-y-0.5">
+            {orgKr.linkedTeamKrs.map(tkr => (
+              <TeamKrRow key={tkr.id} tkr={tkr} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground pl-6 italic">
+            Nenhum time contribuiu para esta KR neste quarter
+          </p>
+        )
       )}
     </div>
   );
