@@ -10,14 +10,12 @@ import { HubLayout } from '@/components/layout/HubLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useKpiDetail } from '@/modules/kpis/hooks';
-import { useKpiDetail } from '@/modules/kpis/hooks';
 import { KpiDetailContent } from '../components/KpiDetailContent';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AlertCircle } from 'lucide-react';
 
 export default function KpiDetailPage() {
   const { kpiId } = useParams<{ kpiId: string }>();
-  const goBack = useSafeBack({ moduleRoot: '/kpis' });
   const { kpi, isLoading } = useKpiDetail(kpiId || '');
 
   usePageTitle(kpi?.name ?? 'Indicador', {
