@@ -376,6 +376,7 @@ export function QbrMeetingClosingStep({
   onRitualFeedbackChange,
   approvals,
   decisions,
+  onDecisionsChange,
   crossCommitments,
   totalTeamsForReview,
   orgObjectives = [],
