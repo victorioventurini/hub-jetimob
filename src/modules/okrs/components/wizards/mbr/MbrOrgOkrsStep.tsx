@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Target, TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, User, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter, WizardStepScaffold, InlineDecisionInput } from '../shared';
+import { WizardStepHeader, WizardStepFooter, WizardStepScaffold, InlineDecisionInput, TeamKrsToggle } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import type { MbrOrgOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
