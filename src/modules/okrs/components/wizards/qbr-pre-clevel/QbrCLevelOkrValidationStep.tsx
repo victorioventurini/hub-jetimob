@@ -143,6 +143,9 @@ export function QbrCLevelOkrValidationStep({
       }
     >
       <div className="p-6 space-y-6">
+        <p className="text-sm text-muted-foreground">
+          Adicione flags onde a proposta precisa de ajuste. Na reunião, a sala vai ver sua análise antes de votar.
+        </p>
         {/* Team navigation */}
         <div className="flex items-center justify-between">
           <Button
