@@ -287,7 +287,7 @@ describe('QbrMeetingCommitmentsStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Compromissos Cross-Área')).toBeInTheDocument();
+    expect(screen.getByText('Compromissos entre times')).toBeInTheDocument();
   });
 
   it('shows empty state when no commitments', () => {

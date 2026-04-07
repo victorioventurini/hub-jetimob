@@ -287,7 +287,7 @@ describe('QbrCLevelDirectivesStep', () => {
 
   it('renders header with title', () => {
     renderDirectives();
-    expect(screen.getByText('Direcionamentos e Decisões')).toBeInTheDocument();
+    expect(screen.getByText('Pauta obrigatória da reunião')).toBeInTheDocument();
   });
 
   it('shows empty state when no directives', () => {
