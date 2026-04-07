@@ -794,74 +794,58 @@ async function handleTeamAnalysis(
     });
   }
 
+  // Build compact objective list — limit description length to save prompt space
   const objectivesList = objectives.map((obj, i) => {
-    const krList = (obj.keyResults || []).map((kr, j) => 
-      `  ${j + 1}. "${kr.title}" | Tipo: ${kr.type || 'N/A'} | Baseline: ${kr.baseline ?? 'N/A'} | Target: ${kr.target ?? 'N/A'} ${kr.unit || ''} | Dono: ${kr.hasOwner ? 'Definido' : 'NÃO'}`
+    const krList = (obj.keyResults || []).slice(0, 5).map((kr, j) => 
+      `  ${j + 1}. "${kr.title}" (${kr.type || '-'}, ${kr.baseline ?? '-'}→${kr.target ?? '-'}${kr.unit ? ' ' + kr.unit : ''}, dono: ${kr.hasOwner ? 'sim' : 'não'})`
     ).join('\n');
-    return `**${i + 1}. ${obj.title}**
-${obj.description ? `   Descrição: ${obj.description}` : ''}
-   Vinculado a: ${obj.orgObjectiveTitle || 'NÃO VINCULADO'}
-   Key Results (${obj.keyResults.length}):
+    const desc = obj.description ? ` — ${obj.description.slice(0, 80)}` : '';
+    return `${i + 1}. "${obj.title}"${desc}
+   Vinculado: ${obj.orgObjectiveTitle || 'NÃO'}
+   Time: ${obj.teamName || 'N/A'}
 ${krList}`;
-  }).join('\n\n');
+  }).join('\n');
 
   const orgObjectivesList = (orgObjectives || []).map((org, i) => {
-    const orgKrList = (org.keyResults || []).map((kr, j) => 
-      `  - KR${j + 1}: "${kr.title}" | Baseline: ${kr.baseline ?? 'N/A'} → Target: ${kr.target ?? 'N/A'} ${kr.unit || ''}`
+    const orgKrList = (org.keyResults || []).slice(0, 3).map((kr, j) => 
+      `  KR${j + 1}: "${kr.title}" (${kr.baseline ?? '-'}→${kr.target ?? '-'}${kr.unit ? ' ' + kr.unit : ''})`
     ).join('\n');
-    return `${i + 1}. **"${org.title}"**${org.description ? ` - ${org.description}` : ''}
-${orgKrList || '  (sem Key Results definidos)'}`;
-  }).join('\n\n') || 'Nenhum OKR organizacional definido';
+    return `${i + 1}. "${org.title}"${org.description ? ` — ${org.description.slice(0, 60)}` : ''}
+${orgKrList || '  (sem KRs)'}`;
+  }).join('\n') || 'Nenhum OKR org definido';
 
+  // Compact other teams list — just titles
   const otherTeamsList = (otherTeamsObjectives || []).map(team => 
-    `**${team.teamName}** (Líder: ${team.leaderFirstName}):
-${team.objectives.map((obj, i) => `  ${i + 1}. "${obj.title}"`).join('\n')}`
-  ).join('\n\n') || 'Nenhum outro time com OKRs no ciclo';
+    `${team.teamName}: ${team.objectives.map(o => `"${o.title}"`).join(', ')}`
+  ).join('\n') || 'Nenhum';
 
-  const userQuestion = `Faça uma ANÁLISE CONSOLIDADA dos OKRs deste time e responda OBRIGATORIAMENTE em JSON:
+  // Build prompt and enforce 9500 char limit
+  const promptParts = {
+    header: `Análise consolidada de OKRs. Responda em JSON.\n\nTIME: ${teamName || 'N/A'}\n`,
+    objectives: `\nOBJETIVOS (${objectives.length}):\n${objectivesList}\n`,
+    orgObjectives: `\nOKRs ORG:\n${orgObjectivesList}\n`,
+    otherTeams: `\nOUTROS TIMES:\n${otherTeamsList}\n`,
+    instructions: `\nAnalise: 1) Score consolidado (0-100), 2) Resumo executivo, 3) Alinhamento com OKRs org (cobertos vs não cobertos), 4) Sugestões de objetivos compartilhados entre times.\n\nJSON exato:\n{"consolidatedScore":N,"consolidatedSummary":"...","orgAlignmentAnalysis":{"score":N,"coveredOrgObjectives":["..."],"uncoveredOrgObjectives":["..."],"feedback":"..."},"sharedSuggestions":[{"objectiveId":"...","objectiveTitle":"...","suggestedTeamId":"...","suggestedTeamName":"...","suggestedLeaderFirstName":"...","suggestedObjectiveId":"...","suggestedObjectiveTitle":"...","reason":"..."}]}`,
+  };
 
-**TIME:** ${teamName || 'Não especificado'}
+  let userQuestion = promptParts.header + promptParts.objectives + promptParts.orgObjectives + promptParts.otherTeams + promptParts.instructions;
 
-=== OBJETIVOS DO TIME (${objectives.length}) ===
-${objectivesList}
+  // If still too large, progressively trim
+  if (userQuestion.length > 9500) {
+    console.log(`[cross-team] Prompt too large (${userQuestion.length}), trimming other teams`);
+    // Remove other teams section first
+    userQuestion = promptParts.header + promptParts.objectives + promptParts.orgObjectives + '\nOUTROS TIMES: (omitido por tamanho)\n' + promptParts.instructions;
+  }
 
-=== OKRs ORGANIZACIONAIS DO CICLO ===
-${orgObjectivesList}
+  if (userQuestion.length > 9500) {
+    console.log(`[cross-team] Still too large (${userQuestion.length}), trimming objectives`);
+    // Truncate objectives to fit
+    const maxObjChars = 9500 - promptParts.header.length - promptParts.orgObjectives.length - promptParts.instructions.length - 200;
+    const truncatedObjectives = objectivesList.slice(0, Math.max(500, maxObjChars));
+    userQuestion = promptParts.header + `\nOBJETIVOS (${objectives.length}, resumido):\n${truncatedObjectives}\n` + promptParts.orgObjectives + promptParts.instructions;
+  }
 
-=== OBJETIVOS DE OUTROS TIMES (para identificar sinergias) ===
-${otherTeamsList}
-
----
-
-Analise:
-1. Score consolidado de qualidade de construção (0-100)
-2. Resumo executivo da qualidade do conjunto de OKRs
-3. Alinhamento com OKRs organizacionais (quais estão cobertos, quais não)
-4. Sugestões de OBJETIVOS COMPARTILHADOS: identifique sinergias entre os objetivos deste time e de outros times. Para cada sinergia, sugira uma conversa no formato "Troque uma ideia com [nome] do time [time]. O objetivo [objetivo dele] parece ter sinergia com o seu [objetivo do time atual]."
-
-Responda com JSON válido no formato EXATO abaixo:
-{
-  "consolidatedScore": number (0-100),
-  "consolidatedSummary": "Resumo executivo em 3-4 frases sobre a qualidade geral",
-  "orgAlignmentAnalysis": {
-    "score": number (0-100),
-    "coveredOrgObjectives": ["título do objetivo org coberto 1", "título 2"],
-    "uncoveredOrgObjectives": ["título do objetivo org NÃO coberto"],
-    "feedback": "Análise do alinhamento estratégico"
-  },
-  "sharedSuggestions": [
-    {
-      "objectiveId": "id do objetivo deste time",
-      "objectiveTitle": "título do objetivo deste time",
-      "suggestedTeamId": "id do time sugerido",
-      "suggestedTeamName": "nome do time sugerido",
-      "suggestedLeaderFirstName": "primeiro nome do líder",
-      "suggestedObjectiveId": "id do objetivo do outro time",
-      "suggestedObjectiveTitle": "título do objetivo do outro time",
-      "reason": "Por que esses objetivos têm sinergia"
-    }
-  ]
-}`;
+  console.log(`[cross-team] Final prompt length: ${userQuestion.length} chars`);
 
   const contextData = {
     type: "okr_team_analysis",
