@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2, Star, BarChart3, Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardLastStepFooter } from '../shared';
+import { WizardStepHeader, WizardLastStepFooter, InlineDecisionInput } from '../shared';
 import type {
   MbrGovernanceChecklist,
   RitualImprovementFeedback,
