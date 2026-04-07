@@ -283,27 +283,68 @@ function GovernanceSummary({
         </div>
 
         {/* Decisions section */}
-        <div className="space-y-1 pt-2 border-t">
-          <p className="text-xs font-medium text-muted-foreground">Decisões:</p>
-          <p className="text-xs">{decisions.length} decisões registradas</p>
-          <div className="flex gap-3 text-xs text-muted-foreground">
-            <span>· {decisionsWithOwner} com dono definido</span>
-            {decisions.length - decisionsWithOwner > 0 && (
-              <span className="text-status-amber">· {decisions.length - decisionsWithOwner} sem dono ⚠️</span>
-            )}
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground">Decisões ({decisions.length}):</p>
+            <div className="flex gap-3 text-[10px] text-muted-foreground">
+              <span>{decisionsWithOwner} com dono</span>
+              {decisions.length - decisionsWithOwner > 0 && (
+                <span className="text-status-amber">{decisions.length - decisionsWithOwner} sem dono ⚠️</span>
+              )}
+            </div>
           </div>
+          {decisions.length > 0 ? (
+            <div className="space-y-1.5">
+              {decisions.map((d) => (
+                <div key={d.id} className="flex items-start gap-2 text-xs p-2 rounded bg-muted/40 border">
+                  <Handshake className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <p className="break-words">{d.text}</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                      {d.owner?.name && <span>Dono: {d.owner.name}</span>}
+                      {d.deadline && <span>Prazo: {d.deadline}</span>}
+                      {d.sourceStep && <span className="italic">#{d.sourceStep}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Nenhuma decisão registrada.</p>
+          )}
         </div>
 
         {/* Commitments section */}
-        <div className="space-y-1 pt-2 border-t">
-          <p className="text-xs font-medium text-muted-foreground">Compromissos:</p>
-          <p className="text-xs">{crossCommitments.length} compromisso{crossCommitments.length !== 1 ? 's' : ''} cross-área formalizados</p>
-          <div className="flex gap-3 text-xs text-muted-foreground">
-            <span>· {commitmentsWithResponsible} com responsável definido</span>
-            {crossCommitments.length - commitmentsWithResponsible > 0 && (
-              <span>· {crossCommitments.length - commitmentsWithResponsible} sem responsável</span>
-            )}
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground">Compromissos cross-área ({crossCommitments.length}):</p>
+            <div className="flex gap-3 text-[10px] text-muted-foreground">
+              <span>{commitmentsWithResponsible} com responsável</span>
+              {crossCommitments.length - commitmentsWithResponsible > 0 && (
+                <span className="text-status-amber">{crossCommitments.length - commitmentsWithResponsible} sem responsável</span>
+              )}
+            </div>
           </div>
+          {crossCommitments.length > 0 ? (
+            <div className="space-y-1.5">
+              {crossCommitments.map((c, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs p-2 rounded bg-muted/40 border">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <p className="break-words">{c.description}</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                      <span>De: {c.fromTeamId?.slice(0, 8)}…</span>
+                      <span>Para: {c.toTeamId?.slice(0, 8)}…</span>
+                      {c.responsibleUserName && <span>Resp: {c.responsibleUserName}</span>}
+                      {c.deadline && <span>Prazo: {c.deadline}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Nenhum compromisso registrado.</p>
+          )}
         </div>
 
         {/* Org KR coverage */}
