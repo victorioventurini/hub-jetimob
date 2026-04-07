@@ -418,6 +418,8 @@ export default function QbrMeetingPage() {
             orgObjectives={orgObjectives || []}
             scorecardMetrics={scorecardMetrics}
             currentStepIndex={STEP_ORDER.indexOf(draft.currentStep)}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
           />
         );
