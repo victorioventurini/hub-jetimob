@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 const KPI_IDS = {
   mrrChurn: 'db355067-64bf-403b-b24b-f0d961ab4f3c',
   mrrCommit: '6b8c68f8-55d4-48aa-9520-a486d879fba8',
+  expansion: 'c6d1834b-ae82-4f40-bd2c-63233c8f6d23',
   budget: '916f4cbf-beee-4819-ad24-54322101e645',
 } as const;
 
