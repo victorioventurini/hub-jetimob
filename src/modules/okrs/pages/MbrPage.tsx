@@ -740,6 +740,7 @@ export default function MbrPage() {
         return (
           <MbrClosingStep
             decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             checklist={draft.data.checklist}
             onChecklistChange={(checklist: MbrGovernanceChecklist) => updateDraft({ checklist })}
             ritualFeedback={draft.data.ritualFeedback}
