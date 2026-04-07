@@ -93,8 +93,9 @@ export default function QbrMeetingPage() {
 
   usePageTitle('Reunião QBR');
 
-  // Cycle (status-based)
-  const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  // Cycle: QBR reviews the closing/just-closed quarter, not the newly active one
+  const { lastClosedQuarterlyCycle, activeQuarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
+  const quarterlyCycle = lastClosedQuarterlyCycle || activeQuarterlyCycle;
   const availability = useRitualAvailability('qbr-meeting', quarterlyCycle);
 
   // Draft persistence
