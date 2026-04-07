@@ -101,6 +101,16 @@ export default function QbrMeetingPage() {
   const quarterlyCycle = lastClosedQuarterlyCycle || activeQuarterlyCycle;
   const availability = useRitualAvailability('qbr-meeting', quarterlyCycle);
 
+  // Permissions (for reopen)
+  const { isWildcard } = usePermissions();
+
+  // Detect completed session for this cycle
+  const {
+    sessionState,
+    completedSession,
+    isLoading: isLoadingCompletedSession,
+  } = useCompletedSessionForCycle('qbr-meeting', null, quarterlyCycle?.id);
+
   // Draft persistence
   const {
     draft,
@@ -109,6 +119,7 @@ export default function QbrMeetingPage() {
     clearDraft,
     discardDraft,
     saveDraft,
+    reopenSession,
     isDirty,
     isSaving,
     isResumingDraft,
@@ -121,6 +132,37 @@ export default function QbrMeetingPage() {
     defaultData: DEFAULT_DATA,
     enabled: !!quarterlyCycle,
   });
+
+  // Track whether we're showing completed view or wizard
+  const [showCompletedView, setShowCompletedView] = useState(false);
+
+  // When completed session detected and draft is empty, show completed view
+  useEffect(() => {
+    if (sessionState === 'completed' && completedSession && !isResumingDraft) {
+      // Check if localStorage has an existing draft (user was editing)
+      const storageKey = `okr-draft.qbr-meeting`;
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) {
+          setShowCompletedView(true);
+        }
+      } catch {
+        setShowCompletedView(true);
+      }
+    }
+  }, [sessionState, completedSession, isResumingDraft]);
+
+  // Handle reopen
+  const handleReopen = useCallback(async () => {
+    if (!completedSession) return;
+    const success = await reopenSession(completedSession.id);
+    if (success) {
+      setShowCompletedView(false);
+      toast.success('Rito reaberto para edição.');
+    } else {
+      toast.error('Erro ao reabrir o rito. Tente novamente.');
+    }
+  }, [completedSession, reopenSession]);
 
   // ── Load C-Level pré-QBR session (directives, calibration flags) ──
   const { data: cLevelSession, isLoading: isLoadingCLevel } = useQuery({
