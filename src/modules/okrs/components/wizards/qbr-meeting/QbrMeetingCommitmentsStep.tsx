@@ -42,6 +42,9 @@ export interface QbrMeetingCommitmentsStepProps {
   approvals?: QbrMeetingSnapshot['approvals'];
   /** Times com suas propostas para exibir OKRs aprovados */
   teamsForReview?: TeamForReview[];
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }

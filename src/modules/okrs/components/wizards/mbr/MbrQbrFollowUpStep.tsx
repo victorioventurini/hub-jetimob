@@ -40,6 +40,9 @@ export interface QbrFollowUpItem {
 interface MbrQbrFollowUpStepProps {
   followUpItems: QbrFollowUpItem[];
   onFollowUpItemsChange: (items: QbrFollowUpItem[]) => void;
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }

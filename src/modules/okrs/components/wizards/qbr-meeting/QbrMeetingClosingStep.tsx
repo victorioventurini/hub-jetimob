@@ -42,6 +42,7 @@ export interface QbrMeetingClosingStepProps {
   onRitualFeedbackChange: (feedback: RitualImprovementFeedback[]) => void;
   approvals: QbrMeetingSnapshot['approvals'];
   decisions: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   crossCommitments: QbrMeetingSnapshot['crossCommitments'];
   totalTeamsForReview: number;
   orgObjectives?: OrgObjectiveWithKrs[];

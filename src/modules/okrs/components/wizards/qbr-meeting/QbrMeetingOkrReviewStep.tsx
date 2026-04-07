@@ -67,6 +67,9 @@ export interface QbrMeetingOkrReviewStepProps {
   orgObjectives?: OrgObjectiveWithKrs[];
   currentTeamIndex: number;
   onCurrentTeamIndexChange: (index: number) => void;
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }

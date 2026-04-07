@@ -32,6 +32,7 @@ import type {
 
 export interface MbrClosingStepProps {
   decisions: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   checklist: MbrGovernanceChecklist;
   onChecklistChange: (checklist: MbrGovernanceChecklist) => void;
   ritualFeedback: RitualImprovementFeedback[];
