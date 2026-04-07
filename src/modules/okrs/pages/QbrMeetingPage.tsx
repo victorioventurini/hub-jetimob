@@ -461,6 +461,8 @@ export default function QbrMeetingPage() {
             teams={buTeams || []}
             approvals={draft.data.approvals}
             teamsForReview={teamsForReview}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />
