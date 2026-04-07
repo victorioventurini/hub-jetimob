@@ -365,6 +365,7 @@ export function QbrCLevelQuarterBalanceStep({
          <WizardStepHeader
           icon={BarChart3}
           title={`Balanço do Quarter — ${cycleName}`}
+          tooltip="qbr-clevel-balance"
           description={`Desempenho dos OKRs organizacionais e entrega dos times no ${cycleName}`}
           variant="primary"
         />
