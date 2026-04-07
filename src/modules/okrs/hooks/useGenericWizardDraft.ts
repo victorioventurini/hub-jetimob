@@ -49,6 +49,7 @@ export interface UseGenericWizardDraftReturn<TStep extends string, TData> {
   clearDraft: () => Promise<string | null>;
   discardDraft: () => Promise<void>;
   saveDraft: () => Promise<void>;
+  reopenSession: (sessionId: string) => Promise<boolean>;
   isDirty: boolean;
   isSaving: boolean;
   isResumingDraft: boolean;
