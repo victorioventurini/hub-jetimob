@@ -176,7 +176,7 @@ describe('QbrCLevelSystemReadStep', () => {
 describe('QbrCLevelStrategicStep', () => {
   function renderStrategic(overrides: Partial<QbrCLevelStrategicStepProps> = {}) {
     const props: QbrCLevelStrategicStepProps = {
-      strategicAnalysis: { alignmentAssessment: '', signalsTeamsMissed: '', whatNotToDo: '' },
+      strategicAnalysis: { alignmentPastQuarter: '', alignmentNextQuarter: '', signalsTeamsMissed: '', whatNotToDo: '' },
       onStrategicAnalysisChange: vi.fn(),
       decisions: [],
       onDecisionsChange: vi.fn(),
