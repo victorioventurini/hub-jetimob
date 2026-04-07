@@ -316,107 +316,101 @@ export function useFullConstructionReview(cycleId: string | null) {
     });
   }, [allObjectives]);
 
-  // Cross-team analysis trigger
-  const evaluateCrossTeam = useCallback(async () => {
-    if (crossAnalysisLoading || crossAnalysis || !currentBuId) return;
-    if (!rawObjectives?.length || !orgObjectives) return;
-
-
-    setCrossAnalysisLoading(true);
-    setCrossAnalysisError(null);
-
-    // Build per-team data for cross-team analysis
-    const teamMap = new Map<string, typeof rawObjectives>();
-    for (const obj of rawObjectives) {
-      if (!teamMap.has(obj.team_id)) teamMap.set(obj.team_id, []);
-      teamMap.get(obj.team_id)!.push(obj);
-    }
-
-    const teamsPayload = Array.from(teamMap.entries()).map(([teamId, objs]) => ({
-      teamId,
-      teamName: objs[0]?.team?.name || 'Time',
-      objectives: objs.map(obj => ({
-        id: obj.id,
-        title: obj.title,
-        description: obj.description,
-        orgObjectiveId: obj.org_objective_id,
-        orgObjectiveTitle: obj.org_objective?.title,
-        keyResults: obj.key_results.map(kr => ({
-          id: kr.id,
-          title: kr.title,
-          type: kr.type,
-          baseline: kr.baseline,
-          target: kr.target,
-          unit: kr.unit,
-          hasOwner: !!kr.owner_user_id,
-        })),
-      })),
-    }));
-
-    // Build otherTeamsObjectives format for each team
-    const otherTeamsForAll = teamsPayload.map(t => ({
-      teamId: t.teamId,
-      teamName: t.teamName,
-      leaderFirstName: '',
-      objectives: t.objectives.map(o => ({ id: o.id, title: o.title })),
-    }));
-
-    try {
-      const { data, error } = await buSupabase.functions.invoke('okr-construction-review', {
-        body: { 
-          buId: currentBuId,
-          mode: 'team-analysis',
-          teamId: 'cross-team',
-          teamName: 'Todos os Times',
-          cycleId,
-          objectives: rawObjectives.map(obj => ({
-            id: obj.id,
-            title: obj.title,
-            description: obj.description,
-            orgObjectiveId: obj.org_objective_id,
-            orgObjectiveTitle: obj.org_objective?.title,
-            teamId: obj.team_id,
-            teamName: obj.team?.name,
-            keyResults: obj.key_results.map(kr => ({
-              id: kr.id,
-              title: kr.title,
-              type: kr.type,
-              baseline: kr.baseline,
-              target: kr.target,
-              unit: kr.unit,
-              hasOwner: !!kr.owner_user_id,
-            })),
-          })),
-          orgObjectives,
-          otherTeamsObjectives: otherTeamsForAll,
-        },
-      });
-
-      if (error) throw error;
-      const responseData = data?.data ?? data;
-      if (responseData?.teamAnalysis) {
-        setCrossAnalysis(responseData.teamAnalysis);
-      }
-    } catch (err) {
-      console.error('Cross-team analysis error:', err);
-      setCrossAnalysisError(err instanceof Error ? err.message : 'Erro na análise cross-team');
-    } finally {
-      setCrossAnalysisLoading(false);
-    }
-  }, [crossAnalysisLoading, crossAnalysis, currentBuId, rawObjectives, orgObjectives, buSupabase, cycleId]);
-
-  // Store evaluateCrossTeam in a ref to avoid effect re-runs
-  const evaluateCrossTeamRef = useRef(evaluateCrossTeam);
-  evaluateCrossTeamRef.current = evaluateCrossTeam;
-
+  // Cross-team analysis — fires 5s after rawObjectives + orgObjectives are available
   useEffect(() => {
     if (crossAnalysisTriggered.current) return;
-    if (!rawObjectives?.length || !orgObjectives) return;
-    
+    if (!rawObjectives?.length || !orgObjectives || !currentBuId || !cycleId) return;
+
     crossAnalysisTriggered.current = true;
-    const timer = setTimeout(() => evaluateCrossTeamRef.current(), 5000);
+
+    const timer = setTimeout(async () => {
+      console.log(`[cross-team] Firing analysis — ${rawObjectives.length} objectives`);
+      setCrossAnalysisLoading(true);
+      setCrossAnalysisError(null);
+
+      // Build per-team data
+      const teamMap = new Map<string, typeof rawObjectives>();
+      for (const obj of rawObjectives) {
+        if (!teamMap.has(obj.team_id)) teamMap.set(obj.team_id, []);
+        teamMap.get(obj.team_id)!.push(obj);
+      }
+
+      const teamsPayload = Array.from(teamMap.entries()).map(([teamId, objs]) => ({
+        teamId,
+        teamName: objs[0]?.team?.name || 'Time',
+        objectives: objs.map(obj => ({
+          id: obj.id,
+          title: obj.title,
+          description: obj.description,
+          orgObjectiveId: obj.org_objective_id,
+          orgObjectiveTitle: obj.org_objective?.title,
+          keyResults: obj.key_results.map(kr => ({
+            id: kr.id,
+            title: kr.title,
+            type: kr.type,
+            baseline: kr.baseline,
+            target: kr.target,
+            unit: kr.unit,
+            hasOwner: !!kr.owner_user_id,
+          })),
+        })),
+      }));
+
+      const otherTeamsForAll = teamsPayload.map(t => ({
+        teamId: t.teamId,
+        teamName: t.teamName,
+        leaderFirstName: '',
+        objectives: t.objectives.map(o => ({ id: o.id, title: o.title })),
+      }));
+
+      try {
+        const { data, error } = await buSupabase.functions.invoke('okr-construction-review', {
+          body: {
+            buId: currentBuId,
+            mode: 'team-analysis',
+            teamId: 'cross-team',
+            teamName: 'Todos os Times',
+            cycleId,
+            objectives: rawObjectives.map(obj => ({
+              id: obj.id,
+              title: obj.title,
+              description: obj.description,
+              orgObjectiveId: obj.org_objective_id,
+              orgObjectiveTitle: obj.org_objective?.title,
+              teamId: obj.team_id,
+              teamName: obj.team?.name,
+              keyResults: obj.key_results.map(kr => ({
+                id: kr.id,
+                title: kr.title,
+                type: kr.type,
+                baseline: kr.baseline,
+                target: kr.target,
+                unit: kr.unit,
+                hasOwner: !!kr.owner_user_id,
+              })),
+            })),
+            orgObjectives,
+            otherTeamsObjectives: otherTeamsForAll,
+          },
+        });
+
+        if (error) throw error;
+        const responseData = data?.data ?? data;
+        console.log('[cross-team] Response:', { hasTeamAnalysis: !!responseData?.teamAnalysis });
+        if (responseData?.teamAnalysis) {
+          setCrossAnalysis(responseData.teamAnalysis);
+        }
+      } catch (err) {
+        console.error('[cross-team] Error:', err);
+        setCrossAnalysisError(err instanceof Error ? err.message : 'Erro na análise cross-team');
+      } finally {
+        setCrossAnalysisLoading(false);
+      }
+    }, 5000);
+
     return () => clearTimeout(timer);
-  }, [rawObjectives, orgObjectives]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawObjectives, orgObjectives, currentBuId, cycleId]);
 
   // Re-evaluate
   const reEvaluateObjective = useCallback((objectiveId: string) => {
