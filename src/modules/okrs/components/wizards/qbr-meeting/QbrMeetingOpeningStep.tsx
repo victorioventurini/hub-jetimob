@@ -15,6 +15,7 @@ import {
   ArrowUp, ArrowDown, Minus, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import {
   Collapsible,
   CollapsibleContent,
