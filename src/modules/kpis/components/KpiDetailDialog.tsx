@@ -67,7 +67,7 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
   if (!kpiId || isLoading || !kpi) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
           </div>
