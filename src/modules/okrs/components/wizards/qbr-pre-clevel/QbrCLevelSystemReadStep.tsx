@@ -254,7 +254,19 @@ export function QbrCLevelSystemReadStep({
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-muted-foreground">{krAgg.other}</p>
-                <p className="text-xs text-muted-foreground">Outros</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-muted-foreground inline-flex items-center gap-1 cursor-help">
+                        Outros
+                        <HelpCircle className="h-3 w-3" />
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[220px]">
+                      <p className="text-xs">Inclui KRs no ritmo (on track), não iniciadas, canceladas ou em outros estados que não se enquadram em Alcançados, Em risco ou Fora da meta.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
             <div className="flex items-center gap-3">
