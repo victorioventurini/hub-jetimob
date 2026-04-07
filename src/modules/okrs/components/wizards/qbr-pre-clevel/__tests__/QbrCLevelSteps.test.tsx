@@ -231,7 +231,7 @@ describe('QbrCLevelOkrValidationStep', () => {
 
   it('renders header with title', () => {
     renderValidation();
-    expect(screen.getByText('Validação de OKRs')).toBeInTheDocument();
+    expect(screen.getByText('Calibração das propostas')).toBeInTheDocument();
   });
 
   it('shows proposed objective title', () => {
