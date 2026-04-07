@@ -1,181 +1,117 @@
 
-# Plano: Melhorias no Ritual QBR Post
 
-**Base:** TCR v3.22.0 | DEVELOPMENT_STANDARDS v1.28.0 | Wizard Development Guide v1.0 | Memories canônicas consultadas
+## Plano: Página dedicada `/kpis/:kpiId` + Links clicáveis nos rituais
 
----
+### Pré-checklist confirmado
 
-## ⚠️ CONFLITOS IDENTIFICADOS COM AS SUGESTÕES DO CLAUDE
-
-### Conflito 1 — Step 2, Adição 2 (Tipo de decisão strategic/tactical)
-**Memory `decision-item-standard-v2-updated` (8h atrás):** *"A classificação por tipo (estratégico/tático) e o vínculo com diretrizes do C-Level foram removidos para reduzir a complexidade operacional durante as reuniões."*
-
-**Ação:** ❌ **NÃO implementar** tipo de decisão nem vínculo com diretiva C-Level no Step 2. Isso foi deliberadamente removido. As Adições 2 e 3 do Step 2 são descartadas.
-
-### Conflito 2 — Step 4, Seção B (Próximos 30 dias por liderança)
-**`QbrMeetingDraftData` já possui `nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string }`** (wizard.ts linha 549). Esse campo é preenchido no QBR Meeting (Step 5 — Encerramento).
-
-**Ação:** ❌ **NÃO duplicar** no Post. Exibir read-only o que foi preenchido no Meeting, se existir.
-
-### Conflito 3 — Step 4, Seção C (Notificação automática para líderes)
-O sistema atual não possui infraestrutura de notificação push para líderes sobre OKRs ativos. A edge function `qbr-post-summary` gera relatório, mas não envia notificação por líder.
-
-**Ação:** ⚠️ Implementar apenas o checkbox de confirmação como intenção. A notificação real é escopo futuro (requer edge function nova).
+| Doc | Consultado |
+|-----|-----------|
+| TCR v3.22.0 | ✅ — §2.3 Módulo KPIs (kpi_metrics, kpi_values schema) |
+| DEVELOPMENT_STANDARDS v1.28.0 | ✅ — §A.1 PRE/POST-BU, §L HubLayout obrigatório, §L.6 checklist novas páginas |
+| DATA_MODEL_REGISTRY | ✅ — kpi_metrics, kpi_values, kpi_data_contributors |
+| IDENTITY_CONVENTION | ✅ — owner_user_id = profiles.id |
+| Codebase existente | ✅ — KpiDetailDialog (381 linhas), rotas em core.routes.tsx, hooks existentes |
 
 ---
 
-## PLANO DE IMPLEMENTAÇÃO (12 tarefas)
+### Escopo
 
-### Fase 1 — Tipos e Estado (wizard.ts + QbrPostDraftData)
+**1. Extrair `KpiDetailContent` de `KpiDetailDialog`**
 
-**Tarefa 1:** Expandir `QbrPostSnapshot` e `QbrPostDraftData`
+Novo arquivo `src/modules/kpis/components/KpiDetailContent.tsx`:
+- Recebe `kpiId: string`
+- Contém todo o JSX que hoje está dentro do `<DialogContent>` (linhas 140-377 de KpiDetailDialog)
+- Usa internamente `useKpiDetail`, `useKpiLinkedKrs`, `useCanEditKpi`, `useKpiMutations`
+- Inclui chart, metadata, histórico, KRs vinculadas, target history
 
-```typescript
-// QbrPostSnapshot — adicionar:
-destinationCycleId?: string;
-ceoContextMessage?: string;
+**2. Refatorar `KpiDetailDialog`**
 
-// QbrPostSnapshot.crossCommitments — adicionar ao tipo existente:
-responsibleUserId?: string;
-responsibleUserName?: string;
-linkedOkrId?: string;
-
-// QbrPostSnapshot.followUpCadence — expandir:
-followUpCadence: {
-  nextMbrDate?: string;          // substitui mbrReviewScheduled
-  firstCheckinDate?: string;     // novo
-  followUpMeetingDate?: string;  // existente
-  leadersNotified?: boolean;     // checkbox confirmação
-};
-
-// QbrPostDraftData — adicionar:
-destinationCycleId?: string;
-ceoContextMessage?: string;
-krAdjustments?: Record<string, Array<{
-  krIndex: number;
-  hasAdjustment: boolean;
-  newTitle?: string;
-  newTarget?: string;
-  newOwnerId?: string;
-  newOwnerName?: string;
-}>>;
+Simplificar para:
+```tsx
+<Dialog open={open} onOpenChange={onOpenChange}>
+  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    {kpiId ? <KpiDetailContent kpiId={kpiId} /> : <LoadingState />}
+  </DialogContent>
+</Dialog>
 ```
 
-**Backward compatibility:** Manter `mbrReviewScheduled` como alias computado para `!!nextMbrDate`.
+**3. Criar `KpiDetailPage`**
+
+Novo arquivo `src/modules/kpis/pages/KpiDetailPage.tsx`:
+- `useParams<{ kpiId: string }>()`
+- `usePageTitle()` com nome dinâmico do KPI
+- `useSafeBack()` para botão voltar (→ `/kpis`)
+- `HubLayout` em TODOS os estados (loading, error, not found, success) — conforme §L.1
+- Renderiza `<KpiDetailContent kpiId={kpiId} />`
+
+**4. Registrar rota em `core.routes.tsx`**
+
+```tsx
+<Route path="/kpis/:kpiId" element={
+  <ProtectedRoute>
+    <BuRequiredRoute>
+      <ModuleRoute moduleSlug="kpis">
+        <KpiDetailPage />
+      </ModuleRoute>
+    </BuRequiredRoute>
+  </ProtectedRoute>
+} />
+```
+
+**5. Exportar no barrel `src/modules/kpis/index.ts`**
+
+**6. Tornar KPIs clicáveis nos rituais (abrir nova aba)**
+
+Em todos os componentes de wizard que exibem nomes de KPI, envolver o nome com `<a href={/kpis/${id}} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>`:
+
+| Componente | Local do `kpi.name` |
+|-----------|---------------------|
+| `KpiStatusBlocks.tsx` (shared) | OutdatedKpisBlock, PendingKpisBlock |
+| `QbrKpiAnalysisStep.tsx` | Cards de KPIs healthy e no-data |
+| `QbrCLevelSystemReadStep.tsx` | Cards de KPIs dos líderes |
+| `QbrMeetingOpeningStep.tsx` | Blocos de KPIs no opening |
+| `MbrPanoramaStep.tsx` | Cards de panorama |
+| `MbrKpiGateStep.tsx` | Lista de KPIs com gate |
+| `CollaboratorCheckinStep.tsx` | KPI primária vinculada |
+| `KrLinkedKpiCard.tsx` (team-checkin) | Card de KPI vinculada a KR |
+| `ManagersSystemicKpisStep.tsx` | KPIs sistêmicas |
+| `TeamOkrContextStep.tsx` | KPIs estratégicas no contexto |
+| `TeamOkrKrMetricsStep.tsx` | Links de KPI primary/guardrail |
+| `CLevelInsightsStep.tsx` | Se exibir nomes de KPI |
+
+Padrão visual: nome com `hover:underline` + ícone `ExternalLink` (3px) ao lado.
 
 ---
 
-### Fase 2 — Step 1 (Promoção de OKRs) — 3 adições
+### Detalhes técnicos
 
-**Tarefa 2:** Adicionar `TeamDeliveryScorecard` (compact mode) no topo de cada card de time.
-- Reutilizar componente existente do qbr-meeting
-- Prop `compact={true}`, read-only
-- Microcopy: "Entrega do quarter que encerrou. Use como contexto ao ajustar e promover."
-- **Dados:** Buscar da sessão qbr-pre do líder (já carregada em `leaderSessions`)
+- **Navegação:** Usa `<a>` com `target="_blank"` (não `<Link>`) para abertura em nova aba — os rituais pedem "abrir em nova aba" explicitamente
+- **`stopPropagation`:** Necessário para evitar trigger de eventos em cards pai (accordion, collapsible)
+- **Componente auxiliar sugerido:** Criar `KpiNameLink` para encapsular o padrão e evitar duplicação em ~12 arquivos:
+  ```tsx
+  function KpiNameLink({ kpiId, name }: { kpiId: string; name: string }) {
+    return (
+      <a href={`/kpis/${kpiId}`} target="_blank" rel="noopener noreferrer"
+         onClick={e => e.stopPropagation()}
+         className="hover:underline inline-flex items-center gap-1">
+        {name}
+        <ExternalLink className="h-3 w-3 opacity-50" />
+      </a>
+    );
+  }
+  ```
+- **BU Scope:** `useKpiDetail` já usa `useBuScopedSupabase()` — a página herda o guard via `BuRequiredRoute`
+- **Permissões:** Leitura de KPIs não exige permissão específica (RLS permite SELECT para membros da BU)
 
-**Tarefa 3:** Banner de ciclo de destino no topo do step.
-- Hook `useCycles` para buscar ciclo com `status = 'planning'` e `type = 'quarter'`
-- Se 1 ciclo: banner informativo com nome e datas
-- Se >1: `CycleSelect` para escolha (componente canônico em `src/components/selects/CycleSelect`)
-- Se 0: aviso âmbar com orientação
-- Persistir `destinationCycleId` no draft
+### Arquivos afetados
 
-**Tarefa 4:** Campo de ajuste estruturado por KR (substituir textarea).
-- Para OKRs `approved_with_changes`: formulário por KR com checkbox "Esta KR tem ajuste"
-- Campos condicionais: novo título, nova meta, novo responsável (`BuUserSelect`)
-- Microcopy: "Registre exatamente o que muda antes de promover."
-- Persistir em `krAdjustments[sessionId]`
+| Arquivo | Ação |
+|---------|------|
+| `src/modules/kpis/components/KpiDetailContent.tsx` | **Novo** |
+| `src/modules/kpis/components/KpiNameLink.tsx` | **Novo** |
+| `src/modules/kpis/pages/KpiDetailPage.tsx` | **Novo** |
+| `src/modules/kpis/components/KpiDetailDialog.tsx` | Refatorar (usa KpiDetailContent) |
+| `src/routes/core.routes.tsx` | Adicionar rota |
+| `src/modules/kpis/index.ts` | Exportar novos componentes |
+| ~12 componentes de wizard | Substituir `kpi.name` por `<KpiNameLink>` |
 
----
-
-### Fase 3 — Step 2 (Decisões) — 1 adição (2 descartadas)
-
-**Tarefa 5:** Separação visual entre decisões da reunião e complementares.
-- Decisões da reunião: header "Decisões da Reunião QBR — imutáveis", fundo `bg-muted/30`, cards read-only
-- Decisões complementares: header "Decisões complementares — adicionadas após a reunião", `InlineDecisionInput` + cards editáveis
-- **NÃO adicionar** tipo strategic/tactical nem vínculo com diretiva (removido por padrão canônico)
-
----
-
-### Fase 4 — Step 3 (Compromissos) — 2 adições
-
-**Tarefa 6:** Adicionar `BuUserSelect` para responsável nominal.
-- Campo após "Para (time)" no formulário
-- Exibir avatar no card após criação
-- Persistir `responsibleUserId` e `responsibleUserName`
-
-**Tarefa 7:** Select de OKR vinculado (opcional).
-- Listar apenas OKRs marcados para promoção no Step 1 (`promotedOkrIds`)
-- Passar `approvedOkrs` + `promotedSessionIds` como props
-- Badge do OKR no card
-
----
-
-### Fase 5 — Step 4 (Follow-up) — Reformulação
-
-**Tarefa 8:** Reformular step completo.
-- **Seção A — Datas:** 3 campos de data (Próximo MBR obrigatório, Primeiro check-in opcional, Follow-up meeting opcional). Pré-preencher MBR de `ritual_occurrences` se disponível.
-- **Seção B — Próximos 30 dias (read-only):** Exibir dados do QBR Meeting (`nextThirtyDays`), NÃO duplicar campos editáveis.
-- **Seção C — Confirmação:** Checkbox "Os líderes serão notificados sobre os OKRs ativos após o encerramento"
-
----
-
-### Fase 6 — Step 5 (Ata Executiva) — 3 adições
-
-**Tarefa 9:** Checklist dinâmico — item 4 ("OKRs do próximo ciclo estão ativos?").
-- Desabilitado se `promotedOkrIds.length === 0`
-- Tooltip quando desabilitado
-- Props: receber `hasPromotedOkrs` do page
-
-**Tarefa 10:** Campo "Carta de contexto do CEO" (textarea opcional).
-- Após resumo automático, antes da ata narrativa
-- Microcopy: "Esta mensagem será enviada para todos os times junto com a notificação de OKRs ativos."
-- Persistir em `ceoContextMessage`
-
-**Tarefa 11:** Atualizar microcopy do step.
-- Título: "Ata executiva e encerramento"
-- Subtítulo: "Formalize o que foi decidido. Ao concluir, os OKRs são ativados e os times são notificados."
-- Labels do checklist conforme especificação
-
----
-
-### Fase 7 — Orquestrador (QbrPostPage.tsx)
-
-**Tarefa 12:** Passar novas props para todos os steps.
-- Step 1: ciclos em planejamento, sessions para scorecard
-- Step 3: `approvedOkrs` + `promotedSessionIds` para select de OKR vinculado
-- Step 4: `meetingNextThirtyDays` do snapshot do meeting
-- Step 5: `hasPromotedOkrs`, `ceoContextMessage`
-
----
-
-## O QUE NÃO MUDA
-
-- Lógica de promoção de OKRs (criação em `okr_team_objectives`)
-- Transição `qbr_status → 'done'` ao concluir
-- Decisões da reunião — imutáveis
-- Edge function `qbr-post-summary` — sem alteração
-- Gates de navegação existentes
-- `TeamCheckinDecision` type — sem adição de `decisionType`
-- Sem migrations de banco (tudo persiste em `reflection_data` JSONB)
-
-## CONFORMIDADE
-
-- ✅ Query keys via `src/lib/queryKeys` (verificar se existem; criar se necessário)
-- ✅ `useBuScopedSupabase()` para queries POST-BU
-- ✅ Componentes canônicos: `BuUserSelect`, `CycleSelect`, `TeamDeliveryScorecard`
-- ✅ Sem `select('*')` — campos explícitos
-- ✅ URL state não necessário (wizard com draft persistido)
-- ✅ Sem hardcode de roles — acesso via `requiresBuAdmin` (já implementado)
-
-## ARQUIVOS IMPACTADOS
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/modules/okrs/types/wizard.ts` | Expandir tipos |
-| `src/modules/okrs/pages/QbrPostPage.tsx` | Novas queries e props |
-| `QbrPostOkrPromotionStep.tsx` | Scorecard + ciclo + ajuste estruturado |
-| `QbrPostDecisionsStep.tsx` | Separação visual |
-| `QbrPostCommitmentsStep.tsx` | Responsável + OKR vinculado |
-| `QbrPostFollowUpStep.tsx` | Reformulação completa |
-| `QbrPostMinutesStep.tsx` | Checklist dinâmico + carta CEO + microcopy |
