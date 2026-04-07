@@ -102,7 +102,7 @@ describe('QbrCLevelSystemReadStep', () => {
         onContinue={vi.fn()}
       />
     );
-    expect(screen.getByText('Leitura do Sistema')).toBeInTheDocument();
+    expect(screen.getByText('O que os times reportaram')).toBeInTheDocument();
   });
 
   it('shows submission count in badge', () => {
