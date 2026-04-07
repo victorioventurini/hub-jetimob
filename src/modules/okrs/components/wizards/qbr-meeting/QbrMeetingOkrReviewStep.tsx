@@ -401,6 +401,8 @@ export function QbrMeetingOkrReviewStep({
   orgObjectives = [],
   currentTeamIndex,
   onCurrentTeamIndexChange,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
   onBack,
 }: QbrMeetingOkrReviewStepProps) {
