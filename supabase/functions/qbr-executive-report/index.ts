@@ -38,6 +38,7 @@ interface ReportResponse {
     teamName: string;
     objectiveTitle: string;
     krCount: number;
+    krs: string[];
   }>;
 }
 
