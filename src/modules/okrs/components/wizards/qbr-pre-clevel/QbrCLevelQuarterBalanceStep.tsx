@@ -31,6 +31,8 @@ import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { TeamKrsToggle } from '../shared/TeamKrsToggle';
+import { TeamDeliveryScorecard, buildTeamScorecardFromOrgObjectives } from '../shared/TeamDeliveryScorecard';
+import type { TeamDeliveryScorecardData } from '../shared/TeamDeliveryScorecard';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { KrStateInline } from '../../insights';
@@ -178,97 +180,8 @@ function OrgObjectiveCard({ objective, showTeamKrs }: { objective: import('../..
   );
 }
 
-// ============================================================
-// TEAM SCORECARD
-// ============================================================
-
-interface TeamScorecardData {
-  teamId: string;
-  teamName: string;
-  totalKrs: number;
-  achieved: number;
-  onTrack: number;
-  atRisk: number;
-  offTrack: number;
-  notStarted: number;
-  stagnant: number;
-  healthScore: 'healthy' | 'attention' | 'risk';
-}
-
-function getHealthScore(metrics: {
-  totalKrs: number;
-  krsAtRisk: number;
-  krsStagnant: number;
-  krsNotStarted: number;
-}): 'healthy' | 'attention' | 'risk' {
-  if (metrics.totalKrs === 0) return 'attention';
-  const riskRatio = (metrics.krsAtRisk + metrics.krsStagnant + metrics.krsNotStarted) / metrics.totalKrs;
-  if (riskRatio >= 0.5) return 'risk';
-  if (riskRatio >= 0.25) return 'attention';
-  return 'healthy';
-}
-
-const HEALTH_CONFIG = {
-  healthy: { label: 'Saudável', icon: CheckCircle2, className: 'text-status-green bg-status-green-muted' },
-  attention: { label: 'Atenção', icon: AlertTriangle, className: 'text-status-amber bg-status-amber-muted' },
-  risk: { label: 'Em risco', icon: AlertTriangle, className: 'text-status-red bg-status-red-muted' },
-} as const;
-
-function TeamScorecardCard({ team }: { team: TeamScorecardData }) {
-  const health = HEALTH_CONFIG[team.healthScore];
-  const HealthIcon = health.icon;
-
-  return (
-    <div className="border rounded-lg p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2 min-w-0">
-        <h4 className="font-medium text-sm truncate min-w-0">{team.teamName}</h4>
-        <Badge variant="outline" className={cn('text-xs shrink-0', health.className)}>
-          <HealthIcon className="h-3 w-3 mr-1" />
-          {health.label}
-        </Badge>
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full bg-status-green shrink-0" />
-          <span className="text-muted-foreground">Alcançadas:</span>
-          <span className="font-medium">{team.achieved}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full bg-primary shrink-0" />
-          <span className="text-muted-foreground">No ritmo:</span>
-          <span className="font-medium">{team.onTrack}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full bg-status-amber shrink-0" />
-          <span className="text-muted-foreground">Em risco:</span>
-          <span className="font-medium">{team.atRisk}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full bg-status-red shrink-0" />
-          <span className="text-muted-foreground">Fora da meta:</span>
-          <span className="font-medium">{team.offTrack}</span>
-        </div>
-        {team.notStarted > 0 && (
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/50 shrink-0" />
-            <span className="text-muted-foreground">Não iniciadas:</span>
-            <span className="font-medium">{team.notStarted}</span>
-          </div>
-        )}
-        {team.stagnant > 0 && (
-          <div className="flex items-center gap-1.5 col-span-2">
-            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">Sem check-in (14d+):</span>
-            <span className="font-medium text-muted-foreground">{team.stagnant}</span>
-          </div>
-        )}
-      </div>
-      <div className="text-xs text-muted-foreground">
-        Total: {team.totalKrs} KRs
-      </div>
-    </div>
-  );
-}
+// TeamScorecardCard — uses shared TeamDeliveryScorecard
+// (Types, health logic and rendering extracted to shared/TeamDeliveryScorecard.tsx)
 
 // ============================================================
 // MAIN COMPONENT
@@ -306,58 +219,11 @@ export function QbrCLevelQuarterBalanceStep({
   const { data: orgObjectives, isLoading: isLoadingOrg } = useAllOrgObjectivesView(year, cycleId);
 
   // Build scorecard data from orgObjectives (derive per-team metrics)
-  const teamScorecards: TeamScorecardData[] = useMemo(() => {
+  const teamScorecards: TeamDeliveryScorecardData[] = useMemo(() => {
     if (!teams || !orgObjectives) return [];
-
-    const teamMap = new Map<string, TeamScorecardData>();
-    for (const t of teams) {
-      teamMap.set(t.id, {
-        teamId: t.id,
-        teamName: t.name,
-        totalKrs: 0,
-        achieved: 0,
-        onTrack: 0,
-        atRisk: 0,
-        offTrack: 0,
-        notStarted: 0,
-        stagnant: 0,
-        healthScore: 'healthy',
-      });
-    }
-
-    // Walk through all org objectives -> org KRs -> linked team KRs
-    for (const obj of orgObjectives) {
-      for (const orgKr of obj.orgKrs) {
-        for (const tkr of orgKr.linkedTeamKrs) {
-          const entry = teamMap.get(tkr.team_id);
-          if (!entry) continue;
-
-          entry.totalKrs++;
-
-          const state = calculateKrState(buildKrStateParams(tkr));
-
-          if (state === 'achieved' || state === 'exceeded') entry.achieved++;
-          else if (state === 'healthy') entry.onTrack++;
-          else if (state === 'at_risk' || state === 'stagnant') entry.atRisk++;
-          else if (state === 'off_track' || state === 'not_achieved') entry.offTrack++;
-          else if (state === 'not_started') entry.notStarted++;
-
-          if (state === 'stagnant') entry.stagnant++;
-        }
-      }
-    }
-
-    // Calculate health scores
-    for (const entry of teamMap.values()) {
-      entry.healthScore = getHealthScore({
-        totalKrs: entry.totalKrs,
-        krsAtRisk: entry.atRisk,
-        krsStagnant: entry.stagnant,
-        krsNotStarted: entry.notStarted,
-      });
-    }
-
-    return Array.from(teamMap.values()).filter(t => t.totalKrs > 0);
+    return teams
+      .map(t => buildTeamScorecardFromOrgObjectives(t.id, t.name, orgObjectives))
+      .filter(t => t.totalKrs > 0);
   }, [teams, orgObjectives]);
 
   const isLoading = isLoadingTeams || isLoadingOrg;
@@ -435,7 +301,7 @@ export function QbrCLevelQuarterBalanceStep({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {teamScorecards.map(team => (
-                    <TeamScorecardCard key={team.teamId} team={team} />
+                    <TeamDeliveryScorecard key={team.teamId} data={team} />
                   ))}
                 </div>
               )}

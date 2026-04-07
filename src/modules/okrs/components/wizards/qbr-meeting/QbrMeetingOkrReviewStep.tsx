@@ -27,6 +27,8 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
+  TeamDeliveryScorecard,
+  buildTeamScorecardFromOrgObjectives,
 } from '../shared';
 import { AddendumBadge } from '../shared/AddendumBadge';
 import type {
@@ -540,6 +542,14 @@ export function QbrMeetingOkrReviewStep({
               <ReviewTimer teamName={current.teamName} teamId={current.teamId} />
             </div>
           </div>
+        )}
+
+        {/* Team delivery scorecard */}
+        {current && orgObjectives.length > 0 && (
+          <TeamDeliveryScorecard
+            data={buildTeamScorecardFromOrgObjectives(current.teamId, current.teamName, orgObjectives)}
+            compact
+          />
         )}
 
         {/* Calibration flags */}
