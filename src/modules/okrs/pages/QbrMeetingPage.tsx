@@ -12,11 +12,14 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
+import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
   useGenericWizardDraft,
   useActiveCycle,
   useAllOrgObjectivesView,
 } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+import { usePermissions } from '@/hooks/usePermissions';
 import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
 import { calculateProgress } from '@/modules/okrs/types';
 import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
