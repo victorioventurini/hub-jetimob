@@ -349,6 +349,7 @@ export function QbrCLevelQuarterBalanceStep({
         totalKrs: entry.totalKrs,
         krsAtRisk: entry.atRisk,
         krsStagnant: entry.stagnant,
+        krsNotStarted: entry.notStarted,
       });
     }
 
