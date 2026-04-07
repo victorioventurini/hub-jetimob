@@ -711,6 +711,9 @@ export default function MbrPage() {
             onChecklistChange={(checklist: MbrGovernanceChecklist) => updateDraft({ checklist })}
             ritualFeedback={draft.data.ritualFeedback}
             onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
+            teamOkrSnapshots={draft.data.teamOkrSnapshots}
+            orgOkrSnapshots={draft.data.orgOkrSnapshots}
+            qbrFollowUpItems={draft.data.qbrFollowUpItems}
             onComplete={handleComplete}
             onBack={goBack}
           />
