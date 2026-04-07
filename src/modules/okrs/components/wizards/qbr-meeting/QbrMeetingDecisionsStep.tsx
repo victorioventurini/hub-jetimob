@@ -66,33 +66,11 @@ export function QbrMeetingDecisionsStep({
         />
       }
       bottomFixed={
-        <div className="space-y-2">
-          {/* Decision type toggle */}
-          <div className="flex items-center gap-2 px-4 pt-2">
-            <span className="text-xs text-muted-foreground">Tipo:</span>
-            <Badge
-              variant="outline"
-              className={`text-[10px] cursor-pointer transition-colors ${defaultDecisionType === 'strategic' ? 'bg-primary/10 text-primary border-primary/30' : ''}`}
-              onClick={() => setDefaultDecisionType('strategic')}
-            >
-              <Zap className="h-2.5 w-2.5 mr-0.5" />
-              Estratégica
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`text-[10px] cursor-pointer transition-colors ${defaultDecisionType === 'tactical' ? 'bg-muted text-foreground border-foreground/30' : ''}`}
-              onClick={() => setDefaultDecisionType('tactical')}
-            >
-              <Target className="h-2.5 w-2.5 mr-0.5" />
-              Tática
-            </Badge>
-          </div>
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={handleDecisionsChange}
-            sourceStep="qbr-meeting-decisions"
-          />
-        </div>
+        <InlineDecisionInput
+          decisions={decisions}
+          onDecisionsChange={onDecisionsChange}
+          sourceStep="qbr-meeting-decisions"
+        />
       }
       footer={
         <WizardStepFooter
