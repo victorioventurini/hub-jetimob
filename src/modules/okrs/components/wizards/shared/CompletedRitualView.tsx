@@ -5,11 +5,23 @@
  * Used by QbrPrePage and MbrPrePage when a completed session exists.
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, ArrowLeft } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle2, ArrowLeft, RotateCcw, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SnapshotReportView } from '@/modules/okrs/components/ritual-report';
@@ -23,6 +35,8 @@ interface CompletedRitualViewProps {
   wizardType: WizardPersona;
   session: CompletedSessionData;
   backUrl: string;
+  canReopen?: boolean;
+  onReopen?: () => Promise<void>;
 }
 
 const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
