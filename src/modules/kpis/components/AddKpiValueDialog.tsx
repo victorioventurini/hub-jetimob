@@ -94,7 +94,7 @@ export function AddKpiValueDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Registrar Valor - {kpiName}</DialogTitle>
         </DialogHeader>
