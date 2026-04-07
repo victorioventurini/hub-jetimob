@@ -321,8 +321,6 @@ export function useFullConstructionReview(cycleId: string | null) {
     if (crossAnalysisLoading || crossAnalysis || !currentBuId) return;
     if (!rawObjectives?.length || !orgObjectives) return;
 
-    const allDone = rawObjectives.every(obj => aiAssessments[obj.id] || aiErrors[obj.id]);
-    if (!allDone) return;
 
     setCrossAnalysisLoading(true);
     setCrossAnalysisError(null);
@@ -405,18 +403,16 @@ export function useFullConstructionReview(cycleId: string | null) {
     } finally {
       setCrossAnalysisLoading(false);
     }
-  }, [crossAnalysisLoading, crossAnalysis, currentBuId, rawObjectives, orgObjectives, aiAssessments, aiErrors, buSupabase, cycleId]);
+  }, [crossAnalysisLoading, crossAnalysis, currentBuId, rawObjectives, orgObjectives, buSupabase, cycleId]);
 
   useEffect(() => {
     if (crossAnalysisTriggered.current) return;
-    if (!rawObjectives?.length) return;
+    if (!rawObjectives?.length || !orgObjectives) return;
     
-    const allDone = rawObjectives.every(obj => aiAssessments[obj.id] || aiErrors[obj.id]);
-    if (allDone && orgObjectives) {
-      crossAnalysisTriggered.current = true;
-      setTimeout(() => evaluateCrossTeam(), 500);
-    }
-  }, [rawObjectives, aiAssessments, aiErrors, orgObjectives, evaluateCrossTeam]);
+    crossAnalysisTriggered.current = true;
+    const timer = setTimeout(() => evaluateCrossTeam(), 5000);
+    return () => clearTimeout(timer);
+  }, [rawObjectives, orgObjectives, evaluateCrossTeam]);
 
   // Re-evaluate
   const reEvaluateObjective = useCallback((objectiveId: string) => {
