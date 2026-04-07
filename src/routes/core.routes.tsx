@@ -177,6 +177,18 @@ export const coreRoutes = (
         </ProtectedRoute>
       }
     />
+    <Route
+      path="/kpis/:kpiId"
+      element={
+        <ProtectedRoute>
+          <BuRequiredRoute>
+            <ModuleRoute moduleSlug="kpis">
+              <KpiDetailPage />
+            </ModuleRoute>
+          </BuRequiredRoute>
+        </ProtectedRoute>
+      }
+    />
 
     {/* User Notifications */}
     <Route
