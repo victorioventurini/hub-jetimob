@@ -60,6 +60,9 @@ export interface QbrMeetingOpeningStepProps {
   currentStepIndex: number;
   /** Dados de retrospectiva do quarter anterior */
   previousQuarterData?: PreviousQuarterTeamData[];
+  /** Decisões inline */
+  decisions?: TeamCheckinDecision[];
+  onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
 }
 
