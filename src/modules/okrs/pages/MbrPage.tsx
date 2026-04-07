@@ -676,6 +676,7 @@ export default function MbrPage() {
             onOrgOkrSnapshotsChange={(orgOkrSnapshots: MbrOrgOkrSnapshot[]) => updateDraft({ orgOkrSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            orgObjectives={orgObjView ?? []}
             onContinue={goNext}
             onBack={goBack}
           />
