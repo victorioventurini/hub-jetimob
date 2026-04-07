@@ -176,7 +176,7 @@ describe('QbrCLevelSystemReadStep', () => {
 describe('QbrCLevelStrategicStep', () => {
   function renderStrategic(overrides: Partial<QbrCLevelStrategicStepProps> = {}) {
     const props: QbrCLevelStrategicStepProps = {
-      strategicAnalysis: { alignmentAssessment: '', signalsTeamsMissed: '', whatNotToDo: '' },
+      strategicAnalysis: { alignmentPastQuarter: '', alignmentNextQuarter: '', signalsTeamsMissed: '', whatNotToDo: '' },
       onStrategicAnalysisChange: vi.fn(),
       decisions: [],
       onDecisionsChange: vi.fn(),
@@ -206,7 +206,7 @@ describe('QbrCLevelStrategicStep', () => {
 
   it('enables continue when any field filled', () => {
     renderStrategic({
-      strategicAnalysis: { alignmentAssessment: 'Alinhado', signalsTeamsMissed: '', whatNotToDo: '' },
+      strategicAnalysis: { alignmentPastQuarter: 'Alinhado', alignmentNextQuarter: '', signalsTeamsMissed: '', whatNotToDo: '' },
     });
     expect(screen.getByTestId('btn-primary')).not.toBeDisabled();
   });
