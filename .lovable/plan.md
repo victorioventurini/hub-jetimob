@@ -1,51 +1,45 @@
 
 
-## Plano: Corrigir contagem de KRs no Scorecard do QBR C-Level
+## Plano: Ajustar textos do Step de Análise Estratégica — QBR Pre C-Level
 
-### Problema
-No `TeamScorecardCard` dentro de `QbrCLevelQuarterBalanceStep`, dois estados de KR não são contabilizados nos contadores visíveis:
-- **`not_started`**: incrementa `totalKrs` mas nenhum contador principal
-- **`stagnant`**: incrementa apenas o campo `stagnant` (condicional), mas não entra no `if/else` dos 4 contadores principais
-
-Resultado: a soma dos contadores visíveis é menor que `totalKrs`.
+### Contexto
+Mudança puramente de copy/UX no componente `QbrCLevelStrategicStep.tsx`. Sem impacto em lógica, validação, tipos ou snapshot `reflection_data`.
 
 ### Arquivo impactado
+`src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelStrategicStep.tsx`
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelQuarterBalanceStep.tsx` | Corrigir lógica de categorização + adicionar contador visual |
+### Mudanças
 
-### Mudanças detalhadas
+**Campo 1 — Alinhamento (linhas 84-96)**
+- Label: `"Alinhamento com a Estratégia"` → `"Alinhamento estratégico"`
+- Substituir a pergunta-guia única por dois blocos de microcopy antes do Textarea:
 
-**1. Lógica de categorização (linhas 324-331)**
+```
+Sobre o quarter que encerrou
+"Os OKRs executados moveram a empresa na direção certa? O que ficou desalinhado com a estratégia?"
 
-Adicionar `not_started` como categoria visível e tratar `stagnant` no else-chain para que conte em "Em risco" (pois inatividade é sinal de risco):
-
-```typescript
-const state = calculateKrState(buildKrStateParams(tkr));
-
-if (state === 'achieved' || state === 'exceeded') entry.achieved++;
-else if (state === 'healthy') entry.onTrack++;
-else if (state === 'at_risk' || state === 'stagnant') entry.atRisk++;
-else if (state === 'off_track' || state === 'not_achieved') entry.offTrack++;
-else if (state === 'not_started') entry.notStarted++;
-
-if (state === 'stagnant') entry.stagnant++;
+Sobre o próximo quarter
+"As propostas dos times cobrem as prioridades estratégicas da empresa? Existe alguma prioridade sem time responsável?"
 ```
 
-**2. Interface `TeamScorecardData` (linha 182)**
+Implementação: dois `<div>` com sub-título em `text-xs font-medium` e pergunta em `text-xs text-muted-foreground`, substituindo o `<p>` atual.
 
-Adicionar campo `notStarted: number`.
+**Campo 2 — Sinais (linhas 101-113)**
+- Label: `"Sinais que os Times Não Viram"` → `"O que você está vendo que os times não veem"`
+- Pergunta-guia: `"Correlações e padrões..."` → `"Que movimentos de mercado, padrões entre áreas ou riscos sistêmicos você está enxergando de cima que os times não conseguem ver de dentro?"`
+- Placeholder: `"Tendências de mercado..."` → `"Movimentos de mercado, padrões entre áreas, riscos que só se veem de cima..."`
 
-**3. UI do `TeamScorecardCard` (linhas 225-253)**
+**Campo 3 — Vetos (linhas 118-130)**
+- Label: `"O que NÃO Fazer"` → `"Vetos estratégicos"`
+- Pergunta-guia: `"Explicitamente: o que não entra..."` → `"O que a empresa não deve fazer no próximo ciclo, mesmo que pareça importante ou urgente? Seja explícito — vetos não ditos viram trabalho desperdiçado."`
+- Placeholder: `"Projetos, iniciativas..."` → `"Iniciativas, direções ou investimentos que não são prioridade agora..."`
 
-Adicionar linha "Não iniciadas" no grid quando `> 0`, usando ícone cinza (mesmo padrão dos outros contadores).
-
-**4. Cálculo de health score**
-
-Incluir `notStarted` no cálculo: KRs não iniciadas contribuem para o risco de saúde do time (similar a stagnant).
-
-### Resultado esperado
-
-No time "Comercial" (Total 3 KRs): Em risco 1, Não iniciadas 2 — soma bate com o total.
+### O que NÃO muda
+- Ícones (CheckCircle2, Eye, Ban) e suas cores
+- Estrutura de 3 campos com mesmo Textarea cada
+- Validação (`hasContent` — qualquer campo preenchido habilita "Continuar")
+- `InlineDecisionInput` no rodapé
+- Chaves do snapshot (`alignmentAssessment`, `signalsTeamsMissed`, `whatNotToDo`)
+- Tooltip do header (`qbr-clevel-strategic`)
+- Nenhum outro arquivo é alterado
 
