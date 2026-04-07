@@ -318,8 +318,15 @@ export function useFullConstructionReview(cycleId: string | null) {
 
   // Cross-team analysis trigger
   const evaluateCrossTeam = useCallback(async () => {
-    if (crossAnalysisLoading || crossAnalysis || !currentBuId) return;
-    if (!rawObjectives?.length || !orgObjectives) return;
+    console.log('[cross-team] evaluateCrossTeam called', { crossAnalysisLoading, hasCrossAnalysis: !!crossAnalysis, currentBuId, rawObjCount: rawObjectives?.length, hasOrgObj: !!orgObjectives });
+    if (crossAnalysisLoading || crossAnalysis || !currentBuId) {
+      console.log('[cross-team] BLOCKED by guard:', { crossAnalysisLoading, hasCrossAnalysis: !!crossAnalysis, noBuId: !currentBuId });
+      return;
+    }
+    if (!rawObjectives?.length || !orgObjectives) {
+      console.log('[cross-team] BLOCKED: no data');
+      return;
+    }
 
 
     setCrossAnalysisLoading(true);
