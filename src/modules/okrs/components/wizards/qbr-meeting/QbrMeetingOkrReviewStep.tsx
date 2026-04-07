@@ -27,6 +27,8 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
+  TeamDeliveryScorecard,
+  buildTeamScorecardFromOrgObjectives,
 } from '../shared';
 import { AddendumBadge } from '../shared/AddendumBadge';
 import type {
