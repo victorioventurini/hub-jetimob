@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Gavel, Zap, Target } from 'lucide-react';
+import { Gavel } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardStepFooter,
