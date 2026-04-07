@@ -411,10 +411,21 @@ export function useFullConstructionReview(cycleId: string | null) {
 
   useEffect(() => {
     if (crossAnalysisTriggered.current) return;
-    if (!rawObjectives?.length || !orgObjectives) return;
+    if (!rawObjectives?.length) {
+      console.log('[cross-team] waiting for rawObjectives...');
+      return;
+    }
+    if (!orgObjectives) {
+      console.log('[cross-team] waiting for orgObjectives...');
+      return;
+    }
     
+    console.log(`[cross-team] Scheduling analysis in 5s — ${rawObjectives.length} objectives, ${orgObjectives.length} org objectives`);
     crossAnalysisTriggered.current = true;
-    const timer = setTimeout(() => evaluateCrossTeamRef.current(), 5000);
+    const timer = setTimeout(() => {
+      console.log('[cross-team] Firing evaluateCrossTeam now');
+      evaluateCrossTeamRef.current();
+    }, 5000);
     return () => clearTimeout(timer);
   }, [rawObjectives, orgObjectives]);
 
