@@ -264,7 +264,7 @@ export function QbrCLevelQuarterBalanceStep({
     return [];
   }, [teams, allTeamKrs, orgObjectives]);
 
-  const isLoading = isLoadingTeams || isLoadingOrg;
+  const isLoading = isLoadingTeams || isLoadingOrg || isLoadingAllKrs;
   const [showTeamKrs, setShowTeamKrs] = useState(true);
 
   return (
