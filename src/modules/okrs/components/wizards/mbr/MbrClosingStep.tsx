@@ -111,6 +111,7 @@ function StarRatingDisplay({ rating, size = 14 }: { rating: number; size?: numbe
 
 export function MbrClosingStep({
   decisions,
+  onDecisionsChange,
   checklist,
   onChecklistChange,
   ritualFeedback,
