@@ -233,13 +233,14 @@ export default function OkrFullConstructionReviewPage() {
 // ============================================================
 
 function TeamSection({ 
-  team, isOpen, onToggle, criteria, onReEvaluate 
+  team, isOpen, onToggle, criteria, onReEvaluate, cycleId,
 }: { 
   team: TeamGroup;
   isOpen: boolean;
   onToggle: () => void;
   criteria: any[];
   onReEvaluate: (objectiveId: string) => void;
+  cycleId: string;
 }) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-success';
