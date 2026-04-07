@@ -409,7 +409,7 @@ export function QbrMeetingOpeningStep({
           <Card className="border-status-red/20">
             <CardContent className="p-3">
               <p className="text-xs font-medium text-status-red mb-1 flex items-center gap-1">
-                <Ban className="h-3 w-3" /> Vetos estratégicos
+                <Ban className="h-3 w-3" /> Vetos do C-Level — não entra no próximo ciclo
               </p>
               <p className="text-sm text-muted-foreground">{cLevelStrategicAnalysis.whatNotToDo}</p>
             </CardContent>
