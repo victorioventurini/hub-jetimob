@@ -151,10 +151,18 @@ function extractNextCycleProposals(sessions: any[], teams: Map<string, string>) 
     const teamName = teams.get(session.team_id) || 'Time';
     if (Array.isArray(nextOkrs)) {
       for (const okr of nextOkrs) {
-        const rawKrs = okr.keyResults || okr.krs || [];
+        // Support both formats:
+        // New: { objective: { title }, draftKrs: [{ title }] }
+        // Legacy: { title, keyResults/krs: [{ title }] }
+        const objectiveTitle =
+          (typeof okr.objective === 'object' ? okr.objective?.title : null) ||
+          okr.title ||
+          okr.objective ||
+          'Sem título';
+        const rawKrs = okr.draftKrs || okr.keyResults || okr.krs || [];
         proposals.push({
           teamName,
-          objectiveTitle: okr.title || okr.objective || 'Sem título',
+          objectiveTitle,
           krCount: rawKrs.length,
           krs: rawKrs.map((kr: any) => kr.title || kr.name || 'Sem título'),
         });
