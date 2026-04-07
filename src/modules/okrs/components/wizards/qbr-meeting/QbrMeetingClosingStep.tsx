@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ShieldCheck, Star, Plus, X, MessageSquare, BarChart3, Check, Pencil, Clock, Ban,
-  Target, AlertTriangle, CheckCircle2, Zap, Calendar, Users, Handshake,
+  Target, AlertTriangle, CheckCircle2, Users, Handshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
