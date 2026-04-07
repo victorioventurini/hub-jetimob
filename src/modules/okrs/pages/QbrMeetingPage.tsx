@@ -435,6 +435,8 @@ export default function QbrMeetingPage() {
             orgObjectives={orgObjectives || []}
             currentTeamIndex={draft.data.currentTeamIndex}
             onCurrentTeamIndexChange={(currentTeamIndex) => updateDraft({ currentTeamIndex })}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />
