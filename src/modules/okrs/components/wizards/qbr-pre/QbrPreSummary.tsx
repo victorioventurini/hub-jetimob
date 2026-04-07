@@ -41,7 +41,7 @@ export function QbrPreSummary({
   onComplete,
   onBack,
 }: QbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, zombieCandidates, kpisToCreate, learnings, proposedOkrs: rawProposedOkrs } = draftData;
+  const { krFinalStates, kpiSnapshots, zombieCandidates, learnings, proposedOkrs: rawProposedOkrs } = draftData;
   const proposedOkrs = normalizeProposedOkrs(rawProposedOkrs);
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
