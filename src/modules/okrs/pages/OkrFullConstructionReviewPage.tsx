@@ -218,6 +218,7 @@ export default function OkrFullConstructionReviewPage() {
                 onToggle={() => toggleTeam(team.teamId)}
                 criteria={criteria}
                 onReEvaluate={reEvaluateObjective}
+                cycleId={selectedCycleId}
               />
             ))}
           </div>
