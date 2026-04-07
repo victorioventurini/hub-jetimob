@@ -251,52 +251,6 @@ export function QbrKpiAnalysisStep({
           </div>
         )}
 
-        {/* KPIs to create */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium flex items-center gap-2">
-            <Plus className="h-4 w-4 text-primary" />
-            KPIs que deveriam existir
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            Há indicadores que você usa para tomar decisões mas não estão no sistema?
-          </p>
-
-          <div className="flex gap-2">
-            <Input
-              value={newKpiDesc}
-              onChange={(e) => setNewKpiDesc(e.target.value)}
-              placeholder="Descreva o indicador..."
-              className="text-sm"
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAddKpiToCreate(); }}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAddKpiToCreate}
-              disabled={!newKpiDesc.trim()}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {kpisToCreate.length > 0 && (
-            <div className="space-y-2">
-              {kpisToCreate.map((kpi, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded bg-muted/50">
-                  <span className="text-sm flex-1">{kpi.description}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleRemoveKpiToCreate(i)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Zombie summary */}
         {zombieCandidates.length > 0 && (
