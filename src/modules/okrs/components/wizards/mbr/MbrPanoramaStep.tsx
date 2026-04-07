@@ -488,6 +488,9 @@ export function MbrPanoramaStep({
             </div>
           )}
 
+          {/* KPIs desatualizados e pendentes */}
+          <KpiStatusBlocks kpiSnapshots={kpiSnapshots} />
+
           {kpiSnapshots.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               Nenhum KPI organizacional carregado. Os snapshots serão preenchidos conforme a integração.
