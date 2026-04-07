@@ -239,7 +239,7 @@ function ScopeSection({
 }
 
 /** Collapsible card for an org objective with team contributions */
-function OrgObjectiveCard({ objective }: { objective: OrgObjectiveWithKrs }) {
+function OrgObjectiveCard({ objective, showTeamKrs }: { objective: OrgObjectiveWithKrs; showTeamKrs: boolean }) {
   const [open, setOpen] = useState(false);
   const statusConfig = AGG_STATUS_CONFIG[objective.aggregatedStatus] ?? AGG_STATUS_CONFIG.on_track;
 
