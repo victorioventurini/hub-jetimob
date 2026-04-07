@@ -252,18 +252,31 @@ function TeamSection({
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
       <div id={`team-${team.teamId}`} className="border rounded-lg overflow-hidden">
-        <CollapsibleTrigger className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-          <div className="flex items-center gap-3">
-            {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-            <div className="text-left">
-              <h3 className="text-sm font-semibold">{team.teamName}</h3>
-              <p className="text-xs text-muted-foreground">
-                {team.objectives.length} objetivo{team.objectives.length !== 1 ? 's' : ''}
-                {' · '}
-                {team.approvedCount} OK · {team.needsImprovementCount} melhorar · {team.pendingCount} pendente
-              </p>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-3">
+              {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+              <div className="text-left">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold">{team.teamName}</h3>
+                  <a
+                    href={`/okrs/construction-review?cycle=${cycleId}&team=${team.teamId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                    title={`Ver análise de ${team.teamName} em nova aba`}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {team.objectives.length} objetivo{team.objectives.length !== 1 ? 's' : ''}
+                  {' · '}
+                  {team.approvedCount} OK · {team.needsImprovementCount} melhorar · {team.pendingCount} pendente
+                </p>
+              </div>
             </div>
-          </div>
           <div className="flex items-center gap-3">
             <span className={cn("text-lg font-bold", getScoreColor(team.avgScore))}>
               {team.avgScore || '—'}
