@@ -109,7 +109,7 @@ export function OutdatedKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; 
       <CardContent className="space-y-1">
         {visible.map(kpi => (
           <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
-            <span className="truncate flex-1">{kpi.name}</span>
+            <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="flex-1 text-xs" />
             <div className="flex items-center gap-2 shrink-0">
               {kpi.lastValueAt && (
                 <span className="text-muted-foreground">
