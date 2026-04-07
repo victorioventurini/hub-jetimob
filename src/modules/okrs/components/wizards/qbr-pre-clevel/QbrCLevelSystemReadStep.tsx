@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { toast } from 'sonner';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import {
