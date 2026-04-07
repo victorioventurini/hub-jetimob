@@ -575,8 +575,6 @@ export interface TeamCheckinDecision {
   deadline?: string | null; // ISO date format
   /** ID da diretiva C-Level relacionada (QBR Meeting Step 3) */
   relatedDirectiveId?: string;
-  /** Tipo de decisão: strategic (impacta empresa) ou tactical (impacta um time) */
-  decisionType?: 'strategic' | 'tactical';
 }
 
 export interface TeamCheckinChecklist {

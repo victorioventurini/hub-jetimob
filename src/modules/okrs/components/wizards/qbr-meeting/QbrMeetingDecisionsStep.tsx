@@ -121,19 +121,7 @@ export function QbrMeetingDecisionsStep({
                 showOwnerDeadline
               />
 
-              {/* Decision type badge */}
               <div className="flex items-center gap-2 pl-7">
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] cursor-pointer ${decision.decisionType === 'strategic' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'}`}
-                  onClick={() => onDecisionsChange(decisions.map(d => d.id === decision.id ? { ...d, decisionType: d.decisionType === 'strategic' ? 'tactical' : 'strategic' } : d))}
-                >
-                  {decision.decisionType === 'strategic' ? (
-                    <><Zap className="h-2.5 w-2.5 mr-0.5" /> Estratégica</>
-                  ) : (
-                    <><Target className="h-2.5 w-2.5 mr-0.5" /> Tática</>
-                  )}
-                </Badge>
 
                 {/* Related directive select */}
                 {cLevelDirectives.length > 0 && (

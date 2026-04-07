@@ -288,10 +288,6 @@ function GovernanceSummary({
           <p className="text-xs font-medium text-muted-foreground">Decisões:</p>
           <p className="text-xs">{decisions.length} decisões registradas</p>
           <div className="flex gap-3 text-xs text-muted-foreground">
-            {strategicCount > 0 && <span>· {strategicCount} estratégica{strategicCount !== 1 ? 's' : ''}</span>}
-            {tacticalCount > 0 && <span>· {tacticalCount} tática{tacticalCount !== 1 ? 's' : ''}</span>}
-          </div>
-          <div className="flex gap-3 text-xs text-muted-foreground">
             <span>· {decisionsWithOwner} com dono definido</span>
             {decisions.length - decisionsWithOwner > 0 && (
               <span className="text-status-amber">· {decisions.length - decisionsWithOwner} sem dono ⚠️</span>
