@@ -45,6 +45,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 import { useQbrExecutiveReport, type QbrExecutiveReportData } from '../hooks/useQbrExecutiveReport';
+import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
 
 // ============================================================
 // LOADING MESSAGES
