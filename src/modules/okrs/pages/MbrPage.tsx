@@ -216,31 +216,7 @@ export default function MbrPage() {
         ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
         : null;
 
-  // ── v1.2: Org objectives view + scorecard metrics ──
-  const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
-  const { data: orgObjView } = useAllOrgObjectivesView(cycleYear, quarterlyCycle?.id);
 
-  const scorecardMetrics = useMemo(() => {
-    const snapshots = draft.data.teamOkrSnapshots;
-    let healthy = 0, atRisk = 0, offTrack = 0;
-    for (const team of snapshots) {
-      for (const obj of team.objectives) {
-        for (const kr of obj.keyResults) {
-          const state = calculateKrState({
-            baseline: kr.baseline, current: kr.current, target: kr.target,
-            direction: kr.direction, status: kr.status as any,
-            lastCheckinAt: kr.lastCheckinAt, cycleEndDate: quarterlyCycle?.end_date ?? null,
-          });
-          if (state === 'healthy' || state === 'achieved' || state === 'exceeded') healthy++;
-          else if (state === 'at_risk' || state === 'stagnant') atRisk++;
-          else if (state === 'off_track' || state === 'not_achieved') offTrack++;
-        }
-      }
-    }
-    // Count teams without mbr-pre submission (teams with no objectives loaded)
-    const noSubmission = snapshots.filter(t => t.objectives.length === 0).length;
-    return { healthy, atRisk, offTrack, noSubmission };
-  }, [draft.data.teamOkrSnapshots, quarterlyCycle]);
 
       return {
         kpiId: kpi.id,
