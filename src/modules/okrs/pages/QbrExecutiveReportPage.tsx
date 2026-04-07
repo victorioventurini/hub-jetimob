@@ -304,26 +304,6 @@ function ReportDisplay({
       {/* Section 3.5 — KPI Evolution (data-driven, not AI) */}
       <KpiEvolutionSection />
 
-      {/* Section 4 — Decisions Needed */}
-      <ReportSection icon={MessageSquare} title="O que precisa de decisão na reunião">
-        {report.decisionsNeeded.length > 0 ? (
-          <div className="space-y-2">
-            {report.decisionsNeeded.map((decision, i) => {
-              const text = typeof decision === 'string'
-                ? decision
-                : (decision as any)?.title || (decision as any)?.description || JSON.stringify(decision);
-              return (
-                <div key={i} className="flex items-start gap-2 text-sm">
-                  <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <span>{text}</span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Nenhuma decisão pendente identificada.</p>
-        )}
-      </ReportSection>
     </div>
   );
 }
