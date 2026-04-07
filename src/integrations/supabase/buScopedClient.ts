@@ -216,6 +216,15 @@ export function getBuScopedClient(buId: string): SupabaseClient<Database> {
   // Hydrate auth state immediately
   void created.auth.getSession();
 
+  // Listen for token refreshes on globalClient and propagate to buScopedClient.
+  // Since autoRefreshToken is false here, we need globalClient to push updates.
+  globalClient.auth.onAuthStateChange((event) => {
+    if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+      // Re-read session from shared localStorage (both clients use the same storage key)
+      void created.auth.getSession();
+    }
+  });
+
   setBuSingleton(created);
   return created;
 }
