@@ -153,7 +153,7 @@ function OrgKrCard({ orgKr, showTeamKrs }: { orgKr: OrgKrWithTeamKrs; showTeamKr
   );
 }
 
-function OrgObjectiveCard({ objective }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs }) {
+function OrgObjectiveCard({ objective, showTeamKrs }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs; showTeamKrs: boolean }) {
   return (
     <Collapsible defaultOpen>
       <div className="border rounded-lg overflow-hidden">
@@ -169,7 +169,7 @@ function OrgObjectiveCard({ objective }: { objective: import('../../../hooks/que
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-4 border-t">
             {objective.orgKrs.map(orgKr => (
-              <OrgKrCard key={orgKr.id} orgKr={orgKr} />
+              <OrgKrCard key={orgKr.id} orgKr={orgKr} showTeamKrs={showTeamKrs} />
             ))}
           </div>
         </CollapsibleContent>
