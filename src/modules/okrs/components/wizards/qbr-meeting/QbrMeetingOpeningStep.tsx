@@ -473,11 +473,8 @@ export function QbrMeetingOpeningStep({
           </Card>
         )}
 
-        {/* Bloco 5b — KPIs desatualizados e pendentes */}
+        {/* Bloco 6b — KPIs desatualizados e pendentes */}
         <KpiStatusBlocks kpiSnapshots={orgKpiSnapshots} />
-
-        {/* Bloco 6 — Agenda da reunião */}
-        <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
       </div>
     </WizardStepScaffold>
   );
