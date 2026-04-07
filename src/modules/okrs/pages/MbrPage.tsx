@@ -729,6 +729,8 @@ export default function MbrPage() {
           <MbrQbrFollowUpStep
             followUpItems={draft.data.qbrFollowUpItems}
             onFollowUpItemsChange={(qbrFollowUpItems) => updateDraft({ qbrFollowUpItems })}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
           />
