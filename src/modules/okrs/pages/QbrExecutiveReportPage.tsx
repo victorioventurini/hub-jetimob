@@ -448,6 +448,10 @@ export default function QbrExecutiveReportPage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* KPI Evolution is always visible (data-driven) */}
+          <KpiEvolutionSection />
+        </>
         )}
       </div>
     </HubLayout>
