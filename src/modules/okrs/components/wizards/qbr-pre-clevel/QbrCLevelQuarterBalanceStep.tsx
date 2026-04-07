@@ -8,7 +8,7 @@
  * Sem campos de input — step puramente informativo.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BarChart3,
@@ -30,6 +30,7 @@ import {
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
+import { TeamKrsToggle } from '../shared/TeamKrsToggle';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { KrStateInline } from '../../insights';
@@ -114,7 +115,7 @@ function TeamKrRow({ tkr }: { tkr: TeamKrLinked }) {
   );
 }
 
-function OrgKrCard({ orgKr }: { orgKr: OrgKrWithTeamKrs }) {
+function OrgKrCard({ orgKr, showTeamKrs }: { orgKr: OrgKrWithTeamKrs; showTeamKrs: boolean }) {
   const krState = calculateKrState(buildKrStateParams({
     ...orgKr,
     last_checkin_at: null,
@@ -135,22 +136,24 @@ function OrgKrCard({ orgKr }: { orgKr: OrgKrWithTeamKrs }) {
         status={orgKr.status}
         size="sm"
       />
-      {orgKr.linkedTeamKrs.length > 0 ? (
-        <div className="border-l-2 border-primary/20 ml-2 space-y-0.5">
-          {orgKr.linkedTeamKrs.map(tkr => (
-            <TeamKrRow key={tkr.id} tkr={tkr} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground pl-6 italic">
-          Nenhum time contribuiu para esta KR neste quarter
-        </p>
+      {showTeamKrs && (
+        orgKr.linkedTeamKrs.length > 0 ? (
+          <div className="border-l-2 border-primary/20 ml-2 space-y-0.5">
+            {orgKr.linkedTeamKrs.map(tkr => (
+              <TeamKrRow key={tkr.id} tkr={tkr} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground pl-6 italic">
+            Nenhum time contribuiu para esta KR neste quarter
+          </p>
+        )
       )}
     </div>
   );
 }
 
-function OrgObjectiveCard({ objective }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs }) {
+function OrgObjectiveCard({ objective, showTeamKrs }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs; showTeamKrs: boolean }) {
   return (
     <Collapsible defaultOpen>
       <div className="border rounded-lg overflow-hidden">
@@ -166,7 +169,7 @@ function OrgObjectiveCard({ objective }: { objective: import('../../../hooks/que
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-4 border-t">
             {objective.orgKrs.map(orgKr => (
-              <OrgKrCard key={orgKr.id} orgKr={orgKr} />
+              <OrgKrCard key={orgKr.id} orgKr={orgKr} showTeamKrs={showTeamKrs} />
             ))}
           </div>
         </CollapsibleContent>
@@ -358,6 +361,7 @@ export function QbrCLevelQuarterBalanceStep({
   }, [teams, orgObjectives]);
 
   const isLoading = isLoadingTeams || isLoadingOrg;
+  const [showTeamKrs, setShowTeamKrs] = useState(true);
 
   return (
     <WizardStepScaffold
@@ -391,6 +395,7 @@ export function QbrCLevelQuarterBalanceStep({
                 <h3 className="font-semibold text-base">
                   Como foram os OKRs da empresa no {cycleName}
                 </h3>
+                <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
               </div>
 
               {(!orgObjectives || orgObjectives.length === 0) ? (
@@ -407,7 +412,7 @@ export function QbrCLevelQuarterBalanceStep({
               ) : (
                 <div className="space-y-3">
                   {orgObjectives.map(obj => (
-                    <OrgObjectiveCard key={obj.id} objective={obj} />
+                    <OrgObjectiveCard key={obj.id} objective={obj} showTeamKrs={showTeamKrs} />
                   ))}
                 </div>
               )}

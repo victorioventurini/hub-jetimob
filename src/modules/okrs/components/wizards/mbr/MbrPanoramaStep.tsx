@@ -26,7 +26,7 @@ import {
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge } from '../shared';
+import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge, TeamKrsToggle } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { formatValueWithUnit } from '@/shared/constants/units';
@@ -239,7 +239,7 @@ function ScopeSection({
 }
 
 /** Collapsible card for an org objective with team contributions */
-function OrgObjectiveCard({ objective }: { objective: OrgObjectiveWithKrs }) {
+function OrgObjectiveCard({ objective, showTeamKrs }: { objective: OrgObjectiveWithKrs; showTeamKrs: boolean }) {
   const [open, setOpen] = useState(false);
   const statusConfig = AGG_STATUS_CONFIG[objective.aggregatedStatus] ?? AGG_STATUS_CONFIG.on_track;
 
@@ -276,25 +276,27 @@ function OrgObjectiveCard({ objective }: { objective: OrgObjectiveWithKrs }) {
                 showLabels={false}
               />
               {/* Team contributions */}
-              {kr.linkedTeamKrs.length > 0 ? (
-                <div className="pl-2 space-y-1">
-              {kr.linkedTeamKrs.map((tkr) => {
-                    const s = String(tkr.status);
-                    const teamStatus = s === 'on_track' ? '✅' : s === 'at_risk' ? '🟡' : s === 'off_track' ? '🔴' : '⚪';
-                    return (
-                      <div key={tkr.id} className="flex items-center gap-2 text-xs">
-                        <span>{teamStatus}</span>
-                        <span className="font-medium truncate">{tkr.team_name}</span>
-                        <span className="text-muted-foreground truncate flex-1">{tkr.title}</span>
-                        <span className="text-muted-foreground shrink-0">{tkr.progress}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground pl-2">
-                  ⚪ Sem cobertura de times neste ciclo
-                </p>
+              {showTeamKrs && (
+                kr.linkedTeamKrs.length > 0 ? (
+                  <div className="pl-2 space-y-1">
+                    {kr.linkedTeamKrs.map((tkr) => {
+                      const s = String(tkr.status);
+                      const teamStatus = s === 'on_track' ? '✅' : s === 'at_risk' ? '🟡' : s === 'off_track' ? '🔴' : '⚪';
+                      return (
+                        <div key={tkr.id} className="flex items-center gap-2 text-xs">
+                          <span>{teamStatus}</span>
+                          <span className="font-medium truncate">{tkr.team_name}</span>
+                          <span className="text-muted-foreground truncate flex-1">{tkr.title}</span>
+                          <span className="text-muted-foreground shrink-0">{tkr.progress}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground pl-2">
+                    ⚪ Sem cobertura de times neste ciclo
+                  </p>
+                )
               )}
             </div>
           ))}
@@ -320,6 +322,7 @@ export function MbrPanoramaStep({
   orgObjectives,
   currentStepIndex = 0,
 }: MbrPanoramaStepProps) {
+  const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
   const { orgKpis, areaGroups, teamGroups, accordionDefaults } = useMemo(() => {
     const org: MbrKpiSnapshot[] = [];
@@ -430,13 +433,14 @@ export function MbrPanoramaStep({
           {/* ── Bloco 2: OKRs da empresa neste mês ── */}
           {orgObjectives && orgObjectives.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-primary" />
-                OKRs da Empresa
-              </h4>
+                <h4 className="text-sm font-semibold">OKRs da Empresa</h4>
+                <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
+              </div>
               <div className="space-y-2">
                 {orgObjectives.map((obj) => (
-                  <OrgObjectiveCard key={obj.id} objective={obj} />
+                  <OrgObjectiveCard key={obj.id} objective={obj} showTeamKrs={showTeamKrs} />
                 ))}
               </div>
             </div>
