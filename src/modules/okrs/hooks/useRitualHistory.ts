@@ -26,6 +26,11 @@ export interface RitualHistoryFilters {
   pageSize?: number;
 }
 
+export interface ParticipantEvaluation {
+  score: number;
+  feedback: string;
+}
+
 export interface RitualHistoryItem {
   id: string;
   wizardType: WizardPersona;
@@ -40,6 +45,7 @@ export interface RitualHistoryItem {
   completedAt: string | null;
   decisions: TeamCheckinDecision[];
   reflectionData: Record<string, unknown> | null;
+  addendums: unknown[] | null;
 }
 
 export interface RitualDetail extends RitualHistoryItem {
