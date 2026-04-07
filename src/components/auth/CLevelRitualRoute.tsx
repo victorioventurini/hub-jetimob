@@ -12,8 +12,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { useBu } from '@/contexts/BuContext';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { LoadingState } from '@/components/ui/loading-state';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -24,16 +23,14 @@ interface CLevelRitualRouteProps {
 export function CLevelRitualRoute({ children }: CLevelRitualRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { isWildcard, isLoading: permLoading } = usePermissions();
-  const { client, isReady } = useBuScopedSupabase();
-  const { currentBuId } = useBu();
+  const { client, isReady, buId } = useOptionalBuClient();
   const location = useLocation();
 
   const { data: isAreaLeader = false, isLoading: areaLoading } = useQuery({
-    queryKey: queryKeys.identity.permissions(currentBuId ?? null, user?.id ?? null).concat('area-leader-check'),
+    queryKey: queryKeys.identity.permissions(buId ?? null, user?.id ?? null).concat('area-leader-check'),
     queryFn: async () => {
-      if (!client || !currentBuId || !user?.id) return false;
+      if (!client || !buId || !user?.id) return false;
 
-      // Get profile_id for this auth user
       const { data: profile } = await client
         .from('profiles')
         .select('id')
@@ -45,14 +42,14 @@ export function CLevelRitualRoute({ children }: CLevelRitualRouteProps) {
       const { data } = await client
         .from('areas')
         .select('id')
-        .eq('bu_id', currentBuId)
+        .eq('bu_id', buId)
         .eq('leader_user_id', profile.id)
         .is('deleted_at', null)
         .limit(1);
 
       return (data?.length ?? 0) > 0;
     },
-    enabled: isReady && !!user?.id && !!currentBuId && !isWildcard,
+    enabled: isReady && !!user?.id && !!buId && !isWildcard,
     staleTime: 5 * 60 * 1000,
   });
 
