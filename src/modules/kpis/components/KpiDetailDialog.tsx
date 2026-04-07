@@ -367,10 +367,10 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
               kpiName={kpi.name}
               canEdit={canUpdateValues}
               onUpdateValue={async (id, data) => {
-                await updateKpiValue.mutateAsync({ id, ...data });
+                await updateKpiValue.mutateAsync({ id, kpi_id: kpi.id, ...data });
               }}
               onDeleteValue={async (id) => {
-                await deleteKpiValue.mutateAsync(id);
+                await deleteKpiValue.mutateAsync({ id, kpi_id: kpi.id });
               }}
             />
           </div>
