@@ -38,8 +38,10 @@ export interface QbrKpiAnalysisStepProps {
   kpiSnapshots: MbrKpiSnapshot[];
   zombieCandidates: string[];
   onZombieCandidatesChange: (ids: string[]) => void;
-  kpisToCreate: QbrPreDraftData['kpisToCreate'];
-  onKpisToCreateChange: (kpis: QbrPreDraftData['kpisToCreate']) => void;
+  /** @deprecated KPI suggestions removed — kept for backward compat */
+  kpisToCreate?: QbrPreDraftData['kpisToCreate'];
+  /** @deprecated KPI suggestions removed — kept for backward compat */
+  onKpisToCreateChange?: (kpis: QbrPreDraftData['kpisToCreate']) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
