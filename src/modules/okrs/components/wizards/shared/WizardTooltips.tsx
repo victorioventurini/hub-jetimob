@@ -340,6 +340,10 @@ export const WIZARD_TOOLTIPS = {
   // ============================================================
   // QBR PRE-WORK C-LEVEL
   // ============================================================
+  'qbr-clevel-balance': {
+    content: 'Balanço consolidado do quarter para calibrar direcionamentos estratégicos.',
+    icon: 'info',
+  },
   'qbr-clevel-system-read': {
     content: 'Leitura sistêmica da organização para calibrar direcionamentos.',
     icon: 'info',
