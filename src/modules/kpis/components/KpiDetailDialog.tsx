@@ -357,67 +357,23 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
           )}
 
           {/* History Table */}
-          {values.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-medium text-foreground">Histórico de Atualizações</h3>
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">
-                        Data / Hora
-                      </th>
-                      <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">
-                        Valor
-                      </th>
-                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">
-                        Origem
-                      </th>
-                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">
-                        Usuário
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {values.slice(0, 10).map((v, i) => (
-                      <tr key={v.id} className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}>
-                        <td className="px-4 py-2 text-sm">
-                          <div>{format(parseISO(v.reference_date), "dd/MM/yyyy")}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {format(parseISO(v.created_at), "HH:mm")}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 text-sm text-right font-medium">
-                          {formatValue(v.value)}
-                        </td>
-                        <td className="px-4 py-2">
-                          <Badge variant="outline" className={cn("text-xs gap-1", getSourceColor(v.source))}>
-                            <SourceIcon type={v.source} />
-                            {SOURCE_TYPE_LABELS[v.source as KpiValueSource] || v.source}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2 text-sm text-muted-foreground">
-                          {v.source === 'manual' && v.created_by_user ? (
-                            <div className="flex items-center gap-1.5">
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage src={v.created_by_user.photo_url || undefined} />
-                                <AvatarFallback className="text-[8px]">
-                                  {v.created_by_user.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>{v.created_by_user.display_name}</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground/60">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          <div className="space-y-3">
+            <h3 className="font-medium text-foreground">Histórico de Atualizações</h3>
+            <KpiValuesTable
+              values={values}
+              unit={kpi.unit}
+              direction={kpi.direction}
+              isLoading={false}
+              kpiName={kpi.name}
+              canEdit={canUpdateValues}
+              onUpdateValue={async (id, data) => {
+                await updateKpiValue.mutateAsync({ id, ...data });
+              }}
+              onDeleteValue={async (id) => {
+                await deleteKpiValue.mutateAsync(id);
+              }}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
