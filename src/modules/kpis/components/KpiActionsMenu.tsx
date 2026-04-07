@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2, RefreshCw } from "lucide-react";
+import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -174,6 +174,12 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()} onCloseAutoFocus={(e) => e.preventDefault()}>
+          <DropdownMenuItem asChild>
+            <a href={`/kpis/${kpi.id}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Abrir em nova aba
+            </a>
+          </DropdownMenuItem>
           {canUpdateValues && (
             <DropdownMenuItem onClick={() => setUpdateValueOpen(true)}>
               <RefreshCw className="mr-2 h-4 w-4" />
