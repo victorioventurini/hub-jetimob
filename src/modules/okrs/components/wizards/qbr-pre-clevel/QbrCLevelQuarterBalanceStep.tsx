@@ -361,6 +361,7 @@ export function QbrCLevelQuarterBalanceStep({
   }, [teams, orgObjectives]);
 
   const isLoading = isLoadingTeams || isLoadingOrg;
+  const [showTeamKrs, setShowTeamKrs] = useState(true);
 
   return (
     <WizardStepScaffold
