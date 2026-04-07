@@ -342,8 +342,6 @@ export function QbrMeetingClosingStep({
   teamsForReview = [],
   intentionalGaps = [],
   onIntentionalGapsChange,
-  nextThirtyDays,
-  onNextThirtyDaysChange,
   isCompleting,
   onComplete,
   onBack,
