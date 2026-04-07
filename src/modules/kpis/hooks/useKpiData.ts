@@ -431,7 +431,7 @@ export function useKpiDetail(kpiId: string) {
   const { data: values } = useQuery({
     queryKey: queryKeys.kpis.values(kpiId),
     staleTime: 2 * 60 * 1000, // 2 minutes cache
-    queryFn: async () => {
+    queryFn: async (): Promise<KpiValue[]> => {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("kpi_values")
@@ -443,18 +443,46 @@ export function useKpiDetail(kpiId: string) {
         .order("reference_date", { ascending: false });
 
       if (error) throw error;
-      return data as DbKpiValue[];
+
+      const rawValues = (data as DbKpiValue[]) || [];
+      const userIds = [...new Set(rawValues.map((value) => value.created_by).filter((id): id is string => Boolean(id)))];
+
+      let userMap: Record<string, { id: string; display_name: string; photo_url: string | null }> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = currentBuId
+          ? await supabase
+              .from("v_bu_active_profiles")
+              .select("id, display_name, photo_url")
+              .eq("bu_id", currentBuId)
+              .in("id", userIds)
+          : await supabase
+              .from("v_profiles_directory")
+              .select("id, display_name, photo_url")
+              .in("id", userIds);
+
+        if (profilesError) throw profilesError;
+
+        userMap = (profiles || []).reduce((acc, profile) => {
+          acc[profile.id] = {
+            id: profile.id,
+            display_name: profile.display_name || "Usuário",
+            photo_url: profile.photo_url,
+          };
+          return acc;
+        }, {} as typeof userMap);
+      }
+
+      return rawValues.map((value) => ({
+        ...value,
+        source: mapSource(value.source),
+        confidence: value.confidence || "medium",
+        rag_status: value.rag_status as KpiValue["rag_status"],
+        created_by_user: value.created_by ? userMap[value.created_by] || null : null,
+      }));
     },
     enabled: !!supabase && !!kpiId,
   });
-
-  // Map to extended type
-  const mappedValues: KpiValue[] = (values || []).map(v => ({
-    ...v,
-    source: mapSource(v.source),
-    confidence: v.confidence || 'medium',
-    rag_status: v.rag_status as KpiValue['rag_status'],
-  }));
 
   return {
     kpi: kpi ? {
