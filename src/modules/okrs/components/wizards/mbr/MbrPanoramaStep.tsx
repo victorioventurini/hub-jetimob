@@ -278,8 +278,9 @@ function OrgObjectiveCard({ objective }: { objective: OrgObjectiveWithKrs }) {
               {/* Team contributions */}
               {kr.linkedTeamKrs.length > 0 ? (
                 <div className="pl-2 space-y-1">
-                  {kr.linkedTeamKrs.map((tkr) => {
-                    const teamStatus = tkr.status === 'on_track' ? '✅' : tkr.status === 'at_risk' ? '🟡' : tkr.status === 'off_track' ? '🔴' : '⚪';
+              {kr.linkedTeamKrs.map((tkr) => {
+                    const s = String(tkr.status);
+                    const teamStatus = s === 'on_track' ? '✅' : s === 'at_risk' ? '🟡' : s === 'off_track' ? '🔴' : '⚪';
                     return (
                       <div key={tkr.id} className="flex items-center gap-2 text-xs">
                         <span>{teamStatus}</span>
