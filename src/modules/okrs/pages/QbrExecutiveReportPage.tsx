@@ -46,6 +46,7 @@ import { toast } from 'sonner';
 
 import { useQbrExecutiveReport, type QbrExecutiveReportData } from '../hooks/useQbrExecutiveReport';
 import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
+import { CriticalKpiComparison } from '../components/qbr-report/CriticalKpiComparison';
 
 // ============================================================
 // LOADING MESSAGES
@@ -149,12 +150,14 @@ function ReportSection({
 function ReportDisplay({
   report,
   cycleName,
+  cycleId,
   generatedAt,
   onRegenerate,
   isRegenerating,
 }: {
   report: QbrExecutiveReportData;
   cycleName: string;
+  cycleId: string | null;
   generatedAt: string | null;
   onRegenerate: () => void;
   isRegenerating: boolean;
@@ -293,6 +296,7 @@ function ReportDisplay({
                 <span className="text-xs font-semibold text-status-red">Ponto crítico</span>
               </div>
               <p className="text-sm">{report.kpiInsights.critical}</p>
+              <CriticalKpiComparison cycleId={cycleId} />
             </div>
           )}
           {!report.kpiInsights.healthy && !report.kpiInsights.atRisk && !report.kpiInsights.critical && (
@@ -399,6 +403,7 @@ export default function QbrExecutiveReportPage() {
           <ReportDisplay
             report={report}
             cycleName={selectedCycle?.name || ''}
+            cycleId={cycleState.value || null}
             generatedAt={generatedAt}
             onRegenerate={() => generate()}
             isRegenerating={isGenerating}
