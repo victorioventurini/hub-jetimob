@@ -408,7 +408,7 @@ export function QbrMeetingOpeningStep({
           <Card className="border-status-red/20">
             <CardContent className="p-3">
               <p className="text-xs font-medium text-status-red mb-1 flex items-center gap-1">
-                <Ban className="h-3 w-3" /> Vetos do C-Level — não entra no próximo ciclo
+                <Ban className="h-3 w-3" /> Vetos estratégicos — não entra no próximo ciclo
               </p>
               <p className="text-sm text-muted-foreground">{cLevelStrategicAnalysis.whatNotToDo}</p>
             </CardContent>
@@ -420,7 +420,7 @@ export function QbrMeetingOpeningStep({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Megaphone className="h-4 w-4" />
-                O que o C-Level quer que a sala decida ({cLevelDirectives.length})
+                O que queremos que a sala decida ({cLevelDirectives.length})
               </CardTitle>
               <p className="text-xs text-muted-foreground">Cada item abaixo é pauta obrigatória. Não saia da reunião sem endereçar.</p>
             </CardHeader>
