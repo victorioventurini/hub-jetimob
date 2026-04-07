@@ -373,6 +373,15 @@ export function QbrMeetingOpeningStep({
           badge={`${leaderSummaryCount} times`}
         />
       }
+      bottomFixed={
+        onDecisionsChange ? (
+          <InlineDecisionInput
+            decisions={decisions}
+            onDecisionsChange={onDecisionsChange}
+            sourceStep="qbr-meeting-opening"
+          />
+        ) : undefined
+      }
       footer={
         <WizardFirstStepFooter onPrimary={onContinue} primaryLabel="Iniciar Revisão de OKRs" />
       }
