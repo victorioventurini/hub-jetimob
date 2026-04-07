@@ -301,6 +301,9 @@ function ReportDisplay({
         </div>
       </ReportSection>
 
+      {/* Section 3.5 — KPI Evolution (data-driven, not AI) */}
+      <KpiEvolutionSection />
+
       {/* Section 4 — Decisions Needed */}
       <ReportSection icon={MessageSquare} title="O que precisa de decisão na reunião">
         {report.decisionsNeeded.length > 0 ? (
