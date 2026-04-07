@@ -41,7 +41,7 @@ export function QbrPreSummary({
   onComplete,
   onBack,
 }: QbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, zombieCandidates, kpisToCreate, learnings, proposedOkrs: rawProposedOkrs } = draftData;
+  const { krFinalStates, kpiSnapshots, zombieCandidates, learnings, proposedOkrs: rawProposedOkrs } = draftData;
   const proposedOkrs = normalizeProposedOkrs(rawProposedOkrs);
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
@@ -119,12 +119,7 @@ export function QbrPreSummary({
                   {zombieCandidates.length} zombie{zombieCandidates.length > 1 ? 's' : ''}
                 </Badge>
               )}
-              {kpisToCreate.length > 0 && (
-                <Badge variant="outline" className="text-xs text-primary">
-                  +{kpisToCreate.length} a criar
-                </Badge>
-              )}
-              {zombieCandidates.length === 0 && kpisToCreate.length === 0 && (
+              {zombieCandidates.length === 0 && (
                 <span className="text-xs text-muted-foreground">Sem sinalizações</span>
               )}
             </div>

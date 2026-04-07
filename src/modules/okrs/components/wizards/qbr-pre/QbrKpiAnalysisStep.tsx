@@ -2,19 +2,15 @@
  * QbrKpiAnalysisStep - Step 2: Análise de KPIs e Métricas
  * 
  * Carrega KPIs do escopo do líder com valor atual, RAG status e variação.
- * Permite marcar KPIs como "zombie" ou sinalizar KPIs a criar.
+ * Permite marcar KPIs como "zombie".
  */
 
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import {
-  Activity, AlertTriangle, Plus, X, Ghost,
+  Activity, AlertTriangle, Ghost,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -38,8 +34,10 @@ export interface QbrKpiAnalysisStepProps {
   kpiSnapshots: MbrKpiSnapshot[];
   zombieCandidates: string[];
   onZombieCandidatesChange: (ids: string[]) => void;
-  kpisToCreate: QbrPreDraftData['kpisToCreate'];
-  onKpisToCreateChange: (kpis: QbrPreDraftData['kpisToCreate']) => void;
+  /** @deprecated KPI suggestions removed — kept for backward compat */
+  kpisToCreate?: QbrPreDraftData['kpisToCreate'];
+  /** @deprecated KPI suggestions removed — kept for backward compat */
+  onKpisToCreateChange?: (kpis: QbrPreDraftData['kpisToCreate']) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
@@ -65,35 +63,17 @@ export function QbrKpiAnalysisStep({
   kpiSnapshots,
   zombieCandidates,
   onZombieCandidatesChange,
-  kpisToCreate,
-  onKpisToCreateChange,
   decisions,
   onDecisionsChange,
   onContinue,
   onBack,
 }: QbrKpiAnalysisStepProps) {
-  const [newKpiDesc, setNewKpiDesc] = useState('');
-  const [newKpiScope, setNewKpiScope] = useState('team');
-
   const handleToggleZombie = (kpiId: string) => {
     if (zombieCandidates.includes(kpiId)) {
       onZombieCandidatesChange(zombieCandidates.filter(id => id !== kpiId));
     } else {
       onZombieCandidatesChange([...zombieCandidates, kpiId]);
     }
-  };
-
-  const handleAddKpiToCreate = () => {
-    if (!newKpiDesc.trim()) return;
-    onKpisToCreateChange([
-      ...kpisToCreate,
-      { description: newKpiDesc.trim(), suggestedScope: newKpiScope, relatedKrTitle: '' },
-    ]);
-    setNewKpiDesc('');
-  };
-
-  const handleRemoveKpiToCreate = (index: number) => {
-    onKpisToCreateChange(kpisToCreate.filter((_, i) => i !== index));
   };
 
   const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
@@ -251,52 +231,6 @@ export function QbrKpiAnalysisStep({
           </div>
         )}
 
-        {/* KPIs to create */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium flex items-center gap-2">
-            <Plus className="h-4 w-4 text-primary" />
-            KPIs que deveriam existir
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            Há indicadores que você usa para tomar decisões mas não estão no sistema?
-          </p>
-
-          <div className="flex gap-2">
-            <Input
-              value={newKpiDesc}
-              onChange={(e) => setNewKpiDesc(e.target.value)}
-              placeholder="Descreva o indicador..."
-              className="text-sm"
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAddKpiToCreate(); }}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAddKpiToCreate}
-              disabled={!newKpiDesc.trim()}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {kpisToCreate.length > 0 && (
-            <div className="space-y-2">
-              {kpisToCreate.map((kpi, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded bg-muted/50">
-                  <span className="text-sm flex-1">{kpi.description}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleRemoveKpiToCreate(i)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Zombie summary */}
         {zombieCandidates.length > 0 && (

@@ -81,15 +81,6 @@ function aggregateZombieKpis(submissions: LeaderPreSubmission[]) {
   return all.size;
 }
 
-function aggregateKpisToCreate(submissions: LeaderPreSubmission[]) {
-  const items: Array<{ description: string; suggestedScope: string; relatedKrTitle: string; teamName: string }> = [];
-  for (const sub of submissions) {
-    for (const kpi of sub.snapshot.kpisToCreate) {
-      items.push({ ...kpi, teamName: sub.teamName });
-    }
-  }
-  return items;
-}
 
 function extractTopLearnings(submissions: LeaderPreSubmission[], field: 'whatWorked' | 'whatDidntWork' | 'debts'): Array<{ text: string; teamName: string }> {
   return submissions
@@ -118,7 +109,7 @@ export function QbrCLevelSystemReadStep({
   const buSupabase = useBuScopedSupabase();
   const krAgg = useMemo(() => aggregateKrStates(leaderSubmissions), [leaderSubmissions]);
   const zombieCount = useMemo(() => aggregateZombieKpis(leaderSubmissions), [leaderSubmissions]);
-  const kpisToCreate = useMemo(() => aggregateKpisToCreate(leaderSubmissions), [leaderSubmissions]);
+  
   const topLearnings = useMemo(() => ({
     worked: extractTopLearnings(leaderSubmissions, 'whatWorked'),
     didntWork: extractTopLearnings(leaderSubmissions, 'whatDidntWork'),
@@ -322,34 +313,6 @@ export function QbrCLevelSystemReadStep({
               <CardContent className="p-3 flex items-center gap-2">
                 <Ghost className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">{zombieCount} KPI{zombieCount > 1 ? 's' : ''} zombie sinalizados</span>
-              </CardContent>
-            </Card>
-          )}
-          {kpisToCreate.length > 0 && (
-            <Card className="border-dashed">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  {kpisToCreate.length} KPI{kpisToCreate.length > 1 ? 's' : ''} sugeridos para criação
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {kpisToCreate.map((kpi, i) => (
-                  <div key={i} className="flex items-start justify-between gap-2 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{kpi.description}</p>
-                      {kpi.relatedKrTitle && (
-                        <p className="text-xs text-muted-foreground truncate">KR: {kpi.relatedKrTitle}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {kpi.suggestedScope && (
-                        <Badge variant="outline" className="text-[10px]">{kpi.suggestedScope}</Badge>
-                      )}
-                      <Badge variant="secondary" className="text-[10px]">{kpi.teamName}</Badge>
-                    </div>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           )}
