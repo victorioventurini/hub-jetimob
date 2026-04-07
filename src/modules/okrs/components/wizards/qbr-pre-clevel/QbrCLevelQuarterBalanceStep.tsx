@@ -326,8 +326,9 @@ export function QbrCLevelQuarterBalanceStep({
 
           if (state === 'achieved' || state === 'exceeded') entry.achieved++;
           else if (state === 'healthy') entry.onTrack++;
-          else if (state === 'at_risk') entry.atRisk++;
+          else if (state === 'at_risk' || state === 'stagnant') entry.atRisk++;
           else if (state === 'off_track' || state === 'not_achieved') entry.offTrack++;
+          else if (state === 'not_started') entry.notStarted++;
 
           if (state === 'stagnant') entry.stagnant++;
         }
