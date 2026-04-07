@@ -108,7 +108,7 @@ export function QbrCLevelOkrValidationStep({
         header={
           <WizardStepHeader
             icon={ClipboardCheck}
-            title="Validação de OKRs"
+            title="Calibração das propostas"
             tooltip="qbr-clevel-okr-validation"
             description="Nenhuma proposta de OKR encontrada"
             variant="amber"
