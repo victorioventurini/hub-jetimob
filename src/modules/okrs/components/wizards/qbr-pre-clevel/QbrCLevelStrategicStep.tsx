@@ -83,11 +83,20 @@ export function QbrCLevelStrategicStep({
         <div className="space-y-2">
           <Label className="flex items-center gap-2 text-sm font-medium">
             <CheckCircle2 className="h-4 w-4 text-primary" />
-            Alinhamento com a Estratégia
+            Alinhamento estratégico
           </Label>
-          <p className="text-xs text-muted-foreground">
-            Os OKRs do ciclo e os propostos levam a empresa para onde precisa?
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-foreground">Sobre o quarter que encerrou</p>
+            <p className="text-xs text-muted-foreground">
+              Os OKRs executados moveram a empresa na direção certa? O que ficou desalinhado com a estratégia?
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-foreground">Sobre o próximo quarter</p>
+            <p className="text-xs text-muted-foreground">
+              As propostas dos times cobrem as prioridades estratégicas da empresa? Existe alguma prioridade sem time responsável?
+            </p>
+          </div>
           <Textarea
             value={strategicAnalysis.alignmentAssessment}
             onChange={(e) => updateField('alignmentAssessment', e.target.value)}
@@ -100,15 +109,15 @@ export function QbrCLevelStrategicStep({
         <div className="space-y-2">
           <Label className="flex items-center gap-2 text-sm font-medium">
             <Eye className="h-4 w-4 text-status-amber" />
-            Sinais que os Times Não Viram
+            O que você está vendo que os times não veem
           </Label>
           <p className="text-xs text-muted-foreground">
-            Correlações e padrões que emergem da visão consolidada mas não são visíveis time a time.
+            Que movimentos de mercado, padrões entre áreas ou riscos sistêmicos você está enxergando de cima que os times não conseguem ver de dentro?
           </p>
           <Textarea
             value={strategicAnalysis.signalsTeamsMissed}
             onChange={(e) => updateField('signalsTeamsMissed', e.target.value)}
-            placeholder="Tendências de mercado, riscos sistêmicos, oportunidades não exploradas..."
+            placeholder="Movimentos de mercado, padrões entre áreas, riscos que só se veem de cima..."
             className="min-h-[100px] text-sm"
           />
         </div>
@@ -117,15 +126,15 @@ export function QbrCLevelStrategicStep({
         <div className="space-y-2">
           <Label className="flex items-center gap-2 text-sm font-medium">
             <Ban className="h-4 w-4 text-status-red" />
-            O que NÃO Fazer
+            Vetos estratégicos
           </Label>
           <p className="text-xs text-muted-foreground">
-            Explicitamente: o que não entra no próximo ciclo, mesmo que pareça importante.
+            O que a empresa não deve fazer no próximo ciclo, mesmo que pareça importante ou urgente? Seja explícito — vetos não ditos viram trabalho desperdiçado.
           </p>
           <Textarea
             value={strategicAnalysis.whatNotToDo}
             onChange={(e) => updateField('whatNotToDo', e.target.value)}
-            placeholder="Projetos, iniciativas ou direções que não são prioridade agora..."
+            placeholder="Iniciativas, direções ou investimentos que não são prioridade agora..."
             className="min-h-[100px] text-sm"
           />
         </div>
