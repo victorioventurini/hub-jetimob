@@ -294,6 +294,7 @@ function TeamSection({
             </Badge>
           </div>
         </button>
+        </CollapsibleTrigger>
 
         <CollapsibleContent>
           <div className="border-t p-4 space-y-4">
