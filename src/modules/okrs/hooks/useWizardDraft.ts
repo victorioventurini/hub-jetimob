@@ -146,6 +146,7 @@ const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft 
   updatedAt: new Date().toISOString(),
   teamId,
   cycleId,
+  sourceDraftObjectiveId: null,
   currentStep: 'intro',
   impactReflection: '',
   contextAiInsight: null,
