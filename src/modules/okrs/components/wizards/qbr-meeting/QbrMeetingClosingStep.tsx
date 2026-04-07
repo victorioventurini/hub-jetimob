@@ -50,9 +50,6 @@ export interface QbrMeetingClosingStepProps {
   teamsForReview?: TeamForReview[];
   intentionalGaps?: string[];
   onIntentionalGapsChange?: (gaps: string[]) => void;
-  /** Próximos 30 dias */
-  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
-  onNextThirtyDaysChange?: (data: { ceo?: string; coo?: string; cpto?: string }) => void;
   isCompleting?: boolean;
   onComplete: () => void;
   onBack: () => void;
