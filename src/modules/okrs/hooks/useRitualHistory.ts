@@ -82,7 +82,7 @@ export { WIZARD_TYPE_LABELS };
 
 const HISTORY_FIELDS = `
   id, bu_id, wizard_type, status, team_id, cycle_id, started_by, started_at,
-  completed_at, decisions, reflection_data,
+  completed_at, decisions, reflection_data, addendums,
   teams!okr_wizard_sessions_team_id_fkey ( name ),
   cycles!okr_wizard_sessions_cycle_id_fkey ( name ),
   profiles!okr_wizard_sessions_started_by_fkey ( display_name, first_name, last_name )
