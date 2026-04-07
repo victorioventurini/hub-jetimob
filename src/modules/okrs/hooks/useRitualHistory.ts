@@ -164,6 +164,7 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         completedAt: row.completed_at,
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
+        addendums: Array.isArray(row.addendums) ? row.addendums : null,
       }));
 
       return { items, totalCount: count ?? 0 };
