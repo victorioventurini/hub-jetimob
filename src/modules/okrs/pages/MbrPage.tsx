@@ -626,6 +626,9 @@ export default function MbrPage() {
             lastCompletedAt={lastCompletedAt}
             onContinue={goNext}
             buName={currentBu?.name}
+            scorecardMetrics={scorecardMetrics}
+            orgObjectives={orgObjView ?? []}
+            currentStepIndex={0}
           />
         );
 
