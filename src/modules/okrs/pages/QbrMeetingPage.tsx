@@ -443,6 +443,7 @@ export default function QbrMeetingPage() {
           <QbrMeetingDecisionsStep
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            cLevelDirectives={cLevelDirectives}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -454,6 +455,8 @@ export default function QbrMeetingPage() {
             commitments={draft.data.crossCommitments}
             onCommitmentsChange={(crossCommitments) => updateDraft({ crossCommitments })}
             teams={buTeams || []}
+            approvals={draft.data.approvals}
+            teamsForReview={teamsForReview}
             onContinue={goNext}
             onBack={goBack}
           />
