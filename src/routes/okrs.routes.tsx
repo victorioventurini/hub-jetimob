@@ -69,7 +69,7 @@ export const okrRoutes = (
     <Route path="/okrs/quality" element={<OkrRoute><OkrQualityPage /></OkrRoute>} />
     <Route path="/okrs/construction-review" element={<OkrRoute><OkrConstructionReviewPage /></OkrRoute>} />
     <Route path="/okrs/org-construction-review" element={<OkrRoute requiresBuAdmin><OrgConstructionReviewPage /></OkrRoute>} />
-    <Route path="/okrs/construction-review-full" element={<OkrRoute requiresBuAdmin><OkrFullConstructionReviewPage /></OkrRoute>} />
+    <Route path="/okrs/construction-review-cross" element={<OkrRoute requiresBuAdmin><OkrFullConstructionReviewPage /></OkrRoute>} />
     <Route path="/okrs/analysis" element={<OkrRoute requiresBuAdmin><OrgAnalysisPage /></OkrRoute>} />
     <Route path="/okrs/health" element={<OkrRoute requiresBuAdmin><OkrHealthPage /></OkrRoute>} />
     
