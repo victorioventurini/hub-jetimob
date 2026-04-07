@@ -105,43 +105,6 @@ export function QbrMeetingDecisionsStep({
                 showOwnerDeadline
               />
 
-              <div className="flex items-center gap-2 pl-7">
-
-                {/* Related directive select */}
-                {cLevelDirectives.length > 0 && (
-                  <Select
-                    value={decision.relatedDirectiveId || '__none__'}
-                    onValueChange={(v) => {
-                      onDecisionsChange(decisions.map(d =>
-                        d.id === decision.id
-                          ? { ...d, relatedDirectiveId: v === '__none__' ? undefined : v }
-                          : d
-                      ));
-                    }}
-                  >
-                    <SelectTrigger className="h-6 text-[10px] w-auto min-w-[140px] max-w-[240px]">
-                      <SelectValue placeholder="Relacionado a..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Sem vínculo</SelectItem>
-                      {cLevelDirectives.map((dir, i) => (
-                        <SelectItem key={`dir-${i}`} value={`directive-${i}`}>
-                          {dir.text.slice(0, 60)}{dir.text.length > 60 ? '…' : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-
-              {/* Show related directive ref badge */}
-              {decision.relatedDirectiveId && cLevelDirectives.length > 0 && (
-                <div className="pl-7">
-                  <Badge variant="secondary" className="text-[10px]">
-                    Ref: {cLevelDirectives[parseInt(decision.relatedDirectiveId.replace('directive-', ''))]?.text?.slice(0, 40)}…
-                  </Badge>
-                </div>
-              )}
             </div>
           ))
         )}
