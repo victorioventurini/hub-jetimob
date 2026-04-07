@@ -441,12 +441,26 @@ export default function QbrMeetingPage() {
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
   // ── Loading ──
-  if (isLoadingCycles || isLoadingCLevel || isLoadingPreQbr) {
+  if (isLoadingCycles || isLoadingCLevel || isLoadingPreQbr || isLoadingCompletedSession) {
     return <LoadingState text="Carregando dados da Reunião QBR..." fullPage />;
   }
 
   if (!availability.isAvailable) {
     return <RitualUnavailableScreen wizardType="qbr-meeting" availability={availability} />;
+  }
+
+  // ── Show completed view if session was already submitted ──
+  if (showCompletedView && completedSession) {
+    return (
+      <CompletedRitualView
+        title="Reunião QBR"
+        wizardType="qbr-meeting"
+        session={completedSession}
+        backUrl="/okrs/executive"
+        canReopen={isWildcard}
+        onReopen={handleReopen}
+      />
+    );
   }
 
   // ── Step render ──
