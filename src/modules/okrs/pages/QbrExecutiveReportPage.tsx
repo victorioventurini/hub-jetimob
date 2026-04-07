@@ -47,6 +47,7 @@ import { toast } from 'sonner';
 import { useQbrExecutiveReport, type QbrExecutiveReportData } from '../hooks/useQbrExecutiveReport';
 import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
 import { CriticalKpiComparison } from '../components/qbr-report/CriticalKpiComparison';
+import { OrgOkrsReportSection } from '../components/qbr-report/OrgOkrsReportSection';
 
 // ============================================================
 // LOADING MESSAGES
