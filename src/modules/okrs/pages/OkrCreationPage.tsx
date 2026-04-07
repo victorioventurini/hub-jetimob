@@ -308,15 +308,19 @@ export default function OkrCreationPage() {
       return;
     }
     
+    // Determine status based on cycle: planning → draft, active → active
+    const objectiveStatus = isPlannningCycle ? 'draft' : 'active';
+    
     try {
       await createBundle.mutateAsync({
+        existingObjectiveId: draft.sourceDraftObjectiveId || undefined,
         objective: {
           title: draft.objectiveTitle,
           description: draft.objectiveDescription || undefined,
           team_id: teamIdParam,
           org_objective_id: draft.selectedOrgObjectiveId,
           cycle_id: quarterlyCycle.id,
-          status: 'active',
+          status: objectiveStatus,
           is_shared: draft.isShared,
           responsibility_model: draft.isShared ? draft.responsibilityModel : null,
         },
@@ -343,7 +347,7 @@ export default function OkrCreationPage() {
         })),
       });
       
-      toast.success('OKRs criados com sucesso!');
+      toast.success(draft.sourceDraftObjectiveId ? 'OKRs atualizados com sucesso!' : 'OKRs criados com sucesso!');
       clearDraft();
       
       setTimeout(() => {
@@ -353,7 +357,7 @@ export default function OkrCreationPage() {
       console.error('Failed to create OKRs:', error);
       toast.error('Erro ao criar OKRs. Tente novamente.');
     }
-  }, [quarterlyCycle, draft, teamIdParam, profileId, createBundle, clearDraft, navigate]);
+  }, [quarterlyCycle, draft, teamIdParam, profileId, createBundle, clearDraft, navigate, isPlannningCycle]);
   
   // Loading state
   if (isLoadingTeams || isLoadingCycles) {
