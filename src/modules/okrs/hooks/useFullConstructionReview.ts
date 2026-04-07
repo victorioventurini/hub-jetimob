@@ -321,8 +321,6 @@ export function useFullConstructionReview(cycleId: string | null) {
     if (crossAnalysisLoading || crossAnalysis || !currentBuId) return;
     if (!rawObjectives?.length || !orgObjectives) return;
 
-    const allDone = rawObjectives.every(obj => aiAssessments[obj.id] || aiErrors[obj.id]);
-    if (!allDone) return;
 
     setCrossAnalysisLoading(true);
     setCrossAnalysisError(null);
