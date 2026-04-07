@@ -93,7 +93,7 @@ describe('QbrMeetingOpeningStep', () => {
 
   it('renders header with title', () => {
     render(<QbrMeetingOpeningStep {...defaultProps} />);
-    expect(screen.getByText('Abertura do QBR')).toBeInTheDocument();
+    expect(screen.getByText('Contexto da reunião')).toBeInTheDocument();
   });
 
   it('shows leader summary count badge', () => {
