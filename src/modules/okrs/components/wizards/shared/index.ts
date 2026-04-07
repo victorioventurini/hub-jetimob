@@ -73,3 +73,6 @@ export type { TeamKrsToggleProps } from './TeamKrsToggle';
 
 export { KpiStatusBlocks, OutdatedKpisBlock, PendingKpisBlock, useKpiStatusClassification } from './KpiStatusBlocks';
 export type { KpiStatusBlocksProps } from './KpiStatusBlocks';
+
+export { TeamDeliveryScorecard, buildTeamScorecardFromOrgObjectives, computeTeamHealth } from './TeamDeliveryScorecard';
+export type { TeamDeliveryScorecardData, TeamDeliveryScorecardProps } from './TeamDeliveryScorecard';
