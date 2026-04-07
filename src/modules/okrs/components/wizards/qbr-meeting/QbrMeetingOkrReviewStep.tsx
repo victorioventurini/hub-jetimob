@@ -26,6 +26,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
 } from '../shared';
 import { AddendumBadge } from '../shared/AddendumBadge';
 import type {
