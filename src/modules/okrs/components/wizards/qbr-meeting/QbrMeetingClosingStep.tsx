@@ -223,8 +223,6 @@ function GovernanceSummary({
   const deferred = approvals.filter(a => a.status === 'defer').length;
   const discarded = approvals.filter(a => a.status === 'discarded').length;
   const decisionsWithOwner = decisions.filter(d => d.owner?.id).length;
-  const strategicCount = decisions.filter(d => d.decisionType === 'strategic').length;
-  const tacticalCount = decisions.filter(d => d.decisionType === 'tactical').length;
   const commitmentsWithResponsible = crossCommitments.filter(c => c.responsibleUserId).length;
 
   // Org KR coverage
