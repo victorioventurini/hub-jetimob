@@ -26,6 +26,11 @@ export interface RitualHistoryFilters {
   pageSize?: number;
 }
 
+export interface ParticipantEvaluation {
+  score: number;
+  feedback: string;
+}
+
 export interface RitualHistoryItem {
   id: string;
   wizardType: WizardPersona;
@@ -40,6 +45,7 @@ export interface RitualHistoryItem {
   completedAt: string | null;
   decisions: TeamCheckinDecision[];
   reflectionData: Record<string, unknown> | null;
+  addendums: unknown[] | null;
 }
 
 export interface RitualDetail extends RitualHistoryItem {
@@ -76,7 +82,7 @@ export { WIZARD_TYPE_LABELS };
 
 const HISTORY_FIELDS = `
   id, bu_id, wizard_type, status, team_id, cycle_id, started_by, started_at,
-  completed_at, decisions, reflection_data,
+  completed_at, decisions, reflection_data, addendums,
   teams!okr_wizard_sessions_team_id_fkey ( name ),
   cycles!okr_wizard_sessions_cycle_id_fkey ( name ),
   profiles!okr_wizard_sessions_started_by_fkey ( display_name, first_name, last_name )
@@ -158,6 +164,7 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         completedAt: row.completed_at,
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
+        addendums: Array.isArray(row.addendums) ? row.addendums : null,
       }));
 
       return { items, totalCount: count ?? 0 };
@@ -201,6 +208,7 @@ export function useRitualDetail(sessionId: string | null) {
         completedAt: row.completed_at,
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
+        addendums: Array.isArray(row.addendums) ? row.addendums : null,
       } as RitualDetail;
     },
     enabled: !!sessionId,
