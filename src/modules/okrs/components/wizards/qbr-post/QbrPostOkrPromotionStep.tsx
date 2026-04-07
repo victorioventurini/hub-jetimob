@@ -2,27 +2,32 @@
  * QbrPostOkrPromotionStep - Step 1: Promoção de OKRs aprovados
  * 
  * Lista OKRs aprovados na reunião QBR. Permite marcar quais serão promovidos.
- * Exibe flags de calibração C-Level, campo de ajuste e indicador de dependências.
+ * Exibe flags de calibração C-Level, scorecard de entrega, ciclo de destino,
+ * e campo de ajuste estruturado por KR.
  */
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Rocket, Check, Pencil, Clock, X, Flag, AlertTriangle } from 'lucide-react';
+import { Rocket, Check, Pencil, Clock, X, Flag, AlertTriangle, Target, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
+  TeamDeliveryScorecard,
 } from '../shared';
+import type { TeamDeliveryScorecardData } from '../shared/TeamDeliveryScorecard';
+import { BuUserSelect } from '@/components/selects';
 import type {
   QbrApprovalStatus,
   ProposedObjectiveEntry,
   QbrCLevelSnapshot,
   QbrMeetingSnapshot,
   QbrCalibrationFlag,
+  QbrPostKrAdjustment,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -37,6 +42,13 @@ export interface ApprovedTeamOkr {
   proposedOkrs: ProposedObjectiveEntry[];
 }
 
+export interface DestinationCycleOption {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface QbrPostOkrPromotionStepProps {
   approvedOkrs: ApprovedTeamOkr[];
   promotedSessionIds: string[];
@@ -45,7 +57,15 @@ export interface QbrPostOkrPromotionStepProps {
   crossCommitments?: QbrMeetingSnapshot['crossCommitments'];
   adjustmentNotes: Record<string, string>;
   onAdjustmentNotesChange: (notes: Record<string, string>) => void;
+  krAdjustments?: Record<string, QbrPostKrAdjustment[]>;
+  onKrAdjustmentsChange?: (adjustments: Record<string, QbrPostKrAdjustment[]>) => void;
   teams?: Array<{ id: string; name: string }>;
+  /** Scorecard de entrega por time (derivado de orgObjectives) */
+  teamScorecards?: TeamDeliveryScorecardData[];
+  /** Ciclos em planejamento disponíveis para promoção */
+  destinationCycles?: DestinationCycleOption[];
+  destinationCycleId?: string;
+  onDestinationCycleIdChange?: (id: string) => void;
   onContinue: () => void;
 }
 
@@ -68,6 +88,158 @@ const FLAG_LABELS: Record<QbrCalibrationFlag, string> = {
 };
 
 // ============================================================
+// DESTINATION CYCLE BANNER
+// ============================================================
+
+function DestinationCycleBanner({
+  cycles,
+  selectedId,
+  onChange,
+}: {
+  cycles: DestinationCycleOption[];
+  selectedId?: string;
+  onChange?: (id: string) => void;
+}) {
+  if (cycles.length === 0) {
+    return (
+      <div className="flex items-start gap-2 p-3 rounded-md bg-status-amber/10 border border-status-amber/20">
+        <AlertTriangle className="h-4 w-4 text-status-amber mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <p className="font-medium text-status-amber">Nenhum ciclo em planejamento encontrado</p>
+          <p className="text-muted-foreground text-xs mt-1">
+            Configure o próximo quarter em Configurações → OKRs → Ciclos antes de promover.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (cycles.length === 1) {
+    const cycle = cycles[0];
+    const start = new Date(cycle.startDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    const end = new Date(cycle.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    return (
+      <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">
+        <Target className="h-4 w-4 text-primary shrink-0" />
+        <span className="text-sm">
+          Os OKRs aprovados serão criados em: <strong>{cycle.name}</strong> · {start} → {end}
+        </span>
+      </div>
+    );
+  }
+
+  // Multiple cycles — show select
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-md bg-primary/5 border border-primary/20">
+      <Target className="h-4 w-4 text-primary shrink-0" />
+      <span className="text-sm shrink-0">Ciclo de destino:</span>
+      <select
+        className="text-sm border rounded px-2 py-1 bg-background flex-1"
+        value={selectedId || ''}
+        onChange={(e) => onChange?.(e.target.value)}
+      >
+        <option value="">Selecione...</option>
+        {cycles.map(c => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ============================================================
+// STRUCTURED KR ADJUSTMENTS
+// ============================================================
+
+function StructuredKrAdjustments({
+  sessionId,
+  proposedOkrs,
+  adjustments,
+  onAdjustmentsChange,
+}: {
+  sessionId: string;
+  proposedOkrs: ProposedObjectiveEntry[];
+  adjustments: QbrPostKrAdjustment[];
+  onAdjustmentsChange: (sessionId: string, adj: QbrPostKrAdjustment[]) => void;
+}) {
+  const allKrs = proposedOkrs.flatMap((entry, _oi) =>
+    entry.draftKrs.map((kr, ki) => ({ kr, krIndex: ki, objectiveTitle: entry.objective.title }))
+  );
+
+  const getAdj = (krIndex: number): QbrPostKrAdjustment =>
+    adjustments.find(a => a.krIndex === krIndex) || { krIndex, hasAdjustment: false };
+
+  const updateAdj = (krIndex: number, updates: Partial<QbrPostKrAdjustment>) => {
+    const existing = adjustments.filter(a => a.krIndex !== krIndex);
+    const current = getAdj(krIndex);
+    onAdjustmentsChange(sessionId, [...existing, { ...current, ...updates }]);
+  };
+
+  return (
+    <div className="space-y-2 mt-2">
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <Info className="h-3 w-3" />
+        Registre exatamente o que muda antes de promover. Esses ajustes serão aplicados ao criar os OKRs no sistema.
+      </p>
+      {allKrs.map(({ kr, krIndex }) => {
+        const adj = getAdj(krIndex);
+        return (
+          <div key={krIndex} className="border rounded-md p-2 space-y-2 bg-muted/20">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id={`adj-${sessionId}-${krIndex}`}
+                checked={adj.hasAdjustment}
+                onCheckedChange={(checked) => updateAdj(krIndex, { hasAdjustment: !!checked })}
+              />
+              <Label htmlFor={`adj-${sessionId}-${krIndex}`} className="text-xs cursor-pointer flex-1 truncate">
+                {kr.title || `KR ${krIndex + 1}`}
+              </Label>
+            </div>
+            {adj.hasAdjustment && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Novo título (opcional)</Label>
+                  <Input
+                    value={adj.newTitle || ''}
+                    onChange={(e) => updateAdj(krIndex, { newTitle: e.target.value || undefined })}
+                    placeholder={kr.title}
+                    className="text-xs h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Nova meta (opcional)</Label>
+                  <Input
+                    value={adj.newTarget || ''}
+                    onChange={(e) => updateAdj(krIndex, { newTarget: e.target.value || undefined })}
+                    placeholder={String(kr.target)}
+                    className="text-xs h-8"
+                  />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label className="text-[10px] text-muted-foreground">Novo responsável (opcional)</Label>
+                  <BuUserSelect
+                    value={adj.newOwnerId || null}
+                    onUserSelected={(meta) => {
+                      if (meta) {
+                        updateAdj(krIndex, { newOwnerId: meta.id, newOwnerName: meta.displayName });
+                      } else {
+                        updateAdj(krIndex, { newOwnerId: undefined, newOwnerName: undefined });
+                      }
+                    }}
+                    placeholder="Selecione..."
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -79,7 +251,13 @@ export function QbrPostOkrPromotionStep({
   crossCommitments = [],
   adjustmentNotes,
   onAdjustmentNotesChange,
+  krAdjustments = {},
+  onKrAdjustmentsChange,
   teams = [],
+  teamScorecards = [],
+  destinationCycles = [],
+  destinationCycleId,
+  onDestinationCycleIdChange,
   onContinue,
 }: QbrPostOkrPromotionStepProps) {
   const promotable = approvedOkrs.filter(o => o.status === 'approved' || o.status === 'approved_with_changes');
@@ -111,6 +289,11 @@ export function QbrPostOkrPromotionStep({
       return fromTeam?.name || 'Time';
     });
   };
+  const getTeamScorecard = (teamId: string) => teamScorecards.find(s => s.teamId === teamId);
+
+  const handleKrAdjustmentsChange = (sessionId: string, adj: QbrPostKrAdjustment[]) => {
+    onKrAdjustmentsChange?.({ ...krAdjustments, [sessionId]: adj });
+  };
 
   return (
     <WizardStepScaffold
@@ -132,6 +315,13 @@ export function QbrPostOkrPromotionStep({
       }
     >
       <div className="p-6 space-y-6">
+        {/* Destination cycle banner */}
+        <DestinationCycleBanner
+          cycles={destinationCycles}
+          selectedId={destinationCycleId}
+          onChange={onDestinationCycleIdChange}
+        />
+
         {/* Select all */}
         {promotable.length > 1 && (
           <div className="flex items-center gap-2">
@@ -156,6 +346,7 @@ export function QbrPostOkrPromotionStep({
               const teamFlags = getTeamFlags(okr.teamId);
               const dependencies = getTeamDependencies(okr.teamId);
               const needsAdjustment = okr.status === 'approved_with_changes';
+              const scorecard = getTeamScorecard(okr.teamId);
 
               return (
                 <Card key={okr.sessionId} className={cn(isSelected && 'border-primary/50 bg-primary/5')}>
@@ -174,6 +365,16 @@ export function QbrPostOkrPromotionStep({
                             {cfg.label}
                           </Badge>
                         </div>
+
+                        {/* Team delivery scorecard (compact) */}
+                        {scorecard && (
+                          <div className="space-y-1">
+                            <TeamDeliveryScorecard data={scorecard} compact />
+                            <p className="text-[10px] text-muted-foreground italic">
+                              Entrega do quarter que encerrou. Use como contexto ao ajustar e promover.
+                            </p>
+                          </div>
+                        )}
 
                         {/* C-Level calibration flags */}
                         {teamFlags.length > 0 && (
@@ -214,16 +415,13 @@ export function QbrPostOkrPromotionStep({
                           </div>
                         )}
 
-                        {/* Adjustment notes for approved_with_changes */}
-                        {needsAdjustment && (
-                          <Textarea
-                            value={adjustmentNotes[okr.sessionId] || ''}
-                            onChange={(e) => onAdjustmentNotesChange({
-                              ...adjustmentNotes,
-                              [okr.sessionId]: e.target.value,
-                            })}
-                            placeholder="Descreva os ajustes necessários antes de promover..."
-                            className="text-xs min-h-[60px] mt-1"
+                        {/* Structured KR adjustments for approved_with_changes */}
+                        {needsAdjustment && onKrAdjustmentsChange && (
+                          <StructuredKrAdjustments
+                            sessionId={okr.sessionId}
+                            proposedOkrs={okr.proposedOkrs}
+                            adjustments={krAdjustments[okr.sessionId] || []}
+                            onAdjustmentsChange={handleKrAdjustmentsChange}
                           />
                         )}
                       </div>
