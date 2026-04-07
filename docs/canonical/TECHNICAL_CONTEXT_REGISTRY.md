@@ -195,13 +195,15 @@ BU (Business Unit)
 
 O Hub utiliza um padrão **singleton** para clientes Supabase, evitando múltiplas instâncias GoTrueClient:
 
-#### Arquitetura de Clientes (v2.69.0)
+#### Arquitetura de Clientes (v3.23.0)
 
-| Cliente | Arquivo | Uso | `detectSessionInUrl` |
-|---------|---------|-----|---------------------|
-| **Global Singleton** | `globalClient.ts` | Auth, bootstrap, pré-BU | `false` |
-| **BU-Scoped Singleton** | `buScopedClient.ts` | Dados operacionais | `false` |
-| **Auto-generated** | `client.ts` | ❌ **NÃO USAR** (apenas para compatibilidade) | `true` |
+| Cliente | Arquivo | Uso | `detectSessionInUrl` | `autoRefreshToken` |
+|---------|---------|-----|---------------------|---------------------|
+| **Global Singleton** | `globalClient.ts` | Auth, bootstrap, pré-BU | `false` | ✅ `true` (único a renovar tokens) |
+| **BU-Scoped Singleton** | `buScopedClient.ts` | Dados operacionais | `false` | ❌ `false` (sincroniza via listener do globalClient) |
+| **Auto-generated** | `client.ts` | ❌ **NÃO USAR** (apenas para compatibilidade) | `false` | `true` (não importado por nenhum arquivo) |
+
+> ⚠️ **CRÍTICO (v3.23.0 — Token Refresh Deduplication):** Apenas o `globalClient` deve ter `autoRefreshToken: true`. O `buScopedClient` escuta `TOKEN_REFRESHED` do `globalClient` e re-lê a sessão do localStorage compartilhado. Ter múltiplos clientes renovando tokens causa **tempestade de 429** no endpoint `/token`, resultando em perda de sessão.
 
 > ⚠️ **CRÍTICO:** O arquivo `client.ts` é auto-gerado pelo Lovable Cloud e **NÃO DEVE SER USADO** diretamente. Usar sempre `globalClient.ts` ou `useBuScopedSupabase()`.
 
