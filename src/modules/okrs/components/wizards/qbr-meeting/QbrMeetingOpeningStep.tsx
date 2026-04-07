@@ -388,18 +388,21 @@ export function QbrMeetingOpeningStep({
       }
     >
       <div className="p-6 space-y-6">
-        {/* Bloco 1 — Scorecard do quarter */}
+        {/* Bloco 1 — Agenda da reunião */}
+        <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
+
+        {/* Bloco 2 — Scorecard do quarter */}
         <ScorecardGrid metrics={scorecardMetrics} />
 
-        {/* Bloco 2 — Retrospectiva do quarter anterior */}
+        {/* Bloco 3 — Retrospectiva do quarter anterior */}
         {previousQuarterData && previousQuarterData.length > 0 && (
           <QuarterRetrospective data={previousQuarterData} />
         )}
 
-        {/* Bloco 3 — OKRs da empresa neste quarter */}
+        {/* Bloco 4 — OKRs da empresa neste quarter */}
         <OrgOkrsSummary objectives={orgObjectives} />
 
-        {/* Bloco 4 — Pauta obrigatória do C-Level */}
+        {/* Bloco 5 — Pauta obrigatória do C-Level */}
         {cLevelStrategicAnalysis?.whatNotToDo && (
           <Card className="border-status-red/20">
             <CardContent className="p-3">
