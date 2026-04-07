@@ -346,8 +346,6 @@ export function QbrMeetingOpeningStep({
           </Card>
         )}
 
-        {/* Bloco 5 — Agenda da reunião */}
-        <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
       </div>
     </WizardStepScaffold>
   );
