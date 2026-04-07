@@ -55,11 +55,11 @@ import {
 // ============================================================
 
 const WIZARD_STEPS = [
-  { id: 'system-read' as const, label: 'Leitura do Sistema', description: 'Consolidação dos pré-QBRs' },
-  { id: 'quarter-balance' as const, label: 'Balanço do Quarter', description: 'Desempenho do ciclo' },
-  { id: 'strategic-analysis' as const, label: 'Análise Estratégica', description: 'Reflexão C-Level' },
-  { id: 'okr-validation' as const, label: 'Validação de OKRs', description: 'Calibração das propostas' },
-  { id: 'directives' as const, label: 'Direcionamentos', description: 'Pauta do QBR' },
+  { id: 'system-read' as const, label: 'Dados dos Times', description: 'O que os times reportaram' },
+  { id: 'quarter-balance' as const, label: 'Balanço do Quarter', description: 'Como foi na prática' },
+  { id: 'strategic-analysis' as const, label: 'Sua Análise', description: 'O que só você vê' },
+  { id: 'okr-validation' as const, label: 'Calibração', description: 'Flags nas propostas' },
+  { id: 'directives' as const, label: 'Pauta da Reunião', description: 'O que a sala decide' },
   { id: 'feedback' as const, label: 'Avaliação do Rito', description: 'Feedback' },
 ];
 
