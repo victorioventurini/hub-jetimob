@@ -355,6 +355,8 @@ export function QbrMeetingOpeningStep({
   scorecardMetrics,
   currentStepIndex,
   previousQuarterData,
+  decisions = [],
+  onDecisionsChange,
   onContinue,
 }: QbrMeetingOpeningStepProps) {
   const alertKpis = orgKpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
