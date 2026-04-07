@@ -22,6 +22,7 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
+  KpiStatusBlocks,
 } from '../shared';
 import type {
   MbrKpiSnapshot,
