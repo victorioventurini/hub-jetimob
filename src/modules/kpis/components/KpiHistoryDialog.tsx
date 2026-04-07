@@ -32,6 +32,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useKpiWithHistory, type KpiWithHistoryData } from "../hooks/useKpiWithHistory";
 import { useKpiLinkedKrs } from "../hooks/useKpiLinkedKrs";
+import { useKpiMutations } from "../hooks/useKpiMutations";
+import { useCanEditKpi } from "../hooks/useCanEditKpi";
 import { KpiEvolutionChart } from "./KpiEvolutionChart";
 import { KpiValuesTable } from "./KpiValuesTable";
 import { LinkedKrsSection } from "./LinkedKrsSection";
