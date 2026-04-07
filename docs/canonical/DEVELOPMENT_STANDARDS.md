@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.28.0  
-**Última atualização:** 2026-04-06  
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0** | **MBR Ritual v1.0** | **QBR Ritual v1.1** | **AI Agents Gemini 3 Flash Migration** | **Automated Testing Framework v1.2**
-**Referência:** TCR v3.22.0
+**Versão:** 1.29.0  
+**Última atualização:** 2026-04-07  
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0** | **MBR Ritual v1.0** | **QBR Ritual v1.1** | **AI Agents Gemini 3 Flash Migration** | **Automated Testing Framework v1.2** | **Auth Token Refresh Deduplication v1.0**
+**Referência:** TCR v3.23.0
 
 ---
 
@@ -94,6 +94,8 @@ const { data } = await supabase.from("tickets").select("*"); // BUG!
 | `validateDomain.ts` | `globalClient.ts` | Validação pré-auth |
 
 > ⚠️ **CRÍTICO:** Nunca importar de `@/integrations/supabase/client`. Sempre usar `globalClient.ts` ou `useBuScopedSupabase()`.
+>
+> ⚠️ **CRÍTICO (v1.29.0 — Token Refresh Deduplication):** Apenas o `globalClient` deve ter `autoRefreshToken: true`. O `buScopedClient` usa `autoRefreshToken: false` e sincroniza sessão via listener `onAuthStateChange` do `globalClient`. Múltiplos clientes com `autoRefreshToken: true` causam tempestade de 429 no endpoint `/token`, resultando em perda de sessão.
 
 #### Regras para NotificationCenter (Realtime)
 

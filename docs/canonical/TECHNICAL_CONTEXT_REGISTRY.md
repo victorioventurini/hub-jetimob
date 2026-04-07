@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.22.0  
-**Última atualização:** 2026-04-06 (v3.22.0 - QBR Rituals Enhancement v1.1 — Scorecard + Pauta C-Level + Agenda no Opening, Checklist Dinâmico no Closing, Flags C-Level + Ajuste Inline no Post Promotion, Resumo Automático na Ata)
+**Versão:** 3.23.0  
+**Última atualização:** 2026-04-07 (v3.23.0 - QBR Executive Report v1.1 + Auth Token Refresh Deduplication v1.0)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -195,13 +195,15 @@ BU (Business Unit)
 
 O Hub utiliza um padrão **singleton** para clientes Supabase, evitando múltiplas instâncias GoTrueClient:
 
-#### Arquitetura de Clientes (v2.69.0)
+#### Arquitetura de Clientes (v3.23.0)
 
-| Cliente | Arquivo | Uso | `detectSessionInUrl` |
-|---------|---------|-----|---------------------|
-| **Global Singleton** | `globalClient.ts` | Auth, bootstrap, pré-BU | `false` |
-| **BU-Scoped Singleton** | `buScopedClient.ts` | Dados operacionais | `false` |
-| **Auto-generated** | `client.ts` | ❌ **NÃO USAR** (apenas para compatibilidade) | `true` |
+| Cliente | Arquivo | Uso | `detectSessionInUrl` | `autoRefreshToken` |
+|---------|---------|-----|---------------------|---------------------|
+| **Global Singleton** | `globalClient.ts` | Auth, bootstrap, pré-BU | `false` | ✅ `true` (único a renovar tokens) |
+| **BU-Scoped Singleton** | `buScopedClient.ts` | Dados operacionais | `false` | ❌ `false` (sincroniza via listener do globalClient) |
+| **Auto-generated** | `client.ts` | ❌ **NÃO USAR** (apenas para compatibilidade) | `false` | `true` (não importado por nenhum arquivo) |
+
+> ⚠️ **CRÍTICO (v3.23.0 — Token Refresh Deduplication):** Apenas o `globalClient` deve ter `autoRefreshToken: true`. O `buScopedClient` escuta `TOKEN_REFRESHED` do `globalClient` e re-lê a sessão do localStorage compartilhado. Ter múltiplos clientes renovando tokens causa **tempestade de 429** no endpoint `/token`, resultando em perda de sessão.
 
 > ⚠️ **CRÍTICO:** O arquivo `client.ts` é auto-gerado pelo Lovable Cloud e **NÃO DEVE SER USADO** diretamente. Usar sempre `globalClient.ts` ou `useBuScopedSupabase()`.
 
@@ -2016,6 +2018,26 @@ O QBR é um ritual trimestral de 4 fases que fecha o ciclo e prepara o próximo,
 
 **Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
 
+#### QBR Executive Report (v1.1)
+
+Relatório executivo consolidado do trimestre, acessível a **todos os usuários da BU** (sem restrição de admin).
+
+| Componente | Rota | Propósito |
+|------------|------|-----------|
+| `QbrExecutiveReportPage` | `/okrs/executive/qbr-report?cycle=<id>` | Relatório completo com auto-load de cache |
+
+**Estrutura do relatório:**
+1. **Resumo Narrativo** — Gerado por IA (Gemini), narrativa estratégica do trimestre
+2. **Evolução dos Indicadores** — KPI Evolution com atingimento e mini-histórico
+3. **Ponto Crítico** — Tabela comparativa: MRR Churn × MRR Commit × Receita de Expansão × Orçamento Mkt & Vendas, com breakdown mensal, saldo líquido e custo por R$1 de MRR (`totalRevenue = mrrCommit + expansion`)
+4. **Como Chegamos Aqui** — OKRs Organizacionais e contribuições de times
+
+**Persistência:** `okr_wizard_sessions` com `wizard_type = 'qbr-executive-report'` — snapshot imutável em `reflection_data` (padrão wizard-snapshot-persistence).
+
+**Auto-load:** Ao acessar a rota com `?cycle=<id>`, carrega cache automaticamente. Botão "Regenerar" disponível para nova geração.
+
+**Localização:** `src/modules/okrs/components/qbr-report/` e `src/modules/okrs/hooks/useQbrExecutiveReport.ts`
+
 **Características comuns:**
 - Formato full-page (modal removido em v2.27.0)
 - Salvamento de draft automático
@@ -3549,6 +3571,22 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.23.0 (2026-04-07)
+- **QBR Executive Report v1.1** — Relatório executivo de QBR com narrativa IA:
+  - Nova rota: `/okrs/executive/qbr-report?cycle=<id>` — acessível a **todos os usuários da BU** (sem restrição de admin)
+  - Estrutura: Resumo Narrativo (IA Gemini), Evolução de Indicadores (KPI Evolution), Ponto Crítico (MRR Churn × MRR Commit × Receita de Expansão × Orçamento Mkt & Vendas com eficiência de custo), Como Chegamos Aqui (OKRs Organizacionais + contribuições)
+  - Persistência via `okr_wizard_sessions` (`wizard_type = 'qbr-executive-report'`) — snapshot imutável em `reflection_data`
+  - Auto-load: ao acessar a rota, carrega cache automaticamente sem necessidade de clicar "Gerar Relatório"
+  - Correção de persistência: validação de `profile.id` antes do insert (RLS compliance)
+  - KPI "Receita de Expansão" adicionado à tabela comparativa de Ponto Crítico com cálculo de `totalRevenue = mrrCommit + expansion`
+  - **Arquivos:** `QbrExecutiveReportPage`, `useQbrExecutiveReport`, `CriticalKpiComparison`, `KpiEvolutionCard`, `OkrContributionsSection`
+- **Auth Token Refresh Deduplication v1.0** — Correção de perda de sessão por 429 rate limit:
+  - **Causa raiz:** 3 clientes Supabase (client.ts, globalClient.ts, buScopedClient.ts) todos com `autoRefreshToken: true` competindo para renovar token
+  - **Correção:** `buScopedClient.ts` agora usa `autoRefreshToken: false` e sincroniza sessão via listener `onAuthStateChange` do `globalClient`
+  - **Import fix:** `useAuditHistory.ts` migrado de `client.ts` → `globalClient.ts` (último arquivo que importava `client.ts`)
+  - **Resultado:** apenas 1 client renova tokens, eliminando tempestade de requests `/token`
+  - **Arquivos:** `buScopedClient.ts`, `useAuditHistory.ts`
 
 ### v3.22.0 (2026-04-06)
 - **QBR Rituals Enhancement v1.1** — Melhorias aditivas nos rituais QBR Meeting e QBR Post:
