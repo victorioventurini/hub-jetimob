@@ -174,7 +174,7 @@ export function QbrKpiAnalysisStep({
                       <div className="min-w-0">
                         <p className="text-sm truncate">{kpi.name}</p>
                         <span className="text-xs text-muted-foreground">
-                          {kpi.currentValue != null ? kpi.currentValue : '—'} {kpi.unit}
+                          {kpi.currentValue != null ? kpi.currentValue : '—'}{kpi.target != null ? ` / ${kpi.target}` : ''} {kpi.unit}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

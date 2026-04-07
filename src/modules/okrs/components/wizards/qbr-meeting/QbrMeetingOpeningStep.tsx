@@ -462,13 +462,16 @@ export function QbrMeetingOpeningStep({
             </CardHeader>
             <CardContent className="space-y-1">
               {alertKpis.slice(0, 5).map(kpi => (
-                <div key={kpi.kpiId} className="flex items-center justify-between text-xs">
+                <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
                   <span className="truncate flex-1">{kpi.name}</span>
+                  <span className="text-muted-foreground shrink-0">
+                    {kpi.currentValue != null ? kpi.currentValue : '—'}{kpi.target != null ? ` / ${kpi.target}` : ''} {kpi.unit}
+                  </span>
                   <Badge variant="outline" className={cn(
                     'text-[10px]',
                     kpi.ragStatus === 'red' ? 'text-status-red' : 'text-status-amber'
                   )}>
-                    {kpi.currentValue != null ? `${kpi.currentValue} ${kpi.unit}` : '—'}
+                    {kpi.ragStatus === 'red' ? '✗' : '⚠'}
                   </Badge>
                 </div>
               ))}

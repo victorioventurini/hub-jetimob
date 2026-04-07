@@ -116,7 +116,7 @@ export function OutdatedKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; 
                 </span>
               )}
               <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                {formatValue(kpi.currentValue, kpi.unit)}
+                {formatValue(kpi.currentValue, kpi.unit)}{kpi.target != null ? ` / ${formatValue(kpi.target, kpi.unit)}` : ''}
               </Badge>
             </div>
           </div>
