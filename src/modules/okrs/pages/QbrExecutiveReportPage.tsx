@@ -402,6 +402,7 @@ export default function QbrExecutiveReportPage() {
           <ReportDisplay
             report={report}
             cycleName={selectedCycle?.name || ''}
+            cycleId={cycleState.value || null}
             generatedAt={generatedAt}
             onRegenerate={() => generate()}
             isRegenerating={isGenerating}
