@@ -26,6 +26,7 @@ import {
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge, TeamKrsToggle, KpiStatusBlocks } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
