@@ -152,6 +152,58 @@ export default function OkrCreationPage() {
   );
   const { data: orgOkrsContext, isLoading: isLoadingOrgOkrs } = useOrgOkrsForContext(quarterlyCycle?.id);
   
+  // Fetch draft objectives from QBR-pre
+  const { data: draftObjectives } = useDraftObjectivesForCycle(teamIdParam, quarterlyCycle?.id);
+  
+  // Hydrate wizard from QBR-pre drafts (once, when data arrives and draft is fresh)
+  const hasHydratedFromDraftsRef = useRef(false);
+  useEffect(() => {
+    if (hasHydratedFromDraftsRef.current) return;
+    if (!draftObjectives || draftObjectives.length === 0) return;
+    
+    // Only hydrate if draft is fresh (intro step, no title)
+    if (draft.currentStep !== 'intro' || draft.objectiveTitle) return;
+    
+    // Don't hydrate if localStorage already has data (user was editing)
+    try {
+      const saved = localStorage.getItem('okr-draft.team-okr-creation');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.objectiveTitle) return;
+      }
+    } catch { /* ignore */ }
+    
+    hasHydratedFromDraftsRef.current = true;
+    
+    const firstDraft = draftObjectives[0];
+    const mappedKrs = firstDraft.keyResults.map((kr, idx) => ({
+      id: `draft-kr-${idx}`,
+      type: (kr.type as any) || 'foundational',
+      title: kr.title,
+      baseline: kr.baseline,
+      target: kr.target,
+      unit: kr.unit,
+      direction: (kr.direction as any) || 'increase',
+      owner_user_id: kr.owner_user_id,
+      linked_org_kr_id: kr.linked_org_kr_id,
+    }));
+    
+    updateDraft({
+      objectiveTitle: firstDraft.title,
+      objectiveDescription: firstDraft.description || '',
+      selectedOrgObjectiveId: firstDraft.org_objective_id,
+      sourceDraftObjectiveId: firstDraft.id,
+      draftKrs: mappedKrs,
+      currentStep: 'objective',
+    });
+    
+    // Also update URL step
+    stepState.set('objective');
+  }, [draftObjectives, draft.currentStep, draft.objectiveTitle, updateDraft, stepState]);
+  
+  // Count remaining drafts for banner
+  const remainingDraftsCount = (draftObjectives?.length ?? 0) - (draft.sourceDraftObjectiveId ? 1 : 0);
+  
   // Transform org OKRs
   const orgObjectivesForContext: OrgObjectiveContext[] = useMemo(() => {
     if (!orgOkrsContext?.objectives) return [];
