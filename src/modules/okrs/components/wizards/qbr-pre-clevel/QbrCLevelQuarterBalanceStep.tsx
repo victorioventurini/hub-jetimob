@@ -219,58 +219,11 @@ export function QbrCLevelQuarterBalanceStep({
   const { data: orgObjectives, isLoading: isLoadingOrg } = useAllOrgObjectivesView(year, cycleId);
 
   // Build scorecard data from orgObjectives (derive per-team metrics)
-  const teamScorecards: TeamScorecardData[] = useMemo(() => {
+  const teamScorecards: TeamDeliveryScorecardData[] = useMemo(() => {
     if (!teams || !orgObjectives) return [];
-
-    const teamMap = new Map<string, TeamScorecardData>();
-    for (const t of teams) {
-      teamMap.set(t.id, {
-        teamId: t.id,
-        teamName: t.name,
-        totalKrs: 0,
-        achieved: 0,
-        onTrack: 0,
-        atRisk: 0,
-        offTrack: 0,
-        notStarted: 0,
-        stagnant: 0,
-        healthScore: 'healthy',
-      });
-    }
-
-    // Walk through all org objectives -> org KRs -> linked team KRs
-    for (const obj of orgObjectives) {
-      for (const orgKr of obj.orgKrs) {
-        for (const tkr of orgKr.linkedTeamKrs) {
-          const entry = teamMap.get(tkr.team_id);
-          if (!entry) continue;
-
-          entry.totalKrs++;
-
-          const state = calculateKrState(buildKrStateParams(tkr));
-
-          if (state === 'achieved' || state === 'exceeded') entry.achieved++;
-          else if (state === 'healthy') entry.onTrack++;
-          else if (state === 'at_risk' || state === 'stagnant') entry.atRisk++;
-          else if (state === 'off_track' || state === 'not_achieved') entry.offTrack++;
-          else if (state === 'not_started') entry.notStarted++;
-
-          if (state === 'stagnant') entry.stagnant++;
-        }
-      }
-    }
-
-    // Calculate health scores
-    for (const entry of teamMap.values()) {
-      entry.healthScore = getHealthScore({
-        totalKrs: entry.totalKrs,
-        krsAtRisk: entry.atRisk,
-        krsStagnant: entry.stagnant,
-        krsNotStarted: entry.notStarted,
-      });
-    }
-
-    return Array.from(teamMap.values()).filter(t => t.totalKrs > 0);
+    return teams
+      .map(t => buildTeamScorecardFromOrgObjectives(t.id, t.name, orgObjectives))
+      .filter(t => t.totalKrs > 0);
   }, [teams, orgObjectives]);
 
   const isLoading = isLoadingTeams || isLoadingOrg;
