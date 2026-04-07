@@ -91,6 +91,9 @@ export interface TeamOkrDraft {
   teamId: string;
   cycleId: string | null;
   
+  // Source draft from QBR-pre (if hydrated from existing draft objective)
+  sourceDraftObjectiveId: string | null;
+  
   // Navigation
   currentStep: WizardStep;
   
