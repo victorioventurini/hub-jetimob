@@ -619,7 +619,7 @@ function parseLooseSharedSuggestions(rawValue: string | null | undefined): Share
     .slice(0, 5);
 }
 
-function normalizeTeamAnalysis(raw: Partial<TeamAnalysisResult>): TeamAnalysisResult {
+function normalizeTeamAnalysis(raw: Partial<TeamAnalysisResult> & { orgAlignmentAnalysis?: Partial<TeamAnalysisResult['orgAlignmentAnalysis']> }): TeamAnalysisResult {
   return {
     consolidatedScore: clampScore(raw.consolidatedScore, 70),
     consolidatedSummary: isMeaningfulNarrativeText(raw.consolidatedSummary)
