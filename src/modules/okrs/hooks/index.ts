@@ -52,6 +52,13 @@ export {
   type LinkedTeamObjective,
 } from './queries';
 
+// Draft objectives (QBR-pre hydration)
+export {
+  useDraftObjectivesForCycle,
+  type DraftObjective,
+  type DraftObjectiveKr,
+} from './queries';
+
 // Dashboard queries
 export {
   useOkrDashboardData,
