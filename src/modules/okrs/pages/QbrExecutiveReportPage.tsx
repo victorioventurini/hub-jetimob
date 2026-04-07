@@ -296,6 +296,7 @@ function ReportDisplay({
                 <span className="text-xs font-semibold text-status-red">Ponto crítico</span>
               </div>
               <p className="text-sm">{report.kpiInsights.critical}</p>
+              <CriticalKpiComparison cycleId={cycleId} />
             </div>
           )}
           {!report.kpiInsights.healthy && !report.kpiInsights.atRisk && !report.kpiInsights.critical && (
