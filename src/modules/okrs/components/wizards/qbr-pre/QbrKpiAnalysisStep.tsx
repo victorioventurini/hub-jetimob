@@ -2,19 +2,15 @@
  * QbrKpiAnalysisStep - Step 2: Análise de KPIs e Métricas
  * 
  * Carrega KPIs do escopo do líder com valor atual, RAG status e variação.
- * Permite marcar KPIs como "zombie" ou sinalizar KPIs a criar.
+ * Permite marcar KPIs como "zombie".
  */
 
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import {
-  Activity, AlertTriangle, Plus, X, Ghost,
+  Activity, AlertTriangle, Ghost,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
