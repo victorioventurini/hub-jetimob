@@ -26,6 +26,7 @@ const TeamKrCreationPage = lazy(() => import('@/modules/okrs/pages/TeamKrCreatio
 const OkrQualityPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrQualityPage'));
 const OkrConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrConstructionReviewPage'));
 const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgConstructionReviewPage'));
+const OkrFullConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrFullConstructionReviewPage'));
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
 const QbrExecutiveReportPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrExecutiveReportPage'));
