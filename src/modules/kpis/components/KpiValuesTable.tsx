@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   Tooltip,
   TooltipContent,
@@ -189,8 +189,8 @@ export function KpiValuesTable({
 
   return (
     <TooltipProvider>
-      <ScrollArea className="w-full">
-        <div className="min-w-[600px]">
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -351,7 +351,7 @@ export function KpiValuesTable({
             </TableBody>
           </Table>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Edit Value Dialog */}
       {onUpdateValue && (
