@@ -3,7 +3,7 @@
  * 
  * Visão cross-team para identificar sinergias e sugerir OKRs compartilhadas.
  * 
- * @route /okrs/construction-review-full
+ * @route /okrs/construction-review-cross
  * @access requiresBuAdmin
  */
 
