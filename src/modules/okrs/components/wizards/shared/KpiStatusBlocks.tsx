@@ -49,7 +49,7 @@ function formatValue(value: number | null | undefined, unit?: string): string {
 
 export interface KpiStatusBlocksProps {
   kpiSnapshots: MbrKpiSnapshot[];
-  /** Max KPIs to show per block (default: 5) */
+  /** Max KPIs to show per block. Undefined = show all */
   maxItems?: number;
   /** Only show if there are items */
   hideEmpty?: boolean;
