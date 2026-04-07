@@ -195,9 +195,9 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
             Investimento total: {formatBRL(sumBudget)}
           </div>
         )}
-        {sumBudget > 0 && sumCommit > 0 && (
+        {sumBudget > 0 && totalRevenue > 0 && (
           <div className="rounded-md px-2.5 py-1.5 bg-muted text-muted-foreground font-medium">
-            Custo por R$1 de MRR: {formatBRL(sumBudget / sumCommit).replace('R$', 'R$ ')}
+            Custo por R$1 de MRR: {formatBRL(sumBudget / totalRevenue).replace('R$', 'R$ ')}
           </div>
         )}
       </div>
