@@ -403,7 +403,7 @@ export function useFullConstructionReview(cycleId: string | null) {
     } finally {
       setCrossAnalysisLoading(false);
     }
-  }, [crossAnalysisLoading, crossAnalysis, currentBuId, rawObjectives, orgObjectives, aiAssessments, aiErrors, buSupabase, cycleId]);
+  }, [crossAnalysisLoading, crossAnalysis, currentBuId, rawObjectives, orgObjectives, buSupabase, cycleId]);
 
   useEffect(() => {
     if (crossAnalysisTriggered.current) return;
