@@ -189,8 +189,8 @@ export function KpiValuesTable({
 
   return (
     <TooltipProvider>
-      <ScrollArea className="w-full">
-        <div className="min-w-[600px]">
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-0">
           <Table>
             <TableHeader>
               <TableRow>
