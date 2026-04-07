@@ -91,6 +91,9 @@ export interface TeamOkrDraft {
   teamId: string;
   cycleId: string | null;
   
+  // Source draft from QBR-pre (if hydrated from existing draft objective)
+  sourceDraftObjectiveId: string | null;
+  
   // Navigation
   currentStep: WizardStep;
   
@@ -135,7 +138,7 @@ export interface TeamOkrDraft {
   shareStepContent: ShareStepContent | null;
 }
 
-const DRAFT_VERSION = 5; // Bumped version for KR metrics pre-selection
+const DRAFT_VERSION = 6; // Bumped for sourceDraftObjectiveId (QBR-pre hydration)
 
 const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft => ({
   version: DRAFT_VERSION,
@@ -143,6 +146,7 @@ const createEmptyDraft = (teamId: string, cycleId: string | null): TeamOkrDraft 
   updatedAt: new Date().toISOString(),
   teamId,
   cycleId,
+  sourceDraftObjectiveId: null,
   currentStep: 'intro',
   impactReflection: '',
   contextAiInsight: null,

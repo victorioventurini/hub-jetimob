@@ -50,3 +50,6 @@ export {
   type TeamObjectiveWithKrs as DashboardTeamObjectiveWithKrs,
   type SharedOkrInsights,
 } from './useOkrDashboardData';
+
+// Draft objectives (QBR-pre hydration)
+export { useDraftObjectivesForCycle, type DraftObjective, type DraftObjectiveKr } from './useDraftObjectivesForCycle';

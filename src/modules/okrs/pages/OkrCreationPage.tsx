@@ -9,7 +9,7 @@
  * URL: /okrs/create?team={teamId}&step={stepId}
  */
 
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +23,7 @@ import {
   useOrgOkrsForContext,
   useCreateTeamOkrBundle,
   useWizardSession,
+  useDraftObjectivesForCycle,
   type WizardStep,
 } from '@/modules/okrs/hooks';
 import { useUrlState } from '@/shared/url';
@@ -51,7 +52,8 @@ import { VicTypewriterQueueProvider } from '@/modules/vic';
 // Loading/Error states
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Target } from 'lucide-react';
+import { Target, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // ============================================================
 // STEP DEFINITIONS
@@ -100,7 +102,12 @@ export default function OkrCreationPage() {
   
   // Get cycles (status-based)
   const { activeQuarterlyCycle, activeCycle, planningCycles, isLoading: isLoadingCycles } = useActiveCycle();
-  const quarterlyCycle = activeQuarterlyCycle || activeCycle;
+  // Fallback: if no active quarter, use planning quarter (for QBR-pre draft hydration)
+  const planningQuarterlyCycle = useMemo(() => {
+    return planningCycles.find(c => c.type === 'quarter') ?? null;
+  }, [planningCycles]);
+  const quarterlyCycle = activeQuarterlyCycle || planningQuarterlyCycle || activeCycle;
+  const isPlannningCycle = !activeQuarterlyCycle && !!planningQuarterlyCycle && quarterlyCycle === planningQuarterlyCycle;
   
   // Page title
   usePageTitle(selectedTeam ? `Criar OKRs - ${selectedTeam.name}` : 'Criar OKRs');
@@ -144,6 +151,58 @@ export default function OkrCreationPage() {
     quarterlyCycle?.id
   );
   const { data: orgOkrsContext, isLoading: isLoadingOrgOkrs } = useOrgOkrsForContext(quarterlyCycle?.id);
+  
+  // Fetch draft objectives from QBR-pre
+  const { data: draftObjectives } = useDraftObjectivesForCycle(teamIdParam, quarterlyCycle?.id);
+  
+  // Hydrate wizard from QBR-pre drafts (once, when data arrives and draft is fresh)
+  const hasHydratedFromDraftsRef = useRef(false);
+  useEffect(() => {
+    if (hasHydratedFromDraftsRef.current) return;
+    if (!draftObjectives || draftObjectives.length === 0) return;
+    
+    // Only hydrate if draft is fresh (intro step, no title)
+    if (draft.currentStep !== 'intro' || draft.objectiveTitle) return;
+    
+    // Don't hydrate if localStorage already has data (user was editing)
+    try {
+      const saved = localStorage.getItem('okr-draft.team-okr-creation');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.objectiveTitle) return;
+      }
+    } catch { /* ignore */ }
+    
+    hasHydratedFromDraftsRef.current = true;
+    
+    const firstDraft = draftObjectives[0];
+    const mappedKrs = firstDraft.keyResults.map((kr, idx) => ({
+      id: `draft-kr-${idx}`,
+      type: (kr.type as any) || 'foundational',
+      title: kr.title,
+      baseline: kr.baseline,
+      target: kr.target,
+      unit: kr.unit,
+      direction: (kr.direction as any) || 'increase',
+      owner_user_id: kr.owner_user_id,
+      linked_org_kr_id: kr.linked_org_kr_id,
+    }));
+    
+    updateDraft({
+      objectiveTitle: firstDraft.title,
+      objectiveDescription: firstDraft.description || '',
+      selectedOrgObjectiveId: firstDraft.org_objective_id,
+      sourceDraftObjectiveId: firstDraft.id,
+      draftKrs: mappedKrs,
+      currentStep: 'objective',
+    });
+    
+    // Also update URL step
+    stepState.set('objective');
+  }, [draftObjectives, draft.currentStep, draft.objectiveTitle, updateDraft, stepState]);
+  
+  // Count remaining drafts for banner
+  const remainingDraftsCount = (draftObjectives?.length ?? 0) - (draft.sourceDraftObjectiveId ? 1 : 0);
   
   // Transform org OKRs
   const orgObjectivesForContext: OrgObjectiveContext[] = useMemo(() => {
@@ -249,15 +308,19 @@ export default function OkrCreationPage() {
       return;
     }
     
+    // Determine status based on cycle: planning → draft, active → active
+    const objectiveStatus = isPlannningCycle ? 'draft' : 'active';
+    
     try {
       await createBundle.mutateAsync({
+        existingObjectiveId: draft.sourceDraftObjectiveId || undefined,
         objective: {
           title: draft.objectiveTitle,
           description: draft.objectiveDescription || undefined,
           team_id: teamIdParam,
           org_objective_id: draft.selectedOrgObjectiveId,
           cycle_id: quarterlyCycle.id,
-          status: 'active',
+          status: objectiveStatus,
           is_shared: draft.isShared,
           responsibility_model: draft.isShared ? draft.responsibilityModel : null,
         },
@@ -284,7 +347,7 @@ export default function OkrCreationPage() {
         })),
       });
       
-      toast.success('OKRs criados com sucesso!');
+      toast.success(draft.sourceDraftObjectiveId ? 'OKRs atualizados com sucesso!' : 'OKRs criados com sucesso!');
       clearDraft();
       
       setTimeout(() => {
@@ -294,7 +357,7 @@ export default function OkrCreationPage() {
       console.error('Failed to create OKRs:', error);
       toast.error('Erro ao criar OKRs. Tente novamente.');
     }
-  }, [quarterlyCycle, draft, teamIdParam, profileId, createBundle, clearDraft, navigate]);
+  }, [quarterlyCycle, draft, teamIdParam, profileId, createBundle, clearDraft, navigate, isPlannningCycle]);
   
   // Loading state
   if (isLoadingTeams || isLoadingCycles) {
@@ -558,6 +621,14 @@ export default function OkrCreationPage() {
           />
         }
       >
+        {remainingDraftsCount > 0 && draft.sourceDraftObjectiveId && (
+          <Alert className="mb-4 border-accent bg-accent/10">
+            <Info className="h-4 w-4 text-accent-foreground" />
+            <AlertDescription className="text-accent-foreground">
+              Você tem {remainingDraftsCount} {remainingDraftsCount === 1 ? 'objetivo rascunho' : 'objetivos rascunho'} do QBR Pre aguardando validação. Após concluir este, volte para os demais.
+            </AlertDescription>
+          </Alert>
+        )}
         {renderStepContent()}
       </FullPageWizardShell>
     </VicTypewriterQueueProvider>
