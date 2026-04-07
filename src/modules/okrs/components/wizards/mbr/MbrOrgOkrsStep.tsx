@@ -118,7 +118,6 @@ export function MbrOrgOkrsStep({
             <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
           }
         />
-        />
       }
       bottomFixed={
         <div className="border-t">
