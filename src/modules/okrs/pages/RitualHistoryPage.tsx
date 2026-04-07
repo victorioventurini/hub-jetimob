@@ -476,6 +476,9 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
               </p>
             )}
 
+            {/* Participant Evaluations (from addendums) */}
+            <ParticipantEvaluationsSection addendums={ritual.addendums} />
+
             {/* Feedback */}
             <RitualFeedbackSection reflectionData={ritual.reflectionData} />
 
