@@ -320,6 +320,7 @@ export function MbrPanoramaStep({
   orgObjectives,
   currentStepIndex = 0,
 }: MbrPanoramaStepProps) {
+  const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
   const { orgKpis, areaGroups, teamGroups, accordionDefaults } = useMemo(() => {
     const org: MbrKpiSnapshot[] = [];
