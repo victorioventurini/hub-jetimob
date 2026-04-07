@@ -367,9 +367,9 @@ export function QbrMeetingOpeningStep({
       header={
         <WizardStepHeader
           icon={Presentation}
-          title="Abertura do QBR"
+          title="Contexto da reunião"
           tooltip="qbr-meeting-opening"
-          description="Contexto e direcionamentos estratégicos"
+          description="O C-Level analisou o quarter e definiu a pauta. Aqui está o que você precisa saber antes de começar."
           variant="primary"
           badge={`${leaderSummaryCount} times`}
         />
