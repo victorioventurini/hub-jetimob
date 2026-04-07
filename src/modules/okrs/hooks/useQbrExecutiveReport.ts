@@ -135,6 +135,8 @@ export function useQbrExecutiveReport(cycleId: string | null) {
 
   const generateMutation = useMutation({
     mutationFn: async () => {
+      if (!profile?.id) throw new Error('Profile not loaded');
+
       const { data: fnData, error: fnError } = await supabase.functions.invoke(
         'qbr-executive-report',
         { body: { cycleId, bu_id: currentBuId } }
@@ -153,14 +155,14 @@ export function useQbrExecutiveReport(cycleId: string | null) {
           wizard_type: 'qbr-executive-report',
           cycle_id: cycleId!,
           bu_id: currentBuId!,
-          started_by: profile?.id ?? '',
+          started_by: profile.id,
           status: 'completed' as const,
           completed_at: new Date().toISOString(),
           reflection_data: reportData as unknown as Json,
         });
 
       if (insertError) {
-        console.warn('Failed to persist report, displaying without persistence:', insertError);
+        console.error('Failed to persist QBR report:', insertError);
       }
 
       return reportData;
