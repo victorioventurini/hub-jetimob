@@ -381,12 +381,12 @@ export function QbrMeetingOkrReviewStep({
             const cfg = STATUS_CONFIG[status];
             const Icon = cfg.icon;
             const isActive = currentApproval?.status === status;
-            return (
+              return (
               <Button
                 key={status}
-                variant={isActive ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
-                className={cn('text-xs gap-1', isActive && cfg.bg)}
+                className={cn('text-xs gap-1', isActive && cn(cfg.bg, cfg.color, 'border-current font-semibold'))}
                 onClick={() => status !== 'discarded' ? handleSetStatus(status) : undefined}
                 disabled={status === 'discarded' && !discardReason.trim()}
               >
