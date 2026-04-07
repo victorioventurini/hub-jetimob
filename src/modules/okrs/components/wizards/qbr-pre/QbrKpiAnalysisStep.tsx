@@ -176,6 +176,9 @@ export function QbrKpiAnalysisStep({
           </div>
         )}
 
+        {/* KPIs desatualizados e pendentes */}
+        <KpiStatusBlocks kpiSnapshots={kpiSnapshots} />
+
         {/* Healthy KPIs */}
         {healthyKpis.length > 0 && (
           <div className="space-y-3">
