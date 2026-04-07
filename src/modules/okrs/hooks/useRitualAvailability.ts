@@ -13,6 +13,10 @@ import type { WizardPersona } from '../types/wizard';
 import type { CycleWithStatus } from './useActiveCycle';
 import { addBusinessDaysToDate } from '../utils/generateCycles';
 
+// ⚠️ TEMPORARY DEV FLAG — remove after QBR flow testing
+const DEV_FORCE_QBR_AVAILABLE = true;
+const DEV_QBR_TYPES: WizardPersona[] = ['qbr-pre', 'qbr-pre-clevel', 'qbr-meeting', 'qbr-post'];
+
 // ============================================================
 // TYPES
 // ============================================================
