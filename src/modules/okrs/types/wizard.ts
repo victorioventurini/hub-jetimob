@@ -440,7 +440,7 @@ export interface QbrMeetingSnapshot {
     teamId: string;
     sessionId: string;
     status: QbrApprovalStatus;
-    changes?: Partial<TeamOkrCreationWizardState>;
+    changes?: Partial<TeamOkrCreationWizardState> | Array<{ krIndex: number; newTitle?: string; newTarget?: string; newOwnerId?: string; newOwnerName?: string }>;
     discardReason?: string;
   }>;
   decisions: TeamCheckinDecision[];
@@ -450,10 +450,14 @@ export interface QbrMeetingSnapshot {
     description: string;
     deadline: string;
     linkedOkrId?: string;
+    responsibleUserId?: string;
+    responsibleUserName?: string;
   }>;
   governanceChecklist: QbrMeetingGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   ritualFeedbackSentAt?: string;
+  /** Prioridades dos próximos 30 dias por papel */
+  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
 }
 
 /** Checklist de governança do pós-QBR */
