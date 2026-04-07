@@ -11,6 +11,7 @@ import { Route, Navigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
+import { CLevelRitualRoute } from '@/components/auth/CLevelRitualRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
 
 // Ritual pages
@@ -31,17 +32,24 @@ const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryP
 /**
  * Wrapper padrão para rotas de rituais
  */
-function RitualRoute({ children, requiresBuAdmin = false }: { children: React.ReactNode; requiresBuAdmin?: boolean }) {
+function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean }) {
   const inner = (
     <ModuleRoute moduleSlug="okrs">
       {children}
     </ModuleRoute>
   );
+
+  let guarded = inner;
+  if (requiresCLevel) {
+    guarded = <CLevelRitualRoute>{inner}</CLevelRitualRoute>;
+  } else if (requiresBuAdmin) {
+    guarded = <BuAdminRoute>{inner}</BuAdminRoute>;
+  }
   
   return (
     <ProtectedRoute>
       <BuRequiredRoute>
-        {requiresBuAdmin ? <BuAdminRoute>{inner}</BuAdminRoute> : inner}
+        {guarded}
       </BuRequiredRoute>
     </ProtectedRoute>
   );
@@ -77,9 +85,9 @@ export const ritualRoutes = (
     
     {/* QBR */}
     <Route path="/rituals/qbr-pre" element={<RitualRoute><QbrPrePage /></RitualRoute>} />
-    <Route path="/rituals/qbr-clevel" element={<RitualRoute><QbrPreCLevelPage /></RitualRoute>} />
-    <Route path="/rituals/qbr" element={<RitualRoute requiresBuAdmin><QbrMeetingPage /></RitualRoute>} />
-    <Route path="/rituals/qbr-post" element={<RitualRoute requiresBuAdmin><QbrPostPage /></RitualRoute>} />
+    <Route path="/rituals/qbr-clevel" element={<RitualRoute requiresCLevel><QbrPreCLevelPage /></RitualRoute>} />
+    <Route path="/rituals/qbr" element={<RitualRoute requiresCLevel><QbrMeetingPage /></RitualRoute>} />
+    <Route path="/rituals/qbr-post" element={<RitualRoute requiresCLevel><QbrPostPage /></RitualRoute>} />
     
     {/* Histórico */}
     <Route path="/rituals/history" element={<RitualRoute><RitualHistoryPage /></RitualRoute>} />
