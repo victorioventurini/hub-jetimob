@@ -97,7 +97,12 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
         onClick && "hover:-translate-y-0.5",
         kpi.last_update_failed && "border-status-red"
       )}
-      onClick={onClick}
+      onClick={(event) => {
+        if (!onClick) return;
+        const target = event.target;
+        if (!(target instanceof Node) || !event.currentTarget.contains(target)) return;
+        onClick();
+      }}
     >
       <CardHeader className="pb-3 pt-5 px-5">
         <div className="flex items-start justify-between gap-3">

@@ -127,7 +127,11 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
               <TableRow 
                 key={kpi.id} 
                 className="cursor-pointer hover:bg-muted/50 group"
-                onClick={() => onKpiClick(kpi)}
+                onClick={(event) => {
+                  const target = event.target;
+                  if (!(target instanceof Node) || !event.currentTarget.contains(target)) return;
+                  onKpiClick(kpi);
+                }}
               >
                 {/* Indicador */}
                 <TableCell>
