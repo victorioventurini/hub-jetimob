@@ -165,7 +165,7 @@ export function PendingKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; m
 }
 
 /** Combined component — renders both blocks below "KPIs em Alerta" */
-export function KpiStatusBlocks({ kpiSnapshots, maxItems = 5, hideEmpty = true }: KpiStatusBlocksProps) {
+export function KpiStatusBlocks({ kpiSnapshots, maxItems, hideEmpty = true }: KpiStatusBlocksProps) {
   const { outdated, pending } = useKpiStatusClassification(kpiSnapshots);
 
   if (hideEmpty && outdated.length === 0 && pending.length === 0) return null;
