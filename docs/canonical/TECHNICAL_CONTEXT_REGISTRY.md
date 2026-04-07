@@ -2018,6 +2018,26 @@ O QBR é um ritual trimestral de 4 fases que fecha o ciclo e prepara o próximo,
 
 **Localização:** `src/modules/okrs/components/wizards/` e `src/modules/okrs/pages/`
 
+#### QBR Executive Report (v1.1)
+
+Relatório executivo consolidado do trimestre, acessível a **todos os usuários da BU** (sem restrição de admin).
+
+| Componente | Rota | Propósito |
+|------------|------|-----------|
+| `QbrExecutiveReportPage` | `/okrs/executive/qbr-report?cycle=<id>` | Relatório completo com auto-load de cache |
+
+**Estrutura do relatório:**
+1. **Resumo Narrativo** — Gerado por IA (Gemini), narrativa estratégica do trimestre
+2. **Evolução dos Indicadores** — KPI Evolution com atingimento e mini-histórico
+3. **Ponto Crítico** — Tabela comparativa: MRR Churn × MRR Commit × Receita de Expansão × Orçamento Mkt & Vendas, com breakdown mensal, saldo líquido e custo por R$1 de MRR (`totalRevenue = mrrCommit + expansion`)
+4. **Como Chegamos Aqui** — OKRs Organizacionais e contribuições de times
+
+**Persistência:** `okr_wizard_sessions` com `wizard_type = 'qbr-executive-report'` — snapshot imutável em `reflection_data` (padrão wizard-snapshot-persistence).
+
+**Auto-load:** Ao acessar a rota com `?cycle=<id>`, carrega cache automaticamente. Botão "Regenerar" disponível para nova geração.
+
+**Localização:** `src/modules/okrs/components/qbr-report/` e `src/modules/okrs/hooks/useQbrExecutiveReport.ts`
+
 **Características comuns:**
 - Formato full-page (modal removido em v2.27.0)
 - Salvamento de draft automático
