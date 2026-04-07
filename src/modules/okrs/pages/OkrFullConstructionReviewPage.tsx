@@ -173,6 +173,7 @@ export default function OkrFullConstructionReviewPage() {
               isLoading={false}
               teamAnalysis={result.crossTeamAnalysis}
               teamAnalysisLoading={result.crossTeamAnalysisLoading}
+              collaborationSuggestionsLimit={8}
               onAskVicAboutAlignment={handleAskVicAboutAlignment}
               onAskVicAboutCollaboration={handleAskVicAboutCollaboration}
             />

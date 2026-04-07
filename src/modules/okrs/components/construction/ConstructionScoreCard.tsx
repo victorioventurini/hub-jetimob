@@ -21,6 +21,7 @@ interface ConstructionScoreCardProps {
   // Análise consolidada
   teamAnalysis?: TeamAnalysisResult;
   teamAnalysisLoading?: boolean;
+  collaborationSuggestionsLimit?: number;
   // Vic integration
   onAskVicAboutAlignment?: () => void;
   onAskVicAboutCollaboration?: (suggestion: TeamAnalysisResult['sharedSuggestions'][0]) => void;
@@ -36,6 +37,7 @@ export function ConstructionScoreCard({
   isLoading,
   teamAnalysis,
   teamAnalysisLoading,
+  collaborationSuggestionsLimit = 3,
   onAskVicAboutAlignment,
   onAskVicAboutCollaboration,
 }: ConstructionScoreCardProps) {
@@ -179,7 +181,7 @@ export function ConstructionScoreCard({
               Sugestões de Colaboração
             </h4>
             <div className="space-y-2">
-              {teamAnalysis.sharedSuggestions.slice(0, 3).map((suggestion, i) => (
+              {teamAnalysis.sharedSuggestions.slice(0, collaborationSuggestionsLimit).map((suggestion, i) => (
                 <div key={i} className="bg-primary/5 p-2.5 rounded-lg">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-xs text-foreground flex-1">
