@@ -206,6 +206,17 @@ export function useRitualAvailability(
   cycle: CycleWithStatus | null | undefined,
 ): RitualAvailability {
   return useMemo((): RitualAvailability => {
+    // ⚠️ TEMPORARY: Force all QBR rituals available for testing
+    if (DEV_FORCE_QBR_AVAILABLE && DEV_QBR_TYPES.includes(wizardType)) {
+      return {
+        isAvailable: true,
+        opensAt: null,
+        closesAt: null,
+        reason: 'available',
+        message: '',
+      };
+    }
+
     const label = RITUAL_LABELS[wizardType] || wizardType;
 
     // No cycle active
