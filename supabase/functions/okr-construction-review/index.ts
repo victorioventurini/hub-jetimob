@@ -665,10 +665,10 @@ function parseLooseTeamAnalysis(content: string): TeamAnalysisResult | null {
     consolidatedScore: consolidatedScore ?? undefined,
     consolidatedSummary: consolidatedSummary ? sanitizeNarrativeText(consolidatedSummary) : undefined,
     orgAlignmentAnalysis: {
-      score: extractNumberField(orgAlignmentRaw, 'score') ?? undefined,
+      score: extractNumberField(orgAlignmentRaw, 'score') ?? 70,
       coveredOrgObjectives: parseLooseStringArray(extractFieldRawValue(orgAlignmentRaw, 'coveredOrgObjectives')),
       uncoveredOrgObjectives: parseLooseStringArray(extractFieldRawValue(orgAlignmentRaw, 'uncoveredOrgObjectives')),
-      feedback: extractFieldRawValue(orgAlignmentRaw, 'feedback') ? sanitizeNarrativeText(extractFieldRawValue(orgAlignmentRaw, 'feedback')) : undefined,
+      feedback: (extractFieldRawValue(orgAlignmentRaw, 'feedback') ? sanitizeNarrativeText(extractFieldRawValue(orgAlignmentRaw, 'feedback')) : '') || 'Análise textual - verifique alinhamento manualmente.',
     },
     sharedSuggestions,
   });
