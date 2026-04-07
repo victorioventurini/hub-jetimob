@@ -13,6 +13,7 @@ import {
   Activity, AlertTriangle, Ghost,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import {
   WizardStepHeader,
   WizardStepFooter,
@@ -122,7 +123,7 @@ export function QbrKpiAnalysisStep({
                   <CardContent className="p-3">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{kpi.name}</p>
+                        <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm font-medium" />
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge variant="outline" className={cn('text-xs', rag.color)}>
                             {rag.label}
@@ -172,7 +173,7 @@ export function QbrKpiAnalysisStep({
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm truncate">{kpi.name}</p>
+                        <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm" />
                         <span className="text-xs text-muted-foreground">
                           {kpi.currentValue != null ? kpi.currentValue : '—'}{kpi.target != null ? ` / ${kpi.target}` : ''} {kpi.unit}
                         </span>
@@ -208,7 +209,7 @@ export function QbrKpiAnalysisStep({
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm truncate">{kpi.name}</p>
+                        <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm" />
                         <span className="text-xs text-muted-foreground">
                           Nenhum valor registrado
                         </span>

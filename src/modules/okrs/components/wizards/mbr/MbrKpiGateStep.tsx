@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -129,7 +130,7 @@ export function MbrKpiGateStep({
                         kpi.ragStatus === 'red' ? 'text-status-red' : 'text-status-amber'
                       )}
                     />
-                    <p className="font-medium text-sm truncate">{kpi.name}</p>
+                    <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="font-medium text-sm" />
                   </div>
                   <Badge
                     variant="secondary"

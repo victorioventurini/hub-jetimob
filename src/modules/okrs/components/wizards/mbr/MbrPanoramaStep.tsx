@@ -26,6 +26,7 @@ import {
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge, TeamKrsToggle, KpiStatusBlocks } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
@@ -153,7 +154,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
         )}>
           <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium truncate flex-1">{kpi.name}</p>
+              <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm font-medium flex-1" />
               <Badge variant="secondary" className={cn('text-xs ml-2', ragBadgeClass(kpi.ragStatus))}>
                 {kpi.ragStatus === 'green' ? 'OK' : kpi.ragStatus === 'yellow' ? 'Atenção' : kpi.ragStatus === 'red' ? 'Crítico' : 'Sem dados'}
               </Badge>

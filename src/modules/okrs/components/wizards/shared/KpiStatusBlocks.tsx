@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -108,7 +109,7 @@ export function OutdatedKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; 
       <CardContent className="space-y-1">
         {visible.map(kpi => (
           <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
-            <span className="truncate flex-1">{kpi.name}</span>
+            <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="flex-1 text-xs" />
             <div className="flex items-center gap-2 shrink-0">
               {kpi.lastValueAt && (
                 <span className="text-muted-foreground">
@@ -148,7 +149,7 @@ export function PendingKpisBlock({ kpis, maxItems }: { kpis: MbrKpiSnapshot[]; m
       <CardContent className="space-y-1">
         {visible.map(kpi => (
           <div key={kpi.kpiId} className="flex items-center justify-between text-xs gap-2">
-            <span className="truncate flex-1">{kpi.name}</span>
+            <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="flex-1 text-xs" />
             <Badge variant="outline" className="text-[10px] text-muted-foreground">
               Sem valor
             </Badge>

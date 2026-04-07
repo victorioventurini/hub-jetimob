@@ -315,7 +315,7 @@ export function CollaboratorCheckinStep({
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-sm">
-                  Esta KR é medida pela KPI "{primaryKpi.kpiName}"
+                  Esta KR é medida pela KPI "<a href={`/kpis/${primaryKpi.kpiId}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="hover:underline">{primaryKpi.kpiName}</a>"
                 </h4>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   O valor é atualizado automaticamente. Para alterar, atualize a KPI.

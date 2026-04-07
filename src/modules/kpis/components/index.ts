@@ -21,3 +21,7 @@ export { KpiValuesTable } from './KpiValuesTable';
 export type { KpiValuesTableProps } from './KpiValuesTable';
 export { KpiHistoryDialog } from './KpiHistoryDialog';
 export type { KpiHistoryDialogProps, KpiHistoryDialogData } from './KpiHistoryDialog';
+export { KpiDetailContent } from './KpiDetailContent';
+export type { KpiDetailContentProps } from './KpiDetailContent';
+export { KpiNameLink } from './KpiNameLink';
+export type { KpiNameLinkProps } from './KpiNameLink';
