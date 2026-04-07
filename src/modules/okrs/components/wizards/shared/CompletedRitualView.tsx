@@ -95,6 +95,42 @@ export function CompletedRitualView({
                 Enviado em {format(new Date(session.completed_at), 'dd/MM/yyyy', { locale: ptBR })}
               </Badge>
             )}
+
+            {/* Reopen button (admin only) */}
+            {canReopen && onReopen && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 ml-auto"
+                    disabled={isReopening}
+                  >
+                    {isReopening ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4" />
+                    )}
+                    Reabrir para edição
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reabrir rito para edição?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O rito será reaberto para edição. Uma cópia de segurança dos dados atuais
+                      será mantida automaticamente. Você poderá editar e re-submeter quando finalizar.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReopen} disabled={isReopening}>
+                      {isReopening ? 'Reabrindo...' : 'Reabrir'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </div>

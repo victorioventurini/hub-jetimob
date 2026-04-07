@@ -677,6 +677,89 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     }
   }, [teamId, cycleId]);
   
+  // ── Reopen a completed session ──
+  const reopenSession = useCallback(async (completedSessionId: string): Promise<boolean> => {
+    try {
+      // 1. Fetch the completed session with reflection_data
+      const { data: session, error: fetchError } = await buSupabase
+        .from('okr_wizard_sessions')
+        .select('id, reflection_data, addendums')
+        .eq('id', completedSessionId)
+        .eq('status', 'completed')
+        .single();
+
+      if (fetchError || !session) {
+        console.error('[reopenSession] Failed to fetch session:', fetchError);
+        return false;
+      }
+
+      const reflectionData = session.reflection_data as unknown as GenericWizardDraft<TStep, TData> | null;
+      if (!reflectionData || typeof reflectionData !== 'object' || !('data' in reflectionData)) {
+        console.error('[reopenSession] Incompatible reflection_data format');
+        return false;
+      }
+
+      // 2. Backup: append snapshot to addendums as pre_reopen_backup
+      const existingAddendums = Array.isArray(session.addendums) ? session.addendums : [];
+      const backupEntry = {
+        type: 'pre_reopen_backup',
+        snapshot: session.reflection_data,
+        created_at: new Date().toISOString(),
+      };
+      const updatedAddendums = [...existingAddendums, backupEntry];
+
+      // 3. Revert status to in_progress
+      const { error: updateError } = await buSupabase
+        .from('okr_wizard_sessions')
+        .update({
+          status: 'in_progress',
+          completed_at: null,
+          addendums: updatedAddendums,
+        })
+        .eq('id', completedSessionId);
+
+      if (updateError) {
+        console.error('[reopenSession] Failed to revert session status:', updateError);
+        return false;
+      }
+
+      // 4. Re-hydrate draft from snapshot
+      const hydratedDraft: GenericWizardDraft<TStep, TData> = {
+        ...reflectionData,
+        version: DRAFT_VERSION,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // 5. Persist to localStorage immediately
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(hydratedDraft));
+      } catch (e) {
+        console.error('[reopenSession] Failed to persist to localStorage:', e);
+      }
+
+      // 6. Update local state
+      setDraft(hydratedDraft);
+      setSessionId(completedSessionId);
+      setIsDirty(false);
+      setIsResumingDraft(true);
+
+      // 7. Invalidate queries
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.okrs.wizardDraftGeneric(profile?.id || '', wizardType, teamId),
+      });
+      if (profile?.id && cycleId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.okrs.completedSessionForCycle(wizardType, teamId, cycleId, profile.id),
+        });
+      }
+
+      return true;
+    } catch (err) {
+      console.error('[reopenSession] Unexpected error:', err);
+      return false;
+    }
+  }, [buSupabase, storageKey, queryClient, profile?.id, wizardType, teamId, cycleId]);
+
   return {
     draft,
     updateDraft,
@@ -684,6 +767,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     clearDraft,
     discardDraft,
     saveDraft,
+    reopenSession,
     isDirty,
     isSaving: saveDraftMutation.isPending,
     isResumingDraft,
