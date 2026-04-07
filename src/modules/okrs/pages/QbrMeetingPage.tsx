@@ -484,8 +484,6 @@ export default function QbrMeetingPage() {
             teamsForReview={teamsForReview}
             intentionalGaps={draft.data.intentionalGaps || []}
             onIntentionalGapsChange={(intentionalGaps) => updateDraft({ intentionalGaps })}
-            nextThirtyDays={draft.data.nextThirtyDays}
-            onNextThirtyDaysChange={(nextThirtyDays) => updateDraft({ nextThirtyDays })}
             isCompleting={isCompletingRef.current}
             onComplete={handleComplete}
             onBack={goBack}
