@@ -394,8 +394,6 @@ export function QbrMeetingOpeningStep({
         {/* Bloco 1 — Agenda da reunião */}
         <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
 
-        {/* Bloco 2 — Scorecard do quarter */}
-        <ScorecardGrid metrics={scorecardMetrics} />
 
         {/* Bloco 3 — Retrospectiva do quarter anterior */}
         {previousQuarterData && previousQuarterData.length > 0 && (
