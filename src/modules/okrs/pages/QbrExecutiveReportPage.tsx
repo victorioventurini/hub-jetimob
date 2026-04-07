@@ -45,6 +45,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 import { useQbrExecutiveReport, type QbrExecutiveReportData } from '../hooks/useQbrExecutiveReport';
+import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
 
 // ============================================================
 // LOADING MESSAGES
@@ -300,6 +301,9 @@ function ReportDisplay({
         </div>
       </ReportSection>
 
+      {/* Section 3.5 — KPI Evolution (data-driven, not AI) */}
+      <KpiEvolutionSection />
+
       {/* Section 4 — Decisions Needed */}
       <ReportSection icon={MessageSquare} title="O que precisa de decisão na reunião">
         {report.decisionsNeeded.length > 0 ? (
@@ -419,31 +423,36 @@ export default function QbrExecutiveReportPage() {
           />
         ) : (
           /* Initial state — no report yet */
-          <Card className="max-w-xl mx-auto">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>
-                Relatório Executivo{selectedCycle ? ` — ${selectedCycle.name}` : ''}
-              </CardTitle>
-              <CardDescription>
-                Análise consolidada gerada por IA com base nos dados do quarter
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <SourceChecklist />
-              <Button
-                className="w-full gap-2"
-                size="lg"
-                onClick={() => generate()}
-                disabled={!cycleState.value || isLoadingReport}
-              >
-                <Sparkles className="h-4 w-4" />
-                Gerar relatório
-              </Button>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="max-w-xl mx-auto">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>
+                  Relatório Executivo{selectedCycle ? ` — ${selectedCycle.name}` : ''}
+                </CardTitle>
+                <CardDescription>
+                  Análise consolidada gerada por IA com base nos dados do quarter
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <SourceChecklist />
+                <Button
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={() => generate()}
+                  disabled={!cycleState.value || isLoadingReport}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Gerar relatório
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* KPI Evolution is always visible (data-driven) */}
+            <KpiEvolutionSection />
+          </>
         )}
       </div>
     </HubLayout>
