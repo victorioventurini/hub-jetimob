@@ -26,6 +26,7 @@ const ResolveContextPage = lazy(() => import('@/pages/ResolveContextPage'));
 const BuManagementPage = lazy(() => import('@/modules/bu/pages/BuManagementPage'));
 const KpiDashboardPage = lazy(() => import('@/modules/kpis/pages/KpiDashboardPage'));
 const KpiEvolutionPage = lazy(() => import('@/modules/kpis/pages/KpiEvolutionPage'));
+const KpiDetailPage = lazy(() => import('@/modules/kpis/pages/KpiDetailPage'));
 const PartnerContactProfilePage = lazy(() => import('@/modules/tickets/pages/PartnerContactProfilePage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
