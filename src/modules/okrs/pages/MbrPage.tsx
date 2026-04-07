@@ -217,38 +217,6 @@ export default function MbrPage() {
         : null;
 
 
-  // ── v1.2: Org objectives view + scorecard metrics ──
-  const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
-  const { data: orgObjView } = useAllOrgObjectivesView(cycleYear, quarterlyCycle?.id);
-
-  const scorecardMetrics = useMemo(() => {
-    const snapshots = draft.data.teamOkrSnapshots;
-    let healthy = 0, atRisk = 0, offTrack = 0;
-    for (const team of snapshots) {
-      for (const obj of team.objectives) {
-        for (const kr of obj.keyResults) {
-          const s = String(kr.status);
-          const progress = kr.progress ?? 0;
-          const daysSince = kr.lastCheckinAt
-            ? Math.floor((Date.now() - new Date(kr.lastCheckinAt).getTime()) / (1000 * 60 * 60 * 24))
-            : 999;
-          const cycleEnded = quarterlyCycle?.end_date ? new Date(quarterlyCycle.end_date) < new Date() : false;
-          const mappedStatus = s === 'on_track' || s === 'green' ? 'green' as const
-            : s === 'at_risk' || s === 'yellow' ? 'yellow' as const
-            : s === 'off_track' || s === 'red' ? 'red' as const
-            : 'not_started' as const;
-          const state = calculateKrState({ progress, status: mappedStatus, daysSinceCheckin: daysSince, cycleEnded });
-          if (state === 'healthy' || state === 'achieved' || state === 'exceeded') healthy++;
-          else if (state === 'at_risk' || state === 'stagnant') atRisk++;
-          else if (state === 'off_track' || state === 'not_achieved') offTrack++;
-        }
-      }
-    }
-    const noSubmission = snapshots.filter(t => t.objectives.length === 0).length;
-    return { healthy, atRisk, offTrack, noSubmission };
-  }, [draft.data.teamOkrSnapshots, quarterlyCycle]);
-
-
       return {
         kpiId: kpi.id,
         name: kpi.name,
