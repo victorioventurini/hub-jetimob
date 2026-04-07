@@ -102,7 +102,12 @@ export default function OkrCreationPage() {
   
   // Get cycles (status-based)
   const { activeQuarterlyCycle, activeCycle, planningCycles, isLoading: isLoadingCycles } = useActiveCycle();
-  const quarterlyCycle = activeQuarterlyCycle || activeCycle;
+  // Fallback: if no active quarter, use planning quarter (for QBR-pre draft hydration)
+  const planningQuarterlyCycle = useMemo(() => {
+    return planningCycles.find(c => c.type === 'quarter') ?? null;
+  }, [planningCycles]);
+  const quarterlyCycle = activeQuarterlyCycle || planningQuarterlyCycle || activeCycle;
+  const isPlannningCycle = !activeQuarterlyCycle && !!planningQuarterlyCycle && quarterlyCycle === planningQuarterlyCycle;
   
   // Page title
   usePageTitle(selectedTeam ? `Criar OKRs - ${selectedTeam.name}` : 'Criar OKRs');
