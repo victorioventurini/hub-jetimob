@@ -152,7 +152,7 @@ describe('QbrMeetingOkrReviewStep', () => {
 
   it('renders header with review count', () => {
     render(<QbrMeetingOkrReviewStep {...defaultProps} />);
-    expect(screen.getByText('Revisão de OKRs por Time')).toBeInTheDocument();
+    expect(screen.getByText('Aprovação de OKRs — time por time')).toBeInTheDocument();
     expect(screen.getByText('3 pendentes')).toBeInTheDocument();
   });
 
