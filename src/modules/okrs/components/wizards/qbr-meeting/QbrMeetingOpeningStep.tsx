@@ -24,6 +24,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
   KpiStatusBlocks,
 } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
