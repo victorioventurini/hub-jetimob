@@ -237,6 +237,7 @@ export {
 export { useOrgHealthReview } from './useOrgHealthReview';
 export { useConstructionReview } from './useConstructionReview';
 export { useOrgConstructionReview } from './useOrgConstructionReview';
+export { useFullConstructionReview } from './useFullConstructionReview';
 
 // =========================
 // KR STATE INSIGHTS
