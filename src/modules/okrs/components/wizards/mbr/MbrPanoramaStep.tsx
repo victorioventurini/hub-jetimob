@@ -1,28 +1,48 @@
 /**
  * MbrPanoramaStep - Etapa 1: Panorama Executivo
  * 
- * Visão consolidada da saúde do negócio via KPIs mestres.
- * KPIs agrupados por escopo: Global BU, por Área, por Time.
- * KPIs em risco (amarelo/vermelho) destacados no topo de cada grupo.
- * Cards exibem data humanizada relativa do último update (ex: "há 2 dias").
+ * Visão consolidada da saúde do negócio:
+ * - Bloco 1: Scorecard do mês (4 metric cards)
+ * - Bloco 2: OKRs organizacionais com contribuições por time
+ * - Bloco 3: Agenda da reunião (8 steps)
+ * - KPIs mestres agrupados por escopo (existente, reposicionado)
  */
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AreaBadge } from '@/components/ui/area-badge';
-import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Building2, Users, Layers, RefreshCw } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Building2,
+  Users, Layers, RefreshCw, Target, Activity, ListChecks, ChevronDown,
+  CheckCircle2, XCircle,
+} from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheckinBadge } from '../shared';
+import { OkrProgressBar } from '../../OkrProgressBar';
+import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { formatValueWithUnit } from '@/shared/constants/units';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
 // ============================================================
 // TYPES
 // ============================================================
+
+export interface MbrScorecardMetrics {
+  healthy: number;
+  atRisk: number;
+  offTrack: number;
+  noSubmission: number;
+}
 
 export interface MbrPanoramaStepProps {
   kpiSnapshots: MbrKpiSnapshot[];
@@ -32,6 +52,12 @@ export interface MbrPanoramaStepProps {
   lastCompletedAt?: string | null;
   onContinue: () => void;
   buName?: string;
+  /** v1.2: Scorecard metrics */
+  scorecardMetrics?: MbrScorecardMetrics;
+  /** v1.2: Org objectives with team contributions */
+  orgObjectives?: OrgObjectiveWithKrs[];
+  /** v1.2: Current step index for agenda */
+  currentStepIndex?: number;
 }
 
 interface KpiGroup {
@@ -40,6 +66,27 @@ interface KpiGroup {
   kpis: MbrKpiSnapshot[];
   areaColor?: string | null;
 }
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+const MBR_AGENDA = [
+  { title: 'Panorama executivo', subtitle: 'Saúde do negócio' },
+  { title: 'KPI Gate estratégico', subtitle: 'KPIs críticos' },
+  { title: 'Visão geral dos times', subtitle: 'Consolidado' },
+  { title: 'Análise detalhada por time', subtitle: 'Drill-down' },
+  { title: 'OKRs organizacionais', subtitle: 'Prioridades' },
+  { title: 'Decisões estratégicas', subtitle: 'Consolidação' },
+  { title: 'Follow-up do QBR', subtitle: 'Decisões pendentes' },
+  { title: 'Encerramento', subtitle: 'Governança' },
+];
+
+const AGG_STATUS_CONFIG = {
+  on_track: { label: 'No ritmo', className: 'bg-status-green-muted text-status-green' },
+  at_risk: { label: 'Em risco', className: 'bg-status-yellow-muted text-status-yellow' },
+  off_track: { label: 'Fora da meta', className: 'bg-status-red-muted text-status-red' },
+} as const;
 
 // ============================================================
 // HELPERS
@@ -191,6 +238,71 @@ function ScopeSection({
   );
 }
 
+/** Collapsible card for an org objective with team contributions */
+function OrgObjectiveCard({ objective }: { objective: OrgObjectiveWithKrs }) {
+  const [open, setOpen] = useState(false);
+  const statusConfig = AGG_STATUS_CONFIG[objective.aggregatedStatus] ?? AGG_STATUS_CONFIG.on_track;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="w-full">
+        <div className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/30 transition-colors">
+          <Target className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm font-medium truncate flex-1 text-left">{objective.title}</span>
+          <Badge variant="secondary" className={cn('text-xs shrink-0', statusConfig.className)}>
+            {statusConfig.label}
+          </Badge>
+          <span className="text-xs text-muted-foreground shrink-0">{objective.aggregatedProgress}%</span>
+          <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="pl-6 pr-3 py-2 space-y-3">
+          {objective.orgKrs.map((kr) => (
+            <div key={kr.id} className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <OkrStatusBadge status={kr.status} type="kr" className="shrink-0 text-[10px]" />
+                <span className="text-xs truncate flex-1">{kr.title}</span>
+                <span className="text-xs text-muted-foreground shrink-0">{kr.progress}%</span>
+              </div>
+              <OkrProgressBar
+                baseline={kr.baseline}
+                current={kr.current_value}
+                target={kr.target}
+                direction={kr.direction}
+                status={kr.status}
+                unit={kr.unit}
+                size="sm"
+                showLabels={false}
+              />
+              {/* Team contributions */}
+              {kr.linkedTeamKrs.length > 0 ? (
+                <div className="pl-2 space-y-1">
+                  {kr.linkedTeamKrs.map((tkr) => {
+                    const teamStatus = tkr.status === 'on_track' ? '✅' : tkr.status === 'at_risk' ? '🟡' : tkr.status === 'off_track' ? '🔴' : '⚪';
+                    return (
+                      <div key={tkr.id} className="flex items-center gap-2 text-xs">
+                        <span>{teamStatus}</span>
+                        <span className="font-medium truncate">{tkr.team_name}</span>
+                        <span className="text-muted-foreground truncate flex-1">{tkr.title}</span>
+                        <span className="text-muted-foreground shrink-0">{tkr.progress}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground pl-2">
+                  ⚪ Sem cobertura de times neste ciclo
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -203,6 +315,9 @@ export function MbrPanoramaStep({
   lastCompletedAt,
   onContinue,
   buName,
+  scorecardMetrics,
+  orgObjectives,
+  currentStepIndex = 0,
 }: MbrPanoramaStepProps) {
   // Group KPIs by scope
   const { orgKpis, areaGroups, teamGroups, accordionDefaults } = useMemo(() => {
@@ -273,47 +388,131 @@ export function MbrPanoramaStep({
         }
       />
 
-      {/* Summary bar */}
-      {atRiskCount > 0 && (
-        <div className="px-6 py-3 border-b bg-status-amber/5">
-          <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="h-4 w-4 text-status-amber" />
-            <span className="font-medium">{atRiskCount} KPI{atRiskCount !== 1 ? 's' : ''} em atenção</span>
-          </div>
-        </div>
-      )}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 space-y-6">
+          {/* ── Bloco 1: Scorecard do mês ── */}
+          {scorecardMetrics && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Scorecard do Mês
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Card className="border-status-green/30">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-status-green">{scorecardMetrics.healthy}</p>
+                    <p className="text-xs text-muted-foreground">No ritmo</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-status-amber/30">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-status-amber">{scorecardMetrics.atRisk}</p>
+                    <p className="text-xs text-muted-foreground">Em risco</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-status-red/30">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-status-red">{scorecardMetrics.offTrack}</p>
+                    <p className="text-xs text-muted-foreground">Fora da meta</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-muted-foreground">{scorecardMetrics.noSubmission}</p>
+                    <p className="text-xs text-muted-foreground">Sem Pré-MBR</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
 
-      {/* KPI groups */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {kpiSnapshots.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhum KPI organizacional carregado. Os snapshots serão preenchidos conforme a integração.
-          </p>
-        ) : (
-          <Accordion type="multiple" defaultValue={accordionDefaults} className="space-y-1">
-            <ScopeSection
-              icon={Building2}
-              title={buName ? `KPIs Globais da ${buName}` : 'KPIs Globais da BU'}
-              count={orgKpis.length}
-              groups={orgGroupForSection}
-              accordionValue="scope-org"
-            />
-            <ScopeSection
-              icon={Layers}
-              title="KPIs por Área"
-              count={areaGroups.reduce((s, g) => s + g.kpis.length, 0)}
-              groups={areaGroups}
-              accordionValue="scope-area"
-            />
-            <ScopeSection
-              icon={Users}
-              title="KPIs por Time"
-              count={teamGroups.reduce((s, g) => s + g.kpis.length, 0)}
-              groups={teamGroups}
-              accordionValue="scope-team"
-            />
-          </Accordion>
-        )}
+          {/* ── Bloco 2: OKRs da empresa neste mês ── */}
+          {orgObjectives && orgObjectives.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Target className="h-4 w-4 text-primary" />
+                OKRs da Empresa
+              </h4>
+              <div className="space-y-2">
+                {orgObjectives.map((obj) => (
+                  <OrgObjectiveCard key={obj.id} objective={obj} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Bloco 3: Agenda da reunião ── */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-primary" />
+              Agenda da Reunião
+            </h4>
+            <div className="space-y-1">
+              {MBR_AGENDA.map((item, i) => {
+                const isCurrent = i === currentStepIndex;
+                const isDone = i < currentStepIndex;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm',
+                      isCurrent && 'bg-primary/10 font-medium',
+                      isDone && 'text-muted-foreground',
+                    )}
+                  >
+                    <span className={cn(
+                      'w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0',
+                      isCurrent ? 'bg-primary text-primary-foreground' : isDone ? 'bg-muted' : 'bg-muted/50',
+                    )}>
+                      {isDone ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                    </span>
+                    <span className="flex-1">{item.title}</span>
+                    <span className="text-xs text-muted-foreground">{item.subtitle}</span>
+                    {isCurrent && <span className="text-xs text-primary">← atual</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── KPIs (conteúdo existente, reposicionado) ── */}
+          {atRiskCount > 0 && (
+            <div className="flex items-center gap-2 text-sm p-3 rounded-lg bg-status-amber/5 border border-status-amber/20">
+              <AlertTriangle className="h-4 w-4 text-status-amber" />
+              <span className="font-medium">{atRiskCount} KPI{atRiskCount !== 1 ? 's' : ''} em atenção</span>
+            </div>
+          )}
+
+          {kpiSnapshots.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Nenhum KPI organizacional carregado. Os snapshots serão preenchidos conforme a integração.
+            </p>
+          ) : (
+            <Accordion type="multiple" defaultValue={accordionDefaults} className="space-y-1">
+              <ScopeSection
+                icon={Building2}
+                title={buName ? `KPIs Globais da ${buName}` : 'KPIs Globais da BU'}
+                count={orgKpis.length}
+                groups={orgGroupForSection}
+                accordionValue="scope-org"
+              />
+              <ScopeSection
+                icon={Layers}
+                title="KPIs por Área"
+                count={areaGroups.reduce((s, g) => s + g.kpis.length, 0)}
+                groups={areaGroups}
+                accordionValue="scope-area"
+              />
+              <ScopeSection
+                icon={Users}
+                title="KPIs por Time"
+                count={teamGroups.reduce((s, g) => s + g.kpis.length, 0)}
+                groups={teamGroups}
+                accordionValue="scope-team"
+              />
+            </Accordion>
+          )}
+        </div>
       </div>
 
       {/* Inline decisions */}

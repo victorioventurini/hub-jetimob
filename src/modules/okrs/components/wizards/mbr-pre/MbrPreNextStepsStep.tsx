@@ -2,6 +2,7 @@
  * MbrPreNextStepsStep - Step 4: Próximos Passos
  * 
  * O líder declara o foco do time para o próximo mês:
+ * - Bloco read-only com projetos em andamento (contexto)
  * - Campo de texto livre para foco principal
  * - Lista dinâmica de itens priorizados (add/remove)
  * - Lista de dependências cross-team (add/remove)
@@ -12,13 +13,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Compass, Plus, Trash2, Link2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Compass, Plus, Trash2, Link2, FolderKanban } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
   InlineDecisionInput,
 } from '../shared';
+import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
+import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -36,6 +42,8 @@ export interface MbrPreNextStepsStepProps {
   onNextStepsChange: (nextSteps: MbrPreNextSteps) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** Team ID for loading project context */
+  teamId?: string;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -49,11 +57,20 @@ export function MbrPreNextStepsStep({
   onNextStepsChange,
   decisions,
   onDecisionsChange,
+  teamId,
   onContinue,
   onBack,
 }: MbrPreNextStepsStepProps) {
   const [newPriority, setNewPriority] = useState('');
   const [newDependency, setNewDependency] = useState('');
+
+  // Load team projects for context
+  const { data: allProjects, isLoading: loadingProjects } = useProjectsForWizard(teamId);
+
+  // Filter to in_progress or at_risk projects
+  const activeProjects = (allProjects || []).filter(
+    p => p.status === 'in_progress' || p.health === 'at_risk'
+  );
 
   const addPriority = () => {
     const trimmed = newPriority.trim();
@@ -117,6 +134,57 @@ export function MbrPreNextStepsStep({
       }
     >
       <div className="p-6 space-y-6">
+        {/* Projects in progress — read-only context block */}
+        {teamId && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FolderKanban className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-medium">Projetos em andamento do time</Label>
+            </div>
+
+            {loadingProjects ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12" />
+                <Skeleton className="h-12" />
+              </div>
+            ) : activeProjects.length === 0 ? (
+              <p className="text-xs text-muted-foreground pl-6">
+                Nenhum projeto em andamento ou em risco.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {activeProjects.map((project) => {
+                  const nextMs = (project.milestones || []).find(m => m.status !== 'done');
+                  return (
+                    <Card key={project.id} className="bg-muted/30">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-2">
+                          <ProjectHealthBadge health={project.health} dotOnly />
+                          <span className="text-sm font-medium truncate flex-1">{project.name}</span>
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            {project.completion_pct}%
+                          </Badge>
+                          {project.due_date && (
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              até {new Date(project.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                            </span>
+                          )}
+                        </div>
+                        {nextMs && (
+                          <p className="text-xs text-muted-foreground mt-1 pl-5">
+                            Próximo marco: {nextMs.name}
+                            {nextMs.due_date && ` · ${new Date(nextMs.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Focus */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">

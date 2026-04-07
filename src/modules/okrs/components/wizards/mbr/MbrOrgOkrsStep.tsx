@@ -2,6 +2,7 @@
  * MbrOrgOkrsStep - Etapa 5: OKRs Organizacionais
  * 
  * Validação de prioridades estratégicas com Key Results detalhados.
+ * v1.2: Mostra contribuição dos times por KR org.
  * Se "Não é mais prioridade" → exige registro de Decisão/Ajuste de Foco.
  */
 
@@ -9,13 +10,14 @@ import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Target, TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, User } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, User, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, WizardStepScaffold, InlineDecisionInput } from '../shared';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import type { MbrOrgOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OkrRagStatus, OkrDirection } from '@/modules/okrs/types';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
 // ============================================================
 // TYPES
@@ -26,6 +28,8 @@ export interface MbrOrgOkrsStepProps {
   onOrgOkrSnapshotsChange: (snapshots: MbrOrgOkrSnapshot[]) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** v1.2: Live org objectives with team contributions */
+  orgObjectives?: OrgObjectiveWithKrs[];
   onContinue: () => void;
   onBack: () => void;
 }
@@ -60,6 +64,7 @@ export function MbrOrgOkrsStep({
   onOrgOkrSnapshotsChange,
   decisions,
   onDecisionsChange,
+  orgObjectives = [],
   onContinue,
   onBack,
 }: MbrOrgOkrsStepProps) {
@@ -74,6 +79,23 @@ export function MbrOrgOkrsStep({
   }, [orgOkrSnapshots, decisions]);
 
   const canProceed = okrsWithoutDecision.length === 0;
+
+  // Build a lookup map from live org objectives for team contributions
+  const orgKrContributions = useMemo(() => {
+    const map = new Map<string, { teamName: string; krTitle: string; progress: number; status: string }[]>();
+    for (const obj of orgObjectives) {
+      for (const kr of obj.orgKrs) {
+        const contribs = kr.linkedTeamKrs.map(tkr => ({
+          teamName: tkr.team_name,
+          krTitle: tkr.title,
+          progress: tkr.progress,
+          status: tkr.status as string,
+        }));
+        map.set(kr.id, contribs);
+      }
+    }
+    return map;
+  }, [orgObjectives]);
 
   const handleTogglePriority = (objectiveId: string, remains: boolean) => {
     onOrgOkrSnapshotsChange(
@@ -148,30 +170,57 @@ export function MbrOrgOkrsStep({
                 {/* Key Results list */}
                 {okr.keyResults.length > 0 && (
                   <div className="space-y-2 pl-3 border-l-2 border-muted">
-                    {okr.keyResults.map((kr) => (
-                      <div key={kr.krId} className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <OkrStatusBadge status={kr.status as OkrRagStatus} type="kr" className="shrink-0" />
-                          <span className="text-xs truncate flex-1 min-w-0">{kr.title}</span>
-                          {kr.ownerName && (
-                            <span className="text-[10px] text-muted-foreground shrink-0 inline-flex items-center gap-0.5">
-                              <User className="h-3 w-3" />
-                              {kr.ownerName}
-                            </span>
+                    {okr.keyResults.map((kr) => {
+                      const contributions = orgKrContributions.get(kr.krId) || [];
+                      return (
+                        <div key={kr.krId} className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <OkrStatusBadge status={kr.status as OkrRagStatus} type="kr" className="shrink-0" />
+                            <span className="text-xs truncate flex-1 min-w-0">{kr.title}</span>
+                            {kr.ownerName && (
+                              <span className="text-[10px] text-muted-foreground shrink-0 inline-flex items-center gap-0.5">
+                                <User className="h-3 w-3" />
+                                {kr.ownerName}
+                              </span>
+                            )}
+                          </div>
+                          <OkrProgressBar
+                            baseline={kr.baseline}
+                            current={kr.current}
+                            target={kr.target}
+                            direction={kr.direction as OkrDirection}
+                            status={kr.status as OkrRagStatus}
+                            unit={kr.unit}
+                            size="sm"
+                            showLabels={false}
+                          />
+
+                          {/* v1.2: Team contributions */}
+                          {contributions.length > 0 ? (
+                            <div className="pl-2 space-y-0.5">
+                              {contributions.map((c, idx) => {
+                                const emoji = c.status === 'on_track' ? '✅' : c.status === 'at_risk' ? '🟡' : c.status === 'off_track' ? '🔴' : '⚪';
+                                return (
+                                  <div key={idx} className="flex items-center gap-2 text-xs">
+                                    <span>{emoji}</span>
+                                    <span className="font-medium truncate">{c.teamName}</span>
+                                    <span className="text-muted-foreground truncate flex-1">{c.krTitle}</span>
+                                    <span className="text-muted-foreground shrink-0">{c.progress}%</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 pl-2 text-xs">
+                              <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
+                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                                Sem cobertura
+                              </Badge>
+                            </div>
                           )}
                         </div>
-                        <OkrProgressBar
-                          baseline={kr.baseline}
-                          current={kr.current}
-                          target={kr.target}
-                          direction={kr.direction as OkrDirection}
-                          status={kr.status as OkrRagStatus}
-                          unit={kr.unit}
-                          size="sm"
-                          showLabels={false}
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
