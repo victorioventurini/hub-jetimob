@@ -5,7 +5,7 @@
  * @see docs/HUB_TECHNICAL_DEEP_DIVE.md — QBR Ritual
  */
 
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +18,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
+import { buildTeamScorecardFromOrgObjectives } from '@/modules/okrs/components/wizards/shared/TeamDeliveryScorecard';
 
 import { QbrPostOkrPromotionStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
 import { QbrPostDecisionsStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostDecisionsStep';
@@ -25,13 +26,14 @@ import { QbrPostCommitmentsStep } from '@/modules/okrs/components/wizards/qbr-po
 import { QbrPostFollowUpStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostFollowUpStep';
 import { QbrPostMinutesStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
 
-import type { ApprovedTeamOkr } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
+import type { ApprovedTeamOkr, DestinationCycleOption } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
 import {
   normalizeProposedOkrs,
   type QbrPostStep, type QbrPostDraftData, type TeamCheckinDecision, type QbrMeetingSnapshot,
   type QbrCLevelSnapshot,
 } from '@/modules/okrs/types/wizard';
 import type { QbrPostMinutesSummaryData } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
 const WIZARD_STEPS = [
   { id: 'okr-promotion' as const, label: 'Promoção de OKRs', description: 'Criar OKRs aprovados' },
@@ -151,11 +153,58 @@ export default function QbrPostPage() {
     },
   });
 
+  // Load org objectives for TeamDeliveryScorecard
+  const { data: orgObjectives } = useQuery({
+    queryKey: ['qbr', 'org-objectives-post', quarterlyCycle?.id],
+    enabled: !!buSupabase && !!quarterlyCycle?.id,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase
+        .from('okr_team_objectives')
+        .select(`
+          id, title, progress, status, team_id,
+          okr_team_key_results (
+            id, title, progress, status, baseline, current_value, target_value,
+            direction, unit, owner_user_id, last_checkin_at,
+            profiles:owner_user_id (display_name)
+          )
+        `)
+        .eq('cycle_id', quarterlyCycle!.id)
+        .is('deleted_at', null);
+      if (error) throw error;
+      return (data || []) as unknown as OrgObjectiveWithKrs[];
+    },
+  });
+
+  // Load destination cycles (status = 'planning', type = 'quarter')
+  const { data: planningCycles } = useQuery({
+    queryKey: ['qbr', 'planning-cycles-post', currentBuId],
+    enabled: !!buSupabase && !!currentBuId,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase
+        .from('cycles')
+        .select('id, name, start_date, end_date')
+        .eq('bu_id', currentBuId!)
+        .eq('status', 'planning')
+        .eq('type', 'quarter')
+        .order('start_date', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({
+        id: c.id,
+        name: c.name,
+        startDate: c.start_date,
+        endDate: c.end_date,
+      })) as DestinationCycleOption[];
+    },
+  });
+
   // Derived: meeting data
   const meetingData = meetingSession?.reflection_data as any;
   const meetingApprovals: QbrMeetingSnapshot['approvals'] = meetingData?.data?.approvals || [];
   const meetingDecisions: TeamCheckinDecision[] = meetingData?.data?.decisions || [];
   const meetingCommitments = meetingData?.data?.crossCommitments || [];
+  const meetingNextThirtyDays = meetingData?.data?.nextThirtyDays as { ceo?: string; coo?: string; cpto?: string } | undefined;
 
   const teamMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -176,6 +225,12 @@ export default function QbrPostPage() {
       };
     });
   }, [meetingApprovals, leaderSessions, teamMap]);
+
+  // Build team scorecards from org objectives
+  const teamScorecards = useMemo(() => {
+    if (!teams?.length || !orgObjectives?.length) return [];
+    return teams.map(t => buildTeamScorecardFromOrgObjectives(t.id, t.name, orgObjectives));
+  }, [teams, orgObjectives]);
 
   // Draft
   const { draft, updateDraft, setStep, clearDraft, discardDraft, saveDraft, isDirty, isSaving, isResumingDraft, lastSavedAt } =
@@ -202,8 +257,6 @@ export default function QbrPostPage() {
       navigate('/okrs');
     } catch (e) { handleError(e, { context: 'QBR Post Complete' }); }
   }, [clearDraft, navigate]);
-  // handleClose is a no-op: FullPageWizardShell handles navigation.
-  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
   const handleClose = useCallback(() => {}, []);
 
   if (isLoadingCycles || isLoadingStatus) return <LoadingState text="Carregando pós-QBR..." fullPage />;
@@ -223,6 +276,8 @@ export default function QbrPostPage() {
     );
   }
 
+  const hasPromotedOkrs = (draft.data.promotedOkrIds || []).length > 0;
+
   const renderStep = () => {
     switch (draft.currentStep) {
       case 'okr-promotion':
@@ -235,7 +290,13 @@ export default function QbrPostPage() {
             crossCommitments={meetingCommitments}
             adjustmentNotes={draft.data.adjustmentNotes || {}}
             onAdjustmentNotesChange={(adjustmentNotes) => updateDraft({ adjustmentNotes })}
+            krAdjustments={draft.data.krAdjustments || {}}
+            onKrAdjustmentsChange={(krAdjustments) => updateDraft({ krAdjustments })}
             teams={teams || []}
+            teamScorecards={teamScorecards}
+            destinationCycles={planningCycles || []}
+            destinationCycleId={draft.data.destinationCycleId}
+            onDestinationCycleIdChange={(destinationCycleId) => updateDraft({ destinationCycleId })}
             onContinue={goNext}
           />
         );
@@ -255,6 +316,8 @@ export default function QbrPostPage() {
             commitments={draft.data.crossCommitments}
             onCommitmentsChange={(crossCommitments) => updateDraft({ crossCommitments })}
             teams={teams || []}
+            approvedOkrs={approvedOkrs}
+            promotedSessionIds={draft.data.promotedOkrIds}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -264,6 +327,7 @@ export default function QbrPostPage() {
           <QbrPostFollowUpStep
             followUpCadence={draft.data.followUpCadence}
             onFollowUpCadenceChange={(followUpCadence) => updateDraft({ followUpCadence })}
+            meetingNextThirtyDays={meetingNextThirtyDays}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -275,6 +339,9 @@ export default function QbrPostPage() {
             onExecutiveMinutesChange={(executiveMinutes) => updateDraft({ executiveMinutes })}
             checklist={draft.data.governanceChecklist}
             onChecklistChange={(governanceChecklist) => updateDraft({ governanceChecklist })}
+            hasPromotedOkrs={hasPromotedOkrs}
+            ceoContextMessage={draft.data.ceoContextMessage}
+            onCeoContextMessageChange={(ceoContextMessage) => updateDraft({ ceoContextMessage })}
             summaryData={(() => {
               const promoted = approvedOkrs.filter(o => draft.data.promotedOkrIds.includes(o.sessionId));
               const promotedTeamIds = new Set(promoted.map(o => o.teamId));
