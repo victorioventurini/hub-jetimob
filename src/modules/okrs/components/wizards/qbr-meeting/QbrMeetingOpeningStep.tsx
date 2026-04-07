@@ -216,10 +216,11 @@ function OrgOkrsSummary({ objectives }: { objectives: OrgObjectiveWithKrs[] }) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Target className="h-4 w-4" />
-            OKRs da Empresa neste Quarter ({objectives.length})
+            Como chegamos aqui — OKRs da empresa ({objectives.length})
           </CardTitle>
           <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
         </div>
+        <p className="text-xs text-muted-foreground">Analisado pelo C-Level no Pré-QBR. Use como contexto, não para reanalisar.</p>
       </CardHeader>
       <CardContent className="space-y-2">
         {objectives.map(obj => (
