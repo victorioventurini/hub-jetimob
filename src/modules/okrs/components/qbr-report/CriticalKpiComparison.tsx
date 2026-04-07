@@ -148,6 +148,21 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
             </tr>
             <tr className="border-t">
               <td className="p-2 flex items-center gap-1.5">
+                <TrendingUp className="h-3 w-3 text-primary" />
+                Receita de Expansão
+              </td>
+              {months.map((m) => {
+                const val = getMonthValue(expansionRows, m);
+                return (
+                  <td key={m} className="text-right p-2 text-primary">
+                    {val != null ? formatBRL(val) : '—'}
+                  </td>
+                );
+              })}
+              <td className="text-right p-2 font-semibold text-primary">{formatBRL(sumExpansion)}</td>
+            </tr>
+            <tr className="border-t">
+              <td className="p-2 flex items-center gap-1.5">
                 <Wallet className="h-3 w-3 text-muted-foreground" />
                 Orçamento Mkt & Vendas
               </td>
