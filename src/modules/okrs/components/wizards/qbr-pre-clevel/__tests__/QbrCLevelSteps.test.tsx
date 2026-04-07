@@ -189,7 +189,7 @@ describe('QbrCLevelStrategicStep', () => {
 
   it('renders header with title', () => {
     renderStrategic();
-    expect(screen.getByText('Análise Estratégica')).toBeInTheDocument();
+    expect(screen.getByText('Sua análise — o que só você vê daqui')).toBeInTheDocument();
   });
 
   it('renders three strategic textareas', () => {
