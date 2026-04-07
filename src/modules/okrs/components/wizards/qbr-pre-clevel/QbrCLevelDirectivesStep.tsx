@@ -86,9 +86,9 @@ export function QbrCLevelDirectivesStep({
       header={
         <WizardStepHeader
           icon={Megaphone}
-          title="Direcionamentos e Decisões"
+          title="Pauta obrigatória da reunião"
           tooltip="qbr-clevel-directives"
-          description="Pauta obrigatória para a reunião QBR"
+          description="Defina o que a sala precisa debater e decidir. Esses itens abrem a reunião."
           variant="amber"
           badge={`${directives.length} itens`}
         />
