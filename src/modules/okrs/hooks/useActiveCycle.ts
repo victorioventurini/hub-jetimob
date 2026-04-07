@@ -31,7 +31,7 @@ export function useActiveCycle() {
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.okrs.activeCycle(buId),
     queryFn: async () => {
-      if (!supabase || !buId) return { active: [], planning: [] };
+      if (!supabase || !buId) return { active: [], planning: [], lastClosedQuarter: null };
 
       // Fetch active, planning AND the most-recently-closed quarter
       const [activeRes, closedRes] = await Promise.all([
