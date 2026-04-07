@@ -440,7 +440,7 @@ export interface QbrMeetingSnapshot {
     teamId: string;
     sessionId: string;
     status: QbrApprovalStatus;
-    changes?: Partial<TeamOkrCreationWizardState>;
+    changes?: Partial<TeamOkrCreationWizardState> | Array<{ krIndex: number; newTitle?: string; newTarget?: string; newOwnerId?: string; newOwnerName?: string }>;
     discardReason?: string;
   }>;
   decisions: TeamCheckinDecision[];
@@ -450,10 +450,14 @@ export interface QbrMeetingSnapshot {
     description: string;
     deadline: string;
     linkedOkrId?: string;
+    responsibleUserId?: string;
+    responsibleUserName?: string;
   }>;
   governanceChecklist: QbrMeetingGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   ritualFeedbackSentAt?: string;
+  /** Prioridades dos próximos 30 dias por papel */
+  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
 }
 
 /** Checklist de governança do pós-QBR */
@@ -541,6 +545,8 @@ export interface QbrMeetingDraftData {
   ritualFeedback: RitualImprovementFeedback[];
   /** IDs de KRs org marcadas como "gap intencional" no mapa de cobertura */
   intentionalGaps?: string[];
+  /** Prioridades dos próximos 30 dias por papel */
+  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
 }
 
 /** Draft data do pós-QBR */
@@ -567,6 +573,10 @@ export interface TeamCheckinDecision {
     name: string;
   };
   deadline?: string | null; // ISO date format
+  /** ID da diretiva C-Level relacionada (QBR Meeting Step 3) */
+  relatedDirectiveId?: string;
+  /** Tipo de decisão: strategic (impacta empresa) ou tactical (impacta um time) */
+  decisionType?: 'strategic' | 'tactical';
 }
 
 export interface TeamCheckinChecklist {

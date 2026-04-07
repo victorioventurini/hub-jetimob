@@ -443,6 +443,7 @@ export default function QbrMeetingPage() {
           <QbrMeetingDecisionsStep
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            cLevelDirectives={cLevelDirectives}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -454,6 +455,8 @@ export default function QbrMeetingPage() {
             commitments={draft.data.crossCommitments}
             onCommitmentsChange={(crossCommitments) => updateDraft({ crossCommitments })}
             teams={buTeams || []}
+            approvals={draft.data.approvals}
+            teamsForReview={teamsForReview}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -474,6 +477,8 @@ export default function QbrMeetingPage() {
             teamsForReview={teamsForReview}
             intentionalGaps={draft.data.intentionalGaps || []}
             onIntentionalGapsChange={(intentionalGaps) => updateDraft({ intentionalGaps })}
+            nextThirtyDays={draft.data.nextThirtyDays}
+            onNextThirtyDaysChange={(nextThirtyDays) => updateDraft({ nextThirtyDays })}
             isCompleting={isCompletingRef.current}
             onComplete={handleComplete}
             onBack={goBack}

@@ -1,19 +1,20 @@
 /**
  * QbrMeetingClosingStep - Step 5: Checklist de governança e encerramento
  * 
- * Mapa de cobertura org + resumo da reunião + checklist dinâmico + feedback.
+ * Mapa de cobertura org + resumo detalhado + checklist dinâmico + próximos 30 dias + feedback.
  */
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ShieldCheck, Star, Plus, X, MessageSquare, BarChart3, Check, Pencil, Clock, Ban,
-  Target, AlertTriangle, CheckCircle2,
+  Target, AlertTriangle, CheckCircle2, Zap, Calendar, Users, Handshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -47,6 +48,9 @@ export interface QbrMeetingClosingStepProps {
   teamsForReview?: TeamForReview[];
   intentionalGaps?: string[];
   onIntentionalGapsChange?: (gaps: string[]) => void;
+  /** Próximos 30 dias */
+  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
+  onNextThirtyDaysChange?: (data: { ceo?: string; coo?: string; cpto?: string }) => void;
   isCompleting?: boolean;
   onComplete: () => void;
   onBack: () => void;
@@ -102,7 +106,6 @@ function OrgCoverageMap({
         .map(a => a.teamId)
     );
 
-    // Map org KR id → covering team names
     const orgKrCoverage = new Map<string, string[]>();
     for (const team of teamsForReview) {
       if (!approvedTeamIds.has(team.teamId)) continue;
@@ -197,56 +200,171 @@ function OrgCoverageMap({
 }
 
 // ============================================================
-// GOVERNANCE SUMMARY
+// GOVERNANCE SUMMARY (EXPANDED)
 // ============================================================
 
 function GovernanceSummary({
   approvals,
   decisions,
   crossCommitments,
+  orgObjectives,
+  teamsForReview,
+  intentionalGaps,
 }: {
   approvals: QbrMeetingSnapshot['approvals'];
   decisions: TeamCheckinDecision[];
   crossCommitments: QbrMeetingSnapshot['crossCommitments'];
+  orgObjectives: OrgObjectiveWithKrs[];
+  teamsForReview: TeamForReview[];
+  intentionalGaps: string[];
 }) {
   const approved = approvals.filter(a => a.status === 'approved').length;
   const withChanges = approvals.filter(a => a.status === 'approved_with_changes').length;
   const deferred = approvals.filter(a => a.status === 'defer').length;
   const discarded = approvals.filter(a => a.status === 'discarded').length;
   const decisionsWithOwner = decisions.filter(d => d.owner?.id).length;
+  const strategicCount = decisions.filter(d => d.decisionType === 'strategic').length;
+  const tacticalCount = decisions.filter(d => d.decisionType === 'tactical').length;
+  const commitmentsWithResponsible = crossCommitments.filter(c => c.responsibleUserId).length;
 
-  const items = [
-    { icon: Check, label: 'Aprovados', value: approved, color: 'text-status-green' },
-    { icon: Pencil, label: 'Com ajustes', value: withChanges, color: 'text-status-amber' },
-    { icon: Clock, label: 'Standby', value: deferred, color: 'text-muted-foreground' },
-    { icon: Ban, label: 'Descartados', value: discarded, color: 'text-status-red' },
-  ];
+  // Org KR coverage
+  const orgKrCoverage = useMemo(() => {
+    if (orgObjectives.length === 0) return { covered: 0, uncovered: 0 };
+    const approvedTeamIds = new Set(
+      approvals
+        .filter(a => a.status === 'approved' || a.status === 'approved_with_changes')
+        .map(a => a.teamId)
+    );
+    const coveredIds = new Set<string>();
+    for (const team of teamsForReview) {
+      if (!approvedTeamIds.has(team.teamId)) continue;
+      for (const entry of team.proposedOkrs) {
+        for (const kr of entry.draftKrs) {
+          if ((kr as any).linkedOrgKrId) coveredIds.add((kr as any).linkedOrgKrId);
+        }
+      }
+    }
+    let totalKrs = 0;
+    let covered = 0;
+    for (const obj of orgObjectives) {
+      for (const kr of obj.orgKrs) {
+        totalKrs++;
+        if (coveredIds.has(kr.id) || intentionalGaps.includes(kr.id)) covered++;
+      }
+    }
+    return { covered, uncovered: totalKrs - covered };
+  }, [orgObjectives, approvals, teamsForReview, intentionalGaps]);
 
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Resumo desta Reunião</span>
+        </div>
+
+        {/* OKRs section */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">OKRs:</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {[
+              { icon: Check, label: 'Aprovados', value: `${approved} time${approved !== 1 ? 's' : ''}`, color: 'text-status-green' },
+              { icon: Pencil, label: 'Com ajustes', value: `${withChanges} time${withChanges !== 1 ? 's' : ''}`, color: 'text-status-amber' },
+              { icon: Clock, label: 'Standby', value: `${deferred} time${deferred !== 1 ? 's' : ''}`, color: 'text-muted-foreground' },
+              { icon: Ban, label: 'Descartados', value: `${discarded} time${discarded !== 1 ? 's' : ''}`, color: 'text-status-red' },
+            ].map(item => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className="flex items-center gap-1.5 text-xs">
+                  <Icon className={cn('h-3.5 w-3.5', item.color)} />
+                  <span className="font-medium">{item.value}</span>
+                  <span className="text-muted-foreground">{item.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Decisions section */}
+        <div className="space-y-1 pt-2 border-t">
+          <p className="text-xs font-medium text-muted-foreground">Decisões:</p>
+          <p className="text-xs">{decisions.length} decisões registradas</p>
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            {strategicCount > 0 && <span>· {strategicCount} estratégica{strategicCount !== 1 ? 's' : ''}</span>}
+            {tacticalCount > 0 && <span>· {tacticalCount} tática{tacticalCount !== 1 ? 's' : ''}</span>}
+          </div>
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            <span>· {decisionsWithOwner} com dono definido</span>
+            {decisions.length - decisionsWithOwner > 0 && (
+              <span className="text-status-amber">· {decisions.length - decisionsWithOwner} sem dono ⚠️</span>
+            )}
+          </div>
+        </div>
+
+        {/* Commitments section */}
+        <div className="space-y-1 pt-2 border-t">
+          <p className="text-xs font-medium text-muted-foreground">Compromissos:</p>
+          <p className="text-xs">{crossCommitments.length} compromisso{crossCommitments.length !== 1 ? 's' : ''} cross-área formalizados</p>
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            <span>· {commitmentsWithResponsible} com responsável definido</span>
+            {crossCommitments.length - commitmentsWithResponsible > 0 && (
+              <span>· {crossCommitments.length - commitmentsWithResponsible} sem responsável</span>
+            )}
+          </div>
+        </div>
+
+        {/* Org KR coverage */}
+        {(orgKrCoverage.covered > 0 || orgKrCoverage.uncovered > 0) && (
+          <div className="space-y-1 pt-2 border-t">
+            <p className="text-xs font-medium text-muted-foreground">KRs org:</p>
+            <div className="flex gap-3 text-xs">
+              <span>{orgKrCoverage.covered} KRs org com cobertura ✅</span>
+              {orgKrCoverage.uncovered > 0 && (
+                <span className="text-status-amber">{orgKrCoverage.uncovered} KRs org sem cobertura</span>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
+// NEXT 30 DAYS
+// ============================================================
+
+function NextThirtyDaysSection({
+  data,
+  onChange,
+}: {
+  data: { ceo?: string; coo?: string; cpto?: string };
+  onChange: (data: { ceo?: string; coo?: string; cpto?: string }) => void;
+}) {
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Resumo da Reunião</span>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">O que acontece nos próximos 30 dias</span>
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {items.map(item => {
-            const Icon = item.icon;
-            return (
-              <div key={item.label} className="flex items-center gap-1.5 text-xs">
-                <Icon className={cn('h-3.5 w-3.5', item.color)} />
-                <span className="font-medium">{item.value}</span>
-                <span className="text-muted-foreground">{item.label}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex gap-4 pt-1 border-t text-xs text-muted-foreground">
-          <span>{decisionsWithOwner}/{decisions.length} decisões com dono</span>
-          <span>{crossCommitments.length} compromisso{crossCommitments.length !== 1 ? 's' : ''} cross-área</span>
-        </div>
+        {[
+          { key: 'ceo' as const, label: 'CEO' },
+          { key: 'coo' as const, label: 'COO' },
+          { key: 'cpto' as const, label: 'CPTO' },
+        ].map(item => (
+          <div key={item.key} className="space-y-1">
+            <Label className="text-xs font-medium">{item.label}:</Label>
+            <Input
+              value={data[item.key] || ''}
+              onChange={e => onChange({ ...data, [item.key]: e.target.value })}
+              placeholder={`Prioridade do ${item.label} nos próximos 30 dias...`}
+              maxLength={200}
+              className="text-xs"
+            />
+          </div>
+        ))}
+        <p className="text-[10px] text-muted-foreground">Opcional — não bloqueia o encerramento.</p>
       </CardContent>
     </Card>
   );
@@ -269,6 +387,8 @@ export function QbrMeetingClosingStep({
   teamsForReview = [],
   intentionalGaps = [],
   onIntentionalGapsChange,
+  nextThirtyDays,
+  onNextThirtyDaysChange,
   isCompleting,
   onComplete,
   onBack,
@@ -293,7 +413,6 @@ export function QbrMeetingClosingStep({
     for (const obj of orgObjectives) {
       for (const kr of obj.orgKrs) {
         if (intentionalGaps.includes(kr.id)) continue;
-        // Check if any approved team covers this KR
         let covered = false;
         for (const team of teamsForReview) {
           if (!approvedTeamIds.has(team.teamId)) continue;
@@ -402,11 +521,14 @@ export function QbrMeetingClosingStep({
           />
         )}
 
-        {/* Governance summary */}
+        {/* Expanded governance summary */}
         <GovernanceSummary
           approvals={approvals}
           decisions={decisions}
           crossCommitments={crossCommitments}
+          orgObjectives={orgObjectives}
+          teamsForReview={teamsForReview}
+          intentionalGaps={intentionalGaps}
         />
 
         {/* Governance checklist */}
@@ -453,6 +575,14 @@ export function QbrMeetingClosingStep({
             </TooltipProvider>
           </CardContent>
         </Card>
+
+        {/* Next 30 days */}
+        {onNextThirtyDaysChange && (
+          <NextThirtyDaysSection
+            data={nextThirtyDays || {}}
+            onChange={onNextThirtyDaysChange}
+          />
+        )}
 
         {/* Ritual feedback */}
         <Card>

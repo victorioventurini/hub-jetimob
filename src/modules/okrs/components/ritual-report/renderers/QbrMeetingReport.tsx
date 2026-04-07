@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Users, Link2 } from 'lucide-react';
+import { CheckCircle2, Users, Link2, Calendar } from 'lucide-react';
 import { ReportSection, EmptyState } from './shared';
 import { cn } from '@/lib/utils';
 
@@ -14,8 +14,10 @@ export function QbrMeetingReport({ data }: { data: Record<string, any> }) {
   const approvals = Array.isArray(data.approvals) ? data.approvals : [];
   const crossCommitments = Array.isArray(data.crossCommitments) ? data.crossCommitments : [];
   const checklist = data.governanceChecklist || {};
+  const nextThirtyDays = data.nextThirtyDays as { ceo?: string; coo?: string; cpto?: string } | undefined;
 
-  const hasContent = approvals.length > 0 || crossCommitments.length > 0 || Object.keys(checklist).length > 0;
+  const hasNextThirtyDays = nextThirtyDays && (nextThirtyDays.ceo || nextThirtyDays.coo || nextThirtyDays.cpto);
+  const hasContent = approvals.length > 0 || crossCommitments.length > 0 || Object.keys(checklist).length > 0 || hasNextThirtyDays;
   if (!hasContent) return <EmptyState message="Nenhum dado registrado nesta reunião QBR." />;
 
   return (
@@ -49,9 +51,10 @@ export function QbrMeetingReport({ data }: { data: Record<string, any> }) {
             {crossCommitments.map((c: any, i: number) => (
               <div key={i} className="p-2 rounded border text-sm space-y-1">
                 <p>{c.description}</p>
-                <div className="flex gap-3 text-xs text-muted-foreground">
+                <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
                   <span>De: {c.fromTeamId?.slice(0, 8)}…</span>
                   <span>Para: {c.toTeamId?.slice(0, 8)}…</span>
+                  {c.responsibleUserName && <span>Resp: {c.responsibleUserName}</span>}
                   {c.deadline && <span>Prazo: {c.deadline}</span>}
                 </div>
               </div>
@@ -77,6 +80,28 @@ export function QbrMeetingReport({ data }: { data: Record<string, any> }) {
                 <span className={checklist[item.key] ? '' : 'text-muted-foreground'}>{item.label}</span>
               </div>
             ))}
+          </div>
+        </ReportSection>
+      )}
+
+      {/* Next 30 Days */}
+      {hasNextThirtyDays && (
+        <ReportSection title="Próximos 30 dias" icon={<Calendar className="h-4 w-4" />}>
+          <div className="space-y-1.5">
+            {[
+              { key: 'ceo', label: 'CEO' },
+              { key: 'coo', label: 'COO' },
+              { key: 'cpto', label: 'CPTO' },
+            ].map(item => {
+              const value = nextThirtyDays?.[item.key as keyof typeof nextThirtyDays];
+              if (!value) return null;
+              return (
+                <div key={item.key} className="flex items-start gap-2 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground w-10 shrink-0">{item.label}:</span>
+                  <span>{value}</span>
+                </div>
+              );
+            })}
           </div>
         </ReportSection>
       )}
