@@ -399,13 +399,15 @@ export function useFullConstructionReview(cycleId: string | null) {
         },
       });
 
+      console.log('[cross-team] Edge function response:', { error, hasData: !!data, dataKeys: data ? Object.keys(data) : [] });
       if (error) throw error;
       const responseData = data?.data ?? data;
+      console.log('[cross-team] Parsed response:', { hasTeamAnalysis: !!responseData?.teamAnalysis, responseKeys: responseData ? Object.keys(responseData) : [] });
       if (responseData?.teamAnalysis) {
         setCrossAnalysis(responseData.teamAnalysis);
       }
     } catch (err) {
-      console.error('Cross-team analysis error:', err);
+      console.error('[cross-team] Cross-team analysis error:', err);
       setCrossAnalysisError(err instanceof Error ? err.message : 'Erro na análise cross-team');
     } finally {
       setCrossAnalysisLoading(false);
