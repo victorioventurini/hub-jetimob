@@ -131,6 +131,80 @@ export function buildTeamScorecardFromOrgObjectives(
   };
 }
 
+/**
+ * Build scorecard data for a single team from raw team KR rows.
+ * Used when we want ALL team KRs (not just org-linked).
+ */
+export interface RawTeamKr {
+  id: string;
+  team_id: string;
+  baseline: number;
+  current_value: number;
+  target: number;
+  direction: string;
+  status: string;
+  last_checkin_at: string | null;
+}
+
+export function buildTeamScorecardFromRawKrs(
+  teamId: string,
+  teamName: string,
+  krs: RawTeamKr[],
+): TeamDeliveryScorecardData {
+  let totalKrs = 0;
+  let achieved = 0;
+  let onTrack = 0;
+  let atRisk = 0;
+  let offTrack = 0;
+  let notStarted = 0;
+  let noCheckin = 0;
+
+  const now = new Date();
+
+  for (const kr of krs) {
+    if (kr.team_id !== teamId) continue;
+    totalKrs++;
+
+    const progress = calculateProgress(
+      kr.baseline ?? 0,
+      kr.current_value ?? 0,
+      kr.target ?? 0,
+      kr.direction as any,
+    );
+    const daysSinceCheckin = kr.last_checkin_at
+      ? differenceInDays(now, parseISO(kr.last_checkin_at))
+      : 999;
+
+    const state = calculateKrState({
+      progress,
+      status: (kr.status || 'not_started') as any,
+      daysSinceCheckin,
+      cycleEnded: false,
+    });
+
+    if (state === 'achieved' || state === 'exceeded') achieved++;
+    else if (state === 'healthy') onTrack++;
+    else if (state === 'at_risk' || state === 'stagnant') atRisk++;
+    else if (state === 'off_track' || state === 'not_achieved') offTrack++;
+    else if (state === 'not_started') notStarted++;
+
+    if (daysSinceCheckin >= 14) noCheckin++;
+  }
+
+  return {
+    teamId,
+    teamName,
+    totalKrs,
+    achieved,
+    onTrack,
+    atRisk,
+    offTrack,
+    notStarted,
+    noCheckin,
+    healthScore: computeTeamHealth({ totalKrs, atRisk, offTrack, notStarted }),
+  };
+}
+
 // ============================================================
 // COMPONENT
 // ============================================================

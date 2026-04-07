@@ -31,8 +31,8 @@ import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { TeamKrsToggle } from '../shared/TeamKrsToggle';
-import { TeamDeliveryScorecard, buildTeamScorecardFromOrgObjectives } from '../shared/TeamDeliveryScorecard';
-import type { TeamDeliveryScorecardData } from '../shared/TeamDeliveryScorecard';
+import { TeamDeliveryScorecard, buildTeamScorecardFromOrgObjectives, buildTeamScorecardFromRawKrs } from '../shared/TeamDeliveryScorecard';
+import type { TeamDeliveryScorecardData, RawTeamKr } from '../shared/TeamDeliveryScorecard';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { KrStateInline } from '../../insights';
@@ -218,15 +218,53 @@ export function QbrCLevelQuarterBalanceStep({
   // Section A: Org OKRs with team contributions
   const { data: orgObjectives, isLoading: isLoadingOrg } = useAllOrgObjectivesView(year, cycleId);
 
-  // Build scorecard data from orgObjectives (derive per-team metrics)
-  const teamScorecards: TeamDeliveryScorecardData[] = useMemo(() => {
-    if (!teams || !orgObjectives) return [];
-    return teams
-      .map(t => buildTeamScorecardFromOrgObjectives(t.id, t.name, orgObjectives))
-      .filter(t => t.totalKrs > 0);
-  }, [teams, orgObjectives]);
+  // Fetch ALL team KRs for the cycle (to include teams without org linkage)
+  const { data: allTeamKrs, isLoading: isLoadingAllKrs } = useQuery({
+    queryKey: ['qbr-clevel', 'all-team-krs', cycleId],
+    enabled: !!buSupabase && !!cycleId,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await buSupabase
+        .from('okr_team_key_results')
+        .select(`
+          id, team_id, baseline, current_value, target, direction, status, last_checkin_at,
+          okr_team_objectives!inner(cycle_id)
+        `)
+        .eq('okr_team_objectives.cycle_id', cycleId)
+        .is('deleted_at', null);
+      if (error) throw error;
+      return (data || []).map(kr => ({
+        id: kr.id,
+        team_id: kr.team_id,
+        baseline: kr.baseline ?? 0,
+        current_value: kr.current_value ?? 0,
+        target: kr.target ?? 0,
+        direction: kr.direction ?? 'increase',
+        status: kr.status ?? 'not_started',
+        last_checkin_at: kr.last_checkin_at,
+      })) as RawTeamKr[];
+    },
+  });
 
-  const isLoading = isLoadingTeams || isLoadingOrg;
+  // Build scorecard data: use ALL team KRs (comprehensive), not just org-linked
+  const teamScorecards: TeamDeliveryScorecardData[] = useMemo(() => {
+    if (!teams) return [];
+    // If we have allTeamKrs, build from that (includes teams without org linkage)
+    if (allTeamKrs) {
+      return teams
+        .map(t => buildTeamScorecardFromRawKrs(t.id, t.name, allTeamKrs))
+        .filter(t => t.totalKrs > 0);
+    }
+    // Fallback to org-only if allTeamKrs hasn't loaded yet
+    if (orgObjectives) {
+      return teams
+        .map(t => buildTeamScorecardFromOrgObjectives(t.id, t.name, orgObjectives))
+        .filter(t => t.totalKrs > 0);
+    }
+    return [];
+  }, [teams, allTeamKrs, orgObjectives]);
+
+  const isLoading = isLoadingTeams || isLoadingOrg || isLoadingAllKrs;
   const [showTeamKrs, setShowTeamKrs] = useState(true);
 
   return (
