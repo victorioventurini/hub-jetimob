@@ -47,6 +47,7 @@ import { toast } from 'sonner';
 import { useQbrExecutiveReport, type QbrExecutiveReportData } from '../hooks/useQbrExecutiveReport';
 import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
 import { CriticalKpiComparison } from '../components/qbr-report/CriticalKpiComparison';
+import { OrgOkrsReportSection } from '../components/qbr-report/OrgOkrsReportSection';
 
 // ============================================================
 // LOADING MESSAGES
@@ -221,6 +222,9 @@ function ReportDisplay({
           {report.quarterNarrative}
         </p>
       </ReportSection>
+
+      {/* Section 1.5 — Org OKRs */}
+      <OrgOkrsReportSection cycleId={cycleId} />
 
       {/* Section 2 — Proposals */}
       <ReportSection icon={Target} title="O que os times propõem para o próximo ciclo">
