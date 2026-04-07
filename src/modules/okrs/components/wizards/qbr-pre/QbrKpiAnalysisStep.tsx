@@ -13,6 +13,7 @@ import {
   Activity, AlertTriangle, Ghost,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import {
   WizardStepHeader,
   WizardStepFooter,
