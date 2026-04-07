@@ -15,10 +15,10 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { OkrProgressBar } from '../../OkrProgressBar';
-import { OkrStatusBadge } from '../../OkrStatusBadge';
-import { TeamKrsToggle } from '../shared/TeamKrsToggle';
-import { useAllOrgObjectivesView, type OrgObjectiveWithKrs } from '../../hooks/queries';
+import { OkrProgressBar } from '@/modules/okrs/components/OkrProgressBar';
+import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
+import { TeamKrsToggle } from '@/modules/okrs/components/wizards/shared/TeamKrsToggle';
+import { useAllOrgObjectivesView } from '@/modules/okrs/hooks/queries';
 import { SkeletonList } from '@/components/ui/loading-state';
 
 const AGG_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
