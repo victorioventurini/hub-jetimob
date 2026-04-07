@@ -411,7 +411,7 @@ export function QbrCLevelSystemReadStep({
                 <p className="text-xs font-medium text-status-green mb-1">✓ Manter</p>
                 {topLearnings.worked.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
-                    <span className="line-clamp-2 flex-1">• {item.text}</span>
+                    <span className="flex-1">• {item.text}</span>
                     <Badge variant="secondary" className="text-[10px] shrink-0">{item.teamName}</Badge>
                   </div>
                 ))}
@@ -422,7 +422,7 @@ export function QbrCLevelSystemReadStep({
                 <p className="text-xs font-medium text-status-red mb-1">✗ Parar</p>
                 {topLearnings.didntWork.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
-                    <span className="line-clamp-2 flex-1">• {item.text}</span>
+                    <span className="flex-1">• {item.text}</span>
                     <Badge variant="secondary" className="text-[10px] shrink-0">{item.teamName}</Badge>
                   </div>
                 ))}
@@ -433,7 +433,7 @@ export function QbrCLevelSystemReadStep({
                 <p className="text-xs font-medium text-status-amber mb-1">⚠ Dívidas</p>
                 {topLearnings.debts.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1">
-                    <span className="line-clamp-2 flex-1">• {item.text}</span>
+                    <span className="flex-1">• {item.text}</span>
                     <Badge variant="secondary" className="text-[10px] shrink-0">{item.teamName}</Badge>
                   </div>
                 ))}
