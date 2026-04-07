@@ -118,12 +118,7 @@ export function MbrPreSummary({
                   {zombieCandidates.length} zombie{zombieCandidates.length > 1 ? 's' : ''}
                 </Badge>
               )}
-              {kpisToCreate.length > 0 && (
-                <Badge variant="outline" className="text-xs text-primary">
-                  +{kpisToCreate.length} a criar
-                </Badge>
-              )}
-              {zombieCandidates.length === 0 && kpisToCreate.length === 0 && (
+              {zombieCandidates.length === 0 && (
                 <span className="text-xs text-muted-foreground">Sem sinalizações</span>
               )}
             </div>

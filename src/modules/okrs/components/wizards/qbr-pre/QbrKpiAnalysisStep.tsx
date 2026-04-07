@@ -67,35 +67,17 @@ export function QbrKpiAnalysisStep({
   kpiSnapshots,
   zombieCandidates,
   onZombieCandidatesChange,
-  kpisToCreate,
-  onKpisToCreateChange,
   decisions,
   onDecisionsChange,
   onContinue,
   onBack,
 }: QbrKpiAnalysisStepProps) {
-  const [newKpiDesc, setNewKpiDesc] = useState('');
-  const [newKpiScope, setNewKpiScope] = useState('team');
-
   const handleToggleZombie = (kpiId: string) => {
     if (zombieCandidates.includes(kpiId)) {
       onZombieCandidatesChange(zombieCandidates.filter(id => id !== kpiId));
     } else {
       onZombieCandidatesChange([...zombieCandidates, kpiId]);
     }
-  };
-
-  const handleAddKpiToCreate = () => {
-    if (!newKpiDesc.trim()) return;
-    onKpisToCreateChange([
-      ...kpisToCreate,
-      { description: newKpiDesc.trim(), suggestedScope: newKpiScope, relatedKrTitle: '' },
-    ]);
-    setNewKpiDesc('');
-  };
-
-  const handleRemoveKpiToCreate = (index: number) => {
-    onKpisToCreateChange(kpisToCreate.filter((_, i) => i !== index));
   };
 
   const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
