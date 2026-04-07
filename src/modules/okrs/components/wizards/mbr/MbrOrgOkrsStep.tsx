@@ -68,6 +68,7 @@ export function MbrOrgOkrsStep({
   onContinue,
   onBack,
 }: MbrOrgOkrsStepProps) {
+  const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Gate: OKRs marked as "not a priority" need a decision registered
   const okrsWithoutDecision = useMemo(() => {
     return orgOkrSnapshots.filter(okr => {
