@@ -538,14 +538,6 @@ export function QbrMeetingClosingStep({
           </CardContent>
         </Card>
 
-        {/* Next 30 days */}
-        {onNextThirtyDaysChange && (
-          <NextThirtyDaysSection
-            data={nextThirtyDays || {}}
-            onChange={onNextThirtyDaysChange}
-          />
-        )}
-
         {/* Ritual feedback */}
         <Card>
           <CardContent className="p-4 space-y-3">
