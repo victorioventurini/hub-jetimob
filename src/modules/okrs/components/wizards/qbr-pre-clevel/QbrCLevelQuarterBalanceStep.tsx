@@ -244,6 +244,13 @@ function TeamScorecardCard({ team }: { team: TeamScorecardData }) {
           <span className="text-muted-foreground">Fora da meta:</span>
           <span className="font-medium">{team.offTrack}</span>
         </div>
+        {team.notStarted > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/50 shrink-0" />
+            <span className="text-muted-foreground">Não iniciadas:</span>
+            <span className="font-medium">{team.notStarted}</span>
+          </div>
+        )}
         {team.stagnant > 0 && (
           <div className="flex items-center gap-1.5 col-span-2">
             <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
