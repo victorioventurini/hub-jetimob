@@ -77,10 +77,12 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
 
   const churnRows = byKpi(KPI_IDS.mrrChurn);
   const commitRows = byKpi(KPI_IDS.mrrCommit);
+  const expansionRows = byKpi(KPI_IDS.expansion);
   const budgetRows = byKpi(KPI_IDS.budget);
 
   const sumChurn = churnRows.reduce((s, r) => s + r.value, 0);
   const sumCommit = commitRows.reduce((s, r) => s + r.value, 0);
+  const sumExpansion = expansionRows.reduce((s, r) => s + r.value, 0);
   const sumBudget = budgetRows.reduce((s, r) => s + r.value, 0);
 
   const months = [...new Set(data.map((r) => r.reference_date.slice(5, 7)))].sort();
@@ -90,7 +92,8 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
     return row ? row.value : null;
   };
 
-  const netGain = sumCommit - sumChurn;
+  const totalRevenue = sumCommit + sumExpansion;
+  const netGain = totalRevenue - sumChurn;
 
   return (
     <div className="mt-3 space-y-3">
