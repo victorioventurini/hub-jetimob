@@ -223,6 +223,9 @@ function ReportDisplay({
         </p>
       </ReportSection>
 
+      {/* Section 1.5 — Org OKRs */}
+      <OrgOkrsReportSection cycleId={cycleId} />
+
       {/* Section 2 — Proposals */}
       <ReportSection icon={Target} title="O que os times propõem para o próximo ciclo">
         {report.teamProposals && report.teamProposals.length > 0 && (
