@@ -600,7 +600,7 @@ function parseLooseSharedSuggestions(rawValue: string | null | undefined): Share
       return parsed
         .map((item) => normalizeSharedSuggestion(item))
         .filter((item): item is SharedObjectiveSuggestion => item !== null)
-        .slice(0, 5);
+        .slice(0, 12);
     }
   } catch {
     // noop - continue with loose parsing
@@ -618,7 +618,7 @@ function parseLooseSharedSuggestions(rawValue: string | null | undefined): Share
       reason: extractFieldRawValue(block, 'reason') || undefined,
     }))
     .filter((item): item is SharedObjectiveSuggestion => item !== null)
-    .slice(0, 5);
+    .slice(0, 12);
 }
 
 function normalizeTeamAnalysis(raw: Partial<TeamAnalysisResult> & { orgAlignmentAnalysis?: Partial<TeamAnalysisResult['orgAlignmentAnalysis']> }): TeamAnalysisResult {
@@ -796,6 +796,12 @@ async function handleTeamAnalysis(
     });
   }
 
+  const isCrossTeamAnalysis = teamId === 'cross-team';
+  const sharedSuggestionsLimit = isCrossTeamAnalysis ? 8 : 5;
+  const sharedSuggestionsInstruction = isCrossTeamAnalysis
+    ? `gere até ${sharedSuggestionsLimit} sugestões distintas e concretas, priorizando pelo menos 6 quando houver evidência suficiente e evitando pares duplicados`
+    : `gere até ${sharedSuggestionsLimit} sugestões distintas e concretas`;
+
   // Build compact objective list — limit description length to save prompt space
   const objectivesList = objectives.map((obj, i) => {
     const krList = (obj.keyResults || []).slice(0, 5).map((kr, j) => 
@@ -816,10 +822,12 @@ ${krList}`;
 ${orgKrList || '  (sem KRs)'}`;
   }).join('\n') || 'Nenhum OKR org definido';
 
-  // Compact other teams list — just titles
-  const otherTeamsList = (otherTeamsObjectives || []).map(team => 
-    `${team.teamName}: ${team.objectives.map(o => `"${o.title}"`).join(', ')}`
-  ).join('\n') || 'Nenhum';
+  // Compact other teams list
+  const otherTeamsList = isCrossTeamAnalysis
+    ? (otherTeamsObjectives || []).map((team) => team.teamName).join(', ') || 'Nenhum'
+    : (otherTeamsObjectives || []).map((team) => 
+        `${team.teamName}: ${team.objectives.map(o => `"${o.title}"`).join(', ')}`
+      ).join('\n') || 'Nenhum';
 
   // Build prompt and enforce 9500 char limit
   const promptParts = {
@@ -827,7 +835,7 @@ ${orgKrList || '  (sem KRs)'}`;
     objectives: `\nOBJETIVOS (${objectives.length}):\n${objectivesList}\n`,
     orgObjectives: `\nOKRs ORG:\n${orgObjectivesList}\n`,
     otherTeams: `\nOUTROS TIMES:\n${otherTeamsList}\n`,
-    instructions: `\nAnalise: 1) Score consolidado (0-100), 2) Resumo executivo, 3) Alinhamento com OKRs org (cobertos vs não cobertos), 4) Sugestões de objetivos compartilhados entre times.\n\nJSON exato:\n{"consolidatedScore":N,"consolidatedSummary":"...","orgAlignmentAnalysis":{"score":N,"coveredOrgObjectives":["..."],"uncoveredOrgObjectives":["..."],"feedback":"..."},"sharedSuggestions":[{"objectiveId":"...","objectiveTitle":"...","suggestedTeamId":"...","suggestedTeamName":"...","suggestedLeaderFirstName":"...","suggestedObjectiveId":"...","suggestedObjectiveTitle":"...","reason":"..."}]}`,
+    instructions: `\nAnalise: 1) Score consolidado (0-100), 2) Resumo executivo, 3) Alinhamento com OKRs org (cobertos vs não cobertos), 4) Sugestões de objetivos compartilhados entre times (${sharedSuggestionsInstruction}).\n\nJSON exato:\n{"consolidatedScore":N,"consolidatedSummary":"...","orgAlignmentAnalysis":{"score":N,"coveredOrgObjectives":["..."],"uncoveredOrgObjectives":["..."],"feedback":"..."},"sharedSuggestions":[{"objectiveId":"...","objectiveTitle":"...","suggestedTeamId":"...","suggestedTeamName":"...","suggestedLeaderFirstName":"...","suggestedObjectiveId":"...","suggestedObjectiveTitle":"...","reason":"..."}]}`,
   };
 
   let userQuestion = promptParts.header + promptParts.objectives + promptParts.orgObjectives + promptParts.otherTeams + promptParts.instructions;
@@ -835,13 +843,11 @@ ${orgKrList || '  (sem KRs)'}`;
   // If still too large, progressively trim
   if (userQuestion.length > 9500) {
     console.log(`[cross-team] Prompt too large (${userQuestion.length}), trimming other teams`);
-    // Remove other teams section first
     userQuestion = promptParts.header + promptParts.objectives + promptParts.orgObjectives + '\nOUTROS TIMES: (omitido por tamanho)\n' + promptParts.instructions;
   }
 
   if (userQuestion.length > 9500) {
     console.log(`[cross-team] Still too large (${userQuestion.length}), trimming objectives`);
-    // Truncate objectives to fit
     const maxObjChars = 9500 - promptParts.header.length - promptParts.orgObjectives.length - promptParts.instructions.length - 200;
     const truncatedObjectives = objectivesList.slice(0, Math.max(500, maxObjChars));
     userQuestion = promptParts.header + `\nOBJETIVOS (${objectives.length}, resumido):\n${truncatedObjectives}\n` + promptParts.orgObjectives + promptParts.instructions;
