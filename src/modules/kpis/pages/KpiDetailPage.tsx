@@ -41,7 +41,8 @@ export default function KpiDetailPage() {
       <div className="space-y-6">
         <PageHeader
           title={isLoading ? 'Carregando...' : (kpi?.name ?? 'Indicador')}
-          onBack={goBack}
+          backTo="/kpis"
+          backLabel="Indicadores"
         />
         <KpiDetailContent kpiId={kpiId} />
       </div>
