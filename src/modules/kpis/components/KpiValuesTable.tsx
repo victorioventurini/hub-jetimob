@@ -351,7 +351,7 @@ export function KpiValuesTable({
             </TableBody>
           </Table>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Edit Value Dialog */}
       {onUpdateValue && (
