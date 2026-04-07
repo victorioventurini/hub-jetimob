@@ -3552,6 +3552,22 @@ export type { SomeType } from './types';
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
 
+### v3.23.0 (2026-04-07)
+- **QBR Executive Report v1.1** — Relatório executivo de QBR com narrativa IA:
+  - Nova rota: `/okrs/executive/qbr-report?cycle=<id>` — acessível a **todos os usuários da BU** (sem restrição de admin)
+  - Estrutura: Resumo Narrativo (IA Gemini), Evolução de Indicadores (KPI Evolution), Ponto Crítico (MRR Churn × MRR Commit × Receita de Expansão × Orçamento Mkt & Vendas com eficiência de custo), Como Chegamos Aqui (OKRs Organizacionais + contribuições)
+  - Persistência via `okr_wizard_sessions` (`wizard_type = 'qbr-executive-report'`) — snapshot imutável em `reflection_data`
+  - Auto-load: ao acessar a rota, carrega cache automaticamente sem necessidade de clicar "Gerar Relatório"
+  - Correção de persistência: validação de `profile.id` antes do insert (RLS compliance)
+  - KPI "Receita de Expansão" adicionado à tabela comparativa de Ponto Crítico com cálculo de `totalRevenue = mrrCommit + expansion`
+  - **Arquivos:** `QbrExecutiveReportPage`, `useQbrExecutiveReport`, `CriticalKpiComparison`, `KpiEvolutionCard`, `OkrContributionsSection`
+- **Auth Token Refresh Deduplication v1.0** — Correção de perda de sessão por 429 rate limit:
+  - **Causa raiz:** 3 clientes Supabase (client.ts, globalClient.ts, buScopedClient.ts) todos com `autoRefreshToken: true` competindo para renovar token
+  - **Correção:** `buScopedClient.ts` agora usa `autoRefreshToken: false` e sincroniza sessão via listener `onAuthStateChange` do `globalClient`
+  - **Import fix:** `useAuditHistory.ts` migrado de `client.ts` → `globalClient.ts` (último arquivo que importava `client.ts`)
+  - **Resultado:** apenas 1 client renova tokens, eliminando tempestade de requests `/token`
+  - **Arquivos:** `buScopedClient.ts`, `useAuditHistory.ts`
+
 ### v3.22.0 (2026-04-06)
 - **QBR Rituals Enhancement v1.1** — Melhorias aditivas nos rituais QBR Meeting e QBR Post:
   - **QBR Meeting — Opening Step (Item 2):**

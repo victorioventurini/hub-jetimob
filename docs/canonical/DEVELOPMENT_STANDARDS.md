@@ -94,6 +94,8 @@ const { data } = await supabase.from("tickets").select("*"); // BUG!
 | `validateDomain.ts` | `globalClient.ts` | Validação pré-auth |
 
 > ⚠️ **CRÍTICO:** Nunca importar de `@/integrations/supabase/client`. Sempre usar `globalClient.ts` ou `useBuScopedSupabase()`.
+>
+> ⚠️ **CRÍTICO (v1.29.0 — Token Refresh Deduplication):** Apenas o `globalClient` deve ter `autoRefreshToken: true`. O `buScopedClient` usa `autoRefreshToken: false` e sincroniza sessão via listener `onAuthStateChange` do `globalClient`. Múltiplos clientes com `autoRefreshToken: true` causam tempestade de 429 no endpoint `/token`, resultando em perda de sessão.
 
 #### Regras para NotificationCenter (Realtime)
 
