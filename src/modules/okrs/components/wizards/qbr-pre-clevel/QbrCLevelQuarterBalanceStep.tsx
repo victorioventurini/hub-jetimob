@@ -301,7 +301,7 @@ export function QbrCLevelQuarterBalanceStep({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {teamScorecards.map(team => (
-                    <TeamScorecardCard key={team.teamId} team={team} />
+                    <TeamDeliveryScorecard key={team.teamId} data={team} />
                   ))}
                 </div>
               )}
