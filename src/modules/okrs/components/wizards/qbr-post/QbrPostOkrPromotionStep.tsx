@@ -218,7 +218,12 @@ function StructuredKrAdjustments({
                 <div className="space-y-1 sm:col-span-2">
                   <Label className="text-[10px] text-muted-foreground">Novo responsável (opcional)</Label>
                   <BuUserSelect
-                    value={adj.newOwnerId || null}
+                    value={adj.newOwnerId || undefined}
+                    onValueChange={(val) => {
+                      if (!val) {
+                        updateAdj(krIndex, { newOwnerId: undefined, newOwnerName: undefined });
+                      }
+                    }}
                     onUserSelected={(meta) => {
                       if (meta) {
                         updateAdj(krIndex, { newOwnerId: meta.id, newOwnerName: meta.displayName });

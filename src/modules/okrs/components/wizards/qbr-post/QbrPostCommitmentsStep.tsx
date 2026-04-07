@@ -187,7 +187,13 @@ export function QbrPostCommitmentsStep({
             <div className="space-y-1">
               <Label className="text-xs">Responsável (opcional)</Label>
               <BuUserSelect
-                value={responsibleUserId}
+                value={responsibleUserId || undefined}
+                onValueChange={(val) => {
+                  if (!val) {
+                    setResponsibleUserId(null);
+                    setResponsibleUserName('');
+                  }
+                }}
                 onUserSelected={(meta) => {
                   if (meta) {
                     setResponsibleUserId(meta.id);
