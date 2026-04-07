@@ -573,13 +573,19 @@ export interface QbrPostDraftData {
   cycleId: string;
   meetingSessionId: string | null;
   promotedOkrIds: string[];
+  /** Ciclo de destino para promoção */
+  destinationCycleId?: string;
   decisions: TeamCheckinDecision[];
   crossCommitments: QbrPostSnapshot['crossCommitments'];
   followUpCadence: QbrPostSnapshot['followUpCadence'];
   executiveMinutes: string;
+  /** Carta de contexto do CEO */
+  ceoContextMessage?: string;
   governanceChecklist: QbrPostGovernanceChecklist;
-  /** Notas de ajuste por sessionId — para OKRs aprovados "com ajustes" */
+  /** Notas de ajuste por sessionId — para OKRs aprovados "com ajustes" (legacy) */
   adjustmentNotes?: Record<string, string>;
+  /** Ajustes estruturados por KR, indexados por sessionId */
+  krAdjustments?: Record<string, QbrPostKrAdjustment[]>;
 }
 
 export interface TeamCheckinDecision {

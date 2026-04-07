@@ -49,10 +49,9 @@ const DEFAULT_DATA: QbrPostDraftData = {
   promotedOkrIds: [],
   decisions: [],
   crossCommitments: [],
-  followUpCadence: {
-    mbrReviewScheduled: false,
-  },
+  followUpCadence: {},
   executiveMinutes: '',
+  ceoContextMessage: '',
   governanceChecklist: {
     strategicFocusClear: false,
     decisionsHaveOwners: false,
@@ -60,6 +59,7 @@ const DEFAULT_DATA: QbrPostDraftData = {
     nextCycleOkrsActive: false,
   },
   adjustmentNotes: {},
+  krAdjustments: {},
 };
 
 export default function QbrPostPage() {
