@@ -58,6 +58,12 @@ export interface KpiHistoryDialogData {
   indicator_type: KpiIndicatorType;
   rag_status: KpiRagStatus;
   frequency?: KpiFrequency;
+  bu_id?: string;
+  owner_user_id?: string | null;
+  team_id?: string | null;
+  area_id?: string | null;
+  responsible_team_id?: string | null;
+  scope?: string;
   area?: {
     id: string;
     name: string;
