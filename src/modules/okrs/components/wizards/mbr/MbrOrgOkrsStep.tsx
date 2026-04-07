@@ -201,27 +201,29 @@ export function MbrOrgOkrsStep({
                           />
 
                           {/* v1.2: Team contributions */}
-                          {contributions.length > 0 ? (
-                            <div className="pl-2 space-y-0.5">
-                              {contributions.map((c, idx) => {
-                                const emoji = c.status === 'on_track' ? '✅' : c.status === 'at_risk' ? '🟡' : c.status === 'off_track' ? '🔴' : '⚪';
-                                return (
-                                  <div key={idx} className="flex items-center gap-2 text-xs">
-                                    <span>{emoji}</span>
-                                    <span className="font-medium truncate">{c.teamName}</span>
-                                    <span className="text-muted-foreground truncate flex-1">{c.krTitle}</span>
-                                    <span className="text-muted-foreground shrink-0">{c.progress}%</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 pl-2 text-xs">
-                              <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
-                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                                Sem cobertura
-                              </Badge>
-                            </div>
+                          {showTeamKrs && (
+                            contributions.length > 0 ? (
+                              <div className="pl-2 space-y-0.5">
+                                {contributions.map((c, idx) => {
+                                  const emoji = c.status === 'on_track' ? '✅' : c.status === 'at_risk' ? '🟡' : c.status === 'off_track' ? '🔴' : '⚪';
+                                  return (
+                                    <div key={idx} className="flex items-center gap-2 text-xs">
+                                      <span>{emoji}</span>
+                                      <span className="font-medium truncate">{c.teamName}</span>
+                                      <span className="text-muted-foreground truncate flex-1">{c.krTitle}</span>
+                                      <span className="text-muted-foreground shrink-0">{c.progress}%</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 pl-2 text-xs">
+                                <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
+                                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                                  Sem cobertura
+                                </Badge>
+                              </div>
+                            )
                           )}
                         </div>
                       );
