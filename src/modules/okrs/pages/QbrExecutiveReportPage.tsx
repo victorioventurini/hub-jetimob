@@ -391,7 +391,9 @@ export default function QbrExecutiveReportPage() {
         />
 
         {/* Content based on state */}
-        {isGenerating ? (
+        {isLoadingReport ? (
+          <LoadingState text="Carregando relatório..." />
+        ) : isGenerating ? (
           <GeneratingState />
         ) : report ? (
           <ReportDisplay
