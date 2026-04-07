@@ -17,8 +17,10 @@ import {
   useActiveCycle,
   useLastCompletedSession,
   useOrgObjectives,
+  useAllOrgObjectivesView,
 } from '@/modules/okrs/hooks';
 import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
+import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
 
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
