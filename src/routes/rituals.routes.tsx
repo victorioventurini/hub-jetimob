@@ -32,17 +32,24 @@ const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryP
 /**
  * Wrapper padrão para rotas de rituais
  */
-function RitualRoute({ children, requiresBuAdmin = false }: { children: React.ReactNode; requiresBuAdmin?: boolean }) {
+function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean }) {
   const inner = (
     <ModuleRoute moduleSlug="okrs">
       {children}
     </ModuleRoute>
   );
+
+  let guarded = inner;
+  if (requiresCLevel) {
+    guarded = <CLevelRitualRoute>{inner}</CLevelRitualRoute>;
+  } else if (requiresBuAdmin) {
+    guarded = <BuAdminRoute>{inner}</BuAdminRoute>;
+  }
   
   return (
     <ProtectedRoute>
       <BuRequiredRoute>
-        {requiresBuAdmin ? <BuAdminRoute>{inner}</BuAdminRoute> : inner}
+        {guarded}
       </BuRequiredRoute>
     </ProtectedRoute>
   );
