@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2, RefreshCw } from "lucide-react";
+import { MoreVertical, Edit, Archive, ArchiveRestore, Trash2, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
