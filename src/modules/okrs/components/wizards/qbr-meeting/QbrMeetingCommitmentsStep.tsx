@@ -24,8 +24,9 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
+  InlineDecisionInput,
 } from '../shared';
-import type { QbrMeetingSnapshot, ProposedObjectiveEntry } from '@/modules/okrs/types/wizard';
+import type { QbrMeetingSnapshot, ProposedObjectiveEntry, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { TeamForReview } from './QbrMeetingOkrReviewStep';
 
 // ============================================================

@@ -13,6 +13,8 @@ import { ptBR } from 'date-fns/locale';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
 import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/WizardStepHeader';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
+import { InlineDecisionInput } from '@/modules/okrs/components/wizards/shared/InlineDecisionInput';
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';

@@ -34,6 +34,7 @@ import type {
   QbrApprovalStatus,
   QbrCLevelSnapshot,
   ProposedObjectiveEntry,
+  TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
 
