@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 const KPI_IDS = {
   mrrChurn: 'db355067-64bf-403b-b24b-f0d961ab4f3c',
   mrrCommit: '6b8c68f8-55d4-48aa-9520-a486d879fba8',
+  expansion: 'c6d1834b-ae82-4f40-bd2c-63233c8f6d23',
   budget: '916f4cbf-beee-4819-ad24-54322101e645',
 } as const;
 
@@ -76,10 +77,12 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
 
   const churnRows = byKpi(KPI_IDS.mrrChurn);
   const commitRows = byKpi(KPI_IDS.mrrCommit);
+  const expansionRows = byKpi(KPI_IDS.expansion);
   const budgetRows = byKpi(KPI_IDS.budget);
 
   const sumChurn = churnRows.reduce((s, r) => s + r.value, 0);
   const sumCommit = commitRows.reduce((s, r) => s + r.value, 0);
+  const sumExpansion = expansionRows.reduce((s, r) => s + r.value, 0);
   const sumBudget = budgetRows.reduce((s, r) => s + r.value, 0);
 
   const months = [...new Set(data.map((r) => r.reference_date.slice(5, 7)))].sort();
@@ -89,7 +92,8 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
     return row ? row.value : null;
   };
 
-  const netGain = sumCommit - sumChurn;
+  const totalRevenue = sumCommit + sumExpansion;
+  const netGain = totalRevenue - sumChurn;
 
   return (
     <div className="mt-3 space-y-3">
@@ -144,6 +148,21 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
             </tr>
             <tr className="border-t">
               <td className="p-2 flex items-center gap-1.5">
+                <TrendingUp className="h-3 w-3 text-primary" />
+                Receita de Expansão
+              </td>
+              {months.map((m) => {
+                const val = getMonthValue(expansionRows, m);
+                return (
+                  <td key={m} className="text-right p-2 text-primary">
+                    {val != null ? formatBRL(val) : '—'}
+                  </td>
+                );
+              })}
+              <td className="text-right p-2 font-semibold text-primary">{formatBRL(sumExpansion)}</td>
+            </tr>
+            <tr className="border-t">
+              <td className="p-2 flex items-center gap-1.5">
                 <Wallet className="h-3 w-3 text-muted-foreground" />
                 Orçamento Mkt & Vendas
               </td>
@@ -176,9 +195,9 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
             Investimento total: {formatBRL(sumBudget)}
           </div>
         )}
-        {sumBudget > 0 && sumCommit > 0 && (
+        {sumBudget > 0 && totalRevenue > 0 && (
           <div className="rounded-md px-2.5 py-1.5 bg-muted text-muted-foreground font-medium">
-            Custo por R$1 de MRR: {formatBRL(sumBudget / sumCommit).replace('R$', 'R$ ')}
+            Custo por R$1 de MRR: {formatBRL(sumBudget / totalRevenue).replace('R$', 'R$ ')}
           </div>
         )}
       </div>
