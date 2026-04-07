@@ -154,8 +154,9 @@ function QuarterRetrospective({ data }: { data: PreviousQuarterTeamData[] }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          Como Chegamos Aqui
+          Entrega do quarter por time
         </CardTitle>
+        <p className="text-xs text-muted-foreground">Contexto pré-analisado. A sala usa isso para calibrar as aprovações.</p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
