@@ -1,10 +1,11 @@
 /**
- * MbrClosingStep - Etapa 5: Encerramento & Governança
+ * MbrClosingStep - Etapa 8: Encerramento & Governança
  * 
- * Checklist obrigatório de 4 itens + feedback anônimo com rating 1-5 estrelas.
+ * v1.2: Resumo de governança + checklist dinâmico (cada item habilitado por condição)
+ * + feedback anônimo com rating 1-5 estrelas.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,13 +14,16 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2, Star } from 'lucide-react';
+import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2, Star, BarChart3, Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardLastStepFooter } from '../shared';
 import type {
   MbrGovernanceChecklist,
   RitualImprovementFeedback,
   TeamCheckinDecision,
+  MbrTeamOkrSnapshot,
+  MbrOrgOkrSnapshot,
+  QbrFollowUpItem,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -32,6 +36,12 @@ export interface MbrClosingStepProps {
   onChecklistChange: (checklist: MbrGovernanceChecklist) => void;
   ritualFeedback: RitualImprovementFeedback[];
   onRitualFeedbackChange: (feedback: RitualImprovementFeedback[]) => void;
+  /** v1.2: Team snapshots for dynamic checklist */
+  teamOkrSnapshots?: MbrTeamOkrSnapshot[];
+  /** v1.2: Org OKR snapshots for dynamic checklist */
+  orgOkrSnapshots?: MbrOrgOkrSnapshot[];
+  /** v1.2: QBR follow-up items for dynamic checklist */
+  qbrFollowUpItems?: QbrFollowUpItem[];
   onComplete: () => void;
   onBack: () => void;
 }
@@ -104,11 +114,35 @@ export function MbrClosingStep({
   onChecklistChange,
   ritualFeedback,
   onRitualFeedbackChange,
+  teamOkrSnapshots = [],
+  orgOkrSnapshots = [],
+  qbrFollowUpItems = [],
   onComplete,
   onBack,
 }: MbrClosingStepProps) {
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(0);
+
+  // ── Dynamic checklist conditions ──
+  const conditions = useMemo(() => {
+    const kpiDecisions = decisions.filter(d => d.sourceStep === 'panorama' || d.sourceStep === 'kpi-gate');
+    const teamsWithOkrs = teamOkrSnapshots.filter(t => t.objectives.length > 0);
+    const allTeamsReviewed = teamsWithOkrs.length > 0 && teamsWithOkrs.every(t => t.reviewed);
+    const orgOkrsAllDecided = orgOkrSnapshots.length === 0 || orgOkrSnapshots.every(o => o.remainsStrategicPriority !== undefined);
+    const decisionsWithOwner = decisions.filter(d => d.sourceStep === 'decisions');
+    const allDecisionsHaveOwner = decisionsWithOwner.length === 0 || decisionsWithOwner.every(d => (d as any).owner_user_id);
+    const overdueItems = qbrFollowUpItems.filter(i => !i.resolved && i.deadline && new Date(i.deadline) < new Date());
+    const qbrAddressed = overdueItems.length === 0;
+
+    return {
+      kpiGateEnabled: kpiDecisions.length > 0 || decisions.some(d => d.sourceStep === 'kpi-gate'),
+      allTeamsReviewedEnabled: allTeamsReviewed,
+      orgOkrsVerifiedEnabled: orgOkrsAllDecided,
+      decisionsHaveOwnerEnabled: allDecisionsHaveOwner,
+      qbrFollowUpAddressedEnabled: qbrAddressed,
+      nextMbrScheduledEnabled: true, // always enabled (manual)
+    };
+  }, [decisions, teamOkrSnapshots, orgOkrSnapshots, qbrFollowUpItems]);
 
   const handleCheckChange = (key: keyof MbrGovernanceChecklist, value: boolean) => {
     onChecklistChange({ ...checklist, [key]: value });
@@ -132,12 +166,23 @@ export function MbrClosingStep({
     onRitualFeedbackChange(ritualFeedback.filter(f => f.id !== id));
   };
 
-  const allChecked =
+  // Legacy checklist check (backward compatible)
+  const legacyChecked =
     checklist.strategicFocusClear &&
     checklist.nextStepsHaveOwners &&
     checklist.nonPrioritiesClear &&
     checklist.communicateInAllHands;
 
+  // Dynamic checklist check
+  const dynamicChecked =
+    checklist.kpiGateClear &&
+    checklist.allTeamsReviewed &&
+    checklist.orgOkrsVerified &&
+    checklist.decisionsHaveOwner &&
+    checklist.qbrFollowUpAddressed &&
+    checklist.nextMbrScheduled;
+
+  const allChecked = legacyChecked && dynamicChecked;
   const hasFeedback = ritualFeedback.length > 0;
   const canComplete = allChecked && hasFeedback;
 
@@ -145,6 +190,24 @@ export function MbrClosingStep({
   const decisionCount = decisions.filter(d => d.category === 'decision').length;
   const focusCount = decisions.filter(d => d.category === 'focus_adjustment').length;
   const nextStepCount = decisions.filter(d => d.category === 'next_step').length;
+  const reviewedTeams = teamOkrSnapshots.filter(t => t.reviewed).length;
+  const totalTeams = teamOkrSnapshots.filter(t => t.objectives.length > 0).length;
+  const orgGaps = orgOkrSnapshots.filter(o => !o.remainsStrategicPriority).length;
+
+  // Dynamic checklist items
+  const dynamicItems: Array<{
+    key: keyof MbrGovernanceChecklist;
+    label: string;
+    enabled: boolean;
+    disabledHint?: string;
+  }> = [
+    { key: 'kpiGateClear', label: 'KPI Gate concluído — decisões obrigatórias registradas', enabled: conditions.kpiGateEnabled, disabledHint: 'Registre decisões no Step 2' },
+    { key: 'allTeamsReviewed', label: `Todos os times revisados (${reviewedTeams}/${totalTeams})`, enabled: conditions.allTeamsReviewedEnabled, disabledHint: 'Revise todos os times no Step 4' },
+    { key: 'orgOkrsVerified', label: 'OKRs organizacionais verificadas', enabled: conditions.orgOkrsVerifiedEnabled, disabledHint: 'Confirme todas OKRs no Step 5' },
+    { key: 'decisionsHaveOwner', label: 'Decisões estratégicas têm dono', enabled: conditions.decisionsHaveOwnerEnabled, disabledHint: 'Atribua donos às decisões no Step 6' },
+    { key: 'qbrFollowUpAddressed', label: 'Follow-up do QBR endereçado', enabled: conditions.qbrFollowUpAddressedEnabled, disabledHint: 'Resolva decisões vencidas no Step 7' },
+    { key: 'nextMbrScheduled', label: 'Próximo MBR agendado', enabled: true },
+  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -158,7 +221,43 @@ export function MbrClosingStep({
 
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
-          {/* Summary */}
+          {/* ── Resumo de governança ── */}
+          <div className="space-y-3">
+            <h4 className="font-medium flex items-center gap-2 text-sm">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Resumo de Governança
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Card>
+                <CardContent className="p-3 text-center">
+                  <p className="text-xl font-bold">{decisionCount + focusCount + nextStepCount}</p>
+                  <p className="text-xs text-muted-foreground">Decisões registradas</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3 text-center">
+                  <p className="text-xl font-bold">{reviewedTeams}/{totalTeams}</p>
+                  <p className="text-xs text-muted-foreground">Times revisados</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3 text-center">
+                  <p className="text-xl font-bold">{decisionCount}</p>
+                  <p className="text-xs text-muted-foreground">Decisões com dono</p>
+                </CardContent>
+              </Card>
+              {orgGaps > 0 && (
+                <Card className="border-status-amber/30">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-xl font-bold text-status-amber">{orgGaps}</p>
+                    <p className="text-xs text-muted-foreground">OKRs org sem cobertura</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          {/* Summary badges */}
           <div className="flex items-center gap-3 flex-wrap">
             <Badge variant="secondary" className="bg-status-blue-muted text-status-blue">
               {decisionCount} decisões
@@ -171,7 +270,7 @@ export function MbrClosingStep({
             </Badge>
           </div>
 
-          {/* Governance checklist */}
+          {/* ── Dynamic governance checklist ── */}
           <div className="space-y-4">
             <h4 className="font-medium flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -179,6 +278,7 @@ export function MbrClosingStep({
             </h4>
 
             <div className="space-y-3">
+              {/* Legacy items */}
               {[
                 { key: 'strategicFocusClear' as const, label: 'Está claro o foco estratégico do próximo mês' },
                 { key: 'nextStepsHaveOwners' as const, label: 'Todos os próximos passos têm responsável' },
@@ -194,6 +294,29 @@ export function MbrClosingStep({
                   <Label htmlFor={key} className="cursor-pointer text-sm">
                     {label}
                   </Label>
+                </div>
+              ))}
+
+              <Separator />
+
+              {/* Dynamic items */}
+              {dynamicItems.map(({ key, label, enabled, disabledHint }) => (
+                <div key={key} className={cn(
+                  'flex items-center gap-3 p-3 rounded-lg',
+                  enabled ? 'bg-muted/50' : 'bg-muted/20 opacity-60',
+                )}>
+                  <Checkbox
+                    id={key}
+                    checked={checklist[key]}
+                    disabled={!enabled}
+                    onCheckedChange={(checked) => handleCheckChange(key, checked as boolean)}
+                  />
+                  <Label htmlFor={key} className={cn('text-sm', !enabled && 'cursor-not-allowed')}>
+                    {label}
+                  </Label>
+                  {!enabled && disabledHint && (
+                    <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{disabledHint}</span>
+                  )}
                 </div>
               ))}
             </div>

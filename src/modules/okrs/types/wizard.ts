@@ -228,12 +228,19 @@ export interface MbrOrgOkrSnapshot {
   }>;
 }
 
-/** Checklist de governança do MBR */
+/** Checklist de governança do MBR (dinâmico — cada item habilitado por condição) */
 export interface MbrGovernanceChecklist {
   strategicFocusClear: boolean;
   nextStepsHaveOwners: boolean;
   nonPrioritiesClear: boolean;
   communicateInAllHands: boolean;
+  /** Dynamic items — MBR v1.2 */
+  kpiGateClear: boolean;
+  allTeamsReviewed: boolean;
+  orgOkrsVerified: boolean;
+  decisionsHaveOwner: boolean;
+  qbrFollowUpAddressed: boolean;
+  nextMbrScheduled: boolean;
 }
 
 /** Feedback anônimo sobre melhoria do rito */

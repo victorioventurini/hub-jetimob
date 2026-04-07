@@ -401,6 +401,12 @@ export default function QbrPreCLevelPage() {
               nextStepsHaveOwners: true,
               nonPrioritiesClear: true,
               communicateInAllHands: true,
+              kpiGateClear: true,
+              allTeamsReviewed: true,
+              orgOkrsVerified: true,
+              decisionsHaveOwner: true,
+              qbrFollowUpAddressed: true,
+              nextMbrScheduled: true,
             }}
             onChecklistChange={() => {}}
             ritualFeedback={draft.data.ritualFeedback}

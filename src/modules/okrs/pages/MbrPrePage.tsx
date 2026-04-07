@@ -466,6 +466,7 @@ export default function MbrPrePage() {
             onNextStepsChange={(nextSteps) => updateDraft({ nextSteps })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            teamId={teamIdParam || undefined}
             onContinue={goNext}
             onBack={goBack}
           />

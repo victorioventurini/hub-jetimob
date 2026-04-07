@@ -1,14 +1,13 @@
 /**
  * MbrQbrFollowUpStep - Follow-up de decisões e compromissos do último QBR
  * 
- * Exibe decisões e compromissos cross-área pendentes do QBR anterior,
- * permitindo ao líder marcar como concluído ou escalar.
+ * v1.2: Alertas visuais por urgência + contador no header + estado positivo.
  */
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, AlertTriangle, Clock, Link2, ClipboardList } from 'lucide-react';
-import { format, isPast, parseISO } from 'date-fns';
+import { format, isPast, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
@@ -18,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 
@@ -42,6 +42,28 @@ interface MbrQbrFollowUpStepProps {
   onFollowUpItemsChange: (items: QbrFollowUpItem[]) => void;
   onContinue: () => void;
   onBack: () => void;
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function getUrgency(item: QbrFollowUpItem): 'overdue' | 'due_soon' | 'normal' {
+  if (item.resolved) return 'normal';
+  if (!item.deadline) return 'normal';
+  const deadline = parseISO(item.deadline);
+  if (isPast(deadline)) return 'overdue';
+  if (differenceInDays(deadline, new Date()) <= 7) return 'due_soon';
+  return 'normal';
+}
+
+function sortByUrgency(items: QbrFollowUpItem[]): QbrFollowUpItem[] {
+  const urgencyOrder = { overdue: 0, due_soon: 1, normal: 2 };
+  return [...items].sort((a, b) => {
+    const ua = a.resolved ? 3 : urgencyOrder[getUrgency(a)];
+    const ub = b.resolved ? 3 : urgencyOrder[getUrgency(b)];
+    return ua - ub;
+  });
 }
 
 // ============================================================
@@ -124,11 +146,21 @@ export function MbrQbrFollowUpStep({
 
   const resolvedCount = followUpItems.filter(i => i.resolved).length;
   const pendingCount = followUpItems.length - resolvedCount;
-  const overdueCount = followUpItems.filter(i => !i.resolved && i.deadline && isPast(parseISO(i.deadline))).length;
+  const overdueCount = followUpItems.filter(i => getUrgency(i) === 'overdue').length;
+  const dueSoonCount = followUpItems.filter(i => getUrgency(i) === 'due_soon').length;
 
-  const decisionItems = followUpItems.filter(i => i.sourceType === 'decision');
-  const commitmentItems = followUpItems.filter(i => i.sourceType === 'commitment');
+  const sortedDecisions = sortByUrgency(followUpItems.filter(i => i.sourceType === 'decision'));
+  const sortedCommitments = sortByUrgency(followUpItems.filter(i => i.sourceType === 'commitment'));
   const noQbrData = !isLoading && followUpItems.length === 0;
+  const allResolved = followUpItems.length > 0 && resolvedCount === followUpItems.length;
+
+  // Build dynamic description for header
+  const headerParts: string[] = [];
+  if (overdueCount > 0) headerParts.push(`⚠️ ${overdueCount} decisão${overdueCount !== 1 ? 'ões' : ''} vencida${overdueCount !== 1 ? 's' : ''}`);
+  if (dueSoonCount > 0) headerParts.push(`${dueSoonCount} vence${dueSoonCount !== 1 ? 'm' : ''} esta semana`);
+  const headerDesc = headerParts.length > 0
+    ? headerParts.join(' · ')
+    : 'Acompanhamento de decisões e compromissos do último Quarterly Business Review';
 
   return (
     <WizardStepScaffold
@@ -137,7 +169,7 @@ export function MbrQbrFollowUpStep({
           icon={ClipboardList}
           title="Follow-up do QBR"
           tooltip="mbr-qbr-followup"
-          description="Acompanhamento de decisões e compromissos do último Quarterly Business Review"
+          description={headerDesc}
           variant="primary"
         />
       }
@@ -158,6 +190,16 @@ export function MbrQbrFollowUpStep({
               <p className="font-medium">Nenhum QBR anterior encontrado</p>
               <p className="text-sm mt-1">
                 Não há decisões ou compromissos de QBR anteriores para acompanhar.
+              </p>
+            </CardContent>
+          </Card>
+        ) : allResolved ? (
+          <Card className="border-status-green/30">
+            <CardContent className="py-8 text-center">
+              <CheckCircle2 className="mx-auto h-10 w-10 mb-3 text-status-green" />
+              <p className="font-medium text-status-green">Todas as decisões do QBR anterior foram resolvidas</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {resolvedCount} item{resolvedCount !== 1 ? 's' : ''} concluído{resolvedCount !== 1 ? 's' : ''}.
               </p>
             </CardContent>
           </Card>
@@ -182,7 +224,7 @@ export function MbrQbrFollowUpStep({
             </div>
 
             {/* Decisions section */}
-            {decisionItems.length > 0 && (
+            {sortedDecisions.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Decisões do QBR</CardTitle>
@@ -190,7 +232,7 @@ export function MbrQbrFollowUpStep({
                 <CardContent>
                   <ScrollArea className="max-h-[300px]">
                     <div className="space-y-3">
-                      {decisionItems.map(item => (
+                      {sortedDecisions.map(item => (
                         <FollowUpItemRow key={item.id} item={item} onToggle={toggleResolved} />
                       ))}
                     </div>
@@ -200,7 +242,7 @@ export function MbrQbrFollowUpStep({
             )}
 
             {/* Commitments section */}
-            {commitmentItems.length > 0 && (
+            {sortedCommitments.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Compromissos Cross-Área</CardTitle>
@@ -208,7 +250,7 @@ export function MbrQbrFollowUpStep({
                 <CardContent>
                   <ScrollArea className="max-h-[300px]">
                     <div className="space-y-3">
-                      {commitmentItems.map(item => (
+                      {sortedCommitments.map(item => (
                         <FollowUpItemRow key={item.id} item={item} onToggle={toggleResolved} />
                       ))}
                     </div>
@@ -234,17 +276,29 @@ function FollowUpItemRow({
   item: QbrFollowUpItem;
   onToggle: (id: string) => void;
 }) {
-  const isOverdue = !item.resolved && item.deadline && isPast(parseISO(item.deadline));
+  const urgency = getUrgency(item);
+  const isOverdue = urgency === 'overdue';
+  const isDueSoon = urgency === 'due_soon';
+
+  const daysOverdue = isOverdue && item.deadline
+    ? differenceInDays(new Date(), parseISO(item.deadline))
+    : 0;
+  const daysUntil = isDueSoon && item.deadline
+    ? differenceInDays(parseISO(item.deadline), new Date())
+    : 0;
 
   return (
     <div
-      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+      className={cn(
+        'flex items-start gap-3 p-3 rounded-lg border transition-colors',
         item.resolved
           ? 'bg-muted/30 border-muted'
           : isOverdue
-          ? 'bg-destructive/5 border-destructive/20'
-          : 'bg-card border-border'
-      }`}
+          ? 'bg-destructive/5 border-destructive/40'
+          : isDueSoon
+          ? 'bg-status-amber/5 border-status-amber/40'
+          : 'bg-card border-border',
+      )}
     >
       <Checkbox
         checked={item.resolved}
@@ -252,7 +306,7 @@ function FollowUpItemRow({
         className="mt-0.5"
       />
       <div className="flex-1 min-w-0">
-        <p className={`text-sm ${item.resolved ? 'line-through text-muted-foreground' : ''}`}>
+        <p className={cn('text-sm', item.resolved && 'line-through text-muted-foreground')}>
           {item.text}
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-1.5">
@@ -260,8 +314,16 @@ function FollowUpItemRow({
             <span className="text-xs text-muted-foreground">→ {item.owner.name}</span>
           )}
           {item.deadline && (
-            <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-              {isOverdue ? '⚠ ' : ''}Prazo: {format(parseISO(item.deadline), "dd/MM/yyyy", { locale: ptBR })}
+            <span className={cn(
+              'text-xs',
+              isOverdue ? 'text-destructive font-medium' : isDueSoon ? 'text-status-amber font-medium' : 'text-muted-foreground',
+            )}>
+              {isOverdue
+                ? `⚠ Vencida há ${daysOverdue} dia${daysOverdue !== 1 ? 's' : ''}`
+                : isDueSoon
+                ? `⏰ Vence em ${daysUntil} dia${daysUntil !== 1 ? 's' : ''}`
+                : `Prazo: ${format(parseISO(item.deadline), "dd/MM/yyyy", { locale: ptBR })}`
+              }
             </span>
           )}
           <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
@@ -271,6 +333,11 @@ function FollowUpItemRow({
              item.category === 'next_step' ? 'Próximo passo' :
              item.category}
           </Badge>
+          {isOverdue && !item.resolved && (
+            <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
+              Vencida
+            </Badge>
+          )}
         </div>
       </div>
     </div>

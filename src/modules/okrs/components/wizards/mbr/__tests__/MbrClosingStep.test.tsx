@@ -23,6 +23,12 @@ const emptyChecklist: MbrGovernanceChecklist = {
   nextStepsHaveOwners: false,
   nonPrioritiesClear: false,
   communicateInAllHands: false,
+  kpiGateClear: false,
+  allTeamsReviewed: false,
+  orgOkrsVerified: false,
+  decisionsHaveOwner: false,
+  qbrFollowUpAddressed: false,
+  nextMbrScheduled: false,
 };
 
 const fullChecklist: MbrGovernanceChecklist = {
@@ -30,6 +36,12 @@ const fullChecklist: MbrGovernanceChecklist = {
   nextStepsHaveOwners: true,
   nonPrioritiesClear: true,
   communicateInAllHands: true,
+  kpiGateClear: true,
+  allTeamsReviewed: true,
+  orgOkrsVerified: true,
+  decisionsHaveOwner: true,
+  qbrFollowUpAddressed: true,
+  nextMbrScheduled: true,
 };
 
 const defaultProps = () => ({

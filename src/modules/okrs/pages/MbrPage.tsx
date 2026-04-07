@@ -17,8 +17,10 @@ import {
   useActiveCycle,
   useLastCompletedSession,
   useOrgObjectives,
+  useAllOrgObjectivesView,
 } from '@/modules/okrs/hooks';
 import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
+import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
 
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -77,6 +79,12 @@ const DEFAULT_DATA: MbrDraftData = {
     nextStepsHaveOwners: false,
     nonPrioritiesClear: false,
     communicateInAllHands: false,
+    kpiGateClear: false,
+    allTeamsReviewed: false,
+    orgOkrsVerified: false,
+    decisionsHaveOwner: false,
+    qbrFollowUpAddressed: false,
+    nextMbrScheduled: false,
   },
   ritualFeedback: [],
   previousMbrPendingItems: [],
@@ -208,7 +216,39 @@ export default function MbrPage() {
         ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
         : null;
 
-      
+
+  // ── v1.2: Org objectives view + scorecard metrics ──
+  const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
+  const { data: orgObjView } = useAllOrgObjectivesView(cycleYear, quarterlyCycle?.id);
+
+  const scorecardMetrics = useMemo(() => {
+    const snapshots = draft.data.teamOkrSnapshots;
+    let healthy = 0, atRisk = 0, offTrack = 0;
+    for (const team of snapshots) {
+      for (const obj of team.objectives) {
+        for (const kr of obj.keyResults) {
+          const s = String(kr.status);
+          const progress = kr.progress ?? 0;
+          const daysSince = kr.lastCheckinAt
+            ? Math.floor((Date.now() - new Date(kr.lastCheckinAt).getTime()) / (1000 * 60 * 60 * 24))
+            : 999;
+          const cycleEnded = quarterlyCycle?.end_date ? new Date(quarterlyCycle.end_date) < new Date() : false;
+          const mappedStatus = s === 'on_track' || s === 'green' ? 'green' as const
+            : s === 'at_risk' || s === 'yellow' ? 'yellow' as const
+            : s === 'off_track' || s === 'red' ? 'red' as const
+            : 'not_started' as const;
+          const state = calculateKrState({ progress, status: mappedStatus, daysSinceCheckin: daysSince, cycleEnded });
+          if (state === 'healthy' || state === 'achieved' || state === 'exceeded') healthy++;
+          else if (state === 'at_risk' || state === 'stagnant') atRisk++;
+          else if (state === 'off_track' || state === 'not_achieved') offTrack++;
+        }
+      }
+    }
+    const noSubmission = snapshots.filter(t => t.objectives.length === 0).length;
+    return { healthy, atRisk, offTrack, noSubmission };
+  }, [draft.data.teamOkrSnapshots, quarterlyCycle]);
+
+
       return {
         kpiId: kpi.id,
         name: kpi.name,
@@ -618,6 +658,9 @@ export default function MbrPage() {
             lastCompletedAt={lastCompletedAt}
             onContinue={goNext}
             buName={currentBu?.name}
+            scorecardMetrics={scorecardMetrics}
+            orgObjectives={orgObjView ?? []}
+            currentStepIndex={0}
           />
         );
 
@@ -665,6 +708,7 @@ export default function MbrPage() {
             onOrgOkrSnapshotsChange={(orgOkrSnapshots: MbrOrgOkrSnapshot[]) => updateDraft({ orgOkrSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            orgObjectives={orgObjView ?? []}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -699,6 +743,9 @@ export default function MbrPage() {
             onChecklistChange={(checklist: MbrGovernanceChecklist) => updateDraft({ checklist })}
             ritualFeedback={draft.data.ritualFeedback}
             onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
+            teamOkrSnapshots={draft.data.teamOkrSnapshots}
+            orgOkrSnapshots={draft.data.orgOkrSnapshots}
+            qbrFollowUpItems={draft.data.qbrFollowUpItems}
             onComplete={handleComplete}
             onBack={goBack}
           />
