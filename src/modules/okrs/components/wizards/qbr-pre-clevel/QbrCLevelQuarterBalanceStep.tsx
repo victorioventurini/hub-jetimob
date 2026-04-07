@@ -187,6 +187,7 @@ interface TeamScorecardData {
   onTrack: number;
   atRisk: number;
   offTrack: number;
+  notStarted: number;
   stagnant: number;
   healthScore: 'healthy' | 'attention' | 'risk';
 }
