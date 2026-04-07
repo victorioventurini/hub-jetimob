@@ -2,11 +2,10 @@
  * KpiValuesTable - Tabela de Histórico de Valores
  * 
  * Exibe o histórico completo de valores de um KPI/Métrica com variações.
- * Segue o padrão do KrCheckinsTable para consistência visual.
- * 
- * @see TCR v2.86.0
+ * v3.x: Suporta edição e exclusão de valores inline.
  */
 
+import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -27,6 +27,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   TrendingUp,
   TrendingDown,
@@ -40,16 +50,27 @@ import {
   Calculator,
   Sheet,
   Webhook,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { KpiValue, KpiDirection, KpiValueSource } from "../types";
+import { EditKpiValueDialog } from "./EditKpiValueDialog";
 
 export interface KpiValuesTableProps {
   values: KpiValue[];
   unit: string;
   direction: KpiDirection;
   isLoading: boolean;
+  /** KPI name for dialog title */
+  kpiName?: string;
+  /** Whether the user can edit/delete values */
+  canEdit?: boolean;
+  /** Callback to update a value */
+  onUpdateValue?: (id: string, data: { value: number; reference_date: string; notes?: string }) => Promise<void>;
+  /** Callback to delete a value */
+  onDeleteValue?: (id: string) => Promise<void>;
 }
 
 const confidenceConfig = {
@@ -89,15 +110,8 @@ function formatValue(value: number, unit: string): string {
 }
 
 function getVariationColor(variation: number, direction: KpiDirection): string {
-  if (variation === 0) {
-    return "text-muted-foreground";
-  }
-
-  if (direction === "up") {
-    return variation > 0 ? "text-success" : "text-destructive";
-  }
-
-  // down
+  if (variation === 0) return "text-muted-foreground";
+  if (direction === "up") return variation > 0 ? "text-success" : "text-destructive";
   return variation < 0 ? "text-success" : "text-destructive";
 }
 
@@ -109,12 +123,7 @@ function getVariationIcon(variation: number) {
 
 function getUserInitials(name: string | undefined): string {
   if (!name) return "?";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 }
 
 function LoadingSkeleton() {
@@ -149,19 +158,34 @@ export function KpiValuesTable({
   unit,
   direction,
   isLoading,
+  kpiName = "",
+  canEdit = false,
+  onUpdateValue,
+  onDeleteValue,
 }: KpiValuesTableProps) {
-  if (isLoading) {
-    return <LoadingSkeleton />;
-  }
+  const [editingValue, setEditingValue] = useState<KpiValue | null>(null);
+  const [deletingValue, setDeletingValue] = useState<KpiValue | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  if (!values?.length) {
-    return <KpiValuesEmptyState />;
-  }
+  if (isLoading) return <LoadingSkeleton />;
+  if (!values?.length) return <KpiValuesEmptyState />;
 
-  // Sort descending (most recent first)
   const sortedValues = [...values].sort(
     (a, b) => new Date(b.reference_date).getTime() - new Date(a.reference_date).getTime()
   );
+
+  const handleDelete = async () => {
+    if (!deletingValue || !onDeleteValue) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteValue(deletingValue.id);
+      setDeletingValue(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const showActions = canEdit && (!!onUpdateValue || !!onDeleteValue);
 
   return (
     <TooltipProvider>
@@ -177,28 +201,27 @@ export function KpiValuesTable({
                 <TableHead className="w-[90px] text-right">Variação</TableHead>
                 <TableHead className="w-[90px] text-center">Origem</TableHead>
                 <TableHead className="w-[50px] text-center">Info</TableHead>
+                {showActions && (
+                  <TableHead className="w-[70px] text-center">Ações</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedValues.map((value, index) => {
-                // Calculate previous value from next item in sorted list
-                const previousValue = index < sortedValues.length - 1 
-                  ? sortedValues[index + 1]?.value 
+                const previousValue = index < sortedValues.length - 1
+                  ? sortedValues[index + 1]?.value
                   : null;
-                const variation = previousValue !== null 
-                  ? value.value - previousValue 
+                const variation = previousValue !== null
+                  ? value.value - previousValue
                   : null;
 
                 const VariationIcon = variation !== null ? getVariationIcon(variation) : null;
-                const variationColor =
-                  variation !== null ? getVariationColor(variation, direction) : "";
-
+                const variationColor = variation !== null ? getVariationColor(variation, direction) : "";
                 const hasNotes = !!value.notes?.trim();
                 const SourceIcon = sourceIcons[value.source] || Edit;
 
                 return (
-                  <TableRow key={value.id} className={index % 2 === 0 ? "bg-muted/20" : ""}>
-                    {/* Data */}
+                  <TableRow key={value.id} className={cn("group/row", index % 2 === 0 ? "bg-muted/20" : "")}>
                     <TableCell className="font-medium">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -207,14 +230,11 @@ export function KpiValuesTable({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {format(parseISO(value.reference_date), "EEEE, dd 'de' MMMM 'de' yyyy", {
-                            locale: ptBR,
-                          })}
+                          {format(parseISO(value.reference_date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
 
-                    {/* Usuário */}
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
@@ -229,19 +249,14 @@ export function KpiValuesTable({
                       </div>
                     </TableCell>
 
-                    {/* Valor Anterior */}
                     <TableCell className="text-right text-muted-foreground">
-                      {previousValue !== null
-                        ? formatValue(previousValue, unit)
-                        : "—"}
+                      {previousValue !== null ? formatValue(previousValue, unit) : "—"}
                     </TableCell>
 
-                    {/* Valor Atual */}
                     <TableCell className="text-right font-medium">
                       {formatValue(value.value, unit)}
                     </TableCell>
 
-                    {/* Variação */}
                     <TableCell className="text-right">
                       {variation !== null && VariationIcon ? (
                         <div className={cn("flex items-center justify-end gap-1", variationColor)}>
@@ -256,7 +271,6 @@ export function KpiValuesTable({
                       )}
                     </TableCell>
 
-                    {/* Origem */}
                     <TableCell className="text-center">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -273,7 +287,6 @@ export function KpiValuesTable({
                       </Tooltip>
                     </TableCell>
 
-                    {/* Info (Notas) */}
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         {hasNotes ? (
@@ -295,6 +308,43 @@ export function KpiValuesTable({
                         )}
                       </div>
                     </TableCell>
+
+                    {showActions && (
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                          {onUpdateValue && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => setEditingValue(value)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Editar valor</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {onDeleteValue && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                  onClick={() => setDeletingValue(value)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Excluir valor</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
@@ -302,6 +352,52 @@ export function KpiValuesTable({
           </Table>
         </div>
       </ScrollArea>
+
+      {/* Edit Value Dialog */}
+      {onUpdateValue && (
+        <EditKpiValueDialog
+          kpiValue={editingValue}
+          kpiName={kpiName}
+          unit={unit}
+          open={!!editingValue}
+          onOpenChange={(open) => { if (!open) setEditingValue(null); }}
+          onSave={onUpdateValue}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingValue} onOpenChange={(open) => { if (!open) setDeletingValue(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Valor</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o valor{" "}
+              <strong>{deletingValue ? formatValue(deletingValue.value, unit) : ""}</strong>{" "}
+              de{" "}
+              <strong>
+                {deletingValue
+                  ? format(parseISO(deletingValue.reference_date), "dd/MM/yyyy")
+                  : ""}
+              </strong>
+              ?
+              <br />
+              <span className="text-destructive font-medium">
+                Esta ação não pode ser desfeita.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }

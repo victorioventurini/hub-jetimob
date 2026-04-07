@@ -32,6 +32,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useKpiWithHistory, type KpiWithHistoryData } from "../hooks/useKpiWithHistory";
 import { useKpiLinkedKrs } from "../hooks/useKpiLinkedKrs";
+import { useKpiMutations } from "../hooks/useKpiMutations";
+import { useCanEditKpi } from "../hooks/useCanEditKpi";
 import { KpiEvolutionChart } from "./KpiEvolutionChart";
 import { KpiValuesTable } from "./KpiValuesTable";
 import { LinkedKrsSection } from "./LinkedKrsSection";
@@ -56,6 +58,12 @@ export interface KpiHistoryDialogData {
   indicator_type: KpiIndicatorType;
   rag_status: KpiRagStatus;
   frequency?: KpiFrequency;
+  bu_id?: string;
+  owner_user_id?: string | null;
+  team_id?: string | null;
+  area_id?: string | null;
+  responsible_team_id?: string | null;
+  scope?: string;
   area?: {
     id: string;
     name: string;
@@ -92,8 +100,26 @@ function formatValue(value: number | null, unit: string): string {
 export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogProps) {
   const { data: historyData, isLoading } = useKpiWithHistory(kpi?.id);
   const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpi?.id ?? null);
+  const { updateKpiValue, deleteKpiValue } = useKpiMutations();
+  const { canUpdateValues } = useCanEditKpi(kpi ? {
+    id: kpi.id,
+    bu_id: kpi.bu_id || '',
+    owner_user_id: kpi.owner_user_id,
+    team_id: kpi.team_id,
+    area_id: kpi.area_id,
+    responsible_team_id: kpi.responsible_team_id,
+    scope: kpi.scope,
+  } : null);
 
   if (!kpi) return null;
+
+  const handleUpdateValue = async (id: string, data: { value: number; reference_date: string; notes?: string }) => {
+    await updateKpiValue.mutateAsync({ id, kpi_id: kpi.id, ...data });
+  };
+
+  const handleDeleteValue = async (id: string) => {
+    await deleteKpiValue.mutateAsync({ id, kpi_id: kpi.id });
+  };
 
   const progress = kpi.target_value && kpi.current_value !== null
     ? Math.min(100, Math.max(0, (kpi.current_value / kpi.target_value) * 100))
@@ -268,6 +294,10 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                   unit={kpi.unit}
                   direction={kpi.direction}
                   isLoading={isLoading}
+                  kpiName={kpi.name}
+                  canEdit={canUpdateValues}
+                  onUpdateValue={handleUpdateValue}
+                  onDeleteValue={handleDeleteValue}
                 />
               </TabsContent>
             </Tabs>
