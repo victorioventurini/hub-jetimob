@@ -323,45 +323,6 @@ function GovernanceSummary({
   );
 }
 
-// ============================================================
-// NEXT 30 DAYS
-// ============================================================
-
-function NextThirtyDaysSection({
-  data,
-  onChange,
-}: {
-  data: { ceo?: string; coo?: string; cpto?: string };
-  onChange: (data: { ceo?: string; coo?: string; cpto?: string }) => void;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">O que acontece nos próximos 30 dias</span>
-        </div>
-        {[
-          { key: 'ceo' as const, label: 'CEO' },
-          { key: 'coo' as const, label: 'COO' },
-          { key: 'cpto' as const, label: 'CPTO' },
-        ].map(item => (
-          <div key={item.key} className="space-y-1">
-            <Label className="text-xs font-medium">{item.label}:</Label>
-            <Input
-              value={data[item.key] || ''}
-              onChange={e => onChange({ ...data, [item.key]: e.target.value })}
-              placeholder={`Prioridade do ${item.label} nos próximos 30 dias...`}
-              maxLength={200}
-              className="text-xs"
-            />
-          </div>
-        ))}
-        <p className="text-[10px] text-muted-foreground">Opcional — não bloqueia o encerramento.</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ============================================================
 // COMPONENT
