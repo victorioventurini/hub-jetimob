@@ -50,9 +50,22 @@ export function CompletedRitualView({
   wizardType,
   session,
   backUrl,
+  canReopen = false,
+  onReopen,
 }: CompletedRitualViewProps) {
   const navigate = useNavigate();
+  const [isReopening, setIsReopening] = useState(false);
   const ritualLabel = RITUAL_LABELS[wizardType] ?? title;
+
+  const handleReopen = async () => {
+    if (!onReopen) return;
+    setIsReopening(true);
+    try {
+      await onReopen();
+    } finally {
+      setIsReopening(false);
+    }
+  };
   const rd = session.reflection_data;
   const snapshotData = (rd as any)?.data;
 
