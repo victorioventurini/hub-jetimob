@@ -315,6 +315,7 @@ export function QbrCLevelQuarterBalanceStep({
         onTrack: 0,
         atRisk: 0,
         offTrack: 0,
+        notStarted: 0,
         stagnant: 0,
         healthScore: 'healthy',
       });
