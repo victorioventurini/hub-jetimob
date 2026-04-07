@@ -45,6 +45,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { validation } from '@/lib/validationMessages';
 import { RAG_STATUS_COLORS, CONFIDENCE_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
