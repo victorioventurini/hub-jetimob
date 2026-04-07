@@ -468,11 +468,23 @@ export interface QbrPostGovernanceChecklist {
   nextCycleOkrsActive: boolean;
 }
 
+/** KR adjustment for approved_with_changes OKRs */
+export interface QbrPostKrAdjustment {
+  krIndex: number;
+  hasAdjustment: boolean;
+  newTitle?: string;
+  newTarget?: string;
+  newOwnerId?: string;
+  newOwnerName?: string;
+}
+
 /** Snapshot do wizard pós-QBR */
 export interface QbrPostSnapshot {
   cycleId: string;
   completedAt: string;
   promotedOkrIds: string[];
+  /** Ciclo de destino para promoção dos OKRs */
+  destinationCycleId?: string;
   decisions: TeamCheckinDecision[];
   crossCommitments: Array<{
     fromTeamId: string;
@@ -480,12 +492,19 @@ export interface QbrPostSnapshot {
     description: string;
     deadline: string;
     dependencyId: string;
+    responsibleUserId?: string;
+    responsibleUserName?: string;
+    linkedOkrId?: string;
   }>;
   followUpCadence: {
-    mbrReviewScheduled: boolean;
+    nextMbrDate?: string;
+    firstCheckinDate?: string;
     followUpMeetingDate?: string;
+    leadersNotified?: boolean;
   };
   executiveMinutes: string;
+  /** Carta de contexto do CEO enviada junto com notificação de OKRs ativos */
+  ceoContextMessage?: string;
   governanceChecklist: QbrPostGovernanceChecklist;
 }
 
