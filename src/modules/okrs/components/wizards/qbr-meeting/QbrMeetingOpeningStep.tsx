@@ -421,8 +421,9 @@ export function QbrMeetingOpeningStep({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Megaphone className="h-4 w-4" />
-                Pauta Obrigatória ({cLevelDirectives.length})
+                O que o C-Level quer que a sala decida ({cLevelDirectives.length})
               </CardTitle>
+              <p className="text-xs text-muted-foreground">Cada item abaixo é pauta obrigatória. Não saia da reunião sem endereçar.</p>
             </CardHeader>
             <CardContent className="space-y-2">
               {cLevelDirectives.map((d, i) => {

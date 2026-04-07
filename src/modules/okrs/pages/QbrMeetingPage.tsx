@@ -498,7 +498,7 @@ export default function QbrMeetingPage() {
   return (
     <FullPageWizardShell
       title="Reunião QBR"
-      subtitle="Revisão e aprovação de OKRs — decisões estratégicas e compromissos cross-área"
+      subtitle="Decisões com base na análise do C-Level. A análise já foi feita. Agora a sala decide, aprova e compromete."
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}

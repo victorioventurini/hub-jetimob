@@ -378,6 +378,7 @@ function ReverseCoverageSection({
           <AlertTriangle className="h-3 w-3" />
           KRs org sem cobertura até agora ({uncoveredOrgKrs.length})
         </CardTitle>
+        <p className="text-[10px] text-muted-foreground">Atualizado em tempo real conforme as aprovações avançam.</p>
       </CardHeader>
       <CardContent className="px-3 pb-2 space-y-0.5">
         {uncoveredOrgKrs.map(kr => (
