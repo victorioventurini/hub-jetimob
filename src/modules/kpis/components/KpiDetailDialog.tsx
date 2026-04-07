@@ -61,6 +61,8 @@ export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogPr
   const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpiId);
   const { currentBu } = useBu();
   const scopeLabels = getScopeLabels(currentBu?.name);
+  const { canUpdateValues } = useCanEditKpi(kpi || undefined);
+  const { updateKpiValue, deleteKpiValue } = useKpiMutations();
   
   if (!kpiId || isLoading || !kpi) {
     return (
