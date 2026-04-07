@@ -6,17 +6,20 @@
  * @see docs/HUB_TECHNICAL_DEEP_DIVE.md — QBR Ritual
  */
 
-import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
+import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
 import {
   useGenericWizardDraft,
   useActiveCycle,
   useAllOrgObjectivesView,
 } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+import { usePermissions } from '@/hooks/usePermissions';
 import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
 import { calculateProgress } from '@/modules/okrs/types';
 import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
@@ -98,6 +101,16 @@ export default function QbrMeetingPage() {
   const quarterlyCycle = lastClosedQuarterlyCycle || activeQuarterlyCycle;
   const availability = useRitualAvailability('qbr-meeting', quarterlyCycle);
 
+  // Permissions (for reopen)
+  const { isWildcard } = usePermissions();
+
+  // Detect completed session for this cycle
+  const {
+    sessionState,
+    completedSession,
+    isLoading: isLoadingCompletedSession,
+  } = useCompletedSessionForCycle('qbr-meeting', null, quarterlyCycle?.id);
+
   // Draft persistence
   const {
     draft,
@@ -106,6 +119,7 @@ export default function QbrMeetingPage() {
     clearDraft,
     discardDraft,
     saveDraft,
+    reopenSession,
     isDirty,
     isSaving,
     isResumingDraft,
@@ -118,6 +132,37 @@ export default function QbrMeetingPage() {
     defaultData: DEFAULT_DATA,
     enabled: !!quarterlyCycle,
   });
+
+  // Track whether we're showing completed view or wizard
+  const [showCompletedView, setShowCompletedView] = useState(false);
+
+  // When completed session detected and draft is empty, show completed view
+  useEffect(() => {
+    if (sessionState === 'completed' && completedSession && !isResumingDraft) {
+      // Check if localStorage has an existing draft (user was editing)
+      const storageKey = `okr-draft.qbr-meeting`;
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) {
+          setShowCompletedView(true);
+        }
+      } catch {
+        setShowCompletedView(true);
+      }
+    }
+  }, [sessionState, completedSession, isResumingDraft]);
+
+  // Handle reopen
+  const handleReopen = useCallback(async () => {
+    if (!completedSession) return;
+    const success = await reopenSession(completedSession.id);
+    if (success) {
+      setShowCompletedView(false);
+      toast.success('Rito reaberto para edição.');
+    } else {
+      toast.error('Erro ao reabrir o rito. Tente novamente.');
+    }
+  }, [completedSession, reopenSession]);
 
   // ── Load C-Level pré-QBR session (directives, calibration flags) ──
   const { data: cLevelSession, isLoading: isLoadingCLevel } = useQuery({
@@ -396,12 +441,26 @@ export default function QbrMeetingPage() {
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
   // ── Loading ──
-  if (isLoadingCycles || isLoadingCLevel || isLoadingPreQbr) {
+  if (isLoadingCycles || isLoadingCLevel || isLoadingPreQbr || isLoadingCompletedSession) {
     return <LoadingState text="Carregando dados da Reunião QBR..." fullPage />;
   }
 
   if (!availability.isAvailable) {
     return <RitualUnavailableScreen wizardType="qbr-meeting" availability={availability} />;
+  }
+
+  // ── Show completed view if session was already submitted ──
+  if (showCompletedView && completedSession) {
+    return (
+      <CompletedRitualView
+        title="Reunião QBR"
+        wizardType="qbr-meeting"
+        session={completedSession}
+        backUrl="/okrs/executive"
+        canReopen={isWildcard}
+        onReopen={handleReopen}
+      />
+    );
   }
 
   // ── Step render ──

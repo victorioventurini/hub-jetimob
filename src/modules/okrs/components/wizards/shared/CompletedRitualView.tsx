@@ -5,11 +5,23 @@
  * Used by QbrPrePage and MbrPrePage when a completed session exists.
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, ArrowLeft } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle2, ArrowLeft, RotateCcw, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SnapshotReportView } from '@/modules/okrs/components/ritual-report';
@@ -23,6 +35,8 @@ interface CompletedRitualViewProps {
   wizardType: WizardPersona;
   session: CompletedSessionData;
   backUrl: string;
+  canReopen?: boolean;
+  onReopen?: () => Promise<void>;
 }
 
 const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
@@ -36,9 +50,22 @@ export function CompletedRitualView({
   wizardType,
   session,
   backUrl,
+  canReopen = false,
+  onReopen,
 }: CompletedRitualViewProps) {
   const navigate = useNavigate();
+  const [isReopening, setIsReopening] = useState(false);
   const ritualLabel = RITUAL_LABELS[wizardType] ?? title;
+
+  const handleReopen = async () => {
+    if (!onReopen) return;
+    setIsReopening(true);
+    try {
+      await onReopen();
+    } finally {
+      setIsReopening(false);
+    }
+  };
   const rd = session.reflection_data;
   const snapshotData = (rd as any)?.data;
 
@@ -67,6 +94,42 @@ export function CompletedRitualView({
                 <CheckCircle2 className="h-3 w-3" />
                 Enviado em {format(new Date(session.completed_at), 'dd/MM/yyyy', { locale: ptBR })}
               </Badge>
+            )}
+
+            {/* Reopen button (admin only) */}
+            {canReopen && onReopen && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 ml-auto"
+                    disabled={isReopening}
+                  >
+                    {isReopening ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4" />
+                    )}
+                    Reabrir para edição
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reabrir rito para edição?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O rito será reaberto para edição. Uma cópia de segurança dos dados atuais
+                      será mantida automaticamente. Você poderá editar e re-submeter quando finalizar.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReopen} disabled={isReopening}>
+                      {isReopening ? 'Reabrindo...' : 'Reabrir'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>
