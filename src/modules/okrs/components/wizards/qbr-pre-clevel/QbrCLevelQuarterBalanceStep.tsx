@@ -30,6 +30,7 @@ import {
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
+import { TeamKrsToggle } from '../shared/TeamKrsToggle';
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { KrStateInline } from '../../insights';
