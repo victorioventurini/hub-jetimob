@@ -324,8 +324,8 @@ export function CollaboratorCheckinStep({
             </div>
             <div className="flex items-center justify-between gap-4 p-3 rounded-md bg-background/50">
               <div>
-                <p className="text-xs text-muted-foreground">Valor atual</p>
-                <p className="font-semibold">{primaryKpi.currentValue ?? '—'} {primaryKpi.kpiUnit}</p>
+                <p className="text-xs text-muted-foreground">Valor atual / Meta</p>
+                <p className="font-semibold">{primaryKpi.currentValue ?? '—'}{primaryKpi.targetValue != null ? ` / ${primaryKpi.targetValue}` : ''} {primaryKpi.kpiUnit}</p>
               </div>
               <Badge className={cn("shrink-0", 
                 primaryKpi.ragStatus === 'green' ? RAG_STATUS_COLORS.green.badge :

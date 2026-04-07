@@ -285,7 +285,7 @@ export function QbrCLevelSystemReadStep({
                     <span className={cn('truncate flex-1', isAlert && 'font-medium')}>{kpi.name}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-muted-foreground">
-                        {kpi.currentValue != null ? kpi.currentValue : '—'} {kpi.unit}
+                        {kpi.currentValue != null ? kpi.currentValue : '—'}{kpi.target != null ? ` / ${kpi.target}` : ''} {kpi.unit}
                       </span>
                       <Badge variant="outline" className={cn(
                         'text-xs',
