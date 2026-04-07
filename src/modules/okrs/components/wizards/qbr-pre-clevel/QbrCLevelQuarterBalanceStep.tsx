@@ -198,7 +198,7 @@ function getHealthScore(metrics: {
   krsStagnant: number;
 }): 'healthy' | 'attention' | 'risk' {
   if (metrics.totalKrs === 0) return 'attention';
-  const riskRatio = (metrics.krsAtRisk + metrics.krsStagnant) / metrics.totalKrs;
+  const riskRatio = (metrics.krsAtRisk + metrics.krsStagnant + metrics.krsNotStarted) / metrics.totalKrs;
   if (riskRatio >= 0.5) return 'risk';
   if (riskRatio >= 0.25) return 'attention';
   return 'healthy';
