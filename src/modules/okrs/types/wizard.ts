@@ -545,6 +545,8 @@ export interface QbrMeetingDraftData {
   ritualFeedback: RitualImprovementFeedback[];
   /** IDs de KRs org marcadas como "gap intencional" no mapa de cobertura */
   intentionalGaps?: string[];
+  /** Prioridades dos próximos 30 dias por papel */
+  nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
 }
 
 /** Draft data do pós-QBR */
