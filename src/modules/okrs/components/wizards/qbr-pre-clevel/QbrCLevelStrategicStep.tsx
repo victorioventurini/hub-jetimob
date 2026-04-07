@@ -58,9 +58,9 @@ export function QbrCLevelStrategicStep({
       header={
         <WizardStepHeader
           icon={Compass}
-          title="Análise Estratégica"
+          title="Sua análise — o que só você vê daqui"
           tooltip="qbr-clevel-strategic"
-          description="Reflexão exclusiva do C-Level sobre direção e prioridades"
+          description="Registre o que a visão consolidada revelou. Esses insights pautam a reunião."
           variant="purple"
         />
       }

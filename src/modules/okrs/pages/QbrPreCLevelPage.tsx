@@ -425,7 +425,7 @@ export default function QbrPreCLevelPage() {
   return (
     <FullPageWizardShell
       title="Pré-QBR C-Level"
-      subtitle="Análise estratégica consolidada e direcionamentos"
+      subtitle="Análise estratégica do quarter — sua visão antes da reunião. Registre sua análise agora. Na reunião, a sala decide com base no que você preparou aqui."
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}

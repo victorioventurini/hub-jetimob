@@ -289,11 +289,14 @@ export function QbrCLevelQuarterBalanceStep({
 
             {/* Section B — Scorecard por Time */}
             <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-base">
-                  O que cada time entregou
-                </h3>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-base">
+                    O que cada time entregou
+                  </h3>
+                </div>
+                <p className="text-xs text-muted-foreground ml-7">Use isso para calibrar as propostas do próximo ciclo.</p>
               </div>
 
               {teamScorecards.length === 0 ? (
