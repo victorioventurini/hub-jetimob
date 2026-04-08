@@ -388,6 +388,7 @@ export default function RitualHistoryPage() {
 function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHistoryItem; autoExpand?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(autoExpand);
   const hasDecisions = ritual.decisions.length > 0;
+  const isEvaluated = hasParticipantEvaluations(ritual.addendums);
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
   const { data: occurrence } = useOccurrenceBySession(ritual.id);
 
