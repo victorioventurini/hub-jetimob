@@ -483,8 +483,8 @@ export default function CollaboratorCheckinPage() {
   return (
     <FullPageWizardShell
       title="Check-in Semanal"
-      subtitle="Atualize seus KRs e reflita sobre o progresso"
-      steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
+      subtitle={hasKrStep ? "Atualize seus KRs e reflita sobre o progresso" : "Atualize seus KPIs, projetos e reflexões"}
+      steps={visibleSteps.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
       onStepChange={goToStep}
