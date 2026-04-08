@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   History, ChevronDown, ChevronRight, CalendarIcon, Users, User,
-  Lightbulb, Target, CheckCircle2, Clock, FileText, Star, MessageSquare,
+  Lightbulb, Target, CheckCircle2, Clock, FileText, Star, MessageSquare, ThumbsUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePageTitle } from '@/hooks/usePageTitle';
