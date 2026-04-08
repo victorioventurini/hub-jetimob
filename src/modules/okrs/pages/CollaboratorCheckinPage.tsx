@@ -296,10 +296,7 @@ export default function CollaboratorCheckinPage() {
     return <LoadingState text="Carregando..." fullPage />;
   }
   
-  // Guard: Ritual window
-  if (!availability.isAvailable) {
-    return <RitualUnavailableScreen wizardType="collaborator" availability={availability} backUrl="/wizards" />;
-  }
+  
   
   // Render step content
   const renderStepContent = () => {
