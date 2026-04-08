@@ -179,12 +179,20 @@ export default function RitualHistoryPage() {
       : null
   );
 
-  // Merge: if deep-link session exists and isn't in the list, prepend it
+  // Merge deep-link + client-side evaluated filter
   const mergedRituals = useMemo(() => {
-    if (!deepLinkSession) return rituals;
-    if (rituals.some(r => r.id === deepLinkSession.id)) return rituals;
-    return [deepLinkSession, ...rituals];
-  }, [rituals, deepLinkSession]);
+    let list = rituals;
+    if (deepLinkSession && !rituals.some(r => r.id === deepLinkSession.id)) {
+      list = [deepLinkSession, ...rituals];
+    }
+    // Client-side filter: evaluated
+    if (evaluatedState.value === 'yes') {
+      list = list.filter(r => hasParticipantEvaluations(r.addendums));
+    } else if (evaluatedState.value === 'no') {
+      list = list.filter(r => !hasParticipantEvaluations(r.addendums));
+    }
+    return list;
+  }, [rituals, deepLinkSession, evaluatedState.value]);
 
   const anyLoading = isLoading || (!!deepLinkSessionId && isLoadingDeepLink);
 
