@@ -427,6 +427,13 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                   </Badge>
                 )}
 
+                {isEvaluated && (
+                  <Badge variant="outline" className="shrink-0 text-[10px] gap-1 border-status-green text-status-green">
+                    <Star className="h-3 w-3" />
+                    Avaliado
+                  </Badge>
+                )}
+
                 {ritual.teamName && (
                   <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
                     <Users className="h-3.5 w-3.5 shrink-0" />
