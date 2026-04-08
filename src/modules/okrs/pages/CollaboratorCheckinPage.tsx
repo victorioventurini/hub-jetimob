@@ -126,13 +126,23 @@ export default function CollaboratorCheckinPage() {
   
   usePageTitle(canSwitchUser && userIdParam ? `Check-in - ${effectiveUserName}` : 'Check-in Semanal');
   
-  // Get cycle (status-based)
+  // Get cycle (status-based) — optional for collaborator check-in
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   
-  // Ritual availability window
-  const availability = useRitualAvailability('collaborator', quarterlyCycle);
+  const hasKrStep = !!(userKrs && userKrs.length > 0);
   
-  // Draft persistence
+  // Dynamic steps: omit 'checkin' when no KRs available
+  const visibleSteps = useMemo(() => {
+    if (hasKrStep) return WIZARD_STEPS;
+    return WIZARD_STEPS.filter(s => s.id !== 'checkin');
+  }, [hasKrStep]);
+  
+  const visibleStepOrder = useMemo(() => {
+    if (hasKrStep) return STEP_ORDER;
+    return STEP_ORDER.filter(s => s !== 'checkin');
+  }, [hasKrStep]);
+  
+  // Draft persistence — always enabled, uses fallback key when no cycle
   const {
     draft,
     updateDraft,
@@ -146,10 +156,10 @@ export default function CollaboratorCheckinPage() {
     lastSavedAt,
   } = useGenericWizardDraft<WizardStep, CollaboratorDraftData>({
     wizardType: 'collaborator',
-    cycleId: quarterlyCycle?.id || null,
+    cycleId: quarterlyCycle?.id || 'no-cycle',
     defaultStep: 'context',
     defaultData: DEFAULT_DATA,
-    enabled: !!quarterlyCycle,
+    enabled: true,
   });
   
   // Fetch user KRs (for effective user)
