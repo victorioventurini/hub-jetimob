@@ -1,49 +1,39 @@
 
 
-## Plano Revisado: Reabrir QBR Meeting com proteção contra perda de dados
+## Plano: Tornar o Check-in do Colaborador sempre acessível
 
-### Mudança principal vs. plano anterior
+### Problema
 
-Adicionada **Etapa 0** de proteção: antes de reverter o status, o sistema cria um backup do snapshot e a re-hidratação é obrigatória antes de qualquer edição.
+O check-in do colaborador (`/rituals/collaborator-checkin`) depende de um ciclo trimestral ativo (`useActiveCycle`). Se não houver ciclo ativo (ex: OKRs em construção, entre quarters), o rito é bloqueado com "Nenhum ciclo ativo". Porém, o colaborador precisa atualizar **projetos e KPIs** independentemente de OKRs.
+
+### Solução
+
+Remover a barreira de ciclo ativo para o collaborator check-in, tornando ciclo e KRs opcionais.
 
 ---
 
-### Etapa 0 — Backup do snapshot antes de reabrir
+### Etapa 1 — Remover guard de disponibilidade do collaborator
 
-**Arquivo:** `src/modules/okrs/hooks/useGenericWizardDraft.ts`
+**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
 
-Na função `reopenSession`:
-1. Buscar a sessão pelo ID, incluindo `reflection_data`
-2. Salvar `reflection_data` no campo `addendums` como entrada especial do tipo `{ type: 'pre_reopen_backup', snapshot: reflection_data, created_at }` — isso garante que mesmo se o rito for re-concluído com dados corrompidos, o snapshot original permanece acessível
-3. Só então reverter `status → 'in_progress'`, `completed_at → null`
-4. Re-hidratar o draft local a partir de `reflection_data.data` (o conteúdo dos steps)
-5. Persistir no localStorage imediatamente
+- Remover o uso de `useRitualAvailability` e o guard `RitualUnavailableScreen` — o rito fica sempre acessível
+- Tornar `quarterlyCycle` opcional: se `null`, o wizard funciona sem KRs (steps de KR são pulados)
+- Ajustar `useGenericWizardDraft` para aceitar `cycleId: null` com uma chave de fallback (ex: `'no-cycle'`) para que o draft persista mesmo sem ciclo
 
-### Etapa 1 — Re-hidratação obrigatória do draft
+### Etapa 2 — Pular steps de KR quando não há ciclo/KRs
 
-**Arquivo:** `src/modules/okrs/hooks/useGenericWizardDraft.ts`
+**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
 
-- A função `reopenSession` recebe o `reflection_data` completo
-- Mapeia os campos do snapshot para o formato do draft do wizard (steps, decisions, commitments, approvals)
-- Popula o localStorage com o draft re-hidratado **antes** de redirecionar o usuário ao wizard
-- Se o mapeamento falhar (formato incompatível), abortar a reabertura e exibir toast de erro
+- No step `checkin`: se `userKrs` estiver vazio (sem ciclo ou sem KRs), pular automaticamente para o próximo step (KPIs)
+- O step `context` mostra mensagem adaptada: "Nenhum OKR ativo neste momento — atualize seus KPIs e projetos"
+- Steps de **KPIs**, **Projetos**, **Iniciativas** e **Reflexão** continuam funcionando normalmente (não dependem de ciclo)
 
-### Etapa 2 — Botão de reabertura na CompletedRitualView
+### Etapa 3 — Ajustar steps no sidebar
 
-**Arquivo:** `src/modules/okrs/components/wizards/shared/CompletedRitualView.tsx`
+**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
 
-- Prop opcional `onReopen?: () => Promise<void>`
-- `ConfirmDialog` com texto explícito: "O rito será reaberto para edição. Uma cópia de segurança dos dados atuais será mantida automaticamente."
-- Visível apenas quando `canReopen` é `true` (restrito a BU admins via `isWildcard`)
-- Loading state no botão durante a operação
-
-### Etapa 3 — Integração no QbrMeetingPage
-
-**Arquivo:** `src/modules/okrs/pages/QbrMeetingPage.tsx`
-
-- Usar `useCompletedSessionForCycle('qbr-meeting', null, quarterlyCycle?.id)`
-- Quando sessão `completed` detectada e draft local vazio: exibir `CompletedRitualView` com botão de reabertura
-- Ao reabrir: chamar `reopenSession(sessionId, reflectionData)` → re-hidratar → redirecionar ao wizard
+- Filtrar `WIZARD_STEPS` dinamicamente: se não há KRs, omitir o step "Check-in" da lista visível
+- O step "Contexto" se adapta para mostrar o cenário sem OKRs
 
 ---
 
@@ -51,20 +41,11 @@ Na função `reopenSession`:
 
 | Arquivo | Ação |
 |---------|------|
-| `useGenericWizardDraft.ts` | `reopenSession` com backup + re-hidratação |
-| `CompletedRitualView.tsx` | Botão opcional com ConfirmDialog |
-| `QbrMeetingPage.tsx` | Detectar completed + integrar reopen |
+| `CollaboratorCheckinPage.tsx` | Remover guard, tornar ciclo opcional, filtrar steps |
+| `useRitualAvailability.ts` | Nenhuma mudança (o hook simplesmente não será chamado) |
 
-### Proteções contra perda de dados
+### O que NÃO muda
 
-| Cenário | Proteção |
-|---------|----------|
-| Re-conclusão com dados vazios | Backup do snapshot original nos addendums |
-| Formato incompatível | Abortar reabertura + toast de erro |
-| Usuário fecha sem re-concluir | Draft permanece no localStorage + sessão fica `in_progress` (editável na próxima visita) |
-| Múltiplas reaberturas | Cada reabertura cria novo backup nos addendums |
-
-### Ação imediata
-
-Para desbloquear o acesso agora (antes da implementação), posso reverter a sessão específica via query SQL direta, desde que se re-hidrate o draft manualmente. Basta confirmar.
+- Outros ritos continuam com suas janelas de disponibilidade
+- O `CollaboratorWizardCard` na home continua usando `usePendingCheckins` para decidir exibição (pode precisar de ajuste separado se quisermos mostrar o card mesmo sem KRs pendentes)
 
