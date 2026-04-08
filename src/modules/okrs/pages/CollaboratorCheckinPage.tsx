@@ -237,18 +237,18 @@ export default function CollaboratorCheckinPage() {
   }, [setStep]);
   
   const goNext = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
-    if (currentIdx < STEP_ORDER.length - 1) {
-      setStep(STEP_ORDER[currentIdx + 1]);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
+    if (currentIdx < visibleStepOrder.length - 1) {
+      setStep(visibleStepOrder[currentIdx + 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   const goBack = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     if (currentIdx > 0) {
-      setStep(STEP_ORDER[currentIdx - 1]);
+      setStep(visibleStepOrder[currentIdx - 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   // Handlers
   // handleClose is a no-op: FullPageWizardShell handles navigation.
