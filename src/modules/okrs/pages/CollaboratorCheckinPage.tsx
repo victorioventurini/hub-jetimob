@@ -18,8 +18,6 @@ import {
   useUserKrsForWizard,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
-import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
@@ -128,13 +126,10 @@ export default function CollaboratorCheckinPage() {
   
   usePageTitle(canSwitchUser && userIdParam ? `Check-in - ${effectiveUserName}` : 'Check-in Semanal');
   
-  // Get cycle (status-based)
+  // Get cycle (status-based) — optional for collaborator check-in
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
   
-  // Ritual availability window
-  const availability = useRitualAvailability('collaborator', quarterlyCycle);
-  
-  // Draft persistence
+  // Draft persistence — always enabled, uses fallback key when no cycle
   const {
     draft,
     updateDraft,
@@ -148,10 +143,10 @@ export default function CollaboratorCheckinPage() {
     lastSavedAt,
   } = useGenericWizardDraft<WizardStep, CollaboratorDraftData>({
     wizardType: 'collaborator',
-    cycleId: quarterlyCycle?.id || null,
+    cycleId: quarterlyCycle?.id || 'no-cycle',
     defaultStep: 'context',
     defaultData: DEFAULT_DATA,
-    enabled: !!quarterlyCycle,
+    enabled: true,
   });
   
   // Fetch user KRs (for effective user)
@@ -160,6 +155,19 @@ export default function CollaboratorCheckinPage() {
     'all',
     effectiveUserId
   );
+  
+  const hasKrStep = !!(userKrs && userKrs.length > 0);
+  
+  // Dynamic steps: omit 'checkin' when no KRs available
+  const visibleSteps = useMemo(() => {
+    if (hasKrStep) return WIZARD_STEPS;
+    return WIZARD_STEPS.filter(s => s.id !== 'checkin');
+  }, [hasKrStep]);
+  
+  const visibleStepOrder = useMemo(() => {
+    if (hasKrStep) return STEP_ORDER;
+    return STEP_ORDER.filter(s => s !== 'checkin');
+  }, [hasKrStep]);
   
   // Fetch user KPIs (fail-safe) - v2.87: usando V2 para incluir contribuidores
   const { 
@@ -217,30 +225,30 @@ export default function CollaboratorCheckinPage() {
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     for (let i = 0; i < currentIdx; i++) {
-      completed.push(STEP_ORDER[i]);
+      completed.push(visibleStepOrder[i]);
     }
     return completed;
-  }, [draft.currentStep]);
+  }, [draft.currentStep, visibleStepOrder]);
   
   const goToStep = useCallback((stepId: string) => {
     setStep(stepId as WizardStep);
   }, [setStep]);
   
   const goNext = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
-    if (currentIdx < STEP_ORDER.length - 1) {
-      setStep(STEP_ORDER[currentIdx + 1]);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
+    if (currentIdx < visibleStepOrder.length - 1) {
+      setStep(visibleStepOrder[currentIdx + 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   const goBack = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     if (currentIdx > 0) {
-      setStep(STEP_ORDER[currentIdx - 1]);
+      setStep(visibleStepOrder[currentIdx - 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   // Handlers
   // handleClose is a no-op: FullPageWizardShell handles navigation.
@@ -288,10 +296,7 @@ export default function CollaboratorCheckinPage() {
     return <LoadingState text="Carregando..." fullPage />;
   }
   
-  // Guard: Ritual window
-  if (!availability.isAvailable) {
-    return <RitualUnavailableScreen wizardType="collaborator" availability={availability} backUrl="/wizards" />;
-  }
+  
   
   // Render step content
   const renderStepContent = () => {
@@ -304,7 +309,7 @@ export default function CollaboratorCheckinPage() {
           <CollaboratorContextStep
             krs={krs}
             kpisToUpdate={kpis}
-            cycleName={quarterlyCycle?.name || 'Ciclo atual'}
+            cycleName={quarterlyCycle?.name || 'Sem ciclo ativo'}
             lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
           />
@@ -478,8 +483,8 @@ export default function CollaboratorCheckinPage() {
   return (
     <FullPageWizardShell
       title="Check-in Semanal"
-      subtitle="Atualize seus KRs e reflita sobre o progresso"
-      steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
+      subtitle={hasKrStep ? "Atualize seus KRs e reflita sobre o progresso" : "Atualize seus KPIs, projetos e reflexões"}
+      steps={visibleSteps.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
       onStepChange={goToStep}
