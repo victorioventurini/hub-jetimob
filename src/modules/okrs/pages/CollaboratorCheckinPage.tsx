@@ -18,8 +18,6 @@ import {
   useUserKrsForWizard,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
-import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
