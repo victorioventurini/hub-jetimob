@@ -116,6 +116,12 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  const evaluatedState = useUrlState<string>({
+    key: 'evaluated',
+    defaultValue: 'all',
+    parse: parsers.string,
+  });
+
   // Default: last 30 days
   const default30DaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const dateFromState = useUrlState<string>({
@@ -138,8 +144,7 @@ export default function RitualHistoryPage() {
   const pageSize = 25;
 
   // Atomic page reset: track filter changes and reset page via effect
-  // (avoids race condition when two useUrlState.set() calls happen in the same handler)
-  const filterFingerprint = `${typeState.value}|${teamState.value}|${userState.value}|${dateFromState.value}|${dateToState.value}`;
+  const filterFingerprint = `${typeState.value}|${teamState.value}|${userState.value}|${dateFromState.value}|${dateToState.value}|${evaluatedState.value}`;
   const prevFilterRef = useRef(filterFingerprint);
 
   useEffect(() => {
