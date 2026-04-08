@@ -1,12 +1,12 @@
 /**
  * TeamCheckinPage - Full-page wizard para check-in do time
+ * v2.88.0: Always accessible — no cycle guard
  */
 
 import { useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { 
   useGenericWizardDraft,
@@ -14,7 +14,6 @@ import {
   useTeamPendingKrs,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -84,11 +83,10 @@ export default function TeamCheckinPage() {
   
   usePageTitle(selectedTeam ? `Check-in - ${selectedTeam.name}` : 'Check-in do Time');
   
-  // Get cycle (status-based)
+  // Get cycle (status-based) — optional
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
-  const availability = useRitualAvailability('team-checkin', quarterlyCycle);
   
-  // Draft persistence
+  // Draft persistence — always enabled
   const {
     draft,
     updateDraft,
@@ -103,10 +101,10 @@ export default function TeamCheckinPage() {
   } = useGenericWizardDraft<WizardStep, TeamCheckinDraftData>({
     wizardType: 'team-checkin',
     teamId: teamIdParam,
-    cycleId: quarterlyCycle?.id || null,
+    cycleId: quarterlyCycle?.id || 'no-cycle',
     defaultStep: 'opening',
     defaultData: DEFAULT_DATA,
-    enabled: !!teamIdParam && !!quarterlyCycle,
+    enabled: !!teamIdParam,
   });
   
   // Fetch team KRs
@@ -115,37 +113,48 @@ export default function TeamCheckinPage() {
     teamIdParam ? [teamIdParam] : []
   );
   
+  // Dynamic steps: omit kr-review when no KRs
+  const hasKrs = !!(pendingKrs && pendingKrs.length > 0);
+  
+  const visibleSteps = useMemo(() => {
+    if (hasKrs) return WIZARD_STEPS;
+    return WIZARD_STEPS.filter(s => s.id !== 'kr-review');
+  }, [hasKrs]);
+  
+  const visibleStepOrder = useMemo(() => {
+    if (hasKrs) return STEP_ORDER;
+    return STEP_ORDER.filter(s => s !== 'kr-review');
+  }, [hasKrs]);
+  
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     for (let i = 0; i < currentIdx; i++) {
-      completed.push(STEP_ORDER[i]);
+      completed.push(visibleStepOrder[i]);
     }
     return completed;
-  }, [draft.currentStep]);
+  }, [draft.currentStep, visibleStepOrder]);
   
   const goToStep = useCallback((stepId: string) => {
     setStep(stepId as WizardStep);
   }, [setStep]);
   
   const goNext = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
-    if (currentIdx < STEP_ORDER.length - 1) {
-      setStep(STEP_ORDER[currentIdx + 1]);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
+    if (currentIdx < visibleStepOrder.length - 1) {
+      setStep(visibleStepOrder[currentIdx + 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   const goBack = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     if (currentIdx > 0) {
-      setStep(STEP_ORDER[currentIdx - 1]);
+      setStep(visibleStepOrder[currentIdx - 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   // Handlers
-  // handleClose is a no-op: FullPageWizardShell handles navigation.
-  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
   const handleClose = useCallback(() => {}, []);
   
   const handleSaveDraft = useCallback(async () => {
@@ -168,12 +177,10 @@ export default function TeamCheckinPage() {
   }, [discardDraft]);
   
   const handleComplete = useCallback(async () => {
-    // 1. Clear draft — creates completed session if none existed, returns sessionId
     const completedSessionId = await clearDraft();
     toast.success('Check-in do time concluído!');
     navigate('/okrs');
 
-    // 2. Trigger summary email (best-effort, non-blocking)
     if (completedSessionId && teamIdParam && quarterlyCycle?.id && currentBu?.id) {
       try {
         await buSupabase.functions.invoke('team-checkin-summary', {
@@ -185,7 +192,6 @@ export default function TeamCheckinPage() {
           }
         });
       } catch (e) {
-        // Non-blocking: log warning but don't show error to user
         console.warn('Summary email failed (non-blocking):', e);
       }
     }
@@ -193,7 +199,6 @@ export default function TeamCheckinPage() {
   
   // Handle team change (admin only)
   const handleTeamChange = useCallback((newTeamId: string) => {
-    // Reset to first step and clear draft for new team
     discardDraft();
     setSearchParams({ team: newTeamId });
   }, [discardDraft, setSearchParams]);
@@ -202,10 +207,6 @@ export default function TeamCheckinPage() {
   // Loading
   if (isLoadingTeams || isLoadingCycles) {
     return <LoadingState text="Carregando..." fullPage />;
-  }
-
-  if (!availability.isAvailable) {
-    return <RitualUnavailableScreen wizardType="team-checkin" availability={availability} backUrl="/wizards" />;
   }
   
   // No team
@@ -230,7 +231,7 @@ export default function TeamCheckinPage() {
         return (
           <TeamOpeningStep
             teamName={selectedTeam.name}
-            cycleName={quarterlyCycle?.name || ''}
+            cycleName={quarterlyCycle?.name || 'Sem ciclo ativo'}
             krs={krs}
             markedForDiscussion={draft.data.reviewedKrs}
             isLoading={isLoadingKrs}
@@ -290,8 +291,8 @@ export default function TeamCheckinPage() {
   return (
     <FullPageWizardShell
       title="Check-in do Time"
-      subtitle="Conduza o check-in coletivo com seu time"
-      steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
+      subtitle={hasKrs ? "Conduza o check-in coletivo com seu time" : "Revise iniciativas e decisões do time"}
+      steps={visibleSteps.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
       onStepChange={goToStep}
