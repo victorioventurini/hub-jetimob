@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   History, ChevronDown, ChevronRight, CalendarIcon, Users, User,
-  Lightbulb, Target, CheckCircle2, Clock, FileText, Star, MessageSquare,
+  Lightbulb, Target, CheckCircle2, Clock, FileText, Star, MessageSquare, ThumbsUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -54,6 +54,19 @@ const CATEGORY_CONFIG = {
   focus_adjustment: { label: 'Ajuste de Foco', icon: Target, color: 'bg-status-purple-muted text-status-purple' },
   next_step: { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' },
 } as const;
+
+const EVALUATED_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'yes', label: 'Avaliados' },
+  { value: 'no', label: 'Não avaliados' },
+];
+
+/** Checa se o ritual possui avaliações de participantes nos addendums */
+function hasParticipantEvaluations(addendums: unknown[] | null): boolean {
+  if (!Array.isArray(addendums)) return false;
+  const ev = addendums.find((a: any) => a?.type === 'participant_evaluation') as any;
+  return Array.isArray(ev?.evaluations) && ev.evaluations.length > 0;
+}
 
 const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos os rituais' },
@@ -103,6 +116,12 @@ export default function RitualHistoryPage() {
     parse: parsers.string,
   });
 
+  const evaluatedState = useUrlState<string>({
+    key: 'evaluated',
+    defaultValue: 'all',
+    parse: parsers.string,
+  });
+
   // Default: last 30 days
   const default30DaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const dateFromState = useUrlState<string>({
@@ -125,8 +144,7 @@ export default function RitualHistoryPage() {
   const pageSize = 25;
 
   // Atomic page reset: track filter changes and reset page via effect
-  // (avoids race condition when two useUrlState.set() calls happen in the same handler)
-  const filterFingerprint = `${typeState.value}|${teamState.value}|${userState.value}|${dateFromState.value}|${dateToState.value}`;
+  const filterFingerprint = `${typeState.value}|${teamState.value}|${userState.value}|${dateFromState.value}|${dateToState.value}|${evaluatedState.value}`;
   const prevFilterRef = useRef(filterFingerprint);
 
   useEffect(() => {
@@ -161,12 +179,20 @@ export default function RitualHistoryPage() {
       : null
   );
 
-  // Merge: if deep-link session exists and isn't in the list, prepend it
+  // Merge deep-link + client-side evaluated filter
   const mergedRituals = useMemo(() => {
-    if (!deepLinkSession) return rituals;
-    if (rituals.some(r => r.id === deepLinkSession.id)) return rituals;
-    return [deepLinkSession, ...rituals];
-  }, [rituals, deepLinkSession]);
+    let list = rituals;
+    if (deepLinkSession && !rituals.some(r => r.id === deepLinkSession.id)) {
+      list = [deepLinkSession, ...rituals];
+    }
+    // Client-side filter: evaluated
+    if (evaluatedState.value === 'yes') {
+      list = list.filter(r => hasParticipantEvaluations(r.addendums));
+    } else if (evaluatedState.value === 'no') {
+      list = list.filter(r => !hasParticipantEvaluations(r.addendums));
+    }
+    return list;
+  }, [rituals, deepLinkSession, evaluatedState.value]);
 
   const anyLoading = isLoading || (!!deepLinkSessionId && isLoadingDeepLink);
 
@@ -208,6 +234,18 @@ export default function RitualHistoryPage() {
               </SelectContent>
             </Select>
           )}
+
+          {/* Evaluated filter */}
+          <Select value={evaluatedState.value || 'all'} onValueChange={(v) => evaluatedState.set(v)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Avaliação" />
+            </SelectTrigger>
+            <SelectContent>
+              {EVALUATED_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* User filter */}
           <BuUserSelect
@@ -282,7 +320,7 @@ export default function RitualHistoryPage() {
         {/* Result count */}
         {!anyLoading && (
           <ViewOptionsBar
-            resultCount={totalCount}
+            resultCount={mergedRituals.length}
             resultCountLabel="rituais encontrados"
             resultCountLabelSingular="ritual encontrado"
           />
@@ -350,6 +388,7 @@ export default function RitualHistoryPage() {
 function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHistoryItem; autoExpand?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(autoExpand);
   const hasDecisions = ritual.decisions.length > 0;
+  const isEvaluated = hasParticipantEvaluations(ritual.addendums);
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
   const { data: occurrence } = useOccurrenceBySession(ritual.id);
 
@@ -385,6 +424,13 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                 {ritual.status === 'in_progress' && (
                   <Badge variant="outline" className="shrink-0 text-[10px] border-status-yellow text-status-yellow">
                     Rascunho
+                  </Badge>
+                )}
+
+                {isEvaluated && (
+                  <Badge variant="outline" className="shrink-0 text-[10px] gap-1 border-status-green text-status-green">
+                    <Star className="h-3 w-3" />
+                    Avaliado
                   </Badge>
                 )}
 
