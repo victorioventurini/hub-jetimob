@@ -225,12 +225,12 @@ export default function CollaboratorCheckinPage() {
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     for (let i = 0; i < currentIdx; i++) {
-      completed.push(STEP_ORDER[i]);
+      completed.push(visibleStepOrder[i]);
     }
     return completed;
-  }, [draft.currentStep]);
+  }, [draft.currentStep, visibleStepOrder]);
   
   const goToStep = useCallback((stepId: string) => {
     setStep(stepId as WizardStep);
