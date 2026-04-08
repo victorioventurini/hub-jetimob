@@ -320,7 +320,7 @@ export default function RitualHistoryPage() {
         {/* Result count */}
         {!anyLoading && (
           <ViewOptionsBar
-            resultCount={totalCount}
+            resultCount={mergedRituals.length}
             resultCountLabel="rituais encontrados"
             resultCountLabelSingular="ritual encontrado"
           />
