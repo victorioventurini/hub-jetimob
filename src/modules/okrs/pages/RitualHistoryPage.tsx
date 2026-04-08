@@ -235,6 +235,18 @@ export default function RitualHistoryPage() {
             </Select>
           )}
 
+          {/* Evaluated filter */}
+          <Select value={evaluatedState.value || 'all'} onValueChange={(v) => evaluatedState.set(v)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Avaliação" />
+            </SelectTrigger>
+            <SelectContent>
+              {EVALUATED_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {/* User filter */}
           <BuUserSelect
             value={userState.value || undefined}
