@@ -55,6 +55,19 @@ const CATEGORY_CONFIG = {
   next_step: { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' },
 } as const;
 
+const EVALUATED_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'yes', label: 'Avaliados' },
+  { value: 'no', label: 'Não avaliados' },
+];
+
+/** Checa se o ritual possui avaliações de participantes nos addendums */
+function hasParticipantEvaluations(addendums: unknown[] | null): boolean {
+  if (!Array.isArray(addendums)) return false;
+  const ev = addendums.find((a: any) => a?.type === 'participant_evaluation') as any;
+  return Array.isArray(ev?.evaluations) && ev.evaluations.length > 0;
+}
+
 const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos os rituais' },
   { value: 'mbr', label: 'MBR' },
