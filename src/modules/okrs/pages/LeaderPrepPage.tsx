@@ -1,13 +1,13 @@
 /**
  * LeaderPrepPage - Full-page wizard para preparação do líder
  * v2.83.0: Added KPI alerts step for indicator attention section
+ * v2.88.0: Always accessible — no cycle guard
  */
 
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { 
   useGenericWizardDraft,
@@ -16,7 +16,6 @@ import {
   useTeamPendingKrs,
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,11 +86,10 @@ export default function LeaderPrepPage() {
   
   usePageTitle(selectedTeam ? `Preparação - ${selectedTeam.name}` : 'Preparação do Check-in');
   
-  // Get cycle (status-based)
+  // Get cycle (status-based) — optional
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
-  const availability = useRitualAvailability('leader-prep', quarterlyCycle);
   
-  // Draft persistence
+  // Draft persistence — always enabled
   const {
     draft,
     updateDraft,
@@ -106,10 +104,10 @@ export default function LeaderPrepPage() {
   } = useGenericWizardDraft<WizardStep, LeaderPrepDraftData>({
     wizardType: 'leader-prep',
     teamId: teamIdParam,
-    cycleId: quarterlyCycle?.id || null,
+    cycleId: quarterlyCycle?.id || 'no-cycle',
     defaultStep: 'overview',
     defaultData: DEFAULT_DATA,
-    enabled: !!teamIdParam && !!quarterlyCycle,
+    enabled: !!teamIdParam,
   });
   
   // Fetch team data
@@ -152,37 +150,48 @@ export default function LeaderPrepPage() {
     updateDraft({ kpisForFollowup: updated });
   }, [draft.data.kpisForFollowup, updateDraft]);
   
+  // Dynamic steps: omit KR-dependent steps when no KRs
+  const hasKrs = !!(pendingKrs && pendingKrs.length > 0);
+  
+  const visibleSteps = useMemo(() => {
+    if (hasKrs) return WIZARD_STEPS;
+    return WIZARD_STEPS.filter(s => s.id !== 'highlights' && s.id !== 'prep');
+  }, [hasKrs]);
+  
+  const visibleStepOrder = useMemo(() => {
+    if (hasKrs) return STEP_ORDER;
+    return STEP_ORDER.filter(s => s !== 'highlights' && s !== 'prep');
+  }, [hasKrs]);
+  
   // Navigation
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     for (let i = 0; i < currentIdx; i++) {
-      completed.push(STEP_ORDER[i]);
+      completed.push(visibleStepOrder[i]);
     }
     return completed;
-  }, [draft.currentStep]);
+  }, [draft.currentStep, visibleStepOrder]);
   
   const goToStep = useCallback((stepId: string) => {
     setStep(stepId as WizardStep);
   }, [setStep]);
   
   const goNext = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
-    if (currentIdx < STEP_ORDER.length - 1) {
-      setStep(STEP_ORDER[currentIdx + 1]);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
+    if (currentIdx < visibleStepOrder.length - 1) {
+      setStep(visibleStepOrder[currentIdx + 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   const goBack = useCallback(() => {
-    const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
+    const currentIdx = visibleStepOrder.indexOf(draft.currentStep);
     if (currentIdx > 0) {
-      setStep(STEP_ORDER[currentIdx - 1]);
+      setStep(visibleStepOrder[currentIdx - 1]);
     }
-  }, [draft.currentStep, setStep]);
+  }, [draft.currentStep, setStep, visibleStepOrder]);
   
   // Handlers
-  // handleClose is a no-op: FullPageWizardShell handles navigation.
-  // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
   const handleClose = useCallback(() => {}, []);
   
   const handleSaveDraft = useCallback(async () => {
@@ -222,10 +231,6 @@ export default function LeaderPrepPage() {
   if (isLoadingTeams || isLoadingCycles) {
     return <LoadingState text="Carregando..." fullPage />;
   }
-
-  if (!availability.isAvailable) {
-    return <RitualUnavailableScreen wizardType="leader-prep" availability={availability} backUrl="/wizards" />;
-  }
   
   // No team
   if (!teamIdParam || !selectedTeam) {
@@ -249,7 +254,7 @@ export default function LeaderPrepPage() {
         return (
           <LeaderOverviewStep
             teamName={selectedTeam.name}
-            cycleName={quarterlyCycle?.name || ''}
+            cycleName={quarterlyCycle?.name || 'Sem ciclo ativo'}
             metrics={metrics?.metrics || null}
             isLoading={isLoadingMetrics}
             lastCompletedAt={lastCheckin.lastCompletedAt}
@@ -283,7 +288,6 @@ export default function LeaderPrepPage() {
         );
 
       case 'highlights': {
-        // Generate highlights from KRs
         const highlights = krs
           .filter(kr => kr.days_since_checkin >= 14 || kr.is_at_risk)
           .map(kr => ({
@@ -345,8 +349,8 @@ export default function LeaderPrepPage() {
   return (
     <FullPageWizardShell
       title="Preparação do Check-in"
-      subtitle="Prepare-se para conduzir um bom check-in com seu time"
-      steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
+      subtitle={hasKrs ? "Prepare-se para conduzir um bom check-in com seu time" : "Revise indicadores e projetos do time"}
+      steps={visibleSteps.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
       onStepChange={goToStep}
