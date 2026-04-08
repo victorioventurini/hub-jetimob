@@ -309,7 +309,7 @@ export default function CollaboratorCheckinPage() {
           <CollaboratorContextStep
             krs={krs}
             kpisToUpdate={kpis}
-            cycleName={quarterlyCycle?.name || 'Ciclo atual'}
+            cycleName={quarterlyCycle?.name || 'Sem ciclo ativo'}
             lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
           />
