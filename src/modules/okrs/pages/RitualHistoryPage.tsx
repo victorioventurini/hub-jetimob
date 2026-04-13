@@ -23,6 +23,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import {
   History, ChevronDown, ChevronRight, CalendarIcon, Users, User,
   Lightbulb, Target, CheckCircle2, Clock, FileText, Star, MessageSquare, ThumbsUp,
@@ -30,6 +33,7 @@ import {
 import { cn } from '@/lib/utils';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
+import { useIdentity } from '@/hooks/useIdentity';
 import {
   useRitualHistory,
   useRitualDetail,
@@ -39,7 +43,7 @@ import {
   type RitualHistoryFilters,
 } from '../hooks/useRitualHistory';
 import { useOccurrenceBySession } from '../hooks/useRitualOccurrences';
-import { useManageableTeamsFlat } from '../hooks';
+import { useManageableTeamsFlat, useCanResolveDecision } from '../hooks';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import { SnapshotReportView } from '../components/ritual-report';
