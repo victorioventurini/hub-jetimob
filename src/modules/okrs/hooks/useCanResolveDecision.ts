@@ -45,7 +45,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
 
       // 2. Check if current user is leader of any of those teams (or parent teams)
       // Fetch the teams + their parent chains
-      const { data: teams, error: teamErr } = await buSupabase
+      const { data: teams, error: teamErr } = await (buSupabase as any)
         .from('teams')
         .select('id, leader_user_id, parent_team_id, area_id')
         .in('id', teamIds)
@@ -62,7 +62,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
         .filter((id): id is string => !!id);
 
       if (parentIds.length > 0) {
-        const { data: parentTeams } = await buSupabase
+        const { data: parentTeams } = await (buSupabase as any)
           .from('teams')
           .select('id, leader_user_id, parent_team_id')
           .in('id', parentIds)
@@ -76,7 +76,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
           .filter((id): id is string => !!id);
 
         if (grandparentIds.length > 0) {
-          const { data: gpTeams } = await buSupabase
+          const { data: gpTeams } = await (buSupabase as any)
             .from('teams')
             .select('id, leader_user_id')
             .in('id', grandparentIds)
@@ -93,7 +93,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
 
       if (areaIds.length > 0) {
         const uniqueAreaIds = [...new Set(areaIds)];
-        const { data: areas } = await buSupabase
+        const { data: areas } = await (buSupabase as any)
           .from('areas')
           .select('id, leader_user_id')
           .in('id', uniqueAreaIds)
