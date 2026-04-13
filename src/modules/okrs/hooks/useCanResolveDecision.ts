@@ -28,7 +28,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
   const needsLeadershipCheck = !isSelf && !isWildcard && !!profileId && !!ownerProfileId;
 
   const { data: isLeader = false, isLoading: leaderLoading } = useQuery({
-    queryKey: ['can-resolve-decision', profileId, ownerProfileId],
+    queryKey: ['can-resolve-decision', profileId, ownerProfileId] as const,
     queryFn: async () => {
       if (!buSupabase || !profileId || !ownerProfileId) return false;
 
