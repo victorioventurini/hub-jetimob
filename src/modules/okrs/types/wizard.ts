@@ -600,6 +600,10 @@ export interface TeamCheckinDecision {
   deadline?: string | null; // ISO date format
   /** ID da diretiva C-Level relacionada (QBR Meeting Step 3) */
   relatedDirectiveId?: string;
+  /** Dados de resolução — preenchidos ao marcar como concluído */
+  resolvedAt?: string;
+  resolvedBy?: { id: string; name: string };
+  resolutionNote?: string;
 }
 
 export interface TeamCheckinChecklist {

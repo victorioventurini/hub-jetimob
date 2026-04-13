@@ -212,6 +212,7 @@ export {
 export { useKrWizardDraft, type KrWizardStep } from './useKrWizardDraft';
 export { useGenericWizardDraft } from './useGenericWizardDraft';
 export { useRitualHistory, useRitualDetail, useUpdateDecisionFollowUp, WIZARD_TYPE_LABELS } from './useRitualHistory';
+export { useCanResolveDecision } from './useCanResolveDecision';
 export { useWizardAI } from './useWizardAI';
 export { useWizardOrchestrator } from './useWizardOrchestrator';
 export { useWizardSession } from './useWizardSession';
