@@ -33,7 +33,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
       if (!buSupabase || !profileId || !ownerProfileId) return false;
 
       // 1. Get owner's team memberships
-      const { data: memberships, error: memErr } = await buSupabase
+      const { data: memberships, error: memErr } = await (buSupabase as any)
         .from('user_team_memberships')
         .select('team_id')
         .eq('profile_id', ownerProfileId)
