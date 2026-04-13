@@ -1,51 +1,92 @@
 
 
-## Plano: Tornar o Check-in do Colaborador sempre acessível
+## Respostas às suas perguntas
 
-### Problema
+### 1. A estrutura de decisão é centralizada?
 
-O check-in do colaborador (`/rituals/collaborator-checkin`) depende de um ciclo trimestral ativo (`useActiveCycle`). Se não houver ciclo ativo (ex: OKRs em construção, entre quarters), o rito é bloqueado com "Nenhum ciclo ativo". Porém, o colaborador precisa atualizar **projetos e KPIs** independentemente de OKRs.
+**Sim, parcialmente.** O tipo `TeamCheckinDecision` em `src/modules/okrs/types/wizard.ts` é a interface única usada por **todos** os rituais (Team Check-in, MBR, QBR Pre, QBR Meeting, QBR Post, etc.). Os componentes de criação/edição (`DecisionCard`, `InlineDecisionInput`) também são compartilhados via `src/modules/okrs/components/wizards/shared/`.
 
-### Solução
+**Porém**, o componente de follow-up (`DecisionFollowUpRow`) que renderiza o checkbox no histórico existe **apenas inline** dentro de `RitualHistoryPage.tsx` — não é um componente compartilhado. A mutação `useUpdateDecisionFollowUp` está centralizada em `useRitualHistory.ts`.
 
-Remover a barreira de ciclo ativo para o collaborator check-in, tornando ciclo e KRs opcionais.
+O que precisamos alterar para o check de resolução impacta:
+- O tipo `TeamCheckinDecision` (centralizado, impacta todos os rituais)
+- O `DecisionFollowUpRow` (inline na página de histórico)
+- O `useUpdateDecisionFollowUp` (centralizado)
 
----
+### 2. Hierarquia de liderança — o que considerar?
 
-### Etapa 1 — Remover guard de disponibilidade do collaborator
+A hierarquia do Hub é:
 
-**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
+```text
+Admin da BU (isWildcard)
+  └── Líder de Área (areas.leader_user_id)
+       └── Líder de Time (teams.leader_user_id)
+            └── Líder de Sub-time (teams.leader_user_id + parent_team_id)
+                 └── Colaborador (membro do time)
+```
 
-- Remover o uso de `useRitualAvailability` e o guard `RitualUnavailableScreen` — o rito fica sempre acessível
-- Tornar `quarterlyCycle` opcional: se `null`, o wizard funciona sem KRs (steps de KR são pulados)
-- Ajustar `useGenericWizardDraft` para aceitar `cycleId: null` com uma chave de fallback (ex: `'no-cycle'`) para que o draft persista mesmo sem ciclo
+**Para o check de resolução, a regra deve ser:**
+- O **próprio responsável** (decision.owner.id === profileId) pode resolver
+- O **líder direto** do time onde o responsável é membro pode resolver
+- O **líder de área** do time do responsável pode resolver
+- O **admin da BU** (isWildcard) pode resolver
 
-### Etapa 2 — Pular steps de KR quando não há ciclo/KRs
-
-**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
-
-- No step `checkin`: se `userKrs` estiver vazio (sem ciclo ou sem KRs), pular automaticamente para o próximo step (KPIs)
-- O step `context` mostra mensagem adaptada: "Nenhum OKR ativo neste momento — atualize seus KPIs e projetos"
-- Steps de **KPIs**, **Projetos**, **Iniciativas** e **Reflexão** continuam funcionando normalmente (não dependem de ciclo)
-
-### Etapa 3 — Ajustar steps no sidebar
-
-**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
-
-- Filtrar `WIZARD_STEPS` dinamicamente: se não há KRs, omitir o step "Check-in" da lista visível
-- O step "Contexto" se adapta para mostrar o cenário sem OKRs
+Isso respeita a cadeia completa que você descreveu: colaborador → líder de subtime/time → líder de área → admin.
 
 ---
+
+## Plano revisado: Check de resolução com campo obrigatório e cadeia de liderança
+
+### Etapa 1 — Estender `TeamCheckinDecision`
+
+**Arquivo:** `src/modules/okrs/types/wizard.ts`
+
+Adicionar campos opcionais:
+```typescript
+resolvedAt?: string;
+resolvedBy?: { id: string; name: string };
+resolutionNote?: string;
+```
+
+Impacto: todos os rituais herdam automaticamente (tipo centralizado).
+
+### Etapa 2 — Hook `useCanResolveDecision`
+
+**Arquivo:** `src/modules/okrs/hooks/useCanResolveDecision.ts`
+
+Recebe `ownerProfileId` e verifica toda a cadeia:
+
+1. `profileId === ownerProfileId` → pode resolver (é o próprio)
+2. `isWildcard` → pode resolver (admin da BU)
+3. Consulta `user_team_memberships` do owner para descobrir seus times
+4. Verifica se o usuário logado é `teams.leader_user_id` de algum desses times ou de um time pai (recursivo via `parent_team_id`)
+5. Verifica se é `areas.leader_user_id` da área desses times
+
+Retorna `{ canResolve: boolean; isLoading: boolean }`.
+
+### Etapa 3 — Modal de resolução no `DecisionFollowUpRow`
+
+**Arquivo:** `src/modules/okrs/pages/RitualHistoryPage.tsx`
+
+- Ao clicar no checkbox para marcar "done":
+  - Se **não tem permissão**: checkbox disabled + tooltip "Apenas o responsável ou seu líder pode resolver"
+  - Se **tem permissão**: abre `Dialog` com textarea obrigatório "O que foi resolvido?"
+  - Ao confirmar: grava `resolvedAt`, `resolvedBy`, `resolutionNote` e `followUpStatus: 'done'`
+- Para desfazer (uncheck): permitir para quem tem permissão, limpa campos de resolução
+- Quando `isDone`: exibir nota de resolução, autor e data abaixo do texto
+
+### Etapa 4 — Atualizar mutação
+
+**Arquivo:** `src/modules/okrs/hooks/useRitualHistory.ts`
+
+O `useUpdateDecisionFollowUp` já aceita `Partial<TeamCheckinDecision>` nos updates — os novos campos (`resolvedAt`, `resolvedBy`, `resolutionNote`) serão gravados automaticamente no JSONB.
 
 ### Arquivos impactados
 
 | Arquivo | Ação |
 |---------|------|
-| `CollaboratorCheckinPage.tsx` | Remover guard, tornar ciclo opcional, filtrar steps |
-| `useRitualAvailability.ts` | Nenhuma mudança (o hook simplesmente não será chamado) |
-
-### O que NÃO muda
-
-- Outros ritos continuam com suas janelas de disponibilidade
-- O `CollaboratorWizardCard` na home continua usando `usePendingCheckins` para decidir exibição (pode precisar de ajuste separado se quisermos mostrar o card mesmo sem KRs pendentes)
+| `src/modules/okrs/types/wizard.ts` | Adicionar campos de resolução ao tipo |
+| `src/modules/okrs/hooks/useCanResolveDecision.ts` | Novo hook com cadeia completa |
+| `src/modules/okrs/hooks/index.ts` | Export do novo hook |
+| `src/modules/okrs/pages/RitualHistoryPage.tsx` | Modal, permissão, exibição |
 
