@@ -27,9 +27,9 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
   const isSelf = !!profileId && !!ownerProfileId && profileId === ownerProfileId;
   const needsLeadershipCheck = !isSelf && !isWildcard && !!profileId && !!ownerProfileId;
 
-  const { data: isLeader = false, isLoading: leaderLoading } = useQuery({
-    queryKey: ['can-resolve-decision', profileId, ownerProfileId] as const,
-    queryFn: async () => {
+  const { data: isLeader = false, isLoading: leaderLoading } = useQuery<boolean>({
+    queryKey: ['can-resolve-decision', profileId, ownerProfileId],
+    queryFn: async (): Promise<boolean> => {
       if (!buSupabase || !profileId || !ownerProfileId) return false;
 
       // 1. Get owner's team memberships
