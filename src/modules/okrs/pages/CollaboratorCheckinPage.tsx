@@ -453,6 +453,16 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
+      case 'decisions':
+        return (
+          <CollaboratorDecisionsStep
+            effectiveUserId={effectiveUserId}
+            onContinue={goNext}
+            onBack={goBack}
+            onSkip={goNext}
+          />
+        );
+
       case 'reflection':
         return (
           <CollaboratorReflectionStep
