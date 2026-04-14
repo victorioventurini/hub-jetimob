@@ -125,4 +125,13 @@ Detecta:
 
 ## Conclusão
 
-**QA APROVADO** - Todos os usuários cadastrados na BU aparecem nas listas, independentemente de primeiro acesso, onboarding ou membership.
+**QA APROVADO** - Todos os usuários cadastrados na BU aparecem nas listas, independentemente de primeiro acesso, onboarding, membership ou BU primária (cross-BU visibility via RLS v3.24.0).
+
+---
+
+## Histórico de Versões
+
+| Versão | Data | Mudanças |
+|--------|------|----------|
+| v2.1 | 2026-04-14 | Cross-BU visibility fix — cenários 3.x adicionados, RLS `profiles_select_bu_v2` com OR EXISTS |
+| v2.0 | 2026-01-09 | Versão inicial — view canônica, audit script, componentes padronizados |
