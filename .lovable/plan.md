@@ -1,92 +1,126 @@
 
 
-## Respostas às suas perguntas
+## Plano: Thread de mensagens em decisões/registros + Step de pendências no check-in do colaborador
 
-### 1. A estrutura de decisão é centralizada?
+### Pré-checklist canônico ✅
 
-**Sim, parcialmente.** O tipo `TeamCheckinDecision` em `src/modules/okrs/types/wizard.ts` é a interface única usada por **todos** os rituais (Team Check-in, MBR, QBR Pre, QBR Meeting, QBR Post, etc.). Os componentes de criação/edição (`DecisionCard`, `InlineDecisionInput`) também são compartilhados via `src/modules/okrs/components/wizards/shared/`.
+| Doc | Status | Impacto |
+|-----|--------|---------|
+| TCR v3.23.0 | ✅ Analisado | Wizard deve usar `FullPageWizardShell`, drafts em `okr_wizard_sessions`, JSONB em `reflection_data` |
+| DEVELOPMENT_STANDARDS v1.29.0 | ✅ Analisado | POST-BU com `useBuScopedSupabase()`, query keys via `queryKeys`, sem `select('*')` |
+| IDENTITY_CONVENTION v2.2.0 | ✅ Analisado | `profileId` para domínio (nunca `auth.uid()`), `realProfileId` para mutations com impersonation |
+| PERMISSIONS_AND_RBAC_MODEL v1.5.0 | ✅ Analisado | `isWildcard` para admin BU, `teams.leader_user_id` para líderes |
+| WIZARD_DEVELOPMENT_GUIDE v1.0.0 | ✅ Analisado | Estrutura `src/modules/okrs/components/wizards/<name>/`, barrel exports |
+| DATA_MODEL_REGISTRY | ✅ Via codebase | `okr_wizard_sessions` com colunas `decisions` e `reflection_data` (JSONB) |
 
-**Porém**, o componente de follow-up (`DecisionFollowUpRow`) que renderiza o checkbox no histórico existe **apenas inline** dentro de `RitualHistoryPage.tsx` — não é um componente compartilhado. A mutação `useUpdateDecisionFollowUp` está centralizada em `useRitualHistory.ts`.
+### Decisão arquitetural
 
-O que precisamos alterar para o check de resolução impacta:
-- O tipo `TeamCheckinDecision` (centralizado, impacta todos os rituais)
-- O `DecisionFollowUpRow` (inline na página de histórico)
-- O `useUpdateDecisionFollowUp` (centralizado)
-
-### 2. Hierarquia de liderança — o que considerar?
-
-A hierarquia do Hub é:
-
-```text
-Admin da BU (isWildcard)
-  └── Líder de Área (areas.leader_user_id)
-       └── Líder de Time (teams.leader_user_id)
-            └── Líder de Sub-time (teams.leader_user_id + parent_team_id)
-                 └── Colaborador (membro do time)
-```
-
-**Para o check de resolução, a regra deve ser:**
-- O **próprio responsável** (decision.owner.id === profileId) pode resolver
-- O **líder direto** do time onde o responsável é membro pode resolver
-- O **líder de área** do time do responsável pode resolver
-- O **admin da BU** (isWildcard) pode resolver
-
-Isso respeita a cadeia completa que você descreveu: colaborador → líder de subtime/time → líder de área → admin.
+**JSONB** — as mensagens da thread ficam dentro do `TeamCheckinDecision` existente. Consistente com o padrão de persistência em `okr_wizard_sessions.decisions` / `reflection_data`. Zero migrações.
 
 ---
 
-## Plano revisado: Check de resolução com campo obrigatório e cadeia de liderança
-
-### Etapa 1 — Estender `TeamCheckinDecision`
+### Etapa 1 — Estender `TeamCheckinDecision` com thread
 
 **Arquivo:** `src/modules/okrs/types/wizard.ts`
 
-Adicionar campos opcionais:
 ```typescript
-resolvedAt?: string;
-resolvedBy?: { id: string; name: string };
-resolutionNote?: string;
+// Novo sub-tipo
+export interface DecisionThreadMessage {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+// Adicionar ao TeamCheckinDecision:
+thread?: DecisionThreadMessage[];
 ```
 
-Impacto: todos os rituais herdam automaticamente (tipo centralizado).
+O campo `resolutionNote` permanece como registro da resolução final. Backward compatible.
 
-### Etapa 2 — Hook `useCanResolveDecision`
+### Etapa 2 — Extrair `DecisionFollowUpRow` como componente compartilhado
 
-**Arquivo:** `src/modules/okrs/hooks/useCanResolveDecision.ts`
+**De:** inline em `RitualHistoryPage.tsx` (linhas 548-732)
+**Para:** `src/modules/okrs/components/wizards/shared/DecisionFollowUpRow.tsx`
 
-Recebe `ownerProfileId` e verifica toda a cadeia:
+O componente recebe props genéricas:
+- `decision`, `sessionId`, `onUpdate` (ou usa `useUpdateDecisionFollowUp` internamente)
+- Seção de thread: lista de `DecisionThreadMessage` usando `MessageBubble` de `src/components/messaging`
+- Input para nova mensagem
+- Modal de resolução (obrigatório ao marcar como done)
+- Permissão via `useCanResolveDecision`
 
-1. `profileId === ownerProfileId` → pode resolver (é o próprio)
-2. `isWildcard` → pode resolver (admin da BU)
-3. Consulta `user_team_memberships` do owner para descobrir seus times
-4. Verifica se o usuário logado é `teams.leader_user_id` de algum desses times ou de um time pai (recursivo via `parent_team_id`)
-5. Verifica se é `areas.leader_user_id` da área desses times
+**Export via:** `src/modules/okrs/components/wizards/shared/index.ts`
 
-Retorna `{ canResolve: boolean; isLoading: boolean }`.
+### Etapa 3 — Hook `useDecisionThread`
 
-### Etapa 3 — Modal de resolução no `DecisionFollowUpRow`
+**Arquivo:** `src/modules/okrs/hooks/useDecisionThread.ts`
+
+- `addMessage(sessionId, decisionId, content)` → append ao array `thread` no JSONB
+- Reutiliza o padrão de `useUpdateDecisionFollowUp`: fetch session → merge thread → update
+- Query key via `queryKeys` (reutiliza `ritualHistoryListPrefix` para invalidação)
+- Usa `useBuScopedSupabase()` (POST-BU)
+- Identity: `profileId` do `useIdentity()` como `authorId`
+
+**Export via:** `src/modules/okrs/hooks/index.ts`
+
+### Etapa 4 — Atualizar `RitualHistoryPage`
 
 **Arquivo:** `src/modules/okrs/pages/RitualHistoryPage.tsx`
 
-- Ao clicar no checkbox para marcar "done":
-  - Se **não tem permissão**: checkbox disabled + tooltip "Apenas o responsável ou seu líder pode resolver"
-  - Se **tem permissão**: abre `Dialog` com textarea obrigatório "O que foi resolvido?"
-  - Ao confirmar: grava `resolvedAt`, `resolvedBy`, `resolutionNote` e `followUpStatus: 'done'`
-- Para desfazer (uncheck): permitir para quem tem permissão, limpa campos de resolução
-- Quando `isDone`: exibir nota de resolução, autor e data abaixo do texto
+- Remover `DecisionFollowUpRow` inline (linhas 548-732)
+- Importar `DecisionFollowUpRow` do compartilhado
+- Zero mudança funcional
 
-### Etapa 4 — Atualizar mutação
+### Etapa 5 — Hook `useMyPendingDecisions`
 
-**Arquivo:** `src/modules/okrs/hooks/useRitualHistory.ts`
+**Arquivo:** `src/modules/okrs/hooks/useMyPendingDecisions.ts`
 
-O `useUpdateDecisionFollowUp` já aceita `Partial<TeamCheckinDecision>` nos updates — os novos campos (`resolvedAt`, `resolvedBy`, `resolutionNote`) serão gravados automaticamente no JSONB.
+- Query em `okr_wizard_sessions` com `status = 'completed'` e `decisions` não vazio
+- Filtra client-side: `decision.owner?.id === effectiveUserId` e `followUpStatus !== 'done'`
+- Retorna lista com `sessionId` para cada decisão (necessário para a mutação)
+- Usa `useBuScopedSupabase()`, query key centralizada
+
+### Etapa 6 — Step `CollaboratorDecisionsStep`
+
+**Arquivo:** `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx`
+
+- Usa `useMyPendingDecisions` para buscar pendências
+- Renderiza cada item via `DecisionFollowUpRow` compartilhado (thread + resolução)
+- Empty state quando sem pendências
+- Segue padrão: `WizardStepHeader` + `WizardStepFooter`
+
+### Etapa 7 — Integrar no wizard do colaborador
+
+**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
+
+- Adicionar step `'decisions'` ao `WizardStep` type e ao `STEP_ORDER`:
+  `context → checkin → kpis → projects → initiatives → decisions → reflection → summary`
+- Auto-skip: se `useMyPendingDecisions` retorna lista vazia, pular para `reflection`
+- Import do novo `CollaboratorDecisionsStep`
+
+---
 
 ### Arquivos impactados
 
 | Arquivo | Ação |
 |---------|------|
-| `src/modules/okrs/types/wizard.ts` | Adicionar campos de resolução ao tipo |
-| `src/modules/okrs/hooks/useCanResolveDecision.ts` | Novo hook com cadeia completa |
-| `src/modules/okrs/hooks/index.ts` | Export do novo hook |
-| `src/modules/okrs/pages/RitualHistoryPage.tsx` | Modal, permissão, exibição |
+| `src/modules/okrs/types/wizard.ts` | Adicionar `DecisionThreadMessage` e campo `thread` |
+| `src/modules/okrs/components/wizards/shared/DecisionFollowUpRow.tsx` | **Novo** — extraído + thread |
+| `src/modules/okrs/components/wizards/shared/index.ts` | Export do novo componente |
+| `src/modules/okrs/hooks/useDecisionThread.ts` | **Novo** — append de mensagens na thread |
+| `src/modules/okrs/hooks/useMyPendingDecisions.ts` | **Novo** — decisões pendentes do usuário |
+| `src/modules/okrs/hooks/index.ts` | Exports dos novos hooks |
+| `src/modules/okrs/pages/RitualHistoryPage.tsx` | Substituir inline por import compartilhado |
+| `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx` | **Novo** — step de pendências |
+| `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` | Adicionar step `decisions` com auto-skip |
+
+### Reutilização
+
+- `MessageBubble` de `src/components/messaging` para renderizar mensagens da thread
+- `useCanResolveDecision` existente para permissões
+- `useUpdateDecisionFollowUp` existente para persistência de resolução
+- `useIdentity` para `profileId` e `realProfileId` (mutation guard)
+- Componentes de wizard compartilhados (`WizardStepHeader`, `WizardStepFooter`)
 
