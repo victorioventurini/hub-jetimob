@@ -43,7 +43,9 @@ import {
   type RitualHistoryFilters,
 } from '../hooks/useRitualHistory';
 import { useOccurrenceBySession } from '../hooks/useRitualOccurrences';
-import { useManageableTeamsFlat, useCanResolveDecision } from '../hooks';
+import { useManageableTeamsFlat } from '../hooks';
+import { DecisionFollowUpRow } from '../components/wizards/shared/DecisionFollowUpRow';
+import { useDecisionThread } from '../hooks/useDecisionThread';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import { SnapshotReportView } from '../components/ritual-report';
