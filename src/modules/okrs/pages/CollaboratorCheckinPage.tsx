@@ -37,6 +37,7 @@ import { CollaboratorProjectsStep } from '@/modules/okrs/components/wizards/coll
 import { CollaboratorInitiativesStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep';
 import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep';
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
+import { CollaboratorDecisionsStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep';
 
 import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
@@ -45,7 +46,7 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 // TYPES
 // ============================================================
 
-type WizardStep = 'context' | 'checkin' | 'kpis' | 'projects' | 'initiatives' | 'reflection' | 'summary';
+type WizardStep = 'context' | 'checkin' | 'kpis' | 'projects' | 'initiatives' | 'decisions' | 'reflection' | 'summary';
 
 interface CollaboratorDraftData {
   currentKrIndex: number;
@@ -62,11 +63,12 @@ const WIZARD_STEPS = [
   { id: 'kpis' as const, label: 'KPIs', description: 'Atualização dos indicadores' },
   { id: 'projects' as const, label: 'Projetos', description: 'Atualização de marcos' },
   { id: 'initiatives' as const, label: 'Iniciativas', description: 'Revisão de atividades' },
+  { id: 'decisions' as const, label: 'Pendências', description: 'Decisões e registros pendentes' },
   { id: 'reflection' as const, label: 'Reflexão', description: 'Aprendizados' },
   { id: 'summary' as const, label: 'Resumo', description: 'Visão consolidada' },
 ];
 
-const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'projects', 'initiatives', 'reflection', 'summary'];
+const STEP_ORDER: WizardStep[] = ['context', 'checkin', 'kpis', 'projects', 'initiatives', 'decisions', 'reflection', 'summary'];
 
 const DEFAULT_DATA: CollaboratorDraftData = {
   currentKrIndex: 0,
@@ -451,6 +453,16 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
+      case 'decisions':
+        return (
+          <CollaboratorDecisionsStep
+            effectiveUserId={effectiveUserId}
+            onContinue={goNext}
+            onBack={goBack}
+            onSkip={goNext}
+          />
+        );
+
       case 'reflection':
         return (
           <CollaboratorReflectionStep

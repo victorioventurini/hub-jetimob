@@ -43,7 +43,9 @@ import {
   type RitualHistoryFilters,
 } from '../hooks/useRitualHistory';
 import { useOccurrenceBySession } from '../hooks/useRitualOccurrences';
-import { useManageableTeamsFlat, useCanResolveDecision } from '../hooks';
+import { useManageableTeamsFlat } from '../hooks';
+import { DecisionFollowUpRow } from '../components/wizards/shared/DecisionFollowUpRow';
+import { useDecisionThread } from '../hooks/useDecisionThread';
 import type { WizardPersona, TeamCheckinDecision, RitualImprovementFeedback } from '../types/wizard';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import { SnapshotReportView } from '../components/ritual-report';
@@ -395,6 +397,8 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
   const isEvaluated = hasParticipantEvaluations(ritual.addendums);
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
   const { data: occurrence } = useOccurrenceBySession(ritual.id);
+  const { mutate: updateFollowUp, isPending: isUpdatingFollowUp } = useUpdateDecisionFollowUp();
+  const { mutate: addThreadMessage, isPending: isAddingMessage } = useDecisionThread();
 
   // Auto-expand when deep-linked
   useEffect(() => {
@@ -516,6 +520,14 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                       key={decision.id}
                       decision={decision}
                       sessionId={ritual.id}
+                      onUpdate={({ sessionId, decisionId, updates }) => {
+                        updateFollowUp({ sessionId, decisionId, updates });
+                      }}
+                      isPending={isUpdatingFollowUp}
+                      onAddMessage={({ sessionId, decisionId, content }) => {
+                        addThreadMessage({ sessionId, decisionId, content });
+                      }}
+                      isAddingMessage={isAddingMessage}
                     />
                   ))}
                 </div>
@@ -538,196 +550,6 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
         </CollapsibleContent>
       </Card>
     </Collapsible>
-  );
-}
-
-// ============================================================
-// DECISION FOLLOW-UP ROW
-// ============================================================
-
-function DecisionFollowUpRow({
-  decision,
-  sessionId,
-}: {
-  decision: TeamCheckinDecision & { followUpStatus?: string };
-  sessionId: string;
-}) {
-  const { mutate: updateFollowUp, isPending } = useUpdateDecisionFollowUp();
-  const { profileId } = useIdentity();
-  const { canResolve, isLoading: permLoading } = useCanResolveDecision(decision.owner?.id);
-  const config = CATEGORY_CONFIG[decision.category];
-  const Icon = config.icon;
-  const isDone = decision.followUpStatus === 'done';
-
-  // Resolution modal state
-  const [showModal, setShowModal] = useState(false);
-  const [resolutionNote, setResolutionNote] = useState('');
-
-  const handleCheckboxClick = () => {
-    if (isDone) {
-      // Uncheck: revert to pending, clear resolution data
-      if (!canResolve) return;
-      updateFollowUp({
-        sessionId,
-        decisionId: decision.id,
-        updates: {
-          followUpStatus: 'pending',
-          resolvedAt: undefined,
-          resolvedBy: undefined,
-          resolutionNote: undefined,
-        } as any,
-      });
-    } else {
-      // Check: open modal for resolution note
-      setResolutionNote('');
-      setShowModal(true);
-    }
-  };
-
-  const handleConfirmResolution = () => {
-    if (!resolutionNote.trim() || !profileId) return;
-
-    // Get current user's name from the useResolveParticipant or identity
-    updateFollowUp({
-      sessionId,
-      decisionId: decision.id,
-      updates: {
-        followUpStatus: 'done',
-        resolvedAt: new Date().toISOString(),
-        resolvedBy: { id: profileId, name: '' }, // name resolved on display
-        resolutionNote: resolutionNote.trim(),
-      } as any,
-    });
-    setShowModal(false);
-  };
-
-  return (
-    <>
-      <div className={cn(
-        'flex items-start gap-3 p-3 rounded-lg border transition-colors',
-        isDone && 'bg-muted/40 opacity-70'
-      )}>
-        {/* Checkbox with permission guard */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Checkbox
-                  checked={isDone}
-                  onCheckedChange={handleCheckboxClick}
-                  disabled={isPending || permLoading || !canResolve}
-                  className="mt-0.5"
-                />
-              </div>
-            </TooltipTrigger>
-            {!canResolve && !permLoading && (
-              <TooltipContent>
-                Apenas o responsável ou seu líder pode resolver
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0 space-y-1">
-          <p className={cn('text-sm', isDone && 'line-through text-muted-foreground')}>
-            {decision.text}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={cn('text-[10px] h-5 px-1.5', config.color)}>
-              <Icon className="h-3 w-3 mr-0.5" />
-              {config.label}
-            </Badge>
-
-            {decision.sourceStep && (
-              <span className="text-[10px] text-muted-foreground">
-                Etapa: {decision.sourceStep}
-              </span>
-            )}
-
-            {decision.owner && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <User className="h-3 w-3" />
-                <OwnerNameResolved ownerId={decision.owner.id} snapshotName={decision.owner.name} />
-              </span>
-            )}
-
-            {decision.deadline && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {format(parseISO(decision.deadline), 'dd/MM/yyyy', { locale: ptBR })}
-              </span>
-            )}
-          </div>
-
-          {/* Resolution details */}
-          {isDone && decision.resolutionNote && (
-            <div className="mt-2 p-2 rounded bg-muted/50 space-y-1">
-              <p className="text-xs italic text-foreground">{decision.resolutionNote}</p>
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                {decision.resolvedBy && (
-                  <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    <OwnerNameResolved ownerId={decision.resolvedBy.id} snapshotName={decision.resolvedBy.name || undefined} />
-                  </span>
-                )}
-                {decision.resolvedAt && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {format(parseISO(decision.resolvedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Status */}
-        <Badge
-          variant={isDone ? 'default' : 'outline'}
-          className={cn('shrink-0 text-[10px]', isDone && 'bg-status-green text-white')}
-        >
-          {isDone ? 'Concluído' : 'Pendente'}
-        </Badge>
-      </div>
-
-      {/* Resolution Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirmar resolução</DialogTitle>
-            <DialogDescription>
-              Descreva o que foi resolvido para esta decisão/registro.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <div className="p-3 rounded-lg border bg-muted/30">
-              <p className="text-sm">{decision.text}</p>
-            </div>
-            <Textarea
-              placeholder="O que foi resolvido?"
-              value={resolutionNote}
-              onChange={(e) => setResolutionNote(e.target.value)}
-              className="min-h-[100px]"
-              autoFocus
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowModal(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmResolution}
-              disabled={!resolutionNote.trim() || isPending}
-            >
-              Confirmar resolução
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
 

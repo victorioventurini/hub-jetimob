@@ -76,3 +76,6 @@ export type { KpiStatusBlocksProps } from './KpiStatusBlocks';
 
 export { TeamDeliveryScorecard, buildTeamScorecardFromOrgObjectives, computeTeamHealth } from './TeamDeliveryScorecard';
 export type { TeamDeliveryScorecardData, TeamDeliveryScorecardProps } from './TeamDeliveryScorecard';
+
+export { DecisionFollowUpRow } from './DecisionFollowUpRow';
+export type { DecisionFollowUpRowProps } from './DecisionFollowUpRow';
