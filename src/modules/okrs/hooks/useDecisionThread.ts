@@ -18,9 +18,6 @@ export function useDecisionThread() {
   const { profileId } = useIdentity();
   const queryClient = useQueryClient();
 
-  // Get display name from profile — fallback handled at render time
-  const { displayName } = useIdentity();
-
   return useMutation({
     mutationFn: async ({
       sessionId,
@@ -47,7 +44,7 @@ export function useDecisionThread() {
         id: crypto.randomUUID(),
         content,
         authorId: profileId,
-        authorName: displayName || 'Usuário',
+        authorName: 'Usuário', // Name resolved at render time via OwnerNameResolved
         createdAt: new Date().toISOString(),
       };
 

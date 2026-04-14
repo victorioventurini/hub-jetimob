@@ -6,12 +6,11 @@
  */
 
 import { ClipboardCheck, Inbox } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/WizardStepHeader';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
-import { useMyPendingDecisions, type PendingDecisionItem } from '@/modules/okrs/hooks/useMyPendingDecisions';
+import { useMyPendingDecisions } from '@/modules/okrs/hooks/useMyPendingDecisions';
 import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks/useRitualHistory';
 import { useDecisionThread } from '@/modules/okrs/hooks/useDecisionThread';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,14 +51,14 @@ export function CollaboratorDecisionsStep({
             title="Pendências"
             description="Decisões e registros atribuídos a você"
             icon={ClipboardCheck}
-            variant="secondary"
+            variant="default"
           />
         }
         footer={
           <WizardStepFooter
             onBack={onBack}
-            onNext={onContinue}
-            nextLabel="Continuar"
+            onPrimary={onContinue}
+            primaryLabel="Continuar"
           />
         }
       >
@@ -80,14 +79,15 @@ export function CollaboratorDecisionsStep({
           title="Pendências"
           description={`${pendingItems.length} decisão(ões)/registro(s) pendente(s) atribuído(s) a você`}
           icon={ClipboardCheck}
-          variant="secondary"
+          variant="default"
         />
       }
       footer={
         <WizardStepFooter
           onBack={onBack}
-          onNext={onContinue}
-          nextLabel="Continuar"
+          onPrimary={onContinue}
+          primaryLabel="Continuar"
+          showSkip
           onSkip={onSkip}
           skipLabel="Pular"
         />
