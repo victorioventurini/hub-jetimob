@@ -1,126 +1,52 @@
 
 
-## Plano: Thread de mensagens em decisões/registros + Step de pendências no check-in do colaborador
+## Correção: Visibilidade cross-BU de perfis
 
-### Pré-checklist canônico ✅
+### Problema
+A policy RLS `profiles_select_bu_v2` verifica se o viewer é membro da BU **primária** do perfil alvo (`profiles.bu_id`). Quando um usuário tem BU primária diferente mas compartilha outra BU via `bu_user_memberships`, a linha é bloqueada. Afeta Gabriel Peixoto e João Victor na BU Jetimob.
 
-| Doc | Status | Impacto |
-|-----|--------|---------|
-| TCR v3.23.0 | ✅ Analisado | Wizard deve usar `FullPageWizardShell`, drafts em `okr_wizard_sessions`, JSONB em `reflection_data` |
-| DEVELOPMENT_STANDARDS v1.29.0 | ✅ Analisado | POST-BU com `useBuScopedSupabase()`, query keys via `queryKeys`, sem `select('*')` |
-| IDENTITY_CONVENTION v2.2.0 | ✅ Analisado | `profileId` para domínio (nunca `auth.uid()`), `realProfileId` para mutations com impersonation |
-| PERMISSIONS_AND_RBAC_MODEL v1.5.0 | ✅ Analisado | `isWildcard` para admin BU, `teams.leader_user_id` para líderes |
-| WIZARD_DEVELOPMENT_GUIDE v1.0.0 | ✅ Analisado | Estrutura `src/modules/okrs/components/wizards/<name>/`, barrel exports |
-| DATA_MODEL_REGISTRY | ✅ Via codebase | `okr_wizard_sessions` com colunas `decisions` e `reflection_data` (JSONB) |
+### Pré-checklist ✅
+- `is_profile_bu_member(profile_id, bu_id)` verifica `bu_user_memberships WHERE profile_id AND bu_id AND deleted_at IS NULL`
+- Índices adequados existem em `bu_user_memberships` (profile_id, bu_id, user_id)
+- `profiles_select_own_v2` já permite ver o próprio perfil via `user_id = auth.uid()`
 
-### Decisão arquitetural
+### Solução
+Adicionar condição OR na policy para permitir visibilidade quando viewer e target compartilham qualquer BU via memberships:
 
-**JSONB** — as mensagens da thread ficam dentro do `TeamCheckinDecision` existente. Consistente com o padrão de persistência em `okr_wizard_sessions.decisions` / `reflection_data`. Zero migrações.
+```sql
+DROP POLICY profiles_select_bu_v2 ON profiles;
 
----
-
-### Etapa 1 — Estender `TeamCheckinDecision` com thread
-
-**Arquivo:** `src/modules/okrs/types/wizard.ts`
-
-```typescript
-// Novo sub-tipo
-export interface DecisionThreadMessage {
-  id: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-}
-
-// Adicionar ao TeamCheckinDecision:
-thread?: DecisionThreadMessage[];
+CREATE POLICY profiles_select_bu_v2 ON profiles
+  FOR SELECT TO authenticated
+  USING (
+    -- Original: viewer é membro da BU primária do perfil
+    is_profile_bu_member(my_profile_id(), bu_id)
+    OR
+    -- Novo: viewer e perfil compartilham qualquer BU via memberships
+    EXISTS (
+      SELECT 1
+      FROM bu_user_memberships my_m
+      JOIN bu_user_memberships their_m 
+        ON their_m.bu_id = my_m.bu_id
+      WHERE my_m.profile_id = my_profile_id()
+        AND their_m.profile_id = profiles.id
+        AND my_m.deleted_at IS NULL
+        AND their_m.deleted_at IS NULL
+    )
+  );
 ```
 
-O campo `resolutionNote` permanece como registro da resolução final. Backward compatible.
+**Nota:** Usa `their_m.profile_id = profiles.id` (não `user_id`) para cobrir inclusive perfis sem login (`user_id = NULL`), consistente com o padrão da `v_bu_active_profiles`.
 
-### Etapa 2 — Extrair `DecisionFollowUpRow` como componente compartilhado
+### Segurança
+- Condição original permanece (OR) — zero breaking change
+- Isolamento mantido: só vê perfis com BU em comum
+- Performance: EXISTS com JOIN em tabela pequena e indexada (`idx_bu_memberships_profile_id`, `idx_bu_memberships_bu`)
 
-**De:** inline em `RitualHistoryPage.tsx` (linhas 548-732)
-**Para:** `src/modules/okrs/components/wizards/shared/DecisionFollowUpRow.tsx`
+### Arquivo impactado
+| Ação | Detalhe |
+|------|---------|
+| Migration SQL | DROP + CREATE policy `profiles_select_bu_v2` |
 
-O componente recebe props genéricas:
-- `decision`, `sessionId`, `onUpdate` (ou usa `useUpdateDecisionFollowUp` internamente)
-- Seção de thread: lista de `DecisionThreadMessage` usando `MessageBubble` de `src/components/messaging`
-- Input para nova mensagem
-- Modal de resolução (obrigatório ao marcar como done)
-- Permissão via `useCanResolveDecision`
-
-**Export via:** `src/modules/okrs/components/wizards/shared/index.ts`
-
-### Etapa 3 — Hook `useDecisionThread`
-
-**Arquivo:** `src/modules/okrs/hooks/useDecisionThread.ts`
-
-- `addMessage(sessionId, decisionId, content)` → append ao array `thread` no JSONB
-- Reutiliza o padrão de `useUpdateDecisionFollowUp`: fetch session → merge thread → update
-- Query key via `queryKeys` (reutiliza `ritualHistoryListPrefix` para invalidação)
-- Usa `useBuScopedSupabase()` (POST-BU)
-- Identity: `profileId` do `useIdentity()` como `authorId`
-
-**Export via:** `src/modules/okrs/hooks/index.ts`
-
-### Etapa 4 — Atualizar `RitualHistoryPage`
-
-**Arquivo:** `src/modules/okrs/pages/RitualHistoryPage.tsx`
-
-- Remover `DecisionFollowUpRow` inline (linhas 548-732)
-- Importar `DecisionFollowUpRow` do compartilhado
-- Zero mudança funcional
-
-### Etapa 5 — Hook `useMyPendingDecisions`
-
-**Arquivo:** `src/modules/okrs/hooks/useMyPendingDecisions.ts`
-
-- Query em `okr_wizard_sessions` com `status = 'completed'` e `decisions` não vazio
-- Filtra client-side: `decision.owner?.id === effectiveUserId` e `followUpStatus !== 'done'`
-- Retorna lista com `sessionId` para cada decisão (necessário para a mutação)
-- Usa `useBuScopedSupabase()`, query key centralizada
-
-### Etapa 6 — Step `CollaboratorDecisionsStep`
-
-**Arquivo:** `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx`
-
-- Usa `useMyPendingDecisions` para buscar pendências
-- Renderiza cada item via `DecisionFollowUpRow` compartilhado (thread + resolução)
-- Empty state quando sem pendências
-- Segue padrão: `WizardStepHeader` + `WizardStepFooter`
-
-### Etapa 7 — Integrar no wizard do colaborador
-
-**Arquivo:** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
-
-- Adicionar step `'decisions'` ao `WizardStep` type e ao `STEP_ORDER`:
-  `context → checkin → kpis → projects → initiatives → decisions → reflection → summary`
-- Auto-skip: se `useMyPendingDecisions` retorna lista vazia, pular para `reflection`
-- Import do novo `CollaboratorDecisionsStep`
-
----
-
-### Arquivos impactados
-
-| Arquivo | Ação |
-|---------|------|
-| `src/modules/okrs/types/wizard.ts` | Adicionar `DecisionThreadMessage` e campo `thread` |
-| `src/modules/okrs/components/wizards/shared/DecisionFollowUpRow.tsx` | **Novo** — extraído + thread |
-| `src/modules/okrs/components/wizards/shared/index.ts` | Export do novo componente |
-| `src/modules/okrs/hooks/useDecisionThread.ts` | **Novo** — append de mensagens na thread |
-| `src/modules/okrs/hooks/useMyPendingDecisions.ts` | **Novo** — decisões pendentes do usuário |
-| `src/modules/okrs/hooks/index.ts` | Exports dos novos hooks |
-| `src/modules/okrs/pages/RitualHistoryPage.tsx` | Substituir inline por import compartilhado |
-| `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx` | **Novo** — step de pendências |
-| `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` | Adicionar step `decisions` com auto-skip |
-
-### Reutilização
-
-- `MessageBubble` de `src/components/messaging` para renderizar mensagens da thread
-- `useCanResolveDecision` existente para permissões
-- `useUpdateDecisionFollowUp` existente para persistência de resolução
-- `useIdentity` para `profileId` e `realProfileId` (mutation guard)
-- Componentes de wizard compartilhados (`WizardStepHeader`, `WizardStepFooter`)
+Zero mudança em código frontend.
 
