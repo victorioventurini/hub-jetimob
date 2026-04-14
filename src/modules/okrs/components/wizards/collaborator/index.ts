@@ -26,3 +26,6 @@ export type { CollaboratorProjectsStepProps } from './CollaboratorProjectsStep';
 
 export { CollaboratorWizardCard } from './CollaboratorWizardCard';
 export type { CollaboratorWizardCardProps } from './CollaboratorWizardCard';
+
+export { CollaboratorDecisionsStep } from './CollaboratorDecisionsStep';
+export type { CollaboratorDecisionsStepProps } from './CollaboratorDecisionsStep';
