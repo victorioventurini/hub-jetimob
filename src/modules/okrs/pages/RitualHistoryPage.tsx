@@ -397,6 +397,8 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
   const isEvaluated = hasParticipantEvaluations(ritual.addendums);
   const label = WIZARD_TYPE_LABELS[ritual.wizardType] || ritual.wizardType;
   const { data: occurrence } = useOccurrenceBySession(ritual.id);
+  const { mutate: updateFollowUp, isPending: isUpdatingFollowUp } = useUpdateDecisionFollowUp();
+  const { mutate: addThreadMessage, isPending: isAddingMessage } = useDecisionThread();
 
   // Auto-expand when deep-linked
   useEffect(() => {
@@ -518,6 +520,14 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
                       key={decision.id}
                       decision={decision}
                       sessionId={ritual.id}
+                      onUpdate={({ sessionId, decisionId, updates }) => {
+                        updateFollowUp({ sessionId, decisionId, updates });
+                      }}
+                      isPending={isUpdatingFollowUp}
+                      onAddMessage={({ sessionId, decisionId, content }) => {
+                        addThreadMessage({ sessionId, decisionId, content });
+                      }}
+                      isAddingMessage={isAddingMessage}
                     />
                   ))}
                 </div>
