@@ -77,6 +77,15 @@ WHERE p.user_id IS NOT NULL AND m.bu_id <> p.bu_id
 
 **REGRA INQUEBRÁVEL:** Esta view NUNCA depende de bu_user_memberships para INCLUIR profiles.
 
+### RLS de Visibilidade (v3.24.0)
+
+A view usa `security_invoker = true`, então a RLS da tabela base `profiles` é aplicada. A policy `profiles_select_bu_v2` permite visibilidade se:
+
+1. Viewer é membro da BU primária do perfil (`is_profile_bu_member(my_profile_id(), profiles.bu_id)`), **OU**
+2. Viewer e perfil compartilham qualquer BU via `bu_user_memberships` (cross-BU visibility via `EXISTS` com JOIN em memberships)
+
+Isso garante que perfis com BU primária diferente mas membership compartilhada sejam visíveis (ex: Gabriel Peixoto com BU primária "Jet Experience" visível para membros da "Jetimob").
+
 ---
 
 ## Health Check View
