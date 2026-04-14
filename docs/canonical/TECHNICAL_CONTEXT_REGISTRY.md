@@ -1,7 +1,7 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.23.0  
-**Última atualização:** 2026-04-07 (v3.23.0 - QBR Executive Report v1.1 + Auth Token Refresh Deduplication v1.0)
+**Versão:** 3.24.0  
+**Última atualização:** 2026-04-14 (v3.24.0 - Cross-BU Profile Visibility Fix v1.0)
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅
 
@@ -412,6 +412,12 @@ Dados do perfil de cada usuário.
 | manager_user_id | uuid | Gestor direto (**auto-atribuído** via trigger `sync_manager_from_team_leader` quando `team_id` é definido e gestor está vazio — ver §4.8) |
 
 **Escopo:** Por BU (via bu_id)
+
+**RLS de Visibilidade (v3.24.0):**
+- `profiles_select_own_v2`: usuário sempre vê o próprio perfil (`user_id = auth.uid()`)
+- `profiles_select_bu_v2`: viewer vê perfil se:
+  1. É membro da BU primária do perfil (`is_profile_bu_member(my_profile_id(), profiles.bu_id)`), **OU**
+  2. Compartilha qualquer BU em comum via `bu_user_memberships` (cross-BU visibility)
 
 **Triggers de Gestão Automática (v3.7.0):**
 
@@ -3571,6 +3577,15 @@ export type { SomeType } from './types';
 - **Documentação removida**:
   - `docs/OKR_CHECKIN_WIZARD_REPORT.md` (obsoleto)
   - `docs/qa/QA_OKR_CHECKIN_WIZARD.md` (obsoleto)
+
+### v3.24.0 (2026-04-14) — Cross-BU Profile Visibility Fix v1.0
+- **Correção de visibilidade cross-BU de perfis**:
+  - **Causa raiz:** Policy RLS `profiles_select_bu_v2` verificava apenas `is_profile_bu_member(my_profile_id(), profiles.bu_id)` — bloqueava perfis cuja BU primária fosse diferente da do viewer, mesmo compartilhando BU via `bu_user_memberships`
+  - **Correção:** Adicionada condição `OR EXISTS` na policy para permitir visibilidade quando viewer e target compartilham qualquer BU via memberships
+  - **Detalhe técnico:** Usa `their_m.profile_id = profiles.id` (não `user_id`) para cobrir perfis sem login (`user_id = NULL`), consistente com `v_bu_active_profiles`
+  - **Segurança:** Isolamento de BU mantido — só vê perfis com BU em comum; condição original preservada (OR)
+  - **Usuários afetados (Jetimob):** Gabriel Peixoto, João Victor Ehlers Machado (BU primária Jet Experience, membership em Jetimob)
+  - **Arquivos:** Migration SQL (DROP + CREATE policy `profiles_select_bu_v2`)
 
 ### v3.23.0 (2026-04-07)
 - **QBR Executive Report v1.1** — Relatório executivo de QBR com narrativa IA:

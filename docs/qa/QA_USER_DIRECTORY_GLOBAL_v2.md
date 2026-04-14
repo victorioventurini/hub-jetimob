@@ -1,6 +1,7 @@
-# QA - User Directory Global v2
+# QA - User Directory Global v2.1
 
-> **Data:** 2026-01-09  
+> **Data:** 2026-04-14  
+> **Última atualização:** 2026-04-14 (v3.24.0 - Cross-BU Visibility Fix)
 > **Status:** ✅ APROVADO
 
 ## Objetivo
@@ -34,18 +35,26 @@ O único critério de exclusão é: `employment_status = 'terminated'` ou `delet
 | 2.1 | Usuário com employment_status = terminated | NÃO aparece | ✅ PASS |
 | 2.2 | Usuário com deleted_at preenchido | NÃO aparece | ✅ PASS |
 
-### 3. Isolamento de BU
+### 3. Usuário Cross-BU (BU primária diferente, membership compartilhada) — v3.24.0
 
 | Cenário | Descrição | Resultado | Status |
 |---------|-----------|-----------|--------|
-| 3.1 | Troca de BU não vaza dados | Profiles da BU anterior não aparecem | ✅ PASS |
-| 3.2 | RLS aplicado via view | View filtra por bu_id automaticamente | ✅ PASS |
+| 3.1 | Usuário com BU primária X mas membership em BU Y | Aparece na lista da BU Y | ✅ PASS |
+| 3.2 | Viewer da BU Y vê perfil do usuário cross-BU | Perfil visível (RLS `profiles_select_bu_v2` com OR EXISTS) | ✅ PASS |
+| 3.3 | Usuário cross-BU NÃO aparece em BU Z (sem membership) | NÃO aparece | ✅ PASS |
 
-### 4. Audit Script
+### 4. Isolamento de BU
 
 | Cenário | Descrição | Resultado | Status |
 |---------|-----------|-----------|--------|
-| 4.1 | audit-user-directory retorna 0 findings | Sem violações detectadas | ✅ PASS |
+| 4.1 | Troca de BU não vaza dados | Profiles da BU anterior não aparecem | ✅ PASS |
+| 4.2 | RLS aplicado via view | View filtra por bu_id automaticamente | ✅ PASS |
+
+### 5. Audit Script
+
+| Cenário | Descrição | Resultado | Status |
+|---------|-----------|-----------|--------|
+| 5.1 | audit-user-directory retorna 0 findings | Sem violações detectadas | ✅ PASS |
 
 ---
 
@@ -67,6 +76,15 @@ WHERE p.user_id IS NOT NULL AND m.bu_id <> p.bu_id
 ```
 
 **REGRA INQUEBRÁVEL:** Esta view NUNCA depende de bu_user_memberships para INCLUIR profiles.
+
+### RLS de Visibilidade (v3.24.0)
+
+A view usa `security_invoker = true`, então a RLS da tabela base `profiles` é aplicada. A policy `profiles_select_bu_v2` permite visibilidade se:
+
+1. Viewer é membro da BU primária do perfil (`is_profile_bu_member(my_profile_id(), profiles.bu_id)`), **OU**
+2. Viewer e perfil compartilham qualquer BU via `bu_user_memberships` (cross-BU visibility via `EXISTS` com JOIN em memberships)
+
+Isso garante que perfis com BU primária diferente mas membership compartilhada sejam visíveis (ex: Gabriel Peixoto com BU primária "Jet Experience" visível para membros da "Jetimob").
 
 ---
 
@@ -107,4 +125,13 @@ Detecta:
 
 ## Conclusão
 
-**QA APROVADO** - Todos os usuários cadastrados na BU aparecem nas listas, independentemente de primeiro acesso, onboarding ou membership.
+**QA APROVADO** - Todos os usuários cadastrados na BU aparecem nas listas, independentemente de primeiro acesso, onboarding, membership ou BU primária (cross-BU visibility via RLS v3.24.0).
+
+---
+
+## Histórico de Versões
+
+| Versão | Data | Mudanças |
+|--------|------|----------|
+| v2.1 | 2026-04-14 | Cross-BU visibility fix — cenários 3.x adicionados, RLS `profiles_select_bu_v2` com OR EXISTS |
+| v2.0 | 2026-01-09 | Versão inicial — view canônica, audit script, componentes padronizados |
