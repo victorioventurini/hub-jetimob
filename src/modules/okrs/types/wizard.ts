@@ -588,6 +588,17 @@ export interface QbrPostDraftData {
   krAdjustments?: Record<string, QbrPostKrAdjustment[]>;
 }
 
+/**
+ * Mensagem individual na thread de acompanhamento de uma decisão/registro.
+ */
+export interface DecisionThreadMessage {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
 export interface TeamCheckinDecision {
   id: string;
   text: string;
@@ -604,6 +615,8 @@ export interface TeamCheckinDecision {
   resolvedAt?: string;
   resolvedBy?: { id: string; name: string };
   resolutionNote?: string;
+  /** Thread de mensagens de acompanhamento (JSONB) */
+  thread?: DecisionThreadMessage[];
 }
 
 export interface TeamCheckinChecklist {
