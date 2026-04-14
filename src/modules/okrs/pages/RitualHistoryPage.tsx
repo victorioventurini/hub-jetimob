@@ -553,9 +553,6 @@ function RitualHistoryCard({ ritual, autoExpand = false }: { ritual: RitualHisto
   );
 }
 
-// DecisionFollowUpRow — now uses shared component
-// Import is at the top of the file
-
 // ============================================================
 // SNAPSHOT SUMMARY
 // ============================================================
