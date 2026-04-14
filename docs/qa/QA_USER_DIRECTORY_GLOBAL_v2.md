@@ -1,6 +1,7 @@
-# QA - User Directory Global v2
+# QA - User Directory Global v2.1
 
-> **Data:** 2026-01-09  
+> **Data:** 2026-04-14  
+> **Última atualização:** 2026-04-14 (v3.24.0 - Cross-BU Visibility Fix)
 > **Status:** ✅ APROVADO
 
 ## Objetivo
@@ -34,18 +35,26 @@ O único critério de exclusão é: `employment_status = 'terminated'` ou `delet
 | 2.1 | Usuário com employment_status = terminated | NÃO aparece | ✅ PASS |
 | 2.2 | Usuário com deleted_at preenchido | NÃO aparece | ✅ PASS |
 
-### 3. Isolamento de BU
+### 3. Usuário Cross-BU (BU primária diferente, membership compartilhada) — v3.24.0
 
 | Cenário | Descrição | Resultado | Status |
 |---------|-----------|-----------|--------|
-| 3.1 | Troca de BU não vaza dados | Profiles da BU anterior não aparecem | ✅ PASS |
-| 3.2 | RLS aplicado via view | View filtra por bu_id automaticamente | ✅ PASS |
+| 3.1 | Usuário com BU primária X mas membership em BU Y | Aparece na lista da BU Y | ✅ PASS |
+| 3.2 | Viewer da BU Y vê perfil do usuário cross-BU | Perfil visível (RLS `profiles_select_bu_v2` com OR EXISTS) | ✅ PASS |
+| 3.3 | Usuário cross-BU NÃO aparece em BU Z (sem membership) | NÃO aparece | ✅ PASS |
 
-### 4. Audit Script
+### 4. Isolamento de BU
 
 | Cenário | Descrição | Resultado | Status |
 |---------|-----------|-----------|--------|
-| 4.1 | audit-user-directory retorna 0 findings | Sem violações detectadas | ✅ PASS |
+| 4.1 | Troca de BU não vaza dados | Profiles da BU anterior não aparecem | ✅ PASS |
+| 4.2 | RLS aplicado via view | View filtra por bu_id automaticamente | ✅ PASS |
+
+### 5. Audit Script
+
+| Cenário | Descrição | Resultado | Status |
+|---------|-----------|-----------|--------|
+| 5.1 | audit-user-directory retorna 0 findings | Sem violações detectadas | ✅ PASS |
 
 ---
 
