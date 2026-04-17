@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, forwardRef } from "react";
-import { useNavigate, useLocation, type Location } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, type Location } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -53,10 +53,15 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   usePageTitle("Login", {
     skipBu: true
   });
+  const [searchParams] = useSearchParams();
+  const emailFromUrl = searchParams.get("email");
   const savedEmail = getSavedEmail();
-  const [email, setEmail] = useState(savedEmail || "");
+  const initialEmail = emailFromUrl || savedEmail || "";
+  const [email, setEmail] = useState(initialEmail);
   const [isLoading, setIsLoading] = useState(false);
-  const [authState, setAuthState] = useState<AuthState>(savedEmail ? "returning" : "first-access");
+  const [authState, setAuthState] = useState<AuthState>(
+    emailFromUrl ? "first-access" : (savedEmail ? "returning" : "first-access")
+  );
   const [domainError, setDomainError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [authTimeout, setAuthTimeout] = useState(false);
