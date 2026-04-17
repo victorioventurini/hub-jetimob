@@ -139,9 +139,12 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
     setIsLoading(false);
     
     if (error) {
+      const msg = (error.message || '').toLowerCase();
       // Check if it's a domain/authorization error from edge function
-      if (error.message?.includes("não está autorizado") || error.message?.includes("não tem acesso")) {
+      if (msg.includes("não está autorizado") || msg.includes("não tem acesso")) {
         setDomainError("Esse e-mail não tem acesso ao Hub.");
+      } else if (msg.includes("demorou demais") || msg.includes("conectar ao servidor") || msg.includes("conexão")) {
+        toast.error(error.message);
       } else {
         toast.error("Algo deu errado. Tenta de novo?");
       }
