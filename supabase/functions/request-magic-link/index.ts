@@ -22,6 +22,29 @@ interface MagicLinkRequest {
   redirectTo: string;
 }
 
+/**
+ * URL_DETONATION_DOMAINS
+ *
+ * Lista de domínios cujos servidores de email usam gateways de proteção
+ * (Mimecast / Proofpoint / Microsoft Defender ATP) que fazem "URL detonation":
+ * escaneiam o link clicando nele em sandbox ANTES de entregar — consumindo
+ * o token single-use do magic link.
+ *
+ * Para esses domínios, o callback aponta para /auth/confirm em vez de
+ * /auth/callback, exigindo um clique manual antes de chamar verifyOtp.
+ *
+ * Adicionar novos domínios aqui é seguro: backward-compatible e zero migração.
+ */
+const URL_DETONATION_DOMAINS = [
+  "ferrigoloadvogados.com.br",
+];
+
+function shouldUseConfirmFlow(email: string): boolean {
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!domain) return false;
+  return URL_DETONATION_DOMAINS.includes(domain);
+}
+
 // Check if email domain is allowed in any active BU
 // OPTIMIZED v2: ALL queries in parallel, no sequential follow-ups
 async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
@@ -234,16 +257,21 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   }
 
   // Build callback URL with token_hash as query param to survive SendGrid click tracking.
+  // For domains protected by URL detonation gateways, route to /auth/confirm
+  // (manual confirmation page) instead of /auth/callback (auto-verify).
   const redirectUrl = new URL(redirectTo);
   const nextPath = `${redirectUrl.pathname}${redirectUrl.search}` || "/";
 
-  const callbackUrl = new URL("/auth/callback", redirectUrl.origin);
+  const useConfirm = shouldUseConfirmFlow(email);
+  const callbackPath = useConfirm ? "/auth/confirm" : "/auth/callback";
+
+  const callbackUrl = new URL(callbackPath, redirectUrl.origin);
   callbackUrl.searchParams.set("next", nextPath);
   callbackUrl.searchParams.set("token_hash", linkData.properties.hashed_token);
   callbackUrl.searchParams.set("type", "magiclink");
 
   const magicLink = callbackUrl.toString();
-  console.log(`[${requestId}] Magic link generated successfully for: ${email}`);
+  console.log(`[${requestId}] Magic link generated for: ${email} (flow: ${useConfirm ? "confirm" : "auto"})`);
 
   // Get display name from email
   const displayName = email.split('@')[0].split('.')[0];

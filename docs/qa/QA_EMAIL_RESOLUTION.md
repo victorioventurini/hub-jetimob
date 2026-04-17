@@ -105,3 +105,75 @@ Verify that email notifications use the correct email field (`work_email`) and t
 
 **Tester:** _______________
 **Date:** _______________
+
+---
+
+## Magic Link Troubleshooting (URL Detonation) — v3.25.0
+
+### Symptoms
+User reports one of:
+- "Recebi o e-mail mas ao clicar no link dá erro"
+- "Failed to fetch" no console
+- "Link inválido / expirado" mesmo no primeiro clique
+- Login funcionava normalmente até poucos dias atrás e parou de repente
+
+### Diagnostic Flow
+
+**Step 1: Confirm email delivery**
+- Check Edge Function logs for `request-magic-link`: search for the user's email
+- Verify success log: `[<requestId>] Magic link sent successfully to: <email>`
+- Ask user to confirm email arrived (check spam/quarantine)
+
+**Step 2: Identify gateway / domain pattern**
+Check the email domain (`@dominio.com.br`). High-risk domains:
+- Law firms (`advogados`, `advocacia`, `legal`)
+- Accounting firms (`contabilidade`, `contadores`)
+- Healthcare (`saude`, `medico`, `hospital`)
+- Government (`gov.br`, `mp.br`)
+- Banks / financial institutions
+
+These typically run Mimecast, Proofpoint, or Microsoft Defender ATP — all of which detonate URLs.
+
+**Step 3: Verify the symptom matches detonation**
+- ✅ Token consumed before user clicks → first real click returns `otp_expired`
+- ✅ "Failed to fetch" → indicates CORS/network block OR consumed token (verifyOtp throws fetch error when token already used in some cases)
+
+**Step 4: Apply mitigation**
+Add the domain to `URL_DETONATION_DOMAINS` in `supabase/functions/request-magic-link/index.ts`:
+
+```ts
+const URL_DETONATION_DOMAINS = [
+  "ferrigoloadvogados.com.br",
+  "<novo-dominio.com.br>",
+];
+```
+
+After deploy, the user's next magic link will route to `/auth/confirm` (manual click required) instead of `/auth/callback`.
+
+**Step 5: Validate**
+- Ask user to request a new magic link
+- Verify the URL in the email points to `/auth/confirm` (not `/auth/callback`)
+- User clicks link → sees "Acessar o Hub" button → clicks → redirects to `/auth/callback` → session established
+
+### Verification Checklist
+
+| Check | Status |
+|-------|--------|
+| Domain added to `URL_DETONATION_DOMAINS` | [ ] |
+| Edge function `request-magic-link` redeployed | [ ] |
+| New magic link points to `/auth/confirm` | [ ] |
+| User successfully authenticated after manual click | [ ] |
+
+### Fallback Diagnostics (if mitigation insufficient)
+
+If user still cannot authenticate after adding domain:
+1. Ask user to open link in **incognito/anonymous window** (rules out browser extensions)
+2. Ask user to try from a **different network** (e.g., mobile 4G — rules out corporate firewall blocking `*.supabase.co`)
+3. Check `AuthCallback.tsx` console log for the specific error category (`network` vs `expired` vs `generic`)
+4. If `network` persists across networks: investigate corporate DNS / certificate pinning
+5. As a last resort, instruct user's IT to allowlist `*.supabase.co` and the project subdomain
+
+### Reference
+- TCR §1.2.1 URL Detonation Mitigation (v3.25.0)
+- Memory: `mem://features/auth/url-detonation-mitigation`
+

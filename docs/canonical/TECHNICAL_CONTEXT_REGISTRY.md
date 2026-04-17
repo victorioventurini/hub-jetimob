@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.24.0  
-**Última atualização:** 2026-04-14 (v3.24.0 - Cross-BU Profile Visibility Fix v1.0)
+**Versão:** 3.25.0  
+**Última atualização:** 2026-04-17 (v3.25.0 - URL Detonation Mitigation v1.0 - Magic Link double opt-in click para domínios protegidos por gateway corporativo)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅ | **URL Detonation Mitigation v1.0** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -77,11 +77,50 @@
   3. **Para usuários internos:** Verifica se existe perfil pré-cadastrado em `profiles`
   4. Se válido, gera Magic Link via `supabase.auth.admin.generateLink()`
   5. Envia link por email via SendGrid (com Resend como fallback)
-  6. Usuário clica no link e é redirecionado para `/auth/callback`
+  6. Usuário clica no link e é redirecionado para `/auth/callback` (ou `/auth/confirm` para domínios protegidos — ver §1.2.1)
   7. `AuthCallback.tsx` verifica o `token_hash` via `supabase.auth.verifyOtp()` para estabelecer sessão
   8. Profile é criado automaticamente via trigger `handle_new_user()` (se não existir), com `user_type = 'external'` e `employment_status = 'external'` para usuários externos
 
 > **Nota (v2.65.0):** O sistema usa Magic Link com `token_hash` no URL (não hash fragment) para evitar problemas com SendGrid click tracking que remove fragmentos de URL.
+
+#### 1.2.1 URL Detonation Mitigation (v3.25.0)
+
+**Problema:** Gateways corporativos de proteção de email (Mimecast, Proofpoint, Microsoft Defender ATP) escaneiam links recebidos clicando neles em sandbox **antes** de entregar a mensagem ao destinatário. Como `/auth/callback` chama `verifyOtp` automaticamente no `useEffect`, o **scanner consome o token single-use** — quando o usuário real clica, recebe `otp_expired` ou erro de rede ("Failed to fetch").
+
+**Solução:** Fluxo dual no `request-magic-link/index.ts` baseado em uma allowlist de domínios afetados:
+
+| Domínio | Callback URL | Comportamento |
+|---------|--------------|---------------|
+| Padrão | `/auth/callback` | Auto-verifica token no mount (UX inalterada) |
+| Em `URL_DETONATION_DOMAINS` | `/auth/confirm` | Renderiza botão "Acessar o Hub" — só verifica após clique manual |
+
+**Página `/auth/confirm`** (`src/pages/AuthConfirm.tsx`):
+- **NÃO chama `verifyOtp` no mount**
+- Renderiza botão "Acessar o Hub"
+- Ao clique → navega para `/auth/callback?token_hash=...&type=magiclink&next=...` preservando query params
+- Scanners automatizados não clicam no botão → token preservado para o usuário real
+
+**Como adicionar novo domínio:**
+```ts
+// supabase/functions/request-magic-link/index.ts
+const URL_DETONATION_DOMAINS = [
+  "ferrigoloadvogados.com.br",
+  // adicionar novos domínios aqui
+];
+```
+
+Mudança backward-compatible: zero migração, zero impacto em outros domínios.
+
+**Tratamento de erros em `AuthCallback.tsx`** — função `classifyError()` separa em 3 categorias:
+- **`network`** (`Failed to fetch`, `NetworkError`) → "Conexão bloqueada. Tente outra rede ou modo anônimo."
+- **`expired`** (`otp_expired`, `Token has expired`, `invalid_token`) → "Link expirado ou já usado."
+- **`generic`** → fallback genérico
+
+Cada categoria exibe CTAs específicos: botão "Solicitar novo link" preserva email via `?email=` ao redirecionar para `/auth`.
+
+**Casos de uso típicos:** escritórios de advocacia, contabilidade, saúde e órgãos governamentais. Quando um usuário reportar "recebi o link mas dá erro ao clicar", classificar primeiro pelo domínio antes de investigar bugs de aplicação.
+
+
 
 > **Nota (v2.43.0):** Usuários internos (domínio em `allowed_email_domains`) agora precisam ter perfil pré-cadastrado em `profiles` para receber Magic Link. Isso impede que qualquer email com domínio válido acesse o sistema sem convite prévio.
 
