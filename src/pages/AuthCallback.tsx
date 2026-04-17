@@ -6,6 +6,7 @@ import { AlertCircle, Mail, WifiOff } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Button } from "@/components/ui/button";
 import { initSessionContext } from "@/lib/analytics";
+import { normalizeAuthNext } from "@/lib/authRedirect";
 
 type AuthErrorKind = "expired" | "network" | "generic";
 
@@ -71,10 +72,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
   const [isProcessing, setIsProcessing] = useState(true);
 
   const next = useMemo(() => {
-    const raw = searchParams.get("next") || "/";
-    // Only allow internal, absolute paths. Reject protocol-relative URLs like "//evil.com".
-    if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
-    return raw;
+    return normalizeAuthNext(searchParams.get("next"));
   }, [searchParams]);
 
   // Tenta extrair email da sessão (se já houver) ou do JWT do token_hash (não disponível)

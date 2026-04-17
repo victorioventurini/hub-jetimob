@@ -2,6 +2,7 @@ import { useMemo, useState, forwardRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { normalizeAuthNext } from "@/lib/authRedirect";
 
 /**
  * AuthConfirm
@@ -26,9 +27,7 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
   const type = searchParams.get("type") || "magiclink";
 
   const next = useMemo(() => {
-    const raw = searchParams.get("next") || "/";
-    if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
-    return raw;
+    return normalizeAuthNext(searchParams.get("next"));
   }, [searchParams]);
 
   const isValidLink = Boolean(tokenHash && type);

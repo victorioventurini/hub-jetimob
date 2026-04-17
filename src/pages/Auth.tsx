@@ -9,6 +9,7 @@ import { ArrowRight, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
+import { normalizeAuthNext } from "@/lib/authRedirect";
 
 const STORAGE_KEY = "hub_last_email";
 const STORAGE_TTL_DAYS = 30;
@@ -121,8 +122,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
       : "/";
 
-    const next = encodeURIComponent(target);
-    return `${window.location.origin}/auth/callback?next=${next}`;
+    return `${window.location.origin}${normalizeAuthNext(target)}`;
   }, [location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
