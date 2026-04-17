@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, forwardRef } from "react";
-import { useNavigate, useLocation, type Location } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, type Location } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
