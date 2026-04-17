@@ -45,6 +45,25 @@ function shouldUseConfirmFlow(email: string): boolean {
   return URL_DETONATION_DOMAINS.includes(domain);
 }
 
+function normalizeNextPath(raw: string | null | undefined): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) {
+    return "/";
+  }
+
+  try {
+    const url = new URL(raw, "https://hub.jetimob.com");
+    const nestedNext = url.searchParams.get("next");
+
+    if ((url.pathname === "/auth/callback" || url.pathname === "/auth/confirm") && nestedNext) {
+      return normalizeNextPath(nestedNext);
+    }
+
+    return `${url.pathname}${url.search}${url.hash}` || "/";
+  } catch {
+    return "/";
+  }
+}
+
 // Check if email domain is allowed in any active BU
 // OPTIMIZED v2: ALL queries in parallel, no sequential follow-ups
 async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: string | null; isPartnerContact: boolean }> {
@@ -260,7 +279,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   // For domains protected by URL detonation gateways, route to /auth/confirm
   // (manual confirmation page) instead of /auth/callback (auto-verify).
   const redirectUrl = new URL(redirectTo);
-  const nextPath = `${redirectUrl.pathname}${redirectUrl.search}` || "/";
+  const nextPath = normalizeNextPath(`${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`);
 
   const useConfirm = shouldUseConfirmFlow(email);
   const callbackPath = useConfirm ? "/auth/confirm" : "/auth/callback";
