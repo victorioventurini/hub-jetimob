@@ -1,69 +1,44 @@
 
+Diagnóstico confirmado após pré-checklist canônico:
+- TCR v3.25.0 lido, incluindo a seção de URL Detonation Mitigation.
+- DEVELOPMENT_STANDARDS v1.29.0, IDENTITY_CONVENTION v2.2.0, PERMISSIONS_AND_RBAC_MODEL v1.5.0 e DATA_MODEL_REGISTRY consultados.
+- Fluxo atual revisado em `src/App.tsx`, `src/pages/Auth.tsx`, `src/pages/AuthCallback.tsx`, `src/pages/AuthConfirm.tsx`, `src/routes/public.routes.tsx` e `supabase/functions/request-magic-link/index.ts`.
 
-## Plano: Mitigar URL Detonation no Magic Link da Mariana
+Problema real:
+- O domínio `ferrigoloadvogados.com.br` já está configurado para cair em `/auth/confirm`.
+- Porém a rota `/auth/confirm` foi adicionada apenas em `src/routes/public.routes.tsx`.
+- O app real não usa esse arquivo no bootstrap público: `src/App.tsx` ainda hardcodeia as rotas públicas e NÃO registra `/auth/confirm`.
+- Resultado: quando Mariana abre o magic link, a URL `/auth/confirm?...` não encontra rota pública e cai no catch-all autenticado. Isso quebra justamente a mitigação criada para ela.
 
-### Pré-checklist canônico ✅
-- TCR v3.24.0 consultado — fluxo de magic link via `request-magic-link` documentado
-- `request-magic-link/index.ts` revisado — gera link customizado para `/auth/callback?token_hash=...&type=magiclink&next=/`
-- `auth-email-hook/index.ts` revisado — só dispara em fluxos nativos da Supabase, não no fluxo da Mariana
-- `AuthCallback.tsx` revisado — usa `verifyOtp({ token_hash, type: "magiclink" })`, mas não diferencia erros
-- `email-sender.ts` revisado — `shouldPreferResend()` já tem `jetimob.com`, padrão pronto para reuso
-- `useAuth.tsx` revisado — chama `request-magic-link` via `supabase.functions.invoke`
-- DEVELOPMENT_STANDARDS, regras inquebráveis 7-8 (URL state, edge functions com JWT/correlation-id) — respeitadas
+Plano de correção:
+1. Corrigir o roteamento público em `src/App.tsx`
+   - Registrar explicitamente `/auth/confirm` junto de `/auth` e `/auth/callback`, ou
+   - Preferencialmente passar a consumir `publicRoutes` centralizado para evitar divergência futura entre `App.tsx` e `src/routes/public.routes.tsx`.
 
-### Causa raiz (refinada)
-Gateways corporativos de proteção (Mimecast/Proofpoint/Microsoft Defender ATP) fazem **URL detonation**: escaneiam o link clicando nele em sandbox antes de entregar. Como a página `/auth/callback` executa `verifyOtp` no `useEffect` automaticamente, o **scanner consome o token single-use**. Quando a Mariana clica de verdade, o Supabase retorna `otp_expired` e o `verifyOtp` falha em nível de rede ("Failed to fetch" pode também indicar bloqueio CORS/firewall corporativo).
+2. Eliminar a duplicação de fonte de verdade das rotas públicas
+   - Unificar o bootstrap para que novas rotas públicas sejam definidas em um único lugar.
+   - Isso evita regressão igual à atual quando uma rota é criada mas não é realmente montada no app.
 
-### Solução em 3 frentes
+3. Ajustar pequenos pontos de UX do fluxo de auth
+   - Fazer `/auth` ler `?email=` para o CTA “Solicitar novo link” funcionar de ponta a ponta.
+   - Garantir que `/auth/confirm` preserve `next` e leve corretamente para `/auth/callback`.
 
-#### Frente 1 — UX: Mensagens de erro acionáveis (`AuthCallback.tsx`)
-Detectar e tratar separadamente:
-- `TypeError: Failed to fetch` → "Conexão bloqueada. Tente outra rede ou modo anônimo."
-- `otp_expired` / `invalid_token` / `Token has expired` → "Este link já foi usado ou expirou. Solicite um novo."
-- Adicionar botão "Solicitar novo link" que volta para `/auth` com email pré-preenchido (via `?email=` na URL).
+4. Revisar o erro de runtime visto no console
+   - O log mostra erro em `<AppRoutes>`, coerente com problema de roteamento.
+   - Na implementação, validar se o crash desaparece após registrar a rota pública corretamente.
 
-#### Frente 2 — Mitigação raiz: Página de confirmação intermediária (double opt-in click)
-Quebrar o auto-`verifyOtp` em duas etapas para domínios sensíveis:
+Arquivos a alterar:
+- `src/App.tsx` — correção principal
+- `src/pages/Auth.tsx` — suporte a `?email=` e refinamento do retry
+- Opcionalmente `src/routes/public.routes.tsx` / `src/routes/index.ts` — consolidar fonte única de verdade
 
-1. **Modificar `request-magic-link/index.ts`**:
-   - Definir array `URL_DETONATION_DOMAINS` com `["ferrigoloadvogados.com.br"]` (extensível)
-   - Quando o domínio do destinatário estiver na lista, gerar `callbackUrl` apontando para `/auth/confirm` em vez de `/auth/callback`
-   - Manter mesmos query params (`token_hash`, `type`, `next`)
+Validação após implementar:
+- Abrir um link `/auth/confirm?...` e verificar que a tela “Confirme seu acesso” aparece.
+- Clicar em “Acessar o Hub” e confirmar navegação para `/auth/callback`.
+- Validar que o fluxo continua normal para domínios fora de `URL_DETONATION_DOMAINS`.
+- Validar que “Solicitar novo link” volta para `/auth` com e-mail preenchido.
 
-2. **Criar nova página `src/pages/AuthConfirm.tsx`**:
-   - **Não chama `verifyOtp` no mount** — apenas renderiza um botão "Acessar o Hub"
-   - Só ao clicar manualmente, faz `navigate("/auth/callback?token_hash=...&type=magiclink&next=...")` ou chama `verifyOtp` diretamente
-   - Scanner automatizado nunca clica no botão → token preservado para o usuário real
-
-3. **Registrar `/auth/confirm` em `src/routes/public.routes.tsx`** como rota pública.
-
-#### Frente 3 — Documentação canônica
-- Bump `TECHNICAL_CONTEXT_REGISTRY.md` para **v3.25.0** documentando:
-  - Padrão de URL detonation mitigation
-  - Lista `URL_DETONATION_DOMAINS` e como adicionar domínios
-  - Fluxo dual: `/auth/callback` (auto) vs `/auth/confirm` (manual)
-- Atualizar `docs/qa/QA_EMAIL_RESOLUTION.md` com cenário de troubleshooting de magic link bloqueado por gateway corporativo
-- Criar memory `mem://features/auth/url-detonation-mitigation` resumindo o padrão
-
-### Arquivos impactados
-
-| Arquivo | Tipo | Mudança |
-|---------|------|---------|
-| `src/pages/AuthCallback.tsx` | edit | Detectar `Failed to fetch` e `otp_expired`; CTA "Solicitar novo link" |
-| `supabase/functions/request-magic-link/index.ts` | edit | Adicionar `URL_DETONATION_DOMAINS` e rotear para `/auth/confirm` |
-| `src/pages/AuthConfirm.tsx` | new | Página intermediária com botão manual antes do `verifyOtp` |
-| `src/routes/public.routes.tsx` | edit | Registrar rota `/auth/confirm` |
-| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` | edit | Bump v3.25.0 + seção URL Detonation |
-| `docs/qa/QA_EMAIL_RESOLUTION.md` | edit | Cenário de gateway corporativo |
-| `mem://features/auth/url-detonation-mitigation` | new | Memory canônica do padrão |
-
-### Por que esta abordagem
-- **Frente 1** é zero risco e dá autoatendimento imediato a qualquer usuário afetado por qualquer causa
-- **Frente 2** elimina a causa raiz para a Mariana sem alterar UX dos demais usuários (apenas o domínio listado vê o passo extra)
-- **Frente 3** garante rastreabilidade para o próximo caso similar (escritórios de advocacia, contabilidade, saúde tendem a ter os mesmos gateways)
-
-### Backward compatibility
-- `/auth/callback` continua funcionando para todos os outros domínios (zero regressão)
-- Fallback automático: se o domínio não está em `URL_DETONATION_DOMAINS`, fluxo atual permanece idêntico
-- Nenhuma migração de banco necessária
-
+Impacto esperado:
+- Corrige o bloqueio específico da Mariana sem mexer em banco nem em permissões.
+- Mantém compatibilidade com os outros domínios.
+- Fecha a principal regressão do v3.25.0: rota criada, mas não montada no app.
