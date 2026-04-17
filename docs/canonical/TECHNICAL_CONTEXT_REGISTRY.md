@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.25.0  
-**Última atualização:** 2026-04-17 (v3.25.0 - URL Detonation Mitigation v1.0 - Magic Link double opt-in click para domínios protegidos por gateway corporativo)
+**Versão:** 3.25.1  
+**Última atualização:** 2026-04-17 (v3.25.1 - URL Detonation Mitigation Hardening - centralização de rotas públicas em fonte única de verdade + `normalizeAuthNext` para neutralizar `next` aninhados em magic links legados)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅ | **URL Detonation Mitigation v1.0** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅ | **URL Detonation Mitigation v1.1** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -83,7 +83,7 @@
 
 > **Nota (v2.65.0):** O sistema usa Magic Link com `token_hash` no URL (não hash fragment) para evitar problemas com SendGrid click tracking que remove fragmentos de URL.
 
-#### 1.2.1 URL Detonation Mitigation (v3.25.0)
+#### 1.2.1 URL Detonation Mitigation (v3.25.1)
 
 **Problema:** Gateways corporativos de proteção de email (Mimecast, Proofpoint, Microsoft Defender ATP) escaneiam links recebidos clicando neles em sandbox **antes** de entregar a mensagem ao destinatário. Como `/auth/callback` chama `verifyOtp` automaticamente no `useEffect`, o **scanner consome o token single-use** — quando o usuário real clica, recebe `otp_expired` ou erro de rede ("Failed to fetch").
 
@@ -116,9 +116,24 @@ Mudança backward-compatible: zero migração, zero impacto em outros domínios.
 - **`expired`** (`otp_expired`, `Token has expired`, `invalid_token`) → "Link expirado ou já usado."
 - **`generic`** → fallback genérico
 
-Cada categoria exibe CTAs específicos: botão "Solicitar novo link" preserva email via `?email=` ao redirecionar para `/auth`.
+Cada categoria exibe CTAs específicos: botão "Solicitar novo link" preserva email via `?email=` ao redirecionar para `/auth`. A página `/auth` consome `?email=` via `useSearchParams` para pré-preencher o input no retry.
 
 **Casos de uso típicos:** escritórios de advocacia, contabilidade, saúde e órgãos governamentais. Quando um usuário reportar "recebi o link mas dá erro ao clicar", classificar primeiro pelo domínio antes de investigar bugs de aplicação.
+
+##### 1.2.1.1 Hardening defensivo (v3.25.1)
+
+Após regressão observada em produção (rota `/auth/confirm` criada na v3.25.0 mas não montada no bootstrap, e magic links legados com `next=/auth/callback?next=...` aninhado), foram adicionadas duas camadas defensivas:
+
+**1. Fonte única de verdade para rotas públicas**
+- `src/routes/public.routes.tsx` exporta `publicRoutes` (JSX `<Route>`) e `PUBLIC_PATHS` (lista canônica).
+- `src/App.tsx` consome `{publicRoutes}` em vez de hardcoded — qualquer nova rota pública (ex.: `/auth/confirm`) passa a ser montada automaticamente.
+- **Regra:** novas rotas públicas DEVEM ser adicionadas exclusivamente em `src/routes/public.routes.tsx`. Editar `App.tsx` para registrar rota pública é violação.
+
+**2. Normalização de `next` aninhado (`src/lib/authRedirect.ts`)**
+- `normalizeAuthNext(raw)` recursivamente desempacota `next` que aponte para `/auth/callback` ou `/auth/confirm`, retornando o destino real (ou `/`).
+- Rejeita absolutos (`http://...`) e protocol-relative (`//evil.com`) — somente paths internos `/...`.
+- Aplicado em `Auth.tsx`, `AuthCallback.tsx`, `AuthConfirm.tsx` e (server-side) em `request-magic-link/index.ts` antes de montar `redirectTo`.
+- Garante que mesmo bundle antigo do cliente que envie `redirectTo` aninhado gere link de email correto.
 
 
 
