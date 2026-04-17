@@ -27,11 +27,8 @@ import { useRouteTracking } from "@/hooks/useRouteTracking";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useGtmConfig, initGTM } from "@/lib/analytics";
 
-// Rotas públicas (sem providers de autenticação)
-import Auth from "./pages/Auth";
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const PublicAsset = lazy(() => import("./pages/PublicAsset"));
-const EventsCapturePage = lazy(() => import("./modules/events/pages/EventsCapturePage"));
+// Rotas públicas (sem providers de autenticação) — fonte única de verdade
+import { publicRoutes } from "./routes/public.routes";
 
 // Rotas modularizadas
 import { hubRoutes } from "./routes/hub.routes";
