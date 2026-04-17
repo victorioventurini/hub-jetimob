@@ -190,27 +190,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Email domain validation is done by the edge function
     // Use provided redirectTo or fallback to root
     const redirectUrl = redirectTo || `${window.location.origin}/`;
-    
-    try {
-      // Call our custom edge function that uses SendGrid
-      const response = await supabase.functions.invoke('request-magic-link', {
-        body: { email, redirectTo: redirectUrl },
+
+    // Hardening v3.25.1 — magic link request hang mitigation
+    // ------------------------------------------------------
+    // Some clients (corporate proxies, stale service workers, slow networks)
+    // observed `supabase.functions.invoke` hanging indefinitely without ever
+    // resolving — leaving the UI stuck on "Enviando...". To guarantee the
+    // user always gets feedback we:
+    //   1) Race the SDK call against an explicit 15s timeout
+    //   2) On timeout/network failure, fall back to a direct fetch() against
+    //      the edge function URL — bypasses any SDK-level state corruption
+    //   3) Always return a deterministic { error } payload
+    const TIMEOUT_MS = 15_000;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const fnUrl = `${supabaseUrl}/functions/v1/request-magic-link`;
+
+    const withTimeout = <T,>(p: Promise<T>, ms: number, label: string): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error(`${label}_timeout`)), ms);
+        p.then(
+          (v) => {
+            clearTimeout(t);
+            resolve(v);
+          },
+          (e) => {
+            clearTimeout(t);
+            reject(e);
+          },
+        );
       });
 
+    const directFetch = async (): Promise<{ ok: boolean; status: number; data: any }> => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const res = await fetch(fnUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ email, redirectTo: redirectUrl }),
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => ({}));
+        return { ok: res.ok, status: res.status, data };
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    try {
+      // 1) Try the SDK invoke (preferred — handles auth headers automatically)
+      const response = await withTimeout(
+        supabase.functions.invoke('request-magic-link', {
+          body: { email, redirectTo: redirectUrl },
+        }),
+        TIMEOUT_MS,
+        'invoke',
+      );
+
       if (response.error) {
-        console.error('Error from request-magic-link:', response.error);
+        console.error('[signInWithMagicLink] SDK invoke error:', response.error);
         return { error: new Error(response.error.message || 'Erro ao enviar magic link') };
       }
-
       if (response.data?.error) {
         return { error: new Error(response.data.error) };
       }
-
-      
       return { error: null };
-    } catch (error: any) {
-      console.error('Error calling request-magic-link:', error);
-      return { error: error as Error };
+    } catch (sdkErr: any) {
+      // 2) Fallback: direct fetch — bypasses SDK if it's hung or misconfigured
+      console.warn(
+        '[signInWithMagicLink] SDK invoke failed/timed out, falling back to direct fetch:',
+        sdkErr?.message,
+      );
+      try {
+        const { ok, status, data } = await directFetch();
+        if (!ok) {
+          const message =
+            data?.error?.message ||
+            data?.message ||
+            (status === 403
+              ? 'Esse e-mail não tem acesso ao Hub.'
+              : 'Erro ao enviar link de acesso. Tente novamente.');
+          return { error: new Error(message) };
+        }
+        if (data?.error) {
+          return { error: new Error(typeof data.error === 'string' ? data.error : 'Erro ao enviar link') };
+        }
+        return { error: null };
+      } catch (fetchErr: any) {
+        console.error('[signInWithMagicLink] Direct fetch also failed:', fetchErr);
+        const isAbort = fetchErr?.name === 'AbortError' || /timeout/i.test(fetchErr?.message || '');
+        return {
+          error: new Error(
+            isAbort
+              ? 'A solicitação demorou demais. Verifique sua conexão e tente novamente.'
+              : 'Não foi possível conectar ao servidor. Tente outra rede ou modo anônimo.',
+          ),
+        };
+      }
     }
   }
 
