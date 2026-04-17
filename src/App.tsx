@@ -118,11 +118,8 @@ function AppRoutes() {
    return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* ===== ROTAS PÚBLICAS (sem BuProvider) ===== */}
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/p/assets/:code" element={<PublicAsset />} />
-        <Route path="/p/events/capture/:eventCode" element={<EventsCapturePage />} />
+        {/* ===== ROTAS PÚBLICAS (sem BuProvider) — vindas de src/routes/public.routes.tsx ===== */}
+        {publicRoutes}
         
         {/* ===== ROTAS AUTENTICADAS (com BuProvider) ===== */}
         <Route path="*" element={<AuthenticatedRoutesWrapper />} />
