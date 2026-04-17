@@ -83,7 +83,7 @@
 
 > **Nota (v2.65.0):** O sistema usa Magic Link com `token_hash` no URL (não hash fragment) para evitar problemas com SendGrid click tracking que remove fragmentos de URL.
 
-#### 1.2.1 URL Detonation Mitigation (v3.25.0)
+#### 1.2.1 URL Detonation Mitigation (v3.25.1)
 
 **Problema:** Gateways corporativos de proteção de email (Mimecast, Proofpoint, Microsoft Defender ATP) escaneiam links recebidos clicando neles em sandbox **antes** de entregar a mensagem ao destinatário. Como `/auth/callback` chama `verifyOtp` automaticamente no `useEffect`, o **scanner consome o token single-use** — quando o usuário real clica, recebe `otp_expired` ou erro de rede ("Failed to fetch").
 
@@ -116,9 +116,24 @@ Mudança backward-compatible: zero migração, zero impacto em outros domínios.
 - **`expired`** (`otp_expired`, `Token has expired`, `invalid_token`) → "Link expirado ou já usado."
 - **`generic`** → fallback genérico
 
-Cada categoria exibe CTAs específicos: botão "Solicitar novo link" preserva email via `?email=` ao redirecionar para `/auth`.
+Cada categoria exibe CTAs específicos: botão "Solicitar novo link" preserva email via `?email=` ao redirecionar para `/auth`. A página `/auth` consome `?email=` via `useSearchParams` para pré-preencher o input no retry.
 
 **Casos de uso típicos:** escritórios de advocacia, contabilidade, saúde e órgãos governamentais. Quando um usuário reportar "recebi o link mas dá erro ao clicar", classificar primeiro pelo domínio antes de investigar bugs de aplicação.
+
+##### 1.2.1.1 Hardening defensivo (v3.25.1)
+
+Após regressão observada em produção (rota `/auth/confirm` criada na v3.25.0 mas não montada no bootstrap, e magic links legados com `next=/auth/callback?next=...` aninhado), foram adicionadas duas camadas defensivas:
+
+**1. Fonte única de verdade para rotas públicas**
+- `src/routes/public.routes.tsx` exporta `publicRoutes` (JSX `<Route>`) e `PUBLIC_PATHS` (lista canônica).
+- `src/App.tsx` consome `{publicRoutes}` em vez de hardcoded — qualquer nova rota pública (ex.: `/auth/confirm`) passa a ser montada automaticamente.
+- **Regra:** novas rotas públicas DEVEM ser adicionadas exclusivamente em `src/routes/public.routes.tsx`. Editar `App.tsx` para registrar rota pública é violação.
+
+**2. Normalização de `next` aninhado (`src/lib/authRedirect.ts`)**
+- `normalizeAuthNext(raw)` recursivamente desempacota `next` que aponte para `/auth/callback` ou `/auth/confirm`, retornando o destino real (ou `/`).
+- Rejeita absolutos (`http://...`) e protocol-relative (`//evil.com`) — somente paths internos `/...`.
+- Aplicado em `Auth.tsx`, `AuthCallback.tsx`, `AuthConfirm.tsx` e (server-side) em `request-magic-link/index.ts` antes de montar `redirectTo`.
+- Garante que mesmo bundle antigo do cliente que envie `redirectTo` aninhado gere link de email correto.
 
 
 
