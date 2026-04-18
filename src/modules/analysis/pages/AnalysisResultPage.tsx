@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TextareaAutoSubmit } from "@/components/ui/textarea-auto-submit";
 import { cn } from "@/lib/utils";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
@@ -387,14 +388,16 @@ export default function AnalysisResultPage() {
 
   if (isLoading || !report) {
     return (
-      <div className="space-y-6 p-4 md:p-6">
-        <PageHeader title="Análise" backTo="/analysis" />
-        <Card>
-          <CardContent className="p-6">
-            <LoadingRotativo />
-          </CardContent>
-        </Card>
-      </div>
+      <HubLayout>
+        <div className="space-y-6">
+          <PageHeader title="Análise" backTo="/analysis" />
+          <Card>
+            <CardContent className="p-6">
+              <LoadingRotativo />
+            </CardContent>
+          </Card>
+        </div>
+      </HubLayout>
     );
   }
 
