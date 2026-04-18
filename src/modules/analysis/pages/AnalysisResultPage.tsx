@@ -20,7 +20,7 @@ import {
   AnalysisCommentList,
   AnalysisDecisionsList,
   SuggestedActions,
-} from "@/modules/analysis/components/result-blocks";
+} from "@/modules/analysis/components/result-blocks/index.ts";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
