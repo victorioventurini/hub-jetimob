@@ -1,0 +1,23 @@
+/**
+ * Analysis Query Keys
+ */
+
+export const analysisKeys = {
+  // ── Prefix helpers ──
+  allPrefix: () => ["analysis"] as const,
+  listPrefix: () => ["analysis", "list"] as const,
+  templatesPrefix: () => ["analysis", "templates"] as const,
+
+  // ── Specific keys ──
+  list: (buId: string | null, filters?: Record<string, unknown>) =>
+    ["analysis", "list", buId, filters] as const,
+  detail: (id: string) => ["analysis", "detail", id] as const,
+  templates: (buId: string | null) =>
+    ["analysis", "templates", buId] as const,
+  feedback: (reportId: string) =>
+    ["analysis", "feedback", reportId] as const,
+  comments: (reportId: string) =>
+    ["analysis", "comments", reportId] as const,
+  shareLog: (reportId: string) =>
+    ["analysis", "share-log", reportId] as const,
+};
