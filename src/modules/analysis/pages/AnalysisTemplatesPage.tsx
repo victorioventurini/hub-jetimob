@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -48,9 +49,10 @@ export default function AnalysisTemplatesPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <PageHeader
-        title="Templates de análise"
+    <HubLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title="Templates de análise"
         description="Use um template para iniciar rapidamente."
         backTo="/analysis"
         backLabel="Voltar para Análise"
@@ -160,6 +162,7 @@ export default function AnalysisTemplatesPage() {
           setToDelete(null);
         }}
       />
-    </div>
+      </div>
+    </HubLayout>
   );
 }

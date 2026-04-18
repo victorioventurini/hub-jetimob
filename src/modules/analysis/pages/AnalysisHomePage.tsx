@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PremiseField } from "../components/composer/PremiseField";
@@ -91,19 +92,20 @@ export default function AnalysisHomePage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <PageHeader
-        title="Análise Estratégica"
-        description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
-        breadcrumbs={[{ label: "Análise Estratégica" }]}
-        actions={
-          <Button variant="outline" onClick={() => navigate("/analysis/templates")}>
-            Templates
-          </Button>
-        }
-      />
+    <HubLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title="Análise Estratégica"
+          description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
+          breadcrumbs={[{ label: "Análise Estratégica" }]}
+          actions={
+            <Button variant="outline" onClick={() => navigate("/analysis/templates")}>
+              Templates
+            </Button>
+          }
+        />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Nova análise</CardTitle>
@@ -151,15 +153,16 @@ export default function AnalysisHomePage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Histórico</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AnalysisHistoryList />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Histórico</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AnalysisHistoryList />
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </HubLayout>
   );
 }
