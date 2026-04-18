@@ -372,6 +372,490 @@ export type Database = {
           },
         ]
       }
+      analysis_comments: {
+        Row: {
+          author_profile_id: string
+          body: string
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          report_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_profile_id: string
+          body: string
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          report_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_profile_id?: string
+          body?: string
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          report_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_comments_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_feedback: {
+        Row: {
+          bu_id: string
+          created_at: string
+          id: string
+          rating: number
+          report_id: string
+          text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          report_id: string
+          text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          report_id?: string
+          text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_feedback_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_feedback_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_reports: {
+        Row: {
+          additional_context: string | null
+          bu_id: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          depth: Database["public"]["Enums"]["analysis_depth"]
+          error_message: string | null
+          generated_at: string | null
+          id: string
+          mode: Database["public"]["Enums"]["analysis_mode"]
+          modules: string[]
+          period: Json
+          premise: string
+          result: Json | null
+          scope: Json
+          sources: Json | null
+          status: Database["public"]["Enums"]["analysis_status"]
+          suggested_actions: Json | null
+          template_id: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_context?: string | null
+          bu_id: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          depth?: Database["public"]["Enums"]["analysis_depth"]
+          error_message?: string | null
+          generated_at?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["analysis_mode"]
+          modules?: string[]
+          period?: Json
+          premise: string
+          result?: Json | null
+          scope?: Json
+          sources?: Json | null
+          status?: Database["public"]["Enums"]["analysis_status"]
+          suggested_actions?: Json | null
+          template_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_context?: string | null
+          bu_id?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          depth?: Database["public"]["Enums"]["analysis_depth"]
+          error_message?: string | null
+          generated_at?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["analysis_mode"]
+          modules?: string[]
+          period?: Json
+          premise?: string
+          result?: Json | null
+          scope?: Json
+          sources?: Json | null
+          status?: Database["public"]["Enums"]["analysis_status"]
+          suggested_actions?: Json | null
+          template_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_reports_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_schedules: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string
+          day_of_period: number | null
+          frequency: Database["public"]["Enums"]["analysis_schedule_frequency"]
+          hour_local: number
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          recipients: Json
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by: string
+          day_of_period?: number | null
+          frequency: Database["public"]["Enums"]["analysis_schedule_frequency"]
+          hour_local?: number
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          recipients?: Json
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string
+          day_of_period?: number | null
+          frequency?: Database["public"]["Enums"]["analysis_schedule_frequency"]
+          hour_local?: number
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          recipients?: Json
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_schedules_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_schedules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_share_log: {
+        Row: {
+          bu_id: string
+          id: string
+          recipient_profile_id: string
+          report_id: string
+          sent_at: string
+          shared_by: string
+        }
+        Insert: {
+          bu_id: string
+          id?: string
+          recipient_profile_id: string
+          report_id: string
+          sent_at?: string
+          shared_by: string
+        }
+        Update: {
+          bu_id?: string
+          id?: string
+          recipient_profile_id?: string
+          report_id?: string
+          sent_at?: string
+          shared_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_share_log_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_share_log_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_templates: {
+        Row: {
+          bu_id: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          defaults: Json
+          deleted_at: string | null
+          display_order: number
+          id: string
+          is_admin_only: boolean
+          name: string
+          premise: string
+          scope: Database["public"]["Enums"]["analysis_template_scope"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          defaults?: Json
+          deleted_at?: string | null
+          display_order?: number
+          id?: string
+          is_admin_only?: boolean
+          name: string
+          premise: string
+          scope?: Database["public"]["Enums"]["analysis_template_scope"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          defaults?: Json
+          deleted_at?: string | null
+          display_order?: number
+          id?: string
+          is_admin_only?: boolean
+          name?: string
+          premise?: string
+          scope?: Database["public"]["Enums"]["analysis_template_scope"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_templates_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_error_logs: {
         Row: {
           action: string
@@ -10807,6 +11291,11 @@ export type Database = {
       agent_output_format: "text" | "json"
       agent_scope: "global" | "bu"
       ai_agent_log_status: "pending" | "success" | "error" | "timeout"
+      analysis_depth: "auto" | "minimal" | "standard" | "full"
+      analysis_mode: "auto" | "manual" | "mixed"
+      analysis_schedule_frequency: "weekly" | "monthly" | "per_cycle"
+      analysis_status: "pending" | "generating" | "complete" | "failed"
+      analysis_template_scope: "global" | "bu"
       app_role: "super_admin" | "admin" | "collaborator" | "external"
       asset_group_item_role: "primary" | "accessory"
       asset_group_status: "active" | "inactive"
@@ -11092,6 +11581,11 @@ export const Constants = {
       agent_output_format: ["text", "json"],
       agent_scope: ["global", "bu"],
       ai_agent_log_status: ["pending", "success", "error", "timeout"],
+      analysis_depth: ["auto", "minimal", "standard", "full"],
+      analysis_mode: ["auto", "manual", "mixed"],
+      analysis_schedule_frequency: ["weekly", "monthly", "per_cycle"],
+      analysis_status: ["pending", "generating", "complete", "failed"],
+      analysis_template_scope: ["global", "bu"],
       app_role: ["super_admin", "admin", "collaborator", "external"],
       asset_group_item_role: ["primary", "accessory"],
       asset_group_status: ["active", "inactive"],
