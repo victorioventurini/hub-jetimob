@@ -93,7 +93,7 @@ export default function AnalysisHomePage() {
 
   return (
     <HubLayout>
-      <div className="space-y-6">
+      <div className="w-full min-w-0 space-y-6 overflow-x-hidden">
         <PageHeader
           title="Análise Estratégica"
           description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
