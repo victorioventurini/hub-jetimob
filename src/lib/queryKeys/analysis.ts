@@ -20,4 +20,12 @@ export const analysisKeys = {
     ["analysis", "comments", reportId] as const,
   shareLog: (reportId: string) =>
     ["analysis", "share-log", reportId] as const,
+
+  // ── Comments / Decisions ──
+  commentsPrefix: (reportId: string) =>
+    ["analysis", "comments", reportId] as const,
+  decisions: (reportId: string) =>
+    ["analysis", "decisions", reportId] as const,
+  decisionsPrefix: (reportId: string) =>
+    ["analysis", "decisions", reportId] as const,
 };

@@ -1,39 +1,33 @@
 /**
- * AnalysisResultPage — visualização do report gerado
+ * AnalysisResultPage — visualização do report gerado.
+ *
+ * Componentes do bloco resultado vivem em `components/result-blocks/`:
+ * header, métricas, insights, ações sugeridas, decisões registradas e discussão.
  */
 import { memo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle2,
-  ChevronRight,
-  Info,
-  Share2,
-  Trash2,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, Share2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useAnalysisComments } from "../hooks/useAnalysisComments";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
+import { AnalysisCommentList } from "../components/result-blocks/AnalysisCommentList";
+import { AnalysisDecisionsList } from "../components/result-blocks/AnalysisDecisionsList";
+import { SuggestedActions } from "../components/result-blocks/SuggestedActions";
 import type {
-  AnalysisComment,
   AnalysisInsight,
   AnalysisKeyMetric,
   AnalysisReport,
   AnalysisSource,
-  AnalysisSuggestedAction,
 } from "../types";
 
 const STATUS_LABEL: Record<
@@ -90,7 +84,6 @@ function ReportSummary({ report }: { report: AnalysisReport }) {
 
 const SourcesChips = memo(function SourcesChips({ sources }: { sources?: AnalysisSource[] }) {
   if (!sources?.length) return null;
-
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -112,7 +105,6 @@ const SourcesChips = memo(function SourcesChips({ sources }: { sources?: Analysi
 
 const KeyMetricsGrid = memo(function KeyMetricsGrid({ metrics }: { metrics?: AnalysisKeyMetric[] }) {
   if (!metrics?.length) return null;
-
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {metrics.map((metric, index) => (
@@ -147,7 +139,6 @@ const INSIGHT_STYLES: Record<
 const InsightBlock = memo(function InsightBlock({ insight }: { insight: AnalysisInsight }) {
   const style = INSIGHT_STYLES[insight.type] ?? INSIGHT_STYLES.info;
   const Icon = style.icon;
-
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-4">
       <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", style.bg)}>
@@ -163,148 +154,10 @@ const InsightBlock = memo(function InsightBlock({ insight }: { insight: Analysis
 
 function AnalysisBody({ body }: { body?: string }) {
   if (!body?.trim()) return null;
-
   return (
     <div className="space-y-2">
       <h2 className="text-base font-semibold text-foreground">Análise</h2>
       <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{body}</div>
-    </div>
-  );
-}
-
-const ACTION_TYPE_LABEL: Record<string, string> = {
-  open_resource: "Abrir recurso",
-  register_decision: "Registrar decisão",
-};
-
-function SuggestedActions({ actions }: { actions?: AnalysisSuggestedAction[] }) {
-  if (!actions?.length) return null;
-
-  return (
-    <div className="space-y-3">
-      <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
-        <CheckCircle2 className="h-5 w-5 text-success" />
-        Ações sugeridas
-      </h2>
-      <div className="space-y-2">
-        {actions.map((action, index) => {
-          // Suporta shape novo (label/suggestedText/type) e legado (title/rationale/owner_hint)
-          const heading = action.label || action.title || "Ação sugerida";
-          const description = action.suggestedText || action.rationale;
-          const typeLabel = action.type ? ACTION_TYPE_LABEL[action.type] : undefined;
-
-          return (
-            <div
-              key={`${heading}-${index}`}
-              className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
-            >
-              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium text-foreground">{heading}</p>
-                  {typeLabel && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {typeLabel}
-                    </Badge>
-                  )}
-                  {action.suggestedCategory && !typeLabel && (
-                    <Badge variant="outline" className="text-[10px]">
-                      {action.suggestedCategory}
-                    </Badge>
-                  )}
-                </div>
-                {description ? (
-                  <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-                ) : null}
-                {(action.owner_hint || action.due_hint || action.entity) && (
-                  <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    {action.owner_hint ? <span>Responsável sugerido: {action.owner_hint}</span> : null}
-                    {action.due_hint ? <span>Prazo: {action.due_hint}</span> : null}
-                    {action.entity ? <span>Entidade: {action.entity}</span> : null}
-                  </div>
-                )}
-              </div>
-              <Button size="sm" variant="outline" disabled title="Em breve: criar decisão formal">
-                Registrar
-              </Button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function AnalysisCommentList({ reportId }: { reportId: string }) {
-  const { data: comments = [], isLoading, add, isAdding } = useAnalysisComments(reportId);
-  const [text, setText] = useState("");
-
-  const submit = () => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    add(trimmed);
-    setText("");
-  };
-
-  return (
-    <div className="space-y-3">
-      <h2 className="text-base font-semibold text-foreground">Discussão</h2>
-
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando comentários…</p>
-      ) : comments.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
-      ) : (
-        <ul className="space-y-3">
-          {comments.map((comment: AnalysisComment) => {
-            const initials = (comment.author?.display_name || "?")
-              .split(" ")
-              .map((part) => part[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
-
-            return (
-              <li key={comment.id} className="flex gap-3">
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarImage src={comment.author?.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-foreground">
-                      {comment.author?.display_name || "Usuário"}
-                    </p>
-                    <span className="text-[10px] text-muted-foreground">
-                      {formatDistanceToNow(new Date(comment.created_at), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{comment.body}</p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      <div className="space-y-2 border-t border-border pt-3">
-        <Textarea
-          placeholder="Adicione um comentário…"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          rows={2}
-          maxLength={2000}
-          className="resize-none"
-        />
-        <div className="flex justify-end">
-          <Button size="sm" onClick={submit} disabled={!text.trim() || isAdding}>
-            Comentar
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -331,6 +184,9 @@ export default function AnalysisResultPage() {
 
   const isGenerating = report.status === "generating" || report.status === "pending";
   const title = report.result?.title || report.title || report.premise.slice(0, 80);
+  const ownerHint = report.author?.id
+    ? { id: report.author.id, name: report.author.display_name ?? "Usuário" }
+    : null;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -381,7 +237,11 @@ export default function AnalysisResultPage() {
                 ))}
               </div>
               <AnalysisBody body={report.result?.body} />
-              <SuggestedActions actions={report.suggested_actions ?? undefined} />
+              <SuggestedActions
+                actions={report.suggested_actions ?? undefined}
+                reportId={report.id}
+                ownerHint={ownerHint}
+              />
             </>
           )}
         </CardContent>
@@ -389,6 +249,7 @@ export default function AnalysisResultPage() {
 
       {report.status === "complete" && (
         <>
+          <AnalysisDecisionsList reportId={report.id} />
           <AnalysisFeedback reportId={report.id} />
           <Card>
             <CardContent className="p-6">

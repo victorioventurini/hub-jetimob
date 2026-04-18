@@ -376,30 +376,48 @@ export type Database = {
         Row: {
           author_profile_id: string
           body: string
+          body_richtext: Json | null
           bu_id: string
           created_at: string
           deleted_at: string | null
+          edited_at: string | null
           id: string
+          is_pinned: boolean
+          pinned_at: string | null
+          pinned_by_user_id: string | null
+          reply_to_comment_id: string | null
           report_id: string
           updated_at: string
         }
         Insert: {
           author_profile_id: string
           body: string
+          body_richtext?: Json | null
           bu_id: string
           created_at?: string
           deleted_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_pinned?: boolean
+          pinned_at?: string | null
+          pinned_by_user_id?: string | null
+          reply_to_comment_id?: string | null
           report_id: string
           updated_at?: string
         }
         Update: {
           author_profile_id?: string
           body?: string
+          body_richtext?: Json | null
           bu_id?: string
           created_at?: string
           deleted_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_pinned?: boolean
+          pinned_at?: string | null
+          pinned_by_user_id?: string | null
+          reply_to_comment_id?: string | null
           report_id?: string
           updated_at?: string
         }
@@ -433,9 +451,106 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "analysis_comments_pinned_by_user_id_fkey"
+            columns: ["pinned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_pinned_by_user_id_fkey"
+            columns: ["pinned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_pinned_by_user_id_fkey"
+            columns: ["pinned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_comments_reply_to_comment_id_fkey"
+            columns: ["reply_to_comment_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_comments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "analysis_comments_report_id_fkey"
             columns: ["report_id"]
             isOneToOne: false
+            referencedRelation: "analysis_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analysis_decisions: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string
+          decisions: Json
+          deleted_at: string | null
+          id: string
+          report_id: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by: string
+          decisions?: Json
+          deleted_at?: string | null
+          id?: string
+          report_id: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string
+          decisions?: Json
+          deleted_at?: string | null
+          id?: string
+          report_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_decisions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_decisions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_decisions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_decisions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analysis_decisions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: true
             referencedRelation: "analysis_reports"
             referencedColumns: ["id"]
           },
