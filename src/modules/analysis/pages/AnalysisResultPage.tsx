@@ -2,13 +2,12 @@
  * AnalysisResultPage — visualização do report gerado
  */
 import { memo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertCircle,
   AlertTriangle,
-  ArrowLeft,
   CheckCircle2,
   ChevronRight,
   Info,
@@ -21,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAnalysisComments } from "../hooks/useAnalysisComments";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
@@ -46,41 +46,14 @@ const STATUS_LABEL: Record<
   failed: { label: "Falhou", variant: "destructive" },
 };
 
-function ResultHeader({
-  report,
-  onShare,
-  onDelete,
-  canDelete,
-}: {
-  report: AnalysisReport;
-  onShare: () => void;
-  onDelete?: () => void;
-  canDelete?: boolean;
-}) {
+function ReportSummary({ report }: { report: AnalysisReport }) {
   const status = STATUS_LABEL[report.status] ?? STATUS_LABEL.pending;
-  const title = report.result?.title || report.title || report.premise.slice(0, 80);
 
   return (
     <div className="space-y-3 border-b border-border pb-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold leading-tight text-foreground">{title}</h1>
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{report.premise}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={status.variant}>{status.label}</Badge>
-          {report.status === "complete" && (
-            <Button size="sm" variant="outline" onClick={onShare}>
-              <Share2 className="mr-1.5 h-4 w-4" />
-              Compartilhar
-            </Button>
-          )}
-          {canDelete && onDelete && (
-            <Button size="sm" variant="ghost" onClick={onDelete}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <p className="min-w-0 flex-1 text-sm text-muted-foreground">{report.premise}</p>
+        <Badge variant={status.variant}>{status.label}</Badge>
       </div>
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
         <span>
@@ -295,7 +268,6 @@ function AnalysisCommentList({ reportId }: { reportId: string }) {
 
 export default function AnalysisResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  const navigate = useNavigate();
   const { data: report, isLoading } = useAnalysisReport(reportId);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -304,10 +276,7 @@ export default function AnalysisResultPage() {
   if (isLoading || !report) {
     return (
       <div className="space-y-6 p-4 md:p-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/analysis")}>
-          <ArrowLeft className="mr-1.5 h-4 w-4" />
-          Voltar
-        </Button>
+        <PageHeader title="Análise" backTo="/analysis" />
         <Card>
           <CardContent className="p-6">
             <LoadingRotativo />
@@ -318,17 +287,27 @@ export default function AnalysisResultPage() {
   }
 
   const isGenerating = report.status === "generating" || report.status === "pending";
+  const title = report.result?.title || report.title || report.premise.slice(0, 80);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/analysis")}>
-        <ArrowLeft className="mr-1.5 h-4 w-4" />
-        Voltar
-      </Button>
+    <div className="space-y-6 p-4 md:p-6">
+      <PageHeader
+        title={title}
+        backTo="/analysis"
+        backLabel="Voltar para Análises"
+        actions={
+          report.status === "complete" ? (
+            <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
+              <Share2 className="mr-1.5 h-4 w-4" />
+              Compartilhar
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Card>
         <CardContent className="space-y-6 p-6">
-          <ResultHeader report={report} onShare={() => setShareOpen(true)} />
+          <ReportSummary report={report} />
 
           {isGenerating && <LoadingRotativo />}
 
