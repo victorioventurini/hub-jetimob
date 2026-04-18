@@ -389,7 +389,7 @@ export default function AnalysisResultPage() {
   if (isLoading || !report) {
     return (
       <HubLayout>
-        <div className="space-y-6">
+        <div className="w-full min-w-0 space-y-6 overflow-x-hidden">
           <PageHeader title="Análise" backTo="/analysis" />
           <Card>
             <CardContent className="p-6">
@@ -409,7 +409,7 @@ export default function AnalysisResultPage() {
 
   return (
     <HubLayout>
-      <div className="space-y-6">
+      <div className="w-full min-w-0 space-y-6 overflow-x-hidden">
         <PageHeader
           title={title}
           backTo="/analysis"
