@@ -30,7 +30,6 @@ export default function AnalysisTemplatesPage() {
       <PageHeader
         title="Templates de análise"
         description="Use um template para iniciar rapidamente."
-        icon={FileText}
       />
 
       {isLoading ? (

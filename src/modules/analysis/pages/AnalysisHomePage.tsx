@@ -95,7 +95,6 @@ export default function AnalysisHomePage() {
       <PageHeader
         title="Análise Estratégica"
         description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
-        icon={Sparkles}
         actions={
           <Button variant="outline" onClick={() => navigate("/analysis/templates")}>
             Templates
