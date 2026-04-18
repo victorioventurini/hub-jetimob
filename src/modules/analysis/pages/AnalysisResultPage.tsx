@@ -480,6 +480,7 @@ export default function AnalysisResultPage() {
       )}
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} reportId={report.id} />
-    </div>
+      </div>
+    </HubLayout>
   );
 }
