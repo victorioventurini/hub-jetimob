@@ -126,13 +126,30 @@ export interface AnalysisComment {
   report_id: string;
   bu_id: string;
   author_profile_id: string;
+  /** Texto puro (compat retroativa) */
   body: string;
+  /** Conteúdo richtext (novo) — ex.: { type: 'text', content: '...' } */
+  body_richtext?: Record<string, unknown> | string | null;
+  /** Resposta a outro comentário */
+  reply_to_comment_id?: string | null;
+  /** Mensagem fixada */
+  is_pinned?: boolean;
+  pinned_at?: string | null;
+  pinned_by_user_id?: string | null;
+  edited_at?: string | null;
   created_at: string;
   updated_at: string;
   author?: {
     id: string;
     display_name: string | null;
     avatar_url: string | null;
+  } | null;
+  /** Comentário citado, quando é uma resposta */
+  reply_to?: {
+    id: string;
+    body: string | null;
+    body_richtext?: Record<string, unknown> | string | null;
+    author?: { id: string; display_name: string | null } | null;
   } | null;
 }
 
