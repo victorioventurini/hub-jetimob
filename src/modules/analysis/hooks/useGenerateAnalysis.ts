@@ -20,8 +20,11 @@ export function useGenerateAnalysis() {
 
   return useMutation({
     mutationFn: async (input: GenerateAnalysisInput): Promise<GenerateResult> => {
+      if (!buId) {
+        throw new Error("BU_REQUIRED");
+      }
       const { data, error } = await supabase.functions.invoke("analysis-generate", {
-        body: input,
+        body: { ...input, bu_id: buId },
       });
       if (error) {
         const msg = String(error.message || "");
