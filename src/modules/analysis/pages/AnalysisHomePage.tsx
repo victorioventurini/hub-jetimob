@@ -1,12 +1,13 @@
 /**
  * AnalysisHomePage — composer + histórico
  */
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Sparkles } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { PremiseField } from "../components/composer/PremiseField";
 import { AdditionalContextField } from "../components/composer/AdditionalContextField";
 import { ModeSelector } from "../components/composer/ModeSelector";
@@ -16,150 +17,147 @@ import { PeriodPills } from "../components/composer/PeriodPills";
 import { DepthSelector } from "../components/composer/DepthSelector";
 import { AnalysisHistoryList } from "../components/history/AnalysisHistoryList";
 import { useGenerateAnalysis } from "../hooks/useGenerateAnalysis";
-import { useAnalysisHistory } from "../hooks/useAnalysisHistory";
 import { useAnalysisTemplates } from "../hooks/useAnalysisTemplates";
-import type { AnalysisComposerState } from "../types";
+import {
+  startOfMonth,
+  endOfMonth,
+  format,
+} from "date-fns";
+import type {
+  AnalysisComposerState,
+  AnalysisModule,
+} from "../types";
 
-function defaultPeriod(): AnalysisComposerState["period"] {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 29);
+function defaultState(): AnalysisComposerState {
   return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-    preset: "last_30_days",
+    premise: "",
+    additional_context: "",
+    mode: "auto",
+    modules: ["kpis", "okrs"],
+    scope: {},
+    period: {
+      start: format(startOfMonth(new Date()), "yyyy-MM-dd"),
+      end: format(endOfMonth(new Date()), "yyyy-MM-dd"),
+      label: "Este mês",
+    },
+    depth: "standard",
   };
 }
 
-const INITIAL: AnalysisComposerState = {
-  premise: "",
-  additionalContext: "",
-  mode: "auto",
-  modules: [],
-  scope: { buWide: true },
-  period: defaultPeriod(),
-  depth: "auto",
-  templateId: null,
-};
-
 export default function AnalysisHomePage() {
+  usePageTitle("Análise Estratégica");
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const templateIdFromUrl = params.get("template_id");
-
+  const templateId = params.get("template_id");
   const { data: templates = [] } = useAnalysisTemplates();
-  const { data: history = [], isLoading: loadingHistory } = useAnalysisHistory();
   const generate = useGenerateAnalysis();
 
-  const [state, setState] = useState<AnalysisComposerState>(INITIAL);
+  const [state, setState] = useState<AnalysisComposerState>(defaultState);
+  const [scopeMode, setScopeMode] = useState("bu");
 
-  // Hidratar template via URL
+  // Pré-preenche a partir de template
   useEffect(() => {
-    if (!templateIdFromUrl || templates.length === 0) return;
-    const tpl = templates.find((t) => t.id === templateIdFromUrl);
+    if (!templateId || !templates.length) return;
+    const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) return;
+    const d = (tpl.defaults ?? {}) as Partial<AnalysisComposerState>;
     setState((prev) => ({
       ...prev,
-      premise: tpl.premise,
-      mode: tpl.defaults?.mode ?? "auto",
-      depth: tpl.defaults?.depth ?? "auto",
-      modules: tpl.defaults?.modules ?? [],
-      scope: tpl.defaults?.scope ?? { buWide: true },
-      templateId: tpl.id,
+      premise: tpl.premise || prev.premise,
+      mode: (d.mode as AnalysisComposerState["mode"]) || prev.mode,
+      modules: (d.modules as AnalysisModule[]) || prev.modules,
+      depth: (d.depth as AnalysisComposerState["depth"]) || prev.depth,
+      template_id: tpl.id,
     }));
-  }, [templateIdFromUrl, templates]);
+  }, [templateId, templates]);
 
-  const canGenerate = useMemo(
-    () => state.premise.trim().length >= 10 && !generate.isPending,
-    [state.premise, generate.isPending],
+  const canSubmit = useMemo(
+    () => state.premise.trim().length >= 5 && !generate.isPending,
+    [state.premise, generate.isPending]
   );
 
-  const handleGenerate = async () => {
-    const res = await generate.mutateAsync(state);
-    navigate(`/analysis/${res.report_id}`);
+  const onSubmit = async () => {
+    const result = await generate.mutateAsync({
+      premise: state.premise.trim(),
+      additional_context: state.additional_context.trim() || undefined,
+      mode: state.mode,
+      modules: state.mode === "auto" ? [] : state.modules,
+      scope: state.scope,
+      period: state.period,
+      depth: state.depth,
+      template_id: state.template_id,
+    });
+    if (result?.report_id) navigate(`/analysis/${result.report_id}`);
   };
 
-  const modulesDisabled = state.mode === "auto";
-
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-6">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold text-foreground">
-            <Sparkles className="h-6 w-6 text-primary" />
-            Análise Estratégica
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Cruze KPIs, OKRs, projetos e rituais com IA para gerar insights acionáveis.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link to="/analysis/templates">
-            <FileText className="mr-1.5 h-4 w-4" />
+    <div className="space-y-6 p-4 md:p-6">
+      <PageHeader
+        title="Análise Estratégica"
+        description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
+        actions={
+          <Button variant="outline" onClick={() => navigate("/analysis/templates")}>
             Templates
-          </Link>
-        </Button>
-      </header>
+          </Button>
+        }
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr,360px]">
-        <Card className="space-y-5 p-5">
-          <PremiseField
-            value={state.premise}
-            onChange={(v) => setState((s) => ({ ...s, premise: v }))}
-          />
-          <AdditionalContextField
-            value={state.additionalContext}
-            onChange={(v) => setState((s) => ({ ...s, additionalContext: v }))}
-          />
-          <ModeSelector
-            value={state.mode}
-            onChange={(v) => setState((s) => ({ ...s, mode: v }))}
-          />
-          <ModulesChips
-            value={state.modules}
-            onChange={(v) => setState((s) => ({ ...s, modules: v }))}
-            disabled={modulesDisabled}
-          />
-          <div className="grid gap-5 md:grid-cols-2">
-            <ScopePills
-              value={state.scope}
-              onChange={(v) => setState((s) => ({ ...s, scope: v }))}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Nova análise</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <PremiseField
+              value={state.premise}
+              onChange={(premise) => setState((s) => ({ ...s, premise }))}
             />
-            <PeriodPills
-              value={state.period}
-              onChange={(v) => setState((s) => ({ ...s, period: v }))}
+            <AdditionalContextField
+              value={state.additional_context}
+              onChange={(additional_context) =>
+                setState((s) => ({ ...s, additional_context }))
+              }
             />
-          </div>
-          <DepthSelector
-            value={state.depth}
-            onChange={(v) => setState((s) => ({ ...s, depth: v }))}
-          />
-
-          <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-            <Button
-              variant="ghost"
-              onClick={() => setState(INITIAL)}
-              disabled={generate.isPending}
-            >
-              Limpar
-            </Button>
-            <Button onClick={handleGenerate} disabled={!canGenerate}>
-              <Sparkles className="mr-1.5 h-4 w-4" />
-              Gerar análise
-            </Button>
-          </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <ModeSelector
+                value={state.mode}
+                onChange={(mode) => setState((s) => ({ ...s, mode }))}
+              />
+              <DepthSelector
+                value={state.depth}
+                onChange={(depth) => setState((s) => ({ ...s, depth }))}
+              />
+            </div>
+            {state.mode !== "auto" && (
+              <ModulesChips
+                value={state.modules}
+                onChange={(modules) => setState((s) => ({ ...s, modules }))}
+              />
+            )}
+            <div className="grid gap-4 md:grid-cols-2">
+              <ScopePills value={scopeMode} onChange={setScopeMode} />
+              <PeriodPills
+                value={state.period}
+                onChange={(period) => setState((s) => ({ ...s, period }))}
+              />
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button onClick={onSubmit} disabled={!canSubmit} size="lg">
+                <Sparkles className="mr-2 h-4 w-4" />
+                {generate.isPending ? "Gerando…" : "Gerar análise"}
+              </Button>
+            </div>
+          </CardContent>
         </Card>
 
-        <aside className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Histórico
-          </h2>
-          {loadingHistory ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
-          ) : (
-            <AnalysisHistoryList reports={history} />
-          )}
-        </aside>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Histórico</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AnalysisHistoryList />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 /**
- * AnalysisFeedback — rating + comentário opcional
+ * AnalysisFeedback — captura nota 1-5 e texto opcional
  */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,49 +12,44 @@ interface Props {
 }
 
 export function AnalysisFeedback({ reportId }: Props) {
-  const { data, submit, isSubmitting } = useAnalysisFeedback(reportId);
+  const { feedback, submit, isSubmitting } = useAnalysisFeedback(reportId);
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
 
   useEffect(() => {
-    if (data?.myRating) setRating(data.myRating);
-  }, [data?.myRating]);
+    if (feedback) {
+      setRating(feedback.rating);
+      setText(feedback.text ?? "");
+    }
+  }, [feedback]);
+
+  const onSubmit = () => {
+    if (!rating) return;
+    submit({ rating, text: text.trim() || undefined });
+  };
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">Esta análise foi útil?</h3>
-          {data && data.count > 0 && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Média {data.average.toFixed(1)} ({data.count} {data.count === 1 ? "voto" : "votos"})
-            </p>
-          )}
-        </div>
-        <StarRatingInput value={rating} onChange={setRating} size={20} />
+    <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+      <h3 className="text-sm font-semibold text-foreground">Avalie esta análise</h3>
+      <div className="flex items-center gap-3">
+        <StarRatingInput value={rating} onChange={setRating} />
+        <span className="text-xs text-muted-foreground">
+          {rating ? `${rating}/5` : "Selecione uma nota"}
+        </span>
       </div>
-
-      {rating > 0 && (
-        <div className="mt-3 space-y-2">
-          <Textarea
-            placeholder="O que poderia melhorar? (opcional)"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={2}
-            maxLength={500}
-            className="resize-none text-sm"
-          />
-          <div className="flex justify-end">
-            <Button
-              size="sm"
-              onClick={() => submit({ rating, text: text.trim() || undefined })}
-              disabled={isSubmitting}
-            >
-              Enviar
-            </Button>
-          </div>
-        </div>
-      )}
+      <Textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Comentário (opcional)"
+        rows={2}
+        maxLength={1000}
+        className="resize-none"
+      />
+      <div className="flex justify-end">
+        <Button size="sm" onClick={onSubmit} disabled={!rating || isSubmitting}>
+          {feedback ? "Atualizar" : "Enviar"}
+        </Button>
+      </div>
     </div>
   );
 }

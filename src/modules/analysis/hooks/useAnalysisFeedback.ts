@@ -1,69 +1,67 @@
 /**
- * useAnalysisFeedback — submit + read média
+ * useAnalysisFeedback — busca e registra avaliação 1-5
  */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAuth } from "@/hooks/useAuth";
-import { analysisKeys } from "@/lib/queryKeys/analysis";
 import { toast } from "sonner";
+import { analysisKeys } from "@/lib/queryKeys/analysis";
 
-export interface AnalysisFeedbackSummary {
-  count: number;
-  average: number;
-  myRating: number | null;
+interface Submit {
+  rating: number;
+  text?: string;
 }
 
 export function useAnalysisFeedback(reportId: string | undefined) {
   const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
   const { user } = useAuth();
-  const { currentBuId } = useBu();
+  const buId = currentBu?.id ?? null;
   const qc = useQueryClient();
 
-  const userId = user?.id ?? null;
-
-  const query = useQuery<AnalysisFeedbackSummary>({
-    queryKey: reportId ? analysisKeys.feedback(reportId) : ["analysis", "feedback", "none"],
-    enabled: Boolean(reportId && currentBuId),
+  const query = useQuery({
+    queryKey: analysisKeys.feedback(reportId ?? ""),
+    enabled: !!reportId && !!buId && !!user?.id,
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("analysis_feedback")
-        .select("rating, user_id")
-        .eq("report_id", reportId!);
+        .select("id,rating,text,created_at,user_id")
+        .eq("report_id", reportId!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
       if (error) throw error;
-      const list = data || [];
-      const count = list.length;
-      const avg = count ? list.reduce((s, r: any) => s + Number(r.rating), 0) / count : 0;
-      const my = userId
-        ? (list.find((r: any) => r.user_id === userId)?.rating ?? null)
-        : null;
-      return { count, average: avg, myRating: my };
+      return data;
     },
   });
 
   const mutate = useMutation({
-    mutationFn: async ({ rating, text }: { rating: number; text?: string }) => {
-      if (!reportId || !currentBuId || !userId) throw new Error("Sem contexto");
-      const { error } = await supabase
-        .from("analysis_feedback")
-        .upsert(
-          {
-            report_id: reportId,
-            bu_id: currentBuId,
-            user_id: userId,
-            rating,
-            text: text ?? null,
-          },
-          { onConflict: "report_id,user_id" },
-        );
+    mutationFn: async ({ rating, text }: Submit) => {
+      if (!reportId || !buId || !user?.id) throw new Error("contexto inválido");
+      const { error } = await supabase.from("analysis_feedback").upsert(
+        {
+          report_id: reportId,
+          user_id: user.id,
+          bu_id: buId,
+          rating,
+          text: text ?? null,
+        },
+        { onConflict: "report_id,user_id" }
+      );
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Obrigado pelo feedback!");
       if (reportId) qc.invalidateQueries({ queryKey: analysisKeys.feedback(reportId) });
+      toast.success("Avaliação registrada");
     },
-    onError: (e: any) => toast.error(e.message || "Falha ao enviar feedback"),
+    onError: (e: Error) => toast.error(e.message),
   });
 
-  return { ...query, submit: mutate.mutate, isSubmitting: mutate.isPending };
+  return {
+    feedback: query.data,
+    isLoading: query.isLoading,
+    submit: mutate.mutate,
+    isSubmitting: mutate.isPending,
+  };
 }

@@ -1,79 +1,48 @@
-/**
- * PeriodPills — presets de período (último 7d, 30d, mês passado, trimestre, ano)
- */
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, format } from "date-fns";
 import type { AnalysisPeriod } from "../../types";
 
-const PRESETS: { id: string; label: string; build: () => AnalysisPeriod }[] = [
+const presets: { key: string; label: string; build: () => AnalysisPeriod }[] = [
   {
-    id: "last_7_days",
-    label: "Últimos 7 dias",
-    build: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 6);
-      return {
-        start: start.toISOString().slice(0, 10),
-        end: end.toISOString().slice(0, 10),
-        preset: "last_7_days",
-      };
-    },
+    key: "this_month",
+    label: "Este mês",
+    build: () => ({
+      start: format(startOfMonth(new Date()), "yyyy-MM-dd"),
+      end: format(endOfMonth(new Date()), "yyyy-MM-dd"),
+      label: "Este mês",
+    }),
   },
   {
-    id: "last_30_days",
-    label: "Últimos 30 dias",
-    build: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 29);
-      return {
-        start: start.toISOString().slice(0, 10),
-        end: end.toISOString().slice(0, 10),
-        preset: "last_30_days",
-      };
-    },
-  },
-  {
-    id: "last_month",
+    key: "last_month",
     label: "Mês passado",
     build: () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const end = new Date(now.getFullYear(), now.getMonth(), 0);
+      const d = subMonths(new Date(), 1);
       return {
-        start: start.toISOString().slice(0, 10),
-        end: end.toISOString().slice(0, 10),
-        preset: "last_month",
+        start: format(startOfMonth(d), "yyyy-MM-dd"),
+        end: format(endOfMonth(d), "yyyy-MM-dd"),
+        label: "Mês passado",
       };
     },
   },
   {
-    id: "last_quarter",
+    key: "this_quarter",
+    label: "Este trimestre",
+    build: () => ({
+      start: format(startOfQuarter(new Date()), "yyyy-MM-dd"),
+      end: format(endOfQuarter(new Date()), "yyyy-MM-dd"),
+      label: "Este trimestre",
+    }),
+  },
+  {
+    key: "last_quarter",
     label: "Trimestre passado",
     build: () => {
-      const now = new Date();
-      const q = Math.floor(now.getMonth() / 3);
-      const startMonth = (q - 1) * 3;
-      const start = new Date(now.getFullYear(), startMonth, 1);
-      const end = new Date(now.getFullYear(), startMonth + 3, 0);
+      const d = subMonths(new Date(), 3);
       return {
-        start: start.toISOString().slice(0, 10),
-        end: end.toISOString().slice(0, 10),
-        preset: "last_quarter",
-      };
-    },
-  },
-  {
-    id: "ytd",
-    label: "Ano corrente",
-    build: () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 1);
-      return {
-        start: start.toISOString().slice(0, 10),
-        end: now.toISOString().slice(0, 10),
-        preset: "ytd",
+        start: format(startOfQuarter(d), "yyyy-MM-dd"),
+        end: format(endOfQuarter(d), "yyyy-MM-dd"),
+        label: "Trimestre passado",
       };
     },
   },
@@ -88,19 +57,19 @@ export function PeriodPills({ value, onChange }: Props) {
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">Período</Label>
-      <div className="flex flex-wrap gap-2">
-        {PRESETS.map((p) => {
-          const active = value.preset === p.id;
+      <div className="flex flex-wrap gap-1.5">
+        {presets.map((p) => {
+          const active = value.label === p.label;
           return (
             <button
-              key={p.id}
+              key={p.key}
               type="button"
               onClick={() => onChange(p.build())}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-xs font-medium",
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background hover:bg-muted",
+                  : "border-border bg-card text-foreground hover:bg-accent"
               )}
             >
               {p.label}
@@ -108,9 +77,6 @@ export function PeriodPills({ value, onChange }: Props) {
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground">
-        {value.start} → {value.end}
-      </p>
     </div>
   );
 }

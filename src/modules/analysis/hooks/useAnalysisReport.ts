@@ -1,5 +1,5 @@
 /**
- * useAnalysisReport — busca um relatório com polling enquanto gera
+ * useAnalysisReport — busca um report por id (com polling enquanto gerando)
  */
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
@@ -7,25 +7,46 @@ import { useBu } from "@/contexts/BuContext";
 import { analysisKeys } from "@/lib/queryKeys/analysis";
 import type { AnalysisReport } from "../types";
 
-const REPORT_COLUMNS =
-  "id, bu_id, created_by, title, premise, additional_context, mode, depth, modules, scope, period, status, result, sources, suggested_actions, template_id, error_message, generated_at, created_at, updated_at";
+const COLUMNS = [
+  "id",
+  "bu_id",
+  "created_by",
+  "created_at",
+  "updated_at",
+  "generated_at",
+  "status",
+  "mode",
+  "depth",
+  "modules",
+  "period",
+  "scope",
+  "premise",
+  "additional_context",
+  "title",
+  "template_id",
+  "result",
+  "sources",
+  "suggested_actions",
+  "error_message",
+].join(",");
 
 export function useAnalysisReport(reportId: string | undefined) {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBu();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
 
-  return useQuery<AnalysisReport | null>({
-    queryKey: reportId ? analysisKeys.report(reportId) : ["analysis", "reports", "detail", "none"],
-    enabled: Boolean(reportId && currentBuId),
+  return useQuery({
+    queryKey: analysisKeys.detail(reportId ?? ""),
+    enabled: !!reportId && !!buId,
     refetchInterval: (q) => {
-      const data = q.state.data as AnalysisReport | null | undefined;
-      if (!data) return 2500;
+      const data = q.state.data as AnalysisReport | undefined;
+      if (!data) return 2000;
       return data.status === "generating" || data.status === "pending" ? 2500 : false;
     },
-    queryFn: async () => {
+    queryFn: async (): Promise<AnalysisReport | null> => {
       const { data, error } = await supabase
         .from("analysis_reports")
-        .select(REPORT_COLUMNS)
+        .select(COLUMNS)
         .eq("id", reportId!)
         .is("deleted_at", null)
         .maybeSingle();

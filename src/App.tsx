@@ -209,7 +209,7 @@ function AuthenticatedRoutes() {
         {/* Projects */}
         {projectRoutes}
 
-        {/* Analysis */}
+        {/* Analysis (Estratégica) */}
         {analysisRoutes}
         
         {/* Core (Home, Profile, Users, etc.) */}

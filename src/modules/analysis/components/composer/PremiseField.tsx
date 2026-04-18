@@ -1,8 +1,5 @@
-/**
- * PremiseField — pergunta principal
- */
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface Props {
   value: string;
@@ -13,19 +10,20 @@ export function PremiseField({ value, onChange }: Props) {
   return (
     <div className="space-y-2">
       <Label htmlFor="premise" className="text-sm font-medium">
-        O que você quer entender?
+        Premissa <span className="text-destructive">*</span>
       </Label>
       <Textarea
         id="premise"
-        placeholder="Ex.: Como nosso MRR evoluiu vs. churn no último trimestre? Quais times entregaram OKRs com mais consistência?"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder="Ex.: Por que o NPS caiu no último trimestre?"
         rows={3}
         maxLength={1000}
         className="resize-none"
+        required
       />
       <p className="text-xs text-muted-foreground">
-        Seja específico. Quanto melhor a premissa, melhor o resultado.
+        Descreva o que você quer entender ou decidir.
       </p>
     </div>
   );

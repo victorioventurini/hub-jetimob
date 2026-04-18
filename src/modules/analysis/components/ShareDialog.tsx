@@ -1,10 +1,18 @@
 /**
- * ShareDialog — compartilhar análise com pessoas da BU
+ * ShareDialog — compartilhar análise com membros da BU
  */
 import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { BuUserMultiSelect } from "@/components/selects";
 import { useAnalysisShare } from "../hooks/useAnalysisShare";
 
 interface Props {
@@ -15,36 +23,49 @@ interface Props {
 
 export function ShareDialog({ open, onOpenChange, reportId }: Props) {
   const [recipients, setRecipients] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
   const share = useAnalysisShare();
 
-  const handleSubmit = async () => {
-    await share.mutateAsync({ reportId, recipientProfileIds: recipients });
+  const submit = async () => {
+    if (!recipients.length) return;
+    await share.mutateAsync({
+      report_id: reportId,
+      recipient_profile_ids: recipients,
+      message: message.trim() || undefined,
+    });
     setRecipients([]);
+    setMessage("");
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Compartilhar análise</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-2">
-          <p className="text-sm text-muted-foreground">
-            Selecione com quem deseja compartilhar. Os destinatários receberão notificação no
-            sistema e por e-mail.
-          </p>
-          <BuUserMultiSelect
-            value={recipients}
-            onValueChange={setRecipients}
-            placeholder="Buscar pessoas da BU…"
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Destinatários</Label>
+            <BuUserMultiSelect value={recipients} onValueChange={setRecipients} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="msg">Mensagem (opcional)</Label>
+            <Textarea
+              id="msg"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Adicione um contexto…"
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={recipients.length === 0 || share.isPending}>
+          <Button onClick={submit} disabled={!recipients.length || share.isPending}>
             Enviar
           </Button>
         </DialogFooter>

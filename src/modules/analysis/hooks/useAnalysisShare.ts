@@ -1,38 +1,28 @@
 /**
- * useAnalysisShare — invoca analysis-share edge function
+ * useAnalysisShare — compartilha um report via edge function
  */
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useBu } from "@/contexts/BuContext";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { toast } from "sonner";
 
+interface ShareInput {
+  report_id: string;
+  recipient_profile_ids: string[];
+  message?: string;
+}
+
 export function useAnalysisShare() {
-  const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
-    mutationFn: async ({
-      reportId,
-      recipientProfileIds,
-    }: {
-      reportId: string;
-      recipientProfileIds: string[];
-    }) => {
-      if (!currentBuId) throw new Error("BU não selecionada");
-      if (recipientProfileIds.length === 0) throw new Error("Selecione ao menos 1 destinatário");
-
+    mutationFn: async (input: ShareInput) => {
       const { data, error } = await supabase.functions.invoke("analysis-share", {
-        body: {
-          bu_id: currentBuId,
-          report_id: reportId,
-          recipient_profile_ids: recipientProfileIds,
-        },
+        body: input,
       });
-      if (error) throw error;
-      return data as { recipientCount: number };
+      if (error) throw new Error(error.message || "Falha ao compartilhar");
+      return data;
     },
-    onSuccess: (data) => {
-      toast.success(`Análise compartilhada com ${data.recipientCount} pessoa(s)`);
-    },
-    onError: (e: any) => toast.error(e.message || "Falha ao compartilhar"),
+    onSuccess: () => toast.success("Análise compartilhada"),
+    onError: (e: Error) => toast.error(e.message),
   });
 }

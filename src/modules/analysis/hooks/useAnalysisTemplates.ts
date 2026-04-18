@@ -1,5 +1,6 @@
 /**
- * useAnalysisTemplates — lista de templates (RLS já filtra is_admin_only)
+ * useAnalysisTemplates — lista templates disponíveis
+ * RLS já filtra is_admin_only para não-admins
  */
 import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
@@ -7,24 +8,27 @@ import { useBu } from "@/contexts/BuContext";
 import { analysisKeys } from "@/lib/queryKeys/analysis";
 import type { AnalysisTemplate } from "../types";
 
-const TEMPLATE_COLUMNS =
-  "id, bu_id, name, category, premise, defaults, is_admin_only, scope, display_order";
+const COLUMNS =
+  "id,bu_id,name,category,premise,scope,defaults,is_admin_only,display_order";
 
 export function useAnalysisTemplates() {
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBu();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
 
-  return useQuery<AnalysisTemplate[]>({
-    queryKey: analysisKeys.templates(currentBuId),
-    enabled: Boolean(currentBuId),
-    queryFn: async () => {
+  return useQuery({
+    queryKey: analysisKeys.templates(buId),
+    enabled: !!buId,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<AnalysisTemplate[]> => {
       const { data, error } = await supabase
         .from("analysis_templates")
-        .select(TEMPLATE_COLUMNS)
+        .select(COLUMNS)
         .is("deleted_at", null)
-        .order("display_order", { ascending: true });
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
       if (error) throw error;
-      return (data || []) as unknown as AnalysisTemplate[];
+      return (data ?? []) as unknown as AnalysisTemplate[];
     },
   });
 }

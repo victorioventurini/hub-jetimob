@@ -2,54 +2,52 @@
  * useGenerateAnalysis — invoca edge function analysis-generate
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
-import { analysisKeys } from "@/lib/queryKeys/analysis";
 import { toast } from "sonner";
-import type { AnalysisComposerState } from "../types";
+import { analysisKeys } from "@/lib/queryKeys/analysis";
+import type { GenerateAnalysisInput } from "../types";
+
+interface GenerateResult {
+  report_id: string;
+}
 
 export function useGenerateAnalysis() {
-  const { currentBuId } = useBu();
+  const supabase = useBuScopedSupabase();
+  const { currentBu } = useBu();
+  const buId = currentBu?.id ?? null;
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (state: AnalysisComposerState): Promise<{ report_id: string }> => {
-      if (!currentBuId) throw new Error("BU não selecionada");
-
+    mutationFn: async (input: GenerateAnalysisInput): Promise<GenerateResult> => {
       const { data, error } = await supabase.functions.invoke("analysis-generate", {
-        body: {
-          bu_id: currentBuId,
-          premise: state.premise,
-          additional_context: state.additionalContext || null,
-          mode: state.mode,
-          modules: state.modules,
-          scope: state.scope,
-          period: state.period,
-          depth: state.depth,
-          template_id: state.templateId ?? null,
-        },
+        body: input,
       });
-
       if (error) {
-        const status = (error as any).context?.status ?? 0;
-        const errorBody = (error as any).context?.body;
-        if (status === 429) {
-          toast.error("Muitas requisições. Tente novamente em alguns segundos.");
-        } else if (status === 402) {
-          toast.error("Créditos de IA esgotados. Adicione créditos para continuar.");
-        } else if (status === 403 && errorBody?.error === "IA_DISABLED") {
-          toast.error("IA desativada para esta BU pelo administrador.");
-        } else {
-          toast.error(error.message || "Falha ao gerar análise");
+        const msg = String(error.message || "");
+        if (msg.includes("429") || msg.toLowerCase().includes("rate")) {
+          throw new Error("RATE_LIMIT");
         }
-        throw error;
+        if (msg.includes("402") || msg.toLowerCase().includes("credit")) {
+          throw new Error("NO_CREDITS");
+        }
+        if (msg.toLowerCase().includes("ia_disabled")) {
+          throw new Error("IA_DISABLED");
+        }
+        throw new Error(msg || "Falha ao gerar análise");
       }
-
-      if (!data?.report_id) throw new Error("Resposta inválida do servidor");
-      return data;
+      return data as GenerateResult;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: analysisKeys.reportsPrefix() });
+      if (buId) qc.invalidateQueries({ queryKey: analysisKeys.list(buId) });
+    },
+    onError: (e: Error) => {
+      const map: Record<string, string> = {
+        RATE_LIMIT: "Muitas requisições. Tente novamente em alguns segundos.",
+        NO_CREDITS: "Créditos de IA esgotados. Adicione créditos no Hub.",
+        IA_DISABLED: "Geração por IA está desativada para esta BU.",
+      };
+      toast.error(map[e.message] || e.message);
     },
   });
 }

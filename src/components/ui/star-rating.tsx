@@ -1,51 +1,39 @@
 /**
- * StarRating — componentes canônicos de avaliação 1-5 estrelas
- *
- * Extraído de MbrClosingStep / QbrMeetingClosingStep para reuso global.
- * Visual idêntico ao original (yellow-400 fill).
+ * StarRating — input/display compartilhado de avaliação 1-5
  */
 import { useState } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface StarRatingInputProps {
+interface InputProps {
   value: number;
-  onChange: (rating: number) => void;
+  onChange: (v: number) => void;
   size?: number;
   className?: string;
 }
 
-export function StarRatingInput({
-  value,
-  onChange,
-  size = 20,
-  className,
-}: StarRatingInputProps) {
+export function StarRatingInput({ value, onChange, size = 22, className }: InputProps) {
   const [hovered, setHovered] = useState(0);
-
   return (
-    <div
-      className={cn("flex items-center gap-0.5", className)}
-      onMouseLeave={() => setHovered(0)}
-    >
-      {[1, 2, 3, 4, 5].map((star) => {
-        const filled = star <= (hovered || value);
+    <div className={cn("flex items-center gap-0.5", className)}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = (hovered || value) >= n;
         return (
           <button
-            key={star}
+            key={n}
             type="button"
-            aria-label={`${star} estrela${star > 1 ? "s" : ""}`}
-            className="p-0.5 transition-colors"
-            onMouseEnter={() => setHovered(star)}
-            onClick={() => onChange(star)}
+            onClick={() => onChange(n)}
+            onMouseEnter={() => setHovered(n)}
+            onMouseLeave={() => setHovered(0)}
+            className="rounded p-0.5 transition-colors hover:bg-accent"
+            aria-label={`${n} estrela${n > 1 ? "s" : ""}`}
           >
             <Star
               size={size}
               className={cn(
                 "transition-colors",
-                filled ? "text-yellow-400" : "text-muted-foreground",
+                filled ? "fill-warning text-warning" : "text-muted-foreground"
               )}
-              fill={filled ? "currentColor" : "none"}
             />
           </button>
         );
@@ -54,27 +42,22 @@ export function StarRatingInput({
   );
 }
 
-interface StarRatingDisplayProps {
+interface DisplayProps {
   rating: number;
   size?: number;
   className?: string;
 }
 
-export function StarRatingDisplay({
-  rating,
-  size = 14,
-  className,
-}: StarRatingDisplayProps) {
+export function StarRatingDisplay({ rating, size = 14, className }: DisplayProps) {
   return (
     <div className={cn("flex items-center gap-0.5", className)}>
-      {[1, 2, 3, 4, 5].map((star) => (
+      {[1, 2, 3, 4, 5].map((n) => (
         <Star
-          key={star}
+          key={n}
           size={size}
           className={cn(
-            star <= rating ? "text-yellow-400" : "text-muted-foreground/40",
+            rating >= n ? "fill-warning text-warning" : "text-muted-foreground"
           )}
-          fill={star <= rating ? "currentColor" : "none"}
         />
       ))}
     </div>

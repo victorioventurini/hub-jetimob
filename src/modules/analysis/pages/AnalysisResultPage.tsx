@@ -1,121 +1,105 @@
 /**
- * AnalysisResultPage — visualização da análise gerada
+ * AnalysisResultPage — visualização do report gerado
  */
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, AlertCircle } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
-import { useIdentity } from "@/hooks/useIdentity";
-import { useAuth } from "@/hooks/useAuth";
-import { LoadingRotativo } from "../components/LoadingRotativo";
 import { ResultHeader } from "../components/result/ResultHeader";
+import { SourcesChips } from "../components/result/SourcesChips";
 import { KeyMetricsGrid } from "../components/result/KeyMetricsGrid";
 import { InsightBlock } from "../components/result/InsightBlock";
 import { AnalysisBody } from "../components/result/AnalysisBody";
-import { SourcesChips } from "../components/result/SourcesChips";
 import { SuggestedActions } from "../components/result/SuggestedActions";
 import { AnalysisCommentList } from "../components/result/AnalysisCommentList";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
+import { LoadingRotativo } from "../components/LoadingRotativo";
 
 export default function AnalysisResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  const { data: report, isLoading, error } = useAnalysisReport(reportId);
-  const { realProfileId } = useIdentity();
-  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { data: report, isLoading } = useAnalysisReport(reportId);
   const [shareOpen, setShareOpen] = useState(false);
 
-  if (isLoading) {
+  usePageTitle(report?.title || report?.premise?.slice(0, 60) || "Análise");
+
+  if (isLoading || !report) {
     return (
-      <div className="container mx-auto max-w-4xl px-4 py-6">
-        <LoadingRotativo />
-      </div>
-    );
-  }
-
-  if (error || !report) {
-    return (
-      <div className="container mx-auto max-w-4xl px-4 py-10 text-center">
-        <AlertTriangle className="mx-auto h-10 w-10 text-warning" />
-        <p className="mt-2 text-sm text-muted-foreground">
-          Análise não encontrada ou sem permissão de acesso.
-        </p>
-        <Button asChild variant="outline" className="mt-4">
-          <Link to="/analysis">
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            Voltar
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
-  const canDelete = isAdmin || report.created_by === realProfileId;
-  const isGenerating = report.status === "generating" || report.status === "pending";
-  const insights = report.result?.insights ?? [];
-
-  return (
-    <div className="container mx-auto max-w-4xl px-4 py-6">
-      <Button asChild variant="ghost" size="sm" className="mb-3">
-        <Link to="/analysis">
+      <div className="space-y-6 p-4 md:p-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/analysis")}>
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Voltar
-        </Link>
+        </Button>
+        <Card>
+          <CardContent className="p-6">
+            <LoadingRotativo />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const isGenerating = report.status === "generating" || report.status === "pending";
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+      <Button variant="ghost" size="sm" onClick={() => navigate("/analysis")}>
+        <ArrowLeft className="mr-1.5 h-4 w-4" />
+        Voltar
       </Button>
 
-      <ResultHeader
-        report={report}
-        onShare={() => setShareOpen(true)}
-        canDelete={canDelete}
-      />
+      <Card>
+        <CardContent className="space-y-6 p-6">
+          <ResultHeader report={report} onShare={() => setShareOpen(true)} />
 
-      {isGenerating && (
-        <Card className="mt-6">
-          <LoadingRotativo />
-        </Card>
-      )}
+          {isGenerating && <LoadingRotativo />}
 
-      {report.status === "failed" && (
-        <Card className="mt-6 border-destructive/50 bg-destructive/5 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Falha ao gerar análise</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {report.error_message || "Erro desconhecido. Tente gerar novamente."}
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {report.status === "complete" && report.result && (
-        <div className="mt-6 space-y-6">
-          <KeyMetricsGrid metrics={report.result.key_metrics} />
-
-          {insights.length > 0 && (
-            <div className="space-y-2">
-              <h2 className="text-base font-semibold text-foreground">Insights</h2>
-              <div className="space-y-2">
-                {insights.map((ins, i) => (
-                  <InsightBlock key={`${ins.title}-${i}`} insight={ins} />
-                ))}
+          {report.status === "failed" && (
+            <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+              <div>
+                <p className="text-sm font-medium text-destructive">Falha ao gerar análise</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {report.error_message || "Tente novamente em alguns instantes."}
+                </p>
               </div>
             </div>
           )}
 
-          <AnalysisBody body={report.result.body} />
+          {report.status === "complete" && (
+            <>
+              <SourcesChips sources={report.sources ?? undefined} />
+              <KeyMetricsGrid metrics={report.result?.key_metrics} />
+              {report.result?.summary && (
+                <p className="text-sm leading-relaxed text-foreground">
+                  {report.result.summary}
+                </p>
+              )}
+              <div className="space-y-3">
+                {report.result?.insights?.map((ins, i) => (
+                  <InsightBlock key={i} insight={ins} />
+                ))}
+              </div>
+              <AnalysisBody body={report.result?.body} />
+              <SuggestedActions actions={report.suggested_actions ?? undefined} />
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-          <SuggestedActions actions={report.suggested_actions ?? undefined} />
-
-          <SourcesChips sources={report.sources ?? report.result.sources ?? undefined} />
-
+      {report.status === "complete" && (
+        <>
           <AnalysisFeedback reportId={report.id} />
-
-          <AnalysisCommentList reportId={report.id} />
-        </div>
+          <Card>
+            <CardContent className="p-6">
+              <AnalysisCommentList reportId={report.id} />
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} reportId={report.id} />

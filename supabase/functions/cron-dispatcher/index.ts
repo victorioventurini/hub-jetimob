@@ -57,8 +57,6 @@ interface MaintenanceResult {
   ritual_occurrences_missed: number;
   cycles_activated: number;
   cycles_closed: number;
-  analysis_schedules_run: number;
-  analysis_schedules_failed: number;
 }
 
 interface ExecutionResult {
@@ -159,8 +157,6 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     ritual_occurrences_missed: 0,
     cycles_activated: 0,
     cycles_closed: 0,
-    analysis_schedules_run: 0,
-    analysis_schedules_failed: 0,
   };
 
   try {
@@ -264,218 +260,10 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
     console.log("[cron-dispatcher] auto_transition_cycle_statuses RPC not available");
   }
 
-  // Run pending analysis schedules
-  try {
-    const stats = await runAnalysisSchedules(supabase);
-    result.analysis_schedules_run = stats.run;
-    result.analysis_schedules_failed = stats.failed;
-    if (stats.run > 0 || stats.failed > 0) {
-      console.log(`[cron-dispatcher] Analysis schedules: ${stats.run} run, ${stats.failed} failed`);
-    }
-  } catch (err) {
-    console.error("[cron-dispatcher] runAnalysisSchedules error:", err);
-  }
-
   return result;
 }
 
-/**
- * Process pending analysis schedules: invokes analysis-generate per schedule
- * and recomputes next_run_at based on frequency.
- */
-async function runAnalysisSchedules(
-  supabase: any,
-): Promise<{ run: number; failed: number }> {
-  const stats = { run: 0, failed: 0 };
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  const nowIso = new Date().toISOString();
-  const { data: schedules, error } = await supabase
-    .from("analysis_schedules")
-    .select("id, bu_id, template_id, frequency, hour_local, day_of_period, recipients, next_run_at")
-    .eq("is_active", true)
-    .lte("next_run_at", nowIso)
-    .limit(50);
-
-  if (error || !schedules || schedules.length === 0) return stats;
-
-  for (const sched of schedules) {
-    try {
-      // Load template defaults
-      const { data: tpl } = await supabase
-        .from("analysis_templates")
-        .select("id, premise, defaults")
-        .eq("id", sched.template_id)
-        .is("deleted_at", null)
-        .maybeSingle();
-
-      if (!tpl) {
-        stats.failed++;
-        continue;
-      }
-
-      const defaults = (tpl.defaults || {}) as Record<string, unknown>;
-
-      // Compute period from frequency (last completed window)
-      const period = computePeriodForFrequency(sched.frequency);
-
-      // Find a service "actor" for created_by — use the schedule's creator if available
-      const { data: schedFull } = await supabase
-        .from("analysis_schedules")
-        .select("created_by")
-        .eq("id", sched.id)
-        .maybeSingle();
-
-      const createdByProfile = schedFull?.created_by;
-      if (!createdByProfile) {
-        stats.failed++;
-        continue;
-      }
-
-      const { data: actorProfile } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("id", createdByProfile)
-        .maybeSingle();
-
-      if (!actorProfile?.user_id) {
-        stats.failed++;
-        continue;
-      }
-
-      // Invoke analysis-generate (service role; function will run with bu context from header)
-      const resp = await fetch(`${supabaseUrl}/functions/v1/analysis-generate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceRoleKey}`,
-          "Content-Type": "application/json",
-          "x-current-bu-id": sched.bu_id,
-          "x-cron-source": "schedule",
-        },
-        body: JSON.stringify({
-          bu_id: sched.bu_id,
-          premise: tpl.premise,
-          mode: defaults.mode ?? "auto",
-          depth: defaults.depth ?? "standard",
-          modules: defaults.modules ?? [],
-          scope: defaults.scope ?? { buWide: true },
-          period,
-          template_id: tpl.id,
-          additional_context: null,
-          impersonated_user_id: actorProfile.user_id,
-        }),
-      });
-
-      if (!resp.ok) {
-        stats.failed++;
-        const txt = await resp.text();
-        console.error(`[cron-dispatcher] schedule ${sched.id} invoke failed: ${txt}`);
-      } else {
-        stats.run++;
-        const body = await resp.json().catch(() => ({}));
-        const reportId = body?.report_id;
-
-        // Notify recipients via outbox (analysis.scheduled)
-        const recipients = Array.isArray(sched.recipients) ? sched.recipients : [];
-        if (recipients.length > 0 && reportId) {
-          // Resolve auth user ids
-          const { data: recProfiles } = await supabase
-            .from("profiles")
-            .select("user_id")
-            .in("id", recipients)
-            .not("user_id", "is", null);
-
-          const authIds = (recProfiles || [])
-            .map((p: any) => p.user_id)
-            .filter(Boolean);
-
-          if (authIds.length > 0) {
-            await supabase.rpc("emit_notification_event", {
-              p_event_slug: "analysis.scheduled",
-              p_bu_id: sched.bu_id,
-              p_recipient_user_ids: authIds,
-              p_actor_id: null,
-              p_title: `Análise agendada disponível`,
-              p_message: `Uma análise estratégica agendada foi gerada e está disponível para consulta.`,
-              p_context_type: "analysis_report",
-              p_context_id: reportId,
-              p_context_url: `/analysis/${reportId}`,
-              p_metadata: {
-                schedule_id: sched.id,
-                template_id: tpl.id,
-              },
-            });
-          }
-        }
-      }
-
-      // Update last_run_at + next_run_at
-      const next = computeNextRunAt(sched.frequency, sched.hour_local ?? 8, sched.day_of_period);
-      await supabase
-        .from("analysis_schedules")
-        .update({ last_run_at: nowIso, next_run_at: next })
-        .eq("id", sched.id);
-    } catch (err) {
-      console.error(`[cron-dispatcher] schedule ${sched.id} error:`, err);
-      stats.failed++;
-    }
-  }
-
-  return stats;
-}
-
-function computePeriodForFrequency(freq: string): { start: string; end: string; preset: string } {
-  const now = new Date();
-  if (freq === "weekly") {
-    const end = new Date(now);
-    end.setUTCDate(end.getUTCDate() - 1);
-    const start = new Date(end);
-    start.setUTCDate(start.getUTCDate() - 6);
-    return {
-      start: start.toISOString().slice(0, 10),
-      end: end.toISOString().slice(0, 10),
-      preset: "last_7_days",
-    };
-  }
-  if (freq === "monthly") {
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0));
-    return {
-      start: start.toISOString().slice(0, 10),
-      end: end.toISOString().slice(0, 10),
-      preset: "last_month",
-    };
-  }
-  // per_cycle → trimestre anterior
-  const q = Math.floor(now.getUTCMonth() / 3);
-  const startMonth = (q - 1) * 3;
-  const start = new Date(Date.UTC(now.getUTCFullYear(), startMonth, 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), startMonth + 3, 0));
-  return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-    preset: "last_quarter",
-  };
-}
-
-function computeNextRunAt(
-  freq: string,
-  hourLocal: number,
-  dayOfPeriod: number | null,
-): string {
-  const next = new Date();
-  if (freq === "weekly") {
-    next.setUTCDate(next.getUTCDate() + 7);
-  } else if (freq === "monthly") {
-    next.setUTCMonth(next.getUTCMonth() + 1);
-    if (dayOfPeriod) next.setUTCDate(Math.min(dayOfPeriod, 28));
-  } else {
-    next.setUTCMonth(next.getUTCMonth() + 3);
-  }
-  next.setUTCHours(hourLocal, 0, 0, 0);
-  return next.toISOString();
-}
+// Log execution to database
 async function logExecution(supabase: any, result: ExecutionResult): Promise<void> {
   try {
     await supabase.from("cron_execution_logs").insert({
@@ -551,7 +339,7 @@ Deno.serve(async (req) => {
       correlation_id: correlationId,
       outbox: { processed: 0, sent: 0, failed: 0 },
       health: { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 },
-      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false, recommendation_notifications_sent: 0, recommendation_notifications_checked: 0, ritual_occurrences_missed: 0, cycles_activated: 0, cycles_closed: 0, analysis_schedules_run: 0, analysis_schedules_failed: 0 },
+      maintenance: { counting_columns_initialized: false, wizard_sessions_cleaned: 0, agent_logs_cleaned: 0, cron_logs_cleaned: 0, perf_snapshots_cleaned: 0, perf_metrics_collected: false, recommendation_notifications_sent: 0, recommendation_notifications_checked: 0, ritual_occurrences_missed: 0, cycles_activated: 0, cycles_closed: 0 },
       duration_ms: Date.now() - startTime,
       ran_at: new Date().toISOString(),
     };
