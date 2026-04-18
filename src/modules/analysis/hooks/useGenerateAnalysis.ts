@@ -46,6 +46,7 @@ export function useGenerateAnalysis() {
     },
     onError: (e: Error) => {
       const map: Record<string, string> = {
+        BU_REQUIRED: "Selecione uma Business Unit antes de gerar a análise.",
         RATE_LIMIT: "Muitas requisições. Tente novamente em alguns segundos.",
         NO_CREDITS: "Créditos de IA esgotados. Adicione créditos no Hub.",
         IA_DISABLED: "Geração por IA está desativada para esta BU.",
