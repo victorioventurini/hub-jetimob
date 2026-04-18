@@ -106,58 +106,63 @@ export default function AnalysisHomePage() {
         />
 
         <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Nova análise</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <PremiseField
-              value={state.premise}
-              onChange={(premise) => setState((s) => ({ ...s, premise }))}
-            />
-            <AdditionalContextField
-              value={state.additional_context}
-              onChange={(additional_context) =>
-                setState((s) => ({ ...s, additional_context }))
-              }
-            />
-            <div className="grid gap-4 md:grid-cols-2">
-              <ModeSelector
-                value={state.mode}
-                onChange={(mode) => setState((s) => ({ ...s, mode }))}
+          <Card className="lg:col-span-2">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-base">Nova análise</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5 p-4 pt-0 md:p-6 md:pt-0">
+              <PremiseField
+                value={state.premise}
+                onChange={(premise) => setState((s) => ({ ...s, premise }))}
               />
-              <DepthSelector
-                value={state.depth}
-                onChange={(depth) => setState((s) => ({ ...s, depth }))}
+              <AdditionalContextField
+                value={state.additional_context}
+                onChange={(additional_context) =>
+                  setState((s) => ({ ...s, additional_context }))
+                }
               />
-            </div>
-            {state.mode !== "auto" && (
-              <ModulesChips
-                value={state.modules}
-                onChange={(modules) => setState((s) => ({ ...s, modules }))}
-              />
-            )}
-            <div className="grid gap-4 md:grid-cols-2">
-              <ScopePills value={scopeMode} onChange={setScopeMode} />
-              <PeriodPills
-                value={state.period}
-                onChange={(period) => setState((s) => ({ ...s, period }))}
-              />
-            </div>
-            <div className="flex justify-end pt-2">
-              <Button onClick={onSubmit} disabled={!canSubmit} size="lg">
-                <Sparkles className="mr-2 h-4 w-4" />
-                {generate.isPending ? "Gerando…" : "Gerar análise"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="grid gap-4 md:grid-cols-2">
+                <ModeSelector
+                  value={state.mode}
+                  onChange={(mode) => setState((s) => ({ ...s, mode }))}
+                />
+                <DepthSelector
+                  value={state.depth}
+                  onChange={(depth) => setState((s) => ({ ...s, depth }))}
+                />
+              </div>
+              {state.mode !== "auto" && (
+                <ModulesChips
+                  value={state.modules}
+                  onChange={(modules) => setState((s) => ({ ...s, modules }))}
+                />
+              )}
+              <div className="grid gap-4 md:grid-cols-2">
+                <ScopePills value={scopeMode} onChange={setScopeMode} />
+                <PeriodPills
+                  value={state.period}
+                  onChange={(period) => setState((s) => ({ ...s, period }))}
+                />
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button
+                  onClick={onSubmit}
+                  disabled={!canSubmit}
+                  size="lg"
+                  className="w-full sm:w-auto"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {generate.isPending ? "Gerando…" : "Gerar análise"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base">Histórico</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
               <AnalysisHistoryList />
             </CardContent>
           </Card>

@@ -119,7 +119,7 @@ const SourcesChips = memo(function SourcesChips({ sources }: { sources?: Analysi
 const KeyMetricsGrid = memo(function KeyMetricsGrid({ metrics }: { metrics?: AnalysisKeyMetric[] }) {
   if (!metrics?.length) return null;
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric, index) => (
         <Card key={`${metric.label}-${index}`} className="p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -424,60 +424,60 @@ export default function AnalysisResultPage() {
         }
       />
 
-      <Card>
-        <CardContent className="space-y-6 p-6">
-          <ReportSummary report={report} />
+        <Card>
+          <CardContent className="space-y-6 p-4 md:p-6">
+            <ReportSummary report={report} />
 
-          {isGenerating && <LoadingRotativo />}
+            {isGenerating && <LoadingRotativo />}
 
-          {report.status === "failed" && (
-            <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-              <div>
-                <p className="text-sm font-medium text-destructive">Falha ao gerar análise</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {report.error_message || "Tente novamente em alguns instantes."}
-                </p>
+            {report.status === "failed" && (
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">Falha ao gerar análise</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {report.error_message || "Tente novamente em alguns instantes."}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {report.status === "complete" && (
-            <>
-              <SourcesChips sources={report.sources ?? undefined} />
-              <KeyMetricsGrid metrics={report.result?.key_metrics} />
-              {report.result?.summary && (
-                <p className="text-sm leading-relaxed text-foreground">
-                  {report.result.summary}
-                </p>
-              )}
-              <div className="space-y-3">
-                {report.result?.insights?.map((ins, i) => (
-                  <InsightBlock key={i} insight={ins} />
-                ))}
-              </div>
-              <AnalysisBody body={report.result?.body} />
-              <SuggestedActionsSection
-                actions={report.suggested_actions ?? undefined}
-                reportId={report.id}
-                ownerHint={ownerHint}
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+            {report.status === "complete" && (
+              <>
+                <SourcesChips sources={report.sources ?? undefined} />
+                <KeyMetricsGrid metrics={report.result?.key_metrics} />
+                {report.result?.summary && (
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {report.result.summary}
+                  </p>
+                )}
+                <div className="space-y-3">
+                  {report.result?.insights?.map((ins, i) => (
+                    <InsightBlock key={i} insight={ins} />
+                  ))}
+                </div>
+                <AnalysisBody body={report.result?.body} />
+                <SuggestedActionsSection
+                  actions={report.suggested_actions ?? undefined}
+                  reportId={report.id}
+                  ownerHint={ownerHint}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-      {report.status === "complete" && (
-        <>
-          <AnalysisDecisionsSection reportId={report.id} />
-          <AnalysisFeedback reportId={report.id} />
-          <Card>
-            <CardContent className="p-6">
-              <AnalysisCommentSection reportId={report.id} />
-            </CardContent>
-          </Card>
-        </>
-      )}
+        {report.status === "complete" && (
+          <>
+            <AnalysisDecisionsSection reportId={report.id} />
+            <AnalysisFeedback reportId={report.id} />
+            <Card>
+              <CardContent className="p-4 md:p-6">
+                <AnalysisCommentSection reportId={report.id} />
+              </CardContent>
+            </Card>
+          </>
+        )}
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} reportId={report.id} />
       </div>

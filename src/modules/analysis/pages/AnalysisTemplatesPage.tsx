@@ -77,7 +77,7 @@ export default function AnalysisTemplatesPage() {
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 {cat}
               </h2>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((t) => {
                   const isBu = t.scope === "bu";
                   const showMenu = canManage && isBu;
