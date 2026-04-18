@@ -1,23 +1,40 @@
 /**
  * AnalysisResultPage — visualização do report gerado
  */
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  ChevronRight,
+  Info,
+  Share2,
+  Trash2,
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useAnalysisComments } from "../hooks/useAnalysisComments";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
-import { ResultHeader } from "../components/result-blocks/ResultHeader";
-import { SourcesChips } from "../components/result-blocks/SourcesChips";
-import { KeyMetricsGrid } from "../components/result-blocks/KeyMetricsGrid";
-import { InsightBlock } from "../components/result-blocks/InsightBlock";
-import { AnalysisBody } from "../components/result-blocks/AnalysisBody";
-import { SuggestedActions } from "../components/result-blocks/SuggestedActions";
-import { AnalysisCommentList } from "../components/result-blocks/AnalysisCommentList";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
+import type {
+  AnalysisComment,
+  AnalysisInsight,
+  AnalysisKeyMetric,
+  AnalysisReport,
+  AnalysisSource,
+  AnalysisSuggestedAction,
+} from "../types";
 
 export default function AnalysisResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
