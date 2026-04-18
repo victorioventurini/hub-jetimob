@@ -16,3 +16,4 @@ export { settingsRoutes } from './settings.routes';
 export { coreRoutes } from './core.routes';
 export { eventsRoutes } from './events.routes';
 export { projectRoutes } from './projects.routes';
+export { analysisRoutes } from './analysis.routes';

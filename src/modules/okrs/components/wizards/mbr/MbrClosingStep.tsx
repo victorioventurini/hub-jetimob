@@ -48,62 +48,9 @@ export interface MbrClosingStepProps {
 }
 
 // ============================================================
-// INLINE STAR RATING
+// STAR RATING — extraído para componente compartilhado
 // ============================================================
-
-function StarRatingInput({
-  value,
-  onChange,
-  size = 20,
-}: {
-  value: number;
-  onChange: (rating: number) => void;
-  size?: number;
-}) {
-  const [hovered, setHovered] = useState(0);
-
-  return (
-    <div className="flex items-center gap-0.5" onMouseLeave={() => setHovered(0)}>
-      {[1, 2, 3, 4, 5].map((star) => {
-        const filled = star <= (hovered || value);
-        return (
-          <button
-            key={star}
-            type="button"
-            aria-label={`${star} estrela${star > 1 ? 's' : ''}`}
-            className="p-0.5 transition-colors"
-            onMouseEnter={() => setHovered(star)}
-            onClick={() => onChange(star)}
-          >
-            <Star
-              size={size}
-              className={cn(
-                'transition-colors',
-                filled ? 'text-yellow-400' : 'text-muted-foreground',
-              )}
-              fill={filled ? 'currentColor' : 'none'}
-            />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function StarRatingDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          size={size}
-          className={cn(star <= rating ? 'text-yellow-400' : 'text-muted-foreground/40')}
-          fill={star <= rating ? 'currentColor' : 'none'}
-        />
-      ))}
-    </div>
-  );
-}
+import { StarRatingInput, StarRatingDisplay } from "@/components/ui/star-rating";
 
 // ============================================================
 // COMPONENT

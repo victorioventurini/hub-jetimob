@@ -56,30 +56,9 @@ export interface QbrMeetingClosingStepProps {
 }
 
 // ============================================================
-// STAR RATING
+// STAR RATING — extraído para componente compartilhado
 // ============================================================
-
-function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [hovered, setHovered] = useState(0);
-  return (
-    <div className="flex items-center gap-0.5" onMouseLeave={() => setHovered(0)}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange(star)}
-          onMouseEnter={() => setHovered(star)}
-          className="p-0.5 transition-colors"
-        >
-          <Star className={cn(
-            'h-5 w-5',
-            star <= (hovered || value) ? 'fill-warning text-warning' : 'text-muted-foreground/30'
-          )} />
-        </button>
-      ))}
-    </div>
-  );
-}
+import { StarRatingInput } from "@/components/ui/star-rating";
 
 // ============================================================
 // ORG COVERAGE MAP

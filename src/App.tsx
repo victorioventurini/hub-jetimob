@@ -41,6 +41,7 @@ import { settingsRoutes } from "./routes/settings.routes";
 import { coreRoutes } from "./routes/core.routes";
 import { eventsRoutes } from "./routes/events.routes";
 import { projectRoutes } from "./routes/projects.routes";
+import { analysisRoutes } from "./routes/analysis.routes";
 
 /**
  * Fallback de loading otimizado
@@ -207,6 +208,9 @@ function AuthenticatedRoutes() {
         
         {/* Projects */}
         {projectRoutes}
+
+        {/* Analysis */}
+        {analysisRoutes}
         
         {/* Core (Home, Profile, Users, etc.) */}
         {coreRoutes}
