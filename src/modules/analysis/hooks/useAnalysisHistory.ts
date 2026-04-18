@@ -27,7 +27,7 @@ export function useAnalysisHistory(filters?: AnalysisHistoryFilters) {
         .limit(50);
 
       if (filters?.status && filters.status !== "all") {
-        q = q.eq("status", filters.status);
+        q = q.eq("status", filters.status as "pending" | "generating" | "complete" | "failed");
       }
       if (filters?.search) {
         q = q.or(`title.ilike.%${filters.search}%,premise.ilike.%${filters.search}%`);
