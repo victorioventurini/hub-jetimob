@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -49,23 +49,20 @@ export default function AnalysisTemplatesPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/analysis")}>
-        <ArrowLeft className="mr-1.5 h-4 w-4" />
-        Voltar
-      </Button>
-
-      <div className="flex items-start justify-between gap-3">
-        <PageHeader
-          title="Templates de análise"
-          description="Use um template para iniciar rapidamente."
-        />
-        {canManage && (
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            Novo template
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Templates de análise"
+        description="Use um template para iniciar rapidamente."
+        backTo="/analysis"
+        backLabel="Voltar para Análise"
+        actions={
+          canManage ? (
+            <Button onClick={openCreate}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Novo template
+            </Button>
+          ) : undefined
+        }
+      />
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
