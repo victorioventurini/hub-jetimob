@@ -30,6 +30,7 @@ import {
   Layers,
   Network,
   FolderKanban,
+  Sparkles,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,7 @@ const iconMap: Record<string, LucideIcon> = {
   assets: Briefcase,
   tickets: FileText,
   wizards: Rocket,
+  analysis: Sparkles,
 };
 
 // Itens fixos (sempre aparecem)
