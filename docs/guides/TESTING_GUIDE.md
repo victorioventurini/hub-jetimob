@@ -42,8 +42,16 @@ src/
     │   └── components/*.test.tsx # Testes de componentes
     ├── teams/
     │   └── hooks/useTeams.test.ts # ⭐ Testes de times + area_id
-    └── areas/
-        └── hooks/useAreas.test.ts # ⭐ Testes de áreas
+    ├── areas/
+    │   └── hooks/useAreas.test.ts # ⭐ Testes de áreas
+    └── analysis/                  # ⭐ NOVO — Módulo Análise Estratégica
+        ├── types/index.test.ts
+        └── components/result/
+            ├── KeyMetricsGrid.test.tsx
+            ├── InsightBlock.test.tsx
+            ├── SourcesChips.test.tsx
+            ├── SuggestedActions.test.tsx
+            └── AnalysisBody.test.tsx
 
 e2e/
 ├── fixtures/             # Fixtures E2E

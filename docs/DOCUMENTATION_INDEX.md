@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-04-06  
-**TCR Version:** 3.22.0  
+**Última atualização:** 2026-04-18  
+**TCR Version:** 3.25.1  
 **System Health:** 10/10 ✅
 
 ---
@@ -43,6 +43,7 @@ docs/
 | `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.7.0 |
 | `SCHEMA_QUICK_REFERENCE.md` | Referência rápida de schema | v1.0.0 |
 | `RESPONSIBILITY_MIGRATION_POLICY.md` | Política de migração de responsabilidades | v1.0.0 |
+| `ANALYSIS_MODULE.md` | **Módulo Análise Estratégica** — tabelas, permissões, componentes, hooks, CRUD de templates | v1.0.0 |
 
 ---
 
