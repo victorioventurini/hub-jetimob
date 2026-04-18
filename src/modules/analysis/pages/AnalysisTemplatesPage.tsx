@@ -162,6 +162,7 @@ export default function AnalysisTemplatesPage() {
           setToDelete(null);
         }}
       />
-    </div>
+      </div>
+    </HubLayout>
   );
 }

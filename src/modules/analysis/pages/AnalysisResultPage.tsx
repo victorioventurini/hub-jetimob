@@ -408,11 +408,12 @@ export default function AnalysisResultPage() {
     : null;
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <PageHeader
-        title={title}
-        backTo="/analysis"
-        backLabel="Voltar para Análises"
+    <HubLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title={title}
+          backTo="/analysis"
+          backLabel="Voltar para Análises"
         actions={
           report.status === "complete" ? (
             <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
