@@ -453,7 +453,7 @@ export default function AnalysisResultPage() {
                 ))}
               </div>
               <AnalysisBody body={report.result?.body} />
-              <SuggestedActions
+              <SuggestedActionsSection
                 actions={report.suggested_actions ?? undefined}
                 reportId={report.id}
                 ownerHint={ownerHint}
@@ -465,11 +465,11 @@ export default function AnalysisResultPage() {
 
       {report.status === "complete" && (
         <>
-          <AnalysisDecisionsList reportId={report.id} />
+          <AnalysisDecisionsSection reportId={report.id} />
           <AnalysisFeedback reportId={report.id} />
           <Card>
             <CardContent className="p-6">
-              <AnalysisCommentList reportId={report.id} />
+              <AnalysisCommentSection reportId={report.id} />
             </CardContent>
           </Card>
         </>
