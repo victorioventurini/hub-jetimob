@@ -8,27 +8,39 @@ import { memo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertCircle, AlertTriangle, CheckCircle2, Info, Share2 } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  ClipboardList,
+  Info,
+  MessageSquare,
+  Share2,
+  Wand2,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { TextareaAutoSubmit } from "@/components/ui/textarea-auto-submit";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { AnalysisCommentList } from "@/modules/analysis/components/result-blocks/AnalysisCommentList.tsx";
-import { AnalysisDecisionsList } from "@/modules/analysis/components/result-blocks/AnalysisDecisionsList.tsx";
-import { SuggestedActions } from "@/modules/analysis/components/result-blocks/SuggestedActions.tsx";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
+import { useAnalysisComments } from "../hooks/useAnalysisComments";
+import { useAnalysisDecisions } from "../hooks/useAnalysisDecisions";
 import type {
+  AnalysisComment,
   AnalysisInsight,
   AnalysisKeyMetric,
   AnalysisReport,
   AnalysisSource,
+  AnalysisSuggestedAction,
 } from "../types";
+import type { TeamCheckinDecision } from "@/modules/okrs/types/wizard";
 
 const STATUS_LABEL: Record<
   string,
@@ -162,6 +174,210 @@ function AnalysisBody({ body }: { body?: string }) {
   );
 }
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function SuggestedActionsSection({
+  actions,
+  reportId,
+  ownerHint,
+}: {
+  actions?: AnalysisSuggestedAction[];
+  reportId: string;
+  ownerHint: { id: string; name: string } | null;
+}) {
+  const { add, isAdding } = useAnalysisDecisions(reportId);
+  const items = actions ?? [];
+
+  if (!items.length) return null;
+
+  const categoryMap: Record<string, TeamCheckinDecision["category"]> = {
+    decision: "decision",
+    focus_adjustment: "focus_adjustment",
+    next_step: "next_step",
+    strategic_proposal: "strategic_proposal",
+  };
+
+  const registerDecision = (action: AnalysisSuggestedAction) => {
+    const text = (action.suggestedText || action.rationale || action.label || action.title || "").trim();
+    if (!text) return;
+
+    add({
+      id: crypto.randomUUID(),
+      text,
+      category: categoryMap[action.suggestedCategory || "decision"] || "decision",
+      owner: ownerHint ?? undefined,
+    });
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Wand2 className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-base font-semibold text-foreground">Ações sugeridas</h2>
+      </div>
+
+      <div className="space-y-3">
+        {items.map((action, index) => {
+          const title = action.label || action.title || "Ação sugerida";
+          const description =
+            action.suggestedText || action.rationale || "Sem detalhes adicionais para esta sugestão.";
+          const isDecision = action.type === "register_decision";
+
+          return (
+            <div key={`${title}-${index}`} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+                    <Badge variant="outline">{isDecision ? "Decisão" : action.type || "Ação"}</Badge>
+                  </div>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+                </div>
+
+                {isDecision ? (
+                  <Button size="sm" variant="outline" onClick={() => registerDecision(action)} disabled={isAdding}>
+                    {isAdding ? "Registrando…" : "Registrar decisão"}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function AnalysisDecisionsSection({ reportId }: { reportId: string }) {
+  const { decisions, isLoading } = useAnalysisDecisions(reportId);
+
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-base font-semibold text-foreground">Decisões registradas</h2>
+          <Badge variant="secondary" className="ml-auto">
+            {decisions.length}
+          </Badge>
+        </div>
+
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando decisões…</p>
+        ) : decisions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma decisão registrada para esta análise.</p>
+        ) : (
+          <div className="space-y-3">
+            {decisions.map((decision) => (
+              <div key={decision.id} className="rounded-lg border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{decision.category}</Badge>
+                  {decision.owner?.name ? (
+                    <span className="text-xs text-muted-foreground">Responsável: {decision.owner.name}</span>
+                  ) : null}
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{decision.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CommentItem({ comment }: { comment: AnalysisComment }) {
+  const authorName = comment.author?.display_name?.trim() || "Usuário";
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-start gap-3">
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={comment.author?.avatar_url ?? undefined} alt={authorName} />
+          <AvatarFallback>{getInitials(authorName) || "?"}</AvatarFallback>
+        </Avatar>
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-foreground">{authorName}</span>
+            <span className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ptBR })}
+            </span>
+            {comment.is_pinned ? <Badge variant="outline">Fixado</Badge> : null}
+          </div>
+
+          {comment.reply_to?.body ? (
+            <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              Respondendo a {comment.reply_to.author?.display_name || "comentário"}: {comment.reply_to.body}
+            </div>
+          ) : null}
+
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{comment.body}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnalysisCommentSection({ reportId }: { reportId: string }) {
+  const { data, isLoading, add, isAdding } = useAnalysisComments(reportId);
+  const [body, setBody] = useState("");
+  const comments = data ?? [];
+
+  const submitComment = () => {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+    add({ body: trimmed });
+    setBody("");
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-2">
+        <MessageSquare className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-base font-semibold text-foreground">Discussão</h2>
+        <Badge variant="secondary" className="ml-auto">
+          {comments.length}
+        </Badge>
+      </div>
+
+      <div className="space-y-2">
+        <TextareaAutoSubmit
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          onSubmit={submitComment}
+          minRows={2}
+          maxRows={6}
+          placeholder="Adicione um comentário…"
+        />
+        <div className="flex justify-end">
+          <Button size="sm" onClick={submitComment} disabled={!body.trim() || isAdding}>
+            {isAdding ? "Enviando…" : "Comentar"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando comentários…</p>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
+        ) : (
+          comments.map((comment) => <CommentItem key={comment.id} comment={comment} />)
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function AnalysisResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
   const { data: report, isLoading } = useAnalysisReport(reportId);
@@ -237,7 +453,7 @@ export default function AnalysisResultPage() {
                 ))}
               </div>
               <AnalysisBody body={report.result?.body} />
-              <SuggestedActions
+              <SuggestedActionsSection
                 actions={report.suggested_actions ?? undefined}
                 reportId={report.id}
                 ownerHint={ownerHint}
@@ -249,11 +465,11 @@ export default function AnalysisResultPage() {
 
       {report.status === "complete" && (
         <>
-          <AnalysisDecisionsList reportId={report.id} />
+          <AnalysisDecisionsSection reportId={report.id} />
           <AnalysisFeedback reportId={report.id} />
           <Card>
             <CardContent className="p-6">
-              <AnalysisCommentList reportId={report.id} />
+              <AnalysisCommentSection reportId={report.id} />
             </CardContent>
           </Card>
         </>
