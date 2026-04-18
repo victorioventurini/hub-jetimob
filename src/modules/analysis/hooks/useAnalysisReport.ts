@@ -51,7 +51,23 @@ export function useAnalysisReport(reportId: string | undefined) {
         .is("deleted_at", null)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as AnalysisReport) ?? null;
+      if (!data) return null;
+
+      const report = data as unknown as AnalysisReport;
+
+      // Resolve autor via v_profiles_directory (BU-scoped, sem PII sensível)
+      if (report.created_by) {
+        const { data: author } = await supabase
+          .from("v_profiles_directory")
+          .select("id, display_name, photo_url")
+          .eq("id", report.created_by)
+          .maybeSingle();
+        report.author = author
+          ? { id: author.id, display_name: author.display_name, photo_url: author.photo_url }
+          : null;
+      }
+
+      return report;
     },
   });
 }

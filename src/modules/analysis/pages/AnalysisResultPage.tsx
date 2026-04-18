@@ -48,6 +48,14 @@ const STATUS_LABEL: Record<
 
 function ReportSummary({ report }: { report: AnalysisReport }) {
   const status = STATUS_LABEL[report.status] ?? STATUS_LABEL.pending;
+  const authorName = report.author?.display_name?.trim() || "Usuário";
+  const initials = authorName
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <div className="space-y-3 border-b border-border pb-4">
@@ -55,7 +63,15 @@ function ReportSummary({ report }: { report: AnalysisReport }) {
         <p className="min-w-0 flex-1 text-sm text-muted-foreground">{report.premise}</p>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
-      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={report.author?.photo_url ?? undefined} alt={authorName} />
+            <AvatarFallback className="text-[10px]">{initials || "?"}</AvatarFallback>
+          </Avatar>
+          <span className="text-foreground">{authorName}</span>
+        </span>
+        <span>•</span>
         <span>
           Criada{" "}
           {formatDistanceToNow(new Date(report.created_at), {
@@ -156,6 +172,11 @@ function AnalysisBody({ body }: { body?: string }) {
   );
 }
 
+const ACTION_TYPE_LABEL: Record<string, string> = {
+  open_resource: "Abrir recurso",
+  register_decision: "Registrar decisão",
+};
+
 function SuggestedActions({ actions }: { actions?: AnalysisSuggestedAction[] }) {
   if (!actions?.length) return null;
 
@@ -166,27 +187,49 @@ function SuggestedActions({ actions }: { actions?: AnalysisSuggestedAction[] }) 
         Ações sugeridas
       </h2>
       <div className="space-y-2">
-        {actions.map((action, index) => (
-          <div
-            key={`${action.title}-${index}`}
-            className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
-          >
-            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-foreground">{action.title}</p>
-              {action.rationale ? (
-                <p className="mt-1 text-xs text-muted-foreground">{action.rationale}</p>
-              ) : null}
-              <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                {action.owner_hint ? <span>Responsável sugerido: {action.owner_hint}</span> : null}
-                {action.due_hint ? <span>Prazo: {action.due_hint}</span> : null}
+        {actions.map((action, index) => {
+          // Suporta shape novo (label/suggestedText/type) e legado (title/rationale/owner_hint)
+          const heading = action.label || action.title || "Ação sugerida";
+          const description = action.suggestedText || action.rationale;
+          const typeLabel = action.type ? ACTION_TYPE_LABEL[action.type] : undefined;
+
+          return (
+            <div
+              key={`${heading}-${index}`}
+              className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
+            >
+              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">{heading}</p>
+                  {typeLabel && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {typeLabel}
+                    </Badge>
+                  )}
+                  {action.suggestedCategory && !typeLabel && (
+                    <Badge variant="outline" className="text-[10px]">
+                      {action.suggestedCategory}
+                    </Badge>
+                  )}
+                </div>
+                {description ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+                ) : null}
+                {(action.owner_hint || action.due_hint || action.entity) && (
+                  <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    {action.owner_hint ? <span>Responsável sugerido: {action.owner_hint}</span> : null}
+                    {action.due_hint ? <span>Prazo: {action.due_hint}</span> : null}
+                    {action.entity ? <span>Entidade: {action.entity}</span> : null}
+                  </div>
+                )}
               </div>
+              <Button size="sm" variant="outline" disabled title="Em breve: criar decisão formal">
+                Registrar
+              </Button>
             </div>
-            <Button size="sm" variant="outline" disabled title="Em breve: criar decisão formal">
-              Registrar
-            </Button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

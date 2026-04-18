@@ -44,11 +44,31 @@ export interface AnalysisInsight {
   body: string;
 }
 
+export type AnalysisSuggestedActionType = "open_resource" | "register_decision";
+
 export interface AnalysisSuggestedAction {
-  title: string;
+  /** Tipo da ação sugerida pela IA */
+  type?: AnalysisSuggestedActionType;
+  /** Rótulo curto exibido no card (shape novo da IA) */
+  label?: string;
+  /** Categoria sugerida quando type='register_decision' */
+  suggestedCategory?: string;
+  /** Texto sugerido para a decisão */
+  suggestedText?: string;
+  /** Entidade alvo quando type='open_resource' */
+  entity?: string;
+  /** ID da entidade alvo (pode ser null) */
+  entityId?: string | null;
+
+  /** @deprecated shape antigo — manter para compat retroativa de relatórios */
+  title?: string;
+  /** @deprecated shape antigo */
   rationale?: string;
+  /** @deprecated shape antigo */
   owner_hint?: string;
+  /** @deprecated shape antigo */
   due_hint?: string;
+  /** @deprecated shape antigo */
   impact?: "low" | "medium" | "high";
 }
 
@@ -81,6 +101,12 @@ export interface AnalysisReport {
   sources: AnalysisSource[] | null;
   suggested_actions: AnalysisSuggestedAction[] | null;
   error_message: string | null;
+  /** Autor (resolvido via join com v_profiles_directory) */
+  author?: {
+    id: string;
+    display_name: string | null;
+    photo_url: string | null;
+  } | null;
 }
 
 export interface AnalysisTemplate {
