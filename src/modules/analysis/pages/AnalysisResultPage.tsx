@@ -16,13 +16,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { AnalysisCommentList } from "@/modules/analysis/components/result-blocks/AnalysisCommentList";
+import { AnalysisDecisionsList } from "@/modules/analysis/components/result-blocks/AnalysisDecisionsList";
+import { SuggestedActions } from "@/modules/analysis/components/result-blocks/SuggestedActions";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
-import { AnalysisCommentList } from "../components/result-blocks/AnalysisCommentList";
-import { AnalysisDecisionsList } from "../components/result-blocks/AnalysisDecisionsList";
-import { SuggestedActions } from "../components/result-blocks/SuggestedActions";
 import type {
   AnalysisInsight,
   AnalysisKeyMetric,
