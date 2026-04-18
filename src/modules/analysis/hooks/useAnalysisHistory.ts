@@ -22,7 +22,7 @@ export function useAnalysisHistory(filters: Filters = {}) {
   const limit = filters.limit ?? 30;
 
   return useQuery({
-    queryKey: analysisKeys.list(buId, filters),
+    queryKey: analysisKeys.list(buId, filters as Record<string, unknown>),
     enabled: !!buId,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<Pick<AnalysisReport,
