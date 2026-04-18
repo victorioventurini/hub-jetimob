@@ -81,6 +81,7 @@ const buMenuItems = [
   { name: "OKRs", href: "/okrs", icon: Target, slug: "okrs" },
   { name: "KPIs", href: "/kpis", icon: BarChart3, slug: "kpis" },
   { name: "Projects", href: "/projects", icon: FolderKanban, slug: "projects" },
+  { name: "Análise", href: "/analysis", icon: Sparkles, slug: "analysis" },
   { name: "Tickets", href: "/tickets", icon: FileText, slug: "tickets" },
   { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
