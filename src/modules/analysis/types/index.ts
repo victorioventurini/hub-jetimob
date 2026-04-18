@@ -101,6 +101,12 @@ export interface AnalysisReport {
   sources: AnalysisSource[] | null;
   suggested_actions: AnalysisSuggestedAction[] | null;
   error_message: string | null;
+  /** Autor (resolvido via join com v_profiles_directory) */
+  author?: {
+    id: string;
+    display_name: string | null;
+    photo_url: string | null;
+  } | null;
 }
 
 export interface AnalysisTemplate {
