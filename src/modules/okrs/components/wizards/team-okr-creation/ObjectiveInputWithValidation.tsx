@@ -69,7 +69,8 @@ export function ObjectiveInputWithValidation({
               isValidating && "opacity-60",
               isValidated && feedback?.type === 'success' && "border-status-green bg-status-green/5",
               isValidated && feedback?.type === 'warning' && "border-status-yellow bg-status-yellow/5",
-              isValidated && feedback?.type === 'suggestion' && "border-info bg-info/5"
+              isValidated && feedback?.type === 'suggestion' && "border-info bg-info/5",
+              !isValidated && feedback?.type === 'warning' && "border-status-yellow/60"
             )}
           />
           {isValidated && (
@@ -121,7 +122,7 @@ export function ObjectiveInputWithValidation({
       </div>
       
       {/* Validation Feedback */}
-      {feedback && isValidated && (
+      {feedback && (
         <div className={cn(
           "p-4 rounded-xl border text-sm space-y-3",
           feedback.type === 'warning' && FEEDBACK_STYLES.warning.container,
@@ -203,7 +204,7 @@ export function ObjectiveInputWithValidation({
           )}
 
           {/* Show "Sugerir objetivos" button even when no alternatives yet */}
-          {(!feedback.alternatives || feedback.alternatives.length === 0) && onRequestMoreSuggestions && (
+          {isValidated && (!feedback.alternatives || feedback.alternatives.length === 0) && onRequestMoreSuggestions && (
             <div className="pt-2 border-t border-border/50">
               <Button
                 type="button"
@@ -224,7 +225,7 @@ export function ObjectiveInputWithValidation({
           )}
         </div>
       )}
-      
+
       {/* Helper text when not validated */}
       {!isValidated && !isValidating && value.length > 0 && value.length < minLength && (
         <p className="text-xs text-muted-foreground">
