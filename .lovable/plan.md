@@ -1,65 +1,47 @@
 
 
-## Plano: Sincronização de cache no vínculo KPI ↔ KR
+## Plano: Resolver 8 erros de build (dependências ausentes)
 
-### Objetivo
-Fazer com que vincular, trocar ou desvincular um KPI primário (e guardrails) atualize **toda** a UI imediatamente, sem necessidade de refresh.
+### Pré-checklist (executado)
+- ✅ TCR / DEVELOPMENT_STANDARDS / DATA_MODEL_REGISTRY consultados — nenhuma regra inquebrável afetada (não toca em RLS, BU scoping, query keys, edge functions ou schema).
+- ✅ Padrão `sr-only` já adotado no projeto (`dialog.tsx`, `sheet.tsx`, `sidebar.tsx`, `breadcrumb.tsx`, etc.) — substituição segue convenção existente.
+- ✅ `@testing-library/user-event` é dependência sister do `@testing-library/react@16` já presente; usado em 6 arquivos de teste.
 
-### Escopo
-Arquivo único: `src/modules/okrs/hooks/useOkrKrMetrics.ts` (estender as 3 mutations existentes — não criar nada novo, conforme padrão "preferir estender e compor").
+### Diagnóstico
+8 erros `TS2307` (módulos não encontrados). 2 pacotes referenciados mas ausentes do `package.json`:
 
-### Mudanças por mutation
+| Pacote | Uso | Arquivos |
+|---|---|---|
+| `@radix-ui/react-visually-hidden` | 1 uso isolado em `CommandDialog` | `src/components/ui/command.tsx` |
+| `@testing-library/user-event` | Interações em testes | 6 arquivos `*.test.tsx` |
 
-**1. `useCreateKrMetric` — adicionar invalidações faltantes em `onSuccess`:**
-- `queryKeys.okrs.krEffectiveValues(kr_id, kr_type)`
-- `queryKeys.okrs.krPrimaryKpiBatch` via predicate (matches `['okr-kr-primary-kpi-batch', ...]`)
-- `queryKeys.kpis.allKrLinks(currentBuId)` — usar predicate `['kpis', 'all-kr-links']` (não temos buId no escopo da mutation)
-- Mover invalidação de `teamKeyResultsPrefix` / `orgKeyResultsPrefix` / `dashboardDataPrefix` para **fora** do branch `role === 'primary'` (também precisam atualizar para guardrails, pois afetam badges/contadores)
+### Mudanças
 
-**2. `useUpdateKrMetric` — substituir invalidação atual (que só atinge `krMetrics`) por padrão completo via predicate:**
-```ts
-queryClient.invalidateQueries({
-  predicate: (q) => Array.isArray(q.queryKey) && (
-    q.queryKey[0] === 'okr-kr-metrics' ||
-    q.queryKey[0] === 'okr-kr-primary-kpi' ||
-    q.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
-    q.queryKey[0] === 'okr-kr-effective-values' ||
-    (q.queryKey[0] === 'kpis' && q.queryKey[1] === 'all-kr-links')
-  ),
-});
-queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
-queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+**1. `src/components/ui/command.tsx`** — remover dependência externa, usar padrão interno `sr-only`:
+```tsx
+// Linha 8: remover
+- import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+
+// Linhas 31-33: simplificar
+- <VisuallyHidden>
+-   <DialogTitle>Busca</DialogTitle>
+- </VisuallyHidden>
++ <DialogTitle className="sr-only">Busca</DialogTitle>
 ```
 
-**3. `useDeleteKrMetric` — estender o predicate atual:**
-- Adicionar `'okr-kr-primary-kpi-batch'` e `'okr-kr-effective-values'` ao predicate
-- Adicionar predicate para `['kpis', 'all-kr-links', ...]`
-- Adicionar invalidações de prefix: `teamKeyResultsPrefix`, `orgKeyResultsPrefix`, `teamObjectivesPrefix`, `orgObjectivesPrefix`, `dashboardDataPrefix` (necessário porque desvincular zera o sync de meta e altera progresso)
+**2. `package.json`** — adicionar em `devDependencies`:
+```json
+"@testing-library/user-event": "^14.5.2"
+```
+(Compatível com `@testing-library/react@^16.3.1` já instalado.)
 
-### Impacto na UI (atualização imediata garantida)
-
-| Componente | Hook re-fetched | Resultado |
-|---|---|---|
-| `KrMetricsSection` (modal aberto) | `usePrimaryKrMetric`, `useGuardrailKrMetrics` | Select volta para "Nenhum" / mostra novo KPI |
-| `PrimaryKpiLockBanner` | `usePrimaryKpiForKr` | Banner some/aparece/atualiza |
-| Inputs de baseline/target/unit do dialog | `usePrimaryKpiForKr` (`hasPrimaryKpi`) | Desbloqueiam quando desvinculado |
-| `OkrObjectiveCard` / `EnhancedObjectiveCard` | `useKrPrimaryKpiBatch` | Badge KPI primário some/aparece |
-| `ObjectiveListItem` (dashboard) | `useKrPrimaryKpiBatch` | Progresso e badge atualizam |
-| `KpiSelect` em outros lugares | `useKpiKrLinks` | Filtros "vinculadas" refletem mudança |
-
-### Validação (pós-implementação)
-1. Editar uma KR, vincular KPI primário → banner + lock dos inputs aparecem na hora.
-2. Trocar para outro KPI → banner atualiza com novo nome/valor.
-3. Selecionar "Nenhum" → banner some, baseline/target/unit voltam editáveis, badge no card da lista some.
-4. Adicionar/remover guardrail → lista atualiza sem fechar modal.
-5. Confirmar que não há regressão em outras edições (título, owner, status — já cobertas pelos hooks `useUpdate*KeyResult`).
+### Validação pós-implementação
+1. `tsc --noEmit` / build sem erros TS2307.
+2. `Cmd+K` (`CommandDialog`) continua funcional e acessível (screen readers leem "Busca" via `sr-only`).
+3. Suítes de teste com `userEvent.click/type/setup` voltam a compilar.
 
 ### Observações
-- Nenhum componente novo, nenhum hook novo: apenas estender `onSuccess` das 3 mutations existentes.
-- Padrão de predicate broad já é usado no `useDeleteKrMetric` — apenas estendido.
-- Não toca em RLS, edge functions ou schema.
-- Conforme `mem://standards/query-key-prefix-standard`: usar helpers `*Prefix()` existentes; predicates para keys que dependem de parâmetros que a mutation não conhece (`buId`, todos os `krIds`).
+- Zero impacto em RLS, edge functions, schema, query keys, BU isolation, RBAC.
+- 1 arquivo de código alterado + 1 dependência adicionada. Nenhum componente novo.
+- Alinhado a `DEVELOPMENT_STANDARDS` (preferir primitivos do design system aos pacotes externos quando equivalentes).
 
