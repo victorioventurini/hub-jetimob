@@ -31,6 +31,12 @@ interface UseBuUsersDirectoryOptions {
   q?: string;
   /** Filter by specific team */
   teamId?: string;
+  /**
+   * When true and `teamId` is set, also includes users belonging to any
+   * descendant subteam (recursive via teams.parent_team_id).
+   * Default: true (avoid surprising callers who pass a parent team id).
+   */
+  includeSubteams?: boolean;
   /** Include terminated users (default: false) */
   includeTerminated?: boolean;
   /** Exclude external users/contacts (default: false) */
