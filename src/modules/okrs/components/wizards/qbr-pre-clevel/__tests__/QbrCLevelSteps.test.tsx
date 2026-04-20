@@ -28,6 +28,20 @@ vi.mock('../../shared', () => ({
     <div>{header}{bottomFixed}{children}{footer}</div>
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
+}));
+
+// QbrCLevelQuarterBalanceStep importa TeamKrsToggle por path direto
+vi.mock('../../shared/TeamKrsToggle', () => ({
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
 }));
 
 // ============================================================
