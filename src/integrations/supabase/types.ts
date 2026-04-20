@@ -289,7 +289,7 @@ export type Database = {
           output_format: Database["public"]["Enums"]["agent_output_format"]
           output_schema: Json | null
           scope: Database["public"]["Enums"]["agent_scope"]
-          slug: string | null
+          slug: string
           system_prompt: string
           temperature: number | null
           updated_at: string
@@ -309,7 +309,7 @@ export type Database = {
           output_format?: Database["public"]["Enums"]["agent_output_format"]
           output_schema?: Json | null
           scope?: Database["public"]["Enums"]["agent_scope"]
-          slug?: string | null
+          slug: string
           system_prompt: string
           temperature?: number | null
           updated_at?: string
@@ -329,7 +329,7 @@ export type Database = {
           output_format?: Database["public"]["Enums"]["agent_output_format"]
           output_schema?: Json | null
           scope?: Database["public"]["Enums"]["agent_scope"]
-          slug?: string | null
+          slug?: string
           system_prompt?: string
           temperature?: number | null
           updated_at?: string

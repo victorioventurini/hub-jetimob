@@ -1,0 +1,1 @@
+alter table public.ai_agents alter column slug set not null;
