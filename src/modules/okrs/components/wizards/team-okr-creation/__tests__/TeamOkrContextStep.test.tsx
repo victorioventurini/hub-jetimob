@@ -1,13 +1,14 @@
 /**
  * @file TeamOkrContextStep tests
  * @description Cobre o bug do "passo 2 travado em geração" — garante que:
- *  - Não trava quando aiInsight já existe (não invoca IA novamente)
- *  - Tenta gerar apenas UMA vez por mount (evita loop por re-render do pai)
- *  - Reset de loading não trava se onAiInsightChange muda referência
+ *  - Não invoca IA quando aiInsight já existe (evita re-render loop)
+ *  - Tenta gerar apenas UMA vez por mount (mesmo com re-renders do pai)
+ *  - Não trava UI quando IA falha
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { WizardAiInsight } from '@/modules/okrs/hooks';
 
 // ---------- Mocks ----------
@@ -18,15 +19,16 @@ vi.mock('@/modules/okrs/hooks', () => ({
 
 vi.mock('@/modules/vic', () => ({
   VicGeneratingCard: () => <div data-testid="vic-generating">Gerando...</div>,
+  VicTypewriterText: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
-vi.mock('../shared/VicInsightCard', () => ({
+vi.mock('../../shared/VicInsightCard', () => ({
   VicInsightCard: ({ content }: { content: string }) => (
     <div data-testid="vic-insight">{content}</div>
   ),
 }));
 
-vi.mock('../shared/WizardTooltips', () => ({
+vi.mock('../../shared/WizardTooltips', () => ({
   WizardTooltipInline: () => null,
   WizardTooltip: () => null,
 }));
@@ -36,7 +38,7 @@ vi.mock('@/modules/vic/components/AskToVic', () => ({
   AskToVicStepHelper: () => null,
 }));
 
-vi.mock('../shared', () => ({
+vi.mock('../../shared', () => ({
   WizardStepFooter: () => <div data-testid="footer" />,
 }));
 
@@ -45,6 +47,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 import { TeamOkrContextStep } from '../TeamOkrContextStep';
+
+const wrap = (ui: React.ReactElement) => (
+  <TooltipProvider>{ui}</TooltipProvider>
+);
 
 const baseProps = {
   teamName: 'Marketing',
@@ -75,7 +81,7 @@ describe('TeamOkrContextStep', () => {
       priority: 'medium',
       source: 'alinhamento-estrategico',
     };
-    render(<TeamOkrContextStep {...baseProps} aiInsight={persisted} />);
+    render(wrap(<TeamOkrContextStep {...baseProps} aiInsight={persisted} />));
 
     expect(invokeVicMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('vic-insight')).toHaveTextContent('Insight previamente salvo');
@@ -83,19 +89,12 @@ describe('TeamOkrContextStep', () => {
 
   it('invoca IA UMA única vez por mount mesmo com re-render do pai', async () => {
     invokeVicMock.mockResolvedValue({ response: 'Insight gerado' });
-    const onAiInsightChange = vi.fn();
 
     const { rerender } = render(
-      <TeamOkrContextStep {...baseProps} onAiInsightChange={onAiInsightChange} />
+      wrap(<TeamOkrContextStep {...baseProps} onAiInsightChange={vi.fn()} />)
     );
-
-    // Re-render com nova referência de função (simula re-render do pai)
-    rerender(
-      <TeamOkrContextStep {...baseProps} onAiInsightChange={vi.fn()} />
-    );
-    rerender(
-      <TeamOkrContextStep {...baseProps} onAiInsightChange={vi.fn()} />
-    );
+    rerender(wrap(<TeamOkrContextStep {...baseProps} onAiInsightChange={vi.fn()} />));
+    rerender(wrap(<TeamOkrContextStep {...baseProps} onAiInsightChange={vi.fn()} />));
 
     await waitFor(() => {
       expect(invokeVicMock).toHaveBeenCalledTimes(1);
@@ -103,7 +102,7 @@ describe('TeamOkrContextStep', () => {
   });
 
   it('NÃO invoca IA quando não há orgObjectives', () => {
-    render(<TeamOkrContextStep {...baseProps} orgObjectives={[]} />);
+    render(wrap(<TeamOkrContextStep {...baseProps} orgObjectives={[]} />));
     expect(invokeVicMock).not.toHaveBeenCalled();
   });
 
@@ -111,7 +110,7 @@ describe('TeamOkrContextStep', () => {
     invokeVicMock.mockResolvedValue({ response: 'Foco em receita recorrente' });
     const onAiInsightChange = vi.fn();
 
-    render(<TeamOkrContextStep {...baseProps} onAiInsightChange={onAiInsightChange} />);
+    render(wrap(<TeamOkrContextStep {...baseProps} onAiInsightChange={onAiInsightChange} />));
 
     await waitFor(() => {
       expect(onAiInsightChange).toHaveBeenCalledWith(
@@ -127,10 +126,9 @@ describe('TeamOkrContextStep', () => {
   it('para de "gerar" mesmo quando IA falha (sem travar UI)', async () => {
     invokeVicMock.mockRejectedValue(new Error('AI down'));
 
-    render(<TeamOkrContextStep {...baseProps} />);
+    render(wrap(<TeamOkrContextStep {...baseProps} />));
 
     await waitFor(() => {
-      // VicGeneratingCard não deve persistir indefinidamente
       expect(screen.queryByTestId('vic-generating')).not.toBeInTheDocument();
     }, { timeout: 3000 });
   });
