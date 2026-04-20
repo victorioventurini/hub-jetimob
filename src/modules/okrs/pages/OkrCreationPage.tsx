@@ -54,6 +54,7 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Target, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CycleSelect } from '@/components/selects/CycleSelect';
 
 // ============================================================
 // STEP DEFINITIONS
