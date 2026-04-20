@@ -272,7 +272,8 @@ describe('QbrPostCommitmentsStep', () => {
 
 describe('QbrPostFollowUpStep', () => {
   const defaultCadence = {
-    mbrReviewScheduled: false,
+    nextMbrDate: undefined,
+    firstCheckinDate: undefined,
     followUpMeetingDate: undefined,
   };
 
@@ -288,7 +289,7 @@ describe('QbrPostFollowUpStep', () => {
     expect(screen.getByText('Cadência de Acompanhamento')).toBeInTheDocument();
   });
 
-  it('shows MBR scheduling checkbox', () => {
+  it('shows next MBR date field', () => {
     render(
       <QbrPostFollowUpStep
         followUpCadence={defaultCadence}
@@ -297,10 +298,10 @@ describe('QbrPostFollowUpStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Próximo MBR já está agendado')).toBeInTheDocument();
+    expect(screen.getByText(/Próximo MBR/)).toBeInTheDocument();
   });
 
-  it('toggles mbrReviewScheduled', () => {
+  it('updates nextMbrDate when date input changes', () => {
     const onChange = vi.fn();
     render(
       <QbrPostFollowUpStep
@@ -310,8 +311,9 @@ describe('QbrPostFollowUpStep', () => {
         onBack={vi.fn()}
       />
     );
-    fireEvent.click(screen.getByRole('checkbox'));
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mbrReviewScheduled: true }));
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[0], { target: { value: '2026-05-15' } });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ nextMbrDate: '2026-05-15' }));
   });
 });
 
