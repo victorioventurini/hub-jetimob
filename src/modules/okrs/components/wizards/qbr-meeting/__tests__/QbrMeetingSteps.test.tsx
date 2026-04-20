@@ -366,7 +366,7 @@ describe('QbrMeetingClosingStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Encerramento')).toBeInTheDocument();
+    expect(screen.getByText('Encerramento e governança')).toBeInTheDocument();
   });
 
   it('renders 4 governance checklist items', () => {
