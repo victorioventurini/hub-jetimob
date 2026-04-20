@@ -111,17 +111,11 @@ Responda APENAS com JSON válido, sem markdown:
         if (cancelled) return;
 
         if (response?.response) {
-          try {
-            // Tentar extrair JSON da resposta
-            const jsonMatch = response.response.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0]) as InitiativeNameFeedback;
-              if (parsed.type && parsed.message) {
-                setFeedback(parsed);
-              }
-            }
-          } catch (parseError) {
-            // Se não conseguir parsear, ignorar silenciosamente
+          // Helper canônico tolera fences, prefixos e sufixos livres.
+          const parsed = tryParseAiJson<InitiativeNameFeedback>(response.response);
+          if (parsed && parsed.type && parsed.message) {
+            setFeedback(parsed);
+          } else {
             console.debug('[useInitiativeNameValidation] Failed to parse AI response');
           }
         }

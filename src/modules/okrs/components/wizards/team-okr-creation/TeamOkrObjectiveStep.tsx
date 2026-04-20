@@ -86,28 +86,31 @@ export function TeamOkrObjectiveStep({
   const [isValidating, setIsValidating] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  // Parse AI response to feedback format
+  // Parse AI response to feedback format.
+  // Usa o helper canônico `tryParseAiJson` (src/lib/aiResponseParser.ts),
+  // que tolera fences markdown, prefixos/sufixos livres e trailing commas.
   const parseAiResponse = useCallback((responseText: string): ObjectiveValidationFeedback => {
-    try {
-      let cleanResponse = responseText.trim();
-      const jsonBlockMatch = cleanResponse.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-      if (jsonBlockMatch) {
-        cleanResponse = jsonBlockMatch[1].trim();
-      }
-      const parsed = JSON.parse(cleanResponse);
-      // Ensure alternatives is always an array with at least 3 items
-      return {
-        type: parsed.type || 'suggestion',
-        message: parsed.message || responseText,
-        alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives.slice(0, 3) : [],
-      };
-    } catch {
+    const parsed = tryParseAiJson<{
+      type?: ObjectiveValidationFeedback['type'];
+      message?: string;
+      alternatives?: unknown;
+    }>(responseText);
+
+    if (!parsed) {
       return {
         type: 'suggestion',
         message: responseText,
         alternatives: [],
       };
     }
+
+    return {
+      type: parsed.type || 'suggestion',
+      message: parsed.message || responseText,
+      alternatives: Array.isArray(parsed.alternatives)
+        ? (parsed.alternatives as string[]).slice(0, 3)
+        : [],
+    };
   }, []);
 
   // Build context string from user inputs for better suggestions
