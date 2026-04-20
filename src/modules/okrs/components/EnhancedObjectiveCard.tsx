@@ -362,6 +362,7 @@ interface EnhancedKrRowProps {
   primaryKpiInfo?: {
     kpiId: string;
     kpiName: string;
+    kpiUnit?: string;
     direction: 'up' | 'down' | 'maintain';
     currentValue: number | null;
     targetValue: number | null;
@@ -381,6 +382,10 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
   const effectiveStatus = hasPrimaryKpi && primaryKpiInfo?.ragStatus && primaryKpiInfo.ragStatus !== 'no_data'
     ? primaryKpiInfo.ragStatus
     : kr.status;
+  // KPI primário é a fonte única de verdade: unidade segue a do KPI quando vinculado
+  const effectiveUnit = hasPrimaryKpi && primaryKpiInfo?.kpiUnit
+    ? primaryKpiInfo.kpiUnit
+    : kr.unit;
   const progress = calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction);
 
   const formatValue = (value: number | null | undefined, unit: string) => {
