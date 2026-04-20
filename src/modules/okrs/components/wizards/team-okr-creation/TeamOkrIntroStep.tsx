@@ -117,9 +117,9 @@ export function TeamOkrIntroStep({
   }, [isReady, buId, isIaConfigLoading, isIaEnabled]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
         {/* Hero Section */}
         <div className="flex flex-col items-center text-center py-6">
           <div className="p-4 bg-primary/10 rounded-2xl mb-6">
@@ -204,7 +204,7 @@ export function TeamOkrIntroStep({
       </div>
 
       {/* Footer - stays fixed at bottom */}
-      <div className="border-t p-4 bg-muted/30 flex-shrink-0">
+      <div className="border-t p-4 bg-muted/30 shrink-0">
         <Button 
           onClick={onContinue} 
           className="w-full gap-2"

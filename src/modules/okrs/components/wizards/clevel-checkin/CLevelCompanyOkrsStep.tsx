@@ -52,7 +52,7 @@ export function CLevelCompanyOkrsStep({
 }: CLevelCompanyOkrsStepProps) {
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
         <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
           <Skeleton className="h-7 w-48 mb-2" />
           <Skeleton className="h-5 w-72" />

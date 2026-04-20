@@ -181,9 +181,9 @@ export function TeamOkrShareStep({
   const reflectionQuestions = shareStepContent?.reflectionQuestions || [];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>

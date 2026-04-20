@@ -94,7 +94,7 @@ export function LeaderAlignmentStep({
   }, [teamProgress, parentProgress, parentObjectives.length]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-3">
