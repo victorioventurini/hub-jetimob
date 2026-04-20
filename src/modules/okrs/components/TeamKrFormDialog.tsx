@@ -361,7 +361,6 @@ export function TeamKrFormDialog({
                   value={ownerUserId || undefined}
                   onValueChange={(id) => setOwnerUserId(id || null)}
                   placeholder="Selecione o responsável"
-                  teamId={teamId}
                   allowNone={true}
                   noneLabel="Nenhum"
                   excludeExternal={true}
