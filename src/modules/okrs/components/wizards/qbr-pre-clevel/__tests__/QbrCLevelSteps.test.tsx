@@ -33,6 +33,8 @@ vi.mock('../../shared', () => ({
       {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
     </button>
   ),
+  KpiStatusBlocks: () => <div data-testid="kpi-status-blocks" />,
+  LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
 }));
 
 // QbrCLevelQuarterBalanceStep importa TeamKrsToggle por path direto
