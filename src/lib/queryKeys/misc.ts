@@ -39,7 +39,7 @@ export const usersKeys = {
   all: () => ['users'] as const,
   directoryPrefix: (buId: string | null) =>
     ['users', 'directory', buId] as const,
-  directory: (buId: string | null, filters?: { q?: string; areaId?: string; teamId?: string; status?: string; includeTerminated?: boolean; excludeExternal?: boolean; page?: number; pageSize?: number }) => 
+  directory: (buId: string | null, filters?: { q?: string; areaId?: string; teamId?: string; status?: string; includeSubteams?: boolean; includeTerminated?: boolean; excludeExternal?: boolean; page?: number; pageSize?: number }) => 
     ['users', 'directory', buId, filters] as const,
   selectOptions: (buId: string | null) => 
     ['users', 'select-options', buId] as const,
