@@ -44,6 +44,19 @@ vi.mock('../../shared/TeamKrsToggle', () => ({
   ),
 }));
 
+// QbrCLevelSystemReadStep usa useBuScopedSupabase para enriquecer dados
+vi.mock('@/integrations/supabase/useBuScopedSupabase', () => ({
+  useBuScopedSupabase: () => ({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        in: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+    })),
+  }),
+}));
+
 // ============================================================
 // FACTORIES
 // ============================================================
