@@ -213,7 +213,7 @@ export function TeamOkrKrDetailStep({
   const isLastKr = currentKrIndex === krSlots.length - 1;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Progress indicator */}
       <div className="px-6 py-3 border-b bg-muted/30">
         <div className="flex items-center justify-between text-sm">
@@ -237,7 +237,7 @@ export function TeamOkrKrDetailStep({
       </div>
 
       {/* Content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-6 space-y-6">
           {/* KR Header */}
           <div className="flex items-center gap-3">

@@ -650,42 +650,51 @@ export default function OkrCreationPage() {
           />
         }
       >
-        {/* Cycle selector + planning banner — visível quando há mais de um quarter elegível */}
-        {selectableQuarterlyCycles.length > 1 && (
-          <div className="mb-4 flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium text-muted-foreground">Ciclo trimestral alvo</span>
-              <span className="text-xs text-muted-foreground">
-                Escolha em qual trimestre criar este OKR. Ciclos em planejamento serão criados como rascunho.
-              </span>
+        <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+          {/* Cycle selector + planning banner — visível quando há mais de um quarter elegível */}
+          {(selectableQuarterlyCycles.length > 1 || isPlannningCycle || (remainingDraftsCount > 0 && draft.sourceDraftObjectiveId)) && (
+            <div className="shrink-0 space-y-4 px-4 pt-4 sm:px-6">
+              {selectableQuarterlyCycles.length > 1 && (
+                <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-muted-foreground">Ciclo trimestral alvo</span>
+                    <span className="text-xs text-muted-foreground">
+                      Escolha em qual trimestre criar este OKR. Ciclos em planejamento serão criados como rascunho.
+                    </span>
+                  </div>
+                  <div className="w-full sm:w-72">
+                    <CycleSelect
+                      value={quarterlyCycle.id}
+                      onValueChange={handleCycleChange}
+                      cycles={selectableQuarterlyCycles}
+                      showPeriodPreview={false}
+                    />
+                  </div>
+                </div>
+              )}
+              {isPlannningCycle && (
+                <Alert className="border-warning/50 bg-warning-muted">
+                  <Info className="h-4 w-4 text-warning" />
+                  <AlertDescription className="text-warning-muted-foreground">
+                    Você está criando OKRs em um ciclo em <strong>planejamento</strong>. Os objetivos serão salvos como <strong>rascunho</strong> e ativados quando o ciclo for iniciado.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {remainingDraftsCount > 0 && draft.sourceDraftObjectiveId && (
+                <Alert className="border-accent bg-accent/10">
+                  <Info className="h-4 w-4 text-accent-foreground" />
+                  <AlertDescription className="text-accent-foreground">
+                    Você tem {remainingDraftsCount} {remainingDraftsCount === 1 ? 'objetivo rascunho' : 'objetivos rascunho'} do QBR Pre aguardando validação. Após concluir este, volte para os demais.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
-            <div className="w-full sm:w-72">
-              <CycleSelect
-                value={quarterlyCycle.id}
-                onValueChange={handleCycleChange}
-                cycles={selectableQuarterlyCycles}
-                showPeriodPreview={false}
-              />
-            </div>
+          )}
+
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {renderStepContent()}
           </div>
-        )}
-        {isPlannningCycle && (
-          <Alert className="mb-4 border-warning/50 bg-warning-muted">
-            <Info className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-warning-muted-foreground">
-              Você está criando OKRs em um ciclo em <strong>planejamento</strong>. Os objetivos serão salvos como <strong>rascunho</strong> e ativados quando o ciclo for iniciado.
-            </AlertDescription>
-          </Alert>
-        )}
-        {remainingDraftsCount > 0 && draft.sourceDraftObjectiveId && (
-          <Alert className="mb-4 border-accent bg-accent/10">
-            <Info className="h-4 w-4 text-accent-foreground" />
-            <AlertDescription className="text-accent-foreground">
-              Você tem {remainingDraftsCount} {remainingDraftsCount === 1 ? 'objetivo rascunho' : 'objetivos rascunho'} do QBR Pre aguardando validação. Após concluir este, volte para os demais.
-            </AlertDescription>
-          </Alert>
-        )}
-        {renderStepContent()}
+        </div>
       </FullPageWizardShell>
     </VicTypewriterQueueProvider>
   );
