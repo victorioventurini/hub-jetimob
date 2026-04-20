@@ -114,6 +114,12 @@ export function TeamOkrObjectiveStep({
     };
   }, []);
 
+  const createAiWarningFeedback = useCallback((message: string): ObjectiveValidationFeedback => ({
+    type: 'warning',
+    message,
+    alternatives: [],
+  }), []);
+
   // Build context string from user inputs for better suggestions
   const buildContextForAI = useCallback(() => {
     const selectedOrg = orgObjectives.find(o => o.id === selectedOrgObjectiveId);
@@ -127,14 +133,14 @@ export function TeamOkrObjectiveStep({
   // Handle validation with AI - now always suggests 3 alternatives
   const handleValidate = useCallback(async () => {
     if (objectiveTitle.trim().length < 10) return;
-    
+
     setIsValidating(true);
-    
+
     try {
       const contextInfo = buildContextForAI();
       const response = await invokeVic(
         'validador-metodologico-okrs',
-        'okr-review-quality',
+        'okr-create-objective',
         {
           type: 'objective-creation',
           title: objectiveTitle,
@@ -142,49 +148,52 @@ export function TeamOkrObjectiveStep({
         },
         `Avalie este objetivo de time: "${objectiveTitle}".
         Contexto: ${contextInfo}
-        
+
         IMPORTANTE: Sempre sugira EXATAMENTE 3 alternativas de objetivos que sejam:
         - Inspiracionais (descrevem o "porquê", não o "como")
         - Mensuráveis indiretamente por KRs
         - Alinhados ao contexto do time e objetivo organizacional
-        
+
         Se estiver operacional demais, diga brevemente o problema.
         Se estiver amplo demais, sugira foco.
         Se estiver bom, confirme brevemente mas ainda assim sugira 3 alternativas para o usuário considerar.
-        
+
         Responda APENAS em JSON válido: { "type": "warning" | "suggestion" | "success", "message": "...", "alternatives": ["alternativa 1", "alternativa 2", "alternativa 3"] }`
       );
+
+      if (!response?.response?.trim()) {
+        throw new Error('EMPTY_AI_RESPONSE');
+      }
 
       const feedback = parseAiResponse(response.response);
       onValidationFeedbackChange(feedback, new Date().toISOString());
     } catch (error) {
       console.error('Failed to validate objective:', error);
-      onValidationFeedbackChange({
-        type: 'success',
-        message: 'Objetivo registrado. Continue com a definição.',
-        alternatives: [],
-      }, new Date().toISOString());
+      onValidationFeedbackChange(
+        createAiWarningFeedback('Não consegui validar este objetivo com o Vic agora. Tente novamente em alguns instantes.'),
+        null
+      );
     } finally {
       setIsValidating(false);
     }
-  }, [objectiveTitle, teamName, buildContextForAI, invokeVic, parseAiResponse, onValidationFeedbackChange]);
+  }, [objectiveTitle, teamName, buildContextForAI, invokeVic, parseAiResponse, onValidationFeedbackChange, createAiWarningFeedback]);
 
   // Handle requesting more suggestions
   const handleRequestMoreSuggestions = useCallback(async () => {
     setIsValidating(true);
-    
+
     try {
       const contextInfo = buildContextForAI();
       const currentAlternatives = objectiveValidationFeedback?.alternatives || [];
-      
+
       const response = await invokeVic(
         'validador-metodologico-okrs',
-        'okr-review-quality',
+        'okr-create-objective',
         {
           type: 'objective-creation',
           title: objectiveTitle,
-          additionalData: { 
-            teamName, 
+          additionalData: {
+            teamName,
             context: contextInfo,
             previousSuggestions: currentAlternatives,
           },
@@ -192,20 +201,23 @@ export function TeamOkrObjectiveStep({
         `O usuário quer mais sugestões de objetivos para o time "${teamName}".
         Objetivo atual: "${objectiveTitle}"
         Contexto: ${contextInfo}
-        
+
         Sugestões anteriores (NÃO repita): ${currentAlternatives.join(', ')}
-        
+
         Sugira EXATAMENTE 3 NOVAS alternativas de objetivos que sejam:
         - Diferentes das anteriores
         - Inspiracionais (descrevem o "porquê", não o "como")
         - Mensuráveis indiretamente por KRs
         - Alinhados ao contexto do time e objetivo organizacional
-        
+
         Responda APENAS em JSON válido: { "type": "suggestion", "message": "Aqui estão mais opções para você considerar:", "alternatives": ["nova 1", "nova 2", "nova 3"] }`
       );
 
+      if (!response?.response?.trim()) {
+        throw new Error('EMPTY_AI_RESPONSE');
+      }
+
       const newFeedback = parseAiResponse(response.response);
-      // Merge with existing feedback, keeping the original message context
       onValidationFeedbackChange({
         type: 'suggestion',
         message: newFeedback.message || 'Mais opções para você considerar:',
@@ -213,10 +225,14 @@ export function TeamOkrObjectiveStep({
       }, new Date().toISOString());
     } catch (error) {
       console.error('Failed to get more suggestions:', error);
+      onValidationFeedbackChange(
+        objectiveValidationFeedback ?? createAiWarningFeedback('Não consegui gerar novas sugestões agora. Tente novamente em alguns instantes.'),
+        objectiveValidatedAt
+      );
     } finally {
       setIsValidating(false);
     }
-  }, [objectiveTitle, teamName, objectiveValidationFeedback, buildContextForAI, invokeVic, parseAiResponse, onValidationFeedbackChange]);
+  }, [objectiveTitle, teamName, objectiveValidationFeedback, objectiveValidatedAt, buildContextForAI, invokeVic, parseAiResponse, onValidationFeedbackChange, createAiWarningFeedback]);
 
   // Handle edit - clear validation
   const handleEdit = useCallback(() => {
