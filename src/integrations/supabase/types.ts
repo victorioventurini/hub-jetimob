@@ -11546,7 +11546,12 @@ export type Database = {
       gift_item_status: "active" | "inactive"
       gift_movement_type: "in" | "out" | "adjustment"
       initiative_priority: "low" | "medium" | "high"
-      initiative_status: "planned" | "in_progress" | "blocked" | "completed"
+      initiative_status:
+        | "planned"
+        | "in_progress"
+        | "blocked"
+        | "completed"
+        | "cancelled"
       instruction_source_type: "api" | "document" | "hub_context" | "template"
       integration_config_mode: "use_global" | "override"
       integration_test_status: "ok" | "error" | "pending"
@@ -11841,7 +11846,13 @@ export const Constants = {
       gift_item_status: ["active", "inactive"],
       gift_movement_type: ["in", "out", "adjustment"],
       initiative_priority: ["low", "medium", "high"],
-      initiative_status: ["planned", "in_progress", "blocked", "completed"],
+      initiative_status: [
+        "planned",
+        "in_progress",
+        "blocked",
+        "completed",
+        "cancelled",
+      ],
       instruction_source_type: ["api", "document", "hub_context", "template"],
       integration_config_mode: ["use_global", "override"],
       integration_test_status: ["ok", "error", "pending"],
