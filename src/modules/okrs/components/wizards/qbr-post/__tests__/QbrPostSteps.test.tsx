@@ -361,10 +361,10 @@ describe('QbrPostMinutesStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText('Foco estratégico do próximo ciclo está claro?')).toBeInTheDocument();
+    expect(screen.getByText('O foco estratégico do próximo ciclo está claro para todos?')).toBeInTheDocument();
     expect(screen.getByText('Todas as decisões têm dono e prazo?')).toBeInTheDocument();
     expect(screen.getByText('Dependências cross-área formalizadas?')).toBeInTheDocument();
-    expect(screen.getByText('OKRs do próximo ciclo estão ativos?')).toBeInTheDocument();
+    expect(screen.getByText('OKRs do próximo ciclo foram promovidos e estão ativos?')).toBeInTheDocument();
   });
 
   it('disables complete when checklist incomplete', () => {
