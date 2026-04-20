@@ -3,7 +3,7 @@
  *
  * Single-screen flow: each objective is an expandable card showing
  * title, description, KR count selector and all KR forms inline.
- * Max 4 objectives × 3 KRs each.
+ * Max 4 objectives × 4 KRs each.
  *
  * AI validation via useProposalValidation / ProposalValidationCard
  * is embedded per-objective card.
