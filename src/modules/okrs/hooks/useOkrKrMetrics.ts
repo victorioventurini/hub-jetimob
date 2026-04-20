@@ -195,10 +195,22 @@ export function useUpdateKrMetric() {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate all KR metrics queries for this specific KR
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.id, 'org') });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.id, 'team') });
+    onSuccess: () => {
+      // Invalidação ampla via predicate (não temos kr_id/kr_type na variable)
+      queryClient.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) &&
+          (q.queryKey[0] === 'okr-kr-metrics' ||
+            q.queryKey[0] === 'okr-kr-primary-kpi' ||
+            q.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
+            q.queryKey[0] === 'okr-kr-effective-values' ||
+            (q.queryKey[0] === 'kpis' && q.queryKey[1] === 'all-kr-links')),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success('KPI atualizado');
     },
     onError: (error: Error) => {
