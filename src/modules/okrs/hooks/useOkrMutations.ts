@@ -134,15 +134,16 @@ export function useCancelTeamObjective() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Objetivo de time cancelado");
     },
-    onError: () => {
-      toast.error("Erro ao cancelar objetivo");
+    onError: (error: Error) => {
+      console.error('[useCancelTeamObjective]', error);
+      toast.error("Erro ao cancelar objetivo", { description: error.message });
     },
   });
 }
 
 /**
  * Cancela (não exclui) um KR de time.
- * Usa cancelled_at em vez de status pois KRs têm RAG status.
+ * Soft-cancel via cancelled_at + cancelled_by (auditoria).
  */
 export function useCancelTeamKeyResult() {
   const queryClient = useQueryClient();
