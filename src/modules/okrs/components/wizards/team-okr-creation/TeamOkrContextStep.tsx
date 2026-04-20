@@ -8,7 +8,7 @@
  * - AI insight persiste entre navegações
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -87,25 +87,40 @@ export function TeamOkrContextStep({
   onBack,
 }: TeamOkrContextStepProps) {
   const { invokeVic } = useWizardAI();
-  const isGeneratingRef = useRef(false);
+  const hasAttemptedRef = useRef(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationFailed, setGenerationFailed] = useState(false);
 
-  // Generate strategic insight - only if not already persisted
+  // Stable refs to avoid re-running effect on parent re-renders
+  const onAiInsightChangeRef = useRef(onAiInsightChange);
+  const invokeVicRef = useRef(invokeVic);
   useEffect(() => {
-    // Skip if already have insight or no objectives
-    if (aiInsight || orgObjectives.length === 0 || isGeneratingRef.current) return;
-    
-    isGeneratingRef.current = true;
-    
+    onAiInsightChangeRef.current = onAiInsightChange;
+    invokeVicRef.current = invokeVic;
+  });
+
+  // Generate strategic insight - only once per mount, only if not already persisted
+  useEffect(() => {
+    // Skip if already have insight, no objectives, or already attempted
+    if (aiInsight || orgObjectives.length === 0 || hasAttemptedRef.current) return;
+
+    hasAttemptedRef.current = true;
+    setIsGenerating(true);
+    setGenerationFailed(false);
+
     let isCancelled = false;
+    // Hard timeout to avoid infinite "generating" state if the call hangs
     const timeoutId = setTimeout(() => {
       if (!isCancelled) {
-        isGeneratingRef.current = false;
+        isCancelled = true;
+        setIsGenerating(false);
+        setGenerationFailed(true);
       }
     }, 30000);
-    
-    const generateInsight = async () => {
+
+    (async () => {
       try {
-        const response = await invokeVic(
+        const response = await invokeVicRef.current(
           'alinhamento-estrategico',
           'okr-check-alignment',
           {
@@ -120,7 +135,7 @@ export function TeamOkrContextStep({
         );
 
         if (!isCancelled) {
-          onAiInsightChange({
+          onAiInsightChangeRef.current({
             id: 'context-insight',
             type: 'insight',
             content: response.response,
@@ -128,24 +143,25 @@ export function TeamOkrContextStep({
             source: 'alinhamento-estrategico',
           });
         }
-      } catch {
-        // Silently fail - insight is optional
+      } catch (err) {
+        console.warn('[TeamOkrContextStep] AI insight generation failed:', err);
+        if (!isCancelled) setGenerationFailed(true);
       } finally {
-        if (!isCancelled) {
-          isGeneratingRef.current = false;
-        }
+        clearTimeout(timeoutId);
+        if (!isCancelled) setIsGenerating(false);
       }
-    };
+    })();
 
-    generateInsight();
-    
     return () => {
       isCancelled = true;
       clearTimeout(timeoutId);
+      setIsGenerating(false);
     };
-  }, [orgObjectives, strategicKpis, aiInsight, onAiInsightChange]);
-
-  const isGenerating = !aiInsight && orgObjectives.length > 0;
+    // Intentionally only depend on stable inputs that should re-trigger generation.
+    // orgObjectives/strategicKpis arrays may have new references on parent re-renders;
+    // we use length/ids as proxies for "data changed".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgObjectives.length, strategicKpis.length, aiInsight]);
 
   if (isLoading) {
     return (
@@ -257,10 +273,14 @@ export function TeamOkrContextStep({
           )}
 
           {/* AI Insight */}
-          {isGenerating && isGeneratingRef.current ? (
+          {isGenerating ? (
             <VicGeneratingCard text="Analisando contexto estratégico..." />
           ) : aiInsight ? (
             <VicInsightCard insight={aiInsight} showSource />
+          ) : generationFailed ? (
+            <p className="text-xs text-muted-foreground italic">
+              Análise contextual indisponível. Você pode prosseguir normalmente.
+            </p>
           ) : null}
 
           {/* Impact Reflection */}

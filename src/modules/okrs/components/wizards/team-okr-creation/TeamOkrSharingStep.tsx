@@ -6,7 +6,7 @@
  * AI insight persiste entre navegações.
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -76,41 +76,73 @@ export function TeamOkrSharingStep({
   onBack,
 }: TeamOkrSharingStepProps) {
   const { invokeVic } = useWizardAI();
-  const isGeneratingRef = useRef(false);
+  const hasAttemptedRef = useRef(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  // Generate AI insight - only if not already persisted
-  const generateSharingInsight = useCallback(async () => {
-    if (!objectiveTitle || aiInsight || isGeneratingRef.current) return;
-    
-    isGeneratingRef.current = true;
-    
-    try {
-      const response = await invokeVic(
-        'alinhamento-estrategico',
-        'okr-check-alignment',
-        {
-          type: 'objetivo-compartilhamento',
-          title: objectiveTitle,
-          additionalData: {
-            teamName,
-            step: 'sharing',
-          },
-        },
-        'Analise se este objetivo tipicamente requer colaboração entre times. Responda em 1-2 frases.'
-      );
-      onAiInsightChange(response.response);
-    } catch (error) {
-      console.error('Error generating sharing insight:', error);
-      // Fallback insight
-      onAiInsightChange('Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.');
-    } finally {
-      isGeneratingRef.current = false;
-    }
-  }, [objectiveTitle, teamName, aiInsight, invokeVic, onAiInsightChange]);
-
+  // Stable refs to avoid re-running effect on parent re-renders
+  const onAiInsightChangeRef = useRef(onAiInsightChange);
+  const invokeVicRef = useRef(invokeVic);
   useEffect(() => {
-    generateSharingInsight();
-  }, [generateSharingInsight]);
+    onAiInsightChangeRef.current = onAiInsightChange;
+    invokeVicRef.current = invokeVic;
+  });
+
+  // Generate AI insight - only once per mount, only if not already persisted
+  useEffect(() => {
+    if (!objectiveTitle || aiInsight || hasAttemptedRef.current) return;
+
+    hasAttemptedRef.current = true;
+    setIsGenerating(true);
+
+    let isCancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (!isCancelled) {
+        isCancelled = true;
+        setIsGenerating(false);
+        onAiInsightChangeRef.current(
+          'Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.'
+        );
+      }
+    }, 30000);
+
+    (async () => {
+      try {
+        const response = await invokeVicRef.current(
+          'alinhamento-estrategico',
+          'okr-check-alignment',
+          {
+            type: 'objetivo-compartilhamento',
+            title: objectiveTitle,
+            additionalData: {
+              teamName,
+              step: 'sharing',
+            },
+          },
+          'Analise se este objetivo tipicamente requer colaboração entre times. Responda em 1-2 frases.'
+        );
+        if (!isCancelled) {
+          onAiInsightChangeRef.current(response.response);
+        }
+      } catch (error) {
+        console.warn('[TeamOkrSharingStep] AI insight failed:', error);
+        if (!isCancelled) {
+          onAiInsightChangeRef.current(
+            'Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.'
+          );
+        }
+      } finally {
+        clearTimeout(timeoutId);
+        if (!isCancelled) setIsGenerating(false);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+      setIsGenerating(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objectiveTitle, aiInsight]);
 
   // Handle shared change
   const handleSharedChange = (value: string) => {
@@ -149,7 +181,6 @@ export function TeamOkrSharingStep({
 
   // Get other teams (excluding current team)
   const otherTeams = availableTeams.filter(t => t.id !== teamId);
-  const isGenerating = !aiInsight && isGeneratingRef.current;
 
   return (
     <ScrollArea className="h-full">
