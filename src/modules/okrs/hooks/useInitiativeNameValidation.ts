@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { useVicAgent, useVicEnabled } from '@/modules/vic/hooks';
+import { tryParseAiJson } from '@/lib/aiResponseParser';
 
 export type InitiativeNameFeedbackType = 'warning' | 'suggestion' | 'success';
 

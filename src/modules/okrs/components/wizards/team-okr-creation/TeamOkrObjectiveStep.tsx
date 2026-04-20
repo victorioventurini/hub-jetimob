@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Lightbulb, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tryParseAiJson } from '@/lib/aiResponseParser';
 import { useWizardAI, type ObjectiveValidationFeedback } from '@/modules/okrs/hooks';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { AlertTriangle, Link2, CheckCircle2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tryParseAiJson } from '@/lib/aiResponseParser';
 import { VicLoadingState } from '@/modules/vic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
