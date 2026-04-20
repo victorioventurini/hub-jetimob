@@ -181,10 +181,10 @@ describe('OKR Limits', () => {
       expect(result.isWithinLimit).toBe(true);
     });
 
-    it('should NOT be within limit when count is 3', () => {
-      const result = validateKrsLimit(3);
+    it('should NOT be within limit when count is 4', () => {
+      const result = validateKrsLimit(4);
       expect(result.isWithinLimit).toBe(false);
-      expect(result.warningMessage).toContain('3/3');
+      expect(result.warningMessage).toContain('4/4');
     });
 
     it('should include educational message about objective scope', () => {
