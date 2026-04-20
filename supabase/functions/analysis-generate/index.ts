@@ -161,8 +161,8 @@ async function invokeAgentDirect(
 
 async function collectKpis(svc: any, buId: string, win: { from: string; to: string }) {
   const { data: kpis } = await svc
-    .from("kpis")
-    .select("id, name, unit, target, baseline, current_value, scope, created_at")
+    .from("kpi_metrics")
+    .select("id, name, unit, target_value, direction, scope, created_at")
     .eq("bu_id", buId)
     .is("deleted_at", null)
     .limit(50);
@@ -172,11 +172,11 @@ async function collectKpis(svc: any, buId: string, win: { from: string; to: stri
   if (ids.length > 0) {
     const { data } = await svc
       .from("kpi_values")
-      .select("kpi_id, period_date, value")
+      .select("kpi_id, reference_date, value, rag_status, confidence")
       .in("kpi_id", ids)
-      .gte("period_date", win.from.slice(0, 10))
-      .lte("period_date", win.to.slice(0, 10))
-      .order("period_date", { ascending: false });
+      .gte("reference_date", win.from.slice(0, 10))
+      .lte("reference_date", win.to.slice(0, 10))
+      .order("reference_date", { ascending: false });
     values = data || [];
   }
   return { kpis: kpis || [], values };
@@ -198,8 +198,8 @@ async function collectOkrs(svc: any, buId: string, scope: GenerateRequest["scope
   if (objIds.length > 0) {
     const { data } = await svc
       .from("okr_team_key_results")
-      .select("id, title, objective_id, baseline, target, current_value, unit, status, progress")
-      .in("objective_id", objIds)
+      .select("id, title, team_objective_id, baseline, target, current_value, unit, status")
+      .in("team_objective_id", objIds)
       .is("deleted_at", null);
     teamKrs = data || [];
   }
@@ -225,7 +225,7 @@ async function collectProjects(svc: any, buId: string, win: { from: string; to: 
 
   let initiativesQ = svc
     .from("okr_initiatives")
-    .select("id, title, status, owner_id, key_result_id, due_date")
+    .select("id, name, status, owner_user_id, kr_id, expected_end_date, progress")
     .eq("bu_id", buId)
     .is("deleted_at", null)
     .limit(80);
@@ -237,7 +237,7 @@ async function collectProjects(svc: any, buId: string, win: { from: string; to: 
 async function collectCheckins(svc: any, buId: string, win: { from: string; to: string }, scope: GenerateRequest["scope"]) {
   let q = svc
     .from("okr_checkins")
-    .select("id, key_result_id, value, status, comment, created_at, created_by")
+    .select("id, kr_id, current_value, previous_value, confidence, blockers, comments, created_at, user_id, team_id")
     .eq("bu_id", buId)
     .gte("created_at", win.from)
     .lte("created_at", win.to)
