@@ -87,6 +87,7 @@ export default function OkrCreationPage() {
   
   // URL params
   const teamIdParam = searchParams.get('team');
+  const cycleIdParam = searchParams.get('cycle');
   const stepState = useUrlState<string>({
     key: 'step',
     defaultValue: 'intro',
@@ -103,12 +104,28 @@ export default function OkrCreationPage() {
   
   // Get cycles (status-based)
   const { activeQuarterlyCycle, activeCycle, planningCycles, isLoading: isLoadingCycles } = useActiveCycle();
-  // Fallback: if no active quarter, use planning quarter (for QBR-pre draft hydration)
-  const planningQuarterlyCycle = useMemo(() => {
-    return planningCycles.find(c => c.type === 'quarter') ?? null;
+  // Quarterly cycles available for OKR creation: active + all planning quarters.
+  // Líderes podem criar OKRs no trimestre vigente OU em trimestres futuros (planejamento antecipado).
+  const planningQuarterlyCycles = useMemo(() => {
+    return planningCycles.filter(c => c.type === 'quarter');
   }, [planningCycles]);
-  const quarterlyCycle = activeQuarterlyCycle || planningQuarterlyCycle || activeCycle;
-  const isPlannningCycle = !activeQuarterlyCycle && !!planningQuarterlyCycle && quarterlyCycle === planningQuarterlyCycle;
+  const selectableQuarterlyCycles = useMemo(() => {
+    const list = [
+      ...(activeQuarterlyCycle ? [activeQuarterlyCycle] : []),
+      ...planningQuarterlyCycles,
+    ];
+    // Sort by start_date ascending so the active/current quarter appears first
+    return list.sort((a, b) => a.start_date.localeCompare(b.start_date));
+  }, [activeQuarterlyCycle, planningQuarterlyCycles]);
+  // Resolve current cycle: URL param (if valid) → active quarter → first planning quarter → year fallback
+  const quarterlyCycle = useMemo(() => {
+    if (cycleIdParam) {
+      const fromUrl = selectableQuarterlyCycles.find(c => c.id === cycleIdParam);
+      if (fromUrl) return fromUrl;
+    }
+    return activeQuarterlyCycle || selectableQuarterlyCycles[0] || activeCycle || null;
+  }, [cycleIdParam, selectableQuarterlyCycles, activeQuarterlyCycle, activeCycle]);
+  const isPlannningCycle = !!quarterlyCycle && quarterlyCycle.status === 'planning';
   
   // Page title
   usePageTitle(selectedTeam ? `Criar OKRs - ${selectedTeam.name}` : 'Criar OKRs');
