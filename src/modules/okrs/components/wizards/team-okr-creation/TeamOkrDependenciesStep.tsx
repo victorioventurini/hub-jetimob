@@ -117,7 +117,7 @@ export function TeamOkrDependenciesStep({
             krIndex: number;
             description: string;
             dependsOnTeamName?: string;
-            severity?: 'low' | 'medium' | 'high';
+            severity: 'low' | 'medium' | 'high';
           }>;
           insight?: string;
         }>(response.response);
