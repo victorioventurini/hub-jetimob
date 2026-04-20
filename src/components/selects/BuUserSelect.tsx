@@ -87,6 +87,7 @@ export function BuUserSelect({
   allowNone = false,
   noneLabel = "Nenhum",
   excludeExternal = false,
+  includeSubteams = true,
 }: BuUserSelectProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -101,6 +102,7 @@ export function BuUserSelect({
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
     q: showSearch ? search : undefined,
     teamId,
+    includeSubteams,
     pageSize: 200,
     excludeExternal,
   });
