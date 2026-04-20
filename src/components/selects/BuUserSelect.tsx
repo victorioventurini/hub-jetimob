@@ -49,6 +49,11 @@ export interface BuUserSelectProps {
   showBadges?: boolean;
   /** Filter by team ID */
   teamId?: string;
+  /**
+   * When `teamId` is set, also include users from descendant subteams.
+   * Default: true (recommended for líderes de área/time pai).
+   */
+  includeSubteams?: boolean;
   /** Show search input in dropdown (default: true) */
   showSearch?: boolean;
   /** Allow selecting "none" option */
