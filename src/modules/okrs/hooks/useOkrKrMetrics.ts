@@ -140,17 +140,28 @@ export function useCreateKrMetric() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('guardrails', variables.kr_id, variables.kr_type) });
       // v3.4.0: manter banner (fonte única) em sync
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpi(variables.kr_id, variables.kr_type) });
-      
-      // v3.4.2: Invalidar queries de KRs para refletir a meta atualizada
+      // v3.4.2: valores efetivos da KR (banner + locks de inputs)
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krEffectiveValues(variables.kr_id, variables.kr_type) });
+      // Batch de KPIs primárias usado em listagens (cards/dashboards)
+      queryClient.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) &&
+          (q.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
+            (q.queryKey[0] === 'kpis' && q.queryKey[1] === 'all-kr-links')),
+      });
+
+      // v3.4.2: Invalidar queries de KRs/objectives/dashboards para todos os roles
+      // (guardrails também afetam badges/contadores em cards)
+      if (variables.kr_type === 'org') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+
       if (variables.role === 'primary') {
-        if (variables.kr_type === 'org') {
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-        } else {
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-        }
-        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
         toast.success('KPI primário vinculado e meta sincronizada');
       } else {
         toast.success('Guardrail adicionado');
