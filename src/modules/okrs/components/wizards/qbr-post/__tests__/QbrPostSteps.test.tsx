@@ -362,8 +362,8 @@ describe('QbrPostMinutesStep', () => {
       />
     );
     expect(screen.getByText('O foco estratégico do próximo ciclo está claro para todos?')).toBeInTheDocument();
-    expect(screen.getByText('Todas as decisões têm dono e prazo?')).toBeInTheDocument();
-    expect(screen.getByText('Dependências cross-área formalizadas?')).toBeInTheDocument();
+    expect(screen.getByText('Todas as decisões têm dono e prazo definidos?')).toBeInTheDocument();
+    expect(screen.getByText('Dependências entre times estão formalizadas?')).toBeInTheDocument();
     expect(screen.getByText('OKRs do próximo ciclo foram promovidos e estão ativos?')).toBeInTheDocument();
   });
 
