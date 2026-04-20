@@ -96,7 +96,7 @@ export function WizardStepFooter({
   
   return (
     <div className={cn(
-      'px-6 py-4 border-t bg-background/95 backdrop-blur',
+      'shrink-0 px-6 py-4 border-t bg-background/95 backdrop-blur',
       'flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 min-w-0 overflow-x-hidden',
       className
     )}>
