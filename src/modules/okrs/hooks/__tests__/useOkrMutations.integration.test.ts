@@ -285,6 +285,11 @@ describe('useOkrMutations — integration', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(toast.success).toHaveBeenCalledWith('Key Result cancelado');
+
+      // KR payload uses cancelled_at + cancelled_by, never `status`
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toHaveProperty('cancelled_by', 'profile-test-1');
+      expect(updatePayload).not.toHaveProperty('status');
     });
   });
 
