@@ -1,7 +1,12 @@
 /**
  * OKR Linking Rules — Business Logic
  * Based on TCR v1.6.0 methodology
+ *
+ * Os limites numéricos vivem em `src/shared/constants/okrLimits.ts` (fonte única).
+ * Re-exportados aqui apenas para compatibilidade com imports existentes.
  */
+import { OKR_LIMITS } from '@/shared/constants/okrLimits';
+export { OKR_LIMITS } from '@/shared/constants/okrLimits';
 
 export type LinkingEntityLevel = 'org' | 'team' | 'user';
 export type LinkingEntityType = 'objective' | 'kr';
@@ -143,16 +148,6 @@ export function validateKrToKr(
 
   return { isValid: true };
 }
-
-/**
- * OKR Limits — Cognitive Load Rules
- * Based on best practices to maintain focus
- */
-export const OKR_LIMITS = {
-  MAX_OBJECTIVES_PER_TEAM: 4,
-  MAX_KRS_PER_OBJECTIVE: 4,
-  MAX_CONTRIBUTIONS_PER_KR: 3,
-} as const;
 
 export interface LimitValidation {
   isWithinLimit: boolean;
