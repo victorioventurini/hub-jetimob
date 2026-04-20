@@ -7,6 +7,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@/test/test-utils';
 
 // ── shared mocks ──
+vi.mock('../../shared/TeamKrsToggle', () => ({
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
+}));
+
 vi.mock('../../shared', () => ({
   WizardStepHeader: ({ title, badge }: { title: string; badge?: string }) => (
     <div data-testid="wizard-step-header"><h3>{title}</h3>{badge && <span>{badge}</span>}</div>
@@ -33,6 +41,8 @@ vi.mock('../../shared', () => ({
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
   DecisionCard: ({ decision }: any) => <div data-testid="decision-card">{decision.text}</div>,
+  KpiStatusBlocks: () => <div data-testid="kpi-status-blocks" />,
+  LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
 }));
 
 import { QbrMeetingOpeningStep } from '../QbrMeetingOpeningStep';
