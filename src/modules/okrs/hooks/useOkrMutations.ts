@@ -52,29 +52,33 @@ export function useCancelOrgObjective() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Objetivo organizacional cancelado");
     },
-    onError: () => {
-      toast.error("Erro ao cancelar objetivo");
+    onError: (error: Error) => {
+      console.error('[useCancelOrgObjective]', error);
+      toast.error("Erro ao cancelar objetivo", { description: error.message });
     },
   });
 }
 
 /**
  * Cancela (não exclui) um KR organizacional.
- * Usa cancelled_at em vez de status pois KRs têm RAG status.
+ * Soft-cancel via cancelled_at + cancelled_by (auditoria).
  */
 export function useCancelOrgKeyResult() {
   const queryClient = useQueryClient();
   const { client: supabase } = useOptionalBuClient();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (krId: string) => {
       if (!supabase) throw new Error('Cliente não disponível');
-      
+      if (!realProfileId) throw new Error('Perfil não disponível');
+
       const { error } = await supabase
         .from("okr_org_key_results")
-        .update({ 
+        .update({
           cancelled_at: new Date().toISOString(),
-          updated_at: new Date().toISOString() 
+          cancelled_by: realProfileId,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", krId);
 
@@ -87,8 +91,9 @@ export function useCancelOrgKeyResult() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Key Result cancelado");
     },
-    onError: () => {
-      toast.error("Erro ao cancelar KR");
+    onError: (error: Error) => {
+      console.error('[useCancelOrgKeyResult]', error);
+      toast.error("Erro ao cancelar KR", { description: error.message });
     },
   });
 }
@@ -103,16 +108,20 @@ export function useCancelOrgKeyResult() {
 export function useCancelTeamObjective() {
   const queryClient = useQueryClient();
   const { client: supabase } = useOptionalBuClient();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
       if (!supabase) throw new Error('Cliente não disponível');
-      
+      if (!realProfileId) throw new Error('Perfil não disponível');
+
       const { error } = await supabase
         .from("okr_team_objectives")
-        .update({ 
+        .update({
           status: 'cancelled',
-          updated_at: new Date().toISOString() 
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: realProfileId,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", objectiveId);
 
@@ -138,16 +147,19 @@ export function useCancelTeamObjective() {
 export function useCancelTeamKeyResult() {
   const queryClient = useQueryClient();
   const { client: supabase } = useOptionalBuClient();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (krId: string) => {
       if (!supabase) throw new Error('Cliente não disponível');
-      
+      if (!realProfileId) throw new Error('Perfil não disponível');
+
       const { error } = await supabase
         .from("okr_team_key_results")
-        .update({ 
+        .update({
           cancelled_at: new Date().toISOString(),
-          updated_at: new Date().toISOString() 
+          cancelled_by: realProfileId,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", krId);
 
@@ -160,8 +172,9 @@ export function useCancelTeamKeyResult() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast.success("Key Result cancelado");
     },
-    onError: () => {
-      toast.error("Erro ao cancelar KR");
+    onError: (error: Error) => {
+      console.error('[useCancelTeamKeyResult]', error);
+      toast.error("Erro ao cancelar KR", { description: error.message });
     },
   });
 }
