@@ -223,7 +223,7 @@ export function CollaboratorCheckinStep({
   }, [handleSave, canSubmit]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Progress indicator */}
       <div className="px-6 py-3 border-b bg-muted/20">
         <div className="flex items-center justify-between">

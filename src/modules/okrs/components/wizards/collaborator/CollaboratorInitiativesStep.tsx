@@ -178,7 +178,7 @@ export function CollaboratorInitiativesStep({
   // If no initiatives, show skip option
   if (initiatives.length === 0) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center max-w-md">
             <div className="p-4 rounded-full bg-muted/50 inline-block mb-4">
