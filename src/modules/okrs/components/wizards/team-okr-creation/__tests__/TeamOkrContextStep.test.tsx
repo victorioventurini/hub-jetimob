@@ -23,8 +23,10 @@ vi.mock('@/modules/vic', () => ({
 }));
 
 vi.mock('../../shared/VicInsightCard', () => ({
-  VicInsightCard: ({ content }: { content: string }) => (
-    <div data-testid="vic-insight">{content}</div>
+  VicInsightCard: (props: any) => (
+    <div data-testid="vic-insight">
+      {props.content ?? props.insight?.content ?? ''}
+    </div>
   ),
 }));
 
