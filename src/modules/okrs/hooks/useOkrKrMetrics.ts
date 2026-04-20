@@ -140,17 +140,28 @@ export function useCreateKrMetric() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetricsRole('guardrails', variables.kr_id, variables.kr_type) });
       // v3.4.0: manter banner (fonte única) em sync
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpi(variables.kr_id, variables.kr_type) });
-      
-      // v3.4.2: Invalidar queries de KRs para refletir a meta atualizada
+      // v3.4.2: valores efetivos da KR (banner + locks de inputs)
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krEffectiveValues(variables.kr_id, variables.kr_type) });
+      // Batch de KPIs primárias usado em listagens (cards/dashboards)
+      queryClient.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) &&
+          (q.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
+            (q.queryKey[0] === 'kpis' && q.queryKey[1] === 'all-kr-links')),
+      });
+
+      // v3.4.2: Invalidar queries de KRs/objectives/dashboards para todos os roles
+      // (guardrails também afetam badges/contadores em cards)
+      if (variables.kr_type === 'org') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
+
       if (variables.role === 'primary') {
-        if (variables.kr_type === 'org') {
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
-        } else {
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
-          queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
-        }
-        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
         toast.success('KPI primário vinculado e meta sincronizada');
       } else {
         toast.success('Guardrail adicionado');
@@ -184,10 +195,22 @@ export function useUpdateKrMetric() {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate all KR metrics queries for this specific KR
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.id, 'org') });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krMetrics(variables.id, 'team') });
+    onSuccess: () => {
+      // Invalidação ampla via predicate (não temos kr_id/kr_type na variable)
+      queryClient.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) &&
+          (q.queryKey[0] === 'okr-kr-metrics' ||
+            q.queryKey[0] === 'okr-kr-primary-kpi' ||
+            q.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
+            q.queryKey[0] === 'okr-kr-effective-values' ||
+            (q.queryKey[0] === 'kpis' && q.queryKey[1] === 'all-kr-links')),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success('KPI atualizado');
     },
     onError: (error: Error) => {
@@ -216,14 +239,22 @@ export function useDeleteKrMetric() {
 
       if (error) throw error;
     },
-    onSuccess: (_, id) => {
-      // Invalidate broad pattern - we don't have context of which KR this was
-      // The queryKey pattern will match all krMetrics queries
+    onSuccess: () => {
+      // Invalidação ampla — desvincular afeta meta sincronizada, progresso, badges e filtros
       queryClient.invalidateQueries({
         predicate: (query) =>
           Array.isArray(query.queryKey) &&
-          (query.queryKey[0] === 'okr-kr-metrics' || query.queryKey[0] === 'okr-kr-primary-kpi'),
+          (query.queryKey[0] === 'okr-kr-metrics' ||
+            query.queryKey[0] === 'okr-kr-primary-kpi' ||
+            query.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
+            query.queryKey[0] === 'okr-kr-effective-values' ||
+            (query.queryKey[0] === 'kpis' && query.queryKey[1] === 'all-kr-links')),
       });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success('KPI desvinculado');
     },
     onError: () => {
