@@ -2,6 +2,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
+import { useIdentity } from "@/hooks/useIdentity";
+
+/**
+ * Mutations canônicas de cancelamento (soft) de OKRs/KRs.
+ *
+ * Padrão (TCR §OKRs + IDENTITY_CONVENTION v2.2):
+ * - Objetivos: status='cancelled' + cancelled_at + cancelled_by (profiles.id)
+ * - KRs:        status='cancelled' + cancelled_at + cancelled_by (profiles.id)
+ *   (KRs também têm RAG status, mas a coluna `status` aceita 'cancelled'
+ *    via enum `okr_rag_status` desde a unificação de estados de OKR.)
+ *
+ * Nunca usar `auth.uid()` direto: a FK cancelled_by aponta para profiles(id).
+ */
 
 // ========================
 // ORG OBJECTIVES MUTATIONS
@@ -14,16 +27,20 @@ import { queryKeys } from "@/lib/queryKeys";
 export function useCancelOrgObjective() {
   const queryClient = useQueryClient();
   const { client: supabase } = useOptionalBuClient();
+  const { realProfileId } = useIdentity();
 
   return useMutation({
     mutationFn: async (objectiveId: string) => {
       if (!supabase) throw new Error('Cliente não disponível');
-      
+      if (!realProfileId) throw new Error('Perfil não disponível');
+
       const { error } = await supabase
         .from("okr_org_objectives")
-        .update({ 
+        .update({
           status: 'cancelled',
-          updated_at: new Date().toISOString() 
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: realProfileId,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", objectiveId);
 
