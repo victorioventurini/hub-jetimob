@@ -516,6 +516,7 @@ interface KeyResultRowProps {
   primaryKpiInfo?: {
     kpiId: string;
     kpiName: string;
+    kpiUnit?: string;
     direction: 'up' | 'down' | 'maintain';
     currentValue: number | null;
     targetValue: number | null;
@@ -555,6 +556,11 @@ function KeyResultRow({ kr, type, objectiveTitle, objectiveStatus, teamName, can
   const effectiveStatus = hasPrimaryKpi && primaryKpiInfo?.ragStatus && primaryKpiInfo.ragStatus !== 'no_data'
     ? primaryKpiInfo.ragStatus
     : kr.status;
+
+  // KPI primário é a fonte única de verdade: unidade segue a do KPI quando vinculado
+  const effectiveUnit = hasPrimaryKpi && primaryKpiInfo?.kpiUnit
+    ? primaryKpiInfo.kpiUnit
+    : kr.unit;
 
   const progress = calculateProgress(
     Number(kr.baseline) || 0,
@@ -623,7 +629,7 @@ function KeyResultRow({ kr, type, objectiveTitle, objectiveStatus, teamName, can
                   </span>
                   <span className="hidden sm:inline">•</span>
                   <span>
-                    {formatValue(effectiveCurrent, kr.unit)} / {formatValue(effectiveTarget, kr.unit)}
+                    {formatValue(effectiveCurrent, effectiveUnit)} / {formatValue(effectiveTarget, effectiveUnit)}
                   </span>
                   {type === 'team' && initiativesCount > 0 && (
                     <>
