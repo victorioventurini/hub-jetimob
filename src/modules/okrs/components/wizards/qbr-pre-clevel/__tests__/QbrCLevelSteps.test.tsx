@@ -171,7 +171,7 @@ describe('QbrCLevelSystemReadStep', () => {
     expect(screen.getByText('Alcançados')).toBeInTheDocument();
   });
 
-  it('shows zombie and KPI-to-create counts', () => {
+  it('shows zombie KPI counts when present', () => {
     render(
       <QbrCLevelSystemReadStep
         leaderSubmissions={[createSubmission()]}
@@ -181,7 +181,6 @@ describe('QbrCLevelSystemReadStep', () => {
       />
     );
     expect(screen.getByText(/zombie sinalizados/)).toBeInTheDocument();
-    expect(screen.getByText(/sugeridos para criação/)).toBeInTheDocument();
   });
 
   it('shows consolidated learnings', () => {
@@ -221,11 +220,11 @@ describe('QbrCLevelStrategicStep', () => {
     expect(screen.getByText('Sua análise — o que só você vê daqui')).toBeInTheDocument();
   });
 
-  it('renders three strategic textareas', () => {
+  it('renders strategic analysis sections (alignment, signals, vetos)', () => {
     renderStrategic();
-    expect(screen.getByText('Alinhamento com a Estratégia')).toBeInTheDocument();
-    expect(screen.getByText('Sinais que os Times Não Viram')).toBeInTheDocument();
-    expect(screen.getByText(/O que NÃO Fazer/)).toBeInTheDocument();
+    expect(screen.getByText('Alinhamento estratégico')).toBeInTheDocument();
+    expect(screen.getByText(/O que você está vendo que os times não veem/)).toBeInTheDocument();
+    expect(screen.getByText('Vetos estratégicos')).toBeInTheDocument();
   });
 
   it('disables continue when all fields empty', () => {
