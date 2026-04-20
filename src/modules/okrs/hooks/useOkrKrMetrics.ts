@@ -239,14 +239,22 @@ export function useDeleteKrMetric() {
 
       if (error) throw error;
     },
-    onSuccess: (_, id) => {
-      // Invalidate broad pattern - we don't have context of which KR this was
-      // The queryKey pattern will match all krMetrics queries
+    onSuccess: () => {
+      // Invalidação ampla — desvincular afeta meta sincronizada, progresso, badges e filtros
       queryClient.invalidateQueries({
         predicate: (query) =>
           Array.isArray(query.queryKey) &&
-          (query.queryKey[0] === 'okr-kr-metrics' || query.queryKey[0] === 'okr-kr-primary-kpi'),
+          (query.queryKey[0] === 'okr-kr-metrics' ||
+            query.queryKey[0] === 'okr-kr-primary-kpi' ||
+            query.queryKey[0] === 'okr-kr-primary-kpi-batch' ||
+            query.queryKey[0] === 'okr-kr-effective-values' ||
+            (query.queryKey[0] === 'kpis' && query.queryKey[1] === 'all-kr-links')),
       });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       toast.success('KPI desvinculado');
     },
     onError: () => {
