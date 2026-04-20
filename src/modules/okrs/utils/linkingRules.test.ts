@@ -135,8 +135,8 @@ describe('OKR Limits', () => {
       expect(OKR_LIMITS.MAX_OBJECTIVES_PER_TEAM).toBe(4);
     });
 
-    it('should have MAX_KRS_PER_OBJECTIVE = 3', () => {
-      expect(OKR_LIMITS.MAX_KRS_PER_OBJECTIVE).toBe(3);
+    it('should have MAX_KRS_PER_OBJECTIVE = 4', () => {
+      expect(OKR_LIMITS.MAX_KRS_PER_OBJECTIVE).toBe(4);
     });
 
     it('should have MAX_CONTRIBUTIONS_PER_KR = 3', () => {
@@ -181,10 +181,10 @@ describe('OKR Limits', () => {
       expect(result.isWithinLimit).toBe(true);
     });
 
-    it('should NOT be within limit when count is 3', () => {
-      const result = validateKrsLimit(3);
+    it('should NOT be within limit when count is 4', () => {
+      const result = validateKrsLimit(4);
       expect(result.isWithinLimit).toBe(false);
-      expect(result.warningMessage).toContain('3/3');
+      expect(result.warningMessage).toContain('4/4');
     });
 
     it('should include educational message about objective scope', () => {

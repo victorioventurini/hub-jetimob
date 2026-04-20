@@ -20,7 +20,7 @@ export function LimitsTab() {
       value: OKR_LIMITS.MAX_KRS_PER_OBJECTIVE,
       description: "Número máximo de KRs ativos por objetivo",
       rationale:
-        "Cada objetivo deve ter poucos KRs bem definidos. Mais de 3 KRs indica que o objetivo pode estar amplo demais.",
+        "Cada objetivo deve ter poucos KRs bem definidos. Mais de 4 KRs indica que o objetivo pode estar amplo demais.",
       enforcement: "Validado no banco de dados (trigger)",
     },
     {
