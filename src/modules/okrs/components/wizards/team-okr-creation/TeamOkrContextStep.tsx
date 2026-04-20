@@ -8,7 +8,7 @@
  * - AI insight persiste entre navegações
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -273,10 +273,14 @@ export function TeamOkrContextStep({
           )}
 
           {/* AI Insight */}
-          {isGenerating && isGeneratingRef.current ? (
+          {isGenerating ? (
             <VicGeneratingCard text="Analisando contexto estratégico..." />
           ) : aiInsight ? (
             <VicInsightCard insight={aiInsight} showSource />
+          ) : generationFailed ? (
+            <p className="text-xs text-muted-foreground italic">
+              Análise contextual indisponível. Você pode prosseguir normalmente.
+            </p>
           ) : null}
 
           {/* Impact Reflection */}
