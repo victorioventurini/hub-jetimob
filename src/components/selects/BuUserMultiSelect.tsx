@@ -38,6 +38,11 @@ export interface BuUserMultiSelectProps {
   showBadges?: boolean;
   /** Filter by team ID */
   teamId?: string;
+  /**
+   * When `teamId` is set, also include users from descendant subteams.
+   * Default: true.
+   */
+  includeSubteams?: boolean;
   /** Exclude external users/contacts (default: false) */
   excludeExternal?: boolean;
 }
@@ -62,6 +67,7 @@ export function BuUserMultiSelect({
   showBadges = false,
   teamId,
   excludeExternal = false,
+  includeSubteams = true,
 }: BuUserMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -69,6 +75,7 @@ export function BuUserMultiSelect({
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
     q: open ? search : undefined, // Only search when popover is open
     teamId,
+    includeSubteams,
     pageSize: 200,
     excludeExternal,
   });

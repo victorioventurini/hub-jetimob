@@ -31,6 +31,12 @@ interface UseBuUsersDirectoryOptions {
   q?: string;
   /** Filter by specific team */
   teamId?: string;
+  /**
+   * When true and `teamId` is set, also includes users belonging to any
+   * descendant subteam (recursive via teams.parent_team_id).
+   * Default: true (avoid surprising callers who pass a parent team id).
+   */
+  includeSubteams?: boolean;
   /** Include terminated users (default: false) */
   includeTerminated?: boolean;
   /** Exclude external users/contacts (default: false) */
@@ -57,6 +63,7 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
   const { 
     q, 
     teamId, 
+    includeSubteams = true,
     includeTerminated = false,
     excludeExternal = false,
     pageSize = 100,
@@ -71,9 +78,48 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
   const debouncedQ = useDebouncedValue(q, 250);
 
   return useQuery({
-    queryKey: queryKeys.users.directory(buId ?? null, { q: debouncedQ, teamId, includeTerminated, excludeExternal }),
+    queryKey: queryKeys.users.directory(buId ?? null, { q: debouncedQ, teamId, includeSubteams, includeTerminated, excludeExternal }),
     queryFn: async () => {
       if (!supabase || !buId) return [];
+
+      // Resolve team filter to include descendant subteams when requested.
+      // Customer Success / áreas com subtimes precisam exibir todos os
+      // membros descendentes ao filtrar pelo time pai.
+      let teamIdsFilter: string[] | null = null;
+      if (teamId) {
+        if (includeSubteams) {
+          const { data: allTeams, error: teamsErr } = await supabase
+            .from("teams")
+            .select("id, parent_team_id")
+            .eq("bu_id", buId)
+            .is("deleted_at", null);
+          if (teamsErr) throw teamsErr;
+
+          const childrenByParent = new Map<string, string[]>();
+          (allTeams ?? []).forEach((t) => {
+            if (!t.parent_team_id) return;
+            const arr = childrenByParent.get(t.parent_team_id) ?? [];
+            arr.push(t.id);
+            childrenByParent.set(t.parent_team_id, arr);
+          });
+
+          const collected = new Set<string>([teamId]);
+          const stack = [teamId];
+          while (stack.length) {
+            const cur = stack.pop()!;
+            const children = childrenByParent.get(cur) ?? [];
+            for (const c of children) {
+              if (!collected.has(c)) {
+                collected.add(c);
+                stack.push(c);
+              }
+            }
+          }
+          teamIdsFilter = Array.from(collected);
+        } else {
+          teamIdsFilter = [teamId];
+        }
+      }
 
       // Query the canonical view
       let query = supabase
@@ -111,9 +157,9 @@ export function useBuUsersDirectory(options: UseBuUsersDirectoryOptions = {}) {
         query = query.eq("user_type", "internal");
       }
 
-      // Filter by team if specified
-      if (teamId) {
-        query = query.eq("team_id", teamId);
+      // Filter by team (and descendants when applicable)
+      if (teamIdsFilter && teamIdsFilter.length > 0) {
+        query = query.in("team_id", teamIdsFilter);
       }
 
       // Search filter (use debouncedQ)

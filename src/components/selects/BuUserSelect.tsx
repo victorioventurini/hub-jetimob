@@ -49,6 +49,11 @@ export interface BuUserSelectProps {
   showBadges?: boolean;
   /** Filter by team ID */
   teamId?: string;
+  /**
+   * When `teamId` is set, also include users from descendant subteams.
+   * Default: true (recommended for líderes de área/time pai).
+   */
+  includeSubteams?: boolean;
   /** Show search input in dropdown (default: true) */
   showSearch?: boolean;
   /** Allow selecting "none" option */
@@ -82,6 +87,7 @@ export function BuUserSelect({
   allowNone = false,
   noneLabel = "Nenhum",
   excludeExternal = false,
+  includeSubteams = true,
 }: BuUserSelectProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -96,6 +102,7 @@ export function BuUserSelect({
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
     q: showSearch ? search : undefined,
     teamId,
+    includeSubteams,
     pageSize: 200,
     excludeExternal,
   });
