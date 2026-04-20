@@ -1,47 +1,67 @@
 
 
-## Plano: Resolver 8 erros de build (dependências ausentes)
-
-### Pré-checklist (executado)
-- ✅ TCR / DEVELOPMENT_STANDARDS / DATA_MODEL_REGISTRY consultados — nenhuma regra inquebrável afetada (não toca em RLS, BU scoping, query keys, edge functions ou schema).
-- ✅ Padrão `sr-only` já adotado no projeto (`dialog.tsx`, `sheet.tsx`, `sidebar.tsx`, `breadcrumb.tsx`, etc.) — substituição segue convenção existente.
-- ✅ `@testing-library/user-event` é dependência sister do `@testing-library/react@16` já presente; usado em 6 arquivos de teste.
+## Plano: Corrigir unidade exibida em KR com KPI primário vinculado + saneamento de duplicatas
 
 ### Diagnóstico
-8 erros `TS2307` (módulos não encontrados). 2 pacotes referenciados mas ausentes do `package.json`:
 
-| Pacote | Uso | Arquivos |
-|---|---|---|
-| `@radix-ui/react-visually-hidden` | 1 uso isolado em `CommandDialog` | `src/components/ui/command.tsx` |
-| `@testing-library/user-event` | Interações em testes | 6 arquivos `*.test.tsx` |
+KR `965748d8` ("Captar 1.800 inscritos com eventos") tem `unit='R$'` no banco e está vinculada a **3 KPIs marcados como `role='primary'`** (NPS em "pontos", Orçamento em "R$", NRR em "%"). O card exibe `R$ 44,54 / R$ 50` enquanto o valor real provavelmente vem do KPI NPS (44,54 pontos). Causas:
+
+1. **Bug de UI (formatação)** — `ObjectiveListItem.tsx` (linha 626) e `EnhancedObjectiveCard.tsx` (linha 386) usam `effectiveCurrent` (vindo do KPI primário) mas formatam com `kr.unit`. Quando a unidade do KPI difere da KR, exibe a unidade errada.
+2. **Bug no hook batch** — `useKrPrimaryKpiBatch.ts` não traz `kpi.unit`, então o card não tem como exibir a unidade correta.
+3. **Violação de integridade** — existem 3 linhas `role='primary'` ativas para a mesma KR (deveria haver no máximo 1). `maybeSingle()` em `usePrimaryKpiForKr` retorna erro/null silencioso; o batch pega a última do loop arbitrariamente.
+
+### Pré-checklist (executado)
+- ✅ `mem://features/kpis/primary-kpi-single-source-truth` — KPI primário é fonte única; valor + unidade + meta devem vir dele.
+- ✅ `mem://features/okrs/kpi-kr-integration-standard-v1` — sincronização de meta e unidade ao vincular KPI primário.
+- ✅ `mem://architecture/unified-unit-selection-standard` — unidades padronizadas em `src/shared/constants/units.ts`.
+- ✅ DEVELOPMENT_STANDARDS — não usar `select('*')`; query keys via helpers (mantido).
+- ✅ Sem impacto em RLS, BU isolation, edge functions.
 
 ### Mudanças
 
-**1. `src/components/ui/command.tsx`** — remover dependência externa, usar padrão interno `sr-only`:
+**1. `src/modules/okrs/hooks/useKrPrimaryKpiBatch.ts`** — passar `unit` adiante:
+- Adicionar `unit` à interface `KrPrimaryKpiInfo` (`kpiUnit: string`).
+- Adicionar `unit` ao select do `kpi:kpi_metrics(...)`.
+- Setar `kpiUnit: kpi.unit || ''` no `result.set(...)`.
+
+**2. `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx`** (linha 626):
 ```tsx
-// Linha 8: remover
-- import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-
-// Linhas 31-33: simplificar
-- <VisuallyHidden>
--   <DialogTitle>Busca</DialogTitle>
-- </VisuallyHidden>
-+ <DialogTitle className="sr-only">Busca</DialogTitle>
+const effectiveUnit = hasPrimaryKpi && primaryKpiInfo?.kpiUnit
+  ? primaryKpiInfo.kpiUnit
+  : kr.unit;
+// ...
+{formatValue(effectiveCurrent, effectiveUnit)} / {formatValue(effectiveTarget, effectiveUnit)}
 ```
 
-**2. `package.json`** — adicionar em `devDependencies`:
-```json
-"@testing-library/user-event": "^14.5.2"
+**3. `src/modules/okrs/components/EnhancedObjectiveCard.tsx`** (linha 386 e usos):
+- Mesma lógica `effectiveUnit` aplicada onde `formatValue(..., kr.unit)` é chamado para `effectiveCurrent`/`effectiveTarget`.
+
+**4. Saneamento de dados — KR `965748d8` (Supervisão Contabilidade BU jetimob)**
+Atualmente 3 linhas `role='primary'` ativas. Um KPI primário só. Conforme o título da KR ("Captar 1.800 inscritos") e o valor exibido (44.54), os 3 vínculos são possivelmente equivocados (orçamento, NPS, NRR não medem "inscritos em eventos"). Ação: marcar os 3 como `deleted_at = now()` (preserva histórico) e deixar a KR sem KPI primário até o time vinculá-lo corretamente. Migration via tool de DB.
+
+**5. Garantia de unicidade no banco** — Criar índice único parcial (se ainda não existir) para evitar reocorrência:
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_okr_kr_metrics_primary_active
+  ON public.okr_kr_metrics (kr_id, kr_type)
+  WHERE role = 'primary' AND deleted_at IS NULL;
 ```
-(Compatível com `@testing-library/react@^16.3.1` já instalado.)
+(Se o índice existente não tiver `WHERE deleted_at IS NULL`, foi por isso que escapou. Esta versão fecha a brecha.)
 
 ### Validação pós-implementação
-1. `tsc --noEmit` / build sem erros TS2307.
-2. `Cmd+K` (`CommandDialog`) continua funcional e acessível (screen readers leem "Busca" via `sr-only`).
-3. Suítes de teste com `userEvent.click/type/setup` voltam a compilar.
+1. Recarregar `/okrs?view=team&team_id=c8e5d7a7...` → KR "Captar 1.800 inscritos" deve mostrar `0 / 50 R$` (sem KPI primário) ou `— / —` até religação correta.
+2. Vincular KPI primário com unidade diferente em qualquer KR → card mostra valor + unidade do KPI, não da KR.
+3. Tentar inserir 2º vínculo `role='primary'` ativo → banco rejeita (índice único).
+4. Banner `PrimaryKpiLockBanner` e badge `KrPrimaryKpiBadge` continuam corretos (já usam dados do KPI).
 
 ### Observações
-- Zero impacto em RLS, edge functions, schema, query keys, BU isolation, RBAC.
-- 1 arquivo de código alterado + 1 dependência adicionada. Nenhum componente novo.
-- Alinhado a `DEVELOPMENT_STANDARDS` (preferir primitivos do design system aos pacotes externos quando equivalentes).
+- Sem componente novo. Apenas estende hook existente + ajusta 2 pontos de exibição.
+- Migration de saneamento é cirúrgica (1 KR específica). Índice único previne recorrência sistêmica.
+- Não toca RLS, edge functions, schema (apenas índice).
+- Query keys e cache invalidation já cobertos pelas mudanças anteriores em `useOkrKrMetrics.ts`.
+
+### Arquivos a editar
+- `src/modules/okrs/hooks/useKrPrimaryKpiBatch.ts`
+- `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx`
+- `src/modules/okrs/components/EnhancedObjectiveCard.tsx`
+- Migration: cleanup + índice único parcial em `okr_kr_metrics`.
 
