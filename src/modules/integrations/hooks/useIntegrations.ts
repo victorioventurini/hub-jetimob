@@ -361,22 +361,24 @@ export function useCreateAgent() {
     }) => {
       const { error } = await supabase
         .from('ai_agents')
-        .insert({
-          scope: agent.scope,
-          bu_id: agent.bu_id || null,
-          integration_key: agent.integration_key,
-          name: agent.name,
-          description: agent.description || null,
-          is_active: agent.is_active ?? true,
-          system_prompt: agent.system_prompt,
-          output_format: agent.output_format || 'text',
-          output_schema: (agent.output_schema || null) as Json,
-          allowed_tools: agent.allowed_tools || [],
-          model_name: agent.model_name || null,
-          max_tokens: agent.max_tokens || null,
-          temperature: agent.temperature ?? 0.7,
-          created_by: agent.created_by || null,
-        });
+        .insert([
+          {
+            scope: agent.scope,
+            bu_id: agent.bu_id || null,
+            integration_key: agent.integration_key,
+            name: agent.name,
+            description: agent.description || null,
+            is_active: agent.is_active ?? true,
+            system_prompt: agent.system_prompt,
+            output_format: agent.output_format || 'text',
+            output_schema: (agent.output_schema || null) as Json,
+            allowed_tools: agent.allowed_tools || [],
+            model_name: agent.model_name || null,
+            max_tokens: agent.max_tokens || null,
+            temperature: agent.temperature ?? 0.7,
+            created_by: agent.created_by || null,
+          },
+        ]);
       
       if (error) throw error;
     },
