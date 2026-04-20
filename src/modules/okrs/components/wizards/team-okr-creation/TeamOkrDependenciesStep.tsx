@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { AlertTriangle, Link2, CheckCircle2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tryParseAiJson } from '@/lib/aiResponseParser';
 import { VicLoadingState } from '@/modules/vic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
@@ -111,14 +112,26 @@ export function TeamOkrDependenciesStep({
           Retorne JSON: { "dependencies": [{ "krIndex": 0, "description": "...", "dependsOnTeamName": "...", "severity": "low|medium|high" }], "insight": "..." }`
         );
 
-        try {
-          const parsed = JSON.parse(response.response);
-          const deps: DetectedDependencyDraft[] = (parsed.dependencies || []).map((d: any) => ({
+        const parsed = tryParseAiJson<{
+          dependencies?: Array<{
+            krIndex: number;
+            description: string;
+            dependsOnTeamName?: string;
+            severity: 'low' | 'medium' | 'high';
+          }>;
+          insight?: string;
+        }>(response.response);
+
+        if (!parsed) {
+          // Resposta não estruturada — sem dependências detectadas
+          onDetectedDependenciesChange([]);
+        } else {
+          const deps: DetectedDependencyDraft[] = (parsed.dependencies || []).map((d) => ({
             ...d,
             krTitle: draftKrs[d.krIndex]?.title || '',
           }));
           onDetectedDependenciesChange(deps);
-          
+
           if (parsed.insight) {
             onAiInsightChange({
               id: 'dep-insight',
@@ -128,9 +141,6 @@ export function TeamOkrDependenciesStep({
               source: 'alinhamento-estrategico',
             });
           }
-        } catch {
-          // If not JSON, no dependencies detected
-          onDetectedDependenciesChange([]);
         }
       } catch {
         // Silently fail - no dependencies detected
