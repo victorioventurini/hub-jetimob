@@ -54,6 +54,7 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Target, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CycleSelect } from '@/components/selects/CycleSelect';
 
 // ============================================================
 // STEP DEFINITIONS
@@ -86,6 +87,7 @@ export default function OkrCreationPage() {
   
   // URL params
   const teamIdParam = searchParams.get('team');
+  const cycleIdParam = searchParams.get('cycle');
   const stepState = useUrlState<string>({
     key: 'step',
     defaultValue: 'intro',
@@ -102,12 +104,28 @@ export default function OkrCreationPage() {
   
   // Get cycles (status-based)
   const { activeQuarterlyCycle, activeCycle, planningCycles, isLoading: isLoadingCycles } = useActiveCycle();
-  // Fallback: if no active quarter, use planning quarter (for QBR-pre draft hydration)
-  const planningQuarterlyCycle = useMemo(() => {
-    return planningCycles.find(c => c.type === 'quarter') ?? null;
+  // Quarterly cycles available for OKR creation: active + all planning quarters.
+  // Líderes podem criar OKRs no trimestre vigente OU em trimestres futuros (planejamento antecipado).
+  const planningQuarterlyCycles = useMemo(() => {
+    return planningCycles.filter(c => c.type === 'quarter');
   }, [planningCycles]);
-  const quarterlyCycle = activeQuarterlyCycle || planningQuarterlyCycle || activeCycle;
-  const isPlannningCycle = !activeQuarterlyCycle && !!planningQuarterlyCycle && quarterlyCycle === planningQuarterlyCycle;
+  const selectableQuarterlyCycles = useMemo(() => {
+    const list = [
+      ...(activeQuarterlyCycle ? [activeQuarterlyCycle] : []),
+      ...planningQuarterlyCycles,
+    ];
+    // Sort by start_date ascending so the active/current quarter appears first
+    return list.sort((a, b) => a.start_date.localeCompare(b.start_date));
+  }, [activeQuarterlyCycle, planningQuarterlyCycles]);
+  // Resolve current cycle: URL param (if valid) → active quarter → first planning quarter → year fallback
+  const quarterlyCycle = useMemo(() => {
+    if (cycleIdParam) {
+      const fromUrl = selectableQuarterlyCycles.find(c => c.id === cycleIdParam);
+      if (fromUrl) return fromUrl;
+    }
+    return activeQuarterlyCycle || selectableQuarterlyCycles[0] || activeCycle || null;
+  }, [cycleIdParam, selectableQuarterlyCycles, activeQuarterlyCycle, activeCycle]);
+  const isPlannningCycle = !!quarterlyCycle && quarterlyCycle.status === 'planning';
   
   // Page title
   usePageTitle(selectedTeam ? `Criar OKRs - ${selectedTeam.name}` : 'Criar OKRs');
@@ -140,6 +158,17 @@ export default function OkrCreationPage() {
     // Clear draft when changing team
     discardDraft();
   }, [searchParams, setSearchParams, discardDraft]);
+  
+  // Handle cycle change (líder escolhe trimestre alvo: ativo ou planejamento)
+  const handleCycleChange = useCallback((newCycleId: string) => {
+    if (newCycleId === quarterlyCycle?.id) return;
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('cycle', newCycleId);
+    newParams.set('step', 'intro'); // Reset to first step
+    setSearchParams(newParams, { replace: true });
+    // Clear draft when changing cycle (rascunho é por team+cycle)
+    discardDraft();
+  }, [searchParams, setSearchParams, discardDraft, quarterlyCycle?.id]);
   
   
   // Session tracking
@@ -621,6 +650,33 @@ export default function OkrCreationPage() {
           />
         }
       >
+        {/* Cycle selector + planning banner — visível quando há mais de um quarter elegível */}
+        {selectableQuarterlyCycles.length > 1 && (
+          <div className="mb-4 flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-medium text-muted-foreground">Ciclo trimestral alvo</span>
+              <span className="text-xs text-muted-foreground">
+                Escolha em qual trimestre criar este OKR. Ciclos em planejamento serão criados como rascunho.
+              </span>
+            </div>
+            <div className="w-full sm:w-72">
+              <CycleSelect
+                value={quarterlyCycle.id}
+                onValueChange={handleCycleChange}
+                cycles={selectableQuarterlyCycles}
+                showPeriodPreview={false}
+              />
+            </div>
+          </div>
+        )}
+        {isPlannningCycle && (
+          <Alert className="mb-4 border-warning/50 bg-warning-muted">
+            <Info className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-warning-muted-foreground">
+              Você está criando OKRs em um ciclo em <strong>planejamento</strong>. Os objetivos serão salvos como <strong>rascunho</strong> e ativados quando o ciclo for iniciado.
+            </AlertDescription>
+          </Alert>
+        )}
         {remainingDraftsCount > 0 && draft.sourceDraftObjectiveId && (
           <Alert className="mb-4 border-accent bg-accent/10">
             <Info className="h-4 w-4 text-accent-foreground" />
