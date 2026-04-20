@@ -159,6 +159,17 @@ export default function OkrCreationPage() {
     discardDraft();
   }, [searchParams, setSearchParams, discardDraft]);
   
+  // Handle cycle change (líder escolhe trimestre alvo: ativo ou planejamento)
+  const handleCycleChange = useCallback((newCycleId: string) => {
+    if (newCycleId === quarterlyCycle?.id) return;
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('cycle', newCycleId);
+    newParams.set('step', 'intro'); // Reset to first step
+    setSearchParams(newParams, { replace: true });
+    // Clear draft when changing cycle (rascunho é por team+cycle)
+    discardDraft();
+  }, [searchParams, setSearchParams, discardDraft, quarterlyCycle?.id]);
+  
   
   // Session tracking
   const { createSession, completeSession } = useWizardSession();
