@@ -347,8 +347,10 @@ export function FullPageWizardShell({
             </div>
           </aside>
           
-          {/* Step content — each step controls its own ScrollArea */}
-          <main className="flex-1 min-w-0 min-h-0 flex flex-col">
+          {/* Step content — each step controls its own ScrollArea.
+              CRITICAL: overflow-hidden ensures children with h-full are contained,
+              preventing footer from being pushed off-screen at high zoom levels. */}
+          <main className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
             {children}
           </main>
         </div>
