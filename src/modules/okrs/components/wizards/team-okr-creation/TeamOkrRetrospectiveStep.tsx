@@ -111,7 +111,7 @@ export function TeamOkrRetrospectiveStep({
           onAiInsightChangeRef.current({
             id: 'retro-insight-fallback',
             type: 'insight',
-            content: `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com 3 KRs ativos tiveram 28% mais foco.`,
+            content: `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com até 4 KRs ativos tiveram 28% mais foco.`,
             priority: 'medium',
             source: 'analista-kpis',
           });

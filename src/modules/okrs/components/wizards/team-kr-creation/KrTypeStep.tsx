@@ -253,7 +253,7 @@ export function KrTypeStep({
             </div>
             {totalKrs > 3 && (
               <p className="text-xs text-muted-foreground mt-2">
-                Times com 3 KRs têm maior foco. Considere priorizar.
+                Times com até 4 KRs têm maior foco. Considere priorizar.
               </p>
             )}
             {!hasFoundational && (
