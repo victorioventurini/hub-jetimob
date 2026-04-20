@@ -13,6 +13,7 @@ import { Target, Link2, Wrench, Plus, Minus, Sparkles, Info } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 import type { OkrKrType } from '@/modules/okrs/types/wizard';
 
 // ============================================================
