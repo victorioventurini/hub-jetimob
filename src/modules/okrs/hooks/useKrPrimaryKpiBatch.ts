@@ -26,6 +26,8 @@ export interface KrPrimaryKpiInfo {
   kpiId: string;
   /** Nome da KPI */
   kpiName: string;
+  /** Unidade da KPI (fonte única de verdade quando há vínculo primário) */
+  kpiUnit: string;
   /** Direção da KPI */
   direction: 'up' | 'down' | 'maintain';
   /** Valor atual da KPI (último valor registrado) */
@@ -92,6 +94,7 @@ export function useKrPrimaryKpiBatch(
           kpi:kpi_metrics(
             id,
             name,
+            unit,
             direction,
             target_value,
             kpi_values(
@@ -125,6 +128,7 @@ export function useKrPrimaryKpiBatch(
           krType: link.kr_type as 'org' | 'team',
           kpiId: kpi.id,
           kpiName: kpi.name,
+          kpiUnit: kpi.unit || '',
           direction: kpi.direction || 'up',
           currentValue: latestValue?.value ?? null,
           targetValue: kpi.target_value ?? null,
