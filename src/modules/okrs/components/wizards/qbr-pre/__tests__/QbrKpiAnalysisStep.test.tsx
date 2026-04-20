@@ -123,29 +123,7 @@ describe('QbrKpiAnalysisStep', () => {
     expect(screen.getByText(/2 KPIs marcados como potencialmente zombie/)).toBeInTheDocument();
   });
 
-  it('adds KPI to create via input', () => {
-    const onKpisToCreateChange = vi.fn();
-    renderStep({ onKpisToCreateChange });
-    
-    const input = screen.getByPlaceholderText('Descreva o indicador...');
-    fireEvent.change(input, { target: { value: 'Novo KPI importante' } });
-    
-    // Click add button (the one next to the input)
-    const addButtons = screen.getAllByRole('button');
-    const addBtn = addButtons.find(b => !b.hasAttribute('data-testid'));
-    if (addBtn) fireEvent.click(addBtn);
-    
-    expect(onKpisToCreateChange).toHaveBeenCalled();
-  });
-
-  it('shows existing KPIs to create', () => {
-    renderStep({
-      kpisToCreate: [
-        { description: 'NPS de locação', suggestedScope: 'team', relatedKrTitle: '' },
-      ],
-    });
-    expect(screen.getByText('NPS de locação')).toBeInTheDocument();
-  });
+  // KPI creation UI removed from this step (props kept as deprecated for backward compat)
 
   it('calls onContinue and onBack', () => {
     const onContinue = vi.fn();
