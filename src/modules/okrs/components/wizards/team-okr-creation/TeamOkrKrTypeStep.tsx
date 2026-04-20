@@ -14,6 +14,7 @@ import { Target, Link2, Wrench, Plus, Minus, Sparkles, Info } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
+import { OKR_LIMITS } from '@/modules/okrs/utils/linkingRules';
 import type { OkrKrType } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -93,12 +94,13 @@ export function TeamOkrKrTypeStep({
   onContinue,
   onBack,
 }: TeamOkrKrTypeStepProps) {
+  const MAX_KRS = OKR_LIMITS.MAX_KRS_PER_OBJECTIVE;
   const totalKrs = krPlan.foundational + krPlan.contribution + krPlan.enabler;
   const hasFoundational = krPlan.foundational > 0;
-  const canContinue = hasFoundational && totalKrs >= 1 && totalKrs <= 5;
+  const canContinue = hasFoundational && totalKrs >= 1 && totalKrs <= MAX_KRS;
 
   const handleIncrement = (type: OkrKrType) => {
-    if (totalKrs >= 5) return;
+    if (totalKrs >= MAX_KRS) return;
     onKrPlanChange({
       ...krPlan,
       [type]: krPlan[type] + 1,
@@ -208,7 +210,7 @@ export function TeamOkrKrTypeStep({
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => handleIncrement(krType.type)}
-                          disabled={totalKrs >= 5}
+                          disabled={totalKrs >= MAX_KRS}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -231,18 +233,17 @@ export function TeamOkrKrTypeStep({
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total de KRs planejados</span>
               <Badge 
-                variant={totalKrs >= 1 && totalKrs <= 3 ? "default" : "outline"}
+                variant={totalKrs >= 1 && totalKrs <= MAX_KRS ? "default" : "outline"}
                 className={cn(
-                  totalKrs > 3 && totalKrs <= 5 && "bg-status-yellow-muted text-status-yellow border-status-yellow/30",
-                  totalKrs > 5 && "bg-status-red-muted text-status-red border-status-red/30"
+                  totalKrs > MAX_KRS && "bg-status-red-muted text-status-red border-status-red/30"
                 )}
               >
-                {totalKrs} / 5 máximo
+                {totalKrs} / {MAX_KRS} máximo
               </Badge>
             </div>
-            {totalKrs > 3 && (
+            {totalKrs === MAX_KRS && (
               <p className="text-xs text-muted-foreground mt-2">
-                Times com até 4 KRs têm maior foco. Considere priorizar.
+                Você atingiu o limite de {MAX_KRS} KRs por objetivo. Foco é tudo.
               </p>
             )}
             {!hasFoundational && (
