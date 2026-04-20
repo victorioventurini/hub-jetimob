@@ -8,7 +8,7 @@
  * - Insights sem julgamento (persistidos)
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -51,17 +51,35 @@ export function TeamOkrRetrospectiveStep({
   onBack,
 }: TeamOkrRetrospectiveStepProps) {
   const { invokeVic } = useWizardAI();
-  const isGeneratingRef = useRef(false);
+  const hasAttemptedRef = useRef(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  // Generate retrospective insight - only if not already persisted
+  // Stable refs to avoid re-running effect on parent re-renders
+  const onAiInsightChangeRef = useRef(onAiInsightChange);
+  const invokeVicRef = useRef(invokeVic);
   useEffect(() => {
-    if (!analysis || aiInsight || isGeneratingRef.current) return;
-    
-    isGeneratingRef.current = true;
-    
-    const generateInsight = async () => {
+    onAiInsightChangeRef.current = onAiInsightChange;
+    invokeVicRef.current = invokeVic;
+  });
+
+  // Generate retrospective insight - only once per mount, only if not already persisted
+  useEffect(() => {
+    if (!analysis || aiInsight || hasAttemptedRef.current) return;
+
+    hasAttemptedRef.current = true;
+    setIsGenerating(true);
+
+    let isCancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (!isCancelled) {
+        isCancelled = true;
+        setIsGenerating(false);
+      }
+    }, 30000);
+
+    (async () => {
       try {
-        const response = await invokeVic(
+        const response = await invokeVicRef.current(
           'analista-kpis',
           'kpi-monthly-summary',
           {
@@ -77,17 +95,20 @@ export function TeamOkrRetrospectiveStep({
           { silent: true }
         );
 
-        onAiInsightChange({
-          id: 'retro-insight',
-          type: 'insight',
-          content: response.response,
-          priority: 'medium',
-          source: 'analista-kpis',
-        });
-      } catch {
-        // Fallback insight
-        if (analysis.abandonedKrs.length > 0) {
-          onAiInsightChange({
+        if (!isCancelled) {
+          onAiInsightChangeRef.current({
+            id: 'retro-insight',
+            type: 'insight',
+            content: response.response,
+            priority: 'medium',
+            source: 'analista-kpis',
+          });
+        }
+      } catch (err) {
+        console.warn('[TeamOkrRetrospectiveStep] AI insight failed:', err);
+        // Fallback insight (best-effort)
+        if (!isCancelled && analysis.abandonedKrs.length > 0) {
+          onAiInsightChangeRef.current({
             id: 'retro-insight-fallback',
             type: 'insight',
             content: `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com 3 KRs ativos tiveram 28% mais foco.`,
@@ -96,15 +117,20 @@ export function TeamOkrRetrospectiveStep({
           });
         }
       } finally {
-        isGeneratingRef.current = false;
+        clearTimeout(timeoutId);
+        if (!isCancelled) setIsGenerating(false);
       }
-    };
+    })();
 
-    generateInsight();
-  }, [analysis, aiInsight, onAiInsightChange]);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+      setIsGenerating(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis, aiInsight]);
 
   const hasData = analysis && (analysis.objectives.length > 0 || analysis.kpiTrends.length > 0);
-  const isGenerating = !aiInsight && analysis && isGeneratingRef.current;
 
   if (isLoading) {
     return (
