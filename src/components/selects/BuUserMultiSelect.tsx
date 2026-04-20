@@ -38,6 +38,11 @@ export interface BuUserMultiSelectProps {
   showBadges?: boolean;
   /** Filter by team ID */
   teamId?: string;
+  /**
+   * When `teamId` is set, also include users from descendant subteams.
+   * Default: true.
+   */
+  includeSubteams?: boolean;
   /** Exclude external users/contacts (default: false) */
   excludeExternal?: boolean;
 }
