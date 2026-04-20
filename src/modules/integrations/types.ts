@@ -56,6 +56,7 @@ export interface AiAgent {
   bu_id: string | null;
   integration_key: string;
   name: string;
+  slug?: string | null;
   description: string | null;
   is_active: boolean;
   system_prompt: string;

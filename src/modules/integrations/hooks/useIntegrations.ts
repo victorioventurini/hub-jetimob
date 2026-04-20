@@ -12,6 +12,16 @@ import type {
 } from '../types';
 import type { Json } from '@/integrations/supabase/types';
 
+function buildAgentSlug(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50);
+}
+
 // ============================================
 // CATALOG HOOKS (Global - no BU required)
 // ============================================
@@ -344,6 +354,7 @@ export function useCreateAgent() {
   
   return useMutation({
     mutationFn: async (agent: {
+      slug?: string | null;
       scope: 'global' | 'bu';
       bu_id?: string | null;
       integration_key: string;
@@ -359,24 +370,29 @@ export function useCreateAgent() {
       temperature?: number;
       created_by?: string | null;
     }) => {
+      const slug = agent.slug?.trim() || buildAgentSlug(agent.name);
+
       const { error } = await supabase
         .from('ai_agents')
-        .insert({
-          scope: agent.scope,
-          bu_id: agent.bu_id || null,
-          integration_key: agent.integration_key,
-          name: agent.name,
-          description: agent.description || null,
-          is_active: agent.is_active ?? true,
-          system_prompt: agent.system_prompt,
-          output_format: agent.output_format || 'text',
-          output_schema: (agent.output_schema || null) as Json,
-          allowed_tools: agent.allowed_tools || [],
-          model_name: agent.model_name || null,
-          max_tokens: agent.max_tokens || null,
-          temperature: agent.temperature ?? 0.7,
-          created_by: agent.created_by || null,
-        });
+        .insert([
+          {
+            slug,
+            scope: agent.scope,
+            bu_id: agent.bu_id || null,
+            integration_key: agent.integration_key,
+            name: agent.name,
+            description: agent.description || null,
+            is_active: agent.is_active ?? true,
+            system_prompt: agent.system_prompt,
+            output_format: agent.output_format || 'text',
+            output_schema: (agent.output_schema || null) as Json,
+            allowed_tools: agent.allowed_tools || [],
+            model_name: agent.model_name || null,
+            max_tokens: agent.max_tokens || null,
+            temperature: agent.temperature ?? 0.7,
+            created_by: agent.created_by || null,
+          },
+        ]);
       
       if (error) throw error;
     },
