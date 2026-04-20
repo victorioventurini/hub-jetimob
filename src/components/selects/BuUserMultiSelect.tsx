@@ -67,6 +67,7 @@ export function BuUserMultiSelect({
   showBadges = false,
   teamId,
   excludeExternal = false,
+  includeSubteams = true,
 }: BuUserMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -74,6 +75,7 @@ export function BuUserMultiSelect({
   const { data: profiles = [], isLoading } = useBuUsersDirectory({
     q: open ? search : undefined, // Only search when popover is open
     teamId,
+    includeSubteams,
     pageSize: 200,
     excludeExternal,
   });
