@@ -5981,6 +5981,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_org_key_results_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_key_results_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_key_results_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "okr_org_key_results_org_objective_id_fkey"
             columns: ["org_objective_id"]
             isOneToOne: false
@@ -6083,6 +6104,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_objectives_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
           {
@@ -6245,6 +6287,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_key_results_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
           {
@@ -6503,6 +6566,27 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_team_objectives_cancelled_by_profile_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
             referencedColumns: ["id"]
           },
           {

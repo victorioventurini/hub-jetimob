@@ -41,6 +41,16 @@ vi.mock('@/integrations/supabase/getOptionalBuClient', () => ({
   useOptionalBuClient: () => ({ client: mockClient }),
 }));
 
+vi.mock('@/hooks/useIdentity', () => ({
+  useIdentity: () => ({
+    realProfileId: 'profile-test-1',
+    profileId: 'profile-test-1',
+    realUserId: 'user-test-1',
+    userId: 'user-test-1',
+    isReady: true,
+  }),
+}));
+
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -149,7 +159,10 @@ describe('useOkrMutations — integration', () => {
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
-      expect(toast.error).toHaveBeenCalledWith('Erro ao cancelar objetivo');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Erro ao cancelar objetivo',
+        expect.objectContaining({ description: expect.any(String) })
+      );
     });
   });
 
@@ -272,6 +285,11 @@ describe('useOkrMutations — integration', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(toast.success).toHaveBeenCalledWith('Key Result cancelado');
+
+      // KR payload uses cancelled_at + cancelled_by, never `status`
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload).toHaveProperty('cancelled_by', 'profile-test-1');
+      expect(updatePayload).not.toHaveProperty('status');
     });
   });
 
