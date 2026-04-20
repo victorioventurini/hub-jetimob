@@ -23,6 +23,12 @@ vi.mock('../../shared', () => ({
     <div data-testid={`inline-decision-${sourceStep}`} />
   ),
   LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
+  KpiStatusBlocks: (props: any) => <div data-testid="kpi-status-blocks" {...props} />,
 }));
 
 // ============================================================

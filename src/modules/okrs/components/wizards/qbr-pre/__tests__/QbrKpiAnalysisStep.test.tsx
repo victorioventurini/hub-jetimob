@@ -22,6 +22,13 @@ vi.mock('../../shared', () => ({
     <div>{header}{bottomFixed}{children}{footer}</div>
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
+  KpiStatusBlocks: () => <div data-testid="kpi-status-blocks" />,
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
+  LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
 }));
 
 function createKpi(overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnapshot {

@@ -28,6 +28,42 @@ vi.mock('../../shared', () => ({
     <div>{header}{bottomFixed}{children}{footer}</div>
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
+  KpiStatusBlocks: () => <div data-testid="kpi-status-blocks" />,
+  LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
+}));
+
+// QbrCLevelQuarterBalanceStep importa TeamKrsToggle por path direto
+vi.mock('../../shared/TeamKrsToggle', () => ({
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
+}));
+
+// QbrCLevelSystemReadStep usa useBuScopedSupabase para enriquecer dados
+vi.mock('@/integrations/supabase/useBuScopedSupabase', () => ({
+  useBuScopedSupabase: () => ({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        in: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+    })),
+  }),
+}));
+
+// QbrCLevelSystemReadStep usa useWizardAI para gerar sumários
+vi.mock('@/modules/okrs/hooks', () => ({
+  useWizardAI: () => ({
+    invokeVic: vi.fn(() => Promise.resolve({ response: '' })),
+  }),
 }));
 
 // ============================================================
@@ -142,7 +178,7 @@ describe('QbrCLevelSystemReadStep', () => {
     expect(screen.getByText('Alcançados')).toBeInTheDocument();
   });
 
-  it('shows zombie and KPI-to-create counts', () => {
+  it('shows zombie KPI counts when present', () => {
     render(
       <QbrCLevelSystemReadStep
         leaderSubmissions={[createSubmission()]}
@@ -152,7 +188,6 @@ describe('QbrCLevelSystemReadStep', () => {
       />
     );
     expect(screen.getByText(/zombie sinalizados/)).toBeInTheDocument();
-    expect(screen.getByText(/sugeridos para criação/)).toBeInTheDocument();
   });
 
   it('shows consolidated learnings', () => {
@@ -192,11 +227,11 @@ describe('QbrCLevelStrategicStep', () => {
     expect(screen.getByText('Sua análise — o que só você vê daqui')).toBeInTheDocument();
   });
 
-  it('renders three strategic textareas', () => {
+  it('renders strategic analysis sections (alignment, signals, vetos)', () => {
     renderStrategic();
-    expect(screen.getByText('Alinhamento com a Estratégia')).toBeInTheDocument();
-    expect(screen.getByText('Sinais que os Times Não Viram')).toBeInTheDocument();
-    expect(screen.getByText(/O que NÃO Fazer/)).toBeInTheDocument();
+    expect(screen.getByText('Alinhamento estratégico')).toBeInTheDocument();
+    expect(screen.getByText(/O que você está vendo que os times não veem/)).toBeInTheDocument();
+    expect(screen.getByText('Vetos estratégicos')).toBeInTheDocument();
   });
 
   it('disables continue when all fields empty', () => {

@@ -22,6 +22,11 @@ vi.mock('../../shared', () => ({
   InlineDecisionInput: ({ sourceStep }: { sourceStep: string }) => (
     <div data-testid={`inline-decision-${sourceStep}`} />
   ),
+  TeamKrsToggle: ({ visible, onToggle }: any) => (
+    <button data-testid="team-krs-toggle" onClick={onToggle}>
+      {visible ? 'Ocultar KRs' : 'Mostrar KRs'}
+    </button>
+  ),
 }));
 
 vi.mock('@/modules/okrs/components/OkrProgressBar', () => ({
