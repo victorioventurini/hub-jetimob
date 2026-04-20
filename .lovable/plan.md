@@ -1,67 +1,25 @@
 
 
-## Plano: Corrigir unidade exibida em KR com KPI primário vinculado + saneamento de duplicatas
+## Verificação: Plano "Remover campo Status manual dos dialogs de KR" foi executado?
 
-### Diagnóstico
+### Resposta curta
+**Não.** O plano não foi executado. A última implementação registrada nesta sessão foi a correção da unidade exibida em KRs com KPI primário vinculado (`useKrPrimaryKpiBatch.ts` + `ObjectiveListItem.tsx` + `EnhancedObjectiveCard.tsx`). Não há registro de remoção do campo Status manual dos dialogs de KR.
 
-KR `965748d8` ("Captar 1.800 inscritos com eventos") tem `unit='R$'` no banco e está vinculada a **3 KPIs marcados como `role='primary'`** (NPS em "pontos", Orçamento em "R$", NRR em "%"). O card exibe `R$ 44,54 / R$ 50` enquanto o valor real provavelmente vem do KPI NPS (44,54 pontos). Causas:
+### Evidências
+1. **`.lovable/plan.md`** atualmente contém o plano de **unidade KPI/KR** (não o plano de remoção de Status). Se o plano de Status tivesse sido executado, este arquivo já teria sido sobrescrito ou existiria histórico dele.
+2. **Histórico de edições recentes** (últimas 3 turnos):
+   - `useKrPrimaryKpiBatch.ts`, `ObjectiveListItem.tsx`, `EnhancedObjectiveCard.tsx` — fix de unidade
+   - `package.json`, `bun.lock`, `command.tsx` — fix de build (TS2307)
+   - Nenhuma edição em `KrFormDialog`, `TeamKrFormDialog`, `OrgKrFormDialog`, `EditKrDialog` ou hooks de mutação que tratem `status`.
+3. **Status do plano de Status manual:** discutido conceitualmente em mensagem anterior (com base na imagem que você enviou mostrando o seletor "Status" no dialog), mas **nunca aprovado nem implementado**. Não houve aprovação explícita ("Lovable plan: Approved") para esse plano específico.
 
-1. **Bug de UI (formatação)** — `ObjectiveListItem.tsx` (linha 626) e `EnhancedObjectiveCard.tsx` (linha 386) usam `effectiveCurrent` (vindo do KPI primário) mas formatam com `kr.unit`. Quando a unidade do KPI difere da KR, exibe a unidade errada.
-2. **Bug no hook batch** — `useKrPrimaryKpiBatch.ts` não traz `kpi.unit`, então o card não tem como exibir a unidade correta.
-3. **Violação de integridade** — existem 3 linhas `role='primary'` ativas para a mesma KR (deveria haver no máximo 1). `maybeSingle()` em `usePrimaryKpiForKr` retorna erro/null silencioso; o batch pega a última do loop arbitrariamente.
+### O que precisa acontecer para executar
+Se quiser prosseguir com a remoção do campo Status manual dos dialogs de KR (cálculo 100% automático via `calculateAutoStatus` em `useOkrStatus.ts`), preciso primeiro:
+1. Inspecionar todos os dialogs/forms de KR (`KrFormDialog`, `TeamKrFormDialog`, `OrgKrFormDialog`, `EditKrDialog`, schemas Zod, hooks de mutação `useUpdateTeamKeyResult`/`useUpdateOrgKeyResult`).
+2. Mapear onde o `status` é exibido/escrito manualmente vs. onde é derivado.
+3. Verificar regras canônicas em `mem://features/okrs/effective-kr-status-logic` e `mem://standards/interpretation/progress-canon`.
+4. Apresentar plano formal de remoção (UI + schema + mutations + backfill se necessário).
 
-### Pré-checklist (executado)
-- ✅ `mem://features/kpis/primary-kpi-single-source-truth` — KPI primário é fonte única; valor + unidade + meta devem vir dele.
-- ✅ `mem://features/okrs/kpi-kr-integration-standard-v1` — sincronização de meta e unidade ao vincular KPI primário.
-- ✅ `mem://architecture/unified-unit-selection-standard` — unidades padronizadas em `src/shared/constants/units.ts`.
-- ✅ DEVELOPMENT_STANDARDS — não usar `select('*')`; query keys via helpers (mantido).
-- ✅ Sem impacto em RLS, BU isolation, edge functions.
-
-### Mudanças
-
-**1. `src/modules/okrs/hooks/useKrPrimaryKpiBatch.ts`** — passar `unit` adiante:
-- Adicionar `unit` à interface `KrPrimaryKpiInfo` (`kpiUnit: string`).
-- Adicionar `unit` ao select do `kpi:kpi_metrics(...)`.
-- Setar `kpiUnit: kpi.unit || ''` no `result.set(...)`.
-
-**2. `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx`** (linha 626):
-```tsx
-const effectiveUnit = hasPrimaryKpi && primaryKpiInfo?.kpiUnit
-  ? primaryKpiInfo.kpiUnit
-  : kr.unit;
-// ...
-{formatValue(effectiveCurrent, effectiveUnit)} / {formatValue(effectiveTarget, effectiveUnit)}
-```
-
-**3. `src/modules/okrs/components/EnhancedObjectiveCard.tsx`** (linha 386 e usos):
-- Mesma lógica `effectiveUnit` aplicada onde `formatValue(..., kr.unit)` é chamado para `effectiveCurrent`/`effectiveTarget`.
-
-**4. Saneamento de dados — KR `965748d8` (Supervisão Contabilidade BU jetimob)**
-Atualmente 3 linhas `role='primary'` ativas. Um KPI primário só. Conforme o título da KR ("Captar 1.800 inscritos") e o valor exibido (44.54), os 3 vínculos são possivelmente equivocados (orçamento, NPS, NRR não medem "inscritos em eventos"). Ação: marcar os 3 como `deleted_at = now()` (preserva histórico) e deixar a KR sem KPI primário até o time vinculá-lo corretamente. Migration via tool de DB.
-
-**5. Garantia de unicidade no banco** — Criar índice único parcial (se ainda não existir) para evitar reocorrência:
-```sql
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_okr_kr_metrics_primary_active
-  ON public.okr_kr_metrics (kr_id, kr_type)
-  WHERE role = 'primary' AND deleted_at IS NULL;
-```
-(Se o índice existente não tiver `WHERE deleted_at IS NULL`, foi por isso que escapou. Esta versão fecha a brecha.)
-
-### Validação pós-implementação
-1. Recarregar `/okrs?view=team&team_id=c8e5d7a7...` → KR "Captar 1.800 inscritos" deve mostrar `0 / 50 R$` (sem KPI primário) ou `— / —` até religação correta.
-2. Vincular KPI primário com unidade diferente em qualquer KR → card mostra valor + unidade do KPI, não da KR.
-3. Tentar inserir 2º vínculo `role='primary'` ativo → banco rejeita (índice único).
-4. Banner `PrimaryKpiLockBanner` e badge `KrPrimaryKpiBadge` continuam corretos (já usam dados do KPI).
-
-### Observações
-- Sem componente novo. Apenas estende hook existente + ajusta 2 pontos de exibição.
-- Migration de saneamento é cirúrgica (1 KR específica). Índice único previne recorrência sistêmica.
-- Não toca RLS, edge functions, schema (apenas índice).
-- Query keys e cache invalidation já cobertos pelas mudanças anteriores em `useOkrKrMetrics.ts`.
-
-### Arquivos a editar
-- `src/modules/okrs/hooks/useKrPrimaryKpiBatch.ts`
-- `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx`
-- `src/modules/okrs/components/EnhancedObjectiveCard.tsx`
-- Migration: cleanup + índice único parcial em `okr_kr_metrics`.
+### Próximo passo sugerido
+Confirme se você quer que eu **explore o codebase agora** e apresente o plano formal de remoção do campo Status manual dos dialogs de KR — para então você aprovar e executarmos.
 
