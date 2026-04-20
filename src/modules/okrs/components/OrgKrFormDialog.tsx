@@ -85,7 +85,6 @@ export function OrgKrFormDialog({
   const [target, setTarget] = useState(kr?.target?.toString() || '');
   const [unit, setUnit] = useState(kr?.unit || '%');
   const [direction, setDirection] = useState<OkrDirection>(kr?.direction || 'up');
-  const [status, setStatus] = useState<OkrRagStatus>(kr?.status || 'not_started');
   const [ownerUserId, setOwnerUserId] = useState<string | null>(kr?.owner_user_id || null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [placeholder] = useState(() => getRandomPlaceholder(true));
@@ -119,7 +118,6 @@ export function OrgKrFormDialog({
     setTarget(kr?.target?.toString() || '');
     setUnit(kr?.unit || '%');
     setDirection(kr?.direction || 'up');
-    setStatus(kr?.status || 'not_started');
     setOwnerUserId(kr?.owner_user_id || null);
   }, [kr]));
 
@@ -146,7 +144,6 @@ export function OrgKrFormDialog({
             target: parseFloat(target),
             direction,
             unit,
-            status,
             owner_user_id: ownerUserId,
             updated_at: new Date().toISOString(),
           })
@@ -398,22 +395,8 @@ export function OrgKrFormDialog({
                 </div>
               </div>
 
-              {isEditing && (
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={status} onValueChange={(v) => setStatus(v as OkrRagStatus)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="not_started">Não iniciado</SelectItem>
-                      <SelectItem value="green">Verde (no caminho)</SelectItem>
-                      <SelectItem value="yellow">Amarelo (atenção)</SelectItem>
-                      <SelectItem value="red">Vermelho (em risco)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              {/* Status removido: cálculo é 100% automático via calculateAutoStatus
+                  com base em progresso vs ritmo do ciclo. Ver useOkrStatus.ts. */}
 
               {/* Seção de Métricas Vinculadas - apenas em edição */}
               {isEditing && kr && (
