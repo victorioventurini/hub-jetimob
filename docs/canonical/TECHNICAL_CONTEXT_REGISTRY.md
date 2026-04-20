@@ -649,7 +649,7 @@ Objetivos de cada time, vinculados a objetivos org.
 | status | enum | `draft`, `active`, `completed`, `cancelled`, `discarded` |
 | bu_id | uuid | FK para bu_units |
 
-**Limite:** Máximo 3 objetivos ativos por time (validado via trigger)
+**Limite:** Máximo 4 objetivos ativos por time (validado via trigger)
 
 **Escopo:** Por BU (via team)
 
@@ -681,7 +681,7 @@ Key Results dos times.
 | status | enum | RAG status |
 | evidence_url | text | URL de evidência |
 
-**Limite:** Máximo 3 KRs por objetivo (validado via trigger)
+**Limite:** Máximo 4 KRs por objetivo (validado via trigger)
 
 **Escopo:** Por BU (via team)
 
@@ -1953,8 +1953,8 @@ UNIQUE (bu_id, internal_code) WHERE deleted_at IS NULL
 
 ### 4.3 Limites de OKRs
 
-- **Máximo 3 objetivos ativos** por time
-- **Máximo 3 KRs** por objetivo
+- **Máximo 4 objetivos ativos** por time
+- **Máximo 4 KRs** por objetivo
 - Validado via triggers no banco
 
 ### 4.4 Cálculo de Progresso de KR

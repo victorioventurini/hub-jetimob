@@ -209,7 +209,7 @@ O vínculo entre KPIs e Key Results é o elo entre o sistema nervoso (KPIs) e o 
 
 O módulo OKRs é o motor que traduz ambição em execução medida. A arquitetura implementa uma hierarquia de dois níveis com limites rígidos que forçam foco:
 
-> **Máximo 3 objetivos por time. Máximo 3 KRs por objetivo.**
+> **Máximo 4 objetivos por time. Máximo 4 KRs por objetivo.**
 
 Isso não é um soft limit do UI — é enforced por validação. A filosofia: poucos OKRs bem executados > muitos OKRs abandonados.
 
