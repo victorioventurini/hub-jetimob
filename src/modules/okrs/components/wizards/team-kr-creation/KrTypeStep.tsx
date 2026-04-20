@@ -212,7 +212,7 @@ export function KrTypeStep({
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => handleIncrement(krType.type)}
-                          disabled={totalKrs >= 5}
+                          disabled={totalKrs >= OKR_LIMITS.MAX_KRS_PER_OBJECTIVE}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -242,18 +242,17 @@ export function KrTypeStep({
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total de KRs planejados</span>
               <Badge 
-                variant={totalKrs >= 1 && totalKrs <= 3 ? "default" : "outline"}
+                variant={totalKrs >= 1 && totalKrs <= OKR_LIMITS.MAX_KRS_PER_OBJECTIVE ? "default" : "outline"}
                 className={cn(
-                  totalKrs > 3 && totalKrs <= 5 && "bg-status-yellow-muted text-status-yellow border-status-yellow/30",
-                  totalKrs > 5 && "bg-status-red-muted text-status-red border-status-red/30"
+                  totalKrs > OKR_LIMITS.MAX_KRS_PER_OBJECTIVE && "bg-status-red-muted text-status-red border-status-red/30"
                 )}
               >
-                {totalKrs} / 5 máximo
+                {totalKrs} / {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} máximo
               </Badge>
             </div>
-            {totalKrs > 3 && (
+            {totalKrs === OKR_LIMITS.MAX_KRS_PER_OBJECTIVE && (
               <p className="text-xs text-muted-foreground mt-2">
-                Times com até 4 KRs têm maior foco. Considere priorizar.
+                Você atingiu o limite de {OKR_LIMITS.MAX_KRS_PER_OBJECTIVE} KRs por objetivo. Foco é tudo.
               </p>
             )}
             {!hasFoundational && (

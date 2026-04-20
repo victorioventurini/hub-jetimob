@@ -194,8 +194,8 @@ export function useTeamObjectiveForm({
     },
     onError: (error: Error) => {
       console.error('Error creating objective:', error);
-      if (error.message.includes('more than 3')) {
-        toast.error('Este time já possui 3 objetivos ativos. Remova ou conclua um antes de criar outro.');
+      if (error.message.includes('more than')) {
+        toast.error('Este time já atingiu o limite de 4 objetivos ativos. Remova ou conclua um antes de criar outro.');
       } else {
         toast.error('Erro ao criar objetivo. Tente novamente.');
       }
