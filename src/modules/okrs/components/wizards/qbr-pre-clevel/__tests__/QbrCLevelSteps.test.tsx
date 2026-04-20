@@ -59,6 +59,13 @@ vi.mock('@/integrations/supabase/useBuScopedSupabase', () => ({
   }),
 }));
 
+// QbrCLevelSystemReadStep usa useWizardAI para gerar sumários
+vi.mock('@/modules/okrs/hooks', () => ({
+  useWizardAI: () => ({
+    invokeVic: vi.fn(() => Promise.resolve({ response: '' })),
+  }),
+}));
+
 // ============================================================
 // FACTORIES
 // ============================================================
