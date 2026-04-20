@@ -482,7 +482,7 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
             <div className="flex-1">
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-muted-foreground">
-                  {formatValue(effectiveCurrent, kr.unit)} / {formatValue(effectiveTarget, kr.unit)}
+                  {formatValue(effectiveCurrent, effectiveUnit)} / {formatValue(effectiveTarget, effectiveUnit)}
                 </span>
                 <span className={cn('font-medium', getStatusColor(), progress > 100 && 'text-status-green')}>
                   {progress.toFixed(0)}%
