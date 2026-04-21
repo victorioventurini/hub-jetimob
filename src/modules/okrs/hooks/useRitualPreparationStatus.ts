@@ -42,7 +42,8 @@ export type SupportedRitualType =
   | 'mbr'
   | 'qbr-pre'
   | 'qbr-meeting'
-  | 'qbr-post';
+  | 'qbr-post'
+  | 'weekly';
 
 export interface UseRitualPreparationStatusArgs {
   ritualType: SupportedRitualType;
