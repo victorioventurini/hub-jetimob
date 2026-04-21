@@ -17,6 +17,7 @@ import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { useDebouncedCallback } from '@/hooks/useDebounce';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
+import { getCurrentStructureVersion } from '@/modules/okrs/components/wizards/shared/framework/config/structureVersions';
 
 // ============================================================
 // TYPES
@@ -456,6 +457,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
             cycle_id: draftToSave.cycleId,
             started_by: profile.id,
             reflection_data: reflectionData,
+            structure_version: getCurrentStructureVersion(wizardType),
           }])
           .select('id')
           .single();
@@ -608,6 +610,7 @@ export function useGenericWizardDraft<TStep extends string, TData>({
             status: 'completed' as const,
             completed_at: completionDateIso,
             reflection_data: reflectionData,
+            structure_version: getCurrentStructureVersion(wizardType),
           }])
           .select('id')
           .single();

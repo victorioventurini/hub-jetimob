@@ -18,6 +18,7 @@ import type {
   KrAction,
 } from '../types/wizard';
 import type { Json } from '@/integrations/supabase/types';
+import { getCurrentStructureVersion } from '@/modules/okrs/components/wizards/shared/framework/config/structureVersions';
 
 // ============================================================
 // TYPES
@@ -152,6 +153,7 @@ export function useWizardSession() {
           team_id: params.teamId || null,
           cycle_id: params.cycleId || null,
           started_by: realProfileId, // Sempre o usuário real para escrita
+          structure_version: getCurrentStructureVersion(params.wizardType),
         })
         .select(SESSION_FIELDS)
         .single();
