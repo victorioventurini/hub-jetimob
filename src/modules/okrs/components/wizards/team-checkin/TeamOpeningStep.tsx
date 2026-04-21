@@ -119,6 +119,7 @@ export function TeamOpeningStep({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {topSlot}
         {/* Marked for discussion */}
         {discussionKrs.length > 0 && (
           <div className="space-y-3">
