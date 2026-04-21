@@ -42,6 +42,41 @@ export interface KrsItem {
   ownerName?: string | null;
   attentionReason?: string;
   reviewed?: boolean;
+  /**
+   * Ação do líder marcada para a pauta (apenas em mode='leader-actions').
+   * `discuss_group` = discutir em grupo. `followup_1on1` = follow-up 1:1.
+   */
+  leaderAction?: 'discuss_group' | 'followup_1on1' | null;
+  /** Dias desde o último check-in (para badges de pendência). */
+  daysSinceCheckin?: number;
+  /** Marca o KR como em risco para destaque visual. */
+  isAtRisk?: boolean;
+  /** Marca o KR como pendente (sem check-in recente). */
+  isPending?: boolean;
+}
+
+/**
+ * Item de insight gerado pelo sistema/IA — consumido por LeaderInsightsStep.
+ * Tipos refletem os HIGHLIGHT_CARD_STYLES centralizados.
+ */
+export interface LeaderInsightItem {
+  id: string;
+  type: 'stagnant' | 'blocked' | 'initiative_impact' | 'help_requested' | 'overdue';
+  title: string;
+  description?: string;
+  priority: 'high' | 'medium' | 'low';
+  source: 'system' | 'ai';
+  relatedKrId?: string;
+  /** Quando true e source='ai', permite descartar via botão. */
+  dismissable?: boolean;
+}
+
+/**
+ * Container do LeaderInsightsStep: insights + lista de IDs descartados.
+ */
+export interface LeaderInsightsData {
+  insights: LeaderInsightItem[];
+  dismissedIds: string[];
 }
 
 export interface ProjectItem {

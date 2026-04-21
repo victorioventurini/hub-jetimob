@@ -21,6 +21,10 @@ export interface EvaluatorContext {
   carryOverDecisions?: TeamCheckinDecision[];
   /** Quaisquer decisões registradas no rito */
   decisions?: TeamCheckinDecision[];
+  /** Quantidade de KRs com leaderAction marcada (modo leader-actions) */
+  leaderActionCount?: number;
+  /** Total de KRs visíveis no step de leader-actions */
+  totalKrsForLeaderActions?: number;
 }
 
 export interface EvaluationResult {
@@ -72,6 +76,13 @@ export function evaluateRule(
       return anyNew || allResolved
         ? { passed: true }
         : { passed: false, errorMessage };
+    }
+
+    case 'atLeastOneLeaderAction': {
+      // Se não há KRs visíveis, não há gate (passa direto).
+      if ((ctx.totalKrsForLeaderActions ?? 0) === 0) return { passed: true };
+      const count = ctx.leaderActionCount ?? 0;
+      return count > 0 ? { passed: true } : { passed: false, errorMessage };
     }
 
     case 'hasAnyDecisionOrSkip':
