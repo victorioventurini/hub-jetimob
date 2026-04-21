@@ -75,7 +75,7 @@ describe('getCurrentStructureVersion', () => {
   it('retorna a versão configurada para uma persona conhecida', () => {
     expect(getCurrentStructureVersion('collaborator')).toBe('v2');
     expect(getCurrentStructureVersion('mbr-pre')).toBe('v3');
-    expect(getCurrentStructureVersion('mbr')).toBe('v1');
+    expect(getCurrentStructureVersion('mbr')).toBe('v4');
   });
 
   it('faz fallback defensivo para v1 quando persona é desconhecida', () => {
