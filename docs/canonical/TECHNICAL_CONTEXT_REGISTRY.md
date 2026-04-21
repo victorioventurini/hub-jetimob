@@ -2345,6 +2345,48 @@ const { profileId, isLoading } = useMyProfileId();
 
 ---
 
+### 4.12 Governança de Agentes de IA
+
+**Documento canônico:** [`AI_AGENTS_PHILOSOPHY.md`](./AI_AGENTS_PHILOSOPHY.md) (v1.0.0)
+
+Toda criação, reutilização ou modificação de agentes em `ai_agents` segue o canônico. Princípio central:
+
+> **Reutilizar quando óbvio. Criar agente genérico quando necessário. Evitar agente específico por caso de uso.**
+
+#### Matriz de decisão (consulta rápida)
+
+| Situação | Decisão |
+|----------|---------|
+| Função idêntica a agente existente | Reutilizar sem ajuste |
+| Função coberta, mas com contexto novo | Reutilizar + adicionar `ai_agent_instruction_sources` |
+| Função nova e reaproveitável em múltiplos ritos | Criar agente **genérico por função cognitiva** |
+| Função nova mas ainda não validada | Criar agente experimental com critério de consolidação |
+| Diferença apenas de formato ou estrutura de saída | **Não criar** — parametrizar `output_format`/`output_schema` na invocação |
+
+#### Antipadrões proibidos
+
+1. Agente por **cadência** (`-weekly`, `-monthly`)
+2. Agente por **rito específico** (`-mbr`, `-qbr`)
+3. Agente por **persona** (`-leader`, `-collaborator`)
+4. Agente **duplicando** função coberta
+5. Agente por **formato de saída** (`-json`, `-text`)
+6. Inchaço do `system_prompt` com contexto que pertence a `instruction_sources`
+
+#### Camadas de prompt
+
+- **`system_prompt`** → identidade permanente do agente (alteração = alto risco)
+- **`ai_agent_instruction_sources`** → adaptações contextuais por caso/BU/persona (baixo risco, reversível)
+
+#### Catálogo ativo (12 agentes, sincronizado em 2026-04-21)
+
+`cultura`, `coach-okrs`, `validador-metodologico-okrs`, `analista-kpis`, `analista-estrategico`, `facilitador-decisoes`, `alinhamento-estrategico`, `revisor-comunicacao`, `onboarding-buddy`, `coach-produtividade`, `vic-persona`, `vic-greeting`. Todos `scope=global`, `integration_key=chatgpt`. Detalhes e distinções em [`AI_AGENTS_PHILOSOPHY.md`](./AI_AGENTS_PHILOSOPHY.md).
+
+#### Entregáveis obrigatórios em PRs
+
+PRs que criam/modificam agentes devem apresentar os **9 entregáveis** listados em `AI_AGENTS_PHILOSOPHY.md` §"Entregáveis obrigatórios" (função cognitiva, análise do catálogo, justificativa, posição na matriz, casos de uso, assinatura única, `system_prompt` inicial, estratégia de prompts, previsão de refinamento).
+
+---
+
 ## 5. Eventos e Integrações
 
 ### 5.1 Eventos Emitidos (Outbound)
