@@ -129,12 +129,47 @@ export function WeeklyExecutiveOpeningStep({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Modo manual</CardTitle>
               <CardDescription>
-                IA desativada ou rascunho ainda não gerado. Edite as seções
-                abaixo para conduzir a abertura. Quando o curador estiver ativo,
-                um botão "Gerar rascunho" aparecerá aqui.
+                Edite as seções abaixo manualmente, ou peça ao curador para
+                gerar um rascunho a partir dos Pré-Weekly da semana.
               </CardDescription>
             </CardHeader>
+            {onGenerateDraft && (
+              <CardContent>
+                <Button
+                  onClick={() => void onGenerateDraft()}
+                  disabled={isGenerating}
+                  size="sm"
+                  className="gap-2"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-4 w-4" />
+                  )}
+                  {isGenerating ? 'Gerando rascunho…' : 'Gerar rascunho com IA'}
+                </Button>
+              </CardContent>
+            )}
           </Card>
+        )}
+
+        {opening.origin === 'ai-curated' && onGenerateDraft && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onGenerateDraft()}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4" />
+              )}
+              Regenerar rascunho
+            </Button>
+          </div>
         )}
 
         <Card>
