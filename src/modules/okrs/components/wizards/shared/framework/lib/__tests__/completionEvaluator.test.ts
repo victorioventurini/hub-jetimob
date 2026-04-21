@@ -15,12 +15,12 @@ const ERR = 'gate bloqueado';
 function decision(id: string, extra: Partial<TeamCheckinDecision> = {}): TeamCheckinDecision {
   return {
     id,
-    title: `dec-${id}`,
+    text: `dec-${id}`,
     category: 'decision',
     createdAt: new Date().toISOString(),
     createdBy: 'tester',
     ...extra,
-  } as TeamCheckinDecision;
+  } as unknown as TeamCheckinDecision;
 }
 
 describe('evaluateRule', () => {
