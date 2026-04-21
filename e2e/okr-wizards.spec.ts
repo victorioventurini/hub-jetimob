@@ -30,10 +30,10 @@ test.describe('OKR Wizard Routes', () => {
 
 test.describe('QBR Wizard Routes', () => {
   const qbrRoutes = [
-    { path: '/okrs/qbr-pre', label: 'QBR Pre' },
-    { path: '/okrs/qbr-pre-clevel', label: 'QBR Pre C-Level' },
-    { path: '/okrs/qbr', label: 'QBR Meeting' },
-    { path: '/okrs/qbr-post', label: 'QBR Post' },
+    { path: '/okrs/qbr-pre', label: 'Pré-QBR' },
+    { path: '/okrs/qbr-pre-clevel', label: 'Pré-QBR Executivo' },
+    { path: '/okrs/qbr', label: 'QBR' },
+    { path: '/okrs/qbr-post', label: 'Pós-QBR' },
   ];
 
   for (const route of qbrRoutes) {

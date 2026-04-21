@@ -86,7 +86,7 @@ export function CollaboratorSummary({
     const blockersResults = results.filter(r => r.blocker);
 
     const summary = `
-# Check-in Semanal — ${new Date().toLocaleDateString('pt-BR')}
+# Check-in Individual — ${new Date().toLocaleDateString('pt-BR')}
 ${cycleName ? `**Ciclo:** ${cycleName}` : ''}
 
 ## Resumo

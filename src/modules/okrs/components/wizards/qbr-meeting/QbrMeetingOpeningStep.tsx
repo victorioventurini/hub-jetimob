@@ -444,7 +444,7 @@ export function QbrMeetingOpeningStep({
             <CardContent className="p-4 text-center">
               <Megaphone className="h-5 w-5 text-muted-foreground/50 mx-auto mb-1" />
               <p className="text-sm text-muted-foreground">
-                O Pré-QBR C-Level não foi submetido. A pauta obrigatória não está disponível.
+                O Pré-QBR Executivo não foi submetido. A pauta obrigatória não está disponível.
               </p>
             </CardContent>
           </Card>

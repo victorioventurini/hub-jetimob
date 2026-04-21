@@ -74,7 +74,7 @@ export function QbrPostDecisionsStep({
           <div className="space-y-3">
             <div className="flex items-center gap-2 pb-1 border-b border-dashed">
               <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Decisões da Reunião QBR</span>
+              <span className="text-sm font-medium">Decisões do QBR</span>
               <Badge variant="outline" className="text-[10px] ml-auto">imutáveis</Badge>
             </div>
             <div className="space-y-2">

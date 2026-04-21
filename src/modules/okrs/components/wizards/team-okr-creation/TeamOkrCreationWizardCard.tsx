@@ -76,7 +76,7 @@ export function TeamOkrCreationWizardCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold text-base">
-                  Criar OKRs do Time
+                  Criação de OKRs do Time
                 </h3>
                 {cycleStartingSoon && (
                   <Badge className="text-xs bg-primary/10 text-primary border-primary/30">

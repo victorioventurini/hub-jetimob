@@ -108,7 +108,7 @@ type QbrStatus = (typeof QBR_STATES)[number]['value'];
 const QBR_WIZARD_FLOW = [
   {
     step: 1,
-    label: 'QBR Pre',
+    label: 'Pré-QBR',
     description: 'Líderes de time fazem balanço do ciclo',
     route: '/okrs/qbr-pre',
     actor: 'Líder de Time',
@@ -116,7 +116,7 @@ const QBR_WIZARD_FLOW = [
   },
   {
     step: 2,
-    label: 'QBR Pre C-Level',
+    label: 'Pré-QBR Executivo',
     description: 'C-Level consolida e define diretrizes',
     route: '/okrs/qbr-pre-clevel',
     actor: 'Admin / C-Level',
@@ -124,7 +124,7 @@ const QBR_WIZARD_FLOW = [
   },
   {
     step: 3,
-    label: 'QBR Meeting',
+    label: 'QBR',
     description: 'Reunião trimestral de revisão',
     route: '/okrs/qbr',
     actor: 'Admin / C-Level',
@@ -132,7 +132,7 @@ const QBR_WIZARD_FLOW = [
   },
   {
     step: 4,
-    label: 'QBR Post',
+    label: 'Pós-QBR',
     description: 'Promoção de OKRs e encerramento',
     route: '/okrs/qbr-post',
     actor: 'Admin / C-Level',

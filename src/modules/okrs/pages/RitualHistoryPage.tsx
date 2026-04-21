@@ -79,12 +79,12 @@ const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
   { value: 'mbr', label: 'MBR' },
   { value: 'mbr-pre', label: 'Pré-MBR' },
   { value: 'team-checkin', label: 'Check-in do Time' },
-  { value: 'collaborator', label: 'Check-in Colaborador' },
-  { value: 'leader-prep', label: 'Preparação do Líder' },
-  { value: 'clevel-checkin', label: 'Check-in C-Level' },
-  { value: 'qbr-pre', label: 'Pré-QBR (Líder)' },
-  { value: 'qbr-pre-clevel', label: 'Pré-QBR (C-Level)' },
-  { value: 'qbr-meeting', label: 'Reunião QBR' },
+  { value: 'collaborator', label: 'Check-in Individual' },
+  { value: 'leader-prep', label: 'Pré-Check-in do Time' },
+  { value: 'clevel-checkin', label: 'Check-in Executivo' },
+  { value: 'qbr-pre', label: 'Pré-QBR' },
+  { value: 'qbr-pre-clevel', label: 'Pré-QBR Executivo' },
+  { value: 'qbr-meeting', label: 'QBR' },
   { value: 'qbr-post', label: 'Pós-QBR' },
 ];
 

@@ -109,7 +109,7 @@ export function QbrCLevelDirectivesStep({
     >
       <div className="p-6 space-y-6">
         <p className="text-sm text-muted-foreground">
-          Cada item aqui vira pauta obrigatória na Reunião QBR. A sala não avança sem endereçar o que você registrar.
+          Cada item aqui vira pauta obrigatória no QBR. A sala não avança sem endereçar o que você registrar.
         </p>
 
         {/* Add new directive */}
