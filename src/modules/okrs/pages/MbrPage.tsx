@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import {
   useGenericWizardDraft,
@@ -660,6 +661,12 @@ export default function MbrPage() {
             scorecardMetrics={scorecardMetrics}
             orgObjectives={orgObjView ?? []}
             currentStepIndex={0}
+            topSlot={
+              <RitualPreparationStatus
+                ritualType="mbr"
+                cycleId={quarterlyCycle?.id ?? null}
+              />
+            }
           />
         );
 

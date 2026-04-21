@@ -20,6 +20,7 @@ import {
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
+import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
 import {
   useGenericWizardDraft,
   useActiveCycle,
@@ -429,6 +430,13 @@ export default function MbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             teamId={teamIdParam || undefined}
+            topSlot={
+              <RitualPreparationStatus
+                ritualType="mbr-pre"
+                teamId={teamIdParam}
+                cycleId={activeCycle?.id ?? null}
+              />
+            }
           />
         );
 

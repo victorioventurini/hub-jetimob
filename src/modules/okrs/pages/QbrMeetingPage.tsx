@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
+import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
 import {
   useGenericWizardDraft,
   useActiveCycle,
@@ -480,6 +481,12 @@ export default function QbrMeetingPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
+            topSlot={
+              <RitualPreparationStatus
+                ritualType="qbr-meeting"
+                cycleId={quarterlyCycle?.id ?? null}
+              />
+            }
           />
         );
 
