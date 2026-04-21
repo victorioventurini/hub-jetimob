@@ -151,6 +151,7 @@ export type CompletionRuleId =
   | 'allActiveTeamsAnalyzed'
   | 'allAtRiskKpisAddressed'
   | 'carryOverHandledIfPresent'
+  | 'atLeastOneLeaderAction'
   | 'hasAnyDecisionOrSkip';
 
 export interface StepCompletionRule {
