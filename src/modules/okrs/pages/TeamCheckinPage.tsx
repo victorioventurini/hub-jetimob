@@ -29,6 +29,7 @@ import { TeamOpeningStep } from '@/modules/okrs/components/wizards/team-checkin/
 import { TeamKrReviewStep } from '@/modules/okrs/components/wizards/team-checkin/TeamKrReviewStep';
 import { TeamInitiativesStep } from '@/modules/okrs/components/wizards/team-checkin/TeamInitiativesStep';
 import { TeamDecisionsStep } from '@/modules/okrs/components/wizards/team-checkin/TeamDecisionsStep';
+import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
 
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
@@ -239,6 +240,13 @@ export default function TeamCheckinPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onContinue={goNext}
+            topSlot={
+              <RitualPreparationStatus
+                ritualType="team-checkin"
+                teamId={teamIdParam}
+                cycleId={quarterlyCycle?.id ?? null}
+              />
+            }
           />
         );
         
