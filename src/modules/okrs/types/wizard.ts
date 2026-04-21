@@ -31,7 +31,10 @@ export type WizardPersona =
   | 'qbr-pre'
   | 'qbr-pre-clevel'
   | 'qbr-meeting'
-  | 'qbr-post';
+  | 'qbr-post'
+  // Onda 4 — Ritos semanais (Pré-Weekly v2 / Weekly v2)
+  | 'pre-weekly'
+  | 'weekly';
 
 // ============================================================
 // STEP CONFIG
