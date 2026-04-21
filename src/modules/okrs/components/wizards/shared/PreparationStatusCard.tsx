@@ -338,8 +338,48 @@ export function PreparationStatusCard({
   onFillNow,
   className,
 }: PreparationStatusCardProps) {
+  // Hooks SEMPRE no topo (antes de qualquer early return)
+  const coverage = useMemo(() => computeCoverage(participants), [participants]);
+  const isAntessala = mode === 'antessala';
+  const grouped = useMemo(() => {
+    if (isAntessala) return null;
+    return {
+      completed: participants.filter(p => p.status === 'completed'),
+      pending: participants.filter(p =>
+        p.status === 'pending-in-window' || p.status === 'pending-late'
+      ),
+      notApplicable: participants.filter(p => p.status === 'not-applicable'),
+    };
+  }, [isAntessala, participants]);
+
   // ── source-ritual variant ──
   if (mode === 'source-ritual' && sourceRitual) {
+    return (
+      <Card className={cn('p-4 space-y-3', className)}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            {title && <h3 className="text-sm font-semibold text-foreground">{title}</h3>}
+            <p className="text-xs text-muted-foreground mt-0.5">Fonte: {sourceRitual.label}</p>
+          </div>
+          {sourceRitual.onOpenSnapshot && (
+            <Button variant="ghost" size="sm" onClick={sourceRitual.onOpenSnapshot}>
+              <FileText className="h-3.5 w-3.5 mr-1.5" />
+              Ver snapshot
+            </Button>
+          )}
+        </div>
+        <Separator />
+        <ul className="space-y-1.5">
+          {sourceRitual.highlights.map((h, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+              {h.icon ?? <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden />}
+              <span>{h.label}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    );
+  }
     return (
       <Card className={cn('p-4 space-y-3', className)}>
         <div className="flex items-start justify-between gap-2">
@@ -445,21 +485,6 @@ export function PreparationStatusCard({
   }
 
   // ── list / antessala mode ──
-  const coverage = useMemo(() => computeCoverage(participants), [participants]);
-  const isAntessala = mode === 'antessala';
-
-  // Agrupamento por estado para modo lista
-  const grouped = useMemo(() => {
-    if (isAntessala) return null;
-    return {
-      completed: participants.filter(p => p.status === 'completed'),
-      pending: participants.filter(p =>
-        p.status === 'pending-in-window' || p.status === 'pending-late'
-      ),
-      notApplicable: participants.filter(p => p.status === 'not-applicable'),
-    };
-  }, [isAntessala, participants]);
-
   const isCritical = coverage.rate < criticalThreshold && coverage.total > 0;
   const isWarning = !isCritical && coverage.rate < warningThreshold && coverage.total > 0;
 
