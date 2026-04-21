@@ -6712,6 +6712,7 @@ export type Database = {
           started_at: string
           started_by: string
           status: Database["public"]["Enums"]["wizard_session_status"] | null
+          structure_version: string
           summary_sent_at: string | null
           team_id: string | null
           updated_at: string
@@ -6732,6 +6733,7 @@ export type Database = {
           started_at?: string
           started_by: string
           status?: Database["public"]["Enums"]["wizard_session_status"] | null
+          structure_version?: string
           summary_sent_at?: string | null
           team_id?: string | null
           updated_at?: string
@@ -6752,6 +6754,7 @@ export type Database = {
           started_at?: string
           started_by?: string
           status?: Database["public"]["Enums"]["wizard_session_status"] | null
+          structure_version?: string
           summary_sent_at?: string | null
           team_id?: string | null
           updated_at?: string
