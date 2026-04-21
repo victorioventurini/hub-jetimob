@@ -147,7 +147,7 @@ export const DecisionsStep = memo(function DecisionsStep({
               Carry-over do rito anterior <Badge variant="outline" className="ml-1 text-xs">{data.carryOverDecisions.length}</Badge>
             </h3>
             {data.carryOverDecisions.map((d) => (
-              <DecisionCard key={d.id} decision={d} onUpdate={() => {}} onRemove={() => {}} />
+              <DecisionCard key={d.id} decision={d} onUpdate={noopUpdate} onRemove={noopRemove} />
             ))}
           </section>
         )}
