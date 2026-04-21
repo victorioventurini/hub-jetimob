@@ -29,6 +29,8 @@ export const RITUAL_LABELS: Record<WizardPersona, string> = {
   'clevel-checkin': 'Check-in Executivo',
   'team-okr-creation': 'Criação de OKRs do Time',
   'team-kr-creation': 'Criação de KRs do Time',
+  'pre-weekly': 'Pré-Weekly',
+  'weekly': 'Weekly',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
   'qbr-pre': 'Pré-QBR',

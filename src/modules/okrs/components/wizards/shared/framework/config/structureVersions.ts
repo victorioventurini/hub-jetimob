@@ -41,6 +41,13 @@ export const STRUCTURE_VERSION_BY_WIZARD_TYPE: Record<WizardPersona, StructureVe
   'qbr-meeting': 'v4',
   'qbr-post': 'v4',
 
+  // Onda 4 — ATIVA (semanais)
+  // Pré-Weekly nasce como rito enxuto de DESTILAÇÃO executiva (4 steps, 5 min).
+  // Weekly consome a curadoria do agente `curador-orquestrador` na Abertura Executiva.
+  // Ambos estreiam em v2 (sem v1 legado, pois são ritos novos).
+  'pre-weekly': 'v2',
+  'weekly': 'v2',
+
   // Não impactados pela padronização (mantêm v1)
   'clevel-checkin': 'v1',
   'team-okr-creation': 'v1',

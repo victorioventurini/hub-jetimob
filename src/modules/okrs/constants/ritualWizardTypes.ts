@@ -11,6 +11,9 @@ export const ALL_RITUAL_WIZARD_TYPES: WizardPersona[] = [
   'clevel-checkin',
   'team-okr-creation',
   'team-kr-creation',
+  // Onda 4 — semanais
+  'pre-weekly',
+  'weekly',
   'mbr',
   'mbr-pre',
   // 'mbr-first' e 'mbr-pre-first' unificados em 'mbr'/'mbr-pre' via janela composta.
