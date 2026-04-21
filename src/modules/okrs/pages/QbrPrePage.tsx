@@ -652,7 +652,7 @@ export default function QbrPrePage() {
 
   return (
     <FullPageWizardShell
-      title="Pré-QBR do Time"
+      title="Pré-QBR"
       subtitle="Balanço, análise e proposta de OKRs para o próximo ciclo"
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}

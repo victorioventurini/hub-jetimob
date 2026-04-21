@@ -89,7 +89,7 @@ export default function QbrPreCLevelPage() {
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
 
-  usePageTitle('Pré-QBR C-Level');
+  usePageTitle('Pré-QBR Executivo');
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
@@ -313,7 +313,7 @@ export default function QbrPreCLevelPage() {
   const handleComplete = useCallback(async () => {
     try {
       await clearDraft();
-      toast.success('Pré-QBR C-Level concluído!');
+      toast.success('Pré-QBR Executivo concluído!');
       navigate('/okrs');
     } catch (error) {
       handleError(error, { context: 'QBR Pre C-Level Complete' });
@@ -424,7 +424,7 @@ export default function QbrPreCLevelPage() {
 
   return (
     <FullPageWizardShell
-      title="Pré-QBR C-Level"
+      title="Pré-QBR Executivo"
       subtitle="Análise estratégica do quarter — sua visão antes da reunião. Registre sua análise agora. Na reunião, a sala decide com base no que você preparou aqui."
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}

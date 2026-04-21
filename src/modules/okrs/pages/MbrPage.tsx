@@ -117,7 +117,7 @@ export default function MbrPage() {
   const { currentBu } = useBu();
   const buSupabase = useBuScopedSupabase();
 
-  usePageTitle('Monthly Business Review');
+  usePageTitle('MBR');
 
   // Cycle (status-based)
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
@@ -760,7 +760,7 @@ export default function MbrPage() {
 
   return (
     <FullPageWizardShell
-      title="Monthly Business Review"
+      title="MBR"
       subtitle="Rito decisório mensal — saúde estratégica do negócio"
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
