@@ -149,10 +149,10 @@ export function useRitualPreparationStatus(
         if (prepSession?.started_by) {
           const { data: profile } = await buSupabase
             .from('profiles')
-            .select('full_name')
+            .select('display_name')
             .eq('id', prepSession.started_by)
             .maybeSingle();
-          if (profile?.full_name) leaderName = profile.full_name;
+          if (profile?.display_name) leaderName = profile.display_name;
         }
 
         const completed = !!prepSession?.completed_at;
@@ -196,10 +196,10 @@ export function useRitualPreparationStatus(
         if (latestTC?.started_by) {
           const { data: profile } = await buSupabase
             .from('profiles')
-            .select('full_name')
+            .select('display_name')
             .eq('id', latestTC.started_by)
             .maybeSingle();
-          if (profile?.full_name) leaderName = profile.full_name;
+          if (profile?.display_name) leaderName = profile.display_name;
         }
 
         const completed = !!latestTC?.completed_at;
@@ -273,7 +273,7 @@ export function useRitualPreparationStatus(
             .select('id, full_name')
             .in('id', profileIds);
           for (const p of profiles ?? []) {
-            if (p.full_name) namesById.set(p.id, p.full_name);
+            if (p.display_name) namesById.set(p.id, p.display_name);
           }
         }
 
@@ -319,10 +319,10 @@ export function useRitualPreparationStatus(
         if (latestTC?.started_by) {
           const { data: profile } = await buSupabase
             .from('profiles')
-            .select('full_name')
+            .select('display_name')
             .eq('id', latestTC.started_by)
             .maybeSingle();
-          if (profile?.full_name) leaderName = profile.full_name;
+          if (profile?.display_name) leaderName = profile.display_name;
         }
 
         const completed = !!latestTC?.completed_at;
@@ -402,7 +402,7 @@ export function useRitualPreparationStatus(
             .select('id, full_name')
             .in('id', profileIds);
           for (const p of profiles ?? []) {
-            if (p.full_name) namesById.set(p.id, p.full_name);
+            if (p.display_name) namesById.set(p.id, p.display_name);
           }
         }
 
