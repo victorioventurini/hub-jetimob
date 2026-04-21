@@ -30,8 +30,7 @@ const ALL_WIZARD_TYPES = [
   'team-kr-creation',
   'mbr',
   'mbr-pre',
-  'mbr-first',
-  'mbr-pre-first',
+  // 'mbr-first' / 'mbr-pre-first' unificados em 'mbr'/'mbr-pre' com cadência mensal (1ª terça).
   'qbr-pre',
   'qbr-pre-clevel',
   'qbr-meeting',
@@ -156,7 +155,7 @@ Deno.serve(async (req) => {
         month_week_ordinal: 1,
         day_of_week: 2,
         day_of_month: null,
-        start_date: firstQuarterStart,
+        start_date: firstReviewMonth1,
         cycle_derived: true,
       },
       {
@@ -165,27 +164,12 @@ Deno.serve(async (req) => {
         month_week_ordinal: 1,
         day_of_week: 2,
         day_of_month: null,
-        start_date: firstQuarterStart,
-        cycle_derived: true,
-      },
-      {
-        wizard_type: 'mbr-first',
-        frequency: 'quarterly',
-        month_week_ordinal: null,
-        day_of_week: null,
-        day_of_month: mbrFirstDay,
         start_date: firstReviewMonth1,
         cycle_derived: true,
       },
-      {
-        wizard_type: 'mbr-pre-first',
-        frequency: 'quarterly',
-        month_week_ordinal: null,
-        day_of_week: null,
-        day_of_month: mbrPreFirstDay,
-        start_date: firstReviewMonth1,
-        cycle_derived: true,
-      },
+      // 'mbr-first' e 'mbr-pre-first' removidos — cadência unificada em 'mbr'/'mbr-pre'
+      // (monthly, 1ª terça-feira). M1 e M2 do quarter recebem uma ocorrência cada;
+      // M3 é bloqueado pela regra QBR (today >= planning_date) no frontend.
       {
         wizard_type: 'qbr-pre',
         frequency: 'quarterly',

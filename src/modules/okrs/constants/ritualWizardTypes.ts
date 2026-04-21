@@ -13,8 +13,7 @@ export const ALL_RITUAL_WIZARD_TYPES: WizardPersona[] = [
   'team-kr-creation',
   'mbr',
   'mbr-pre',
-  'mbr-first',
-  'mbr-pre-first',
+  // 'mbr-first' e 'mbr-pre-first' unificados em 'mbr'/'mbr-pre' via janela composta.
   'qbr-pre',
   'qbr-pre-clevel',
   'qbr-meeting',

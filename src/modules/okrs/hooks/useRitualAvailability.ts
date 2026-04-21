@@ -38,8 +38,6 @@ const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
   'leader-prep': 'Preparação do Check-in',
   'team-checkin': 'Check-in do Time',
   'clevel-checkin': 'Check-in Estratégico',
-  'mbr-pre-first': 'Pré-MBR (1º mês)',
-  'mbr-first': 'MBR (1º mês)',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
   'qbr-pre': 'Pré-QBR',
@@ -76,6 +74,59 @@ interface WindowDef {
   getWindow: (cycle: CycleWithStatus) => { opens: Date | null; closes: Date | null };
 }
 
+/** Build a business-day window [offsetOpen..offsetClose] relative to a reference ISO date. */
+function buildWindow(
+  referenceDateStr: string | null | undefined,
+  offsetOpen: number,
+  offsetClose: number,
+): { opens: Date | null; closes: Date | null } {
+  const ref = parseDate(referenceDateStr);
+  if (!ref) return { opens: null, closes: null };
+  return {
+    opens: offsetOpen === 0 ? ref : addBusinessDaysToDate(ref, offsetOpen),
+    closes: addBusinessDaysToDate(ref, offsetClose),
+  };
+}
+
+/**
+ * Composite window picker: given 1..N windows (e.g. MBR₁ and MBR₂), return:
+ *   1) the active window if `today` is inside it,
+ *   2) otherwise the nearest future window (so RitualUnavailableScreen shows correct opening date),
+ *   3) otherwise the latest past window (for expired messaging).
+ * Null windows are ignored. Returns {null,null} if all are null.
+ */
+function pickCompositeWindow(
+  ...windows: Array<{ opens: Date | null; closes: Date | null }>
+): { opens: Date | null; closes: Date | null } {
+  const valid = windows.filter(w => w.opens && w.closes) as Array<{ opens: Date; closes: Date }>;
+  if (valid.length === 0) return { opens: null, closes: null };
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // 1) Active window (today within [opens..closesEndOfDay])
+  const active = valid.find(w => {
+    const closesEOD = new Date(w.closes.getFullYear(), w.closes.getMonth(), w.closes.getDate(), 23, 59, 59);
+    return today >= w.opens && now <= closesEOD;
+  });
+  if (active) return active;
+
+  // 2) Nearest future window
+  const future = valid
+    .filter(w => today < w.opens)
+    .sort((a, b) => a.opens.getTime() - b.opens.getTime())[0];
+  if (future) return future;
+
+  // 3) Latest past window
+  const past = valid
+    .filter(w => {
+      const closesEOD = new Date(w.closes.getFullYear(), w.closes.getMonth(), w.closes.getDate(), 23, 59, 59);
+      return now > closesEOD;
+    })
+    .sort((a, b) => b.closes.getTime() - a.closes.getTime())[0];
+  return past ?? valid[0];
+}
+
 const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
   // Check-ins: available throughout the cycle
   'collaborator': {
@@ -103,48 +154,19 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
     }),
   },
 
-  // MBR₁ (1st month review)
-  'mbr-pre-first': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date_first_month);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: addBusinessDaysToDate(review, -5),
-        closes: addBusinessDaysToDate(review, -1),
-      };
-    },
-  },
-  'mbr-first': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date_first_month);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: review,
-        closes: addBusinessDaysToDate(review, 2),
-      };
-    },
-  },
-
-  // MBR₂ (2nd month review)
+  // MBR / Pré-MBR — janela composta (MBR₁ sobre review_date_first_month + MBR₂ sobre review_date).
+  // Retorna a janela ativa se `today` estiver dentro de alguma; caso contrário, a próxima futura.
   'mbr-pre': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: addBusinessDaysToDate(review, -5),
-        closes: addBusinessDaysToDate(review, -1),
-      };
-    },
+    getWindow: (c) => pickCompositeWindow(
+      buildWindow(c.review_date_first_month, -5, -1),
+      buildWindow(c.review_date, -5, -1),
+    ),
   },
   'mbr': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: review,
-        closes: addBusinessDaysToDate(review, 2),
-      };
-    },
+    getWindow: (c) => pickCompositeWindow(
+      buildWindow(c.review_date_first_month, 0, 2),
+      buildWindow(c.review_date, 0, 2),
+    ),
   },
 
   // QBR phases
@@ -238,7 +260,7 @@ export function useRitualAvailability(
     // ── QBR period block for MBR/MBR-pre ──────────────────────
     // When today >= planning_date, MBR and MBR-pre are blocked
     // because QBR takes over the review function for the 3rd month.
-    if (['mbr', 'mbr-pre', 'mbr-first', 'mbr-pre-first'].includes(wizardType)) {
+    if (['mbr', 'mbr-pre'].includes(wizardType)) {
       const planningDate = parseDate(cycle.planning_date);
 
       if (planningDate) {
