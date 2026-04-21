@@ -221,6 +221,9 @@ A cada onda concluída:
 
 ### ✅ Testes
 - `framework/lib/__tests__/completionEvaluator.test.ts` — 16 casos cobrindo todas as `CompletionRuleId`.
+- `framework/lib/__tests__/visibilityEvaluator.test.ts` — 10 casos cobrindo todas as `VisibilityRuleId`.
+- `framework/hooks/__tests__/useDecisionsAggregator.test.ts` — 4 casos cobrindo agrupamento, bucket `__unsourced__` e estabilidade de memo.
+- **Total: 30 testes verdes.**
 
 ### Critérios de sucesso — auditoria final
 | # | Status | Nota |
