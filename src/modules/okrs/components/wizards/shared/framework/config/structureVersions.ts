@@ -18,9 +18,13 @@ import type { WizardPersona } from '@/modules/okrs/types/wizard';
 import type { StructureVersion } from '@/modules/okrs/constants/ritualLabels';
 
 export const STRUCTURE_VERSION_BY_WIZARD_TYPE: Record<WizardPersona, StructureVersion> = {
-  // Onda 1
-  'collaborator': 'v1', // será promovido para v2 ao ativar a Onda 1
-  'leader-prep': 'v1',  // será promovido para v2 ao ativar a Onda 1
+  // Onda 1 — ATIVA
+  // Estratégia híbrida: páginas mantêm seus step components ricos
+  // (CollaboratorCheckinStep, CollaboratorKpiStep, etc.) e o framework
+  // atua como SSOT estrutural + versionamento. Novas sessões gravam v2;
+  // sessões antigas (v1) renderizam via SnapshotReportView (snapshot imutável).
+  'collaborator': 'v2',
+  'leader-prep': 'v2',
 
   // Onda 2
   'team-checkin': 'v1', // → v3
