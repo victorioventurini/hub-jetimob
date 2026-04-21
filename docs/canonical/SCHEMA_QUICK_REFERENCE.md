@@ -292,7 +292,9 @@
 `id, session_id, kr_id, action_type, notes, created_at`
 
 ### okr_wizard_sessions
-`id, bu_id, cycle_id, team_id, wizard_type, started_by, started_at, completed_at, decisions, action_items, ai_insights_shown, reflection_data, meeting_notes, created_at, updated_at, status`
+`id, bu_id, cycle_id, team_id, wizard_type, started_by, started_at, completed_at, decisions, action_items, ai_insights_shown, reflection_data, meeting_notes, created_at, updated_at, status, structure_version`
+
+> ℹ️ `structure_version` (v3.26.0) — versão estrutural canônica gravada na criação da sessão. Lookup via `STRUCTURE_VERSION_BY_WIZARD_TYPE` (`src/modules/okrs/components/wizards/shared/framework/config/structureVersions.ts`). Sessões antigas (`v1`) renderizam via `SnapshotReportView`; novas usam o framework unificado por dispatcher. Nunca alterar o valor após gravação.
 
 ---
 
