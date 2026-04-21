@@ -1,72 +1,117 @@
 
 
-# Unificar MBR: remover `mbr-first`/`mbr-pre-first` e usar apenas `mbr`/`mbr-pre` com dupla janela
+# Padronização de Nomenclatura dos Ritos no Hub
 
-## Diagnóstico
+## Decisão sobre o prompt sugerido (Claude/GPT)
 
-- **Nenhuma página instancia `mbr-first`/`mbr-pre-first`**: `MbrPage` grava hardcoded `wizardType: 'mbr'` e `MbrPrePage` grava `'mbr-pre'`. Não há rota, card, nem componente dedicado.
-- **Zero histórico**: `okr_wizard_sessions` tem 0 sessões `mbr-first`/`mbr-pre-first` (auditoria confirmada).
-- **Bug latente**: o calendário agenda 72 ocorrências futuras `mbr-first` e 90 `mbr-pre-first` que **nenhum usuário consegue executar** — a única UI existente só grava com persona `mbr`/`mbr-pre`.
-- **Ganho**: simplificar 4 personas → 2, mantendo **a cadência de dois MBRs por quarter** via janela dupla (M1 + M2) sobre as mesmas personas.
+A proposta externa cobre apenas **labels visíveis**, sem alterar slugs — o que está alinhado ao TCR e às memórias canônicas. Porém, **2 nomes do mapeamento sugerido divergem dos padrões atuais do projeto** e precisam de ajuste antes da execução:
 
-## Estratégia (sem prejuízo funcional)
+| Sugestão externa | Estado atual no projeto | Decisão recomendada |
+|---|---|---|
+| **"Check-in Individual"** (era "Check-in do Colaborador") | Hoje aparece como **"Check-in Semanal"** em `WIZARD_CONFIGS`/cards e como "Check-in do Colaborador" em hooks de availability/history. O nome "Semanal" reforça a cadência canônica documentada em `mem://features/rituals/collaborator-checkin-pending-items-step` e `off-cycle-accessibility-standard`. | **Adotar "Check-in Individual"** conforme a sugestão — é mais claro e neutro de cadência (o rito é acessível off-cycle). Substitui tanto "Check-in Semanal" quanto "Check-in do Colaborador". |
+| **"Check-in Executivo"** (era "Check-in C-Level") | Hoje aparece como **"Check-in Estratégico"** em `clevel-checkin` config + page title. | **Adotar "Check-in Executivo"** conforme sugestão — alinha com o nome "Pré-QBR Executivo" e cria família coerente. |
 
-Mantemos **exatamente a mesma cadência de governança** (MBR na 1ª terça de M2 e M3 do quarter, Pré-MBR nos 5du anteriores) — mudamos apenas a modelagem: em vez de 4 personas com janelas disjuntas, usamos 2 personas com **janela composta** que abre em qualquer um dos dois períodos do quarter.
+Demais nomes da sugestão são aplicados na íntegra. O termo "Pré Check-in do Time" recebe hífen ("**Pré-Check-in do Time**") para padronizar com `Pré-MBR`/`Pré-QBR`.
 
-## Mudanças no Frontend
+## Mapa final de labels (single source of truth)
 
-1. **`src/modules/okrs/hooks/useRitualAvailability.ts`**
-   - Remover entradas `'mbr-first'` e `'mbr-pre-first'` dos maps `RITUAL_LABELS` e `RITUAL_WINDOWS`.
-   - Expandir `getWindow` de `'mbr'` e `'mbr-pre'` para retornar **união de janelas**: computa `window1` sobre `review_date_first_month` e `window2` sobre `review_date`, retorna a janela ativa (onde `today` está dentro) ou a **próxima futura** para exibir data de abertura correta em `RitualUnavailableScreen`.
-   - Manter regra de bloqueio QBR (`today >= planning_date`) aplicada a `['mbr','mbr-pre']`.
+| Slug técnico (imutável) | Label antiga(s) encontrada(s) | **Label nova** |
+|---|---|---|
+| `collaborator` | "Check-in Semanal" / "Check-in do Colaborador" / "Check-in Colaborador" | **Check-in Individual** |
+| `leader-prep` | "Preparação do Líder" / "Pré Check-in do Time" | **Pré-Check-in do Time** |
+| `team-checkin` | "Check-in do Time" | **Check-in do Time** *(mantém)* |
+| `clevel-checkin` | "Check-in Estratégico" / "Check-in C-Level" | **Check-in Executivo** |
+| `team-okr-creation` | "Criação de OKRs do Time" / "Criar OKRs do Time" | **Criação de OKRs do Time** *(mantém)* |
+| `team-kr-creation` | "Criação de KRs do Time" / "Criação de Key Results" | **Criação de KRs do Time** |
+| `mbr-pre` | "Pré-MBR" | **Pré-MBR** *(mantém)* |
+| `mbr` | "Monthly Business Review" / "MBR — Monthly Business Review" | **MBR** |
+| `qbr-pre` | "Pré-QBR do Time" / "Pré-QBR (Líder)" / "QBR — Preparação" | **Pré-QBR** |
+| `qbr-pre-clevel` | "Pré-QBR C-Level" / "Pré-QBR (C-Level)" / "QBR Pre — C-Level" | **Pré-QBR Executivo** |
+| `qbr-meeting` | "Reunião QBR" / "QBR Meeting" | **QBR** |
+| `qbr-post` | "Pós-QBR" / "QBR Post" | **Pós-QBR** *(mantém)* |
 
-2. **`src/modules/okrs/constants/ritualWizardTypes.ts`** — remover `'mbr-first'` e `'mbr-pre-first'` de `ALL_RITUAL_WIZARD_TYPES`.
+### Labels de histórico (back-compat — mantêm sufixo)
+- `managers-checkin` → **"Check-in de Gestores (descontinuado)"**
+- `mbr-first` → **"MBR (histórico)"**
+- `mbr-pre-first` → **"Pré-MBR (histórico)"**
 
-3. **`src/modules/okrs/types/wizard.ts`**
-   - **Manter** `'mbr-first'` e `'mbr-pre-first'` no tipo `WizardPersona` (back-compat de registros antigos — mesmo padrão do `managers-checkin`).
-   - Remover entradas `'mbr-first'` e `'mbr-pre-first'` de `WIZARD_METADATA` e do mapa de agentes IA (linhas 853-855).
+## Regras de implementação (TCR-compliant)
 
-4. **`src/modules/okrs/hooks/useRitualHistory.ts`** — remover labels `'mbr-first'` e `'mbr-pre-first'` do seletor de filtros (tipos consolidados como "MBR" e "Pré-MBR"; histórico real é 0 e qualquer registro antigo cai no fallback).
+- **Nenhum slug, route, query key, permission key, persona, ID de step ou tipo TS é alterado.** Apenas strings de UI.
+- **Fonte única de labels:** consolidar todos os mapas em um único arquivo `src/modules/okrs/constants/ritualLabels.ts` exportando `RITUAL_LABELS: Record<WizardPersona, string>` + helper `getRitualLabel(persona)`. Os hooks/configs passam a importar dele.
+- **Texto auxiliar:** descriptions e tooltips que mencionem o nome do rito também são atualizados (ex.: "preparação para o **MBR**" em vez de "Monthly Business Review").
+- **Histórico em banco:** os slugs em `okr_wizard_sessions.wizard_type`, `ritual_occurrences.wizard_type`, `ritual_cadences.wizard_type` permanecem inalterados — UI faz tradução via `RITUAL_LABELS`.
 
-5. **`src/modules/okrs/pages/ExecutiveQuarterReviewPage.tsx`** — remover `'mbr-first'` e `'mbr-pre-first'` do `.in('wizard_type', …)` (linha 306).
+## Arquivos afetados
 
-## Mudanças no Backend
+### 1. Novo arquivo (SSOT)
+- **`src/modules/okrs/constants/ritualLabels.ts`** — criar com `RITUAL_LABELS` final + `getRitualLabel(persona)`.
 
-6. **`supabase/functions/sync-ritual-calendar-from-cycles/index.ts`**
-   - Remover `'mbr-first'` e `'mbr-pre-first'` de `ALL_WIZARD_TYPES` e seus `CadenceTemplate`.
-   - Duplicar/ajustar as cadências `'mbr'` e `'mbr-pre'` para `frequency: 'monthly'` na **1ª terça-feira** (`month_week_ordinal=1, day_of_week=2`). O gerador de ocorrências (`generate-ritual-occurrences`) já materializa mês a mês — assim M1 e M2 do quarter recebem uma ocorrência cada sem duplicação.
-   - Ajustar derivação de `start_date` para o `review_date_first_month` do primeiro quarter disponível.
+### 2. Atualização de fontes de labels (passam a importar do SSOT)
+- `src/modules/okrs/types/wizard.ts` — atualizar `title` em `WIZARD_CONFIGS` (12 personas) usando `RITUAL_LABELS`.
+- `src/modules/okrs/hooks/useRitualHistory.ts` — substituir `WIZARD_TYPE_LABELS` local pelo import do SSOT.
+- `src/modules/okrs/hooks/useRitualAvailability.ts` — substituir `RITUAL_LABELS` local pelo import do SSOT.
+- `src/modules/okrs/components/wizards/shared/CompletedRitualView.tsx` — substituir `RITUAL_LABELS` local pelo import do SSOT.
 
-7. **Migration de limpeza** `supabase/migrations/<ts>_unify_mbr_personas.sql`:
-   ```sql
-   -- Remove cadências órfãs
-   DELETE FROM public.ritual_cadences 
-   WHERE wizard_type IN ('mbr-first','mbr-pre-first');
+### 3. Páginas (page titles + headers)
+- `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` — `usePageTitle('Check-in Individual')`.
+- `src/modules/okrs/pages/CLevelCheckinPage.tsx` — `usePageTitle('Check-in Executivo')`.
+- `src/modules/okrs/pages/TeamCheckinPage.tsx` — fallback "Check-in do Time" (inalterado).
+- `src/modules/okrs/pages/MbrPage.tsx` — title "MBR".
+- `src/modules/okrs/pages/MbrPrePage.tsx` — title "Pré-MBR" (inalterado).
+- `src/modules/okrs/pages/LeaderPrepPage.tsx` — title "Pré-Check-in do Time".
+- `src/modules/okrs/pages/QbrPrePage.tsx` — title "Pré-QBR" + `FullPageWizardShell title="Pré-QBR"`.
+- `src/modules/okrs/pages/QbrPreCLevelPage.tsx` — title "Pré-QBR Executivo".
+- `src/modules/okrs/pages/QbrMeetingPage.tsx` — title "QBR".
+- `src/modules/okrs/pages/QbrPostPage.tsx` — title "Pós-QBR".
+- `src/modules/okrs/pages/ExecutiveQuarterReviewPage.tsx` — referências a "MBR" / "QBR" nos cabeçalhos.
 
-   -- Cancela ocorrências futuras órfãs (soft via status)
-   UPDATE public.ritual_occurrences
-     SET status = 'cancelled', updated_at = now()
-     WHERE wizard_type IN ('mbr-first','mbr-pre-first')
-       AND status = 'scheduled';
-   ```
-   Não toca em enums nem em tipos de coluna. `WizardPersona` no TS preserva os valores para qualquer linha remanescente de outras BUs.
+### 4. Hub de Rituais e cards
+- `src/pages/Wizards.tsx` — atualizar `WIZARD_SECTIONS` (8 entradas: collaborator, team-okr-creation, leader-prep, team-checkin, mbr-pre, clevel-checkin, mbr) e builders QBR (`getQbrLeaderWizards`, `getQbrExecutiveWizards`).
+- `src/pages/Index.tsx` — labels em cards.
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard.tsx` — "Check-in Individual" (e remover lógica condicional "Atualizar OKRs"/"Check-in Semanal" → ficar "Check-in Individual" sempre, mantendo badge dinâmica).
+- `src/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard.tsx` — "Pré-Check-in do Time".
+- `src/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard.tsx` — inalterado.
+- `src/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard.tsx` — "Check-in Executivo".
+- `src/modules/okrs/components/wizards/mbr/MbrWizardCard.tsx` — `CardTitle` "MBR" + descrição mantida.
+- `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizardCard.tsx` — labels.
 
-8. **Re-sync automático** — após a migration, o deploy do `sync-ritual-calendar-from-cycles` repopula `ritual_cadences` de MBR/MBR-pre com cadência mensal correta. `useSyncRitualCalendar` é invocado automaticamente em operações de ciclo (memória `comprehensive-calendar-architecture-v2`).
+### 5. Calendário, settings e auditoria
+- `src/modules/okrs/components/settings/RitualsTab.tsx` — labels do timeline QBR (Pré-QBR, Pré-QBR Executivo, QBR, Pós-QBR).
+- `src/modules/okrs/components/settings/CycleRitualDates.tsx` — labels.
+- `src/modules/okrs/pages/RitualHistoryPage.tsx` — `WIZARD_TYPE_OPTIONS` consome SSOT (mantém histórico de descontinuados).
+- Componentes de calendário operacional (busca por `wizard_type` em `src/modules/okrs/components/calendar/*` e `src/modules/calendar/*` se houver) — labels via SSOT.
+
+### 6. Tooltips, AI prompts e relatórios
+- `src/modules/okrs/components/wizards/shared/WizardTooltips.tsx` — comentários de seção atualizados (não-funcional, apenas DX).
+- `src/modules/okrs/components/ritual-report/renderers/*.tsx` — títulos de seções nos snapshots usam SSOT.
+- `supabase/functions/_shared/tcr-content.ts` (linhas 417-421) — labels de IA mantêm os nomes técnicos atuais (texto interno do TCR; **fora do escopo de UI**, não alterar).
+
+### 7. E2E
+- `e2e/okr-wizards.spec.ts` — atualizar `label` de "QBR Pre"→"Pré-QBR", "QBR Meeting"→"QBR", "QBR Post"→"Pós-QBR".
 
 ## Atualização de memória canônica
 
-9. Atualizar `mem://features/okrs/ritual-access-governance-standard.md` e `mem://features/okrs/mbr-multi-date-governance.md`:
-   - Remover referências a `mbr-first`/`mbr-pre-first`.
-   - Documentar que `'mbr'` e `'mbr-pre'` possuem **janela composta** (união de MBR₁ sobre `review_date_first_month` e MBR₂ sobre `review_date`).
-   - Cadência passa a ser `monthly` na 1ª terça-feira (implicitamente M1 e M2 do quarter, bloqueada em M3 pela regra QBR).
+- **`mem://features/okrs/management-rituals-standard-v2`** — atualizar tabela de ritos com nova nomenclatura.
+- **`mem://index.md`** — adicionar nova entrada **"Ritual Labels SSOT"** apontando para `src/modules/okrs/constants/ritualLabels.ts` como fonte única.
+
+## Critérios de aceite
+
+- ✅ Todos os ritos exibem os novos nomes em hub, cards, headers, calendário, histórico, tooltips de relatório.
+- ✅ Nenhum slug, rota, persona, query key ou permission key foi alterado.
+- ✅ "Monthly Business Review" não aparece mais como nome de rito (apenas como descrição auxiliar opcional).
+- ✅ "Reunião QBR" / "QBR Meeting" / "QBR Pre" / "QBR Post" eliminados da UI.
+- ✅ "Check-in C-Level" / "Check-in Estratégico" / "Check-in Semanal" / "Check-in do Colaborador" eliminados da UI.
+- ✅ Labels de histórico para ritos descontinuados (`managers-checkin`, `mbr-first`, `mbr-pre-first`) preservam sufixo identificador.
+- ✅ Build TypeScript verde; testes E2E atualizados.
 
 ## Checklist TCR
 
 - [x] Sem `select('*')`.
 - [x] Query keys inalteradas.
-- [x] BU-scoping preservado (migration opera em tabelas com RLS nativa).
-- [x] Sem hardcode de roles — guards `requiresBuAdmin` do MBR permanecem.
-- [x] Histórico preservado: `WizardPersona` mantém os valores antigos; renderers `MbrPanoramaStep` etc. continuam funcionando.
-- [x] Sem prejuízo funcional: cadência de 2 MBRs por quarter é mantida via janela composta.
-- [x] Bug latente (ocorrências órfãs não executáveis) é corrigido no processo.
+- [x] BU-scoping preservado (mudança puramente de UI).
+- [x] Sem hardcode de roles.
+- [x] Slugs/routes/personas/IDs imutáveis.
+- [x] SSOT de labels evita drift futuro.
+- [x] Histórico read-only preservado com sufixos identificadores.
 
