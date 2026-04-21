@@ -1170,6 +1170,7 @@ O Compliance Baseline inclui **12 audits obrigatórios**:
 - [ ] **URL State**: Não usar wrapper legado (`src/hooks/useUrlState.ts`)
 - [ ] **User Directory**: Selects de usuários usam `v_bu_active_profiles` / `useBuUsersDirectory`?
 - [ ] **User Directory**: Não usa `bu_user_memberships` para listar pessoas?
+- [ ] **Agentes IA**: Toda criação/modificação de agente em `ai_agents` apresenta os **9 entregáveis** de `AI_AGENTS_PHILOSOPHY.md` §"Entregáveis obrigatórios" (função cognitiva, análise do catálogo, matriz de decisão, etc.)?
 - [ ] **Documentação**: TCR/docs atualizados se necessário?
 
 ### H.3 CI Gate

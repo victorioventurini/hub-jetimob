@@ -13,7 +13,8 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 
 | Documento | Descrição | Versão |
 |-----------|-----------|--------|
-| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio (inclui §4.8.1 Framework Unificado de Wizards) | v3.26.0 |
+| `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio (inclui §4.8.1 Framework Unificado de Wizards e §4.12 Governança de Agentes de IA) | v3.27.0 |
+| `AI_AGENTS_PHILOSOPHY.md` | Governança de criação/reutilização de agentes IA (matriz de decisão + antipadrões) | v1.0.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.28.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | v1.2.2 |
 | `IDENTITY_CONVENTION.md` | Convenção user_id vs profile_id | v2.2.0 |

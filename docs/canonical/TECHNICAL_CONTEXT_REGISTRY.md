@@ -1,9 +1,9 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.26.0  
-**Última atualização:** 2026-04-21 (v3.26.0 - Padronização Estrutural dos Ritos do Hub: Framework Unificado de Wizards com versionamento por sessão (`structure_version`), Ondas 1/2/3 ATIVAS — collaborator/leader-prep=v2, team-checkin/mbr-pre/qbr-pre=v3, mbr/qbr-meeting/qbr-post=v4 — dispatcher v1↔v2+, `RITUAL_STEP_LABELS` SSOT, `useDecisionsAggregator` ubíquo, `SnapshotReportView` para sessões legadas)
+**Versão:** 3.27.0  
+**Última atualização:** 2026-04-21 (v3.27.0 - Adoção do canônico `AI_AGENTS_PHILOSOPHY.md` v1.0: governança formal de criação/reutilização de agentes IA, matriz de decisão de 5 linhas, 6 antipadrões, separação `system_prompt` vs `instruction_sources`, catálogo sincronizado com 12 agentes ativos. Ver §4.12. Sem mudança em código/banco/edge functions.)
 **Responsável:** Lovable AI / Equipe de Engenharia
-**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅ | **URL Detonation Mitigation v1.1** ✅ | **Unified Wizard Framework v4 (Ondas 1-3 ATIVAS)** ✅
+**Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **AI Agents Philosophy v1.0** ✅ | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅ | **URL Detonation Mitigation v1.1** ✅ | **Unified Wizard Framework v4 (Ondas 1-3 ATIVAS)** ✅
 
 > 📚 **Documentação Técnica Consolidada:**
 >
@@ -1185,6 +1185,8 @@ Definição de agentes de IA (Vic).
 
 **Escopo:** Global ou por BU
 
+> 📐 **Governança canônica:** A criação, reutilização e modificação de agentes seguem **obrigatoriamente** [`AI_AGENTS_PHILOSOPHY.md`](./AI_AGENTS_PHILOSOPHY.md) (v1.0.0). Adaptações contextuais usam `ai_agent_instruction_sources` (não inchar `system_prompt` base). Ver §4.12 para a matriz de decisão.
+
 ---
 
 #### **bu_ia_config** — Configuração de IA por BU
@@ -2340,6 +2342,48 @@ const { profileId, isLoading } = useMyProfileId();
 - Métricas clicáveis redirecionam para listagens filtradas via deep links
 - Card de devoluções atrasadas exibe itens com `expected_return_at` no passado
 - Visibilidade dos cards respeita permissões por sub-módulo
+
+---
+
+### 4.12 Governança de Agentes de IA
+
+**Documento canônico:** [`AI_AGENTS_PHILOSOPHY.md`](./AI_AGENTS_PHILOSOPHY.md) (v1.0.0)
+
+Toda criação, reutilização ou modificação de agentes em `ai_agents` segue o canônico. Princípio central:
+
+> **Reutilizar quando óbvio. Criar agente genérico quando necessário. Evitar agente específico por caso de uso.**
+
+#### Matriz de decisão (consulta rápida)
+
+| Situação | Decisão |
+|----------|---------|
+| Função idêntica a agente existente | Reutilizar sem ajuste |
+| Função coberta, mas com contexto novo | Reutilizar + adicionar `ai_agent_instruction_sources` |
+| Função nova e reaproveitável em múltiplos ritos | Criar agente **genérico por função cognitiva** |
+| Função nova mas ainda não validada | Criar agente experimental com critério de consolidação |
+| Diferença apenas de formato ou estrutura de saída | **Não criar** — parametrizar `output_format`/`output_schema` na invocação |
+
+#### Antipadrões proibidos
+
+1. Agente por **cadência** (`-weekly`, `-monthly`)
+2. Agente por **rito específico** (`-mbr`, `-qbr`)
+3. Agente por **persona** (`-leader`, `-collaborator`)
+4. Agente **duplicando** função coberta
+5. Agente por **formato de saída** (`-json`, `-text`)
+6. Inchaço do `system_prompt` com contexto que pertence a `instruction_sources`
+
+#### Camadas de prompt
+
+- **`system_prompt`** → identidade permanente do agente (alteração = alto risco)
+- **`ai_agent_instruction_sources`** → adaptações contextuais por caso/BU/persona (baixo risco, reversível)
+
+#### Catálogo ativo (12 agentes, sincronizado em 2026-04-21)
+
+`cultura`, `coach-okrs`, `validador-metodologico-okrs`, `analista-kpis`, `analista-estrategico`, `facilitador-decisoes`, `alinhamento-estrategico`, `revisor-comunicacao`, `onboarding-buddy`, `coach-produtividade`, `vic-persona`, `vic-greeting`. Todos `scope=global`, `integration_key=chatgpt`. Detalhes e distinções em [`AI_AGENTS_PHILOSOPHY.md`](./AI_AGENTS_PHILOSOPHY.md).
+
+#### Entregáveis obrigatórios em PRs
+
+PRs que criam/modificam agentes devem apresentar os **9 entregáveis** listados em `AI_AGENTS_PHILOSOPHY.md` §"Entregáveis obrigatórios" (função cognitiva, análise do catálogo, justificativa, posição na matriz, casos de uso, assinatura única, `system_prompt` inicial, estratégia de prompts, previsão de refinamento).
 
 ---
 
