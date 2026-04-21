@@ -225,8 +225,9 @@ A cada onda concluída:
 - `framework/hooks/__tests__/useDecisionsAggregator.test.ts` — 4 casos cobrindo agrupamento, bucket `__unsourced__` e estabilidade de memo.
 - `framework/config/__tests__/structureVersions.test.ts` — 8 casos garantindo SSOT do mapa por persona, status das Ondas 1/2/3 e fallback defensivo do helper.
 - `framework/config/__tests__/stepDefinitions.test.ts` — 45 casos blindando integridade declarativa do SSOT estrutural: presença de definições, IDs únicos, ordem canônica `KPIs→KRs→Projetos` (com exceções: leader-prep/qbr-meeting/qbr-post), supressão de inline em consolidação, conformidade pontual de cada rito (collaborator/leader-prep/team-checkin/mbr-pre/qbr-pre/mbr/qbr-meeting/qbr-post).
+- `framework/config/__tests__/stepContentAdapters.test.ts` — 6 casos blindando `groupDecisionsBySourceStep` (lib pura): vazio, multi-bucket, `__unsourced__`, ordem de inserção, shape `DecisionsBySourceStep`, distinção `''` vs `undefined`.
 - `ritual-report/__tests__/SnapshotReportView.test.tsx` — 15 casos cobrindo roteamento de todos os 11 renderers, fallback amigável e compatibilidade transparente v1↔v2+.
-- **Total: 98 testes verdes** (83 framework + 15 dispatcher).
+- **Total: 104 testes verdes** (89 framework + 15 dispatcher).
 
 ### Critérios de sucesso — auditoria final
 | # | Status | Nota |
