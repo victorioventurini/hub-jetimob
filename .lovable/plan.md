@@ -1,94 +1,69 @@
-> ✅ **STATUS: EXECUTADO em 2026-04-21**
-> Flip Onda 3 (`mbr`/`qbr-meeting`/`qbr-post` → `v4`) concluído.
-> Testes: **186 verdes** em 9 suítes. Documentação canônica atualizada (TCR v3.26.0 §4.8.1, SCHEMA_QUICK_REFERENCE, README canônico).
-> Restam apenas as ações operacionais (smoke manual, publicação, monitoramento D+7).
 
-## Flip Onda 3 — Plano de Ativação (MBR / QBR / Pós-QBR v4)
 
-### Objetivo
-Ativar a estrutura v4 para os ritos MBR, QBR-Meeting e QBR-Post, migrando novas sessões da estrutura legada (v1) para o framework unificado (v4). Sessões antigas permanecem acessíveis via `SnapshotReportView`.
+## Adoção do Documento Canônico "Filosofia de Agentes de IA no Hub"
 
----
+### Avaliação prévia
+Os 5 ajustes propostos (definição de "função cognitiva", distinção curador-orquestrador vs alinhamento-estrategico, proibição de agente por formato de saída, governança `system_prompt` vs `instruction_sources`, matriz de decisão) são **acertos**. Reforçam clareza sem alterar arquitetura. Adoto integralmente, com **três correções factuais** identificadas contra o estado real do banco:
 
-### Step 1 — Flip do Mapa de Versões (1 arquivo)
-
-**Arquivo:** `src/modules/okrs/components/wizards/shared/framework/config/structureVersions.ts`
-
-**Mudança:** Alterar 3 valores no mapa `STRUCTURE_VERSION_BY_WIZARD_TYPE`:
-
-````text
-Linha 41: 'mbr': 'v1',          → 'mbr': 'v4',
-Linha 42: 'qbr-meeting': 'v1',  → 'qbr-meeting': 'v4',
-Linha 43: 'qbr-post': 'v1',     → 'qbr-post': 'v4',
-````
-
-**Atualização do comentário:** Substituir o bloco "Onda 3 — PRÉ-ATIVAÇÃO" por:
-
-````typescript
-// Onda 3 — ATIVA (Q-end YYYY-QX)
-// Estrutura v4 ativada. Novas sessões usam framework genérico;
-// sessões antigas (v1) renderizam via SnapshotReportView.
-````
+1. **Catálogo incompleto** — o doc lista 9 agentes, mas o banco tem 12: faltam `analista-estrategico`, `vic-greeting`, `vic-persona`. Vou complementar.
+2. **`curador-orquestrador` não existe ainda** — o doc o trata como exemplo legítimo de criação. Marcarei explicitamente como **proposto/roadmap**, não como agente existente.
+3. **Schema real** — `ai_agents` usa `integration_key` (FK obrigatória) e enum `agent_scope`. Acrescento essa nota técnica.
 
 ---
 
-### Step 2 — Validações Automatizadas
+### Entregáveis
 
-Executar sequência de validação:
+#### 1. Novo canônico: `docs/canonical/AI_AGENTS_PHILOSOPHY.md` (v1.0.0)
+Documento integral proposto, com os 5 ajustes incorporados e as 3 correções factuais acima. Estrutura:
 
-1. **Testes do framework:** `npm test src/modules/okrs/components/wizards/shared/framework`
-   - Esperado: 169+ testes verdes (incluindo `structureVersions.test.ts` que cobre o cenário v4)
+- Contexto + Princípio central
+- Vocabulário canônico (função cognitiva)
+- Três regras fundamentais
+- **Catálogo real (12 agentes)** com função cognitiva mapeada para cada um
+- Distinções críticas entre adjacentes
+- Fluxo de decisão (4 passos)
+- **Matriz de decisão rápida (5 linhas)**
+- Governança de prompts (`system_prompt` vs `instruction_sources`)
+- 6 antipadrões (incluindo o novo: agente por formato de saída)
+- Quando criar agente é legítimo
+- **Aplicação prática Pré-Weekly/Weekly** (mantida, mas marcando `curador-orquestrador` como roadmap)
+- Entregáveis obrigatórios em PRs
+- Revisão periódica + Resumo
 
-2. **Testes de labels:** `npm test src/modules/okrs/constants/__tests__/ritualLabels.test.ts`
-   - Esperado: 14 testes verdes (cobertura de todos os stepIds v4)
+#### 2. Atualização `docs/canonical/README.md`
+Adicionar linha na tabela de documentos:
+```
+| AI_AGENTS_PHILOSOPHY.md | Governança de criação/reutilização de agentes IA | v1.0.0 |
+```
 
-3. **Suite completa:** `npm test`
-   - Esperado: 184+ testes verdes
+#### 3. Atualização `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (bump v3.27.0)
+- **§2.5** — após o bloco `ai_agents`, inserir parágrafo curto: *"A criação, reutilização e governança de agentes seguem obrigatoriamente `AI_AGENTS_PHILOSOPHY.md` (canônico)."*
+- **§4** — nova subseção `4.12 Governança de Agentes de IA` com referência ao canônico e a matriz de decisão resumida (5 linhas) inline para consulta rápida.
+- **Status** no topo: adicionar `**AI Agents Philosophy v1.0** ✅`.
 
-4. **Build:** `npm run build`
-   - Esperado: zero warnings de TypeScript
+#### 4. Atualização `docs/canonical/DEVELOPMENT_STANDARDS.md`
+Adicionar item à checklist obrigatória de PRs que mexem em IA: *"Toda criação/modificação de agente deve apresentar os 9 entregáveis listados em `AI_AGENTS_PHILOSOPHY.md` §Entregáveis obrigatórios."*
 
-5. **Lint:** `npm run lint`
-   - Esperado: zero erros
-
----
-
-### Step 3 — Smoke Manual no Preview
-
-Validações pós-build no ambiente de preview:
-
-| Rota | Validação |
-|------|-----------|
-| `/rituals/mbr` | Confirmar 8 steps: opening-executive → kpi-gate → teams-overview → team-analysis → org-okrs → strategic-projects → decisions → closing |
-| `/rituals/qbr-meeting` | Confirmar 4 steps: opening-executive → okr-approval → decisions → closing |
-| `/rituals/qbr-post` | Confirmar 4 steps: okr-promotion → decisions-adjustments → commitments-followup → closing |
-| Decisões inline | Registrar decisão em step intermediário; validar que aparece no `DecisionsStep` agrupada por `sourceStep` |
-| `/rituals/history` | Abrir MBR/QBR antigo (structure_version='v1'); confirmar renderização via layout legado |
-
----
-
-### Step 4 — Rollout e Monitoramento
-
-1. **Publicação:** Deploy via Lovable Cloud
-2. **Comunicação:** Notificar líderes/C-Level que estrutura v4 entra em vigor para o próximo ciclo
-3. **Monitoramento (24h):** Observar `app_error_logs` por erros relacionados aos wizard_types ativados
+#### 5. Memórias canônicas (`mem://`)
+- Criar `mem://standards/ai/agents-philosophy-canonical.md` — referência ao canônico + síntese da matriz de decisão (5 linhas) + os 6 antipadrões nominais.
+- Atualizar `mem://index.md` na seção **Memories** com nova linha:
+  `[Agents Philosophy](mem://standards/ai/agents-philosophy-canonical) — Reuso primeiro; criar genérico por função cognitiva; matriz 5-linhas`
+- Atualizar **Core** com regra curta: *"AI Agents: reutilizar antes de criar; nunca por cadência/rito/persona/formato; ver AI_AGENTS_PHILOSOPHY.md."*
 
 ---
 
-### Plano de Rollback (se necessário)
+### Detalhes técnicos relevantes
 
-**Antes da publicação:** Reverter 3 valores para 'v1' e reexecutar testes.
+- **Não há mudança de schema, código ou edge function.** Trabalho 100% documental + memória.
+- **Catálogo do doc será sincronizado com banco real** (consulta `SELECT slug, name FROM ai_agents` produziu 12 registros, vs 9 no draft).
+- **`curador-orquestrador`** entra como exemplo de "criação legítima futura" e é o único agente proposto no doc — marcado claramente como **NÃO IMPLEMENTADO**, evitando confusão. Sua eventual criação seguirá o próprio fluxo de decisão do canônico.
+- **Sem alteração em `ai_agents.scope`, `output_format` ou enums** — o canônico apenas formaliza disciplina sobre uso correto desses campos já existentes.
+- **Compatível com infra atual**: `ai_agent_instruction_sources` (já em uso conforme `useInstructionSources.ts`) é exatamente a camada que o canônico privilegia para adaptações contextuais.
 
-**Após publicação:** 
-1. Reverter para 'v1' + republicar
-2. Sessões v4 criadas antes do rollback permanecem acessíveis via dispatcher
-3. Não requer migration — `structure_version` é coluna livre
+### Critérios de aceite
+- 5 arquivos atualizados (1 novo canônico + README + TCR + DEV_STANDARDS + memória).
+- TCR bumped para v3.27.0 com referência cruzada ao novo canônico.
+- `mem://index.md` atualizado em Core e Memories.
+- Catálogo do canônico bate exatamente com `SELECT slug FROM ai_agents`.
+- Zero mudança em código de aplicação, banco ou edge functions.
 
----
-
-### Pós-Ativação (D+7)
-
-- Coletar feedback sobre novos steps (`teams-overview`, `team-analysis`, `okr-approval`)
-- Validar contagem de inline decisions por `sourceStep` em produção
-- Atualizar memória canônica com data efetiva da virada
-- Marcar checklist como executado em `.lovable/plan.md`
