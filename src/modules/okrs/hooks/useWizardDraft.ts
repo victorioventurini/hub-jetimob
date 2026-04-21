@@ -31,6 +31,7 @@ import type {
 } from '@/modules/okrs/types/wizard';
 import type { VicAgentSlug } from '@/modules/vic/types';
 import type { KrPlan } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrTypeStep';
+import { getCurrentStructureVersion } from '@/modules/okrs/components/wizards/shared/framework/config/structureVersions';
 
 // ============================================================
 // TYPES
@@ -351,6 +352,7 @@ export function useWizardDraft({
             cycle_id: draftToSave.cycleId,
             started_by: profile.id,
             reflection_data: reflectionData,
+            structure_version: getCurrentStructureVersion('team-okr-creation'),
           }])
           .select('id')
           .single();
