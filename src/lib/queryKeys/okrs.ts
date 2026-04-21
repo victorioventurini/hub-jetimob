@@ -282,6 +282,14 @@ export const okrsKeys = {
   // QBR Executive Report (AI-generated)
   qbrExecutiveReport: (buId: string | null, cycleId: string | null) =>
     ['qbr-executive-report', buId, cycleId] as const,
+
+  // Weekly v2 — agregação a partir de Pré-Weekly concluídos
+  weeklyAggregationListPrefix: (buId: string | null) =>
+    ['weekly', 'pre-weekly-aggregation', buId] as const,
+  weeklyAggregation: (buId: string | null, referenceWeek: string) =>
+    ['weekly', 'pre-weekly-aggregation', buId, referenceWeek] as const,
+  weeklyExpectedLeaders: (buId: string | null) =>
+    ['weekly', 'expected-leaders', buId] as const,
 } as const;
 
 export const kpisKeys = {

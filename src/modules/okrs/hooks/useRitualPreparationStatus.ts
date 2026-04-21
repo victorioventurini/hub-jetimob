@@ -22,7 +22,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { startOfMonth, endOfMonth, subDays } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, subDays } from 'date-fns';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import type {
@@ -42,7 +42,8 @@ export type SupportedRitualType =
   | 'mbr'
   | 'qbr-pre'
   | 'qbr-meeting'
-  | 'qbr-post';
+  | 'qbr-post'
+  | 'weekly';
 
 export interface UseRitualPreparationStatusArgs {
   ritualType: SupportedRitualType;
@@ -476,6 +477,84 @@ export function useRitualPreparationStatus(
               { label: 'Snapshot completo disponível para consulta' },
             ],
           },
+        };
+      }
+
+      // ────────────────────────────────────────────────
+      // CASO: weekly (list, N líderes com pre-weekly da semana)
+      // ────────────────────────────────────────────────
+      if (ritualType === 'weekly') {
+        const now = new Date();
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 }).toISOString();
+
+        const { data: teamsData } = await buSupabase
+          .from('teams')
+          .select('id, name')
+          .eq('bu_id', buId!)
+          .eq('status', 'active')
+          .is('deleted_at', null)
+          .order('name');
+
+        const teams = teamsData ?? [];
+        if (teams.length === 0) return null;
+
+        const { data: preWeeklySessions } = await buSupabase
+          .from('okr_wizard_sessions')
+          .select('id, team_id, completed_at, started_by')
+          .eq('bu_id', buId!)
+          .eq('wizard_type', 'pre-weekly')
+          .eq('status', 'completed')
+          .gte('completed_at', weekStart)
+          .lte('completed_at', weekEnd)
+          .is('deleted_at', null);
+
+        const byTeam = new Map<
+          string,
+          { id: string; completed_at: string | null; started_by: string | null }
+        >();
+        for (const s of preWeeklySessions ?? []) {
+          if (s.team_id && !byTeam.has(s.team_id)) {
+            byTeam.set(s.team_id, {
+              id: s.id,
+              completed_at: s.completed_at,
+              started_by: s.started_by,
+            });
+          }
+        }
+
+        const profileIds = Array.from(byTeam.values())
+          .map(v => v.started_by)
+          .filter(Boolean) as string[];
+        const namesById = new Map<string, string>();
+        if (profileIds.length > 0) {
+          const { data: profiles } = await buSupabase
+            .from('profiles')
+            .select('id, display_name')
+            .in('id', profileIds);
+          for (const p of profiles ?? []) {
+            if (p.display_name) namesById.set(p.id, p.display_name);
+          }
+        }
+
+        const participants: PreparationParticipant[] = teams.map(t => {
+          const session = byTeam.get(t.id);
+          const completed = !!session?.completed_at;
+          return {
+            id: t.id,
+            name: namesById.get(session?.started_by ?? '') ?? t.name,
+            context: t.name,
+            status: completed ? 'completed' : 'pending-late',
+            timestamp: session?.completed_at ?? null,
+          };
+        });
+
+        return {
+          mode: 'list' as const,
+          title: 'Pré-Weeklies da semana',
+          description:
+            'Cobertura dos preparatórios individuais que alimentam esta Weekly.',
+          participants,
         };
       }
 
