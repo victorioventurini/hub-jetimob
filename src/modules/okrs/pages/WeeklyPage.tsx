@@ -23,6 +23,8 @@ import {
   WeeklyClosingStep,
 } from '@/modules/okrs/components/wizards/weekly';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks';
+import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks/useWeeklyPreWeeklyAggregation';
+import { useWeeklyOpeningCuration } from '@/modules/okrs/hooks/useWeeklyOpeningCuration';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
 
@@ -155,6 +157,31 @@ export default function WeeklyPage() {
 
   const handleClose = useCallback(() => {}, []);
 
+  // Agregação dos Pré-Weekly da semana → insumo para o curador IA
+  const aggregation = useWeeklyPreWeeklyAggregation(draft.data.referenceWeek);
+
+  const { isGenerating, generate } = useWeeklyOpeningCuration({
+    referenceWeek: draft.data.referenceWeek,
+    topics: aggregation.topics,
+    peopleSignals: aggregation.peopleSignals,
+    coverage: aggregation.coverage,
+  });
+
+  const handleGenerateDraft = useCallback(async () => {
+    try {
+      const result = await generate(draft.data.executiveOpening);
+      if (!result) return;
+      updateDraft({ executiveOpening: result.next });
+      if (result.reason) {
+        toast.info('Curador indisponível — abertura permanece em modo manual.');
+      } else {
+        toast.success('Rascunho da abertura gerado pelo curador.');
+      }
+    } catch (error) {
+      handleError(error, { context: 'Weekly Curate Opening' });
+    }
+  }, [generate, draft.data.executiveOpening, updateDraft]);
+
   const renderStepContent = () => {
     switch (draft.currentStep) {
       case 'executive-opening':
@@ -167,6 +194,8 @@ export default function WeeklyPage() {
               updateDraft({ decisions })
             }
             onContinue={goNext}
+            onGenerateDraft={handleGenerateDraft}
+            isGenerating={isGenerating}
           />
         );
       case 'priorities':
