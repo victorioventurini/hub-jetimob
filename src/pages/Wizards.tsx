@@ -132,6 +132,18 @@ const WIZARD_SECTIONS: WizardSection[] = [
         route: '/rituals/team-checkin',
       },
       {
+        id: 'pre-weekly',
+        name: 'Pré-Weekly',
+        description: 'Destile sua semana antes da Weekly da BU',
+        icon: Inbox,
+        module: 'okrs',
+        requiredRole: 'leader',
+        badge: 'Semanal',
+        badgeVariant: 'outline',
+        requiresTeam: false,
+        route: '/rituals/pre-weekly',
+      },
+      {
         id: 'mbr-pre',
         name: 'Pré-MBR',
         description: 'Prepare o contexto do seu time para o MBR',

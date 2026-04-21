@@ -27,6 +27,7 @@ const QbrPreCLevelPage = lazy(() => import('@/modules/okrs/pages/QbrPreCLevelPag
 const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'));
 const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
 const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
+const PreWeeklyPage = lazy(() => import('@/modules/okrs/pages/PreWeeklyPage'));
 
 /**
  * Wrapper padrão para rotas de rituais
@@ -79,6 +80,9 @@ export const ritualRoutes = (
     <Route path="/rituals/managers-checkin" element={<Navigate to="/rituals" replace />} />
     <Route path="/rituals/clevel-checkin" element={<RitualRoute><CLevelCheckinPage /></RitualRoute>} />
     
+    {/* Semanais — Onda 4 */}
+    <Route path="/rituals/pre-weekly" element={<RitualRoute><PreWeeklyPage /></RitualRoute>} />
+
     {/* MBR */}
     <Route path="/rituals/mbr-pre" element={<RitualRoute><MbrPrePage /></RitualRoute>} />
     <Route path="/rituals/mbr" element={<RitualRoute requiresBuAdmin><MbrPage /></RitualRoute>} />
