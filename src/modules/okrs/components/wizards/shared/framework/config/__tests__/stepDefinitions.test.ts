@@ -66,8 +66,15 @@ describe('STEP_DEFINITIONS — integridade SSOT', () => {
         (s) => s.component === 'ProjectsAndInitiativesStep',
       );
 
-      // qbr-meeting e qbr-post são exceções documentadas (sem KRs/Projetos)
-      if (persona === 'qbr-meeting' || persona === 'qbr-post') {
+      // Exceções documentadas:
+      // - qbr-meeting / qbr-post: reuniões aprovativas, sem KRs/Projetos
+      // - leader-prep: 'KrsStep' é a PAUTA DO LÍDER (mode='leader-actions'),
+      //   posicionada após Projetos por design (preparação para reunião)
+      if (
+        persona === 'qbr-meeting' ||
+        persona === 'qbr-post' ||
+        persona === 'leader-prep'
+      ) {
         return;
       }
 
