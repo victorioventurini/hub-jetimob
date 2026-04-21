@@ -65,10 +65,15 @@ export const KrsStep = memo(function KrsStep({
   onDecisionsChange,
   footer,
   suppressInlineDecisions,
+  meetingNotes,
+  onMeetingNotesChange,
 }: KrsStepProps) {
   const label = getStepLabel(persona, stepId, version);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  const isLeaderActions = config.mode === 'leader-actions';
+
+  // Em leader-actions, ordenar por prioridade (em risco/pendentes primeiro)
   const visible =
     config.mode === 'attention-only'
       ? data.filter(
@@ -78,6 +83,22 @@ export const KrsStep = memo(function KrsStep({
             k.status === 'blocked' ||
             k.status === 'stagnant',
         )
+      : isLeaderActions
+      ? [...data].sort((a, b) => {
+          if (a.isAtRisk && !b.isAtRisk) return -1;
+          if (!a.isAtRisk && b.isAtRisk) return 1;
+          if (a.isPending && !b.isPending) return -1;
+          if (!a.isPending && b.isPending) return 1;
+          const order: Record<KrsItem['status'], number> = {
+            'at-risk': 0,
+            blocked: 0,
+            stagnant: 0,
+            unknown: 1,
+            'on-track': 2,
+            completed: 3,
+          };
+          return order[a.status] - order[b.status];
+        })
       : data;
 
   const updateKr = useCallback(
@@ -87,9 +108,32 @@ export const KrsStep = memo(function KrsStep({
     [data, onDataChange],
   );
 
+  const toggleLeaderAction = useCallback(
+    (id: string, action: NonNullable<KrsItem['leaderAction']>) => {
+      const current = data.find((k) => k.id === id)?.leaderAction;
+      updateKr(id, { leaderAction: current === action ? null : action });
+    },
+    [data, updateKr],
+  );
+
   const pendingReview = config.requireReview
     ? visible.filter((k) => !k.reviewed).length
     : 0;
+
+  const discussCount = isLeaderActions
+    ? visible.filter((k) => k.leaderAction === 'discuss_group').length
+    : 0;
+  const followupCount = isLeaderActions
+    ? visible.filter((k) => k.leaderAction === 'followup_1on1').length
+    : 0;
+
+  const headerBadge = isLeaderActions
+    ? `${discussCount + followupCount}/${visible.length}`
+    : config.requireReview
+    ? `${visible.length - pendingReview}/${visible.length} revisados`
+    : visible.length > 0
+    ? `${visible.length}`
+    : undefined;
 
   return (
     <WizardStepScaffold
@@ -99,13 +143,7 @@ export const KrsStep = memo(function KrsStep({
           title={label.title}
           description={label.subtitle}
           variant={pendingReview > 0 ? 'amber' : 'primary'}
-          badge={
-            config.requireReview
-              ? `${visible.length - pendingReview}/${visible.length} revisados`
-              : visible.length > 0
-              ? `${visible.length}`
-              : undefined
-          }
+          badge={headerBadge}
         />
       }
       bottomFixed={
@@ -120,6 +158,19 @@ export const KrsStep = memo(function KrsStep({
       footer={footer}
     >
       <div className="p-4 md:p-6 space-y-3">
+        {isLeaderActions && visible.length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="outline" className="gap-1">
+              <Users className="h-3 w-3" />
+              {discussCount} em grupo
+            </Badge>
+            <Badge variant="outline" className="gap-1">
+              <UserRound className="h-3 w-3" />
+              {followupCount} 1:1
+            </Badge>
+          </div>
+        )}
+
         {visible.length === 0 ? (
           <p className="text-sm text-muted-foreground italic">Nenhum KR para exibir.</p>
         ) : (
@@ -134,6 +185,12 @@ export const KrsStep = memo(function KrsStep({
                 className={cn(
                   'p-4 transition-colors',
                   config.requireReview && !kr.reviewed && inAttention && 'border-status-amber/40',
+                  isLeaderActions &&
+                    kr.leaderAction === 'discuss_group' &&
+                    'border-info/50 bg-info-muted',
+                  isLeaderActions &&
+                    kr.leaderAction === 'followup_1on1' &&
+                    'border-status-purple/50 bg-status-purple-muted',
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -144,6 +201,20 @@ export const KrsStep = memo(function KrsStep({
                     <p className="font-medium text-sm">{kr.title}</p>
                     {kr.ownerName && (
                       <p className="text-xs text-muted-foreground mt-0.5">{kr.ownerName}</p>
+                    )}
+                    {isLeaderActions && (kr.isAtRisk || kr.isPending) && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {kr.isAtRisk && (
+                          <Badge variant="destructive" className="text-xs h-5">
+                            Em risco
+                          </Badge>
+                        )}
+                        {kr.isPending && !kr.isAtRisk && kr.daysSinceCheckin != null && (
+                          <Badge variant="secondary" className="text-xs h-5">
+                            {kr.daysSinceCheckin}d
+                          </Badge>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
@@ -162,7 +233,33 @@ export const KrsStep = memo(function KrsStep({
                   </div>
                 </div>
 
-                {/* Edição inline */}
+                {/* Botões de ação do líder (mode=leader-actions) */}
+                {isLeaderActions && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant={kr.leaderAction === 'discuss_group' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => toggleLeaderAction(kr.id, 'discuss_group')}
+                    >
+                      <Users className="h-3 w-3 mr-1" />
+                      Discutir em grupo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={kr.leaderAction === 'followup_1on1' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => toggleLeaderAction(kr.id, 'followup_1on1')}
+                    >
+                      <UserRound className="h-3 w-3 mr-1" />
+                      Follow-up 1:1
+                    </Button>
+                  </div>
+                )}
+
+                {/* Edição inline (nota / revisão) */}
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <Button
                     type="button"
@@ -207,6 +304,19 @@ export const KrsStep = memo(function KrsStep({
               </Card>
             );
           })
+        )}
+
+        {/* Notas de pauta (apenas mode=leader-actions) */}
+        {isLeaderActions && onMeetingNotesChange && (
+          <div className="pt-4 border-t space-y-2">
+            <p className="text-sm font-medium">Notas pré-reunião</p>
+            <Textarea
+              value={meetingNotes ?? ''}
+              onChange={(e) => onMeetingNotesChange(e.target.value)}
+              placeholder="Adicione anotações para guiar a discussão..."
+              className="min-h-[100px] resize-none text-sm"
+            />
+          </div>
         )}
       </div>
     </WizardStepScaffold>
