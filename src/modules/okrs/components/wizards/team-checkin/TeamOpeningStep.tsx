@@ -50,6 +50,7 @@ export function TeamOpeningStep({
   decisions = [],
   onDecisionsChange,
   onContinue,
+  topSlot,
 }: TeamOpeningStepProps) {
   // Calculate stats
   const stats = useMemo(() => {
