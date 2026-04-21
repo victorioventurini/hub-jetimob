@@ -31,21 +31,10 @@ export interface RitualAvailability {
 }
 
 // ============================================================
-// RITUAL LABELS (PT-BR)
+// RITUAL LABELS (PT-BR) — proxied from SSOT
 // ============================================================
 
-const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
-  'collaborator': 'Check-in do Colaborador',
-  'leader-prep': 'Preparação do Check-in',
-  'team-checkin': 'Check-in do Time',
-  'clevel-checkin': 'Check-in Estratégico',
-  'mbr-pre': 'Pré-MBR',
-  'mbr': 'MBR',
-  'qbr-pre': 'Pré-QBR',
-  'qbr-pre-clevel': 'Pré-QBR (C-Level)',
-  'qbr-meeting': 'Reunião QBR',
-  'qbr-post': 'Pós-QBR',
-};
+const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = SSOT_RITUAL_LABELS;
 
 // ============================================================
 // DATE HELPERS
