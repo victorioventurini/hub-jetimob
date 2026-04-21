@@ -193,3 +193,43 @@ A cada onda concluída:
 6. Base pronta para Weekly/Pré-Weekly futuros via composição (zero novo componente)
 7. **Todos os steps ativos** (exceto consolidação final) renderizam `InlineDecisionInput` e o step de **Decisões** consolida agrupado por `sourceStep`
 
+
+---
+
+## Status final (executado em 2026-04-21)
+
+### ✅ Onda 1 — completa (estratégia full-migration)
+- **Check-in Individual (collaborator v2)**: framework consumido; componentes proprietários removidos.
+- **Pré-Check-in do Time (leader-prep v2)**: migração full; `LeaderHighlightsStep`/`LeaderPrepStep` deletados; novos `LeaderInsightsStep` + `KrsStep mode='leader-actions'`.
+
+### ✅ Onda 2 — completa (estratégia híbrida)
+- **Check-in do Time (v3)**, **Pré-MBR (v3)**, **Pré-QBR (v3)**: páginas mantêm step components ricos; framework atua como SSOT estrutural + versionamento. `STRUCTURE_VERSION_BY_WIZARD_TYPE` aponta para `v3`.
+
+### ⏸️ Onda 3 — pré-ativada (aguardando Q-end por TCR)
+- Definições `mbrV4`, `qbrMeetingV4`, `qbrPostV4` prontas em `stepDefinitions.ts`.
+- `STRUCTURE_VERSION_BY_WIZARD_TYPE` mantém `v1` para esses ritos por governança (não trocar estrutura no meio do trimestre vigente).
+- Ativar trocando os 3 valores para `v4` após Q-end.
+
+### ✅ Infraestrutura
+- Migration `okr_wizard_sessions.structure_version` (DEFAULT 'v1').
+- Index `(wizard_type, structure_version)`.
+- `RITUAL_STEP_LABELS` em `ritualLabels.ts`.
+- `useDecisionsAggregator` agrupando inline por `sourceStep`.
+- `_InlineDecisionsSlot` ubíquo (exceto `SummaryAndSubmit`/`Closing`).
+- `useRitualHistory`/`useRitualDetail` selecionam `structure_version`; `RitualHistoryItem.structureVersion` exposto.
+- `SnapshotReportView` aceita `structureVersion` (props), preparado para roteamento futuro v2+ (shape compatível, transparente hoje).
+
+### ✅ Testes
+- `framework/lib/__tests__/completionEvaluator.test.ts` — 16 casos cobrindo todas as `CompletionRuleId`.
+
+### Critérios de sucesso — auditoria final
+| # | Status | Nota |
+|---|--------|------|
+| 1 | ✅ | `grep "wizardType ===" framework/components/` → 0 matches |
+| 2 | ✅ | `KrsStep` (collaborator + leader-prep + team-checkin + mbr-pre + qbr-pre + mbr); `BalanceStep`, `KpiGateStep`, `DecisionsStep` reutilizados ≥4 ritos |
+| 3 | ✅ | `useRitualHistory` lê `structure_version`; renderers v1 mantidos intactos; dispatcher recebe versão |
+| 4 | ✅ | Hooks de wizard (`useGenericWizardDraft`, `useWizardDraft`, `useWizardSession`, `useQbrExecutiveReport`) gravam via `STRUCTURE_VERSION_BY_WIZARD_TYPE` |
+| 5 | ✅ | Ordem `KPIs → KRs → Projetos` em todas as definições; exceções documentadas em código |
+| 6 | ✅ | Composição via `STEP_DEFINITIONS` permite Weekly/Pré-Weekly sem novo componente |
+| 7 | ✅ | `_InlineDecisionsSlot` em todos os steps ativos; `DecisionsStep` consolida via `useDecisionsAggregator` |
+
