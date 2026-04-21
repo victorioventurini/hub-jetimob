@@ -60,6 +60,8 @@ export const DecisionsStep = memo(function DecisionsStep({
   const handleRemove = (id: string) => {
     onDecisionsChange(decisions.filter((d) => d.id !== id));
   };
+  const noopUpdate = (_id: string, _updates: Partial<TeamCheckinDecision>) => {};
+  const noopRemove = (_id: string) => {};
 
   return (
     <WizardStepScaffold
@@ -99,8 +101,8 @@ export const DecisionsStep = memo(function DecisionsStep({
               <DecisionCard
                 key={d.id}
                 decision={d}
-                onUpdate={(updates) => handleUpdate(d.id, updates)}
-                onRemove={() => handleRemove(d.id)}
+                onUpdate={handleUpdate}
+                onRemove={handleRemove}
               />
             ))
           )}
@@ -119,8 +121,8 @@ export const DecisionsStep = memo(function DecisionsStep({
                   <DecisionCard
                     key={d.id}
                     decision={d}
-                    onUpdate={(updates) => handleUpdate(d.id, updates)}
-                    onRemove={() => handleRemove(d.id)}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
                   />
                 ))}
               </Card>
@@ -133,7 +135,7 @@ export const DecisionsStep = memo(function DecisionsStep({
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-foreground">Compromissos cross-área</h3>
             {data.crossAreaDecisions.map((d) => (
-              <DecisionCard key={d.id} decision={d} onUpdate={() => {}} onRemove={() => {}} />
+              <DecisionCard key={d.id} decision={d} onUpdate={noopUpdate} onRemove={noopRemove} />
             ))}
           </section>
         )}
@@ -145,7 +147,7 @@ export const DecisionsStep = memo(function DecisionsStep({
               Carry-over do rito anterior <Badge variant="outline" className="ml-1 text-xs">{data.carryOverDecisions.length}</Badge>
             </h3>
             {data.carryOverDecisions.map((d) => (
-              <DecisionCard key={d.id} decision={d} onUpdate={() => {}} onRemove={() => {}} />
+              <DecisionCard key={d.id} decision={d} onUpdate={noopUpdate} onRemove={noopRemove} />
             ))}
           </section>
         )}
