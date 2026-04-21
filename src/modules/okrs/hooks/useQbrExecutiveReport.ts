@@ -159,6 +159,9 @@ export function useQbrExecutiveReport(cycleId: string | null) {
           status: 'completed' as const,
           completed_at: new Date().toISOString(),
           reflection_data: reportData as unknown as Json,
+          // qbr-executive-report não é WizardPersona padrão (relatório IA persistido como sessão).
+          // Mantém v1 explícito até o relatório ser incorporado ao framework.
+          structure_version: 'v1',
         });
 
       if (insertError) {
