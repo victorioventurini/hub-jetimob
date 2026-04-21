@@ -11,11 +11,11 @@ import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 function dec(id: string): TeamCheckinDecision {
   return {
     id,
-    title: `dec-${id}`,
+    text: `dec-${id}`,
     category: 'decision',
     createdAt: new Date().toISOString(),
     createdBy: 'tester',
-  } as TeamCheckinDecision;
+  } as unknown as TeamCheckinDecision;
 }
 
 describe('isVisible', () => {
