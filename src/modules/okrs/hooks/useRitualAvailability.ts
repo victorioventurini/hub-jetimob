@@ -38,8 +38,6 @@ const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
   'leader-prep': 'Preparação do Check-in',
   'team-checkin': 'Check-in do Time',
   'clevel-checkin': 'Check-in Estratégico',
-  'mbr-pre-first': 'Pré-MBR (1º mês)',
-  'mbr-first': 'MBR (1º mês)',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
   'qbr-pre': 'Pré-QBR',
@@ -103,48 +101,19 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
     }),
   },
 
-  // MBR₁ (1st month review)
-  'mbr-pre-first': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date_first_month);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: addBusinessDaysToDate(review, -5),
-        closes: addBusinessDaysToDate(review, -1),
-      };
-    },
-  },
-  'mbr-first': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date_first_month);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: review,
-        closes: addBusinessDaysToDate(review, 2),
-      };
-    },
-  },
-
-  // MBR₂ (2nd month review)
+  // MBR / Pré-MBR — janela composta (MBR₁ sobre review_date_first_month + MBR₂ sobre review_date).
+  // Retorna a janela ativa se `today` estiver dentro de alguma; caso contrário, a próxima futura.
   'mbr-pre': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: addBusinessDaysToDate(review, -5),
-        closes: addBusinessDaysToDate(review, -1),
-      };
-    },
+    getWindow: (c) => pickCompositeWindow(
+      buildWindow(c.review_date_first_month, -5, -1),
+      buildWindow(c.review_date, -5, -1),
+    ),
   },
   'mbr': {
-    getWindow: (c) => {
-      const review = parseDate(c.review_date);
-      if (!review) return { opens: null, closes: null };
-      return {
-        opens: review,
-        closes: addBusinessDaysToDate(review, 2),
-      };
-    },
+    getWindow: (c) => pickCompositeWindow(
+      buildWindow(c.review_date_first_month, 0, 2),
+      buildWindow(c.review_date, 0, 2),
+    ),
   },
 
   // QBR phases
@@ -238,7 +207,7 @@ export function useRitualAvailability(
     // ── QBR period block for MBR/MBR-pre ──────────────────────
     // When today >= planning_date, MBR and MBR-pre are blocked
     // because QBR takes over the review function for the 3rd month.
-    if (['mbr', 'mbr-pre', 'mbr-first', 'mbr-pre-first'].includes(wizardType)) {
+    if (['mbr', 'mbr-pre'].includes(wizardType)) {
       const planningDate = parseDate(cycle.planning_date);
 
       if (planningDate) {

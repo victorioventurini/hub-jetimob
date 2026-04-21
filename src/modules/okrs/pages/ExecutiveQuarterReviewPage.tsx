@@ -303,7 +303,7 @@ export default function ExecutiveQuarterReviewPage() {
         .eq('bu_id', currentBuId!)
         .eq('cycle_id', selectedCycle!.id)
         .eq('status', 'completed')
-        .in('wizard_type', ['qbr-pre', 'qbr-pre-clevel', 'qbr-meeting', 'qbr-post', 'mbr', 'mbr-pre', 'mbr-first', 'mbr-pre-first']);
+        .in('wizard_type', ['qbr-pre', 'qbr-pre-clevel', 'qbr-meeting', 'qbr-post', 'mbr', 'mbr-pre']);
       if (error) throw error;
       return (data || []) as RitualSessionRow[];
     },
