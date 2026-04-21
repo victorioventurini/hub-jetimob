@@ -23,6 +23,7 @@ export type FrameworkComponentId =
   | 'KrsStep'
   | 'ProjectsAndInitiativesStep'
   | 'HighlightsAndRisksStep'
+  | 'LeaderInsightsStep'
   | 'DecisionsStep'
   | 'ClosingStep'
   | 'SummaryAndSubmitStep'
@@ -41,10 +42,18 @@ export interface KpiGateStepConfig {
 }
 
 export interface KrsStepConfig {
-  /** all = todos; attention-only = apenas em atenção; teams-overview = visão por time (MBR) */
-  mode: 'all' | 'attention-only' | 'teams-overview';
+  /**
+   * all = todos; attention-only = apenas em atenção; teams-overview = visão por time (MBR);
+   * leader-actions = pauta do líder (botões discuss_group/followup_1on1 + notas de reunião)
+   */
+  mode: 'all' | 'attention-only' | 'teams-overview' | 'leader-actions';
   /** Quando true, exige revisão explícita dos KRs marcados antes de avançar */
   requireReview?: boolean;
+  /**
+   * Quando true (apenas em mode='leader-actions'), exige ao menos uma ação
+   * marcada (discuss_group ou followup_1on1) antes de avançar.
+   */
+  requireLeaderAction?: boolean;
 }
 
 export interface ProjectsAndInitiativesStepConfig {
@@ -59,6 +68,18 @@ export interface ProjectsAndInitiativesStepConfig {
 export interface HighlightsAndRisksStepConfig {
   /** Variação narrativa: highlights+risks (default) vs learnings+risks (Pré-QBR) */
   variant: 'highlights-risks' | 'learnings-risks';
+}
+
+/**
+ * LeaderInsightsStep — read-only para destaques gerados pelo sistema/IA
+ * (estagnados, bloqueados, alto-impacto, pediu ajuda, atrasados).
+ * Diferente do `HighlightsAndRisksStep` (CRUD livre).
+ */
+export interface LeaderInsightsStepConfig {
+  /** Quando true, exibe seção de Insights da IA (Vic) acima dos system highlights */
+  showAiInsights?: boolean;
+  /** Permite descartar insights individualmente (apenas IA) */
+  dismissable?: boolean;
 }
 
 export interface DecisionsStepConfig {
