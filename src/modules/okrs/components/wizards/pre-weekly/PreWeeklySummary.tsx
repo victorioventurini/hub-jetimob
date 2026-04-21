@@ -63,7 +63,6 @@ export function PreWeeklySummary({
           onBack={onBack}
           onPrimary={onComplete}
           primaryLoading={isCompleting}
-          primaryLabel="Enviar Pré-Weekly"
         />
       }
     >
