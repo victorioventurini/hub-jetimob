@@ -32,6 +32,9 @@ export type { ProjectsAndInitiativesStepProps } from './components/ProjectsAndIn
 export { HighlightsAndRisksStep } from './components/HighlightsAndRisksStep';
 export type { HighlightsAndRisksStepProps } from './components/HighlightsAndRisksStep';
 
+export { LeaderInsightsStep } from './components/LeaderInsightsStep';
+export type { LeaderInsightsStepProps } from './components/LeaderInsightsStep';
+
 export { DecisionsStep } from './components/DecisionsStep';
 export type { DecisionsStepProps } from './components/DecisionsStep';
 
@@ -65,6 +68,8 @@ export type {
   ProjectItem,
   InitiativeItem,
   HighlightItem,
+  LeaderInsightItem,
+  LeaderInsightsData,
   DecisionsBySourceStep,
 } from './config/stepContentAdapters';
 
@@ -95,6 +100,7 @@ export type {
   KrsStepConfig,
   ProjectsAndInitiativesStepConfig,
   HighlightsAndRisksStepConfig,
+  LeaderInsightsStepConfig,
   DecisionsStepConfig,
   ClosingStepConfig,
   SummaryAndSubmitStepConfig,

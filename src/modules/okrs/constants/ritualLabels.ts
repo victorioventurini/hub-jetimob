@@ -95,6 +95,8 @@ export const RITUAL_STEP_LABELS: Partial<
       'krs-attention': { title: 'KRs em Atenção', subtitle: 'KRs que mudaram de estado na semana', shortLabel: 'KRs' },
       'projects-initiatives': { title: 'Projetos e Iniciativas', subtitle: 'Execução do time', shortLabel: 'Projetos' },
       'highlights-risks': { title: 'Destaques e Riscos', subtitle: 'Acelerou, travou, atenção', shortLabel: 'Destaques' },
+      'leader-insights': { title: 'Insights do Time', subtitle: 'Pontos identificados pelo sistema e pela IA', shortLabel: 'Insights' },
+      'prep': { title: 'Preparação da Pauta', subtitle: 'Marque KRs para discutir em grupo ou em 1:1', shortLabel: 'Preparação' },
       'agenda': { title: 'Preparação da Pauta', subtitle: 'Pauta do check-in coletivo', shortLabel: 'Pauta' },
       'summary': { title: 'Resumo e Envio', subtitle: 'Revise antes de compartilhar', shortLabel: 'Resumo' },
     },
