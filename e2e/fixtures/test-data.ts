@@ -56,7 +56,6 @@ export const ROUTES = {
   collaboratorCheckin: '/rituals/collaborator-checkin',
   teamCheckinPre: '/rituals/team-checkin-pre',
   teamCheckin: '/rituals/team-checkin',
-  managersCheckin: '/rituals/managers-checkin',
   clevelCheckin: '/rituals/clevel-checkin',
   mbr: '/rituals/mbr',
   qbrPre: '/rituals/qbr-pre',
