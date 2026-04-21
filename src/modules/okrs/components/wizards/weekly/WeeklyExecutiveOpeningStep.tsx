@@ -11,7 +11,7 @@
  */
 
 import { useCallback } from 'react';
-import { Sparkles, ListChecks, AlertTriangle, Clock4, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ListChecks, AlertTriangle, Clock4, CheckCircle2, Wand2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -53,6 +53,10 @@ export interface WeeklyExecutiveOpeningStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  /** Acionado pelo botão "Gerar rascunho" — invoca o curador-orquestrador */
+  onGenerateDraft?: () => void | Promise<void>;
+  /** Indica geração em curso (desabilita botão e mostra spinner) */
+  isGenerating?: boolean;
 }
 
 // ============================================================
@@ -65,6 +69,8 @@ export function WeeklyExecutiveOpeningStep({
   decisions,
   onDecisionsChange,
   onContinue,
+  onGenerateDraft,
+  isGenerating = false,
 }: WeeklyExecutiveOpeningStepProps) {
   const { isWildcard } = usePermissions();
   const { realProfileId } = useIdentity();
@@ -123,12 +129,47 @@ export function WeeklyExecutiveOpeningStep({
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Modo manual</CardTitle>
               <CardDescription>
-                IA desativada ou rascunho ainda não gerado. Edite as seções
-                abaixo para conduzir a abertura. Quando o curador estiver ativo,
-                um botão "Gerar rascunho" aparecerá aqui.
+                Edite as seções abaixo manualmente, ou peça ao curador para
+                gerar um rascunho a partir dos Pré-Weekly da semana.
               </CardDescription>
             </CardHeader>
+            {onGenerateDraft && (
+              <CardContent>
+                <Button
+                  onClick={() => void onGenerateDraft()}
+                  disabled={isGenerating}
+                  size="sm"
+                  className="gap-2"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-4 w-4" />
+                  )}
+                  {isGenerating ? 'Gerando rascunho…' : 'Gerar rascunho com IA'}
+                </Button>
+              </CardContent>
+            )}
           </Card>
+        )}
+
+        {opening.origin === 'ai-curated' && onGenerateDraft && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onGenerateDraft()}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4" />
+              )}
+              Regenerar rascunho
+            </Button>
+          </div>
         )}
 
         <Card>
