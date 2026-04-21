@@ -154,20 +154,46 @@ const qbrPreV3: StepDefinition[] = [
 ];
 
 // ============================================================
-// ONDA 3 — v4
+// ONDA 3 — v4 (PRÉ-ATIVAÇÃO — aguardando Q-end)
 // ============================================================
+//
+// Estado: definições prontas, mas o mapeamento ativo em
+// `STRUCTURE_VERSION_BY_WIZARD_TYPE` permanece em 'v1' por governança
+// do TCR (não trocar estrutura no meio do trimestre vigente).
+//
+// Steps marcados como `// LEGADO:` permanecem em componentes específicos
+// durante a Onda 3 — o framework atua como SSOT estrutural enquanto a UI
+// rica é mantida. Ver memórias canônicas:
+//   - mem://features/rituals/mbr-ritual-alignment-standard
+//   - mem://features/rituals/qbr-meeting-ritual-standard-v2-0-0
+//   - mem://features/rituals/qbr-post-ritual-standard-v2-0-0
+// ------------------------------------------------------------
 
+/**
+ * MBR v4 (Reunião Mensal de Negócio) — 8 etapas canônicas.
+ * Steps `org-okrs` e `qbr-followup` são LEGADO (componentes específicos
+ * com lógica de cobertura cross-team / urgência de prazo).
+ */
 const mbrV4: StepDefinition[] = [
   { id: 'opening-executive', component: 'BalanceStep', config: { period: 'monthly' } },
   { id: 'kpi-gate', component: 'KpiGateStep', config: { requireResolution: true } },
   { id: 'teams-overview', component: 'KrsStep', config: { mode: 'teams-overview' } },
-  { id: 'team-analysis', component: 'KrsStep', config: { mode: 'all', requireReview: true } },
-  // 'org-okrs' e 'strategic-projects' são renderizados por componentes
-  // específicos legados durante a Onda 3 (a serem migrados quando ativados)
+  {
+    id: 'team-analysis',
+    component: 'KrsStep',
+    config: { mode: 'all', requireReview: true },
+  },
+  // LEGADO: 'org-okrs' (cobertura cross-team com badge "Sem cobertura")
+  // LEGADO: 'qbr-followup' (decisões com bordas de urgência)
   {
     id: 'strategic-projects',
     component: 'ProjectsAndInitiativesStep',
-    config: { showProjects: true, showInitiatives: false, scope: 'cross-team', minTeamsForCrossTeam: 2 },
+    config: {
+      showProjects: true,
+      showInitiatives: false,
+      scope: 'cross-team',
+      minTeamsForCrossTeam: 2,
+    },
   },
   {
     id: 'decisions',
@@ -182,9 +208,17 @@ const mbrV4: StepDefinition[] = [
   },
 ];
 
+/**
+ * QBR Meeting v4 — 5 etapas canônicas.
+ * Step 'review' é LEGADO (Review Timer 9min, badge OKR compartilhado,
+ * formulário "Ajustes Estruturados", TeamDeliveryScorecard por card).
+ * Step 'org-okrs' é LEGADO (deliberação sobre OKRs organizacionais).
+ * Step 1 NÃO exibe scorecard do quarter (canônico).
+ */
 const qbrMeetingV4: StepDefinition[] = [
   { id: 'opening-executive', component: 'BalanceStep', config: { period: 'cycle' } },
-  // 'okr-approval' permanece em componente específico (deliberação central)
+  // LEGADO: 'review' (KRs com Review Timer + ajustes estruturados)
+  // LEGADO: 'org-okrs' (deliberação organizacional)
   {
     id: 'decisions',
     component: 'DecisionsStep',
@@ -193,26 +227,31 @@ const qbrMeetingV4: StepDefinition[] = [
   {
     id: 'closing',
     component: 'ClosingStep',
-    config: { blocks: ['checklist', 'feedback', 'next-30-days'] },
+    // Sem 'next-30-days' aqui — esta seção foi movida para QBR Post.
+    config: { blocks: ['checklist', 'feedback'] },
     suppressInlineDecisions: true,
   },
 ];
 
+/**
+ * QBR Post v4 — 5 etapas canônicas.
+ * Steps `promotion`, `commitments` e `cadence` são LEGADO (UIs ricas:
+ * scorecard histórico + seletor de ciclo destino, atribuição nominal,
+ * datas MBR/check-ins read-only).
+ */
 const qbrPostV4: StepDefinition[] = [
-  // 'okr-promotion' permanece em componente específico
+  // LEGADO: 'promotion' (scorecard histórico + seletor de ciclo destino + ajustes finos KR)
   {
     id: 'decisions-adjustments',
     component: 'DecisionsStep',
     config: { includeCarryOver: true, includeCrossArea: true, groupInlineBySource: true },
   },
-  {
-    id: 'commitments-followup',
-    component: 'DecisionsStep',
-    config: { includeCarryOver: false, includeCrossArea: true, groupInlineBySource: true },
-  },
+  // LEGADO: 'commitments' (atribuição nominal + vínculo OKR promovido)
+  // LEGADO: 'cadence' (datas MBR/check-ins read-only)
   {
     id: 'closing',
     component: 'ClosingStep',
+    // 'minutes' = ata + carta de contexto do CEO + checklist dinâmico
     config: { blocks: ['minutes', 'ceo-letter'] },
     suppressInlineDecisions: true,
   },
