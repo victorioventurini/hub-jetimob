@@ -29,6 +29,7 @@ import {
   Settings2,
   Presentation,
   History,
+  Inbox,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
