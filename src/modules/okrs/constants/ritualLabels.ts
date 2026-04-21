@@ -168,6 +168,24 @@ export const RITUAL_STEP_LABELS: Partial<
       'closing': { title: 'Encerramento', subtitle: 'Ata executiva e comunicação final', shortLabel: 'Encerramento' },
     },
   },
+
+  // ============= Onda 4 — Ritos semanais =============
+  'pre-weekly': {
+    v2: {
+      'sources': { title: 'Suas fontes desta semana', subtitle: 'O que você já registrou e vai destilar', shortLabel: 'Fontes' },
+      'pauta': { title: 'Preparação da Pauta', subtitle: 'Selecione até 3 temas que sobem para a BU', shortLabel: 'Pauta' },
+      'pessoas': { title: 'Pessoas', subtitle: 'Sinais estruturais do time para a Weekly', shortLabel: 'Pessoas' },
+      'summary': { title: 'Resumo e Envio', subtitle: 'Revise antes de enviar para o Weekly', shortLabel: 'Resumo' },
+    },
+  },
+  'weekly': {
+    v2: {
+      'executive-opening': { title: 'Abertura Executiva', subtitle: 'Curadoria da pauta consolidada da BU', shortLabel: 'Abertura' },
+      'priorities': { title: 'Prioridades da Semana', subtitle: 'Temas cross-times de Performance e Projetos', shortLabel: 'Prioridades' },
+      'people': { title: 'Pessoas', subtitle: 'Temas e sinais estruturais sobre o time da BU', shortLabel: 'Pessoas' },
+      'closing': { title: 'Encerramento', subtitle: 'Checklist e ata da Weekly', shortLabel: 'Encerramento' },
+    },
+  },
 };
 
 /**

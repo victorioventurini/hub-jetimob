@@ -119,6 +119,31 @@ export const COMPLETION_RULES: Partial<Record<WizardPersona, RulesByVersion>> = 
       },
     },
   },
+
+  // ============= Onda 4 — Ritos semanais =============
+  'pre-weekly': {
+    v2: {
+      steps: {
+        // 'sources' (gate flexível): não bloqueia mesmo com fontes faltando.
+        // 'pauta' e 'pessoas' são LEGADO — validados no container do rito
+        // (limites de itens, contexto obrigatório quando urgência=alta, etc.).
+      },
+      submission: {
+        requiredSteps: ['summary'],
+      },
+    },
+  },
+  'weekly': {
+    v2: {
+      steps: {
+        // 'executive-opening', 'priorities' e 'people' são LEGADO — validados
+        // nos containers (cobertura mínima, fallback manual, dual-channel).
+      },
+      submission: {
+        requiredSteps: ['closing'],
+      },
+    },
+  },
 };
 
 export function getCompletionRules(
