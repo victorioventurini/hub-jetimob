@@ -571,6 +571,49 @@ export interface QbrMeetingDraftData {
   nextThirtyDays?: { ceo?: string; coo?: string; cpto?: string };
 }
 
+// ============================================================
+// PRÉ-WEEKLY (ONDA 4 — DESTILAÇÃO INDIVIDUAL DA SEMANA)
+// ============================================================
+
+export type PreWeeklyStep = 'sources' | 'pauta' | 'pessoas' | 'summary';
+
+/**
+ * Categorização do tema selecionado para subir à Weekly da BU.
+ * Performance = números/KPIs/KRs do time. Projetos = entregas estruturais.
+ */
+export type PreWeeklyTopicCategory = 'performance' | 'projetos' | 'pessoas';
+export type PreWeeklyTopicPriority = 'low' | 'medium' | 'high';
+
+export interface PreWeeklyTopic {
+  id: string;
+  title: string;
+  category: PreWeeklyTopicCategory;
+  priority: PreWeeklyTopicPriority;
+  /** Resumo livre do contexto/decisão proposta */
+  context?: string;
+}
+
+export interface PreWeeklyPeopleSignal {
+  id: string;
+  /** Tipo de sinal estrutural */
+  type: 'celebracao' | 'risco' | 'mudanca' | 'feedback';
+  description: string;
+}
+
+/** Draft data do Pré-Weekly — escopo individual do gestor */
+export interface PreWeeklyDraftData {
+  /** Semana de referência (YYYY-MM-DD da segunda-feira) */
+  referenceWeek: string;
+  /** Reflexão livre sobre as fontes desta semana (Step 1) */
+  sourcesReflection: string;
+  /** Até 3 temas que sobem para a Weekly (Step 2) */
+  topics: PreWeeklyTopic[];
+  /** Sinais de pessoas (Step 3) */
+  peopleSignals: PreWeeklyPeopleSignal[];
+  /** Decisões registradas inline ao longo dos steps */
+  decisions: TeamCheckinDecision[];
+}
+
 /** Draft data do pós-QBR */
 export interface QbrPostDraftData {
   cycleId: string;
