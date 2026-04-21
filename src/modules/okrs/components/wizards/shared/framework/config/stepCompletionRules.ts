@@ -111,7 +111,9 @@ export const COMPLETION_RULES: Partial<Record<WizardPersona, RulesByVersion>> = 
     v4: {
       steps: {},
       submission: {
-        requiredSteps: ['decisions-adjustments', 'commitments-followup', 'closing'],
+        // Steps LEGADO ('promotion', 'commitments', 'cadence') ficam fora do
+        // gate do framework — validados pelos containers específicos.
+        requiredSteps: ['decisions-adjustments', 'closing'],
       },
     },
   },

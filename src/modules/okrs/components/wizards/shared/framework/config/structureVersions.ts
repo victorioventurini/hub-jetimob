@@ -33,10 +33,14 @@ export const STRUCTURE_VERSION_BY_WIZARD_TYPE: Record<WizardPersona, StructureVe
   'mbr-pre': 'v3',
   'qbr-pre': 'v3',
 
-  // Onda 3
-  'mbr': 'v1',          // → v4
-  'qbr-meeting': 'v1',  // → v4
-  'qbr-post': 'v1',     // → v4
+  // Onda 3 — PRÉ-ATIVAÇÃO
+  // Definições v4 prontas em `stepDefinitions.ts` + completion rules em
+  // `stepCompletionRules.ts`. Mapeamento permanece v1 por governança TCR
+  // (não trocar estrutura no meio do trimestre vigente). Ativar trocando
+  // os valores abaixo para 'v4' após o Q-end.
+  'mbr': 'v1',          // → v4 (aguardando Q-end)
+  'qbr-meeting': 'v1',  // → v4 (aguardando Q-end)
+  'qbr-post': 'v1',     // → v4 (aguardando Q-end)
 
   // Não impactados pela padronização (mantêm v1)
   'clevel-checkin': 'v1',
