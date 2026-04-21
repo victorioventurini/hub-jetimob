@@ -1,117 +1,195 @@
 
 
-# Padronização de Nomenclatura dos Ritos no Hub
+# Padronização Estrutural dos Ritos do Hub — Framework Unificado (Plano Final)
 
-## Decisão sobre o prompt sugerido (Claude/GPT)
+## Conformidade com docs canônicos
 
-A proposta externa cobre apenas **labels visíveis**, sem alterar slugs — o que está alinhado ao TCR e às memórias canônicas. Porém, **2 nomes do mapeamento sugerido divergem dos padrões atuais do projeto** e precisam de ajuste antes da execução:
+Pré-checklist obrigatório executado:
 
-| Sugestão externa | Estado atual no projeto | Decisão recomendada |
+- ✅ **TCR**: rituais são `okr_wizard_sessions` com `wizard_type` (slug imutável) + `reflection_data` (JSONB livre). Snapshots imutáveis em MBR/QBR preservados.
+- ✅ **IDENTITY_CONVENTION**: mutações continuam via `realProfileId` do `useIdentity` (mutation-identity-guard-pattern).
+- ✅ **PERMISSIONS_AND_RBAC_MODEL**: nenhuma permission key alterada. Guards de rota (`BuAdminRoute`, `CLevelRitualRoute`, `ModuleRoute`) intactos.
+- ✅ **DATA_MODEL_REGISTRY**: única alteração estrutural é coluna `structure_version` em `okr_wizard_sessions` + correção do CHECK constraint do `wizard_type` (bug latente — não inclui `mbr-pre`).
+- ✅ **DEVELOPMENT_STANDARDS**: query keys via helpers existentes; sem `select('*')`; React.memo nos componentes de lista; URL state preservado.
+- ✅ **Reuso máximo**: estende `wizards/shared/` (25+ componentes existentes) com nova subpasta `framework/`. SSOT `ritualLabels.ts` ganha `RITUAL_STEP_LABELS`.
+
+## Princípios arquiteturais
+
+1. **Slugs `WizardPersona` imutáveis** — só labels e composição de steps mudam.
+2. **SSOT único de labels**: `ritualLabels.ts` se estende para incluir step labels (não criar novo arquivo).
+3. **Componentes 100% agnósticos de `wizardType`** — toda variação via `config` prop.
+4. **Versionamento por rito**: cada `WizardPersona` tem versão própria. Sessões antigas renderizam com sua versão original.
+5. **Reutilização máxima**: novos componentes em `framework/` reutilizam `WizardStepScaffold`, `WizardStepHeader`, `InlineDecisionInput`, `KrContextCard`, `DecisionCard`, `AlertBanner`, `VicInsightCard`, `ProjectsSummary`.
+6. **🆕 Decisão inline ubíqua**: **todos os steps de todos os ritos** suportam registro inline de decisão via `InlineDecisionInput`, além do step formal de **Decisões** que consolida novas decisões, compromissos cross-área e carry-over.
+
+## Decisão inline ubíqua — especificação
+
+**Regra estrutural vinculante** (aplicada a todos os componentes do `framework/`):
+
+- Todo step renderizado pelo framework **deve** incluir `InlineDecisionInput` na região `bottomFixed` do `WizardStepScaffold` (padrão já estabelecido em `mem://ui/wizards/inline-decision-input-ux` e `mem://features/rituals/cross-step-decision-logging-standard`).
+- O `sourceStep` do `TeamCheckinDecision` é populado automaticamente com o `stepId` corrente — sem hardcode nos componentes.
+- O step formal de **Decisões** consolida visualmente:
+  - **Novas decisões** (registradas durante o step de Decisões em si)
+  - **Decisões inline de todos os steps anteriores** (agrupadas por `sourceStep`)
+  - **Compromissos cross-área** (subseção)
+  - **Carry-over** do rito anterior (subseção, quando aplicável)
+- Componente `DecisionsStep` recebe `config: { includeCarryOver, includeCrossArea, groupInlineBySource }` para parametrizar essa consolidação.
+- Implementação: helper `useDecisionsAggregator(decisions, currentStepId)` agrupa por `sourceStep` e expõe contagem por step para exibição visual no `DecisionsStep`.
+- **Exceção**: `SummaryAndSubmitStep` e `ClosingStep` exibem decisões em modo read-only (consolidação final), sem `InlineDecisionInput` ativo.
+
+## Vocabulário canônico
+
+| Conceito | Nome | Exceções documentadas |
 |---|---|---|
-| **"Check-in Individual"** (era "Check-in do Colaborador") | Hoje aparece como **"Check-in Semanal"** em `WIZARD_CONFIGS`/cards e como "Check-in do Colaborador" em hooks de availability/history. O nome "Semanal" reforça a cadência canônica documentada em `mem://features/rituals/collaborator-checkin-pending-items-step` e `off-cycle-accessibility-standard`. | **Adotar "Check-in Individual"** conforme a sugestão — é mais claro e neutro de cadência (o rito é acessível off-cycle). Substitui tanto "Check-in Semanal" quanto "Check-in do Colaborador". |
-| **"Check-in Executivo"** (era "Check-in C-Level") | Hoje aparece como **"Check-in Estratégico"** em `clevel-checkin` config + page title. | **Adotar "Check-in Executivo"** conforme sugestão — alinha com o nome "Pré-QBR Executivo" e cria família coerente. |
+| 1º step preparatório | **Balanço** (semana/mês/ciclo) | — |
+| 1º step decisório | **Abertura** (ou **Abertura Executiva** em MBR/QBR) | — |
+| Indicadores | **KPIs** (ou **KPI Gate** quando há gate obrigatório) | QBR usa KPIs como subseção interna |
+| Resultados | **KRs** (ou **OKRs** quando inclui objetivos) | — |
+| Execução | **Projetos e Iniciativas** (config por rito) | — |
+| Sinais | **Destaques e Riscos** (acelerou / travou / atenção) | Pré-QBR usa **Aprendizados e Riscos** |
+| Deliberação | **Decisões** (consolida inline + carry-over como subseções) | Check-in Individual usa **Pendências e Decisões**; Pós-QBR usa **Decisões e Ajustes** |
+| Final preparatório | **Resumo e Envio** | — |
+| Final decisório | **Encerramento** (Ata/Carta/Feedback como blocos internos) | — |
 
-Demais nomes da sugestão são aplicados na íntegra. O termo "Pré Check-in do Time" recebe hífen ("**Pré-Check-in do Time**") para padronizar com `Pré-MBR`/`Pré-QBR`.
+## Ordem padrão do framework
 
-## Mapa final de labels (single source of truth)
+`Abertura/Balanço → KPIs → KRs → Projetos+Iniciativas → Destaques e Riscos → Decisões → Encerramento/Resumo`
 
-| Slug técnico (imutável) | Label antiga(s) encontrada(s) | **Label nova** |
+**Justificativa**: KPIs (presente, sistema nervoso) antes de KRs (futuro, aposta) — se algo está pegando fogo, decide-se primeiro se o plano original ainda vale.
+
+## Estrutura final por rito
+
+| Rito | Versão | Steps |
 |---|---|---|
-| `collaborator` | "Check-in Semanal" / "Check-in do Colaborador" / "Check-in Colaborador" | **Check-in Individual** |
-| `leader-prep` | "Preparação do Líder" / "Pré Check-in do Time" | **Pré-Check-in do Time** |
-| `team-checkin` | "Check-in do Time" | **Check-in do Time** *(mantém)* |
-| `clevel-checkin` | "Check-in Estratégico" / "Check-in C-Level" | **Check-in Executivo** |
-| `team-okr-creation` | "Criação de OKRs do Time" / "Criar OKRs do Time" | **Criação de OKRs do Time** *(mantém)* |
-| `team-kr-creation` | "Criação de KRs do Time" / "Criação de Key Results" | **Criação de KRs do Time** |
-| `mbr-pre` | "Pré-MBR" | **Pré-MBR** *(mantém)* |
-| `mbr` | "Monthly Business Review" / "MBR — Monthly Business Review" | **MBR** |
-| `qbr-pre` | "Pré-QBR do Time" / "Pré-QBR (Líder)" / "QBR — Preparação" | **Pré-QBR** |
-| `qbr-pre-clevel` | "Pré-QBR C-Level" / "Pré-QBR (C-Level)" / "QBR Pre — C-Level" | **Pré-QBR Executivo** |
-| `qbr-meeting` | "Reunião QBR" / "QBR Meeting" | **QBR** |
-| `qbr-post` | "Pós-QBR" / "QBR Post" | **Pós-QBR** *(mantém)* |
+| **Check-in Individual** | v2 | Abertura → KPIs → KRs → Projetos+Iniciativas → Pendências e Decisões → Reflexão → Resumo e Envio |
+| **Pré-Check-in do Time** | v2 | Balanço da Semana → KPIs do Time → KRs em Atenção → Projetos+Iniciativas → Destaques e Riscos → Preparação da Pauta → Resumo e Envio |
+| **Check-in do Time** | v3 | Abertura → KPI Gate → KRs em Atenção → Projetos+Iniciativas → Destaques e Riscos → Decisões (carry-over) → Encerramento |
+| **Pré-MBR** | v3 | Balanço do Mês → KPIs do Time → KRs → Projetos (sem iniciativas) → Destaques e Riscos → Próximos Passos → Resumo e Envio |
+| **Pré-QBR** | v3 | Balanço do Ciclo → KPIs do Ciclo → KRs do Ciclo → Projetos do Ciclo → Aprendizados e Riscos → Proposta de OKRs → Resumo e Envio |
+| **MBR** | v4 | Abertura Executiva → KPI Gate → Overview dos Times → Análise por Time → OKRs Organizacionais → Projetos Estratégicos (cross-team) → Decisões (absorve Follow-up QBR) → Encerramento |
+| **QBR** | v4 | Abertura Executiva (KPIs como bloco) → Aprovação de OKRs → Decisões (absorve Compromissos) → Encerramento |
+| **Pós-QBR** | v4 | Promoção de OKRs → Decisões e Ajustes → Compromissos e Follow-up → Encerramento (Ata como bloco) |
 
-### Labels de histórico (back-compat — mantêm sufixo)
-- `managers-checkin` → **"Check-in de Gestores (descontinuado)"**
-- `mbr-first` → **"MBR (histórico)"**
-- `mbr-pre-first` → **"Pré-MBR (histórico)"**
+**Todos os steps acima** (exceto `Resumo e Envio` e `Encerramento`) carregam o `InlineDecisionInput` ativo.
 
-## Regras de implementação (TCR-compliant)
+## Detalhamento "Projetos e Iniciativas" por rito
 
-- **Nenhum slug, route, query key, permission key, persona, ID de step ou tipo TS é alterado.** Apenas strings de UI.
-- **Fonte única de labels:** consolidar todos os mapas em um único arquivo `src/modules/okrs/constants/ritualLabels.ts` exportando `RITUAL_LABELS: Record<WizardPersona, string>` + helper `getRitualLabel(persona)`. Os hooks/configs passam a importar dele.
-- **Texto auxiliar:** descriptions e tooltips que mencionem o nome do rito também são atualizados (ex.: "preparação para o **MBR**" em vez de "Monthly Business Review").
-- **Histórico em banco:** os slugs em `okr_wizard_sessions.wizard_type`, `ritual_occurrences.wizard_type`, `ritual_cadences.wizard_type` permanecem inalterados — UI faz tradução via `RITUAL_LABELS`.
+| Rito | Projetos | Iniciativas | Escopo |
+|---|---|---|---|
+| Check-in Individual | ✅ | ✅ | do colaborador |
+| Pré-Check-in do Time | ✅ | ✅ | do time |
+| Check-in do Time | ✅ | ✅ | do time (em atenção) |
+| Pré-MBR | ✅ | ❌ | do time |
+| MBR (Projetos Estratégicos) | ✅ | ❌ | cross-team (≥2 times) |
+| Pré-QBR | ✅ | ❌ | do time no ciclo |
+| QBR / Pós-QBR | ❌ | ❌ | — |
 
-## Arquivos afetados
+## Fase 0 — Fundação (executada na Onda 1)
 
-### 1. Novo arquivo (SSOT)
-- **`src/modules/okrs/constants/ritualLabels.ts`** — criar com `RITUAL_LABELS` final + `getRitualLabel(persona)`.
+### Migration de banco
+- `ALTER TABLE okr_wizard_sessions ADD COLUMN structure_version TEXT NOT NULL DEFAULT 'v1'`
+- Recriar CHECK constraint de `wizard_type` para incluir `mbr-pre`, `mbr-first`, `mbr-pre-first`, `managers-checkin` (back-compat) — **bug latente corrigido**
+- Index: `(wizard_type, structure_version)` para `RitualHistoryPage`
+- Sem CHECK em `structure_version` (regra TCR — usar trigger se preciso no futuro)
 
-### 2. Atualização de fontes de labels (passam a importar do SSOT)
-- `src/modules/okrs/types/wizard.ts` — atualizar `title` em `WIZARD_CONFIGS` (12 personas) usando `RITUAL_LABELS`.
-- `src/modules/okrs/hooks/useRitualHistory.ts` — substituir `WIZARD_TYPE_LABELS` local pelo import do SSOT.
-- `src/modules/okrs/hooks/useRitualAvailability.ts` — substituir `RITUAL_LABELS` local pelo import do SSOT.
-- `src/modules/okrs/components/wizards/shared/CompletedRitualView.tsx` — substituir `RITUAL_LABELS` local pelo import do SSOT.
+### Nova estrutura de pastas
+```
+src/modules/okrs/components/wizards/shared/framework/
+├── components/                     (genéricos, agnósticos de wizardType)
+│   ├── BalanceStep.tsx             (parametrizado: weekly | monthly | cycle)
+│   ├── KpiGateStep.tsx
+│   ├── KrsStep.tsx                 (modes: all | attention-only | teams-overview)
+│   ├── ProjectsAndInitiativesStep.tsx
+│   ├── HighlightsAndRisksStep.tsx
+│   ├── DecisionsStep.tsx           (consolida inline por sourceStep + carry-over + cross-área)
+│   ├── ClosingStep.tsx             (blocos: checklist | feedback | minutes | ceo-letter)
+│   ├── SummaryAndSubmitStep.tsx
+│   └── ReflectionStep.tsx          (exceção: collaborator)
+├── config/
+│   ├── stepDefinitions.ts          (SSOT estrutural por wizardType+version)
+│   ├── stepVisibilityRules.ts
+│   ├── stepCompletionRules.ts      (gates declarativos)
+│   ├── stepContentAdapters.ts
+│   └── structureVersions.ts        (mapa wizardType → versão atual)
+├── hooks/
+│   └── useDecisionsAggregator.ts   (agrupa decisões por sourceStep)
+└── lib/
+    ├── completionEvaluator.ts      (puro, testável)
+    └── visibilityEvaluator.ts      (puro, testável)
+```
 
-### 3. Páginas (page titles + headers)
-- `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` — `usePageTitle('Check-in Individual')`.
-- `src/modules/okrs/pages/CLevelCheckinPage.tsx` — `usePageTitle('Check-in Executivo')`.
-- `src/modules/okrs/pages/TeamCheckinPage.tsx` — fallback "Check-in do Time" (inalterado).
-- `src/modules/okrs/pages/MbrPage.tsx` — title "MBR".
-- `src/modules/okrs/pages/MbrPrePage.tsx` — title "Pré-MBR" (inalterado).
-- `src/modules/okrs/pages/LeaderPrepPage.tsx` — title "Pré-Check-in do Time".
-- `src/modules/okrs/pages/QbrPrePage.tsx` — title "Pré-QBR" + `FullPageWizardShell title="Pré-QBR"`.
-- `src/modules/okrs/pages/QbrPreCLevelPage.tsx` — title "Pré-QBR Executivo".
-- `src/modules/okrs/pages/QbrMeetingPage.tsx` — title "QBR".
-- `src/modules/okrs/pages/QbrPostPage.tsx` — title "Pós-QBR".
-- `src/modules/okrs/pages/ExecutiveQuarterReviewPage.tsx` — referências a "MBR" / "QBR" nos cabeçalhos.
+### Extensão do SSOT
+`src/modules/okrs/constants/ritualLabels.ts` ganha:
+- `RITUAL_STEP_LABELS: Record<WizardPersona, Record<StepId, { title: string; subtitle?: string }>>`
+- `getStepLabel(persona, stepId, version)` helper
 
-### 4. Hub de Rituais e cards
-- `src/pages/Wizards.tsx` — atualizar `WIZARD_SECTIONS` (8 entradas: collaborator, team-okr-creation, leader-prep, team-checkin, mbr-pre, clevel-checkin, mbr) e builders QBR (`getQbrLeaderWizards`, `getQbrExecutiveWizards`).
-- `src/pages/Index.tsx` — labels em cards.
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard.tsx` — "Check-in Individual" (e remover lógica condicional "Atualizar OKRs"/"Check-in Semanal" → ficar "Check-in Individual" sempre, mantendo badge dinâmica).
-- `src/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard.tsx` — "Pré-Check-in do Time".
-- `src/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard.tsx` — inalterado.
-- `src/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard.tsx` — "Check-in Executivo".
-- `src/modules/okrs/components/wizards/mbr/MbrWizardCard.tsx` — `CardTitle` "MBR" + descrição mantida.
-- `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizardCard.tsx` — labels.
+### RitualHistoryPage
+- Lê `session.structure_version`
+- `v1` → renderers atuais (`*Report.tsx`) intactos
+- `v2+` → renderiza via `getStepDefinitions(wizardType, version)` + adapters
 
-### 5. Calendário, settings e auditoria
-- `src/modules/okrs/components/settings/RitualsTab.tsx` — labels do timeline QBR (Pré-QBR, Pré-QBR Executivo, QBR, Pós-QBR).
-- `src/modules/okrs/components/settings/CycleRitualDates.tsx` — labels.
-- `src/modules/okrs/pages/RitualHistoryPage.tsx` — `WIZARD_TYPE_OPTIONS` consome SSOT (mantém histórico de descontinuados).
-- Componentes de calendário operacional (busca por `wizard_type` em `src/modules/okrs/components/calendar/*` e `src/modules/calendar/*` se houver) — labels via SSOT.
+## Ondas de implementação
 
-### 6. Tooltips, AI prompts e relatórios
-- `src/modules/okrs/components/wizards/shared/WizardTooltips.tsx` — comentários de seção atualizados (não-funcional, apenas DX).
-- `src/modules/okrs/components/ritual-report/renderers/*.tsx` — títulos de seções nos snapshots usam SSOT.
-- `supabase/functions/_shared/tcr-content.ts` (linhas 417-421) — labels de IA mantêm os nomes técnicos atuais (texto interno do TCR; **fora do escopo de UI**, não alterar).
+### Onda 1 — Baixo risco (entrega Fase 0 completa)
+- **Ritos**: Check-in Individual (v2), Pré-Check-in do Time (v2)
+- **Entrega adicional**: toda a infraestrutura `framework/` + migration + extensão do SSOT + `useDecisionsAggregator`
+- **Validação**: 1 semana de uso real
 
-### 7. E2E
-- `e2e/okr-wizards.spec.ts` — atualizar `label` de "QBR Pre"→"Pré-QBR", "QBR Meeting"→"QBR", "QBR Post"→"Pós-QBR".
+### Onda 2 — Médio risco
+- **Ritos**: Check-in do Time (v3), Pré-MBR (v3), Pré-QBR (v3)
+- **Reusa** componentes da Onda 1, só compondo configurações novas
 
-## Atualização de memória canônica
+### Onda 3 — Alto risco (janela de transição de quarter)
+- **Ritos**: MBR (v4), QBR (v4), Pós-QBR (v4)
+- **Preserva 100%** dos snapshots imutáveis (`MbrKpiSnapshot`, `QbrPreSnapshot`, `QbrMeetingSnapshot`)
+- **Apenas em virada de ciclo** — nunca no meio
 
-- **`mem://features/okrs/management-rituals-standard-v2`** — atualizar tabela de ritos com nova nomenclatura.
-- **`mem://index.md`** — adicionar nova entrada **"Ritual Labels SSOT"** apontando para `src/modules/okrs/constants/ritualLabels.ts` como fonte única.
+## Exceções intencionais (vinculantes — não corrigir em rodadas futuras)
 
-## Critérios de aceite
+| Exceção | Rito | Justificativa |
+|---|---|---|
+| Step "Pendências e Decisões" | Check-in Individual | Pendências pessoais ≠ decisões formais |
+| Step "Reflexão" dedicado | Check-in Individual | Espaço explícito para introspecção |
+| Step "Próximos Passos" dedicado | Pré-MBR | Plano de ação mensal específico |
+| Step "Aprendizados e Riscos" | Pré-QBR | Olhar retrospectivo `worked/didn't/debts` |
+| Sem KPI Gate como step separado | QBR | Reunião aprovativa, não diagnóstica |
+| Step "Decisões e Ajustes" | Pós-QBR | Formalização do aprovado + ajustes |
+| `InlineDecisionInput` ausente em `SummaryAndSubmitStep`/`ClosingStep` | Todos | Steps de consolidação final são read-only para decisões |
 
-- ✅ Todos os ritos exibem os novos nomes em hub, cards, headers, calendário, histórico, tooltips de relatório.
-- ✅ Nenhum slug, rota, persona, query key ou permission key foi alterado.
-- ✅ "Monthly Business Review" não aparece mais como nome de rito (apenas como descrição auxiliar opcional).
-- ✅ "Reunião QBR" / "QBR Meeting" / "QBR Pre" / "QBR Post" eliminados da UI.
-- ✅ "Check-in C-Level" / "Check-in Estratégico" / "Check-in Semanal" / "Check-in do Colaborador" eliminados da UI.
-- ✅ Labels de histórico para ritos descontinuados (`managers-checkin`, `mbr-first`, `mbr-pre-first`) preservam sufixo identificador.
-- ✅ Build TypeScript verde; testes E2E atualizados.
+## Conformidade TCR (checklist final)
 
-## Checklist TCR
+- ✅ Slugs/rotas/personas/IDs imutáveis
+- ✅ Sem `select('*')` em adapters
+- ✅ Query keys via helpers existentes; chave de fetch de session ganha `structure_version`
+- ✅ BU isolation (`currentBuId` síncrono em adapters)
+- ✅ RLS intacta — nenhuma policy alterada
+- ✅ Sem CHECK constraints novas
+- ✅ React.memo em componentes de lista
+- ✅ Identity guard via `realProfileId`
+- ✅ `tryParseAiJson` em integrações VIC
+- ✅ Histórico read-only — sessões `v1` preservam UI original
+- ✅ Snapshots imutáveis MBR/QBR intocados
+- ✅ Calendário operacional (`ritual_occurrences.session_id`) sem impacto
+- ✅ Permissões e janelas temporais preservadas
+- ✅ `useGenericWizardDraft` mantém padrão (draft-uniqueness-standard)
+- ✅ `WizardStepScaffold` usado em todos os componentes novos (footer-visibility-fix)
+- ✅ `InlineDecisionInput` ubíquo conforme `cross-step-decision-logging-standard` e `inline-decision-input-ux`
 
-- [x] Sem `select('*')`.
-- [x] Query keys inalteradas.
-- [x] BU-scoping preservado (mudança puramente de UI).
-- [x] Sem hardcode de roles.
-- [x] Slugs/routes/personas/IDs imutáveis.
-- [x] SSOT de labels evita drift futuro.
-- [x] Histórico read-only preservado com sufixos identificadores.
+## Memória canônica
+
+A cada onda concluída:
+- Atualizar `mem://features/okrs/management-rituals-standard-v2` com versões estruturais
+- Criar `mem://architecture/wizards/structure-versioning-standard`
+- Criar `mem://features/rituals/inline-decision-ubiquity-standard` documentando regra ubíqua
+- Adicionar entradas no `mem://index.md`
+
+## Critérios de sucesso
+
+1. `grep -r "wizardType ===" src/modules/okrs/components/wizards/shared/framework/components/` → **zero matches**
+2. Componentes do `framework/` reutilizados por **≥3 ritos** via configuração
+3. Sessões antigas (`structure_version='v1'`) abrem no `RitualHistoryPage` com layout original
+4. Novas sessões gravam `structure_version` correto via `STRUCTURE_VERSION_BY_WIZARD_TYPE`
+5. Ordem `KPIs → KRs → Projetos` aplicada com exceções documentadas
+6. Base pronta para Weekly/Pré-Weekly futuros via composição (zero novo componente)
+7. **Todos os steps ativos** (exceto consolidação final) renderizam `InlineDecisionInput` e o step de **Decisões** consolida agrupado por `sourceStep`
 
