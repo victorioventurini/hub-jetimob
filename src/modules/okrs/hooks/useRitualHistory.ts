@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { WizardPersona, TeamCheckinDecision } from '../types/wizard';
+import { RITUAL_LABELS } from '../constants/ritualLabels';
 
 // ============================================================
 // TYPES
