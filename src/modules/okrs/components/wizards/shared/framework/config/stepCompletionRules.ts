@@ -29,8 +29,10 @@ export const COMPLETION_RULES: Partial<Record<WizardPersona, RulesByVersion>> = 
     v2: {
       steps: {},
       submission: {
-        requiredSteps: ['balance', 'kpis', 'krs-attention', 'agenda', 'summary'],
-        optionalSteps: ['projects-initiatives', 'highlights-risks'],
+        // Alinhado ao SSOT estrutural (`stepDefinitions.ts → leaderPrepV2`):
+        // balance → kpis → leader-insights → projects-initiatives → prep → agenda → summary.
+        requiredSteps: ['balance', 'kpis', 'prep', 'agenda', 'summary'],
+        optionalSteps: ['leader-insights', 'projects-initiatives'],
       },
     },
   },
