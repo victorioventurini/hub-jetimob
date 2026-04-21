@@ -57,23 +57,8 @@ export interface RitualDetail extends RitualHistoryItem {
 // CONSTANTS
 // ============================================================
 
-const WIZARD_TYPE_LABELS: Record<WizardPersona, string> = {
-  'collaborator': 'Check-in Colaborador',
-  'leader-prep': 'Pré Check-in do Time',
-  'team-checkin': 'Check-in do Time',
-  'managers-checkin': 'Check-in de Gestores',
-  'clevel-checkin': 'Check-in C-Level',
-  'team-okr-creation': 'Criação de OKRs',
-  'team-kr-creation': 'Criação de KRs',
-  'mbr': 'MBR',
-  'mbr-pre': 'Pré-MBR',
-  'mbr-first': 'MBR (histórico)',
-  'mbr-pre-first': 'Pré-MBR (histórico)',
-  'qbr-pre': 'Pré-QBR (Líder)',
-  'qbr-pre-clevel': 'Pré-QBR (C-Level)',
-  'qbr-meeting': 'Reunião QBR',
-  'qbr-post': 'Pós-QBR',
-};
+/** @deprecated Use RITUAL_LABELS from '../constants/ritualLabels' instead. Re-exported for back-compat. */
+const WIZARD_TYPE_LABELS: Record<WizardPersona, string> = RITUAL_LABELS;
 
 export { WIZARD_TYPE_LABELS };
 
