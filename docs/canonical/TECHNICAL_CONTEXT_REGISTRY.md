@@ -2131,6 +2131,92 @@ const conditions = [
 ];
 ```
 
+### 4.8.1 Framework Unificado de Wizards (v3.26.0)
+
+**Status:** ATIVO — Ondas 1, 2 e 3 em produção.
+
+A padronização estrutural dos ritos do Hub consolida MBR, QBR e Check-ins sob um framework único, agnóstico de `wizardType`, com versionamento por sessão. O objetivo é separar **estrutura canônica** (steps, gates, regras de visibilidade, completion) de **conteúdo de step** (componentes ricos legados preservados).
+
+#### Princípios canônicos
+
+1. **SSOT estrutural por persona:** o mapa `STRUCTURE_VERSION_BY_WIZARD_TYPE` (`src/modules/okrs/components/wizards/shared/framework/config/structureVersions.ts`) define a versão a ser gravada em **novas sessões**. Sessões antigas preservam a versão original via coluna `okr_wizard_sessions.structure_version`.
+2. **Imutabilidade de sessão:** uma vez criada, a `structure_version` da sessão **nunca muda**. Garante reprodutibilidade do snapshot e renderização determinística no histórico.
+3. **Dispatcher transparente:** ao abrir um rito, o dispatcher seleciona o renderer correto:
+   - `v1` → `SnapshotReportView` (renderer legado, somente leitura para sessões concluídas, ou shells legados específicos por wizard).
+   - `v2+` → Framework genérico, montando steps por `STEP_DEFINITIONS[wizardType]@vN`.
+4. **Componentes do framework são 100% agnósticos** — proibido `if (wizardType === ...)` em `framework/components/`. Toda divergência por rito é resolvida via configs (`stepDefinitions`, `stepCompletionRules`, `stepVisibilityRules`, `stepContentAdapters`, `RITUAL_STEP_LABELS`).
+5. **Decisões inline ubíquas:** `_InlineDecisionsSlot` + `useDecisionsAggregator` permitem registrar decisões em qualquer step intermediário, agrupadas por `sourceStep` no `DecisionsStep` consolidado.
+6. **Governança TCR:** flips de versão de ritos ativos só ocorrem em **Q-end** (encerramento de trimestre). Nunca trocar estrutura no meio de um ciclo vigente.
+
+#### Estado atual das ondas
+
+| Onda | Personas (`wizard_type`) | Versão estrutural | Status |
+|------|--------------------------|-------------------|--------|
+| **Onda 1** | `collaborator`, `leader-prep` | `v2` | ✅ ATIVA |
+| **Onda 2** | `team-checkin`, `mbr-pre`, `qbr-pre` | `v3` | ✅ ATIVA |
+| **Onda 3** | `mbr`, `qbr-meeting`, `qbr-post` | `v4` | ✅ ATIVA (Q-end flip executado) |
+| Não impactados | `clevel-checkin`, `team-okr-creation`, `team-kr-creation`, `qbr-pre-clevel` | `v1` | Mantidos por escopo |
+| Históricos / descontinuados | `managers-checkin`, `mbr-first`, `mbr-pre-first` | `v1` | Preservados para histórico |
+
+#### Steps canônicos por rito (estrutura ativa)
+
+| Rito | Versão | Steps (ordem) |
+|------|--------|---------------|
+| `mbr` | v4 | opening-executive → kpi-gate → teams-overview → team-analysis → org-okrs → strategic-projects → decisions → closing |
+| `qbr-meeting` | v4 | opening-executive → okr-approval → decisions → closing |
+| `qbr-post` | v4 | okr-promotion → decisions-adjustments → commitments-followup → closing |
+| `team-checkin` | v3 | (definido em `STEP_DEFINITIONS.teamCheckinV3`) |
+| `mbr-pre` / `qbr-pre` | v3 | (definido em `STEP_DEFINITIONS.*V3`) |
+| `collaborator` / `leader-prep` | v2 | (definido em `STEP_DEFINITIONS.*V2`) |
+
+> 📌 Labels exibidos seguem `RITUAL_STEP_LABELS` (`src/modules/okrs/constants/ritualLabels.ts`) — SSOT compartilhado por dispatcher, breadcrumbs e snapshot.
+
+#### Arquivos centrais
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `framework/config/structureVersions.ts` | Mapa persona → versão ativa + helper `getCurrentStructureVersion` |
+| `framework/config/stepDefinitions.ts` | Definição canônica dos steps por `wizardType@vN` |
+| `framework/config/stepCompletionRules.ts` | Gates de completude (ex: `allAtRiskKpisAddressed`, `allActiveTeamsAnalyzed`) |
+| `framework/config/stepVisibilityRules.ts` | Regras de visibilidade condicional (carry-over, cross-area, projects-module, qbr-completed) |
+| `framework/hooks/useDecisionsAggregator.ts` | Agrega decisões inline de todos os steps por `sourceStep` |
+| `framework/components/_InlineDecisionsSlot.tsx` | Slot reutilizável para registro inline de decisões |
+| `pages/SnapshotReportView.tsx` | Renderer legado para sessões `v1` concluídas |
+| `constants/ritualLabels.ts` | `RITUAL_STEP_LABELS` SSOT |
+
+#### Persistência
+
+- **Coluna:** `okr_wizard_sessions.structure_version` (texto, gravado na criação).
+- **Índice composto:** suporta queries de histórico por `(wizard_type, structure_version)`.
+- **Política:** valor é `getCurrentStructureVersion(wizardType)` no momento da criação. Após gravação, **somente leitura**.
+
+#### Cobertura de testes
+
+**186 testes verdes** em 9 suítes:
+- `structureVersions.test.ts` — mapa + helper
+- `stepDefinitions.test.ts` — 45 cenários estruturais
+- `stepCompletionRules.test.ts` — 57 cenários de gates
+- `stepVisibilityRules.test.ts` — 23 cenários de visibilidade
+- `stepContentAdapters.test.ts`, `completionEvaluator.test.ts`, `visibilityEvaluator.test.ts`, `useDecisionsAggregator.test.ts`
+- `ritualLabels.test.ts` — cobertura SSOT de todos os stepIds ativos
+
+#### Flip de versão (governança Q-end)
+
+Procedimento documentado em `.lovable/onda-3-activation.md`. Resumo:
+1. Validar pré-requisitos (sessões ativas concluídas, testes verdes, definições prontas).
+2. Editar **apenas** `STRUCTURE_VERSION_BY_WIZARD_TYPE` (3 valores no caso da Onda 3).
+3. Rodar suite completa + build + lint.
+4. Smoke manual nas rotas dos ritos ativados + `/rituals/history` (validar fallback v1).
+5. Publicar e monitorar `app_error_logs` por 24h.
+6. Rollback é determinístico: reverter os mesmos 3 valores. Sessões `v4` criadas antes do rollback continuam acessíveis via dispatcher.
+
+#### Memórias canônicas relacionadas
+
+- `mem://architecture/wizards/structure-versioning-standard`
+- `mem://features/rituals/inline-decision-ubiquity-standard`
+- `mem://architecture/wizards/framework-component-editability`
+- `mem://features/okrs/ritual-governance-master-standard`
+
 ### 4.9 Vínculo KR ↔ KPI
 
 - KR deve ter **exatamente 1 KPI primary** (obrigatório)
