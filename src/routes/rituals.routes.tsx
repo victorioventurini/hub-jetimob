@@ -28,6 +28,7 @@ const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'))
 const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
 const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
 const PreWeeklyPage = lazy(() => import('@/modules/okrs/pages/PreWeeklyPage'));
+const WeeklyPage = lazy(() => import('@/modules/okrs/pages/WeeklyPage'));
 
 /**
  * Wrapper padrão para rotas de rituais
