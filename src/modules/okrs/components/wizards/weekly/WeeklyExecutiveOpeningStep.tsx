@@ -11,7 +11,7 @@
  */
 
 import { useCallback } from 'react';
-import { Sparkles, ListChecks, AlertTriangle, Clock4, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ListChecks, AlertTriangle, Clock4, CheckCircle2, Wand2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -53,6 +53,10 @@ export interface WeeklyExecutiveOpeningStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  /** Acionado pelo botão "Gerar rascunho" — invoca o curador-orquestrador */
+  onGenerateDraft?: () => void | Promise<void>;
+  /** Indica geração em curso (desabilita botão e mostra spinner) */
+  isGenerating?: boolean;
 }
 
 // ============================================================
@@ -65,6 +69,8 @@ export function WeeklyExecutiveOpeningStep({
   decisions,
   onDecisionsChange,
   onContinue,
+  onGenerateDraft,
+  isGenerating = false,
 }: WeeklyExecutiveOpeningStepProps) {
   const { isWildcard } = usePermissions();
   const { realProfileId } = useIdentity();
