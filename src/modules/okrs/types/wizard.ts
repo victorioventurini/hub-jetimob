@@ -841,7 +841,7 @@ export interface WizardVicContext extends VicContext {
 // ACTION CONTEXTS FOR VIC
 // ============================================================
 
-export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext> = {
+export const WIZARD_VIC_ACTION_CONTEXTS: Partial<Record<WizardPersona, VicActionContext>> = {
   'collaborator': 'okr-check-alignment',
   'leader-prep': 'okr-review-quality',
   'team-checkin': 'okr-review-quality',
@@ -861,7 +861,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Record<WizardPersona, VicActionContext>
 // WIZARD CONFIGS
 // ============================================================
 
-export const WIZARD_CONFIGS: Record<WizardPersona, WizardConfig> = {
+export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   'collaborator': {
     persona: 'collaborator',
     title: 'Check-in Semanal',
