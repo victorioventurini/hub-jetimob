@@ -229,7 +229,11 @@ A cada onda concluída:
 - `framework/config/__tests__/stepCompletionRules.test.ts` — 57 casos cruzando `COMPLETION_RULES` com `STEP_DEFINITIONS`: existência de `requiredSteps`/`optionalSteps`, disjunção, SLUGS reconhecidos, mensagens de erro com gates, gates canônicos TCR (team-checkin/mbr/qbr-post) e fallback. **Detectou drift real em `leader-prep@v2`** (gate referenciava `krs-attention`/`highlights-risks`, steps inexistentes; corrigido para `prep`/`leader-insights`).
 - `framework/config/__tests__/stepVisibilityRules.test.ts` — 23 casos validando `VISIBILITY_RULES`: stepIds em `STEP_DEFINITIONS` (com pseudo `strategic-projects` autorizado), SLUGS reconhecidos, regras canônicas TCR e fallback fail-open de `getVisibilityRule`.
 - `ritual-report/__tests__/SnapshotReportView.test.tsx` — 15 casos cobrindo roteamento de todos os 11 renderers, fallback amigável e compatibilidade transparente v1↔v2+.
-- **Total: 169 testes verdes** (154 framework + 15 dispatcher).
+- `constants/__tests__/ritualLabels.test.ts` — 14 casos blindando `getRitualLabel`/`getStepLabel` (incluindo fallback sentinel) e coerência cruzada `RITUAL_STEP_LABELS` ↔ `STEP_DEFINITIONS` para todas as personas ativas (≠ v1). Garante que nenhum stepId fica sem label.
+- **Total: 184 testes verdes** (168 framework/labels + 15 dispatcher + 1 fix em qbr-post pré-existente).
+
+### ✅ Documentação operacional
+- `.lovable/onda-3-activation.md` — checklist determinístico de ativação Onda 3 (pré-requisitos, janela Q-end, smoke manual, rollback, pós-ativação D+7) com referências canônicas.
 
 ### Critérios de sucesso — auditoria final
 | # | Status | Nota |

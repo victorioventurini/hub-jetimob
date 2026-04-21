@@ -181,7 +181,8 @@ describe('QbrPostDecisionsStep', () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByText(/Decisões da Reunião/)).toBeInTheDocument();
+    // Seção read-only de decisões do QBR (rótulo canônico no componente)
+    expect(screen.getByText('Decisões do QBR')).toBeInTheDocument();
     expect(screen.getByText('Decisão da reunião')).toBeInTheDocument();
   });
 
