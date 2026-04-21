@@ -12,7 +12,7 @@ const renderWithRouter = (ui: React.ReactElement) => render(ui);
 describe('MbrWizardCard', () => {
   it('renders card title', () => {
     renderWithRouter(<MbrWizardCard />);
-    expect(screen.getByText('Monthly Business Review')).toBeInTheDocument();
+    expect(screen.getByText('MBR')).toBeInTheDocument();
   });
 
   it('renders mensal badge', () => {
@@ -49,11 +49,11 @@ describe('MbrWizardCard', () => {
   it('shows skeleton when loading', () => {
     renderWithRouter(<MbrWizardCard isLoading />);
     // Skeleton component renders with data-slot="skeleton"
-    expect(screen.queryByText('Monthly Business Review')).not.toBeInTheDocument();
+    expect(screen.queryByText('MBR')).not.toBeInTheDocument();
   });
 
   it('does not render content when loading', () => {
     renderWithRouter(<MbrWizardCard isLoading />);
-    expect(screen.queryByText('Monthly Business Review')).not.toBeInTheDocument();
+    expect(screen.queryByText('MBR')).not.toBeInTheDocument();
   });
 });

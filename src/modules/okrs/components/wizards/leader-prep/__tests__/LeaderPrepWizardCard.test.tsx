@@ -21,7 +21,7 @@ const renderCard = (props: Partial<Parameters<typeof LeaderPrepWizardCard>[0]> =
 describe('LeaderPrepWizardCard', () => {
   it('renders title', () => {
     renderCard();
-    expect(screen.getByText('Pré Check-in do Time')).toBeInTheDocument();
+    expect(screen.getByText('Pré-Check-in do Time')).toBeInTheDocument();
   });
 
   it('renders team name in description', () => {
