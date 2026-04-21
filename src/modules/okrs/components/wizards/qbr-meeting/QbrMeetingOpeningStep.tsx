@@ -5,7 +5,7 @@
  * Inclui scorecard do quarter, retrospectiva, OKRs org, pauta obrigatória e agenda da reunião.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { TeamKrsToggle } from '../shared/TeamKrsToggle';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +66,8 @@ export interface QbrMeetingOpeningStepProps {
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  /** Slot opcional renderizado no topo do conteúdo (ex.: PreparationStatusCard) */
+  topSlot?: ReactNode;
 }
 
 // ============================================================
@@ -362,6 +364,7 @@ export function QbrMeetingOpeningStep({
   decisions = [],
   onDecisionsChange,
   onContinue,
+  topSlot,
 }: QbrMeetingOpeningStepProps) {
   const alertKpis = orgKpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
 
@@ -391,6 +394,7 @@ export function QbrMeetingOpeningStep({
       }
     >
       <div className="p-6 space-y-6">
+        {topSlot}
         {/* Bloco 1 — Agenda da reunião */}
         <MeetingAgenda currentStepIndex={currentStepIndex} leaderCount={leaderSummaryCount} />
 

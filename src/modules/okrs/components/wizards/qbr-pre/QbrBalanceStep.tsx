@@ -5,7 +5,7 @@
  * Unlinked projects appear at the bottom.
  */
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { BarChart3, Target } from 'lucide-react';
@@ -35,6 +35,8 @@ export interface QbrBalanceStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   teamId?: string;
+  /** Slot opcional renderizado no topo do conteúdo (ex.: PreparationStatusCard) */
+  topSlot?: ReactNode;
 }
 
 interface ObjectiveGroup {
@@ -53,6 +55,7 @@ export function QbrBalanceStep({
   onDecisionsChange,
   onContinue,
   teamId,
+  topSlot,
 }: QbrBalanceStepProps) {
   // Group KRs by objective
   const objectiveGroups = useMemo(() => {
@@ -117,6 +120,7 @@ export function QbrBalanceStep({
       }
     >
       <div className="p-6 space-y-6">
+        {topSlot}
         {/* Score summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Card>

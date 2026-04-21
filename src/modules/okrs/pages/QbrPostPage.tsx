@@ -25,6 +25,7 @@ import { QbrPostDecisionsStep } from '@/modules/okrs/components/wizards/qbr-post
 import { QbrPostCommitmentsStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostCommitmentsStep';
 import { QbrPostFollowUpStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostFollowUpStep';
 import { QbrPostMinutesStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
+import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
 
 import type { ApprovedTeamOkr, DestinationCycleOption } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
 import {
@@ -298,6 +299,12 @@ export default function QbrPostPage() {
             destinationCycleId={draft.data.destinationCycleId}
             onDestinationCycleIdChange={(destinationCycleId) => updateDraft({ destinationCycleId })}
             onContinue={goNext}
+            topSlot={
+              <RitualPreparationStatus
+                ritualType="qbr-post"
+                cycleId={quarterlyCycle?.id ?? null}
+              />
+            }
           />
         );
       case 'decisions':
