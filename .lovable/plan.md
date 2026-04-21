@@ -226,8 +226,10 @@ A cada onda concluída:
 - `framework/config/__tests__/structureVersions.test.ts` — 8 casos garantindo SSOT do mapa por persona, status das Ondas 1/2/3 e fallback defensivo do helper.
 - `framework/config/__tests__/stepDefinitions.test.ts` — 45 casos blindando integridade declarativa do SSOT estrutural: presença de definições, IDs únicos, ordem canônica `KPIs→KRs→Projetos` (com exceções: leader-prep/qbr-meeting/qbr-post), supressão de inline em consolidação, conformidade pontual de cada rito (collaborator/leader-prep/team-checkin/mbr-pre/qbr-pre/mbr/qbr-meeting/qbr-post).
 - `framework/config/__tests__/stepContentAdapters.test.ts` — 6 casos blindando `groupDecisionsBySourceStep` (lib pura): vazio, multi-bucket, `__unsourced__`, ordem de inserção, shape `DecisionsBySourceStep`, distinção `''` vs `undefined`.
+- `framework/config/__tests__/stepCompletionRules.test.ts` — 57 casos cruzando `COMPLETION_RULES` com `STEP_DEFINITIONS`: existência de `requiredSteps`/`optionalSteps`, disjunção, SLUGS reconhecidos, mensagens de erro com gates, gates canônicos TCR (team-checkin/mbr/qbr-post) e fallback. **Detectou drift real em `leader-prep@v2`** (gate referenciava `krs-attention`/`highlights-risks`, steps inexistentes; corrigido para `prep`/`leader-insights`).
+- `framework/config/__tests__/stepVisibilityRules.test.ts` — 23 casos validando `VISIBILITY_RULES`: stepIds em `STEP_DEFINITIONS` (com pseudo `strategic-projects` autorizado), SLUGS reconhecidos, regras canônicas TCR e fallback fail-open de `getVisibilityRule`.
 - `ritual-report/__tests__/SnapshotReportView.test.tsx` — 15 casos cobrindo roteamento de todos os 11 renderers, fallback amigável e compatibilidade transparente v1↔v2+.
-- **Total: 104 testes verdes** (89 framework + 15 dispatcher).
+- **Total: 169 testes verdes** (154 framework + 15 dispatcher).
 
 ### Critérios de sucesso — auditoria final
 | # | Status | Nota |
