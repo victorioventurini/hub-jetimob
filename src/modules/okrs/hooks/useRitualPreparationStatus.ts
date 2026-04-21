@@ -270,7 +270,7 @@ export function useRitualPreparationStatus(
         if (profileIds.length > 0) {
           const { data: profiles } = await buSupabase
             .from('profiles')
-            .select('id, full_name')
+            .select('id, display_name')
             .in('id', profileIds);
           for (const p of profiles ?? []) {
             if (p.display_name) namesById.set(p.id, p.display_name);
@@ -399,7 +399,7 @@ export function useRitualPreparationStatus(
         if (profileIds.length > 0) {
           const { data: profiles } = await buSupabase
             .from('profiles')
-            .select('id, full_name')
+            .select('id, display_name')
             .in('id', profileIds);
           for (const p of profiles ?? []) {
             if (p.display_name) namesById.set(p.id, p.display_name);
