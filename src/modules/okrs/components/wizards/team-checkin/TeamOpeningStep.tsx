@@ -6,7 +6,7 @@
  * - Itens marcados para discussão (do leader-prep)
  */
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +32,8 @@ export interface TeamOpeningStepProps {
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  /** Slot opcional renderizado no topo do conteúdo (ex: PreparationStatusCard) */
+  topSlot?: ReactNode;
 }
 
 // ============================================================
