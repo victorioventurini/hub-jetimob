@@ -84,7 +84,6 @@ export function WeeklyClosingStep({
           onBack={onBack}
           onPrimary={onComplete}
           primaryLoading={isCompleting}
-          primaryLabel="Encerrar Weekly"
         />
       }
     >
