@@ -15,7 +15,6 @@ import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { MyProjectsCard } from "@/components/home/MyProjectsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
-import { ManagersCheckinWizardCard } from "@/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard";
 import { CLevelCheckinWizardCard } from "@/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard";
 import { useLeaderTeams } from "@/modules/home/hooks";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
@@ -129,8 +128,7 @@ const Index = () => {
 
             {/* Executive Wizards */}
             {isExecutive && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ManagersCheckinWizardCard isLoading={dashboardData.isLoading} />
+              <div className="grid grid-cols-1 gap-4">
                 <CLevelCheckinWizardCard 
                   overallProgress={
                     dashboardData.okrSummary.onTrack + 

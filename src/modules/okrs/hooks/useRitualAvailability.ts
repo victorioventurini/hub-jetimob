@@ -37,7 +37,6 @@ const RITUAL_LABELS: Partial<Record<WizardPersona, string>> = {
   'collaborator': 'Check-in do Colaborador',
   'leader-prep': 'Preparação do Check-in',
   'team-checkin': 'Check-in do Time',
-  'managers-checkin': 'Check-in de Gestores',
   'clevel-checkin': 'Check-in Estratégico',
   'mbr-pre-first': 'Pré-MBR (1º mês)',
   'mbr-first': 'MBR (1º mês)',
@@ -92,12 +91,6 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
     }),
   },
   'team-checkin': {
-    getWindow: (c) => ({
-      opens: parseDate(c.start_date),
-      closes: parseDate(c.end_date),
-    }),
-  },
-  'managers-checkin': {
     getWindow: (c) => ({
       opens: parseDate(c.start_date),
       closes: parseDate(c.end_date),

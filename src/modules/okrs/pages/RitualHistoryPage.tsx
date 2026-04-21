@@ -82,7 +82,6 @@ const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string }[] = [
   { value: 'collaborator', label: 'Check-in Colaborador' },
   { value: 'leader-prep', label: 'Preparação do Líder' },
   { value: 'clevel-checkin', label: 'Check-in C-Level' },
-  { value: 'managers-checkin', label: 'Check-in de Gestores' },
   { value: 'qbr-pre', label: 'Pré-QBR (Líder)' },
   { value: 'qbr-pre-clevel', label: 'Pré-QBR (C-Level)' },
   { value: 'qbr-meeting', label: 'Reunião QBR' },

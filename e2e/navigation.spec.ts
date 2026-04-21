@@ -27,7 +27,6 @@ test.describe('Protected Routes Redirect', () => {
     { path: '/okrs/dashboard', name: 'OKR Dashboard' },
     { path: '/okrs/team-checkin', name: 'Team Check-in' },
     { path: '/okrs/leader-prep', name: 'Leader Prep' },
-    { path: '/okrs/managers-checkin', name: 'Managers Check-in' },
     { path: '/admin', name: 'Admin' },
   ];
 

@@ -12,7 +12,6 @@ test.describe('OKRs Routes (Protected)', () => {
     { path: '/okrs/dashboard', name: 'Dashboard' },
     { path: '/okrs/team-checkin', name: 'Team Check-in' },
     { path: '/okrs/leader-prep', name: 'Leader Prep' },
-    { path: '/okrs/managers-checkin', name: 'Managers Check-in' },
     { path: '/okrs/construction-review', name: 'Construction Review' },
   ];
 
