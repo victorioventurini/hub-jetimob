@@ -175,7 +175,8 @@ export type TeamCheckinDecisionSourceStep = 'opening' | 'kr-review' | 'initiativ
   | 'qbr-clevel-system-read' | 'qbr-clevel-strategic' | 'qbr-clevel-okr-validation' | 'qbr-clevel-directives'
   | 'qbr-meeting-opening' | 'qbr-meeting-okr-review' | 'qbr-meeting-decisions' | 'qbr-meeting-commitments' | 'qbr-meeting-closing'
   | 'qbr-post-promotion' | 'qbr-post-decisions' | 'qbr-post-commitments' | 'qbr-post-followup' | 'qbr-post-minutes'
-  | 'pre-weekly-sources' | 'pre-weekly-pauta' | 'pre-weekly-pessoas';
+  | 'pre-weekly-sources' | 'pre-weekly-pauta' | 'pre-weekly-pessoas'
+  | 'weekly-executive-opening' | 'weekly-priorities' | 'weekly-people' | 'weekly-closing';
 
 // ============================================================
 // MBR (MONTHLY BUSINESS REVIEW) WIZARD
