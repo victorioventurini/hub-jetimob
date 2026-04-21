@@ -11,7 +11,7 @@
  */
 
 import { memo, useCallback } from 'react';
-import { Target, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Target, CheckCircle2, ChevronDown, ChevronUp, Users, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { WizardStepScaffold } from '../../WizardStepScaffold';
 import { WizardStepHeader } from '../../WizardStepHeader';
@@ -37,6 +37,12 @@ export interface KrsStepProps {
   onDecisionsChange: (next: TeamCheckinDecision[]) => void;
   footer: React.ReactNode;
   suppressInlineDecisions?: boolean;
+  /**
+   * Apenas em mode='leader-actions': notas de pauta da reunião.
+   * Renderiza um Textarea no rodapé do step quando definido.
+   */
+  meetingNotes?: string;
+  onMeetingNotesChange?: (next: string) => void;
 }
 
 const STATUS_BADGE_VARIANT: Record<KrsItem['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
