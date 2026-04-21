@@ -36,7 +36,7 @@ interface SnapshotReportViewProps {
   structureVersion?: string;
 }
 
-const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Record<string, any>; structureVersion?: string }>>> = {
+const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Record<string, any> }>>> = {
   'collaborator': CollaboratorReport,
   'leader-prep': LeaderPrepReport,
   'team-checkin': TeamCheckinReport,
@@ -61,5 +61,10 @@ export function SnapshotReportView({ wizardType, data, structureVersion = 'v1' }
     );
   }
 
-  return <Renderer data={data} structureVersion={structureVersion} />;
+  // `structureVersion` é capturado para futuras divergências de layout (v2+).
+  // Atualmente os renderers leem `reflection_data.data` em shape compatível,
+  // então o roteamento por versão é transparente — ver comentário do header.
+  void structureVersion;
+
+  return <Renderer data={data} />;
 }
