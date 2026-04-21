@@ -92,3 +92,6 @@ export type {
   PreparationSection,
   SourceRitualSummary,
 } from './PreparationStatusCard';
+
+export { RitualPreparationStatus } from './RitualPreparationStatus';
+export type { RitualPreparationStatusProps } from './RitualPreparationStatus';

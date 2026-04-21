@@ -6,7 +6,7 @@
  * - Itens marcados para discussão (do leader-prep)
  */
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +32,8 @@ export interface TeamOpeningStepProps {
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
+  /** Slot opcional renderizado no topo do conteúdo (ex: PreparationStatusCard) */
+  topSlot?: ReactNode;
 }
 
 // ============================================================
@@ -48,6 +50,7 @@ export function TeamOpeningStep({
   decisions = [],
   onDecisionsChange,
   onContinue,
+  topSlot,
 }: TeamOpeningStepProps) {
   // Calculate stats
   const stats = useMemo(() => {
@@ -116,6 +119,7 @@ export function TeamOpeningStep({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {topSlot}
         {/* Marked for discussion */}
         {discussionKrs.length > 0 && (
           <div className="space-y-3">
