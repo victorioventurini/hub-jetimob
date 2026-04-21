@@ -30,6 +30,7 @@ import {
   Presentation,
   History,
   Inbox,
+  Sparkles,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
