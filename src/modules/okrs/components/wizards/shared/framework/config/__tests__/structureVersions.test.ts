@@ -51,10 +51,10 @@ describe('STRUCTURE_VERSION_BY_WIZARD_TYPE', () => {
     expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['qbr-pre']).toBe('v3');
   });
 
-  it('Onda 3 (mbr, qbr-meeting, qbr-post) permanece em v1 até Q-end por TCR', () => {
-    expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['mbr']).toBe('v1');
-    expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['qbr-meeting']).toBe('v1');
-    expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['qbr-post']).toBe('v1');
+  it('Onda 3 (mbr, qbr-meeting, qbr-post) está em v4 após Q-end flip', () => {
+    expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['mbr']).toBe('v4');
+    expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['qbr-meeting']).toBe('v4');
+    expect(STRUCTURE_VERSION_BY_WIZARD_TYPE['qbr-post']).toBe('v4');
   });
 
   it('Ritos não impactados pela padronização permanecem em v1', () => {
@@ -75,7 +75,7 @@ describe('getCurrentStructureVersion', () => {
   it('retorna a versão configurada para uma persona conhecida', () => {
     expect(getCurrentStructureVersion('collaborator')).toBe('v2');
     expect(getCurrentStructureVersion('mbr-pre')).toBe('v3');
-    expect(getCurrentStructureVersion('mbr')).toBe('v1');
+    expect(getCurrentStructureVersion('mbr')).toBe('v4');
   });
 
   it('faz fallback defensivo para v1 quando persona é desconhecida', () => {
