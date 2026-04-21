@@ -26,10 +26,12 @@ export const STRUCTURE_VERSION_BY_WIZARD_TYPE: Record<WizardPersona, StructureVe
   'collaborator': 'v2',
   'leader-prep': 'v2',
 
-  // Onda 2
-  'team-checkin': 'v1', // → v3
-  'mbr-pre': 'v1',      // → v3
-  'qbr-pre': 'v1',      // → v3
+  // Onda 2 — ATIVA
+  // Estratégia híbrida: páginas mantêm step components ricos atuais;
+  // framework atua como SSOT estrutural + versionamento.
+  'team-checkin': 'v3',
+  'mbr-pre': 'v3',
+  'qbr-pre': 'v3',
 
   // Onda 3
   'mbr': 'v1',          // → v4
