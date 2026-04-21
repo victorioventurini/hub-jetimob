@@ -78,7 +78,7 @@ function mapCuratorOutputToOpening(
       const title = (item.title || '').trim();
       if (!title) return;
       const themeType: WeeklyThemeType =
-        item.urgency === 'alta' ? 'risk' : item.urgency === 'baixa' ? 'opportunity' : 'theme';
+        item.urgency === 'alta' ? 'risco' : item.urgency === 'baixa' ? 'oportunidade' : 'alerta';
       themes.push({
         id: `${dstBlock}-${idx}-${Date.now()}`,
         title,
@@ -158,8 +158,8 @@ export function useWeeklyOpeningCuration(
           teamName: t.teamName,
           title: t.topic.title,
           category: t.topic.category,
-          urgency: t.topic.urgency,
-          rationale: t.topic.rationale,
+          urgency: t.topic.priority,
+          rationale: t.topic.context,
         }));
         const aggregatedSignals = params.peopleSignals.map((s) => ({
           teamName: s.teamName,
