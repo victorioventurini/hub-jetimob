@@ -864,7 +864,7 @@ export const WIZARD_VIC_ACTION_CONTEXTS: Partial<Record<WizardPersona, VicAction
 export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   'collaborator': {
     persona: 'collaborator',
-    title: 'Check-in Semanal',
+    title: 'Check-in Individual',
     description: 'Reflexão individual + atualização consciente',
     steps: [
       { id: 'context', label: 'Contexto da Semana', shortLabel: 'Contexto' },
@@ -877,7 +877,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'leader-prep': {
     persona: 'leader-prep',
-    title: 'Pré Check-in do Time',
+    title: 'Pré-Check-in do Time',
     description: 'Prepare-se para conduzir um bom check-in com seu time',
     steps: [
       { id: 'overview', label: 'Visão Geral do Time', shortLabel: 'Visão' },
@@ -901,7 +901,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'managers-checkin': {
     persona: 'managers-checkin',
-    title: 'Check-in de Gestores',
+    title: 'Check-in de Gestores (descontinuado)',
     description: 'Alinhamento entre áreas',
     steps: [
       { id: 'panorama', label: 'Panorama Geral', shortLabel: 'Panorama' },
@@ -912,7 +912,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'clevel-checkin': {
     persona: 'clevel-checkin',
-    title: 'Check-in Estratégico',
+    title: 'Check-in Executivo',
     description: 'Direção estratégica para a empresa',
     steps: [
       { id: 'company-okrs', label: 'Company OKRs', shortLabel: 'OKRs' },
@@ -942,7 +942,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'team-kr-creation': {
     persona: 'team-kr-creation',
-    title: 'Criação de Key Results',
+    title: 'Criação de KRs do Time',
     description: 'Defina como medir o sucesso do objetivo do time',
     steps: [
       { id: 'kr-context', label: 'Contexto', shortLabel: 'Contexto' },
@@ -958,7 +958,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'mbr': {
     persona: 'mbr',
-    title: 'Monthly Business Review',
+    title: 'MBR',
     description: 'Rito decisório mensal — saúde estratégica do negócio',
     steps: [
       { id: 'panorama', label: 'Panorama Executivo', shortLabel: 'Panorama' },
@@ -974,7 +974,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   'mbr-pre': {
     persona: 'mbr-pre',
     title: 'Pré-MBR',
-    description: 'Preparação individual do líder para o Monthly Business Review',
+    description: 'Preparação individual do líder para o MBR',
     steps: [
       { id: 'balance', label: 'Balanço do Mês', shortLabel: 'Balanço' },
       { id: 'kpi-analysis', label: 'KPIs do Time', shortLabel: 'KPIs' },
@@ -986,7 +986,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'qbr-pre': {
     persona: 'qbr-pre',
-    title: 'Pré-QBR do Time',
+    title: 'Pré-QBR',
     description: 'Balanço do ciclo, análise de KPIs e proposta de OKRs para o próximo trimestre',
     steps: [
       { id: 'balance', label: 'Balanço do Ciclo', shortLabel: 'Balanço' },
@@ -999,8 +999,8 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'qbr-pre-clevel': {
     persona: 'qbr-pre-clevel',
-    title: 'Pré-QBR C-Level',
-    description: 'Análise estratégica consolidada e direcionamentos para a reunião QBR',
+    title: 'Pré-QBR Executivo',
+    description: 'Análise estratégica consolidada e direcionamentos para o QBR',
     steps: [
       { id: 'system-read', label: 'Leitura do Sistema', shortLabel: 'Sistema' },
       { id: 'quarter-balance', label: 'Balanço do Quarter', shortLabel: 'Balanço' },
@@ -1013,7 +1013,7 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
   },
   'qbr-meeting': {
     persona: 'qbr-meeting',
-    title: 'Reunião QBR',
+    title: 'QBR',
     description: 'Revisão trimestral com aprovação de OKRs e decisões estratégicas',
     steps: [
       { id: 'opening', label: 'Abertura e Direcionamentos', shortLabel: 'Abertura' },
