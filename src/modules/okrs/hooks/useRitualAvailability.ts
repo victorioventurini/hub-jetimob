@@ -74,6 +74,59 @@ interface WindowDef {
   getWindow: (cycle: CycleWithStatus) => { opens: Date | null; closes: Date | null };
 }
 
+/** Build a business-day window [offsetOpen..offsetClose] relative to a reference ISO date. */
+function buildWindow(
+  referenceDateStr: string | null | undefined,
+  offsetOpen: number,
+  offsetClose: number,
+): { opens: Date | null; closes: Date | null } {
+  const ref = parseDate(referenceDateStr);
+  if (!ref) return { opens: null, closes: null };
+  return {
+    opens: offsetOpen === 0 ? ref : addBusinessDaysToDate(ref, offsetOpen),
+    closes: addBusinessDaysToDate(ref, offsetClose),
+  };
+}
+
+/**
+ * Composite window picker: given 1..N windows (e.g. MBR₁ and MBR₂), return:
+ *   1) the active window if `today` is inside it,
+ *   2) otherwise the nearest future window (so RitualUnavailableScreen shows correct opening date),
+ *   3) otherwise the latest past window (for expired messaging).
+ * Null windows are ignored. Returns {null,null} if all are null.
+ */
+function pickCompositeWindow(
+  ...windows: Array<{ opens: Date | null; closes: Date | null }>
+): { opens: Date | null; closes: Date | null } {
+  const valid = windows.filter(w => w.opens && w.closes) as Array<{ opens: Date; closes: Date }>;
+  if (valid.length === 0) return { opens: null, closes: null };
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // 1) Active window (today within [opens..closesEndOfDay])
+  const active = valid.find(w => {
+    const closesEOD = new Date(w.closes.getFullYear(), w.closes.getMonth(), w.closes.getDate(), 23, 59, 59);
+    return today >= w.opens && now <= closesEOD;
+  });
+  if (active) return active;
+
+  // 2) Nearest future window
+  const future = valid
+    .filter(w => today < w.opens)
+    .sort((a, b) => a.opens.getTime() - b.opens.getTime())[0];
+  if (future) return future;
+
+  // 3) Latest past window
+  const past = valid
+    .filter(w => {
+      const closesEOD = new Date(w.closes.getFullYear(), w.closes.getMonth(), w.closes.getDate(), 23, 59, 59);
+      return now > closesEOD;
+    })
+    .sort((a, b) => b.closes.getTime() - a.closes.getTime())[0];
+  return past ?? valid[0];
+}
+
 const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
   // Check-ins: available throughout the cycle
   'collaborator': {
