@@ -615,6 +615,80 @@ export interface PreWeeklyDraftData {
   decisions: TeamCheckinDecision[];
 }
 
+// ============================================================
+// WEEKLY (ONDA 4 — RITO EXECUTIVO DA BU)
+// ============================================================
+
+export type WeeklyStep = 'executive-opening' | 'priorities' | 'people' | 'closing';
+
+/** Bloco temático curado pelo agente curador-orquestrador. */
+export type WeeklyThemeBlock = 'performance' | 'projetos' | 'pessoas';
+export type WeeklyThemeType = 'risco' | 'oportunidade' | 'decisao' | 'celebracao' | 'alerta';
+
+export interface WeeklyTheme {
+  id: string;
+  title: string;
+  block: WeeklyThemeBlock;
+  type: WeeklyThemeType;
+  motivation: string;
+  suggestedDecision?: string;
+  affectedTeams: string[];
+}
+
+/** Estados do rascunho da Abertura Executiva (curadoria IA + revisão humana). */
+export type WeeklyOpeningState = 'draft' | 'reviewed' | 'approved';
+export type WeeklyOpeningOrigin = 'ai-curated' | 'manual';
+
+export interface WeeklyOpeningTransition {
+  state: WeeklyOpeningState;
+  at: string;
+  by: string | null;
+}
+
+export interface WeeklyExecutiveOpening {
+  state: WeeklyOpeningState;
+  origin: WeeklyOpeningOrigin;
+  generatedAt: string | null;
+  summary: string;
+  themes: WeeklyTheme[];
+  alertsByBlock: { performance: string[]; projetos: string[]; pessoas: string[] };
+  offAgenda: string[];
+  suggestedOrder: { themeId: string; minutes: number }[];
+  transitions: WeeklyOpeningTransition[];
+}
+
+export interface WeeklyPriorityItem {
+  id: string;
+  sourcePreWeeklyId: string;
+  teamId: string | null;
+  teamName: string;
+  topic: PreWeeklyTopic;
+}
+
+export interface WeeklyPeopleSignalAggregated {
+  id: string;
+  sourcePreWeeklyId: string;
+  teamId: string | null;
+  teamName: string;
+  signal: PreWeeklyPeopleSignal;
+}
+
+/** Draft data da Weekly — escopo coletivo da BU. */
+export interface WeeklyDraftData {
+  /** Semana de referência (YYYY-MM-DD da segunda-feira) */
+  referenceWeek: string;
+  /** Abertura Executiva curada (ou manual) */
+  executiveOpening: WeeklyExecutiveOpening;
+  /** Notas livres do facilitador no Step de Prioridades */
+  prioritiesNotes: string;
+  /** Notas livres no Step de Pessoas */
+  peopleNotes: string;
+  /** Encerramento (checklist + ata) */
+  closing: { checklist: Record<string, boolean>; minutes: string };
+  /** Decisões registradas inline ao longo dos steps */
+  decisions: TeamCheckinDecision[];
+}
+
 /** Draft data do pós-QBR */
 export interface QbrPostDraftData {
   cycleId: string;
