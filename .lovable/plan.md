@@ -1,86 +1,68 @@
 
 
-## Plano: Auditoria + Teste + Correção dos Agentes de IA do Hub
+# Descontinuar ritual "Check-in de Gestores" (managers-checkin)
 
-### Pré-checklist (executado)
-- ✅ TCR / DEVELOPMENT_STANDARDS / DATA_MODEL_REGISTRY / IDENTITY_CONVENTION / DOCUMENTATION_INDEX consultados
-- ✅ Tabela `ai_agents` inspecionada (12 registros)
-- ✅ Logs `ai_agent_logs` últimos 30 dias inspecionados (1 erro histórico, agentes ativos saudáveis)
-- ✅ Memórias `mem://features/okrs/methodological-validator-agent` e `mem://architecture/ai-multi-llm-gateway-standard-v2-0-0` revisadas
-- ✅ Mapa de edge functions consumidoras já levantado (11 functions)
+## Contexto e justificativa
 
-### Diagnóstico — Inventário completo dos agentes
+- O rito `managers-checkin` foi substituído pelo MBR (Monthly Business Review) nos dashboards estratégicos (memória canônica `management-rituals-standard-v2`).
+- Auditoria no banco confirma: **0 sessões concluídas** (`okr_wizard_sessions`), **324 ocorrências futuras** planejadas no calendário (`ritual_occurrences`) e **1 cadência ativa** (`ritual_cadences`). Não há risco de perda de histórico real.
+- Remoção deve seguir o TCR: não apagar migrations históricas, preservar `WizardPersona` para compatibilidade com registros antigos de auditoria, e remover apenas entry-points e geração de novas ocorrências.
 
-**12 agentes cadastrados em `ai_agents` (todos `is_active=true`, scope=global, integration_key=chatgpt):**
+## Estratégia (soft-remove, não destrutivo)
 
-| # | Slug | Nome | Status uso (7d) | Observação |
-|---|------|------|-----------------|------------|
-| 1 | `cultura` | Guardião da Cultura | ✅ 124 success | OK |
-| 2 | `coach-okrs` | Coach de OKRs | ✅ 6 success | OK |
-| 3 | `validador-metodologico-okrs` | Validador Metodológico | ✅ 117 success | OK (1 erro em 07/04 antigo) |
-| 4 | `analista-kpis` | Analista de KPIs | ✅ 34 success | OK |
-| 5 | `facilitador-decisoes` | Facilitador de Decisões | ⚠️ Sem chamadas recentes | Verificar invocação |
-| 6 | `alinhamento-estrategico` | Alinhamento Estratégico | ✅ 124 success | OK |
-| 7 | `revisor-comunicacao` | Revisor de Comunicação | ✅ 6 success | OK |
-| 8 | `onboarding-buddy` | Onboarding dos Jetimobers | ⚠️ Sem chamadas recentes | Verificar invocação |
-| 9 | `analista-estrategico` | Analista Estratégico | ⚠️ Sem chamadas recentes | **Não existe no `VicAgentSlug` do front** |
-| 10 | `vic-persona` | Persona do Vic | ⚠️ Sem chamadas recentes | **Não existe no `VicAgentSlug`** (filtrado em `BuIaSettings`) |
-| 11 | `vic-greeting` | Persona do Vic / Saudações | ⚠️ Sem chamadas recentes | **Não existe no `VicAgentSlug`** (filtrado em `BuIaSettings`) |
-| 12 | (NULL) | Coach de produtividade | ❌ **slug NULL** | **BUG CRÍTICO** — o tipo TS espera `coach-produtividade` mas o registro no banco tem `slug = NULL`. Qualquer invocação via `invoke-vic` falha em `loadAgent()`. |
+Adotamos **remoção cirúrgica das entradas do usuário** (cards, rotas, listagens, calendário) mantendo tipos e renderer de relatório para back-compat — padrão seguido anteriormente para o "modal removido" citado no próprio `index.ts` do módulo.
 
-### Problemas confirmados
+## Mudanças no Frontend
 
-1. **🔴 Crítico — `coach-produtividade` com `slug = NULL` no banco**
-   - O tipo `VicAgentSlug` declara `"coach-produtividade"` e `VIC_AGENTS["coach-produtividade"]` está mapeado em `src/modules/vic/types.ts:145`
-   - Edge function `invoke-vic` carrega agentes por `slug` em `loadAgent()` → retorna `null` → erro `AGENT_DISABLED` ou similar
-   - **Fix:** UPDATE no banco para definir `slug = 'coach-produtividade'`
+1. **`src/pages/Index.tsx`** — Remover import de `ManagersCheckinWizardCard` e seu uso no bloco `isExecutive`. O grid `md:grid-cols-2` passa a conter apenas `CLevelCheckinWizardCard` (ajustar para `grid-cols-1`).
+2. **`src/routes/rituals.routes.tsx`** — Remover a rota ativa `/rituals/managers-checkin` e o lazy import de `ManagersCheckinPage`. Substituir o redirect legado `/okrs/managers-checkin` por redirect para `/rituals` (hub), preservando links antigos sem 404.
+3. **`src/modules/okrs/constants/ritualWizardTypes.ts`** — Remover `'managers-checkin'` de `ALL_RITUAL_WIZARD_TYPES` para que o sync de calendário não regenere ocorrências.
+4. **`src/modules/okrs/hooks/useRitualAvailability.ts`** — Remover entrada `'managers-checkin'` dos maps de label e de janelas, forçando `RitualUnavailableScreen` caso algum link remanescente seja acessado.
+5. **`src/modules/okrs/pages/RitualHistoryPage.tsx`** — Remover `managers-checkin` dos filtros do seletor de tipo de rito.
+6. **`e2e/fixtures/test-data.ts`, `e2e/okrs.spec.ts`, `e2e/navigation.spec.ts`** — Remover a rota dos arrays de smoke-tests.
+7. **Arquivos mantidos (back-compat)**:
+   - `src/modules/okrs/types/wizard.ts` — mantém `'managers-checkin'` em `WizardPersona` para tipagem de registros históricos.
+   - `src/modules/okrs/hooks/useRitualHistory.ts` — mantém label `'Check-in de Gestores'` para renderizar eventuais addendums antigos.
+   - `src/modules/okrs/components/ritual-report/SnapshotReportView.tsx` + `renderers/ManagersCheckinReport.tsx` — mantidos para visualização read-only do histórico.
+   - `src/modules/vic/types/ask-to-vic.ts`, `useWizardAI.ts`, `useAskToVic.ts` — mantidos (consumidos apenas se uma sessão ativa ocorresse).
 
-2. **🟡 Médio — Agentes "órfãos" não declarados no front**
-   - `analista-estrategico`, `vic-persona`, `vic-greeting` existem no banco mas não estão em `VicAgentSlug` nem em `VIC_AGENTS`
-   - `vic-persona` / `vic-greeting` são filtrados explicitamente em `BuIaSettings.tsx` (provavelmente uso interno de Greeting/Persona via outras edge functions, não via `invoke-vic`)
-   - `analista-estrategico` (output_format=json, max_tokens=4000) provavelmente é usado pela edge `analysis-generate` — **verificar**
-   - **Fix:** documentar uso de cada um e, se forem invocáveis pelo usuário via Vic, adicionar ao tipo
+## Mudanças no Backend
 
-3. **🟢 Cobertura de testes funcionais**
-   - Todos os agentes com chamadas recentes estão `success` — saudáveis
-   - Agentes sem chamadas (5, 8, 9, 10, 11, 12) precisam ser testados manualmente via `supabase--curl_edge_functions` para confirmar funcionamento
+8. **`supabase/functions/sync-ritual-calendar-from-cycles/index.ts`** — Remover `'managers-checkin'` de `ALL_WIZARD_TYPES` e sua `CadenceTemplate`. Redeploy automático.
+9. **Migration de limpeza** (`supabase/migrations/<timestamp>_deprecate_managers_checkin.sql`):
+   ```sql
+   -- Remove cadência ativa (evita regeneração)
+   DELETE FROM public.ritual_cadences WHERE wizard_type = 'managers-checkin';
+   -- Cancela ocorrências futuras (soft-delete via status)
+   UPDATE public.ritual_occurrences
+     SET status = 'cancelled', updated_at = now()
+     WHERE wizard_type = 'managers-checkin'
+       AND status = 'scheduled';
+   ```
+   Não altera enums nem drops de colunas — preserva FKs e sessões históricas (caso surjam em outras BUs).
 
-### Plano de execução (3 etapas)
+## Arquivos que serão fisicamente removidos
 
-**Etapa 1 — Correção crítica do `slug` NULL** (banco)
-- Migration: `UPDATE ai_agents SET slug = 'coach-produtividade' WHERE name = 'Coach de produtividade' AND slug IS NULL`
-- Adicionar constraint `CHECK (slug IS NOT NULL AND slug <> '')` para prevenir recorrência (NOT VALID inicialmente, validate depois)
-- Adicionar índice único `UNIQUE (slug)` se ainda não existir
+- `src/modules/okrs/pages/ManagersCheckinPage.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/ManagersCheckinWizardCard.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/ManagersPanoramaStep.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/ManagersCrossIssuesStep.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/ManagersAdjustmentsStep.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/ManagersSystemicKpisStep.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/__tests__/ManagersCheckinWizardCard.test.tsx`
+- `src/modules/okrs/components/wizards/managers-checkin/index.ts`
+- Ajustar `src/modules/okrs/components/wizards/index.ts` e `src/modules/okrs/hooks/__tests__/useGenericWizardDraft.test.ts` para não referenciarem o path removido.
 
-**Etapa 2 — Teste funcional de cada agente** (sem mudança de código)
-- Para cada um dos 12 slugs, invocar `invoke-vic` (para os user-facing) ou a edge function que o consome (para os de backend) com payload mínimo válido
-- Para agentes de backend (`analista-estrategico` em `analysis-generate`, `vic-persona` em `vic-greeting`) inspecionar a edge function correspondente para confirmar slug usado
-- Registrar resultado: ✅ funciona / ❌ falha + mensagem de erro
-- Conferir logs em `ai_agent_logs` após cada teste
+## Atualização de memória canônica
 
-**Etapa 3 — Correções pontuais** (somente para falhas reais detectadas na Etapa 2)
-- Se `coach-produtividade` continuar falhando após Etapa 1 → investigar `invoke-vic` `loadAgent()`
-- Se `facilitador-decisoes` ou `onboarding-buddy` falharem → diagnosticar prompt/config
-- Para agentes "órfãos" (analista-estrategico, vic-persona, vic-greeting): documentar uso interno em comentário no código onde são invocados; não adicionar ao `VicAgentSlug` se não forem expostos ao usuário via Vic
+10. Atualizar `mem://features/okrs/management-rituals-standard-v2` reforçando que o entry-point e calendário do `managers-checkin` foram descontinuados, mantendo o MBR como substituto oficial. Atualizar `mem://index.md` se a descrição precisar refletir o novo estado.
 
-### Critérios de aceite
-1. `coach-produtividade` invocável sem erro `AGENT_NOT_FOUND`
-2. Tabela final com status de funcionamento dos 12 agentes
-3. Zero divergência silenciosa entre `slug` no banco e `VicAgentSlug` no código (ou documentada)
-4. Constraint `slug NOT NULL` aplicada para prevenir recorrência
+## Checklist de conformidade TCR
 
-### Não-objetivos (fora do escopo)
-- ❌ Alterar prompts de sistema dos agentes
-- ❌ Alterar modelos LLM ou parâmetros (temperature/max_tokens)
-- ❌ Adicionar novos agentes
-- ❌ Refatorar `invoke-vic` ou edge functions consumidoras
-
-### Arquivos/recursos afetados
-- 1 migration de banco (UPDATE + CONSTRAINT + INDEX)
-- Possíveis ajustes em `src/modules/vic/types.ts` (apenas se análise da Etapa 2 indicar)
-- Comentários de documentação em edge functions consumidoras dos agentes "órfãos" (se necessário)
-
-### Riscos
-- 🟢 Baixo: UPDATE em 1 linha, constraint NOT VALID, sem impacto em RLS, sem mudança de schema relacional
-- 🟢 Baixo: Testes funcionais usam payloads de sondagem mínimos — não geram dados persistentes problemáticos
+- [x] Sem `select('*')` introduzido.
+- [x] Query keys inalteradas.
+- [x] BU-scoping respeitado (migration usa RLS nativa das tabelas).
+- [x] Sem hardcode de roles — guards permanecem via `CLevelRitualRoute`/`BuAdminRoute` nos demais rituais.
+- [x] Histórico preservado (renderer + tipo mantidos; sessões antigas seguem visíveis).
+- [x] Redirect legado preservado (`/okrs/managers-checkin` → `/rituals`).
 
