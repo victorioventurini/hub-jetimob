@@ -6,6 +6,7 @@
  * e campo de ajuste estruturado por KR.
  */
 
+import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -67,6 +68,8 @@ export interface QbrPostOkrPromotionStepProps {
   destinationCycleId?: string;
   onDestinationCycleIdChange?: (id: string) => void;
   onContinue: () => void;
+  /** Slot opcional renderizado no topo do conteúdo (ex.: PreparationStatusCard) */
+  topSlot?: ReactNode;
 }
 
 // ============================================================
@@ -264,6 +267,7 @@ export function QbrPostOkrPromotionStep({
   destinationCycleId,
   onDestinationCycleIdChange,
   onContinue,
+  topSlot,
 }: QbrPostOkrPromotionStepProps) {
   const promotable = approvedOkrs.filter(o => o.status === 'approved' || o.status === 'approved_with_changes');
   const deferred = approvedOkrs.filter(o => o.status === 'defer');
@@ -320,6 +324,7 @@ export function QbrPostOkrPromotionStep({
       }
     >
       <div className="p-6 space-y-6">
+        {topSlot}
         {/* Destination cycle banner */}
         <DestinationCycleBanner
           cycles={destinationCycles}

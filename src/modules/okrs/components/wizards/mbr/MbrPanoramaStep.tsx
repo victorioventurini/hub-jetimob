@@ -8,7 +8,7 @@
  * - KPIs mestres agrupados por escopo (existente, reposicionado)
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -59,6 +59,8 @@ export interface MbrPanoramaStepProps {
   orgObjectives?: OrgObjectiveWithKrs[];
   /** v1.2: Current step index for agenda */
   currentStepIndex?: number;
+  /** Slot opcional renderizado no topo do conteúdo (ex.: PreparationStatusCard) */
+  topSlot?: ReactNode;
 }
 
 interface KpiGroup {
@@ -322,6 +324,7 @@ export function MbrPanoramaStep({
   scorecardMetrics,
   orgObjectives,
   currentStepIndex = 0,
+  topSlot,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
@@ -395,6 +398,7 @@ export function MbrPanoramaStep({
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
+          {topSlot}
           {/* ── Bloco 1: Scorecard do mês ── */}
           {scorecardMetrics && (
             <div className="space-y-2">
