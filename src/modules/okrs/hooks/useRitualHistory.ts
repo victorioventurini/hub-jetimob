@@ -47,6 +47,12 @@ export interface RitualHistoryItem {
   decisions: TeamCheckinDecision[];
   reflectionData: Record<string, unknown> | null;
   addendums: unknown[] | null;
+  /**
+   * Versão estrutural da sessão (SSOT em `framework/config/structureVersions.ts`).
+   * Sessões antigas devolvem 'v1' (default na coluna). Renderers usam este campo
+   * para selecionar layout legado vs novo (estratégia híbrida documentada).
+   */
+  structureVersion: string;
 }
 
 export interface RitualDetail extends RitualHistoryItem {
@@ -67,7 +73,7 @@ export { WIZARD_TYPE_LABELS };
 // ============================================================
 
 const HISTORY_FIELDS = `
-  id, bu_id, wizard_type, status, team_id, cycle_id, started_by, started_at,
+  id, bu_id, wizard_type, structure_version, status, team_id, cycle_id, started_by, started_at,
   completed_at, decisions, reflection_data, addendums,
   teams!okr_wizard_sessions_team_id_fkey ( name ),
   cycles!okr_wizard_sessions_cycle_id_fkey ( name ),
@@ -151,6 +157,7 @@ export function useRitualHistory(filters: RitualHistoryFilters = {}) {
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
         addendums: Array.isArray(row.addendums) ? row.addendums : null,
+        structureVersion: (row.structure_version as string) ?? 'v1',
       }));
 
       return { items, totalCount: count ?? 0 };
@@ -195,6 +202,7 @@ export function useRitualDetail(sessionId: string | null) {
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
         addendums: Array.isArray(row.addendums) ? row.addendums : null,
+        structureVersion: (row.structure_version as string) ?? 'v1',
       } as RitualDetail;
     },
     enabled: !!sessionId,
