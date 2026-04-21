@@ -44,7 +44,7 @@ export function MbrWizardCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-status-purple" />
-            <CardTitle className="text-lg">Monthly Business Review</CardTitle>
+            <CardTitle className="text-lg">MBR</CardTitle>
           </div>
           <Badge variant="secondary">Mensal</Badge>
         </div>

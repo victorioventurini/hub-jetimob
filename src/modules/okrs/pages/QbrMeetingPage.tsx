@@ -94,7 +94,7 @@ export default function QbrMeetingPage() {
   const { currentBu, currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
 
-  usePageTitle('Reunião QBR');
+  usePageTitle('QBR');
 
   // Cycle: QBR reviews the closing/just-closed quarter, not the newly active one
   const { lastClosedQuarterlyCycle, activeQuarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
@@ -418,7 +418,7 @@ export default function QbrMeetingPage() {
 
     try {
       const completedSessionId = await clearDraft();
-      toast.success('Reunião QBR concluída com sucesso!');
+      toast.success('QBR concluído com sucesso!');
       navigate('/okrs/executive');
 
       // Trigger summary email (best-effort, non-blocking)
@@ -442,7 +442,7 @@ export default function QbrMeetingPage() {
 
   // ── Loading ──
   if (isLoadingCycles || isLoadingCLevel || isLoadingPreQbr || isLoadingCompletedSession) {
-    return <LoadingState text="Carregando dados da Reunião QBR..." fullPage />;
+    return <LoadingState text="Carregando dados do QBR..." fullPage />;
   }
 
   if (!availability.isAvailable) {
@@ -453,7 +453,7 @@ export default function QbrMeetingPage() {
   if (showCompletedView && completedSession) {
     return (
       <CompletedRitualView
-        title="Reunião QBR"
+        title="QBR"
         wizardType="qbr-meeting"
         session={completedSession}
         backUrl="/okrs/executive"
@@ -556,7 +556,7 @@ export default function QbrMeetingPage() {
 
   return (
     <FullPageWizardShell
-      title="Reunião QBR"
+      title="QBR"
       subtitle="Decisões com base na análise do C-Level. A análise já foi feita. Agora a sala decide, aprova e compromete."
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}

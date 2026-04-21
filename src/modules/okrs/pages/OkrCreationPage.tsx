@@ -625,7 +625,7 @@ export default function OkrCreationPage() {
   return (
     <VicTypewriterQueueProvider>
       <FullPageWizardShell
-        title="Criar OKRs do Time"
+        title="Criação de OKRs do Time"
         subtitle={`Criando para: ${quarterlyCycle.name} · ${format(parseISO(quarterlyCycle.start_date), "dd MMM", { locale: ptBR })} → ${format(parseISO(quarterlyCycle.end_date), "dd MMM", { locale: ptBR })}`}
         steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
         currentStepId={draft.currentStep}
@@ -684,7 +684,7 @@ export default function OkrCreationPage() {
                 <Alert className="border-accent bg-accent/10">
                   <Info className="h-4 w-4 text-accent-foreground" />
                   <AlertDescription className="text-accent-foreground">
-                    Você tem {remainingDraftsCount} {remainingDraftsCount === 1 ? 'objetivo rascunho' : 'objetivos rascunho'} do QBR Pre aguardando validação. Após concluir este, volte para os demais.
+                    Você tem {remainingDraftsCount} {remainingDraftsCount === 1 ? 'objetivo rascunho' : 'objetivos rascunho'} do Pré-QBR aguardando validação. Após concluir este, volte para os demais.
                   </AlertDescription>
                 </Alert>
               )}

@@ -77,7 +77,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
     wizards: [
       {
         id: 'collaborator-checkin',
-        name: 'Check-in Semanal',
+        name: 'Check-in Individual',
         description: 'Atualize seus KRs e reflita sobre o progresso da semana',
         icon: ClipboardCheck,
         module: 'okrs',
@@ -96,7 +96,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
     wizards: [
       {
         id: 'team-okr-creation',
-        name: 'Criar OKRs do Time',
+        name: 'Criação de OKRs do Time',
         description: 'Defina objetivos e resultados-chave com alinhamento estratégico',
         icon: Target,
         module: 'okrs',
@@ -109,7 +109,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
       },
       {
         id: 'leader-prep',
-        name: 'Pré Check-in do Time',
+        name: 'Pré-Check-in do Time',
         description: 'Prepare-se para conduzir um bom check-in com seu time',
         icon: Settings2,
         module: 'okrs',
@@ -134,7 +134,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
       {
         id: 'mbr-pre',
         name: 'Pré-MBR',
-        description: 'Prepare o contexto do seu time para o Monthly Business Review',
+        description: 'Prepare o contexto do seu time para o MBR',
         icon: Briefcase,
         module: 'okrs',
         requiredRole: 'leader',
@@ -152,7 +152,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
     wizards: [
       {
         id: 'clevel-checkin',
-        name: 'Check-in Estratégico',
+        name: 'Check-in Executivo',
         description: 'Visão estratégica e direcionamentos para a empresa',
         icon: BarChart3,
         module: 'okrs',
@@ -164,7 +164,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
       },
       {
         id: 'mbr',
-        name: 'Monthly Business Review',
+        name: 'MBR',
         description: 'Revisão mensal de KPIs e OKRs com decisões estratégicas',
         icon: Briefcase,
         module: 'okrs',
@@ -187,7 +187,7 @@ function getQbrLeaderWizards(qbrStatus: QbrStatus): WizardDefinition[] {
   return [
     {
       id: 'qbr-pre',
-      name: 'QBR — Preparação',
+      name: 'Pré-QBR',
       description: 'Balanço do ciclo, KPIs e proposta de novos OKRs',
       icon: Presentation,
       module: 'okrs',
@@ -206,7 +206,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
   if (qbrStatus === 'open' || qbrStatus === 'collecting' || qbrStatus === 'reviewing') {
     wizards.push({
       id: 'qbr-pre-clevel',
-      name: 'QBR Pre — C-Level',
+      name: 'Pré-QBR Executivo',
       description: 'Análise estratégica consolidada e direcionamentos',
       icon: Presentation,
       module: 'okrs',
@@ -221,7 +221,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
   if (qbrStatus === 'reviewing') {
     wizards.push({
       id: 'qbr-meeting',
-      name: 'Reunião QBR',
+      name: 'QBR',
       description: 'Apresentação, aprovação de OKRs e decisões estratégicas',
       icon: Presentation,
       module: 'okrs',
@@ -236,7 +236,7 @@ function getQbrExecutiveWizards(qbrStatus: QbrStatus): WizardDefinition[] {
   if (qbrStatus === 'ready') {
     wizards.push({
       id: 'qbr-post',
-      name: 'QBR Post',
+      name: 'Pós-QBR',
       description: 'Promoção de OKRs aprovados, ata e follow-up',
       icon: Presentation,
       module: 'okrs',

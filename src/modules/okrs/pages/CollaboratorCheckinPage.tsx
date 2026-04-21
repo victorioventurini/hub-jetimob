@@ -126,7 +126,7 @@ export default function CollaboratorCheckinPage() {
     setSearchParams(newParams, { replace: true });
   }, [searchParams, setSearchParams, profile?.id]);
   
-  usePageTitle(canSwitchUser && userIdParam ? `Check-in - ${effectiveUserName}` : 'Check-in Semanal');
+  usePageTitle(canSwitchUser && userIdParam ? `Check-in - ${effectiveUserName}` : 'Check-in Individual');
   
   // Get cycle (status-based) — optional for collaborator check-in
   const { activeQuarterlyCycle: quarterlyCycle, isLoading: isLoadingCycles } = useActiveCycle();
@@ -494,7 +494,7 @@ export default function CollaboratorCheckinPage() {
   
   return (
     <FullPageWizardShell
-      title="Check-in Semanal"
+      title="Check-in Individual"
       subtitle={hasKrStep ? "Atualize seus KRs e reflita sobre o progresso" : "Atualize seus KPIs, projetos e reflexões"}
       steps={visibleSteps.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}

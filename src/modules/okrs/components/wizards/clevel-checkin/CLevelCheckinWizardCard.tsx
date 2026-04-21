@@ -43,7 +43,7 @@ export function CLevelCheckinWizardCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Crown className="h-5 w-5 text-status-purple" />
-            <CardTitle className="text-lg">Check-in Estratégico</CardTitle>
+            <CardTitle className="text-lg">Check-in Executivo</CardTitle>
           </div>
           {atRiskCount > 0 && (
             <Badge variant="destructive">

@@ -63,7 +63,7 @@ export default function CLevelCheckinPage() {
   const buSupabase = useBuScopedSupabase();
   const lastCheckin = useLastCompletedSession('clevel-checkin');
   
-  usePageTitle('Check-in Estratégico');
+  usePageTitle('Check-in Executivo');
   
   const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
   const availability = useRitualAvailability('clevel-checkin', quarterlyCycle);
@@ -239,7 +239,7 @@ export default function CLevelCheckinPage() {
   
   return (
     <FullPageWizardShell
-      title="Check-in Estratégico"
+      title="Check-in Executivo"
       subtitle="Visão estratégica e direcionamentos para a empresa"
       steps={WIZARD_STEPS.map(s => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}

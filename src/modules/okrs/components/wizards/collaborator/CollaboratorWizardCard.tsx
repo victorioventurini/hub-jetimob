@@ -80,7 +80,7 @@ export function CollaboratorWizardCard({ className }: CollaboratorWizardCardProp
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold text-base">
-                  {isFriday ? 'Check-in Semanal' : 'Atualizar OKRs'}
+                  Check-in Individual
                 </h3>
                 {overdueCount > 0 && (
                   <Badge variant="destructive" className="text-xs">

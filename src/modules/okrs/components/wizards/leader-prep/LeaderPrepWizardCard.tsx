@@ -82,7 +82,7 @@ export function LeaderPrepWizardCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold text-base">
-                  Pré Check-in do Time
+                  Pré-Check-in do Time
                 </h3>
                 {hasIssues && (
                   <Badge variant="destructive" className="text-xs">

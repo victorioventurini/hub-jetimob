@@ -44,7 +44,7 @@ interface QbrPhase {
 const QBR_PHASES: QbrPhase[] = [
   {
     status: ['open', 'collecting'],
-    label: 'QBR Pre — Líder',
+    label: 'Pré-QBR',
     description: 'Balanço do ciclo, KPIs e proposta de novos OKRs',
     route: '/okrs/qbr-pre',
     duration: '~30 min',
@@ -52,7 +52,7 @@ const QBR_PHASES: QbrPhase[] = [
   },
   {
     status: ['open', 'collecting', 'reviewing'],
-    label: 'QBR Pre — C-Level',
+    label: 'Pré-QBR Executivo',
     description: 'Análise estratégica consolidada e direcionamentos',
     route: '/rituals/qbr-clevel',
     duration: '~20 min',
@@ -60,7 +60,7 @@ const QBR_PHASES: QbrPhase[] = [
   },
   {
     status: ['reviewing'],
-    label: 'Reunião QBR',
+    label: 'QBR',
     description: 'Apresentação, aprovação de OKRs e decisões',
     route: '/okrs/qbr',
     duration: '~90 min',
@@ -68,7 +68,7 @@ const QBR_PHASES: QbrPhase[] = [
   },
   {
     status: ['ready'],
-    label: 'QBR Post',
+    label: 'Pós-QBR',
     description: 'Promoção de OKRs, ata e follow-up',
     route: '/okrs/qbr-post',
     duration: '~15 min',
@@ -174,7 +174,7 @@ export function QbrWizardCard({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-base">QBR — Preparação</h3>
+                  <h3 className="font-semibold text-base">Pré-QBR</h3>
                   <Badge variant="secondary" className="text-xs">Trimestral</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-1">
