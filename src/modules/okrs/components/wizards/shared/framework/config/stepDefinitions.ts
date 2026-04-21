@@ -262,6 +262,66 @@ const qbrPostV4: StepDefinition[] = [
 ];
 
 // ============================================================
+// ONDA 4 — v2 (Ritos semanais — Pré-Weekly e Weekly)
+// ============================================================
+//
+// Pré-Weekly: rito de DESTILAÇÃO (não coleta) — 4 steps, 5 min de duração-alvo.
+// Weekly: rito executivo da BU consumindo curadoria do agente
+// `curador-orquestrador` na Abertura Executiva.
+//
+// Steps marcados como `// LEGADO:` serão implementados em containers específicos
+// (UI rica + adapters de DB + integração com agente). Esta definição registra
+// a estrutura canônica no SSOT antes da implementação dos containers.
+// ------------------------------------------------------------
+
+/**
+ * Pré-Weekly v2 — 4 etapas canônicas (destilação executiva do líder).
+ *
+ * - Step 1 (sources): PreparationStatusCard em modo 'antessala' mostrando
+ *   as 3 fontes do próprio líder (Check-in Individual, Pré-Check-in do Time,
+ *   Check-in do Time). Gate flexível — permite prosseguir com gaps.
+ * - Step 2 (pauta): seleção e classificação estruturada de até 3 itens
+ *   das fontes; máximo 1 manual; contexto obrigatório quando urgência=alta.
+ * - Step 3 (pessoas): 4 campos curtos (risco/movimentação/reconhecimento/sobrecarga)
+ *   que alimentam o PeopleStep da Weekly INDEPENDENTEMENTE do Step 2.
+ * - Step 4 (summary): SummaryAndSubmitStep canônico.
+ */
+const preWeeklyV2: StepDefinition[] = [
+  // LEGADO: 'sources' (PreparationStatusCard mode='antessala' + gate flexível)
+  // LEGADO: 'pauta' (seleção+classificação de até 3 itens com adapter consolidador)
+  // LEGADO: 'pessoas' (4 campos curtos com canal independente para Weekly)
+  {
+    id: 'summary',
+    component: 'SummaryAndSubmitStep',
+    config: { requireConfirmDialog: true },
+    suppressInlineDecisions: true,
+  },
+];
+
+/**
+ * Weekly v2 — 4 etapas canônicas (rito executivo da BU).
+ *
+ * - Step 1 (executive-opening): PreparationStatusCard mode='list' (cobertura
+ *   dos Pré-Weekly da BU) + Abertura Executiva curada por `curador-orquestrador`
+ *   com fallback manual quando bu_ia_config.ia_enabled=false.
+ * - Step 2 (priorities): pauta consolidada cross-times (Performance/Projetos).
+ * - Step 3 (people): canal duplo — temas priorizados (bloco='Pessoas') +
+ *   sinais estruturais do Step 3 dos Pré-Weekly.
+ * - Step 4 (closing): ClosingStep canônico (checklist + ata).
+ */
+const weeklyV2: StepDefinition[] = [
+  // LEGADO: 'executive-opening' (PreparationStatusCard list + AberturaExecutivaStep curada)
+  // LEGADO: 'priorities' (pauta cross-times consolidada)
+  // LEGADO: 'people' (PeopleStep dual-channel)
+  {
+    id: 'closing',
+    component: 'ClosingStep',
+    config: { blocks: ['checklist', 'minutes'] },
+    suppressInlineDecisions: true,
+  },
+];
+
+// ============================================================
 // MAPA SSOT
 // ============================================================
 
@@ -274,6 +334,8 @@ export const STEP_DEFINITIONS: StepDefinitionMap = {
   'mbr': { v4: mbrV4 },
   'qbr-meeting': { v4: qbrMeetingV4 },
   'qbr-post': { v4: qbrPostV4 },
+  'pre-weekly': { v2: preWeeklyV2 },
+  'weekly': { v2: weeklyV2 },
 };
 
 /**
