@@ -109,6 +109,7 @@ export type FrameworkStepConfig =
   | KrsStepConfig
   | ProjectsAndInitiativesStepConfig
   | HighlightsAndRisksStepConfig
+  | LeaderInsightsStepConfig
   | DecisionsStepConfig
   | ClosingStepConfig
   | SummaryAndSubmitStepConfig
