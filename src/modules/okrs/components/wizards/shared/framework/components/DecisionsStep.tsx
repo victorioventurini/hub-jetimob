@@ -121,8 +121,8 @@ export const DecisionsStep = memo(function DecisionsStep({
                   <DecisionCard
                     key={d.id}
                     decision={d}
-                    onUpdate={(updates) => handleUpdate(d.id, updates)}
-                    onRemove={() => handleRemove(d.id)}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
                   />
                 ))}
               </Card>
