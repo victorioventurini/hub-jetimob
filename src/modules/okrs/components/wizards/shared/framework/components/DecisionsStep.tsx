@@ -60,6 +60,8 @@ export const DecisionsStep = memo(function DecisionsStep({
   const handleRemove = (id: string) => {
     onDecisionsChange(decisions.filter((d) => d.id !== id));
   };
+  const noopUpdate = (_id: string, _updates: Partial<TeamCheckinDecision>) => {};
+  const noopRemove = (_id: string) => {};
 
   return (
     <WizardStepScaffold
