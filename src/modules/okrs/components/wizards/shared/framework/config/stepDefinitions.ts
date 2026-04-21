@@ -47,16 +47,20 @@ const collaboratorV2: StepDefinition[] = [
 const leaderPrepV2: StepDefinition[] = [
   { id: 'balance', component: 'BalanceStep', config: { period: 'weekly' } },
   { id: 'kpis', component: 'KpiGateStep', config: { requireResolution: false } },
-  { id: 'krs-attention', component: 'KrsStep', config: { mode: 'attention-only' } },
+  {
+    id: 'leader-insights',
+    component: 'LeaderInsightsStep',
+    config: { showAiInsights: true, dismissable: true },
+  },
   {
     id: 'projects-initiatives',
     component: 'ProjectsAndInitiativesStep',
     config: { showProjects: true, showInitiatives: true, scope: 'team' },
   },
   {
-    id: 'highlights-risks',
-    component: 'HighlightsAndRisksStep',
-    config: { variant: 'highlights-risks' },
+    id: 'prep',
+    component: 'KrsStep',
+    config: { mode: 'leader-actions', requireLeaderAction: false },
   },
   {
     id: 'agenda',
