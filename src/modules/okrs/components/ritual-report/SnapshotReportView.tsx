@@ -1,8 +1,16 @@
 /**
  * SnapshotReportView - Dispatcher para renderizar relatórios visuais de rituais
- * 
- * Recebe wizardType + data (conteúdo de reflection_data.data) e renderiza
- * o renderer específico. Fallback: mensagem genérica.
+ *
+ * Recebe wizardType + structureVersion + data (conteúdo de reflection_data.data)
+ * e renderiza o renderer específico. Fallback: mensagem genérica.
+ *
+ * Roteamento por versão estrutural:
+ * - v1: renderers legados (snapshot imutável de pré-padronização)
+ * - v2+: mesmos renderers — o shape de `reflection_data.data` é compatível
+ *   pois o framework grava nos mesmos campos. Mantemos o parâmetro
+ *   explicitado para futuras divergências (ex: novo layout consolidado).
+ *
+ * SSOT estrutural: `wizards/shared/framework/config/structureVersions.ts`.
  */
 
 import type { WizardPersona } from '../../types/wizard';
@@ -21,9 +29,14 @@ import { QbrPostReport } from './renderers/QbrPostReport';
 interface SnapshotReportViewProps {
   wizardType: WizardPersona;
   data: Record<string, any>;
+  /**
+   * Versão estrutural da sessão. Default `v1` para retrocompatibilidade
+   * com sessões anteriores à coluna `okr_wizard_sessions.structure_version`.
+   */
+  structureVersion?: string;
 }
 
-const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Record<string, any> }>>> = {
+const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Record<string, any>; structureVersion?: string }>>> = {
   'collaborator': CollaboratorReport,
   'leader-prep': LeaderPrepReport,
   'team-checkin': TeamCheckinReport,
@@ -37,7 +50,7 @@ const RENDERERS: Partial<Record<WizardPersona, React.ComponentType<{ data: Recor
   'qbr-post': QbrPostReport,
 };
 
-export function SnapshotReportView({ wizardType, data }: SnapshotReportViewProps) {
+export function SnapshotReportView({ wizardType, data, structureVersion = 'v1' }: SnapshotReportViewProps) {
   const Renderer = RENDERERS[wizardType];
 
   if (!Renderer) {
@@ -48,5 +61,5 @@ export function SnapshotReportView({ wizardType, data }: SnapshotReportViewProps
     );
   }
 
-  return <Renderer data={data} />;
+  return <Renderer data={data} structureVersion={structureVersion} />;
 }

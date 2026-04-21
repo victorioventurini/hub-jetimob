@@ -570,7 +570,11 @@ function SnapshotSummary({ ritual }: { ritual: RitualHistoryItem }) {
 
       {/* Formatted report */}
       {data && (
-        <SnapshotReportView wizardType={ritual.wizardType} data={data} />
+        <SnapshotReportView
+          wizardType={ritual.wizardType}
+          data={data}
+          structureVersion={ritual.structureVersion}
+        />
       )}
 
       {/* Raw JSON (debug) */}

@@ -202,6 +202,7 @@ export function useRitualDetail(sessionId: string | null) {
         decisions: extractDecisions(row),
         reflectionData: row.reflection_data as Record<string, unknown> | null,
         addendums: Array.isArray(row.addendums) ? row.addendums : null,
+        structureVersion: (row.structure_version as string) ?? 'v1',
       } as RitualDetail;
     },
     enabled: !!sessionId,
