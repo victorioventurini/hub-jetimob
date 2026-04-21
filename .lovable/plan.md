@@ -1,3 +1,7 @@
+> ✅ **STATUS: EXECUTADO em 2026-04-21**
+> Flip Onda 3 (`mbr`/`qbr-meeting`/`qbr-post` → `v4`) concluído.
+> Testes: **186 verdes** em 9 suítes. Documentação canônica atualizada (TCR v3.26.0 §4.8.1, SCHEMA_QUICK_REFERENCE, README canônico).
+> Restam apenas as ações operacionais (smoke manual, publicação, monitoramento D+7).
 
 ## Flip Onda 3 — Plano de Ativação (MBR / QBR / Pós-QBR v4)
 
