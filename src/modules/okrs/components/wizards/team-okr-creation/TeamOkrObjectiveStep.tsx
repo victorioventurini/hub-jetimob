@@ -395,7 +395,7 @@ export function TeamOkrObjectiveStep({
 
       <WizardStepFooter
         onBack={onBack}
-        primaryLabel="Escolher KRs"
+        primaryLabel={hasNotValidatedYet && objectiveTitle.trim().length >= 10 && selectedOrgObjectiveId ? 'Continuar sem validar' : 'Escolher KRs'}
         onPrimary={onContinue}
         primaryDisabled={!canContinue}
       />
