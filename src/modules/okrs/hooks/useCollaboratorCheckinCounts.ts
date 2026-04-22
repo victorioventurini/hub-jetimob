@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
-import { useActiveCycles } from '@/modules/okrs/hooks';
+import { useActiveCycles } from './useCycleData';
 import { useMemo } from 'react';
 
 export interface CollaboratorCheckinCounts {
