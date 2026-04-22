@@ -43,6 +43,7 @@ vi.mock('../../shared', () => ({
   DecisionCard: ({ decision }: any) => <div data-testid="decision-card">{decision.text}</div>,
   KpiStatusBlocks: () => <div data-testid="kpi-status-blocks" />,
   LastCheckinBadge: () => <span data-testid="last-checkin-badge" />,
+  CarryOverDecisionsSection: () => <div data-testid="carry-over-decisions-section" />,
 }));
 
 import { QbrMeetingOpeningStep } from '../QbrMeetingOpeningStep';

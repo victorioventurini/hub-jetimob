@@ -33,6 +33,7 @@ vi.mock('../../shared', () => ({
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
   DecisionCard: ({ decision }: any) => <div data-testid="decision-card">{decision.text}</div>,
+  CarryOverDecisionsSection: () => <div data-testid="carry-over-decisions-section" />,
 }));
 
 import { QbrPostOkrPromotionStep, type ApprovedTeamOkr } from '../QbrPostOkrPromotionStep';
