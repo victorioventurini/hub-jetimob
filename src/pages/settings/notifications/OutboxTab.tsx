@@ -38,7 +38,7 @@ interface OutboxItem {
   status: string;
   retries: number;
   last_error: string | null;
-  recipient: { display_name?: string | null; email?: string | null } | null;
+  recipient?: { display_name?: string | null; email?: string | null } | null;
 }
 
 interface OutboxData {

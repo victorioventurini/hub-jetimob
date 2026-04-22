@@ -27,7 +27,7 @@ interface InAppItem {
   type: string;
   is_read: boolean;
   event_slug: string | null;
-  recipient: { display_name?: string | null } | null;
+  recipient?: { display_name?: string | null } | null;
 }
 
 interface InAppData {
