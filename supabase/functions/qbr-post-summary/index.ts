@@ -297,16 +297,18 @@ serve(async (req) => {
     if (!snapshot) return successResponse({ skipped: true, reason: 'no_snapshot' });
     if (recipientAuthIds.length === 0) return successResponse({ skipped: true, reason: 'no_recipients' });
 
-    const snapshotData = snapshot?.data || snapshot;
+    const snap = (snapshot as Record<string, unknown>) ?? {};
+    const snapshotData = (snap.data as Record<string, unknown> | undefined) ?? snap;
 
     const { data: cycleInfo } = await serviceClient.from('cycles').select('name').eq('id', cycleId).single();
     const cycleName = cycleInfo?.name || 'Ciclo';
 
+    interface DecisionSnapshot { text: string; category: string; owner?: { name?: string }; deadline?: string }
     const agentContext: QbrPostAgentContext = {
       buName,
       cycleName,
-      promotedOkrCount: (snapshotData?.promotedOkrIds || []).length,
-      decisions: (snapshotData?.decisions || []).map((d: any) => ({
+      promotedOkrCount: ((snapshotData.promotedOkrIds as unknown[]) || []).length,
+      decisions: ((snapshotData.decisions as DecisionSnapshot[]) || []).map((d) => ({
         text: d.text, category: d.category,
         owner: d.owner?.name, deadline: d.deadline,
       })),
