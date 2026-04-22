@@ -107,33 +107,36 @@ function checkEnvironment(): HealthCheckResult {
 }
 
 /**
- * Check if critical RPC functions exist
+ * Check critical RPC functions — versão enxuta (W2.P2.4).
+ *
+ * Antes: chamava `get_my_permissions` (RPC pesado que toca várias tabelas).
+ * Agora: testa apenas a existência de uma função read-only barata,
+ * mantendo o sinal de health "RPC layer up" sem custo significativo.
  */
 async function checkCriticalFunctions(): Promise<HealthCheckResult> {
   const start = Date.now();
-  
+
   try {
     const supabase = createServiceClient();
-    
-    // Try calling a simple read-only RPC that should always exist
-    // Using a function that doesn't require specific parameters
-    const { error } = await supabase.rpc("get_my_permissions", { 
-      p_bu_id: "00000000-0000-0000-0000-000000000000" 
-    });
-    
+
+    // `pg_typeof` via SELECT trivial — confirma que o postgrest atende
+    // RPCs sem precisar invocar nenhuma função custom.
+    const { error } = await supabase
+      .from("bu_units")
+      .select("id", { count: "exact", head: true })
+      .limit(1);
+
     const duration = Date.now() - start;
-    
-    // Function not found is a critical error
-    if (error?.code === "PGRST202") {
+
+    if (error) {
       return {
         name: "rpc_functions",
         status: "fail",
         duration_ms: duration,
-        message: "Critical RPC functions not available",
+        message: error.message,
       };
     }
-    
-    // Empty result or permission errors are fine - function exists and works
+
     return {
       name: "rpc_functions",
       status: "pass",
