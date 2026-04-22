@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBu } from '@/contexts/BuContext';
 import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { extractAllDecisions } from '../lib/extractDecisions';
 import type { TeamCheckinDecision } from '../types/wizard';
 
 export interface PendingDecisionItem {
@@ -67,27 +68,3 @@ export function useMyPendingDecisions(effectiveUserId: string | null) {
   });
 }
 
-function extractAllDecisions(row: any): TeamCheckinDecision[] {
-  const results: TeamCheckinDecision[] = [];
-
-  if (Array.isArray(row.decisions) && row.decisions.length > 0) {
-    results.push(...(row.decisions as TeamCheckinDecision[]));
-  }
-
-  // Also check reflection_data
-  const rd = row.reflection_data;
-  if (rd && typeof rd === 'object') {
-    const data = (rd as any).data;
-    if (data && Array.isArray(data.decisions)) {
-      // Only add decisions not already in results (by id)
-      const existingIds = new Set(results.map(d => d.id));
-      for (const d of data.decisions) {
-        if (!existingIds.has(d.id)) {
-          results.push(d as TeamCheckinDecision);
-        }
-      }
-    }
-  }
-
-  return results;
-}
