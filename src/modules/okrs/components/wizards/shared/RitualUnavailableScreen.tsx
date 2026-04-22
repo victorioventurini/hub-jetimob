@@ -5,7 +5,7 @@
  * Mostra ícone, nome, mensagem contextual e botão para voltar.
  */
 
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarClock, CalendarX, CalendarOff, ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import type { RitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
@@ -61,7 +61,7 @@ export function RitualUnavailableScreen({
   availability,
   backUrl = '/rituals',
 }: RitualUnavailableScreenProps) {
-  const navigate = useNavigate();
+  
   const Icon = REASON_ICON[availability.reason];
   const title = REASON_TITLE[availability.reason];
   const qbrUrl = availability.reason === 'qbr_period' ? QBR_REDIRECT[wizardType] : null;
@@ -93,22 +93,19 @@ export function RitualUnavailableScreen({
 
         <div className="flex flex-col gap-2 items-center">
           {qbrUrl && (
-            <Button
-              onClick={() => navigate(qbrUrl)}
-              className="gap-2"
-            >
-              Ir para o QBR
-              <ArrowRight className="h-4 w-4" />
+            <Button asChild className="gap-2">
+              <Link to={qbrUrl}>
+                Ir para o QBR
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           )}
 
-          <Button
-            variant="outline"
-            onClick={() => navigate(backUrl)}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
+          <Button variant="outline" asChild className="gap-2">
+            <Link to={backUrl}>
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Link>
           </Button>
         </div>
       </div>

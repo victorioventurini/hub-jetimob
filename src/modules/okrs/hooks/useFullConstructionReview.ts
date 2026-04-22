@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { logger } from "@/lib/logger";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useCycle } from "./useCycleData";
 import { 
@@ -324,7 +325,7 @@ export function useFullConstructionReview(cycleId: string | null) {
     crossAnalysisTriggered.current = true;
 
     const timer = setTimeout(async () => {
-      console.log(`[cross-team] Firing analysis — ${rawObjectives.length} objectives`);
+      logger.debug(`[cross-team] Firing analysis — ${rawObjectives.length} objectives`);
       setCrossAnalysisLoading(true);
       setCrossAnalysisError(null);
 
@@ -396,7 +397,7 @@ export function useFullConstructionReview(cycleId: string | null) {
 
         if (error) throw error;
         const responseData = data?.data ?? data;
-        console.log('[cross-team] Response:', { hasTeamAnalysis: !!responseData?.teamAnalysis });
+        logger.debug('[cross-team] Response:', { hasTeamAnalysis: !!responseData?.teamAnalysis });
         if (responseData?.teamAnalysis) {
           setCrossAnalysis(responseData.teamAnalysis);
         }

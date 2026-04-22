@@ -2,7 +2,7 @@
  * AnalysisTemplatesPage — galeria + CRUD de templates da BU
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ import type { AnalysisTemplate } from "../types";
 
 export default function AnalysisTemplatesPage() {
   usePageTitle("Templates de análise");
-  const navigate = useNavigate();
+  
   const { data: templates = [], isLoading } = useAnalysisTemplates();
   const canManage = useHasPermission("analysis.template.manage:bu");
   const deleteTemplate = useDeleteTemplate();
@@ -122,12 +122,10 @@ export default function AnalysisTemplatesPage() {
                         <p className="line-clamp-3 flex-1 text-xs text-muted-foreground">
                           {t.premise}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/analysis?template_id=${t.id}`)}
-                        >
-                          Usar este template
+                        <Button size="sm" variant="outline" asChild>
+                          <Link to={`/analysis?template_id=${t.id}`}>
+                            Usar este template
+                          </Link>
                         </Button>
                       </CardContent>
                     </Card>
