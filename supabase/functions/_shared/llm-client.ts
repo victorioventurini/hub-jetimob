@@ -4,6 +4,7 @@
  */
 
 import { corsHeaders } from "./cors.ts";
+import type { EdgeSupabaseClient } from "./types/common.ts";
 
 export interface LLMConfig {
   apiUrl: string;
