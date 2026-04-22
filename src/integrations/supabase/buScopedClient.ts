@@ -126,9 +126,9 @@ function createBuAwareFetch() {
     
     if (buId && !headers.has("x-current-bu-id")) {
       headers.set("x-current-bu-id", buId);
-      console.debug("[BuScopedClient] Injecting x-current-bu-id:", buId);
+      logger.debug("[BuScopedClient] Injecting x-current-bu-id:", buId);
     } else if (!buId) {
-      console.warn("[BuScopedClient] No BU ID available for header injection!");
+      logger.warn("[BuScopedClient] No BU ID available for header injection!");
     }
 
     // CRITICAL FIX: Always prefer globalClient session token as source of truth.
@@ -145,7 +145,7 @@ function createBuAwareFetch() {
         // (Prevents stale/anon tokens from being used due to client caching.)
         if (currentToken !== session.access_token) {
           headers.set("Authorization", `Bearer ${session.access_token}`);
-          console.debug("[BuScopedClient] Synced Authorization from globalClient session");
+          logger.debug("[BuScopedClient] Synced Authorization from globalClient session");
         }
       } else {
         // Fallback: only inject from storage if current request is anon/missing.
@@ -154,14 +154,14 @@ function createBuAwareFetch() {
           const storedToken = readAccessTokenFromStorage();
           if (storedToken) {
             headers.set("Authorization", `Bearer ${storedToken}`);
-            console.debug("[BuScopedClient] Using localStorage token (fallback)");
+            logger.debug("[BuScopedClient] Using localStorage token (fallback)");
           } else {
-            console.warn("[BuScopedClient] No session token available (globalClient + storage)");
+            logger.warn("[BuScopedClient] No session token available (globalClient + storage)");
           }
         }
       }
     } catch (error) {
-      console.warn("[BuScopedClient] Failed to sync session from globalClient:", error);
+      logger.warn("[BuScopedClient] Failed to sync session from globalClient:", error);
       const shouldFallback = !currentAuth || currentRole === "anon" || currentRole === null;
       if (shouldFallback) {
         const storedToken = readAccessTokenFromStorage();
