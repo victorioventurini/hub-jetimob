@@ -246,14 +246,20 @@ export function TeamOkrObjectiveStep({
     onValidationFeedbackChange(null, null);
   }, [onObjectiveTitleChange, onValidationFeedbackChange]);
 
-  // Validation - requires validated objective
+  // Validation - IA é OPCIONAL. Não bloqueia avanço se a validação falhar
+  // ou se o usuário optar por seguir sem validar.
   const canContinue = useMemo(() => {
     return (
-      objectiveTitle.trim().length >= 10 && 
-      selectedOrgObjectiveId && 
-      objectiveValidatedAt
+      objectiveTitle.trim().length >= 10 &&
+      !!selectedOrgObjectiveId &&
+      !isValidating
     );
-  }, [objectiveTitle, selectedOrgObjectiveId, objectiveValidatedAt]);
+  }, [objectiveTitle, selectedOrgObjectiveId, isValidating]);
+
+  // Sinaliza se o usuário ainda não validou com a IA (apenas informativo).
+  const hasNotValidatedYet = useMemo(() => {
+    return !objectiveValidatedAt && !isValidating;
+  }, [objectiveValidatedAt, isValidating]);
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
