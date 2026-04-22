@@ -308,7 +308,7 @@ export async function queryOkrs(
     return "Nenhum OKR encontrado com os filtros especificados.";
   }
 
-  const objectiveIds = objectives.map((o: any) => o.id);
+  const objectiveIds = (objectives as OkrObjectiveRow[]).map((o) => o.id);
   
   let krsQuery = supabase
     .from("okr_team_key_results")
@@ -337,7 +337,7 @@ export async function queryOkrs(
 
   let output = "=== OKRs DO HUB ===\n\n";
 
-  for (const obj of objectives as any[]) {
+  for (const obj of objectives as OkrObjectiveRow[]) {
     const teamName = obj.team?.name || "Time não identificado";
     const cycleName = obj.cycle?.name || "Sem ciclo";
     
@@ -348,7 +348,7 @@ export async function queryOkrs(
       output += `   Descrição: ${obj.description}\n`;
     }
 
-    const objKrs = keyResults?.filter((kr: any) => kr.team_objective_id === obj.id) || [];
+    const objKrs = (keyResults as OkrKeyResultRow[] | null)?.filter((kr) => kr.team_objective_id === obj.id) || [];
     
     if (objKrs.length > 0) {
       output += `   Key Results (${objKrs.length}):\n`;
@@ -439,10 +439,10 @@ export async function queryKpis(
     return "Nenhum KPI encontrado com os filtros especificados.";
   }
 
-  const valuesMap: Record<string, any[]> = {};
+  const valuesMap: Record<string, KpiValueRow[]> = {};
   
   if (includeValues) {
-    const kpiIds = kpis.map((k: any) => k.id);
+    const kpiIds = (kpis as KpiRow[]).map((k) => k.id);
     
     const { data: values } = await supabase
       .from("kpi_values")
@@ -465,7 +465,7 @@ export async function queryKpis(
 
   let output = "=== KPIs DO HUB ===\n\n";
 
-  for (const kpi of kpis as any[]) {
+  for (const kpi of kpis as KpiRow[]) {
     const teamName = kpi.team?.name || "Sem time";
     const ownerName = kpi.owner ? `${kpi.owner.first_name} ${kpi.owner.last_name}` : "Sem owner";
     const targetStr = kpi.target_value ? `Meta: ${kpi.target_value}${kpi.unit}` : "Sem meta definida";
@@ -554,7 +554,7 @@ export async function queryTeams(
     return "Nenhum time encontrado.";
   }
 
-  const teamIds = teams.map((t: any) => t.id);
+  const teamIds = (teams as TeamRow[]).map((t) => t.id);
   
   const { data: memberships } = await supabase
     .from("user_team_memberships")
@@ -571,7 +571,7 @@ export async function queryTeams(
 
   let output = "=== TIMES DO HUB ===\n\n";
 
-  for (const team of teams as any[]) {
+  for (const team of teams as TeamRow[]) {
     const leaderName = team.leader 
       ? `${team.leader.first_name} ${team.leader.last_name}`
       : "Sem líder";
@@ -621,7 +621,7 @@ export async function queryTeams(
 export async function executeHubTool(
   supabase: SupabaseClient,
   toolName: string,
-  args: Record<string, any>,
+  args: Record<string, unknown>,
   buId: string
 ): Promise<string> {
   console.log(`Executing hub tool: ${toolName} with args:`, args);
@@ -756,7 +756,7 @@ function getStatusEmoji(status: string): string {
  * @param direction - "up" for increase goals, "down" for decrease goals
  * @returns Formatted trend string with emoji and percentage change
  */
-function calculateTrend(values: any[], direction: string): string {
+function calculateTrend(values: Array<{ value: number }>, direction: string): string {
   if (values.length < 2) return "Dados insuficientes";
   
   const recent = values[0].value;
