@@ -57,9 +57,9 @@ export function useExpectedAttendanceParticipants({
     pageSize: 200,
   });
 
-  // ── Fonte: líderes da BU (Weekly / Managers Check-in) ──
-  // useHierarchicalTeamList traz times com leader_user_id (profile_id)
-  const teamList = useHierarchicalTeamList();
+  // ── Fonte: líderes da BU (Weekly / Managers Check-in / MBR / QBR) ──
+  // useTeams traz cada time com `leader: { id, display_name }` (profile_id)
+  const teamList = useTeams(false);
   const buLeadersEnabled =
     enabled &&
     (resolver === 'bu-leaders' ||
