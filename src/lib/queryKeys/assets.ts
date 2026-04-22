@@ -56,6 +56,9 @@ export const assetsKeys = {
       ['assets', 'recommendations', 'best', params] as const,
     lastValue: (id: string | null) => 
       ['assets', 'recommendations', 'lastValue', id] as const,
+    /** Recommendations owned by a given user/profile */
+    byOwner: (buId: string | null, profileId: string | null) =>
+      ['assets', 'recommendations', buId, 'owner', profileId] as const,
   },
 
   // Phone Lines
