@@ -324,7 +324,7 @@ export function useFullConstructionReview(cycleId: string | null) {
     crossAnalysisTriggered.current = true;
 
     const timer = setTimeout(async () => {
-      console.log(`[cross-team] Firing analysis — ${rawObjectives.length} objectives`);
+      logger.debug(`[cross-team] Firing analysis — ${rawObjectives.length} objectives`);
       setCrossAnalysisLoading(true);
       setCrossAnalysisError(null);
 
@@ -396,7 +396,7 @@ export function useFullConstructionReview(cycleId: string | null) {
 
         if (error) throw error;
         const responseData = data?.data ?? data;
-        console.log('[cross-team] Response:', { hasTeamAnalysis: !!responseData?.teamAnalysis });
+        logger.debug('[cross-team] Response:', { hasTeamAnalysis: !!responseData?.teamAnalysis });
         if (responseData?.teamAnalysis) {
           setCrossAnalysis(responseData.teamAnalysis);
         }
