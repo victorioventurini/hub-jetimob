@@ -80,11 +80,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    const firstQuarterStart = quarterCycles[0].start_date;
-    const firstPlanning = quarterCycles.find((c: any) => !!c.planning_date)?.planning_date ?? firstQuarterStart;
-    const firstReview = quarterCycles.find((c: any) => !!c.review_date)?.review_date ?? firstQuarterStart;
-    const firstReviewMonth1 = quarterCycles.find((c: any) => !!c.review_date_first_month)?.review_date_first_month ?? firstReview;
-    const firstRetro = quarterCycles.find((c: any) => !!c.retro_date)?.retro_date ?? firstReview;
+    interface QuarterCycleRow {
+      start_date: string;
+      planning_date?: string | null;
+      review_date?: string | null;
+      review_date_first_month?: string | null;
+      retro_date?: string | null;
+    }
+    const cycles = quarterCycles as QuarterCycleRow[];
+    const firstQuarterStart = cycles[0].start_date;
+    const firstPlanning = cycles.find((c) => !!c.planning_date)?.planning_date ?? firstQuarterStart;
+    const firstReview = cycles.find((c) => !!c.review_date)?.review_date ?? firstQuarterStart;
+    const firstReviewMonth1 = cycles.find((c) => !!c.review_date_first_month)?.review_date_first_month ?? firstReview;
+    const firstRetro = cycles.find((c) => !!c.retro_date)?.retro_date ?? firstReview;
 
     const qbrPreDay = clampDay(dayOfMonth(firstPlanning));
     const mbrFirstDay = clampDay(dayOfMonth(firstReviewMonth1));
@@ -220,7 +228,21 @@ Deno.serve(async (req) => {
       .is('team_id', null)
       .order('created_at', { ascending: true });
 
-    const byType = new Map<string, any>((existingCadences ?? []).map((c: any) => [c.wizard_type, c]));
+    interface ExistingCadenceRow {
+      id: string;
+      wizard_type: string;
+      team_id: string | null;
+      responsible_profile_id: string | null;
+      frequency: string;
+      month_week_ordinal: number | null;
+      day_of_week: number | null;
+      day_of_month: number | null;
+      start_date: string;
+      is_active: boolean;
+    }
+    const byType = new Map<string, ExistingCadenceRow>(
+      ((existingCadences ?? []) as ExistingCadenceRow[]).map((c) => [c.wizard_type, c])
+    );
 
     const cadenceIds = new Set<string>();
     const createdWizardTypes: string[] = [];
@@ -316,7 +338,9 @@ Deno.serve(async (req) => {
       .in('wizard_type', [...ALL_WIZARD_TYPES])
       .is('team_id', null);
 
-    const verifiedByType = new Map<string, string>((verifiedCadences ?? []).map((c: any) => [c.wizard_type, c.id]));
+    const verifiedByType = new Map<string, string>(
+      ((verifiedCadences ?? []) as Array<{ wizard_type: string; id: string }>).map((c) => [c.wizard_type, c.id])
+    );
     const missingAfterUpsert = ALL_WIZARD_TYPES.filter((type) => !verifiedByType.has(type));
 
     if (missingAfterUpsert.length > 0) {
