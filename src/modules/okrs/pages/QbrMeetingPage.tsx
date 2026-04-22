@@ -18,6 +18,7 @@ import {
   useGenericWizardDraft,
   useActiveCycle,
   useAllOrgObjectivesView,
+  useCarryOverDecisions,
 } from '@/modules/okrs/hooks';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -524,6 +525,7 @@ export default function QbrMeetingPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             cLevelDirectives={cLevelDirectives}
+            carryOverDecisions={qbrMeetingCarryOver}
             onContinue={goNext}
             onBack={goBack}
           />
