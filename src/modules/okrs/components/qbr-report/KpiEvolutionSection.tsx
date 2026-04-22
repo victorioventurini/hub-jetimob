@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import {
   BarChart3,
   TrendingUp,
@@ -231,7 +232,7 @@ export function KpiEvolutionSection() {
   const { currentBuId } = useBu();
 
   const { data: kpis, isLoading } = useQuery({
-    queryKey: ['qbr-report', 'kpi-evolution', currentBuId],
+    queryKey: qbrKeys.reportKpiEvolution(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {

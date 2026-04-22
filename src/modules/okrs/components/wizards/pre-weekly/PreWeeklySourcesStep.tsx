@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { getRitualLabel } from '@/modules/okrs/constants/ritualLabels';
+import { preWeeklyKeys } from '@/lib/queryKeys/okrs';
 import {
   WizardStepHeader,
   WizardFirstStepFooter,
@@ -62,7 +63,7 @@ function useUserWeeklySources(referenceWeek: string) {
   const buSupabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ['pre-weekly', 'user-sources', currentBuId, user?.id, referenceWeek],
+    queryKey: preWeeklyKeys.userSources(currentBuId, user?.id, referenceWeek),
     enabled: !!currentBuId && !!user?.id,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<SessionItem[]> => {
