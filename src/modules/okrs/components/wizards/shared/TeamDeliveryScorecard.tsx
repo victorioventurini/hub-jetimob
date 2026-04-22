@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { calculateKrState } from '../../../hooks/useKrStateInsights';
 import { calculateProgress } from '../../../types';
 import { differenceInDays, parseISO } from 'date-fns';
-import type { OrgObjectiveWithKrs } from '../../../hooks/queries/aggregateTypes';
+import type { OrgObjectiveWithKrs } from '../../../hooks/queries';
 
 // ============================================================
 // TYPES
