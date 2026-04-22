@@ -142,6 +142,7 @@ export default function DecisionsPage() {
     filters,
     page: pageState.value,
     pageSize: PAGE_SIZE,
+    overrideTeamIds,
   });
 
   const items = data?.items ?? [];
@@ -177,6 +178,7 @@ export default function DecisionsPage() {
       category: categoryState.value,
       ritual: wizardState.value,
       owner: ownerState.value,
+      team: teamState.value,
       from: dateFromState.value,
       to: dateToState.value,
       q: searchState.value,
@@ -186,6 +188,7 @@ export default function DecisionsPage() {
       category: 'all',
       ritual: 'all',
       owner: '',
+      team: '',
       from: '',
       to: '',
       q: '',
@@ -195,6 +198,7 @@ export default function DecisionsPage() {
       category: 'Categoria',
       ritual: 'Rito',
       owner: 'Responsável',
+      team: 'Time',
       from: 'De',
       to: 'Até',
       q: 'Busca',
@@ -203,10 +207,11 @@ export default function DecisionsPage() {
       status: (v) => STATUS_OPTIONS.find((o) => o.value === v)?.label ?? v,
       category: (v) => CATEGORY_OPTIONS.find((o) => o.value === v)?.label ?? v,
       ritual: (v) => RITUAL_LABELS[v as WizardPersona] ?? v,
+      team: () => selectedTeamName,
       from: (v) => format(parseISO(v), 'dd/MM/yyyy', { locale: ptBR }),
       to: (v) => format(parseISO(v), 'dd/MM/yyyy', { locale: ptBR }),
     },
-  ), [statusState.value, categoryState.value, wizardState.value, ownerState.value, dateFromState.value, dateToState.value, searchState.value]);
+  ), [statusState.value, categoryState.value, wizardState.value, ownerState.value, teamState.value, selectedTeamName, dateFromState.value, dateToState.value, searchState.value]);
 
   const handleRemoveFilter = (key: string) => {
     const map: Record<string, () => void> = {
@@ -214,6 +219,7 @@ export default function DecisionsPage() {
       category: () => categoryState.set('all'),
       ritual: () => wizardState.set('all'),
       owner: () => ownerState.set(''),
+      team: () => teamState.set(''),
       from: () => dateFromState.set(''),
       to: () => dateToState.set(''),
       q: () => searchState.set(''),
@@ -227,6 +233,7 @@ export default function DecisionsPage() {
     categoryState.set('all');
     wizardState.set('all');
     ownerState.set('');
+    teamState.set('');
     dateFromState.set('');
     dateToState.set('');
     searchState.set('');
