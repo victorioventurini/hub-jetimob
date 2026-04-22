@@ -97,7 +97,7 @@ export function useDecisionsScopeContext() {
       if (directIds.length > 0) {
         for (const tid of directIds) {
           const { data: descendants } = await (buSupabase as any).rpc('get_descendant_team_ids', {
-            root_team_id: tid,
+            p_team_id: tid,
           });
           for (const d of (descendants ?? []) as Array<{ get_descendant_team_ids?: string } | string>) {
             const id = typeof d === 'string' ? d : d?.get_descendant_team_ids;
