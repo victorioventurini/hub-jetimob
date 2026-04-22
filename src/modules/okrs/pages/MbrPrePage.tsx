@@ -28,6 +28,7 @@ import {
 import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
+import { mbrKeys } from '@/lib/queryKeys/okrs';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -137,7 +138,7 @@ export default function MbrPrePage() {
 
   // ── Load team KRs for balance step ──
   const { data: teamObjectives, isLoading: isLoadingKrs } = useQuery({
-    queryKey: ['mbr-pre', 'team-krs', currentBuId, teamIdParam, activeCycle?.id],
+    queryKey: mbrKeys.preTeamKrs(currentBuId, teamIdParam, activeCycle?.id),
     enabled: !!buSupabase && !!currentBuId && !!teamIdParam && !!activeCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -229,7 +230,7 @@ export default function MbrPrePage() {
 
   // ── Load KPIs ──
   const { data: teamKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: ['mbr-pre', 'team-kpis', teamIdParam, currentBuId],
+    queryKey: mbrKeys.preTeamKpis(teamIdParam, currentBuId),
     enabled: !!buSupabase && !!currentBuId && !!teamIdParam,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {

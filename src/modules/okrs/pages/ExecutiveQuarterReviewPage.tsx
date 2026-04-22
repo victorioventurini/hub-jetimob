@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { quarterReviewKeys } from '@/lib/queryKeys/okrs';
 import { useUrlState } from '@/shared/url';
 
 import { useKpiData } from '@/modules/kpis/hooks/useKpiData';
@@ -187,7 +188,7 @@ function TeamUnlinkedProjects({ teamId, krIds }: { teamId: string; krIds: string
   const { data: projects } = useProjectsForWizard(teamId);
 
   const { data: linkedProjectIds } = useQuery({
-    queryKey: ['quarter-review', 'linked-project-ids', teamId, krIds],
+    queryKey: quarterReviewKeys.linkedProjectIds(teamId, krIds),
     queryFn: async () => {
       if (!krIds.length) return [] as string[];
       const { data, error } = await supabase
@@ -236,7 +237,7 @@ export default function ExecutiveQuarterReviewPage() {
   const cycleState = useUrlState<string>({ key: 'cycle', defaultValue: '' });
 
   const { data: quarterCycles, isLoading: isLoadingCycles, error: cyclesError } = useQuery({
-    queryKey: ['quarter-review', 'cycles', currentBuId],
+    queryKey: quarterReviewKeys.cycles(currentBuId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cycles')
@@ -263,7 +264,7 @@ export default function ExecutiveQuarterReviewPage() {
   );
 
   const { data: teamObjectives, isLoading: isLoadingObjectives, error: objectivesError } = useQuery({
-    queryKey: ['quarter-review', 'team-objectives', currentBuId, selectedCycle?.id],
+    queryKey: quarterReviewKeys.teamObjectives(currentBuId, selectedCycle?.id),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('okr_team_objectives')
@@ -295,7 +296,7 @@ export default function ExecutiveQuarterReviewPage() {
   });
 
   const { data: ritualSessions, isLoading: isLoadingRituals, error: ritualError } = useQuery({
-    queryKey: ['quarter-review', 'ritual-sessions', currentBuId, selectedCycle?.id],
+    queryKey: quarterReviewKeys.ritualSessions(currentBuId, selectedCycle?.id),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('okr_wizard_sessions')

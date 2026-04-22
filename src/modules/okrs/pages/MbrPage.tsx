@@ -26,6 +26,7 @@ import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { mbrKeys } from '@/lib/queryKeys/okrs';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
 
@@ -151,7 +152,7 @@ export default function MbrPage() {
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
   const { currentBuId } = useBu();
   const { data: allBuKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: ['mbr', 'bu-kpis', currentBuId],
+    queryKey: mbrKeys.buKpis(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -284,7 +285,7 @@ export default function MbrPage() {
     isLoading: isLoadingTeamOkrs,
     isFetched: hasFetchedTeamOkrs,
   } = useQuery({
-    queryKey: ['mbr', 'team-objectives', currentBuId, quarterlyCycle?.id],
+    queryKey: mbrKeys.teamObjectives(currentBuId, quarterlyCycle?.id),
     enabled: !!buSupabase && !!currentBuId && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
