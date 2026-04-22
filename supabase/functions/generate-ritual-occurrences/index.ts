@@ -211,19 +211,26 @@ Deno.serve(async (req) => {
         .eq("status", "active");
 
       if (teams && teams.length > 0) {
-        teamIds = teams.map((t: any) => t.id);
+        teamIds = (teams as Array<{ id: string }>).map((t) => t.id);
       }
       // else fallback to [null] so at least one set of occurrences is created
     }
 
     // Fetch existing occurrences for this cadence
+    interface OccurrenceRow {
+      id: string;
+      planned_date: string;
+      team_id: string | null;
+      session_id: string | null;
+      status: string;
+    }
     const { data: existing } = await serviceClient
       .from("ritual_occurrences")
       .select("id, planned_date, team_id, session_id, status")
       .eq("cadence_id", cadenceId);
 
     if (rebuildMode === 'full') {
-      const existingIds = (existing ?? []).map((o: any) => o.id as string);
+      const existingIds = ((existing ?? []) as OccurrenceRow[]).map((o) => o.id);
 
       if (existingIds.length > 0) {
         const { error: delErr } = await serviceClient
@@ -236,7 +243,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const toInsert: any[] = [];
+      const toInsert: Array<Record<string, unknown>> = [];
       for (const d of plannedDates) {
         for (const tid of teamIds) {
           toInsert.push({
@@ -268,7 +275,7 @@ Deno.serve(async (req) => {
 
     // Build composite key: "planned_date|team_id"
     const existingMap = new Map(
-      (existing ?? []).map((o: any) => [`${o.planned_date}|${o.team_id ?? "null"}`, o])
+      ((existing ?? []) as OccurrenceRow[]).map((o) => [`${o.planned_date}|${o.team_id ?? "null"}`, o])
     );
 
     const plannedDateStrings = new Set(plannedDates.map(formatDate));
@@ -285,7 +292,7 @@ Deno.serve(async (req) => {
     }
 
     // Remove future orphans (not in expected set, no session, still scheduled)
-    const toRemove = (existing ?? []).filter((o: any) => {
+    const toRemove = ((existing ?? []) as OccurrenceRow[]).filter((o) => {
       const key = `${o.planned_date}|${o.team_id ?? "null"}`;
       return !expectedKeys.has(key) && !o.session_id && o.status === "scheduled";
     });
@@ -294,13 +301,13 @@ Deno.serve(async (req) => {
       const { error: delErr } = await serviceClient
         .from("ritual_occurrences")
         .delete()
-        .in("id", toRemove.map((o: any) => o.id));
+        .in("id", toRemove.map((o) => o.id));
 
       if (!delErr) removed = toRemove.length;
     }
 
     // Insert new date+team combinations (skip existing)
-    const toInsert: any[] = [];
+    const toInsert: Array<Record<string, unknown>> = [];
     for (const d of plannedDates) {
       for (const tid of teamIds) {
         const key = `${formatDate(d)}|${tid ?? "null"}`;
