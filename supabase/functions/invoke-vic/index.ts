@@ -44,6 +44,7 @@ import {
   formatValidationErrors,
   validateToolCallArgs,
 } from "../_shared/validation.ts";
+import type { EdgeSupabaseClient, HttpLikeError } from "../_shared/types/common.ts";
 
 const MAX_CULTURE_MESSAGE_CHARS = 60;
 
@@ -77,7 +78,7 @@ function normalizeCultureMessage(input: string): string {
  * Log agent invocation to ai_agent_logs
  */
 async function logAgentInvocation(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   params: {
     agentId: string | null;
     agentName: string;
@@ -117,7 +118,7 @@ async function logAgentInvocation(
  * Handle tool calls from the LLM
  */
 async function handleToolCalls(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   toolCalls: ToolCall[],
   buId: string,
   requestId: string
@@ -309,8 +310,9 @@ serve(async (req) => {
             logRequestCompletion(ctx, "success");
           },
         });
-      } catch (error: any) {
-        const errorInfo = mapLLMError(error.status || 500, requestId);
+      } catch (error) {
+        const httpErr = error as HttpLikeError;
+        const errorInfo = mapLLMError(httpErr.status || 500, requestId);
         
         await logAgentInvocation(serviceClient, {
           agentId,
@@ -321,7 +323,7 @@ serve(async (req) => {
           integrationKey: agent.integration_key,
           actionContext,
           status: "error",
-          errorMessage: `AI API error: ${error.status}`,
+          errorMessage: `AI API error: ${httpErr.status}`,
           latencyMs: Date.now() - startTime,
         });
 
@@ -343,8 +345,9 @@ serve(async (req) => {
         temperature: llmConfig.temperature,
         tools: agentTools,
       });
-    } catch (error: any) {
-      console.error(`[${requestId}] AI API error:`, error.status, error.body);
+    } catch (error) {
+      const httpErr = error as HttpLikeError;
+      console.error(`[${requestId}] AI API error:`, httpErr.status, httpErr.body);
 
       await logAgentInvocation(serviceClient, {
         agentId,
@@ -355,11 +358,11 @@ serve(async (req) => {
         integrationKey: agent.integration_key,
         actionContext,
         status: "error",
-        errorMessage: `AI API error: ${error.status}`,
+        errorMessage: `AI API error: ${httpErr.status}`,
         latencyMs: Date.now() - startTime,
       });
 
-      const errorInfo = mapLLMError(error.status || 500, requestId);
+      const errorInfo = mapLLMError(httpErr.status || 500, requestId);
       return errorResponse(errorInfo.message, errorInfo.httpStatus, {
         requestId,
         error: errorInfo.code,

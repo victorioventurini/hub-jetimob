@@ -1,8 +1,8 @@
 # 🧪 Edge Functions — Plano de Tipagem & Lint Cleanup
 
-**Versão:** v1.1.0
+**Versão:** v1.2.0
 **Última atualização:** 2026-04-22
-**Status:** Em execução — 50/203 erros resolvidos (`_shared/` 100% limpo)
+**Status:** Em execução — 103/203 erros resolvidos (51%); `_shared/` 100% + 11 functions limpas
 **Owner:** Plataforma / Backend
 **Referência cruzada:** `docs/canonical/EDGE_PERFORMANCE_STANDARD.md`,
 `mem://backend/edge-function-standard-v4`,
@@ -104,27 +104,29 @@ Após auditoria real (não a contagem agregada do CI), o panorama é:
 - [x] `_shared/notification-providers/types.ts` (1 → 0; alias para `EdgeSupabaseClient`)
 
 ### Etapa 3 — Summaries de ritos
-- [ ] `team-checkin-summary` (15)
+- [x] `qbr-pre-summary` (8 → 0)
+- [x] `qbr-post-summary` (7 → 0)
+- [ ] `team-checkin-summary` (14)
 - [ ] `qbr-executive-report` (14)
-- [ ] `mbr-summary` (12)
-- [ ] `clevel-checkin-summary` (8)
-- [ ] `collaborator-checkin-summary` (8)
+- [ ] `mbr-summary` (11)
 - [ ] `qbr-meeting-summary` (8)
-- [ ] `qbr-pre-summary` (8)
-- [ ] `qbr-post-summary` (7)
+- [ ] `clevel-checkin-summary` (7)
+- [ ] `collaborator-checkin-summary` (7)
 - [ ] `qbr-clevel-learnings-summary`
 
 ### Etapa 4 — Demais functions
-- [ ] `analysis-generate` (44)
-- [ ] `generate-ritual-occurrences` (8)
-- [ ] `sync-ritual-calendar-from-cycles` (7)
-- [ ] `okr-construction-review` (6)
-- [ ] `cron-dispatcher` (4)
-- [ ] `invoke-vic` (4)
-- [ ] Outras (≤3 cada): `get-public-asset`, `search-cities`,
-  `weekly-curate-opening`, `analysis-share`, `auth-email-hook`,
-  `evaluate-notification-health`, `get-place-details`, `search-address`,
-  `send-partner-invite`
+- [ ] `analysis-generate` (39)
+- [x] `generate-ritual-occurrences` (7 → 0)
+- [x] `sync-ritual-calendar-from-cycles` (7 → 0)
+- [ ] `okr-construction-review` (6) ← já em quick-wins
+- [x] `cron-dispatcher` (4 → 0)
+- [x] `invoke-vic` (4 → 0)
+- [x] `weekly-curate-opening` (3 → 0)
+- [x] `get-public-asset` (3 → 0)
+- [x] `search-cities` (3 → 0)
+- [x] `analysis-share` (2 → 0)
+- [x] Demais (1 cada): `auth-email-hook`, `evaluate-notification-health`,
+  `get-place-details`, `search-address`, `send-partner-invite`
 
 ### Etapa 5 — Validação
 - [ ] `npx eslint supabase/functions --ext .ts` → 0 erros

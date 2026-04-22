@@ -80,7 +80,7 @@ serve(async (req) => {
       return errorResponse("Failed to resolve recipients", 500, { requestId, error: "RECIPIENT_LOOKUP_FAILED" });
     }
 
-    const authIds = (recipients || []).map((p: any) => p.user_id).filter(Boolean);
+    const authIds = (recipients || []).map((p: { user_id: string | null }) => p.user_id).filter(Boolean);
     if (authIds.length === 0) {
       return errorResponse("No valid recipients with auth account", 400, { requestId, error: "NO_VALID_RECIPIENTS" });
     }
@@ -112,7 +112,7 @@ serve(async (req) => {
     }
 
     // Log shares
-    const logRows = (recipients || []).map((p: any) => ({
+    const logRows = (recipients || []).map((p: { id: string }) => ({
       bu_id: buId,
       report_id: report.id,
       recipient_profile_id: p.id,

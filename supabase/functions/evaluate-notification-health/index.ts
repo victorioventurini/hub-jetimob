@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from "../_shared/middleware.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -100,9 +101,8 @@ const handler = async (req: Request): Promise<Response> => {
  * 1. Alert is CRITICAL severity
  * 2. Either new (never notified) OR cooldown has expired
  */
-// deno-lint-ignore no-explicit-any
 async function notifyCriticalAlertsWithCooldown(
-  supabase: any,
+  supabase: EdgeSupabaseClient,
   correlationId: string
 ): Promise<number> {
   // Get active CRITICAL alerts

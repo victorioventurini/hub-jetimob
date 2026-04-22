@@ -65,7 +65,13 @@ interface AddressDetails {
   google_place_id: string;
 }
 
-function parseAddressComponents(components: any[]): Partial<AddressDetails> {
+interface GooglePlaceComponent {
+  long_name: string;
+  short_name?: string;
+  types?: string[];
+}
+
+function parseAddressComponents(components: GooglePlaceComponent[]): Partial<AddressDetails> {
   const result: Partial<AddressDetails> = {};
   
   for (const component of components) {

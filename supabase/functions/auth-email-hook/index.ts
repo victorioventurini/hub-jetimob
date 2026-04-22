@@ -188,13 +188,14 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in auth-email-hook function:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({ 
         error: {
           http_code: 500,
-          message: error.message 
+          message,
         }
       }),
       {

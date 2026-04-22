@@ -24,6 +24,7 @@ import {
 } from "../_shared/response.ts";
 import { loadAgent, buildSystemPrompt } from "../_shared/agent-loader.ts";
 import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient, Json } from "../_shared/types/common.ts";
 
 // ============================================================================
 // Types
