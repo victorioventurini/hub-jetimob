@@ -100,7 +100,7 @@ function extractOrFallback(
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -150,11 +150,11 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadCLevelSessionData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string,
   buId: string
 ): Promise<{
-  snapshot: any;
+  snapshot: Json | null;
   buName: string;
   recipientAuthIds: string[];
 }> {
@@ -205,11 +205,11 @@ async function loadCLevelSessionData(
       .in('id', areaLeaderProfileIds)
       .not('user_id', 'is', null);
 
-    recipientAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
+    recipientAuthIds = (profiles || []).map((p: { user_id: string | null }) => p.user_id).filter((v): v is string => Boolean(v));
   }
 
   // Add BU admin auth IDs directly (bu_user_memberships.user_id = auth.users.id)
-  const adminAuthIds = (buAdminsResult.data || []).map((r: any) => r.user_id).filter(Boolean);
+  const adminAuthIds = (buAdminsResult.data || []).map((r: { user_id: string | null }) => r.user_id).filter((v): v is string => Boolean(v));
   recipientAuthIds.push(...adminAuthIds);
 
   // Deduplicate
@@ -227,7 +227,7 @@ async function loadCLevelSessionData(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   agentContext: CLevelAgentContext,
   requestId: string
@@ -379,7 +379,8 @@ serve(async (req) => {
     }
 
     // Extract snapshot data
-    const snapshotData = (snapshot as any)?.data || snapshot;
+    const snapshotObj = snapshot as { data?: unknown } | null;
+    const snapshotData = (snapshotObj?.data ?? snapshot) as Record<string, unknown> | null;
 
     // Load cycle name
     const { data: cycleData } = await serviceClient
