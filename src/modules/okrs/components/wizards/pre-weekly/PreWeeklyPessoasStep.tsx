@@ -126,7 +126,7 @@ export function PreWeeklyPessoasStep({
         />
       }
     >
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         <Card className="bg-muted/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Por que separar Pessoas?</CardTitle>

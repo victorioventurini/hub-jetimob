@@ -149,7 +149,7 @@ export function PreWeeklyPautaStep({
         />
       }
     >
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         {topics.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="py-8 text-center space-y-2">

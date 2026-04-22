@@ -66,7 +66,7 @@ export function PreWeeklySummary({
         />
       }
     >
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         {/* Reflexão */}
         <Card>
           <CardHeader className="pb-2">
