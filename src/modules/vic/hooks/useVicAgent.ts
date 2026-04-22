@@ -25,7 +25,27 @@ export interface VicInvokeOptions {
    * Useful for optional/"nice-to-have" AI enrichments where fallback exists.
    */
   silent?: boolean;
+  /**
+   * If set, the invoke promise resolves to `fallback` (or rejects with a
+   * timeout error if no fallback) when the AI call exceeds `timeoutMs`.
+   * Prevents wizards/UI from hanging indefinitely on slow agents.
+   */
+  timeoutMs?: number;
+  /**
+   * Value returned if the call fails OR exceeds `timeoutMs`.
+   * When provided, `invoke` ALWAYS resolves (never throws) — the caller
+   * is responsible for treating the fallback as a soft-failure signal.
+   */
+  fallback?: VicInvokeResponse;
 }
+
+/**
+ * Default timeout for AI calls inside wizards / non-critical UI flows.
+ * Hard cap that protects user from hanging on slow agents (cold starts,
+ * upstream LLM lag, etc). Critical "fire and forget" calls can opt out by
+ * passing `timeoutMs: 0`.
+ */
+export const DEFAULT_VIC_TIMEOUT_MS = 12_000;
 
 export function useVicAgent(options?: UseVicAgentOptions) {
   const { currentBu, currentBuId } = useBu();
@@ -140,13 +160,56 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       context: VicContext,
       userQuestion?: string,
       invokeOptions?: VicInvokeOptions
-    ) => {
-      return mutation.mutateAsync({
+    ): Promise<VicInvokeResponse> => {
+      const call = mutation.mutateAsync({
         agentSlug,
         actionContext,
         context,
         userQuestion,
         silent: invokeOptions?.silent,
+      });
+
+      const timeoutMs = invokeOptions?.timeoutMs ?? DEFAULT_VIC_TIMEOUT_MS;
+      const hasFallback = invokeOptions?.fallback !== undefined;
+
+      // Wrap with fallback-on-error: when caller provides a fallback, the
+      // promise NEVER rejects — soft-fails to fallback so wizards/UI keep moving.
+      const withFallback = hasFallback
+        ? call.catch((err) => {
+            console.warn(`[Vic] ${agentSlug} call failed, using fallback:`, err);
+            return invokeOptions!.fallback as VicInvokeResponse;
+          })
+        : call;
+
+      // No timeout requested: return as-is.
+      if (!timeoutMs || timeoutMs <= 0) {
+        return withFallback;
+      }
+
+      // Race against a timeout. Fallback wins on timeout if provided,
+      // otherwise the promise rejects with a clear timeout error.
+      return new Promise<VicInvokeResponse>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (hasFallback) {
+            console.warn(
+              `[Vic] ${agentSlug} timed out after ${timeoutMs}ms, using fallback`
+            );
+            resolve(invokeOptions!.fallback as VicInvokeResponse);
+          } else {
+            reject(new Error(`Vic agent "${agentSlug}" timed out after ${timeoutMs}ms`));
+          }
+        }, timeoutMs);
+
+        withFallback.then(
+          (value) => {
+            clearTimeout(timer);
+            resolve(value);
+          },
+          (err) => {
+            clearTimeout(timer);
+            reject(err);
+          }
+        );
       });
     },
     [mutation]
