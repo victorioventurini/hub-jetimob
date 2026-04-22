@@ -25,6 +25,7 @@ import {
 } from "../_shared/response.ts";
 import { loadAgent, buildSystemPrompt } from "../_shared/agent-loader.ts";
 import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
 
 // ============================================================================
 // Types
@@ -290,7 +291,7 @@ function sanitizeJsonResponse(raw: string): string {
  * Respects model/provider configured in hub_integrations_global_config.
  */
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -344,7 +345,7 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadTeamData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   teamId: string,
   cycleId: string,
   buId: string
@@ -447,7 +448,7 @@ async function loadTeamData(
   let memberAuthIds: string[] = [];
   if (membersResult.data && membersResult.data.length > 0) {
     memberAuthIds = membersResult.data
-      .map((m: any) => m.profiles?.user_id)
+      .map((m: { profiles: { user_id: string | null } | null }) => m.profiles?.user_id)
       .filter(Boolean);
   } else {
     // Fallback: profiles.team_id (canonical source when junction table is empty)
@@ -460,7 +461,7 @@ async function loadTeamData(
       .not('user_id', 'is', null);
 
     if (profileMembers) {
-      memberAuthIds = profileMembers.map((p: any) => p.user_id).filter(Boolean);
+      memberAuthIds = profileMembers.map((p: { user_id: string | null }) => p.user_id).filter((v): v is string => Boolean(v));
     }
   }
   
@@ -484,7 +485,7 @@ async function loadTeamData(
     .is('deleted_at', null);
 
   if (directSubteams && directSubteams.length > 0) {
-    const subteamIds = directSubteams.map((s: any) => s.id);
+    const subteamIds = directSubteams.map((s: { id: string }) => s.id);
 
     // Check which sub-teams have their own OKRs in the current cycle
     const { data: subteamOkrs } = await serviceClient
@@ -495,12 +496,12 @@ async function loadTeamData(
       .is('deleted_at', null)
       .not('status', 'in', '("cancelled","discarded")');
 
-    const subteamsWithOkrs = new Set((subteamOkrs || []).map((o: any) => o.team_id));
-    const subteamsWithoutOkrs = directSubteams.filter((s: any) => !subteamsWithOkrs.has(s.id));
+    const subteamsWithOkrs = new Set((subteamOkrs || []).map((o: { team_id: string }) => o.team_id));
+    const subteamsWithoutOkrs = directSubteams.filter((s: { id: string }) => !subteamsWithOkrs.has(s.id));
 
     if (subteamsWithoutOkrs.length > 0) {
-      const subteamIdsWithoutOkrs = subteamsWithoutOkrs.map((s: any) => s.id);
-      console.log(`[loadTeamData] Including members from ${subteamsWithoutOkrs.length} sub-team(s) without own OKRs: ${subteamsWithoutOkrs.map((s: any) => s.name).join(', ')}`);
+      const subteamIdsWithoutOkrs = subteamsWithoutOkrs.map((s: { id: string }) => s.id);
+      console.log(`[loadTeamData] Including members from ${subteamsWithoutOkrs.length} sub-team(s) without own OKRs: ${subteamsWithoutOkrs.map((s: { name: string }) => s.name).join(', ')}`);
 
       // Fetch members via user_team_memberships (canonical)
       const { data: subMembers } = await serviceClient
@@ -510,7 +511,7 @@ async function loadTeamData(
 
       if (subMembers && subMembers.length > 0) {
         const subMemberIds = subMembers
-          .map((m: any) => m.profiles?.user_id)
+          .map((m: { profiles: { user_id: string | null } | null }) => m.profiles?.user_id)
           .filter(Boolean);
         memberAuthIds.push(...subMemberIds);
       } else {
@@ -524,7 +525,7 @@ async function loadTeamData(
           .not('user_id', 'is', null);
 
         if (subProfileMembers) {
-          memberAuthIds.push(...subProfileMembers.map((p: any) => p.user_id).filter(Boolean));
+          memberAuthIds.push(...subProfileMembers.map((p: { user_id: string | null }) => p.user_id).filter((v): v is string => Boolean(v)));
         }
       }
 
@@ -644,7 +645,7 @@ async function loadTeamData(
 }
 
 async function loadSessionDecisions(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string
 ): Promise<DecisionSummary[]> {
   const { data: session } = await serviceClient
@@ -655,7 +656,7 @@ async function loadSessionDecisions(
 
   if (!session?.reflection_data) return [];
 
-  const reflectionData = session.reflection_data as any;
+  const reflectionData = session.reflection_data as { data?: { decisions?: Array<{ text?: string; description?: string; category?: string; type?: string }> } } | null;
   const decisions: DecisionSummary[] = [];
 
   const categoryToType: Record<string, string> = {
@@ -682,7 +683,7 @@ async function loadSessionDecisions(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   agentContext: AgentContextData,
   requestId: string
