@@ -25,6 +25,42 @@ import {
   CANONICAL_PROGRESS_INTERPRETATION_RULES,
 } from "../_shared/agent-loader.ts";
 import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
+
+// ============================================================================
+// Internal row/aggregate types for collected modules
+// ============================================================================
+
+interface KpiRow { id: string; name: string; unit?: string | null; target_value?: number | null; direction?: string | null; scope?: string | null; created_at?: string }
+interface KpiValueRow { kpi_id: string; reference_date: string; value: number | null; rag_status?: string | null; confidence?: number | null }
+interface KpisModule { kpis: KpiRow[]; values: KpiValueRow[] }
+
+interface OkrObjRow { id: string; title: string; description?: string | null; team_id?: string | null; cycle_id?: string | null; status?: string | null; progress?: number | null }
+interface OkrKrRow { id: string; title: string; team_objective_id: string; baseline?: number | null; target?: number | null; current_value?: number | null; unit?: string | null; status?: string | null }
+interface OkrsModule { teamObjectives: OkrObjRow[]; teamKrs: OkrKrRow[]; orgObjectives: OkrObjRow[] }
+
+interface ProjectRow { id: string; name: string; description?: string | null; status?: string | null; start_date?: string | null; due_date?: string | null; owner_id?: string | null }
+interface InitiativeRow { id: string; name: string; status?: string | null; owner_user_id?: string | null; kr_id?: string | null; expected_end_date?: string | null; progress?: number | null }
+interface ProjectsModule { projects: ProjectRow[]; initiatives: InitiativeRow[] }
+
+interface CheckinRow { id: string; kr_id?: string | null; current_value?: number | null; previous_value?: number | null; confidence?: number | null; blockers?: string | null; comments?: string | null; created_at: string; user_id?: string | null; team_id?: string | null }
+interface WizardRow { id: string; wizard_type: string; team_id?: string | null; cycle_id?: string | null; status?: string | null; reflection_data?: unknown; created_at: string; completed_at?: string | null }
+
+interface StrategicJSON {
+  title?: string;
+  key_metrics?: unknown[];
+  insights?: unknown[];
+  body?: string;
+  sources?: Array<{ module: string; entityType: string; entityId?: string; label: string }>;
+}
+
+interface ActionItem {
+  type?: string;
+  label?: string;
+  entity?: string;
+  entityId?: string | null;
+  [key: string]: unknown;
+}
 
 // ============================================================================
 // Types
