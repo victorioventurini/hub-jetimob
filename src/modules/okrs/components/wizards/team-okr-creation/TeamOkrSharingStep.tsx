@@ -87,7 +87,7 @@ export function TeamOkrSharingStep({
     invokeVicRef.current = invokeVic;
   });
 
-  // Generate AI insight - only once per mount, only if not already persisted
+  // Generate AI insight - resiliência centralizada em useVicAgent (timeout + silent).
   useEffect(() => {
     if (!objectiveTitle || aiInsight || hasAttemptedRef.current) return;
 
@@ -95,15 +95,8 @@ export function TeamOkrSharingStep({
     setIsGenerating(true);
 
     let isCancelled = false;
-    const timeoutId = setTimeout(() => {
-      if (!isCancelled) {
-        isCancelled = true;
-        setIsGenerating(false);
-        onAiInsightChangeRef.current(
-          'Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.'
-        );
-      }
-    }, 30000);
+    const fallbackInsight =
+      'Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.';
 
     (async () => {
       try {
@@ -118,27 +111,27 @@ export function TeamOkrSharingStep({
               step: 'sharing',
             },
           },
-          'Analise se este objetivo tipicamente requer colaboração entre times. Responda em 1-2 frases.'
+          'Analise se este objetivo tipicamente requer colaboração entre times. Responda em 1-2 frases.',
+          {
+            silent: true,
+            timeoutMs: 12_000,
+            fallback: { response: fallbackInsight },
+          },
         );
         if (!isCancelled) {
-          onAiInsightChangeRef.current(response.response);
+          onAiInsightChangeRef.current(response?.response || fallbackInsight);
         }
-      } catch (error) {
-        console.warn('[TeamOkrSharingStep] AI insight failed:', error);
+      } catch {
         if (!isCancelled) {
-          onAiInsightChangeRef.current(
-            'Pelo histórico de times similares, objetivos como este frequentemente envolvem colaboração entre áreas. Considere se outros times podem contribuir para o sucesso.'
-          );
+          onAiInsightChangeRef.current(fallbackInsight);
         }
       } finally {
-        clearTimeout(timeoutId);
         if (!isCancelled) setIsGenerating(false);
       }
     })();
 
     return () => {
       isCancelled = true;
-      clearTimeout(timeoutId);
       setIsGenerating(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

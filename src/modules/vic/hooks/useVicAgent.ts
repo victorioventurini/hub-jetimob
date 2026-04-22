@@ -33,10 +33,11 @@ export interface VicInvokeOptions {
   timeoutMs?: number;
   /**
    * Value returned if the call fails OR exceeds `timeoutMs`.
-   * When provided, `invoke` ALWAYS resolves (never throws) — the caller
-   * is responsible for treating the fallback as a soft-failure signal.
+   * Caller só precisa fornecer `response` (texto que será usado pela UI);
+   * `agentName`/`agentSlug` ficam vazios e devem ser tratados como "soft failure".
+   * Quando provido, `invoke` NUNCA rejeita.
    */
-  fallback?: VicInvokeResponse;
+  fallback?: Pick<VicInvokeResponse, 'response'> & Partial<VicInvokeResponse>;
 }
 
 /**
@@ -172,12 +173,21 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       const timeoutMs = invokeOptions?.timeoutMs ?? DEFAULT_VIC_TIMEOUT_MS;
       const hasFallback = invokeOptions?.fallback !== undefined;
 
+      // Normaliza o fallback (caller só precisa fornecer `response`).
+      const normalizedFallback: VicInvokeResponse | undefined = hasFallback
+        ? {
+            agentName: agentSlug,
+            agentSlug,
+            ...invokeOptions!.fallback!,
+          }
+        : undefined;
+
       // Wrap with fallback-on-error: when caller provides a fallback, the
       // promise NEVER rejects — soft-fails to fallback so wizards/UI keep moving.
-      const withFallback = hasFallback
+      const withFallback = normalizedFallback
         ? call.catch((err) => {
             console.warn(`[Vic] ${agentSlug} call failed, using fallback:`, err);
-            return invokeOptions!.fallback as VicInvokeResponse;
+            return normalizedFallback;
           })
         : call;
 
@@ -190,11 +200,11 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       // otherwise the promise rejects with a clear timeout error.
       return new Promise<VicInvokeResponse>((resolve, reject) => {
         const timer = setTimeout(() => {
-          if (hasFallback) {
+          if (normalizedFallback) {
             console.warn(
               `[Vic] ${agentSlug} timed out after ${timeoutMs}ms, using fallback`
             );
-            resolve(invokeOptions!.fallback as VicInvokeResponse);
+            resolve(normalizedFallback);
           } else {
             reject(new Error(`Vic agent "${agentSlug}" timed out after ${timeoutMs}ms`));
           }

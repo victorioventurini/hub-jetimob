@@ -62,7 +62,7 @@ export function TeamOkrRetrospectiveStep({
     invokeVicRef.current = invokeVic;
   });
 
-  // Generate retrospective insight - only once per mount, only if not already persisted
+  // Generate retrospective insight - resiliência centralizada em useVicAgent.
   useEffect(() => {
     if (!analysis || aiInsight || hasAttemptedRef.current) return;
 
@@ -70,12 +70,10 @@ export function TeamOkrRetrospectiveStep({
     setIsGenerating(true);
 
     let isCancelled = false;
-    const timeoutId = setTimeout(() => {
-      if (!isCancelled) {
-        isCancelled = true;
-        setIsGenerating(false);
-      }
-    }, 30000);
+
+    const fallbackInsight = analysis.abandonedKrs.length > 0
+      ? `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com até 4 KRs ativos tiveram 28% mais foco.`
+      : `Atingimento médio do ciclo anterior: ${analysis.avgCompletion}%. Use esse número como linha de base para definir metas que sejam realmente desafiadoras — não óbvias, mas alcançáveis.`;
 
     (async () => {
       try {
@@ -92,39 +90,38 @@ export function TeamOkrRetrospectiveStep({
             },
           },
           'Analise o ciclo anterior e forneça 2-3 aprendizados sem julgar, focando em padrões observados e oportunidades de melhoria.',
-          { silent: true }
+          {
+            silent: true,
+            timeoutMs: 15_000,
+            fallback: { response: fallbackInsight },
+          },
         );
 
+        if (isCancelled) return;
+        onAiInsightChangeRef.current({
+          id: 'retro-insight',
+          type: 'insight',
+          content: response?.response || fallbackInsight,
+          priority: 'medium',
+          source: 'analista-kpis',
+        });
+      } catch {
         if (!isCancelled) {
-          onAiInsightChangeRef.current({
-            id: 'retro-insight',
-            type: 'insight',
-            content: response.response,
-            priority: 'medium',
-            source: 'analista-kpis',
-          });
-        }
-      } catch (err) {
-        console.warn('[TeamOkrRetrospectiveStep] AI insight failed:', err);
-        // Fallback insight (best-effort)
-        if (!isCancelled && analysis.abandonedKrs.length > 0) {
           onAiInsightChangeRef.current({
             id: 'retro-insight-fallback',
             type: 'insight',
-            content: `No último ciclo, ${analysis.abandonedKrs.length} KR(s) ficaram sem atualização após a 2ª semana. Times com até 4 KRs ativos tiveram 28% mais foco.`,
+            content: fallbackInsight,
             priority: 'medium',
             source: 'analista-kpis',
           });
         }
       } finally {
-        clearTimeout(timeoutId);
         if (!isCancelled) setIsGenerating(false);
       }
     })();
 
     return () => {
       isCancelled = true;
-      clearTimeout(timeoutId);
       setIsGenerating(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
