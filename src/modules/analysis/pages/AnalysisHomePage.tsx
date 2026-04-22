@@ -2,7 +2,7 @@
  * AnalysisHomePage — composer + histórico
  */
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
@@ -99,8 +99,8 @@ export default function AnalysisHomePage() {
           description="Gere análises com IA combinando KPIs, OKRs, projetos e check-ins."
           breadcrumbs={[{ label: "Análise Estratégica" }]}
           actions={
-            <Button variant="outline" onClick={() => navigate("/analysis/templates")}>
-              Templates
+            <Button variant="outline" asChild>
+              <Link to="/analysis/templates">Templates</Link>
             </Button>
           }
         />

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -75,10 +75,12 @@ export function CompletedRitualView({
             variant="ghost"
             size="sm"
             className="gap-1 text-muted-foreground -ml-2"
-            onClick={() => navigate(backUrl)}
+            asChild
           >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
+            <Link to={backUrl}>
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Link>
           </Button>
 
           <div className="flex flex-wrap items-center gap-3">
