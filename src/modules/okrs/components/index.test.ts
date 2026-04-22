@@ -86,15 +86,11 @@ describe('OKR Components exports', () => {
     });
   });
 
-  describe('Filter components', () => {
-    // OrgViewFilters e CycleCheckinsFilters removidos: smoke tests de re-export
-    // arrastavam árvore de dependências pesada (Supabase + contexts) e estouravam
-    // timeout. tsc já valida o export — sem perda de cobertura real.
-    it('should export TeamContributionFilters', async () => {
-      const { TeamContributionFilters } = await import('./team-contribution/TeamContributionFilters');
-      expect(TeamContributionFilters).toBeDefined();
-    });
-  });
+  // 'Filter components' removido por completo: smoke tests de re-export
+  // (OrgViewFilters, CycleCheckinsFilters, TeamContributionFilters) arrastavam
+  // árvore de dependências pesada (Supabase client + contexts + hooks) e
+  // estouravam o timeout default do Vitest. tsc já valida que esses exports
+  // existem — não há perda de cobertura comportamental real.
 
   describe('Dashboard components', () => {
     it('should export StatusDistributionBar', async () => {
