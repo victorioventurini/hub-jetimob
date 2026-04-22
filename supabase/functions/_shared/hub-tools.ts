@@ -98,8 +98,62 @@ export interface HubContextConfig {
   max_rows?: number;
 }
 
-/**
- * OpenAI-compatible tool definitions for LLM function calling
+// =============================================================================
+// ROW SHAPES (subset of columns we select via .select())
+// =============================================================================
+
+interface OkrObjectiveRow {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  team?: { name: string } | null;
+  cycle?: { name: string } | null;
+}
+
+interface OkrKeyResultRow {
+  id: string;
+  title: string;
+  baseline: number;
+  current_value: number;
+  target: number;
+  direction: string;
+  unit: string;
+  status: string;
+  type: string;
+  team_objective_id: string;
+  team?: { name: string } | null;
+}
+
+interface KpiRow {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+  direction: string;
+  frequency: string;
+  status: string;
+  target_value: number | null;
+  team?: { name: string } | null;
+  owner?: { first_name: string; last_name: string } | null;
+}
+
+interface KpiValueRow {
+  kpi_id: string;
+  value: number;
+  reference_date: string;
+  source: string | null;
+  notes: string | null;
+}
+
+interface TeamRow {
+  id: string;
+  name: string;
+  status: string;
+  description: string | null;
+  leader?: { first_name: string; last_name: string } | null;
+}
+
  * 
  * These definitions follow the OpenAI function calling schema and can be
  * passed directly to LLM APIs that support tool/function calling.
