@@ -328,6 +328,25 @@ export const okrsKeys = {
   // ── Calendar — user sessions filter ──
   calendarUserSessions: (userFilter: string | null, sessionIds: string[]) =>
     ['calendar-user-sessions', userFilter, sessionIds] as const,
+
+  // ── Decisions Inbox (gestão de decisões/notas) ──
+  decisionsInboxPrefix: (buId: string | null) =>
+    ['okr-decisions-inbox', buId] as const,
+  decisionsInbox: (
+    buId: string | null,
+    profileId: string | null,
+    scope: string,
+    filters?: Record<string, unknown> | null,
+    page?: number,
+  ) => ['okr-decisions-inbox', buId, profileId, scope, filters ?? null, page ?? 1] as const,
+  decisionsScopeContext: (buId: string | null, profileId: string | null) =>
+    ['okr-decisions-scope-context', buId, profileId] as const,
+  carryOverDecisions: (
+    buId: string | null,
+    wizardType: string,
+    teamId: string | null,
+    profileId: string | null,
+  ) => ['okr-carry-over-decisions', buId, wizardType, teamId ?? 'none', profileId ?? 'none'] as const,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
