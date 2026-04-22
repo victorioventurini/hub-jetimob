@@ -26,10 +26,10 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
   const [notes, setNotes] = useState('');
 
   const handleSubmit = () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !dueDate) return;
     onSubmit({
       name: name.trim(),
-      due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
+      due_date: dueDate.toISOString().split('T')[0],
       owner_id: ownerId,
       notes: notes.trim() || null,
     });
