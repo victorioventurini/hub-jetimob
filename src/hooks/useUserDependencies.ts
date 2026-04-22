@@ -189,7 +189,7 @@ export function useUserDependencies(profileId: string | null): UserDependencies 
 
   // Fetch Asset Recommendations where user is owner
   const { data: assetRecommendations = [], isLoading: assetRecommendationsLoading } = useQuery({
-    queryKey: ["assets", "recommendations", buId, "owner", profileId],
+    queryKey: queryKeys.assets.recommendations.byOwner(buId, profileId),
     staleTime: 2 * 60 * 1000,
     enabled: !!buId && !!profileId,
     queryFn: async () => {
