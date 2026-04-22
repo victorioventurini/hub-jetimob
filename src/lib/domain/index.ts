@@ -12,7 +12,7 @@
  *   import { statusTone }     from "@/lib/ui";
  *   import { logger }         from "@/lib/utils";
  */
-export { tryParseAiJson, parseAiResponse } from "../aiResponseParser";
+export { tryParseAiJson, stripJsonNoise } from "../aiResponseParser";
 export * from "../authRedirect";
 export * from "../idTypes";
 export * from "../participantTypes";
