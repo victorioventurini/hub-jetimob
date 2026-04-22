@@ -163,7 +163,7 @@ export function useCreateTeamKrBundle() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectiveDetail(variables.objectiveId) });
-      queryClient.invalidateQueries({ queryKey: ['cross-dependencies'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.crossDependenciesPrefix() });
       
       toast.success('Key Results criados com sucesso!');
     },

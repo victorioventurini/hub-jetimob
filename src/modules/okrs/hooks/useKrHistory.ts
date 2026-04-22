@@ -148,7 +148,7 @@ export function useKrWithHistory(krId: string | null | undefined) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['kr-with-history', buId, krId] as const,
+    queryKey: queryKeys.okrs.krWithHistory(buId, krId),
     queryFn: async (): Promise<KrWithHistoryData | null> => {
       if (!krId || !supabase) return null;
 

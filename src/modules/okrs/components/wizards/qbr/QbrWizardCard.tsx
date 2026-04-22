@@ -24,6 +24,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useActiveCycles } from '@/modules/okrs/hooks';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 
 // ============================================================
 // Types
@@ -107,7 +108,7 @@ export function QbrWizardCard({
   );
 
   const { data: cycleData, isLoading: statusLoading } = useQuery({
-    queryKey: ['qbr', 'cycle-status-card', quarterlyCycle?.id],
+    queryKey: qbrKeys.cycleStatusCard(quarterlyCycle?.id),
     enabled: !!supabase && !!quarterlyCycle?.id,
     queryFn: async () => {
       const { data, error } = await supabase

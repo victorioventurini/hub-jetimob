@@ -282,7 +282,7 @@ export function useCreateTeamOkrBundle() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.initiativesAll() });
-      queryClient.invalidateQueries({ queryKey: ['cross-dependencies'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.crossDependenciesPrefix() });
       
       toast.success('OKRs do time criados com sucesso!');
     },

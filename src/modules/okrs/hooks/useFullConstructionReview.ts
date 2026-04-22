@@ -161,7 +161,7 @@ export function useFullConstructionReview(cycleId: string | null) {
 
   // Fetch cycle year for org objectives
   const { data: cycleData } = useQuery({
-    queryKey: ['cycle-year', cycleId],
+    queryKey: queryKeys.okrs.cycleYear(cycleId),
     queryFn: async () => {
       if (!cycleId) return null;
       const { data, error } = await buSupabase

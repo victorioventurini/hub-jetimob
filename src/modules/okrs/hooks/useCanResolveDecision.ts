@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useIdentity } from '@/hooks/useIdentity';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { okrsKeys } from '@/lib/queryKeys/okrs';
 
 interface UseCanResolveDecisionResult {
   canResolve: boolean;
@@ -28,7 +29,7 @@ export function useCanResolveDecision(ownerProfileId: string | undefined): UseCa
   const needsLeadershipCheck = !isSelf && !isWildcard && !!profileId && !!ownerProfileId;
 
   const { data: isLeader = false, isLoading: leaderLoading } = useQuery<boolean>({
-    queryKey: ['can-resolve-decision', profileId, ownerProfileId],
+    queryKey: okrsKeys.canResolveDecision(profileId, ownerProfileId),
     queryFn: async (): Promise<boolean> => {
       if (!buSupabase || !profileId || !ownerProfileId) return false;
 
