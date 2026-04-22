@@ -99,9 +99,9 @@ export function TeamOkrContextStep({
     invokeVicRef.current = invokeVic;
   });
 
-  // Generate strategic insight - only once per mount, only if not already persisted
+  // Generate strategic insight - only once per mount, only if not already persisted.
+  // Resiliência centralizada (timeout + silent fallback) vive em `useVicAgent`.
   useEffect(() => {
-    // Skip if already have insight, no objectives, or already attempted
     if (aiInsight || orgObjectives.length === 0 || hasAttemptedRef.current) return;
 
     hasAttemptedRef.current = true;
@@ -109,14 +109,6 @@ export function TeamOkrContextStep({
     setGenerationFailed(false);
 
     let isCancelled = false;
-    // Hard timeout to avoid infinite "generating" state if the call hangs
-    const timeoutId = setTimeout(() => {
-      if (!isCancelled) {
-        isCancelled = true;
-        setIsGenerating(false);
-        setGenerationFailed(true);
-      }
-    }, 30000);
 
     (async () => {
       try {
@@ -126,15 +118,20 @@ export function TeamOkrContextStep({
           {
             type: 'org-context',
             additionalData: {
-              objectives: orgObjectives.map(o => o.title),
-              kpis: strategicKpis.map(k => k.name),
+              objectives: orgObjectives.map((o) => o.title),
+              kpis: strategicKpis.map((k) => k.name),
             },
           },
           'Resuma em 2-3 frases as prioridades estratégicas deste ciclo e como o time pode impactá-las.',
-          { silent: true }
+          {
+            silent: true,
+            timeoutMs: 15_000,
+            fallback: { response: '' },
+          },
         );
 
-        if (!isCancelled) {
+        if (isCancelled) return;
+        if (response?.response?.trim()) {
           onAiInsightChangeRef.current({
             id: 'context-insight',
             type: 'insight',
@@ -142,24 +139,21 @@ export function TeamOkrContextStep({
             priority: 'medium',
             source: 'alinhamento-estrategico',
           });
+        } else {
+          setGenerationFailed(true);
         }
-      } catch (err) {
-        console.warn('[TeamOkrContextStep] AI insight generation failed:', err);
+      } catch {
+        // useVicAgent já trata silenciosamente; chegamos aqui só em casos extremos.
         if (!isCancelled) setGenerationFailed(true);
       } finally {
-        clearTimeout(timeoutId);
         if (!isCancelled) setIsGenerating(false);
       }
     })();
 
     return () => {
       isCancelled = true;
-      clearTimeout(timeoutId);
       setIsGenerating(false);
     };
-    // Intentionally only depend on stable inputs that should re-trigger generation.
-    // orgObjectives/strategicKpis arrays may have new references on parent re-renders;
-    // we use length/ids as proxies for "data changed".
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgObjectives.length, strategicKpis.length, aiInsight]);
 
