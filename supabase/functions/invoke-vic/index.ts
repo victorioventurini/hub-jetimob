@@ -323,7 +323,7 @@ serve(async (req) => {
           integrationKey: agent.integration_key,
           actionContext,
           status: "error",
-          errorMessage: `AI API error: ${error.status}`,
+          errorMessage: `AI API error: ${httpErr.status}`,
           latencyMs: Date.now() - startTime,
         });
 
@@ -345,8 +345,9 @@ serve(async (req) => {
         temperature: llmConfig.temperature,
         tools: agentTools,
       });
-    } catch (error: any) {
-      console.error(`[${requestId}] AI API error:`, error.status, error.body);
+    } catch (error) {
+      const httpErr = error as HttpLikeError;
+      console.error(`[${requestId}] AI API error:`, httpErr.status, httpErr.body);
 
       await logAgentInvocation(serviceClient, {
         agentId,
@@ -357,7 +358,7 @@ serve(async (req) => {
         integrationKey: agent.integration_key,
         actionContext,
         status: "error",
-        errorMessage: `AI API error: ${error.status}`,
+        errorMessage: `AI API error: ${httpErr.status}`,
         latencyMs: Date.now() - startTime,
       });
 
