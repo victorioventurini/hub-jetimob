@@ -22,6 +22,7 @@ vi.mock('../../shared', () => ({
       <button data-testid={`remove-${decision.id}`} onClick={() => onRemove(decision.id)}>X</button>
     </div>
   ),
+  CarryOverDecisionsSection: () => <div data-testid="carry-over-decisions-section" />,
 }));
 
 vi.mock('@/components/ui/textarea-auto-submit', () => ({

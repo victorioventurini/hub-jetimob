@@ -19,6 +19,7 @@ vi.mock('../../shared', () => ({
   ),
   InlineDecisionInput: () => <div data-testid="inline-decision-input" />,
   KrLinkedDetails: ({ krId }: { krId: string }) => <div data-testid={`kr-linked-${krId}`} />,
+  CarryOverDecisionsSection: () => <div data-testid="carry-over-decisions-section" />,
 }));
 
 vi.mock('../UnlinkedProjectsList', () => ({
