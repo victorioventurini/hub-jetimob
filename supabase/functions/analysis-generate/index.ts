@@ -82,12 +82,12 @@ interface GenerateRequest {
 }
 
 interface CollectedData {
-  kpis?: any[];
-  okrs?: any;
-  projects?: any[];
-  initiatives?: any[];
-  checkins?: any[];
-  wizards?: any[];
+  kpis?: KpisModule;
+  okrs?: OkrsModule;
+  projects?: ProjectsModule;
+  initiatives?: InitiativeRow[];
+  checkins?: CheckinRow[];
+  wizards?: WizardRow[];
 }
 
 // ============================================================================
@@ -155,7 +155,7 @@ function periodWindow(period: GenerateRequest["period"], depth: AnalysisDepth): 
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -195,7 +195,7 @@ async function invokeAgentDirect(
 // Data collection per module (respects period × depth)
 // ============================================================================
 
-async function collectKpis(svc: any, buId: string, win: { from: string; to: string }) {
+async function collectKpis(svc: EdgeSupabaseClient, buId: string, win: { from: string; to: string }): Promise<KpisModule> {
   const { data: kpis } = await svc
     .from("kpi_metrics")
     .select("id, name, unit, target_value, direction, scope, created_at")
@@ -203,8 +203,8 @@ async function collectKpis(svc: any, buId: string, win: { from: string; to: stri
     .is("deleted_at", null)
     .limit(50);
 
-  const ids = (kpis || []).map((k: any) => k.id);
-  let values: any[] = [];
+  const ids = ((kpis || []) as KpiRow[]).map((k) => k.id);
+  let values: KpiValueRow[] = [];
   if (ids.length > 0) {
     const { data } = await svc
       .from("kpi_values")
@@ -213,12 +213,12 @@ async function collectKpis(svc: any, buId: string, win: { from: string; to: stri
       .gte("reference_date", win.from.slice(0, 10))
       .lte("reference_date", win.to.slice(0, 10))
       .order("reference_date", { ascending: false });
-    values = data || [];
+    values = (data || []) as KpiValueRow[];
   }
-  return { kpis: kpis || [], values };
+  return { kpis: (kpis || []) as KpiRow[], values };
 }
 
-async function collectOkrs(svc: any, buId: string, scope: GenerateRequest["scope"]) {
+async function collectOkrs(svc: EdgeSupabaseClient, buId: string, scope: GenerateRequest["scope"]): Promise<OkrsModule> {
   let teamObjQuery = svc
     .from("okr_team_objectives")
     .select("id, title, description, team_id, cycle_id, status, progress")
@@ -229,15 +229,15 @@ async function collectOkrs(svc: any, buId: string, scope: GenerateRequest["scope
   }
   const { data: teamObjectives } = await teamObjQuery.limit(80);
 
-  const objIds = (teamObjectives || []).map((o: any) => o.id);
-  let teamKrs: any[] = [];
+  const objIds = ((teamObjectives || []) as OkrObjRow[]).map((o) => o.id);
+  let teamKrs: OkrKrRow[] = [];
   if (objIds.length > 0) {
     const { data } = await svc
       .from("okr_team_key_results")
       .select("id, title, team_objective_id, baseline, target, current_value, unit, status")
       .in("team_objective_id", objIds)
       .is("deleted_at", null);
-    teamKrs = data || [];
+    teamKrs = (data || []) as OkrKrRow[];
   }
 
   const { data: orgObjectives } = await svc
@@ -247,10 +247,10 @@ async function collectOkrs(svc: any, buId: string, scope: GenerateRequest["scope
     .is("deleted_at", null)
     .limit(40);
 
-  return { teamObjectives: teamObjectives || [], teamKrs, orgObjectives: orgObjectives || [] };
+  return { teamObjectives: (teamObjectives || []) as OkrObjRow[], teamKrs, orgObjectives: (orgObjectives || []) as OkrObjRow[] };
 }
 
-async function collectProjects(svc: any, buId: string, win: { from: string; to: string }, scope: GenerateRequest["scope"]) {
+async function collectProjects(svc: EdgeSupabaseClient, buId: string, win: { from: string; to: string }, _scope: GenerateRequest["scope"]): Promise<ProjectsModule> {
   const q = svc
     .from("projects")
     .select("id, name, description, status, start_date, due_date, owner_id")
@@ -267,10 +267,10 @@ async function collectProjects(svc: any, buId: string, win: { from: string; to: 
     .limit(80);
   const { data: initiatives } = await initiativesQ;
 
-  return { projects: projects || [], initiatives: initiatives || [] };
+  return { projects: (projects || []) as ProjectRow[], initiatives: (initiatives || []) as InitiativeRow[] };
 }
 
-async function collectCheckins(svc: any, buId: string, win: { from: string; to: string }, scope: GenerateRequest["scope"]) {
+async function collectCheckins(svc: EdgeSupabaseClient, buId: string, win: { from: string; to: string }, _scope: GenerateRequest["scope"]): Promise<CheckinRow[]> {
   const q = svc
     .from("okr_checkins")
     .select("id, kr_id, current_value, previous_value, confidence, blockers, comments, created_at, user_id, team_id")
