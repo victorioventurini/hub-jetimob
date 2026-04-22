@@ -17,7 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
-import { useHierarchicalTeamList } from '@/modules/teams/hooks';
+import { useTeams } from '@/modules/teams/hooks';
 import type {
   ExpectedParticipant,
   AttendanceResolverContext,
