@@ -233,7 +233,6 @@ export function TeamOkrIntroStep({
           onClick={onContinue} 
           className="w-full gap-2"
           size="lg"
-          disabled={isLoading}
         >
           Começar pelo contexto
           <ArrowRight className="h-4 w-4" />
