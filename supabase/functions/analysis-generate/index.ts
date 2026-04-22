@@ -283,7 +283,7 @@ async function collectCheckins(svc: EdgeSupabaseClient, buId: string, win: { fro
   return data || [];
 }
 
-async function collectWizards(svc: any, buId: string, win: { from: string; to: string }) {
+async function collectWizards(svc: EdgeSupabaseClient, buId: string, win: { from: string; to: string }) {
   const { data } = await svc
     .from("okr_wizard_sessions")
     .select("id, wizard_type, team_id, cycle_id, status, reflection_data, created_at, completed_at")
@@ -296,13 +296,13 @@ async function collectWizards(svc: any, buId: string, win: { from: string; to: s
 }
 
 async function collectAll(
-  svc: any,
+  svc: EdgeSupabaseClient,
   buId: string,
   modules: string[],
   scope: GenerateRequest["scope"],
   win: { from: string; to: string },
 ): Promise<CollectedData> {
-  const tasks: Promise<any>[] = [];
+  const tasks: Promise<unknown>[] = [];
   const keys: string[] = [];
 
   if (modules.includes("kpis")) {
@@ -330,7 +330,7 @@ async function collectAll(
   const out: CollectedData = {};
   results.forEach((r, i) => {
     if (r.status === "fulfilled") {
-      (out as any)[keys[i]] = r.value;
+      (out as Record<string, unknown>)[keys[i]] = r.value;
     } else {
       console.warn(`[collect] failed ${keys[i]}:`, r.reason);
     }
@@ -346,31 +346,31 @@ function buildSources(modules: string[], data: CollectedData) {
   const sources: Array<{ module: string; entityType: string; entityId?: string; label: string }> = [];
 
   if (modules.includes("kpis") && data.kpis) {
-    const kpis: any = data.kpis as any;
-    (kpis.kpis || []).slice(0, 10).forEach((k: any) =>
+    const kpis = data.kpis as KpisModule | undefined;
+    (kpis?.kpis || []).slice(0, 10).forEach((k) =>
       sources.push({ module: "kpis", entityType: "kpi", entityId: k.id, label: `KPI: ${k.name}` }),
     );
   }
   if (modules.includes("okrs") && data.okrs) {
-    const okrs: any = data.okrs as any;
-    (okrs.teamKrs || []).slice(0, 10).forEach((kr: any) =>
+    const okrs = data.okrs as OkrsModule | undefined;
+    (okrs?.teamKrs || []).slice(0, 10).forEach((kr) =>
       sources.push({ module: "okrs", entityType: "kr", entityId: kr.id, label: `KR: ${kr.title}` }),
     );
   }
   if (data.projects) {
-    const proj: any = data.projects as any;
-    (proj.projects || []).slice(0, 6).forEach((p: any) =>
+    const proj = data.projects as ProjectsModule | undefined;
+    (proj?.projects || []).slice(0, 6).forEach((p) =>
       sources.push({ module: "projects", entityType: "project", entityId: p.id, label: `Projeto: ${p.name}` }),
     );
   }
   if (data.checkins) {
-    const ch: any[] = data.checkins as any[];
+    const ch = data.checkins as CheckinRow[];
     if (ch.length > 0) {
       sources.push({ module: "checkins", entityType: "count", label: `${ch.length} check-ins` });
     }
   }
   if (data.wizards) {
-    const w: any[] = data.wizards as any[];
+    const w = data.wizards as WizardRow[];
     if (w.length > 0) {
       sources.push({ module: "wizards", entityType: "count", label: `${w.length} sessões de ritual` });
     }
@@ -433,9 +433,9 @@ ${JSON.stringify({
     period: req.period,
     depth: req.depth,
     sample: {
-      kpis_count: (data.kpis as any)?.kpis?.length ?? 0,
-      okrs_count: (data.okrs as any)?.teamObjectives?.length ?? 0,
-      projects_count: (data.projects as any)?.projects?.length ?? 0,
+      kpis_count: (data.kpis as KpisModule | undefined)?.kpis?.length ?? 0,
+      okrs_count: (data.okrs as OkrsModule | undefined)?.teamObjectives?.length ?? 0,
+      projects_count: (data.projects as ProjectsModule | undefined)?.projects?.length ?? 0,
       checkins_count: Array.isArray(data.checkins) ? data.checkins.length : 0,
     },
   })}
@@ -593,7 +593,7 @@ serve(async (req) => {
         ]);
 
         // Parse results
-        const strategicJSON = safeParseJSON<any>(
+        const strategicJSON = safeParseJSON<StrategicJSON>(
           strategicRes.status === "fulfilled" ? strategicRes.value : "{}",
           {
             title: body.premise.slice(0, 80),
@@ -604,7 +604,7 @@ serve(async (req) => {
           },
         );
 
-        const actionsJSON = safeParseJSON<{ actions?: any[] }>(
+        const actionsJSON = safeParseJSON<{ actions?: ActionItem[] }>(
           actionsRes.status === "fulfilled" ? actionsRes.value : "{}",
           { actions: [] },
         );
@@ -641,9 +641,9 @@ serve(async (req) => {
 
     // Try background processing
     // @ts-expect-error EdgeRuntime is provided in Supabase Edge runtime
-    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
+    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil) {
       // @ts-expect-error EdgeRuntime is provided in Supabase Edge runtime
-      (EdgeRuntime as any).waitUntil(work);
+      (EdgeRuntime as { waitUntil: (p: Promise<unknown>) => void }).waitUntil(work);
     } else {
       // Fallback: don't await — fire-and-forget (avoid blocking response)
       work.catch((e) => console.error(`[${requestId}] background error:`, e));
