@@ -312,10 +312,10 @@ serve(async (req) => {
         text: d.text, category: d.category,
         owner: d.owner?.name, deadline: d.deadline,
       })),
-      crossCommitments: snapshotData?.crossCommitments || [],
-      executiveMinutes: snapshotData?.executiveMinutes || '',
-      governanceChecklist: snapshotData?.governanceChecklist || {},
-      followUpCadence: snapshotData?.followUpCadence || {},
+      crossCommitments: (snapshotData.crossCommitments as QbrPostAgentContext['crossCommitments']) || [],
+      executiveMinutes: (snapshotData.executiveMinutes as string) || '',
+      governanceChecklist: (snapshotData.governanceChecklist as QbrPostAgentContext['governanceChecklist']) || {},
+      followUpCadence: (snapshotData.followUpCadence as QbrPostAgentContext['followUpCadence']) || {},
     };
 
     console.log(`[${requestId}] Orchestrating AI agents for QBR Post summary...`);
