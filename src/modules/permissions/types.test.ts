@@ -39,12 +39,17 @@ describe('Permissions · Permission shape', () => {
 });
 
 describe('Permissions · Override', () => {
-  it('effect=allow|deny — deny vence em todas as resoluções', () => {
-    const allow: BuUserPermissionOverride['effect'] = 'allow';
-    const deny: BuUserPermissionOverride['effect'] = 'deny';
-    const winner = (a: typeof allow, b: typeof deny) => (a === 'deny' || b === 'deny' ? 'deny' : 'allow');
-    expect(winner(allow, deny)).toBe('deny');
-    expect(winner(allow, allow as any)).toBe('allow');
+  type Effect = BuUserPermissionOverride['effect'];
+  const winner = (a: Effect, b: Effect): Effect =>
+    a === 'deny' || b === 'deny' ? 'deny' : 'allow';
+
+  it('deny vence sobre allow em qualquer ordem', () => {
+    expect(winner('allow', 'deny')).toBe('deny');
+    expect(winner('deny', 'allow')).toBe('deny');
+  });
+
+  it('allow + allow resulta em allow', () => {
+    expect(winner('allow', 'allow')).toBe('allow');
   });
 });
 
