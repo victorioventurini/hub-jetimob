@@ -41,6 +41,7 @@ import {
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
 import { getRitualLabel, getStepLabel, type StructureVersion } from '@/modules/okrs/constants/ritualLabels';
 import { RITUAL_LABELS } from '@/modules/okrs/constants/ritualLabels';
+import { ALL_RITUAL_WIZARD_TYPES } from '@/modules/okrs/constants/ritualWizardTypes';
 import type { WizardPersona, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 const PAGE_SIZE = 25;
