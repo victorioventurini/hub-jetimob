@@ -28,6 +28,7 @@ import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { handleError } from '@/lib/errorMessages';
@@ -107,7 +108,7 @@ export default function QbrPrePage() {
 
   // Validate qbr_status
   const { data: cycleData, isLoading: isLoadingCycleStatus } = useQuery({
-    queryKey: ['qbr', 'cycle-status', quarterlyCycle?.id],
+    queryKey: qbrKeys.cycleStatus(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     queryFn: async () => {
       const { data, error } = await buSupabase
@@ -152,7 +153,7 @@ export default function QbrPrePage() {
 
   // ── Load team KRs for balance step ──
   const { data: teamObjectives, isLoading: isLoadingKrs } = useQuery({
-    queryKey: ['qbr-pre', 'team-krs', currentBuId, teamIdParam, quarterlyCycle?.id],
+    queryKey: qbrKeys.preTeamKrs(currentBuId, teamIdParam, quarterlyCycle?.id),
     enabled: !!buSupabase && !!currentBuId && !!teamIdParam && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -245,7 +246,7 @@ export default function QbrPrePage() {
 
   // ── Load KPIs ──
   const { data: teamKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: ['qbr-pre', 'team-kpis', teamIdParam, currentBuId],
+    queryKey: qbrKeys.preTeamKpis(teamIdParam, currentBuId),
     enabled: !!buSupabase && !!currentBuId && !!teamIdParam,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -326,7 +327,7 @@ export default function QbrPrePage() {
   }, [planningCycles]);
 
   const { data: draftOkrsFromPlanning } = useQuery({
-    queryKey: ['qbr-pre', 'draft-okrs', teamIdParam, planningQuarter?.id],
+    queryKey: qbrKeys.preDraftOkrs(teamIdParam, planningQuarter?.id),
     enabled: !!buSupabase && !!teamIdParam && !!planningQuarter?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {

@@ -27,6 +27,7 @@ import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailabilit
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
 
@@ -167,7 +168,7 @@ export default function QbrMeetingPage() {
 
   // ── Load C-Level pré-QBR session (directives, calibration flags) ──
   const { data: cLevelSession, isLoading: isLoadingCLevel } = useQuery({
-    queryKey: ['qbr-meeting', 'clevel-session', currentBuId, quarterlyCycle?.id],
+    queryKey: qbrKeys.meetingCLevelSession(currentBuId, quarterlyCycle?.id),
     enabled: !!buSupabase && !!currentBuId && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -191,7 +192,7 @@ export default function QbrMeetingPage() {
 
   // ── Load all completed qbr-pre sessions (per team) ──
   const { data: preQbrSessions, isLoading: isLoadingPreQbr } = useQuery({
-    queryKey: ['qbr-meeting', 'pre-sessions', currentBuId, quarterlyCycle?.id],
+    queryKey: qbrKeys.meetingPreSessions(currentBuId, quarterlyCycle?.id),
     enabled: !!buSupabase && !!currentBuId && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -210,7 +211,7 @@ export default function QbrMeetingPage() {
 
   // ── Load teams for commitments dropdown ──
   const { data: buTeams } = useQuery({
-    queryKey: ['qbr-meeting', 'teams', currentBuId],
+    queryKey: qbrKeys.meetingTeams(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -234,7 +235,7 @@ export default function QbrMeetingPage() {
   );
 
   const { data: addendumsBySession } = useQuery({
-    queryKey: ['qbr-meeting', 'addendums', preQbrSessionIds],
+    queryKey: qbrKeys.meetingAddendums(preQbrSessionIds),
     enabled: preQbrSessionIds.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
