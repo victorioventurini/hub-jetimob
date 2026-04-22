@@ -80,19 +80,17 @@ export function TeamOkrDependenciesStep({
   const [selectedActions, setSelectedActions] = useState<Record<number, string>>({});
   const hasAnalyzedRef = useRef(false);
 
-  // Analyze dependencies on mount - only if not already analyzed
+  // Analyze dependencies on mount - resiliência centralizada em useVicAgent.
   useEffect(() => {
-    // Skip if already have detected dependencies or no KRs
     if (detectedDependencies.length > 0 || draftKrs.length === 0 || hasAnalyzedRef.current) {
       return;
     }
 
     hasAnalyzedRef.current = true;
-    
+
     const analyzeDependencies = async () => {
       setIsAnalyzing(true);
       try {
-        // Build context for analysis
         const krContext = draftKrs.map((kr, i) => ({
           index: i,
           title: kr.title,
@@ -109,7 +107,12 @@ export function TeamOkrDependenciesStep({
             additionalData: { krs: krContext },
           },
           `Analise estes KRs e identifique potenciais dependências com outros times ou riscos.
-          Retorne JSON: { "dependencies": [{ "krIndex": 0, "description": "...", "dependsOnTeamName": "...", "severity": "low|medium|high" }], "insight": "..." }`
+          Retorne JSON: { "dependencies": [{ "krIndex": 0, "description": "...", "dependsOnTeamName": "...", "severity": "low|medium|high" }], "insight": "..." }`,
+          {
+            silent: true,
+            timeoutMs: 18_000,
+            fallback: { response: '' },
+          },
         );
 
         const parsed = tryParseAiJson<{
@@ -123,7 +126,7 @@ export function TeamOkrDependenciesStep({
         }>(response.response);
 
         if (!parsed) {
-          // Resposta não estruturada — sem dependências detectadas
+          // Sem JSON válido (inclui timeout/erro pelo fallback vazio) — segue sem dependências.
           onDetectedDependenciesChange([]);
         } else {
           const deps: DetectedDependencyDraft[] = (parsed.dependencies || []).map((d) => ({
@@ -137,13 +140,12 @@ export function TeamOkrDependenciesStep({
               id: 'dep-insight',
               type: 'insight',
               content: parsed.insight,
-              priority: deps.some(d => d.severity === 'high') ? 'high' : 'medium',
+              priority: deps.some((d) => d.severity === 'high') ? 'high' : 'medium',
               source: 'alinhamento-estrategico',
             });
           }
         }
       } catch {
-        // Silently fail - no dependencies detected
         onDetectedDependenciesChange([]);
       } finally {
         setIsAnalyzing(false);
@@ -151,7 +153,7 @@ export function TeamOkrDependenciesStep({
     };
 
     analyzeDependencies();
-  }, [draftKrs, detectedDependencies.length, onDetectedDependenciesChange, onAiInsightChange]);
+  }, [draftKrs, detectedDependencies.length, onDetectedDependenciesChange, onAiInsightChange, invokeVic]);
 
   // Handle action selection
   const handleActionSelect = (depIndex: number, action: string) => {

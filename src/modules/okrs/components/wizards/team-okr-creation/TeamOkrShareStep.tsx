@@ -67,82 +67,100 @@ export function TeamOkrShareStep({
     }
   }, [shareStepContent?.summary]);
 
-  // Generate summary and messages - only if not already persisted
+  // Generate summary and messages - resiliência centralizada em useVicAgent.
+  // Cada chamada tem timeout + fallback dedicado; se IA falhar, fallback final é
+  // construído localmente (texto coerente com o resumo do OKR).
   useEffect(() => {
     if (shareStepContent || hasGeneratedRef.current) return;
-    
+
     hasGeneratedRef.current = true;
+
+    const fallbackContent: ShareStepContent = {
+      summary: `O ${teamName} definiu um novo objetivo: "${objectiveTitle}". Este ciclo, vamos focar em ${draftKrs.length} resultados-chave que vão nos guiar para o sucesso.`,
+      reflectionQuestions: [
+        'O que cada um de nós pode fazer para contribuir com esses resultados?',
+        'Quais obstáculos precisamos remover juntos?',
+        'Como vamos medir nosso progresso semanalmente?',
+      ],
+      closingMessage: 'Foco não é dizer sim para poucas coisas. É dizer não para muitas coisas boas.',
+    };
 
     const generateContent = async () => {
       setIsGenerating(true);
       try {
-        // Generate summary
-        const summaryResponse = await invokeVic(
-          'revisor-comunicacao',
-          'comms-review',
-          {
-            type: 'okr-summary',
-            title: objectiveTitle,
-            additionalData: {
-              teamName,
-              krs: draftKrs.map(kr => ({
-                title: kr.title,
-                type: kr.type,
-                target: kr.target,
-                unit: kr.unit,
-              })),
-              initiativesCount: initiatives.length,
+        // Disparo paralelo — usuário não espera 3x o tempo de uma chamada.
+        const [summaryResponse, questionsResponse, closingResponse] = await Promise.all([
+          invokeVic(
+            'revisor-comunicacao',
+            'comms-review',
+            {
+              type: 'okr-summary',
+              title: objectiveTitle,
+              additionalData: {
+                teamName,
+                krs: draftKrs.map((kr) => ({
+                  title: kr.title,
+                  type: kr.type,
+                  target: kr.target,
+                  unit: kr.unit,
+                })),
+                initiativesCount: initiatives.length,
+              },
             },
-          },
-          `Gere um resumo claro e inspirador para compartilhar com o time sobre estes OKRs.
+            `Gere um resumo claro e inspirador para compartilhar com o time sobre estes OKRs.
           Inclua: contexto do porquê dessas escolhas, os KRs de forma simples, e uma chamada para ação.
-          Máximo 150 palavras, em linguagem simples e direta.`
-        );
+          Máximo 150 palavras, em linguagem simples e direta.`,
+            {
+              silent: true,
+              timeoutMs: 18_000,
+              fallback: { response: fallbackContent.summary },
+            },
+          ),
+          invokeVic(
+            'validador-metodologico-okrs',
+            'okr-review-quality',
+            {
+              type: 'reflection',
+              title: objectiveTitle,
+              additionalData: { krs: draftKrs.map((kr) => kr.title) },
+            },
+            `Sugira 3 perguntas curtas para provocar reflexão no time sobre estes OKRs.
+          Retorne apenas as 3 perguntas, uma por linha.`,
+            {
+              silent: true,
+              timeoutMs: 15_000,
+              fallback: { response: fallbackContent.reflectionQuestions.join('\n') },
+            },
+          ),
+          invokeVic(
+            'cultura',
+            'dashboard-culture',
+            { type: 'closing' },
+            `Gere uma mensagem cultural curta (1-2 frases) sobre foco e priorização para encerrar a criação de OKRs.`,
+            {
+              silent: true,
+              timeoutMs: 12_000,
+              fallback: { response: fallbackContent.closingMessage! },
+            },
+          ),
+        ]);
 
-        // Generate reflection questions
-        const questionsResponse = await invokeVic(
-          'validador-metodologico-okrs',
-          'okr-review-quality',
-          {
-            type: 'reflection',
-            title: objectiveTitle,
-            additionalData: { krs: draftKrs.map(kr => kr.title) },
-          },
-          `Sugira 3 perguntas curtas para provocar reflexão no time sobre estes OKRs.
-          Retorne apenas as 3 perguntas, uma por linha.`
-        );
-        const questions = questionsResponse.response
+        const questions = (questionsResponse.response || '')
           .split('\n')
-          .filter(q => q.trim())
+          .map((q) => q.trim())
+          .filter(Boolean)
           .slice(0, 3);
 
-        // Generate closing message
-        const closingResponse = await invokeVic(
-          'cultura',
-          'dashboard-culture',
-          { type: 'closing' },
-          `Gere uma mensagem cultural curta (1-2 frases) sobre foco e priorização para encerrar a criação de OKRs.`
-        );
-
         const content: ShareStepContent = {
-          summary: summaryResponse.response,
-          closingMessage: closingResponse.response,
-          reflectionQuestions: questions,
+          summary: summaryResponse.response || fallbackContent.summary,
+          closingMessage: closingResponse.response || fallbackContent.closingMessage,
+          reflectionQuestions: questions.length > 0 ? questions : fallbackContent.reflectionQuestions,
         };
 
         onShareStepContentChange(content);
-        setLocalSummary(summaryResponse.response);
+        setLocalSummary(content.summary);
       } catch {
-        // Fallback content
-        const fallbackContent: ShareStepContent = {
-          summary: `O ${teamName} definiu um novo objetivo: "${objectiveTitle}". Este ciclo, vamos focar em ${draftKrs.length} resultados-chave que vão nos guiar para o sucesso.`,
-          reflectionQuestions: [
-            'O que cada um de nós pode fazer para contribuir com esses resultados?',
-            'Quais obstáculos precisamos remover juntos?',
-            'Como vamos medir nosso progresso semanalmente?',
-          ],
-          closingMessage: 'Foco não é dizer sim para poucas coisas. É dizer não para muitas coisas boas.',
-        };
+        // Falha catastrófica (fallbacks de cada chamada já cobrem o caso comum).
         onShareStepContentChange(fallbackContent);
         setLocalSummary(fallbackContent.summary);
       } finally {
@@ -151,7 +169,7 @@ export function TeamOkrShareStep({
     };
 
     generateContent();
-  }, [shareStepContent, teamName, objectiveTitle, draftKrs, initiatives, onShareStepContentChange]);
+  }, [shareStepContent, teamName, objectiveTitle, draftKrs, initiatives, onShareStepContentChange, invokeVic]);
 
   // Update persisted content when local summary changes
   const handleSummaryChange = (value: string) => {
