@@ -6548,6 +6548,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "okr_team_objectives_qbr_origin_session_id_fkey"
+            columns: ["qbr_origin_session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
+          },
+          {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -6609,6 +6616,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "okr_wizard_sessions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_kr_actions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
           },
         ]
       }
@@ -8125,6 +8139,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ritual_occurrences_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
+          },
+          {
             foreignKeyName: "ritual_occurrences_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -8137,6 +8158,138 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      ritual_session_attendance: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_present: boolean
+          last_modified_at: string
+          marked_at: string
+          marked_by_profile_id: string
+          participant_name: string
+          participant_profile_id: string
+          participant_role: string | null
+          participant_team_id: string | null
+          participant_team_name: string | null
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_present: boolean
+          last_modified_at?: string
+          marked_at?: string
+          marked_by_profile_id: string
+          participant_name: string
+          participant_profile_id: string
+          participant_role?: string | null
+          participant_team_id?: string | null
+          participant_team_name?: string | null
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_present?: boolean
+          last_modified_at?: string
+          marked_at?: string
+          marked_by_profile_id?: string
+          participant_name?: string
+          participant_profile_id?: string
+          participant_role?: string | null
+          participant_team_id?: string | null
+          participant_team_name?: string | null
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_session_attendance_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_marked_by_profile_id_fkey"
+            columns: ["marked_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_marked_by_profile_id_fkey"
+            columns: ["marked_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_marked_by_profile_id_fkey"
+            columns: ["marked_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_participant_profile_id_fkey"
+            columns: ["participant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_participant_profile_id_fkey"
+            columns: ["participant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_participant_profile_id_fkey"
+            columns: ["participant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_participant_team_id_fkey"
+            columns: ["participant_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_participant_team_id_fkey"
+            columns: ["participant_team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "okr_wizard_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
           },
         ]
       }
@@ -10183,6 +10336,50 @@ export type Database = {
             columns: ["job_title_id"]
             isOneToOne: false
             referencedRelation: "job_titles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_ritual_attendance_summary: {
+        Row: {
+          attendance_rate_pct: number | null
+          bu_id: string | null
+          completed_at: string | null
+          cycle_id: string | null
+          present_count: number | null
+          session_id: string | null
+          status: Database["public"]["Enums"]["wizard_session_status"] | null
+          team_id: string | null
+          total_count: number | null
+          wizard_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_wizard_sessions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
             referencedColumns: ["id"]
           },
         ]
