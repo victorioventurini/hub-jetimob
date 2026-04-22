@@ -1,8 +1,8 @@
 # 🧪 Edge Functions — Plano de Tipagem & Lint Cleanup
 
-**Versão:** v1.0.0
+**Versão:** v1.1.0
 **Última atualização:** 2026-04-22
-**Status:** Em execução
+**Status:** Em execução — 50/203 erros resolvidos (`_shared/` 100% limpo)
 **Owner:** Plataforma / Backend
 **Referência cruzada:** `docs/canonical/EDGE_PERFORMANCE_STANDARD.md`,
 `mem://backend/edge-function-standard-v4`,
@@ -93,14 +93,15 @@ Após auditoria real (não a contagem agregada do CI), o panorama é:
 - [x] `okr-construction-review/index.ts` — `no-useless-escape` ×6
 - [x] `team-checkin-summary/index.ts` — `prefer-const`
 
-### Etapa 2 — Tipagem do `_shared`
-- [ ] `_shared/hub-tools.ts` (14 `any`)
-- [ ] `_shared/llm-client.ts` (5 `any`)
-- [ ] `_shared/agent-loader.ts` (4)
-- [ ] `_shared/email-sender.ts` (4)
-- [ ] `_shared/instruction-sources.ts` (4)
-- [ ] `_shared/middleware.ts` (2)
-- [ ] `_shared/notification-providers/types.ts` (1)
+### Etapa 2 — Tipagem do `_shared` ✅ CONCLUÍDA
+- [x] Criado `_shared/types/common.ts` com `EdgeSupabaseClient`, `AuthClaims`, `Json`, `HttpLikeError`, `UnknownRecord`
+- [x] `_shared/hub-tools.ts` (10 `any` → 0; interfaces locais `OkrObjectiveRow`, `OkrKeyResultRow`, `KpiRow`, `KpiValueRow`, `TeamRow`)
+- [x] `_shared/llm-client.ts` (4 `any` → 0; `EdgeSupabaseClient` em todos os helpers)
+- [x] `_shared/agent-loader.ts` (4 → 0)
+- [x] `_shared/email-sender.ts` (4 → 0; `error: any` → `(error as Error).message`)
+- [x] `_shared/instruction-sources.ts` (4 → 0)
+- [x] `_shared/middleware.ts` (2 → 0; `claims: any` → `AuthClaims`)
+- [x] `_shared/notification-providers/types.ts` (1 → 0; alias para `EdgeSupabaseClient`)
 
 ### Etapa 3 — Summaries de ritos
 - [ ] `team-checkin-summary` (15)
