@@ -7,7 +7,7 @@
  *  - area  : da minha área (líder de área)
  *  - all   : toda a BU (admin)
  */
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -88,11 +88,29 @@ export default function DecisionsPage() {
   const pageState = useUrlState<number>({ key: 'page', defaultValue: 1, parse: parsers.numberWithDefault(1) });
   const teamState = useUrlState<string>({ key: 'team', defaultValue: '', parse: parsers.string });
 
-  // Helper: aplica setter e reseta paginação para 1
-  const setAndResetPage = <T,>(setter: (v: T) => void, value: T) => {
-    setter(value);
-    pageState.set(1);
-  };
+  // Reset atômico da paginação quando qualquer filtro muda, evitando sobrescrever
+  // o parâmetro recém-alterado com múltiplos setSearchParams no mesmo tick.
+  const filterFingerprint = [
+    scopeState.value,
+    statusState.value,
+    categoryState.value,
+    wizardState.value,
+    ownerState.value,
+    teamState.value,
+    dateFromState.value,
+    dateToState.value,
+    searchState.value,
+  ].join('|');
+  const prevFilterRef = useRef(filterFingerprint);
+
+  useEffect(() => {
+    if (prevFilterRef.current !== filterFingerprint) {
+      prevFilterRef.current = filterFingerprint;
+      if (pageState.value !== 1) {
+        pageState.set(1);
+      }
+    }
+  }, [filterFingerprint, pageState]);
 
   // ── Expansão de subtimes (padrão `team-filter-includes-subteams`) ──
   const { tree: teamTree } = useTeamTree();
@@ -261,7 +279,7 @@ export default function DecisionsPage() {
                 key={s}
                 variant={currentScope === s ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => { scopeState.set(s); pageState.set(1); }}
+                onClick={() => { scopeState.set(s); }}
               >
                 {SCOPE_LABELS[s]}
               </Button>
@@ -271,7 +289,7 @@ export default function DecisionsPage() {
 
         {/* Filtros */}
         <ListPageFilters hideSearch>
-          <Select value={statusState.value || 'pending'} onValueChange={(v) => setAndResetPage(statusState.set, v)}>
+          <Select value={statusState.value || 'pending'} onValueChange={statusState.set}>
             <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -282,7 +300,7 @@ export default function DecisionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={categoryState.value || 'all'} onValueChange={(v) => setAndResetPage(categoryState.set, v)}>
+          <Select value={categoryState.value || 'all'} onValueChange={categoryState.set}>
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
@@ -293,7 +311,7 @@ export default function DecisionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={wizardState.value || 'all'} onValueChange={(v) => setAndResetPage(wizardState.set, v)}>
+          <Select value={wizardState.value || 'all'} onValueChange={wizardState.set}>
             <SelectTrigger className="w-full sm:w-[220px]">
               <SelectValue placeholder="Rito" />
             </SelectTrigger>
@@ -306,14 +324,14 @@ export default function DecisionsPage() {
 
           <BuUserSelect
             value={ownerState.value || undefined}
-            onValueChange={(v) => setAndResetPage(ownerState.set, v || '')}
+            onValueChange={(v) => ownerState.set(v || '')}
             placeholder="Responsável"
             className="w-full sm:w-[220px]"
           />
 
           <TeamSelect
             value={teamState.value || undefined}
-            onValueChange={(v) => setAndResetPage(teamState.set, v ?? '')}
+            onValueChange={(v) => teamState.set(v ?? '')}
             placeholder="Time"
             includeAll
             allLabel="Todos os times"
@@ -322,7 +340,7 @@ export default function DecisionsPage() {
 
           <UrlSearchInput
             value={searchState.value}
-            onChange={(v) => setAndResetPage(searchState.set, v)}
+            onChange={searchState.set}
             placeholder="Buscar no texto…"
             debounceMs={300}
             className="w-full sm:w-[260px]"
@@ -336,7 +354,6 @@ export default function DecisionsPage() {
             onChange={(s, e) => {
               dateFromState.set(s);
               dateToState.set(e);
-              pageState.set(1);
             }}
             placeholder="Período"
           />
