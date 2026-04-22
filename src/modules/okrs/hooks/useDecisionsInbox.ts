@@ -13,6 +13,9 @@ import { useOptionalBuScopedSupabase } from '@/integrations/supabase/useBuScoped
 import { okrsKeys } from '@/lib/queryKeys/okrs';
 import type { TeamCheckinDecision, WizardPersona } from '../types/wizard';
 
+type TeamRow = { id: string };
+type AreaRow = { id: string };
+
 export type DecisionsInboxScope = 'self' | 'team' | 'area' | 'all';
 
 export interface DecisionsInboxFilters {
@@ -74,31 +77,38 @@ export function useDecisionsScopeContext() {
 
       if (!buSupabase || !profileId) return empty;
 
-      // Áreas lideradas
-      const { data: areas } = await (buSupabase as any)
-        .from('areas')
-        .select('id')
-        .eq('leader_user_id', profileId)
-        .is('deleted_at', null);
+      const [{ data: areas, error: areasError }, { data: leaderTeams, error: leaderTeamsError }] = await Promise.all([
+        (buSupabase as any)
+          .from('areas')
+          .select('id')
+          .eq('leader_user_id', profileId)
+          .is('deleted_at', null),
+        (buSupabase as any)
+          .from('teams')
+          .select('id')
+          .eq('leader_user_id', profileId)
+          .is('deleted_at', null),
+      ]);
 
-      const managedAreaIds: string[] = (areas ?? []).map((a: { id: string }) => a.id);
+      if (areasError) throw areasError;
+      if (leaderTeamsError) throw leaderTeamsError;
 
-      // Times liderados diretamente
-      const { data: leaderTeams } = await (buSupabase as any)
-        .from('teams')
-        .select('id')
-        .eq('leader_user_id', profileId)
-        .is('deleted_at', null);
-
-      const directIds: string[] = (leaderTeams ?? []).map((t: { id: string }) => t.id);
+      const managedAreaIds = ((areas ?? []) as AreaRow[]).map((area) => area.id);
+      const directIds = ((leaderTeams ?? []) as TeamRow[]).map((team) => team.id);
 
       // Expansão recursiva: usa get_descendant_team_ids p/ cada time liderado
       const directLeaderTeamIds = new Set<string>(directIds);
       if (directIds.length > 0) {
-        for (const tid of directIds) {
-          const { data: descendants } = await (buSupabase as any).rpc('get_descendant_team_ids', {
-            p_team_id: tid,
-          });
+        const descendantsResults = await Promise.all(
+          directIds.map((tid) =>
+            (buSupabase as any).rpc('get_descendant_team_ids', {
+              p_team_id: tid,
+            }),
+          ),
+        );
+
+        for (const { data: descendants, error } of descendantsResults) {
+          if (error) throw error;
           for (const d of (descendants ?? []) as Array<{ get_descendant_team_ids?: string } | string>) {
             const id = typeof d === 'string' ? d : d?.get_descendant_team_ids;
             if (id) directLeaderTeamIds.add(id);
