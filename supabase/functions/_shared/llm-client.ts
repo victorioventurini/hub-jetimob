@@ -484,6 +484,7 @@ export function llmStream(
     } catch (error) {
       reject(error);
     }
+    })();
   });
 }
 
