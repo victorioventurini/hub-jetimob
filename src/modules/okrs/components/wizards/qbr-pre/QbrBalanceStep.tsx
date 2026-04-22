@@ -16,6 +16,7 @@ import {
   WizardStepScaffold,
   InlineDecisionInput,
   KrLinkedDetails,
+  CarryOverDecisionsSection,
 } from '../shared';
 import {
   KR_STATE_CONFIG,
@@ -37,6 +38,8 @@ export interface QbrBalanceStepProps {
   teamId?: string;
   /** Slot opcional renderizado no topo do conteúdo (ex.: PreparationStatusCard) */
   topSlot?: ReactNode;
+  /** Decisões pendentes do Pré-QBR anterior do mesmo time (carry-over). */
+  carryOverDecisions?: TeamCheckinDecision[];
 }
 
 interface ObjectiveGroup {
@@ -56,6 +59,7 @@ export function QbrBalanceStep({
   onContinue,
   teamId,
   topSlot,
+  carryOverDecisions,
 }: QbrBalanceStepProps) {
   // Group KRs by objective
   const objectiveGroups = useMemo(() => {
@@ -121,6 +125,11 @@ export function QbrBalanceStep({
     >
       <div className="p-6 space-y-6">
         {topSlot}
+        <CarryOverDecisionsSection
+          items={carryOverDecisions}
+          contextLabel="do Pré-QBR anterior"
+          showSeparator={false}
+        />
         {/* Score summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Card>
