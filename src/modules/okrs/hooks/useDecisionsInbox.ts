@@ -163,7 +163,7 @@ export function useDecisionsInbox({
       filters as unknown as Record<string, unknown>,
       page,
       hasOverride ? overrideTeamIds : null,
-      hasOverride ? null : scopeCtx?.managedTeamIds ?? null,
+      hasOverride ? null : effectiveScope === 'team' ? scopeCtx?.directLeaderTeamIds ?? null : null,
       hasOverride ? null : effectiveScope === 'area' ? scopeCtx?.managedAreaIds ?? null : null,
     ),
     queryFn: async (): Promise<DecisionsInboxResult> => {
@@ -181,18 +181,27 @@ export function useDecisionsInbox({
       if (filters.dateTo) rpcFilters.date_to = filters.dateTo;
       if (filters.search) rpcFilters.search = filters.search;
 
+      // Payload por escopo:
+      //  - override (TeamSelect manual) → força 'team' com IDs já expandidos no client
+      //  - 'team'  → directLeaderTeamIds (com descendentes)
+      //  - 'area'  → área é resolvida via p_area_ids (RPC expande para times)
+      //  - 'self' / 'all' → sem times/áreas
       const teamIdsForRpc = hasOverride
         ? overrideTeamIds
-        : effectiveScope === 'team' || effectiveScope === 'area'
-          ? scopeCtx?.managedTeamIds ?? []
+        : effectiveScope === 'team'
+          ? scopeCtx?.directLeaderTeamIds ?? []
           : [];
+
+      const areaIdsForRpc = !hasOverride && effectiveScope === 'area'
+        ? scopeCtx?.managedAreaIds ?? []
+        : [];
 
       const { data, error } = await (buSupabase as any).rpc('rpc_decisions_inbox', {
         p_bu_id: currentBu.id,
         p_user_profile_id: profileId,
         p_scope: effectiveScope,
         p_team_ids: teamIdsForRpc,
-        p_area_ids: effectiveScope === 'area' ? scopeCtx?.managedAreaIds ?? [] : [],
+        p_area_ids: areaIdsForRpc,
         p_filters: rpcFilters,
         p_limit: pageSize,
         p_offset: (page - 1) * pageSize,
