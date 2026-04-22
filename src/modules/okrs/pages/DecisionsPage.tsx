@@ -17,17 +17,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { PageHeader } from '@/components/ui/page-header';
 import { ListPageFilters } from '@/components/ui/list-page-filters';
 import { ViewOptionsBar } from '@/components/ui/view-options-bar';
 import { Lightbulb, CalendarIcon, Inbox, Users, ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import {
+  UrlSearchInput,
+  UrlDateRangePicker,
+  UrlFilterBar,
+  buildActiveFilters,
+} from '@/shared/filters';
+import { SavedLinksPopover } from '@/shared/saved-links';
 import {
   useDecisionsInbox,
   useDecisionsScopeContext,
@@ -81,6 +84,12 @@ export default function DecisionsPage() {
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '', parse: parsers.string });
   const pageState = useUrlState<number>({ key: 'page', defaultValue: 1, parse: parsers.numberWithDefault(1) });
 
+  // Helper: aplica setter e reseta paginação para 1
+  const setAndResetPage = <T,>(setter: (v: T) => void, value: T) => {
+    setter(value);
+    pageState.set(1);
+  };
+
   // ── Escopo disponível ──
   const { data: scopeCtx, isLoading: isScopeLoading } = useDecisionsScopeContext();
   const availableScopes = scopeCtx?.availableScopes ?? ['self'];
@@ -133,6 +142,69 @@ export default function DecisionsPage() {
     ];
   }, []);
 
+  // ── Filtros ativos (chips) ──
+  const activeFilters = useMemo(() => buildActiveFilters(
+    {
+      status: statusState.value,
+      category: categoryState.value,
+      ritual: wizardState.value,
+      owner: ownerState.value,
+      from: dateFromState.value,
+      to: dateToState.value,
+      q: searchState.value,
+    },
+    {
+      status: 'pending',
+      category: 'all',
+      ritual: 'all',
+      owner: '',
+      from: '',
+      to: '',
+      q: '',
+    },
+    {
+      status: 'Status',
+      category: 'Categoria',
+      ritual: 'Rito',
+      owner: 'Responsável',
+      from: 'De',
+      to: 'Até',
+      q: 'Busca',
+    },
+    {
+      status: (v) => STATUS_OPTIONS.find((o) => o.value === v)?.label ?? v,
+      category: (v) => CATEGORY_OPTIONS.find((o) => o.value === v)?.label ?? v,
+      ritual: (v) => RITUAL_LABELS[v as WizardPersona] ?? v,
+      from: (v) => format(parseISO(v), 'dd/MM/yyyy', { locale: ptBR }),
+      to: (v) => format(parseISO(v), 'dd/MM/yyyy', { locale: ptBR }),
+    },
+  ), [statusState.value, categoryState.value, wizardState.value, ownerState.value, dateFromState.value, dateToState.value, searchState.value]);
+
+  const handleRemoveFilter = (key: string) => {
+    const map: Record<string, () => void> = {
+      status: () => statusState.set('pending'),
+      category: () => categoryState.set('all'),
+      ritual: () => wizardState.set('all'),
+      owner: () => ownerState.set(''),
+      from: () => dateFromState.set(''),
+      to: () => dateToState.set(''),
+      q: () => searchState.set(''),
+    };
+    map[key]?.();
+    pageState.set(1);
+  };
+
+  const handleClearAll = () => {
+    statusState.set('pending');
+    categoryState.set('all');
+    wizardState.set('all');
+    ownerState.set('');
+    dateFromState.set('');
+    dateToState.set('');
+    searchState.set('');
+    pageState.set(1);
+  };
+
   return (
     <HubLayout>
       <div className="space-y-6">
@@ -143,6 +215,7 @@ export default function DecisionsPage() {
             { label: 'Rituais', href: '/rituals' },
             { label: 'Decisões' },
           ]}
+          actions={<SavedLinksPopover moduleSlug="decisions" />}
         />
 
         {/* Escopo */}
@@ -163,7 +236,7 @@ export default function DecisionsPage() {
 
         {/* Filtros */}
         <ListPageFilters hideSearch>
-          <Select value={statusState.value || 'pending'} onValueChange={(v) => { statusState.set(v); pageState.set(1); }}>
+          <Select value={statusState.value || 'pending'} onValueChange={(v) => setAndResetPage(statusState.set, v)}>
             <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -174,7 +247,7 @@ export default function DecisionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={categoryState.value || 'all'} onValueChange={(v) => { categoryState.set(v); pageState.set(1); }}>
+          <Select value={categoryState.value || 'all'} onValueChange={(v) => setAndResetPage(categoryState.set, v)}>
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
@@ -185,7 +258,7 @@ export default function DecisionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={wizardState.value || 'all'} onValueChange={(v) => { wizardState.set(v); pageState.set(1); }}>
+          <Select value={wizardState.value || 'all'} onValueChange={(v) => setAndResetPage(wizardState.set, v)}>
             <SelectTrigger className="w-full sm:w-[220px]">
               <SelectValue placeholder="Rito" />
             </SelectTrigger>
@@ -198,66 +271,40 @@ export default function DecisionsPage() {
 
           <BuUserSelect
             value={ownerState.value || undefined}
-            onValueChange={(v) => { ownerState.set(v || ''); pageState.set(1); }}
+            onValueChange={(v) => setAndResetPage(ownerState.set, v || '')}
             placeholder="Responsável"
             className="w-full sm:w-[220px]"
           />
 
-          <Input
-            placeholder="Buscar no texto…"
+          <UrlSearchInput
             value={searchState.value}
-            onChange={(e) => { searchState.set(e.target.value); pageState.set(1); }}
-            className="w-full sm:w-[220px]"
+            onChange={(v) => setAndResetPage(searchState.set, v)}
+            placeholder="Buscar no texto…"
+            debounceMs={300}
+            className="w-full sm:w-[260px]"
           />
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="default" className={cn(
-                  'flex-1 sm:flex-none sm:w-[160px] justify-start text-left font-normal',
-                  !dateFromState.value && 'text-muted-foreground',
-                )}>
-                  <CalendarIcon className="h-4 w-4 mr-2 shrink-0" />
-                  {dateFromState.value
-                    ? format(parseISO(dateFromState.value), 'dd/MM/yyyy', { locale: ptBR })
-                    : 'Data início'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateFromState.value ? parseISO(dateFromState.value) : undefined}
-                  onSelect={(d) => { dateFromState.set(d ? format(d, 'yyyy-MM-dd') : ''); pageState.set(1); }}
-                  className="p-3 pointer-events-auto"
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="default" className={cn(
-                  'flex-1 sm:flex-none sm:w-[160px] justify-start text-left font-normal',
-                  !dateToState.value && 'text-muted-foreground',
-                )}>
-                  <CalendarIcon className="h-4 w-4 mr-2 shrink-0" />
-                  {dateToState.value
-                    ? format(parseISO(dateToState.value), 'dd/MM/yyyy', { locale: ptBR })
-                    : 'Data fim'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateToState.value ? parseISO(dateToState.value) : undefined}
-                  onSelect={(d) => { dateToState.set(d ? format(d, 'yyyy-MM-dd') : ''); pageState.set(1); }}
-                  className="p-3 pointer-events-auto"
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <UrlDateRangePicker
+            startDate={dateFromState.value}
+            endDate={dateToState.value}
+            onStartChange={dateFromState.set}
+            onEndChange={dateToState.set}
+            onChange={(s, e) => {
+              dateFromState.set(s);
+              dateToState.set(e);
+              pageState.set(1);
+            }}
+            placeholder="Período"
+          />
         </ListPageFilters>
+
+        {activeFilters.length > 0 && (
+          <UrlFilterBar
+            activeFilters={activeFilters}
+            onRemoveFilter={handleRemoveFilter}
+            onClearAll={handleClearAll}
+          />
+        )}
 
         {!isLoading && (
           <ViewOptionsBar
