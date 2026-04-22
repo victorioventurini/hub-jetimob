@@ -28,6 +28,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/middleware.ts";
+import { errorResponse, badRequestResponse, serviceUnavailableResponse, internalErrorResponse } from "../_shared/response.ts";
 
 // Get Google Maps API key from integrations config
 async function getGoogleMapsApiKey(): Promise<string | null> {
@@ -100,18 +101,12 @@ serve(async (req) => {
     const { placeId } = await req.json();
 
     if (!placeId) {
-      return new Response(
-        JSON.stringify({ error: "placeId is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return badRequestResponse("placeId is required", "MISSING_REQUIRED_FIELD");
     }
 
     const apiKey = await getGoogleMapsApiKey();
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "Google Maps API not configured" }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return serviceUnavailableResponse("Google Maps API not configured");
     }
 
     // Call Google Place Details API
@@ -126,10 +121,7 @@ serve(async (req) => {
 
     if (data.status !== "OK") {
       console.error("Google Place Details API error:", data.status, data.error_message);
-      return new Response(
-        JSON.stringify({ error: "Failed to get place details", status: data.status }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Failed to get place details", 502, "UPSTREAM_ERROR", { status: data.status });
     }
 
     const place = data.result;
@@ -155,9 +147,6 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error in get-place-details:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return internalErrorResponse(error instanceof Error ? error.message : "Internal server error");
   }
 });

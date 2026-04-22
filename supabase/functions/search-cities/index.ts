@@ -33,6 +33,7 @@ import {
   formatValidationErrors,
 } from "../_shared/validation.ts";
 import { corsHeaders } from "../_shared/middleware.ts";
+import { internalErrorResponse } from "../_shared/response.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -265,10 +266,6 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in search-cities:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return internalErrorResponse(error instanceof Error ? error.message : 'Unknown error');
   }
 });
