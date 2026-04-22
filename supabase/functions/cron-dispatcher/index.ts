@@ -32,6 +32,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/middleware.ts";
 import { createServiceClient } from "../_shared/client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
 
 interface OutboxResult {
   processed: number;
@@ -70,7 +71,7 @@ interface ExecutionResult {
 }
 
 // Get CRON_SECRET from database config (same pattern as other integrations)
-async function getCronSecret(supabase: any): Promise<string | null> {
+async function getCronSecret(supabase: EdgeSupabaseClient): Promise<string | null> {
   const { data, error } = await supabase
     .from("hub_integrations_global_config")
     .select("config_encrypted, is_enabled_global")
@@ -127,7 +128,7 @@ async function processOutbox(): Promise<OutboxResult> {
 }
 
 // Evaluate notification health
-async function evaluateHealth(supabase: any): Promise<HealthResult> {
+async function evaluateHealth(supabase: EdgeSupabaseClient): Promise<HealthResult> {
   const result: HealthResult = { alerts_created: 0, alerts_resolved: 0, admins_notified: 0 };
 
   try {
@@ -144,7 +145,7 @@ async function evaluateHealth(supabase: any): Promise<HealthResult> {
 }
 
 // Run database maintenance tasks
-async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
+async function runMaintenance(supabase: EdgeSupabaseClient): Promise<MaintenanceResult> {
   const result: MaintenanceResult = { 
     counting_columns_initialized: false, 
     wizard_sessions_cleaned: 0,
@@ -264,7 +265,7 @@ async function runMaintenance(supabase: any): Promise<MaintenanceResult> {
 }
 
 // Log execution to database
-async function logExecution(supabase: any, result: ExecutionResult): Promise<void> {
+async function logExecution(supabase: EdgeSupabaseClient, result: ExecutionResult): Promise<void> {
   try {
     await supabase.from("cron_execution_logs").insert({
       ran_at: result.ran_at,
