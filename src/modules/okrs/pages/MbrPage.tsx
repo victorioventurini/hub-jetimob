@@ -151,6 +151,12 @@ export default function MbrPage() {
     enabled: !!quarterlyCycle,
   });
 
+  // Carry-over: pendências do MBR anterior na BU (fonte canônica)
+  const { data: mbrCarryOver = [] } = useCarryOverDecisions({
+    wizardType: 'mbr',
+    teamId: null,
+  });
+
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
   const { currentBuId } = useBu();
   const { data: allBuKpis, isLoading: isLoadingKpis } = useQuery({
@@ -736,7 +742,11 @@ export default function MbrPage() {
           <MbrDecisionsStep
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
-            previousMbrPendingItems={draft.data.previousMbrPendingItems}
+            previousMbrPendingItems={
+              draft.data.previousMbrPendingItems.length > 0
+                ? draft.data.previousMbrPendingItems
+                : mbrCarryOver
+            }
             onContinue={goNext}
             onBack={goBack}
           />
