@@ -44,7 +44,9 @@ export interface DecisionsInboxResult {
 
 export interface DecisionsScopeContext {
   availableScopes: DecisionsInboxScope[];
-  managedTeamIds: string[];
+  /** Times liderados diretamente + descendentes (escopo `team`). */
+  directLeaderTeamIds: string[];
+  /** Áreas lideradas pelo usuário (escopo `area`). */
   managedAreaIds: string[];
   isWildcard: boolean;
 }
