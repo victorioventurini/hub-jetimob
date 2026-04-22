@@ -197,27 +197,14 @@ export function TeamOkrObjectiveStep({
     }
   }, [objectiveTitle, teamName, buildContextForAI, invokeVic, parseAiResponse, onValidationFeedbackChange, createAiWarningFeedback]);
 
-  // Handle requesting more suggestions
+  // Handle requesting more suggestions (com retry e tratamento gracioso).
   const handleRequestMoreSuggestions = useCallback(async () => {
     setIsValidating(true);
 
-    try {
-      const contextInfo = buildContextForAI();
-      const currentAlternatives = objectiveValidationFeedback?.alternatives || [];
+    const contextInfo = buildContextForAI();
+    const currentAlternatives = objectiveValidationFeedback?.alternatives || [];
 
-      const response = await invokeVic(
-        'validador-metodologico-okrs',
-        'okr-create-objective',
-        {
-          type: 'objective-creation',
-          title: objectiveTitle,
-          additionalData: {
-            teamName,
-            context: contextInfo,
-            previousSuggestions: currentAlternatives,
-          },
-        },
-        `O usuário quer mais sugestões de objetivos para o time "${teamName}".
+    const userQuestion = `O usuário quer mais sugestões de objetivos para o time "${teamName}".
         Objetivo atual: "${objectiveTitle}"
         Contexto: ${contextInfo}
 
@@ -229,8 +216,33 @@ export function TeamOkrObjectiveStep({
         - Mensuráveis indiretamente por KRs
         - Alinhados ao contexto do time e objetivo organizacional
 
-        Responda APENAS em JSON válido: { "type": "suggestion", "message": "Aqui estão mais opções para você considerar:", "alternatives": ["nova 1", "nova 2", "nova 3"] }`
-      );
+        Responda APENAS em JSON válido: { "type": "suggestion", "message": "Aqui estão mais opções para você considerar:", "alternatives": ["nova 1", "nova 2", "nova 3"] }`;
+
+    const tryInvoke = async () => invokeVic(
+      'validador-metodologico-okrs',
+      'okr-create-objective',
+      {
+        type: 'objective-creation',
+        title: objectiveTitle,
+        additionalData: {
+          teamName,
+          context: contextInfo,
+          previousSuggestions: currentAlternatives,
+        },
+      },
+      userQuestion,
+      { silent: true },
+    );
+
+    try {
+      let response;
+      try {
+        response = await tryInvoke();
+      } catch (firstErr) {
+        console.warn('[TeamOkrObjectiveStep] more-suggestions retry...', firstErr);
+        await new Promise((r) => setTimeout(r, 800));
+        response = await tryInvoke();
+      }
 
       if (!response?.response?.trim()) {
         throw new Error('EMPTY_AI_RESPONSE');
@@ -245,8 +257,8 @@ export function TeamOkrObjectiveStep({
     } catch (error) {
       console.error('Failed to get more suggestions:', error);
       onValidationFeedbackChange(
-        objectiveValidationFeedback ?? createAiWarningFeedback('Não consegui gerar novas sugestões agora. Tente novamente em alguns instantes.'),
-        objectiveValidatedAt
+        objectiveValidationFeedback ?? createAiWarningFeedback('Não consegui gerar novas sugestões agora. Esta sugestão é opcional — você pode seguir adiante.'),
+        objectiveValidatedAt,
       );
     } finally {
       setIsValidating(false);
