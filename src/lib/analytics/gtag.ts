@@ -36,13 +36,13 @@ let gtmInitialized = false;
  */
 export function initGTM(containerId: string): void {
   if (!containerId) {
-    if (isDev) console.warn('[GTM] Container ID não fornecido');
+    logger.warn('[GTM] Container ID não fornecido');
     return;
   }
 
   // Evitar inicialização duplicada
   if (gtmInitialized) {
-    if (isDev) console.log('[GTM] Já inicializado, ignorando');
+    logger.info('[GTM] Já inicializado, ignorando');
     return;
   }
 
@@ -61,7 +61,7 @@ export function initGTM(containerId: string): void {
 
   gtmInitialized = true;
 
-  if (isDev) console.log('[GTM] Inicializado com Container ID:', containerId);
+  logger.info('[GTM] Inicializado com Container ID:', containerId);
 }
 
 /**
@@ -89,7 +89,7 @@ export function setTenantId(tenantId: string | null): void {
       tenant_id: tenantId,
     });
 
-    if (isDev) console.log('[GTM] tenant_id definido:', tenantId);
+    logger.info('[GTM] tenant_id definido:', tenantId);
   } else {
     // Limpar tenant_id no logout/clear
     window.dataLayer.push({
@@ -97,7 +97,7 @@ export function setTenantId(tenantId: string | null): void {
       tenant_id: null,
     });
     
-    if (isDev) console.log('[GTM] tenant_id limpo');
+    logger.info('[GTM] tenant_id limpo');
   }
 }
 
