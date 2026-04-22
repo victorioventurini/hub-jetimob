@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
+import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import {
   useGenericWizardDraft,
@@ -140,6 +140,7 @@ export default function MbrPage() {
     isSaving,
     isResumingDraft,
     lastSavedAt,
+    sessionId,
   } = useGenericWizardDraft<MbrStep, MbrDraftData>({
     wizardType: 'mbr',
     teamId: null,
@@ -663,10 +664,18 @@ export default function MbrPage() {
             orgObjectives={orgObjView ?? []}
             currentStepIndex={0}
             topSlot={
-              <RitualPreparationStatus
-                ritualType="mbr"
-                cycleId={quarterlyCycle?.id ?? null}
-              />
+              <>
+                <RitualPreparationStatus
+                  ritualType="mbr"
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+                <RitualAttendance
+                  persona="mbr"
+                  sessionId={sessionId}
+                  buId={currentBu?.id}
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+              </>
             }
           />
         );
