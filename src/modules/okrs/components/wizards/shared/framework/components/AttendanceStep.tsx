@@ -13,9 +13,9 @@ import {
   useSessionAttendance,
   type UseSessionAttendanceArgs,
 } from '../../hooks/useSessionAttendance';
-import { AttendanceCheckboxList } from './AttendanceCheckboxList';
-import { AttendanceCounter } from './AttendanceCounter';
-import { AttendanceSummary } from './AttendanceSummary';
+import { AttendanceCheckboxList } from './attendance/AttendanceCheckboxList';
+import { AttendanceCounter } from './attendance/AttendanceCounter';
+import { AttendanceSummary } from './attendance/AttendanceSummary';
 
 export interface AttendanceStepProps extends UseSessionAttendanceArgs {
   /** Quando true, força modo read-only (ex.: sessão completed) */
