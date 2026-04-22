@@ -32,7 +32,7 @@ import { Users, User, ChevronDown, Shield, Search, Building2 } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useIdentity } from '@/hooks/useIdentity';
-import { useManageableTeamsFlat } from '@/modules/okrs/hooks/useManageableTeams';
+import { useManageableTeamsFlat } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList, type FlatTeamItem } from '@/modules/teams/hooks';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
 

@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@/test/test-utils';
 import { LeaderAlignmentStep } from '../LeaderAlignmentStep';
 import type { ParentObjective } from '../LeaderAlignmentStep';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 
 vi.mock('../shared/ReflectionQuestions', () => ({
   MicrocopyQuestion: ({ question }: any) => <p>{question}</p>,

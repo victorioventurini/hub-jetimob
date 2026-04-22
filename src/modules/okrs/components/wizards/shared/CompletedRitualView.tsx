@@ -27,7 +27,7 @@ import { ptBR } from 'date-fns/locale';
 import { SnapshotReportView } from '@/modules/okrs/components/ritual-report';
 import { AddendumSection } from './AddendumSection';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
-import type { CompletedSessionData } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+import type { CompletedSessionData } from '@/modules/okrs/hooks';
 import { RITUAL_LABELS } from '@/modules/okrs/constants/ritualLabels';
 
 interface CompletedRitualViewProps {

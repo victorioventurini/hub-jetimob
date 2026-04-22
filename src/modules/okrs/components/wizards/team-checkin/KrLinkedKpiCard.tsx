@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 
 // ============================================================
 // TYPES

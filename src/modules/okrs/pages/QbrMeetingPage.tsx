@@ -19,11 +19,11 @@ import {
   useActiveCycle,
   useAllOrgObjectivesView,
 } from '@/modules/okrs/hooks';
-import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { usePermissions } from '@/hooks/usePermissions';
-import { calculateKrState } from '@/modules/okrs/hooks/useKrStateInsights';
+import { calculateKrState } from '@/modules/okrs/hooks';
 import { calculateProgress } from '@/modules/okrs/types';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
+import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';

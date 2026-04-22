@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import { ChevronDown, Lightbulb, FolderKanban, CheckCircle2, Circle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useKrInitiatives } from '@/modules/okrs/hooks/useInitiatives';
+import { useKrInitiatives } from '@/modules/okrs/hooks';
 import { useProjectsForKr } from '@/modules/projects/hooks/useProjectsForKr';
 import { InitiativeStatusBadge } from '@/modules/okrs/components/initiatives/InitiativeStatusBadge';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';

@@ -22,8 +22,8 @@ import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
-import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+import { useRitualAvailability } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -44,7 +44,7 @@ import { QbrPreSummary } from '@/modules/okrs/components/wizards/qbr-pre/QbrPreS
 
 import {
   calculateKrState,
-} from '@/modules/okrs/hooks/useKrStateInsights';
+} from '@/modules/okrs/hooks';
 
 import type {
   QbrPreStep,

@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CycleFormDialog } from "./CycleFormDialog";
 import { CycleRitualDates } from "./CycleRitualDates";
-import { useCycleActions } from "@/modules/okrs/hooks/useCycleActions";
+import { useCycleActions } from "@/modules/okrs/hooks";
 import { generateCyclesForYears, filterNewCycles } from "@/modules/okrs/utils/generateCycles";
-import { useSyncRitualCalendar } from "@/modules/okrs/hooks/useSyncRitualCalendar";
+import { useSyncRitualCalendar } from "@/modules/okrs/hooks";
 
 interface Cycle {
   id: string;

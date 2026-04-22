@@ -20,7 +20,7 @@ import {
   WizardStepScaffold,
   InlineDecisionInput,
 } from '../shared';
-import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks/useWeeklyPreWeeklyAggregation';
+import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks';
 import type {
   TeamCheckinDecision,
   WeeklyPriorityItem,

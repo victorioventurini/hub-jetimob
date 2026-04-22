@@ -10,9 +10,9 @@ import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/Wizar
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
-import { useMyPendingDecisions } from '@/modules/okrs/hooks/useMyPendingDecisions';
-import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks/useRitualHistory';
-import { useDecisionThread } from '@/modules/okrs/hooks/useDecisionThread';
+import { useMyPendingDecisions } from '@/modules/okrs/hooks';
+import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks';
+import { useDecisionThread } from '@/modules/okrs/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export interface CollaboratorDecisionsStepProps {

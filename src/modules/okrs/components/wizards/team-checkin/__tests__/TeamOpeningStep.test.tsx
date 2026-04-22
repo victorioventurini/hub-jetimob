@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@/test/test-utils';
 import { TeamOpeningStep } from '../TeamOpeningStep';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 
 vi.mock('../../shared', () => ({
   WizardStepHeader: ({ title }: { title: string }) => <h3>{title}</h3>,

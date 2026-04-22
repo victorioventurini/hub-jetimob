@@ -15,7 +15,7 @@ import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { VicLoadingState } from '@/modules/vic';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import { useWizardAI } from '@/modules/okrs/hooks';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
 
 // ============================================================

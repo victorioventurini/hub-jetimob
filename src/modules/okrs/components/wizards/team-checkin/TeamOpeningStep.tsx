@@ -15,7 +15,7 @@ import { Users, Target, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput } from '../shared';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================

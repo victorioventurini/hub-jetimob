@@ -5,7 +5,7 @@
  */
 
 import type { OkrRagStatus, OkrKrType, OkrDirection } from '@/modules/okrs/types';
-import type { Cycle } from '@/modules/okrs/hooks/useCycleData';
+import type { Cycle } from '@/modules/okrs/hooks';
 import type { InitiativeStatus } from '@/modules/okrs/types/initiative';
 
 // KR Data for health calculations

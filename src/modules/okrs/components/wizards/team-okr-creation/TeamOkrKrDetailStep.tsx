@@ -19,7 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Target, Link2, Wrench, TrendingUp, TrendingDown, Equal, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
+import { useWizardAI } from '@/modules/okrs/hooks';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { BuUserSelect, UnitSelect } from '@/components/selects';

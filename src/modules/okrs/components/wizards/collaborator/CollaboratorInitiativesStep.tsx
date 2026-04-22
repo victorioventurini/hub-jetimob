@@ -27,7 +27,7 @@ import { projectsKeys } from '@/lib/queryKeys/projects';
 import { InitiativesSummary } from '../shared/InitiativesSummary';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 import type { Initiative } from '@/modules/okrs/types/initiative';
 import type { ProjectHealth } from '@/modules/projects/types';
 

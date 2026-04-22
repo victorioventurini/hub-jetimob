@@ -43,11 +43,11 @@ import { AlertBanner } from '../shared/AlertBanner';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import { useWizardAI } from '@/modules/okrs/hooks/useWizardAI';
-import { useCreateCheckin } from '@/modules/okrs/hooks/useCreateCheckin';
-import { usePrimaryKpiForKr } from '@/modules/okrs/hooks/usePrimaryKpiForKr';
+import { useWizardAI } from '@/modules/okrs/hooks';
+import { useCreateCheckin } from '@/modules/okrs/hooks';
+import { usePrimaryKpiForKr } from '@/modules/okrs/hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 import type { CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================

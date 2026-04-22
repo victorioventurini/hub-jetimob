@@ -23,8 +23,8 @@ import {
   WeeklyClosingStep,
 } from '@/modules/okrs/components/wizards/weekly';
 import { useGenericWizardDraft } from '@/modules/okrs/hooks';
-import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks/useWeeklyPreWeeklyAggregation';
-import { useWeeklyOpeningCuration } from '@/modules/okrs/hooks/useWeeklyOpeningCuration';
+import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks';
+import { useWeeklyOpeningCuration } from '@/modules/okrs/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
 
