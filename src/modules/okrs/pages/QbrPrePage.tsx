@@ -131,6 +131,13 @@ export default function QbrPrePage() {
     isLoading: isLoadingCompletedCheck,
   } = useCompletedSessionForCycle('qbr-pre', teamIdParam, quarterlyCycle?.id);
 
+  // Carry-over: decisões pendentes do Pré-QBR anterior do mesmo time
+  const { data: carryOverDecisions = [] } = useCarryOverDecisions({
+    wizardType: 'qbr-pre',
+    teamId: teamIdParam,
+    enabled: !!teamIdParam,
+  });
+
   // Draft persistence (only if not already completed)
   const {
     draft,
