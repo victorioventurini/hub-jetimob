@@ -24,6 +24,9 @@ import { Lightbulb, CalendarIcon, Inbox, Users, ExternalLink } from 'lucide-reac
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { TeamSelect } from '@/components/selects/TeamSelect';
+import { useTeamTree, useHierarchicalTeamList } from '@/modules/teams/hooks';
+import type { TeamTreeNode } from '@/modules/teams/types';
 import {
   UrlSearchInput,
   UrlDateRangePicker,
@@ -83,12 +86,37 @@ export default function DecisionsPage() {
   const dateToState = useUrlState<string>({ key: 'to', defaultValue: '', parse: parsers.string });
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '', parse: parsers.string });
   const pageState = useUrlState<number>({ key: 'page', defaultValue: 1, parse: parsers.numberWithDefault(1) });
+  const teamState = useUrlState<string>({ key: 'team', defaultValue: '', parse: parsers.string });
 
   // Helper: aplica setter e reseta paginação para 1
   const setAndResetPage = <T,>(setter: (v: T) => void, value: T) => {
     setter(value);
     pageState.set(1);
   };
+
+  // ── Expansão de subtimes (padrão `team-filter-includes-subteams`) ──
+  const { tree: teamTree } = useTeamTree();
+  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
+
+  const overrideTeamIds = useMemo<string[] | undefined>(() => {
+    if (!teamState.value) return undefined;
+    const collect = (nodes: TeamTreeNode[], targetId: string, inSubtree: boolean): string[] => {
+      const acc: string[] = [];
+      for (const node of nodes) {
+        const here = inSubtree || node.id === targetId;
+        if (here) acc.push(node.id);
+        acc.push(...collect(node.children, targetId, here));
+      }
+      return acc;
+    };
+    const ids = collect(teamTree as TeamTreeNode[], teamState.value, false);
+    return ids.length > 0 ? ids : [teamState.value];
+  }, [teamState.value, teamTree]);
+
+  const selectedTeamName = useMemo(
+    () => hierarchicalTeams.find((t) => t.id === teamState.value)?.name ?? teamState.value,
+    [hierarchicalTeams, teamState.value],
+  );
 
   // ── Escopo disponível ──
   const { data: scopeCtx, isLoading: isScopeLoading } = useDecisionsScopeContext();
@@ -114,6 +142,7 @@ export default function DecisionsPage() {
     filters,
     page: pageState.value,
     pageSize: PAGE_SIZE,
+    overrideTeamIds,
   });
 
   const items = data?.items ?? [];
@@ -149,6 +178,7 @@ export default function DecisionsPage() {
       category: categoryState.value,
       ritual: wizardState.value,
       owner: ownerState.value,
+      team: teamState.value,
       from: dateFromState.value,
       to: dateToState.value,
       q: searchState.value,
@@ -158,6 +188,7 @@ export default function DecisionsPage() {
       category: 'all',
       ritual: 'all',
       owner: '',
+      team: '',
       from: '',
       to: '',
       q: '',
@@ -167,6 +198,7 @@ export default function DecisionsPage() {
       category: 'Categoria',
       ritual: 'Rito',
       owner: 'Responsável',
+      team: 'Time',
       from: 'De',
       to: 'Até',
       q: 'Busca',
@@ -175,10 +207,11 @@ export default function DecisionsPage() {
       status: (v) => STATUS_OPTIONS.find((o) => o.value === v)?.label ?? v,
       category: (v) => CATEGORY_OPTIONS.find((o) => o.value === v)?.label ?? v,
       ritual: (v) => RITUAL_LABELS[v as WizardPersona] ?? v,
+      team: () => selectedTeamName,
       from: (v) => format(parseISO(v), 'dd/MM/yyyy', { locale: ptBR }),
       to: (v) => format(parseISO(v), 'dd/MM/yyyy', { locale: ptBR }),
     },
-  ), [statusState.value, categoryState.value, wizardState.value, ownerState.value, dateFromState.value, dateToState.value, searchState.value]);
+  ), [statusState.value, categoryState.value, wizardState.value, ownerState.value, teamState.value, selectedTeamName, dateFromState.value, dateToState.value, searchState.value]);
 
   const handleRemoveFilter = (key: string) => {
     const map: Record<string, () => void> = {
@@ -186,6 +219,7 @@ export default function DecisionsPage() {
       category: () => categoryState.set('all'),
       ritual: () => wizardState.set('all'),
       owner: () => ownerState.set(''),
+      team: () => teamState.set(''),
       from: () => dateFromState.set(''),
       to: () => dateToState.set(''),
       q: () => searchState.set(''),
@@ -199,6 +233,7 @@ export default function DecisionsPage() {
     categoryState.set('all');
     wizardState.set('all');
     ownerState.set('');
+    teamState.set('');
     dateFromState.set('');
     dateToState.set('');
     searchState.set('');
@@ -210,7 +245,7 @@ export default function DecisionsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Decisões e Notas"
-          description="Acompanhe decisões registradas nos ritos — atribuídas a você, do seu time, da sua área ou de toda a BU."
+          description={'Acompanhe decisões registradas nos ritos. Use o filtro de Time para ver decisões de qualquer time (e seus subtimes). Os escopos "Meu time" e "Toda a BU" só aparecem para líderes e administradores, respectivamente.'}
           breadcrumbs={[
             { label: 'Rituais', href: '/rituals' },
             { label: 'Decisões' },
@@ -274,6 +309,15 @@ export default function DecisionsPage() {
             onValueChange={(v) => setAndResetPage(ownerState.set, v || '')}
             placeholder="Responsável"
             className="w-full sm:w-[220px]"
+          />
+
+          <TeamSelect
+            value={teamState.value || undefined}
+            onValueChange={(v) => setAndResetPage(teamState.set, v ?? '')}
+            placeholder="Time"
+            includeAll
+            allLabel="Todos os times"
+            triggerClassName="w-full sm:w-[220px]"
           />
 
           <UrlSearchInput
