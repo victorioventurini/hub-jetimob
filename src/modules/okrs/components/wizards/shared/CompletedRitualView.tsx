@@ -49,7 +49,7 @@ export function CompletedRitualView({
   canReopen = false,
   onReopen,
 }: CompletedRitualViewProps) {
-  const navigate = useNavigate();
+  
   const [isReopening, setIsReopening] = useState(false);
   const ritualLabel = RITUAL_LABELS[wizardType] ?? title;
 

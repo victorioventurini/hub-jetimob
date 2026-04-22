@@ -61,7 +61,7 @@ export function RitualUnavailableScreen({
   availability,
   backUrl = '/rituals',
 }: RitualUnavailableScreenProps) {
-  const navigate = useNavigate();
+  
   const Icon = REASON_ICON[availability.reason];
   const title = REASON_TITLE[availability.reason];
   const qbrUrl = availability.reason === 'qbr_period' ? QBR_REDIRECT[wizardType] : null;

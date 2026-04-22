@@ -25,7 +25,7 @@ import type { AnalysisTemplate } from "../types";
 
 export default function AnalysisTemplatesPage() {
   usePageTitle("Templates de análise");
-  const navigate = useNavigate();
+  
   const { data: templates = [], isLoading } = useAnalysisTemplates();
   const canManage = useHasPermission("analysis.template.manage:bu");
   const deleteTemplate = useDeleteTemplate();
