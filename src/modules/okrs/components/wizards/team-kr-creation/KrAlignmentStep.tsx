@@ -1,21 +1,23 @@
 /**
  * KrAlignmentStep - Step 2: Alinhamento Estratégico
- * 
- * Conectar os KRs com a estratégia maior da empresa
+ *
+ * Conectar os KRs com a estratégia maior da empresa.
+ *
+ * Resiliência de IA: usa `useAiSection` (timeout + fallback + gating + anti-double-fetch).
+ * Ver `.lovable/memory/standards/ai/use-ai-section-hook.md`.
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Target, TrendingUp, History, Sparkles } from 'lucide-react';
+import { Target, TrendingUp, History } from 'lucide-react';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { VicInsightCard } from '../shared/VicInsightCard';
-import { VicLoadingState } from '@/modules/vic';
-import { useWizardAI } from '@/modules/okrs/hooks';
+import { useAiSection } from '@/modules/vic';
 import type { VicInsight } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -49,6 +51,9 @@ export interface KrAlignmentStepProps {
 // COMPONENT
 // ============================================================
 
+const ALIGNMENT_FALLBACK =
+  'Conecte cada KR a uma prioridade estratégica visível: o KR deve mover um número que a organização já está observando. Quando essa ligação não existe, a entrega vira esforço sem evidência de impacto.';
+
 export function KrAlignmentStep({
   objectiveTitle,
   strategicPriorities = [],
@@ -58,47 +63,38 @@ export function KrAlignmentStep({
   onContinue,
   onBack,
 }: KrAlignmentStepProps) {
-  const { invokeVic } = useWizardAI();
-  const [aiInsight, setAiInsight] = useState<VicInsight | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(true);
-
-  // Fetch AI insight on mount
-  useEffect(() => {
-    const fetchInsight = async () => {
-      setIsAnalyzing(true);
-      try {
-        const response = await invokeVic(
-          'alinhamento-estrategico',
-          'okr-check-alignment',
-          {
-            type: 'strategic-alignment',
-            additionalData: {
-              objectiveTitle,
-              priorities: strategicPriorities.map(p => p.title),
-            },
+  const { values } = useAiSection({
+    timeoutMs: 12_000,
+    slots: {
+      alignmentInsight: {
+        agent: 'alinhamento-estrategico',
+        actionContext: 'okr-check-alignment',
+        context: {
+          type: 'strategic-alignment',
+          additionalData: {
+            objectiveTitle,
+            priorities: strategicPriorities.map((p) => p.title),
           },
-          `Analise este objetivo de time e sugira como os KRs podem se conectar às prioridades estratégicas.
+        },
+        userQuestion: `Analise este objetivo de time e sugira como os KRs podem se conectar às prioridades estratégicas.
           Objetivo: "${objectiveTitle}"
-          Prioridades organizacionais: ${strategicPriorities.map(p => p.title).join(', ') || 'Não informadas'}
-          Responda em 2-3 frases curtas e diretas.`
-        );
+          Prioridades organizacionais: ${strategicPriorities.map((p) => p.title).join(', ') || 'Não informadas'}
+          Responda em 2-3 frases curtas e diretas.`,
+        fallback: ALIGNMENT_FALLBACK,
+      },
+    },
+  });
 
-        setAiInsight({
-          id: 'alignment-insight',
-          type: 'insight',
-          content: response.response,
-          priority: 'medium',
-          source: 'alinhamento-estrategico',
-        });
-      } catch (error) {
-        console.error('Failed to fetch alignment insight:', error);
-      } finally {
-        setIsAnalyzing(false);
-      }
-    };
-
-    fetchInsight();
-  }, [objectiveTitle, strategicPriorities, invokeVic]);
+  const aiInsight = useMemo<VicInsight>(
+    () => ({
+      id: 'alignment-insight',
+      type: 'insight',
+      content: values.alignmentInsight,
+      priority: 'medium',
+      source: 'alinhamento-estrategico',
+    }),
+    [values.alignmentInsight],
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -123,14 +119,8 @@ export function KrAlignmentStep({
             </p>
           </div>
 
-          {/* AI Insight */}
-          {isAnalyzing ? (
-            <div className="p-6 border rounded-lg border-dashed flex items-center justify-center">
-              <VicLoadingState text="Analisando alinhamento..." size="md" />
-            </div>
-          ) : aiInsight ? (
-            <VicInsightCard insight={aiInsight} showSource />
-          ) : null}
+          {/* AI Insight (sempre renderiza — fallback imediato, IA sobrescreve quando responde) */}
+          <VicInsightCard insight={aiInsight} showSource />
 
           {/* Strategic Priorities */}
           {strategicPriorities.length > 0 && (
@@ -143,11 +133,8 @@ export function KrAlignmentStep({
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {strategicPriorities.map(priority => (
-                    <div 
-                      key={priority.id}
-                      className="p-3 bg-muted/50 rounded-lg"
-                    >
+                  {strategicPriorities.map((priority) => (
+                    <div key={priority.id} className="p-3 bg-muted/50 rounded-lg">
                       <p className="text-sm font-medium">{priority.title}</p>
                       {priority.description && (
                         <p className="text-xs text-muted-foreground mt-1">
@@ -172,19 +159,19 @@ export function KrAlignmentStep({
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
-                  {strategicKpis.map(kpi => (
-                    <div 
-                      key={kpi.id}
-                      className="p-3 bg-muted/50 rounded-lg"
-                    >
+                  {strategicKpis.map((kpi) => (
+                    <div key={kpi.id} className="p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground">{kpi.name}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-sm font-medium">{kpi.value}</p>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={
-                            kpi.trend === 'up' ? 'text-success' :
-                            kpi.trend === 'down' ? 'text-danger' : ''
+                            kpi.trend === 'up'
+                              ? 'text-success'
+                              : kpi.trend === 'down'
+                                ? 'text-danger'
+                                : ''
                           }
                         >
                           {kpi.trend === 'up' ? '↑' : kpi.trend === 'down' ? '↓' : '→'}
