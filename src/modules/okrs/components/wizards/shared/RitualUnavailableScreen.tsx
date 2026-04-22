@@ -5,7 +5,7 @@
  * Mostra ícone, nome, mensagem contextual e botão para voltar.
  */
 
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarClock, CalendarX, CalendarOff, ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import type { RitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
