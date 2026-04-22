@@ -137,6 +137,12 @@ export default function QbrMeetingPage() {
     enabled: !!quarterlyCycle,
   });
 
+  // Carry-over: pendências do QBR Meeting anterior na BU
+  const { data: qbrMeetingCarryOver = [] } = useCarryOverDecisions({
+    wizardType: 'qbr-meeting',
+    teamId: null,
+  });
+
   // Track whether we're showing completed view or wizard
   const [showCompletedView, setShowCompletedView] = useState(false);
 
