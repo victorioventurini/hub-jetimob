@@ -163,7 +163,7 @@ export function TeamOkrObjectiveStep({
           additionalData: { teamName, context: contextInfo },
         },
         userQuestion,
-        { silent: true }, // tratamos o erro localmente
+        { silent: true, timeoutMs: 15_000 }, // tratamos o erro localmente; timeout central
       );
     };
 
@@ -231,7 +231,7 @@ export function TeamOkrObjectiveStep({
         },
       },
       userQuestion,
-      { silent: true },
+      { silent: true, timeoutMs: 15_000 },
     );
 
     try {
