@@ -10,7 +10,7 @@
  * 100% do fluxo (origin='manual', state inicia em 'draft').
  */
 
-import { useCallback } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { Sparkles, ListChecks, AlertTriangle, Clock4, CheckCircle2, Wand2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,6 +57,8 @@ export interface WeeklyExecutiveOpeningStepProps {
   onGenerateDraft?: () => void | Promise<void>;
   /** Indica geração em curso (desabilita botão e mostra spinner) */
   isGenerating?: boolean;
+  /** Slot opcional renderizado abaixo do PreparationStatusCard (ex.: RitualAttendance) */
+  topSlot?: ReactNode;
 }
 
 // ============================================================
@@ -71,6 +73,7 @@ export function WeeklyExecutiveOpeningStep({
   onContinue,
   onGenerateDraft,
   isGenerating = false,
+  topSlot,
 }: WeeklyExecutiveOpeningStepProps) {
   const { isWildcard } = usePermissions();
   const { realProfileId } = useIdentity();
@@ -123,6 +126,7 @@ export function WeeklyExecutiveOpeningStep({
     >
       <div className="p-6 space-y-4">
         <RitualPreparationStatus ritualType="weekly" />
+        {topSlot}
 
         {opening.origin === 'manual' && (
           <Card className="bg-muted/30 border-dashed">

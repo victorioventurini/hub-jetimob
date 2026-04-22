@@ -26,7 +26,7 @@ import { QbrPostDecisionsStep } from '@/modules/okrs/components/wizards/qbr-post
 import { QbrPostCommitmentsStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostCommitmentsStep';
 import { QbrPostFollowUpStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostFollowUpStep';
 import { QbrPostMinutesStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
-import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
+import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
 
 import type { ApprovedTeamOkr, DestinationCycleOption } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
 import {
@@ -235,7 +235,7 @@ export default function QbrPostPage() {
   }, [teams, orgObjectives]);
 
   // Draft
-  const { draft, updateDraft, setStep, clearDraft, discardDraft, saveDraft, isDirty, isSaving, isResumingDraft, lastSavedAt } =
+  const { draft, updateDraft, setStep, clearDraft, discardDraft, saveDraft, isDirty, isSaving, isResumingDraft, lastSavedAt, sessionId } =
     useGenericWizardDraft<QbrPostStep, QbrPostDraftData>({
       wizardType: 'qbr-post', teamId: null, cycleId: quarterlyCycle?.id || null,
       defaultStep: 'okr-promotion', defaultData: { ...DEFAULT_DATA, crossCommitments: meetingCommitments },
@@ -301,10 +301,19 @@ export default function QbrPostPage() {
             onDestinationCycleIdChange={(destinationCycleId) => updateDraft({ destinationCycleId })}
             onContinue={goNext}
             topSlot={
-              <RitualPreparationStatus
-                ritualType="qbr-post"
-                cycleId={quarterlyCycle?.id ?? null}
-              />
+              <>
+                <RitualPreparationStatus
+                  ritualType="qbr-post"
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+                <RitualAttendance
+                  persona="qbr-post"
+                  sessionId={sessionId}
+                  buId={currentBuId}
+                  cycleId={quarterlyCycle?.id ?? null}
+                  previousQbrSessionId={meetingSession?.id ?? null}
+                />
+              </>
             }
           />
         );
