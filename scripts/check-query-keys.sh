@@ -20,17 +20,24 @@ echo "🔍 Scanning for hardcoded query keys..."
 echo ""
 
 # Files/dirs to exclude
-EXCLUDES="--exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.vite --exclude-dir=coverage --exclude=queryKeys.ts --exclude=check-query-keys.sh --exclude=audit-querykeys.ts"
+# - queryKeys.ts and src/lib/queryKeys/ are the canonical home for keys
+# - __tests__ and *.test.ts contain expectation fixtures (literal arrays are intentional)
+# - JSDoc/comment lines (starting with `*` or `//`) are documentation, not real keys
+EXCLUDES="--exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.vite --exclude-dir=coverage --exclude-dir=__tests__ --exclude-dir=queryKeys --exclude=queryKeys.ts --exclude=check-query-keys.sh --exclude=audit-querykeys.ts --exclude=*.test.ts --exclude=*.test.tsx"
 
 FOUND=0
 TEMP_FILE=$(mktemp)
+RAW_FILE=$(mktemp)
 
-# Function to search and collect violations
+# Function to search and collect violations (filters out comment lines)
 search_pattern() {
   local pattern="$1"
   local description="$2"
   
-  if grep -rn $EXCLUDES -E "$pattern" src/ 2>/dev/null >> "$TEMP_FILE"; then
+  # Capture matches, then drop lines that are clearly comments (JSDoc `*` or `//`)
+  if grep -rn $EXCLUDES -E "$pattern" src/ 2>/dev/null \
+      | grep -vE ':[[:space:]]*\*' \
+      | grep -vE ':[[:space:]]*//' >> "$TEMP_FILE"; then
     FOUND=1
   fi
 }
