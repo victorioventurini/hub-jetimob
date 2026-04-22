@@ -290,6 +290,163 @@ export const okrsKeys = {
     ['weekly', 'pre-weekly-aggregation', buId, referenceWeek] as const,
   weeklyExpectedLeaders: (buId: string | null) =>
     ['weekly', 'expected-leaders', buId] as const,
+
+  // ── Auto cycle transition (settings) ──
+  autoCycleTransition: (buId: string | null) =>
+    ['okr-auto-cycle-transition', buId] as const,
+
+  // ── KR primary KPI / effective values broad invalidation ──
+  krPrimaryKpiPrefix: () => ['okr-kr-primary-kpi'] as const,
+  krPrimaryKpiBatchPrefix: () => ['okr-kr-primary-kpi-batch'] as const,
+  krEffectiveValuesPrefix: () => ['okr-kr-effective-values'] as const,
+
+  // ── Completed wizard sessions broad invalidation (addendums) ──
+  completedSessionForCyclePrefix: () => ['okr-completed-session-cycle'] as const,
+
+  // ── Decision permissions ──
+  canResolveDecision: (profileId: string | null, ownerProfileId: string | null) =>
+    ['can-resolve-decision', profileId, ownerProfileId] as const,
+
+  // ── Cycle metadata (year extraction) ──
+  cycleYear: (cycleId: string | null) => ['cycle-year', cycleId] as const,
+
+  // ── Cross-team dependencies (Managers Panorama) ──
+  crossDependenciesPrefix: () => ['cross-dependencies'] as const,
+  crossDependencies: (buId: string | null, cycleId: string | null) =>
+    ['cross-dependencies', buId, cycleId] as const,
+  managersPanorama: (buId: string | null, cycleId: string | null) =>
+    ['managers-panorama', buId, cycleId] as const,
+
+  // ── KR with full history (audit) ──
+  krWithHistory: (buId: string | null, krId: string | null) =>
+    ['kr-with-history', buId, krId] as const,
+
+  // ── Ritual Report — KR titles batch ──
+  krTitlesForReport: (krIds: string[]) =>
+    ['kr-titles-for-report', ...krIds] as const,
+
+  // ── Calendar — user sessions filter ──
+  calendarUserSessions: (userFilter: string | null, sessionIds: string[]) =>
+    ['calendar-user-sessions', userFilter, sessionIds] as const,
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// QBR / MBR / Pre-Weekly / Quarter Review keys
+// ═══════════════════════════════════════════════════════════════
+
+/** All QBR-related query keys (pre, meeting, post, executive cards) */
+export const qbrKeys = {
+  prefix: () => ['qbr'] as const,
+
+  // Cycle status (used by QbrWizardCard, QbrPreCLevelPage, QbrPrePage, QbrPostPage, Wizards)
+  cycleStatus: (cycleId: string | null | undefined) =>
+    ['qbr', 'cycle-status', cycleId] as const,
+  cycleStatusCard: (cycleId: string | null | undefined) =>
+    ['qbr', 'cycle-status-card', cycleId] as const,
+  cycleStatusPost: (cycleId: string | null | undefined) =>
+    ['qbr', 'cycle-status-post', cycleId] as const,
+  cycleStatusWizards: (cycleId: string | null | undefined) =>
+    ['qbr', 'cycle-status-wizards', cycleId] as const,
+
+  // Pre C-Level
+  leaderSessions: (cycleId: string | null | undefined) =>
+    ['qbr', 'leader-sessions', cycleId] as const,
+  teams: (buId: string | null) => ['qbr', 'teams', buId] as const,
+  orgKpis: (buId: string | null) => ['qbr', 'org-kpis', buId] as const,
+
+  // Post
+  cLevelSessionPost: (cycleId: string | null | undefined) =>
+    ['qbr', 'clevel-session-post', cycleId] as const,
+  leaderSessionsPost: (cycleId: string | null | undefined) =>
+    ['qbr', 'leader-sessions-post', cycleId] as const,
+  teamsPost: (buId: string | null) => ['qbr', 'teams-post', buId] as const,
+  orgObjectivesPost: (cycleId: string | null | undefined) =>
+    ['qbr', 'org-objectives-post', cycleId] as const,
+  planningCyclesPost: (buId: string | null) =>
+    ['qbr', 'planning-cycles-post', buId] as const,
+  meetingSession: (cycleId: string | null | undefined) =>
+    ['qbr', 'meeting-session', cycleId] as const,
+
+  // Pre (team)
+  preTeamKrs: (
+    buId: string | null,
+    teamId: string | null | undefined,
+    cycleId: string | null | undefined
+  ) => ['qbr-pre', 'team-krs', buId, teamId, cycleId] as const,
+  preTeamKpis: (teamId: string | null | undefined, buId: string | null) =>
+    ['qbr-pre', 'team-kpis', teamId, buId] as const,
+  preDraftOkrs: (
+    teamId: string | null | undefined,
+    planningCycleId: string | null | undefined
+  ) => ['qbr-pre', 'draft-okrs', teamId, planningCycleId] as const,
+
+  // Meeting
+  meetingCLevelSession: (
+    buId: string | null,
+    cycleId: string | null | undefined
+  ) => ['qbr-meeting', 'clevel-session', buId, cycleId] as const,
+  meetingPreSessions: (
+    buId: string | null,
+    cycleId: string | null | undefined
+  ) => ['qbr-meeting', 'pre-sessions', buId, cycleId] as const,
+  meetingTeams: (buId: string | null) =>
+    ['qbr-meeting', 'teams', buId] as const,
+  meetingAddendums: (preQbrSessionIds: string[]) =>
+    ['qbr-meeting', 'addendums', preQbrSessionIds] as const,
+
+  // QBR C-Level (balance)
+  cLevelBalanceTeams: (buId: string | null) =>
+    ['qbr-clevel', 'balance-teams', buId] as const,
+  cLevelAllTeamKrs: (cycleId: string | null | undefined) =>
+    ['qbr-clevel', 'all-team-krs', cycleId] as const,
+
+  // QBR report (pages)
+  reportKpiEvolution: (buId: string | null) =>
+    ['qbr-report', 'kpi-evolution', buId] as const,
+  criticalKpiComparison: (buId: string | null, cycleId: string | null) =>
+    ['qbr-critical-kpi-comparison', buId, cycleId] as const,
+} as const;
+
+/** All MBR-related query keys */
+export const mbrKeys = {
+  prefix: () => ['mbr'] as const,
+
+  buKpis: (buId: string | null) => ['mbr', 'bu-kpis', buId] as const,
+  teamObjectives: (buId: string | null, cycleId: string | null | undefined) =>
+    ['mbr', 'team-objectives', buId, cycleId] as const,
+  qbrFollowup: (buId: string | null) =>
+    ['mbr', 'qbr-followup', buId] as const,
+
+  preTeamKrs: (
+    buId: string | null,
+    teamId: string | null | undefined,
+    cycleId: string | null | undefined
+  ) => ['mbr-pre', 'team-krs', buId, teamId, cycleId] as const,
+  preTeamKpis: (teamId: string | null | undefined, buId: string | null) =>
+    ['mbr-pre', 'team-kpis', teamId, buId] as const,
+} as const;
+
+/** Pre-Weekly wizard keys */
+export const preWeeklyKeys = {
+  prefix: () => ['pre-weekly'] as const,
+  userSources: (
+    buId: string | null,
+    userId: string | null | undefined,
+    referenceWeek: string
+  ) => ['pre-weekly', 'user-sources', buId, userId, referenceWeek] as const,
+} as const;
+
+/** Quarter Review (executive page) keys */
+export const quarterReviewKeys = {
+  prefix: () => ['quarter-review'] as const,
+  cycles: (buId: string | null) =>
+    ['quarter-review', 'cycles', buId] as const,
+  teamObjectives: (buId: string | null, cycleId: string | null | undefined) =>
+    ['quarter-review', 'team-objectives', buId, cycleId] as const,
+  ritualSessions: (buId: string | null, cycleId: string | null | undefined) =>
+    ['quarter-review', 'ritual-sessions', buId, cycleId] as const,
+  linkedProjectIds: (teamId: string | null | undefined, krIds: string[]) =>
+    ['quarter-review', 'linked-project-ids', teamId, krIds] as const,
 } as const;
 
 export const kpisKeys = {
