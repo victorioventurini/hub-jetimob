@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { startOfWeek, format } from 'date-fns';
 
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { RitualAttendance } from '@/modules/okrs/components/wizards/shared';
 import {
   WeeklyExecutiveOpeningStep,
   WeeklyPrioritiesStep,
@@ -25,6 +26,7 @@ import {
 import { useGenericWizardDraft } from '@/modules/okrs/hooks';
 import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks';
 import { useWeeklyOpeningCuration } from '@/modules/okrs/hooks';
+import { useBu } from '@/contexts/BuContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
 
@@ -85,6 +87,7 @@ const DEFAULT_DATA: WeeklyDraftData = {
 export default function WeeklyPage() {
   const navigate = useNavigate();
   usePageTitle('Weekly');
+  const { currentBu } = useBu();
 
   const {
     draft,
@@ -97,6 +100,7 @@ export default function WeeklyPage() {
     isSaving,
     isResumingDraft,
     lastSavedAt,
+    sessionId,
   } = useGenericWizardDraft<WeeklyStep, WeeklyDraftData>({
     wizardType: 'weekly',
     teamId: null,
@@ -196,6 +200,13 @@ export default function WeeklyPage() {
             onContinue={goNext}
             onGenerateDraft={handleGenerateDraft}
             isGenerating={isGenerating}
+            topSlot={
+              <RitualAttendance
+                persona="weekly"
+                sessionId={sessionId}
+                buId={currentBu?.id}
+              />
+            }
           />
         );
       case 'priorities':
