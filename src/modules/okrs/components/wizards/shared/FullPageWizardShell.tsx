@@ -217,20 +217,21 @@ export function FullPageWizardShell({
     <div className={cn('h-screen bg-background flex flex-col overflow-hidden', className)}>
       {/* Header */}
       <header className="shrink-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center gap-4">
+        <div className="container flex h-12 sm:h-14 items-center gap-1.5 sm:gap-4 px-3 sm:px-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="gap-2"
+            className="gap-2 px-2 sm:px-3 shrink-0"
+            aria-label="Voltar"
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">Voltar</span>
           </Button>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold truncate">{title}</h1>
+              <h1 className="text-base sm:text-lg font-semibold truncate">{title}</h1>
               {/* Admin context switcher (team/user selector) */}
               {adminContextSwitcher}
               {/* Fallback to contextLabel if no switcher */}
@@ -246,10 +247,10 @@ export function FullPageWizardShell({
               </p>
             )}
           </div>
-          
+
           {/* Save draft button */}
           {onSaveDraft && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {lastSavedAt && !isDirty && (
                 <span className="text-xs text-muted-foreground hidden sm:inline">
                   Salvo às {formatLastSaved(lastSavedAt)}
@@ -261,27 +262,28 @@ export function FullPageWizardShell({
                 onClick={handleSaveDraft}
                 disabled={!isDirty}
                 isLoading={isSaving || isSavingDraft}
-                className="gap-2"
+                className="gap-2 px-2 sm:px-3"
+                aria-label="Salvar rascunho"
               >
                 <Save className="h-4 w-4" />
                 <span className="hidden sm:inline">Salvar rascunho</span>
               </Button>
             </div>
           )}
-          
+
           <Button
             variant="ghost"
             size="icon"
             onClick={handleClose}
-            className="shrink-0"
+            className="shrink-0 h-9 w-9"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Fechar</span>
           </Button>
         </div>
-        
+
         {/* Mobile stepper */}
-        <div className="container pb-3 lg:hidden">
+        <div className="container px-3 sm:px-6 pb-2 sm:pb-3 lg:hidden">
           <WizardStepperCompact
             steps={steps}
             currentStepId={currentStepId}
@@ -289,21 +291,22 @@ export function FullPageWizardShell({
           />
         </div>
       </header>
-      
+
       {/* Draft resuming banner */}
       {showDraftBanner && isResumingDraft && (
         <div className="bg-muted border-b">
-          <div className="container py-2 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">📝</span>
-              <span>
-                Continuando rascunho salvo
+          <div className="container px-3 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
+              <span className="text-muted-foreground shrink-0">📝</span>
+              <span className="truncate">
+                <span className="hidden sm:inline">Continuando rascunho salvo</span>
+                <span className="sm:hidden">Rascunho retomado</span>
                 {lastSavedAt && (
-                  <span className="text-muted-foreground"> em {formatDraftDate(lastSavedAt)}</span>
+                  <span className="text-muted-foreground hidden sm:inline"> em {formatDraftDate(lastSavedAt)}</span>
                 )}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {onDiscardDraft && (
                 <Button
                   variant="ghost"
@@ -315,7 +318,8 @@ export function FullPageWizardShell({
                   {isDiscarding ? (
                     <LoadingSpinner size="sm" className="mr-1" />
                   ) : null}
-                  Descartar e começar novo
+                  <span className="hidden sm:inline">Descartar e começar novo</span>
+                  <span className="sm:hidden">Descartar</span>
                 </Button>
               )}
               <Button
@@ -330,10 +334,10 @@ export function FullPageWizardShell({
           </div>
         </div>
       )}
-      
+
       {/* Main content */}
-      <div className="flex-1 min-h-0 container py-6 flex flex-col">
-        <div className="flex gap-8 flex-1 min-h-0">
+      <div className="flex-1 min-h-0 container px-0 sm:px-6 py-0 lg:py-6 flex flex-col">
+        <div className="flex gap-0 lg:gap-8 flex-1 min-h-0">
           {/* Desktop stepper - lateral */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-20">
@@ -346,7 +350,7 @@ export function FullPageWizardShell({
               />
             </div>
           </aside>
-          
+
           {/* Step content — each step controls its own ScrollArea.
               CRITICAL: overflow-hidden ensures children with h-full are contained,
               preventing footer from being pushed off-screen at high zoom levels. */}
@@ -355,7 +359,7 @@ export function FullPageWizardShell({
           </main>
         </div>
       </div>
-      
+
       {/* Exit confirmation dialog */}
       <DiscardChangesDialog
         open={showExitDialog}
