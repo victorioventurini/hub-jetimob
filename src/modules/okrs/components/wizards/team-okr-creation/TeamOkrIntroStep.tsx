@@ -150,12 +150,7 @@ export function TeamOkrIntroStep({
             <Target className="h-12 w-12 text-primary" />
           </div>
 
-          {isLoading ? (
-            <VicLoadingState 
-              text="Preparando sua jornada de OKRs..."
-              size="sm"
-            />
-          ) : (
+          {greeting ? (
             <>
               <h2 className="text-2xl font-bold mb-2">
                 <VicTypewriterText text={greeting} speed={36} priority={0} />
@@ -164,6 +159,11 @@ export function TeamOkrIntroStep({
                 Vamos definir os OKRs do <span className="font-medium text-foreground">{teamName}</span>
               </p>
             </>
+          ) : (
+            <VicLoadingState 
+              text="Preparando sua jornada de OKRs..."
+              size="sm"
+            />
           )}
         </div>
 
