@@ -13,6 +13,7 @@ import {
   useActiveCycle,
   useTeamPendingKrs,
   useLastCompletedSession,
+  useCarryOverDecisions,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
@@ -114,6 +115,13 @@ export default function TeamCheckinPage() {
     quarterlyCycle?.id,
     teamIdParam ? [teamIdParam] : []
   );
+
+  // Carry-over: pendências do check-in anterior do mesmo time
+  const { data: carryOverDecisions = [] } = useCarryOverDecisions({
+    wizardType: 'team-checkin',
+    teamId: teamIdParam,
+    enabled: !!teamIdParam,
+  });
   
   // Dynamic steps: omit kr-review when no KRs
   const hasKrs = !!(pendingKrs && pendingKrs.length > 0);
@@ -296,6 +304,7 @@ export default function TeamCheckinPage() {
             checklist={draft.data.checklist}
             onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onChecklistChange={(checklist) => updateDraft({ checklist })}
+            carryOverDecisions={carryOverDecisions}
             onComplete={handleComplete}
             onBack={goBack}
           />
