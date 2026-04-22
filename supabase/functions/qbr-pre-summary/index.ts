@@ -24,6 +24,7 @@ import {
 } from "../_shared/response.ts";
 import { loadAgent, buildSystemPrompt, CANONICAL_PROGRESS_INTERPRETATION_RULES } from "../_shared/agent-loader.ts";
 import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient, Json } from "../_shared/types/common.ts";
 
 // ============================================================================
 // Types
@@ -106,7 +107,7 @@ function extractOrFallback(result: PromiseSettledResult<string>, fallback: strin
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -140,12 +141,12 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadQbrPreData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string,
   teamId: string,
   buId: string
 ): Promise<{
-  snapshot: any;
+  snapshot: Json | null;
   buName: string;
   teamName: string;
   leaderAuthId: string | null;
@@ -182,7 +183,7 @@ async function loadQbrPreData(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   ctx: QbrPreAgentContext,
   requestId: string
@@ -311,23 +312,27 @@ serve(async (req) => {
     const cycleName = cycleInfo?.name || 'Ciclo';
 
     // Build agent context
+    interface KrSnapshot { krTitle: string; state: string; finalProgress: number; paceStatus: string }
+    interface KpiSnapshot { name: string; currentValue: number | null; target: number | null; ragStatus: string; variationVsLastMonth?: number | null }
+    interface DecisionSnapshot { text: string; category: string }
+    const snap = (snapshotData ?? {}) as Record<string, unknown>;
     const agentContext: QbrPreAgentContext = {
       buName,
       teamName,
       cycleName,
-      krFinalStates: (snapshotData?.krFinalStates || []).map((kr: any) => ({
+      krFinalStates: ((snap.krFinalStates as KrSnapshot[] | undefined) || []).map((kr) => ({
         krTitle: kr.krTitle, state: kr.state, finalProgress: kr.finalProgress, paceStatus: kr.paceStatus,
       })),
-      criticalKpis: (snapshotData?.kpiSnapshot || snapshotData?.kpiSnapshots || [])
-        .filter((k: any) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
-        .map((k: any) => ({
+      criticalKpis: (((snap.kpiSnapshot ?? snap.kpiSnapshots) as KpiSnapshot[] | undefined) || [])
+        .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
+        .map((k) => ({
           name: k.name, currentValue: k.currentValue, target: k.target,
           ragStatus: k.ragStatus, variationVsLastMonth: k.variationVsLastMonth,
         })),
-      zombieCandidates: snapshotData?.zombieCandidates || [],
-      kpisToCreate: snapshotData?.kpisToCreate || [],
-      learnings: snapshotData?.learnings || { whatWorked: '', whatDidntWork: '', debts: '' },
-      decisions: (snapshotData?.decisions || []).map((d: any) => ({ text: d.text, category: d.category })),
+      zombieCandidates: (snap.zombieCandidates as QbrPreAgentContext['zombieCandidates']) || [],
+      kpisToCreate: (snap.kpisToCreate as QbrPreAgentContext['kpisToCreate']) || [],
+      learnings: (snap.learnings as QbrPreAgentContext['learnings']) || { whatWorked: '', whatDidntWork: '', debts: '' },
+      decisions: ((snap.decisions as DecisionSnapshot[] | undefined) || []).map((d) => ({ text: d.text, category: d.category })),
     };
 
     // Orchestrate AI
