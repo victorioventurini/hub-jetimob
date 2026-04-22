@@ -365,9 +365,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi-batch'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-effective-values'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiBatchPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krEffectiveValuesPrefix(), refetchType: 'active' });
       
       toast({
         title: "Valor registrado",

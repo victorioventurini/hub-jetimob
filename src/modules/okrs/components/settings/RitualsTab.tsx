@@ -210,7 +210,7 @@ export function RitualsTab() {
     },
     onSuccess: (_, { newStatus }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.settingsCycles(null) });
-      queryClient.invalidateQueries({ queryKey: ['qbr'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.qbr.prefix() });
       const label = getStateConfig(newStatus).label;
       toast.success(`QBR status alterado para "${label}"`);
       setConfirmAction(null);

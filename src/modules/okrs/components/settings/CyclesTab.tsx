@@ -64,7 +64,7 @@ export function CyclesTab() {
 
   // Auto-transition toggle query
   const { data: autoTransitionEnabled, isLoading: isLoadingToggle } = useQuery({
-    queryKey: ['okr-auto-cycle-transition', buId],
+    queryKey: queryKeys.okrs.autoCycleTransition(buId),
     queryFn: async () => {
       if (!supabase || !buId) return false;
       const { data, error } = await supabase
@@ -108,7 +108,7 @@ export function CyclesTab() {
       if (error) throw error;
     },
     onSuccess: (_, enabled) => {
-      queryClient.invalidateQueries({ queryKey: ['okr-auto-cycle-transition', buId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.autoCycleTransition(buId) });
       toast.success(enabled ? 'Transição automática ativada' : 'Transição automática desativada');
     },
     onError: () => {
