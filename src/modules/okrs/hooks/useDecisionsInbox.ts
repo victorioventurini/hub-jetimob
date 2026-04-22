@@ -44,7 +44,9 @@ export interface DecisionsInboxResult {
 
 export interface DecisionsScopeContext {
   availableScopes: DecisionsInboxScope[];
-  managedTeamIds: string[];
+  /** Times liderados diretamente + descendentes (escopo `team`). */
+  directLeaderTeamIds: string[];
+  /** Áreas lideradas pelo usuário (escopo `area`). */
   managedAreaIds: string[];
   isWildcard: boolean;
 }
@@ -65,7 +67,7 @@ export function useDecisionsScopeContext() {
     queryFn: async (): Promise<DecisionsScopeContext> => {
       const empty: DecisionsScopeContext = {
         availableScopes: ['self'],
-        managedTeamIds: [],
+        directLeaderTeamIds: [],
         managedAreaIds: [],
         isWildcard: !!isWildcard,
       };
@@ -81,44 +83,37 @@ export function useDecisionsScopeContext() {
 
       const managedAreaIds: string[] = (areas ?? []).map((a: { id: string }) => a.id);
 
-      // Times liderados (incluindo expansão para sub-times via parent_team_id)
+      // Times liderados diretamente
       const { data: leaderTeams } = await (buSupabase as any)
         .from('teams')
-        .select('id, parent_team_id, area_id')
+        .select('id')
         .eq('leader_user_id', profileId)
         .is('deleted_at', null);
 
       const directIds: string[] = (leaderTeams ?? []).map((t: { id: string }) => t.id);
-      const allTeamIds = new Set<string>(directIds);
 
-      // Expansão: times cujos pais o usuário lidera
+      // Expansão recursiva: usa get_descendant_team_ids p/ cada time liderado
+      const directLeaderTeamIds = new Set<string>(directIds);
       if (directIds.length > 0) {
-        const { data: childTeams } = await (buSupabase as any)
-          .from('teams')
-          .select('id, parent_team_id')
-          .in('parent_team_id', directIds)
-          .is('deleted_at', null);
-        for (const t of childTeams ?? []) allTeamIds.add(t.id);
-      }
-
-      // Times de áreas lideradas (escopo área)
-      if (managedAreaIds.length > 0) {
-        const { data: areaTeams } = await (buSupabase as any)
-          .from('teams')
-          .select('id')
-          .in('area_id', managedAreaIds)
-          .is('deleted_at', null);
-        for (const t of areaTeams ?? []) allTeamIds.add(t.id);
+        for (const tid of directIds) {
+          const { data: descendants } = await (buSupabase as any).rpc('get_descendant_team_ids', {
+            p_team_id: tid,
+          });
+          for (const d of (descendants ?? []) as Array<{ get_descendant_team_ids?: string } | string>) {
+            const id = typeof d === 'string' ? d : d?.get_descendant_team_ids;
+            if (id) directLeaderTeamIds.add(id);
+          }
+        }
       }
 
       const availableScopes: DecisionsInboxScope[] = ['self'];
-      if (directIds.length > 0) availableScopes.push('team');
+      if (directLeaderTeamIds.size > 0) availableScopes.push('team');
       if (managedAreaIds.length > 0) availableScopes.push('area');
       if (isWildcard) availableScopes.push('all');
 
       return {
         availableScopes,
-        managedTeamIds: Array.from(allTeamIds),
+        directLeaderTeamIds: Array.from(directLeaderTeamIds),
         managedAreaIds,
         isWildcard: !!isWildcard,
       };
@@ -168,7 +163,7 @@ export function useDecisionsInbox({
       filters as unknown as Record<string, unknown>,
       page,
       hasOverride ? overrideTeamIds : null,
-      hasOverride ? null : scopeCtx?.managedTeamIds ?? null,
+      hasOverride ? null : effectiveScope === 'team' ? scopeCtx?.directLeaderTeamIds ?? null : null,
       hasOverride ? null : effectiveScope === 'area' ? scopeCtx?.managedAreaIds ?? null : null,
     ),
     queryFn: async (): Promise<DecisionsInboxResult> => {
@@ -186,18 +181,27 @@ export function useDecisionsInbox({
       if (filters.dateTo) rpcFilters.date_to = filters.dateTo;
       if (filters.search) rpcFilters.search = filters.search;
 
+      // Payload por escopo:
+      //  - override (TeamSelect manual) → força 'team' com IDs já expandidos no client
+      //  - 'team'  → directLeaderTeamIds (com descendentes)
+      //  - 'area'  → área é resolvida via p_area_ids (RPC expande para times)
+      //  - 'self' / 'all' → sem times/áreas
       const teamIdsForRpc = hasOverride
         ? overrideTeamIds
-        : effectiveScope === 'team' || effectiveScope === 'area'
-          ? scopeCtx?.managedTeamIds ?? []
+        : effectiveScope === 'team'
+          ? scopeCtx?.directLeaderTeamIds ?? []
           : [];
+
+      const areaIdsForRpc = !hasOverride && effectiveScope === 'area'
+        ? scopeCtx?.managedAreaIds ?? []
+        : [];
 
       const { data, error } = await (buSupabase as any).rpc('rpc_decisions_inbox', {
         p_bu_id: currentBu.id,
         p_user_profile_id: profileId,
         p_scope: effectiveScope,
         p_team_ids: teamIdsForRpc,
-        p_area_ids: effectiveScope === 'area' ? scopeCtx?.managedAreaIds ?? [] : [],
+        p_area_ids: areaIdsForRpc,
         p_filters: rpcFilters,
         p_limit: pageSize,
         p_offset: (page - 1) * pageSize,
