@@ -115,9 +115,21 @@ export default function DecisionsPage() {
   const { mutate: addThreadMessage, isPending: isAddingMessage } = useDecisionThread();
 
   const wizardOptions = useMemo(() => {
+    // Canônico: usa ALL_RITUAL_WIZARD_TYPES (exclui ritos descontinuados como
+    // 'managers-checkin' e históricos 'mbr-first'/'mbr-pre-first'), garantindo
+    // unicidade pela natureza de Set do array tipado.
+    const seen = new Set<string>();
+    const ritualEntries = ALL_RITUAL_WIZARD_TYPES
+      .filter((value) => {
+        if (seen.has(value)) return false;
+        seen.add(value);
+        return Boolean(RITUAL_LABELS[value]);
+      })
+      .map((value) => ({ value, label: RITUAL_LABELS[value] }));
+
     return [
       { value: 'all', label: 'Todos os ritos' },
-      ...Object.entries(RITUAL_LABELS).map(([value, label]) => ({ value, label })),
+      ...ritualEntries,
     ];
   }, []);
 
