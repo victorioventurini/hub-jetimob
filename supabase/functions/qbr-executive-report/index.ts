@@ -110,7 +110,7 @@ function calculateKrProgress(baseline: number, current: number, target: number, 
   return Math.round(Math.max(0, progress));
 }
 
-function buildTeamHealthSummary(teamObjectives: any[], teams: Map<string, string>) {
+function buildTeamHealthSummary(teamObjectives: TeamObjectiveRow[], teams: Map<string, string>) {
   const teamMap = new Map<string, { name: string; achieved: number; onTrack: number; atRisk: number; offTrack: number; total: number }>();
 
   for (const obj of teamObjectives) {
@@ -140,10 +140,10 @@ function buildTeamHealthSummary(teamObjectives: any[], teams: Map<string, string
   return Array.from(teamMap.values());
 }
 
-function buildKpiSummary(kpis: any[]) {
+function buildKpiSummary(kpis: KpiRow[]) {
   return kpis.map(kpi => {
-    const values = (kpi.values || []).sort((a: any, b: any) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const values = (kpi.values || []).slice().sort((a: KpiValueRow, b: KpiValueRow) =>
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
     const latest = values[0];
     return {
@@ -159,7 +159,7 @@ function buildKpiSummary(kpis: any[]) {
   });
 }
 
-function extractLearnings(sessions: any[]) {
+function extractLearnings(sessions: SessionRow[]) {
   const learnings: Array<{ teamId: string; whatWorked: string; whatDidntWork: string; debts: string }> = [];
   for (const session of sessions) {
     const data = session.reflection_data?.data ?? session.reflection_data ?? {};
