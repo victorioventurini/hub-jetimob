@@ -26,10 +26,10 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
   const [notes, setNotes] = useState('');
 
   const handleSubmit = () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !dueDate) return;
     onSubmit({
       name: name.trim(),
-      due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
+      due_date: dueDate.toISOString().split('T')[0],
       owner_id: ownerId,
       notes: notes.trim() || null,
     });
@@ -52,14 +52,14 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
         <Button
           size="sm"
           onClick={handleSubmit}
-          disabled={!name.trim() || isPending}
+          disabled={!name.trim() || !dueDate || isPending}
         >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {/* Due date picker */}
+        {/* Due date picker — obrigatório */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -67,11 +67,11 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
               size="sm"
               className={cn(
                 'h-8 text-xs justify-start',
-                !dueDate && 'text-muted-foreground',
+                !dueDate && 'text-destructive border-destructive/50',
               )}
             >
               <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-              {dueDate ? format(dueDate, "dd MMM yyyy", { locale: ptBR }) : 'Prazo'}
+              {dueDate ? format(dueDate, "dd MMM yyyy", { locale: ptBR }) : 'Prazo *'}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
