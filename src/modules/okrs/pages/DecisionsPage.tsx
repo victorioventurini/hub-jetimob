@@ -492,8 +492,6 @@ export default function DecisionsPage() {
             </PaginationContent>
           </Pagination>
         )}
-          </div>
-        )}
       </div>
     </HubLayout>
   );
