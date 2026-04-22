@@ -154,7 +154,9 @@ interface TeamRow {
   leader?: { first_name: string; last_name: string } | null;
 }
 
- * 
+/**
+ * OpenAI-compatible tool definitions for LLM function calling
+ *
  * These definitions follow the OpenAI function calling schema and can be
  * passed directly to LLM APIs that support tool/function calling.
  */
