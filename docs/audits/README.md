@@ -1,39 +1,37 @@
 # 📊 Relatórios de Auditoria — Hub da Jet
 
-**Última atualização:** 2026-01-22  
-**Categoria:** AUDITORIAS
+**Última atualização:** 2026-04-22  
+**Categoria:** AUDITORIAS  
+**Política:** [DOCS_RETENTION_POLICY.md](../canonical/DOCS_RETENTION_POLICY.md)
 
 ---
 
 ## Sobre Esta Pasta
 
-Esta pasta contém os **relatórios de auditoria atuais** — análises de saúde, segurança, performance e conformidade.
-
-## Política de Retenção
-
-| Tipo | Retenção |
-|------|----------|
-| Health Reports | 7 dias (depois → archive) |
-| Audits Pontuais | 30 dias (depois → archive) |
-| Audits de Segurança | Permanente |
+Contém **apenas a versão mais recente** de cada auditoria. Versões anteriores foram movidas para `docs/archive/audits-<período>/`.
 
 ## Documentos Atuais
 
-### Saúde Geral
-- `HEALTH_REPORT_2026-01-22.md` — Relatório de saúde atual
-- `SYSTEMIC_ANALYSIS_2026-01-22.md` — Análise sistêmica completa
-- `COMPREHENSIVE_TECHNICAL_AUDIT_2026-01-22.md` — Auditoria técnica abrangente
-
-### Segurança
-- `RLS_SECURITY_AUDIT_2026-01-21.md` — Auditoria de RLS
+### Análise Sistêmica
+- `SYSTEMIC_HEALTH_AUDIT_2026-02-08.md` — Saúde sistêmica
+- `COMPREHENSIVE_TECHNICAL_AUDIT_2026-02-08.md` — Auditoria técnica
+- `HYGIENE_ANALYSIS_2026-03-14.md` — Análise de higienização
+- `REFACTORING_PLAN_2026-03-14.md` — Plano de refatoração
 
 ### Backend
-- `BACKEND_AUDIT_2026-01-22.md` — Auditoria de Edge Functions e RPCs
-- `DATABASE_OPTIMIZATION_AUDIT_2026-01-22.md` — Otimização de banco
+- `BACKEND_ROBUSTNESS_AUDIT_2026-02-08.md` — Robustez backend
+- `DATABASE_OPTIMIZATION_AUDIT_2026-02-08.md` — Otimização de banco
 
 ### Frontend
-- `FRONTEND_UX_AUDIT_2026-01-22.md` — Auditoria de UX
+- `FRONTEND_UX_AUDIT_2026-02-08.md` — UX
+- `HOOKS_CONSOLIDATION_AUDIT_2026-02-08.md` — Consolidação de hooks
 
 ---
 
-*Atualizado a cada ciclo de auditoria.*
+## Histórico
+
+Versões antigas em `docs/archive/audits-2026-q1/` (17 documentos arquivados em 2026-04-22).
+
+---
+
+*Atualizado conforme política de retenção.*
