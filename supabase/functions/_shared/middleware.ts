@@ -122,7 +122,7 @@ async function validateAuth(
 
   // Validate JWT using signing keys (preferred over getUser())
   const { data, error: claimsError } = await supabase.auth.getClaims(token);
-  const claims: any = (data as any)?.claims;
+  const claims = (data as { claims?: AuthClaims } | null)?.claims;
 
   if (claimsError || !claims?.sub) {
     console.error(`[${requestId}] Auth claims error:`, claimsError?.message);
