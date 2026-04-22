@@ -160,13 +160,56 @@ export function useVicAgent(options?: UseVicAgentOptions) {
       context: VicContext,
       userQuestion?: string,
       invokeOptions?: VicInvokeOptions
-    ) => {
-      return mutation.mutateAsync({
+    ): Promise<VicInvokeResponse> => {
+      const call = mutation.mutateAsync({
         agentSlug,
         actionContext,
         context,
         userQuestion,
         silent: invokeOptions?.silent,
+      });
+
+      const timeoutMs = invokeOptions?.timeoutMs ?? DEFAULT_VIC_TIMEOUT_MS;
+      const hasFallback = invokeOptions?.fallback !== undefined;
+
+      // Wrap with fallback-on-error: when caller provides a fallback, the
+      // promise NEVER rejects — soft-fails to fallback so wizards/UI keep moving.
+      const withFallback = hasFallback
+        ? call.catch((err) => {
+            console.warn(`[Vic] ${agentSlug} call failed, using fallback:`, err);
+            return invokeOptions!.fallback as VicInvokeResponse;
+          })
+        : call;
+
+      // No timeout requested: return as-is.
+      if (!timeoutMs || timeoutMs <= 0) {
+        return withFallback;
+      }
+
+      // Race against a timeout. Fallback wins on timeout if provided,
+      // otherwise the promise rejects with a clear timeout error.
+      return new Promise<VicInvokeResponse>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (hasFallback) {
+            console.warn(
+              `[Vic] ${agentSlug} timed out after ${timeoutMs}ms, using fallback`
+            );
+            resolve(invokeOptions!.fallback as VicInvokeResponse);
+          } else {
+            reject(new Error(`Vic agent "${agentSlug}" timed out after ${timeoutMs}ms`));
+          }
+        }, timeoutMs);
+
+        withFallback.then(
+          (value) => {
+            clearTimeout(timer);
+            resolve(value);
+          },
+          (err) => {
+            clearTimeout(timer);
+            reject(err);
+          }
+        );
       });
     },
     [mutation]
