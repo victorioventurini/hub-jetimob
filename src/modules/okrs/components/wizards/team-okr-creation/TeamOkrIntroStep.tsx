@@ -177,13 +177,7 @@ export function TeamOkrIntroStep({
                 </div>
               </div>
               <div className="space-y-2">
-                {isLoading ? (
-                  <VicLoadingState 
-                    text="Vic está matutando..."
-                    size="sm"
-                    variant="inline"
-                  />
-                ) : (
+                {message ? (
                   <>
                     <p className="text-base leading-relaxed">
                       <VicTypewriterText text={message} speed={24} priority={1} />
@@ -193,6 +187,12 @@ export function TeamOkrIntroStep({
                       Vic, seu assistente de OKRs
                     </p>
                   </>
+                ) : (
+                  <VicLoadingState 
+                    text="Vic está matutando..."
+                    size="sm"
+                    variant="inline"
+                  />
                 )}
               </div>
             </div>
