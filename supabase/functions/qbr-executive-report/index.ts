@@ -367,7 +367,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     if (orgObjectivesErr) console.error(`[${requestId}] Org objectives query error:`, orgObjectivesErr.message);
     if (decisionSessionsErr) console.error(`[${requestId}] Decision sessions query error:`, decisionSessionsErr.message);
 
-    const teamsMap = new Map((teamsData || []).map((t: any) => [t.id, t.name]));
+    const teamsMap = new Map((teamsData || []).map((t: { id: string; name: string }) => [t.id, t.name]));
     const teamHealthSummary = buildTeamHealthSummary(teamObjectives || [], teamsMap);
     const kpisSummary = buildKpiSummary(orgKpis || []);
     const leaderLearnings = extractLearnings(qbrPreSessions || []);
@@ -415,9 +415,9 @@ ${JSON.stringify(cLevelFlags)}
 ${JSON.stringify(pendingDecisions.slice(0, 10))}
 
 === OKRs ORGANIZACIONAIS ===
-${JSON.stringify((orgObjectives || []).map((o: any) => ({
+${JSON.stringify(((orgObjectives || []) as OrgObjectiveRow[]).map((o) => ({
   title: o.title,
-  krs: (o.key_results || []).map((kr: any) => ({
+  krs: (o.key_results || []).map((kr: KrRow) => ({
     title: kr.title,
     progress: calculateKrProgress(Number(kr.baseline) || 0, Number(kr.current_value) || 0, Number(kr.target) || 0, kr.direction || 'up'),
     status: kr.status,
@@ -456,7 +456,7 @@ Gere o relatório em JSON com exatamente esta estrutura:
         return errorResponse("Empty AI response", 500, { requestId });
       }
 
-      let parsed: any;
+      let parsed: ParsedReport;
       try {
         let jsonStr = response.content.trim();
         if (jsonStr.startsWith("```")) {
