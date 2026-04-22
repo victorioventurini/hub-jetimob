@@ -33,6 +33,7 @@ import {
   formatValidationErrors,
 } from "../_shared/validation.ts";
 import { corsHeaders } from "../_shared/middleware.ts";
+import { errorResponse, successResponse, serviceUnavailableResponse, internalErrorResponse } from "../_shared/response.ts";
 
 // Get Google Maps API key from integrations config
 async function getGoogleMapsApiKey(): Promise<string | null> {
@@ -75,20 +76,14 @@ serve(async (req) => {
     if (!parseResult.success) {
       // Return empty predictions for validation errors (graceful degradation)
       console.warn("Validation failed:", formatValidationErrors(parseResult.error));
-      return new Response(
-        JSON.stringify({ predictions: [] }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return successResponse({ predictions: [] });
     }
 
     const { query } = parseResult.data;
 
     const apiKey = await getGoogleMapsApiKey();
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "Google Maps API not configured" }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return serviceUnavailableResponse("Google Maps API not configured");
     }
 
     // Call Google Places Autocomplete API
@@ -104,10 +99,7 @@ serve(async (req) => {
 
     if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
       console.error("Google Places API error:", data.status, data.error_message);
-      return new Response(
-        JSON.stringify({ error: "Failed to search addresses", status: data.status }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Failed to search addresses", 502, "UPSTREAM_ERROR", { status: data.status });
     }
 
     const predictions: AddressPrediction[] = (data.predictions || []).map((p: any) => ({
@@ -117,15 +109,9 @@ serve(async (req) => {
       secondaryText: p.structured_formatting?.secondary_text || "",
     }));
 
-    return new Response(
-      JSON.stringify({ predictions }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return successResponse({ predictions });
   } catch (error) {
     console.error("Error in search-address:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return internalErrorResponse(error instanceof Error ? error.message : "Internal server error");
   }
 });
