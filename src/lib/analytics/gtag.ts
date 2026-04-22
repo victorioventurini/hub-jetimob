@@ -17,13 +17,13 @@
  * @version 2.0.0 (GTM-based)
  */
 
+import { logger } from "@/lib/logger";
+
 declare global {
   interface Window {
     dataLayer: Record<string, unknown>[];
   }
 }
-
-const isDev = import.meta.env.DEV;
 
 // Track se GTM já foi inicializado (singleton)
 let gtmInitialized = false;
@@ -36,13 +36,13 @@ let gtmInitialized = false;
  */
 export function initGTM(containerId: string): void {
   if (!containerId) {
-    if (isDev) console.warn('[GTM] Container ID não fornecido');
+    logger.warn('[GTM] Container ID não fornecido');
     return;
   }
 
   // Evitar inicialização duplicada
   if (gtmInitialized) {
-    if (isDev) console.log('[GTM] Já inicializado, ignorando');
+    logger.info('[GTM] Já inicializado, ignorando');
     return;
   }
 
@@ -61,7 +61,7 @@ export function initGTM(containerId: string): void {
 
   gtmInitialized = true;
 
-  if (isDev) console.log('[GTM] Inicializado com Container ID:', containerId);
+  logger.info('[GTM] Inicializado com Container ID:', containerId);
 }
 
 /**
@@ -89,7 +89,7 @@ export function setTenantId(tenantId: string | null): void {
       tenant_id: tenantId,
     });
 
-    if (isDev) console.log('[GTM] tenant_id definido:', tenantId);
+    logger.info('[GTM] tenant_id definido:', tenantId);
   } else {
     // Limpar tenant_id no logout/clear
     window.dataLayer.push({
@@ -97,7 +97,7 @@ export function setTenantId(tenantId: string | null): void {
       tenant_id: null,
     });
     
-    if (isDev) console.log('[GTM] tenant_id limpo');
+    logger.info('[GTM] tenant_id limpo');
   }
 }
 
@@ -128,9 +128,7 @@ export function trackVirtualPageView(
 
   window.dataLayer.push(eventData);
 
-  if (isDev) {
-    console.log('[GTM] Virtual Page View:', screenName, eventData);
-  }
+  logger.info('[GTM] Virtual Page View:', screenName, eventData);
 }
 
 /**
@@ -154,9 +152,7 @@ export function trackEvent(
     ...params,
   });
 
-  if (isDev) {
-    console.log('[GTM] Event:', eventName, params);
-  }
+  logger.info('[GTM] Event:', eventName, params);
 }
 
 /**
@@ -169,9 +165,7 @@ export function pushToDataLayer(data: Record<string, unknown>): void {
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(data);
 
-  if (isDev) {
-    console.log('[GTM] DataLayer push:', data);
-  }
+  logger.info('[GTM] DataLayer push:', data);
 }
 
 /**
@@ -192,9 +186,7 @@ export function initSessionContext(params: {
     user_role: params.userRole,
   });
 
-  if (isDev) {
-    console.log('[GTM] Session context initialized:', params);
-  }
+  logger.info('[GTM] Session context initialized:', params);
 }
 
 // ============================================
@@ -205,7 +197,5 @@ export function initSessionContext(params: {
  * @deprecated Use initGTM() ao invés. GA4 agora é gerenciado dentro do GTM.
  */
 export function initGA4(): void {
-  if (isDev) {
-    console.warn('[GTM] initGA4() está deprecated. Use initGTM() - o GA4 é configurado dentro do GTM.');
-  }
+  logger.warn('[GTM] initGA4() está deprecated. Use initGTM() - o GA4 é configurado dentro do GTM.');
 }
