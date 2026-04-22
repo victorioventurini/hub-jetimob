@@ -29,6 +29,7 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 | `EDGE_PERFORMANCE_STANDARD.md` | Padrões de performance em Edge Functions | v1.0.0 |
 | `EDGE_ERROR_RESPONSE_STANDARD.md` | Contrato de erro em Edge Functions | Normativo |
 | `DOCS_RETENTION_POLICY.md` | Política de retenção de documentação | v1.0.0 |
+| `WIZARDS_FRAMEWORK_BOUNDARY.md` | Fronteira pública do framework de wizards (`@/wizards-framework`) | v1.0.0 |
 | `ANALYSIS_MODULE.md` | Módulo Análise Estratégica | v1.0.0 |
 
 ## Regras de Manutenção
