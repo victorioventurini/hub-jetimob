@@ -29,7 +29,7 @@ import { TeamOpeningStep } from '@/modules/okrs/components/wizards/team-checkin/
 import { TeamKrReviewStep } from '@/modules/okrs/components/wizards/team-checkin/TeamKrReviewStep';
 import { TeamInitiativesStep } from '@/modules/okrs/components/wizards/team-checkin/TeamInitiativesStep';
 import { TeamDecisionsStep } from '@/modules/okrs/components/wizards/team-checkin/TeamDecisionsStep';
-import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
+import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
 
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
@@ -99,6 +99,7 @@ export default function TeamCheckinPage() {
     isSaving,
     isResumingDraft,
     lastSavedAt,
+    sessionId,
   } = useGenericWizardDraft<WizardStep, TeamCheckinDraftData>({
     wizardType: 'team-checkin',
     teamId: teamIdParam,
@@ -241,11 +242,20 @@ export default function TeamCheckinPage() {
             onDecisionsChange={(decisions) => updateDraft({ decisions })}
             onContinue={goNext}
             topSlot={
-              <RitualPreparationStatus
-                ritualType="team-checkin"
-                teamId={teamIdParam}
-                cycleId={quarterlyCycle?.id ?? null}
-              />
+              <>
+                <RitualPreparationStatus
+                  ritualType="team-checkin"
+                  teamId={teamIdParam}
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+                <RitualAttendance
+                  persona="team-checkin"
+                  sessionId={sessionId}
+                  buId={currentBu?.id}
+                  teamId={teamIdParam}
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+              </>
             }
           />
         );
