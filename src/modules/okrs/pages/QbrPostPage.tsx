@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
-import { useGenericWizardDraft, useActiveCycle } from '@/modules/okrs/hooks';
+import { useGenericWizardDraft, useActiveCycle, useCarryOverDecisions } from '@/modules/okrs/hooks';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -242,6 +242,12 @@ export default function QbrPostPage() {
       enabled: !!quarterlyCycle && canAccessPost,
     });
 
+  // Carry-over: pendências do QBR-pós anterior na BU
+  const { data: qbrPostCarryOver = [] } = useCarryOverDecisions({
+    wizardType: 'qbr-post',
+    teamId: null,
+  });
+
   const completedSteps = useMemo(() => {
     const idx = STEP_ORDER.indexOf(draft.currentStep);
     return STEP_ORDER.slice(0, idx);
@@ -323,6 +329,7 @@ export default function QbrPostPage() {
             meetingDecisions={meetingDecisions}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            carryOverDecisions={qbrPostCarryOver}
             onContinue={goNext}
             onBack={goBack}
           />

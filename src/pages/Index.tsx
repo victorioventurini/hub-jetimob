@@ -13,6 +13,7 @@ import { FocusCard } from "@/components/home/FocusCard";
 import { TeamStatusCard } from "@/components/home/TeamStatusCard";
 import { MyOkrsCard } from "@/components/home/MyOkrsCard";
 import { MyProjectsCard } from "@/components/home/MyProjectsCard";
+import { MyPendingDecisionsCard } from "@/modules/home/components/shared/MyPendingDecisionsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
 import { CLevelCheckinWizardCard } from "@/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard";
@@ -148,6 +149,9 @@ const Index = () => {
 
         {/* 4. My OKRs Card */}
         {canAccessOkrs && <MyOkrsCard />}
+
+        {/* 4a. Minhas decisões pendentes (renderiza apenas quando há itens) */}
+        {canAccessOkrs && <MyPendingDecisionsCard />}
 
         {/* 4b. My Projects Card */}
         <MyProjectsCard />

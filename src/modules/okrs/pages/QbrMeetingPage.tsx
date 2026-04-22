@@ -18,6 +18,7 @@ import {
   useGenericWizardDraft,
   useActiveCycle,
   useAllOrgObjectivesView,
+  useCarryOverDecisions,
 } from '@/modules/okrs/hooks';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -134,6 +135,12 @@ export default function QbrMeetingPage() {
     defaultStep: 'opening',
     defaultData: DEFAULT_DATA,
     enabled: !!quarterlyCycle,
+  });
+
+  // Carry-over: pendências do QBR Meeting anterior na BU
+  const { data: qbrMeetingCarryOver = [] } = useCarryOverDecisions({
+    wizardType: 'qbr-meeting',
+    teamId: null,
   });
 
   // Track whether we're showing completed view or wizard
@@ -524,6 +531,7 @@ export default function QbrMeetingPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             cLevelDirectives={cLevelDirectives}
+            carryOverDecisions={qbrMeetingCarryOver}
             onContinue={goNext}
             onBack={goBack}
           />

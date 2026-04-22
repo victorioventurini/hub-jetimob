@@ -15,6 +15,7 @@ import {
   OkrConstructionReviewCard,
 } from "./leader";
 import { LeaderPrepWizardCard } from "@/modules/okrs/components/wizards/leader-prep/LeaderPrepWizardCard";
+import { MyPendingDecisionsCard } from "@/modules/home/components/shared/MyPendingDecisionsCard";
 import { TeamCheckinWizardCard } from "@/modules/okrs/components/wizards/team-checkin/TeamCheckinWizardCard";
 import { QbrWizardCard } from "@/modules/okrs/components/wizards/qbr/QbrWizardCard";
 import { TeamOkrCreationWizardCard } from "@/modules/okrs/components/wizards/team-okr-creation/TeamOkrCreationWizardCard";
@@ -148,6 +149,9 @@ export function LeaderDashboard() {
           </Button>
         </section>
       )}
+
+      {/* Decisões pendentes do líder (renderiza apenas quando há itens) */}
+      <MyPendingDecisionsCard />
 
       {/* Critical Alerts - Full width, only if there are items */}
       {criticalAlerts.length > 0 && (

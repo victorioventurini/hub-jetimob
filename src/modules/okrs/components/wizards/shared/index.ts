@@ -80,6 +80,9 @@ export type { TeamDeliveryScorecardData, TeamDeliveryScorecardProps } from './Te
 export { DecisionFollowUpRow } from './DecisionFollowUpRow';
 export type { DecisionFollowUpRowProps } from './DecisionFollowUpRow';
 
+export { CarryOverDecisionsSection } from './CarryOverDecisionsSection';
+export type { CarryOverDecisionsSectionProps } from './CarryOverDecisionsSection';
+
 export {
   PreparationStatusCard,
   PREPARATION_PARTICIPANT_STATES,

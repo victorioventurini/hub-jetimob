@@ -17,7 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle2, Plus, Lightbulb, Target, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardLastStepFooter, DecisionCard } from '../shared';
+import { WizardStepHeader, WizardLastStepFooter, DecisionCard, CarryOverDecisionsSection } from '../shared';
 import type { TeamCheckinDecision, TeamCheckinChecklist } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -29,6 +29,8 @@ export interface TeamDecisionsStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   checklist: TeamCheckinChecklist;
   onChecklistChange: (checklist: TeamCheckinChecklist) => void;
+  /** Decisões pendentes do check-in anterior do mesmo time (carry-over). */
+  carryOverDecisions?: TeamCheckinDecision[];
   onComplete: () => void;
   onBack: () => void;
 }
@@ -59,6 +61,7 @@ export function TeamDecisionsStep({
   onDecisionsChange,
   checklist,
   onChecklistChange,
+  carryOverDecisions,
   onComplete,
   onBack,
 }: TeamDecisionsStepProps) {
@@ -187,6 +190,11 @@ export function TeamDecisionsStep({
               Nenhum registro ainda. Adicione decisões, ajustes de foco ou próximos passos.
             </p>
           )}
+
+          <CarryOverDecisionsSection
+            items={carryOverDecisions}
+            contextLabel="do check-in anterior"
+          />
 
           <Separator />
 

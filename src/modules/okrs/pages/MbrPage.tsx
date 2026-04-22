@@ -19,6 +19,7 @@ import {
   useLastCompletedSession,
   useOrgObjectives,
   useAllOrgObjectivesView,
+  useCarryOverDecisions,
 } from '@/modules/okrs/hooks';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { calculateKrState } from '@/modules/okrs/hooks';
@@ -148,6 +149,12 @@ export default function MbrPage() {
     defaultStep: 'panorama',
     defaultData: DEFAULT_DATA,
     enabled: !!quarterlyCycle,
+  });
+
+  // Carry-over: pendências do MBR anterior na BU (fonte canônica)
+  const { data: mbrCarryOver = [] } = useCarryOverDecisions({
+    wizardType: 'mbr',
+    teamId: null,
   });
 
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
@@ -735,7 +742,11 @@ export default function MbrPage() {
           <MbrDecisionsStep
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
-            previousMbrPendingItems={draft.data.previousMbrPendingItems}
+            previousMbrPendingItems={
+              draft.data.previousMbrPendingItems.length > 0
+                ? draft.data.previousMbrPendingItems
+                : mbrCarryOver
+            }
             onContinue={goNext}
             onBack={goBack}
           />
