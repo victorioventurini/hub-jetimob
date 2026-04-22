@@ -16,6 +16,61 @@ import {
   errorResponse,
 } from "../_shared/response.ts";
 import { resolveLLMConfig, llmComplete, mapLLMError, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
+
+// ============================================================================
+// Internal types for query rows / snapshots
+// ============================================================================
+
+interface KrRow {
+  baseline?: number | string | null;
+  current_value?: number | string | null;
+  target?: number | string | null;
+  direction?: string | null;
+  status?: string | null;
+  deleted_at?: string | null;
+  cancelled_at?: string | null;
+  title?: string;
+}
+
+interface TeamObjectiveRow {
+  team_id: string;
+  key_results?: KrRow[];
+}
+
+interface KpiValueRow {
+  value?: number | null;
+  rag_status?: string | null;
+  period_label?: string | null;
+  reference_date?: string | null;
+  created_at?: string | null;
+}
+
+interface KpiRow {
+  name: string;
+  category?: string | null;
+  unit?: string | null;
+  direction?: string | null;
+  target_value?: number | null;
+  values?: KpiValueRow[];
+}
+
+interface SessionRow {
+  team_id: string;
+  reflection_data?: { data?: Record<string, unknown> } | Record<string, unknown> | null;
+}
+
+interface OrgObjectiveRow {
+  title: string;
+  key_results?: KrRow[];
+}
+
+interface ParsedReport {
+  quarterNarrative?: string;
+  proposalsAnalysis?: string;
+  kpiInsights?: { healthy?: string; atRisk?: string; critical?: string };
+  decisionsNeeded?: string[];
+}
 
 // ============================================================================
 // Types
