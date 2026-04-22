@@ -51,7 +51,14 @@ import {
   myProfileKeys, 
   publicProfileKeys 
 } from './queryKeys/auth';
-import { okrsKeys, kpisKeys } from './queryKeys/okrs';
+import {
+  okrsKeys,
+  kpisKeys,
+  qbrKeys,
+  mbrKeys,
+  preWeeklyKeys,
+  quarterReviewKeys,
+} from './queryKeys/okrs';
 import { assetsKeys } from './queryKeys/assets';
 import { ticketsKeys } from './queryKeys/tickets';
 import { 
@@ -108,6 +115,10 @@ export const queryKeys = {
   // Core Modules
   okrs: okrsKeys,
   kpis: kpisKeys,
+  qbr: qbrKeys,
+  mbr: mbrKeys,
+  preWeekly: preWeeklyKeys,
+  quarterReview: quarterReviewKeys,
   assets: assetsKeys,
   tickets: ticketsKeys,
   
