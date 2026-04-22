@@ -91,7 +91,7 @@ export function useIdentity(): UserIdentity {
 
   // Fetch user_id for impersonated profile (when impersonating)
   const { data: impersonatedAuthUserId, isLoading: impersonatedUserIdLoading } = useQuery({
-    queryKey: identityKeys.impersonatedAuthUser(impersonatedUserId),
+    queryKey: queryKeys.identity.impersonatedAuthUser(impersonatedUserId),
     queryFn: async () => {
       if (!impersonatedUserId) return null;
       
