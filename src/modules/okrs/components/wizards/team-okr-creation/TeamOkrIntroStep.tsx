@@ -80,36 +80,60 @@ export function TeamOkrIntroStep({
     if (hasFetched.current) return;
     hasFetched.current = true;
 
+    // Helper: race a promise against a timeout, returning fallback on expire/erro.
+    const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+      return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+          console.warn(`[TeamOkrIntroStep] IA call timed out after ${ms}ms`);
+          resolve(fallback);
+        }, ms);
+        promise
+          .then((value) => {
+            clearTimeout(timer);
+            resolve(value);
+          })
+          .catch((error) => {
+            clearTimeout(timer);
+            console.warn('[TeamOkrIntroStep] IA call failed, using fallback:', error);
+            resolve(fallback);
+          });
+      });
+    };
+
     const fetchMessages = async () => {
       setIsLoading(true);
-      try {
-        // Get greeting using validador-metodologico-okrs agent
-        const greetingResponse = await invokeVic(
-          'validador-metodologico-okrs',
-          'okr-create-objective',
-          { type: 'wizard-intro', additionalData: { userName, teamName } },
-          'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
-          { silent: true }
-        );
-        setGreeting(greetingResponse.response);
 
-        // Get motivational message using cultura agent
-        const messageResponse = await invokeVic(
-          'cultura',
-          'dashboard-culture',
-          { type: 'wizard-intro', additionalData: { teamName } },
-          'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.',
-          { silent: true }
-        );
-        setMessage(messageResponse.response);
-      } catch (error) {
-        // Fallback messages - silently use fallback without propagating error
-        console.warn('[TeamOkrIntroStep] IA call failed, using fallback:', error);
-        setGreeting(fallbackGreeting);
-        setMessage(fallbackMessage);
-      } finally {
-        setIsLoading(false);
-      }
+      // Pré-popular com fallback para que o conteúdo apareça imediatamente
+      // mesmo se a IA demorar. Se a IA responder a tempo, sobrescrevemos.
+      setGreeting(fallbackGreeting);
+      setMessage(fallbackMessage);
+
+      // Disparar ambas em paralelo com timeout individual de 10s.
+      const greetingPromise = invokeVic(
+        'validador-metodologico-okrs',
+        'okr-create-objective',
+        { type: 'wizard-intro', additionalData: { userName, teamName } },
+        'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
+        { silent: true }
+      ).then((r) => r?.response).catch(() => null);
+
+      const messagePromise = invokeVic(
+        'cultura',
+        'dashboard-culture',
+        { type: 'wizard-intro', additionalData: { teamName } },
+        'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.',
+        { silent: true }
+      ).then((r) => r?.response).catch(() => null);
+
+      const [greetingResult, messageResult] = await Promise.all([
+        withTimeout(greetingPromise, 10000, null),
+        withTimeout(messagePromise, 10000, null),
+      ]);
+
+      if (greetingResult) setGreeting(greetingResult);
+      if (messageResult) setMessage(messageResult);
+
+      setIsLoading(false);
     };
 
     fetchMessages();
@@ -126,12 +150,7 @@ export function TeamOkrIntroStep({
             <Target className="h-12 w-12 text-primary" />
           </div>
 
-          {isLoading ? (
-            <VicLoadingState 
-              text="Preparando sua jornada de OKRs..."
-              size="sm"
-            />
-          ) : (
+          {greeting ? (
             <>
               <h2 className="text-2xl font-bold mb-2">
                 <VicTypewriterText text={greeting} speed={36} priority={0} />
@@ -140,6 +159,11 @@ export function TeamOkrIntroStep({
                 Vamos definir os OKRs do <span className="font-medium text-foreground">{teamName}</span>
               </p>
             </>
+          ) : (
+            <VicLoadingState 
+              text="Preparando sua jornada de OKRs..."
+              size="sm"
+            />
           )}
         </div>
 
@@ -153,13 +177,7 @@ export function TeamOkrIntroStep({
                 </div>
               </div>
               <div className="space-y-2">
-                {isLoading ? (
-                  <VicLoadingState 
-                    text="Vic está matutando..."
-                    size="sm"
-                    variant="inline"
-                  />
-                ) : (
+                {message ? (
                   <>
                     <p className="text-base leading-relaxed">
                       <VicTypewriterText text={message} speed={24} priority={1} />
@@ -169,6 +187,12 @@ export function TeamOkrIntroStep({
                       Vic, seu assistente de OKRs
                     </p>
                   </>
+                ) : (
+                  <VicLoadingState 
+                    text="Vic está matutando..."
+                    size="sm"
+                    variant="inline"
+                  />
                 )}
               </div>
             </div>
@@ -209,7 +233,6 @@ export function TeamOkrIntroStep({
           onClick={onContinue} 
           className="w-full gap-2"
           size="lg"
-          disabled={isLoading}
         >
           Começar pelo contexto
           <ArrowRight className="h-4 w-4" />
