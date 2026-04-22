@@ -98,7 +98,7 @@ function extractJsonPayload(raw: string): unknown {
 // ============================================================================
 
 async function logAgentInvocation(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   params: {
     agentSlug: string;
     agentName: string;
@@ -279,10 +279,11 @@ Retorne APENAS o JSON, sem comentários adicionais.`;
         maxTokens: loaded.agent.max_tokens || 2000,
         temperature: loaded.agent.temperature ?? 0.3,
       });
-    } catch (err: any) {
+    } catch (err) {
       const latencyMs = Date.now() - startedAt;
-      const errorMessage = err?.message || "LLM_ERROR";
-      console.error(`[${requestId}] LLM error:`, errorMessage, err?.body);
+      const httpErr = err as HttpLikeError;
+      const errorMessage = httpErr?.message || "LLM_ERROR";
+      console.error(`[${requestId}] LLM error:`, errorMessage, httpErr?.body);
 
       await logAgentInvocation(serviceClient, {
         agentSlug: "curador-orquestrador",
@@ -357,10 +358,11 @@ Retorne APENAS o JSON, sem comentários adicionais.`;
       generatedAt: new Date().toISOString(),
       output: parsed,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error(`[${requestId}] Unexpected error:`, err);
-    logRequestCompletion(ctx, "error", err?.message);
-    return errorResponse(err?.message || "Internal error", 500, {
+    const message = err instanceof Error ? err.message : "Internal error";
+    logRequestCompletion(ctx, "error", message);
+    return errorResponse(message, 500, {
       requestId,
       error: "INTERNAL_ERROR",
     });

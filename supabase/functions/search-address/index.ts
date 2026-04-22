@@ -105,7 +105,12 @@ serve(async (req) => {
       return errorResponse("Failed to search addresses", 502, "UPSTREAM_ERROR", { status: data.status });
     }
 
-    const predictions: AddressPrediction[] = (data.predictions || []).map((p: any) => ({
+    interface GooglePrediction {
+      place_id: string;
+      description: string;
+      structured_formatting?: { main_text?: string; secondary_text?: string };
+    }
+    const predictions: AddressPrediction[] = (data.predictions || []).map((p: GooglePrediction) => ({
       placeId: p.place_id,
       description: p.description,
       mainText: p.structured_formatting?.main_text || p.description,

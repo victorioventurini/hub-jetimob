@@ -124,7 +124,14 @@ serve(async (req) => {
       .maybeSingle();
 
     // Get related items (kit accessories)
-    let relatedItems: any[] = [];
+    interface RelatedKitItem {
+      name: string;
+      internal_code: string;
+      status: string;
+      photo: string | null;
+      role: string;
+    }
+    let relatedItems: RelatedKitItem[] = [];
     
     // Check if asset is part of a kit
     const { data: groupItemData } = await supabase
@@ -222,11 +229,11 @@ serve(async (req) => {
   }
 });
 
-function sanitizePhotos(photos: any): string[] | null {
+function sanitizePhotos(photos: unknown): string[] | null {
   if (!photos || !Array.isArray(photos)) return null;
   // Only return public storage URLs, filter out any internal/document URLs
-  return photos
-    .filter((p: any) => typeof p === "string" && p.includes("/storage/"))
+  return (photos as unknown[])
+    .filter((p): p is string => typeof p === "string" && p.includes("/storage/"))
     .slice(0, 5);
 }
 

@@ -145,15 +145,22 @@ const popularCities = [
   { city: 'Palmas', state: 'TO', placeId: 'cached-pmw' },
 ];
 
+interface CityPrediction {
+  city: string;
+  state: string;
+  placeId: string;
+  description?: string;
+}
+
 // Cache em memória para buscas recentes (persiste durante a vida do worker)
-const searchCache = new Map<string, { predictions: any[]; timestamp: number }>();
+const searchCache = new Map<string, { predictions: CityPrediction[]; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 60; // 1 hora
 
 function normalizeQuery(query: string): string {
   return query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }
 
-function searchLocalCache(query: string): any[] {
+function searchLocalCache(query: string): CityPrediction[] {
   const normalized = normalizeQuery(query);
   return popularCities.filter(city => {
     const normalizedCity = normalizeQuery(city.city);
@@ -232,7 +239,11 @@ serve(async (req) => {
       });
     }
 
-    const predictions = (data.predictions || []).map((prediction: any) => {
+    interface GoogleCityPrediction {
+      description: string;
+      place_id: string;
+    }
+    const predictions = (data.predictions || []).map((prediction: GoogleCityPrediction) => {
       const parts = prediction.description.split(', ');
       const city = parts[0];
       let state = '';

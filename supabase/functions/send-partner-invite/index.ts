@@ -126,8 +126,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     .eq("id", bu_id)
     .single();
 
-  // deno-lint-ignore no-explicit-any
-  const contactData = contact as any;
+  const contactData = contact as { external_company?: { name?: string } | null };
   const buName = buData?.name || "Hub";
   const companyName = contactData.external_company?.name || "Empresa Parceira";
 

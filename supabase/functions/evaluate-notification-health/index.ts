@@ -100,9 +100,8 @@ const handler = async (req: Request): Promise<Response> => {
  * 1. Alert is CRITICAL severity
  * 2. Either new (never notified) OR cooldown has expired
  */
-// deno-lint-ignore no-explicit-any
 async function notifyCriticalAlertsWithCooldown(
-  supabase: any,
+  supabase: EdgeSupabaseClient,
   correlationId: string
 ): Promise<number> {
   // Get active CRITICAL alerts
