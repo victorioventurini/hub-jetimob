@@ -156,7 +156,7 @@ function OrgKrCard({ orgKr, showTeamKrs }: { orgKr: OrgKrWithTeamKrs; showTeamKr
   );
 }
 
-function OrgObjectiveCard({ objective, showTeamKrs }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs; showTeamKrs: boolean }) {
+function OrgObjectiveCard({ objective, showTeamKrs }: { objective: OrgObjectiveWithKrs; showTeamKrs: boolean }) {
   return (
     <Collapsible defaultOpen>
       <div className="border rounded-lg overflow-hidden">
