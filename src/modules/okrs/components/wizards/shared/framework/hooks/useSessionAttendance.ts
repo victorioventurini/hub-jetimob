@@ -146,7 +146,7 @@ export function useSessionAttendance(
       attendanceId: string | null;
     }) => {
       if (!sessionId) throw new Error('sessionId ausente');
-      if (!profile?.id) throw new Error('profile ausente');
+      if (!profileId) throw new Error('profile ausente');
 
       const payload = {
         session_id: sessionId,
@@ -157,13 +157,13 @@ export function useSessionAttendance(
         participant_team_id: input.participant.teamId,
         participant_team_name: input.participant.teamName,
         is_present: input.isPresent,
-        marked_by_profile_id: profile.id,
+        marked_by_profile_id: profileId,
       };
 
       if (input.attendanceId) {
         const { error } = await supabase
           .from('ritual_session_attendance')
-          .update({ is_present: input.isPresent, marked_by_profile_id: profile.id })
+          .update({ is_present: input.isPresent, marked_by_profile_id: profileId })
           .eq('id', input.attendanceId);
         if (error) throw error;
       } else {
