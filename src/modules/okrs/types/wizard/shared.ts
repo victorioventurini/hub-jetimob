@@ -1,0 +1,104 @@
+/**
+ * Wizard Types — Shared
+ *
+ * Tipos transversais usados por múltiplos wizards (decisões, threads,
+ * checklists). Mantidos isolados para evitar import cíclico entre as
+ * personas que os referenciam (collaborator, team-checkin, mbr, qbr, weekly).
+ */
+
+// ============================================================
+// TEAM CHECKIN DECISION SOURCE STEPS
+// ============================================================
+
+export type TeamCheckinDecisionSourceStep =
+  | 'opening'
+  | 'kr-review'
+  | 'initiatives'
+  | 'decisions'
+  | 'panorama'
+  | 'kpi-gate'
+  | 'team-okrs-overview'
+  | 'team-okrs-detail'
+  | 'org-okrs'
+  | 'closing'
+  | 'mbr-pre-balance'
+  | 'mbr-pre-kpi'
+  | 'mbr-pre-highlights'
+  | 'mbr-pre-next-steps'
+  | 'qbr-balance'
+  | 'qbr-kpi-analysis'
+  | 'qbr-learnings'
+  | 'qbr-okr-proposal'
+  | 'qbr-clevel-system-read'
+  | 'qbr-clevel-strategic'
+  | 'qbr-clevel-okr-validation'
+  | 'qbr-clevel-directives'
+  | 'qbr-meeting-opening'
+  | 'qbr-meeting-okr-review'
+  | 'qbr-meeting-decisions'
+  | 'qbr-meeting-commitments'
+  | 'qbr-meeting-closing'
+  | 'qbr-post-promotion'
+  | 'qbr-post-decisions'
+  | 'qbr-post-commitments'
+  | 'qbr-post-followup'
+  | 'qbr-post-minutes'
+  | 'pre-weekly-sources'
+  | 'pre-weekly-pauta'
+  | 'pre-weekly-pessoas'
+  | 'weekly-executive-opening'
+  | 'weekly-priorities'
+  | 'weekly-people'
+  | 'weekly-closing';
+
+// ============================================================
+// DECISION THREAD
+// ============================================================
+
+/**
+ * Mensagem individual na thread de acompanhamento de uma decisão/registro.
+ */
+export interface DecisionThreadMessage {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+// ============================================================
+// TEAM CHECKIN DECISION (compartilhado por todos os ritos)
+// ============================================================
+
+export interface TeamCheckinDecision {
+  id: string;
+  text: string;
+  category: 'decision' | 'focus_adjustment' | 'next_step' | 'strategic_proposal';
+  sourceStep?: TeamCheckinDecisionSourceStep;
+  owner?: {
+    id: string;
+    name: string;
+  };
+  deadline?: string | null; // ISO date format
+  /** ID da diretiva C-Level relacionada (QBR Meeting Step 3) */
+  relatedDirectiveId?: string;
+  /** Dados de resolução — preenchidos ao marcar como concluído */
+  resolvedAt?: string;
+  resolvedBy?: { id: string; name: string };
+  resolutionNote?: string;
+  /** Thread de mensagens de acompanhamento (JSONB) */
+  thread?: DecisionThreadMessage[];
+}
+
+// ============================================================
+// IMPROVEMENT FEEDBACK (rituais)
+// ============================================================
+
+/** Feedback anônimo sobre melhoria do rito */
+export interface RitualImprovementFeedback {
+  id: string;
+  rating: number;
+  text: string;
+  status: 'pending' | 'implement' | 'evaluated' | 'discarded';
+  createdAt: string;
+}
