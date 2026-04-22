@@ -189,8 +189,8 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
         return { success: true, provider: "resend" };
       }
       console.warn("[EmailSender] Resend not configured, trying SendGrid...");
-    } catch (error: any) {
-      console.error("[EmailSender] Resend failed:", error.message);
+    } catch (error) {
+      console.error("[EmailSender] Resend failed:", (error as Error).message);
       console.log("[EmailSender] Attempting fallback to SendGrid...");
     }
 
@@ -202,12 +202,12 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
         return { success: true, provider: "sendgrid" };
       }
       console.warn("[EmailSender] SendGrid fallback not configured");
-    } catch (error: any) {
-      console.error("[EmailSender] SendGrid fallback also failed:", error.message);
+    } catch (error) {
+      console.error("[EmailSender] SendGrid fallback also failed:", (error as Error).message);
       return {
         success: false,
         provider: "sendgrid",
-        error: `Both Resend and SendGrid failed. Last error: ${error.message}`,
+        error: `Both Resend and SendGrid failed. Last error: ${(error as Error).message}`,
       };
     }
   }
@@ -220,8 +220,8 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
       return { success: true, provider: "sendgrid" };
     }
     console.warn("[EmailSender] SendGrid not configured, trying fallback...");
-  } catch (error: any) {
-    console.error("[EmailSender] SendGrid failed:", error.message);
+  } catch (error) {
+    console.error("[EmailSender] SendGrid failed:", (error as Error).message);
     console.log("[EmailSender] Attempting fallback to Resend...");
   }
 
@@ -232,12 +232,12 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
       return { success: true, provider: "resend" };
     }
     console.warn("[EmailSender] Resend fallback not configured");
-  } catch (error: any) {
-    console.error("[EmailSender] Resend fallback also failed:", error.message);
+  } catch (error) {
+    console.error("[EmailSender] Resend fallback also failed:", (error as Error).message);
     return {
       success: false,
       provider: "resend",
-      error: `Both SendGrid and Resend failed. Last error: ${error.message}`,
+      error: `Both SendGrid and Resend failed. Last error: ${(error as Error).message}`,
     };
   }
 

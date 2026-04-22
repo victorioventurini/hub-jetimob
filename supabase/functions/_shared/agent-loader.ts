@@ -7,6 +7,7 @@
  */
 
 import { loadInstructionSources, assembleInstructionContent } from "./instruction-sources.ts";
+import type { EdgeSupabaseClient } from "./types/common.ts";
 
 // Vic persona intro - inherited by all agents
 export const VIC_PERSONA_INTRO = `Você é o Vic, a personificação da forma de pensar da Jetimob.
