@@ -56,12 +56,12 @@ const PAGE_SIZE = 25;
 // ────────────────────────────────────────────────────────────────
 export function useDecisionsScopeContext() {
   const { profileId } = useIdentity();
-  const { isWildcard } = usePermissions();
+  const { isWildcard, isLoading: isPermissionsLoading } = usePermissions();
   const { currentBu } = useBu();
   const buSupabase = useOptionalBuScopedSupabase();
 
   return useQuery<DecisionsScopeContext>({
-    queryKey: okrsKeys.decisionsScopeContext(currentBu?.id ?? null, profileId ?? null),
+    queryKey: okrsKeys.decisionsScopeContext(currentBu?.id ?? null, profileId ?? null, isWildcard),
     queryFn: async (): Promise<DecisionsScopeContext> => {
       const empty: DecisionsScopeContext = {
         availableScopes: ['self'],
@@ -123,7 +123,7 @@ export function useDecisionsScopeContext() {
         isWildcard: !!isWildcard,
       };
     },
-    enabled: !!buSupabase && !!profileId,
+    enabled: !!buSupabase && !!profileId && !isPermissionsLoading,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -155,7 +155,7 @@ export function useDecisionsInbox({
   const { profileId } = useIdentity();
   const { currentBu } = useBu();
   const buSupabase = useOptionalBuScopedSupabase();
-  const { data: scopeCtx } = useDecisionsScopeContext();
+  const { data: scopeCtx, isLoading: isScopeLoading } = useDecisionsScopeContext();
 
   const hasOverride = !!overrideTeamIds && overrideTeamIds.length > 0;
   const effectiveScope: DecisionsInboxScope = hasOverride ? 'team' : scope;
@@ -168,6 +168,8 @@ export function useDecisionsInbox({
       filters as unknown as Record<string, unknown>,
       page,
       hasOverride ? overrideTeamIds : null,
+      hasOverride ? null : scopeCtx?.managedTeamIds ?? null,
+      hasOverride ? null : effectiveScope === 'area' ? scopeCtx?.managedAreaIds ?? null : null,
     ),
     queryFn: async (): Promise<DecisionsInboxResult> => {
       if (!buSupabase || !currentBu?.id || !profileId) {
@@ -231,7 +233,7 @@ export function useDecisionsInbox({
         totalCount: rows[0]?.total_count ?? 0,
       };
     },
-    enabled: !!buSupabase && !!currentBu?.id && !!profileId,
+    enabled: !!buSupabase && !!currentBu?.id && !!profileId && !isScopeLoading,
     staleTime: 60 * 1000,
   });
 }
