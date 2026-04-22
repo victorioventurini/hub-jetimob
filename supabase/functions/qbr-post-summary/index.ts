@@ -101,7 +101,7 @@ function extractOrFallback(result: PromiseSettledResult<string>, fallback: strin
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -135,11 +135,11 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadQbrPostData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string,
   buId: string
 ): Promise<{
-  snapshot: any;
+  snapshot: Json | null;
   buName: string;
   recipientAuthIds: string[];
 }> {
@@ -158,7 +158,7 @@ async function loadQbrPostData(
     if (area.co_leader_user_id) profileIds.add(area.co_leader_user_id);
   }
 
-  const adminAuthIds = (adminsResult.data || []).map((a: any) => a.user_id).filter(Boolean);
+  const adminAuthIds = (adminsResult.data || []).map((a: { user_id: string | null }) => a.user_id).filter(Boolean);
 
   let leaderAuthIds: string[] = [];
   const profileIdArray = [...profileIds];
@@ -167,7 +167,7 @@ async function loadQbrPostData(
       .from('profiles').select('user_id')
       .in('id', profileIdArray)
       .not('user_id', 'is', null);
-    leaderAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
+    leaderAuthIds = (profiles || []).map((p: { user_id: string | null }) => p.user_id).filter(Boolean);
   }
 
   return {
@@ -182,7 +182,7 @@ async function loadQbrPostData(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   ctx: QbrPostAgentContext,
   requestId: string
