@@ -58,14 +58,15 @@ const ROUTE_PREFETCHERS: Record<string, Prefetcher> = {
   "/okrs": async (qc, { buId }) => {
     if (!buId) return;
     return qc.prefetchQuery({
-      queryKey: ["bu", buId, "okrs", "cycles", "preview"],
+      queryKey: ["bu", buId, "okrs", "objectives", "preview"],
       queryFn: async () => {
         const { data } = await supabase
-          .from("okr_cycles")
-          .select("id, name, status, start_date, end_date")
+          .from("okr_team_objectives")
+          .select("id, title, status")
           .eq("bu_id", buId)
-          .order("start_date", { ascending: false })
-          .limit(8);
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(10);
         return data;
       },
       staleTime: 60_000,
