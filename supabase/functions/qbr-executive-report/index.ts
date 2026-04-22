@@ -162,25 +162,30 @@ function buildKpiSummary(kpis: KpiRow[]) {
 function extractLearnings(sessions: SessionRow[]) {
   const learnings: Array<{ teamId: string; whatWorked: string; whatDidntWork: string; debts: string }> = [];
   for (const session of sessions) {
-    const data = session.reflection_data?.data ?? session.reflection_data ?? {};
+    const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+    const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
+    const learn = (data.learnings as Record<string, unknown> | undefined) || {};
     learnings.push({
       teamId: session.team_id,
-      whatWorked: data.learnings?.whatWorked || data.whatWorked || '',
-      whatDidntWork: data.learnings?.whatDidntWork || data.whatDidntWork || '',
-      debts: data.learnings?.debts || data.debts || '',
+      whatWorked: (learn.whatWorked as string) || (data.whatWorked as string) || '',
+      whatDidntWork: (learn.whatDidntWork as string) || (data.whatDidntWork as string) || '',
+      debts: (learn.debts as string) || (data.debts as string) || '',
     });
   }
   return learnings;
 }
 
-function extractDecisions(sessions: any[]) {
+function extractDecisions(sessions: SessionRow[]) {
   const decisions: string[] = [];
   for (const session of sessions) {
-    const data = session.reflection_data?.data ?? session.reflection_data ?? {};
-    const items = data.decisions || data.itensDecisao || data.nextSteps || [];
+    const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+    const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
+    const items = (data.decisions || data.itensDecisao || data.nextSteps || []) as unknown[];
     if (Array.isArray(items)) {
       for (const item of items) {
-        const text = typeof item === 'string' ? item : item?.text || item?.title;
+        const text = typeof item === 'string'
+          ? item
+          : (item as { text?: string; title?: string })?.text || (item as { text?: string; title?: string })?.title;
         if (text) decisions.push(text);
       }
     }
@@ -188,39 +193,39 @@ function extractDecisions(sessions: any[]) {
   return decisions;
 }
 
-function extractCLevelFlags(session: any) {
+function extractCLevelFlags(session: SessionRow | null | undefined) {
   if (!session) return [];
-  const data = session.reflection_data?.data ?? session.reflection_data ?? {};
+  const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+  const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
   const flags: string[] = [];
-  const calibrations = data.calibrations || data.teamCalibrations || {};
-  for (const [teamId, cal] of Object.entries(calibrations as Record<string, any>)) {
+  const calibrations = (data.calibrations || data.teamCalibrations || {}) as Record<string, { flag?: string }>;
+  for (const [teamId, cal] of Object.entries(calibrations)) {
     if (cal?.flag) flags.push(`${teamId}: ${cal.flag}`);
   }
   return flags;
 }
 
-function extractNextCycleProposals(sessions: any[], teams: Map<string, string>) {
+function extractNextCycleProposals(sessions: SessionRow[], teams: Map<string, string>) {
   const proposals: Array<{ teamName: string; objectiveTitle: string; krCount: number; krs: string[] }> = [];
   for (const session of sessions) {
-    const data = session.reflection_data?.data ?? session.reflection_data ?? {};
-    const nextOkrs = data.nextCycleOkrs || data.proposedOkrs || [];
+    const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+    const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
+    const nextOkrs = (data.nextCycleOkrs || data.proposedOkrs || []) as Array<Record<string, unknown>>;
     const teamName = teams.get(session.team_id) || 'Time';
     if (Array.isArray(nextOkrs)) {
       for (const okr of nextOkrs) {
-        // Support both formats:
-        // New: { objective: { title }, draftKrs: [{ title }] }
-        // Legacy: { title, keyResults/krs: [{ title }] }
+        const objectiveAsObj = okr.objective as { title?: string } | string | undefined;
         const objectiveTitle =
-          (typeof okr.objective === 'object' ? okr.objective?.title : null) ||
-          okr.title ||
-          okr.objective ||
+          (typeof objectiveAsObj === 'object' ? objectiveAsObj?.title : null) ||
+          (okr.title as string) ||
+          (typeof objectiveAsObj === 'string' ? objectiveAsObj : null) ||
           'Sem título';
-        const rawKrs = okr.draftKrs || okr.keyResults || okr.krs || [];
+        const rawKrs = (okr.draftKrs || okr.keyResults || okr.krs || []) as Array<{ title?: string; name?: string }>;
         proposals.push({
           teamName,
           objectiveTitle,
           krCount: rawKrs.length,
-          krs: rawKrs.map((kr: any) => kr.title || kr.name || 'Sem título'),
+          krs: rawKrs.map((kr) => kr.title || kr.name || 'Sem título'),
         });
       }
     }
