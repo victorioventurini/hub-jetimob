@@ -110,7 +110,7 @@ function extractOrFallback(
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -160,11 +160,11 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadMbrSessionData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string,
   buId: string
 ): Promise<{
-  snapshot: any;
+  snapshot: Json | null;
   buName: string;
   leaderAuthIds: string[];
 }> {
@@ -195,8 +195,8 @@ async function loadMbrSessionData(
 
   // Resolve leader profile IDs → auth user IDs
   const leaderProfileIds = (teamsResult.data || [])
-    .map((t: any) => t.leader_user_id)
-    .filter(Boolean);
+    .map((t: { leader_user_id: string | null }) => t.leader_user_id)
+    .filter((v): v is string => Boolean(v));
 
   let leaderAuthIds: string[] = [];
   if (leaderProfileIds.length > 0) {
@@ -206,7 +206,7 @@ async function loadMbrSessionData(
       .in('id', leaderProfileIds)
       .not('user_id', 'is', null);
 
-    leaderAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
+    leaderAuthIds = (profiles || []).map((p: { user_id: string | null }) => p.user_id).filter((v): v is string => Boolean(v));
   }
 
   // Deduplicate
@@ -224,7 +224,7 @@ async function loadMbrSessionData(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   agentContext: MbrAgentContext,
   requestId: string
@@ -379,7 +379,14 @@ serve(async (req) => {
     }
 
     // Extract snapshot data
-    const snapshotData = (snapshot as any)?.data || snapshot;
+    const snapshotObj = snapshot as { data?: unknown } | null;
+    const snapshotData = (snapshotObj?.data ?? snapshot) as {
+      kpiSnapshots?: Array<Record<string, unknown>>;
+      orgOkrSnapshots?: Array<Record<string, unknown>>;
+      decisions?: Array<Record<string, unknown>>;
+      checklist?: Record<string, unknown>;
+      referenceMonth?: string;
+    } | null;
     const kpiSnapshots = snapshotData?.kpiSnapshots || [];
     const orgOkrSnapshots = snapshotData?.orgOkrSnapshots || [];
     const decisions = snapshotData?.decisions || [];
@@ -391,24 +398,24 @@ serve(async (req) => {
       buName,
       referenceMonth,
       criticalKpis: kpiSnapshots
-        .filter((k: any) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
-        .map((k: any) => ({
-          name: k.name,
-          currentValue: k.currentValue,
-          target: k.target,
-          ragStatus: k.ragStatus,
-          variationVsLastMonth: k.variationVsLastMonth,
-          impactAssessment: k.impactAssessment,
+        .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
+        .map((k) => ({
+          name: k.name as string,
+          currentValue: k.currentValue as number,
+          target: k.target as number,
+          ragStatus: k.ragStatus as string,
+          variationVsLastMonth: k.variationVsLastMonth as number | undefined,
+          impactAssessment: k.impactAssessment as string | undefined,
         })),
-      orgOkrsSummary: orgOkrSnapshots.map((o: any) => ({
-        title: o.title,
-        progress: o.progress,
-        trend: o.trend,
-        remainsStrategicPriority: o.remainsStrategicPriority,
+      orgOkrsSummary: orgOkrSnapshots.map((o) => ({
+        title: o.title as string,
+        progress: o.progress as number,
+        trend: o.trend as string | undefined,
+        remainsStrategicPriority: o.remainsStrategicPriority as boolean | undefined,
       })),
-      decisions: decisions.map((d: any) => ({
-        text: d.text,
-        category: d.category,
+      decisions: decisions.map((d) => ({
+        text: d.text as string,
+        category: d.category as string,
       })),
       checklist,
     };

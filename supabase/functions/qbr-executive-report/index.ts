@@ -16,6 +16,61 @@ import {
   errorResponse,
 } from "../_shared/response.ts";
 import { resolveLLMConfig, llmComplete, mapLLMError, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
+
+// ============================================================================
+// Internal types for query rows / snapshots
+// ============================================================================
+
+interface KrRow {
+  baseline?: number | string | null;
+  current_value?: number | string | null;
+  target?: number | string | null;
+  direction?: string | null;
+  status?: string | null;
+  deleted_at?: string | null;
+  cancelled_at?: string | null;
+  title?: string;
+}
+
+interface TeamObjectiveRow {
+  team_id: string;
+  key_results?: KrRow[];
+}
+
+interface KpiValueRow {
+  value?: number | null;
+  rag_status?: string | null;
+  period_label?: string | null;
+  reference_date?: string | null;
+  created_at?: string | null;
+}
+
+interface KpiRow {
+  name: string;
+  category?: string | null;
+  unit?: string | null;
+  direction?: string | null;
+  target_value?: number | null;
+  values?: KpiValueRow[];
+}
+
+interface SessionRow {
+  team_id: string;
+  reflection_data?: { data?: Record<string, unknown> } | Record<string, unknown> | null;
+}
+
+interface OrgObjectiveRow {
+  title: string;
+  key_results?: KrRow[];
+}
+
+interface ParsedReport {
+  quarterNarrative?: string;
+  proposalsAnalysis?: string;
+  kpiInsights?: { healthy?: string; atRisk?: string; critical?: string };
+  decisionsNeeded?: string[];
+}
 
 // ============================================================================
 // Types
@@ -55,7 +110,7 @@ function calculateKrProgress(baseline: number, current: number, target: number, 
   return Math.round(Math.max(0, progress));
 }
 
-function buildTeamHealthSummary(teamObjectives: any[], teams: Map<string, string>) {
+function buildTeamHealthSummary(teamObjectives: TeamObjectiveRow[], teams: Map<string, string>) {
   const teamMap = new Map<string, { name: string; achieved: number; onTrack: number; atRisk: number; offTrack: number; total: number }>();
 
   for (const obj of teamObjectives) {
@@ -85,10 +140,10 @@ function buildTeamHealthSummary(teamObjectives: any[], teams: Map<string, string
   return Array.from(teamMap.values());
 }
 
-function buildKpiSummary(kpis: any[]) {
+function buildKpiSummary(kpis: KpiRow[]) {
   return kpis.map(kpi => {
-    const values = (kpi.values || []).sort((a: any, b: any) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const values = (kpi.values || []).slice().sort((a: KpiValueRow, b: KpiValueRow) =>
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
     const latest = values[0];
     return {
@@ -104,28 +159,33 @@ function buildKpiSummary(kpis: any[]) {
   });
 }
 
-function extractLearnings(sessions: any[]) {
+function extractLearnings(sessions: SessionRow[]) {
   const learnings: Array<{ teamId: string; whatWorked: string; whatDidntWork: string; debts: string }> = [];
   for (const session of sessions) {
-    const data = session.reflection_data?.data ?? session.reflection_data ?? {};
+    const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+    const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
+    const learn = (data.learnings as Record<string, unknown> | undefined) || {};
     learnings.push({
       teamId: session.team_id,
-      whatWorked: data.learnings?.whatWorked || data.whatWorked || '',
-      whatDidntWork: data.learnings?.whatDidntWork || data.whatDidntWork || '',
-      debts: data.learnings?.debts || data.debts || '',
+      whatWorked: (learn.whatWorked as string) || (data.whatWorked as string) || '',
+      whatDidntWork: (learn.whatDidntWork as string) || (data.whatDidntWork as string) || '',
+      debts: (learn.debts as string) || (data.debts as string) || '',
     });
   }
   return learnings;
 }
 
-function extractDecisions(sessions: any[]) {
+function extractDecisions(sessions: SessionRow[]) {
   const decisions: string[] = [];
   for (const session of sessions) {
-    const data = session.reflection_data?.data ?? session.reflection_data ?? {};
-    const items = data.decisions || data.itensDecisao || data.nextSteps || [];
+    const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+    const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
+    const items = (data.decisions || data.itensDecisao || data.nextSteps || []) as unknown[];
     if (Array.isArray(items)) {
       for (const item of items) {
-        const text = typeof item === 'string' ? item : item?.text || item?.title;
+        const text = typeof item === 'string'
+          ? item
+          : (item as { text?: string; title?: string })?.text || (item as { text?: string; title?: string })?.title;
         if (text) decisions.push(text);
       }
     }
@@ -133,39 +193,39 @@ function extractDecisions(sessions: any[]) {
   return decisions;
 }
 
-function extractCLevelFlags(session: any) {
+function extractCLevelFlags(session: SessionRow | null | undefined) {
   if (!session) return [];
-  const data = session.reflection_data?.data ?? session.reflection_data ?? {};
+  const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+  const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
   const flags: string[] = [];
-  const calibrations = data.calibrations || data.teamCalibrations || {};
-  for (const [teamId, cal] of Object.entries(calibrations as Record<string, any>)) {
+  const calibrations = (data.calibrations || data.teamCalibrations || {}) as Record<string, { flag?: string }>;
+  for (const [teamId, cal] of Object.entries(calibrations)) {
     if (cal?.flag) flags.push(`${teamId}: ${cal.flag}`);
   }
   return flags;
 }
 
-function extractNextCycleProposals(sessions: any[], teams: Map<string, string>) {
+function extractNextCycleProposals(sessions: SessionRow[], teams: Map<string, string>) {
   const proposals: Array<{ teamName: string; objectiveTitle: string; krCount: number; krs: string[] }> = [];
   for (const session of sessions) {
-    const data = session.reflection_data?.data ?? session.reflection_data ?? {};
-    const nextOkrs = data.nextCycleOkrs || data.proposedOkrs || [];
+    const raw = session.reflection_data as { data?: Record<string, unknown> } | Record<string, unknown> | null;
+    const data = ((raw && 'data' in (raw as object) ? (raw as { data?: Record<string, unknown> }).data : raw) || {}) as Record<string, unknown>;
+    const nextOkrs = (data.nextCycleOkrs || data.proposedOkrs || []) as Array<Record<string, unknown>>;
     const teamName = teams.get(session.team_id) || 'Time';
     if (Array.isArray(nextOkrs)) {
       for (const okr of nextOkrs) {
-        // Support both formats:
-        // New: { objective: { title }, draftKrs: [{ title }] }
-        // Legacy: { title, keyResults/krs: [{ title }] }
+        const objectiveAsObj = okr.objective as { title?: string } | string | undefined;
         const objectiveTitle =
-          (typeof okr.objective === 'object' ? okr.objective?.title : null) ||
-          okr.title ||
-          okr.objective ||
+          (typeof objectiveAsObj === 'object' ? objectiveAsObj?.title : null) ||
+          (okr.title as string) ||
+          (typeof objectiveAsObj === 'string' ? objectiveAsObj : null) ||
           'Sem título';
-        const rawKrs = okr.draftKrs || okr.keyResults || okr.krs || [];
+        const rawKrs = (okr.draftKrs || okr.keyResults || okr.krs || []) as Array<{ title?: string; name?: string }>;
         proposals.push({
           teamName,
           objectiveTitle,
           krCount: rawKrs.length,
-          krs: rawKrs.map((kr: any) => kr.title || kr.name || 'Sem título'),
+          krs: rawKrs.map((kr) => kr.title || kr.name || 'Sem título'),
         });
       }
     }
@@ -307,7 +367,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     if (orgObjectivesErr) console.error(`[${requestId}] Org objectives query error:`, orgObjectivesErr.message);
     if (decisionSessionsErr) console.error(`[${requestId}] Decision sessions query error:`, decisionSessionsErr.message);
 
-    const teamsMap = new Map((teamsData || []).map((t: any) => [t.id, t.name]));
+    const teamsMap = new Map((teamsData || []).map((t: { id: string; name: string }) => [t.id, t.name]));
     const teamHealthSummary = buildTeamHealthSummary(teamObjectives || [], teamsMap);
     const kpisSummary = buildKpiSummary(orgKpis || []);
     const leaderLearnings = extractLearnings(qbrPreSessions || []);
@@ -355,9 +415,9 @@ ${JSON.stringify(cLevelFlags)}
 ${JSON.stringify(pendingDecisions.slice(0, 10))}
 
 === OKRs ORGANIZACIONAIS ===
-${JSON.stringify((orgObjectives || []).map((o: any) => ({
+${JSON.stringify(((orgObjectives || []) as OrgObjectiveRow[]).map((o) => ({
   title: o.title,
-  krs: (o.key_results || []).map((kr: any) => ({
+  krs: (o.key_results || []).map((kr: KrRow) => ({
     title: kr.title,
     progress: calculateKrProgress(Number(kr.baseline) || 0, Number(kr.current_value) || 0, Number(kr.target) || 0, kr.direction || 'up'),
     status: kr.status,
@@ -396,7 +456,7 @@ Gere o relatório em JSON com exatamente esta estrutura:
         return errorResponse("Empty AI response", 500, { requestId });
       }
 
-      let parsed: any;
+      let parsed: ParsedReport;
       try {
         let jsonStr = response.content.trim();
         if (jsonStr.startsWith("```")) {

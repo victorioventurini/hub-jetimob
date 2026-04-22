@@ -103,7 +103,7 @@ function extractOrFallback(
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -153,11 +153,11 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadCollaboratorSessionData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string,
   buId: string
 ): Promise<{
-  snapshot: any;
+  snapshot: Json | null;
   buName: string;
   userName: string;
   cycleName: string;
@@ -246,7 +246,7 @@ async function loadCollaboratorSessionData(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   agentContext: CollaboratorAgentContext,
   requestId: string
@@ -380,25 +380,30 @@ serve(async (req) => {
     }
 
     // Extract snapshot data
-    const snapshotData = (snapshot as any)?.data || snapshot;
+    const snapshotObj = snapshot as { data?: unknown } | null;
+    const snapshotData = (snapshotObj?.data ?? snapshot) as {
+      results?: Array<Record<string, unknown>>;
+      kpiResults?: Array<Record<string, unknown>>;
+      reflection?: Record<string, unknown>;
+    } | null;
 
     // Build agent context
     const agentContext: CollaboratorAgentContext = {
       buName,
       userName,
       cycleName,
-      krResults: (snapshotData?.results || []).map((r: any) => ({
-        title: r.krTitle || r.title || '',
-        previousValue: r.previousValue ?? null,
-        newValue: r.newValue ?? null,
-        targetValue: r.targetValue ?? null,
-        progress: r.progress ?? 0,
-        comment: r.comment || '',
+      krResults: (snapshotData?.results || []).map((r) => ({
+        title: (r.krTitle as string) || (r.title as string) || '',
+        previousValue: (r.previousValue as number | null) ?? null,
+        newValue: (r.newValue as number | null) ?? null,
+        targetValue: (r.targetValue as number | null) ?? null,
+        progress: (r.progress as number | null) ?? 0,
+        comment: (r.comment as string) || '',
       })),
-      kpiResults: (snapshotData?.kpiResults || []).map((k: any) => ({
-        name: k.name || k.kpiName || '',
-        value: k.value ?? null,
-        target: k.target ?? null,
+      kpiResults: (snapshotData?.kpiResults || []).map((k) => ({
+        name: (k.name as string) || (k.kpiName as string) || '',
+        value: (k.value as number | null) ?? null,
+        target: (k.target as number | null) ?? null,
       })),
       reflection: snapshotData?.reflection || {},
     };

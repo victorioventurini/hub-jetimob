@@ -101,7 +101,7 @@ function extractOrFallback(result: PromiseSettledResult<string>, fallback: strin
 // ============================================================================
 
 async function invokeAgentDirect(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   userPromptContent: string,
   buId: string,
@@ -135,11 +135,11 @@ async function invokeAgentDirect(
 // ============================================================================
 
 async function loadQbrMeetingData(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   sessionId: string,
   buId: string
 ): Promise<{
-  snapshot: any;
+  snapshot: Json | null;
   buName: string;
   recipientAuthIds: string[];
 }> {
@@ -161,7 +161,7 @@ async function loadQbrMeetingData(
   }
 
   // Admins already have user_id (auth)
-  const adminAuthIds = (adminsResult.data || []).map((a: any) => a.user_id).filter(Boolean);
+  const adminAuthIds = (adminsResult.data || []).map((a: { user_id: string | null }) => a.user_id).filter((v): v is string => Boolean(v));
 
   // Resolve profile IDs → auth user IDs
   let leaderAuthIds: string[] = [];
@@ -171,7 +171,7 @@ async function loadQbrMeetingData(
       .from('profiles').select('user_id')
       .in('id', profileIdArray)
       .not('user_id', 'is', null);
-    leaderAuthIds = (profiles || []).map((p: any) => p.user_id).filter(Boolean);
+    leaderAuthIds = (profiles || []).map((p: { user_id: string | null }) => p.user_id).filter((v): v is string => Boolean(v));
   }
 
   const recipientAuthIds = [...new Set([...leaderAuthIds, ...adminAuthIds])];
@@ -188,7 +188,7 @@ async function loadQbrMeetingData(
 // ============================================================================
 
 async function orchestrateAgents(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   buId: string,
   ctx: QbrMeetingAgentContext,
   requestId: string
@@ -303,7 +303,13 @@ serve(async (req) => {
     if (!snapshot) return successResponse({ skipped: true, reason: 'no_snapshot' });
     if (recipientAuthIds.length === 0) return successResponse({ skipped: true, reason: 'no_recipients' });
 
-    const snapshotData = snapshot?.data || snapshot;
+    const snapshotObj = snapshot as { data?: unknown } | null;
+    const snapshotData = (snapshotObj?.data ?? snapshot) as {
+      approvals?: Array<Record<string, unknown>>;
+      decisions?: Array<Record<string, unknown>>;
+      crossCommitments?: unknown[];
+      governanceChecklist?: Record<string, unknown>;
+    } | null;
 
     // Cycle name
     const { data: cycleInfo } = await serviceClient.from('cycles').select('name').eq('id', cycleId).single();
@@ -312,16 +318,19 @@ serve(async (req) => {
     const agentContext: QbrMeetingAgentContext = {
       buName,
       cycleName,
-      approvals: (snapshotData?.approvals || []).map((a: any) => ({
-        teamId: a.teamId, status: a.status,
+      approvals: (snapshotData?.approvals || []).map((a) => ({
+        teamId: a.teamId as string,
+        status: a.status as string,
         changes: a.changes ? JSON.stringify(a.changes) : undefined,
-        discardReason: a.discardReason,
+        discardReason: a.discardReason as string | undefined,
       })),
-      decisions: (snapshotData?.decisions || []).map((d: any) => ({
-        text: d.text, category: d.category,
-        owner: d.owner?.name, deadline: d.deadline,
+      decisions: (snapshotData?.decisions || []).map((d) => ({
+        text: d.text as string,
+        category: d.category as string,
+        owner: (d.owner as { name?: string } | undefined)?.name,
+        deadline: d.deadline as string | undefined,
       })),
-      crossCommitments: snapshotData?.crossCommitments || [],
+      crossCommitments: (snapshotData?.crossCommitments || []) as QbrMeetingAgentContext['crossCommitments'],
       governanceChecklist: snapshotData?.governanceChecklist || {},
     };
 
