@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
-import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
+import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
 import {
   useGenericWizardDraft,
   useActiveCycle,
@@ -126,6 +126,7 @@ export default function QbrMeetingPage() {
     isSaving,
     isResumingDraft,
     lastSavedAt,
+    sessionId,
   } = useGenericWizardDraft<QbrMeetingStep, QbrMeetingDraftData>({
     wizardType: 'qbr-meeting',
     teamId: null,
@@ -483,10 +484,18 @@ export default function QbrMeetingPage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             topSlot={
-              <RitualPreparationStatus
-                ritualType="qbr-meeting"
-                cycleId={quarterlyCycle?.id ?? null}
-              />
+              <>
+                <RitualPreparationStatus
+                  ritualType="qbr-meeting"
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+                <RitualAttendance
+                  persona="qbr-meeting"
+                  sessionId={sessionId}
+                  buId={currentBu?.id}
+                  cycleId={quarterlyCycle?.id ?? null}
+                />
+              </>
             }
           />
         );
