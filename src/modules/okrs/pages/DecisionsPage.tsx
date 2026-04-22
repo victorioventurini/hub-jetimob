@@ -86,12 +86,37 @@ export default function DecisionsPage() {
   const dateToState = useUrlState<string>({ key: 'to', defaultValue: '', parse: parsers.string });
   const searchState = useUrlState<string>({ key: 'q', defaultValue: '', parse: parsers.string });
   const pageState = useUrlState<number>({ key: 'page', defaultValue: 1, parse: parsers.numberWithDefault(1) });
+  const teamState = useUrlState<string>({ key: 'team', defaultValue: '', parse: parsers.string });
 
   // Helper: aplica setter e reseta paginação para 1
   const setAndResetPage = <T,>(setter: (v: T) => void, value: T) => {
     setter(value);
     pageState.set(1);
   };
+
+  // ── Expansão de subtimes (padrão `team-filter-includes-subteams`) ──
+  const { tree: teamTree } = useTeamTree();
+  const { teams: hierarchicalTeams } = useHierarchicalTeamList();
+
+  const overrideTeamIds = useMemo<string[] | undefined>(() => {
+    if (!teamState.value) return undefined;
+    const collect = (nodes: TeamTreeNode[], targetId: string, inSubtree: boolean): string[] => {
+      const acc: string[] = [];
+      for (const node of nodes) {
+        const here = inSubtree || node.id === targetId;
+        if (here) acc.push(node.id);
+        acc.push(...collect(node.children, targetId, here));
+      }
+      return acc;
+    };
+    const ids = collect(teamTree as TeamTreeNode[], teamState.value, false);
+    return ids.length > 0 ? ids : [teamState.value];
+  }, [teamState.value, teamTree]);
+
+  const selectedTeamName = useMemo(
+    () => hierarchicalTeams.find((t) => t.id === teamState.value)?.name ?? teamState.value,
+    [hierarchicalTeams, teamState.value],
+  );
 
   // ── Escopo disponível ──
   const { data: scopeCtx, isLoading: isScopeLoading } = useDecisionsScopeContext();
