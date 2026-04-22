@@ -222,6 +222,7 @@ export function useKpiMutations() {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiBatchPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krEffectiveValuesPrefix(), refetchType: 'active' });
+      toast({ title: "Valor atualizado", description: "O valor foi atualizado com sucesso." });
     },
     onError: (error) => {
       toast({ title: "Erro ao atualizar valor", description: error.message, variant: "destructive" });
@@ -242,9 +243,9 @@ export function useKpiMutations() {
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-primary-kpi-batch'], refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['okr-kr-effective-values'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiBatchPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krEffectiveValuesPrefix(), refetchType: 'active' });
       toast({ title: "Valor excluído", description: "O valor foi removido com sucesso." });
     },
     onError: (error) => {
