@@ -61,7 +61,7 @@ export function AddendumSection({ sessionId, addendums: initialAddendums }: Adde
       setAddendums(updated);
       setText('');
       toast.success('Adendo registrado com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['okr-completed-session-cycle'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.completedSessionForCyclePrefix() });
     },
     onError: () => {
       toast.error('Erro ao enviar adendo. Tente novamente.');

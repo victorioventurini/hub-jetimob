@@ -28,6 +28,9 @@ export const identityKeys = {
     ['identity', 'role', 'impersonated', buId, targetUserId] as const,
   modules: (userId: string | null, buId: string | null) => 
     ['identity', 'modules', userId, buId] as const,
+  /** Auth user metadata fetched while impersonating another user */
+  impersonatedAuthUser: (impersonatedUserId: string | null) =>
+    ['identity', 'impersonated-auth-user', impersonatedUserId] as const,
 } as const;
 
 export const onboardingKeys = {
