@@ -362,7 +362,7 @@ serve(async (req) => {
         latencyMs: Date.now() - startTime,
       });
 
-      const errorInfo = mapLLMError(error.status || 500, requestId);
+      const errorInfo = mapLLMError(httpErr.status || 500, requestId);
       return errorResponse(errorInfo.message, errorInfo.httpStatus, {
         requestId,
         error: errorInfo.code,
