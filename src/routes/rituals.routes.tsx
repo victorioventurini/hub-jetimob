@@ -83,6 +83,7 @@ export const ritualRoutes = (
     
     {/* Semanais — Onda 4 */}
     <Route path="/rituals/pre-weekly" element={<RitualRoute><PreWeeklyPage /></RitualRoute>} />
+    <Route path="/rituals/weekly" element={<RitualRoute><WeeklyPage /></RitualRoute>} />
 
     {/* MBR */}
     <Route path="/rituals/mbr-pre" element={<RitualRoute><MbrPrePage /></RitualRoute>} />
