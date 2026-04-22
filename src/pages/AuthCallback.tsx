@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, forwardRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/globalClient";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
 import { AlertCircle, Mail, WifiOff } from "lucide-react";
@@ -251,12 +251,10 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
                 <Button size="sm" onClick={handleRequestNew}>
                   Solicitar novo link
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => navigate("/auth", { replace: true })}
-                >
-                  Voltar para o login
+                <Button size="sm" variant="ghost" asChild>
+                  <Link to="/auth" replace>
+                    Voltar para o login
+                  </Link>
                 </Button>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState, forwardRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { normalizeAuthNext } from "@/lib/authRedirect";
@@ -62,12 +62,10 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
               <p className="text-sm text-destructive">
                 Link inválido ou incompleto. Solicite um novo link de acesso.
               </p>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate("/auth", { replace: true })}
-              >
-                Voltar para o login
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/auth" replace>
+                  Voltar para o login
+                </Link>
               </Button>
             </div>
           ) : (
