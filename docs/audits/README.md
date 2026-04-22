@@ -26,6 +26,9 @@ Contém **apenas a versão mais recente** de cada auditoria. Versões anteriores
 - `FRONTEND_UX_AUDIT_2026-02-08.md` — UX
 - `HOOKS_CONSOLIDATION_AUDIT_2026-02-08.md` — Consolidação de hooks
 
+### Incidentes
+- `BUNDLING_INCIDENT_2026-04-22.md` — Pós-mortem da tela branca em produção (manualChunks)
+
 ---
 
 ## Histórico

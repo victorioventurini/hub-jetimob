@@ -1,6 +1,6 @@
 # 📐 Documentos Canônicos — Hub da Jet
 
-**Última atualização:** 2026-04-22  
+**Última atualização:** 2026-04-22 (incidente bundling)
 **Categoria:** NORMATIVO
 
 ---
@@ -31,6 +31,7 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 | `DOCS_RETENTION_POLICY.md` | Política de retenção de documentação | v1.0.0 |
 | `WIZARDS_FRAMEWORK_BOUNDARY.md` | Fronteira pública do framework de wizards (`@/wizards-framework`) | v1.0.0 |
 | `ANALYSIS_MODULE.md` | Módulo Análise Estratégica | v1.0.0 |
+| `BUNDLING_AND_VENDOR_CHUNKS_STANDARD.md` | Regras de chunking Vite/Rollup — proíbe `manualChunks` sem aprovação | v1.0.0 |
 
 ## Regras de Manutenção
 
