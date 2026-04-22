@@ -4,6 +4,7 @@
  */
 
 import { corsHeaders } from "./cors.ts";
+import type { EdgeSupabaseClient } from "./types/common.ts";
 
 export interface LLMConfig {
   apiUrl: string;
@@ -59,7 +60,7 @@ export interface StreamMetadata {
  * Get integration API key from hub_integrations_global_config
  */
 export async function getIntegrationApiKey(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   integrationKey: string
 ): Promise<string | null> {
   const { data, error } = await serviceClient
@@ -85,7 +86,7 @@ export async function getIntegrationApiKey(
  * Get Google API key from the chatgpt integration config
  */
 export async function getGoogleApiKey(
-  serviceClient: any
+  serviceClient: EdgeSupabaseClient
 ): Promise<string | null> {
   const { data, error } = await serviceClient
     .from("hub_integrations_global_config")
@@ -113,7 +114,7 @@ export async function getGoogleApiKey(
  * Check if OpenAI source is set to 'own_key' in config
  */
 async function getOpenAISourcePreference(
-  serviceClient: any
+  serviceClient: EdgeSupabaseClient
 ): Promise<{ apiKey: string | null; useOwnKey: boolean }> {
   const { data, error } = await serviceClient
     .from("hub_integrations_global_config")
@@ -146,7 +147,7 @@ async function getOpenAISourcePreference(
  *  • null / unknown → Gateway with default model
  */
 export async function resolveLLMConfig(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   preferredModel: string | null
 ): Promise<LLMConfig | null> {
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");

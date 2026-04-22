@@ -50,5 +50,4 @@ export interface ProviderResult {
   error?: string;
 }
 
-// deno-lint-ignore no-explicit-any
-export type SupabaseClient = any;
+export type { EdgeSupabaseClient as SupabaseClient } from "../types/common.ts";

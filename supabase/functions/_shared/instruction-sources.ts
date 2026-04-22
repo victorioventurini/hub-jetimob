@@ -27,7 +27,7 @@ export interface InstructionSource {
   description: string | null;
   priority: number;
   is_enabled: boolean;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   last_fetch_at: string | null;
   last_fetch_status: "success" | "error" | "pending" | null;
   last_fetch_error: string | null;
@@ -38,7 +38,7 @@ export interface ApiSourceConfig {
   url: string;
   method?: "GET" | "POST" | "PUT";
   headers?: Record<string, string>;
-  body_template?: Record<string, any>;
+  body_template?: Record<string, unknown>;
   refresh_interval_seconds?: number;
   auth_type?: "none" | "bearer" | "api_key";
   auth_header_name?: string;
@@ -204,8 +204,8 @@ async function fetchDocumentSource(
   }
 
   return documents
-    .filter((doc: any) => doc.extracted_content)
-    .map((doc: any) => `=== ${doc.name} ===\n${doc.extracted_content}`)
+    .filter((doc: { extracted_content?: string | null }) => doc.extracted_content)
+    .map((doc: { name: string; extracted_content: string }) => `=== ${doc.name} ===\n${doc.extracted_content}`)
     .join("\n\n");
 }
 

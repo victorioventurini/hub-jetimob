@@ -7,6 +7,7 @@
  */
 
 import { loadInstructionSources, assembleInstructionContent } from "./instruction-sources.ts";
+import type { EdgeSupabaseClient } from "./types/common.ts";
 
 // Vic persona intro - inherited by all agents
 export const VIC_PERSONA_INTRO = `Você é o Vic, a personificação da forma de pensar da Jetimob.
@@ -201,7 +202,7 @@ export function clearAgentCache(agentSlug?: string, buId?: string): void {
  * Uses SWR caching to reduce database queries
  */
 export async function loadAgent(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   buId: string,
   requestId: string
@@ -232,7 +233,7 @@ export async function loadAgent(
  * Fetch agent from database and update cache
  */
 async function fetchAndCacheAgent(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   buId: string,
   requestId: string
@@ -300,7 +301,7 @@ async function fetchAndCacheAgent(
  * Refresh agent cache in background
  */
 async function refreshAgentCache(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agentSlug: string,
   buId: string,
   requestId: string
@@ -317,7 +318,7 @@ async function refreshAgentCache(
  * Build the complete system prompt for an agent
  */
 export async function buildSystemPrompt(
-  serviceClient: any,
+  serviceClient: EdgeSupabaseClient,
   agent: AgentRow,
   effectiveSystemPrompt: string,
   buId: string,
