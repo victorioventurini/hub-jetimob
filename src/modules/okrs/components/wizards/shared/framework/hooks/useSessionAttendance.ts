@@ -80,7 +80,7 @@ export function useSessionAttendance(
   const supabase = useBuScopedSupabase();
   const queryClient = useQueryClient();
   const { has, isWildcard } = usePermissions();
-  const { profile } = useIdentity();
+  const { profileId } = useIdentity();
 
   const [confirmedLocally, setConfirmedLocally] = useState(false);
 
