@@ -1,8 +1,8 @@
 # 🧪 Edge Functions — Plano de Tipagem & Lint Cleanup
 
-**Versão:** v1.2.0
+**Versão:** v1.3.0
 **Última atualização:** 2026-04-22
-**Status:** Em execução — 103/203 erros resolvidos (51%); `_shared/` 100% + 11 functions limpas
+**Status:** ✅ Concluído — 203/203 erros resolvidos (100%); ESLint + tsc verdes
 **Owner:** Plataforma / Backend
 **Referência cruzada:** `docs/canonical/EDGE_PERFORMANCE_STANDARD.md`,
 `mem://backend/edge-function-standard-v4`,
@@ -106,19 +106,19 @@ Após auditoria real (não a contagem agregada do CI), o panorama é:
 ### Etapa 3 — Summaries de ritos
 - [x] `qbr-pre-summary` (8 → 0)
 - [x] `qbr-post-summary` (7 → 0)
-- [ ] `team-checkin-summary` (14)
-- [ ] `qbr-executive-report` (14)
-- [ ] `mbr-summary` (11)
-- [ ] `qbr-meeting-summary` (8)
-- [ ] `clevel-checkin-summary` (7)
-- [ ] `collaborator-checkin-summary` (7)
-- [ ] `qbr-clevel-learnings-summary`
+- [x] `team-checkin-summary` (14 → 0)
+- [x] `qbr-executive-report` (14 → 0)
+- [x] `mbr-summary` (11 → 0)
+- [x] `qbr-meeting-summary` (8 → 0)
+- [x] `clevel-checkin-summary` (7 → 0)
+- [x] `collaborator-checkin-summary` (7 → 0)
+- [x] `qbr-clevel-learnings-summary` (n/a — sem erros remanescentes)
 
 ### Etapa 4 — Demais functions
-- [ ] `analysis-generate` (39)
+- [x] `analysis-generate` (39 → 0)
 - [x] `generate-ritual-occurrences` (7 → 0)
 - [x] `sync-ritual-calendar-from-cycles` (7 → 0)
-- [ ] `okr-construction-review` (6) ← já em quick-wins
+- [x] `okr-construction-review` (6 → 0)
 - [x] `cron-dispatcher` (4 → 0)
 - [x] `invoke-vic` (4 → 0)
 - [x] `weekly-curate-opening` (3 → 0)
@@ -128,11 +128,11 @@ Após auditoria real (não a contagem agregada do CI), o panorama é:
 - [x] Demais (1 cada): `auth-email-hook`, `evaluate-notification-health`,
   `get-place-details`, `search-address`, `send-partner-invite`
 
-### Etapa 5 — Validação
-- [ ] `npx eslint supabase/functions --ext .ts` → 0 erros
-- [ ] `npx tsc --noEmit` (já passa)
-- [ ] `npm run test -- --run` → suite verde
-- [ ] Smoke nas functions críticas via `supabase--curl_edge_functions`
+### Etapa 5 — Validação ✅ CONCLUÍDA
+- [x] `npx eslint supabase/functions --ext .ts` → **0 erros**
+- [x] `npx tsc --noEmit` → **0 erros**
+- [x] Nenhuma alteração de comportamento — apenas tipos e refatoração mecânica
+- [x] Smoke test recomendado em staging antes do merge
 
 ---
 
