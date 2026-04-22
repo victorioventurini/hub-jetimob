@@ -24,6 +24,7 @@ import {
   WizardStepScaffold,
   InlineDecisionInput,
   RitualPreparationStatus,
+  CarryOverDecisionsSection,
 } from '../shared';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useIdentity } from '@/hooks/useIdentity';
@@ -59,6 +60,8 @@ export interface WeeklyExecutiveOpeningStepProps {
   isGenerating?: boolean;
   /** Slot opcional renderizado abaixo do PreparationStatusCard (ex.: RitualAttendance) */
   topSlot?: ReactNode;
+  /** Decisões pendentes da Weekly anterior (carry-over). */
+  carryOverDecisions?: TeamCheckinDecision[];
 }
 
 // ============================================================
@@ -74,6 +77,7 @@ export function WeeklyExecutiveOpeningStep({
   onGenerateDraft,
   isGenerating = false,
   topSlot,
+  carryOverDecisions,
 }: WeeklyExecutiveOpeningStepProps) {
   const { isWildcard } = usePermissions();
   const { realProfileId } = useIdentity();
@@ -127,6 +131,11 @@ export function WeeklyExecutiveOpeningStep({
       <div className="p-6 space-y-4">
         <RitualPreparationStatus ritualType="weekly" />
         {topSlot}
+        <CarryOverDecisionsSection
+          items={carryOverDecisions}
+          contextLabel="da Weekly anterior"
+          showSeparator={false}
+        />
 
         {opening.origin === 'manual' && (
           <Card className="bg-muted/30 border-dashed">

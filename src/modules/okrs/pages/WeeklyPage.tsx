@@ -26,6 +26,7 @@ import {
 import { useGenericWizardDraft } from '@/modules/okrs/hooks';
 import { useWeeklyPreWeeklyAggregation } from '@/modules/okrs/hooks';
 import { useWeeklyOpeningCuration } from '@/modules/okrs/hooks';
+import { useCarryOverDecisions } from '@/modules/okrs/hooks/useCarryOverDecisions';
 import { useBu } from '@/contexts/BuContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
@@ -107,6 +108,12 @@ export default function WeeklyPage() {
     cycleId: null,
     defaultStep: 'executive-opening',
     defaultData: DEFAULT_DATA,
+  });
+
+  // Carry-over: decisões pendentes da Weekly anterior (escopo BU, sem teamId)
+  const { data: carryOverDecisions = [] } = useCarryOverDecisions({
+    wizardType: 'weekly',
+    teamId: null,
   });
 
   const completedSteps = useMemo(() => {
@@ -200,6 +207,7 @@ export default function WeeklyPage() {
             onContinue={goNext}
             onGenerateDraft={handleGenerateDraft}
             isGenerating={isGenerating}
+            carryOverDecisions={carryOverDecisions}
             topSlot={
               <RitualAttendance
                 persona="weekly"

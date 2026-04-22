@@ -24,6 +24,7 @@ import {
 } from '@/modules/okrs/hooks';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
+import { useCarryOverDecisions } from '@/modules/okrs/hooks/useCarryOverDecisions';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -129,6 +130,13 @@ export default function QbrPrePage() {
     completedSession,
     isLoading: isLoadingCompletedCheck,
   } = useCompletedSessionForCycle('qbr-pre', teamIdParam, quarterlyCycle?.id);
+
+  // Carry-over: decisões pendentes do Pré-QBR anterior do mesmo time
+  const { data: carryOverDecisions = [] } = useCarryOverDecisions({
+    wizardType: 'qbr-pre',
+    teamId: teamIdParam,
+    enabled: !!teamIdParam,
+  });
 
   // Draft persistence (only if not already completed)
   const {
@@ -595,6 +603,7 @@ export default function QbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             teamId={teamIdParam || undefined}
+            carryOverDecisions={carryOverDecisions}
             topSlot={
               <RitualPreparationStatus
                 ritualType="qbr-pre"
