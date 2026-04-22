@@ -394,12 +394,12 @@ export default function DecisionsPage() {
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
           </div>
         ) : items.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Inbox className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Nenhuma decisão encontrada com os filtros atuais.</p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            variant="filter"
+            description="Nenhuma decisão encontrada com os filtros atuais. Tente ajustar ou remover alguns filtros."
+            actionLabel={activeFilters.length > 0 ? 'Limpar filtros' : undefined}
+            onAction={activeFilters.length > 0 ? handleClearAll : undefined}
+          />
         ) : (
           <div className="space-y-3">
             {items.map((item) => {
@@ -462,26 +462,36 @@ export default function DecisionsPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pageState.value <= 1}
-              onClick={() => pageState.set(pageState.value - 1)}
-            >
-              Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Página {pageState.value} de {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pageState.value >= totalPages}
-              onClick={() => pageState.set(pageState.value + 1)}
-            >
-              Próxima
-            </Button>
+          <Pagination className="pt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  aria-label="Página anterior"
+                  aria-disabled={pageState.value <= 1}
+                  className={pageState.value <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  onClick={() => {
+                    if (pageState.value > 1) pageState.set(pageState.value - 1);
+                  }}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink isActive aria-current="page">
+                  {pageState.value} / {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  aria-label="Próxima página"
+                  aria-disabled={pageState.value >= totalPages}
+                  className={pageState.value >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  onClick={() => {
+                    if (pageState.value < totalPages) pageState.set(pageState.value + 1);
+                  }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
           </div>
         )}
       </div>
