@@ -122,7 +122,7 @@ export function useExpectedAttendanceParticipants({
           .filter((t) => !!t.leader_user_id && !seen.has(t.leader_user_id) && (seen.add(t.leader_user_id), true))
           .map<ExpectedParticipant>((t) => ({
             profileId: t.leader_user_id as string,
-            name: t.leader_name ?? 'Líder',
+            name: t.leader?.display_name ?? 'Líder',
             role: 'Líder de Time',
             teamId: t.id,
             teamName: t.name,
@@ -137,7 +137,7 @@ export function useExpectedAttendanceParticipants({
           .filter((t) => !!t.leader_user_id && !seen.has(t.leader_user_id) && (seen.add(t.leader_user_id), true))
           .map<ExpectedParticipant>((t) => ({
             profileId: t.leader_user_id as string,
-            name: t.leader_name ?? 'Líder',
+            name: t.leader?.display_name ?? 'Líder',
             role: 'Líder de Time',
             teamId: t.id,
             teamName: t.name,
