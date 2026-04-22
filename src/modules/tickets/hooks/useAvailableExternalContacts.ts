@@ -118,7 +118,7 @@ export function useCompanyFallbackContacts(externalCompanyId: string | undefined
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: ["company-fallback-contacts", buId, externalCompanyId],
+    queryKey: queryKeys.tickets.companyFallbackContacts(buId, externalCompanyId ?? null),
     queryFn: async () => {
       if (!buId || !externalCompanyId) return [];
 
@@ -238,7 +238,7 @@ export function useUpdateFallbackContacts() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["company-fallback-contacts", buId, variables.externalCompanyId],
+        queryKey: queryKeys.tickets.companyFallbackContacts(buId, variables.externalCompanyId),
         refetchType: 'active',
       });
       toast.success("Contatos padrão atualizados");

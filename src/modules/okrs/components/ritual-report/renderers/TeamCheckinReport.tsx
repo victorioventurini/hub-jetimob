@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Target } from 'lucide-react';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { okrsKeys } from '@/lib/queryKeys/okrs';
 import { ReportSection, EmptyState } from './shared';
 
 /**
@@ -11,7 +12,7 @@ function useKrTitles(krIds: string[]) {
   const { client: supabase, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['kr-titles-for-report', ...krIds],
+    queryKey: okrsKeys.krTitlesForReport(krIds),
     queryFn: async () => {
       if (!supabase || !buId || krIds.length === 0) return {};
       const { data, error } = await supabase

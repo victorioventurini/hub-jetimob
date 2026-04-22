@@ -40,6 +40,7 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { quarterReviewKeys } from '@/lib/queryKeys/okrs';
 import { useUrlState } from '@/shared/url';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -330,7 +331,7 @@ export default function QbrExecutiveReportPage() {
 
   // Fetch quarter cycles
   const { data: quarterCycles, isLoading: isLoadingCycles } = useQuery({
-    queryKey: ['quarter-review', 'cycles', currentBuId],
+    queryKey: quarterReviewKeys.cycles(currentBuId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cycles')

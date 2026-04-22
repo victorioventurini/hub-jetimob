@@ -16,6 +16,7 @@ import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailabilit
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
 import { buildTeamScorecardFromOrgObjectives } from '@/modules/okrs/components/wizards/shared/TeamDeliveryScorecard';
@@ -76,7 +77,7 @@ export default function QbrPostPage() {
 
   // Check qbr_status = 'done' or 'ready' (post can happen after meeting)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
-    queryKey: ['qbr', 'cycle-status-post', quarterlyCycle?.id],
+    queryKey: qbrKeys.cycleStatusPost(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     queryFn: async () => {
       const { data, error } = await buSupabase.from('cycles').select('id, qbr_status').eq('id', quarterlyCycle!.id).single();
@@ -89,7 +90,7 @@ export default function QbrPostPage() {
 
   // Load meeting session for approvals and decisions
   const { data: meetingSession } = useQuery({
-    queryKey: ['qbr', 'meeting-session', quarterlyCycle?.id],
+    queryKey: qbrKeys.meetingSession(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     queryFn: async () => {
       const { data, error } = await buSupabase.from('okr_wizard_sessions')
@@ -107,7 +108,7 @@ export default function QbrPostPage() {
 
   // Load C-Level session for calibration flags
   const { data: cLevelSession } = useQuery({
-    queryKey: ['qbr', 'clevel-session-post', quarterlyCycle?.id],
+    queryKey: qbrKeys.cLevelSessionPost(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -128,7 +129,7 @@ export default function QbrPostPage() {
 
   // Load leader sessions for OKR proposals
   const { data: leaderSessions } = useQuery({
-    queryKey: ['qbr', 'leader-sessions-post', quarterlyCycle?.id],
+    queryKey: qbrKeys.leaderSessionsPost(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -144,7 +145,7 @@ export default function QbrPostPage() {
 
   // Load teams
   const { data: teams } = useQuery({
-    queryKey: ['qbr', 'teams-post', currentBuId],
+    queryKey: qbrKeys.teamsPost(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -156,7 +157,7 @@ export default function QbrPostPage() {
 
   // Load org objectives for TeamDeliveryScorecard
   const { data: orgObjectives } = useQuery({
-    queryKey: ['qbr', 'org-objectives-post', quarterlyCycle?.id],
+    queryKey: qbrKeys.orgObjectivesPost(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -179,7 +180,7 @@ export default function QbrPostPage() {
 
   // Load destination cycles (status = 'planning', type = 'quarter')
   const { data: planningCycles } = useQuery({
-    queryKey: ['qbr', 'planning-cycles-post', currentBuId],
+    queryKey: qbrKeys.planningCyclesPost(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {

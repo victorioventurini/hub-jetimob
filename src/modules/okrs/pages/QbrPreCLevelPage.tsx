@@ -23,6 +23,7 @@ import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailabilit
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
 
@@ -97,7 +98,7 @@ export default function QbrPreCLevelPage() {
 
   // Load qbr_status for informational display (no longer a hard gate)
   const { data: cycleData, isLoading: isLoadingStatus } = useQuery({
-    queryKey: ['qbr', 'cycle-status', quarterlyCycle?.id],
+    queryKey: qbrKeys.cycleStatus(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     queryFn: async () => {
       const { data, error } = await buSupabase
@@ -112,7 +113,7 @@ export default function QbrPreCLevelPage() {
 
   // Load leader submissions
   const { data: leaderSessions, isLoading: isLoadingSessions } = useQuery({
-    queryKey: ['qbr', 'leader-sessions', quarterlyCycle?.id],
+    queryKey: qbrKeys.leaderSessions(quarterlyCycle?.id),
     enabled: !!buSupabase && !!quarterlyCycle?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -131,7 +132,7 @@ export default function QbrPreCLevelPage() {
 
   // Load teams for names
   const { data: teams } = useQuery({
-    queryKey: ['qbr', 'teams', currentBuId],
+    queryKey: qbrKeys.teams(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -149,7 +150,7 @@ export default function QbrPreCLevelPage() {
 
   // Load org KPIs
   const { data: orgKpis } = useQuery({
-    queryKey: ['qbr', 'org-kpis', currentBuId],
+    queryKey: qbrKeys.orgKpis(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {

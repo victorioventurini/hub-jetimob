@@ -152,7 +152,7 @@ export function useConstructionReview(
   
   // Buscar o ano do ciclo para depois buscar OKRs organizacionais
   const { data: cycleData } = useQuery({
-    queryKey: ['cycle-year', cycleId],
+    queryKey: queryKeys.okrs.cycleYear(cycleId),
     queryFn: async () => {
       if (!cycleId) return null;
       

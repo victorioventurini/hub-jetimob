@@ -19,7 +19,7 @@ export function useManagersPanorama(cycleId: string | null | undefined) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['managers-panorama', buId, cycleId],
+    queryKey: queryKeys.okrs.managersPanorama(buId, cycleId),
     queryFn: async (): Promise<{
       areas: AreaOkrSummary[];
       companyProgress: number;
@@ -221,7 +221,7 @@ export function useCrossDependencies(cycleId: string | null | undefined) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: ['cross-dependencies', buId, cycleId],
+    queryKey: queryKeys.okrs.crossDependencies(buId, cycleId),
     queryFn: async (): Promise<CrossDependency[]> => {
       if (!supabase || !buId || !cycleId) {
         return [];

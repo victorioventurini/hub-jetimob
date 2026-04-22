@@ -22,6 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { mbrKeys } from '@/lib/queryKeys/okrs';
 
 // ============================================================
 // Types
@@ -88,7 +89,7 @@ export function MbrQbrFollowUpStep({
 
   // Load last completed QBR Post session for follow-up data
   const { data: lastQbrSession, isLoading } = useQuery({
-    queryKey: ['mbr', 'qbr-followup', currentBuId],
+    queryKey: mbrKeys.qbrFollowup(currentBuId),
     enabled: !!buSupabase && !!currentBuId && followUpItems.length === 0,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {

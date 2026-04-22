@@ -42,6 +42,7 @@ import { useAllOrgObjectivesView } from '../../../hooks/queries/useOrgObjectiveV
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { useQuery } from '@tanstack/react-query';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { differenceInDays, parseISO } from 'date-fns';
 import { LoadingState } from '@/components/ui/loading-state';
 import type { OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggregateTypes';
@@ -199,7 +200,7 @@ export function QbrCLevelQuarterBalanceStep({
 
   // Fetch active teams
   const { data: teams, isLoading: isLoadingTeams } = useQuery({
-    queryKey: ['qbr-clevel', 'balance-teams', currentBuId],
+    queryKey: qbrKeys.cLevelBalanceTeams(currentBuId),
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -220,7 +221,7 @@ export function QbrCLevelQuarterBalanceStep({
 
   // Fetch ALL team KRs for the cycle (to include teams without org linkage)
   const { data: allTeamKrs, isLoading: isLoadingAllKrs } = useQuery({
-    queryKey: ['qbr-clevel', 'all-team-krs', cycleId],
+    queryKey: qbrKeys.cLevelAllTeamKrs(cycleId),
     enabled: !!buSupabase && !!cycleId,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
