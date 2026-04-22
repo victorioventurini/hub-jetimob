@@ -95,3 +95,6 @@ export type {
 
 export { RitualPreparationStatus } from './RitualPreparationStatus';
 export type { RitualPreparationStatusProps } from './RitualPreparationStatus';
+
+export { RitualAttendance } from './RitualAttendance';
+export type { RitualAttendanceProps } from './RitualAttendance';
