@@ -32,6 +32,7 @@ import {
   Network,
   FolderKanban,
   Sparkles,
+  Lightbulb,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,7 @@ const fixedItems = [
 // Itens condicionais baseados em acesso a módulos
 const conditionalItems = [
   { name: "Rituais", href: "/rituals", icon: Rocket, requiresModule: "okrs" },
+  { name: "Decisões", href: "/decisions", icon: Lightbulb, requiresModule: "okrs" },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)
