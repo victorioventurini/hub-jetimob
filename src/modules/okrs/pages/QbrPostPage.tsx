@@ -242,6 +242,13 @@ export default function QbrPostPage() {
       enabled: !!quarterlyCycle && canAccessPost,
     });
 
+  // Carry-over: pendências do QBR-pós anterior na BU
+  const { data: qbrPostCarryOver = [] } = useCarryOverDecisions({
+    wizardType: 'qbr-post',
+    teamId: null,
+  });
+    });
+
   const completedSteps = useMemo(() => {
     const idx = STEP_ORDER.indexOf(draft.currentStep);
     return STEP_ORDER.slice(0, idx);
