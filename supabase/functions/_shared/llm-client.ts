@@ -252,8 +252,31 @@ export async function resolveLLMConfig(
 }
 
 /**
- * Make a non-streaming LLM request
+ * Make a non-streaming LLM request.
+ *
+ * W2.P2.2 — Cache em memória (TTL 5min) para prompts determinísticos.
+ * Apenas chamadas com `temperature ≤ 0.3` e SEM tools são cacheadas — isso
+ * cobre validadores e classificadores chamados em loop sem afetar
+ * gerações criativas.
  */
+const llmCache = new Map<string, { value: LLMResponse; expiresAt: number }>();
+const LLM_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function buildCacheKey(model: string, messages: LLMMessage[], maxTokens: number): string {
+  // Hash leve baseado em model + último user message + tamanho do system prompt.
+  // Suficiente pra evitar colisão dentro de um cold start.
+  const sys = messages.find((m) => m.role === "system")?.content?.length ?? 0;
+  const lastUser = messages.filter((m) => m.role === "user").slice(-1)[0]?.content ?? "";
+  return `${model}|${maxTokens}|sys:${sys}|u:${lastUser}`;
+}
+
+function pruneLlmCache(): void {
+  const now = Date.now();
+  for (const [k, v] of llmCache) {
+    if (v.expiresAt < now) llmCache.delete(k);
+  }
+}
+
 export async function llmComplete(
   config: LLMConfig,
   messages: LLMMessage[],
@@ -264,11 +287,25 @@ export async function llmComplete(
     toolChoice?: string | { type: string; function: { name: string } };
   }
 ): Promise<LLMResponse> {
+  const maxTokens = options?.maxTokens ?? config.maxTokens;
+  const temperature = options?.temperature ?? config.temperature;
+
+  // Cache só é seguro pra prompts determinísticos sem tool-calls.
+  const cacheable = !options?.tools?.length && temperature <= 0.3;
+  const cacheKey = cacheable ? buildCacheKey(config.model, messages, maxTokens) : null;
+
+  if (cacheKey) {
+    const hit = llmCache.get(cacheKey);
+    if (hit && hit.expiresAt > Date.now()) {
+      return hit.value;
+    }
+  }
+
   const payload: Record<string, unknown> = {
     model: config.model,
     messages,
-    max_tokens: options?.maxTokens ?? config.maxTokens,
-    temperature: options?.temperature ?? config.temperature,
+    max_tokens: maxTokens,
+    temperature,
   };
 
   if (options?.tools?.length) {
@@ -298,7 +335,7 @@ export async function llmComplete(
 
   const data = await response.json();
 
-  return {
+  const result: LLMResponse = {
     content: data.choices?.[0]?.message?.content ?? null,
     toolCalls: data.choices?.[0]?.message?.tool_calls ?? null,
     usage: data.usage
@@ -310,6 +347,13 @@ export async function llmComplete(
       : null,
     rawMessage: data.choices?.[0]?.message,
   };
+
+  if (cacheKey) {
+    pruneLlmCache();
+    llmCache.set(cacheKey, { value: result, expiresAt: Date.now() + LLM_CACHE_TTL_MS });
+  }
+
+  return result;
 }
 
 /**
