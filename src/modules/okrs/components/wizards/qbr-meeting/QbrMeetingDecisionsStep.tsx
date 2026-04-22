@@ -21,6 +21,7 @@ import {
   WizardStepScaffold,
   InlineDecisionInput,
   DecisionCard,
+  CarryOverDecisionsSection,
 } from '../shared';
 import type { TeamCheckinDecision, QbrCLevelSnapshot } from '@/modules/okrs/types/wizard';
 
@@ -33,6 +34,8 @@ export interface QbrMeetingDecisionsStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   /** Diretivas do C-Level para vínculo */
   cLevelDirectives?: QbrCLevelSnapshot['directives'];
+  /** Decisões pendentes do QBR anterior do mesmo time (carry-over). */
+  carryOverDecisions?: TeamCheckinDecision[];
   onContinue: () => void;
   onBack: () => void;
 }
@@ -45,6 +48,7 @@ export function QbrMeetingDecisionsStep({
   decisions,
   onDecisionsChange,
   cLevelDirectives = [],
+  carryOverDecisions,
   onContinue,
   onBack,
 }: QbrMeetingDecisionsStepProps) {
@@ -114,6 +118,11 @@ export function QbrMeetingDecisionsStep({
             ⚠ Algumas decisões não têm dono definido. Defina antes de encerrar.
           </p>
         )}
+
+        <CarryOverDecisionsSection
+          items={carryOverDecisions}
+          contextLabel="do QBR anterior"
+        />
       </div>
     </WizardStepScaffold>
   );
