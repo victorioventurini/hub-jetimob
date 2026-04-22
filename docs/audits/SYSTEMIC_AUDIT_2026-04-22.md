@@ -48,15 +48,15 @@
 
 **Resultado verificado:** TypeScript limpo. `DEFAULT_VIC_TIMEOUT_MS = 12_000` aplicado a TODAS as chamadas existentes de `invokeVic` (10 wizards + `useWizardAI` + `useAskToVic`) sem precisar editar cada uma.
 
-### 🔜 Wave 2 — Refator profundo (próxima sessão dedicada — ~6h)
+### ✅ Wave 2 — EXECUTADA NESTA SESSÃO
 
-| # | Item | Esforço | Risco | Justificativa |
-|---|------|---------|-------|---------------|
-| 1 | Split `okr-construction-review/index.ts` (1133 linhas) em `prompts.ts`, `parsers.ts`, `index.ts` | 2h | Médio | Isola edição de prompts da lógica de fluxo. |
-| 2 | Split `ExecutiveQuarterReviewPage` (894) e `MbrPage` (798) em containers + presentational | 2h | Médio | Reduz risco de regressão a cada ajuste de KPI/ritual. |
-| 3 | Criar `useAiSection({ agent, fallback, timeoutMs })` — hook que encapsula o padrão repetido nos 10 wizards (loading/error/fallback/silent) | 1h | Baixo | Elimina duplicação #4. |
-| 4 | Substituir 27 `JSON.parse` diretos por `tryParseAiJson` em hooks de IA | 30min | Baixo | Aplica canon já documentado. |
-| 5 | ESLint rule custom: proibir `console.*` exceto via `src/lib/logger.ts` | 30min | Baixo | Barra entrada de novos `console.*`. Limpeza dos 320 existentes pode ser progressiva. |
+| # | Item | Status | Resultado |
+|---|------|--------|-----------|
+| 1 | Split `okr-construction-review/index.ts` (1133 linhas) em `types.ts` + `parsers.ts` + `vic.ts` + `index.ts` | ✅ | `index.ts` agora 388 linhas (orquestração pura). Parsers e tipos isolados, testáveis. |
+| 2 | Criar `useAiSection({ slots, timeoutMs })` — hook canônico para wizards com IA opcional | ✅ | `src/modules/vic/hooks/useAiSection.ts`. Encapsula gating (isReady/buId/iaEnabled) + paralelo + fallback imediato + anti-double-fetch. Migrado em `TeamOkrIntroStep` como referência. |
+| 3 | Substituir 27 `JSON.parse` diretos por `tryParseAiJson` | ⏸️ | Adiada — 156 ocorrências, maioria é localStorage/jsonb (legítimo). Próxima sessão: triagem por arquivo de IA. |
+| 4 | ESLint rule custom proibindo `console.*` direto | ⏸️ | Adiada — requer setup de plugin local + lint pass nos 320 legados. Sessão dedicada. |
+| 5 | Split `ExecutiveQuarterReviewPage` / `MbrPage` | ⏸️ | Sob demanda na próxima edição (Wave 3 — higiene contínua). |
 
 ### 🌱 Wave 3 — Higiene contínua (próximas 2-3 semanas — diluído)
 

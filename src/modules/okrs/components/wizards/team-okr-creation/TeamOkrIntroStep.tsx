@@ -6,7 +6,6 @@
  * - Prepara mentalidade antes de criar
  */
 
-import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -15,10 +14,7 @@ import {
   Target,
   Quote,
 } from 'lucide-react';
-import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { useWizardAI } from '@/modules/okrs/hooks';
-import { useVicEnabled } from '@/modules/vic/hooks';
-import { VicTypewriterText, VicLoadingState } from '@/modules/vic';
+import { useAiSection, VicTypewriterText, VicLoadingState } from '@/modules/vic';
 // ============================================================
 // TYPES
 // ============================================================
@@ -38,88 +34,33 @@ export function TeamOkrIntroStep({
   userName,
   onContinue,
 }: TeamOkrIntroStepProps) {
-  const { invokeVic } = useWizardAI();
-  const { isReady, buId } = useOptionalBuClient();
-  const { isEnabled: isIaEnabled, isLoading: isIaConfigLoading } = useVicEnabled();
-  const [greeting, setGreeting] = useState<string>('');
-  const [message, setMessage] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fallback messages
   const fallbackGreeting = userName ? `Olá, ${userName.split(' ')[0]}!` : 'Olá!';
   const fallbackMessage = 'Antes de definir metas, vamos alinhar direção. OKRs não servem para fazer mais coisas — servem para fazer as coisas certas.';
 
-  // Generate greeting and message on mount
-  // Use ref to prevent multiple invocations due to callback changes
-  const hasFetched = useRef(false);
-  
-  useEffect(() => {
-    // Wait for auth/client readiness
-    if (!isReady) return;
+  // Resiliência centralizada: timeout + fallback + paralelo + gating de IA.
+  // Se IA estiver off / BU sem config / chamada timeout → fica nos fallbacks.
+  const { values } = useAiSection({
+    timeoutMs: 10_000,
+    slots: {
+      greeting: {
+        agent: 'validador-metodologico-okrs',
+        actionContext: 'okr-create-objective',
+        context: { type: 'wizard-intro', additionalData: { userName, teamName } },
+        userQuestion: 'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
+        fallback: fallbackGreeting,
+      },
+      message: {
+        agent: 'cultura',
+        actionContext: 'dashboard-culture',
+        context: { type: 'wizard-intro', additionalData: { teamName } },
+        userQuestion: 'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.',
+        fallback: fallbackMessage,
+      },
+    },
+  });
 
-    // If no BU selected yet (or user is pre-BU), do not call IA.
-    if (!buId) {
-      setGreeting(fallbackGreeting);
-      setMessage(fallbackMessage);
-      setIsLoading(false);
-      return;
-    }
-
-    // Wait for IA config to load
-    if (isIaConfigLoading) return;
-
-    // If IA is not enabled, use fallback immediately
-    if (!isIaEnabled) {
-      setGreeting(fallbackGreeting);
-      setMessage(fallbackMessage);
-      setIsLoading(false);
-      return;
-    }
-
-    // Prevent multiple invocations
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-
-    const fetchMessages = async () => {
-      setIsLoading(true);
-
-      // Pré-popular com fallback para que o conteúdo apareça imediatamente
-      // mesmo se a IA demorar. Se a IA responder a tempo, sobrescrevemos.
-      setGreeting(fallbackGreeting);
-      setMessage(fallbackMessage);
-
-      // Resiliência centralizada no useVicAgent: timeout + fallback opt-in.
-      // Sem fallback aqui — só sobrescrevemos se a IA realmente responder.
-      const greetingPromise = invokeVic(
-        'validador-metodologico-okrs',
-        'okr-create-objective',
-        { type: 'wizard-intro', additionalData: { userName, teamName } },
-        'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
-        { silent: true, timeoutMs: 10_000 }
-      ).then((r) => r?.response ?? null).catch(() => null);
-
-      const messagePromise = invokeVic(
-        'cultura',
-        'dashboard-culture',
-        { type: 'wizard-intro', additionalData: { teamName } },
-        'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.',
-        { silent: true, timeoutMs: 10_000 }
-      ).then((r) => r?.response ?? null).catch(() => null);
-
-      const [greetingResult, messageResult] = await Promise.all([
-        greetingPromise,
-        messagePromise,
-      ]);
-
-      if (greetingResult) setGreeting(greetingResult);
-      if (messageResult) setMessage(messageResult);
-
-      setIsLoading(false);
-    };
-
-    fetchMessages();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, buId, isIaConfigLoading, isIaEnabled]);
+  const greeting = values.greeting;
+  const message = values.message;
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
