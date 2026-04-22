@@ -7,6 +7,7 @@ import { useBu } from "@/contexts/BuContext";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
 import { useFavoriteLinks } from "@/shared/saved-links";
+import { usePrefetchRoute } from "@/hooks/usePrefetchRoute";
 import {
   Home,
   Users,
@@ -117,6 +118,7 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
   const { isAdmin } = useAuth();
   const { currentBu, userRole } = useBu();
   const { symbolUrl, buName, primaryColor, memberMenuLabel } = useBuBranding();
+  const prefetchRoute = usePrefetchRoute();
   
   // Build globalBuItems with dynamic member name
   const globalBuItems = globalBuItemBase.map((item) => ({
@@ -168,6 +170,8 @@ export function DynamicSidebar({ collapsed, onCollapse }: DynamicSidebarProps) {
     ) : (
       <Link
         to={href}
+        onMouseEnter={() => prefetchRoute(href)}
+        onFocus={() => prefetchRoute(href)}
         className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200",
           "hover:bg-sidebar-accent",
