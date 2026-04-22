@@ -33,7 +33,7 @@ import {
   formatValidationErrors,
 } from "../_shared/validation.ts";
 import { corsHeaders } from "../_shared/middleware.ts";
-import { errorResponse, successResponse, serviceUnavailableResponse, internalErrorResponse } from "../_shared/response.ts";
+import { errorResponse, serviceUnavailableResponse, internalErrorResponse } from "../_shared/response.ts";
 
 // Get Google Maps API key from integrations config
 async function getGoogleMapsApiKey(): Promise<string | null> {
@@ -76,7 +76,10 @@ serve(async (req) => {
     if (!parseResult.success) {
       // Return empty predictions for validation errors (graceful degradation)
       console.warn("Validation failed:", formatValidationErrors(parseResult.error));
-      return successResponse({ predictions: [] });
+      return new Response(
+        JSON.stringify({ predictions: [] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const { query } = parseResult.data;
@@ -109,7 +112,10 @@ serve(async (req) => {
       secondaryText: p.structured_formatting?.secondary_text || "",
     }));
 
-    return successResponse({ predictions });
+    return new Response(
+      JSON.stringify({ predictions }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("Error in search-address:", error);
     return internalErrorResponse(error instanceof Error ? error.message : "Internal server error");
