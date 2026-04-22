@@ -136,6 +136,13 @@ export interface UseDecisionsInboxParams {
   filters?: DecisionsInboxFilters;
   page?: number;
   pageSize?: number;
+  /**
+   * Override de times pelo client (ex.: filtro `TeamSelect` arbitrário).
+   * Quando informado e não-vazio, força `scope='team'` e ignora `managedTeamIds`
+   * do `scopeCtx`. Mantém o padrão `team-filter-includes-subteams` (cabe ao
+   * caller expandir os descendentes).
+   */
+  overrideTeamIds?: string[];
 }
 
 export function useDecisionsInbox({
@@ -143,19 +150,24 @@ export function useDecisionsInbox({
   filters = {},
   page = 1,
   pageSize = PAGE_SIZE,
+  overrideTeamIds,
 }: UseDecisionsInboxParams) {
   const { profileId } = useIdentity();
   const { currentBu } = useBu();
   const buSupabase = useOptionalBuScopedSupabase();
   const { data: scopeCtx } = useDecisionsScopeContext();
 
+  const hasOverride = !!overrideTeamIds && overrideTeamIds.length > 0;
+  const effectiveScope: DecisionsInboxScope = hasOverride ? 'team' : scope;
+
   return useQuery<DecisionsInboxResult>({
     queryKey: okrsKeys.decisionsInbox(
       currentBu?.id ?? null,
       profileId ?? null,
-      scope,
+      effectiveScope,
       filters as unknown as Record<string, unknown>,
       page,
+      hasOverride ? overrideTeamIds : null,
     ),
     queryFn: async (): Promise<DecisionsInboxResult> => {
       if (!buSupabase || !currentBu?.id || !profileId) {
@@ -172,12 +184,18 @@ export function useDecisionsInbox({
       if (filters.dateTo) rpcFilters.date_to = filters.dateTo;
       if (filters.search) rpcFilters.search = filters.search;
 
+      const teamIdsForRpc = hasOverride
+        ? overrideTeamIds
+        : effectiveScope === 'team' || effectiveScope === 'area'
+          ? scopeCtx?.managedTeamIds ?? []
+          : [];
+
       const { data, error } = await (buSupabase as any).rpc('rpc_decisions_inbox', {
         p_bu_id: currentBu.id,
         p_user_profile_id: profileId,
-        p_scope: scope,
-        p_team_ids: scope === 'team' || scope === 'area' ? scopeCtx?.managedTeamIds ?? [] : [],
-        p_area_ids: scope === 'area' ? scopeCtx?.managedAreaIds ?? [] : [],
+        p_scope: effectiveScope,
+        p_team_ids: teamIdsForRpc,
+        p_area_ids: effectiveScope === 'area' ? scopeCtx?.managedAreaIds ?? [] : [],
         p_filters: rpcFilters,
         p_limit: pageSize,
         p_offset: (page - 1) * pageSize,

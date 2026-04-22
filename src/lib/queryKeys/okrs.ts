@@ -338,7 +338,8 @@ export const okrsKeys = {
     scope: string,
     filters?: Record<string, unknown> | null,
     page?: number,
-  ) => ['okr-decisions-inbox', buId, profileId, scope, filters ?? null, page ?? 1] as const,
+    overrideTeamIds?: string[] | null,
+  ) => ['okr-decisions-inbox', buId, profileId, scope, filters ?? null, page ?? 1, overrideTeamIds ?? null] as const,
   decisionsScopeContext: (buId: string | null, profileId: string | null) =>
     ['okr-decisions-scope-context', buId, profileId] as const,
   carryOverDecisions: (
