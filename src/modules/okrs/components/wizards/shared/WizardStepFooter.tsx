@@ -96,19 +96,20 @@ export function WizardStepFooter({
   
   return (
     <div className={cn(
-      'shrink-0 px-6 py-4 border-t bg-background/95 backdrop-blur',
-      'flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 min-w-0 overflow-x-hidden',
+      'shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t bg-background/95 backdrop-blur',
+      'flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 sm:gap-3 min-w-0 overflow-x-hidden',
+      'pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-4',
       className
     )}>
       {/* Left side */}
       <div className="flex items-center gap-2 min-w-0 max-w-full flex-wrap">
         {leftContent ?? (
           showBack && onBack && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={onBack}
               disabled={backDisabled}
-              className="min-w-0 max-w-full"
+              className="min-w-0 max-w-full w-full sm:w-auto h-11 sm:h-10"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               <span className="truncate">{backLabel}</span>
@@ -116,20 +117,20 @@ export function WizardStepFooter({
           )
         )}
       </div>
-      
+
       {/* Right side */}
       <div className="flex items-center gap-2 min-w-0 max-w-full flex-wrap sm:justify-end sm:ml-auto">
         {showSkip && onSkip && (
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={onSkip}
-            className="text-muted-foreground min-w-0 max-w-full"
+            className="text-muted-foreground min-w-0 max-w-full w-full sm:w-auto h-11 sm:h-10"
           >
             <SkipForward className="h-4 w-4 mr-1" />
             <span className="truncate">{skipLabel}</span>
           </Button>
         )}
-        
+
         {rightContent ?? (
           !hidePrimary && onPrimary && (
             <Button
@@ -137,7 +138,7 @@ export function WizardStepFooter({
               disabled={primaryDisabled || primaryLoading}
               isLoading={primaryLoading}
               className={cn(
-                'min-w-0 max-w-full',
+                'min-w-0 max-w-full w-full sm:w-auto h-11 sm:h-10',
                 primaryVariant === 'success' && 'bg-success text-success-foreground hover:bg-success/90'
               )}
             >

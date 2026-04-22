@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Plus, ChevronDown, Lightbulb, Target, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { DecisionCard } from './DecisionCard';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
@@ -49,7 +50,10 @@ export function InlineDecisionInput({
   sourceStep,
   placeholder = 'Registrar decisão, ajuste de foco ou próximo passo...',
 }: InlineDecisionInputProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const isMobile = useIsMobile();
+  // Mobile: collapsed por padrão para liberar viewport.
+  // Desktop: aberto por padrão (comportamento original).
+  const [isOpen, setIsOpen] = useState(!isMobile);
   const [text, setText] = useState('');
   const [category, setCategory] = useState<TeamCheckinDecision['category']>('decision');
 
@@ -84,7 +88,7 @@ export function InlineDecisionInput({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-between text-muted-foreground hover:text-foreground min-w-0"
+          className="w-full justify-between text-muted-foreground hover:text-foreground min-w-0 px-3 sm:px-4"
         >
           <span className="flex items-center gap-2 text-xs min-w-0 flex-1">
             <Lightbulb className="h-3.5 w-3.5 shrink-0" />
@@ -105,7 +109,7 @@ export function InlineDecisionInput({
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3">
           {/* Category selector */}
           <div className="flex flex-wrap gap-1.5 min-w-0">
             {(Object.entries(CATEGORY_CONFIG) as [TeamCheckinDecision['category'], typeof CATEGORY_CONFIG[keyof typeof CATEGORY_CONFIG]][]).map(([cat, config]) => (
@@ -136,17 +140,19 @@ export function InlineDecisionInput({
             <Button
               size="sm"
               variant="outline"
-              className="h-8 w-8 p-0 flex-shrink-0 self-end"
+              className="h-9 w-9 sm:h-8 sm:w-8 p-0 flex-shrink-0 self-end"
               onClick={handleAdd}
               disabled={!text.trim()}
+              aria-label="Adicionar decisão"
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          {/* Step decisions list — using DecisionCard with owner/deadline */}
+          {/* Step decisions list — using DecisionCard with owner/deadline.
+              max-h reduzido em mobile para evitar overlap com teclado virtual. */}
           {stepDecisions.length > 0 && (
-            <ScrollArea className="max-h-[40vh]">
+            <ScrollArea className="max-h-[28vh] sm:max-h-[40vh]">
               <div className="space-y-2 pr-2">
                 {stepDecisions.map((decision) => (
                   <DecisionCard

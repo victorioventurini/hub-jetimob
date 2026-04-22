@@ -106,29 +106,29 @@ export function WizardStepHeader({
   
   return (
     <div className={cn(
-      'px-6 py-4 border-b',
+      'px-4 sm:px-6 py-3 sm:py-4 border-b',
       `bg-gradient-to-r ${styles.gradient}`,
       className
     )}>
-      <div className="flex items-center justify-between gap-3 min-w-0">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className={cn('p-2 rounded-lg shrink-0', styles.iconBg)}>
-            <Icon className={cn('h-5 w-5', styles.iconColor)} />
+      <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className={cn('p-1.5 sm:p-2 rounded-lg shrink-0', styles.iconBg)}>
+            <Icon className={cn('h-4 w-4 sm:h-5 sm:w-5', styles.iconColor)} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
-              <h3 className="font-semibold text-lg truncate">{title}</h3>
+              <h3 className="font-semibold text-base sm:text-lg truncate">{title}</h3>
               {tooltip && <WizardTooltipInline tooltipKey={tooltip} />}
               {badge && (
                 <Badge variant={badgeVariant} className="shrink-0">{badge}</Badge>
               )}
             </div>
             {description && (
-              <p className="text-sm text-muted-foreground truncate">{description}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:truncate">{description}</p>
             )}
           </div>
         </div>
-        
+
         {rightContent && (
           <div className="flex items-center gap-2 shrink-0">
             {rightContent}
