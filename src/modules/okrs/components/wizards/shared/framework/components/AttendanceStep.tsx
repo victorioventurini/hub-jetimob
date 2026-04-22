@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   useSessionAttendance,
   type UseSessionAttendanceArgs,
-} from '../../hooks/useSessionAttendance';
+} from '@/modules/okrs/components/wizards/shared/framework/hooks/useSessionAttendance';
 import { AttendanceCheckboxList } from './attendance/AttendanceCheckboxList';
 import { AttendanceCounter } from './attendance/AttendanceCounter';
 import { AttendanceSummary } from './attendance/AttendanceSummary';
