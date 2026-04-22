@@ -25,7 +25,27 @@ export interface VicInvokeOptions {
    * Useful for optional/"nice-to-have" AI enrichments where fallback exists.
    */
   silent?: boolean;
+  /**
+   * If set, the invoke promise resolves to `fallback` (or rejects with a
+   * timeout error if no fallback) when the AI call exceeds `timeoutMs`.
+   * Prevents wizards/UI from hanging indefinitely on slow agents.
+   */
+  timeoutMs?: number;
+  /**
+   * Value returned if the call fails OR exceeds `timeoutMs`.
+   * When provided, `invoke` ALWAYS resolves (never throws) — the caller
+   * is responsible for treating the fallback as a soft-failure signal.
+   */
+  fallback?: VicInvokeResponse;
 }
+
+/**
+ * Default timeout for AI calls inside wizards / non-critical UI flows.
+ * Hard cap that protects user from hanging on slow agents (cold starts,
+ * upstream LLM lag, etc). Critical "fire and forget" calls can opt out by
+ * passing `timeoutMs: 0`.
+ */
+export const DEFAULT_VIC_TIMEOUT_MS = 12_000;
 
 export function useVicAgent(options?: UseVicAgentOptions) {
   const { currentBu, currentBuId } = useBu();
