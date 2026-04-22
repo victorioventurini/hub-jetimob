@@ -39,6 +39,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveCycle } from '@/modules/okrs/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 
 // ============================================================
 // TYPES
@@ -288,7 +289,7 @@ function useQbrStatus() {
   const { activeQuarterlyCycle: quarterlyCycle } = useActiveCycle();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['qbr', 'cycle-status-wizards', quarterlyCycle?.id],
+    queryKey: qbrKeys.cycleStatusWizards(quarterlyCycle?.id),
     enabled: !!supabase && !!quarterlyCycle?.id,
     queryFn: async () => {
       const { data: row, error } = await supabase
