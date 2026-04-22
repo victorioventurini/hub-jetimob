@@ -134,7 +134,7 @@ function getNthWeekdayOfMonth(
   ordinal: number
 ): Date | null {
   const firstOfMonth = new Date(Date.UTC(year, month, 1));
-  let firstDow = firstOfMonth.getUTCDay();
+  const firstDow = firstOfMonth.getUTCDay();
   
   // Days until the first occurrence of dayOfWeek
   let diff = dayOfWeek - firstDow;

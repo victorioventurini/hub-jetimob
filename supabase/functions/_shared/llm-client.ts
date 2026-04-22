@@ -369,17 +369,18 @@ export function llmStream(
     onComplete?: (totalTokens: number, latencyMs: number) => Promise<void>;
   }
 ): Promise<Response> {
-  return new Promise(async (resolve, reject) => {
-    const startTime = Date.now();
+  const startTime = Date.now();
 
-    const payload = {
-      model: config.model,
-      messages,
-      max_tokens: options?.maxTokens ?? config.maxTokens,
-      temperature: options?.temperature ?? config.temperature,
-      stream: true,
-    };
+  const payload = {
+    model: config.model,
+    messages,
+    max_tokens: options?.maxTokens ?? config.maxTokens,
+    temperature: options?.temperature ?? config.temperature,
+    stream: true,
+  };
 
+  return new Promise<Response>((resolve, reject) => {
+    (async () => {
     try {
       const response = await fetch(config.apiUrl, {
         method: "POST",

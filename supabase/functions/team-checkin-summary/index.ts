@@ -741,7 +741,7 @@ Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
   ]);
 
   // Extract results with fallbacks
-  let sections: AgentSections = {
+  const sections: AgentSections = {
     opening_text: 'Este é o resumo do check-in mais recente do seu time.',
     objectives_summary: 'Sem objetivos em destaque neste ciclo.',
     krs_highlight: '',

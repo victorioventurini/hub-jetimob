@@ -383,7 +383,7 @@ export async function queryKpis(
     return "Nenhum KPI encontrado com os filtros especificados.";
   }
 
-  let valuesMap: Record<string, any[]> = {};
+  const valuesMap: Record<string, any[]> = {};
   
   if (includeValues) {
     const kpiIds = kpis.map((k: any) => k.id);
@@ -615,20 +615,21 @@ export async function getHubContextData(
 
   for (const table of config.tables) {
     switch (table) {
-      case "okrs":
+      case "okrs": {
         const okrFilters = { ...config.filters?.okrs, limit: maxRows };
         results.push(await queryOkrs(supabase, buId, okrFilters));
         break;
-      
-      case "kpis":
+      }
+      case "kpis": {
         const kpiFilters = { ...config.filters?.kpis, limit: maxRows };
         results.push(await queryKpis(supabase, buId, kpiFilters));
         break;
-      
-      case "teams":
+      }
+      case "teams": {
         const teamFilters = { ...config.filters?.teams, limit: maxRows };
         results.push(await queryTeams(supabase, buId, teamFilters));
         break;
+      }
     }
   }
 

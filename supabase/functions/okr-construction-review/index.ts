@@ -182,8 +182,8 @@ function sanitizeLooseText(value: string | null | undefined): string {
     .replace(/\\n/g, ' ')
     .replace(/\r?\n+/g, ' ')
     .replace(/\s+/g, ' ')
-    .replace(/^[\s`"'{}\[\](),:]+/, '')
-    .replace(/[\s`"'{}\[\](),:]+$/, '')
+    .replace(/^[\s`"'{}[\](),:]+/, '')
+    .replace(/[\s`"'{}[\](),:]+$/, '')
     .trim();
 }
 
@@ -313,7 +313,7 @@ function extractNumberField(source: string, field: string): number | null {
 function parseLooseStringArray(rawValue: string | null | undefined): string[] {
   if (!rawValue) return [];
 
-  return Array.from(rawValue.matchAll(/"([^\"]+)"/g))
+  return Array.from(rawValue.matchAll(/"([^"]+)"/g))
     .map((match) => sanitizeNarrativeText(match[1]))
     .filter((item) => isMeaningfulNarrativeText(item))
     .slice(0, 5);
@@ -466,7 +466,7 @@ function extractFreeTextSummary(text: string, fallback: string): string {
     text
       .replace(/```json|```/g, ' ')
       .replace(/"[^"]+"\s*:/g, ' ')
-      .replace(/[{}\[\]]/g, ' ')
+      .replace(/[{}[\]]/g, ' ')
       .slice(0, 320)
   );
 
@@ -507,12 +507,12 @@ function createTextBasedAssessment(text: string, keyResults: KeyResult[]): AiAss
   }
 
   const improvements: string[] = [];
-  const improvementPatterns = text.match(/(?:\-|melhoria|sugestão|melhorar)[:\s]*([^\n]+)/gi);
+  const improvementPatterns = text.match(/(?:-|melhoria|sugestão|melhorar)[:\s]*([^\n]+)/gi);
   if (improvementPatterns) {
     improvements.push(
       ...improvementPatterns
         .slice(0, 3)
-        .map((item) => sanitizeNarrativeText(item.replace(/^(?:\-|melhoria|sugestão|melhorar)[:\s]*/i, '')))
+        .map((item) => sanitizeNarrativeText(item.replace(/^(?:-|melhoria|sugestão|melhorar)[:\s]*/i, '')))
         .filter((item) => isMeaningfulNarrativeText(item))
     );
   }

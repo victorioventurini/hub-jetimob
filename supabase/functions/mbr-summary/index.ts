@@ -265,7 +265,7 @@ Linguagem executiva, sem burocracia.`,
       buId, requestId),
   ]);
 
-  let sections: MbrSections = {
+  const sections: MbrSections = {
     opening_text: 'Este é o resumo do Monthly Business Review mais recente.',
     critical_kpis_summary: 'Sem KPIs críticos identificados.',
     strategic_decisions: 'Sem decisões registradas.',

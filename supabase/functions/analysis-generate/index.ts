@@ -215,7 +215,7 @@ async function collectOkrs(svc: any, buId: string, scope: GenerateRequest["scope
 }
 
 async function collectProjects(svc: any, buId: string, win: { from: string; to: string }, scope: GenerateRequest["scope"]) {
-  let q = svc
+  const q = svc
     .from("projects")
     .select("id, name, description, status, start_date, due_date, owner_id")
     .eq("bu_id", buId)
@@ -223,7 +223,7 @@ async function collectProjects(svc: any, buId: string, win: { from: string; to: 
     .gte("created_at", win.from);
   const { data: projects } = await q.limit(80);
 
-  let initiativesQ = svc
+  const initiativesQ = svc
     .from("okr_initiatives")
     .select("id, name, status, owner_user_id, kr_id, expected_end_date, progress")
     .eq("bu_id", buId)
@@ -235,7 +235,7 @@ async function collectProjects(svc: any, buId: string, win: { from: string; to: 
 }
 
 async function collectCheckins(svc: any, buId: string, win: { from: string; to: string }, scope: GenerateRequest["scope"]) {
-  let q = svc
+  const q = svc
     .from("okr_checkins")
     .select("id, kr_id, current_value, previous_value, confidence, blockers, comments, created_at, user_id, team_id")
     .eq("bu_id", buId)
@@ -604,9 +604,9 @@ serve(async (req) => {
     })();
 
     // Try background processing
-    // @ts-ignore EdgeRuntime is provided in Supabase Edge runtime
+    // @ts-expect-error EdgeRuntime is provided in Supabase Edge runtime
     if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
-      // @ts-ignore
+      // @ts-expect-error EdgeRuntime is provided in Supabase Edge runtime
       (EdgeRuntime as any).waitUntil(work);
     } else {
       // Fallback: don't await — fire-and-forget (avoid blocking response)
