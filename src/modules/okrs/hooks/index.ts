@@ -189,7 +189,13 @@ export { useCanEditInitiative } from './useCanEditInitiative';
 export { useCanEditTeamObjective } from './useCanEditTeamObjective';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
-export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';
+export {
+  useTeamPreviousCycleAnalysis,
+  type PreviousCycleObjective,
+  type AbandonedKr,
+  type KpiTrend,
+  type PreviousCycleAnalysis,
+} from './useTeamPreviousCycleAnalysis';
 export { useManagersPanorama, useCrossDependencies } from './useManagersPanorama';
 export { useTeamKeyResult, type TeamKeyResultData } from './useTeamKeyResult';
 
