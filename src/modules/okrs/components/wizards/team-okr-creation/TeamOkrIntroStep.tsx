@@ -80,26 +80,6 @@ export function TeamOkrIntroStep({
     if (hasFetched.current) return;
     hasFetched.current = true;
 
-    // Helper: race a promise against a timeout, returning fallback on expire/erro.
-    const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
-      return new Promise((resolve) => {
-        const timer = setTimeout(() => {
-          console.warn(`[TeamOkrIntroStep] IA call timed out after ${ms}ms`);
-          resolve(fallback);
-        }, ms);
-        promise
-          .then((value) => {
-            clearTimeout(timer);
-            resolve(value);
-          })
-          .catch((error) => {
-            clearTimeout(timer);
-            console.warn('[TeamOkrIntroStep] IA call failed, using fallback:', error);
-            resolve(fallback);
-          });
-      });
-    };
-
     const fetchMessages = async () => {
       setIsLoading(true);
 
@@ -108,26 +88,27 @@ export function TeamOkrIntroStep({
       setGreeting(fallbackGreeting);
       setMessage(fallbackMessage);
 
-      // Disparar ambas em paralelo com timeout individual de 10s.
+      // Resiliência centralizada no useVicAgent: timeout + fallback opt-in.
+      // Sem fallback aqui — só sobrescrevemos se a IA realmente responder.
       const greetingPromise = invokeVic(
         'validador-metodologico-okrs',
         'okr-create-objective',
         { type: 'wizard-intro', additionalData: { userName, teamName } },
         'Gere uma saudação breve e calorosa para um líder que vai criar OKRs.',
-        { silent: true }
-      ).then((r) => r?.response).catch(() => null);
+        { silent: true, timeoutMs: 10_000 }
+      ).then((r) => r?.response ?? null).catch(() => null);
 
       const messagePromise = invokeVic(
         'cultura',
         'dashboard-culture',
         { type: 'wizard-intro', additionalData: { teamName } },
         'Gere uma mensagem curta (2-3 frases) sobre o propósito de OKRs, enfatizando que servem para fazer as coisas certas, não mais coisas.',
-        { silent: true }
-      ).then((r) => r?.response).catch(() => null);
+        { silent: true, timeoutMs: 10_000 }
+      ).then((r) => r?.response ?? null).catch(() => null);
 
       const [greetingResult, messageResult] = await Promise.all([
-        withTimeout(greetingPromise, 10000, null),
-        withTimeout(messagePromise, 10000, null),
+        greetingPromise,
+        messagePromise,
       ]);
 
       if (greetingResult) setGreeting(greetingResult);
