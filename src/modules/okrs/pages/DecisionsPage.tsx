@@ -20,7 +20,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader } from '@/components/ui/page-header';
 import { ListPageFilters } from '@/components/ui/list-page-filters';
 import { ViewOptionsBar } from '@/components/ui/view-options-bar';
-import { Lightbulb, CalendarIcon, Inbox, Users, ExternalLink } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Lightbulb, CalendarIcon, Users, ExternalLink } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
@@ -77,7 +86,11 @@ export default function DecisionsPage() {
   usePageTitle('Decisões');
 
   // ── URL state (filtros + paginação) ──
-  const scopeState = useUrlState<string>({ key: 'scope', defaultValue: 'self', parse: parsers.string });
+  const scopeState = useUrlState<DecisionsInboxScope>({
+    key: 'scope',
+    defaultValue: 'self',
+    parse: parsers.string as (v: string) => DecisionsInboxScope,
+  });
   const statusState = useUrlState<string>({ key: 'status', defaultValue: 'pending', parse: parsers.string });
   const categoryState = useUrlState<string>({ key: 'category', defaultValue: 'all', parse: parsers.string });
   const wizardState = useUrlState<string>({ key: 'ritual', defaultValue: 'all', parse: parsers.string });
@@ -265,6 +278,7 @@ export default function DecisionsPage() {
           title="Decisões e Notas"
           description={'Acompanhe decisões registradas nos ritos. Use o filtro de Time para ver decisões de qualquer time (e seus subtimes). Os escopos "Meu time" e "Toda a BU" só aparecem para líderes e administradores, respectivamente.'}
           breadcrumbs={[
+            { label: 'OKRs', href: '/okrs' },
             { label: 'Rituais', href: '/rituals' },
             { label: 'Decisões' },
           ]}
@@ -380,12 +394,12 @@ export default function DecisionsPage() {
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
           </div>
         ) : items.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Inbox className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Nenhuma decisão encontrada com os filtros atuais.</p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            variant="filter"
+            description="Nenhuma decisão encontrada com os filtros atuais. Tente ajustar ou remover alguns filtros."
+            actionLabel={activeFilters.length > 0 ? 'Limpar filtros' : undefined}
+            onAction={activeFilters.length > 0 ? handleClearAll : undefined}
+          />
         ) : (
           <div className="space-y-3">
             {items.map((item) => {
@@ -448,27 +462,35 @@ export default function DecisionsPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pageState.value <= 1}
-              onClick={() => pageState.set(pageState.value - 1)}
-            >
-              Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Página {pageState.value} de {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pageState.value >= totalPages}
-              onClick={() => pageState.set(pageState.value + 1)}
-            >
-              Próxima
-            </Button>
-          </div>
+          <Pagination className="pt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  aria-label="Página anterior"
+                  aria-disabled={pageState.value <= 1}
+                  className={pageState.value <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  onClick={() => {
+                    if (pageState.value > 1) pageState.set(pageState.value - 1);
+                  }}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink isActive aria-current="page">
+                  {pageState.value} / {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  aria-label="Próxima página"
+                  aria-disabled={pageState.value >= totalPages}
+                  className={pageState.value >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  onClick={() => {
+                    if (pageState.value < totalPages) pageState.set(pageState.value + 1);
+                  }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
       </div>
     </HubLayout>
