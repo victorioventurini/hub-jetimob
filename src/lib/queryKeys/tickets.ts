@@ -64,4 +64,8 @@ export const ticketsKeys = {
   // Ticket viewers and mentions
   viewers: (ticketId: string | null) =>
     ['ticket-viewers', ticketId] as const,
+
+  // External company fallback contacts (used when ticket lacks an explicit contact)
+  companyFallbackContacts: (buId: string | null, externalCompanyId: string | null) =>
+    ['company-fallback-contacts', buId, externalCompanyId] as const,
 } as const;
