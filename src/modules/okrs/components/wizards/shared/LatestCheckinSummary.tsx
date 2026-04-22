@@ -10,7 +10,7 @@ import { AlertTriangle, ChevronDown, MessageSquare, User } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import type { LatestCheckinData } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { LatestCheckinData } from '@/modules/okrs/hooks';
 
 // ============================================================
 // TYPES

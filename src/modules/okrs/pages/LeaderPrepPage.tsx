@@ -53,7 +53,7 @@ import {
 } from '@/modules/okrs/components/wizards/shared/framework';
 
 import type { KrAction, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 
 // ============================================================
 // TYPES

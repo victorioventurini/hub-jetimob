@@ -38,14 +38,14 @@ import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { KrStateInline } from '../../insights';
 import { calculateKrState } from '../../../hooks/useKrStateInsights';
 import { calculateProgress } from '../../../types';
-import { useAllOrgObjectivesView } from '../../../hooks/queries/useOrgObjectiveViewQueries';
+import { useAllOrgObjectivesView } from '../../../hooks/queries';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { useQuery } from '@tanstack/react-query';
 import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { differenceInDays, parseISO } from 'date-fns';
 import { LoadingState } from '@/components/ui/loading-state';
-import type { OrgKrWithTeamKrs, TeamKrLinked } from '../../../hooks/queries/aggregateTypes';
+import type { OrgKrWithTeamKrs, TeamKrLinked, OrgObjectiveWithKrs } from '../../../hooks/queries';
 
 // ============================================================
 // TYPES
@@ -156,7 +156,7 @@ function OrgKrCard({ orgKr, showTeamKrs }: { orgKr: OrgKrWithTeamKrs; showTeamKr
   );
 }
 
-function OrgObjectiveCard({ objective, showTeamKrs }: { objective: import('../../../hooks/queries/aggregateTypes').OrgObjectiveWithKrs; showTeamKrs: boolean }) {
+function OrgObjectiveCard({ objective, showTeamKrs }: { objective: OrgObjectiveWithKrs; showTeamKrs: boolean }) {
   return (
     <Collapsible defaultOpen>
       <div className="border rounded-lg overflow-hidden">

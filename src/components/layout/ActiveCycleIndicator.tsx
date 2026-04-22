@@ -9,8 +9,8 @@ import { Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useActiveCycle } from '@/modules/okrs/hooks/useActiveCycle';
-import { useCycleProgress } from '@/modules/okrs/hooks/useCycleData';
+import { useActiveCycle } from '@/modules/okrs/hooks';
+import { useCycleProgress } from '@/modules/okrs/hooks';
 import { format, parseISO, differenceInWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

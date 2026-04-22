@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
 // ============================================================

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useHeaderCycleProgress, type HeaderQuarterProgress } from "@/modules/okrs/hooks/useHeaderCycleProgress";
+import { useHeaderCycleProgress, type HeaderQuarterProgress } from "@/modules/okrs/hooks";
 
 type CycleProgressHeaderVariant = "compact" | "card" | "segmented";
 

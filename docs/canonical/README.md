@@ -25,6 +25,7 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 | `SCHEMA_QUICK_REFERENCE.md` | Referência rápida para validação de schema | v1.0.0 |
 | `UI_COMPONENTS_REGISTRY.md` | Registro de componentes UI canônicos | v1.7.0 |
 | `RESPONSIBILITY_MIGRATION_POLICY.md` | Política de migração de responsabilidades | v1.0.0 |
+| `HOOKS_BARREL_STANDARD.md` | Regras de barrels para `hooks/` e sub-barrels (`queries/`) | v1.0.0 |
 
 ## Regras de Manutenção
 

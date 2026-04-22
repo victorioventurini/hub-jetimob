@@ -25,7 +25,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useIdentity } from '@/hooks/useIdentity';
-import { useCanResolveDecision } from '@/modules/okrs/hooks/useCanResolveDecision';
+import { useCanResolveDecision } from '@/modules/okrs/hooks';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import type { TeamCheckinDecision, DecisionThreadMessage } from '@/modules/okrs/types/wizard';
 

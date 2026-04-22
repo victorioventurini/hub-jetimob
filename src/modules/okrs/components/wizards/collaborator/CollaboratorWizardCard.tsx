@@ -16,7 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePendingCheckins } from '@/modules/okrs/hooks/usePendingCheckins';
+import { usePendingCheckins } from '@/modules/okrs/hooks';
 
 export interface CollaboratorWizardCardProps {
   className?: string;

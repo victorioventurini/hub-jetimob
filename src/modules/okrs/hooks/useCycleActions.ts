@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
-import { useSyncRitualCalendar } from '@/modules/okrs/hooks/useSyncRitualCalendar';
+import { useSyncRitualCalendar } from './useSyncRitualCalendar';
 import { toast } from 'sonner';
 
 export function useCycleActions() {

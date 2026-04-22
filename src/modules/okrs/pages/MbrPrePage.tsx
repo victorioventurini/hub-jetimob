@@ -25,8 +25,8 @@ import {
   useGenericWizardDraft,
   useActiveCycle,
 } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
-import { useCompletedSessionForCycle } from '@/modules/okrs/hooks/useCompletedSessionForCycle';
+import { useRitualAvailability } from '@/modules/okrs/hooks';
+import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { mbrKeys } from '@/lib/queryKeys/okrs';
 import { useBu } from '@/contexts/BuContext';
@@ -49,7 +49,7 @@ import { MbrPreSummary } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreS
 
 import {
   calculateKrState,
-} from '@/modules/okrs/hooks/useKrStateInsights';
+} from '@/modules/okrs/hooks';
 
 import type {
   MbrPreStep,

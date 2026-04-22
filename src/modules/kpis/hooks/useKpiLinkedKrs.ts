@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { kpisKeys } from '@/lib/queryKeys';
 import { calculateProgress } from '@/modules/okrs/utils/progressCalculation';
-import { mapRagToCalculated, type OkrCalculatedStatus } from '@/modules/okrs/hooks/useOkrStatus';
+import { mapRagToCalculated, type OkrCalculatedStatus } from '@/modules/okrs/hooks';
 import type { OkrMetricRole, OkrDirection, OkrRagStatus } from '@/modules/okrs/types';
 
 // Explicit fields for each query step

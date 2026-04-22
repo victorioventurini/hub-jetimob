@@ -8,7 +8,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarClock, CalendarX, CalendarOff, ArrowLeft, ArrowRight, Info } from 'lucide-react';
-import type { RitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
+import type { RitualAvailability } from '@/modules/okrs/hooks';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 
 // ============================================================

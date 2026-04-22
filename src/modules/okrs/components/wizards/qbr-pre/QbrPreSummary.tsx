@@ -15,7 +15,7 @@ import {
   WizardLastStepFooter,
   WizardStepScaffold,
 } from '../shared';
-import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks/useKrStateInsights';
+import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks';
 import { normalizeProposedOkrs, type QbrPreDraftData, type TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================

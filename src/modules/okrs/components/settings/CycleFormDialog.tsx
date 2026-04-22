@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useSyncRitualCalendar } from "@/modules/okrs/hooks/useSyncRitualCalendar";
+import { useSyncRitualCalendar } from "@/modules/okrs/hooks";
 import { DIALOG_SIZES } from "@/lib/dialog-sizes";
 import {
   Dialog,

@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { useGenericWizardDraft, useActiveCycle } from '@/modules/okrs/hooks';
-import { useRitualAvailability } from '@/modules/okrs/hooks/useRitualAvailability';
+import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -35,7 +35,7 @@ import {
   type QbrCLevelSnapshot,
 } from '@/modules/okrs/types/wizard';
 import type { QbrPostMinutesSummaryData } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
-import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 
 const WIZARD_STEPS = [
   { id: 'okr-promotion' as const, label: 'Promoção de OKRs', description: 'Criar OKRs aprovados' },

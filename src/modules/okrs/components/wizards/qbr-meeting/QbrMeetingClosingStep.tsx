@@ -29,7 +29,7 @@ import type {
   QbrMeetingSnapshot,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
-import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 import type { TeamForReview } from './QbrMeetingOkrReviewStep';
 
 // ============================================================

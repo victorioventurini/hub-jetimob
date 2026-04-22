@@ -20,7 +20,7 @@ import { VicGeneratingCard } from '@/modules/vic';
 import { WizardStepFooter } from '../shared';
 import { VicInsightCard } from '../shared/VicInsightCard';
 import { useWizardAI, type WizardAiInsight } from '@/modules/okrs/hooks';
-import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks/useTeamPreviousCycleAnalysis';
+import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks';
 import { RAG_STATUS_COLORS, TREND_COLORS } from '@/lib/colors';
 
 // ============================================================

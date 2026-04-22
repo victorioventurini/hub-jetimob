@@ -22,7 +22,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
+import type { WizardKr } from '@/modules/okrs/hooks';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { KpiContextSection } from '@/modules/kpis/components/KpiContextSection';

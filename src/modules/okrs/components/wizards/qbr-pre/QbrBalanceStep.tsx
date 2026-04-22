@@ -20,7 +20,7 @@ import {
 import {
   KR_STATE_CONFIG,
   type KrState,
-} from '@/modules/okrs/hooks/useKrStateInsights';
+} from '@/modules/okrs/hooks';
 import { UnlinkedProjectsList } from './UnlinkedProjectsList';
 import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 

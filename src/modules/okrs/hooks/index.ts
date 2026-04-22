@@ -189,7 +189,13 @@ export { useCanEditInitiative } from './useCanEditInitiative';
 export { useCanEditTeamObjective } from './useCanEditTeamObjective';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
-export { useTeamPreviousCycleAnalysis } from './useTeamPreviousCycleAnalysis';
+export {
+  useTeamPreviousCycleAnalysis,
+  type PreviousCycleObjective,
+  type AbandonedKr,
+  type KpiTrend,
+  type PreviousCycleAnalysis,
+} from './useTeamPreviousCycleAnalysis';
 export { useManagersPanorama, useCrossDependencies } from './useManagersPanorama';
 export { useTeamKeyResult, type TeamKeyResultData } from './useTeamKeyResult';
 
@@ -266,3 +272,53 @@ export {
   type KrStateSeverity,
   type CalculateKrStateParams,
 } from './useKrStateInsights';
+
+// =========================
+// HEADER / CYCLE PROGRESS
+// =========================
+export { useHeaderCycleProgress, type HeaderQuarterProgress } from './useHeaderCycleProgress';
+
+// =========================
+// RITUALS — calendar / availability / preparation
+// =========================
+export { useSyncRitualCalendar } from './useSyncRitualCalendar';
+export { useRitualAvailability, type RitualAvailability } from './useRitualAvailability';
+export {
+  useRitualPreparationStatus,
+  type SupportedRitualType,
+  type UseRitualPreparationStatusArgs,
+  type UseRitualPreparationStatusReturn,
+} from './useRitualPreparationStatus';
+
+// =========================
+// PROPOSAL / SESSION / COMPANY OKRs
+// =========================
+export {
+  useProposalValidation,
+  type ProposalValidationInput,
+  type ProposalValidationState,
+} from './useProposalValidation';
+export {
+  useCompletedSessionForCycle,
+  type CompletedSessionData,
+} from './useCompletedSessionForCycle';
+export { useCompanyOkrs } from './useCompanyOkrs';
+
+// =========================
+// WEEKLY ritual aggregations
+// =========================
+export {
+  useWeeklyOpeningCuration,
+  type UseWeeklyOpeningCurationParams,
+  type UseWeeklyOpeningCurationReturn,
+} from './useWeeklyOpeningCuration';
+export {
+  useWeeklyPreWeeklyAggregation,
+  type WeeklyAggregationCoverage,
+  type UseWeeklyPreWeeklyAggregationReturn,
+} from './useWeeklyPreWeeklyAggregation';
+
+// =========================
+// SHARED TYPES re-exported for convenience
+// =========================
+export type { WizardKr, LatestCheckinData } from './useTeamPendingKrs';

@@ -25,7 +25,7 @@ import { PreparationStatusCard } from './PreparationStatusCard';
 import {
   useRitualPreparationStatus,
   type SupportedRitualType,
-} from '@/modules/okrs/hooks/useRitualPreparationStatus';
+} from '@/modules/okrs/hooks';
 
 export interface RitualPreparationStatusProps {
   ritualType: SupportedRitualType;
