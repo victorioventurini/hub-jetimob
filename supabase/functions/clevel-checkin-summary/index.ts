@@ -267,7 +267,7 @@ Linguagem executiva, sem burocracia. Tom de liderança sênior.`,
       buId, requestId),
   ]);
 
-  let sections: CLevelSections = {
+  const sections: CLevelSections = {
     opening_text: 'Este é o resumo do check-in estratégico C-Level mais recente.',
     okrs_analysis: 'Sem análise de OKRs disponível.',
     kpis_analysis: 'Sem KPIs em alerta.',

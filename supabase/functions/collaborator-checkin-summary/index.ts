@@ -279,7 +279,7 @@ Linguagem humana, sem burocracia. Personalize com o nome "{{user_name}}".`,
       buId, requestId),
   ]);
 
-  let sections: CollaboratorSections = {
+  const sections: CollaboratorSections = {
     opening_text: 'Este é o resumo do seu check-in semanal.',
     kr_summary: 'Sem KRs atualizados neste check-in.',
     kpi_summary: '',
