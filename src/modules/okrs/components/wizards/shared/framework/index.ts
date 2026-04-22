@@ -50,6 +50,13 @@ export type { ReflectionStepProps, ReflectionStepData } from './components/Refle
 export { InlineDecisionsSlot } from './components/_InlineDecisionsSlot';
 export type { InlineDecisionsSlotProps } from './components/_InlineDecisionsSlot';
 
+// Attendance (Onda B — registro de presença em ritos coletivos)
+export { AttendanceStep } from './components/AttendanceStep';
+export type { AttendanceStepProps } from './components/AttendanceStep';
+export { AttendanceCheckboxList } from './components/attendance/AttendanceCheckboxList';
+export { AttendanceCounter } from './components/attendance/AttendanceCounter';
+export { AttendanceSummary } from './components/attendance/AttendanceSummary';
+
 // Config
 export { STEP_DEFINITIONS, getStepDefinitions } from './config/stepDefinitions';
 export {
