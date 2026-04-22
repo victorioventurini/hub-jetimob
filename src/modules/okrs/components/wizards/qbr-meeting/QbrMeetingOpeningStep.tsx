@@ -31,7 +31,7 @@ import {
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import type { QbrCLevelSnapshot, MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
-import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
 // TYPES

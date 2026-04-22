@@ -35,7 +35,7 @@ import {
   type QbrCLevelSnapshot,
 } from '@/modules/okrs/types/wizard';
 import type { QbrPostMinutesSummaryData } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
-import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries/aggregateTypes';
+import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 
 const WIZARD_STEPS = [
   { id: 'okr-promotion' as const, label: 'Promoção de OKRs', description: 'Criar OKRs aprovados' },
