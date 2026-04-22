@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ShieldX, ArrowLeft, AlertCircle } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
+import { logger } from "@/lib/logger";
 
 type EntityType = 
   | "asset" 
@@ -283,7 +284,7 @@ export default function ResolveContextPage() {
         // Fallback: check if user is an external partner with access to this BU
         if (!hasAccess && externalBuIds.length > 0) {
           hasAccess = externalBuIds.includes(buId);
-          console.log("[ResolveContext] External partner access check:", { buId, hasAccess, externalBuIds });
+          logger.debug("[ResolveContext] External partner access check:", { buId, hasAccess, externalBuIds });
         }
         
         if (!hasAccess) {

@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Button } from "@/components/ui/button";
 import { initSessionContext } from "@/lib/analytics";
 import { normalizeAuthNext } from "@/lib/authRedirect";
+import { logger } from "@/lib/logger";
 
 type AuthErrorKind = "expired" | "network" | "generic";
 
@@ -88,7 +89,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
         const type = searchParams.get("type");
 
         if (tokenHash && type === "magiclink") {
-          console.log("[AuthCallback] Processing magic link with token_hash");
+          logger.debug("[AuthCallback] Processing magic link with token_hash");
 
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
@@ -105,7 +106,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
           }
 
           if (data.session) {
-            console.log("[AuthCallback] Session established via verifyOtp:", {
+            logger.debug("[AuthCallback] Session established via verifyOtp:", {
               userId: data.session.user.id,
               email: data.session.user.email,
               expiresAt: data.session.expires_at,
@@ -132,7 +133,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
                 checkData.session?.user?.id === data.session.user.id &&
                 hasStoredToken
               ) {
-                console.log(
+                logger.debug(
                   "[AuthCallback] Session confirmed in SDK and localStorage after",
                   attempts + 1,
                   "checks"
@@ -155,7 +156,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
               await new Promise((resolve) => setTimeout(resolve, 200));
             }
 
-            console.log("[AuthCallback] Redirecting to:", next);
+            logger.debug("[AuthCallback] Redirecting to:", next);
             if (mounted) navigate(next, { replace: true });
             return;
           }
@@ -176,7 +177,7 @@ const AuthCallback = forwardRef<HTMLDivElement>(function AuthCallback(_props, _r
         }
 
         if (session) {
-          console.log("[AuthCallback] Existing session found, redirecting to:", next);
+          logger.debug("[AuthCallback] Existing session found, redirecting to:", next);
           if (mounted) navigate(next, { replace: true });
           return;
         }

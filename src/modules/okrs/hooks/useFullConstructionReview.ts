@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { logger } from "@/lib/logger";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useCycle } from "./useCycleData";
 import { 

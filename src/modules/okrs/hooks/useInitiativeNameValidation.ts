@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { useVicAgent, useVicEnabled } from '@/modules/vic/hooks';
 import { tryParseAiJson } from '@/lib/aiResponseParser';
+import { logger } from '@/lib/logger';
 
 export type InitiativeNameFeedbackType = 'warning' | 'suggestion' | 'success';
 
@@ -117,12 +118,12 @@ Responda APENAS com JSON válido, sem markdown:
           if (parsed && parsed.type && parsed.message) {
             setFeedback(parsed);
           } else {
-            console.debug('[useInitiativeNameValidation] Failed to parse AI response');
+            logger.debug('[useInitiativeNameValidation] Failed to parse AI response');
           }
         }
       } catch (error) {
         // Validação falhou silenciosamente - não bloqueia o usuário
-        console.debug('[useInitiativeNameValidation] Validation failed:', error);
+        logger.debug('[useInitiativeNameValidation] Validation failed:', error);
       } finally {
         if (!cancelled) {
           setIsValidating(false);
