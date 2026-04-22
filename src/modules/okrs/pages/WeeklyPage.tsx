@@ -110,6 +110,12 @@ export default function WeeklyPage() {
     defaultData: DEFAULT_DATA,
   });
 
+  // Carry-over: decisões pendentes da Weekly anterior (escopo BU, sem teamId)
+  const { data: carryOverDecisions = [] } = useCarryOverDecisions({
+    wizardType: 'weekly',
+    teamId: null,
+  });
+
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
     const currentIdx = STEP_ORDER.indexOf(draft.currentStep);
