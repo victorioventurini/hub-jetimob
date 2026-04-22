@@ -6,6 +6,7 @@
  */
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { AuthClaims } from "./types/common.ts";
 
 // ============================================================================
 // CORS Headers - Re-exported from cors.ts (single source of truth)
