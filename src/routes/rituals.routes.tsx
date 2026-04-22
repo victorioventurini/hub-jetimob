@@ -29,6 +29,7 @@ const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
 const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
 const PreWeeklyPage = lazy(() => import('@/modules/okrs/pages/PreWeeklyPage'));
 const WeeklyPage = lazy(() => import('@/modules/okrs/pages/WeeklyPage'));
+const DecisionsPage = lazy(() => import('@/modules/okrs/pages/DecisionsPage'));
 
 /**
  * Wrapper padrão para rotas de rituais
@@ -97,6 +98,10 @@ export const ritualRoutes = (
     
     {/* Histórico */}
     <Route path="/rituals/history" element={<RitualRoute><RitualHistoryPage /></RitualRoute>} />
+
+    {/* Decisões — inbox unificado */}
+    <Route path="/decisions" element={<RitualRoute><DecisionsPage /></RitualRoute>} />
+    <Route path="/rituals/decisions" element={<RedirectWithParams to="/decisions" />} />
 
     {/* ============================================================ */}
     {/* LEGACY REDIRECTS — preserva links existentes                 */}

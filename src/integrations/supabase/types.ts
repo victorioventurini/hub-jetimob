@@ -11454,6 +11454,30 @@ export type Database = {
         Returns: string
       }
       resolve_work_email: { Args: { p_auth_user_id: string }; Returns: string }
+      rpc_decisions_inbox: {
+        Args: {
+          p_area_ids?: string[]
+          p_bu_id: string
+          p_filters?: Json
+          p_limit?: number
+          p_offset?: number
+          p_scope?: string
+          p_team_ids?: string[]
+          p_user_profile_id: string
+        }
+        Returns: {
+          completed_at: string
+          cycle_id: string
+          decision: Json
+          session_id: string
+          started_by: string
+          structure_version: string
+          team_id: string
+          team_name: string
+          total_count: number
+          wizard_type: string
+        }[]
+      }
       rpc_home_dashboard_data: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: Json

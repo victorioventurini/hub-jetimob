@@ -221,6 +221,15 @@ export { useRitualHistory, useRitualDetail, useUpdateDecisionFollowUp, WIZARD_TY
 export { useCanResolveDecision } from './useCanResolveDecision';
 export { useDecisionThread } from './useDecisionThread';
 export { useMyPendingDecisions, type PendingDecisionItem } from './useMyPendingDecisions';
+export { useCarryOverDecisions } from './useCarryOverDecisions';
+export {
+  useDecisionsInbox,
+  useDecisionsScopeContext,
+  type DecisionsInboxScope,
+  type DecisionsInboxFilters,
+  type DecisionsInboxItem,
+  type DecisionsInboxResult,
+} from './useDecisionsInbox';
 export { useWizardAI } from './useWizardAI';
 export { useWizardOrchestrator } from './useWizardOrchestrator';
 export { useWizardSession } from './useWizardSession';
