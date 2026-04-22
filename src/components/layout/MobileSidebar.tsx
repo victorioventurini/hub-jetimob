@@ -81,6 +81,7 @@ const fixedItems = [
 // Itens condicionais baseados em acesso a módulos
 const conditionalItems = [
   { name: "Rituais", href: "/rituals", icon: Rocket, requiresModule: "okrs" },
+  { name: "Decisões", href: "/decisions", icon: Lightbulb, requiresModule: "okrs" },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)
@@ -91,6 +92,7 @@ const buMenuItems = [
   { name: "Tickets", href: "/tickets", icon: FileText, slug: "tickets" },
   { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
+  { name: "Events", href: "/events", icon: Calendar, slug: "events" },
 ];
 
 // Módulos globais que aparecem sempre (mesmo com BU selecionada)
