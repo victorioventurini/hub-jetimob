@@ -247,7 +247,6 @@ export default function QbrPostPage() {
     wizardType: 'qbr-post',
     teamId: null,
   });
-    });
 
   const completedSteps = useMemo(() => {
     const idx = STEP_ORDER.indexOf(draft.currentStep);
