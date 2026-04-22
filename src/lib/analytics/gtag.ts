@@ -25,8 +25,6 @@ declare global {
   }
 }
 
-const isDev = import.meta.env.DEV;
-
 // Track se GTM já foi inicializado (singleton)
 let gtmInitialized = false;
 
