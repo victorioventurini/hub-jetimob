@@ -8,6 +8,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
+import { qbrKeys } from '@/lib/queryKeys/okrs';
 import { TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -45,7 +46,7 @@ export function CriticalKpiComparison({ cycleId }: { cycleId: string | null }) {
   const { currentBuId } = useBu();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['qbr-critical-kpi-comparison', currentBuId, cycleId],
+    queryKey: qbrKeys.criticalKpiComparison(currentBuId, cycleId),
     queryFn: async () => {
       const { data: rows, error } = await supabase
         .from('kpi_values')
