@@ -20,7 +20,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader } from '@/components/ui/page-header';
 import { ListPageFilters } from '@/components/ui/list-page-filters';
 import { ViewOptionsBar } from '@/components/ui/view-options-bar';
-import { Lightbulb, CalendarIcon, Inbox, Users, ExternalLink } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Lightbulb, CalendarIcon, Users, ExternalLink } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useUrlState, parsers } from '@/shared/url';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
@@ -77,7 +86,11 @@ export default function DecisionsPage() {
   usePageTitle('Decisões');
 
   // ── URL state (filtros + paginação) ──
-  const scopeState = useUrlState<string>({ key: 'scope', defaultValue: 'self', parse: parsers.string });
+  const scopeState = useUrlState<DecisionsInboxScope>({
+    key: 'scope',
+    defaultValue: 'self',
+    parse: parsers.string as (v: string) => DecisionsInboxScope,
+  });
   const statusState = useUrlState<string>({ key: 'status', defaultValue: 'pending', parse: parsers.string });
   const categoryState = useUrlState<string>({ key: 'category', defaultValue: 'all', parse: parsers.string });
   const wizardState = useUrlState<string>({ key: 'ritual', defaultValue: 'all', parse: parsers.string });
@@ -265,6 +278,7 @@ export default function DecisionsPage() {
           title="Decisões e Notas"
           description={'Acompanhe decisões registradas nos ritos. Use o filtro de Time para ver decisões de qualquer time (e seus subtimes). Os escopos "Meu time" e "Toda a BU" só aparecem para líderes e administradores, respectivamente.'}
           breadcrumbs={[
+            { label: 'OKRs', href: '/okrs' },
             { label: 'Rituais', href: '/rituals' },
             { label: 'Decisões' },
           ]}
