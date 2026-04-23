@@ -1,72 +1,75 @@
 
 
-## Corrigir erro ao atualizar status do milestone
+## Corrigir busca de usuários nos comentários de Projetos
 
-### Diagnóstico (pré-checklist executado)
-- ✅ Inspecionei triggers de `project_milestones` via `pg_trigger`.
-- ✅ Li o source de `notify_milestone_status_changed`, `validate_project_milestone_dates`, `enforce_bu_scope` e `emit_notification_event`.
-- ✅ Validei colunas reais de `user_team_memberships`, `profiles`, `partner_contacts`, `projects`.
-- ✅ Confirmei dados do projeto `98074a55-...` (2 milestones, datas válidas, `start_date = due_date` após backfill — passa pelo `validate`).
-- ✅ Conferi que `notification_outbox` não tem nenhum registro `milestone.status.changed`, ou seja, o trigger **nunca** rodou com sucesso desde sua criação.
+### Pré-checklist (executado)
+- ✅ TCR §3.3.1 (Módulo Projetos v1.4) e `mem://features/projects/holistic-module-architecture-v2`
+- ✅ `mem://standards/bu-isolation-master` (Core: "use `currentBuId` synchronously")
+- ✅ Confirmado no DB: RPC `search_bu_users_for_mention(a0000000-...-001, 'th', 8)` retorna 8 usuários internos válidos. **O backend está funcionando**.
+- ✅ Conferido que `ProjectCommentsSection.tsx` (linha 329) JÁ usa o `MentionInput` centralizado de `@/components/mentions` com `context="internal"` — **sem duplicação, padrão correto**.
+- ✅ Conferido que `TicketMessageComposer.tsx` (linha 290) usa o mesmo componente com `context="internal+external"`.
+- ✅ Conferido que `mentions.entity_type` é `text` (não enum), então `'project_comment'` é aceito.
 
 ### Causa raiz
-O trigger `trg_notify_milestone_status_changed` (AFTER UPDATE) chama `notify_milestone_status_changed`, que faz:
+Em `src/hooks/useMentionableUsers.ts` linha 87:
 
-```sql
-JOIN public.user_team_memberships utm
-  ON utm.team_id = pt.team_id
- AND utm.is_active = true
+```ts
+const { currentBu } = useBu();
+const buId = currentBu?.id ?? null;   // ❌ depende de hidratação de userBus
 ```
 
-Mas a tabela `public.user_team_memberships` **não possui a coluna `is_active`** (colunas reais: `id, user_id, team_id, is_primary, created_at, updated_at`). Toda tentativa de UPDATE em `project_milestones` que altere `status` dispara o trigger AFTER, que joga `column "is_active" does not exist`, fazendo a transação inteira do UPDATE ser revertida.
+`currentBu` é derivado de `userBus.find(...).bu_unit`, que só fica disponível após o fetch da lista de membresias. Durante essa janela, `currentBu` é `null` mesmo com `currentBuId` válido (sincrono no localStorage). Resultado: a query React Query é desabilitada (`enabled: !!buId === false`), `data` permanece `undefined → []`, e o dropdown mostra **"Nenhum usuário encontrado"** sem nunca disparar o RPC.
 
-Resultado: front recebe erro do Supabase → `useUpdateMilestone.onError` → toast "Erro ao atualizar milestone".
+A regra Core do projeto é explícita: *"ALWAYS filter queries by `bu_id` using `currentBuId` synchronously. No exceptions."* O hook viola essa regra.
 
-Não é regressão da minha migration de `start_date` — é bug pré-existente do trigger de notificação que ficou latente porque, aparentemente, ninguém havia trocado status desde a criação do trigger (`notification_outbox` vazio para esse slug).
+Por que tickets "parecem funcionar": o composer de ticket fica em uma página onde `useTicket` já força hidratação completa da BU antes do composer montar, então `currentBu` está pronto. Já em `/projects/:id`, o composer monta no mesmo ciclo que `useProject`, antes da hidratação de membresias.
 
-### Correção (uma única migration)
-Recriar a função `public.notify_milestone_status_changed` removendo o filtro `AND utm.is_active = true`. Mantém toda a lógica restante (recipients, emit_notification_event, metadata) intacta.
+### Correção (mínima, centralizada, sem duplicação)
+**Único arquivo alterado:** `src/hooks/useMentionableUsers.ts`
 
-```sql
--- Trecho ajustado dentro da função:
-JOIN public.user_team_memberships utm
-  ON utm.team_id = pt.team_id
-JOIN public.profiles p
-  ON p.id = utm.user_id
- AND p.user_id IS NOT NULL
-WHERE pt.project_id = NEW.project_id
+Trocar a fonte do `buId` para o estado síncrono:
+
+```ts
+- const { currentBu } = useBu();
+- const supabase = useBuScopedSupabase();
+- const buId = currentBu?.id ?? null;
++ const { currentBuId } = useBu();
++ const supabase = useBuScopedSupabase();
++ const buId = currentBuId;
 ```
 
-Sem mudança em RLS, sem mudança em schema, sem CHECK constraint. Apenas `CREATE OR REPLACE FUNCTION` com `SECURITY DEFINER` e `SET search_path = public` preservados (idênticos ao atual).
+Isso corrige automaticamente:
+- `MentionInput` em projetos (`context="internal"` via `ProjectCommentsSection`)
+- `MentionInput` em tickets (`context="internal+external"` via `TicketMessageComposer`)
+- `InternalMentionInput` em check-ins de OKR (`CheckinReflectionBlock`)
+- Qualquer uso futuro do hook
 
-### Por que não duplicar / por que essa abordagem
-- **Reaproveitamento**: a função já existe, só corrigimos o JOIN.
-- **Não criar componente novo no front**: o front está correto — `MilestoneStatusSelect` + `useUpdateMilestone` já tratam o erro com toast.
-- **Sem CHECK constraints** (padrão do projeto respeitado).
-- **Sem regressão futura**: opcionalmente, registrar no `mem://standards/database/triggers-must-reference-existing-columns` (já existe a memória `check-constraint-prohibition` correlata; basta uma nota curta no TCR — vide §9 abaixo).
+Como o hook já é a fonte única de candidates para todos os contextos de menção, a centralização é preservada (zero duplicação de componentes, zero novos hooks).
+
+### Por que essa abordagem
+- **Componente único reaproveitado**: `MentionInput` (um arquivo, dois contextos via prop) já existe e está corretamente usado nos dois módulos. Não há nada a unificar — só falta corrigir o hook compartilhado.
+- **Conformidade com Core rule**: `currentBuId` síncrono em vez de `currentBu` derivado.
+- **Sem novas tabelas/RPCs/migrações**: backend já entrega o que precisa.
+- **Sem mudança em RLS, contratos ou tipos**.
 
 ### Validação pós-correção
-1. Migration aplicada → `pg_proc.prosrc` sem `is_active`.
-2. UPDATE de status manual via SQL para confirmar (sem erro):
-   ```sql
-   UPDATE project_milestones SET status = 'in_progress'
-   WHERE id = '1cb5e4a3-12cc-4967-9aa8-8ff81f384fbb';
-   ```
-3. Conferir `notification_outbox` recebe entry `milestone.status.changed`.
-4. Reverter status no banco para `todo` para não poluir.
-5. No preview, alterar status de uma milestone do projeto e confirmar toast "Milestone atualizado" (success path do `useUpdateMilestone`).
-
-### Documentação canônica (manter em dia)
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`: nota curta no changelog do Módulo Projetos v1.4 ("hotfix: trigger notify_milestone_status_changed referenciava coluna inexistente `user_team_memberships.is_active`").
+1. Abrir `/projects/98074a55-...` → seção Comentários → digitar `@th` → dropdown mostra Thomas, Thiago, Thaise, etc.
+2. Selecionar um usuário → chip de menção interna (azul) aparece corretamente.
+3. Enviar comentário → `mentions` recebe registro com `entity_type='project_comment'`, `mentioned_user_id` preenchido.
+4. Sanity-check em `/tickets/<id>` (não deve regredir): `@` continua mostrando internos + externos da partner company.
+5. Sanity-check em check-in de OKR (`InternalMentionInput`): `@` continua funcionando.
 
 ### Arquivos afetados
-- `supabase/migrations/<new>.sql` (criar — apenas `CREATE OR REPLACE FUNCTION public.notify_milestone_status_changed`).
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (entry de hotfix).
+- `src/hooks/useMentionableUsers.ts` (única alteração: 2 linhas)
+
+### Documentação canônica (manter em dia)
+- Adicionar nota curta em `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` no changelog (hotfix: `useMentionableUsers` agora usa `currentBuId` síncrono, alinhado ao Core BU Isolation).
 
 ### Princípios respeitados
-- BU isolation preservada (lógica de recipients e `bu_id` inalterada).
-- RLS preservada (SECURITY DEFINER mantido).
-- Soft-delete não se aplica (tabela `user_team_memberships` não possui `deleted_at`; a única filtragem desnecessária era o `is_active` inexistente).
-- Sem `select('*')` (função usa colunas explícitas).
-- Sem novo componente; correção localizada na fonte real do bug.
+- BU Isolation (`currentBuId` síncrono — Core rule)
+- Componentização centralizada (`MentionInput` é a SSOT de menções; nenhum novo componente)
+- Sem `select('*')`
+- Sem CHECK constraints
+- Sem mudança de RLS / schema / RPC
+- Reuso máximo: o componente do ticket e do projeto continuam compartilhando 100% do código
 
