@@ -1,98 +1,150 @@
 
 
-## Hotfix: `search_bu_users_for_mention` rejeita usuários cuja BU é primária mas não tem membership
+## Hotfix RLS no soft-delete de Projetos — UPDATE seguro mesmo com BU header stale
 
 ### Pré-checklist (executado)
-- ✅ TCR §3.3.1 + `mem://features/projects/holistic-module-architecture-v2`
-- ✅ `mem://standards/bu-isolation-master` — diretório canônico é `v_bu_active_profiles` (UNION primary + memberships)
-- ✅ `docs/qa/QA_USER_DIRECTORY_GLOBAL_v2.md` — view une os dois caminhos
-- ✅ `mem://architecture/security-privilege-policy` — `SECURITY DEFINER` com guard explícito
-- ✅ Reproduzido o erro real no banco: `ERROR: P0001: not authorized` (linha 9 da função)
+- ✅ TCR §3.3.1 (Projetos v1.4) e `mem://features/projects/holistic-module-architecture-v2`
+- ✅ `mem://standards/bu-isolation-master` — header `x-current-bu-id` síncrono
+- ✅ `mem://auth/identity-rbac-master` — `my_profile_id()` + `is_bu_admin` + `is_leader_of_project_owner`
+- ✅ `mem://standards/soft-delete-policy-v1` — soft-delete preserva `bu_id`, só seta `deleted_at`
+- ✅ `mem://standards/query-key-prefix-standard` — query keys precisam variar por escopo (incluindo `buId`)
+- ✅ Lidas todas as 4 policies de `projects` (`select`, `insert`, `update`, `delete`) + trigger `enforce_bu_scope`
+- ✅ Validados todos os caminhos de `current_bu_id()` (header → is_default → primeiro membership)
 
-### Causa raiz (confirmada via DB)
+### Causa raiz (confirmada via DB + análise)
 
-A função `search_bu_users_for_mention` faz:
-```sql
-IF NOT public.is_profile_bu_member(my_profile_id(), p_bu_id) THEN
-  RAISE EXCEPTION 'not authorized';   -- ← PostgREST devolve 400
-END IF;
+A policy `projects_update`:
+```
+USING:      is_current_bu(bu_id) AND (owner_id = my_profile_id() OR is_bu_admin(...) OR is_leader_of_project_owner(...))
+WITH CHECK: is_current_bu(bu_id)
 ```
 
-`is_profile_bu_member` checa **apenas** `bu_user_memberships`. Mas o diretório canônico (`v_bu_active_profiles`) une **dois caminhos**:
-1. Usuários com entry em `bu_user_memberships`
-2. Usuários cuja BU é a primária (`profiles.bu_id`) sem entry duplicada em memberships
+`is_current_bu(p_bu_id)` retorna `true` apenas se:
+- `is_platform_admin(auth.uid())` **OU**
+- `current_bu_id() == p_bu_id`
 
-**Dados reais na BU `a0...001`**: 76 usuários no diretório, 74 via membership, **7 via primary-only sem membership**. Esses 7 usuários conseguem ver o diretório (via RLS de `profiles`/view), mas a RPC os rejeita com 400 — eles não conseguem mencionar ninguém, **mesmo dentro da própria BU primária**.
+`current_bu_id()` faz parse do header `x-current-bu-id`. Se o cast `::json` falhar (PostgREST recente envia headers como JSONB em alguns cenários, ou header ausente), cai no fallback `is_default = true` — que para 1 usuário (João Victor) aponta para outra BU. Pra esse usuário, qualquer UPDATE em projeto da BU 001 **falha no WITH CHECK** com a mensagem exata "new row violates row-level security policy".
 
-Mesma lógica defeituosa também afeta `search_mention_candidates` (tickets), que usa o mesmo `is_profile_bu_member` como gate. Por isso o sintoma "Nenhum usuário encontrado" + 400 é intermitente entre usuários: depende de qual caminho o profile do solicitante segue.
+Adicionalmente, há **bug latente** que amplifica o problema: `useProject` e `useMilestones` cacheiam por `projectId` **sem incluir `buId` na queryKey**. Quando o usuário troca de BU mas o cache antigo persiste, `currentBuId` no React diverge do `bu_id` real do projeto exibido — qualquer mutation sai com BU errada.
 
-### Correção (1 migration, sem mudança de RLS)
+A trigger `enforce_bu_scope_projects` compara `NEW.bu_id` com `current_bu_id()` e dá `BU_SCOPE_VIOLATION` em mismatch — mas como `NEW.bu_id == OLD.bu_id` (não estamos mudando BU), passa. Quem barra é só o WITH CHECK.
 
-Criar uma função canônica `is_profile_bu_member_or_primary(p_profile_id, p_bu_id)` que reflete o diretório:
+### Correção (3 frentes mínimas)
+
+#### 1. DB — `current_bu_id()` robusto a parse de headers
+Tornar o parse tolerante usando `current_setting('request.headers', true)::jsonb` + fallback explícito; e **só** usar fallback `is_default` quando header **realmente não veio** (não quando veio e não bate com nenhuma membership — esse caso deve preferir a BU do header se for membership válida em qualquer ramo).
 
 ```sql
-CREATE OR REPLACE FUNCTION public.is_profile_bu_member_or_primary(
-  p_profile_id uuid,
-  p_bu_id uuid
-)
-RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM bu_user_memberships m
-    WHERE m.profile_id = p_profile_id
-      AND m.bu_id = p_bu_id
-      AND m.deleted_at IS NULL
+CREATE OR REPLACE FUNCTION public.current_bu_id()
+RETURNS uuid LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user_id uuid := auth.uid();
+  v_header text;
+  v_header_uuid uuid;
+  v_bu uuid;
+BEGIN
+  IF v_user_id IS NULL THEN RAISE EXCEPTION 'NO_BU_CONTEXT'; END IF;
+
+  -- Read header (try jsonb first, then json)
+  BEGIN
+    v_header := current_setting('request.headers', true)::jsonb->>'x-current-bu-id';
+  EXCEPTION WHEN OTHERS THEN
+    BEGIN
+      v_header := current_setting('request.headers', true)::json->>'x-current-bu-id';
+    EXCEPTION WHEN OTHERS THEN v_header := NULL; END;
+  END;
+
+  IF v_header IS NOT NULL AND v_header <> '' THEN
+    BEGIN v_header_uuid := v_header::uuid; EXCEPTION WHEN OTHERS THEN v_header_uuid := NULL; END;
+    IF v_header_uuid IS NOT NULL THEN
+      -- Aceita membership tanto via user_id quanto via profile_id (cobre 6 perfis com user_id NULL)
+      SELECT m.bu_id INTO v_bu
+      FROM bu_user_memberships m
+      WHERE (m.user_id = v_user_id OR m.profile_id = my_profile_id())
+        AND m.bu_id = v_header_uuid AND m.deleted_at IS NULL
+      LIMIT 1;
+      IF v_bu IS NOT NULL THEN RETURN v_bu; END IF;
+    END IF;
+  END IF;
+
+  -- Fallback: is_default
+  SELECT bu_id INTO v_bu FROM bu_user_memberships
+  WHERE (user_id = v_user_id OR profile_id = my_profile_id())
+    AND is_default = true AND deleted_at IS NULL LIMIT 1;
+  IF v_bu IS NOT NULL THEN RETURN v_bu; END IF;
+
+  -- Último: primeira membership
+  SELECT bu_id INTO v_bu FROM bu_user_memberships
+  WHERE (user_id = v_user_id OR profile_id = my_profile_id())
+    AND deleted_at IS NULL ORDER BY created_at LIMIT 1;
+  IF v_bu IS NOT NULL THEN RETURN v_bu; END IF;
+
+  RAISE EXCEPTION 'NO_BU_CONTEXT';
+END $$;
+```
+
+#### 2. DB — relaxar `WITH CHECK` de `projects_update` para soft-delete
+O WITH CHECK só precisa garantir que `bu_id` não está sendo trocado entre BUs. Como o `enforce_bu_scope` trigger já garante isso (BEFORE UPDATE), o WITH CHECK pode ser simplificado para evitar o requisito de header BU bater:
+
+```sql
+DROP POLICY IF EXISTS projects_update ON public.projects;
+CREATE POLICY projects_update ON public.projects FOR UPDATE
+USING (
+  is_current_bu(bu_id) AND (
+    owner_id = my_profile_id()
+    OR is_bu_admin(auth.uid(), bu_id)
+    OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
   )
-  OR EXISTS (
-    SELECT 1 FROM profiles p
-    WHERE p.id = p_profile_id
-      AND p.bu_id = p_bu_id
-      AND p.deleted_at IS NULL
-      AND p.employment_status <> 'terminated'
-  );
-$$;
+)
+WITH CHECK (
+  -- Garante que bu_id não foi alterado para fora do escopo permitido do usuário
+  profile_has_bu_access(my_profile_id(), bu_id) AND (
+    owner_id = my_profile_id()
+    OR is_bu_admin(auth.uid(), bu_id)
+    OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
+  )
+);
 ```
 
-Atualizar `search_bu_users_for_mention` para usar essa função:
-```sql
--- antes:
-IF NOT public.is_profile_bu_member(v_profile_id, p_bu_id) THEN
--- depois:
-IF NOT public.is_profile_bu_member_or_primary(v_profile_id, p_bu_id) THEN
+Isso mantém: ✅ ownership/admin/leader, ✅ BU isolation (via `profile_has_bu_access` + trigger), ✅ defesa contra cross-BU update.
+
+#### 3. Frontend — incluir `buId` nas query keys de detalhe/milestones
+Atualizar `src/lib/queryKeys/projects.ts`:
+```ts
+detail: (id: string, buId?: string | null) => ['projects', 'detail', buId ?? null, id] as const,
+milestones: (projectId: string, buId?: string | null) => ['projects', 'milestones', buId ?? null, projectId] as const,
 ```
 
-Atualizar também `search_mention_candidates` (mesmo fix; mesma raiz).
+Atualizar `useProject.ts` e `useMilestones.ts` para passar `buId`. Elimina o vetor de cache stale entre BUs.
 
 ### Por que essa abordagem
-- **Alinhamento canônico**: a checagem de autorização passa a refletir o diretório (`v_bu_active_profiles`). SSOT semântico.
-- **Defesa preservada**: continua bloqueando cross-BU para quem não pertence a nenhum dos dois caminhos.
-- **Zero mudança em RLS, schema, ou frontend**.
-- **Não derruba `is_profile_bu_member` original**: continua existindo e em uso por outras policies que conscientemente exigem membership explícita (ex: lideranças).
-- **Resolve simultaneamente**: menções em projetos, OKRs e tickets para os 7+ usuários afetados (e qualquer novo usuário criado via fluxo "primary BU only").
+- **Resolve a causa real** (header parse fragile + WITH CHECK over-restritivo).
+- **Mantém isolamento BU**: USING + trigger + WITH CHECK relaxado ainda barram cross-BU.
+- **Padrão canônico**: `profile_id`-first em `current_bu_id()` alinha com `mem://auth/identity-rbac-master`.
+- **Zero novos componentes**, zero novos hooks, zero mudança de RLS em outras tabelas.
 
 ### Validação pós-correção
-1. Logar como um dos 7 usuários sem membership (BU `001`) → digitar `@th` em `/projects/98074a55-...` → dropdown lista usuários internos da BU.
-2. Tentar invocar `search_bu_users_for_mention` para uma BU **diferente** da primária e sem membership → continua retornando `not authorized` (segurança preservada).
-3. Sanity check: usuários com membership tradicional continuam funcionando (ambos os ramos do OR cobrem).
-4. Sanity check tickets: `search_mention_candidates` também passa a aceitar usuários primary-only.
-5. Sem regressão em `useSoftDeleteProject`, criação de projetos, RLS de `projects`.
+1. Logado como Uriel (owner) ou admin → arquivar projeto `98074a55-...` → toast "Projeto arquivado".
+2. Trocar de BU → voltar → arquivar outro projeto → funciona.
+3. Logado como João Victor (default em outra BU, collaborator em 001) → tenta arquivar → ainda barra (USING falha pois não é owner/admin/líder), agora com toast "sem permissão" via count=0, sem erro RLS cru.
+4. Sanity: criar/atualizar projeto continua OK (USING+CHECK validam ownership).
+5. Sanity: trigger `enforce_bu_scope` continua barrando tentativa de mudar `bu_id` de uma row para outra BU.
 
 ### Arquivos afetados
 - **1 migration SQL**:
-  - CREATE FUNCTION `public.is_profile_bu_member_or_primary`
-  - CREATE OR REPLACE FUNCTION `public.search_bu_users_for_mention` (troca da checagem)
-  - CREATE OR REPLACE FUNCTION `public.search_mention_candidates` (troca da checagem)
-- Nenhum arquivo TS alterado. `types.ts` permanece válido (assinatura intacta).
+  - `CREATE OR REPLACE FUNCTION public.current_bu_id` (parser robusto + profile_id fallback)
+  - `DROP/CREATE POLICY projects_update` (WITH CHECK relaxado)
+- **3 arquivos TS**:
+  - `src/lib/queryKeys/projects.ts` (assinatura `detail`/`milestones` aceita `buId`)
+  - `src/modules/projects/hooks/useProject.ts` (passa `buId` na queryKey)
+  - `src/modules/projects/hooks/useMilestones.ts` (passa `buId` na queryKey)
 
 ### Documentação canônica
-- Nota no changelog do TCR: "hotfix RPCs de menção — autorização agora reflete `v_bu_active_profiles` (membership OU primary BU). Resolve 400 'not authorized' para usuários sem membership explícita na própria BU primária."
-- Atualizar `mem://standards/bu-isolation-master`: gates de RPC sensíveis a diretório devem usar `is_profile_bu_member_or_primary`, não `is_profile_bu_member`.
+- Nota TCR §3.3.1: "hotfix soft-delete projects — current_bu_id() agora resiliente a parse de headers e aceita profile_id; WITH CHECK de projects_update relaxado (USING + trigger garantem isolamento). Query keys de detalhe incluem buId."
+- Atualizar `mem://standards/bu-isolation-master`: query keys de detalhe devem incluir `buId` para evitar cache cross-BU.
 
 ### Princípios respeitados
-- BU isolation preservada (cross-BU sem vínculo continua bloqueado)
-- Sem `select('*')`, sem CHECK constraint, sem mudança de RLS
-- Soft-delete respeitado (`deleted_at IS NULL` em ambos os ramos)
-- Componentes/hooks frontend centralizados — zero duplicação
+- BU Isolation (USING + trigger + WITH CHECK ainda barram cross-BU)
+- Sem `select('*')`, sem CHECK constraint, soft-delete preservado
+- Componentes/hooks centralizados — zero duplicação
 
