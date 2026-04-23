@@ -40,6 +40,9 @@ vi.mock('@/contexts/ImpersonationContext', () => ({
   }),
 }));
 
+const OWNER = 'owner-profile-id';
+const OTHER = 'other-profile-id';
+
 describe('useProjectPermissionsV2', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,9 +57,12 @@ describe('useProjectPermissionsV2', () => {
     expect(result.current.canCreateProject).toBe(false);
     expect(result.current.canEditProject).toBe(false);
     expect(result.current.canDeleteProject).toBe(false);
+    expect(result.current.canDeleteOwnProject).toBe(false);
     expect(result.current.canViewMilestones).toBe(false);
     expect(result.current.canCreateMilestone).toBe(false);
     expect(result.current.canEditMilestone).toBe(false);
+    expect(result.current.canEditProjectRecord(OWNER, OWNER)).toBe(false);
+    expect(result.current.canDeleteProjectRecord(OWNER, OWNER)).toBe(false);
   });
 
   it('grants view-only with read permission', () => {
@@ -73,8 +79,69 @@ describe('useProjectPermissionsV2', () => {
     expect(result.current.canDeleteProject).toBe(false);
   });
 
+  describe('row-aware helpers (self_or_owner)', () => {
+    it('owner with update:self_or_owner CAN edit own project', () => {
+      mockHas.mockImplementation((key: string) => key === 'projects.project.update:self_or_owner');
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canEditOwnProject).toBe(true);
+      expect(result.current.canEditProjectRecord(OWNER, OWNER)).toBe(true);
+    });
+
+    it('non-owner with update:self_or_owner CANNOT edit other project', () => {
+      mockHas.mockImplementation((key: string) => key === 'projects.project.update:self_or_owner');
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canEditProjectRecord(OWNER, OTHER)).toBe(false);
+    });
+
+    it('owner with delete:self_or_owner CAN archive own project', () => {
+      mockHas.mockImplementation((key: string) => key === 'projects.project.delete:self_or_owner');
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canDeleteOwnProject).toBe(true);
+      expect(result.current.canDeleteProjectRecord(OWNER, OWNER)).toBe(true);
+    });
+
+    it('non-owner with delete:self_or_owner CANNOT archive other project', () => {
+      mockHas.mockImplementation((key: string) => key === 'projects.project.delete:self_or_owner');
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canDeleteProjectRecord(OWNER, OTHER)).toBe(false);
+    });
+
+    it('user with update:bu CAN edit any project', () => {
+      mockHas.mockImplementation((key: string) => key === 'projects.project.update:bu');
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canEditProject).toBe(true);
+      expect(result.current.canEditProjectRecord(OWNER, OTHER)).toBe(true);
+    });
+
+    it('returns false when actorProfileId is null', () => {
+      mockHas.mockImplementation((key: string) =>
+        key === 'projects.project.update:self_or_owner' ||
+        key === 'projects.project.delete:self_or_owner'
+      );
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canEditProjectRecord(OWNER, null)).toBe(false);
+      expect(result.current.canDeleteProjectRecord(OWNER, null)).toBe(false);
+    });
+
+    it('returns false when ownerId is null', () => {
+      mockHas.mockImplementation((key: string) =>
+        key === 'projects.project.update:self_or_owner' ||
+        key === 'projects.project.delete:self_or_owner'
+      );
+      const { result } = renderHook(() => useProjectPermissionsV2());
+
+      expect(result.current.canEditProjectRecord(null, OWNER)).toBe(false);
+      expect(result.current.canDeleteProjectRecord(null, OWNER)).toBe(false);
+    });
+  });
+
   it('returns isLoading when permissions are loading', () => {
-    // We can't easily change const mocks, so this is a structural test
     const { result } = renderHook(() => useProjectPermissionsV2());
     expect(result.current.isLoading).toBeDefined();
   });
