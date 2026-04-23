@@ -205,13 +205,15 @@ describe('useCanEditKpi', () => {
 
   it('grants canUpdateValues to team leader via responsible_team_id', async () => {
     setup({ manageableTeamIds: ['rt-1'] });
-    const { result } = renderHook(() =>
-      useCanEditKpi({
-        id: 'k1',
-        bu_id: 'bu-1',
-        scope: 'org',
-        responsible_team_id: 'rt-1',
-      })
+    const { result } = renderHook(
+      () =>
+        useCanEditKpi({
+          id: 'k1',
+          bu_id: 'bu-1',
+          scope: 'org',
+          responsible_team_id: 'rt-1',
+        }),
+      { wrapper: makeWrapper() }
     );
     await waitFor(() => expect(result.current.canUpdateValues).toBe(true));
     expect(result.current.canEdit).toBe(false);
@@ -227,14 +229,16 @@ describe('useCanEditKpi', () => {
 
   it('denies all to plain collaborator with no relationships', async () => {
     setup({ profileId: 'me-1' });
-    const { result } = renderHook(() =>
-      useCanEditKpi({
-        id: 'k1',
-        bu_id: 'bu-1',
-        scope: 'team',
-        team_id: 't-other',
-        owner_user_id: 'someone-else',
-      })
+    const { result } = renderHook(
+      () =>
+        useCanEditKpi({
+          id: 'k1',
+          bu_id: 'bu-1',
+          scope: 'team',
+          team_id: 't-other',
+          owner_user_id: 'someone-else',
+        }),
+      { wrapper: makeWrapper() }
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.canEdit).toBe(false);
