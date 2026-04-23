@@ -13,12 +13,13 @@ export const projectsKeys = {
   // ── Specific keys ──
   list: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'list', buId, filters] as const,
-  detail: (id: string) => ['projects', 'detail', id] as const,
+  detail: (id: string, buId?: string | null) =>
+    ['projects', 'detail', buId ?? null, id] as const,
   byKr: (krId: string) => ['projects', 'by-kr', krId] as const,
   forWizard: (buId: string | null, teamId: string) =>
     ['projects', 'wizard', buId, teamId] as const,
-  milestones: (projectId: string) =>
-    ['projects', 'milestones', projectId] as const,
+  milestones: (projectId: string, buId?: string | null) =>
+    ['projects', 'milestones', buId ?? null, projectId] as const,
   milestonesPrefix: () => ['projects', 'milestones'] as const,
   gantt: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'gantt', buId, filters] as const,
