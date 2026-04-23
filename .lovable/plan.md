@@ -1,142 +1,82 @@
 
-## Diagnóstico definitivo
 
-Auditei o banco em produção. **Nenhuma role está faltando**. Você está com:
+# Cobertura de testes — Notificações de Projetos
 
-- `user_roles.role = 'super_admin'` (registrado em 2025-12-31) ✅
-- `bu_user_memberships.role_in_bu = 'admin'` na BU `a0000000-0000-0000-0000-000000000001` ✅
-- `manager_user_id` do owner do projeto (Uriel Canfield) aponta para o seu `profile_id` ✅
-- Avaliando a RLS direto no banco com seus IDs:
-  - `is_platform_admin(seu user_id)` → `true`
-  - `is_bu_admin(seu user_id, bu do projeto)` → `true`
-  - `is_leader_of_project_owner(...)` → `true`
+## Contexto
 
-A RLS `projects_update` libera por **três caminhos independentes**, todos `true` para você. **O banco não está te negando.**
+A migration `20260423233016` adicionou lógica server-side de fanout (owner + teams + watchers via mentions) sem testes acompanhantes. Como o projeto não tem pgTAP configurado, a cobertura será via **testes de integração com Vitest** executando as funções SQL contra o banco Lovable Cloud, mais um teste de QA manual documentado.
 
-## Onde está o bug real
+## Escopo
 
-O hook `useSoftDeleteProject` (`src/modules/projects/hooks/useProjectMutations.ts:120-176`) faz:
+### 1. Testes de integração SQL (Vitest + Supabase client)
 
-```ts
-.update({ deleted_at: ... }, { count: 'exact' })
-.eq('id', projectId)
-.eq('bu_id', currentBuId)        // ← BU do CONTEXTO, não do projeto
-.is('deleted_at', null);
+Arquivo novo: `src/modules/projects/__tests__/notifications.integration.test.ts`
 
-if (count === 0) {
-  throw { code: '42501', message: 'sem permissão ou BU incorreta' };
-}
+Cobre 6 cenários executando contra o banco real (com cleanup via transação/rollback de fixtures):
+
+- **CN-1**: Mudança de status em projeto notifica owner + membros de `project_teams`, excluindo o actor
+- **CN-2**: Watchers (usuários mentionados em `project_comments`) são incluídos na audiência de status change
+- **CN-3**: Comentários com `deleted_at IS NOT NULL` não geram watchers (respeita soft-delete)
+- **CN-4**: Mudança de status em `project_milestones` dispara `milestone.status.changed` e cria notificações
+- **CN-5**: Deduplicação — usuário que é owner + watcher recebe 1 notificação apenas
+- **CN-6**: Mention em comentário de projeto cria notificação `project.mention` para o mencionado
+
+### 2. Teste de regressão — Tickets (anti-double-fire)
+
+Arquivo novo: `src/modules/tickets/__tests__/mention-no-duplicates.integration.test.ts`
+
+- **CN-7**: Mention em comentário de ticket cria exatamente **1** notificação (valida remoção do `trg_notify_mention` redundante)
+
+### 3. Teste unitário — Query keys (se aplicável)
+
+Verificar se `notificationsKeys` precisa de namespace para project/milestone notifications. Se sim, estender `src/lib/queryKeys/notifications.test.ts`.
+
+### 4. Validação de schema
+
+Arquivo novo: `src/modules/projects/__tests__/notification-events-registration.test.ts`
+
+- Query SELECT em `notification_events` confirmando que `project.status.changed`, `milestone.status.changed` e `project.mention` estão registrados, com `default_channels` corretos e `audience` apropriada.
+
+### 5. Atualização do QA doc
+
+Atualizar `docs/qa/QA_PROJECTS_NOTIFICATIONS.md` adicionando:
+- Comandos para rodar os novos testes
+- Mapeamento cenário ↔ teste automatizado
+- Marcar cenários antes "manuais" como "automatizados"
+
+## Detalhes técnicos
+
+**Padrão de fixtures**: Cada teste cria seus próprios `bu_id`/`project_id`/`profile_id` com prefixo `test-notif-{uuid}` e limpa via `afterEach` com DELETE em cascata. Não usa banco de testes separado — usa o Lovable Cloud com isolamento por BU sintética.
+
+**Identidade**: Segue `IDENTITY_CONVENTION.md` — `notifications.user_id` = `auth.users.id`. Testes asserem por `user_id` resolvido a partir de `profiles.user_id`.
+
+**RLS bypass**: Testes de fanout usam o `service_role` client (já disponível em fixtures de teste do projeto) para inspecionar `notifications` independente de quem disparou.
+
+**Performance**: Conjunto roda em ~8-12s (estimado) — aceitável para CI, mas marcamos com `describe.concurrent` quando possível.
+
+## Comandos
+
+```bash
+npm run test -- src/modules/projects/__tests__/notifications.integration.test.ts
+npm run test -- src/modules/tickets/__tests__/mention-no-duplicates.integration.test.ts
+npm run test -- --coverage src/modules/projects src/modules/tickets
 ```
 
-Quando `currentBuId` (do `BuContext`) não coincide com `project.bu_id`, o filtro casa zero linhas, `count = 0`, e o hook **fabrica um erro `42501` falso** com a mensagem "sem permissão". O `onError` então mostra "Você não tem permissão para arquivar este projeto" — mensagem totalmente errada para o que aconteceu.
+## Arquivos
 
-Isso pode acontecer em três cenários reais:
+**Criados**:
+- `src/modules/projects/__tests__/notifications.integration.test.ts`
+- `src/modules/projects/__tests__/notification-events-registration.test.ts`
+- `src/modules/tickets/__tests__/mention-no-duplicates.integration.test.ts`
 
-1. Você abriu o projeto via link direto (`/projects/<id>`) e o `BuContext` está com outra BU selecionada (ex.: `f3d2d8a5-...` em vez da `a0000000-...0001` do projeto).
-2. A persistência da BU corrente no `localStorage` está dessincronizada do projeto sendo visto.
-3. Mudança recente de header `x-bu-id` no `useBuScopedSupabase` ainda não propagou no momento do clique.
+**Atualizados**:
+- `docs/qa/QA_PROJECTS_NOTIFICATIONS.md` (mapeamento de cobertura)
+- `.lovable/memory/features/projects/notification-context-standard.md` (referência aos testes)
 
-Adicionalmente, mesmo que a BU estivesse certa, o RLS do header `x-bu-id` (`is_current_bu`) compara com `current_bu_id()` derivado do header. Se o cliente buScoped envia uma BU diferente da do projeto, a policy retorna `false` no `is_current_bu(bu_id)` antes mesmo de avaliar os 3 caminhos de admin/owner/leader — exceto que `is_current_bu` já tem um shortcut para `is_platform_admin`, então isso não é o seu caso. O bloqueio real é o `count = 0` do filtro extra.
+## Critério de aceite
 
-## Plano de correção
+- [ ] 7 cenários novos passando localmente e no CI (`.github/workflows/test.yml`)
+- [ ] Suite total do módulo projects continua verde
+- [ ] Suite total do módulo tickets continua verde (sem regressão de double-fire)
+- [ ] QA doc reflete cobertura automatizada vs manual
 
-Atacar a causa-raiz no frontend. Sem migration, sem mexer em RLS (o banco está correto).
-
-### 1. `useSoftDeleteProject` — usar `bu_id` do projeto, não do contexto
-
-**Arquivo:** `src/modules/projects/hooks/useProjectMutations.ts`
-
-Mudar a assinatura para aceitar o `bu_id` do registro e remover o filtro estrito por `currentBuId`:
-
-```ts
-type SoftDeleteInput = { id: string; bu_id: string };
-
-return useMutation({
-  mutationFn: async ({ id, bu_id }: SoftDeleteInput) => {
-    if (!supabase) throw new Error('Client not ready');
-
-    const { error, count } = await supabase
-      .from('projects')
-      .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
-      .eq('id', id)
-      .eq('bu_id', bu_id)            // BU do PROJETO
-      .is('deleted_at', null);
-
-    if (error) throw error;
-
-    if (count === 0) {
-      // count=0 sem error é AMBÍGUO. Não mais fingir 42501.
-      // Pode ser: (a) RLS negou silenciosamente, (b) já estava arquivado,
-      // (c) registro inexistente. Diferenciamos com SELECT diagnóstico.
-      const { data: probe, error: probeErr } = await supabase
-        .from('projects')
-        .select('id, deleted_at, bu_id')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (probeErr) throw probeErr;
-      if (!probe) {
-        throw new Error('Projeto não encontrado.');
-      }
-      if (probe.deleted_at) {
-        // Idempotência: já estava arquivado, tratar como sucesso.
-        return;
-      }
-      // Existe, não está arquivado, mas update não afetou → RLS real
-      const rlsErr = new Error('Sem permissão para arquivar este projeto.');
-      (rlsErr as any).code = '42501';
-      throw rlsErr;
-    }
-  },
-  // ...resto igual
-});
-```
-
-### 2. `useUpdateProject` — mesmo tratamento
-
-Aplicar a mesma lógica: aceitar `bu_id` no input, remover dependência de `currentBuId` na cláusula, e usar probe `SELECT` antes de classificar erro.
-
-### 3. `ProjectDetailPage` — passar `project.bu_id` na mutation
-
-**Arquivo:** `src/modules/projects/pages/ProjectDetailPage.tsx`
-
-```ts
-deleteProject.mutate({ id: project.id, bu_id: project.bu_id });
-```
-
-E o mesmo no `updateProject.mutate(...)`.
-
-### 4. Mensagens de erro mais honestas
-
-No `onError` parar de fundir "BU divergente" com "RLS negou". Hoje a mensagem "Você não tem permissão" é exibida em qualquer `count === 0`, o que mascara bugs como este por dias.
-
-### 5. Telemetria temporária
-
-Manter o `console.info` que já existe, mas incluir:
-- `project.bu_id` (do registro)
-- `currentBuId` (do contexto)
-- `permissionsResolved`, `hasFullAccess`, `userRole`
-
-Para na próxima ocorrência cair direto na raiz sem auditoria de banco.
-
-### 6. Teste de regressão
-
-Adicionar caso em `src/modules/projects/hooks/__tests__/useProjectMutations.test.ts` (criar se não existir) que cobre:
-- super_admin arquiva projeto de BU diferente da `currentBuId` → sucesso
-- Projeto já arquivado → idempotente
-- Projeto inexistente → erro distinto de RLS
-
-## Riscos
-
-- **Conformidade BU isolation** (regra inquebrável #1 e #3): a remoção do `.eq('bu_id', currentBuId)` parece relaxar o isolamento, mas **não relaxa** — quem garante o isolamento é a RLS do banco (`projects_update` exige `is_current_bu(bu_id) AND (...3 caminhos...)`). O filtro do frontend era cinto-e-suspensório que estava mascarando bugs. O `bu_id` do projeto continua sendo enviado na cláusula, garantindo target específico.
-- **Compat de chamadores**: a mudança de assinatura de `mutate(projectId)` para `mutate({ id, bu_id })` é breaking. Auditar todos os usos antes de aplicar (provavelmente só `ProjectDetailPage` e talvez algum `ProjectsList`).
-
-## O que NÃO vou fazer
-
-- **Não vou inserir nada em `user_roles`**: você já está como super_admin lá.
-- **Não vou alterar RLS**: ela está correta.
-- **Não vou tocar `get_my_permissions`**: existe um gap conceitual ali (ela checa `bu_user_memberships.role_in_bu = 'super_admin'` em vez de `user_roles`), mas não afeta este bug porque `useProjectPermissionsV2` cobre via `userRole === 'admin'` e `isAdmin` do `useAuth`. Endereçar isso seria escopo separado.
-
-## Resumo
-
-O erro "sem permissão" é mentira do frontend. O banco te libera. O hook `useSoftDeleteProject` confunde "BU divergente" com "RLS negou" e exibe mensagem errada. Correção: receber `bu_id` do projeto, fazer probe de diagnóstico em vez de fabricar erro 42501, e ser honesto sobre o que falhou.
