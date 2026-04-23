@@ -339,7 +339,7 @@ export default function ProjectDetailPage() {
         <ProjectKrLinkSection
           projectId={project.id}
           linkedKrs={project.krs}
-          canEdit={canEditProject}
+          canEdit={canEditThisProject}
         />
 
         {/* Comentários */}
