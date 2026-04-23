@@ -84,7 +84,8 @@ function setup(opts: {
   ledAreas?: string[];
   isReady?: boolean;
 } = {}) {
-  mockUseProfileId.mockReturnValue('profileId' in opts ? (opts.profileId ?? null) : 'me-1');
+  const profileIdValue = opts.profileId === undefined ? 'me-1' : opts.profileId;
+  mockUseProfileId.mockReturnValue(profileIdValue);
   const perms = opts.permissions ?? [];
   mockUsePermissions.mockReturnValue({
     permissions: perms,
