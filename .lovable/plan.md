@@ -1,119 +1,95 @@
 
-## Corrigir o incidente de arquivamento em Projetos no ambiente live — o código atual já está correto, mas o domínio customizado está servindo bundle antigo
 
-### Pré-checklist obrigatório executado
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
-- `docs/canonical/IDENTITY_CONVENTION.md`
-- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`
-- `docs/canonical/DATA_MODEL_REGISTRY.md`
-- `docs/canonical/DEVELOPMENT_STANDARDS.md`
-- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md`
-- `docs/canonical/QUERY_KEYS_STANDARD.md`
-- `docs/canonical/SCHEMA_QUICK_REFERENCE.md`
-- `docs/canonical/DB_FUNCTIONS_INDEX.md`
-- `docs/qa/QA_PERMISSIONS_TEMPLATES.md`
-- memórias: `mem://features/projects/holistic-module-architecture-v2`, `mem://index.md`
+## Aba "Atuação na BU" no perfil do usuário — Projetos, KRs/Iniciativas e KPIs
 
-### Diagnóstico consolidado
-O problema reportado em `https://hub.jetimob.com/projects/98074a55-c388-4282-a093-f0eaa3bf1b22` indica **divergência entre o código atual e o bundle que está rodando no domínio customizado**.
+Adicionar à página `src/pages/UserProfile/index.tsx` uma seção em abas que mostre o envolvimento real do usuário na BU atual, **reutilizando 100% dos componentes e hooks já existentes** (sem duplicar nenhum visual ou lógica).
 
-### Evidência objetiva
-No código atual:
-- `ProjectDetailPage.tsx` já usa `canDeleteProjectRecord(project.owner_id, writerProfileId)`
-- `useProjectPermissionsV2.ts` já faz gating row-aware para `self_or_owner`
-- `useProjectMutations.ts` já exibe:
-```ts
-'Você não tem permissão para arquivar este projeto.'
+### Pré-checklist canônico executado
+- `TECHNICAL_CONTEXT_REGISTRY.md` — perfil público, BU isolation, módulo Projetos v1.4
+- `IDENTITY_CONVENTION.md` — `profile_id` é a identidade; `owner_user_id` em KPIs/KRs/Iniciativas referencia `profiles.id`
+- `PERMISSIONS_AND_RBAC_MODEL.md` — perfil público respeita `v_bu_active_profiles` + `get_profile_with_privacy`
+- `DATA_MODEL_REGISTRY.md` — `projects.owner_id`, `kpi_metrics.owner_user_id`, `okr_team_objectives.owner_user_id`, `okr_team_key_results.owner_user_id`+`co_responsibles[]`, `okr_initiatives.owner_user_id`
+- `mem://features/projects/holistic-module-architecture-v2` — uso canônico de `useProjects({ owner_id })` + `ProjectCard`/`ProjectStatusSummary`
+- `mem://standards/query-key-prefix-standard` — keys novas adicionadas em `queryKeys.publicProfile.*`
+- `mem://standards/query-optimization-standard` — sem `select('*')`, somente colunas necessárias
+- `mem://standards/soft-delete-policy-v1` — todas queries filtram `deleted_at IS NULL`
+
+### Fonte da informação (reaproveitando o que já existe)
+
+| Domínio | Hook reutilizado | Componente reutilizado |
+|---|---|---|
+| Projetos onde é owner | `useProjects({ owner_id: profile.id })` (já filtra por BU) | `ProjectCard`, `ProjectStatusSummary` |
+| KRs (owner ou co-responsável) | `useUserOkrs(profile.id)` (**já existe** em `usePublicProfile.ts`, hoje não é consumido) | `OkrProgressBar` + linha compacta |
+| Objetivos onde é owner | mesmo `useUserOkrs` | linha compacta com link para `/okrs?objective=…` |
+| Iniciativas onde é owner | **novo hook** `useUserInitiatives(profile.id)` — query única em `okr_initiatives` filtrando `owner_user_id` + `bu_id` + `deleted_at IS NULL` + join enxuto com `kr` | `InitiativeCard` (`showKrInfo`) já existente |
+| KPIs onde é owner | `useUserKpis(profile.id)` (já existe) | mantém o item compacto atual (KpiCard exige shape rico que `useUserKpis` não traz; **não vamos enriquecer agora** pra evitar duplicar `useKpiData`) |
+| KPIs onde é contribuidor | **novo hook** `useUserContributedKpis(profile.id)` — query única em `kpi_contributors` com join enxuto em `kpi_metrics` (id, name, unit, team) | mesmo item compacto dos KPIs próprios + badge "Contribuidor" |
+
+Nada de novos cards visuais. Onde KpiCard rico não cabe, usamos a linha compacta que já está no `UserProfile` hoje.
+
+### Layout proposto
+
+Substituir o card "KPIs" inline atual por um bloco **`<Tabs>`** (componente shadcn já existente) logo abaixo de "Informações Profissionais", dentro da coluna `lg:col-span-2`:
+
+```
+[Tabs]
+ ├─ Visão geral   (4 contadores: Projetos · OKRs · KRs · KPIs)
+ ├─ Projetos      (ProjectStatusSummary + grid de ProjectCard)
+ ├─ OKRs & KRs    (Objetivos + KRs com OkrProgressBar)
+ ├─ Iniciativas   (InitiativeCard list, showKrInfo)
+ └─ KPIs          (próprios + contribuídos, com badge)
 ```
 
-Mas o usuário reportou o toast:
-```text
-"Você não permissão para arquivar esse projeto."
-```
+- "Visão geral" usa só números agregados (length de cada lista) — zero query nova além das que já vão rodar.
+- Cada aba só faz fetch quando ativada (`enabled` controlado por `activeTab`) — evita N requests no load inicial.
+- Empty state padrão por aba: ícone + texto curto ("Nenhum projeto sob responsabilidade nesta BU").
+- Loading: `Skeleton` já usado no resto da página.
 
-Essa string **não existe no código atual**. Portanto, o comportamento observado não está vindo do código que hoje está no repositório; está vindo de **bundle antigo em produção/custom domain**.
+### Mudanças por arquivo
 
-### Leitura canônica da regra de negócio
-Pelo TCR + docs + migrations:
-- `projects.owner_id` referencia `profiles.id`
-- RLS de `projects_update`/`projects_delete` permite arquivar apenas quando o ator é:
-  - owner do projeto
-  - admin da BU
-  - líder hierárquico do owner
-- A UI deve refletir isso; o banco não deve ser afrouxado
+**1. `src/hooks/usePublicProfile.ts`** (estender, não duplicar)
+- Adicionar `useUserInitiatives(profileId)` — segue o padrão dos hooks já no arquivo, com query key `queryKeys.publicProfile.initiatives(profileId, buId)`.
+- Adicionar `useUserContributedKpis(profileId)` — query em `kpi_contributors` com join enxuto, key `queryKeys.publicProfile.contributedKpis(profileId, buId)`.
+- `useUserOkrs` já existe; só passa a ser consumido.
 
-Logo, **não há nova evidência para mexer em RLS**. O banco continua sendo a fonte correta de autorização.
+**2. `src/lib/queryKeys/index.ts`** (estender `publicProfile`)
+- Adicionar `initiatives(profileId, buId)` e `contributedKpis(profileId, buId)` no helper já existente.
 
-## Plano de ação
+**3. `src/pages/UserProfile/index.tsx`**
+- Importar `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` (shadcn já no projeto).
+- Importar `useProjects` (de `@/modules/projects/hooks`), `ProjectCard`, `ProjectStatusSummary`.
+- Importar `InitiativeCard` (de `@/modules/okrs/components/initiatives`).
+- Importar `OkrProgressBar` (de `@/modules/okrs/components/OkrProgressBar`).
+- Substituir o bloco KPIs inline atual pelo `<Tabs>` com 5 abas conforme layout acima.
+- Manter sidebar (Gestor, Squads, Contato, Redes Sociais) inalterada.
 
-### 1. Alinhar o ambiente live com o código atual
-Publicar/promover a versão atual para o ambiente que atende `hub.jetimob.com`, porque o domínio customizado está claramente servindo um build anterior ao hotfix row-aware.
+### Regras de negócio respeitadas
 
-Objetivo:
-- fazer o live usar o mesmo `ProjectDetailPage` e o mesmo `useProjectPermissionsV2` que já estão no código atual
-- eliminar o bundle antigo que ainda expõe a ação indevida e o toast com texto desatualizado
+- Toda query é BU-scoped (`useBuScopedSupabase` ou `useOptionalBuClient`) e filtra por `bu_id = currentBu.id` + `deleted_at IS NULL`.
+- Identidade canônica: usa `profile.id` (não `auth.uid`, não `user_id`).
+- KRs incluem `owner_user_id = profileId OR co_responsibles cs {profileId}` (idêntico ao padrão já em `usePublicProfile.useUserOkrs`).
+- Projeto reutiliza filtro server-side `owner_id` que já existe em `useProjects`.
+- Sem novos componentes visuais; navegação via `<Link>` para `/projects/:id`, `/okrs?...`, `/kpis?kpi=…` (padrão atual da página).
 
-### 2. Adicionar defesa em profundidade no detalhe do projeto
-Mesmo com o botão oculto, endurecer o fluxo do detalhe para impedir chamada indevida em qualquer cenário de bundle stale, hydration antiga ou estado residual:
+### Performance e cache
 
-- Em `ProjectDetailPage.tsx`:
-  - antes de `deleteProject.mutate(project.id)`, revalidar `canDeleteThisProject`
-  - se `false`, fechar o dialog e abortar a mutation
-- Condicionar também o `AlertDialogAction` ao mesmo guard lógico
-- Opcionalmente resetar `deleteOpen` quando `project.owner_id`/`writerProfileId` mudarem e a permissão deixar de existir
+- Lazy fetch por aba (`enabled: activeTab === 'projects'`, etc.).
+- Query keys distintas por `(profileId, buId)` evitam colisão em troca de BU/usuário.
+- Reaproveita cache global de Projects/OKRs já populado em outras telas para o mesmo `profileId`.
 
-Isso evita que UI antiga ou estado órfão ainda disparem o update que o RLS vai negar.
+### Validação manual pós-implementação
 
-### 3. Atualizar os testes do detalhe para o contrato atual
-Os testes atuais de `ProjectDetailPage` ainda mockam a versão antiga do hook e não cobrem o fluxo row-aware real.
+1. Acessar `/users/<id>` de um usuário com projetos/KRs/iniciativas/KPIs na BU atual → cada aba mostra dados corretos.
+2. Trocar de BU → contagens e listas refletem só a BU ativa (mesmo perfil pode ter membership em outras).
+3. Usuário sem dados em alguma aba → empty state amigável, sem skeleton infinito.
+4. Usuário externo (`employment_status === 'external'`) → redirect via `useExternalProfileRedirect` continua funcionando antes de qualquer fetch.
+5. Clique em ProjectCard → navega para `/projects/:id`. Clique em InitiativeCard → comportamento atual preservado. Clique em KR linha → `/okrs?kr=<id>`.
 
-Ajustar:
-- `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
-  - mockar `canEditProjectRecord` e `canDeleteProjectRecord`
-  - caso não-owner: botão de arquivar não aparece
-  - caso não-owner com tentativa indevida: mutation **não é chamada**
-  - caso owner/admin: botão aparece e mutation é chamada
-- manter os testes de `useProjectPermissionsV2` como SSOT semântica do gating por owner
+### Arquivos afetados (resumo)
 
-### 4. Fazer uma auditoria rápida das superfícies de arquivamento
-Revisar se existe outro ponto do módulo Projects que ainda permita arquivar via permissão estrutural antiga ou callback legado.
+- `src/hooks/usePublicProfile.ts` (adicionar 2 hooks)
+- `src/lib/queryKeys/index.ts` (adicionar 2 entradas em `publicProfile`)
+- `src/pages/UserProfile/index.tsx` (refator visual: introduzir Tabs e consumir hooks)
 
-Escopo mínimo:
-- `ProjectDetailPage.tsx`
-- chamadas de `useSoftDeleteProject`
-- qualquer menu/ação inline futura em Projects
+Zero arquivos novos de componente. Zero duplicação. Toda a parte visual é composição dos componentes canônicos já existentes (`Tabs`, `ProjectCard`, `ProjectStatusSummary`, `InitiativeCard`, `OkrProgressBar`).
 
-Hoje a busca aponta o detalhe como principal ponto; a auditoria garante que não ficou nenhum caminho paralelo.
-
-### 5. Preservar RLS e evitar novas mudanças de banco
-Não alterar:
-- `projects_update`
-- `projects_delete`
-- `current_bu_id()`
-- triggers de BU
-- schema/tabelas
-
-Justificativa:
-- o código atual já confirma que o incidente deixou de ser “RLS errada”
-- o sintoma reportado agora é coerente com **bundle live antigo + necessidade de guard extra na UI**
-
-## Validação pós-correção
-1. Em `hub.jetimob.com`, o toast deve mudar para o texto atual do código (ou idealmente nem aparecer para usuário sem permissão, porque o CTA some).
-2. Usuário sem ownership/admin/liderança:
-   - não vê botão de arquivar
-   - mesmo tentando forçar ação, a mutation não dispara pelo detalhe
-3. Owner/admin/líder autorizado:
-   - consegue abrir o dialog
-   - arquivamento funciona normalmente
-4. Preview e custom domain passam a apresentar o mesmo comportamento
-5. Regressão coberta por teste de página
-
-## Arquivos a ajustar
-- `src/modules/projects/pages/ProjectDetailPage.tsx`
-- `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
-- possivelmente nenhum outro arquivo funcional além da publicação/promote do build live
-
-## Resultado esperado
-- o domínio `hub.jetimob.com` passa a executar o hotfix row-aware já existente
-- usuários não autorizados deixam de receber esse toast ao clicar em um CTA que não deveria existir
-- o banco continua íntegro e sem flexibilização indevida de segurança
