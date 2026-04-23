@@ -10,7 +10,7 @@ const PROJECT_LIST_FIELDS = `
   owner:profiles!projects_owner_id_fkey(id, display_name, photo_url),
   project_teams(team_id, teams:teams!project_teams_team_id_fkey(id, name)),
   project_krs(key_result_id, impact, kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title)),
-  project_milestones(id, name, status, due_date, deleted_at)
+  project_milestones(id, name, status, start_date, due_date, created_at, deleted_at)
 ` as const;
 
 export function useProjects(filters: ProjectFilters = {}) {

@@ -48,7 +48,11 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
       if (project.milestones?.length) {
         for (const ms of project.milestones) {
           if (ms.deleted_at || !isValidDateStr(ms.due_date)) continue;
-          const msStart = isValidDateStr(ms.created_at) ? ms.created_at : project.start_date;
+          const msStart = isValidDateStr(ms.start_date)
+            ? ms.start_date
+            : isValidDateStr(ms.created_at)
+              ? ms.created_at
+              : project.start_date;
           items.push({
             id: ms.id,
             type: 'milestone',
