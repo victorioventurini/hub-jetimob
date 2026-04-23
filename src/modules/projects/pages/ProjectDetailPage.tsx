@@ -2,7 +2,7 @@
  * ProjectDetailPage — /projects/:id
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
@@ -71,6 +71,14 @@ export default function ProjectDetailPage() {
   const writerProfileId = realProfileId ?? profileId;
   const canEditThisProject = canEditProjectRecord(project?.owner_id, writerProfileId);
   const canDeleteThisProject = canDeleteProjectRecord(project?.owner_id, writerProfileId);
+
+  // Defesa em profundidade: fecha o dialog automaticamente se a permissão sumir
+  // (ex.: troca de impersonação, refetch que muda owner_id, etc.).
+  useEffect(() => {
+    if (deleteOpen && !canDeleteThisProject) {
+      setDeleteOpen(false);
+    }
+  }, [deleteOpen, canDeleteThisProject]);
 
   // Build owner profiles map from project owner + any future sources
   const ownerProfiles = useMemo(() => {
@@ -153,6 +161,12 @@ export default function ProjectDetailPage() {
   };
 
   const handleDelete = () => {
+    // Defesa em profundidade: revalidar permissão antes de disparar mutation,
+    // protegendo contra bundle stale, hydration antiga ou estado órfão.
+    if (!canDeleteThisProject) {
+      setDeleteOpen(false);
+      return;
+    }
     deleteProject.mutate(project.id, {
       onSuccess: () => navigate('/projects'),
     });
@@ -366,21 +380,25 @@ export default function ProjectDetailPage() {
         }}
       />
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O projeto "{project.name}" será arquivado. Essa ação pode ser revertida.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Arquivar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Confirmation — só montado quando há permissão real para arquivar este registro */}
+      {canDeleteThisProject && (
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Arquivar projeto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O projeto "{project.name}" será arquivado. Essa ação pode ser revertida.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={deleteProject.isPending}>
+                Arquivar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </HubLayout>
   );
 }

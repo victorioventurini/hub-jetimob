@@ -91,9 +91,12 @@ vi.mock('@/modules/projects/hooks/useProjectPermissionsV2', () => ({
     canEditProject: true,
     canEditOwnProject: true,
     canDeleteProject: true,
+    canDeleteOwnProject: true,
     canViewMilestones: true,
     canCreateMilestone: true,
     canEditMilestone: true,
+    canEditProjectRecord: vi.fn(() => true),
+    canDeleteProjectRecord: vi.fn(() => true),
   })),
 }));
 
@@ -114,6 +117,8 @@ vi.mock('@/modules/projects/components/ProjectCommentsSection', () => ({
 
 import ProjectDetailPage from '../../pages/ProjectDetailPage';
 import { useProject } from '../../hooks/useProject';
+import { useProjectPermissionsV2 } from '../../hooks/useProjectPermissionsV2';
+import { useSoftDeleteProject } from '../../hooks/useProjectMutations';
 
 describe('ProjectDetailPage', () => {
   it('renders project name in heading', () => {
@@ -192,5 +197,54 @@ describe('ProjectDetailPage', () => {
     const { container } = renderWithProviders(<ProjectDetailPage />);
     const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it('hides Arquivar button when user is not owner/admin', () => {
+    vi.mocked(useProjectPermissionsV2).mockReturnValueOnce({
+      isLoading: false,
+      hasFullAccess: false,
+      canViewProjects: true,
+      canCreateProject: false,
+      canEditProject: false,
+      canEditOwnProject: true,
+      canDeleteProject: false,
+      canDeleteOwnProject: true,
+      canViewMilestones: true,
+      canCreateMilestone: false,
+      canEditMilestone: false,
+      canEditProjectRecord: vi.fn(() => false),
+      canDeleteProjectRecord: vi.fn(() => false),
+    } as any);
+
+    const { container } = renderWithProviders(<ProjectDetailPage />);
+    // Botão "Editar" e ícone de arquivar não devem aparecer
+    expect(screen.queryByText('Editar')).not.toBeInTheDocument();
+    expect(container.querySelector('button.bg-destructive, button[class*="destructive"]')).toBeNull();
+  });
+
+  it('does not call delete mutation when permission is false', () => {
+    const mutateSpy = vi.fn();
+    vi.mocked(useSoftDeleteProject).mockReturnValueOnce({
+      mutate: mutateSpy,
+      isPending: false,
+    } as any);
+    vi.mocked(useProjectPermissionsV2).mockReturnValueOnce({
+      isLoading: false,
+      hasFullAccess: false,
+      canViewProjects: true,
+      canCreateProject: false,
+      canEditProject: false,
+      canEditOwnProject: false,
+      canDeleteProject: false,
+      canDeleteOwnProject: false,
+      canViewMilestones: true,
+      canCreateMilestone: false,
+      canEditMilestone: false,
+      canEditProjectRecord: vi.fn(() => false),
+      canDeleteProjectRecord: vi.fn(() => false),
+    } as any);
+
+    renderWithProviders(<ProjectDetailPage />);
+    expect(mutateSpy).not.toHaveBeenCalled();
   });
 });
