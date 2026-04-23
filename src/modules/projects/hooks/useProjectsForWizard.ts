@@ -21,7 +21,7 @@ export function useProjectsForWizard(teamId: string | undefined) {
         .select(`
           id, name, status, due_date, external_url, owner_id,
           owner:profiles!projects_owner_id_fkey(display_name, photo_url),
-          project_milestones(id, name, status, due_date, owner_id, notes, deleted_at,
+          project_milestones(id, name, status, start_date, due_date, owner_id, notes, deleted_at,
             milestone_owner:profiles!project_milestones_owner_id_fkey(display_name, photo_url)
           ),
           project_teams!inner(team_id, team:teams!project_teams_team_id_fkey(name))
@@ -61,6 +61,7 @@ export function useProjectsForWizard(teamId: string | undefined) {
             id: m.id,
             name: m.name,
             status: m.status,
+            start_date: m.start_date,
             due_date: m.due_date,
             owner_id: m.owner_id,
             owner_name: m.milestone_owner?.display_name ?? null,
