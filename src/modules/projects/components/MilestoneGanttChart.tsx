@@ -29,6 +29,7 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
       }
 
       // Use real start_date when present; fallback only for legacy/edge cases.
+      // Aligned with useGanttData: no fallback to due_date (would create zero-width bars).
       const startDate =
         m.start_date && isValid(parseISO(m.start_date))
           ? m.start_date
@@ -36,7 +37,12 @@ export function MilestoneGanttChart({ milestones, projectStartDate, projectDueDa
             ? m.created_at
             : projectStartDate && isValid(parseISO(projectStartDate))
               ? projectStartDate
-              : m.due_date;
+              : null;
+
+      if (!startDate) {
+        excludedCount++;
+        continue;
+      }
 
       items.push({
         id: m.id,
