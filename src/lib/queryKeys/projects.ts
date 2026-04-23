@@ -14,12 +14,12 @@ export const projectsKeys = {
   list: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'list', buId, filters] as const,
   detail: (id: string, buId?: string | null) =>
-    ['projects', 'detail', buId ?? null, id] as const,
+    ['projects', 'detail', id, buId ?? null] as const,
   byKr: (krId: string) => ['projects', 'by-kr', krId] as const,
   forWizard: (buId: string | null, teamId: string) =>
     ['projects', 'wizard', buId, teamId] as const,
   milestones: (projectId: string, buId?: string | null) =>
-    ['projects', 'milestones', buId ?? null, projectId] as const,
+    ['projects', 'milestones', projectId, buId ?? null] as const,
   milestonesPrefix: () => ['projects', 'milestones'] as const,
   /** Invalidate detail across all BU variants for a given project */
   detailPrefix: () => ['projects', 'detail'] as const,
