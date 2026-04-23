@@ -74,8 +74,34 @@ export default function ProjectDetailPage() {
   });
 
   const writerProfileId = realProfileId ?? profileId;
-  const canEditThisProject = canEditProjectRecord(project?.owner_id, writerProfileId);
-  const canDeleteThisProject = canDeleteProjectRecord(project?.owner_id, writerProfileId);
+  const canEditThisProject =
+    permissionsResolved && canEditProjectRecord(project?.owner_id, writerProfileId);
+  const canDeleteThisProject =
+    permissionsResolved && canDeleteProjectRecord(project?.owner_id, writerProfileId);
+
+  // Observabilidade: gating row-aware do detalhe do projeto.
+  // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
+  useEffect(() => {
+    if (!project) return;
+    console.info('[ProjectDetailPage] permission gate', {
+      projectId: project.id,
+      ownerId: project.owner_id,
+      writerProfileId,
+      permissionsResolved,
+      identityLoading,
+      permissionsLoading,
+      canEditThisProject,
+      canDeleteThisProject,
+    });
+  }, [
+    project,
+    writerProfileId,
+    permissionsResolved,
+    identityLoading,
+    permissionsLoading,
+    canEditThisProject,
+    canDeleteThisProject,
+  ]);
 
   // Defesa em profundidade: fecha o dialog automaticamente se a permissão sumir
   // (ex.: troca de impersonação, refetch que muda owner_id, etc.).
