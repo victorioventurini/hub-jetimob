@@ -32,10 +32,9 @@ export function useCreateMilestone() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
-      toast.success('Milestone criado');
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
     },
     onError: (error) => {
       console.error('Error creating milestone:', error);
@@ -65,12 +64,9 @@ export function useUpdateMilestone() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
-    },
-    onError: (error) => {
-      console.error('Error updating milestone:', error);
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
       toast.error('Erro ao atualizar milestone');
     },
   });
@@ -93,10 +89,9 @@ export function useSoftDeleteMilestone() {
       return { project_id };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
-      toast.success('Milestone removido');
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
     },
     onError: (error) => {
       console.error('Error deleting milestone:', error);

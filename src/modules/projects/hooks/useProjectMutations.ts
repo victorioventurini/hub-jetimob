@@ -107,7 +107,7 @@ export function useUpdateProject() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.id) });
       toast.success('Projeto atualizado');
     },
     onError: (error) => {
