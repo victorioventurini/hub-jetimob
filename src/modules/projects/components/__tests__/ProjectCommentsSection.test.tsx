@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+
+vi.mock('@/lib/mentions', () => ({
+  parseMentionsForDisplay: () => [<span key="mention">@Uriel Canfield</span>],
+}));
+
 import { renderProjectCommentContent } from '../ProjectCommentsSection';
 
 describe('renderProjectCommentContent', () => {
