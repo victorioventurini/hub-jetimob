@@ -121,6 +121,8 @@ export default function UserProfile() {
   const { data: squads } = useUserSquads(profile?.id);
   const { data: buMemberships } = useUserBuMemberships(profile?.id);
   const { currentBu } = useBu();
+  const { activeCycle } = useActiveCycle();
+  const activeCycleId = activeCycle?.id ?? null;
 
   const [activeTab, setActiveTab] = useState<EngagementTab>("overview");
   const profileId = profile?.id;
@@ -134,11 +136,14 @@ export default function UserProfile() {
   const { data: projects, isLoading: loadingProjects } = useProjects(
     fetchProjects ? { owner_id: profileId } : {}
   );
+  // OKRs/KRs e Iniciativas filtrados pelo ciclo ativo da BU (fallback: todos os ciclos quando não houver ciclo ativo)
   const { data: okrsData, isLoading: loadingOkrs } = useUserOkrs(
-    fetchOkrs ? profileId : undefined
+    fetchOkrs ? profileId : undefined,
+    activeCycleId
   );
   const { data: initiatives, isLoading: loadingInitiatives } = useUserInitiatives(
-    fetchInitiatives ? profileId : undefined
+    fetchInitiatives ? profileId : undefined,
+    activeCycleId
   );
   const { data: kpis, isLoading: loadingKpis } = useUserKpis(
     fetchKpis ? profileId : undefined
