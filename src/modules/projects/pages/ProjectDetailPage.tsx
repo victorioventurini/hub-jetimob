@@ -178,6 +178,7 @@ export default function ProjectDetailPage() {
   const handleEdit = (values: any) => {
     updateProject.mutate({
       id: project.id,
+      bu_id: project.bu_id,
       name: values.name,
       description: values.description || null,
       owner_id: values.owner_id || undefined,
@@ -198,9 +199,10 @@ export default function ProjectDetailPage() {
       setDeleteOpen(false);
       return;
     }
-    deleteProject.mutate(project.id, {
-      onSuccess: () => navigate('/projects'),
-    });
+    deleteProject.mutate(
+      { id: project.id, bu_id: project.bu_id },
+      { onSuccess: () => navigate('/projects') },
+    );
   };
 
   const headerActions = (

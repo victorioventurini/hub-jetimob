@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
-import { useBu } from '@/contexts/BuContext';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { toast } from 'sonner';
-import type { CreateProjectInput, UpdateProjectInput } from '../types';
+import type { CreateProjectInput, SoftDeleteProjectInput, UpdateProjectInput } from '../types';
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
@@ -76,16 +75,45 @@ export function useUpdateProject() {
     mutationFn: async (input: UpdateProjectInput) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { id, team_ids, ...updates } = input;
+      const { id, bu_id, team_ids, ...updates } = input;
 
-      const { data, error } = await supabase
+      // Filtra por bu_id do REGISTRO (não do contexto). RLS já garante isolamento.
+      // Manter o filtro aqui é defesa em profundidade contra mismatch de target,
+      // não substituto da RLS.
+      const { data, error, count } = await supabase
         .from('projects')
-        .update(updates)
+        .update(updates, { count: 'exact' })
         .eq('id', id)
+        .eq('bu_id', bu_id)
         .select('id')
-        .single();
+        .maybeSingle();
+
+      console.info('[useUpdateProject] result', {
+        projectId: id,
+        recordBuId: bu_id,
+        affectedCount: count,
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+      });
 
       if (error) throw error;
+
+      if (!data || count === 0) {
+        // count=0 sem error → ambíguo. Diagnosticar com SELECT.
+        const { data: probe, error: probeErr } = await supabase
+          .from('projects')
+          .select('id, deleted_at')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (probeErr) throw probeErr;
+        if (!probe) throw new Error('Projeto não encontrado.');
+        if (probe.deleted_at) throw new Error('Projeto já está arquivado.');
+
+        const rlsErr = new Error('Sem permissão para atualizar este projeto.');
+        (rlsErr as any).code = '42501';
+        throw rlsErr;
+      }
 
       // Sync team links (delete + re-insert)
       if (team_ids !== undefined) {
@@ -110,9 +138,17 @@ export function useUpdateProject() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.id) });
       toast.success('Projeto atualizado');
     },
-    onError: (error) => {
-      console.error('Error updating project:', error);
-      toast.error('Erro ao atualizar projeto');
+    onError: (error: any) => {
+      const code = error?.code ?? '';
+      const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
+      console.error('[useUpdateProject] error', { code, rawMsg });
+      const isPermissionError =
+        code === '42501' ||
+        /row-level security|permission denied|sem permiss/i.test(rawMsg);
+      const friendly = isPermissionError
+        ? 'Você não tem permissão para atualizar este projeto.'
+        : `Erro ao atualizar projeto: ${rawMsg}`;
+      toast.error(friendly);
     },
   });
 }
@@ -120,35 +156,61 @@ export function useUpdateProject() {
 export function useSoftDeleteProject() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
-  const { currentBuId } = useBu();
 
   return useMutation({
-    mutationFn: async (projectId: string) => {
+    mutationFn: async (input: SoftDeleteProjectInput) => {
       if (!supabase) throw new Error('Client not ready');
-      if (!currentBuId) throw new Error('Nenhuma BU selecionada');
 
-      // Defense in depth: filtra explicitamente por bu_id corrente.
-      // Evita erro RLS obscuro quando header BU está stale + garante isolamento.
+      const { id, bu_id } = input;
+
+      // Filtra por bu_id do REGISTRO (não do contexto). Isolamento real é da RLS.
       const { error, count } = await supabase
         .from('projects')
         .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
-        .eq('id', projectId)
-        .eq('bu_id', currentBuId)
+        .eq('id', id)
+        .eq('bu_id', bu_id)
         .is('deleted_at', null);
 
-      console.info('[useSoftDeleteProject] mutation result', {
-        projectId,
-        currentBuId,
+      console.info('[useSoftDeleteProject] result', {
+        projectId: id,
+        recordBuId: bu_id,
         affectedCount: count,
         errorCode: error?.code ?? null,
         errorMessage: error?.message ?? null,
       });
 
       if (error) throw error;
+
       if (count === 0) {
-        const noopError = new Error('Projeto não pôde ser arquivado (sem permissão ou BU incorreta).');
-        (noopError as any).code = '42501';
-        throw noopError;
+        // count=0 sem error é AMBÍGUO. Diagnosticar com SELECT antes de
+        // assumir que foi RLS — pode ter sido idempotência ou registro inexistente.
+        const { data: probe, error: probeErr } = await supabase
+          .from('projects')
+          .select('id, deleted_at, bu_id')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (probeErr) throw probeErr;
+
+        if (!probe) {
+          throw new Error('Projeto não encontrado.');
+        }
+
+        if (probe.deleted_at) {
+          // Já estava arquivado: tratar como sucesso (idempotência).
+          console.info('[useSoftDeleteProject] already archived (idempotent)', { id });
+          return;
+        }
+
+        if (probe.bu_id !== bu_id) {
+          // Caller passou bu_id errado. Bug do caller, não da permissão.
+          throw new Error(`BU do projeto (${probe.bu_id}) difere do bu_id informado (${bu_id}).`);
+        }
+
+        // Existe, não está arquivado, bu_id confere → RLS negou de verdade.
+        const rlsErr = new Error('Sem permissão para arquivar este projeto.');
+        (rlsErr as any).code = '42501';
+        throw rlsErr;
       }
     },
     onSuccess: () => {
