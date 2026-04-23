@@ -135,9 +135,10 @@ export function useSoftDeleteProject() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       toast.success('Projeto arquivado');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting project:', error);
-      toast.error('Erro ao arquivar projeto');
+      const detail = error?.message || error?.details || error?.hint || 'Erro desconhecido';
+      toast.error(`Erro ao arquivar projeto: ${detail}`);
     },
   });
 }
