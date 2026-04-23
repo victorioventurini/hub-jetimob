@@ -21,6 +21,10 @@ export const projectsKeys = {
   milestones: (projectId: string, buId?: string | null) =>
     ['projects', 'milestones', buId ?? null, projectId] as const,
   milestonesPrefix: () => ['projects', 'milestones'] as const,
+  /** Invalidate detail across all BU variants for a given project */
+  detailPrefix: () => ['projects', 'detail'] as const,
+  /** Invalidate milestones across all BU variants for a given project */
+  milestonesAllPrefix: () => ['projects', 'milestones'] as const,
   gantt: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'gantt', buId, filters] as const,
   myProjects: (buId: string | null, profileId: string | null) =>
