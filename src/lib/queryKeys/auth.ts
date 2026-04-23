@@ -53,6 +53,8 @@ export const publicProfileKeys = {
     ['user-okrs', userId, buId] as const,
   kpis: (userId: string | null, buId: string | null) => 
     ['user-kpis', userId, buId] as const,
+  contributedKpis: (userId: string | null, buId: string | null) => 
+    ['user-contributed-kpis', userId, buId] as const,
   squads: (userId: string | null, buId: string | null) => 
     ['user-squads', userId, buId] as const,
   buMemberships: (profileId: string | null) => 

@@ -229,6 +229,51 @@ export function useUserKpis(userId?: string) {
   });
 }
 
+/**
+ * KPIs onde o usuário é contribuidor (não owner).
+ * Reaproveita a tabela canônica `kpi_data_contributors` com join enxuto em `kpi_metrics`.
+ */
+export function useUserContributedKpis(userId?: string) {
+  const { currentBu } = useBu();
+  const supabase = useBuScopedSupabase();
+
+  return useQuery({
+    queryKey: queryKeys.publicProfile.contributedKpis(userId ?? null, currentBu?.id ?? null),
+    queryFn: async () => {
+      if (!userId || !currentBu?.id) return [];
+
+      const { data, error } = await supabase
+        .from("kpi_data_contributors")
+        .select(`
+          id,
+          role,
+          kpi:kpi_metrics!kpi_data_contributors_kpi_id_fkey(
+            id, name, unit, status, owner_user_id,
+            team:teams!kpi_metrics_team_id_fkey(id, name)
+          )
+        `)
+        .eq("contributor_user_id", userId)
+        .eq("bu_id", currentBu.id)
+        .is("deleted_at", null);
+
+      if (error) throw error;
+      // Filter out KPIs where the user is also the owner (avoid duplication)
+      // and entries with broken joins
+      return (data || [])
+        .filter((row: any) => row.kpi && row.kpi.owner_user_id !== userId)
+        .map((row: any) => ({
+          id: row.kpi.id,
+          name: row.kpi.name,
+          unit: row.kpi.unit,
+          status: row.kpi.status,
+          team: row.kpi.team,
+          role: row.role,
+        }));
+    },
+    enabled: !!userId && !!currentBu?.id,
+  });
+}
+
 export function useUserSquads(userId?: string) {
   const supabase = useBuScopedSupabase();
   const { currentBu } = useBu();

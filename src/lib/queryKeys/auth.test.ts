@@ -78,6 +78,7 @@ describe('publicProfileKeys', () => {
     expect(publicProfileKeys.profile('p1', 'bu-1')).toEqual(['public-profile', 'p1', 'bu-1']);
     expect(publicProfileKeys.okrs('u1', 'bu-1')).toEqual(['user-okrs', 'u1', 'bu-1']);
     expect(publicProfileKeys.kpis('u1', 'bu-1')).toEqual(['user-kpis', 'u1', 'bu-1']);
+    expect(publicProfileKeys.contributedKpis('u1', 'bu-1')).toEqual(['user-contributed-kpis', 'u1', 'bu-1']);
     expect(publicProfileKeys.squads('u1', 'bu-1')).toEqual(['user-squads', 'u1', 'bu-1']);
     expect(publicProfileKeys.buMemberships('p1')).toEqual(['user-bu-memberships', 'p1']);
   });
