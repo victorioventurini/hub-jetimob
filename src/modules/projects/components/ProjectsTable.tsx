@@ -120,26 +120,12 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
 
                 {/* Teams */}
                 <TableCell>
-                  {project.teams.length > 0 ? (
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {project.teams.slice(0, 2).map((t) => (
-                        <Badge
-                          key={t.team_id}
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {t.team_name}
-                        </Badge>
-                      ))}
-                      {project.teams.length > 2 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{project.teams.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  <EntityNamesCell
+                    teamNames={project.teams.map((t) => t.team_name)}
+                    maxVisible={2}
+                    variant="outline"
+                    emptyText="—"
+                  />
                 </TableCell>
 
                 {/* Progress */}
