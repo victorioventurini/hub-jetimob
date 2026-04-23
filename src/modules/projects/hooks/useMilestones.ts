@@ -12,7 +12,7 @@ export function useMilestones(projectId: string | undefined) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: projectsKeys.milestones(projectId || ''),
+    queryKey: projectsKeys.milestones(projectId || '', buId ?? null),
     queryFn: async () => {
       if (!supabase || !projectId) return [];
 
