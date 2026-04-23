@@ -7,8 +7,10 @@
  *
  * Mocks Supabase queries for contributors and led areas.
  */
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@/test/test-utils';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/hooks/useIdentity', () => ({
   useProfileId: vi.fn(),
