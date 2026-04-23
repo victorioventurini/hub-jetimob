@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useBu } from '@/contexts/BuContext';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { toast } from 'sonner';
 import type { CreateProjectInput, UpdateProjectInput } from '../types';
