@@ -136,9 +136,19 @@ export function useSoftDeleteProject() {
         .eq('bu_id', currentBuId)
         .is('deleted_at', null);
 
+      console.info('[useSoftDeleteProject] mutation result', {
+        projectId,
+        currentBuId,
+        affectedCount: count,
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+      });
+
       if (error) throw error;
       if (count === 0) {
-        throw new Error('Projeto não pôde ser arquivado (sem permissão ou BU incorreta).');
+        const noopError = new Error('Projeto não pôde ser arquivado (sem permissão ou BU incorreta).');
+        (noopError as any).code = '42501';
+        throw noopError;
       }
     },
     onSuccess: () => {
@@ -146,9 +156,14 @@ export function useSoftDeleteProject() {
       toast.success('Projeto arquivado');
     },
     onError: (error: any) => {
-      console.error('[useSoftDeleteProject]', error);
       const code = error?.code ?? '';
       const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
+      console.error('[useSoftDeleteProject] error', {
+        code,
+        rawMsg,
+        details: error?.details ?? null,
+        hint: error?.hint ?? null,
+      });
       const isPermissionError =
         code === '42501' ||
         /row-level security|permission denied|sem permiss/i.test(rawMsg);
