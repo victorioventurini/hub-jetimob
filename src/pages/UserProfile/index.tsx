@@ -45,6 +45,7 @@ import { ProjectStatusSummary } from "@/modules/projects/components/ProjectStatu
 import { useUserInitiatives } from "@/modules/okrs/hooks/useInitiatives";
 import { InitiativeCard } from "@/modules/okrs/components/initiatives";
 import { OkrProgressBar } from "@/modules/okrs/components/OkrProgressBar";
+import { useActiveCycle } from "@/modules/okrs/hooks/useActiveCycle";
 import { cn } from "@/lib/utils";
 
 
