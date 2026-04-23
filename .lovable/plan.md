@@ -1,37 +1,63 @@
+# Filtrar OKRs/KRs e Iniciativas do Perfil pelo Ciclo Ativo
 
-## Tooltip nos times escondidos ("+N") da listagem de Projetos
+## Objetivo
+Na página `/users/:id`, exibir apenas KRs e Iniciativas do **ciclo ativo** da BU corrente, com fallback claro quando não houver ciclo ativo.
 
-### Pré-checklist canônico
-- `TECHNICAL_CONTEXT_REGISTRY.md` — módulo Projetos v1.4
-- `mem://features/projects/holistic-module-architecture-v2`
-- Padrão visual de referência já implementado em `src/modules/assets/components/recommendations/ScopeNamesCell.tsx` (usado em `/assets/inventory/recommendations`)
-- Existe wrapper canônico genérico já no projeto: `src/components/ui/entity-names-cell.tsx` (`EntityNamesCell`) — segue exatamente o padrão `ScopeNamesCell` e aceita `userNames`, `teamNames`, `squadNames`
+## Conformidade com TCR e Canônicos
 
-### Diagnóstico
-- A tela `/projects` renderiza a coluna **Times** em `src/modules/projects/components/ProjectsTable.tsx` (linhas 120-142).
-- Hoje mostra os 2 primeiros times como `Badge` e o restante como texto inerte `+N`, **sem tooltip**.
-- A screenshot enviada (`Suporte`, `Onboarding`, `+3`) confirma que o usuário está vendo essa coluna e quer hover-to-reveal.
-- A tela `/assets/inventory/recommendations` resolve isso via `ScopeNamesCell`, que envolve as badges em `Tooltip` (Radix) e lista todos os nomes agrupados no conteúdo do tooltip.
-- O componente `EntityNamesCell` já existe em `src/components/ui/` exatamente para esse caso (suporta `teamNames`) — não precisamos criar nada novo nem duplicar lógica.
+- **BU isolation:** mantém `bu_id` + cliente buScoped (`useOptionalBuClient`).
+- **Ciclo ativo:** via `useActiveCycle()` (SSOT — `mem://features/dashboard/active-cycle-logic`), nunca inferindo por datas.
+- **Query keys centralizadas:** estende helpers em `src/lib/queryKeys/auth.ts` e `src/lib/queryKeys/okrs.ts` (regra #5).
+- **Sem `select('*')`:** colunas explícitas (regra #4).
+- **Soft-delete:** mantém `.is('deleted_at', null)` / `.is('cancelled_at', null)` onde aplicável.
+- **Joins canônicos:** usa `!inner` para que filtros em relações aninhadas (`cycle_id`) sejam aplicados pelo PostgREST.
+- **Reaproveitamento:** estende hooks existentes (`useUserOkrs`, `useUserInitiatives`) — sem duplicação.
 
-### Mudança proposta (única)
+## Mudanças por Arquivo
 
-Em `src/modules/projects/components/ProjectsTable.tsx`:
+### 1. `src/lib/queryKeys/auth.ts`
+Estender `publicProfileKeys.okrs` com `cycleId` opcional:
+```ts
+okrs: (userId, buId, cycleId?) => ['user-okrs', userId, buId, cycleId ?? null] as const,
+```
 
-- Substituir o bloco da `<TableCell>` da coluna **Times** (linhas 120-142) por uma única chamada a `<EntityNamesCell teamNames={...} maxVisible={2} variant="outline" emptyText="—" />`.
-- Mapear `project.teams` para `string[]` de `team_name` antes de passar.
-- Importar `EntityNamesCell` de `@/components/ui/entity-names-cell`.
-- Resultado: ao deixar o mouse sobre o "+N" (ou sobre as badges), aparece um tooltip listando **todos** os times do projeto, idêntico ao padrão de `recommendations`.
+### 2. `src/lib/queryKeys/okrs.ts`
+Estender helper de iniciativas-por-usuário com `cycleId` opcional, mantendo retrocompat.
 
-### O que NÃO vai mudar
-- `ProjectCard` (vista de cards) **não** está no escopo desta solicitação — a screenshot é da listagem em tabela. Se o usuário quiser tooltip também nos cards depois, aplicamos o mesmo `EntityNamesCell` lá.
-- Nenhum novo componente será criado. Nenhuma duplicação de lógica de tooltip.
-- Sem alterações em hooks, queries, RLS, query keys ou tipos.
+### 3. `src/lib/queryKeys/auth.test.ts`
+Adicionar casos para `publicProfileKeys.okrs` com e sem `cycleId`, garantindo chaves distintas.
 
-### Arquivos afetados
-- `src/modules/projects/components/ProjectsTable.tsx` — refator localizado da coluna Times (≈20 linhas substituídas por ≈6).
+### 4. `src/hooks/usePublicProfile.ts` — `useUserOkrs`
+- Aceitar `cycleId: string | null` opcional.
+- Incluir `cycleId` na queryKey.
+- Filtrar `okr_team_objectives.cycle_id = cycleId` quando presente.
+- Para KRs aninhados, usar join `team_objective:okr_team_objectives!inner(cycle_id, ...)` + `.eq('team_objective.cycle_id', cycleId)`.
+- Fallback: sem `cycleId`, comportamento atual (todos os ciclos).
 
-### Validação esperada
-- `/projects` (vista de tabela) → projeto com >2 times mostra 2 badges + chip `+N`; hover sobre qualquer badge ou sobre o `+N` exibe tooltip agrupado "Times:" com todos os nomes.
-- Comportamento idêntico ao de `/assets/inventory/recommendations`.
-- Projetos sem times continuam mostrando `—`.
+### 5. `src/modules/okrs/hooks/useInitiatives.ts` — `useUserInitiatives`
+- Aceitar `cycleId: string | null` opcional.
+- Incluir `cycleId` na queryKey.
+- Filtrar via duplo `!inner` (`key_result -> team_objective -> cycle_id`).
+- Manter soft-delete.
+
+### 6. `src/pages/UserProfile/index.tsx`
+- Importar `useActiveCycle` de `@/modules/okrs/hooks/useActiveCycle`.
+- `activeCycleId = activeCycle?.id ?? null`.
+- Passar `activeCycleId` para `useUserOkrs` e `useUserInitiatives`.
+- Exibir Badge com nome do ciclo no header das seções de OKRs/Iniciativas.
+- Empty states:
+  - Sem ciclo ativo: mensagem "BU sem ciclo ativo — exibindo todos os registros" + lista completa (fallback).
+  - Com ciclo ativo, mas sem KRs/Iniciativas: "Nenhum KR/Iniciativa neste ciclo".
+
+## Validação
+- Testes unitários em `auth.test.ts` (query keys).
+- Verificação visual em `/users/4e5985d2-d729-4529-ad6c-4ee15b0d927f`.
+- Chip do ciclo visível no cabeçalho das seções.
+
+## Arquivos Impactados
+- `src/lib/queryKeys/auth.ts`
+- `src/lib/queryKeys/okrs.ts`
+- `src/lib/queryKeys/auth.test.ts`
+- `src/hooks/usePublicProfile.ts`
+- `src/modules/okrs/hooks/useInitiatives.ts`
+- `src/pages/UserProfile/index.tsx`
