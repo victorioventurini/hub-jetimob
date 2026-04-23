@@ -82,9 +82,9 @@ export function useMentionableUsers(
     enabled = true 
   } = options;
   
-  const { currentBu } = useBu();
+  const { currentBuId } = useBu();
   const supabase = useBuScopedSupabase();
-  const buId = currentBu?.id ?? null;
+  const buId = currentBuId;
 
   // Query for 'internal+external' context - uses search_mention_candidates RPC
   // This RPC returns both internal users AND external contacts
