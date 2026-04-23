@@ -67,6 +67,42 @@ export function useProjectPermissionsV2() {
     [hasFullAccess, canDeleteOwnProject],
   );
 
+  // Observabilidade: snapshot das permissões efetivas do módulo Projects.
+  // TEMP: ajuda a distinguir bundle stale vs gating real no live.
+  const lastSnapshotRef = useRef<string>("");
+  useEffect(() => {
+    if (isLoading) return;
+    const snapshot = JSON.stringify({
+      isWildcard,
+      isImpersonating,
+      hasFullAccess,
+      canViewProjects,
+      canCreateProject,
+      canEditProject,
+      canEditOwnProject,
+      canDeleteOwnProject,
+      canViewMilestones,
+      canCreateMilestone,
+      canEditMilestone,
+    });
+    if (snapshot === lastSnapshotRef.current) return;
+    lastSnapshotRef.current = snapshot;
+    console.info("[useProjectPermissionsV2] effective permissions", JSON.parse(snapshot));
+  }, [
+    isLoading,
+    isWildcard,
+    isImpersonating,
+    hasFullAccess,
+    canViewProjects,
+    canCreateProject,
+    canEditProject,
+    canEditOwnProject,
+    canDeleteOwnProject,
+    canViewMilestones,
+    canCreateMilestone,
+    canEditMilestone,
+  ]);
+
   return useMemo(() => ({
     isLoading,
     hasFullAccess,
