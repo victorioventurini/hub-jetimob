@@ -21,14 +21,19 @@ describe('projectsKeys', () => {
     ]);
   });
 
-  it('detail keys are unique per id', () => {
+  it('detail keys are unique per id and BU-scoped', () => {
     expect(projectsKeys.detail('p1')).not.toEqual(projectsKeys.detail('p2'));
+    expect(projectsKeys.detail('p1', 'bu-1')).toEqual(['projects', 'detail', 'p1', 'bu-1']);
+    expect(projectsKeys.detail('p1')).toEqual(['projects', 'detail', 'p1', null]);
   });
 
   it('byKr / forWizard / milestones build expected shapes', () => {
     expect(projectsKeys.byKr('kr-1')).toEqual(['projects', 'by-kr', 'kr-1']);
     expect(projectsKeys.forWizard('bu-1', 'team-9')).toEqual(['projects', 'wizard', 'bu-1', 'team-9']);
-    expect(projectsKeys.milestones('p1')).toEqual(['projects', 'milestones', 'p1']);
+    expect(projectsKeys.milestones('p1')).toEqual(['projects', 'milestones', 'p1', null]);
+    expect(projectsKeys.milestones('p1', 'bu-1')).toEqual(['projects', 'milestones', 'p1', 'bu-1']);
+    expect(projectsKeys.detailFor('p1')).toEqual(['projects', 'detail', 'p1']);
+    expect(projectsKeys.milestonesFor('p1')).toEqual(['projects', 'milestones', 'p1']);
   });
 
   it('myProjects/myMilestones include profileId', () => {

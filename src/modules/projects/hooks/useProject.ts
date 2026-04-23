@@ -17,7 +17,7 @@ export function useProject(projectId: string | undefined) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: projectsKeys.detail(projectId || ''),
+    queryKey: projectsKeys.detail(projectId || '', buId ?? null),
     queryFn: async () => {
       if (!supabase || !projectId) return null;
 

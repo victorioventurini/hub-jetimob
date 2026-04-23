@@ -13,13 +13,22 @@ export const projectsKeys = {
   // ── Specific keys ──
   list: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'list', buId, filters] as const,
-  detail: (id: string) => ['projects', 'detail', id] as const,
+  detail: (id: string, buId?: string | null) =>
+    ['projects', 'detail', id, buId ?? null] as const,
   byKr: (krId: string) => ['projects', 'by-kr', krId] as const,
   forWizard: (buId: string | null, teamId: string) =>
     ['projects', 'wizard', buId, teamId] as const,
-  milestones: (projectId: string) =>
-    ['projects', 'milestones', projectId] as const,
+  milestones: (projectId: string, buId?: string | null) =>
+    ['projects', 'milestones', projectId, buId ?? null] as const,
   milestonesPrefix: () => ['projects', 'milestones'] as const,
+  /** Invalidate detail across all BU variants for a given project */
+  detailPrefix: () => ['projects', 'detail'] as const,
+  /** Invalidate detail for one project across all BU variants */
+  detailFor: (id: string) => ['projects', 'detail', id] as const,
+  /** Invalidate milestones across all BU variants for a given project */
+  milestonesAllPrefix: () => ['projects', 'milestones'] as const,
+  /** Invalidate milestones for one project across all BU variants */
+  milestonesFor: (projectId: string) => ['projects', 'milestones', projectId] as const,
   gantt: (buId: string | null, filters?: ProjectFilters) =>
     ['projects', 'gantt', buId, filters] as const,
   myProjects: (buId: string | null, profileId: string | null) =>

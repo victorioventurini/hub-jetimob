@@ -24,7 +24,7 @@ export function useAddProjectKrLink() {
       return input;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
       toast.success('KR vinculado ao projeto');
@@ -54,7 +54,7 @@ export function useRemoveProjectKrLink() {
       return input;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
     },

@@ -30,8 +30,8 @@ export function useAddMilestoneKrLink() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrs(data.milestone_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.key_result_id) });
       toast.success('KR vinculada ao milestone');
@@ -66,8 +66,8 @@ export function useRemoveMilestoneKrLink() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrs(data.milestone_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestones(data.project_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.detail(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.key_result_id) });
     },
