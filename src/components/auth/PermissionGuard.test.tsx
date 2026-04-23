@@ -15,117 +15,118 @@ import { usePermissions } from '@/hooks/usePermissions';
 const mockUsePermissions = vi.mocked(usePermissions);
 
 function setupPermissions(overrides: Partial<ReturnType<typeof usePermissions>> = {}) {
+  const perms = overrides.permissions ?? [];
   mockUsePermissions.mockReturnValue({
-    permissions: [],
-    has: (key: string) => overrides.permissions?.includes(key) ?? false,
-    hasAny: (keys: string[]) => keys.some(k => overrides.permissions?.includes(k)),
-    hasAll: (keys: string[]) => keys.every(k => overrides.permissions?.includes(k)),
+    permissions: perms,
+    has: (key: string) => overrides.isWildcard || perms.includes(key),
+    hasAny: (keys: string[]) => overrides.isWildcard || keys.some(k => perms.includes(k)),
+    hasAll: (keys: string[]) => overrides.isWildcard || keys.every(k => perms.includes(k)),
     isWildcard: false,
     isLoading: false,
     isImpersonating: false,
     ...overrides,
-  });
+  } as any);
 }
 
 describe('PermissionGuard', () => {
-  it('should render children when user has single permission', () => {
-    setupPermissions({ permissions: ['tickets.view'], has: () => true });
+  it('renders fallback while loading', () => {
+    setupPermissions({ isLoading: true });
     render(
-      <PermissionGuard permission="tickets.view">
-        <span>Content</span>
+      <PermissionGuard permission="x.y" fallback={<span>fb</span>}>
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.queryByText('secret')).not.toBeInTheDocument();
+    expect(screen.getByText('fb')).toBeInTheDocument();
   });
 
-  it('should render fallback when user lacks permission', () => {
-    setupPermissions({ has: () => false });
-    render(
-      <PermissionGuard permission="tickets.admin" fallback={<span>No access</span>}>
-        <span>Content</span>
-      </PermissionGuard>
-    );
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
-    expect(screen.getByText('No access')).toBeInTheDocument();
-  });
-
-  it('should render null fallback by default', () => {
-    setupPermissions({ has: () => false });
-    const { container } = render(
-      <PermissionGuard permission="tickets.admin">
-        <span>Content</span>
-      </PermissionGuard>
-    );
-    expect(container.textContent).toBe('');
-  });
-
-  it('should render children when isWildcard (admin)', () => {
+  it('renders children for wildcard regardless of permission', () => {
     setupPermissions({ isWildcard: true });
     render(
-      <PermissionGuard permission="any.permission">
-        <span>Admin Content</span>
+      <PermissionGuard permission="non.existent">
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.getByText('Admin Content')).toBeInTheDocument();
+    expect(screen.getByText('secret')).toBeInTheDocument();
   });
 
-  it('should render fallback during loading', () => {
-    setupPermissions({ isLoading: true });
-    const { container } = render(
-      <PermissionGuard permission="tickets.view">
-        <span>Content</span>
-      </PermissionGuard>
-    );
-    expect(container.textContent).toBe('');
-  });
-
-  it('should support anyOf - passes when one matches', () => {
-    setupPermissions({ hasAny: (keys: string[]) => keys.includes('tickets.view') });
+  it('renders children when single permission matches', () => {
+    setupPermissions({ permissions: ['okrs.team_objective.cancel:team'] });
     render(
-      <PermissionGuard anyOf={['tickets.view', 'tickets.admin']}>
-        <span>Content</span>
+      <PermissionGuard permission="okrs.team_objective.cancel:team">
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByText('secret')).toBeInTheDocument();
   });
 
-  it('should support anyOf - fails when none match', () => {
-    setupPermissions({ hasAny: () => false });
+  it('renders fallback when single permission missing', () => {
+    setupPermissions({ permissions: ['okrs.view'] });
     render(
-      <PermissionGuard anyOf={['tickets.admin', 'tickets.delete']}>
-        <span>Content</span>
+      <PermissionGuard permission="okrs.manage" fallback={<span>denied</span>}>
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    expect(screen.getByText('denied')).toBeInTheDocument();
   });
 
-  it('should support allOf - passes when all match', () => {
-    setupPermissions({ hasAll: () => true });
+  it('renders children when ANY of anyOf permissions match', () => {
+    setupPermissions({ permissions: ['okrs.view'] });
     render(
-      <PermissionGuard allOf={['tickets.view', 'tickets.edit']}>
-        <span>Content</span>
+      <PermissionGuard anyOf={['okrs.manage', 'okrs.view']}>
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByText('secret')).toBeInTheDocument();
   });
 
-  it('should support allOf - fails when one missing', () => {
-    setupPermissions({ hasAll: () => false });
+  it('renders fallback when NONE of anyOf permissions match', () => {
+    setupPermissions({ permissions: ['other.perm'] });
     render(
-      <PermissionGuard allOf={['tickets.view', 'tickets.admin']}>
-        <span>Content</span>
+      <PermissionGuard anyOf={['okrs.manage', 'okrs.view']} fallback={<span>denied</span>}>
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    expect(screen.getByText('denied')).toBeInTheDocument();
   });
 
-  it('should render children when no permission props provided', () => {
+  it('renders children when ALL allOf permissions match', () => {
+    setupPermissions({ permissions: ['a', 'b', 'c'] });
+    render(
+      <PermissionGuard allOf={['a', 'b']}>
+        <span>secret</span>
+      </PermissionGuard>
+    );
+    expect(screen.getByText('secret')).toBeInTheDocument();
+  });
+
+  it('renders fallback when allOf is missing one permission', () => {
+    setupPermissions({ permissions: ['a'] });
+    render(
+      <PermissionGuard allOf={['a', 'b']} fallback={<span>denied</span>}>
+        <span>secret</span>
+      </PermissionGuard>
+    );
+    expect(screen.getByText('denied')).toBeInTheDocument();
+  });
+
+  it('renders children when no permission props are provided (open guard)', () => {
     setupPermissions({});
     render(
       <PermissionGuard>
-        <span>Open Content</span>
+        <span>secret</span>
       </PermissionGuard>
     );
-    expect(screen.getByText('Open Content')).toBeInTheDocument();
+    expect(screen.getByText('secret')).toBeInTheDocument();
+  });
+
+  it('combines permission + anyOf — both must pass', () => {
+    setupPermissions({ permissions: ['x'] });
+    render(
+      <PermissionGuard permission="x" anyOf={['y', 'z']} fallback={<span>denied</span>}>
+        <span>secret</span>
+      </PermissionGuard>
+    );
+    expect(screen.getByText('denied')).toBeInTheDocument();
   });
 });
