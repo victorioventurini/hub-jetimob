@@ -147,8 +147,15 @@ export function useSoftDeleteProject() {
     },
     onError: (error: any) => {
       console.error('[useSoftDeleteProject]', error);
-      const detail = error?.message || error?.details || error?.hint || 'Erro desconhecido';
-      toast.error(`Erro ao arquivar projeto: ${detail}`);
+      const code = error?.code ?? '';
+      const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
+      const isPermissionError =
+        code === '42501' ||
+        /row-level security|permission denied|sem permiss/i.test(rawMsg);
+      const friendly = isPermissionError
+        ? 'Você não tem permissão para arquivar este projeto.'
+        : `Erro ao arquivar projeto: ${rawMsg}`;
+      toast.error(friendly);
     },
   });
 }
