@@ -153,6 +153,12 @@ export default function ProjectDetailPage() {
   };
 
   const handleDelete = () => {
+    // Defesa em profundidade: revalidar permissão antes de disparar mutation,
+    // protegendo contra bundle stale, hydration antiga ou estado órfão.
+    if (!canDeleteThisProject) {
+      setDeleteOpen(false);
+      return;
+    }
     deleteProject.mutate(project.id, {
       onSuccess: () => navigate('/projects'),
     });
