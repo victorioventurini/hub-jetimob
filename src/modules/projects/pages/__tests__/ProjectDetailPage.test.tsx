@@ -91,9 +91,12 @@ vi.mock('@/modules/projects/hooks/useProjectPermissionsV2', () => ({
     canEditProject: true,
     canEditOwnProject: true,
     canDeleteProject: true,
+    canDeleteOwnProject: true,
     canViewMilestones: true,
     canCreateMilestone: true,
     canEditMilestone: true,
+    canEditProjectRecord: vi.fn(() => true),
+    canDeleteProjectRecord: vi.fn(() => true),
   })),
 }));
 

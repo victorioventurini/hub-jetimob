@@ -72,6 +72,14 @@ export default function ProjectDetailPage() {
   const canEditThisProject = canEditProjectRecord(project?.owner_id, writerProfileId);
   const canDeleteThisProject = canDeleteProjectRecord(project?.owner_id, writerProfileId);
 
+  // Defesa em profundidade: fecha o dialog automaticamente se a permissão sumir
+  // (ex.: troca de impersonação, refetch que muda owner_id, etc.).
+  useEffect(() => {
+    if (deleteOpen && !canDeleteThisProject) {
+      setDeleteOpen(false);
+    }
+  }, [deleteOpen, canDeleteThisProject]);
+
   // Build owner profiles map from project owner + any future sources
   const ownerProfiles = useMemo(() => {
     const map: Record<string, { display_name: string | null; photo_url: string | null }> = {};
