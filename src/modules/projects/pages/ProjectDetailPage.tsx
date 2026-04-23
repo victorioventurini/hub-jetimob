@@ -168,13 +168,13 @@ export default function ProjectDetailPage() {
           </a>
         </Button>
       )}
-      {canEditProject && (
+      {canEditThisProject && (
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil className="h-4 w-4 sm:mr-1" />
           <span className="hidden sm:inline">Editar</span>
         </Button>
       )}
-      {canDeleteProject && (
+      {canDeleteThisProject && (
         <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
           <Trash2 className="h-4 w-4" />
         </Button>
