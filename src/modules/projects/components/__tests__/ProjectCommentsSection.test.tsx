@@ -5,7 +5,7 @@ vi.mock('@/lib/mentions', () => ({
   parseMentionsForDisplay: () => [<span key="mention">@Uriel Canfield</span>],
 }));
 
-import { renderProjectCommentContent } from '../ProjectCommentsSection';
+import { renderProjectCommentContent } from '../../utils/commentContent';
 
 describe('renderProjectCommentContent', () => {
   it('renderiza menções internas sem serializar React nodes como [object Object]', () => {
