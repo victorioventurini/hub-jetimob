@@ -286,6 +286,33 @@ describe('ProjectDetailPage', () => {
   });
 
   it('projects_manager (update:bu without delete) sees Editar but NOT Arquivar', () => {
+    // Reset useProject (testes anteriores podem ter setado mockReturnValue persistente).
+    vi.mocked(useProject).mockReturnValue({
+      data: {
+        id: 'proj-1',
+        name: 'Projeto Beta',
+        description: 'Descrição Beta',
+        owner_id: 'owner-1',
+        status: 'in_progress',
+        start_date: '2026-01-01',
+        due_date: '2026-06-30',
+        external_url: 'https://example.com',
+        bu_id: 'bu-1',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+        deleted_at: null,
+        owner: { id: 'owner-1', display_name: 'Maria Santos', photo_url: null },
+        teams: [],
+        krs: [],
+        milestones: [],
+        health: 'at_risk',
+        milestones_total: 4,
+        milestones_done: 1,
+        completion_pct: 25,
+      },
+      isLoading: false,
+    } as any);
+
     // Simula template projects_manager: pode editar qualquer projeto da BU,
     // mas NÃO tem nenhuma key de delete.
     vi.mocked(useProjectPermissionsV2).mockReturnValueOnce({
