@@ -1,77 +1,85 @@
 
 
-# `/decisions` — Tornar os escopos `self/team/area/all` realmente funcionais
+## Adicionar campo "Data de início" obrigatório em milestones
 
-## Pré-checklist canônico — concluído
-Consultados antes deste plano:
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
-- `docs/canonical/IDENTITY_CONVENTION.md` (regra de ouro `my_profile_id()`)
-- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` (matriz de personas)
-- `docs/canonical/QUERY_KEYS_STANDARD.md`
-- `mem://features/decisions/lifecycle-and-inbox-standard`
-- `mem://standards/users/team-filter-includes-subteams`
-- Migration `20260422195055` (RPC `rpc_decisions_inbox`)
-- Policies reais de `okr_wizard_sessions` (consultadas em `pg_policy`)
+### Pré-checklist (executado)
+- ✅ TCR §3.3.1 (Módulo Projetos v1.4) — schema atual de `project_milestones` confirmado sem `start_date`
+- ✅ `SCHEMA_QUICK_REFERENCE.md` linhas 462-463 — campos atuais listados
+- ✅ `DATA_MODEL_REGISTRY.md` — tabela rastreada com RLS BU-scoped
+- ✅ `mem://standards/database/check-constraint-prohibition` — usar trigger, não CHECK
+- ✅ `mem://features/projects/holistic-module-architecture-v2` — RBAC V2 e RLS preservados
+- ✅ Identidade: `owner_id` é `profiles.id` (legado, JOIN via `profiles.id`) — mantido
+- ✅ Sem duplicação: reaproveita `Popover + Calendar` (Shadcn) já usado para `due_date`
 
-## Diagnóstico verificado
+### Mudanças
 
-| Sintoma | Causa real |
-|---|---|
-| "Minhas" parece vazio | RPC filtra por `owner.id` no JSONB **OU** `started_by`. Decisões legadas sem `owner.id` somem. |
-| "Minha área" parece vazio para líderes de área | **Não existe** policy `okr_wizard_sessions` para líder de área. RLS bloqueia mesmo o RPC sendo `SECURITY INVOKER`. |
-| "Toda a BU" some para muita gente | É correto: só aparece quando `isWildcard` (admin BU/super-admin). |
-| "Meu time" inconsistente | Resolver mistura `times liderados + filhos + times da área` em `managedTeamIds`, então `team` ≠ "só meu time". |
+**1. Migração SQL** (`supabase/migrations/<new>.sql`)
+- `ALTER TABLE public.project_milestones ADD COLUMN start_date date;`
+- Backfill: `UPDATE public.project_milestones SET start_date = COALESCE(due_date, created_at::date) WHERE start_date IS NULL;`
+- `ALTER TABLE public.project_milestones ALTER COLUMN start_date SET NOT NULL;`
+- Função + trigger `trg_project_milestones_validate_dates` (BEFORE INSERT/UPDATE) — bloqueia `start_date > due_date` quando `due_date IS NOT NULL`. Sem CHECK constraint.
+- Não altera RLS, índices ou `bu_id` trigger.
 
-## Mudanças (mínimas, canônicas, sem componente novo)
+**2. Types** (`src/modules/projects/types.ts`)
+- `ProjectMilestone.start_date: string` (obrigatório)
+- `CreateMilestoneInput.start_date: string` (obrigatório)
+- `UpdateMilestoneInput.start_date?: string`
+- `ProjectForWizard.milestones[].start_date: string`
 
-### 1. RLS — adicionar policy de líder de área
-Migration nova com policy `Area leaders can view area sessions`:
-- `SELECT` em `okr_wizard_sessions` quando `started_by` ou `team_id` pertence a um time cuja `area_id` ∈ áreas onde `areas.leader_user_id = my_profile_id()`.
-- Usa `my_profile_id()` (sem `auth.uid()` em coluna de domínio — IDENTITY_CONVENTION).
-- `status IN ('completed','in_progress')`.
+**3. Form de criação** (`MilestoneCreateForm.tsx`) — estender, não duplicar
+- Novo state `startDate: Date | undefined`
+- Segundo `Popover + Calendar` com label "Início *", borda destructive quando vazio (mesmo padrão visual do `dueDate`)
+- Validação client-side: bloqueia submit se `!startDate || !dueDate || startDate > dueDate`
+- `onSubmit` passa `start_date` no payload; reset junto com os outros campos
 
-### 2. Resolver `useDecisionsScopeContext` — separar contextos
-Hoje colapsa tudo em `managedTeamIds`. Passa a retornar:
-- `directLeaderTeamIds`: árvore (próprios + descendentes via `get_descendant_team_ids`) — usado por `team`.
-- `managedAreaIds` + `areaTeamIds`: usado por `area`.
-- `availableScopes`: `self` sempre; `team` se há `directLeaderTeamIds`; `area` se há `managedAreaIds`; `all` se `isWildcard`.
+**4. Edição inline** (`MilestoneList.tsx`)
+- Adicionar `Popover + Calendar` para `start_date` ao lado do existente
+- Estender prop `onUpdate` para aceitar `start_date?: string | null`
+- Borda destructive quando `start_date > due_date` (validação visual)
 
-### 3. `useDecisionsInbox` — payload coerente por escopo
-- `self` → `p_team_ids=[]`, `p_area_ids=[]`.
-- `team` → `p_team_ids=directLeaderTeamIds` (já com descendentes).
-- `area` → `p_area_ids=managedAreaIds` (RPC já expande para times via `teams.area_id`).
-- `all` → `p_team_ids=[]`, `p_area_ids=[]`.
-- `overrideTeamIds` (filtro `TeamSelect`) continua forçando `effectiveScope='team'` com expansão recursiva já feita no client (`useTeamTree`).
-- Query keys (`okrsKeys.decisionsInbox`) atualizadas para refletir os novos campos sem perder estabilidade de cache.
+**5. Hooks/queries** — incluir `start_date` em todos selects/inserts/updates
+- `useMilestones.ts` (`MILESTONE_FIELDS`)
+- `useProject.ts` (PROJECT_SELECT)
+- `useProjectsForKr.ts` (select de `project_milestones`)
+- `useProjectsForWizard.ts`
+- `useMilestoneMutations.ts` (`useCreateMilestone` e `useUpdateMilestone`)
+- `CollaboratorProjectsStep.tsx` (2 selects)
 
-### 4. RPC `rpc_decisions_inbox` — endurecer `self`
-Pequeno ajuste em `WHEN p_scope = 'self'`:
-- Continua matchando `owner.id = me OR started_by = me`.
-- Acrescentar fallback: `me = ANY( (decision->'mentions')::jsonb )` quando o JSONB tiver array de citados.
-- Migration apenas substitui a função (sem mudar assinatura → sem quebra).
+**6. Page** (`ProjectDetailPage.tsx`)
+- `handleAddMilestone`: aceitar `start_date: string` no payload
+- `handleMilestoneUpdate`: aceitar `start_date?: string | null` opcional
 
-### 5. UX — feedback honesto na página
-- Manter botões só quando o escopo está realmente disponível (já faz).
-- Texto do `PageHeader` já explica que `Meu time`/`Toda a BU` dependem do papel — manter.
-- Nada de novo componente; reaproveita `PageHeader`, `ListPageFilters`, `TeamSelect`, `BuUserSelect`, `UrlFilterBar`, `SavedLinksPopover`.
+**7. Gantt** (`MilestoneGanttChart.tsx`)
+- Substituir heurística atual (`created_at` → `projectStartDate` → `due_date`) por `m.start_date` real
+- Manter fallback apenas defensivo (caso de borda)
 
-## Arquivos
-- `supabase/migrations/<novo>.sql` — policy de líder de área + nova versão de `rpc_decisions_inbox` (mesma assinatura).
-- `src/modules/okrs/hooks/useDecisionsInbox.ts` — separação de `directLeaderTeamIds` / `managedAreaIds` e payload correto por escopo.
-- `src/lib/queryKeys/okrs.ts` — refletir novos parâmetros nas keys.
-- `src/modules/okrs/pages/DecisionsPage.tsx` — apenas consumir o resolver atualizado (sem mudança de UI).
+**8. Testes**
+- Atualizar fixtures em `CollaboratorProjectsStep.test.tsx` e `ProjectDetailPage.test.tsx` para incluir `start_date`
+- Atualizar `useGanttData.test.ts` se necessário
+- Atualizar `MilestoneList.test.tsx` para nova prop
 
-## Critérios de aceite
-1. Admin BU vê `Toda a BU` retornar conjunto > `Meu time` > `Minhas`.
-2. Líder de time vê `Meu time` com decisões dele + descendentes.
-3. Líder de área vê `Minha área` com decisões de todos os times da área (RLS permite).
-4. Colaborador comum continua vendo só `Minhas`.
-5. Filtro manual `TeamSelect` continua expandindo subtimes (padrão `team-filter-includes-subteams`).
-6. URL state e `SavedLinksPopover` permanecem intactos.
-7. `IDENTITY_CONVENTION` respeitada: nenhuma comparação direta `auth.uid()` com coluna de domínio.
+**9. Documentação canônica** (manter em dia)
+- `docs/canonical/SCHEMA_QUICK_REFERENCE.md` — adicionar `start_date` à linha 463 e atualizar nota da linha 481
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — registrar mudança no changelog (nova entry de versão) e atualizar §3.3.1
 
-## Fora de escopo
-- Mudar a semântica do `self`/owner.
-- Trocar a RPC para `SECURITY DEFINER`.
-- Novos componentes de UI ou novas permission keys.
+### Arquivos afetados
+- `supabase/migrations/<new>.sql` (criar)
+- `src/modules/projects/types.ts`
+- `src/modules/projects/components/MilestoneCreateForm.tsx`
+- `src/modules/projects/components/MilestoneList.tsx`
+- `src/modules/projects/components/MilestoneGanttChart.tsx`
+- `src/modules/projects/hooks/{useMilestones,useMilestoneMutations,useProject,useProjectsForKr,useProjectsForWizard}.ts`
+- `src/modules/projects/pages/ProjectDetailPage.tsx`
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
+- Testes: `CollaboratorProjectsStep.test.tsx`, `ProjectDetailPage.test.tsx`, `MilestoneList.test.tsx`, `useGanttData.test.ts`
+- Docs: `SCHEMA_QUICK_REFERENCE.md`, `TECHNICAL_CONTEXT_REGISTRY.md`
+
+### Princípios respeitados
+- BU Isolation preservada (trigger `enforce_bu_scope` intacto)
+- Sem CHECK constraints (trigger de validação)
+- Sem `select('*')` (campos explícitos)
+- Soft-delete e RLS atuais preservados
+- Query keys via `projectsKeys` (sem mudança)
+- Reaproveitamento de `Popover + Calendar` Shadcn (sem duplicação)
+- Identidade: `owner_id` permanece `profiles.id`
 
