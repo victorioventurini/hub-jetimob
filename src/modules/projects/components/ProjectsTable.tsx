@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { ProjectHealthBadge } from './ProjectHealthBadge';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
 import { ProjectProgressBar } from './ProjectProgressBar';
+import { EntityNamesCell } from '@/components/ui/entity-names-cell';
 import type { ProjectWithRelations } from '../types';
 
 interface ProjectsTableProps {
