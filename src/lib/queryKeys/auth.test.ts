@@ -76,10 +76,18 @@ describe('onboardingKeys & myProfileKeys', () => {
 describe('publicProfileKeys', () => {
   it('builds keys per public-profile resource type', () => {
     expect(publicProfileKeys.profile('p1', 'bu-1')).toEqual(['public-profile', 'p1', 'bu-1']);
-    expect(publicProfileKeys.okrs('u1', 'bu-1')).toEqual(['user-okrs', 'u1', 'bu-1']);
+    expect(publicProfileKeys.okrs('u1', 'bu-1')).toEqual(['user-okrs', 'u1', 'bu-1', null]);
     expect(publicProfileKeys.kpis('u1', 'bu-1')).toEqual(['user-kpis', 'u1', 'bu-1']);
     expect(publicProfileKeys.contributedKpis('u1', 'bu-1')).toEqual(['user-contributed-kpis', 'u1', 'bu-1']);
     expect(publicProfileKeys.squads('u1', 'bu-1')).toEqual(['user-squads', 'u1', 'bu-1']);
     expect(publicProfileKeys.buMemberships('p1')).toEqual(['user-bu-memberships', 'p1']);
+  });
+
+  it('okrs key differentiates by cycleId', () => {
+    const noCycle = publicProfileKeys.okrs('u1', 'bu-1');
+    const withCycle = publicProfileKeys.okrs('u1', 'bu-1', 'cycle-1');
+    expect(noCycle).toEqual(['user-okrs', 'u1', 'bu-1', null]);
+    expect(withCycle).toEqual(['user-okrs', 'u1', 'bu-1', 'cycle-1']);
+    expect(noCycle).not.toEqual(withCycle);
   });
 });
