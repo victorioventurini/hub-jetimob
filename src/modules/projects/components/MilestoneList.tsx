@@ -18,7 +18,7 @@ interface MilestoneListProps {
   milestones: ProjectMilestone[];
   projectId: string;
   onStatusChange?: (milestoneId: string, status: MilestoneStatus) => void;
-  onUpdate?: (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null; notes?: string | null }) => void;
+  onUpdate?: (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string | null; notes?: string | null }) => void;
   onDelete?: (milestoneId: string) => void;
   canEditKrLinks?: boolean;
   canEdit?: boolean;
@@ -119,66 +119,110 @@ export function MilestoneList({
 
             {isExpanded && (
               <div className="ml-8 pl-2 border-l border-border space-y-3 py-2">
-                {/* Inline editing for due_date and owner */}
-                {canEdit && onUpdate && (
-                  <div className="flex gap-2 flex-wrap items-center">
-                    {/* Due date inline edit */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            'h-7 text-xs justify-start',
-                            !m.due_date && 'text-muted-foreground',
-                            isOverdue && 'border-destructive/50 text-destructive',
-                          )}
-                        >
-                          <CalendarIcon className="h-3 w-3 mr-1" />
-                          {m.due_date
-                            ? format(parseISO(m.due_date), "dd MMM yyyy", { locale: ptBR })
-                            : 'Definir prazo'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={m.due_date ? parseISO(m.due_date) : undefined}
-                          onSelect={(date) => {
-                            onUpdate(m.id, {
-                              due_date: date ? date.toISOString().split('T')[0] : null,
-                            });
-                          }}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                {/* Inline editing for start_date, due_date and owner */}
+                {canEdit && onUpdate && (() => {
+                  const dateOrderInvalid = !!m.start_date && !!m.due_date && m.start_date > m.due_date;
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex gap-2 flex-wrap items-center">
+                        {/* Start date inline edit */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                'h-7 text-xs justify-start',
+                                dateOrderInvalid && 'border-destructive/50 text-destructive',
+                              )}
+                            >
+                              <CalendarIcon className="h-3 w-3 mr-1" />
+                              {m.start_date
+                                ? `Início: ${format(parseISO(m.start_date), "dd MMM yyyy", { locale: ptBR })}`
+                                : 'Definir início'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={m.start_date ? parseISO(m.start_date) : undefined}
+                              onSelect={(date) => {
+                                if (!date) return;
+                                onUpdate(m.id, {
+                                  start_date: format(date, 'yyyy-MM-dd'),
+                                });
+                              }}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
 
-                    {/* Owner inline edit */}
-                    <div className="min-w-[180px]">
-                      <BuUserSelect
-                        value={m.owner_id ?? undefined}
-                        onValueChange={(v) => onUpdate(m.id, { owner_id: v })}
-                        placeholder="Responsável"
-                        allowNone
-                        noneLabel="Sem responsável"
-                      />
+                        {/* Due date inline edit */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                'h-7 text-xs justify-start',
+                                !m.due_date && 'text-muted-foreground',
+                                isOverdue && 'border-destructive/50 text-destructive',
+                                dateOrderInvalid && 'border-destructive/50 text-destructive',
+                              )}
+                            >
+                              <CalendarIcon className="h-3 w-3 mr-1" />
+                              {m.due_date
+                                ? `Prazo: ${format(parseISO(m.due_date), "dd MMM yyyy", { locale: ptBR })}`
+                                : 'Definir prazo'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={m.due_date ? parseISO(m.due_date) : undefined}
+                              onSelect={(date) => {
+                                onUpdate(m.id, {
+                                  due_date: date ? format(date, 'yyyy-MM-dd') : null,
+                                });
+                              }}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+
+                        {/* Owner inline edit */}
+                        <div className="min-w-[180px]">
+                          <BuUserSelect
+                            value={m.owner_id ?? undefined}
+                            onValueChange={(v) => onUpdate(m.id, { owner_id: v })}
+                            placeholder="Responsável"
+                            allowNone
+                            noneLabel="Sem responsável"
+                          />
+                        </div>
+
+                        {/* Delete button */}
+                        {onDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-destructive hover:text-destructive"
+                            onClick={() => onDelete(m.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                      {dateOrderInvalid && (
+                        <p className="text-xs text-destructive">
+                          A data de início deve ser anterior ou igual à data de fim.
+                        </p>
+                      )}
                     </div>
-
-                    {/* Delete button */}
-                    {onDelete && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs text-destructive hover:text-destructive"
-                        onClick={() => onDelete(m.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Notes inline edit */}
                 {canEdit && onUpdate && (
