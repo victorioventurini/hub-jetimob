@@ -76,26 +76,44 @@ export function useKrInitiativesCount(krId: string | undefined) {
 }
 
 // Fetch all initiatives for a user (as owner) - expects profile.id
-export function useUserInitiatives(profileId: string | undefined) {
+// When cycleId is provided, restricts to initiatives whose KR belongs to an objective in that cycle.
+export function useUserInitiatives(profileId: string | undefined, cycleId?: string | null) {
   const { client: supabase, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: queryKeys.okrs.initiativesByUser(profileId ?? null),
+    queryKey: queryKeys.okrs.initiativesByUser(profileId ?? null, cycleId ?? null),
     queryFn: async () => {
       if (!profileId || !supabase) return [];
-      
-      const { data, error } = await supabase
+
+      // Base columns + (when filtering by cycle) inner-joined KR → team_objective
+      const selectClause = cycleId
+        ? `${INITIATIVE_FIELDS},
+           key_result:okr_team_key_results!okr_initiatives_kr_id_fkey!inner(
+             id,
+             team_objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey!inner(
+               id, cycle_id
+             )
+           )`
+        : INITIATIVE_FIELDS;
+
+      let query = supabase
         .from("okr_initiatives")
-        .select(INITIATIVE_FIELDS)
+        .select(selectClause)
         .eq("owner_user_id", profileId)
-        .is("deleted_at", null)
+        .is("deleted_at", null);
+
+      if (cycleId) {
+        query = query.eq("key_result.team_objective.cycle_id", cycleId);
+      }
+
+      const { data, error } = await query
         .order("updated_at", { ascending: false })
         .limit(100);
 
       if (error) throw error;
       
       // Fetch owners separately - owner_user_id is profile.id
-      const ownerIds = [...new Set((data || []).map(i => i.owner_user_id))];
+      const ownerIds = [...new Set((data || []).map((i: any) => i.owner_user_id))];
       let ownerMap = new Map<string, { id: string; display_name: string | null; first_name: string | null; last_name: string | null; photo_url: string | null; }>();
       
       if (ownerIds.length > 0) {
@@ -107,7 +125,7 @@ export function useUserInitiatives(profileId: string | undefined) {
         ownerMap = new Map((owners || []).map(o => [o.id, { id: o.id, display_name: o.display_name, first_name: o.first_name, last_name: o.last_name, photo_url: o.photo_url }]));
       }
       
-      return (data || []).map(initiative => ({
+      return (data || []).map((initiative: any) => ({
         ...initiative,
         owner: ownerMap.get(initiative.owner_user_id),
       })) as Initiative[];
