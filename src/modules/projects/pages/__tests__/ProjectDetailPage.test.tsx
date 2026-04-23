@@ -104,6 +104,7 @@ vi.mock('@/hooks/useIdentity', () => ({
   useIdentity: vi.fn(() => ({
     profileId: 'test-profile-id',
     realProfileId: null,
+    isLoading: false,
   })),
 }));
 
