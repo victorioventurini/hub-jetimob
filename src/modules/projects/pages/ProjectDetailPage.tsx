@@ -2,7 +2,7 @@
  * ProjectDetailPage — /projects/:id
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
