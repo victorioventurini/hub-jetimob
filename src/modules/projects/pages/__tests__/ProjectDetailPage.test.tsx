@@ -333,6 +333,8 @@ describe('ProjectDetailPage', () => {
 
     const { container } = renderWithProviders(<ProjectDetailPage />);
     expect(screen.getByText('Editar')).toBeInTheDocument();
-    expect(container.querySelector('button[class*="destructive"]')).toBeNull();
+    // O botão de arquivar é o único botão destrutivo dentro do PageHeader (header actions).
+    const archiveBtn = container.querySelector('header button.bg-destructive, header button[class*="bg-destructive"]');
+    expect(archiveBtn).toBeNull();
   });
 });
