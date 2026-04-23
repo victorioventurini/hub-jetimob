@@ -139,17 +139,17 @@ export function usePublicProfile(profileId?: string) {
   });
 }
 
-export function useUserOkrs(userId?: string) {
+export function useUserOkrs(userId?: string, cycleId?: string | null) {
   const { currentBu } = useBu();
   const supabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: queryKeys.publicProfile.okrs(userId ?? null, currentBu?.id ?? null),
+    queryKey: queryKeys.publicProfile.okrs(userId ?? null, currentBu?.id ?? null, cycleId ?? null),
     queryFn: async () => {
       if (!userId || !currentBu?.id) return { objectives: [], keyResults: [] };
 
       // Fetch team objectives where user is owner
-      const { data: objectives, error: objError } = await supabase
+      let objectivesQuery = supabase
         .from("okr_team_objectives")
         .select(`
           id,
@@ -157,6 +157,7 @@ export function useUserOkrs(userId?: string) {
           status,
           is_shared,
           team_id,
+          cycle_id,
           team:teams!okr_team_objectives_team_id_fkey(id, name),
           key_results:okr_team_key_results(id, title, status, current_value, target, baseline, direction)
         `)
@@ -164,12 +165,31 @@ export function useUserOkrs(userId?: string) {
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null);
 
+      if (cycleId) {
+        objectivesQuery = objectivesQuery.eq("cycle_id", cycleId);
+      }
+
+      const { data: objectives, error: objError } = await objectivesQuery;
+
       if (objError) throw objError;
 
-      // Fetch key results where user is owner or co-responsible
-      const { data: krs, error: krError } = await supabase
-        .from("okr_team_key_results")
-        .select(`
+      // Fetch key results where user is owner or co-responsible.
+      // When cycleId is provided, use inner join on the parent objective and filter by its cycle_id.
+      const krSelect = cycleId
+        ? `
+          id,
+          title,
+          status,
+          current_value,
+          target,
+          baseline,
+          direction,
+          last_checkin_at,
+          team_id,
+          team:teams!okr_team_key_results_team_id_fkey(id, name),
+          objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey!inner(id, title, cycle_id)
+        `
+        : `
           id,
           title,
           status,
@@ -181,10 +201,20 @@ export function useUserOkrs(userId?: string) {
           team_id,
           team:teams!okr_team_key_results_team_id_fkey(id, name),
           objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey(id, title)
-        `)
+        `;
+
+      let krQuery = supabase
+        .from("okr_team_key_results")
+        .select(krSelect)
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
         .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`);
+
+      if (cycleId) {
+        krQuery = krQuery.eq("objective.cycle_id", cycleId);
+      }
+
+      const { data: krs, error: krError } = await krQuery;
 
       if (krError) throw krError;
 
