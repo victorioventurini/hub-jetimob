@@ -1,95 +1,140 @@
 
+## Corrigir definitivamente o incidente de arquivamento em Projetos no live
 
-## Aba "Atuação na BU" no perfil do usuário — Projetos, KRs/Iniciativas e KPIs
+### Pré-checklist obrigatório executado
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
+- `docs/canonical/IDENTITY_CONVENTION.md`
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`
+- `docs/canonical/DATA_MODEL_REGISTRY.md`
+- `docs/canonical/DEVELOPMENT_STANDARDS.md`
+- `docs/canonical/RBAC_TEMPLATES_V3.md`
+- `docs/qa/QA_PERMISSIONS_TEMPLATES.md`
+- memória: `mem://features/projects/holistic-module-architecture-v2`
+- memória: `mem://standards/query-key-prefix-standard`
+- memória: `mem://standards/soft-delete-policy-v1`
 
-Adicionar à página `src/pages/UserProfile/index.tsx` uma seção em abas que mostre o envolvimento real do usuário na BU atual, **reutilizando 100% dos componentes e hooks já existentes** (sem duplicar nenhum visual ou lógica).
+### Releitura do problema
+O problema real não é “RLS errada”. O problema é: um usuário sem permissão de exclusão/arquivamento está conseguindo chegar a um fluxo de arquivamento no ambiente live, e o toast exibido não bate com o código atual do repositório.
 
-### Pré-checklist canônico executado
-- `TECHNICAL_CONTEXT_REGISTRY.md` — perfil público, BU isolation, módulo Projetos v1.4
-- `IDENTITY_CONVENTION.md` — `profile_id` é a identidade; `owner_user_id` em KPIs/KRs/Iniciativas referencia `profiles.id`
-- `PERMISSIONS_AND_RBAC_MODEL.md` — perfil público respeita `v_bu_active_profiles` + `get_profile_with_privacy`
-- `DATA_MODEL_REGISTRY.md` — `projects.owner_id`, `kpi_metrics.owner_user_id`, `okr_team_objectives.owner_user_id`, `okr_team_key_results.owner_user_id`+`co_responsibles[]`, `okr_initiatives.owner_user_id`
-- `mem://features/projects/holistic-module-architecture-v2` — uso canônico de `useProjects({ owner_id })` + `ProjectCard`/`ProjectStatusSummary`
-- `mem://standards/query-key-prefix-standard` — keys novas adicionadas em `queryKeys.publicProfile.*`
-- `mem://standards/query-optimization-standard` — sem `select('*')`, somente colunas necessárias
-- `mem://standards/soft-delete-policy-v1` — todas queries filtram `deleted_at IS NULL`
+### Do I know what the issue is?
+Sim.
 
-### Fonte da informação (reaproveitando o que já existe)
+### O que a documentação canônica confirma
+- `projects.owner_id` referencia `profiles.id`, não `auth.users.id`.
+- O template `projects_manager` pode criar/editar projetos e milestones, mas **não pode excluir/arquivar** projetos.
+- A key de exclusão do módulo é `projects.project.delete:self_or_owner`.
+- Portanto:
+  - `projects_manager` não deve ver CTA de arquivar.
+  - `projects_admin`/admin BU/wildcard podem arquivar.
+  - owner só pode arquivar se efetivamente tiver a key de delete compatível.
 
-| Domínio | Hook reutilizado | Componente reutilizado |
-|---|---|---|
-| Projetos onde é owner | `useProjects({ owner_id: profile.id })` (já filtra por BU) | `ProjectCard`, `ProjectStatusSummary` |
-| KRs (owner ou co-responsável) | `useUserOkrs(profile.id)` (**já existe** em `usePublicProfile.ts`, hoje não é consumido) | `OkrProgressBar` + linha compacta |
-| Objetivos onde é owner | mesmo `useUserOkrs` | linha compacta com link para `/okrs?objective=…` |
-| Iniciativas onde é owner | **novo hook** `useUserInitiatives(profile.id)` — query única em `okr_initiatives` filtrando `owner_user_id` + `bu_id` + `deleted_at IS NULL` + join enxuto com `kr` | `InitiativeCard` (`showKrInfo`) já existente |
-| KPIs onde é owner | `useUserKpis(profile.id)` (já existe) | mantém o item compacto atual (KpiCard exige shape rico que `useUserKpis` não traz; **não vamos enriquecer agora** pra evitar duplicar `useKpiData`) |
-| KPIs onde é contribuidor | **novo hook** `useUserContributedKpis(profile.id)` — query única em `kpi_contributors` com join enxuto em `kpi_metrics` (id, name, unit, team) | mesmo item compacto dos KPIs próprios + badge "Contribuidor" |
+### Evidência consolidada
+- No código atual, o único toast de permissão é:
+  - `Você não tem permissão para arquivar este projeto.`
+- O toast reportado pelo usuário foi:
+  - `Você não permissão para arquivar esse projeto.`
+- Essa string **não existe** no codebase pesquisado.
+- Logo, há forte evidência de um destes cenários:
+  1. bundle antigo/stale no ambiente live;
+  2. segundo code path legado ainda não auditado no módulo Projects;
+  3. deploy publicado não está refletindo o estado atual do repositório.
 
-Nada de novos cards visuais. Onde KpiCard rico não cabe, usamos a linha compacta que já está no `UserProfile` hoje.
+## Plano de ação
 
-### Layout proposto
+### 1. Isolar e eliminar qualquer code path legado de arquivamento no módulo Projects
+Arquivos-foco:
+- `src/modules/projects/pages/ProjectDetailPage.tsx`
+- `src/modules/projects/hooks/useProjectPermissionsV2.ts`
+- `src/modules/projects/hooks/useProjectMutations.ts`
+- demais superfícies do módulo que chamem `useSoftDeleteProject` ou disparem arquivamento
 
-Substituir o card "KPIs" inline atual por um bloco **`<Tabs>`** (componente shadcn já existente) logo abaixo de "Informações Profissionais", dentro da coluna `lg:col-span-2`:
+Objetivo:
+- garantir que exista **um único fluxo canônico** para arquivar projeto;
+- remover qualquer fallback/branch legado que ainda use copy antiga ou gating incorreto.
 
-```
-[Tabs]
- ├─ Visão geral   (4 contadores: Projetos · OKRs · KRs · KPIs)
- ├─ Projetos      (ProjectStatusSummary + grid de ProjectCard)
- ├─ OKRs & KRs    (Objetivos + KRs com OkrProgressBar)
- ├─ Iniciativas   (InitiativeCard list, showKrInfo)
- └─ KPIs          (próprios + contribuídos, com badge)
-```
+### 2. Endurecer o gating de UI contra estado de permissão ainda carregando
+Hoje o detalhe já usa `canDeleteProjectRecord(...)`, mas o plano é reforçar o contrato:
 
-- "Visão geral" usa só números agregados (length de cada lista) — zero query nova além das que já vão rodar.
-- Cada aba só faz fetch quando ativada (`enabled` controlado por `activeTab`) — evita N requests no load inicial.
-- Empty state padrão por aba: ícone + texto curto ("Nenhum projeto sob responsabilidade nesta BU").
-- Loading: `Skeleton` já usado no resto da página.
+- bloquear renderização do CTA de arquivar enquanto `useProjectPermissionsV2().isLoading` estiver `true`;
+- bloquear também enquanto `useIdentity().isLoading` estiver `true`;
+- impedir abertura do dialog até que identidade + permissões estejam resolvidas;
+- manter a revalidação dentro de `handleDelete`.
 
-### Mudanças por arquivo
+Objetivo:
+- evitar falso positivo por race de carregamento;
+- alinhar com o padrão canônico: checar loading antes de decidir permissão.
 
-**1. `src/hooks/usePublicProfile.ts`** (estender, não duplicar)
-- Adicionar `useUserInitiatives(profileId)` — segue o padrão dos hooks já no arquivo, com query key `queryKeys.publicProfile.initiatives(profileId, buId)`.
-- Adicionar `useUserContributedKpis(profileId)` — query em `kpi_contributors` com join enxuto, key `queryKeys.publicProfile.contributedKpis(profileId, buId)`.
-- `useUserOkrs` já existe; só passa a ser consumido.
+### 3. Tornar o fluxo de erro observável para diferenciar permissão vs bundle stale
+Adicionar instrumentação temporária e objetiva nos pontos críticos:
 
-**2. `src/lib/queryKeys/index.ts`** (estender `publicProfile`)
-- Adicionar `initiatives(profileId, buId)` e `contributedKpis(profileId, buId)` no helper já existente.
+- em `useProjectPermissionsV2`:
+  - logar quais keys efetivas chegaram para Projects;
+  - logar `isLoading`, `hasFullAccess`, `canDeleteOwnProject`.
+- em `ProjectDetailPage`:
+  - logar `project.owner_id`, `writerProfileId`, `canDeleteThisProject`;
+- em `useSoftDeleteProject`:
+  - logar `projectId`, `currentBuId`, `error.code`, `error.message`, `count`.
 
-**3. `src/pages/UserProfile/index.tsx`**
-- Importar `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` (shadcn já no projeto).
-- Importar `useProjects` (de `@/modules/projects/hooks`), `ProjectCard`, `ProjectStatusSummary`.
-- Importar `InitiativeCard` (de `@/modules/okrs/components/initiatives`).
-- Importar `OkrProgressBar` (de `@/modules/okrs/components/OkrProgressBar`).
-- Substituir o bloco KPIs inline atual pelo `<Tabs>` com 5 abas conforme layout acima.
-- Manter sidebar (Gestor, Squads, Contato, Redes Sociais) inalterada.
+Objetivo:
+- no próximo reporte, identificar com precisão se o live ainda está rodando bundle antigo ou se existe algum branch inesperado.
 
-### Regras de negócio respeitadas
+### 4. Unificar a mensagem de erro e remover qualquer copy divergente
+Padronizar o copy de arquivamento em um único ponto do módulo, evitando strings duplicadas.
 
-- Toda query é BU-scoped (`useBuScopedSupabase` ou `useOptionalBuClient`) e filtra por `bu_id = currentBu.id` + `deleted_at IS NULL`.
-- Identidade canônica: usa `profile.id` (não `auth.uid`, não `user_id`).
-- KRs incluem `owner_user_id = profileId OR co_responsibles cs {profileId}` (idêntico ao padrão já em `usePublicProfile.useUserOkrs`).
-- Projeto reutiliza filtro server-side `owner_id` que já existe em `useProjects`.
-- Sem novos componentes visuais; navegação via `<Link>` para `/projects/:id`, `/okrs?...`, `/kpis?kpi=…` (padrão atual da página).
+Regra:
+- toast amigável de permissão vem somente do fluxo canônico de `useSoftDeleteProject`;
+- nenhum componente de página deve gerar manualmente uma variante textual diferente.
 
-### Performance e cache
+Objetivo:
+- se o toast antigo continuar aparecendo depois disso, a evidência de bundle stale fica inequívoca.
 
-- Lazy fetch por aba (`enabled: activeTab === 'projects'`, etc.).
-- Query keys distintas por `(profileId, buId)` evitam colisão em troca de BU/usuário.
-- Reaproveita cache global de Projects/OKRs já populado em outras telas para o mesmo `profileId`.
+### 5. Expandir a cobertura de testes para o cenário exato do incidente
+Atualizar/estender testes para cobrir:
 
-### Validação manual pós-implementação
+- usuário com `projects_manager`:
+  - vê editar;
+  - **não vê arquivar**;
+  - não dispara mutation;
+- usuário com permissions ainda carregando:
+  - CTA de arquivar não renderiza;
+- usuário com `projects_admin` ou wildcard:
+  - CTA aparece;
+  - mutation dispara;
+- owner sem key de delete:
+  - não arquiva;
+- owner com key `projects.project.delete:self_or_owner`:
+  - arquiva normalmente.
 
-1. Acessar `/users/<id>` de um usuário com projetos/KRs/iniciativas/KPIs na BU atual → cada aba mostra dados corretos.
-2. Trocar de BU → contagens e listas refletem só a BU ativa (mesmo perfil pode ter membership em outras).
-3. Usuário sem dados em alguma aba → empty state amigável, sem skeleton infinito.
-4. Usuário externo (`employment_status === 'external'`) → redirect via `useExternalProfileRedirect` continua funcionando antes de qualquer fetch.
-5. Clique em ProjectCard → navega para `/projects/:id`. Clique em InitiativeCard → comportamento atual preservado. Clique em KR linha → `/okrs?kr=<id>`.
+Arquivos de teste:
+- `src/modules/projects/hooks/__tests__/useProjectPermissionsV2.test.ts`
+- `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
 
-### Arquivos afetados (resumo)
+### 6. Validar publicação/live como parte do incidente
+Como frontend só vai para produção após atualização publicada, o plano inclui checagem explícita do ambiente live após a implementação:
 
-- `src/hooks/usePublicProfile.ts` (adicionar 2 hooks)
-- `src/lib/queryKeys/index.ts` (adicionar 2 entradas em `publicProfile`)
-- `src/pages/UserProfile/index.tsx` (refator visual: introduzir Tabs e consumir hooks)
+- publicar a versão atualizada;
+- validar comportamento no domínio publicado e no domínio customizado;
+- confirmar que o texto exibido é o do código atual;
+- se o domínio customizado continuar servindo comportamento antigo, tratar como problema de publicação/distribuição, não de app logic.
 
-Zero arquivos novos de componente. Zero duplicação. Toda a parte visual é composição dos componentes canônicos já existentes (`Tabs`, `ProjectCard`, `ProjectStatusSummary`, `InitiativeCard`, `OkrProgressBar`).
+## Resultado esperado
+- Usuário com `projects_manager` deixa de ver qualquer caminho de arquivamento.
+- Usuário sem permissão não consegue abrir dialog nem disparar mutation.
+- O único toast possível passa a ser o do fluxo canônico atual.
+- Se ainda surgir a copy antiga, ficará comprovado que o ambiente live está servindo bundle desatualizado.
+- O módulo Projects permanece aderente ao TCR, RBAC V2, identity convention e BU isolation.
 
+## Arquivos que provavelmente serão ajustados
+- `src/modules/projects/pages/ProjectDetailPage.tsx`
+- `src/modules/projects/hooks/useProjectPermissionsV2.ts`
+- `src/modules/projects/hooks/useProjectMutations.ts`
+- `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
+- `src/modules/projects/hooks/__tests__/useProjectPermissionsV2.test.ts`
+
+## Restrições mantidas
+- sem alterar RLS de `projects`;
+- sem afrouxar segurança;
+- sem trocar `profile_id` por `auth.uid()` em colunas de domínio;
+- sem duplicar componentes;
+- sem criar query keys fora de `src/lib/queryKeys/*`;
+- mantendo soft-delete, BU scope e invalidation por prefixo.
