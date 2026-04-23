@@ -433,13 +433,32 @@ export default function UserProfile() {
 
                   {/* OKRs & KRs */}
                   <TabsContent value="okrs" className="mt-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        {activeCycle
+                          ? "Exibindo registros do ciclo ativo desta BU."
+                          : "BU sem ciclo ativo — exibindo todos os registros."}
+                      </p>
+                      {activeCycle && (
+                        <Badge variant="outline" className="text-xs">
+                          Ciclo: {activeCycle.name}
+                        </Badge>
+                      )}
+                    </div>
                     {loadingOkrs ? (
                       <div className="space-y-3">
                         <Skeleton className="h-20 w-full" />
                         <Skeleton className="h-20 w-full" />
                       </div>
                     ) : objectivesCount === 0 && krsCount === 0 ? (
-                      <EmptyState icon={Target} message="Nenhum OKR ou KR sob responsabilidade nesta BU." />
+                      <EmptyState
+                        icon={Target}
+                        message={
+                          activeCycle
+                            ? `Nenhum OKR ou KR neste ciclo (${activeCycle.name}).`
+                            : "Nenhum OKR ou KR sob responsabilidade nesta BU."
+                        }
+                      />
                     ) : (
                       <>
                         {objectivesCount > 0 && (
@@ -516,13 +535,32 @@ export default function UserProfile() {
 
                   {/* Initiatives */}
                   <TabsContent value="initiatives" className="mt-6 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        {activeCycle
+                          ? "Exibindo iniciativas vinculadas a KRs do ciclo ativo."
+                          : "BU sem ciclo ativo — exibindo todas as iniciativas."}
+                      </p>
+                      {activeCycle && (
+                        <Badge variant="outline" className="text-xs">
+                          Ciclo: {activeCycle.name}
+                        </Badge>
+                      )}
+                    </div>
                     {loadingInitiatives ? (
                       <div className="space-y-3">
                         <Skeleton className="h-20 w-full" />
                         <Skeleton className="h-20 w-full" />
                       </div>
                     ) : initiativesCount === 0 ? (
-                      <EmptyState icon={Rocket} message="Nenhuma iniciativa sob responsabilidade nesta BU." />
+                      <EmptyState
+                        icon={Rocket}
+                        message={
+                          activeCycle
+                            ? `Nenhuma iniciativa neste ciclo (${activeCycle.name}).`
+                            : "Nenhuma iniciativa sob responsabilidade nesta BU."
+                        }
+                      />
                     ) : (
                       <div className="space-y-3">
                         {buInitiatives.map((initiative: any) => (
