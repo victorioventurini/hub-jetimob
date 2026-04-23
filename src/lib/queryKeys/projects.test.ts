@@ -21,8 +21,10 @@ describe('projectsKeys', () => {
     ]);
   });
 
-  it('detail keys are unique per id', () => {
+  it('detail keys are unique per id and BU-scoped', () => {
     expect(projectsKeys.detail('p1')).not.toEqual(projectsKeys.detail('p2'));
+    expect(projectsKeys.detail('p1', 'bu-1')).toEqual(['projects', 'detail', 'p1', 'bu-1']);
+    expect(projectsKeys.detail('p1')).toEqual(['projects', 'detail', 'p1', null]);
   });
 
   it('byKr / forWizard / milestones build expected shapes', () => {
