@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { toast } from 'sonner';
 import type { CreateProjectInput, UpdateProjectInput } from '../types';
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
-  const { client: supabase } = useOptionalBuClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (input: CreateProjectInput) => {
@@ -69,7 +69,7 @@ export function useCreateProject() {
 
 export function useUpdateProject() {
   const queryClient = useQueryClient();
-  const { client: supabase } = useOptionalBuClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (input: UpdateProjectInput) => {
@@ -118,7 +118,7 @@ export function useUpdateProject() {
 
 export function useSoftDeleteProject() {
   const queryClient = useQueryClient();
-  const { client: supabase } = useOptionalBuClient();
+  const supabase = useBuScopedSupabase();
 
   return useMutation({
     mutationFn: async (projectId: string) => {
