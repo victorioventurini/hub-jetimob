@@ -49,8 +49,8 @@ export const myProfileKeys = {
 export const publicProfileKeys = {
   profile: (profileId: string | null, buId: string | null) => 
     ['public-profile', profileId, buId] as const,
-  okrs: (userId: string | null, buId: string | null) => 
-    ['user-okrs', userId, buId] as const,
+  okrs: (userId: string | null, buId: string | null, cycleId?: string | null) => 
+    ['user-okrs', userId, buId, cycleId ?? null] as const,
   kpis: (userId: string | null, buId: string | null) => 
     ['user-kpis', userId, buId] as const,
   contributedKpis: (userId: string | null, buId: string | null) => 
