@@ -120,24 +120,33 @@ export function useUpdateProject() {
 export function useSoftDeleteProject() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
 
   return useMutation({
     mutationFn: async (projectId: string) => {
       if (!supabase) throw new Error('Client not ready');
+      if (!currentBuId) throw new Error('Nenhuma BU selecionada');
 
-      const { error } = await supabase
+      // Defense in depth: filtra explicitamente por bu_id corrente.
+      // Evita erro RLS obscuro quando header BU está stale + garante isolamento.
+      const { error, count } = await supabase
         .from('projects')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', projectId);
+        .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
+        .eq('id', projectId)
+        .eq('bu_id', currentBuId)
+        .is('deleted_at', null);
 
       if (error) throw error;
+      if (count === 0) {
+        throw new Error('Projeto não pôde ser arquivado (sem permissão ou BU incorreta).');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       toast.success('Projeto arquivado');
     },
     onError: (error: any) => {
-      console.error('Error deleting project:', error);
+      console.error('[useSoftDeleteProject]', error);
       const detail = error?.message || error?.details || error?.hint || 'Erro desconhecido';
       toast.error(`Erro ao arquivar projeto: ${detail}`);
     },
