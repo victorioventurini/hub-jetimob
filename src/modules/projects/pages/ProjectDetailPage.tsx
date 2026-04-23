@@ -40,7 +40,7 @@ import {
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profileId, realProfileId } = useIdentity();
+  const { profileId, realProfileId, isLoading: identityLoading } = useIdentity();
   const { currentBuId } = useBu();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -54,11 +54,16 @@ export default function ProjectDetailPage() {
   const updateMilestone = useUpdateMilestone();
   const deleteMilestone = useSoftDeleteMilestone();
   const {
+    isLoading: permissionsLoading,
     canEditProjectRecord,
     canDeleteProjectRecord,
     canCreateMilestone: canAddMilestone,
     canEditMilestone,
   } = useProjectPermissionsV2();
+
+  // Gate canônico: enquanto identidade ou permissões estiverem carregando,
+  // tratamos as flags por-registro como FALSAS para evitar falso positivo de UI.
+  const permissionsResolved = !identityLoading && !permissionsLoading;
 
   const projectName = project?.name ?? 'Projeto';
 
