@@ -53,7 +53,12 @@ export default function ProjectDetailPage() {
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
   const deleteMilestone = useSoftDeleteMilestone();
-  const { canEditProject, canDeleteProject, canCreateMilestone: canAddMilestone, canEditMilestone } = useProjectPermissionsV2();
+  const {
+    canEditProjectRecord,
+    canDeleteProjectRecord,
+    canCreateMilestone: canAddMilestone,
+    canEditMilestone,
+  } = useProjectPermissionsV2();
 
   const projectName = project?.name ?? 'Projeto';
 
@@ -64,6 +69,8 @@ export default function ProjectDetailPage() {
   });
 
   const writerProfileId = realProfileId ?? profileId;
+  const canEditThisProject = canEditProjectRecord(project?.owner_id, writerProfileId);
+  const canDeleteThisProject = canDeleteProjectRecord(project?.owner_id, writerProfileId);
 
   // Build owner profiles map from project owner + any future sources
   const ownerProfiles = useMemo(() => {
@@ -161,13 +168,13 @@ export default function ProjectDetailPage() {
           </a>
         </Button>
       )}
-      {canEditProject && (
+      {canEditThisProject && (
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil className="h-4 w-4 sm:mr-1" />
           <span className="hidden sm:inline">Editar</span>
         </Button>
       )}
-      {canDeleteProject && (
+      {canDeleteThisProject && (
         <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -332,7 +339,7 @@ export default function ProjectDetailPage() {
         <ProjectKrLinkSection
           projectId={project.id}
           linkedKrs={project.krs}
-          canEdit={canEditProject}
+          canEdit={canEditThisProject}
         />
 
         {/* Comentários */}
