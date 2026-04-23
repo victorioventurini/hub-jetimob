@@ -19,6 +19,7 @@ export function useCreateMilestone() {
           name: input.name,
           owner_id: input.owner_id ?? null,
           status: input.status ?? 'todo',
+          start_date: input.start_date,
           due_date: input.due_date ?? null,
           notes: input.notes ?? null,
           sort_order: input.sort_order ?? 0,

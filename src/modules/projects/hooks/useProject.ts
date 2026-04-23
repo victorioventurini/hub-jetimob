@@ -10,7 +10,7 @@ const PROJECT_DETAIL_FIELDS = `
   owner:profiles!projects_owner_id_fkey(id, display_name, photo_url),
   project_teams(team_id, teams:teams!project_teams_team_id_fkey(id, name)),
   project_krs(key_result_id, impact, kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title)),
-  project_milestones(id, project_id, name, owner_id, status, due_date, notes, sort_order, bu_id, created_at, updated_at, deleted_at)
+  project_milestones(id, project_id, name, owner_id, status, start_date, due_date, notes, sort_order, bu_id, created_at, updated_at, deleted_at)
 ` as const;
 
 export function useProject(projectId: string | undefined) {

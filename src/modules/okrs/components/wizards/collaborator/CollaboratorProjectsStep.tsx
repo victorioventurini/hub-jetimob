@@ -92,7 +92,7 @@ export function CollaboratorProjectsStep({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, status, due_date, project_milestones!inner(id, name, status, due_date, owner_id, notes, deleted_at)')
+        .select('id, name, status, due_date, project_milestones!inner(id, name, status, start_date, due_date, owner_id, notes, deleted_at)')
         .eq('bu_id', buId!)
         .eq('project_milestones.owner_id', effectiveUserId!)
         .in('status', ['planned', 'in_progress', 'paused'])
@@ -110,7 +110,7 @@ export function CollaboratorProjectsStep({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, status, due_date, project_milestones(id, name, status, due_date, owner_id, notes, deleted_at)')
+        .select('id, name, status, start_date, due_date, project_milestones(id, name, status, start_date, due_date, owner_id, notes, deleted_at)')
         .eq('bu_id', buId!)
         .eq('owner_id', effectiveUserId!)
         .in('status', ['planned', 'in_progress', 'paused'])

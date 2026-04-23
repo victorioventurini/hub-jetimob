@@ -101,13 +101,15 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const handleAddMilestone = (data: { name: string; due_date: string | null; owner_id: string | null }) => {
+  const handleAddMilestone = (data: { name: string; start_date: string; due_date: string; owner_id: string | null; notes: string | null }) => {
     if (!currentBuId || !id) return;
     createMilestone.mutate({
       project_id: id,
       name: data.name,
+      start_date: data.start_date,
       due_date: data.due_date,
       owner_id: data.owner_id,
+      notes: data.notes,
       bu_id: currentBuId,
     });
   };
@@ -117,7 +119,7 @@ export default function ProjectDetailPage() {
     updateMilestone.mutate({ id: milestoneId, project_id: id, status });
   };
 
-  const handleMilestoneUpdate = (milestoneId: string, updates: { due_date?: string | null; owner_id?: string | null }) => {
+  const handleMilestoneUpdate = (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string | null; notes?: string | null }) => {
     if (!id) return;
     updateMilestone.mutate({ id: milestoneId, project_id: id, ...updates });
   };

@@ -26,6 +26,7 @@ function createMilestone(overrides: Partial<ProjectMilestone> = {}): ProjectMile
     name: 'Milestone 1',
     owner_id: null,
     status: 'todo',
+    start_date: '2026-01-01',
     due_date: null,
     notes: null,
     sort_order: 0,

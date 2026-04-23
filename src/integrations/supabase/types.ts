@@ -7790,6 +7790,7 @@ export type Database = {
           owner_id: string | null
           project_id: string
           sort_order: number
+          start_date: string
           status: Database["public"]["Enums"]["milestone_status"]
           updated_at: string
         }
@@ -7804,6 +7805,7 @@ export type Database = {
           owner_id?: string | null
           project_id: string
           sort_order?: number
+          start_date: string
           status?: Database["public"]["Enums"]["milestone_status"]
           updated_at?: string
         }
@@ -7818,6 +7820,7 @@ export type Database = {
           owner_id?: string | null
           project_id?: string
           sort_order?: number
+          start_date?: string
           status?: Database["public"]["Enums"]["milestone_status"]
           updated_at?: string
         }

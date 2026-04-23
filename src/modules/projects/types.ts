@@ -51,6 +51,7 @@ export interface ProjectMilestone {
   name: string;
   owner_id: string | null;
   status: MilestoneStatus;
+  start_date: string;
   due_date: string | null;
   notes: string | null;
   sort_order: number;
@@ -87,6 +88,7 @@ export interface ProjectForWizard {
     id: string;
     name: string;
     status: MilestoneStatus;
+    start_date: string;
     due_date: string | null;
     owner_id: string | null;
     owner_name: string | null;
@@ -154,6 +156,7 @@ export interface CreateMilestoneInput {
   name: string;
   owner_id?: string | null;
   status?: MilestoneStatus;
+  start_date: string;
   due_date?: string | null;
   notes?: string | null;
   sort_order?: number;
@@ -165,6 +168,7 @@ export interface UpdateMilestoneInput {
   name?: string;
   owner_id?: string | null;
   status?: MilestoneStatus;
+  start_date?: string;
   due_date?: string | null;
   notes?: string | null;
   sort_order?: number;

@@ -4,7 +4,7 @@ import { projectsKeys } from '@/lib/queryKeys/projects';
 import type { ProjectMilestone } from '../types';
 
 const MILESTONE_FIELDS = `
-  id, project_id, name, owner_id, status, due_date, notes,
+  id, project_id, name, owner_id, status, start_date, due_date, notes,
   sort_order, bu_id, created_at, updated_at, deleted_at
 ` as const;
 

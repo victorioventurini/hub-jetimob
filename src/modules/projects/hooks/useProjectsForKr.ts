@@ -25,7 +25,7 @@ export function useProjectsForKr(krId: string | undefined) {
           impact,
           project:projects!project_krs_project_id_fkey(
             id, name, status, due_date, external_url, bu_id,
-            project_milestones(id, name, status, due_date, deleted_at)
+            project_milestones(id, name, status, start_date, due_date, deleted_at)
           )
         `)
         .eq('key_result_id', krId);
@@ -55,6 +55,7 @@ export function useProjectsForKr(krId: string | undefined) {
               id: m.id,
               name: m.name,
               status: m.status,
+              start_date: m.start_date,
               due_date: m.due_date,
               owner_id: null,
               owner_name: null,
