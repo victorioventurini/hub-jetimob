@@ -18,8 +18,8 @@ import { useCreateProjectComment, usePinProjectComment } from '../hooks/useProje
 import { useIdentity } from '@/hooks/useIdentity';
 import { supabase } from '@/integrations/supabase/globalClient';
 import { toast } from 'sonner';
-import { parseMentionsForDisplay } from '@/lib/mentions';
 import type { ProjectComment, ProjectCommentAttachment, RichTextContent } from '../types/comments';
+import { renderProjectCommentContent } from '../utils/commentContent';
 
 const THREAD_CONFIG: MessageThreadConfig = {
   allowExternalParticipants: false,
@@ -194,7 +194,7 @@ export function ProjectCommentsSection({ projectId }: ProjectCommentsSectionProp
   }, []);
 
   const renderContent = useCallback((text: string) => {
-    return <span dangerouslySetInnerHTML={{ __html: parseMentionsForDisplay(text) }} />;
+    return renderProjectCommentContent(text);
   }, []);
 
   const renderAttachments = useCallback((atts: any[]) => {
