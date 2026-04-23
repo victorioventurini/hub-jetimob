@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Send, Paperclip, X, FileIcon, Loader2 } from 'lucide-react';
@@ -47,6 +48,10 @@ function getMessageText(body: RichTextContent): string {
     if (typeof content === 'string') return content;
   }
   return '';
+}
+
+export function renderProjectCommentContent(text: string): ReactNode {
+  return <>{parseMentionsForDisplay(text)}</>;
 }
 
 function commentToGeneric(
@@ -194,7 +199,7 @@ export function ProjectCommentsSection({ projectId }: ProjectCommentsSectionProp
   }, []);
 
   const renderContent = useCallback((text: string) => {
-    return <span dangerouslySetInnerHTML={{ __html: parseMentionsForDisplay(text) }} />;
+    return renderProjectCommentContent(text);
   }, []);
 
   const renderAttachments = useCallback((atts: any[]) => {
