@@ -120,6 +120,7 @@ import ProjectDetailPage from '../../pages/ProjectDetailPage';
 import { useProject } from '../../hooks/useProject';
 import { useProjectPermissionsV2 } from '../../hooks/useProjectPermissionsV2';
 import { useSoftDeleteProject } from '../../hooks/useProjectMutations';
+import { useIdentity } from '@/hooks/useIdentity';
 
 describe('ProjectDetailPage', () => {
   it('renders project name in heading', () => {
@@ -247,5 +248,64 @@ describe('ProjectDetailPage', () => {
 
     renderWithProviders(<ProjectDetailPage />);
     expect(mutateSpy).not.toHaveBeenCalled();
+  });
+
+  it('hides Arquivar/Editar buttons while permissions are still loading', () => {
+    vi.mocked(useProjectPermissionsV2).mockReturnValueOnce({
+      isLoading: true,
+      hasFullAccess: false,
+      canViewProjects: false,
+      canCreateProject: false,
+      canEditProject: false,
+      canEditOwnProject: false,
+      canDeleteProject: false,
+      canDeleteOwnProject: false,
+      canViewMilestones: false,
+      canCreateMilestone: false,
+      canEditMilestone: false,
+      // Mesmo que helpers retornassem true, o gate `permissionsResolved` deve bloquear.
+      canEditProjectRecord: vi.fn(() => true),
+      canDeleteProjectRecord: vi.fn(() => true),
+    } as any);
+
+    const { container } = renderWithProviders(<ProjectDetailPage />);
+    expect(screen.queryByText('Editar')).not.toBeInTheDocument();
+    expect(container.querySelector('button[class*="destructive"]')).toBeNull();
+  });
+
+  it('hides Arquivar/Editar buttons while identity is still loading', () => {
+    vi.mocked(useIdentity).mockReturnValueOnce({
+      profileId: null,
+      realProfileId: null,
+      isLoading: true,
+    } as any);
+
+    const { container } = renderWithProviders(<ProjectDetailPage />);
+    expect(screen.queryByText('Editar')).not.toBeInTheDocument();
+    expect(container.querySelector('button[class*="destructive"]')).toBeNull();
+  });
+
+  it('projects_manager (update:bu without delete) sees Editar but NOT Arquivar', () => {
+    // Simula template projects_manager: pode editar qualquer projeto da BU,
+    // mas NÃO tem nenhuma key de delete.
+    vi.mocked(useProjectPermissionsV2).mockReturnValueOnce({
+      isLoading: false,
+      hasFullAccess: false,
+      canViewProjects: true,
+      canCreateProject: true,
+      canEditProject: true,
+      canEditOwnProject: false,
+      canDeleteProject: false,
+      canDeleteOwnProject: false,
+      canViewMilestones: true,
+      canCreateMilestone: true,
+      canEditMilestone: true,
+      canEditProjectRecord: vi.fn(() => true),
+      canDeleteProjectRecord: vi.fn(() => false),
+    } as any);
+
+    const { container } = renderWithProviders(<ProjectDetailPage />);
+    expect(screen.getByText('Editar')).toBeInTheDocument();
+    expect(container.querySelector('button[class*="destructive"]')).toBeNull();
   });
 });
