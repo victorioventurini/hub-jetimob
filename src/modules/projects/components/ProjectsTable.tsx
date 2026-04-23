@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { format, parseISO, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+
 import {
   Table,
   TableBody,
@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { ProjectHealthBadge } from './ProjectHealthBadge';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
 import { ProjectProgressBar } from './ProjectProgressBar';
+import { EntityNamesCell } from '@/components/ui/entity-names-cell';
 import type { ProjectWithRelations } from '../types';
 
 interface ProjectsTableProps {
@@ -119,26 +120,12 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
 
                 {/* Teams */}
                 <TableCell>
-                  {project.teams.length > 0 ? (
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {project.teams.slice(0, 2).map((t) => (
-                        <Badge
-                          key={t.team_id}
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {t.team_name}
-                        </Badge>
-                      ))}
-                      {project.teams.length > 2 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{project.teams.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  <EntityNamesCell
+                    teamNames={project.teams.map((t) => t.team_name)}
+                    maxVisible={2}
+                    variant="outline"
+                    emptyText="—"
+                  />
                 </TableCell>
 
                 {/* Progress */}
