@@ -1,75 +1,76 @@
 
 
-## Corrigir busca de usuários nos comentários de Projetos
+## Corrigir Gantt geral em `/projects?view=gantt` para usar `start_date` real do milestone
 
 ### Pré-checklist (executado)
 - ✅ TCR §3.3.1 (Módulo Projetos v1.4) e `mem://features/projects/holistic-module-architecture-v2`
-- ✅ `mem://standards/bu-isolation-master` (Core: "use `currentBuId` synchronously")
-- ✅ Confirmado no DB: RPC `search_bu_users_for_mention(a0000000-...-001, 'th', 8)` retorna 8 usuários internos válidos. **O backend está funcionando**.
-- ✅ Conferido que `ProjectCommentsSection.tsx` (linha 329) JÁ usa o `MentionInput` centralizado de `@/components/mentions` com `context="internal"` — **sem duplicação, padrão correto**.
-- ✅ Conferido que `TicketMessageComposer.tsx` (linha 290) usa o mesmo componente com `context="internal+external"`.
-- ✅ Conferido que `mentions.entity_type` é `text` (não enum), então `'project_comment'` é aceito.
+- ✅ `mem://standards/query-optimization-standard` (sem `select('*')`, colunas explícitas)
+- ✅ `mem://standards/soft-delete-policy-v1` (filtro `deleted_at` mantido)
+- ✅ Comparado `MilestoneGanttChart` (detalhe do projeto) vs `useGanttData` (Gantt geral): o de detalhe **já usa** `m.start_date` corretamente; o geral **não**.
 
-### Causa raiz
-Em `src/hooks/useMentionableUsers.ts` linha 87:
+### Causa raiz (dois pontos no mesmo fluxo)
 
+**1. `src/modules/projects/hooks/useProjects.ts` (linha 13)** — o SELECT da lista de projetos não traz `start_date` nem `created_at` dos milestones:
 ```ts
-const { currentBu } = useBu();
-const buId = currentBu?.id ?? null;   // ❌ depende de hidratação de userBus
+project_milestones(id, name, status, due_date, deleted_at)
 ```
+Resultado: ao chegar em `useGanttData`, todo `ms.start_date` é `undefined`.
 
-`currentBu` é derivado de `userBus.find(...).bu_unit`, que só fica disponível após o fetch da lista de membresias. Durante essa janela, `currentBu` é `null` mesmo com `currentBuId` válido (sincrono no localStorage). Resultado: a query React Query é desabilitada (`enabled: !!buId === false`), `data` permanece `undefined → []`, e o dropdown mostra **"Nenhum usuário encontrado"** sem nunca disparar o RPC.
-
-A regra Core do projeto é explícita: *"ALWAYS filter queries by `bu_id` using `currentBuId` synchronously. No exceptions."* O hook viola essa regra.
-
-Por que tickets "parecem funcionar": o composer de ticket fica em uma página onde `useTicket` já força hidratação completa da BU antes do composer montar, então `currentBu` está pronto. Já em `/projects/:id`, o composer monta no mesmo ciclo que `useProject`, antes da hidratação de membresias.
-
-### Correção (mínima, centralizada, sem duplicação)
-**Único arquivo alterado:** `src/hooks/useMentionableUsers.ts`
-
-Trocar a fonte do `buId` para o estado síncrono:
-
+**2. `src/modules/projects/hooks/useGanttData.ts` (linha 51)** — ignora `ms.start_date` e usa `ms.created_at` como fallback "padrão":
 ```ts
-- const { currentBu } = useBu();
-- const supabase = useBuScopedSupabase();
-- const buId = currentBu?.id ?? null;
-+ const { currentBuId } = useBu();
-+ const supabase = useBuScopedSupabase();
-+ const buId = currentBuId;
+const msStart = isValidDateStr(ms.created_at) ? ms.created_at : project.start_date;
 ```
+Isso contradiz o `MilestoneGanttChart` (detalhe do projeto), que prioriza `m.start_date` real e só usa `created_at`/`projectStartDate` como fallback legacy.
 
-Isso corrige automaticamente:
-- `MentionInput` em projetos (`context="internal"` via `ProjectCommentsSection`)
-- `MentionInput` em tickets (`context="internal+external"` via `TicketMessageComposer`)
-- `InternalMentionInput` em check-ins de OKR (`CheckinReflectionBlock`)
-- Qualquer uso futuro do hook
+Consequência visual: na visão geral, todas as barras de milestone começam na data de criação do registro (ou na data de início do projeto), não na `start_date` definida pelo usuário.
 
-Como o hook já é a fonte única de candidates para todos os contextos de menção, a centralização é preservada (zero duplicação de componentes, zero novos hooks).
+### Correção (mínima, alinhada ao padrão já existente em `MilestoneGanttChart`)
+
+**Arquivo 1 — `src/modules/projects/hooks/useProjects.ts` (1 linha):**
+```ts
+- project_milestones(id, name, status, due_date, deleted_at)
++ project_milestones(id, name, status, start_date, due_date, created_at, deleted_at)
+```
+Adiciona apenas as 2 colunas necessárias (sem `select('*')`, mantendo o padrão de colunas explícitas).
+
+**Arquivo 2 — `src/modules/projects/hooks/useGanttData.ts` (lógica do `msStart`):**
+Replicar exatamente a hierarquia do `MilestoneGanttChart`:
+```ts
+const msStart =
+  isValidDateStr(ms.start_date) ? ms.start_date
+  : isValidDateStr(ms.created_at) ? ms.created_at
+  : project.start_date;
+```
+Prioridade: `start_date` real → `created_at` (legacy) → `project.start_date` (fallback final).
+
+**Arquivo 3 — Tipo `ProjectWithRelations.milestones[]`:**
+Verificar se o tipo dos milestones na lista exige ajuste; se hoje aceita `ProjectMilestone` completo, basta garantir que o mapeamento em `useProjects.ts` não derrube `start_date`/`created_at` ao montar `milestones`. (Vou conferir o map em `useProjects.ts` linhas 42-45 e ajustar se necessário sem alterar contrato público.)
 
 ### Por que essa abordagem
-- **Componente único reaproveitado**: `MentionInput` (um arquivo, dois contextos via prop) já existe e está corretamente usado nos dois módulos. Não há nada a unificar — só falta corrigir o hook compartilhado.
-- **Conformidade com Core rule**: `currentBuId` síncrono em vez de `currentBu` derivado.
-- **Sem novas tabelas/RPCs/migrações**: backend já entrega o que precisa.
-- **Sem mudança em RLS, contratos ou tipos**.
+- **Reaproveitamento de padrão existente**: a lógica correta já está em `MilestoneGanttChart`. Apenas espelhamos no Gantt geral, mantendo SSOT semântico de "como inferir start de milestone".
+- **Sem novo componente, sem novo hook, sem nova RPC**.
+- **Sem mudança de schema/RLS/migration**.
+- **Conformidade com Core**: BU isolation preservada (sem alterar filtros), `select` explícito, soft-delete intacto.
 
 ### Validação pós-correção
-1. Abrir `/projects/98074a55-...` → seção Comentários → digitar `@th` → dropdown mostra Thomas, Thiago, Thaise, etc.
-2. Selecionar um usuário → chip de menção interna (azul) aparece corretamente.
-3. Enviar comentário → `mentions` recebe registro com `entity_type='project_comment'`, `mentioned_user_id` preenchido.
-4. Sanity-check em `/tickets/<id>` (não deve regredir): `@` continua mostrando internos + externos da partner company.
-5. Sanity-check em check-in de OKR (`InternalMentionInput`): `@` continua funcionando.
+1. `/projects?view=gantt` → milestones de projetos com `start_date` definido renderizam barras iniciando na data correta (ex.: projeto `98074a55-...` cujos milestones têm `start_date != created_at` após o backfill recente).
+2. Tooltip do milestone mostra `start_date → due_date` real.
+3. Sanity-check em `/projects/:id?view=timeline` (`MilestoneGanttChart`) — deve continuar idêntico (já estava correto).
+4. Milestones legacy sem `start_date` continuam usando fallback `created_at`/`project.start_date` (sem regressão).
 
 ### Arquivos afetados
-- `src/hooks/useMentionableUsers.ts` (única alteração: 2 linhas)
+- `src/modules/projects/hooks/useProjects.ts` (1 linha no SELECT + ajuste no map se necessário)
+- `src/modules/projects/hooks/useGanttData.ts` (3 linhas na hierarquia de `msStart`)
+- `src/modules/projects/hooks/__tests__/useGanttData.test.ts` (atualizar/adicionar caso para `ms.start_date` ter prioridade)
 
-### Documentação canônica (manter em dia)
-- Adicionar nota curta em `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` no changelog (hotfix: `useMentionableUsers` agora usa `currentBuId` síncrono, alinhado ao Core BU Isolation).
+### Documentação canônica
+- Nota curta no changelog do TCR §3.3.1: "hotfix Gantt geral — `useGanttData` agora prioriza `milestone.start_date` (alinhado a `MilestoneGanttChart`)."
 
 ### Princípios respeitados
-- BU Isolation (`currentBuId` síncrono — Core rule)
-- Componentização centralizada (`MentionInput` é a SSOT de menções; nenhum novo componente)
-- Sem `select('*')`
-- Sem CHECK constraints
-- Sem mudança de RLS / schema / RPC
-- Reuso máximo: o componente do ticket e do projeto continuam compartilhando 100% do código
+- BU Isolation (sem mudança em filtros)
+- Sem `select('*')` (colunas explícitas adicionadas)
+- Sem CHECK constraints / sem mudança em RLS
+- Soft-delete preservado
+- Reuso do padrão de fallback já validado no detalhe do projeto
+- Componentes centralizados (mesma SSOT lógica nos dois cenários)
 
