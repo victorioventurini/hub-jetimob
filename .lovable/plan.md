@@ -1,150 +1,172 @@
 
+## Corrigir falso positivo de permissão no arquivamento de Projetos — RLS está certa, UI está errada
 
-## Hotfix RLS no soft-delete de Projetos — UPDATE seguro mesmo com BU header stale
+### Pré-checklist obrigatório executado
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — Módulo Projetos v1.4, permission keys e hook `useProjectPermissionsV2`
+- `docs/canonical/IDENTITY_CONVENTION.md` — mutations e ownership devem usar `profile_id`/`useIdentity`
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — scopes `bu` vs `self_or_owner`
+- `docs/canonical/DATA_MODEL_REGISTRY.md` + `SCHEMA_QUICK_REFERENCE.md` — tabela `projects`, ownership em `owner_id`, memberships
+- `docs/canonical/DEVELOPMENT_STANDARDS.md` — `self_or_owner` significa “apenas recursos próprios/owner”
+- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` + `QUERY_KEYS_STANDARD.md`
+- Memórias relevantes: `mem://features/projects/holistic-module-architecture-v2`, `mem://standards/soft-delete-policy-v1`, `mem://standards/query-key-prefix-standard`
 
-### Pré-checklist (executado)
-- ✅ TCR §3.3.1 (Projetos v1.4) e `mem://features/projects/holistic-module-architecture-v2`
-- ✅ `mem://standards/bu-isolation-master` — header `x-current-bu-id` síncrono
-- ✅ `mem://auth/identity-rbac-master` — `my_profile_id()` + `is_bu_admin` + `is_leader_of_project_owner`
-- ✅ `mem://standards/soft-delete-policy-v1` — soft-delete preserva `bu_id`, só seta `deleted_at`
-- ✅ `mem://standards/query-key-prefix-standard` — query keys precisam variar por escopo (incluindo `buId`)
-- ✅ Lidas todas as 4 policies de `projects` (`select`, `insert`, `update`, `delete`) + trigger `enforce_bu_scope`
-- ✅ Validados todos os caminhos de `current_bu_id()` (header → is_default → primeiro membership)
+### Causa raiz confirmada
+O erro persistente **não é mais de header BU stale**. O banco já está com:
+- `current_bu_id()` robusta
+- `projects_update` com `WITH CHECK = profile_has_bu_access(...)`
 
-### Causa raiz (confirmada via DB + análise)
+Mesmo assim o `UPDATE` falha porque o usuário atual **não é owner/admin/líder do owner**.
 
-A policy `projects_update`:
-```
-USING:      is_current_bu(bu_id) AND (owner_id = my_profile_id() OR is_bu_admin(...) OR is_leader_of_project_owner(...))
-WITH CHECK: is_current_bu(bu_id)
-```
-
-`is_current_bu(p_bu_id)` retorna `true` apenas se:
-- `is_platform_admin(auth.uid())` **OU**
-- `current_bu_id() == p_bu_id`
-
-`current_bu_id()` faz parse do header `x-current-bu-id`. Se o cast `::json` falhar (PostgREST recente envia headers como JSONB em alguns cenários, ou header ausente), cai no fallback `is_default = true` — que para 1 usuário (João Victor) aponta para outra BU. Pra esse usuário, qualquer UPDATE em projeto da BU 001 **falha no WITH CHECK** com a mensagem exata "new row violates row-level security policy".
-
-Adicionalmente, há **bug latente** que amplifica o problema: `useProject` e `useMilestones` cacheiam por `projectId` **sem incluir `buId` na queryKey**. Quando o usuário troca de BU mas o cache antigo persiste, `currentBuId` no React diverge do `bu_id` real do projeto exibido — qualquer mutation sai com BU errada.
-
-A trigger `enforce_bu_scope_projects` compara `NEW.bu_id` com `current_bu_id()` e dá `BU_SCOPE_VIOLATION` em mismatch — mas como `NEW.bu_id == OLD.bu_id` (não estamos mudando BU), passa. Quem barra é só o WITH CHECK.
-
-### Correção (3 frentes mínimas)
-
-#### 1. DB — `current_bu_id()` robusto a parse de headers
-Tornar o parse tolerante usando `current_setting('request.headers', true)::jsonb` + fallback explícito; e **só** usar fallback `is_default` quando header **realmente não veio** (não quando veio e não bate com nenhuma membership — esse caso deve preferir a BU do header se for membership válida em qualquer ramo).
-
+Evidências confirmadas:
+- Projeto `98074a55-c388-4282-a093-f0eaa3bf1b22`:
+  - `bu_id = a0000000-0000-0000-0000-000000000001`
+  - `owner_id = f8afaa82-416d-4a29-86a2-65ebc4ec4b76` (Uriel)
+- Usuário autenticado atual:
+  - profile `140b6fdc-31f7-4615-83ed-fcdab4849c6c`
+  - role global `external`
+  - membership na BU como `external`
+- Policy atual de `projects_update`:
 ```sql
-CREATE OR REPLACE FUNCTION public.current_bu_id()
-RETURNS uuid LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  v_user_id uuid := auth.uid();
-  v_header text;
-  v_header_uuid uuid;
-  v_bu uuid;
-BEGIN
-  IF v_user_id IS NULL THEN RAISE EXCEPTION 'NO_BU_CONTEXT'; END IF;
-
-  -- Read header (try jsonb first, then json)
-  BEGIN
-    v_header := current_setting('request.headers', true)::jsonb->>'x-current-bu-id';
-  EXCEPTION WHEN OTHERS THEN
-    BEGIN
-      v_header := current_setting('request.headers', true)::json->>'x-current-bu-id';
-    EXCEPTION WHEN OTHERS THEN v_header := NULL; END;
-  END;
-
-  IF v_header IS NOT NULL AND v_header <> '' THEN
-    BEGIN v_header_uuid := v_header::uuid; EXCEPTION WHEN OTHERS THEN v_header_uuid := NULL; END;
-    IF v_header_uuid IS NOT NULL THEN
-      -- Aceita membership tanto via user_id quanto via profile_id (cobre 6 perfis com user_id NULL)
-      SELECT m.bu_id INTO v_bu
-      FROM bu_user_memberships m
-      WHERE (m.user_id = v_user_id OR m.profile_id = my_profile_id())
-        AND m.bu_id = v_header_uuid AND m.deleted_at IS NULL
-      LIMIT 1;
-      IF v_bu IS NOT NULL THEN RETURN v_bu; END IF;
-    END IF;
-  END IF;
-
-  -- Fallback: is_default
-  SELECT bu_id INTO v_bu FROM bu_user_memberships
-  WHERE (user_id = v_user_id OR profile_id = my_profile_id())
-    AND is_default = true AND deleted_at IS NULL LIMIT 1;
-  IF v_bu IS NOT NULL THEN RETURN v_bu; END IF;
-
-  -- Último: primeira membership
-  SELECT bu_id INTO v_bu FROM bu_user_memberships
-  WHERE (user_id = v_user_id OR profile_id = my_profile_id())
-    AND deleted_at IS NULL ORDER BY created_at LIMIT 1;
-  IF v_bu IS NOT NULL THEN RETURN v_bu; END IF;
-
-  RAISE EXCEPTION 'NO_BU_CONTEXT';
-END $$;
-```
-
-#### 2. DB — relaxar `WITH CHECK` de `projects_update` para soft-delete
-O WITH CHECK só precisa garantir que `bu_id` não está sendo trocado entre BUs. Como o `enforce_bu_scope` trigger já garante isso (BEFORE UPDATE), o WITH CHECK pode ser simplificado para evitar o requisito de header BU bater:
-
-```sql
-DROP POLICY IF EXISTS projects_update ON public.projects;
-CREATE POLICY projects_update ON public.projects FOR UPDATE
 USING (
-  is_current_bu(bu_id) AND (
+  is_current_bu(bu_id)
+  AND (
     owner_id = my_profile_id()
     OR is_bu_admin(auth.uid(), bu_id)
     OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
   )
 )
-WITH CHECK (
-  -- Garante que bu_id não foi alterado para fora do escopo permitido do usuário
-  profile_has_bu_access(my_profile_id(), bu_id) AND (
-    owner_id = my_profile_id()
-    OR is_bu_admin(auth.uid(), bu_id)
-    OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
-  )
-);
 ```
 
-Isso mantém: ✅ ownership/admin/leader, ✅ BU isolation (via `profile_has_bu_access` + trigger), ✅ defesa contra cross-BU update.
+Logo, o RLS está fazendo o correto: **bloqueando arquivamento de projeto de outra pessoa**.
 
-#### 3. Frontend — incluir `buId` nas query keys de detalhe/milestones
-Atualizar `src/lib/queryKeys/projects.ts`:
+### Bug real no frontend
+A UI está expondo ação de “arquivar” de forma indevida.
+
+Hoje:
+- `useProjectPermissionsV2` retorna:
+  - `canEditProject`
+  - `canEditOwnProject`
+  - `canDeleteProject`
+- `ProjectDetailPage` usa:
 ```ts
-detail: (id: string, buId?: string | null) => ['projects', 'detail', buId ?? null, id] as const,
-milestones: (projectId: string, buId?: string | null) => ['projects', 'milestones', buId ?? null, projectId] as const,
+{canDeleteProject && <Button ... />}
+```
+e
+```ts
+{canEditProject && <Button ... />}
 ```
 
-Atualizar `useProject.ts` e `useMilestones.ts` para passar `buId`. Elimina o vetor de cache stale entre BUs.
+Isso ignora a semântica do scope `self_or_owner`.
 
-### Por que essa abordagem
-- **Resolve a causa real** (header parse fragile + WITH CHECK over-restritivo).
-- **Mantém isolamento BU**: USING + trigger + WITH CHECK relaxado ainda barram cross-BU.
-- **Padrão canônico**: `profile_id`-first em `current_bu_id()` alinha com `mem://auth/identity-rbac-master`.
-- **Zero novos componentes**, zero novos hooks, zero mudança de RLS em outras tabelas.
+Pelo padrão canônico:
+- `projects.project.delete:self_or_owner` = só pode arquivar **projeto próprio**
+- `projects.project.update:self_or_owner` = só pode editar **projeto próprio**
 
-### Validação pós-correção
-1. Logado como Uriel (owner) ou admin → arquivar projeto `98074a55-...` → toast "Projeto arquivado".
-2. Trocar de BU → voltar → arquivar outro projeto → funciona.
-3. Logado como João Victor (default em outra BU, collaborator em 001) → tenta arquivar → ainda barra (USING falha pois não é owner/admin/líder), agora com toast "sem permissão" via count=0, sem erro RLS cru.
-4. Sanity: criar/atualizar projeto continua OK (USING+CHECK validam ownership).
-5. Sanity: trigger `enforce_bu_scope` continua barrando tentativa de mudar `bu_id` de uma row para outra BU.
+Ou seja: a permissão “self_or_owner” precisa ser combinada com **`project.owner_id === writerProfileId`** antes de liberar CTA.
 
-### Arquivos afetados
-- **1 migration SQL**:
-  - `CREATE OR REPLACE FUNCTION public.current_bu_id` (parser robusto + profile_id fallback)
-  - `DROP/CREATE POLICY projects_update` (WITH CHECK relaxado)
-- **3 arquivos TS**:
-  - `src/lib/queryKeys/projects.ts` (assinatura `detail`/`milestones` aceita `buId`)
-  - `src/modules/projects/hooks/useProject.ts` (passa `buId` na queryKey)
-  - `src/modules/projects/hooks/useMilestones.ts` (passa `buId` na queryKey)
+### Correção proposta
 
-### Documentação canônica
-- Nota TCR §3.3.1: "hotfix soft-delete projects — current_bu_id() agora resiliente a parse de headers e aceita profile_id; WITH CHECK de projects_update relaxado (USING + trigger garantem isolamento). Query keys de detalhe incluem buId."
-- Atualizar `mem://standards/bu-isolation-master`: query keys de detalhe devem incluir `buId` para evitar cache cross-BU.
+#### 1. Tornar a autorização do detalhe “row-aware”
+No `ProjectDetailPage.tsx`:
+- usar `writerProfileId = realProfileId ?? profileId`
+- derivar flags por registro:
+```ts
+const isOwner = !!writerProfileId && project.owner_id === writerProfileId;
 
-### Princípios respeitados
-- BU Isolation (USING + trigger + WITH CHECK ainda barram cross-BU)
-- Sem `select('*')`, sem CHECK constraint, soft-delete preservado
-- Componentes/hooks centralizados — zero duplicação
+const canEditThisProject =
+  canEditProject || (canEditOwnProject && isOwner);
 
+const canDeleteThisProject =
+  canDeleteProject && isOwner;
+```
+
+Aplicar essas flags em:
+- botão Editar
+- botão Arquivar
+- seções editáveis do projeto (`ProjectKrLinkSection`, etc.) quando dependerem de ownership
+
+Observação:
+- `hasFullAccess`/admin já está embutido em `canEditProject`
+- para delete, se houver admin com wildcard, `canDeleteProject` continuará `true`
+
+#### 2. Endurecer `useProjectPermissionsV2` para não induzir erro de uso
+Ajustar o hook para deixar explícita a diferença entre:
+- permissão estrutural (`canDeleteProjectOwn`, `canEditProjectOwn`)
+- permissão ampla de BU (`canEditProjectAny`)
+- helper por entidade
+
+Abordagem preferida:
+```ts
+canEditProjectAny
+canEditOwnProject
+canDeleteOwnProject
+canEditProjectRecord(ownerId, actorProfileId)
+canDeleteProjectRecord(ownerId, actorProfileId)
+```
+
+Assim o hook vira SSOT semântica e reduz regressão em outras telas.
+
+#### 3. Corrigir feedback do mutation
+Em `useSoftDeleteProject`, mapear erro RLS/42501 para mensagem amigável:
+- atual: `new row violates row-level security policy...`
+- novo: `Você não tem permissão para arquivar este projeto.`
+
+Isso não substitui a correção da UI; é defesa em profundidade caso:
+- haja cache de permissões
+- ação seja disparada por chamada direta
+- outra tela ainda exponha CTA indevido
+
+#### 4. Auditar outras superfícies do módulo Projects
+Verificar se a mesma falha existe em:
+- cards/tabelas/listagens de projetos
+- ações inline de edição
+- qualquer CTA que use `self_or_owner` sem comparar `owner_id`
+
+Ponto crítico:
+- `ProjectDetailPage` já confirmado
+- revisar `ProjectsTable`, `ProjectCard`, `ProjectsPage` e ações relacionadas
+
+#### 5. Cobertura de testes
+Atualizar/adicionar testes para garantir:
+
+**`useProjectPermissionsV2.test.ts`**
+- owner + `update:self_or_owner` => pode editar próprio
+- não-owner + `update:self_or_owner` => não pode editar este projeto
+- owner + `delete:self_or_owner` => pode arquivar próprio
+- não-owner + `delete:self_or_owner` => não pode arquivar este projeto
+- admin/wildcard => pode editar/arquivar qualquer projeto
+
+**`ProjectDetailPage.test.tsx`**
+- oculta botão de arquivar quando usuário não é owner
+- exibe botão de arquivar quando usuário é owner
+- exibe botão de arquivar para admin
+- clique indevido não ocorre em cenário não-owner
+
+### Por que não mexer mais no banco
+Não há evidência nova de bug no RLS de `projects`.
+O banco está barrando corretamente um usuário sem ownership/admin/leadership.
+
+Mudar policy agora:
+- abriria risco de segurança
+- mascararia bug de autorização visual
+- violaria a semântica canônica de `self_or_owner`
+
+### Arquivos a ajustar
+- `src/modules/projects/hooks/useProjectPermissionsV2.ts`
+- `src/modules/projects/pages/ProjectDetailPage.tsx`
+- possivelmente:
+  - `src/modules/projects/components/ProjectCard.tsx`
+  - `src/modules/projects/components/ProjectsTable.tsx`
+  - `src/modules/projects/pages/ProjectsPage.tsx`
+- testes:
+  - `src/modules/projects/hooks/useProjectPermissionsV2.test.ts`
+  - `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
+
+### Resultado esperado após o hotfix
+1. Usuário que não é owner/admin/líder **não verá** botão de arquivar.
+2. Owner/admin continuará conseguindo arquivar normalmente.
+3. Se alguma chamada indevida escapar, o toast será claro e amigável, sem mensagem crua de RLS.
+4. O módulo Projects ficará alinhado com o padrão canônico de scope `self_or_owner`.
+
+### Nota técnica importante
+As mudanças anteriores em `current_bu_id()` e query keys continuam válidas como hardening geral, mas **não resolvem este incidente específico**. O incidente atual é de **mismatch entre permissão semântica e renderização da UI**, não de BU context.
