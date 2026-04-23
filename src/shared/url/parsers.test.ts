@@ -17,7 +17,7 @@ describe('parsers.stringOrUndefined', () => {
     expect(parsers.stringOrUndefined('   ')).toBeUndefined();
   });
   it('retorna valor trimado', () => {
-    expect(parsers.stringOrUndefined('  abc  ')).toBe('  abc  ');
+    expect(parsers.stringOrUndefined('  abc  ')).toBe('abc');
     expect(parsers.stringOrUndefined('xyz')).toBe('xyz');
   });
 });
