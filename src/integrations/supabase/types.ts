@@ -11270,6 +11270,10 @@ export type Database = {
         Args: { p_bu_id: string; p_profile_id: string }
         Returns: boolean
       }
+      is_profile_bu_member_or_primary: {
+        Args: { p_bu_id: string; p_profile_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       is_team_leader: {
         Args: { p_team_id: string; p_user_id: string }
