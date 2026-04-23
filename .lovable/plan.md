@@ -1,172 +1,119 @@
 
-## Corrigir falso positivo de permissão no arquivamento de Projetos — RLS está certa, UI está errada
+## Corrigir o incidente de arquivamento em Projetos no ambiente live — o código atual já está correto, mas o domínio customizado está servindo bundle antigo
 
 ### Pré-checklist obrigatório executado
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — Módulo Projetos v1.4, permission keys e hook `useProjectPermissionsV2`
-- `docs/canonical/IDENTITY_CONVENTION.md` — mutations e ownership devem usar `profile_id`/`useIdentity`
-- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — scopes `bu` vs `self_or_owner`
-- `docs/canonical/DATA_MODEL_REGISTRY.md` + `SCHEMA_QUICK_REFERENCE.md` — tabela `projects`, ownership em `owner_id`, memberships
-- `docs/canonical/DEVELOPMENT_STANDARDS.md` — `self_or_owner` significa “apenas recursos próprios/owner”
-- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` + `QUERY_KEYS_STANDARD.md`
-- Memórias relevantes: `mem://features/projects/holistic-module-architecture-v2`, `mem://standards/soft-delete-policy-v1`, `mem://standards/query-key-prefix-standard`
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
+- `docs/canonical/IDENTITY_CONVENTION.md`
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md`
+- `docs/canonical/DATA_MODEL_REGISTRY.md`
+- `docs/canonical/DEVELOPMENT_STANDARDS.md`
+- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md`
+- `docs/canonical/QUERY_KEYS_STANDARD.md`
+- `docs/canonical/SCHEMA_QUICK_REFERENCE.md`
+- `docs/canonical/DB_FUNCTIONS_INDEX.md`
+- `docs/qa/QA_PERMISSIONS_TEMPLATES.md`
+- memórias: `mem://features/projects/holistic-module-architecture-v2`, `mem://index.md`
 
-### Causa raiz confirmada
-O erro persistente **não é mais de header BU stale**. O banco já está com:
-- `current_bu_id()` robusta
-- `projects_update` com `WITH CHECK = profile_has_bu_access(...)`
+### Diagnóstico consolidado
+O problema reportado em `https://hub.jetimob.com/projects/98074a55-c388-4282-a093-f0eaa3bf1b22` indica **divergência entre o código atual e o bundle que está rodando no domínio customizado**.
 
-Mesmo assim o `UPDATE` falha porque o usuário atual **não é owner/admin/líder do owner**.
-
-Evidências confirmadas:
-- Projeto `98074a55-c388-4282-a093-f0eaa3bf1b22`:
-  - `bu_id = a0000000-0000-0000-0000-000000000001`
-  - `owner_id = f8afaa82-416d-4a29-86a2-65ebc4ec4b76` (Uriel)
-- Usuário autenticado atual:
-  - profile `140b6fdc-31f7-4615-83ed-fcdab4849c6c`
-  - role global `external`
-  - membership na BU como `external`
-- Policy atual de `projects_update`:
-```sql
-USING (
-  is_current_bu(bu_id)
-  AND (
-    owner_id = my_profile_id()
-    OR is_bu_admin(auth.uid(), bu_id)
-    OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
-  )
-)
-```
-
-Logo, o RLS está fazendo o correto: **bloqueando arquivamento de projeto de outra pessoa**.
-
-### Bug real no frontend
-A UI está expondo ação de “arquivar” de forma indevida.
-
-Hoje:
-- `useProjectPermissionsV2` retorna:
-  - `canEditProject`
-  - `canEditOwnProject`
-  - `canDeleteProject`
-- `ProjectDetailPage` usa:
+### Evidência objetiva
+No código atual:
+- `ProjectDetailPage.tsx` já usa `canDeleteProjectRecord(project.owner_id, writerProfileId)`
+- `useProjectPermissionsV2.ts` já faz gating row-aware para `self_or_owner`
+- `useProjectMutations.ts` já exibe:
 ```ts
-{canDeleteProject && <Button ... />}
-```
-e
-```ts
-{canEditProject && <Button ... />}
+'Você não tem permissão para arquivar este projeto.'
 ```
 
-Isso ignora a semântica do scope `self_or_owner`.
-
-Pelo padrão canônico:
-- `projects.project.delete:self_or_owner` = só pode arquivar **projeto próprio**
-- `projects.project.update:self_or_owner` = só pode editar **projeto próprio**
-
-Ou seja: a permissão “self_or_owner” precisa ser combinada com **`project.owner_id === writerProfileId`** antes de liberar CTA.
-
-### Correção proposta
-
-#### 1. Tornar a autorização do detalhe “row-aware”
-No `ProjectDetailPage.tsx`:
-- usar `writerProfileId = realProfileId ?? profileId`
-- derivar flags por registro:
-```ts
-const isOwner = !!writerProfileId && project.owner_id === writerProfileId;
-
-const canEditThisProject =
-  canEditProject || (canEditOwnProject && isOwner);
-
-const canDeleteThisProject =
-  canDeleteProject && isOwner;
+Mas o usuário reportou o toast:
+```text
+"Você não permissão para arquivar esse projeto."
 ```
 
-Aplicar essas flags em:
-- botão Editar
-- botão Arquivar
-- seções editáveis do projeto (`ProjectKrLinkSection`, etc.) quando dependerem de ownership
+Essa string **não existe no código atual**. Portanto, o comportamento observado não está vindo do código que hoje está no repositório; está vindo de **bundle antigo em produção/custom domain**.
 
-Observação:
-- `hasFullAccess`/admin já está embutido em `canEditProject`
-- para delete, se houver admin com wildcard, `canDeleteProject` continuará `true`
+### Leitura canônica da regra de negócio
+Pelo TCR + docs + migrations:
+- `projects.owner_id` referencia `profiles.id`
+- RLS de `projects_update`/`projects_delete` permite arquivar apenas quando o ator é:
+  - owner do projeto
+  - admin da BU
+  - líder hierárquico do owner
+- A UI deve refletir isso; o banco não deve ser afrouxado
 
-#### 2. Endurecer `useProjectPermissionsV2` para não induzir erro de uso
-Ajustar o hook para deixar explícita a diferença entre:
-- permissão estrutural (`canDeleteProjectOwn`, `canEditProjectOwn`)
-- permissão ampla de BU (`canEditProjectAny`)
-- helper por entidade
+Logo, **não há nova evidência para mexer em RLS**. O banco continua sendo a fonte correta de autorização.
 
-Abordagem preferida:
-```ts
-canEditProjectAny
-canEditOwnProject
-canDeleteOwnProject
-canEditProjectRecord(ownerId, actorProfileId)
-canDeleteProjectRecord(ownerId, actorProfileId)
-```
+## Plano de ação
 
-Assim o hook vira SSOT semântica e reduz regressão em outras telas.
+### 1. Alinhar o ambiente live com o código atual
+Publicar/promover a versão atual para o ambiente que atende `hub.jetimob.com`, porque o domínio customizado está claramente servindo um build anterior ao hotfix row-aware.
 
-#### 3. Corrigir feedback do mutation
-Em `useSoftDeleteProject`, mapear erro RLS/42501 para mensagem amigável:
-- atual: `new row violates row-level security policy...`
-- novo: `Você não tem permissão para arquivar este projeto.`
+Objetivo:
+- fazer o live usar o mesmo `ProjectDetailPage` e o mesmo `useProjectPermissionsV2` que já estão no código atual
+- eliminar o bundle antigo que ainda expõe a ação indevida e o toast com texto desatualizado
 
-Isso não substitui a correção da UI; é defesa em profundidade caso:
-- haja cache de permissões
-- ação seja disparada por chamada direta
-- outra tela ainda exponha CTA indevido
+### 2. Adicionar defesa em profundidade no detalhe do projeto
+Mesmo com o botão oculto, endurecer o fluxo do detalhe para impedir chamada indevida em qualquer cenário de bundle stale, hydration antiga ou estado residual:
 
-#### 4. Auditar outras superfícies do módulo Projects
-Verificar se a mesma falha existe em:
-- cards/tabelas/listagens de projetos
-- ações inline de edição
-- qualquer CTA que use `self_or_owner` sem comparar `owner_id`
+- Em `ProjectDetailPage.tsx`:
+  - antes de `deleteProject.mutate(project.id)`, revalidar `canDeleteThisProject`
+  - se `false`, fechar o dialog e abortar a mutation
+- Condicionar também o `AlertDialogAction` ao mesmo guard lógico
+- Opcionalmente resetar `deleteOpen` quando `project.owner_id`/`writerProfileId` mudarem e a permissão deixar de existir
 
-Ponto crítico:
-- `ProjectDetailPage` já confirmado
-- revisar `ProjectsTable`, `ProjectCard`, `ProjectsPage` e ações relacionadas
+Isso evita que UI antiga ou estado órfão ainda disparem o update que o RLS vai negar.
 
-#### 5. Cobertura de testes
-Atualizar/adicionar testes para garantir:
+### 3. Atualizar os testes do detalhe para o contrato atual
+Os testes atuais de `ProjectDetailPage` ainda mockam a versão antiga do hook e não cobrem o fluxo row-aware real.
 
-**`useProjectPermissionsV2.test.ts`**
-- owner + `update:self_or_owner` => pode editar próprio
-- não-owner + `update:self_or_owner` => não pode editar este projeto
-- owner + `delete:self_or_owner` => pode arquivar próprio
-- não-owner + `delete:self_or_owner` => não pode arquivar este projeto
-- admin/wildcard => pode editar/arquivar qualquer projeto
+Ajustar:
+- `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
+  - mockar `canEditProjectRecord` e `canDeleteProjectRecord`
+  - caso não-owner: botão de arquivar não aparece
+  - caso não-owner com tentativa indevida: mutation **não é chamada**
+  - caso owner/admin: botão aparece e mutation é chamada
+- manter os testes de `useProjectPermissionsV2` como SSOT semântica do gating por owner
 
-**`ProjectDetailPage.test.tsx`**
-- oculta botão de arquivar quando usuário não é owner
-- exibe botão de arquivar quando usuário é owner
-- exibe botão de arquivar para admin
-- clique indevido não ocorre em cenário não-owner
+### 4. Fazer uma auditoria rápida das superfícies de arquivamento
+Revisar se existe outro ponto do módulo Projects que ainda permita arquivar via permissão estrutural antiga ou callback legado.
 
-### Por que não mexer mais no banco
-Não há evidência nova de bug no RLS de `projects`.
-O banco está barrando corretamente um usuário sem ownership/admin/leadership.
+Escopo mínimo:
+- `ProjectDetailPage.tsx`
+- chamadas de `useSoftDeleteProject`
+- qualquer menu/ação inline futura em Projects
 
-Mudar policy agora:
-- abriria risco de segurança
-- mascararia bug de autorização visual
-- violaria a semântica canônica de `self_or_owner`
+Hoje a busca aponta o detalhe como principal ponto; a auditoria garante que não ficou nenhum caminho paralelo.
 
-### Arquivos a ajustar
-- `src/modules/projects/hooks/useProjectPermissionsV2.ts`
+### 5. Preservar RLS e evitar novas mudanças de banco
+Não alterar:
+- `projects_update`
+- `projects_delete`
+- `current_bu_id()`
+- triggers de BU
+- schema/tabelas
+
+Justificativa:
+- o código atual já confirma que o incidente deixou de ser “RLS errada”
+- o sintoma reportado agora é coerente com **bundle live antigo + necessidade de guard extra na UI**
+
+## Validação pós-correção
+1. Em `hub.jetimob.com`, o toast deve mudar para o texto atual do código (ou idealmente nem aparecer para usuário sem permissão, porque o CTA some).
+2. Usuário sem ownership/admin/liderança:
+   - não vê botão de arquivar
+   - mesmo tentando forçar ação, a mutation não dispara pelo detalhe
+3. Owner/admin/líder autorizado:
+   - consegue abrir o dialog
+   - arquivamento funciona normalmente
+4. Preview e custom domain passam a apresentar o mesmo comportamento
+5. Regressão coberta por teste de página
+
+## Arquivos a ajustar
 - `src/modules/projects/pages/ProjectDetailPage.tsx`
-- possivelmente:
-  - `src/modules/projects/components/ProjectCard.tsx`
-  - `src/modules/projects/components/ProjectsTable.tsx`
-  - `src/modules/projects/pages/ProjectsPage.tsx`
-- testes:
-  - `src/modules/projects/hooks/useProjectPermissionsV2.test.ts`
-  - `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
+- `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
+- possivelmente nenhum outro arquivo funcional além da publicação/promote do build live
 
-### Resultado esperado após o hotfix
-1. Usuário que não é owner/admin/líder **não verá** botão de arquivar.
-2. Owner/admin continuará conseguindo arquivar normalmente.
-3. Se alguma chamada indevida escapar, o toast será claro e amigável, sem mensagem crua de RLS.
-4. O módulo Projects ficará alinhado com o padrão canônico de scope `self_or_owner`.
-
-### Nota técnica importante
-As mudanças anteriores em `current_bu_id()` e query keys continuam válidas como hardening geral, mas **não resolvem este incidente específico**. O incidente atual é de **mismatch entre permissão semântica e renderização da UI**, não de BU context.
+## Resultado esperado
+- o domínio `hub.jetimob.com` passa a executar o hotfix row-aware já existente
+- usuários não autorizados deixam de receber esse toast ao clicar em um CTA que não deveria existir
+- o banco continua íntegro e sem flexibilização indevida de segurança
