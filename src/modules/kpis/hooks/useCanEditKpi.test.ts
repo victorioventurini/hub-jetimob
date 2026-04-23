@@ -108,6 +108,14 @@ function setup(opts: {
   } as any);
 }
 
+function makeWrapper() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
+  });
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client }, children);
+}
+
 describe('useCanEditKpi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
