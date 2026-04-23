@@ -53,7 +53,12 @@ export default function ProjectDetailPage() {
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
   const deleteMilestone = useSoftDeleteMilestone();
-  const { canEditProject, canDeleteProject, canCreateMilestone: canAddMilestone, canEditMilestone } = useProjectPermissionsV2();
+  const {
+    canEditProjectRecord,
+    canDeleteProjectRecord,
+    canCreateMilestone: canAddMilestone,
+    canEditMilestone,
+  } = useProjectPermissionsV2();
 
   const projectName = project?.name ?? 'Projeto';
 
@@ -64,6 +69,8 @@ export default function ProjectDetailPage() {
   });
 
   const writerProfileId = realProfileId ?? profileId;
+  const canEditThisProject = canEditProjectRecord(project?.owner_id, writerProfileId);
+  const canDeleteThisProject = canDeleteProjectRecord(project?.owner_id, writerProfileId);
 
   // Build owner profiles map from project owner + any future sources
   const ownerProfiles = useMemo(() => {
