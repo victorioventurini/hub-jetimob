@@ -117,6 +117,8 @@ vi.mock('@/modules/projects/components/ProjectCommentsSection', () => ({
 
 import ProjectDetailPage from '../../pages/ProjectDetailPage';
 import { useProject } from '../../hooks/useProject';
+import { useProjectPermissionsV2 } from '../../hooks/useProjectPermissionsV2';
+import { useSoftDeleteProject } from '../../hooks/useProjectMutations';
 
 describe('ProjectDetailPage', () => {
   it('renders project name in heading', () => {
