@@ -76,16 +76,14 @@ describe('preloadAvatarImages', () => {
 
   beforeEach(() => {
     createdSrcs = [];
-    // jsdom provides a real Image; spy on the setter
-    vi.spyOn(window, 'Image').mockImplementation(() => {
-      const img: any = {};
-      Object.defineProperty(img, 'src', {
+    function MockImage(this: any) {
+      Object.defineProperty(this, 'src', {
         set(v: string) {
           createdSrcs.push(v);
         },
       });
-      return img;
-    });
+    }
+    vi.stubGlobal('Image', MockImage);
   });
 
   it('preloads all valid Supabase URLs', () => {
