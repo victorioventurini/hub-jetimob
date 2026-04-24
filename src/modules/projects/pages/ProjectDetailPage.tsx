@@ -97,6 +97,10 @@ export default function ProjectDetailPage() {
   const canRestoreThisProject =
     isArchived && (baseDelete || (permissionsResolved && isLeaderOfOwner));
 
+  // Milestone CRUD: bloqueado em projetos arquivados (read-only canônico).
+  const canAddMilestone = !isArchived && rawCanAddMilestone;
+  const canEditMilestone = !isArchived && rawCanEditMilestone;
+
   // Observabilidade: gating row-aware do detalhe do projeto.
   // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
   useEffect(() => {
