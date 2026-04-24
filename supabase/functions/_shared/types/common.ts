@@ -14,10 +14,12 @@ import type { SupabaseClient as RawSupabaseClient } from "https://esm.sh/@supaba
  *
  * Edge functions don't have access to the generated `Database` type
  * (it lives in `src/integrations/supabase/types.ts`), so we use the
- * untyped client. `unknown` would be too restrictive for chained queries,
- * so we keep the raw client signature without further parameterization.
+ * untyped client. We use `any` for the type parameters to avoid
+ * cross-version SDK incompatibilities (different esm.sh versions of
+ * @supabase/supabase-js produce structurally incompatible classes).
  */
-export type EdgeSupabaseClient = RawSupabaseClient;
+// deno-lint-ignore no-explicit-any
+export type EdgeSupabaseClient = RawSupabaseClient<any, any, any>;
 
 /**
  * Generic JSON value that comes back from Supabase JSONB columns or
