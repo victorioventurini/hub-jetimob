@@ -87,7 +87,8 @@ export function ProjectKrLinkSection({ projectId, linkedKrs, canEdit }: ProjectK
         !linkedIds.has(kr.id) &&
         (q === '' ||
           kr.title.toLowerCase().includes(q) ||
-          (kr.objective_title?.toLowerCase().includes(q) ?? false)),
+          (kr.objective_title?.toLowerCase().includes(q) ?? false) ||
+          (kr.team_name?.toLowerCase().includes(q) ?? false)),
     );
   }, [availableKrs, search, linkedIds]);
 
