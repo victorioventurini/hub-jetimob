@@ -230,6 +230,11 @@ export default function ProjectDetailPage() {
     );
   };
 
+  const handleRestore = () => {
+    if (!canRestoreThisProject) return;
+    restoreProject.mutate({ id: project.id });
+  };
+
   const headerActions = (
     <div className="flex flex-wrap items-center gap-2">
       {project.external_url && (
@@ -238,6 +243,17 @@ export default function ProjectDetailPage() {
             <ExternalLink className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Link externo</span>
           </a>
+        </Button>
+      )}
+      {canRestoreThisProject && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRestore}
+          disabled={restoreProject.isPending}
+        >
+          <RotateCcw className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Restaurar projeto</span>
         </Button>
       )}
       {canEditThisProject && (
