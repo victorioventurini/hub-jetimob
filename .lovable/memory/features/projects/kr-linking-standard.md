@@ -10,6 +10,7 @@ type: feature
 - Trigger `enforce_one_kr_link_xor` (BEFORE INSERT/UPDATE) garante exatamente um dos dois preenchido (proibido CHECK — ver `mem://standards/database/check-constraint-prohibition`).
 - PK surrogate `id uuid` substituiu PK composta legada.
 - Índices UNIQUE parciais evitam duplicatas: `(project_id|milestone_id, kr_id)` por tipo.
+- Coluna `impact` (`project_impact` enum: high/medium/low) **mantida com `NOT NULL DEFAULT 'medium'`** por compatibilidade de schema, mas **NÃO é mais exposta na UI** (decisão de produto 2026-04-24: categorização não trazia valor para o usuário). Nenhum input nem display de impacto. Mutations enviam `impact: 'medium'` fixo.
 
 ## Listagem para vínculo (`useKrsForLinking`)
 Inclui:
@@ -29,9 +30,11 @@ Inclui:
   - Aplica-se ao popover de busca **e** aos chips dos KRs já vinculados (Project + Milestone).
 - Empty state: "Nenhuma KR ativa no ciclo atual".
 - Busca cobre título da KR, título do objetivo **e nome do time**.
+- **Sem seletor de impacto** no popover. Após selecionar a KR, basta clicar em "Vincular".
 
 ## Mutations
-- `useAddProjectKrLink` / `useAddMilestoneKrLink` recebem `{ kr_id, kind: 'team'|'org', impact }` e gravam na coluna correta.
+- `useAddProjectKrLink` / `useAddMilestoneKrLink` recebem `{ kr_id, kind: 'team'|'org', impact }` (assinatura preservada por compat) e gravam na coluna correta.
+- Call sites na UI passam **sempre `impact: 'medium'`** — campo é detalhe interno do schema.
 - Unlink usa o par `(project_id|milestone_id, kr_id)` filtrando pela coluna correspondente ao `kind`.
 
 ## Navegação

@@ -34,18 +34,6 @@ interface ProjectsForKrSectionProps {
   className?: string;
 }
 
-const impactLabel: Record<string, string> = {
-  high: 'Alto',
-  medium: 'Médio',
-  low: 'Baixo',
-};
-
-const IMPACT_COLORS: Record<string, string> = {
-  high: 'bg-destructive/10 text-destructive',
-  medium: 'bg-warning/10 text-warning-foreground',
-  low: 'bg-muted text-muted-foreground',
-};
-
 const milestoneStatusIcon: Record<MilestoneStatus, React.ReactNode> = {
   todo: <Circle className="h-3.5 w-3.5 text-muted-foreground" />,
   in_progress: <Clock className="h-3.5 w-3.5 text-blue-500" />,
@@ -243,9 +231,6 @@ export function ProjectsForKrSection({ krId, krKind = 'team', canEdit = false, c
               </span>
               <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
                 {ms.project_name}
-              </span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${IMPACT_COLORS[ms.impact]}`}>
-                {impactLabel[ms.impact]}
               </span>
               {ms.due_date && (
                 <span className="text-xs text-muted-foreground shrink-0">

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, X, Search, Link2 } from 'lucide-react';
@@ -24,18 +23,6 @@ interface ProjectKrLinkSectionProps {
   linkedKrs: LinkedKr[];
   canEdit: boolean;
 }
-
-const IMPACT_LABELS: Record<ProjectImpact, string> = {
-  high: 'Alto',
-  medium: 'Médio',
-  low: 'Baixo',
-};
-
-const IMPACT_COLORS: Record<ProjectImpact, string> = {
-  high: 'bg-destructive/10 text-destructive',
-  medium: 'bg-warning/10 text-warning-foreground',
-  low: 'bg-muted text-muted-foreground',
-};
 
 const KIND_CLASS: Record<KrLinkKind, string> = {
   org: 'bg-primary/10 text-primary border-primary/20',
@@ -73,7 +60,6 @@ export function ProjectKrLinkSection({ projectId, linkedKrs, canEdit }: ProjectK
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<KrForLinking | null>(null);
-  const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
 
   const { data: availableKrs = [], isLoading: loadingKrs } = useKrsForLinking();
   const addLink = useAddProjectKrLink();
@@ -96,12 +82,13 @@ export function ProjectKrLinkSection({ projectId, linkedKrs, canEdit }: ProjectK
 
   const handleAdd = () => {
     if (!selected) return;
+    // `impact` mantido fixo em 'medium' por compatibilidade com a coluna NOT NULL
+    // do schema. Não exibido na UI — decisão de produto: categorização desnecessária.
     addLink.mutate(
-      { project_id: projectId, kr_id: selected.id, kind: selected.kind, impact: selectedImpact },
+      { project_id: projectId, kr_id: selected.id, kind: selected.kind, impact: 'medium' },
       {
         onSuccess: () => {
           setSelected(null);
-          setSelectedImpact('medium');
           setPopoverOpen(false);
           setSearch('');
         },
@@ -184,20 +171,7 @@ export function ProjectKrLinkSection({ projectId, linkedKrs, canEdit }: ProjectK
                   </div>
 
                   {selected && (
-                    <div className="flex items-center gap-2 pt-2 border-t">
-                      <Select
-                        value={selectedImpact}
-                        onValueChange={(v) => setSelectedImpact(v as ProjectImpact)}
-                      >
-                        <SelectTrigger className="h-8 text-xs flex-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="high">Alto</SelectItem>
-                          <SelectItem value="medium">Médio</SelectItem>
-                          <SelectItem value="low">Baixo</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex justify-end pt-2 border-t">
                       <Button
                         size="sm"
                         className="h-8 text-xs"
@@ -230,22 +204,17 @@ export function ProjectKrLinkSection({ projectId, linkedKrs, canEdit }: ProjectK
                   </Badge>
                   <span className="truncate">{kr.kr_title}</span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${IMPACT_COLORS[kr.impact]}`}>
-                    {IMPACT_LABELS[kr.impact]}
-                  </span>
-                  {canEdit && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => handleRemove(kr)}
-                      disabled={removeLink.isPending}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    onClick={() => handleRemove(kr)}
+                    disabled={removeLink.isPending}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
