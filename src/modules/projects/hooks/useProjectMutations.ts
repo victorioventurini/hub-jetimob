@@ -108,7 +108,7 @@ export function useUpdateProject() {
 
       const { data, error } = await supabase.rpc('update_project_v2', {
         p_project_id: id,
-        p_payload: payload,
+        p_payload: payload as never,
       });
 
       console.info('[useUpdateProject] rpc result', {
