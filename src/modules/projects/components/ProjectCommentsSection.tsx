@@ -258,8 +258,8 @@ export function ProjectCommentsSection({ projectId, readOnly = false }: ProjectC
           </div>
         )}
 
-        {/* Composer */}
-        {writerProfileId && (
+        {/* Composer (oculto em projetos arquivados / read-only) */}
+        {writerProfileId && !readOnly && (
           <div className="space-y-3 border-t pt-4">
             {/* Selected files */}
             {selectedFiles.length > 0 && (
