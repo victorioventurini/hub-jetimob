@@ -85,7 +85,7 @@ async function fetchApiSource(
   supabase: SupabaseClient,
   source: InstructionSource
 ): Promise<string> {
-  const config = source.config as ApiSourceConfig;
+  const config = source.config as unknown as ApiSourceConfig;
   
   // Check cache validity
   if (source.cached_content && source.last_fetch_at) {
@@ -182,7 +182,7 @@ async function fetchDocumentSource(
   supabase: SupabaseClient,
   source: InstructionSource
 ): Promise<string> {
-  const config = source.config as DocumentSourceConfig;
+  const config = source.config as unknown as DocumentSourceConfig;
   
   if (!config.document_ids?.length) {
     return "";
@@ -217,7 +217,7 @@ async function fetchHubContextSource(
   source: InstructionSource,
   buId: string
 ): Promise<string> {
-  const config = source.config as HubContextConfig;
+  const config = source.config as unknown as HubContextConfig;
   
   if (!config.tables?.length) {
     return "";
@@ -230,7 +230,7 @@ async function fetchHubContextSource(
  * Get content from template source
  */
 function fetchTemplateSource(source: InstructionSource): string {
-  const config = source.config as TemplateSourceConfig;
+  const config = source.config as unknown as TemplateSourceConfig;
   return config.template_content || "";
 }
 

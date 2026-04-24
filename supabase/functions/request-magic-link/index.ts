@@ -178,7 +178,7 @@ async function getEmailBu(email: string): Promise<{ allowed: boolean; buName: st
 
   // Check external company domain associations via external_company_bu_associations (TCR-compliant)
   if (partnerBuAssociationsResult.data) {
-    for (const assoc of partnerBuAssociationsResult.data as Array<{
+    for (const assoc of partnerBuAssociationsResult.data as unknown as Array<{
       id: string;
       bu_id: string;
       is_active: boolean;
