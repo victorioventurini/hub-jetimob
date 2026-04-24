@@ -28,6 +28,8 @@ import { CheckCircle2, Circle, Clock } from 'lucide-react';
 
 interface ProjectsForKrSectionProps {
   krId: string;
+  /** 'team' (padrão) ou 'org' — define em qual coluna o vínculo é gravado/removido. */
+  krKind?: 'team' | 'org';
   canEdit?: boolean;
   className?: string;
 }
@@ -50,7 +52,7 @@ const milestoneStatusIcon: Record<MilestoneStatus, React.ReactNode> = {
   done: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />,
 };
 
-export function ProjectsForKrSection({ krId, canEdit = false, className }: ProjectsForKrSectionProps) {
+export function ProjectsForKrSection({ krId, krKind = 'team', canEdit = false, className }: ProjectsForKrSectionProps) {
   const { data: projects, isLoading } = useProjectsForKr(krId);
   const { data: milestones, isLoading: loadingMilestones } = useMilestonesForKr(krId);
   const { data: availableProjects = [], isLoading: loadingProjects } = useProjectsForLinking();
@@ -78,7 +80,7 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   const handleAdd = () => {
     if (!selectedProjectId) return;
     addLink.mutate(
-      { project_id: selectedProjectId, key_result_id: krId, impact: 'medium' },
+      { project_id: selectedProjectId, kr_id: krId, kind: krKind, impact: 'medium' },
       {
         onSuccess: () => {
           setSelectedProjectId(null);
@@ -90,7 +92,7 @@ export function ProjectsForKrSection({ krId, canEdit = false, className }: Proje
   };
 
   const handleRemove = (projectId: string) => {
-    removeLink.mutate({ project_id: projectId, key_result_id: krId });
+    removeLink.mutate({ project_id: projectId, kr_id: krId, kind: krKind });
   };
 
   const hasProjects = projects && projects.length > 0;
