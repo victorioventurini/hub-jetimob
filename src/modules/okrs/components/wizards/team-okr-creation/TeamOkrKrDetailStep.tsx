@@ -22,6 +22,8 @@ import { WizardStepFooter } from '../shared';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { BuUserSelect, UnitSelect } from '@/components/selects';
+import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
+import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
 import type { KrPlan } from './TeamOkrKrTypeStep';
 
