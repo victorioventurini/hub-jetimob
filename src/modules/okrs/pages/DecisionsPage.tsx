@@ -282,7 +282,7 @@ export default function DecisionsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Decisões e Notas"
-          description={`Acompanhe decisões registradas nos ritos. Use o filtro de Time para ver decisões de qualquer time (e seus subtimes). Os escopos "Meu time" e "${SCOPE_LABELS.all}" só aparecem para líderes e administradores, respectivamente.`}
+          description="Acompanhe notas e decisões registradas nos ritos."
           breadcrumbs={[
             { label: 'OKRs', href: '/okrs' },
             { label: 'Rituais', href: '/rituals' },
