@@ -15,29 +15,56 @@ const PROJECT_LIST_FIELDS = `
 
 export function useProjects(filters: ProjectFilters = {}) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const archivedState = filters.archived_state ?? 'active';
 
   return useQuery({
     queryKey: projectsKeys.list(buId, filters),
     queryFn: async () => {
       if (!supabase || !buId) return [];
 
-      let query = supabase
-        .from('projects')
-        .select(PROJECT_LIST_FIELDS)
-        .eq('bu_id', buId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+      // ── Active branch (canonical SELECT — preserves existing behavior) ──
+      const fetchActive = async () => {
+        let query = supabase
+          .from('projects')
+          .select(PROJECT_LIST_FIELDS)
+          .eq('bu_id', buId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
 
-      // Server-side filters
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters.owner_id) {
-        query = query.eq('owner_id', filters.owner_id);
-      }
+        if (filters.status && filters.status !== 'all') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters.owner_id) {
+          query = query.eq('owner_id', filters.owner_id);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
+        const { data, error } = await query;
+        if (error) throw error;
+        return (data || []) as any[];
+      };
+
+      // ── Archived branch (RPC SECURITY DEFINER) ──
+      const fetchArchived = async () => {
+        const { data, error } = await supabase.rpc('list_archived_projects');
+        if (error) throw error;
+        // RPC retorna SETOF projects (sem joins). Aplicamos status/owner client-side.
+        let rows = (data || []) as any[];
+        if (filters.status && filters.status !== 'all') {
+          rows = rows.filter((p) => p.status === filters.status);
+        }
+        if (filters.owner_id) {
+          rows = rows.filter((p) => p.owner_id === filters.owner_id);
+        }
+        // Marca como arquivado para o mapeamento downstream.
+        return rows.map((p) => ({ ...p, _is_archived: true }));
+      };
+
+      const rawData =
+        archivedState === 'active'
+          ? await fetchActive()
+          : archivedState === 'archived'
+            ? await fetchArchived()
+            : (await Promise.all([fetchActive(), fetchArchived()])).flat();
 
       let results = (data || []).map((p: any) => {
         const milestones = p.project_milestones || [];
