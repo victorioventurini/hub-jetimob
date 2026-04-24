@@ -453,7 +453,7 @@ export default function ProjectDetailPage() {
         />
 
         {/* Comentários */}
-        <ProjectCommentsSection projectId={project.id} />
+        <ProjectCommentsSection projectId={project.id} readOnly={isArchived} />
       </div>
 
       {/* Milestone Create Dialog */}
