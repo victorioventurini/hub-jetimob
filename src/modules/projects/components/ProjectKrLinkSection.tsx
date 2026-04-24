@@ -16,6 +16,7 @@ interface LinkedKr {
   kr_title: string;
   impact: ProjectImpact;
   kind: KrLinkKind;
+  team_name: string | null;
 }
 
 interface ProjectKrLinkSectionProps {
@@ -36,14 +37,22 @@ const IMPACT_COLORS: Record<ProjectImpact, string> = {
   low: 'bg-muted text-muted-foreground',
 };
 
-const KIND_LABEL: Record<KrLinkKind, string> = { team: 'Time', org: 'Org' };
 const KIND_CLASS: Record<KrLinkKind, string> = {
   org: 'bg-primary/10 text-primary border-primary/20',
   team: 'bg-muted text-muted-foreground border-border',
 };
 
+/** Texto do badge: nome do time (Team) ou 'Org'. Fallback defensivo: 'Time'. */
+function badgeLabel(kind: KrLinkKind, teamName: string | null | undefined) {
+  if (kind === 'org') return 'Org';
+  return teamName?.trim() || 'Time';
+}
+
 function groupByObjective(krs: KrForLinking[]) {
-  const groups = new Map<string, { objectiveTitle: string; cycleName: string | null; kind: KrLinkKind; items: KrForLinking[] }>();
+  const groups = new Map<
+    string,
+    { objectiveTitle: string; cycleName: string | null; kind: KrLinkKind; teamName: string | null; items: KrForLinking[] }
+  >();
   for (const kr of krs) {
     const key = `${kr.kind}:${kr.objective_id ?? 'none'}`;
     const existing = groups.get(key);
@@ -53,6 +62,7 @@ function groupByObjective(krs: KrForLinking[]) {
         objectiveTitle: kr.objective_title ?? 'Sem objetivo',
         cycleName: kr.cycle_name,
         kind: kr.kind,
+        teamName: kr.team_name,
         items: [kr],
       });
   }
