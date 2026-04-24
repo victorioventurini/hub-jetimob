@@ -90,7 +90,7 @@ export function TeamOkrSections({
               variant="outline" 
               className="ml-2 bg-status-purple-muted text-status-purple border-status-purple/30"
             >
-              {contributedObjectives.length} contribuição{contributedObjectives.length !== 1 ? 'ões' : ''}
+              {contributedObjectives.length} contribuiç{contributedObjectives.length !== 1 ? 'ões' : 'ão'}
             </Badge>
           </div>
 
