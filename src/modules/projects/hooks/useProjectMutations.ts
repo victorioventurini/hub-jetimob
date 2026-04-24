@@ -97,7 +97,7 @@ export function useUpdateProject() {
       const { id, bu_id: _buIdLegacy, team_ids, ...updates } = input;
 
       // Whitelist do payload (a RPC valida e aplica COALESCE no banco).
-      const payload: Record<string, unknown> = {};
+      const payload: Record<string, string | null | undefined> = {};
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.description !== undefined) payload.description = updates.description;
       if (updates.owner_id !== undefined) payload.owner_id = updates.owner_id;
