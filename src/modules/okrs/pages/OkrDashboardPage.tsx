@@ -175,6 +175,11 @@ export default function OkrDashboardPage() {
     teamId: normalizedTeamId,
     cycleId: activeView !== 'company' ? filters.cycleId : undefined,
   });
+
+  // Contributed OKRs (shared with this team) — only when a single team is selected in team view
+  const { data: contributedObjectives, isLoading: contributedLoading } = useTeamContributedOkrs(
+    activeView === 'team' && normalizedTeamId ? normalizedTeamId : undefined
+  );
   
   // "Meus OKRs" queries - only fetch when in 'my' view
   // Usa effectiveProfileId diretamente para respeitar impersonação imediatamente
