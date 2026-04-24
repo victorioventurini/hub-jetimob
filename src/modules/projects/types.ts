@@ -52,6 +52,8 @@ export interface ProjectWithRelations extends Project {
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  /** Verdadeiro quando o projeto está arquivado (deleted_at != null). */
+  is_archived?: boolean;
 }
 
 export interface ProjectMilestone {
