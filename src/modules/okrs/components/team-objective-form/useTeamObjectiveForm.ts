@@ -236,34 +236,64 @@ export function useTeamObjectiveForm({
         })
         .eq('id', objective.id);
 
+      console.info('[TeamObjectiveForm.update] objective updated', {
+        objectiveId: objective.id,
+        isShared,
+        responsibilityModel: isShared ? responsibilityModel : null,
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+      });
+
       if (error) throw error;
 
-      if (isShared) {
+      // Diff de contribuidores: só chama manageContributors quando muda de fato.
+      const original = originalContributorIdsRef.current ?? [];
+      const target = isShared ? contributingTeamIds : [];
+      const sortedOriginal = [...original].sort();
+      const sortedTarget = [...target].sort();
+      const changed =
+        sortedOriginal.length !== sortedTarget.length ||
+        sortedOriginal.some((id, i) => id !== sortedTarget[i]);
+
+      console.info('[TeamObjectiveForm.update] contributors diff', {
+        objectiveId: objective.id,
+        original: sortedOriginal,
+        target: sortedTarget,
+        changed,
+      });
+
+      if (changed) {
         await manageContributors.mutateAsync({
           objectiveId: objective.id!,
-          teamIds: contributingTeamIds,
-        });
-      } else {
-        await manageContributors.mutateAsync({
-          objectiveId: objective.id!,
-          teamIds: [],
+          teamIds: target,
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.okrs.objectiveContributors(objective?.id ?? null),
+        refetchType: 'active',
+      });
       hookToast({
         title: 'Objetivo atualizado',
         description: 'O objetivo do time foi atualizado com sucesso.',
       });
       onOpenChange(false);
     },
-    onError: (error) => {
-      console.error('Error updating objective:', error);
+    onError: (error: any) => {
+      const code = error?.code ?? '';
+      const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
+      console.error('[TeamObjectiveForm.update] error', { code, rawMsg, raw: error });
+      const isPermissionError =
+        code === '42501' ||
+        /row-level security|permission denied|sem permiss/i.test(rawMsg);
       hookToast({
-        title: 'Erro ao atualizar',
-        description: 'Não foi possível atualizar o objetivo.',
+        title: isPermissionError ? 'Sem permissão' : 'Erro ao atualizar',
+        description: isPermissionError
+          ? 'Você não tem permissão para atualizar este objetivo ou seus contribuidores.'
+          : `Não foi possível atualizar o objetivo: ${rawMsg}`,
         variant: 'destructive',
       });
     },
