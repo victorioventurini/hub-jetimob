@@ -8,6 +8,8 @@ export interface MilestoneKrLink {
   kr_title: string;
   impact: ProjectImpact;
   kind: KrLinkKind;
+  /** Nome do time dono do objetivo (apenas Team KRs; null para Org). */
+  team_name: string | null;
 }
 
 export function useMilestoneKrs(milestoneId: string | null) {
@@ -23,7 +25,12 @@ export function useMilestoneKrs(milestoneId: string | null) {
         .from('milestone_krs')
         .select(
           `key_result_id, org_key_result_id, impact,
-           kr:okr_team_key_results!milestone_krs_key_result_id_fkey(title),
+           kr:okr_team_key_results!milestone_krs_key_result_id_fkey(
+             title,
+             objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey(
+               team:teams!okr_team_objectives_team_id_fkey(id, name)
+             )
+           ),
            org_kr:okr_org_key_results!milestone_krs_org_key_result_id_fkey(title)`,
         )
         .eq('milestone_id', milestoneId);
@@ -37,6 +44,7 @@ export function useMilestoneKrs(milestoneId: string | null) {
           kr_title: isOrg ? (row.org_kr?.title ?? '') : (row.kr?.title ?? ''),
           impact: row.impact as ProjectImpact,
           kind: isOrg ? ('org' as const) : ('team' as const),
+          team_name: isOrg ? null : (row.kr?.objective?.team?.name ?? null),
         };
       });
     },
