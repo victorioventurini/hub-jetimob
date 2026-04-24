@@ -92,6 +92,16 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         allOptionLabel="KR: Todos"
         triggerClassName="w-full sm:w-[180px]"
       />
+
+      {/* Visualização: ativos / arquivados / todos */}
+      <UrlSelect
+        value={filters.archived_state ?? 'active'}
+        onChange={(v) =>
+          onFiltersChange({ ...filters, archived_state: v as ProjectArchivedState })
+        }
+        options={archivedStateOptions}
+        triggerClassName="w-full sm:w-[160px]"
+      />
     </ListPageFilters>
   );
 }
