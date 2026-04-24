@@ -173,6 +173,7 @@ export function useTeamObjectiveForm({
       const { data: createdObjective, error } = await supabase
         .from('okr_team_objectives')
         .insert({
+          bu_id: buId,
           title,
           description: description || null,
           team_id: teamId,
