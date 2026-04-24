@@ -15,6 +15,8 @@ type ProjectRpcResult = {
     | 'ARCHIVED'
     | 'ALREADY_ARCHIVED'
     | 'UPDATED'
+    | 'RESTORED'
+    | 'NOT_ARCHIVED'
     | 'NOT_FOUND'
     | 'FORBIDDEN'
     | 'UNAUTHENTICATED'
