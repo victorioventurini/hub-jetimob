@@ -163,10 +163,36 @@ export function useSoftDeleteProject() {
 
       const { id, bu_id } = input;
 
-      // Filtra por bu_id do REGISTRO (não do contexto). Isolamento real é da RLS.
-      const { error, count } = await supabase
+      // PROBE PRÉ-UPDATE: a policy `projects_select` exige `deleted_at IS NULL`,
+      // então não é possível usar `count: 'exact'` nem `.select()` no soft-delete
+      // (a row some da SELECT após o UPDATE, retornando count=0 mesmo em sucesso).
+      // Validamos existência + estado ANTES do update para distinguir os casos.
+      const { data: probe, error: probeErr } = await supabase
         .from('projects')
-        .update({ deleted_at: new Date().toISOString() }, { count: 'exact' })
+        .select('id, deleted_at, bu_id, owner_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (probeErr) throw probeErr;
+
+      if (!probe) {
+        throw new Error('Projeto não encontrado nesta BU.');
+      }
+
+      if (probe.deleted_at) {
+        // Já estava arquivado: idempotência.
+        console.info('[useSoftDeleteProject] already archived (idempotent)', { id });
+        return;
+      }
+
+      if (probe.bu_id !== bu_id) {
+        throw new Error(`BU do projeto (${probe.bu_id}) difere do bu_id informado (${bu_id}).`);
+      }
+
+      // UPDATE sem count/select — não tentamos ler a row após arquivar (policy SELECT bloqueia).
+      const { error } = await supabase
+        .from('projects')
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
         .eq('bu_id', bu_id)
         .is('deleted_at', null);
@@ -174,44 +200,11 @@ export function useSoftDeleteProject() {
       console.info('[useSoftDeleteProject] result', {
         projectId: id,
         recordBuId: bu_id,
-        affectedCount: count,
         errorCode: error?.code ?? null,
         errorMessage: error?.message ?? null,
       });
 
       if (error) throw error;
-
-      if (count === 0) {
-        // count=0 sem error é AMBÍGUO. Diagnosticar com SELECT antes de
-        // assumir que foi RLS — pode ter sido idempotência ou registro inexistente.
-        const { data: probe, error: probeErr } = await supabase
-          .from('projects')
-          .select('id, deleted_at, bu_id')
-          .eq('id', id)
-          .maybeSingle();
-
-        if (probeErr) throw probeErr;
-
-        if (!probe) {
-          throw new Error('Projeto não encontrado.');
-        }
-
-        if (probe.deleted_at) {
-          // Já estava arquivado: tratar como sucesso (idempotência).
-          console.info('[useSoftDeleteProject] already archived (idempotent)', { id });
-          return;
-        }
-
-        if (probe.bu_id !== bu_id) {
-          // Caller passou bu_id errado. Bug do caller, não da permissão.
-          throw new Error(`BU do projeto (${probe.bu_id}) difere do bu_id informado (${bu_id}).`);
-        }
-
-        // Existe, não está arquivado, bu_id confere → RLS negou de verdade.
-        const rlsErr = new Error('Sem permissão para arquivar este projeto.');
-        (rlsErr as any).code = '42501';
-        throw rlsErr;
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
