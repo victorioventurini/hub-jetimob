@@ -447,9 +447,9 @@ async function loadTeamData(
   // Build member auth IDs from user_team_memberships (with fallback to profiles.team_id)
   let memberAuthIds: string[] = [];
   if (membersResult.data && membersResult.data.length > 0) {
-    memberAuthIds = membersResult.data
-      .map((m: { profiles: { user_id: string | null } | null }) => m.profiles?.user_id)
-      .filter(Boolean);
+    memberAuthIds = (membersResult.data as unknown as Array<{ profiles: { user_id: string | null } | null }>)
+      .map((m) => m.profiles?.user_id)
+      .filter((v): v is string => Boolean(v));
   } else {
     // Fallback: profiles.team_id (canonical source when junction table is empty)
     console.log(`[loadTeamData] user_team_memberships empty for team ${teamId}, falling back to profiles.team_id`);
@@ -471,9 +471,10 @@ async function loadTeamData(
     .select('profiles!leader_user_id(user_id)')
     .eq('id', teamId)
     .single();
-  
-  if (teamLeader?.profiles?.user_id) {
-    memberAuthIds.push(teamLeader.profiles.user_id);
+
+  const leaderProfile = (teamLeader as unknown as { profiles: { user_id: string | null } | null } | null)?.profiles;
+  if (leaderProfile?.user_id) {
+    memberAuthIds.push(leaderProfile.user_id);
   }
 
   // ── Expand recipients: include members of direct sub-teams WITHOUT own OKRs ──
@@ -510,9 +511,9 @@ async function loadTeamData(
         .in('team_id', subteamIdsWithoutOkrs);
 
       if (subMembers && subMembers.length > 0) {
-        const subMemberIds = subMembers
-          .map((m: { profiles: { user_id: string | null } | null }) => m.profiles?.user_id)
-          .filter(Boolean);
+        const subMemberIds = (subMembers as unknown as Array<{ profiles: { user_id: string | null } | null }>)
+          .map((m) => m.profiles?.user_id)
+          .filter((v): v is string => Boolean(v));
         memberAuthIds.push(...subMemberIds);
       } else {
         // Fallback: profiles.team_id
@@ -659,18 +660,18 @@ async function loadSessionDecisions(
   const reflectionData = session.reflection_data as { data?: { decisions?: Array<{ text?: string; description?: string; category?: string; type?: string }> } } | null;
   const decisions: DecisionSummary[] = [];
 
-  const categoryToType: Record<string, string> = {
-    decision: 'Decisão',
-    focus_adjustment: 'Ajuste de Foco',
-    next_step: 'Próximo Passo',
+  const categoryToType: Record<string, DecisionSummary['type']> = {
+    decision: 'decision',
+    focus_adjustment: 'decision',
+    next_step: 'initiative',
   };
 
-  if (reflectionData.data?.decisions) {
+  if (reflectionData?.data?.decisions) {
     for (const decision of reflectionData.data.decisions) {
       const rawCategory = decision.category || decision.type || 'decision';
       decisions.push({
         text: decision.text || decision.description || '',
-        type: categoryToType[rawCategory] || rawCategory,
+        type: categoryToType[rawCategory] || 'decision',
       });
     }
   }
