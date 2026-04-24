@@ -1,84 +1,104 @@
-# Diagnóstico
+## Objetivo
+Corrigir definitivamente o fluxo de arquivar/editar projetos para respeitar esta regra de negócio:
+- super_admin
+- admin da BU
+- responsável pelo projeto
+- líder do responsável pelo projeto
 
-Auditei a fundo o fluxo de arquivamento (que é um soft-delete via `UPDATE deleted_at`) e encontrei **um bug estrutural real** + **um ponto de incerteza que ainda preciso confirmar com o usuário**.
+## Diagnóstico consolidado
+A análise do TCR e dos canônicos mostrou dois desalinhamentos reais no módulo Projects:
 
-## O bug estrutural (RLS desalinhada do V2)
+1. **RLS de `projects` não está canônica para platform admins**
+   - A policy atual de `UPDATE` ainda usa um `WITH CHECK` com `profile_has_bu_access(...)`.
+   - Isso contradiz o modelo canônico em que `super_admin` tem wildcard global via `has_permission(...)`.
+   - Resultado provável: o detalhe pode abrir, mas o soft-delete falha no banco para alguns admins/super_admins.
 
-Política `projects_update` (governa o arquivamento):
+2. **O gate de UI não contempla líder do responsável**
+   - `useProjectPermissionsV2` só libera por:
+     - full access
+     - owner com `self_or_owner`
+   - Ele **não implementa o caminho de líder do owner**, embora o backend já tenha a função `is_leader_of_project_owner(...)` e a regra esteja documentada.
+   - Resultado: mesmo quando o banco permitir, a UI pode esconder ou bloquear editar/arquivar para líderes.
 
-```sql
-USING/CHECK: is_current_bu(bu_id) AND (
-  owner_id = my_profile_id()
-  OR is_bu_admin(auth.uid(), bu_id)
+3. **Tabelas filhas ainda estão incompletas para edição ampla**
+   - `project_teams` e `project_krs` continuam com políticas focadas em owner/admin/líder, sem alinhar totalmente com as permissões V2 amplas.
+   - Isso afeta a regra “quem pode editar projeto” porque editar também sincroniza times/KRs.
+
+## Plano de ação
+### 1) Reescrever a autorização mutativa de `projects` no padrão canônico
+Atualizar `projects_insert`, `projects_update` e `projects_delete` para usar como base:
+- `is_current_bu(bu_id)` para isolamento de contexto
+- `owner_id = my_profile_id()`
+- `is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)`
+- `has_permission(my_profile_id(), bu_id, 'projects.project.{create,update,delete}:bu')`
+
+Ajuste principal:
+- remover a dependência estrutural de `profile_has_bu_access(...)` no `WITH CHECK` de `projects_update`, porque ela bloqueia `super_admin` fora do caso de membership explícito e conflita com o modelo de wildcard global.
+
+### 2) Alinhar `project_teams` e `project_krs` com a mesma regra de edição
+Revisar as policies de insert/delete dessas tabelas para herdar o mesmo critério do projeto pai:
+- owner
+- líder do owner
+- quem tiver `projects.project.update:bu`
+
+Isso garante que **editar** projeto continue funcionando quando houver mudança de times ou vínculos com KRs.
+
+### 3) Corrigir o gate de UI para refletir exatamente a regra real
+Substituir a lógica atual de `useProjectPermissionsV2` / detalhe do projeto por um gate alinhado ao backend:
+- full access para `super_admin` / admin / wildcard
+- owner
+- líder do responsável
+
+Implementação proposta:
+- manter as permissões locais para casos amplos (`hasFullAccess`, `:bu`, `self_or_owner`)
+- adicionar um check row-aware para líder usando a função já existente `is_leader_of_project_owner(...)`
+- consumir esse resultado no `ProjectDetailPage` para exibir/permitir editar e arquivar corretamente
+
+### 4) Preservar o fix anterior do soft-delete
+Manter o padrão já correto em `useSoftDeleteProject`:
+- probe pré-update
+- update sem `count: 'exact'`
+- sem `.select()` após arquivar
+
+Esse ponto não será revertido; ele continua necessário.
+
+### 5) Cobertura de regressão
+Adicionar testes para os 4 cenários obrigatórios:
+- super_admin pode arquivar/editar
+- admin da BU pode arquivar/editar
+- owner pode arquivar/editar
+- líder do owner pode arquivar/editar
+- colaborador sem regra não pode
+
+## Arquivos previstos
+- `supabase/migrations/...` — rewrite das policies de `projects`, `project_teams` e `project_krs`
+- `src/modules/projects/hooks/useProjectPermissionsV2.ts` — gate row-aware alinhado
+- `src/modules/projects/pages/ProjectDetailPage.tsx` — consumo da nova regra
+- testes de `useProjectPermissionsV2` e/ou `ProjectDetailPage`
+- memória técnica do módulo Projects
+
+## Detalhes técnicos
+```text
+Regra final desejada por registro:
+ALLOW IF
+  has_permission(profile_id, bu_id, 'projects.project.update:bu'|'delete:bu')
+  OR owner_id = my_profile_id()
   OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
-)
+
+Sempre com isolamento:
+  is_current_bu(bu_id)
 ```
 
-Ela **não consulta `has_permission()`**, ou seja, ignora completamente os templates V2. Resultado:
-
-- Quem tem template `projects_admin` (com `projects.project.delete:bu` / `update:bu`) **mas não é dono nem líder direto do dono** é silenciosamente barrado pelo banco. A UI (gate V2) libera o botão, e o backend recusa → toast genérico "Sem permissão".
-- O mesmo vale para `projects_delete` (já existente) e indiretamente para milestones (`project_milestones_*` provavelmente sofrem do mesmo problema — vou auditar e incluir no fix).
-
-Esse fix é **necessário**, independente do que acontece no caso específico do Uriel.
-
-## O caso específico do Uriel (projeto `98074a55-…`)
-
-- Uriel **é o dono** do projeto (`owner_id = f8afaa82-…416d-…` = profile do Uriel).
-- Cliente do app é BU-scoped (header `x-current-bu-id` presente), então `is_current_bu(bu_id)` deveria passar.
-- Pela RLS atual, o `UPDATE` deveria ter sucesso.
-
-Se **mesmo assim** o arquivamento falha, há 2 causas possíveis que **só posso confirmar com a evidência empírica que pedi**:
-
-1. O `actorProfileId` resolvido pelo `useIdentity` (durante impersonação) **não bate** com `f8afaa82-…` → gate V2 bloqueia antes de chamar o banco. Toast: "Sem permissão para arquivar este projeto." (lançado no client em `useProjectMutations.ts:211`).
-2. O `bu_id` enviado pelo client não bate com o do registro → erro: "BU do projeto … difere do bu_id informado …".
-
-Mas é provável que o usuário esteja relatando o problema **da perspectiva do uso normal** (sem impersonação), e o dono real do projeto seja outra pessoa que não o Uriel-no-comando-agora — nesse caso caímos no bug estrutural acima.
-
-# Plano de execução (em DEFAULT mode)
-
-## Etapa 1 — Diagnóstico empírico (sem mudar código ainda)
-
-- Pedir ao usuário (1) qual mensagem aparece no toast e (2) os logs `[useSoftDeleteProject] result` e `[ProjectDetailPage] permission gate` no console ao tentar arquivar. Isso confirma se é gate de UI, RLS, ou bu_id divergente.
-- Em paralelo, posso reproduzir via `browser--navigate_to_sandbox` se o usuário autorizar (sandbox usa a sessão dele).
-
-## Etapa 2 — Migração: alinhar RLS de `projects` ao V2
-
-Substituir as políticas `projects_update` e `projects_delete` para também aceitar `has_permission(my_profile_id(), bu_id, '...:bu')`:
-
-```sql
--- projects_update
-USING/CHECK: is_current_bu(bu_id) AND (
-  owner_id = my_profile_id()
-  OR is_bu_admin(auth.uid(), bu_id)
-  OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
-  OR has_permission(my_profile_id(), bu_id, 'projects.project.update:bu')
-)
-
--- projects_delete (apenas se ainda houver hard-deletes; soft-delete vai por UPDATE)
-USING: is_current_bu(bu_id) AND (
-  owner_id = my_profile_id()
-  OR is_bu_admin(auth.uid(), bu_id)
-  OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
-  OR has_permission(my_profile_id(), bu_id, 'projects.project.delete:bu')
-)
+```text
+Problema atual mais crítico:
+projects_update.WITH CHECK = profile_has_bu_access(...) AND ...
+Isso é mais restritivo que o modelo canônico para super_admin.
 ```
 
-`projects_insert` já casa com `projects.project.create:bu` na lógica do gate V2; vou checar se faz sentido alinhar também (provavelmente sim, para paridade).
-
-## Etapa 3 — Estender o mesmo alinhamento para `project_milestones`
-
-Auditar políticas `project_milestones_*` e aplicar o mesmo padrão (`projects.milestone.update:bu`, `projects.milestone.delete:bu` etc.), porque o problema estrutural é idêntico.
-
-## Etapa 4 — Verificação pós-migration
-
-- `supabase--read_query` para listar políticas atualizadas e confirmar a expressão.
-- Reproduzir o arquivamento na sandbox como Uriel para confirmar sucesso (ou pedir validação ao usuário no preview).
-- Atualizar `mem://features/projects/holistic-module-architecture-v2` registrando que a RLS do módulo Projects passa a respeitar V2 (`has_permission`) além de owner/leader/admin.
-
-# Riscos / observações
-
-- A política V2 é **aditiva** (OR): nenhum usuário perde acesso; apenas usuários com template ganham acesso que já está prometido pela UI.
-- Não toco em soft-delete em cascata de milestones — fora do escopo desse pedido.
-- Não estamos enfraquecendo isolamento de BU: `is_current_bu(bu_id)` continua obrigatório.
-
-Confirma para eu prosseguir? (Em paralelo, mande os 2 dados do console que pedi — eles definem se a Etapa 1 termina rápido ou se preciso investigar algo extra antes da Etapa 2.)
+## Resultado esperado
+Após a implementação:
+- você (`victorio@jetimob.com`) conseguirá arquivar o projeto como `super_admin`
+- admins da BU continuarão podendo arquivar/editar
+- owner continuará podendo
+- líder do owner passará a poder também, inclusive na UI
+- a regra ficará consistente entre frontend, RLS e documentação
