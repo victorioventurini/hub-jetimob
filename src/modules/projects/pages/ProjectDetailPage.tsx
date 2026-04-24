@@ -283,6 +283,19 @@ export default function ProjectDetailPage() {
           actions={headerActions}
         />
 
+        {/* Banner de projeto arquivado (read-only) */}
+        {isArchived && (
+          <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm">
+            <Archive className="h-5 w-5 mt-0.5 text-warning shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Projeto arquivado</p>
+              <p className="text-muted-foreground mt-1">
+                Este projeto está arquivado. As edições estão desabilitadas. Use "Restaurar projeto" para reativá-lo.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Badges + description below header */}
         <div className="flex items-center gap-2 -mt-4">
           <ProjectHealthBadge health={project.health} />
