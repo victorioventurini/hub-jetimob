@@ -125,12 +125,16 @@ export interface GanttItem {
 
 // ── Filters ──
 
+export type ProjectArchivedState = 'active' | 'archived' | 'all';
+
 export interface ProjectFilters {
   status?: ProjectStatus | 'all';
   owner_id?: string;
   team_id?: string;
   linked_to_kr?: boolean | null;
   search?: string;
+  /** Filtro de visualização por estado de arquivamento. Default: 'active'. */
+  archived_state?: ProjectArchivedState;
 }
 
 // ── Mutation inputs ──
