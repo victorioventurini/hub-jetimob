@@ -10877,6 +10877,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_archived_project_v2: { Args: { p_project_id: string }; Returns: Json }
       get_asset_kit: {
         Args: { p_asset_id: string }
         Returns: {
@@ -11338,6 +11339,29 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["kpi_rag_status"]
       }
+      list_archived_projects: {
+        Args: never
+        Returns: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          due_date: string | null
+          external_url: string | null
+          id: string
+          name: string
+          owner_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       list_partner_companies_with_privacy: {
         Args: { p_bu_id: string }
         Returns: {
@@ -11488,6 +11512,7 @@ export type Database = {
         Returns: string
       }
       resolve_work_email: { Args: { p_auth_user_id: string }; Returns: string }
+      restore_project_v2: { Args: { p_project_id: string }; Returns: Json }
       rpc_decisions_inbox: {
         Args: {
           p_area_ids?: string[]
