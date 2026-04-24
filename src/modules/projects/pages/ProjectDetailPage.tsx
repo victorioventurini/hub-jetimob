@@ -52,6 +52,7 @@ export default function ProjectDetailPage() {
   const { data: milestones } = useMilestones(id);
   const updateProject = useUpdateProject();
   const deleteProject = useSoftDeleteProject();
+  const restoreProject = useRestoreProject();
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
   const deleteMilestone = useSoftDeleteMilestone();
