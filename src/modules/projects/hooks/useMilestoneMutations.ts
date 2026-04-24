@@ -11,13 +11,17 @@ export function useCreateMilestone() {
   return useMutation({
     mutationFn: async (input: CreateMilestoneInput) => {
       if (!supabase) throw new Error('Client not ready');
+      if (!input.owner_id) {
+        // Defesa em profundidade: UI já bloqueia, mas garantimos no hook.
+        throw new Error('Responsável é obrigatório');
+      }
 
       const { data, error } = await supabase
         .from('project_milestones')
         .insert({
           project_id: input.project_id,
           name: input.name,
-          owner_id: input.owner_id ?? null,
+          owner_id: input.owner_id,
           status: input.status ?? 'todo',
           start_date: input.start_date,
           due_date: input.due_date ?? null,
