@@ -228,3 +228,56 @@ export function useSoftDeleteProject() {
     },
   });
 }
+
+export function useRestoreProject() {
+  const queryClient = useQueryClient();
+  const supabase = useBuScopedSupabase();
+
+  return useMutation({
+    mutationFn: async (input: { id: string }) => {
+      if (!supabase) throw new Error('Client not ready');
+
+      const { data, error } = await supabase.rpc('restore_project_v2', {
+        p_project_id: input.id,
+      });
+
+      console.info('[useRestoreProject] rpc result', {
+        projectId: input.id,
+        result: data,
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+      });
+
+      if (error) throw error;
+
+      const result = data as unknown as ProjectRpcResult | null;
+      if (!result) throw new Error('Resposta inválida do servidor.');
+
+      if (result.ok) return result;
+
+      const friendly =
+        result.code === 'FORBIDDEN'
+          ? 'Você não tem permissão para restaurar este projeto.'
+          : result.code === 'NOT_FOUND'
+            ? 'Projeto não encontrado.'
+            : result.code === 'NOT_ARCHIVED'
+              ? 'Projeto já está ativo.'
+              : result.code === 'UNAUTHENTICATED'
+                ? 'Sessão expirada. Faça login novamente.'
+                : `Erro ao restaurar projeto (${result.code}).`;
+      const err = new Error(friendly);
+      (err as { code?: string }).code = result.code;
+      throw err;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: projectsKeys.allPrefix() });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(variables.id) });
+      toast.success('Projeto restaurado');
+    },
+    onError: (error: Error & { code?: string }) => {
+      const rawMsg = error?.message || 'Erro desconhecido';
+      console.error('[useRestoreProject] error', { code: error?.code, rawMsg });
+      toast.error(rawMsg);
+    },
+  });
+}
