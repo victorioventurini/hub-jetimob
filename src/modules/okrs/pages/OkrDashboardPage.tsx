@@ -532,6 +532,19 @@ export default function OkrDashboardPage() {
                   : undefined
               }
             />
+          ) : activeView === 'team' && normalizedTeamId ? (
+            <TeamOkrSections
+              primaryObjectives={displayObjectives}
+              contributedObjectives={contributedObjectives || []}
+              teamId={normalizedTeamId}
+              teamName={
+                (displayObjectives[0] as any)?.team?.name
+                || teams?.find(t => t.id === normalizedTeamId)?.name
+                || 'Time'
+              }
+              isLoading={contributedLoading}
+              canEdit={manageableTeamIds.has(normalizedTeamId)}
+            />
           ) : (
             <div className="space-y-6">
               {displayObjectives.map((objective: any) => (
