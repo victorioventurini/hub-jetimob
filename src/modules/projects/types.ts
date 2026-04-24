@@ -44,6 +44,8 @@ export interface ProjectWithRelations extends Project {
     kr_title: string;
     impact: ProjectImpact;
     kind: KrLinkKind;
+    /** Nome do time dono do objetivo (apenas Team KRs; null para Org). */
+    team_name: string | null;
   }>;
   milestones: ProjectMilestone[];
   health: ProjectHealth;

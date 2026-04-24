@@ -20,11 +20,15 @@ Inclui:
 - Exclui KR com `deleted_at IS NOT NULL` ou `cancelled_at IS NOT NULL`.
 - Exclui KR cujo **objetivo pai** esteja em `status='draft'`, `status='cancelled'`, com `deleted_at` ou `cancelled_at` preenchidos. Rascunho de KR não existe no schema (KR.status é enum RAG); o estado "rascunho" é herdado do objetivo, conforme `mem://features/okrs/draft-okr-governance`.
 
-## UI (popovers de vínculo)
-- Largura `w-[480px]`.
-- Resultados agrupados por **Objetivo** com badge `Org`/`Time` e nome do ciclo.
+## UI (popovers de vínculo + chips de KRs vinculados)
+- Largura do popover: `w-[480px]`.
+- Resultados agrupados por **Objetivo** com badge de origem + nome do ciclo.
+- **Badge de origem (regra canônica)**:
+  - Team KR → exibe **nome do time** dono do objetivo (`okr_team_objectives.team.name`); fallback defensivo `'Time'` se ausente.
+  - Org KR → exibe `'Org'`.
+  - Aplica-se ao popover de busca **e** aos chips dos KRs já vinculados (Project + Milestone).
 - Empty state: "Nenhuma KR ativa no ciclo atual".
-- Busca cobre título da KR e título do objetivo.
+- Busca cobre título da KR, título do objetivo **e nome do time**.
 
 ## Mutations
 - `useAddProjectKrLink` / `useAddMilestoneKrLink` recebem `{ kr_id, kind: 'team'|'org', impact }` e gravam na coluna correta.

@@ -14,6 +14,8 @@ export interface KrForLinking {
   objective_title: string | null;
   cycle_id: string | null;
   cycle_name: string | null;
+  /** Nome do time dono do objetivo (apenas para Team KRs; null para Org). */
+  team_name: string | null;
   status: string;
 }
 
@@ -68,7 +70,8 @@ export function useKrsForLinking() {
             `id, title, status,
              objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey(
                id, title, status, cycle_id, deleted_at, cancelled_at,
-               cycle:cycles!okr_team_objectives_cycle_id_fkey(id, name)
+               cycle:cycles!okr_team_objectives_cycle_id_fkey(id, name),
+               team:teams!okr_team_objectives_team_id_fkey(id, name)
              )`,
           )
           .eq('bu_id', currentBuId)
@@ -125,6 +128,7 @@ export function useKrsForLinking() {
           objective_title: kr.objective?.title ?? null,
           cycle_id: kr.objective?.cycle_id ?? null,
           cycle_name: kr.objective?.cycle?.name ?? null,
+          team_name: kr.objective?.team?.name ?? null,
           status: kr.status,
         }));
 
@@ -140,6 +144,7 @@ export function useKrsForLinking() {
           cycle_name:
             kr.objective?.cycle?.name
             ?? (kr.objective?.year ? String(kr.objective.year) : null),
+          team_name: null,
           status: kr.status,
         }));
 

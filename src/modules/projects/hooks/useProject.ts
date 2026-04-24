@@ -11,7 +11,13 @@ const PROJECT_DETAIL_FIELDS = `
   project_teams(team_id, teams:teams!project_teams_team_id_fkey(id, name)),
   project_krs(
     key_result_id, org_key_result_id, impact,
-    kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title),
+    kr:okr_team_key_results!project_krs_key_result_id_fkey(
+      id, title,
+      objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey(
+        id, title,
+        team:teams!okr_team_objectives_team_id_fkey(id, name)
+      )
+    ),
     org_kr:okr_org_key_results!project_krs_org_key_result_id_fkey(id, title)
   ),
   project_milestones(id, project_id, name, owner_id, status, start_date, due_date, notes, sort_order, bu_id, created_at, updated_at, deleted_at)
@@ -54,6 +60,7 @@ export function useProject(projectId: string | undefined) {
           kr_title: isOrg ? (pk.org_kr?.title ?? '') : (pk.kr?.title ?? ''),
           impact: pk.impact,
           kind: isOrg ? ('org' as const) : ('team' as const),
+          team_name: isOrg ? null : (pk.kr?.objective?.team?.name ?? null),
         };
       });
 

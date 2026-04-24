@@ -37,14 +37,22 @@ const IMPACT_COLORS: Record<ProjectImpact, string> = {
   low: 'bg-muted text-muted-foreground',
 };
 
-const KIND_LABEL: Record<KrLinkKind, string> = { team: 'Time', org: 'Org' };
 const KIND_CLASS: Record<KrLinkKind, string> = {
   org: 'bg-primary/10 text-primary border-primary/20',
   team: 'bg-muted text-muted-foreground border-border',
 };
 
+/** Texto do badge: nome do time (Team) ou 'Org'. Fallback defensivo: 'Time'. */
+function badgeLabel(kind: KrLinkKind, teamName: string | null | undefined) {
+  if (kind === 'org') return 'Org';
+  return teamName?.trim() || 'Time';
+}
+
 function groupByObjective(krs: KrForLinking[]) {
-  const groups = new Map<string, { objectiveTitle: string; cycleName: string | null; kind: KrLinkKind; items: KrForLinking[] }>();
+  const groups = new Map<
+    string,
+    { objectiveTitle: string; cycleName: string | null; kind: KrLinkKind; teamName: string | null; items: KrForLinking[] }
+  >();
   for (const kr of krs) {
     const key = `${kr.kind}:${kr.objective_id ?? 'none'}`;
     const existing = groups.get(key);
@@ -54,6 +62,7 @@ function groupByObjective(krs: KrForLinking[]) {
         objectiveTitle: kr.objective_title ?? 'Sem objetivo',
         cycleName: kr.cycle_name,
         kind: kr.kind,
+        teamName: kr.team_name,
         items: [kr],
       });
   }
@@ -84,7 +93,8 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
         !linkedIds.has(kr.id) &&
         (q === '' ||
           kr.title.toLowerCase().includes(q) ||
-          (kr.objective_title?.toLowerCase().includes(q) ?? false)),
+          (kr.objective_title?.toLowerCase().includes(q) ?? false) ||
+          (kr.team_name?.toLowerCase().includes(q) ?? false)),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableKrs, search, krs.length]);
@@ -161,7 +171,7 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
                           variant="outline"
                           className={cn('text-[10px] px-1.5 py-0 h-4', KIND_CLASS[group.kind])}
                         >
-                          {KIND_LABEL[group.kind]}
+                          {badgeLabel(group.kind, group.teamName)}
                         </Badge>
                         <span className="text-xs font-medium text-muted-foreground line-clamp-1 flex-1">
                           {group.objectiveTitle}
@@ -234,7 +244,7 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
                   variant="outline"
                   className={cn('text-[10px] px-1 py-0 h-3.5 shrink-0', KIND_CLASS[kr.kind])}
                 >
-                  {KIND_LABEL[kr.kind]}
+                  {badgeLabel(kr.kind, kr.team_name)}
                 </Badge>
                 <span className="truncate">{kr.kr_title}</span>
               </div>
