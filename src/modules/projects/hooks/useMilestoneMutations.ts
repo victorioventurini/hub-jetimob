@@ -76,6 +76,10 @@ export function useUpdateMilestone() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
+      toast.success('Milestone atualizado');
+    },
+    onError: (error) => {
+      console.error('Error updating milestone:', error);
       toast.error('Erro ao atualizar milestone');
     },
   });
