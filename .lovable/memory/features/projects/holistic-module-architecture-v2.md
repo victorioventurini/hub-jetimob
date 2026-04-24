@@ -1,14 +1,20 @@
-O módulo de Projetos (v1.7) gerencia iniciativas estratégicas com marcos (milestones), cronograma e indicadores de saúde (late/overdue, at_risk/<7 dias, on_track), diferenciando-se das 'okr_initiatives'. **Milestones têm responsável obrigatório** (`project_milestones.owner_id NOT NULL`); UI bloqueia criação/edição sem responsável (`BuUserSelect allowNone={false}`); hooks fazem guard defensivo.
+---
+name: holistic-module-architecture-v2
+description: Arquitetura holística do módulo Projetos (v1.8) — milestones, autorização canônica e RPCs SECURITY DEFINER para archive/update
+type: feature
+---
+
+O módulo de Projetos (v1.8) gerencia iniciativas estratégicas com marcos (milestones), cronograma e indicadores de saúde (late/overdue, at_risk/<7 dias, on_track), diferenciando-se das 'okr_initiatives'. **Milestones têm responsável obrigatório** (`project_milestones.owner_id NOT NULL`); UI bloqueia criação/edição sem responsável (`BuUserSelect allowNone={false}`); hooks fazem guard defensivo.
 
 **UI de Milestones (v1.7 — 2026-04-24):**
 - Criação **exclusivamente via `MilestoneDialog`** (modal canônico baseado em `ProjectDialog`: Dialog + react-hook-form + zod + `useDialogFormReset`), acionado pelo botão "Novo milestone" no canto superior direito do `CardHeader` da seção "Milestones" em `ProjectDetailPage`. O componente `MilestoneCreateForm` (form inline) foi removido.
 - Vínculo KR ↔ projeto **somente em nível de projeto** na UI: `MilestoneKrLinkSection` foi removido. A tabela `milestone_krs` e o hook `useMilestoneKrLinks` permanecem intactos para preservar dados históricos e a inverse view (`ProjectsForKrSection`), mas não há mais entrada de UI para criar/editar esses vínculos.
 - Observações (`notes`) do milestone usam **salvar manual** via `MilestoneNotesEditor` (estado local + botões Salvar/Cancelar com `isDirty` calculado vs valor persistido). O auto-save por `onChange` foi removido.
 
-**Autorização canônica de projetos (v1.6 — 2026-04-24):** A regra única e válida em todas as camadas (RLS + UI) para editar/arquivar projeto é:
+**Autorização canônica de projetos (v1.6 — 2026-04-24):** A regra única e válida em todas as camadas (RLS + RPC + UI) para editar/arquivar projeto é:
 
 ```
-ALLOW IF is_current_bu(bu_id) AND (
+ALLOW IF (
   is_super_admin(auth.uid())
   OR is_bu_admin(auth.uid(), bu_id)
   OR owner_id = my_profile_id()
@@ -17,10 +23,17 @@ ALLOW IF is_current_bu(bu_id) AND (
 )
 ```
 
-Aplicada em `projects_insert/update/delete`, e herdada por `project_teams_insert/delete` e `project_krs_insert/delete` via JOIN com `projects`. **Removido** o `WITH CHECK = profile_has_bu_access(...)` que existia em `projects_update` e bloqueava super_admin sem membership na BU. No frontend o gate row-aware é composto por `useProjectPermissionsV2` (cobre full access, owner via `:self_or_owner`, e wildcard `:bu`) somado a `useIsLeaderOfProjectOwner` (RPC para a função canônica do banco) — ambos consumidos no `ProjectDetailPage` para liberar Editar/Arquivar exatamente conforme a RLS.
+Aplicada em `projects_insert/update/delete` (RLS) com `is_current_bu(bu_id)`, e herdada por `project_teams_insert/delete` e `project_krs_insert/delete` via JOIN com `projects`. **Removido** o `WITH CHECK = profile_has_bu_access(...)` que existia em `projects_update` e bloqueava super_admin sem membership na BU. No frontend o gate row-aware é composto por `useProjectPermissionsV2` (cobre full access, owner via `:self_or_owner`, e wildcard `:bu`) somado a `useIsLeaderOfProjectOwner` (RPC para a função canônica do banco) — ambos consumidos no `ProjectDetailPage` para liberar Editar/Arquivar exatamente conforme a RLS.
 
 `project_milestones` segue o mesmo modelo (substituindo a key por `projects.milestone.{create,update,delete}:bu`), com a checagem feita via JOIN ao projeto pai.
 
-**CRÍTICO — Soft-delete + RLS SELECT (corrigido 2026-04-24):** A policy `projects_select` exige `deleted_at IS NULL`; portanto, NÃO usar `count: 'exact'` nem `.select()` no soft-delete (`useSoftDeleteProject`), pois a row some da SELECT após o UPDATE e PostgREST retorna `count=0` mesmo em sucesso, gerando falso "Sem permissão". Padrão correto: PROBE pré-UPDATE (`select id, deleted_at, bu_id` para validar existência/idempotência/BU mismatch) seguido de UPDATE simples sem count nem select.
+**Mutations canônicas via RPC SECURITY DEFINER (v1.8 — 2026-04-24):** As operações de **arquivamento e update** de projetos passaram a usar funções `SECURITY DEFINER`, eliminando a fragilidade do antigo PROBE SELECT que falhava em drift de BU contextual / impersonação:
+
+- **`archive_project_v2(p_project_id uuid) RETURNS jsonb`** — usado por `useSoftDeleteProject`. Valida a regra canônica acima server-side (SEM depender da policy SELECT) e retorna `jsonb` categorizado: `{ ok, code }` com `ARCHIVED | ALREADY_ARCHIVED | NOT_FOUND | FORBIDDEN | UNAUTHENTICATED`. Idempotente: se o projeto já estava arquivado, retorna `ALREADY_ARCHIVED` com `ok: true`. Faz `UPDATE projects SET deleted_at = now()` apenas após autorização.
+- **`update_project_v2(p_project_id uuid, p_payload jsonb) RETURNS jsonb`** — usado por `useUpdateProject`. Aplica COALESCE por campo via whitelist (`name, description, owner_id, status, start_date, due_date, external_url`). Retorna `{ ok, code }` com `UPDATED | NOT_FOUND | FORBIDDEN | ALREADY_ARCHIVED | UNAUTHENTICATED | INVALID_PAYLOAD`.
+- Sync de `team_ids` (em `useUpdateProject`) continua sendo feito via `delete + insert` direto na tabela `project_teams` após a RPC retornar `ok: true` — RLS de `project_teams` já herda permissão por JOIN com `projects` e respeita o bypass de admin.
+- Frontend mapeia `code` para toast amigável; **não há mais regex sobre `error.message`** ("Sem permissão" forjado a partir de `count=0`). Erro de rede (PostgREST) cai no `onError` padrão.
+
+**CRÍTICO — Soft-delete + RLS SELECT (histórico — superado em v1.8):** Antes da RPC, o probe pré-update lia o projeto via `SELECT` e dependia da policy `projects_select` (que exige `is_current_bu(bu_id)`). Em cenários de drift de BU contextual / impersonação / bundle stale, o probe retornava `null` e o hook gerava o falso positivo "Sem permissão" mesmo para super_admin. A RPC `archive_project_v2` resolve isso definitivamente porque roda como `SECURITY DEFINER` (bypass total de RLS) e aplica a regra canônica explicitamente.
 
 A integração com OKRs é N:N (somente projeto->KR na UI; milestone->KR preservado no DB para histórico) via tabelas de junção com campo 'impact'. Inclui sistema de comentários com anexos e menções (@), visualização de Gantt customizada (Emerald/Amber/Red), listagem com 'ProjectStatusSummary' e filtros salvos. Nos rituais (MBR, QBR, Check-ins), o 'ProjectsSummary' (mode="detail") exibe marcos, responsáveis e times envolvidos. Notificações automatizadas (project/milestone status, menções) garantem o fluxo de comunicação entre stakeholders.
