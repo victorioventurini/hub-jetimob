@@ -181,9 +181,17 @@ export function useTeamObjectiveForm({
           status,
           is_shared: isShared,
           responsibility_model: isShared ? responsibilityModel : null,
-        } as any)
-        .select()
+        })
+        .select('id, title, team_id, status, is_shared, responsibility_model, bu_id')
         .single();
+
+      console.info('[TeamObjectiveForm.create] objective inserted', {
+        objectiveId: createdObjective?.id ?? null,
+        isShared,
+        contributorsCount: contributingTeamIds.length,
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+      });
 
       if (error) throw error;
 
@@ -197,7 +205,13 @@ export function useTeamObjectiveForm({
           .from('okr_team_objective_contributors')
           .insert(contributors);
 
-        if (contribError) console.error('Error creating contributors:', contribError);
+        if (contribError) {
+          // Falha ao criar contribuidores é crítica em OKR compartilhado:
+          // o objetivo já existe, mas a relação não — propagamos para o caller
+          // saber tratar (toast de erro + invalidar cache).
+          console.error('[TeamObjectiveForm.create] contributors insert failed', contribError);
+          throw contribError;
+        }
       }
 
       return createdObjective;
