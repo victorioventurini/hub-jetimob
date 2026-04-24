@@ -16,6 +16,7 @@ import { useMilestones } from '../hooks/useMilestones';
 import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
 import { useCreateMilestone, useUpdateMilestone, useSoftDeleteMilestone } from '../hooks/useMilestoneMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
+import { useIsLeaderOfProjectOwner } from '../hooks/useIsLeaderOfProjectOwner';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { ProjectHealthBadge } from '../components/ProjectHealthBadge';
@@ -74,10 +75,19 @@ export default function ProjectDetailPage() {
   });
 
   const writerProfileId = realProfileId ?? profileId;
-  const canEditThisProject =
+
+  // Caminho "líder do responsável": consulta a função canônica do banco
+  // (`is_leader_of_project_owner`) para casar exatamente com a RLS.
+  const { data: isLeaderOfOwner = false, isLoading: isLeaderCheckLoading } =
+    useIsLeaderOfProjectOwner(project?.owner_id);
+
+  const baseEdit =
     permissionsResolved && canEditProjectRecord(project?.owner_id, writerProfileId);
-  const canDeleteThisProject =
+  const baseDelete =
     permissionsResolved && canDeleteProjectRecord(project?.owner_id, writerProfileId);
+
+  const canEditThisProject = baseEdit || (permissionsResolved && isLeaderOfOwner);
+  const canDeleteThisProject = baseDelete || (permissionsResolved && isLeaderOfOwner);
 
   // Observabilidade: gating row-aware do detalhe do projeto.
   // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
