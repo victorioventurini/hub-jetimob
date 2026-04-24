@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
-import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
+import { useUpdateProject, useSoftDeleteProject, useRestoreProject } from '../hooks/useProjectMutations';
 import { useCreateMilestone, useUpdateMilestone, useSoftDeleteMilestone } from '../hooks/useMilestoneMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIsLeaderOfProjectOwner } from '../hooks/useIsLeaderOfProjectOwner';
