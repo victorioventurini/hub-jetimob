@@ -49,7 +49,7 @@ export function useKrsForLinking() {
           .select(
             `id, title, status,
              objective:okr_team_objectives!okr_team_key_results_team_objective_id_fkey(
-               id, title, cycle_id,
+               id, title, status, cycle_id, deleted_at, cancelled_at,
                cycle:cycles!okr_team_objectives_cycle_id_fkey(id, name)
              )`,
           )
@@ -62,7 +62,7 @@ export function useKrsForLinking() {
           .select(
             `id, title, status,
              objective:okr_org_objectives!okr_org_key_results_org_objective_id_fkey(
-               id, title, cycle_id,
+               id, title, status, cycle_id, deleted_at, cancelled_at,
                cycle:cycles!okr_org_objectives_cycle_id_fkey(id, name)
              )`,
           )
@@ -77,8 +77,18 @@ export function useKrsForLinking() {
 
       const cycleSet = new Set(cycleIds);
 
+      // Exclui KRs cujo objetivo pai esteja em draft/cancelled/deleted.
+      // Ver `mem://features/projects/kr-linking-standard` + `mem://features/okrs/draft-okr-governance`.
+      const isObjectiveActive = (obj: any) =>
+        !!obj?.cycle_id
+        && cycleSet.has(obj.cycle_id)
+        && obj.status !== 'draft'
+        && obj.status !== 'cancelled'
+        && !obj.deleted_at
+        && !obj.cancelled_at;
+
       const team: KrForLinking[] = (teamRes.data ?? [])
-        .filter((kr: any) => kr.objective?.cycle_id && cycleSet.has(kr.objective.cycle_id))
+        .filter((kr: any) => isObjectiveActive(kr.objective))
         .map((kr: any) => ({
           id: kr.id,
           title: kr.title,
@@ -91,7 +101,7 @@ export function useKrsForLinking() {
         }));
 
       const org: KrForLinking[] = (orgRes.data ?? [])
-        .filter((kr: any) => kr.objective?.cycle_id && cycleSet.has(kr.objective.cycle_id))
+        .filter((kr: any) => isObjectiveActive(kr.objective))
         .map((kr: any) => ({
           id: kr.id,
           title: kr.title,

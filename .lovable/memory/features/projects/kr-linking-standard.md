@@ -15,7 +15,8 @@ type: feature
 Inclui:
 - Team KRs **e** Org KRs do BU atual.
 - Apenas do **ciclo ativo**: quarter ATIVO + year ATIVO (via `objective.cycle_id`).
-- Exclui `deleted_at IS NOT NULL` e `cancelled_at IS NOT NULL`.
+- Exclui KR com `deleted_at IS NOT NULL` ou `cancelled_at IS NOT NULL`.
+- Exclui KR cujo **objetivo pai** esteja em `status='draft'`, `status='cancelled'`, com `deleted_at` ou `cancelled_at` preenchidos. Rascunho de KR não existe no schema (KR.status é enum RAG); o estado "rascunho" é herdado do objetivo, conforme `mem://features/okrs/draft-okr-governance`.
 
 ## UI (popovers de vínculo)
 - Largura `w-[480px]`.
