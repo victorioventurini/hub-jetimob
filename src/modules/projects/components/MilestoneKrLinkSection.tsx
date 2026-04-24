@@ -93,7 +93,8 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
         !linkedIds.has(kr.id) &&
         (q === '' ||
           kr.title.toLowerCase().includes(q) ||
-          (kr.objective_title?.toLowerCase().includes(q) ?? false)),
+          (kr.objective_title?.toLowerCase().includes(q) ?? false) ||
+          (kr.team_name?.toLowerCase().includes(q) ?? false)),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableKrs, search, krs.length]);
