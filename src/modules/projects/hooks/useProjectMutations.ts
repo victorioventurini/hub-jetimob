@@ -4,6 +4,25 @@ import { projectsKeys } from '@/lib/queryKeys/projects';
 import { toast } from 'sonner';
 import type { CreateProjectInput, SoftDeleteProjectInput, UpdateProjectInput } from '../types';
 
+/**
+ * Resultado canônico das RPCs de projeto (archive_project_v2 / update_project_v2).
+ * Códigos: ARCHIVED, ALREADY_ARCHIVED, UPDATED, NOT_FOUND, FORBIDDEN,
+ * UNAUTHENTICATED, INVALID_PAYLOAD.
+ */
+type ProjectRpcResult = {
+  ok: boolean;
+  code:
+    | 'ARCHIVED'
+    | 'ALREADY_ARCHIVED'
+    | 'UPDATED'
+    | 'NOT_FOUND'
+    | 'FORBIDDEN'
+    | 'UNAUTHENTICATED'
+    | 'INVALID_PAYLOAD';
+  project_id?: string;
+  bu_id?: string;
+};
+
 export function useCreateProject() {
   const queryClient = useQueryClient();
   const supabase = useBuScopedSupabase();
@@ -75,47 +94,49 @@ export function useUpdateProject() {
     mutationFn: async (input: UpdateProjectInput) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { id, bu_id, team_ids, ...updates } = input;
+      const { id, bu_id: _buIdLegacy, team_ids, ...updates } = input;
 
-      // Filtra por bu_id do REGISTRO (não do contexto). RLS já garante isolamento.
-      // Manter o filtro aqui é defesa em profundidade contra mismatch de target,
-      // não substituto da RLS.
-      const { data, error, count } = await supabase
-        .from('projects')
-        .update(updates, { count: 'exact' })
-        .eq('id', id)
-        .eq('bu_id', bu_id)
-        .select('id')
-        .maybeSingle();
+      // Whitelist do payload (a RPC valida e aplica COALESCE no banco).
+      const payload: Record<string, unknown> = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.owner_id !== undefined) payload.owner_id = updates.owner_id;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.start_date !== undefined) payload.start_date = updates.start_date;
+      if (updates.due_date !== undefined) payload.due_date = updates.due_date;
+      if (updates.external_url !== undefined) payload.external_url = updates.external_url;
 
-      console.info('[useUpdateProject] result', {
+      const { data, error } = await supabase.rpc('update_project_v2', {
+        p_project_id: id,
+        p_payload: payload,
+      });
+
+      console.info('[useUpdateProject] rpc result', {
         projectId: id,
-        recordBuId: bu_id,
-        affectedCount: count,
+        result: data,
         errorCode: error?.code ?? null,
         errorMessage: error?.message ?? null,
       });
 
       if (error) throw error;
 
-      if (!data || count === 0) {
-        // count=0 sem error → ambíguo. Diagnosticar com SELECT.
-        const { data: probe, error: probeErr } = await supabase
-          .from('projects')
-          .select('id, deleted_at')
-          .eq('id', id)
-          .maybeSingle();
-
-        if (probeErr) throw probeErr;
-        if (!probe) throw new Error('Projeto não encontrado.');
-        if (probe.deleted_at) throw new Error('Projeto já está arquivado.');
-
-        const rlsErr = new Error('Sem permissão para atualizar este projeto.');
-        (rlsErr as any).code = '42501';
-        throw rlsErr;
+      const result = data as unknown as ProjectRpcResult | null;
+      if (!result || !result.ok) {
+        const code = result?.code ?? 'UNKNOWN';
+        const err = new Error(code === 'FORBIDDEN'
+          ? 'Você não tem permissão para atualizar este projeto.'
+          : code === 'NOT_FOUND'
+            ? 'Projeto não encontrado.'
+            : code === 'ALREADY_ARCHIVED'
+              ? 'Projeto está arquivado.'
+              : code === 'UNAUTHENTICATED'
+                ? 'Sessão expirada. Faça login novamente.'
+                : `Erro ao atualizar projeto (${code}).`);
+        (err as { code?: string }).code = code;
+        throw err;
       }
 
-      // Sync team links (delete + re-insert)
+      // Sync team links (delete + re-insert) — herda permissão via JOIN com projects.
       if (team_ids !== undefined) {
         const { error: delError } = await supabase
           .from('project_teams')
@@ -131,24 +152,17 @@ export function useUpdateProject() {
         }
       }
 
-      return data;
+      return { id };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.id) });
       toast.success('Projeto atualizado');
     },
-    onError: (error: any) => {
-      const code = error?.code ?? '';
-      const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
-      console.error('[useUpdateProject] error', { code, rawMsg });
-      const isPermissionError =
-        code === '42501' ||
-        /row-level security|permission denied|sem permiss/i.test(rawMsg);
-      const friendly = isPermissionError
-        ? 'Você não tem permissão para atualizar este projeto.'
-        : `Erro ao atualizar projeto: ${rawMsg}`;
-      toast.error(friendly);
+    onError: (error: Error & { code?: string }) => {
+      const rawMsg = error?.message || 'Erro desconhecido';
+      console.error('[useUpdateProject] error', { code: error?.code, rawMsg });
+      toast.error(rawMsg);
     },
   });
 }
@@ -161,71 +175,54 @@ export function useSoftDeleteProject() {
     mutationFn: async (input: SoftDeleteProjectInput) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { id, bu_id } = input;
+      const { id } = input;
 
-      // PROBE PRÉ-UPDATE: a policy `projects_select` exige `deleted_at IS NULL`,
-      // então não é possível usar `count: 'exact'` nem `.select()` no soft-delete
-      // (a row some da SELECT após o UPDATE, retornando count=0 mesmo em sucesso).
-      // Validamos existência + estado ANTES do update para distinguir os casos.
-      const { data: probe, error: probeErr } = await supabase
-        .from('projects')
-        .select('id, deleted_at, bu_id, owner_id')
-        .eq('id', id)
-        .maybeSingle();
+      // RPC SECURITY DEFINER: valida permissão server-side seguindo a regra
+      // canônica v1.6 (super_admin, bu_admin, owner, leader_of_owner,
+      // permission key). Não depende mais de probe SELECT (que falhava em
+      // drift de BU contextual / impersonação).
+      const { data, error } = await supabase.rpc('archive_project_v2', {
+        p_project_id: id,
+      });
 
-      if (probeErr) throw probeErr;
-
-      if (!probe) {
-        throw new Error('Projeto não encontrado nesta BU.');
-      }
-
-      if (probe.deleted_at) {
-        // Já estava arquivado: idempotência.
-        console.info('[useSoftDeleteProject] already archived (idempotent)', { id });
-        return;
-      }
-
-      if (probe.bu_id !== bu_id) {
-        throw new Error(`BU do projeto (${probe.bu_id}) difere do bu_id informado (${bu_id}).`);
-      }
-
-      // UPDATE sem count/select — não tentamos ler a row após arquivar (policy SELECT bloqueia).
-      const { error } = await supabase
-        .from('projects')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('bu_id', bu_id)
-        .is('deleted_at', null);
-
-      console.info('[useSoftDeleteProject] result', {
+      console.info('[useSoftDeleteProject] rpc result', {
         projectId: id,
-        recordBuId: bu_id,
+        result: data,
         errorCode: error?.code ?? null,
         errorMessage: error?.message ?? null,
       });
 
       if (error) throw error;
+
+      const result = data as unknown as ProjectRpcResult | null;
+      if (!result) {
+        throw new Error('Resposta inválida do servidor.');
+      }
+
+      if (result.ok) {
+        return result;
+      }
+
+      const friendly =
+        result.code === 'FORBIDDEN'
+          ? 'Você não tem permissão para arquivar este projeto.'
+          : result.code === 'NOT_FOUND'
+            ? 'Projeto não encontrado.'
+            : result.code === 'UNAUTHENTICATED'
+              ? 'Sessão expirada. Faça login novamente.'
+              : `Erro ao arquivar projeto (${result.code}).`;
+      const err = new Error(friendly);
+      (err as { code?: string }).code = result.code;
+      throw err;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       toast.success('Projeto arquivado');
     },
-    onError: (error: any) => {
-      const code = error?.code ?? '';
-      const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
-      console.error('[useSoftDeleteProject] error', {
-        code,
-        rawMsg,
-        details: error?.details ?? null,
-        hint: error?.hint ?? null,
-      });
-      const isPermissionError =
-        code === '42501' ||
-        /row-level security|permission denied|sem permiss/i.test(rawMsg);
-      const friendly = isPermissionError
-        ? 'Você não tem permissão para arquivar este projeto.'
-        : `Erro ao arquivar projeto: ${rawMsg}`;
-      toast.error(friendly);
+    onError: (error: Error & { code?: string }) => {
+      const rawMsg = error?.message || 'Erro desconhecido';
+      console.error('[useSoftDeleteProject] error', { code: error?.code, rawMsg });
+      toast.error(rawMsg);
     },
   });
 }
