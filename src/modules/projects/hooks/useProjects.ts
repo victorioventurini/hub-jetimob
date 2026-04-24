@@ -66,7 +66,7 @@ export function useProjects(filters: ProjectFilters = {}) {
             ? await fetchArchived()
             : (await Promise.all([fetchActive(), fetchArchived()])).flat();
 
-      let results = (data || []).map((p: any) => {
+      let results = (rawData || []).map((p: any) => {
         const milestones = p.project_milestones || [];
         const completion = computeCompletion(milestones);
         const health = computeHealth(milestones);
@@ -82,6 +82,8 @@ export function useProjects(filters: ProjectFilters = {}) {
           impact: pk.impact,
         }));
 
+        const isArchived = p._is_archived === true || p.deleted_at != null;
+
         return {
           id: p.id,
           name: p.name,
@@ -94,7 +96,7 @@ export function useProjects(filters: ProjectFilters = {}) {
           bu_id: p.bu_id,
           created_at: p.created_at,
           updated_at: p.updated_at,
-          deleted_at: null,
+          deleted_at: p.deleted_at ?? null,
           owner: p.owner ?? null,
           teams,
           krs,
@@ -103,6 +105,7 @@ export function useProjects(filters: ProjectFilters = {}) {
           milestones_total: completion.total,
           milestones_done: completion.done,
           completion_pct: completion.pct,
+          is_archived: isArchived,
         } as ProjectWithRelations;
       });
 
