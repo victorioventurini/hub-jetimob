@@ -58,15 +58,19 @@ import { getRitualLabel, getStepLabel, type StructureVersion } from '@/modules/o
 import { RITUAL_LABELS } from '@/modules/okrs/constants/ritualLabels';
 import { ALL_RITUAL_WIZARD_TYPES } from '@/modules/okrs/constants/ritualWizardTypes';
 import type { WizardPersona, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import { useBu } from '@/contexts/BuContext';
 
 const PAGE_SIZE = 25;
 
-const SCOPE_LABELS: Record<DecisionsInboxScope, string> = {
-  self: 'Minhas',
-  team: 'Meu time',
-  area: 'Minha área',
-  all: 'Toda a BU',
-};
+function buildScopeLabels(buName: string | null | undefined): Record<DecisionsInboxScope, string> {
+  const allLabel = buName ? `Toda ${buName}` : 'Toda a BU';
+  return {
+    self: 'Minhas',
+    team: 'Meu time',
+    area: 'Minha área',
+    all: allLabel,
+  };
+}
 
 const STATUS_OPTIONS: Array<{ value: 'pending' | 'done' | 'all'; label: string }> = [
   { value: 'pending', label: 'Pendentes' },
