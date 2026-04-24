@@ -100,6 +100,8 @@ export default function ProjectDetailPage() {
       permissionsResolved,
       identityLoading,
       permissionsLoading,
+      isLeaderCheckLoading,
+      isLeaderOfOwner,
       canEditThisProject,
       canDeleteThisProject,
     });
@@ -109,6 +111,8 @@ export default function ProjectDetailPage() {
     permissionsResolved,
     identityLoading,
     permissionsLoading,
+    isLeaderCheckLoading,
+    isLeaderOfOwner,
     canEditThisProject,
     canDeleteThisProject,
   ]);
