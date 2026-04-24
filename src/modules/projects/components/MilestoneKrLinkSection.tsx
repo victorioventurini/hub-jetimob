@@ -8,7 +8,6 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, X, Search, Link2 } from 'lucide-react';
@@ -17,25 +16,13 @@ import { useKrsForLinking, type KrForLinking } from '../hooks/useKrsForLinking';
 import { useAddMilestoneKrLink, useRemoveMilestoneKrLink } from '../hooks/useMilestoneKrLinks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { ProjectImpact, KrLinkKind } from '../types';
+import type { KrLinkKind } from '../types';
 
 interface MilestoneKrLinkSectionProps {
   milestoneId: string;
   projectId: string;
   canEdit: boolean;
 }
-
-const IMPACT_LABELS: Record<ProjectImpact, string> = {
-  high: 'Alto',
-  medium: 'Médio',
-  low: 'Baixo',
-};
-
-const IMPACT_COLORS: Record<ProjectImpact, string> = {
-  high: 'bg-destructive/10 text-destructive',
-  medium: 'bg-warning/10 text-warning-foreground',
-  low: 'bg-muted text-muted-foreground',
-};
 
 const KIND_CLASS: Record<KrLinkKind, string> = {
   org: 'bg-primary/10 text-primary border-primary/20',
@@ -83,7 +70,6 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<KrForLinking | null>(null);
-  const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
 
   // Derivações estáveis para a deps array dos useMemo (evitam o anti-padrão
   // de usar `length` como proxy de identidade do conteúdo).
@@ -115,18 +101,19 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
 
   const handleAdd = () => {
     if (!selected) return;
+    // `impact` mantido fixo em 'medium' por compatibilidade com a coluna NOT NULL
+    // do schema. Não exibido na UI — decisão de produto: categorização desnecessária.
     addLink.mutate(
       {
         milestone_id: milestoneId,
         kr_id: selected.id,
         kind: selected.kind,
-        impact: selectedImpact,
+        impact: 'medium',
         project_id: projectId,
       },
       {
         onSuccess: () => {
           setSelected(null);
-          setSelectedImpact('medium');
           setPopoverOpen(false);
           setSearch('');
         },
@@ -214,20 +201,7 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
                 </div>
 
                 {selected && (
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Select
-                      value={selectedImpact}
-                      onValueChange={(v) => setSelectedImpact(v as ProjectImpact)}
-                    >
-                      <SelectTrigger className="h-8 text-xs flex-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high">Alto</SelectItem>
-                        <SelectItem value="medium">Médio</SelectItem>
-                        <SelectItem value="low">Baixo</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex justify-end pt-2 border-t">
                     <Button
                       size="sm"
                       className="h-8 text-xs"
@@ -260,22 +234,17 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
                 </Badge>
                 <span className="truncate">{kr.kr_title}</span>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[10px] px-1.5 py-0.5 rounded ${IMPACT_COLORS[kr.impact]}`}>
-                  {IMPACT_LABELS[kr.impact]}
-                </span>
-                {canEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => handleRemove(kr)}
-                    disabled={removeLink.isPending}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 shrink-0"
+                  onClick={() => handleRemove(kr)}
+                  disabled={removeLink.isPending}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
             </li>
           ))}
         </ul>

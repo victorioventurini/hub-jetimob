@@ -1,103 +1,75 @@
-# Plano: Corrigir React #310 ao abrir milestones
 
-## Pré-checklist (TCR + Canônicos) — ✅ Executado
+## Pré-checklist (executado)
 
-- ✅ **TECHNICAL_CONTEXT_REGISTRY.md** — confirmado padrão de componentes funcionais e Rules of Hooks como pré-requisito implícito do React 18.
-- ✅ **DEVELOPMENT_STANDARDS.md** — `React.memo` mandatório em listas (mem://standards/frontend-memoization-standard); hooks devem ser estáveis.
-- ✅ **mem://features/projects/holistic-module-architecture-v2** — `MilestoneKrLinkSection` faz parte do módulo Projects v1.4.
-- ✅ **HOOKS_BARREL_STANDARD.md** — imports internos do mesmo módulo via path relativo (já em conformidade no arquivo).
-- ✅ **Code review** — confirmada violação real: `useMemo` (linhas 89 e 102) executados **após** early-return `if (isLoading)` (linha 83). Isso causa **mudança no número de hooks** entre renders → React #310.
-- ✅ Verificado que `linkedIds` (Set) na linha 88 é recriado a cada render, tornando `krs.length` na deps array uma proxy frágil.
+- ✅ `TECHNICAL_CONTEXT_REGISTRY` (via memória `mem://features/projects/holistic-module-architecture-v2`)
+- ✅ `mem://features/projects/kr-linking-standard` — schema XOR `key_result_id`/`org_key_result_id`, mutations recebem `impact`, default `medium`
+- ✅ `mem://standards/database/check-constraint-prohibition` — coluna `impact` é ENUM com default, sem CHECK time-based; remoção de UI é segura
+- ✅ Inspeção do código: 3 componentes envolvidos + 2 hooks + tipos
+- ✅ DB: `project_krs.impact` e `milestone_krs.impact` são `NOT NULL DEFAULT 'medium'` — não requer migration
 
-## Diagnóstico Técnico (raiz)
+## Diagnóstico
 
-**Arquivo:** `src/modules/projects/components/MilestoneKrLinkSection.tsx`
+O campo `impact` (alto/médio/baixo) aparece em 3 superfícies:
 
-```ts
-// Linha 73-85: hooks executados (4 hooks: 2 queries + 2 mutations + 4 useState = 8 hooks)
-if (isLoading) return <Skeleton />;  // ⚠️ early return
+1. **`ProjectKrLinkSection.tsx`** — popover de vínculo de KR ao Projeto: `<Select>` (linhas 192-200) + chip colorido na lista de KRs já vinculadas (linhas 234-236)
+2. **`MilestoneKrLinkSection.tsx`** — popover de vínculo de KR ao Marco: `<Select>` (linhas 222-230) + chip colorido (linhas 264-266)
+3. **`ProjectsForKrSection.tsx`** — visão inversa (na página do KR, lista de projetos vinculados): chip colorido (linhas 247-249). Sem seletor — já envia `'medium'` fixo na linha 83.
 
-// Linhas 89, 102: 2 useMemo executados APENAS quando !isLoading
-const filteredKrs = useMemo(...);    // hook #9
-const grouped = useMemo(...);        // hook #10
-```
+Mutations (`useAddProjectKrLink`, `useAddMilestoneKrLink`) **continuam recebendo `impact`** porque a coluna é `NOT NULL`. Vamos passar `'medium'` fixo em todos os call sites.
 
-**Cenário de quebra:**
-1. Primeiro render: `isLoading=true` → 8 hooks executados.
-2. Query resolve → `isLoading=false` → 10 hooks executados.
-3. React detecta mismatch → **error #310 ("Rendered more hooks than during the previous render")**.
+## Plano de execução
 
-## Plano de Correção
+### 1. `src/modules/projects/components/ProjectKrLinkSection.tsx`
 
-### 1. Refatorar `MilestoneKrLinkSection.tsx`
-- Mover **todos os hooks** (incluindo `useMemo`) para **antes** do early-return `if (isLoading)`.
-- Substituir `krs.length` por `linkedIdsKey` (string estável de IDs) na deps array de `useMemo`, removendo o `eslint-disable`.
-- Manter ordem de hooks idêntica em todos os caminhos de render.
+- Remover `IMPACT_LABELS` e `IMPACT_COLORS` (linhas 28-39).
+- Remover `useState<ProjectImpact>('medium')` para `selectedImpact` (linha 76) e seu reset (linha 104).
+- Remover o `<Select>` de impacto inteiro do popover (linhas ~190-201) — manter apenas KR selecionado + botão "Vincular".
+- Substituir chamada `addLink.mutate({ ..., impact: selectedImpact })` por `impact: 'medium'`.
+- Remover chip de impacto na lista de KRs vinculadas (linhas 234-236) — manter apenas título do KR + badge de origem (Time/Org) + botão remover.
+- Limpar import `ProjectImpact` se não for mais usado; manter `KrLinkKind`.
+- Remover import `Select*` se não usado em outro lugar do arquivo.
 
-```ts
-export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Props) {
-  // 1. Todos os hooks no topo
-  const { data: linkedKrs, isLoading } = useMilestoneKrs(milestoneId);
-  const { data: availableKrs = [], isLoading: loadingKrs } = useKrsForLinking();
-  const addLink = useAddMilestoneKrLink();
-  const removeLink = useRemoveMilestoneKrLink();
+### 2. `src/modules/projects/components/MilestoneKrLinkSection.tsx`
 
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<KrForLinking | null>(null);
-  const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
+- Mesmo tratamento: remover `IMPACT_LABELS`/`IMPACT_COLORS`, `selectedImpact` state, `<Select>` (linhas 222-230) e chip (linhas 264-266).
+- `addLink.mutate({ ..., impact: selectedImpact })` → `impact: 'medium'`.
+- **Atenção:** preservar a regra de hooks (`mem://standards/frontend-rules-of-hooks`) — não introduzir early-return entre hooks ao remover linhas.
 
-  const krs = linkedKrs ?? [];
-  const linkedIdsKey = krs.map((k) => k.key_result_id).sort().join(',');
+### 3. `src/modules/projects/components/ProjectsForKrSection.tsx`
 
-  const filteredKrs = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    const linkedSet = new Set(linkedIdsKey ? linkedIdsKey.split(',') : []);
-    return availableKrs.filter(
-      (kr) => !linkedSet.has(kr.id) &&
-        (q === '' ||
-          kr.title.toLowerCase().includes(q) ||
-          (kr.objective_title?.toLowerCase().includes(q) ?? false) ||
-          (kr.team_name?.toLowerCase().includes(q) ?? false)),
-    );
-  }, [availableKrs, search, linkedIdsKey]);
+- Remover `impactLabel` e `IMPACT_COLORS` (linhas 37-47).
+- Remover chip de impacto na linha 247-249.
+- Mutation já passa `'medium'` fixo — sem alteração.
 
-  const grouped = useMemo(() => groupByObjective(filteredKrs), [filteredKrs]);
+### 4. Documentação canônica
 
-  // 2. Early returns DEPOIS de todos os hooks
-  if (isLoading) return <Skeleton className="h-8 w-full" />;
+Atualizar `mem://features/projects/kr-linking-standard`:
+- Remover menção a `impact` como decisão do usuário.
+- Adicionar nota: "Coluna `impact` mantida no schema com default `'medium'` por compatibilidade; **não é exposta na UI**. Se reintroduzir no futuro, usar default sem bloquear vínculo."
+- Atualizar contrato de mutation: `{ kr_id, kind }` (impact passa a ser detalhe interno).
 
-  // 3. Restante do JSX inalterado
-}
-```
+### 5. NÃO mexer
 
-### 2. Auditoria preventiva (módulo Projects)
-- Rodar `rg "if \(.*isLoading.*\)\s*\{?\s*return" src/modules/projects/components/` para identificar outros componentes com early-return seguido de hooks.
-- Corrigir caso a caso (mesmo padrão).
+- **Schema/DB**: nenhuma migration. Coluna fica como está com default.
+- **Tipos `ProjectImpact`**: mantém em `types.ts` (ainda usado por `ProjectWithRelations.krs[].impact` em queries — remover quebraria o select). Pode ficar como vestigial.
+- **Hooks de mutation**: continuam aceitando `impact` (compat). Apenas os call sites passam `'medium'` fixo.
 
-### 3. Padronização canônica
-- Criar `.lovable/memory/standards/frontend-rules-of-hooks.md`:
-  - Regra: **todos os hooks (incluindo `useMemo`/`useCallback`) DEVEM preceder qualquer early-return condicional**.
-  - Justificativa: Rules of Hooks do React + prevenção de erros #310/#321 em produção.
-  - Pattern recomendado: estados de loading/empty renderizados no JSX final, não como early-return antes de hooks.
-- Atualizar `.lovable/memory/index.md` adicionando entrada em **Core**: "Hooks: todos antes de early-returns. Ver mem://standards/frontend-rules-of-hooks."
+## Arquivos modificados
 
-### 4. Validação pós-fix
-- Verificar que abrir/fechar milestone não dispara mais React #310.
-- Confirmar que badge de contagem (`KRs vinculadas (N)`) atualiza corretamente após adicionar/remover.
+- `src/modules/projects/components/ProjectKrLinkSection.tsx`
+- `src/modules/projects/components/MilestoneKrLinkSection.tsx`
+- `src/modules/projects/components/ProjectsForKrSection.tsx`
+- `.lovable/memory/features/projects/kr-linking-standard.md`
 
-## Arquivos a Modificar
-- ✏️ `src/modules/projects/components/MilestoneKrLinkSection.tsx` (refactor hooks)
-- ➕ `.lovable/memory/standards/frontend-rules-of-hooks.md` (novo SSOT)
-- ✏️ `.lovable/memory/index.md` (adicionar Core rule + entry)
-- ✏️ Eventuais componentes detectados na auditoria preventiva (se houver)
+## Riscos
 
-## Riscos e Mitigações
-- **Risco:** Recálculo de `linkedIdsKey` a cada render. **Mitigação:** operação O(n) trivial; n ≤ 20 KRs/milestone na prática.
-- **Risco:** Auditoria pode detectar outros componentes. **Mitigação:** correções são triviais (mesmo padrão); se >3, escalar em PR separado.
+- **Nenhum risco de dados**: registros existentes mantêm seu `impact` atual (que ninguém mais vê).
+- **Regra de hooks**: ao deletar linhas com hooks, manter ordem; já validado nos arquivos atuais que hooks ficam acima do early-return.
+- **Tipos órfãos**: `ProjectImpact` permanece exportado — não quebra nada.
 
-## Conformidade Final
-- ✅ Rules of Hooks (React)
-- ✅ TCR — Frontend Memoization Standard
-- ✅ HOOKS_BARREL_STANDARD (imports já corretos)
-- ✅ Sem `select('*')`, sem hardcode de roles, sem violação BU
+## Validação pós-execução
+
+1. Vincular KR a um projeto → popover sem seletor de impacto → chip mostra apenas Time/Org.
+2. Vincular KR a um marco → idem.
+3. Página do KR → projetos vinculados sem chip Alto/Médio/Baixo.
+4. `npm run build` sem erros TS.
