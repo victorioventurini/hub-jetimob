@@ -1,82 +1,56 @@
+# Correção — Perda de sessão no desktop
 
+## Diagnóstico (já confirmado no pré-checklist)
 
-# Cobertura de testes — Notificações de Projetos
+1. **Causa raiz (cross-tab):** `globalClient.ts` substitui o lock nativo do GoTrue por um no-op. Em desktop com múltiplas abas, refresh tokens disparam concorrentemente — a primeira aba consome o refresh token, as demais recebem `invalid_grant` → `SIGNED_OUT` silencioso. Mobile não sofre porque normalmente há 1 só aba ativa.
+2. **Causa secundária (cold start / wake):** `useAuth` chama `supabase.auth.getSession()` em paralelo ao listener `onAuthStateChange` que já dispara `INITIAL_SESSION`. O safety timeout de 10s força `isLoading=false` ainda sem sessão hidratada quando o laptop volta de sleep e a rede está lenta → UI renderiza como "deslogado".
+3. **Causa terciária (idle):** `useIdleTimeout` (8h) não escuta `visibilitychange`. Ao voltar de uma aba dormente após 8h+, o usuário leva sign-out mesmo tendo "voltado a interagir".
 
-## Contexto
+## Plano de implementação
 
-A migration `20260423233016` adicionou lógica server-side de fanout (owner + teams + watchers via mentions) sem testes acompanhantes. Como o projeto não tem pgTAP configurado, a cobertura será via **testes de integração com Vitest** executando as funções SQL contra o banco Lovable Cloud, mais um teste de QA manual documentado.
+### Fase 1 — `src/integrations/supabase/globalClient.ts`
+- Remover o `lock: async (..) => fn()` (no-op).
+- Manter `detectSessionInUrl: false`, `persistSession: true`, `autoRefreshToken: true`.
+- Comentário explicando que o lock nativo (Navigator LockManager) volta a coordenar refresh entre abas.
 
-## Escopo
+### Fase 2 — `src/hooks/useAuth.tsx`
+- **Remover** o bloco `supabase.auth.getSession().then(...)` redundante (linhas ~104-134). O listener `onAuthStateChange` dispara `INITIAL_SESSION` no mount com a sessão hidratada, eliminando o deadlock que motivou o lock no-op.
+- **Aumentar** safety timeout de 10s → 20s (cobre wake de laptop em redes lentas).
+- **Adicionar** listener `visibilitychange` que, ao voltar `visible`, chama `supabase.auth.getSession()` (silencioso) para revalidar/atualizar a sessão local sem bloquear a UI. Se voltar `null` e antes havia sessão, registra warn e deixa o GoTrue emitir `SIGNED_OUT` naturalmente.
+- Garantir que `setIsLoading(false)` também ocorra no caminho `INITIAL_SESSION` quando não há usuário (já está, mas validar).
 
-### 1. Testes de integração SQL (Vitest + Supabase client)
+### Fase 3 — `src/hooks/useIdleTimeout.ts`
+- Adicionar `visibilitychange` (apenas quando `document.visibilityState === 'visible'`) à lista de eventos que chamam `touch()`.
+- Manter timeout de 8h e checagem por `localStorage` (cross-tab já funciona).
 
-Arquivo novo: `src/modules/projects/__tests__/notifications.integration.test.ts`
-
-Cobre 6 cenários executando contra o banco real (com cleanup via transação/rollback de fixtures):
-
-- **CN-1**: Mudança de status em projeto notifica owner + membros de `project_teams`, excluindo o actor
-- **CN-2**: Watchers (usuários mentionados em `project_comments`) são incluídos na audiência de status change
-- **CN-3**: Comentários com `deleted_at IS NOT NULL` não geram watchers (respeita soft-delete)
-- **CN-4**: Mudança de status em `project_milestones` dispara `milestone.status.changed` e cria notificações
-- **CN-5**: Deduplicação — usuário que é owner + watcher recebe 1 notificação apenas
-- **CN-6**: Mention em comentário de projeto cria notificação `project.mention` para o mencionado
-
-### 2. Teste de regressão — Tickets (anti-double-fire)
-
-Arquivo novo: `src/modules/tickets/__tests__/mention-no-duplicates.integration.test.ts`
-
-- **CN-7**: Mention em comentário de ticket cria exatamente **1** notificação (valida remoção do `trg_notify_mention` redundante)
-
-### 3. Teste unitário — Query keys (se aplicável)
-
-Verificar se `notificationsKeys` precisa de namespace para project/milestone notifications. Se sim, estender `src/lib/queryKeys/notifications.test.ts`.
-
-### 4. Validação de schema
-
-Arquivo novo: `src/modules/projects/__tests__/notification-events-registration.test.ts`
-
-- Query SELECT em `notification_events` confirmando que `project.status.changed`, `milestone.status.changed` e `project.mention` estão registrados, com `default_channels` corretos e `audience` apropriada.
-
-### 5. Atualização do QA doc
-
-Atualizar `docs/qa/QA_PROJECTS_NOTIFICATIONS.md` adicionando:
-- Comandos para rodar os novos testes
-- Mapeamento cenário ↔ teste automatizado
-- Marcar cenários antes "manuais" como "automatizados"
-
-## Detalhes técnicos
-
-**Padrão de fixtures**: Cada teste cria seus próprios `bu_id`/`project_id`/`profile_id` com prefixo `test-notif-{uuid}` e limpa via `afterEach` com DELETE em cascata. Não usa banco de testes separado — usa o Lovable Cloud com isolamento por BU sintética.
-
-**Identidade**: Segue `IDENTITY_CONVENTION.md` — `notifications.user_id` = `auth.users.id`. Testes asserem por `user_id` resolvido a partir de `profiles.user_id`.
-
-**RLS bypass**: Testes de fanout usam o `service_role` client (já disponível em fixtures de teste do projeto) para inspecionar `notifications` independente de quem disparou.
-
-**Performance**: Conjunto roda em ~8-12s (estimado) — aceitável para CI, mas marcamos com `describe.concurrent` quando possível.
-
-## Comandos
-
-```bash
-npm run test -- src/modules/projects/__tests__/notifications.integration.test.ts
-npm run test -- src/modules/tickets/__tests__/mention-no-duplicates.integration.test.ts
-npm run test -- --coverage src/modules/projects src/modules/tickets
-```
+### Fase 4 — Documentação
+- Criar `docs/qa/QA_AUTH_DESKTOP_SESSION.md` com:
+  - Descrição do incidente (sessão perdendo no desktop, persistente no mobile)
+  - Diagnóstico raiz (lock no-op + cross-tab refresh race)
+  - Mudanças aplicadas
+  - Cenários de validação manual: (a) 2 abas abertas por 1h+ não derrubam sessão; (b) wake de laptop após sleep mantém sessão; (c) idle real de 8h+ ainda desloga.
+- Atualizar `mem://architecture/auth/supabase-client-sync-standard` adicionando: "Lock nativo do GoTrue obrigatório no globalClient; proibido lock no-op."
 
 ## Arquivos
 
-**Criados**:
-- `src/modules/projects/__tests__/notifications.integration.test.ts`
-- `src/modules/projects/__tests__/notification-events-registration.test.ts`
-- `src/modules/tickets/__tests__/mention-no-duplicates.integration.test.ts`
+**Editados:**
+- `src/integrations/supabase/globalClient.ts`
+- `src/hooks/useAuth.tsx`
+- `src/hooks/useIdleTimeout.ts`
+- `.lovable/memory/architecture/auth/supabase-client-sync-standard.md` (criar/atualizar)
 
-**Atualizados**:
-- `docs/qa/QA_PROJECTS_NOTIFICATIONS.md` (mapeamento de cobertura)
-- `.lovable/memory/features/projects/notification-context-standard.md` (referência aos testes)
+**Criados:**
+- `docs/qa/QA_AUTH_DESKTOP_SESSION.md`
 
 ## Critério de aceite
 
-- [ ] 7 cenários novos passando localmente e no CI (`.github/workflows/test.yml`)
-- [ ] Suite total do módulo projects continua verde
-- [ ] Suite total do módulo tickets continua verde (sem regressão de double-fire)
-- [ ] QA doc reflete cobertura automatizada vs manual
+- [ ] Sessão persiste em ≥2 abas abertas por horas (sem `SIGNED_OUT` espúrio)
+- [ ] Voltar de sleep com rede lenta não desloga (safety timeout 20s + INITIAL_SESSION)
+- [ ] `useIdleTimeout` registra atividade ao tornar a aba visível
+- [ ] Sem warning "Multiple GoTrueClient instances"
+- [ ] QA doc + memória atualizados
 
+## Riscos
+
+- **Baixo**: o lock nativo já é o default upstream do Supabase JS; o no-op foi um workaround para o deadlock interno do useAuth, que estamos eliminando na Fase 2. Sem o `getSession()` manual concorrente, não há cenário de auto-deadlock.
+- **Mitigação**: safety timeout de 20s garante UI nunca trava em loading mesmo se algo der errado.

@@ -52,15 +52,14 @@ function createGlobalClient(): SupabaseClient<Database> {
       // CRITICAL: Disable URL detection to prevent competing with BU-scoped client
       // The AuthCallback page handles session extraction from URL explicitly
       detectSessionInUrl: false,
-      // CRITICAL: Disable Navigator Lock to prevent self-deadlock.
-      // When onAuthStateChange triggers initialize() and getSession() is called
-      // concurrently (both in useAuth's useEffect), they compete for the same
-      // exclusive lock, causing a 10s timeout. The no-op lock executes operations
-      // immediately without Navigator LockManager coordination.
-      // Multi-tab token refresh is handled gracefully by the auth server.
-      lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => {
-        return await fn();
-      },
+      // Lock nativo do GoTrue (Navigator LockManager) HABILITADO — coordena
+      // refresh de token entre múltiplas abas no desktop. Versões anteriores
+      // usavam um lock no-op para contornar um deadlock interno do useAuth
+      // (getSession() concorrente com onAuthStateChange). Esse deadlock foi
+      // eliminado simplificando o useAuth para confiar apenas em INITIAL_SESSION,
+      // permitindo restaurar o lock nativo e estancar o sign-out silencioso
+      // que ocorria quando duas abas tentavam consumir o mesmo refresh token.
+      // Ver: docs/qa/QA_AUTH_DESKTOP_SESSION.md
     },
   });
 

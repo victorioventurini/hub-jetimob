@@ -52,14 +52,23 @@ export function useIdleTimeout() {
 
     const handler = () => touch();
 
+    // visibilitychange: ao retornar para a aba (foco), conta como atividade.
+    // Sem isso, abas em background por 8h+ levam sign-out mesmo quando o
+    // usuário "voltou a usar" — comportamento confuso no desktop com várias janelas.
+    const visibilityHandler = () => {
+      if (document.visibilityState === 'visible') touch();
+    };
+
     for (const event of ACTIVITY_EVENTS) {
       window.addEventListener(event, handler, { passive: true });
     }
+    document.addEventListener('visibilitychange', visibilityHandler);
 
     return () => {
       for (const event of ACTIVITY_EVENTS) {
         window.removeEventListener(event, handler);
       }
+      document.removeEventListener('visibilitychange', visibilityHandler);
     };
   }, [user, touch]);
 
