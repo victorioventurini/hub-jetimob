@@ -171,7 +171,7 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
                           variant="outline"
                           className={cn('text-[10px] px-1.5 py-0 h-4', KIND_CLASS[group.kind])}
                         >
-                          {KIND_LABEL[group.kind]}
+                          {badgeLabel(group.kind, group.teamName)}
                         </Badge>
                         <span className="text-xs font-medium text-muted-foreground line-clamp-1 flex-1">
                           {group.objectiveTitle}
