@@ -332,7 +332,14 @@ export function useTeamObjectiveForm({
       toast.error('Selecione pelo menos um time contribuidor');
       return;
     }
-    
+
+    // Em modo edit, bloqueia salvar se contribuidores ainda não carregaram —
+    // evita zerar contribuidores existentes por race condition.
+    if (isEditing && isLoadingContributors) {
+      toast.error('Aguarde — carregando contribuidores atuais…');
+      return;
+    }
+
     if (isEditing) {
       updateMutation.mutate();
     } else {
