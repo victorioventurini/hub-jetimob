@@ -18,7 +18,7 @@ interface MilestoneListProps {
   milestones: ProjectMilestone[];
   projectId: string;
   onStatusChange?: (milestoneId: string, status: MilestoneStatus) => void;
-  onUpdate?: (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string | null; notes?: string | null }) => void;
+  onUpdate?: (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string; notes?: string | null }) => void;
   onDelete?: (milestoneId: string) => void;
   canEditKrLinks?: boolean;
   canEdit?: boolean;
@@ -192,14 +192,16 @@ export function MilestoneList({
                           </PopoverContent>
                         </Popover>
 
-                        {/* Owner inline edit */}
+                        {/* Owner inline edit — obrigatório */}
                         <div className="min-w-[180px]">
                           <BuUserSelect
-                            value={m.owner_id ?? undefined}
-                            onValueChange={(v) => onUpdate(m.id, { owner_id: v })}
-                            placeholder="Responsável"
-                            allowNone
-                            noneLabel="Sem responsável"
+                            value={m.owner_id}
+                            onValueChange={(v) => {
+                              // Defesa: ignorar tentativas de limpar (allowNone={false} já bloqueia).
+                              if (v) onUpdate(m.id, { owner_id: v });
+                            }}
+                            placeholder="Responsável *"
+                            allowNone={false}
                           />
                         </div>
 
