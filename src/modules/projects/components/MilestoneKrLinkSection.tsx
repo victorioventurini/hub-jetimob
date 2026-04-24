@@ -70,6 +70,11 @@ function groupByObjective(krs: KrForLinking[]) {
 }
 
 export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: MilestoneKrLinkSectionProps) {
+  // ⚠️ CRÍTICO — Rules of Hooks: TODOS os hooks (incluindo useMemo) DEVEM ser
+  // chamados antes de qualquer early-return condicional. Mover hooks para depois
+  // de `if (isLoading) return ...` quebra a contagem entre renders e dispara
+  // React #310 ("Rendered more hooks than during the previous render").
+  // Ver: mem://standards/frontend-rules-of-hooks
   const { data: linkedKrs, isLoading } = useMilestoneKrs(milestoneId);
   const { data: availableKrs = [], isLoading: loadingKrs } = useKrsForLinking();
   const addLink = useAddMilestoneKrLink();
@@ -80,26 +85,33 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
   const [selected, setSelected] = useState<KrForLinking | null>(null);
   const [selectedImpact, setSelectedImpact] = useState<ProjectImpact>('medium');
 
-  if (isLoading) {
-    return <Skeleton className="h-8 w-full" />;
-  }
-
+  // Derivações estáveis para a deps array dos useMemo (evitam o anti-padrão
+  // de usar `length` como proxy de identidade do conteúdo).
   const krs = linkedKrs ?? [];
-  const linkedIds = new Set(krs.map((kr) => kr.key_result_id));
+  const linkedIdsKey = krs
+    .map((kr) => kr.key_result_id)
+    .sort()
+    .join(',');
+
   const filteredKrs = useMemo(() => {
     const q = search.toLowerCase().trim();
+    const linkedSet = new Set(linkedIdsKey ? linkedIdsKey.split(',') : []);
     return availableKrs.filter(
       (kr) =>
-        !linkedIds.has(kr.id) &&
+        !linkedSet.has(kr.id) &&
         (q === '' ||
           kr.title.toLowerCase().includes(q) ||
           (kr.objective_title?.toLowerCase().includes(q) ?? false) ||
           (kr.team_name?.toLowerCase().includes(q) ?? false)),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableKrs, search, krs.length]);
+  }, [availableKrs, search, linkedIdsKey]);
 
   const grouped = useMemo(() => groupByObjective(filteredKrs), [filteredKrs]);
+
+  // ✅ Early return APÓS todos os hooks (Rules of Hooks compliance).
+  if (isLoading) {
+    return <Skeleton className="h-8 w-full" />;
+  }
 
   const handleAdd = () => {
     if (!selected) return;
