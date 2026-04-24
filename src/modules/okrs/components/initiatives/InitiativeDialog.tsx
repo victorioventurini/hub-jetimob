@@ -22,6 +22,8 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { AskToVicInline } from "@/modules/vic/components/AskToVic";
 import { InitiativeNameFeedback } from "./InitiativeNameFeedback";
 import { InitiativeCulturalMessage } from "./InitiativeCulturalMessage";
+import { CharCountFeedback } from "@/components/shared/CharCountFeedback";
+import { ENTITY_NAME_LIMITS } from "@/shared/constants/entityLimits";
 
 interface KrContext {
   id: string;
@@ -252,7 +254,9 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="O que será feito para mover esta KR?"
               required
+              maxLength={ENTITY_NAME_LIMITS.INITIATIVE_NAME}
             />
+            <CharCountFeedback value={formData.name} maxLength={ENTITY_NAME_LIMITS.INITIATIVE_NAME} />
             {!isEditing && (
               <InitiativeNameFeedback 
                 feedback={nameFeedback} 

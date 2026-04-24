@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/select';
 import { TeamSelect, SimpleSelect, MultiTeamSelect, CycleSelect } from '@/components/selects';
 import { VicActionButton } from '@/modules/vic';
+import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
+import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 import type { FlatTeamItem } from '@/modules/teams/hooks';
 import type { OkrStatus } from '../../types';
 import type { Cycle } from '../../hooks/useCycleData';
@@ -259,7 +261,9 @@ export function TeamObjectiveFormFields({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={isPending}
+          maxLength={ENTITY_NAME_LIMITS.TEAM_OBJECTIVE_TITLE}
         />
+        <CharCountFeedback value={title} maxLength={ENTITY_NAME_LIMITS.TEAM_OBJECTIVE_TITLE} />
       </div>
 
       {/* Description */}

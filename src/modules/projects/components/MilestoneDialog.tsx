@@ -18,9 +18,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
+import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
+import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 
 const schema = z.object({
-  name: z.string().min(1, 'Nome obrigatório'),
+  name: z.string()
+    .min(1, 'Nome obrigatório')
+    .max(ENTITY_NAME_LIMITS.MILESTONE_NAME, `Máximo de ${ENTITY_NAME_LIMITS.MILESTONE_NAME} caracteres`),
   start_date: z.string().min(1, 'Data de início obrigatória'),
   due_date: z.string().min(1, 'Data de prazo obrigatória'),
   owner_id: z.string().min(1, 'Responsável obrigatório'),
@@ -95,7 +99,9 @@ export function MilestoneDialog({
               id="milestone-name"
               {...form.register('name')}
               placeholder="Nome do milestone"
+              maxLength={ENTITY_NAME_LIMITS.MILESTONE_NAME}
             />
+            <CharCountFeedback value={form.watch('name') ?? ''} maxLength={ENTITY_NAME_LIMITS.MILESTONE_NAME} />
             {form.formState.errors.name && (
               <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
             )}

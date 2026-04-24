@@ -273,7 +273,9 @@ export function TeamOkrKrDetailStep({
               placeholder="Ex: Aumentar NPS de 65 para 72 pontos"
               value={currentKr.title}
               onChange={(e) => updateKrField('title', e.target.value)}
+              maxLength={ENTITY_NAME_LIMITS.KEY_RESULT_TITLE}
             />
+            <CharCountFeedback value={currentKr.title} maxLength={ENTITY_NAME_LIMITS.KEY_RESULT_TITLE} />
           </div>
 
           {/* Metrics Row */}

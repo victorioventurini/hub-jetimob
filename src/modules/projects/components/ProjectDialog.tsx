@@ -14,10 +14,14 @@ import {
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import { MultiTeamSelect } from '@/components/selects/MultiTeamSelect';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
+import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
+import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 import type { ProjectStatus } from '../types';
 
 const schema = z.object({
-  name: z.string().min(1, 'Nome obrigatório'),
+  name: z.string()
+    .min(1, 'Nome obrigatório')
+    .max(ENTITY_NAME_LIMITS.PROJECT_NAME, `Máximo de ${ENTITY_NAME_LIMITS.PROJECT_NAME} caracteres`),
   description: z.string().optional(),
   owner_id: z.string().min(1, 'Responsável obrigatório'),
   team_ids: z.array(z.string()).optional(),
@@ -79,7 +83,13 @@ export function ProjectDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nome *</Label>
-            <Input id="name" {...form.register('name')} placeholder="Nome do projeto" />
+            <Input
+              id="name"
+              {...form.register('name')}
+              placeholder="Nome do projeto"
+              maxLength={ENTITY_NAME_LIMITS.PROJECT_NAME}
+            />
+            <CharCountFeedback value={form.watch('name') ?? ''} maxLength={ENTITY_NAME_LIMITS.PROJECT_NAME} />
             {form.formState.errors.name && (
               <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
             )}
