@@ -60,8 +60,8 @@ export default function ProjectDetailPage() {
     isLoading: permissionsLoading,
     canEditProjectRecord,
     canDeleteProjectRecord,
-    canCreateMilestone: canAddMilestone,
-    canEditMilestone,
+    canCreateMilestone: rawCanAddMilestone,
+    canEditMilestone: rawCanEditMilestone,
   } = useProjectPermissionsV2();
 
   // Gate canônico: enquanto identidade ou permissões estiverem carregando,
