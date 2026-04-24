@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface MilestoneCreateFormProps {
-  onSubmit: (data: { name: string; start_date: string; due_date: string; owner_id: string | null; notes: string | null }) => void;
+  onSubmit: (data: { name: string; start_date: string; due_date: string; owner_id: string; notes: string | null }) => void;
   isPending?: boolean;
 }
 
@@ -23,14 +23,15 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [dueDate, setDueDate] = useState<Date | undefined>();
-  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState('');
 
   const dateOrderInvalid = !!startDate && !!dueDate && startDate > dueDate;
-  const canSubmit = !!name.trim() && !!startDate && !!dueDate && !dateOrderInvalid && !isPending;
+  const canSubmit =
+    !!name.trim() && !!startDate && !!dueDate && !!ownerId && !dateOrderInvalid && !isPending;
 
   const handleSubmit = () => {
-    if (!canSubmit || !startDate || !dueDate) return;
+    if (!canSubmit || !startDate || !dueDate || !ownerId) return;
     onSubmit({
       name: name.trim(),
       start_date: format(startDate, 'yyyy-MM-dd'),
@@ -41,7 +42,7 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
     setName('');
     setStartDate(undefined);
     setDueDate(undefined);
-    setOwnerId(null);
+    setOwnerId(undefined);
     setNotes('');
   };
 
@@ -119,14 +120,18 @@ export function MilestoneCreateForm({ onSubmit, isPending }: MilestoneCreateForm
           </PopoverContent>
         </Popover>
 
-        {/* Owner selector */}
-        <div className="min-w-[180px]">
+        {/* Owner selector — obrigatório */}
+        <div
+          className={cn(
+            'min-w-[180px] rounded-md',
+            !ownerId && 'ring-1 ring-destructive/50',
+          )}
+        >
           <BuUserSelect
-            value={ownerId ?? undefined}
-            onValueChange={setOwnerId}
-            placeholder="Responsável"
-            allowNone
-            noneLabel="Sem responsável"
+            value={ownerId}
+            onValueChange={(v) => setOwnerId(v || undefined)}
+            placeholder="Responsável *"
+            allowNone={false}
           />
         </div>
       </div>

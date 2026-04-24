@@ -1,58 +1,67 @@
-## Objetivo
-Substituir o badge genérico "Time" por **nome do time real** (ex: "Marketing", "RevOps") em **dois locais**:
-1. Popover de busca de KRs (ProjectKrLinkSection + MilestoneKrLinkSection)
-2. Chips de KRs já vinculados (mesmas seções)
+# Plano: Responsável obrigatório em Milestones
 
-Org KRs continuam exibindo "Org" (sem mudança).
+## Conformidade prévia (TCR + canônicos)
+- ✅ `DATA_MODEL_REGISTRY` — `project_milestones.owner_id` é nullable hoje; alteração para NOT NULL é compatível após backfill.
+- ✅ `IDENTITY_CONVENTION` — `owner_id` referencia `profiles.id` (nunca `auth.users.id`).
+- ✅ Soft-delete v1.1 — backfill respeita `deleted_at IS NULL`.
+- ✅ BU Isolation — DDL é cross-BU mas backfill usa join por `project_id` (cada projeto carrega seu `bu_id`).
+- ✅ Memória `holistic-module-architecture-v2` será atualizada para refletir nova invariante.
 
-## Conformidade verificada
-- ✅ TCR Projects v1.4 + `mem://features/projects/kr-linking-standard`
-- ✅ `DATA_MODEL_REGISTRY`: `okr_team_objectives.team_id → teams.id` (FK existente)
-- ✅ Soft-Delete v1.1: queries mantêm `.is('deleted_at', null)`
-- ✅ BU Isolation: `.eq('bu_id', currentBuId)` preservado
-- ✅ Query Optimization: colunas explícitas (sem `select('*')`)
-- ✅ Query Keys via `projectsKeys.*` (sem mudança de chave necessária — payload da mesma key)
+## 1. Migração SQL
+- **Backfill** (idempotente):
+  ```sql
+  UPDATE public.project_milestones pm
+  SET owner_id = p.owner_id, updated_at = now()
+  FROM public.projects p
+  WHERE pm.project_id = p.id
+    AND pm.owner_id IS NULL
+    AND p.owner_id IS NOT NULL;
+  ```
+- **Constraint**:
+  ```sql
+  ALTER TABLE public.project_milestones
+    ALTER COLUMN owner_id SET NOT NULL;
+  ```
+- Sem CHECK constraints (segue `check-constraint-prohibition`).
 
-## Arquivos a modificar
+## 2. Tipos (`src/modules/projects/types.ts`)
+- `ProjectMilestone.owner_id`: `string | null` → `string`.
+- `CreateMilestoneInput.owner_id`: `string | null | undefined` → `string` (obrigatório).
+- `UpdateMilestoneInput.owner_id`: `string | null | undefined` → `string | undefined` (não pode ser limpo, mas pode ser trocado).
+- `ProjectForWizard.milestones[].owner_id`: ajustar para `string`.
 
-### 1. `src/modules/projects/hooks/useKrsForLinking.ts`
-- Adicionar `team:teams!okr_team_objectives_team_id_fkey(id, name)` no select do nested objective (Team KRs apenas).
-- Mapear `team_name: kr.objective?.team?.name ?? null` no retorno.
+## 3. Hook de mutações (`useMilestoneMutations.ts`)
+- `useCreateMilestone`: validar `if (!input.owner_id) throw new Error('Responsável é obrigatório')` antes do insert; remover fallback `?? null`.
+- `useUpdateMilestone`: se `owner_id` vier no payload, validar não-null.
 
-### 2. `src/modules/projects/hooks/useProject.ts`
-- Em `PROJECT_DETAIL_FIELDS` (ou equivalente), adicionar relação aninhada para trazer `team.name` via `key_result.objective.team` quando `kind = 'team'`.
-- Mapear `team_name` no array `krs` de `ProjectWithRelations`.
+## 4. UI — Criação (`MilestoneCreateForm.tsx`)
+- `ownerId` passa de `string | null` para `string | undefined`.
+- `canSubmit` inclui `!!ownerId`.
+- `BuUserSelect`: `allowNone={false}`, remover `noneLabel`.
+- Estilo destacado (border destructive até preencher), igual aos campos de data.
+- `onSubmit` recebe `owner_id: string` (não-null).
 
-### 3. `src/modules/projects/hooks/useMilestoneKrs.ts`
-- Mesma adição da relação `team` no nested objective.
-- Mapear `team_name` no payload.
+## 5. UI — Edição inline (`MilestoneList.tsx`)
+- `BuUserSelect` na linha 197: `allowNone={false}`, remover `noneLabel="Sem responsável"`.
+- Tipo de `onUpdate.owner_id`: `string` (não `string | null`).
+- Remover branches que tratam `m.owner_id === null` (linhas ~50, exibição de "Sem responsável").
 
-### 4. `src/modules/projects/types.ts`
-- `KrForLinking` (no hook): adicionar `team_name: string | null`.
-- `ProjectWithRelations.krs[]`: adicionar `team_name: string | null`.
-- Tipo de milestone KR link: adicionar `team_name: string | null`.
+## 6. Callers de criação
+- `MilestoneCreateForm` consumidores (ex: página de detalhe do projeto): garantir que passam `owner_id` no `useCreateMilestone.mutate`.
+- Buscar com `rg "useCreateMilestone|MilestoneCreateForm" src/` e ajustar adapters se houver default `null`.
 
-### 5. `src/modules/projects/components/ProjectKrLinkSection.tsx`
-- **Popover**: badge dos resultados agrupados por objetivo → `kind === 'team' ? (teamName ?? 'Time') : 'Org'`.
-- **Chips vinculados**: mesma lógica.
-- **Busca**: incluir `team_name` no filtro client-side (junto com título de KR e objetivo).
+## 7. Documentação
+- `mem://features/projects/holistic-module-architecture-v2`: adicionar invariante "Milestones têm owner obrigatório (NOT NULL no DB; UI bloqueia criação sem responsável). Backfill 2026-04-24 usou `project.owner_id` como fallback."
 
-### 6. `src/modules/projects/components/MilestoneKrLinkSection.tsx`
-- Mesmas mudanças do item 5.
+## 8. Validação
+- `tsc --noEmit` para garantir tipos consistentes em todos os callers.
+- Smoke test mental: criar milestone sem owner → bloqueado; editar e tentar limpar owner → opção indisponível; carregar milestone existente backfilled → mostra owner herdado do projeto.
 
-### 7. `.lovable/memory/features/projects/kr-linking-standard.md`
-- Atualizar seção "UI (popovers de vínculo)" e adicionar nota sobre chips:
-  - "Badge para Team KR exibe **nome do time**; fallback para 'Time' se ausente."
-  - "Org KRs mantêm badge 'Org'."
-  - "Busca cobre título da KR, título do objetivo **e nome do time**."
-
-## Fora de escopo
-- Nenhuma migration de banco (apenas join adicional em queries existentes).
-- Nenhuma mudança em RLS/permissions.
-- Nenhuma mudança em navegação ou rotas.
-
-## Validação pós-implementação
-1. Abrir projeto `98074a55-...` → seção KRs → verificar chips exibindo nome do time.
-2. Clicar em "Adicionar KR" → popover → resultados agrupados mostram nome do time.
-3. Buscar pelo nome do time no popover → KRs do time aparecem.
-4. Verificar Org KRs continuam com badge "Org".
+## Arquivos afetados
+- `supabase/migrations/<timestamp>_milestones_owner_required.sql` (nova)
+- `src/modules/projects/types.ts`
+- `src/modules/projects/hooks/useMilestoneMutations.ts`
+- `src/modules/projects/components/MilestoneCreateForm.tsx`
+- `src/modules/projects/components/MilestoneList.tsx`
+- Eventuais callers descobertos via `rg`
+- `.lovable/memory/features/projects/holistic-module-architecture-v2.md`

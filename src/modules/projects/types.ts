@@ -58,7 +58,7 @@ export interface ProjectMilestone {
   id: string;
   project_id: string;
   name: string;
-  owner_id: string | null;
+  owner_id: string;
   status: MilestoneStatus;
   start_date: string;
   due_date: string | null;
@@ -99,7 +99,7 @@ export interface ProjectForWizard {
     status: MilestoneStatus;
     start_date: string;
     due_date: string | null;
-    owner_id: string | null;
+    owner_id: string;
     owner_name: string | null;
     owner_photo_url: string | null;
     notes: string | null;
@@ -175,7 +175,8 @@ export interface SoftDeleteProjectInput {
 export interface CreateMilestoneInput {
   project_id: string;
   name: string;
-  owner_id?: string | null;
+  /** Obrigatório — referencia profiles.id (NUNCA auth.users.id). Ver mem://features/projects/holistic-module-architecture-v2 */
+  owner_id: string;
   status?: MilestoneStatus;
   start_date: string;
   due_date?: string | null;
@@ -187,7 +188,8 @@ export interface CreateMilestoneInput {
 export interface UpdateMilestoneInput {
   id: string;
   name?: string;
-  owner_id?: string | null;
+  /** Não pode ser limpo (NOT NULL no DB) — só trocado. */
+  owner_id?: string;
   status?: MilestoneStatus;
   start_date?: string;
   due_date?: string | null;

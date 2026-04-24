@@ -7813,7 +7813,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
-          owner_id: string | null
+          owner_id: string
           project_id: string
           sort_order: number
           start_date: string
@@ -7828,7 +7828,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
-          owner_id?: string | null
+          owner_id: string
           project_id: string
           sort_order?: number
           start_date: string
@@ -7843,7 +7843,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
-          owner_id?: string | null
+          owner_id?: string
           project_id?: string
           sort_order?: number
           start_date?: string
