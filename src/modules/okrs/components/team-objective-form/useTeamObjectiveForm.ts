@@ -367,6 +367,7 @@ export function useTeamObjectiveForm({
     canManageThisTeam,
     isLoadingPermission,
     isLoadingManageable,
+    isLoadingContributors,
     hasManageableTeams,
     isPending,
     showCancelConfirm,
