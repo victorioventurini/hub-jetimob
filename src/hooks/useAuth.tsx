@@ -73,12 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    
-    // Set up auth state listener FIRST
+
+    // Single source of truth: o listener emite INITIAL_SESSION no mount com
+    // a sessão já hidratada do storage. Não chamamos getSession() em paralelo
+    // para evitar disputa pelo Navigator Lock (deadlock observado na v3.x).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        
+
         // Keep BU-scoped clients in sync with the global auth session.
         // Otherwise, a BU client created pre-login can stay "unauth" forever due to caching.
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
@@ -87,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
@@ -101,49 +103,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session with error handling
-    supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
-        if (!mounted) return;
-        
-        if (error) {
-          console.error('[useAuth] Error getting session:', error);
-          // Clear any corrupted session state
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setRole(null);
-          setIsLoading(false);
-          return;
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          fetchUserData(session.user.id);
-        } else {
-          setIsLoading(false);
-        }
-      })
-      .catch((error) => {
-        if (!mounted) return;
-        console.error('[useAuth] Critical error in getSession:', error);
-        // Ensure we never get stuck in loading state
-        setIsLoading(false);
+    // Revalidação on focus: ao retornar para a aba (wake de sleep, troca de janela),
+    // perguntamos ao GoTrue qual a sessão atual. Isso atualiza o estado local sem
+    // bloquear a UI. Se o token foi revogado em outra aba ou pelo servidor, o próprio
+    // listener acima emitirá SIGNED_OUT naturalmente.
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      supabase.auth.getSession().catch((err) => {
+        console.warn('[useAuth] Revalidação on visibility falhou:', err);
       });
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
-    // Safety timeout - ensure isLoading becomes false even if something hangs
+    // Safety timeout — garante que isLoading nunca fica travado em true.
+    // Elevado de 10s para 20s para cobrir wake de laptop em redes lentas
+    // (ex: VPN reconectando, 3G fraco), evitando UI renderizar como deslogado
+    // antes do INITIAL_SESSION chegar.
     const safetyTimeout = setTimeout(() => {
-      if (mounted && isLoading) {
-        console.warn('[useAuth] Safety timeout triggered - forcing isLoading to false');
-        setIsLoading(false);
+      if (mounted) {
+        setIsLoading((prev) => {
+          if (prev) {
+            console.warn('[useAuth] Safety timeout (20s) — forçando isLoading=false');
+          }
+          return false;
+        });
       }
-    }, 10000); // 10 seconds max
+    }, 20_000);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibility);
       clearTimeout(safetyTimeout);
     };
   }, []);
