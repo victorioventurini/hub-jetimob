@@ -1,37 +1,30 @@
-## Objetivo
-Excluir da busca de KRs vinculáveis a Projetos/Marcos qualquer item cujo **objetivo pai** ou a própria **KR** estejam em estado `draft` ou `cancelled`. Hoje a listagem ignora o status do objetivo, fazendo com que o objetivo "teste" (cancelado, com KR ativa) apareça nos popovers.
-
-## Diagnóstico
-- `useKrsForLinking` filtra apenas `deleted_at IS NULL` e `cancelled_at IS NULL` na própria KR.
-- O status `draft`/`cancelled` é uma propriedade do **objetivo** (`okr_team_objectives.status` / `okr_org_objectives.status`), não da KR.
-- KRs órfãs de objetivos cancelados/rascunho continuam visíveis — viola `mem://features/okrs/draft-okr-governance`.
+## Contexto
+Org Objectives são associados ao ciclo via coluna `year` (integer), não via `cycle_id`. O filtro atual de `useKrsForLinking` rejeita todos eles porque exige `cycleSet.has(obj.cycle_id)`. Resultado: nenhum Org KR aparece no popover de vínculo.
 
 ## Mudanças
 
 ### 1. `src/modules/projects/hooks/useKrsForLinking.ts`
-- Incluir `objective.status`, `objective.deleted_at`, `objective.cancelled_at` no SELECT (Team e Org).
-- Filtro client-side adicional após o filtro de ciclo:
-  ```ts
-  const obj = kr.objective;
-  return obj?.cycle_id
-    && cycleSet.has(obj.cycle_id)
-    && obj.status !== 'draft'
-    && obj.status !== 'cancelled'
-    && !obj.deleted_at
-    && !obj.cancelled_at;
-  ```
-- Aplicar a mesma regra a Team e Org.
+- Adicionar `year` ao select de `okr_org_objectives`.
+- Derivar `activeYears` a partir dos `activeCycles` com `type === 'year'` (parse do `name` para int).
+- Criar dois validadores:
+  - `isTeamObjectiveActive(obj)` → mantém regra atual (cycle_id ∈ cycleSet, status ≠ draft/cancelled, sem deleted_at/cancelled_at).
+  - `isOrgObjectiveActive(obj)` → aceita match por `obj.year ∈ activeYears` **OU** `obj.cycle_id ∈ cycleSet`; mantém demais regras (status, soft-delete).
+- Para Org KRs, `cycle_name` faz fallback para `String(obj.year)` quando `cycle:cycles` for nulo.
+- `enabled`/early-return: permitir prosseguir se `cycleIds.length > 0` **OU** `activeYears.length > 0`.
 
 ### 2. `.lovable/memory/features/projects/kr-linking-standard.md`
-Atualizar a seção "Listagem para vínculo" com:
-> Exclui também KRs cujo **objetivo pai** esteja em `status='draft'`, `status='cancelled'`, `deleted_at` ou `cancelled_at` preenchidos.
+- Documentar regra dual de filtragem por ciclo:
+  - Team KRs: via `objective.cycle_id` ∈ ciclos ativos (quarter/year).
+  - Org KRs: via `objective.year` ∈ anos ativos **ou** `objective.cycle_id` ∈ ciclos ativos (compatibilidade futura).
+- Manter regras de exclusão de draft/cancelled/deleted intactas.
 
-## Não muda
-- Schema do banco (XOR já implementado).
-- UI dos popovers (largura, agrupamento, badges).
-- Mutations de link/unlink.
-- Navegação `/okrs?...`.
+## Não-mudanças
+- Schema do BD permanece igual.
+- UI dos popovers permanece igual (já agrupa por objetivo + badge Org/Time).
+- Mutations permanecem iguais.
+- Navegação continua para `/okrs?...`.
 
-## Validação
-- Recarregar `/projects/98074a55-...` → abrir popover → objetivo "teste" não deve mais aparecer.
-- KRs de objetivos publicados ativos continuam listadas normalmente.
+## Verificação
+- Type-check.
+- Validar que Org KRs do ciclo 2026 aparecem na busca em /projects/:id.
+- Validar que objetivos draft/cancelled continuam excluídos.

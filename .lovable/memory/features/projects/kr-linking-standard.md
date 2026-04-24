@@ -14,7 +14,9 @@ type: feature
 ## Listagem para vínculo (`useKrsForLinking`)
 Inclui:
 - Team KRs **e** Org KRs do BU atual.
-- Apenas do **ciclo ativo**: quarter ATIVO + year ATIVO (via `objective.cycle_id`).
+- Filtragem por ciclo é **DUAL** (schemas diferentes):
+  - **Team Objectives** → via `objective.cycle_id` ∈ ciclos ativos (quarter + year).
+  - **Org Objectives** → via `objective.year` ∈ anos ativos (canônico — Org Objectives normalmente têm `cycle_id` NULL e usam `year::int`). Aceita também `cycle_id` como fallback de compatibilidade futura.
 - Exclui KR com `deleted_at IS NOT NULL` ou `cancelled_at IS NOT NULL`.
 - Exclui KR cujo **objetivo pai** esteja em `status='draft'`, `status='cancelled'`, com `deleted_at` ou `cancelled_at` preenchidos. Rascunho de KR não existe no schema (KR.status é enum RAG); o estado "rascunho" é herdado do objetivo, conforme `mem://features/okrs/draft-okr-governance`.
 
