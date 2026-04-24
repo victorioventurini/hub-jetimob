@@ -88,7 +88,10 @@ export function buildNotificationEmailHtmlFromTemplate(
   body: string,
   contextUrl: string | undefined
 ): string {
-  const siteUrl = SITE_URL;
+  // absolutizeUrl é idempotente: prefixa SITE_URL para paths relativos e retorna
+  // URLs já absolutas inalteradas. Evita duplicação caso o caller passe uma URL
+  // já absolutizada por engano.
+  const ctaHref = absolutizeUrl(contextUrl);
   const bodyHtml = markdownToHtml(body);
 
   return `
@@ -110,9 +113,9 @@ export function buildNotificationEmailHtmlFromTemplate(
           ${bodyHtml}
         </div>
         
-        ${contextUrl ? `
+        ${ctaHref ? `
         <div style="text-align: center; margin-bottom: 32px;">
-          <a href="${siteUrl}${contextUrl}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          <a href="${ctaHref}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
             Ver no Hub
           </a>
         </div>
