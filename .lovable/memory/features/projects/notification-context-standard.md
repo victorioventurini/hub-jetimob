@@ -17,4 +17,6 @@ As notificações do módulo de Projetos seguem o mesmo padrão canônico do mó
 
 Nenhuma alteração de frontend foi necessária — `MentionInput` já está em `ProjectCommentsSection` e todo o fluxo é server-side via `p_metadata` → `templateVars`.
 
+**URLs**: `p_context_url` é gravado como **path relativo** (`/projects/<id>`, `/go/ticket/<id>`) — absolutização em render-time pelos providers de email/slack/webhook. Ver `mem://standards/notifications/email-url-absolutization`.
+
 **Cobertura automatizada**: `scripts/qa/validate-projects-notifications.sql` (idempotente, <1s, 28 asserções estruturais cobrindo eventos, templates, triggers, fanout, soft-delete, dedup, exclusão do actor e índices). Não há `*.integration.test.ts` em Vitest porque a lógica vive 100% em triggers PostgreSQL — mocks no jsdom não disparariam triggers. Quando o projeto ganhar pgTAP/container DB no CI, os cenários E2E do `docs/qa/QA_PROJECTS_NOTIFICATIONS.md` poderão ser automatizados.

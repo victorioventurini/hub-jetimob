@@ -25,13 +25,42 @@ export async function resolveTemplate(
 }
 
 /**
- * Render template variables
+ * Absolutiza uma URL contextual para uso em emails.
+ *
+ * - Se a URL já é absoluta (`https://...`), retorna inalterada (idempotente).
+ * - Se é relativa (`/go/ticket/abc`), prefixa com `SITE_URL`.
+ * - Se é null/undefined/vazia, retorna string vazia.
+ *
+ * Por que: triggers SQL gravam `context_url` como path relativo (SSOT em
+ * `lib/shareableLinks.ts`). Clientes de email (Gmail, Outlook) não resolvem
+ * paths relativos no inbox — links inline ficam quebrados sem absolutização.
+ *
+ * Ver: docs/qa/QA_EMAIL_CONTEXT_URL.md, mem://standards/notifications/email-url-absolutization
+ */
+export function absolutizeUrl(url: unknown): string {
+  if (url === null || url === undefined) return "";
+  const str = String(url).trim();
+  if (!str) return "";
+  if (/^https?:\/\//i.test(str)) return str;
+  const path = str.startsWith("/") ? str : `/${str}`;
+  return `${SITE_URL}${path}`;
+}
+
+/**
+ * Render template variables.
+ *
+ * Variáveis cujo nome é exatamente `context_url` ou termina em `_url` são
+ * automaticamente absolutizadas — ver `absolutizeUrl()`. Isso garante que
+ * `[Ver detalhes]({{context_url}})` no markdown vire `<a href="https://hub.jetimob.com/go/...">`
+ * em vez de `<a href="/go/...">` (quebrado em emails).
  */
 export function renderTemplate(template: string, variables: Record<string, unknown>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
     const placeholder = `{{${key}}}`;
-    result = result.split(placeholder).join(String(value ?? ""));
+    const isUrlVar = key === "context_url" || key.endsWith("_url");
+    const renderedValue = isUrlVar ? absolutizeUrl(value) : String(value ?? "");
+    result = result.split(placeholder).join(renderedValue);
   }
   // Remove any unresolved placeholders
   result = result.replace(/\{\{\w+\}\}/g, "");
@@ -59,7 +88,10 @@ export function buildNotificationEmailHtmlFromTemplate(
   body: string,
   contextUrl: string | undefined
 ): string {
-  const siteUrl = SITE_URL;
+  // absolutizeUrl é idempotente: prefixa SITE_URL para paths relativos e retorna
+  // URLs já absolutas inalteradas. Evita duplicação caso o caller passe uma URL
+  // já absolutizada por engano.
+  const ctaHref = absolutizeUrl(contextUrl);
   const bodyHtml = markdownToHtml(body);
 
   return `
@@ -81,9 +113,9 @@ export function buildNotificationEmailHtmlFromTemplate(
           ${bodyHtml}
         </div>
         
-        ${contextUrl ? `
+        ${ctaHref ? `
         <div style="text-align: center; margin-bottom: 32px;">
-          <a href="${siteUrl}${contextUrl}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          <a href="${ctaHref}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
             Ver no Hub
           </a>
         </div>
