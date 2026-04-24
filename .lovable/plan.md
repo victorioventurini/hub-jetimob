@@ -1,67 +1,84 @@
-# Plano: Responsável obrigatório em Milestones
+# Diagnóstico
 
-## Conformidade prévia (TCR + canônicos)
-- ✅ `DATA_MODEL_REGISTRY` — `project_milestones.owner_id` é nullable hoje; alteração para NOT NULL é compatível após backfill.
-- ✅ `IDENTITY_CONVENTION` — `owner_id` referencia `profiles.id` (nunca `auth.users.id`).
-- ✅ Soft-delete v1.1 — backfill respeita `deleted_at IS NULL`.
-- ✅ BU Isolation — DDL é cross-BU mas backfill usa join por `project_id` (cada projeto carrega seu `bu_id`).
-- ✅ Memória `holistic-module-architecture-v2` será atualizada para refletir nova invariante.
+Auditei a fundo o fluxo de arquivamento (que é um soft-delete via `UPDATE deleted_at`) e encontrei **um bug estrutural real** + **um ponto de incerteza que ainda preciso confirmar com o usuário**.
 
-## 1. Migração SQL
-- **Backfill** (idempotente):
-  ```sql
-  UPDATE public.project_milestones pm
-  SET owner_id = p.owner_id, updated_at = now()
-  FROM public.projects p
-  WHERE pm.project_id = p.id
-    AND pm.owner_id IS NULL
-    AND p.owner_id IS NOT NULL;
-  ```
-- **Constraint**:
-  ```sql
-  ALTER TABLE public.project_milestones
-    ALTER COLUMN owner_id SET NOT NULL;
-  ```
-- Sem CHECK constraints (segue `check-constraint-prohibition`).
+## O bug estrutural (RLS desalinhada do V2)
 
-## 2. Tipos (`src/modules/projects/types.ts`)
-- `ProjectMilestone.owner_id`: `string | null` → `string`.
-- `CreateMilestoneInput.owner_id`: `string | null | undefined` → `string` (obrigatório).
-- `UpdateMilestoneInput.owner_id`: `string | null | undefined` → `string | undefined` (não pode ser limpo, mas pode ser trocado).
-- `ProjectForWizard.milestones[].owner_id`: ajustar para `string`.
+Política `projects_update` (governa o arquivamento):
 
-## 3. Hook de mutações (`useMilestoneMutations.ts`)
-- `useCreateMilestone`: validar `if (!input.owner_id) throw new Error('Responsável é obrigatório')` antes do insert; remover fallback `?? null`.
-- `useUpdateMilestone`: se `owner_id` vier no payload, validar não-null.
+```sql
+USING/CHECK: is_current_bu(bu_id) AND (
+  owner_id = my_profile_id()
+  OR is_bu_admin(auth.uid(), bu_id)
+  OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
+)
+```
 
-## 4. UI — Criação (`MilestoneCreateForm.tsx`)
-- `ownerId` passa de `string | null` para `string | undefined`.
-- `canSubmit` inclui `!!ownerId`.
-- `BuUserSelect`: `allowNone={false}`, remover `noneLabel`.
-- Estilo destacado (border destructive até preencher), igual aos campos de data.
-- `onSubmit` recebe `owner_id: string` (não-null).
+Ela **não consulta `has_permission()`**, ou seja, ignora completamente os templates V2. Resultado:
 
-## 5. UI — Edição inline (`MilestoneList.tsx`)
-- `BuUserSelect` na linha 197: `allowNone={false}`, remover `noneLabel="Sem responsável"`.
-- Tipo de `onUpdate.owner_id`: `string` (não `string | null`).
-- Remover branches que tratam `m.owner_id === null` (linhas ~50, exibição de "Sem responsável").
+- Quem tem template `projects_admin` (com `projects.project.delete:bu` / `update:bu`) **mas não é dono nem líder direto do dono** é silenciosamente barrado pelo banco. A UI (gate V2) libera o botão, e o backend recusa → toast genérico "Sem permissão".
+- O mesmo vale para `projects_delete` (já existente) e indiretamente para milestones (`project_milestones_*` provavelmente sofrem do mesmo problema — vou auditar e incluir no fix).
 
-## 6. Callers de criação
-- `MilestoneCreateForm` consumidores (ex: página de detalhe do projeto): garantir que passam `owner_id` no `useCreateMilestone.mutate`.
-- Buscar com `rg "useCreateMilestone|MilestoneCreateForm" src/` e ajustar adapters se houver default `null`.
+Esse fix é **necessário**, independente do que acontece no caso específico do Uriel.
 
-## 7. Documentação
-- `mem://features/projects/holistic-module-architecture-v2`: adicionar invariante "Milestones têm owner obrigatório (NOT NULL no DB; UI bloqueia criação sem responsável). Backfill 2026-04-24 usou `project.owner_id` como fallback."
+## O caso específico do Uriel (projeto `98074a55-…`)
 
-## 8. Validação
-- `tsc --noEmit` para garantir tipos consistentes em todos os callers.
-- Smoke test mental: criar milestone sem owner → bloqueado; editar e tentar limpar owner → opção indisponível; carregar milestone existente backfilled → mostra owner herdado do projeto.
+- Uriel **é o dono** do projeto (`owner_id = f8afaa82-…416d-…` = profile do Uriel).
+- Cliente do app é BU-scoped (header `x-current-bu-id` presente), então `is_current_bu(bu_id)` deveria passar.
+- Pela RLS atual, o `UPDATE` deveria ter sucesso.
 
-## Arquivos afetados
-- `supabase/migrations/<timestamp>_milestones_owner_required.sql` (nova)
-- `src/modules/projects/types.ts`
-- `src/modules/projects/hooks/useMilestoneMutations.ts`
-- `src/modules/projects/components/MilestoneCreateForm.tsx`
-- `src/modules/projects/components/MilestoneList.tsx`
-- Eventuais callers descobertos via `rg`
-- `.lovable/memory/features/projects/holistic-module-architecture-v2.md`
+Se **mesmo assim** o arquivamento falha, há 2 causas possíveis que **só posso confirmar com a evidência empírica que pedi**:
+
+1. O `actorProfileId` resolvido pelo `useIdentity` (durante impersonação) **não bate** com `f8afaa82-…` → gate V2 bloqueia antes de chamar o banco. Toast: "Sem permissão para arquivar este projeto." (lançado no client em `useProjectMutations.ts:211`).
+2. O `bu_id` enviado pelo client não bate com o do registro → erro: "BU do projeto … difere do bu_id informado …".
+
+Mas é provável que o usuário esteja relatando o problema **da perspectiva do uso normal** (sem impersonação), e o dono real do projeto seja outra pessoa que não o Uriel-no-comando-agora — nesse caso caímos no bug estrutural acima.
+
+# Plano de execução (em DEFAULT mode)
+
+## Etapa 1 — Diagnóstico empírico (sem mudar código ainda)
+
+- Pedir ao usuário (1) qual mensagem aparece no toast e (2) os logs `[useSoftDeleteProject] result` e `[ProjectDetailPage] permission gate` no console ao tentar arquivar. Isso confirma se é gate de UI, RLS, ou bu_id divergente.
+- Em paralelo, posso reproduzir via `browser--navigate_to_sandbox` se o usuário autorizar (sandbox usa a sessão dele).
+
+## Etapa 2 — Migração: alinhar RLS de `projects` ao V2
+
+Substituir as políticas `projects_update` e `projects_delete` para também aceitar `has_permission(my_profile_id(), bu_id, '...:bu')`:
+
+```sql
+-- projects_update
+USING/CHECK: is_current_bu(bu_id) AND (
+  owner_id = my_profile_id()
+  OR is_bu_admin(auth.uid(), bu_id)
+  OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
+  OR has_permission(my_profile_id(), bu_id, 'projects.project.update:bu')
+)
+
+-- projects_delete (apenas se ainda houver hard-deletes; soft-delete vai por UPDATE)
+USING: is_current_bu(bu_id) AND (
+  owner_id = my_profile_id()
+  OR is_bu_admin(auth.uid(), bu_id)
+  OR is_leader_of_project_owner(my_profile_id(), owner_id, bu_id)
+  OR has_permission(my_profile_id(), bu_id, 'projects.project.delete:bu')
+)
+```
+
+`projects_insert` já casa com `projects.project.create:bu` na lógica do gate V2; vou checar se faz sentido alinhar também (provavelmente sim, para paridade).
+
+## Etapa 3 — Estender o mesmo alinhamento para `project_milestones`
+
+Auditar políticas `project_milestones_*` e aplicar o mesmo padrão (`projects.milestone.update:bu`, `projects.milestone.delete:bu` etc.), porque o problema estrutural é idêntico.
+
+## Etapa 4 — Verificação pós-migration
+
+- `supabase--read_query` para listar políticas atualizadas e confirmar a expressão.
+- Reproduzir o arquivamento na sandbox como Uriel para confirmar sucesso (ou pedir validação ao usuário no preview).
+- Atualizar `mem://features/projects/holistic-module-architecture-v2` registrando que a RLS do módulo Projects passa a respeitar V2 (`has_permission`) além de owner/leader/admin.
+
+# Riscos / observações
+
+- A política V2 é **aditiva** (OR): nenhum usuário perde acesso; apenas usuários com template ganham acesso que já está prometido pela UI.
+- Não toco em soft-delete em cascata de milestones — fora do escopo desse pedido.
+- Não estamos enfraquecendo isolamento de BU: `is_current_bu(bu_id)` continua obrigatório.
+
+Confirma para eu prosseguir? (Em paralelo, mande os 2 dados do console que pedi — eles definem se a Etapa 1 termina rápido ou se preciso investigar algo extra antes da Etapa 2.)
