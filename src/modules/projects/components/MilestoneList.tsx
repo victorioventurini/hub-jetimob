@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, CalendarIcon, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast } from 'date-fns';
@@ -11,7 +11,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ProjectMilestone, MilestoneStatus } from '../types';
-import { MilestoneKrLinkSection } from './MilestoneKrLinkSection';
 import { MilestoneStatusSelect } from './MilestoneStatusSelect';
 
 interface MilestoneListProps {
@@ -20,6 +19,7 @@ interface MilestoneListProps {
   onStatusChange?: (milestoneId: string, status: MilestoneStatus) => void;
   onUpdate?: (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string; notes?: string | null }) => void;
   onDelete?: (milestoneId: string) => void;
+  /** @deprecated KR-link UI removida ao nível de milestone (v1.7). Mantida na assinatura para compat. */
   canEditKrLinks?: boolean;
   canEdit?: boolean;
   compact?: boolean;
@@ -27,9 +27,66 @@ interface MilestoneListProps {
   ownerProfiles?: Record<string, { display_name: string | null; photo_url: string | null }>;
 }
 
+/**
+ * Editor de observações com salvar manual (sem auto-save).
+ * Padrão v1.7: estado local + Salvar/Cancelar; isDirty calculado vs valor persistido.
+ */
+function MilestoneNotesEditor({
+  milestoneId,
+  initialNotes,
+  onSave,
+}: {
+  milestoneId: string;
+  initialNotes: string | null;
+  onSave: (notes: string | null) => void;
+}) {
+  const persisted = initialNotes ?? '';
+  const [draft, setDraft] = useState(persisted);
+
+  // Resync quando o valor remoto muda (ex.: outra sessão atualizou) ou ao trocar de milestone.
+  useEffect(() => {
+    setDraft(persisted);
+  }, [milestoneId, persisted]);
+
+  const isDirty = draft !== persisted;
+
+  return (
+    <div className="space-y-2">
+      <Textarea
+        placeholder="Observações, bloqueios, contexto..."
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={2}
+        className="text-xs min-h-[48px]"
+      />
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs"
+          disabled={!isDirty}
+          onClick={() => setDraft(persisted)}
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          className="h-7 text-xs"
+          disabled={!isDirty}
+          onClick={() => onSave(draft.trim() ? draft : null)}
+        >
+          Salvar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function MilestoneList({
-  milestones, projectId, onStatusChange, onUpdate, onDelete,
-  canEditKrLinks, canEdit, compact, ownerProfiles,
+  milestones, onStatusChange, onUpdate, onDelete,
+  canEdit, compact, ownerProfiles,
 }: MilestoneListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -226,14 +283,12 @@ export function MilestoneList({
                   );
                 })()}
 
-                {/* Notes inline edit */}
+                {/* Notes — salvar manual (sem auto-save) */}
                 {canEdit && onUpdate && (
-                  <Textarea
-                    placeholder="Observações, bloqueios, contexto..."
-                    value={m.notes ?? ''}
-                    onChange={(e) => onUpdate(m.id, { notes: e.target.value || null })}
-                    rows={2}
-                    className="text-xs min-h-[48px]"
+                  <MilestoneNotesEditor
+                    milestoneId={m.id}
+                    initialNotes={m.notes}
+                    onSave={(notes) => onUpdate(m.id, { notes })}
                   />
                 )}
 
@@ -241,13 +296,6 @@ export function MilestoneList({
                 {!canEdit && m.notes && (
                   <p className="text-xs text-muted-foreground whitespace-pre-wrap">{m.notes}</p>
                 )}
-
-                {/* KR links */}
-                <MilestoneKrLinkSection
-                  milestoneId={m.id}
-                  projectId={projectId}
-                  canEdit={canEditKrLinks ?? false}
-                />
               </div>
             )}
           </li>

@@ -7,7 +7,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Pencil, Trash2, Calendar, List, GanttChart } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar, List, GanttChart, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -23,7 +23,7 @@ import { ProjectHealthBadge } from '../components/ProjectHealthBadge';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { ProjectProgressBar } from '../components/ProjectProgressBar';
 import { MilestoneList } from '../components/MilestoneList';
-import { MilestoneCreateForm } from '../components/MilestoneCreateForm';
+import { MilestoneDialog, type MilestoneDialogSubmitValues } from '../components/MilestoneDialog';
 import { MilestoneGanttChart } from '../components/MilestoneGanttChart';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectKrLinkSection } from '../components/ProjectKrLinkSection';
@@ -45,6 +45,7 @@ export default function ProjectDetailPage() {
   const { currentBuId } = useBu();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
   const [milestoneView, setMilestoneView] = useState<'list' | 'gantt'>('list');
 
   const { data: project, isLoading } = useProject(id);
@@ -161,17 +162,20 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const handleAddMilestone = (data: { name: string; start_date: string; due_date: string; owner_id: string | null; notes: string | null }) => {
+  const handleAddMilestone = (data: MilestoneDialogSubmitValues) => {
     if (!currentBuId || !id) return;
-    createMilestone.mutate({
-      project_id: id,
-      name: data.name,
-      start_date: data.start_date,
-      due_date: data.due_date,
-      owner_id: data.owner_id,
-      notes: data.notes,
-      bu_id: currentBuId,
-    });
+    createMilestone.mutate(
+      {
+        project_id: id,
+        name: data.name,
+        start_date: data.start_date,
+        due_date: data.due_date,
+        owner_id: data.owner_id,
+        notes: data.notes,
+        bu_id: currentBuId,
+      },
+      { onSuccess: () => setMilestoneDialogOpen(false) },
+    );
   };
 
   const handleMilestoneStatusChange = (milestoneId: string, status: MilestoneStatus) => {
@@ -334,37 +338,49 @@ export default function ProjectDetailPage() {
         {/* Milestones */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base">Milestones</CardTitle>
-              <div className="flex items-center gap-0.5 p-1 bg-muted rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMilestoneView('list')}
-                  className={cn(
-                    "h-7 px-2 gap-1 rounded-md transition-all text-xs",
-                    milestoneView === 'list'
-                      ? "bg-background shadow-sm text-foreground font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-transparent"
-                  )}
-                >
-                  <List className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Lista</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMilestoneView('gantt')}
-                  className={cn(
-                    "h-7 px-2 gap-1 rounded-md transition-all text-xs",
-                    milestoneView === 'gantt'
-                      ? "bg-background shadow-sm text-foreground font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-transparent"
-                  )}
-                >
-                  <GanttChart className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Gantt</span>
-                </Button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5 p-1 bg-muted rounded-lg">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMilestoneView('list')}
+                    className={cn(
+                      "h-7 px-2 gap-1 rounded-md transition-all text-xs",
+                      milestoneView === 'list'
+                        ? "bg-background shadow-sm text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                    )}
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Lista</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMilestoneView('gantt')}
+                    className={cn(
+                      "h-7 px-2 gap-1 rounded-md transition-all text-xs",
+                      milestoneView === 'gantt'
+                        ? "bg-background shadow-sm text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                    )}
+                  >
+                    <GanttChart className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Gantt</span>
+                  </Button>
+                </div>
+                {canAddMilestone && (
+                  <Button
+                    size="sm"
+                    onClick={() => setMilestoneDialogOpen(true)}
+                    className="h-8"
+                  >
+                    <Plus className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Novo milestone</span>
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -382,15 +398,8 @@ export default function ProjectDetailPage() {
                 onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
                 onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
                 onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
-                canEditKrLinks={canEditMilestone}
                 canEdit={canEditMilestone}
                 ownerProfiles={ownerProfiles}
-              />
-            )}
-            {canAddMilestone && (
-              <MilestoneCreateForm
-                onSubmit={handleAddMilestone}
-                isPending={createMilestone.isPending}
               />
             )}
           </CardContent>
@@ -406,6 +415,17 @@ export default function ProjectDetailPage() {
         {/* Comentários */}
         <ProjectCommentsSection projectId={project.id} />
       </div>
+
+      {/* Milestone Create Dialog */}
+      {canAddMilestone && (
+        <MilestoneDialog
+          open={milestoneDialogOpen}
+          onOpenChange={setMilestoneDialogOpen}
+          onSubmit={handleAddMilestone}
+          isSubmitting={createMilestone.isPending}
+          title="Novo milestone"
+        />
+      )}
 
       {/* Edit Dialog */}
       <ProjectDialog
