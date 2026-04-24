@@ -8,6 +8,7 @@
 
 export * from './units';
 export * from './okrLimits';
+export * from './entityLimits';
 export * from './statusTones';
 
 // Re-exports retrocompatíveis de constantes que já viviam em src/lib/.
