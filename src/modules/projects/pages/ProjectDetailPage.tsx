@@ -88,8 +88,14 @@ export default function ProjectDetailPage() {
   const baseDelete =
     permissionsResolved && canDeleteProjectRecord(project?.owner_id, writerProfileId);
 
-  const canEditThisProject = baseEdit || (permissionsResolved && isLeaderOfOwner);
-  const canDeleteThisProject = baseDelete || (permissionsResolved && isLeaderOfOwner);
+  const isArchived = !!project?.is_archived;
+
+  const canEditThisProject =
+    !isArchived && (baseEdit || (permissionsResolved && isLeaderOfOwner));
+  const canDeleteThisProject =
+    !isArchived && (baseDelete || (permissionsResolved && isLeaderOfOwner));
+  const canRestoreThisProject =
+    isArchived && (baseDelete || (permissionsResolved && isLeaderOfOwner));
 
   // Observabilidade: gating row-aware do detalhe do projeto.
   // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
