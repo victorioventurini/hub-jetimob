@@ -1,6 +1,6 @@
 ---
 name: holistic-module-architecture-v2
-description: Arquitetura holística do módulo Projetos (v1.8) — milestones, autorização canônica e RPCs SECURITY DEFINER para archive/update
+description: Arquitetura holística do módulo Projetos (v1.9) — milestones, autorização canônica, RPCs SECURITY DEFINER para archive/update e acesso a arquivados
 type: feature
 ---
 
