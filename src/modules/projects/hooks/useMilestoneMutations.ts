@@ -57,6 +57,11 @@ export function useUpdateMilestone() {
 
       const { id, project_id, ...updates } = input;
 
+      // Defesa: owner_id é NOT NULL no DB; bloquear tentativas de limpá-lo.
+      if ('owner_id' in updates && !updates.owner_id) {
+        throw new Error('Responsável é obrigatório');
+      }
+
       const { data, error } = await supabase
         .from('project_milestones')
         .update(updates)
