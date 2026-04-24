@@ -1,116 +1,159 @@
+# Plano — Limites de caracteres por entidade + correção de legados
 
-# Plano — OKRs Compartilhadas: Bloco no Time Contribuidor + Fix de Edição
+## Objetivo
+Estabelecer limites máximos de caracteres como SSOT, aplicar validação no frontend (Zod + UI) e defesa em profundidade no banco (triggers), e corrigir os 7 registros legados que extrapolam os novos limites.
 
-Resolve dois bugs reais reportados (edição perde `is_shared`; objetivo compartilhado não aparece no time contribuidor) reaproveitando 100% dos componentes existentes (`TeamOkrSections`, `ContributingOkrCard`, `useTeamContributedOkrs`, `SharedOkrBadge`). **Sem duplicação de componentes**, sem alterações de schema, sem mudanças em ritos (que já leem KRs por `team_id` da KR).
+## Limites finais (recalibrados)
+| Entidade | Campo | Limite |
+|---|---|---|
+| Org Objective | `title` | 120 |
+| Team Objective | `title` | 120 |
+| Key Result | `title` | 160 |
+| Initiative | `name` | 120 |
+| Project | `name` | 100 |
+| Milestone | `name` | 80 |
 
 ---
 
-## Fase 1 — Correção dos bugs (núcleo)
+## Fase 1 — Correção dos 7 registros legados (UPDATEs no banco)
 
-### 1.1 Fix de hidratação na edição (`is_shared` perdido)
-**Arquivo:** `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx`
+Textos confirmados pelo usuário (#1, #2) + ajustes mínimos do AI (#3, #4, #5, #6, #7) para caber nos limites:
 
-Hoje, ao abrir o `TeamObjectiveFormDialog` para editar, o objeto passado em `objective` omite `is_shared`, `responsibility_model` e `org_objective_id`. O form então hidrata com defaults (`isShared=false`), escondendo a seção de contribuidores e fazendo parecer que o compartilhamento foi perdido.
+### 1.1 Org Objective (`okr_org_objectives`)
+- **#1 — `1801fdb9...`** (115 chars): "Elevar a experiência do cliente e pavimentar a evolução da Jetimob como sistema operacional do mercado imobiliário."
 
-**Mudança:** incluir esses campos no objeto passado ao dialog (já vêm em `objective` da query `useTeamObjectives` / `okr_team_objectives`):
+### 1.2 Team Objectives (`okr_team_objectives`)
+- **#2 — `1470f9f5...`** BizOps Q2 (120 chars): "Consolidar o HubSpot como plataforma padronizada e escalável, com dados confiáveis para sustentar decisões estratégicas."
+- **#3 — `b91f3198...`** G&C Q1 + **#4 — `2864bdc6...`** G&C Q2 (109 chars): "Elevar a maturidade organizacional da Jetimob, com Gente & Cultura como pilar do desenvolvimento das pessoas."
+
+### 1.3 Key Result (`okr_team_key_results`)
+- **#5 — `39946929...`** Comercial (147 chars): "Reduzir em 30% o gap de faturamento entre top performer e média do time até o fim do Q1 (baseline Q3-Q4), sem queda do top performer."
+
+### 1.4 Projects (`projects`)
+- **#6 — `4bf6fa01...`** (86 chars): "Ampliar cobertura e qualidade da base de conhecimento para aumentar resolução via bot."
+- **#7 — `bc79779e...`** (99 chars): "Regravar/otimizar vídeos prioritários, garantindo que temas críticos estejam atualizados."
+
+> Será executado via tool de insert/update do Supabase (UPDATEs com WHERE id), preservando `updated_at`/`updated_by` automáticos via triggers de auditoria.
+
+---
+
+## Fase 2 — Constantes centralizadas (SSOT)
+
+**Novo arquivo:** `src/shared/constants/entityLimits.ts`
 ```ts
-objective={{
-  id: objective.id,
-  title: objective.title,
-  description: objective.description,
-  team_id: objective.team_id,
-  status: objective.status,
-  is_shared: objective.is_shared,
-  responsibility_model: objective.responsibility_model,
-  org_objective_id: objective.org_objective_id,
-}}
+export const ENTITY_NAME_LIMITS = {
+  ORG_OBJECTIVE_TITLE: 120,
+  TEAM_OBJECTIVE_TITLE: 120,
+  KEY_RESULT_TITLE: 160,
+  INITIATIVE_NAME: 120,
+  PROJECT_NAME: 100,
+  MILESTONE_NAME: 80,
+} as const;
+export type EntityNameLimitKey = keyof typeof ENTITY_NAME_LIMITS;
 ```
 
-**Validação:** verificar via `useTeamObjectives` que esses campos já estão sendo selecionados (via `AGGREGATE_FIELDS.teamObjectiveWithKrs`). Se algum estiver faltando no select, adicionar em `aggregateUtils.ts`.
+Exportar em `src/shared/constants/index.ts` e `src/shared/index.ts`.
 
-### 1.2 Renderizar bloco "OKRs Compartilhadas" no dashboard de time
-**Arquivo:** `src/modules/okrs/pages/OkrDashboardPage.tsx` (view `team`)
-
-Hoje renderiza apenas `useTeamObjectives` (objetivos onde `team_id = currentTeamId`). O componente `TeamOkrSections` já existe e implementa exatamente a UI proposta (bloco principal + bloco "Compartilhadas" condicional), mas está orfão.
-
-**Mudança:**
-- Adicionar `useTeamContributedOkrs(teamId)` ao lado da query existente.
-- Substituir o map atual de `ObjectiveListItem` por `<TeamOkrSections primaryObjectives={...} contributedObjectives={...} teamId={teamId} teamName={teamName} canEdit={canEdit} />`.
-- Bloco "Compartilhadas" só aparece se `contributedObjectives.length > 0` (lógica já no componente).
-- Card secundário renderizado por `ContributingOkrCard` (read-only, com `SharedOkrBadge` + nome do time owner).
-
-**Reaproveitamento:** zero novo componente. Apenas conectar peças existentes.
+> ⚠️ Comentário inquebrável no header: "Manter sincronizado com triggers `validate_*_name_length` no banco."
 
 ---
 
-## Fase 2 — Enriquecimento do card compartilhado
+## Fase 3 — Componente reutilizável de feedback
 
-### 2.1 Filtrar KRs do time contribuidor no `ContributingOkrCard`
-**Arquivo:** `src/modules/okrs/components/team-view/ContributingOkrCard.tsx`
+**Refatorar** `src/modules/okrs/components/initiatives/InitiativeNameFeedback.tsx` para componente genérico:
 
-Mostrar explicitamente "Contribuição do {Time B}" listando apenas as KRs onde `kr.team_id === currentTeamId` (já recebido como prop). Isso materializa o conceito metodológico: "objetivo do Time A, KRs próprias do Time B contribuindo".
+**Novo arquivo:** `src/components/shared/CharCountFeedback.tsx`
+- Props: `value: string`, `maxLength: number`, `showWarningAt?: number` (default 90%)
+- Estados visuais: `default` / `warning` (≥90%) / `error` (>max)
+- Mensagem: `{count}/{max}`
+- Reusa Tailwind tokens `text-muted-foreground`, `text-warning`, `text-destructive`
 
-- Reusar `KrCardCompact` ou o pattern já usado em `ObjectiveListItem` para listagem de KRs (não criar componente novo).
-- Se `team_id` não estiver em `okr_team_key_results` no select atual, adicionar.
-
-### 2.2 Badge de estado de contribuição
-Derivar 3 estados a partir dos dados já disponíveis no objeto contribuído:
-
-| Estado | Condição | Badge |
-|---|---|---|
-| Estratégica | tem ≥1 KR com `team_id = currentTeamId` | `success` "Contribuição estratégica" |
-| Operacional | sem KR, mas tem projeto/iniciativa do time vinculada | `warning` "Contribuição operacional" |
-| Apenas visível | nenhum vínculo concreto | `outline` "Apenas visível" |
-
-Renderizar via `Badge` existente (`@/components/ui/badge`). Sem componente novo.
-
-### 2.3 Ações no card compartilhado (read-only)
-- Manter botão "Ver detalhes" → navega para a página/drawer já existente do objetivo (mesma rota usada no time owner). Sem edição, sem cancel, sem delete.
-- `canEdit` permanece `false` no `ObjectiveListItem` quando renderizado dentro do bloco compartilhado (já é a default em `TeamOkrSections`).
+**Manter** `InitiativeNameFeedback` como wrapper fino que delega ao novo componente (back-compat).
 
 ---
 
-## Ritos e Check-in (sem mudanças)
+## Fase 4 — Validação Zod nos formulários
 
-Confirmado por leitura de código:
-- **Ritos coletivos** (Weekly, MBR Pre, QBR Pre, QBR Meeting, Team Check-in) já agregam KRs por `kr.team_id` — KRs do time contribuidor sob objetivo compartilhado **já aparecem automaticamente**.
-- **Collaborator Check-in** filtra por `kr.owner_id` — KR de owner do Time B já aparece no check-in individual dele, com contexto do objetivo pai (que pode ser do Time A).
-- `cross-team-scorecard-visibility-logic` já cobre esse caso.
+Aplicar `.max(ENTITY_NAME_LIMITS.X, validation.maxLength(X))` em:
 
-**Nenhuma alteração em ritos é necessária.**
+| Arquivo | Campo |
+|---|---|
+| `src/modules/okrs/components/TeamObjectiveFormDialog.tsx` (schema) | `title` → 120 |
+| `src/modules/okrs/components/org/OrgObjectiveDialog.tsx` (ou equivalente) | `title` → 120 |
+| `src/modules/okrs/components/wizards/team-kr-creation/KrDetailStep.tsx` (schema) | `title` → 160 |
+| `src/modules/okrs/components/team-objective-form/teamObjectiveFormTypes.ts` | `title` → 120 |
+| `src/modules/okrs/hooks/useKrWizardDraft.ts` (se houver schema) | `title` → 160 |
+| `src/modules/projects/components/ProjectDialog.tsx` | `name` → 100 |
+| `src/modules/projects/components/MilestoneDialog.tsx` | `name` → 80 |
+| Initiatives (KR wizard / dialogs) | `name` → 120 |
+| `supabase/functions/_shared/schemas.ts` (validação edge) | espelhar todos |
 
----
-
-## Documentação
-
-Atualizar/criar memórias:
-- `mem://features/okrs/shared-okr-edit-hydration-standard.md` → mandar que callers de `TeamObjectiveFormDialog` hidratem `is_shared`, `responsibility_model`, `org_objective_id`.
-- `mem://features/okrs/shared-okr-contributor-view-standard.md` (novo) → SSOT do bloco "OKRs Compartilhadas" no dashboard de time + 3 estados de contribuição + read-only.
-- Atualizar `mem://index.md` com referência ao novo SSOT.
-
----
-
-## Pré-checklist (executado)
-
-- [x] Padrão metodológico: `mem://features/okrs/okr-methodology-standards` (objetivo único + KRs cross-team)
-- [x] RLS: `mem://auth/okr-ownership-enforcement-rls` (KR.team_id independe do objetivo)
-- [x] Cross-team: `mem://features/rituals/cross-team-scorecard-visibility-logic`
-- [x] Agrupamento visual: `mem://features/okrs/wizard-strategic-grouping-standard`
-- [x] Componentes existentes auditados: `TeamOkrSections`, `ContributingOkrCard`, `SharedOkrBadge`, `useTeamContributedOkrs`, `v_team_contributed_okrs`
-- [x] Sem `select('*')`, sem novo componente duplicado, sem alteração de schema
+Adicionar `<CharCountFeedback>` ao lado de cada `<Input>` correspondente.
 
 ---
 
-## Critérios de sucesso
+## Fase 5 — Defesa em profundidade no banco (triggers)
 
-1. Editar OKR compartilhado mantém `is_shared=true` e contribuidores selecionados ✅
-2. Time B vê o objetivo do Time A em bloco separado "OKRs Compartilhadas" abaixo dos próprios ✅
-3. Card mostra badge "Compartilhado" + nome do time owner + KRs do Time B + estado de contribuição ✅
-4. Time B não consegue editar/cancelar o objetivo compartilhado ✅
-5. KRs do Time B em objetivo compartilhado continuam aparecendo nos ritos e no check-in individual (sem regressão) ✅
+Criar 5 funções `BEFORE INSERT OR UPDATE` (validation triggers, **sem** CHECK constraints conforme `mem://standards/database/check-constraint-prohibition`):
+
+```sql
+-- Exemplo (replicado para cada tabela)
+CREATE OR REPLACE FUNCTION public.validate_team_objective_title_length()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF char_length(NEW.title) > 120 THEN
+    RAISE EXCEPTION 'Título do objetivo de time excede 120 caracteres (atual: %).', char_length(NEW.title)
+      USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_validate_team_objective_title_length
+  BEFORE INSERT OR UPDATE OF title ON public.okr_team_objectives
+  FOR EACH ROW EXECUTE FUNCTION public.validate_team_objective_title_length();
+```
+
+Triggers a criar:
+- `validate_org_objective_title_length` → `okr_org_objectives` (120)
+- `validate_team_objective_title_length` → `okr_team_objectives` (120)
+- `validate_kr_title_length` → `okr_team_key_results` (160)
+- `validate_initiative_name_length` → `okr_initiatives` (120)
+- `validate_project_name_length` → `projects` (100)
+- `validate_milestone_name_length` → `project_milestones` (80)
+
+> Triggers entrarão em vigor **após** os UPDATEs da Fase 1, garantindo que nenhum legado quebre.
 
 ---
 
-## Fase 3 (fora deste plano)
+## Fase 6 — Documentação (SSOT em memória)
 
-Drawer dedicado de detalhe cross-team (Visão geral / Relação / Contexto ampliado) — **não incluído**. Pode ser feito em rodada futura se a página/drawer atual do objetivo não for suficiente.
+**Novo arquivo:** `mem://standards/entity-name-length-limits`
+- Limites canônicos
+- Como adicionar novos campos
+- Regra de sincronia constants↔triggers
+- Estratégia de tratamento de legados (UPDATE manual + trigger ativo)
+
+Atualizar `mem://index.md` (seção Standards & Patterns) com referência.
+
+---
+
+## Ordem de execução
+1. **Fase 1** — UPDATEs nos 7 legados (via insert tool)
+2. **Fase 2** — Criar `entityLimits.ts`
+3. **Fase 3** — Criar `CharCountFeedback` + refatorar `InitiativeNameFeedback`
+4. **Fase 4** — Aplicar Zod + UI nos 8 formulários
+5. **Fase 5** — Migration com 6 triggers
+6. **Fase 6** — Memória SSOT
+
+## Critérios de aceitação
+- [ ] 7 legados ajustados, 0 registros acima do limite no banco
+- [ ] Tentar salvar título > limite no UI bloqueia com mensagem amigável
+- [ ] Tentar inserir via API/edge sem Zod é bloqueado pelo trigger (erro 23514)
+- [ ] Contador `{n}/{max}` aparece em todos os 8 inputs
+- [ ] `InitiativeNameFeedback` continua funcionando (back-compat)
+- [ ] Memória SSOT publicada e indexada
+
+## Riscos / Mitigações
+- **Risco:** Fase 5 antes da Fase 1 quebraria edição dos legados → **Mitigação:** ordem rígida 1→5.
+- **Risco:** Edge functions sem schema atualizado aceitariam payloads inválidos → trigger garante última linha de defesa.
+- **Risco:** `useKrWizardDraft` pode ter validação separada → auditar e alinhar.

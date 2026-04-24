@@ -22,6 +22,8 @@ import { WizardStepFooter } from '../shared';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { BuUserSelect, UnitSelect } from '@/components/selects';
+import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
+import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 import type { OkrKrType, OkrDirection, DraftTeamKr } from '@/modules/okrs/types/wizard';
 import type { KrPlan } from './TeamOkrKrTypeStep';
 
@@ -273,7 +275,9 @@ export function TeamOkrKrDetailStep({
               placeholder="Ex: Aumentar NPS de 65 para 72 pontos"
               value={currentKr.title}
               onChange={(e) => updateKrField('title', e.target.value)}
+              maxLength={ENTITY_NAME_LIMITS.KEY_RESULT_TITLE}
             />
+            <CharCountFeedback value={currentKr.title} maxLength={ENTITY_NAME_LIMITS.KEY_RESULT_TITLE} />
           </div>
 
           {/* Metrics Row */}

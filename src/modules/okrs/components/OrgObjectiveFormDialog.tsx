@@ -29,6 +29,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
+import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 import type { OkrStatus } from '../types';
 
 interface OrgObjectiveFormDialogProps {
@@ -219,7 +221,9 @@ export function OrgObjectiveFormDialog({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={isPending}
+                  maxLength={ENTITY_NAME_LIMITS.ORG_OBJECTIVE_TITLE}
                 />
+                <CharCountFeedback value={title} maxLength={ENTITY_NAME_LIMITS.ORG_OBJECTIVE_TITLE} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Descrição</Label>
