@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { queryKeys } from '@/lib/queryKeys';
@@ -67,15 +67,32 @@ export function useTeamObjectiveForm({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const { data: cycles = [] } = useCycles();
-  const { data: existingContributors } = useObjectiveContributors(objective?.id || '');
+  const { data: existingContributors, isLoading: isLoadingContributors } = useObjectiveContributors(objective?.id || '');
   const { data: fetchedOrgObjectives = [] } = useOrgObjectives({ buId: buId ?? undefined });
 
-  // Load existing contributors for edit mode
+  // Snapshot dos contribuidores originais (para diff no save).
+  const originalContributorIdsRef = useRef<string[] | null>(null);
+
+  // Hidratação ONE-SHOT por objetivo: só popula se ainda não foi hidratado para
+  // este objetivo. Refetches subsequentes não sobrescrevem edições do usuário.
+  const hydratedForObjectiveRef = useRef<string | null>(null);
   useEffect(() => {
-    if (existingContributors) {
-      setContributingTeamIds(existingContributors.map(c => c.team_id));
+    if (!open || !isEditing || !objective?.id) return;
+    if (hydratedForObjectiveRef.current === objective.id) return;
+    if (!existingContributors) return; // aguarda fetch inicial
+    const ids = existingContributors.map(c => c.team_id);
+    setContributingTeamIds(ids);
+    originalContributorIdsRef.current = ids;
+    hydratedForObjectiveRef.current = objective.id;
+  }, [open, isEditing, objective?.id, existingContributors]);
+
+  // Reset do flag de hidratação ao fechar o dialog.
+  useEffect(() => {
+    if (!open) {
+      hydratedForObjectiveRef.current = null;
+      originalContributorIdsRef.current = null;
     }
-  }, [existingContributors]);
+  }, [open]);
 
   // Pre-select user's team when dialog opens in create mode
   useEffect(() => {
@@ -219,34 +236,64 @@ export function useTeamObjectiveForm({
         })
         .eq('id', objective.id);
 
+      console.info('[TeamObjectiveForm.update] objective updated', {
+        objectiveId: objective.id,
+        isShared,
+        responsibilityModel: isShared ? responsibilityModel : null,
+        errorCode: error?.code ?? null,
+        errorMessage: error?.message ?? null,
+      });
+
       if (error) throw error;
 
-      if (isShared) {
+      // Diff de contribuidores: só chama manageContributors quando muda de fato.
+      const original = originalContributorIdsRef.current ?? [];
+      const target = isShared ? contributingTeamIds : [];
+      const sortedOriginal = [...original].sort();
+      const sortedTarget = [...target].sort();
+      const changed =
+        sortedOriginal.length !== sortedTarget.length ||
+        sortedOriginal.some((id, i) => id !== sortedTarget[i]);
+
+      console.info('[TeamObjectiveForm.update] contributors diff', {
+        objectiveId: objective.id,
+        original: sortedOriginal,
+        target: sortedTarget,
+        changed,
+      });
+
+      if (changed) {
         await manageContributors.mutateAsync({
           objectiveId: objective.id!,
-          teamIds: contributingTeamIds,
-        });
-      } else {
-        await manageContributors.mutateAsync({
-          objectiveId: objective.id!,
-          teamIds: [],
+          teamIds: target,
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.okrs.objectiveContributors(objective?.id ?? null),
+        refetchType: 'active',
+      });
       hookToast({
         title: 'Objetivo atualizado',
         description: 'O objetivo do time foi atualizado com sucesso.',
       });
       onOpenChange(false);
     },
-    onError: (error) => {
-      console.error('Error updating objective:', error);
+    onError: (error: any) => {
+      const code = error?.code ?? '';
+      const rawMsg: string = error?.message || error?.details || error?.hint || 'Erro desconhecido';
+      console.error('[TeamObjectiveForm.update] error', { code, rawMsg, raw: error });
+      const isPermissionError =
+        code === '42501' ||
+        /row-level security|permission denied|sem permiss/i.test(rawMsg);
       hookToast({
-        title: 'Erro ao atualizar',
-        description: 'Não foi possível atualizar o objetivo.',
+        title: isPermissionError ? 'Sem permissão' : 'Erro ao atualizar',
+        description: isPermissionError
+          ? 'Você não tem permissão para atualizar este objetivo ou seus contribuidores.'
+          : `Não foi possível atualizar o objetivo: ${rawMsg}`,
         variant: 'destructive',
       });
     },
@@ -285,7 +332,14 @@ export function useTeamObjectiveForm({
       toast.error('Selecione pelo menos um time contribuidor');
       return;
     }
-    
+
+    // Em modo edit, bloqueia salvar se contribuidores ainda não carregaram —
+    // evita zerar contribuidores existentes por race condition.
+    if (isEditing && isLoadingContributors) {
+      toast.error('Aguarde — carregando contribuidores atuais…');
+      return;
+    }
+
     if (isEditing) {
       updateMutation.mutate();
     } else {
@@ -313,6 +367,7 @@ export function useTeamObjectiveForm({
     canManageThisTeam,
     isLoadingPermission,
     isLoadingManageable,
+    isLoadingContributors,
     hasManageableTeams,
     isPending,
     showCancelConfirm,
