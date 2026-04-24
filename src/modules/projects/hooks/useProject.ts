@@ -31,15 +31,33 @@ export function useProject(projectId: string | undefined) {
     queryFn: async () => {
       if (!supabase || !projectId) return null;
 
-      const { data, error } = await supabase
+      // 1) Tenta SELECT direto (apenas projetos ativos passam pela RLS).
+      const { data: activeData, error: activeError } = await supabase
         .from('projects')
         .select(PROJECT_DETAIL_FIELDS)
         .eq('id', projectId)
         .is('deleted_at', null)
         .maybeSingle();
 
-      if (error) throw error;
-      if (!data) return null;
+      if (activeError) throw activeError;
+
+      let data: any = activeData;
+      let isArchived = false;
+
+      // 2) Fallback: RPC para projetos arquivados (autorização canônica server-side).
+      if (!data) {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          'get_archived_project_v2',
+          { p_project_id: projectId },
+        );
+        if (rpcError) throw rpcError;
+        const result = rpcResult as { ok: boolean; code: string; project?: any } | null;
+        if (!result || !result.ok || !result.project) {
+          return null;
+        }
+        data = result.project;
+        isArchived = true;
+      }
 
       // Post-fetch BU validation
       if (buId && data.bu_id !== buId) return null;
@@ -66,7 +84,7 @@ export function useProject(projectId: string | undefined) {
 
       return {
         ...data,
-        deleted_at: null,
+        deleted_at: data.deleted_at ?? null,
         owner: data.owner ?? null,
         teams,
         krs,
@@ -75,6 +93,7 @@ export function useProject(projectId: string | undefined) {
         milestones_total: completion.total,
         milestones_done: completion.done,
         completion_pct: completion.pct,
+        is_archived: isArchived || data.deleted_at != null,
       } as ProjectWithRelations;
     },
     enabled: isReady && !!supabase && !!projectId,
