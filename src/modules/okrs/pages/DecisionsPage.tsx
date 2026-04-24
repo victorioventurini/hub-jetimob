@@ -58,15 +58,19 @@ import { getRitualLabel, getStepLabel, type StructureVersion } from '@/modules/o
 import { RITUAL_LABELS } from '@/modules/okrs/constants/ritualLabels';
 import { ALL_RITUAL_WIZARD_TYPES } from '@/modules/okrs/constants/ritualWizardTypes';
 import type { WizardPersona, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import { useBu } from '@/contexts/BuContext';
 
 const PAGE_SIZE = 25;
 
-const SCOPE_LABELS: Record<DecisionsInboxScope, string> = {
-  self: 'Minhas',
-  team: 'Meu time',
-  area: 'Minha área',
-  all: 'Toda a BU',
-};
+function buildScopeLabels(buName: string | null | undefined): Record<DecisionsInboxScope, string> {
+  const allLabel = buName ? `Toda ${buName}` : 'Toda a BU';
+  return {
+    self: 'Minhas',
+    team: 'Meu time',
+    area: 'Minha área',
+    all: allLabel,
+  };
+}
 
 const STATUS_OPTIONS: Array<{ value: 'pending' | 'done' | 'all'; label: string }> = [
   { value: 'pending', label: 'Pendentes' },
@@ -84,6 +88,8 @@ const CATEGORY_OPTIONS: Array<{ value: TeamCheckinDecision['category'] | 'all'; 
 
 export default function DecisionsPage() {
   usePageTitle('Decisões');
+  const { currentBu } = useBu();
+  const SCOPE_LABELS = useMemo(() => buildScopeLabels(currentBu?.name), [currentBu?.name]);
 
   // ── URL state (filtros + paginação) ──
   const scopeState = useUrlState<DecisionsInboxScope>({
@@ -276,7 +282,7 @@ export default function DecisionsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Decisões e Notas"
-          description={'Acompanhe decisões registradas nos ritos. Use o filtro de Time para ver decisões de qualquer time (e seus subtimes). Os escopos "Meu time" e "Toda a BU" só aparecem para líderes e administradores, respectivamente.'}
+          description={`Acompanhe decisões registradas nos ritos. Use o filtro de Time para ver decisões de qualquer time (e seus subtimes). Os escopos "Meu time" e "${SCOPE_LABELS.all}" só aparecem para líderes e administradores, respectivamente.`}
           breadcrumbs={[
             { label: 'OKRs', href: '/okrs' },
             { label: 'Rituais', href: '/rituals' },
