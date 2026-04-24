@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useUrlTab } from "@/shared/url";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
@@ -124,7 +125,7 @@ export default function UserProfile() {
   const { activeCycle } = useActiveCycle();
   const activeCycleId = activeCycle?.id ?? null;
 
-  const [activeTab, setActiveTab] = useState<EngagementTab>("overview");
+  const [activeTab, setActiveTab] = useUrlTab<EngagementTab>("overview");
   const profileId = profile?.id;
 
   // Lazy-fetch per tab — overview also needs all of them for counts
@@ -598,7 +599,7 @@ export default function UserProfile() {
                                 return (
                                   <KpiRow
                                     key={kpi.id}
-                                    to={`/kpis?kpi=${kpi.id}`}
+                                    to={`/kpis/${kpi.id}`}
                                     name={kpi.name}
                                     teamName={kpi.team?.name}
                                     rightContent={
@@ -623,7 +624,7 @@ export default function UserProfile() {
                               {(contributedKpis || []).map((kpi: any) => (
                                 <KpiRow
                                   key={kpi.id}
-                                  to={`/kpis?kpi=${kpi.id}`}
+                                  to={`/kpis/${kpi.id}`}
                                   name={kpi.name}
                                   teamName={kpi.team?.name}
                                   badge={
