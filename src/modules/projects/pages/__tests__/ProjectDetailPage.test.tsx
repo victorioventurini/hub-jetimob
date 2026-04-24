@@ -175,9 +175,9 @@ describe('ProjectDetailPage', () => {
     expect(screen.getByText('Projetos')).toBeInTheDocument();
   });
 
-  it('renders new milestone input', () => {
+  it('renders "Novo milestone" trigger button (canonical v1.7)', () => {
     renderWithProviders(<ProjectDetailPage />);
-    expect(screen.getByPlaceholderText('Novo milestone...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /novo milestone/i })).toBeInTheDocument();
   });
 
   it('renders not found state when project is null', () => {

@@ -10655,6 +10655,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      archive_project_v2: { Args: { p_project_id: string }; Returns: Json }
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
       assert_profile_identity: {
         Args: { p_profile_id: string }
@@ -11617,6 +11618,10 @@ export type Database = {
         Returns: boolean
       }
       ticket_status_label: { Args: { p_status: string }; Returns: string }
+      update_project_v2: {
+        Args: { p_payload: Json; p_project_id: string }
+        Returns: Json
+      }
       update_user_global_role: {
         Args: { new_role: string; target_user_id: string }
         Returns: undefined
