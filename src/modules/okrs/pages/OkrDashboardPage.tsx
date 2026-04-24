@@ -24,7 +24,8 @@ import {
   useLatestCheckinDate,
   useUserProfile,
 } from '../hooks/queries';
-import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr, useTeamKeyResult } from '../hooks';
+import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr, useTeamKeyResult, useTeamContributedOkrs } from '../hooks';
+import { TeamOkrSections } from '../components/team-view/TeamOkrSections';
 import { calculateProgress } from '../types';
 import { KrHistoryDialog } from '../components/KrHistoryDialog';
 import { useActiveCycles, useCycles } from '../hooks/useCycleData';
@@ -174,6 +175,11 @@ export default function OkrDashboardPage() {
     teamId: normalizedTeamId,
     cycleId: activeView !== 'company' ? filters.cycleId : undefined,
   });
+
+  // Contributed OKRs (shared with this team) — only when a single team is selected in team view
+  const { data: contributedObjectives, isLoading: contributedLoading } = useTeamContributedOkrs(
+    activeView === 'team' && normalizedTeamId ? normalizedTeamId : undefined
+  );
   
   // "Meus OKRs" queries - only fetch when in 'my' view
   // Usa effectiveProfileId diretamente para respeitar impersonação imediatamente
@@ -525,6 +531,19 @@ export default function OkrDashboardPage() {
                     }
                   : undefined
               }
+            />
+          ) : activeView === 'team' && normalizedTeamId ? (
+            <TeamOkrSections
+              primaryObjectives={displayObjectives}
+              contributedObjectives={contributedObjectives || []}
+              teamId={normalizedTeamId}
+              teamName={
+                (displayObjectives[0] as any)?.team?.name
+                || teams?.find(t => t.id === normalizedTeamId)?.name
+                || 'Time'
+              }
+              isLoading={contributedLoading}
+              canEdit={manageableTeamIds.has(normalizedTeamId)}
             />
           ) : (
             <div className="space-y-6">

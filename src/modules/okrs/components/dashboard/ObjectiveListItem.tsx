@@ -405,6 +405,9 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
             description: objective.description,
             team_id: objective.team_id,
             status: objective.status as OkrStatus,
+            is_shared: objective.is_shared,
+            responsibility_model: objective.responsibility_model,
+            org_objective_id: objective.org_objective_id,
           }}
         />
       ) : null}

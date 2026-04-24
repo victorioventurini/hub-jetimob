@@ -1,0 +1,39 @@
+---
+name: Shared OKR contributor view standard
+description: SSOT para exibição de OKRs compartilhados no dashboard do time contribuidor — bloco separado, read-only, com KRs próprias do contribuidor destacadas
+type: feature
+---
+
+Quando um objetivo de time está marcado como `is_shared=true` e contém entradas em `okr_team_objective_contributors`, ele aparece em DOIS lugares no dashboard `/okrs?view=team`:
+
+1. **Time proprietário (Time A)**: aparece no bloco principal "OKRs do {Time A}", editável (badge `Compartilhado`).
+2. **Time contribuidor (Time B)**: aparece em bloco separado abaixo dos próprios, intitulado **"OKRs Compartilhadas"**, **read-only**.
+
+## Componentes canônicos (não duplicar)
+
+- **`OkrDashboardPage.tsx`**: quando `activeView === 'team'` E `normalizedTeamId` está definido, renderiza `<TeamOkrSections>` em vez do map plano de `ObjectiveListItem`. Carrega `useTeamContributedOkrs(teamId)` em paralelo aos `useTeamObjectives`.
+- **`TeamOkrSections`** (`src/modules/okrs/components/team-view/`): orquestra os dois blocos. O bloco "OKRs Compartilhadas" só aparece quando `contributedObjectives.length > 0`.
+- **`ContributingOkrCard`** (`src/modules/okrs/components/team-view/`): card read-only de objetivo compartilhado. Mostra: badge `Compartilhada`, time proprietário, modelo de responsabilidade, progresso geral do objetivo, badge de estado de contribuição, e a sub-lista "Contribuição do seu time" filtrada por `kr.team_id === currentTeamId`.
+
+## Estado de contribuição (badge no card)
+
+| Estado | Condição | Visual |
+|---|---|---|
+| Estratégica | ≥1 KR onde `kr.team_id === currentTeamId` | `bg-status-green-muted` "Contribuição estratégica" |
+| Apenas visível | nenhum KR do contribuidor | `outline` muted "Apenas visível" |
+
+(Estado "Operacional" — sem KR mas com projeto/iniciativa do time vinculado — é uma extensão futura; requer fetch adicional.)
+
+## Regras invioláveis
+
+1. **Ownership único**: o objetivo NÃO é duplicado — `okr_team_objectives.team_id` permanece apontando apenas para o Time A. O bloco no Time B vem da view `v_team_contributed_okrs` (filtrada por `contributor_team_id`).
+2. **Read-only no contribuidor**: `canEdit` é forçadamente `false` no bloco "OKRs Compartilhadas". O card não expõe edição, cancelamento ou criação de KR — apenas link "Ver detalhes" para o time owner.
+3. **KRs do contribuidor são próprias**: o Time B cria suas próprias KRs em `okr_team_key_results` com `team_id = TimeB` e `team_objective_id = objective.id`. Essas KRs aparecem automaticamente em todos os ritos coletivos (Weekly/MBR/QBR/Team Check-in) que filtram por `kr.team_id`, e no Collaborator Check-in que filtra por `kr.owner_id`. **Nenhuma alteração nos ritos é necessária para suportar contribuição cross-team.**
+4. **Select correto**: `AGGREGATE_FIELDS.teamObjectiveWithKrs` em `aggregateUtils.ts` DEVE incluir `team_id` em `key_results` para permitir o filtro do contribuidor. Também inclui `is_shared`, `responsibility_model` e `org_objective_id` no objetivo.
+5. **Caller do `TeamObjectiveFormDialog`**: ver `mem://features/okrs/shared-okr-edit-hydration-standard` — passar `is_shared`, `responsibility_model` e `org_objective_id` ao editar.
+
+## Hooks/queries envolvidos
+
+- `useTeamContributedOkrs(teamId)` — lê `v_team_contributed_okrs` filtrando por `contributor_team_id`, depois carrega objetivos completos.
+- `useObjectiveContributors(objectiveId)` — lê `okr_team_objective_contributors` para popular o multiselect no form.
+- `useManageContributors()` — diff INSERT/DELETE em `okr_team_objective_contributors` (RLS V2).
