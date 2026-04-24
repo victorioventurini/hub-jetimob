@@ -67,15 +67,32 @@ export function useTeamObjectiveForm({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const { data: cycles = [] } = useCycles();
-  const { data: existingContributors } = useObjectiveContributors(objective?.id || '');
+  const { data: existingContributors, isLoading: isLoadingContributors } = useObjectiveContributors(objective?.id || '');
   const { data: fetchedOrgObjectives = [] } = useOrgObjectives({ buId: buId ?? undefined });
 
-  // Load existing contributors for edit mode
+  // Snapshot dos contribuidores originais (para diff no save).
+  const originalContributorIdsRef = useRef<string[] | null>(null);
+
+  // Hidratação ONE-SHOT por objetivo: só popula se ainda não foi hidratado para
+  // este objetivo. Refetches subsequentes não sobrescrevem edições do usuário.
+  const hydratedForObjectiveRef = useRef<string | null>(null);
   useEffect(() => {
-    if (existingContributors) {
-      setContributingTeamIds(existingContributors.map(c => c.team_id));
+    if (!open || !isEditing || !objective?.id) return;
+    if (hydratedForObjectiveRef.current === objective.id) return;
+    if (!existingContributors) return; // aguarda fetch inicial
+    const ids = existingContributors.map(c => c.team_id);
+    setContributingTeamIds(ids);
+    originalContributorIdsRef.current = ids;
+    hydratedForObjectiveRef.current = objective.id;
+  }, [open, isEditing, objective?.id, existingContributors]);
+
+  // Reset do flag de hidratação ao fechar o dialog.
+  useEffect(() => {
+    if (!open) {
+      hydratedForObjectiveRef.current = null;
+      originalContributorIdsRef.current = null;
     }
-  }, [existingContributors]);
+  }, [open]);
 
   // Pre-select user's team when dialog opens in create mode
   useEffect(() => {
