@@ -244,7 +244,7 @@ export function MilestoneKrLinkSection({ milestoneId, projectId, canEdit }: Mile
                   variant="outline"
                   className={cn('text-[10px] px-1 py-0 h-3.5 shrink-0', KIND_CLASS[kr.kind])}
                 >
-                  {KIND_LABEL[kr.kind]}
+                  {badgeLabel(kr.kind, kr.team_name)}
                 </Badge>
                 <span className="truncate">{kr.kr_title}</span>
               </div>
