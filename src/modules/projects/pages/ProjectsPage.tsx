@@ -24,7 +24,7 @@ import { ProjectStatusSummary } from '../components/ProjectStatusSummary';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectViewToggle';
 import { ProjectGanttChart } from '../components/ProjectGanttChart';
-import type { ProjectFilters, ProjectStatus } from '../types';
+import type { ProjectArchivedState, ProjectFilters, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SavedLinksPopover } from '@/shared/saved-links';
 
@@ -43,6 +43,7 @@ export default function ProjectsPage() {
   const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
   const teamState = useUrlState<string>({ key: 'teamId', defaultValue: '' });
   const krLinkState = useUrlState<string>({ key: 'krLink', defaultValue: '' });
+  const archivedState = useUrlState<ProjectArchivedState>({ key: 'archived', defaultValue: 'active' });
   const viewState = useUrlState<ProjectViewMode>({ key: 'view', defaultValue: 'list' });
   const { value: search, setValue: setSearch } = useLocalSearch('q');
 
@@ -52,6 +53,7 @@ export default function ProjectsPage() {
     owner_id: ownerState.value || undefined,
     team_id: teamState.value || undefined,
     linked_to_kr: krLinkState.value === 'linked' ? true : krLinkState.value === 'not_linked' ? false : null,
+    archived_state: archivedState.value,
   };
 
   const handleFiltersChange = useCallback((newFilters: ProjectFilters) => {
@@ -62,7 +64,8 @@ export default function ProjectsPage() {
     krLinkState.set(
       newFilters.linked_to_kr === true ? 'linked' : newFilters.linked_to_kr === false ? 'not_linked' : ''
     );
-  }, [statusState, ownerState, teamState, setSearch, krLinkState]);
+    archivedState.set(newFilters.archived_state ?? 'active');
+  }, [statusState, ownerState, teamState, setSearch, krLinkState, archivedState]);
 
   const { data: projects, isLoading, error } = useProjects(filters);
   const { items: ganttItems, excludedCount: ganttExcluded } = useGanttData(projects);

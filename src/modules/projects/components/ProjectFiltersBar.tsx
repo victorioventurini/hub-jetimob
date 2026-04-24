@@ -9,7 +9,7 @@ import { ListPageFilters } from '@/components/ui/list-page-filters';
 import { UrlSelect } from '@/shared/filters/UrlSelect';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
-import type { ProjectFilters, ProjectStatus } from '../types';
+import type { ProjectArchivedState, ProjectFilters, ProjectStatus } from '../types';
 
 interface ProjectFiltersBarProps {
   filters: ProjectFilters;
@@ -27,6 +27,12 @@ const statusOptions: Array<{ value: string; label: string }> = [
 const krLinkOptions: Array<{ value: string; label: string }> = [
   { value: 'linked', label: 'Vinculado a KR' },
   { value: 'not_linked', label: 'Sem KR vinculado' },
+];
+
+const archivedStateOptions: Array<{ value: string; label: string }> = [
+  { value: 'active', label: 'Ativos' },
+  { value: 'archived', label: 'Arquivados' },
+  { value: 'all', label: 'Todos' },
 ];
 
 export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBarProps) {
@@ -85,6 +91,16 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         includeAllOption
         allOptionLabel="KR: Todos"
         triggerClassName="w-full sm:w-[180px]"
+      />
+
+      {/* Visualização: ativos / arquivados / todos */}
+      <UrlSelect
+        value={filters.archived_state ?? 'active'}
+        onChange={(v) =>
+          onFiltersChange({ ...filters, archived_state: v as ProjectArchivedState })
+        }
+        options={archivedStateOptions}
+        triggerClassName="w-full sm:w-[160px]"
       />
     </ListPageFilters>
   );

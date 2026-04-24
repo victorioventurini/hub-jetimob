@@ -1,98 +1,83 @@
+## Plano v1.9 — Acesso a Projetos Arquivados
 
-## Diagnóstico (TCR + canônicos consultados)
+### Pré-checklist (concluído)
+- TCR + IDENTITY_CONVENTION + PERMISSIONS_AND_RBAC_MODEL + DATA_MODEL_REGISTRY consultados.
+- Memória `mem://features/projects/holistic-module-architecture-v2` (v1.8 atual) revisada.
+- RLS atual de `projects` confirmada: `projects_select` filtra `deleted_at IS NULL` no DB → `SELECT` direto nunca retorna arquivado, mesmo para `super_admin`. Necessário Security Definer.
 
-**Documentação consultada:**
-- `mem://features/projects/holistic-module-architecture-v2` (v1.6/1.7) — autorização canônica de projetos
-- `docs/canonical/RBAC_TEMPLATES_V3.md` — modelo de templates e bypass de admin
-- `docs/engineering/IDENTITY_CONVENTION.md` — `realProfileId` para mutations
-- `mem://standards/soft-delete-policy-v1` — soft-delete com RLS
-- `mem://auth/identity-rbac-master` — 5-níveis e impersonação
-
-**Evidências coletadas no banco (read-only):**
-1. `projects_update` e `projects_delete` **já têm bypass** por `is_super_admin(auth.uid())` e `is_bu_admin(auth.uid(), bu_id)` — RLS está correta.
-2. victorio@jetimob.com é `super_admin` global em `user_roles` e tem membership na BU `a000…0001` (BU do projeto `98074a55…`).
-3. `is_super_admin('dcb85e6f…')` = **true**, `is_bu_admin('dcb85e6f…', 'a000…0001')` = **true** para o projeto-alvo.
-4. `postgres_logs` (últimas 6h) **não tem nenhum ERROR de RLS** — o banco **não** está rejeitando a operação.
-
-**Causa raiz do toast "Você não tem permissão para arquivar esse projeto":**
-
-Está em `src/modules/projects/hooks/useProjectMutations.ts`:
-- `useSoftDeleteProject` faz um **PROBE SELECT** antes do UPDATE (linha 170). A policy `projects_select` exige `is_current_bu(bu_id)` — e essa função **só** dá bypass para `is_platform_admin`, não respeita `is_super_admin` quando o header `x-current-bu-id` não bate com `project.bu_id` (caso comum em troca de BU/impersonação/bundle stale).
-- Quando o probe retorna `null`, o hook lança `"Projeto não encontrado nesta BU"` ou — no `useUpdateProject` — converte `count=0` em **erro forjado 42501 "Sem permissão"** (linhas 113-116). O `onError` então casa com a regex `/sem permiss/i` e mostra o toast errado.
-- Mesmo o UPDATE final (linha 193) usa `.eq('bu_id', bu_id).is('deleted_at', null)`: se houver qualquer drift de BU contextual ou concorrência, retorna 0 rows silenciosamente.
-
-**Conclusão:** o problema é de arquitetura do hook, não de RLS. A solução canônica é **mover as mutações para RPCs `SECURITY DEFINER`** que validam permissão server-side e retornam código categorizado, eliminando a dependência do probe SELECT e do `count=0`.
+### Decisões confirmadas
+1. Reusar matriz canônica de archive/update (super_admin OR bu_admin OR owner OR líder do owner OR `projects.project.update:bu`). Sem criar `projects.project.restore:*`.
+2. Detalhe arquivado é 100% read-only (sem editar projeto, sem CRUD de milestones, comentários só leitura).
+3. Filtro default `archived_state = 'active'` — `/projects` continua mostrando só ativos como hoje.
 
 ---
 
-## Plano de Ação
+### 1. Backend — Migration (Security Definer RPCs)
 
-### 1. Migration: criar RPCs `SECURITY DEFINER`
+Nova migration `supabase/migrations/[ts]_project_archived_access.sql`:
 
-Criar `supabase/migrations/<ts>_project_archive_update_rpcs.sql` com:
+- `list_archived_projects()` → retorna projetos arquivados da BU corrente (`current_bu_id()`), filtrados pela matriz canônica (admin vê todos da BU; usuário com `update:bu` idem; owner/líder vê os seus). Retorna `SETOF projects`.
+- `get_archived_project_v2(p_project_id uuid)` → retorna jsonb único do projeto arquivado + relações mínimas necessárias para a página de detalhe. Valida BU + autorização canônica.
+- `restore_project_v2(p_project_id uuid) RETURNS jsonb` → autorização canônica, `UPDATE projects SET deleted_at = NULL, updated_at = now() WHERE id = p_project_id`. Códigos: `RESTORED`, `NOT_FOUND`, `FORBIDDEN`, `NOT_ARCHIVED`.
 
-#### `archive_project_v2(p_project_id uuid) RETURNS jsonb`
-- `SECURITY DEFINER`, `SET search_path = public`
-- Resolve `actor_profile := my_profile_id()` e `auth_uid := auth.uid()`.
-- Lê o projeto via `SELECT id, bu_id, owner_id, deleted_at FROM projects WHERE id = p_project_id` (sem RLS porque é DEFINER).
-- Se não existir → `RETURN jsonb_build_object('ok', false, 'code', 'NOT_FOUND')`.
-- Se `deleted_at IS NOT NULL` → idempotente: `RETURN jsonb_build_object('ok', true, 'code', 'ALREADY_ARCHIVED')`.
-- Autoriza se **qualquer** for verdadeiro (mesma regra canônica v1.6):
-  - `is_super_admin(auth_uid)`
-  - `is_bu_admin(auth_uid, bu_id)`
-  - `owner_id = actor_profile`
-  - `is_leader_of_project_owner(actor_profile, owner_id, bu_id)`
-  - `has_permission(actor_profile, bu_id, 'projects.project.delete:bu')`
-- Caso contrário → `RETURN jsonb_build_object('ok', false, 'code', 'FORBIDDEN')`.
-- Se autorizado → `UPDATE projects SET deleted_at = now() WHERE id = p_project_id` e retorna `{ ok: true, code: 'ARCHIVED', project_id, bu_id }`.
-- `GRANT EXECUTE ON FUNCTION archive_project_v2(uuid) TO authenticated`.
+Permissões: `GRANT EXECUTE ... TO authenticated`. Autorização real é feita dentro das funções.
 
-#### `update_project_v2(p_project_id uuid, p_payload jsonb) RETURNS jsonb`
-- Mesma estrutura de autorização (usando `'projects.project.update:bu'` na key permission).
-- `p_payload` aceita whitelist de campos: `name, description, owner_id, status, start_date, due_date, external_url`.
-- Aplica `UPDATE` com `COALESCE` por campo presente no JSONB.
-- Retorna `{ ok: true, code: 'UPDATED', project_id }` ou erro categorizado.
-- `team_ids` continua sendo sincronizado pelo hook (não entra na RPC para manter a função enxuta — a RLS de `project_teams` herda via JOIN com `projects` e isso já funciona via bypass de admin).
+### 2. Frontend — Tipos & Filtros
 
-### 2. Refator `src/modules/projects/hooks/useProjectMutations.ts`
+- `src/modules/projects/types.ts`: adicionar `archived_state?: 'active' | 'archived' | 'all'` em `ProjectFilters` (default `'active'` quando ausente).
+- `src/modules/projects/components/ProjectFiltersBar.tsx`: novo `UrlSelect` "Visualização" com opções Ativos / Arquivados / Todos (`triggerClassName="w-full sm:w-[160px]"`).
+- `src/modules/projects/pages/ProjectsPage.tsx`: incluir `archived_state` no `useUrlState` (default `'active'`).
 
-#### `useSoftDeleteProject`
-- Substituir todo o corpo da `mutationFn` por chamada `supabase.rpc('archive_project_v2', { p_project_id: id })`.
-- Mapear retorno por `code`:
-  - `ARCHIVED`/`ALREADY_ARCHIVED` → success.
-  - `NOT_FOUND` → `toast.error('Projeto não encontrado.')`.
-  - `FORBIDDEN` → `toast.error('Você não tem permissão para arquivar este projeto.')`.
-- Remover probe pré-update e remover dependência de `bu_id` no input (mas manter o campo opcional para compat — descartado no payload da RPC).
+### 3. Frontend — Hooks
 
-#### `useUpdateProject`
-- Substituir o UPDATE direto por `supabase.rpc('update_project_v2', { p_project_id, p_payload })`.
-- Remover bloco "count=0 → forge 42501" (a RPC retorna código real).
-- Manter sync de `team_ids` (delete + reinsert) **após** RPC retornar `ok: true`. Esse passo herda permissão via JOIN com `projects` — RLS já trata.
+- `src/modules/projects/hooks/useProjects.ts`:
+  - Se `filters.archived_state === 'active'` → fluxo atual (sem mudança).
+  - Se `'archived'` → chamar `supabase.rpc('list_archived_projects')` e mapear no mesmo formato `ProjectWithRelations` (relações vêm vazias/leves; OK para listagem). Query key inclui `archived_state`.
+  - Se `'all'` → unir `'active' + 'archived'` em duas queries paralelas e concatenar.
+- `src/modules/projects/hooks/useProject.ts`:
+  - Mantém SELECT atual primeiro.
+  - Se `data === null` → fallback para `supabase.rpc('get_archived_project_v2', { p_project_id })`. Marcar resultado com flag `is_archived: true` (campo derivado).
+- `src/modules/projects/hooks/useProjectMutations.ts`:
+  - Novo hook `useRestoreProject()` chamando `restore_project_v2`. Toasts mapeados por código (`RESTORED`, `FORBIDDEN`, `NOT_FOUND`, `NOT_ARCHIVED`). Invalidar `projectsKeys.allPrefix()` no sucesso.
+- `src/lib/queryKeys/projects.ts`: garantir que `list(buId, filters)` já serializa `archived_state` (é genérico → ok via `JSON.stringify(filters)`).
 
-### 3. Atualizar `src/modules/projects/types.ts`
-- `SoftDeleteProjectInput.bu_id` permanece (compat retroativa) mas vira opcional comentado como deprecated.
+### 4. Frontend — UI Detalhe
 
-### 4. Testes
-- Atualizar `src/modules/projects/hooks/__tests__/useProjectPermissionsV2.test.ts` adicionando case explícito de `super_admin` (`isAdmin: true`) → `canDeleteProjectRecord(any, any) === true`.
-- Atualizar `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx` com mock de `supabase.rpc('archive_project_v2', …)` retornando `{ ok: true, code: 'ARCHIVED' }` para o cenário super_admin.
+- `src/modules/projects/pages/ProjectDetailPage.tsx`:
+  - Quando `project.is_archived` (ou `project.deleted_at != null`):
+    - Banner `<Alert variant="warning">` no topo: "Este projeto está arquivado. As edições estão desabilitadas.".
+    - Botão "Restaurar projeto" (gated pela mesma matriz já usada para arquivar via `useProjectPermissionsV2.canDeleteProjectRecord`).
+    - Esconder/desabilitar: botão Editar, botão Arquivar, botão Novo milestone, ações de milestone (editar/excluir/notas), input de comentários.
+  - Tabela de milestones e comentários renderizam em modo leitura.
 
 ### 5. Documentação
-- Atualizar `.lovable/memory/features/projects/holistic-module-architecture-v2.md` para v1.8: soft-delete e update agora canalizados via RPC `archive_project_v2`/`update_project_v2`. Manter a regra de autorização canônica idêntica (não muda a semântica — só centraliza a verificação no banco).
+
+- `.lovable/memory/features/projects/holistic-module-architecture-v2.md` → bump v1.9 com seção "Acesso a Projetos Arquivados" (filtro, RPCs, autorização canônica, read-only).
+
+### 6. Testes
+
+- `src/modules/projects/hooks/__tests__/useProjectMutations.test.ts` (ou novo): cobrir `useRestoreProject` com códigos `RESTORED`, `FORBIDDEN`, `NOT_FOUND`, `NOT_ARCHIVED`.
+- `src/modules/projects/pages/__tests__/ProjectsPage.test.tsx`: cobrir filtro `archived_state` (mock de `useProjects`).
 
 ---
 
-## Arquivos afetados
+### Arquivos afetados
 
-- **NEW** `supabase/migrations/<ts>_project_archive_update_rpcs.sql`
-- **EDIT** `src/modules/projects/hooks/useProjectMutations.ts`
-- **EDIT** `src/modules/projects/types.ts` (campo `bu_id` opcional em `SoftDeleteProjectInput`)
-- **EDIT** `src/modules/projects/hooks/__tests__/useProjectPermissionsV2.test.ts`
-- **EDIT** `src/modules/projects/pages/__tests__/ProjectDetailPage.test.tsx`
-- **EDIT** `.lovable/memory/features/projects/holistic-module-architecture-v2.md` (v1.8)
+Novos:
+- `supabase/migrations/[timestamp]_project_archived_access.sql`
 
-## Fora de escopo
-- Não toca em `projects_select` policy (não precisa — a RPC contorna a fragilidade do probe).
-- Não toca em `useCreateProject` (criação não tem o problema de probe).
-- Não toca no fluxo de milestones (já refatorado em v1.7).
+Editados:
+- `src/modules/projects/types.ts`
+- `src/modules/projects/components/ProjectFiltersBar.tsx`
+- `src/modules/projects/pages/ProjectsPage.tsx`
+- `src/modules/projects/pages/ProjectDetailPage.tsx`
+- `src/modules/projects/hooks/useProjects.ts`
+- `src/modules/projects/hooks/useProject.ts`
+- `src/modules/projects/hooks/useProjectMutations.ts`
+- `.lovable/memory/features/projects/holistic-module-architecture-v2.md`
+- Testes correspondentes
 
-**Posso executar?**
+### Fora de escopo
+- Soft-delete cascade de milestones (já existe).
+- Ações em massa (restaurar múltiplos).
+- Permissão dedicada `restore:*` (decidido reusar matriz canônica).

@@ -52,6 +52,8 @@ export interface ProjectWithRelations extends Project {
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  /** Verdadeiro quando o projeto está arquivado (deleted_at != null). */
+  is_archived?: boolean;
 }
 
 export interface ProjectMilestone {
@@ -125,12 +127,16 @@ export interface GanttItem {
 
 // ── Filters ──
 
+export type ProjectArchivedState = 'active' | 'archived' | 'all';
+
 export interface ProjectFilters {
   status?: ProjectStatus | 'all';
   owner_id?: string;
   team_id?: string;
   linked_to_kr?: boolean | null;
   search?: string;
+  /** Filtro de visualização por estado de arquivamento. Default: 'active'. */
+  archived_state?: ProjectArchivedState;
 }
 
 // ── Mutation inputs ──

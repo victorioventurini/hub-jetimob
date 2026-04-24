@@ -7,13 +7,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Pencil, Trash2, Calendar, List, GanttChart, Plus } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar, List, GanttChart, Plus, Archive, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
-import { useUpdateProject, useSoftDeleteProject } from '../hooks/useProjectMutations';
+import { useUpdateProject, useSoftDeleteProject, useRestoreProject } from '../hooks/useProjectMutations';
 import { useCreateMilestone, useUpdateMilestone, useSoftDeleteMilestone } from '../hooks/useMilestoneMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
 import { useIsLeaderOfProjectOwner } from '../hooks/useIsLeaderOfProjectOwner';
@@ -52,6 +52,7 @@ export default function ProjectDetailPage() {
   const { data: milestones } = useMilestones(id);
   const updateProject = useUpdateProject();
   const deleteProject = useSoftDeleteProject();
+  const restoreProject = useRestoreProject();
   const createMilestone = useCreateMilestone();
   const updateMilestone = useUpdateMilestone();
   const deleteMilestone = useSoftDeleteMilestone();
@@ -59,8 +60,8 @@ export default function ProjectDetailPage() {
     isLoading: permissionsLoading,
     canEditProjectRecord,
     canDeleteProjectRecord,
-    canCreateMilestone: canAddMilestone,
-    canEditMilestone,
+    canCreateMilestone: rawCanAddMilestone,
+    canEditMilestone: rawCanEditMilestone,
   } = useProjectPermissionsV2();
 
   // Gate canônico: enquanto identidade ou permissões estiverem carregando,
@@ -87,8 +88,18 @@ export default function ProjectDetailPage() {
   const baseDelete =
     permissionsResolved && canDeleteProjectRecord(project?.owner_id, writerProfileId);
 
-  const canEditThisProject = baseEdit || (permissionsResolved && isLeaderOfOwner);
-  const canDeleteThisProject = baseDelete || (permissionsResolved && isLeaderOfOwner);
+  const isArchived = !!project?.is_archived;
+
+  const canEditThisProject =
+    !isArchived && (baseEdit || (permissionsResolved && isLeaderOfOwner));
+  const canDeleteThisProject =
+    !isArchived && (baseDelete || (permissionsResolved && isLeaderOfOwner));
+  const canRestoreThisProject =
+    isArchived && (baseDelete || (permissionsResolved && isLeaderOfOwner));
+
+  // Milestone CRUD: bloqueado em projetos arquivados (read-only canônico).
+  const canAddMilestone = !isArchived && rawCanAddMilestone;
+  const canEditMilestone = !isArchived && rawCanEditMilestone;
 
   // Observabilidade: gating row-aware do detalhe do projeto.
   // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
@@ -223,6 +234,11 @@ export default function ProjectDetailPage() {
     );
   };
 
+  const handleRestore = () => {
+    if (!canRestoreThisProject) return;
+    restoreProject.mutate({ id: project.id });
+  };
+
   const headerActions = (
     <div className="flex flex-wrap items-center gap-2">
       {project.external_url && (
@@ -231,6 +247,17 @@ export default function ProjectDetailPage() {
             <ExternalLink className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Link externo</span>
           </a>
+        </Button>
+      )}
+      {canRestoreThisProject && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRestore}
+          disabled={restoreProject.isPending}
+        >
+          <RotateCcw className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Restaurar projeto</span>
         </Button>
       )}
       {canEditThisProject && (
@@ -259,6 +286,19 @@ export default function ProjectDetailPage() {
           ]}
           actions={headerActions}
         />
+
+        {/* Banner de projeto arquivado (read-only) */}
+        {isArchived && (
+          <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm">
+            <Archive className="h-5 w-5 mt-0.5 text-warning shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Projeto arquivado</p>
+              <p className="text-muted-foreground mt-1">
+                Este projeto está arquivado. As edições estão desabilitadas. Use "Restaurar projeto" para reativá-lo.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Badges + description below header */}
         <div className="flex items-center gap-2 -mt-4">
@@ -413,7 +453,7 @@ export default function ProjectDetailPage() {
         />
 
         {/* Comentários */}
-        <ProjectCommentsSection projectId={project.id} />
+        <ProjectCommentsSection projectId={project.id} readOnly={isArchived} />
       </div>
 
       {/* Milestone Create Dialog */}

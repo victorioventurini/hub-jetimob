@@ -95,9 +95,11 @@ interface SelectedFile {
 
 interface ProjectCommentsSectionProps {
   projectId: string;
+  /** Quando true, esconde o composer (projeto arquivado / sem permissão de escrita). */
+  readOnly?: boolean;
 }
 
-export function ProjectCommentsSection({ projectId }: ProjectCommentsSectionProps) {
+export function ProjectCommentsSection({ projectId, readOnly = false }: ProjectCommentsSectionProps) {
   const { profileId, realProfileId } = useIdentity();
   const writerProfileId = realProfileId ?? profileId;
 
@@ -256,8 +258,8 @@ export function ProjectCommentsSection({ projectId }: ProjectCommentsSectionProp
           </div>
         )}
 
-        {/* Composer */}
-        {writerProfileId && (
+        {/* Composer (oculto em projetos arquivados / read-only) */}
+        {writerProfileId && !readOnly && (
           <div className="space-y-3 border-t pt-4">
             {/* Selected files */}
             {selectedFiles.length > 0 && (
