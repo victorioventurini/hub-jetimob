@@ -67,10 +67,10 @@ export const AGGREGATE_FIELDS = {
   ` as const,
 
   teamObjectiveWithKrs: `
-    id, title, description, status, team_id, created_at, updated_at,
+    id, title, description, status, team_id, is_shared, responsibility_model, org_objective_id, created_at, updated_at,
     team:teams!okr_team_objectives_team_id_fkey(id, name),
     key_results:okr_team_key_results(
-      id, title, baseline, current_value, target, direction, unit, status, last_checkin_at
+      id, title, baseline, current_value, target, direction, unit, status, last_checkin_at, team_id, owner_user_id
     )
   ` as const,
 
