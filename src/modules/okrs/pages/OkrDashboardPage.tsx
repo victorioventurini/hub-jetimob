@@ -24,7 +24,8 @@ import {
   useLatestCheckinDate,
   useUserProfile,
 } from '../hooks/queries';
-import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr, useTeamKeyResult } from '../hooks';
+import { useKrStatusDistribution, OkrCalculatedStatus, usePendingCheckins, useSharedOkrsInsights, useManageableTeams, useCanManageOrgOkr, useTeamKeyResult, useTeamContributedOkrs } from '../hooks';
+import { TeamOkrSections } from '../components/team-view/TeamOkrSections';
 import { calculateProgress } from '../types';
 import { KrHistoryDialog } from '../components/KrHistoryDialog';
 import { useActiveCycles, useCycles } from '../hooks/useCycleData';
