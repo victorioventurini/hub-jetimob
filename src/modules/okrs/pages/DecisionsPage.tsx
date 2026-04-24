@@ -88,6 +88,8 @@ const CATEGORY_OPTIONS: Array<{ value: TeamCheckinDecision['category'] | 'all'; 
 
 export default function DecisionsPage() {
   usePageTitle('Decisões');
+  const { currentBu } = useBu();
+  const SCOPE_LABELS = useMemo(() => buildScopeLabels(currentBu?.name), [currentBu?.name]);
 
   // ── URL state (filtros + paginação) ──
   const scopeState = useUrlState<DecisionsInboxScope>({
