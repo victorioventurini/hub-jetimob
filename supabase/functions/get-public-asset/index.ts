@@ -171,7 +171,7 @@ serve(async (req) => {
 
           if (kitAssets) {
             relatedItems = kitItems
-              .map(ki => {
+              .map((ki): RelatedKitItem | null => {
                 const kitAsset = kitAssets.find(a => a.id === ki.asset_id);
                 if (!kitAsset) return null;
                 return {
@@ -182,7 +182,7 @@ serve(async (req) => {
                   role: ki.role,
                 };
               })
-              .filter(Boolean);
+              .filter((item): item is RelatedKitItem => item !== null);
           }
         }
       }

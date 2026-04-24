@@ -164,8 +164,8 @@ Deno.serve(async (req) => {
     validateBuAccess: true,
   });
 
-  if (!mw.success) return mw.error!;
-  const { context } = mw;
+  if (!mw.success || !mw.context) return mw.error!;
+  const context = mw.context;
 
   try {
     const body = await req.json();
@@ -177,6 +177,9 @@ Deno.serve(async (req) => {
     }
 
     const { serviceClient, buId } = context;
+    if (!buId) {
+      return errorResponse("bu_id is required", 400, "MISSING_BU");
+    }
 
     // Fetch cadence
     const { data: cadence, error: cadenceErr } = await serviceClient
