@@ -1,26 +1,41 @@
 /**
- * PreWeeklyPage — Pré-Weekly v2 (scaffolding)
+ * PreWeeklyPage — Pré-Weekly v2.1
  *
- * Wizard individual de destilação semanal. Sem novas tabelas e sem agente
- * curador (ambos virão na evolução de backend). Persistência via
- * `useGenericWizardDraft` na tabela existente `okr_wizard_sessions`.
+ * Wizard individual de destilação semanal com seleção de time no header
+ * (HierarchyContextSwitcher canônico). O draft é segregado por time via
+ * `useGenericWizardDraft({ teamId })` para que admins/líderes possam
+ * trocar de contexto sem misturar conteúdos.
+ *
+ * Regras de visibilidade (delegadas ao componente):
+ * - Admin: switcher sempre visível, precisa selecionar time.
+ * - Líder de 2+ times: switcher visível, restrito à hierarquia.
+ * - Líder de 1 time: auto-seleção via URL, switcher oculto.
  */
 
-import { useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { startOfWeek, format } from 'date-fns';
+import { AlertCircle } from 'lucide-react';
 
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
+import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import {
   PreWeeklySourcesStep,
   PreWeeklyPautaStep,
   PreWeeklyPessoasStep,
   PreWeeklySummary,
 } from '@/modules/okrs/components/wizards/pre-weekly';
-import { useGenericWizardDraft } from '@/modules/okrs/hooks';
+import {
+  useGenericWizardDraft,
+  useManageableTeamsFlat,
+} from '@/modules/okrs/hooks';
+import { useHierarchicalTeamList } from '@/modules/teams/hooks';
+import { usePermissions } from '@/hooks/usePermissions';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { handleError } from '@/lib/errorMessages';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 import type {
   PreWeeklyStep,
@@ -59,7 +74,43 @@ const DEFAULT_DATA: PreWeeklyDraftData = {
 
 export default function PreWeeklyPage() {
   const navigate = useNavigate();
-  usePageTitle('Pré-Weekly');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamIdParam = searchParams.get('team');
+
+  const { isWildcard } = usePermissions();
+  const isAdminLevel = isWildcard;
+
+  // Times (admin: todos; líder: gerenciáveis)
+  const { teams: allTeams, isLoading: isLoadingAllTeams } = useHierarchicalTeamList();
+  const { teams: manageableTeams, isLoading: isLoadingManageable } =
+    useManageableTeamsFlat();
+
+  const isLoadingTeams = isAdminLevel ? isLoadingAllTeams : isLoadingManageable;
+
+  const selectedTeam = useMemo(() => {
+    if (!teamIdParam) return null;
+    return allTeams?.find((t) => t.id === teamIdParam) ?? null;
+  }, [teamIdParam, allTeams]);
+
+  // Auto-seleção: líder com exatamente 1 time → popula URL
+  useEffect(() => {
+    if (teamIdParam) return;
+    if (isAdminLevel) return;
+    if (isLoadingManageable) return;
+    if (manageableTeams.length === 1) {
+      setSearchParams({ team: manageableTeams[0].id }, { replace: true });
+    }
+  }, [
+    teamIdParam,
+    isAdminLevel,
+    isLoadingManageable,
+    manageableTeams,
+    setSearchParams,
+  ]);
+
+  usePageTitle(
+    selectedTeam ? `Pré-Weekly — ${selectedTeam.name}` : 'Pré-Weekly',
+  );
 
   const {
     draft,
@@ -74,10 +125,11 @@ export default function PreWeeklyPage() {
     lastSavedAt,
   } = useGenericWizardDraft<PreWeeklyStep, PreWeeklyDraftData>({
     wizardType: 'pre-weekly',
-    teamId: null,
+    teamId: teamIdParam,
     cycleId: null,
     defaultStep: 'sources',
     defaultData: DEFAULT_DATA,
+    enabled: !!teamIdParam,
   });
 
   const completedSteps = useMemo(() => {
@@ -131,6 +183,75 @@ export default function PreWeeklyPage() {
   }, [clearDraft, navigate]);
 
   const handleClose = useCallback(() => {}, []);
+
+  // Troca de time (descarta draft do time anterior)
+  const handleTeamChange = useCallback(
+    (newTeamId: string) => {
+      if (newTeamId === teamIdParam) return;
+      // Limpar rascunho do contexto atual antes de trocar
+      if (teamIdParam) {
+        void discardDraft();
+      }
+      setSearchParams({ team: newTeamId });
+    },
+    [teamIdParam, discardDraft, setSearchParams],
+  );
+
+  // Switcher reutilizável (sempre passado ao shell)
+  const contextSwitcher = (
+    <HierarchyContextSwitcher
+      type="team"
+      currentLabel={selectedTeam?.name || 'Selecionar time'}
+      selectedId={teamIdParam}
+      onSelect={handleTeamChange}
+      isLoading={isLoadingTeams}
+    />
+  );
+
+  // Loading enquanto resolve times
+  if (isLoadingTeams && !teamIdParam) {
+    return <LoadingState text="Carregando times..." fullPage />;
+  }
+
+  // Sem time selecionado → empty state com switcher no header
+  if (!teamIdParam) {
+    const isLeaderWithoutTeams =
+      !isAdminLevel && !isLoadingManageable && manageableTeams.length === 0;
+
+    return (
+      <FullPageWizardShell
+        title="Pré-Weekly"
+        subtitle="Destilação individual da semana"
+        steps={WIZARD_STEPS}
+        currentStepId="sources"
+        completedSteps={[]}
+        onStepChange={() => {}}
+        isDirty={false}
+        isSavingDraft={false}
+        onSaveDraft={async () => {}}
+        lastSavedAt={null}
+        isResumingDraft={false}
+        onDiscardDraft={async () => {}}
+        onClose={handleClose}
+        backUrl="/rituals"
+        adminContextSwitcher={contextSwitcher}
+      >
+        <EmptyState
+          icon={AlertCircle}
+          title={
+            isLeaderWithoutTeams
+              ? 'Você não lidera nenhum time'
+              : 'Selecione um time para começar'
+          }
+          description={
+            isLeaderWithoutTeams
+              ? 'O Pré-Weekly é uma destilação semanal vinculada a um time. Fale com um administrador para ajustar sua hierarquia.'
+              : 'Use o seletor de time no canto superior do wizard para escolher o contexto do Pré-Weekly.'
+          }
+        />
+      </FullPageWizardShell>
+    );
+  }
 
   const renderStepContent = () => {
     switch (draft.currentStep) {
@@ -195,7 +316,11 @@ export default function PreWeeklyPage() {
   return (
     <FullPageWizardShell
       title="Pré-Weekly"
-      subtitle="Destilação individual da semana"
+      subtitle={
+        selectedTeam
+          ? `Destilação individual da semana — ${selectedTeam.name}`
+          : 'Destilação individual da semana'
+      }
       steps={WIZARD_STEPS}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
@@ -208,6 +333,7 @@ export default function PreWeeklyPage() {
       onDiscardDraft={handleDiscardDraft}
       onClose={handleClose}
       backUrl="/rituals"
+      adminContextSwitcher={contextSwitcher}
     >
       {renderStepContent()}
     </FullPageWizardShell>
