@@ -128,6 +128,7 @@ interface OkrKeyResultRow {
 interface KpiRow {
   id: string;
   name: string;
+  description?: string | null;
   category: string;
   unit: string;
   direction: string;
@@ -308,7 +309,7 @@ export async function queryOkrs(
     return "Nenhum OKR encontrado com os filtros especificados.";
   }
 
-  const objectiveIds = (objectives as OkrObjectiveRow[]).map((o) => o.id);
+  const objectiveIds = (objectives as unknown as OkrObjectiveRow[]).map((o) => o.id);
   
   let krsQuery = supabase
     .from("okr_team_key_results")
@@ -337,7 +338,7 @@ export async function queryOkrs(
 
   let output = "=== OKRs DO HUB ===\n\n";
 
-  for (const obj of objectives as OkrObjectiveRow[]) {
+  for (const obj of objectives as unknown as OkrObjectiveRow[]) {
     const teamName = obj.team?.name || "Time não identificado";
     const cycleName = obj.cycle?.name || "Sem ciclo";
     
@@ -442,7 +443,7 @@ export async function queryKpis(
   const valuesMap: Record<string, KpiValueRow[]> = {};
   
   if (includeValues) {
-    const kpiIds = (kpis as KpiRow[]).map((k) => k.id);
+    const kpiIds = (kpis as unknown as KpiRow[]).map((k) => k.id);
     
     const { data: values } = await supabase
       .from("kpi_values")
@@ -465,7 +466,7 @@ export async function queryKpis(
 
   let output = "=== KPIs DO HUB ===\n\n";
 
-  for (const kpi of kpis as KpiRow[]) {
+  for (const kpi of kpis as unknown as KpiRow[]) {
     const teamName = kpi.team?.name || "Sem time";
     const ownerName = kpi.owner ? `${kpi.owner.first_name} ${kpi.owner.last_name}` : "Sem owner";
     const targetStr = kpi.target_value ? `Meta: ${kpi.target_value}${kpi.unit}` : "Sem meta definida";
@@ -554,7 +555,7 @@ export async function queryTeams(
     return "Nenhum time encontrado.";
   }
 
-  const teamIds = (teams as TeamRow[]).map((t) => t.id);
+  const teamIds = (teams as unknown as TeamRow[]).map((t) => t.id);
   
   const { data: memberships } = await supabase
     .from("user_team_memberships")
@@ -571,7 +572,7 @@ export async function queryTeams(
 
   let output = "=== TIMES DO HUB ===\n\n";
 
-  for (const team of teams as TeamRow[]) {
+  for (const team of teams as unknown as TeamRow[]) {
     const leaderName = team.leader 
       ? `${team.leader.first_name} ${team.leader.last_name}`
       : "Sem líder";
