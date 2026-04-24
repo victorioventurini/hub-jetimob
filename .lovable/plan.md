@@ -1,83 +1,85 @@
-## Plano v1.9 — Acesso a Projetos Arquivados
+# Pré-Weekly v2.1 — Team Switcher no header
 
-### Pré-checklist (concluído)
-- TCR + IDENTITY_CONVENTION + PERMISSIONS_AND_RBAC_MODEL + DATA_MODEL_REGISTRY consultados.
-- Memória `mem://features/projects/holistic-module-architecture-v2` (v1.8 atual) revisada.
-- RLS atual de `projects` confirmada: `projects_select` filtra `deleted_at IS NULL` no DB → `SELECT` direto nunca retorna arquivado, mesmo para `super_admin`. Necessário Security Definer.
+## Pré-checklist confirmado
+- ✅ TCR + `hierarchy-context-switcher-standard` (mem) — padrão canônico aplicado em LeaderPrep, TeamCheckin, MbrPre, QbrPre.
+- ✅ `FullPageWizardShell` já expõe o slot `adminContextSwitcher` (linha 92/236).
+- ✅ `HierarchyContextSwitcher` já implementa as 3 regras de visibilidade exigidas (admin sempre, líder com 2+ times, líder único oculto) — sem necessidade de lógica nova.
+- ✅ `useGenericWizardDraft` aceita `teamId` para segregar drafts por time (gating com `enabled`).
+- ✅ `off-cycle-accessibility-standard` mantido (`cycleId: null` continua válido).
 
-### Decisões confirmadas
-1. Reusar matriz canônica de archive/update (super_admin OR bu_admin OR owner OR líder do owner OR `projects.project.update:bu`). Sem criar `projects.project.restore:*`.
-2. Detalhe arquivado é 100% read-only (sem editar projeto, sem CRUD de milestones, comentários só leitura).
-3. Filtro default `archived_state = 'active'` — `/projects` continua mostrando só ativos como hoje.
+## Mudanças (1 arquivo)
 
----
+**`src/modules/okrs/pages/PreWeeklyPage.tsx`**
 
-### 1. Backend — Migration (Security Definer RPCs)
+1. **Imports adicionais**
+   - `useSearchParams` de `react-router-dom`
+   - `HierarchyContextSwitcher` de `shared/HierarchyContextSwitcher`
+   - `useHierarchicalTeamList` de `@/modules/teams/hooks`
+   - `LoadingState` / `EmptyState` para estados de gating
+   - `usePermissions` para distinguir admin × líder
+   - `useManageableTeamsFlat` para fallback de líder com 1 time (auto-seleção)
 
-Nova migration `supabase/migrations/[ts]_project_archived_access.sql`:
+2. **State da URL (regra inquebrável #7)**
+   ```ts
+   const [searchParams, setSearchParams] = useSearchParams();
+   const teamIdParam = searchParams.get('team');
+   ```
 
-- `list_archived_projects()` → retorna projetos arquivados da BU corrente (`current_bu_id()`), filtrados pela matriz canônica (admin vê todos da BU; usuário com `update:bu` idem; owner/líder vê os seus). Retorna `SETOF projects`.
-- `get_archived_project_v2(p_project_id uuid)` → retorna jsonb único do projeto arquivado + relações mínimas necessárias para a página de detalhe. Valida BU + autorização canônica.
-- `restore_project_v2(p_project_id uuid) RETURNS jsonb` → autorização canônica, `UPDATE projects SET deleted_at = NULL, updated_at = now() WHERE id = p_project_id`. Códigos: `RESTORED`, `NOT_FOUND`, `FORBIDDEN`, `NOT_ARCHIVED`.
+3. **Resolver time selecionado + auto-seleção para líder com 1 time**
+   - `useHierarchicalTeamList()` para resolver nome do time selecionado.
+   - Se não-admin e `manageableTeams.length === 1` e sem `?team=`, redirecionar URL para `?team=<id>` (UX seamless, idêntico ao LeaderPrep).
 
-Permissões: `GRANT EXECUTE ... TO authenticated`. Autorização real é feita dentro das funções.
+4. **Draft segregado por time**
+   ```ts
+   useGenericWizardDraft({
+     wizardType: 'pre-weekly',
+     teamId: teamIdParam,        // antes: null
+     cycleId: null,
+     defaultStep: 'sources',
+     defaultData: DEFAULT_DATA,
+     enabled: !!teamIdParam,     // gating
+   });
+   ```
 
-### 2. Frontend — Tipos & Filtros
+5. **`handleTeamChange`** — descarta draft atual e troca o `?team=` (mesma assinatura do LeaderPrep).
 
-- `src/modules/projects/types.ts`: adicionar `archived_state?: 'active' | 'archived' | 'all'` em `ProjectFilters` (default `'active'` quando ausente).
-- `src/modules/projects/components/ProjectFiltersBar.tsx`: novo `UrlSelect` "Visualização" com opções Ativos / Arquivados / Todos (`triggerClassName="w-full sm:w-[160px]"`).
-- `src/modules/projects/pages/ProjectsPage.tsx`: incluir `archived_state` no `useUrlState` (default `'active'`).
+6. **Empty state** quando admin abre sem `?team=`:
+   - `EmptyState` com CTA "Selecionar time" abrindo o switcher (ou texto "use o seletor no header").
 
-### 3. Frontend — Hooks
+7. **Slot `adminContextSwitcher` no `FullPageWizardShell`**
+   ```tsx
+   adminContextSwitcher={
+     <HierarchyContextSwitcher
+       type="team"
+       currentLabel={selectedTeam?.name || 'Selecionar time'}
+       selectedId={teamIdParam}
+       onSelect={handleTeamChange}
+       isLoading={isLoadingTeams}
+     />
+   }
+   ```
 
-- `src/modules/projects/hooks/useProjects.ts`:
-  - Se `filters.archived_state === 'active'` → fluxo atual (sem mudança).
-  - Se `'archived'` → chamar `supabase.rpc('list_archived_projects')` e mapear no mesmo formato `ProjectWithRelations` (relações vêm vazias/leves; OK para listagem). Query key inclui `archived_state`.
-  - Se `'all'` → unir `'active' + 'archived'` em duas queries paralelas e concatenar.
-- `src/modules/projects/hooks/useProject.ts`:
-  - Mantém SELECT atual primeiro.
-  - Se `data === null` → fallback para `supabase.rpc('get_archived_project_v2', { p_project_id })`. Marcar resultado com flag `is_archived: true` (campo derivado).
-- `src/modules/projects/hooks/useProjectMutations.ts`:
-  - Novo hook `useRestoreProject()` chamando `restore_project_v2`. Toasts mapeados por código (`RESTORED`, `FORBIDDEN`, `NOT_FOUND`, `NOT_ARCHIVED`). Invalidar `projectsKeys.allPrefix()` no sucesso.
-- `src/lib/queryKeys/projects.ts`: garantir que `list(buId, filters)` já serializa `archived_state` (é genérico → ok via `JSON.stringify(filters)`).
+## Regras de visibilidade (já garantidas pelo componente)
+| Perfil | Comportamento |
+|---|---|
+| Super-admin / BU-admin | Switcher sempre visível; precisa selecionar time para começar |
+| Líder de 2+ times | Switcher visível, restrito aos times que gerencia |
+| Líder de 1 time | Switcher oculto + auto-seleção via URL |
+| Colaborador sem times | Empty state ("você não lidera nenhum time") |
 
-### 4. Frontend — UI Detalhe
+## Documentação
+- Atualizar `mem://ui/rituals/hierarchy-context-switcher-standard` para incluir `pre-weekly` na lista canônica de rituais que adotam o padrão.
+- Atualizar `mem://features/rituals/pre-weekly-v2-standard` com a nota de v2.1 (team-scoped + switcher).
 
-- `src/modules/projects/pages/ProjectDetailPage.tsx`:
-  - Quando `project.is_archived` (ou `project.deleted_at != null`):
-    - Banner `<Alert variant="warning">` no topo: "Este projeto está arquivado. As edições estão desabilitadas.".
-    - Botão "Restaurar projeto" (gated pela mesma matriz já usada para arquivar via `useProjectPermissionsV2.canDeleteProjectRecord`).
-    - Esconder/desabilitar: botão Editar, botão Arquivar, botão Novo milestone, ações de milestone (editar/excluir/notas), input de comentários.
-  - Tabela de milestones e comentários renderizam em modo leitura.
+## Não-objetivos
+- Não mexe em `useWeeklyPreWeeklyAggregation` (já é BU-scoped, não precisa de teamId).
+- Não cria nova RPC, tabela, ou permission key.
+- Não altera os 4 steps do wizard.
+- Não toca em `okr_wizard_sessions` (a coluna `team_id` já existe e é usada pelo `useGenericWizardDraft`).
 
-### 5. Documentação
-
-- `.lovable/memory/features/projects/holistic-module-architecture-v2.md` → bump v1.9 com seção "Acesso a Projetos Arquivados" (filtro, RPCs, autorização canônica, read-only).
-
-### 6. Testes
-
-- `src/modules/projects/hooks/__tests__/useProjectMutations.test.ts` (ou novo): cobrir `useRestoreProject` com códigos `RESTORED`, `FORBIDDEN`, `NOT_FOUND`, `NOT_ARCHIVED`.
-- `src/modules/projects/pages/__tests__/ProjectsPage.test.tsx`: cobrir filtro `archived_state` (mock de `useProjects`).
-
----
-
-### Arquivos afetados
-
-Novos:
-- `supabase/migrations/[timestamp]_project_archived_access.sql`
-
-Editados:
-- `src/modules/projects/types.ts`
-- `src/modules/projects/components/ProjectFiltersBar.tsx`
-- `src/modules/projects/pages/ProjectsPage.tsx`
-- `src/modules/projects/pages/ProjectDetailPage.tsx`
-- `src/modules/projects/hooks/useProjects.ts`
-- `src/modules/projects/hooks/useProject.ts`
-- `src/modules/projects/hooks/useProjectMutations.ts`
-- `.lovable/memory/features/projects/holistic-module-architecture-v2.md`
-- Testes correspondentes
-
-### Fora de escopo
-- Soft-delete cascade de milestones (já existe).
-- Ações em massa (restaurar múltiplos).
-- Permissão dedicada `restore:*` (decidido reusar matriz canônica).
+## Testes manuais
+1. Admin abre `/rituals/pre-weekly` → vê switcher, sem time selecionado, empty state.
+2. Admin seleciona time A → wizard carrega; preenche e troca para time B → draft de A é descartado, time B começa do zero.
+3. Líder de 2 times → vê switcher restrito aos seus times.
+4. Líder de 1 time → URL auto-popula `?team=<id>`, switcher oculto, fluxo idêntico ao atual.
+5. Refresh com `?team=<id>` → estado preservado.
