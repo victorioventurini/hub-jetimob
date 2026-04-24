@@ -34,10 +34,17 @@ export interface ProjectOwner {
   photo_url: string | null;
 }
 
+export type KrLinkKind = 'team' | 'org';
+
 export interface ProjectWithRelations extends Project {
   owner: ProjectOwner | null;
   teams: Array<{ team_id: string; team_name: string }>;
-  krs: Array<{ key_result_id: string; kr_title: string; impact: ProjectImpact }>;
+  krs: Array<{
+    key_result_id: string;
+    kr_title: string;
+    impact: ProjectImpact;
+    kind: KrLinkKind;
+  }>;
   milestones: ProjectMilestone[];
   health: ProjectHealth;
   milestones_total: number;

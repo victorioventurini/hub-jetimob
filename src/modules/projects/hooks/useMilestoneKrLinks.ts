@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { toast } from 'sonner';
-import type { ProjectImpact } from '../types';
+import type { ProjectImpact, KrLinkKind } from '../types';
 
 export function useAddMilestoneKrLink() {
   const queryClient = useQueryClient();
@@ -11,20 +11,19 @@ export function useAddMilestoneKrLink() {
   return useMutation({
     mutationFn: async (input: {
       milestone_id: string;
-      key_result_id: string;
+      kr_id: string;
+      kind: KrLinkKind;
       impact: ProjectImpact;
       project_id: string;
     }) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { error } = await supabase
-        .from('milestone_krs')
-        .insert({
-          milestone_id: input.milestone_id,
-          key_result_id: input.key_result_id,
-          impact: input.impact,
-        });
+      const payload =
+        input.kind === 'org'
+          ? { milestone_id: input.milestone_id, org_key_result_id: input.kr_id, impact: input.impact }
+          : { milestone_id: input.milestone_id, key_result_id: input.kr_id, impact: input.impact };
 
+      const { error } = await supabase.from('milestone_krs').insert(payload);
       if (error) throw error;
       return input;
     },
@@ -32,8 +31,8 @@ export function useAddMilestoneKrLink() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrs(data.milestone_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.key_result_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.kr_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.kr_id) });
       toast.success('KR vinculada ao milestone');
     },
     onError: (error) => {
@@ -50,16 +49,19 @@ export function useRemoveMilestoneKrLink() {
   return useMutation({
     mutationFn: async (input: {
       milestone_id: string;
-      key_result_id: string;
+      kr_id: string;
+      kind: KrLinkKind;
       project_id: string;
     }) => {
       if (!supabase) throw new Error('Client not ready');
+
+      const column = input.kind === 'org' ? 'org_key_result_id' : 'key_result_id';
 
       const { error } = await supabase
         .from('milestone_krs')
         .delete()
         .eq('milestone_id', input.milestone_id)
-        .eq('key_result_id', input.key_result_id);
+        .eq(column, input.kr_id);
 
       if (error) throw error;
       return input;
@@ -68,8 +70,8 @@ export function useRemoveMilestoneKrLink() {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrs(data.milestone_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.key_result_id) });
-      queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.key_result_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.byKr(data.kr_id) });
+      queryClient.invalidateQueries({ queryKey: projectsKeys.milestoneKrsByKr(data.kr_id) });
     },
     onError: (error) => {
       console.error('Error unlinking KR from milestone:', error);

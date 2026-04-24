@@ -86,7 +86,7 @@ describe('ProjectCard', () => {
     renderWithProviders(
       <ProjectCard project={createMockProject({
         krs: [
-          { key_result_id: 'kr-1', kr_title: 'Aumentar conversão', impact: 'high' },
+          { key_result_id: 'kr-1', kr_title: 'Aumentar conversão', impact: 'high', kind: 'team' },
         ],
       })} />
     );

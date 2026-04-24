@@ -9,7 +9,11 @@ const PROJECT_DETAIL_FIELDS = `
   external_url, owner_id, bu_id, created_at, updated_at,
   owner:profiles!projects_owner_id_fkey(id, display_name, photo_url),
   project_teams(team_id, teams:teams!project_teams_team_id_fkey(id, name)),
-  project_krs(key_result_id, impact, kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title)),
+  project_krs(
+    key_result_id, org_key_result_id, impact,
+    kr:okr_team_key_results!project_krs_key_result_id_fkey(id, title),
+    org_kr:okr_org_key_results!project_krs_org_key_result_id_fkey(id, title)
+  ),
   project_milestones(id, project_id, name, owner_id, status, start_date, due_date, notes, sort_order, bu_id, created_at, updated_at, deleted_at)
 ` as const;
 
@@ -43,11 +47,15 @@ export function useProject(projectId: string | undefined) {
         team_name: pt.teams?.name ?? '',
       }));
 
-      const krs = (data.project_krs || []).map((pk: any) => ({
-        key_result_id: pk.key_result_id,
-        kr_title: pk.kr?.title ?? '',
-        impact: pk.impact,
-      }));
+      const krs = (data.project_krs || []).map((pk: any) => {
+        const isOrg = !!pk.org_key_result_id;
+        return {
+          key_result_id: isOrg ? pk.org_key_result_id : pk.key_result_id,
+          kr_title: isOrg ? (pk.org_kr?.title ?? '') : (pk.kr?.title ?? ''),
+          impact: pk.impact,
+          kind: isOrg ? ('org' as const) : ('team' as const),
+        };
+      });
 
       return {
         ...data,
