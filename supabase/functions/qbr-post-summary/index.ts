@@ -158,7 +158,9 @@ async function loadQbrPostData(
     if (area.co_leader_user_id) profileIds.add(area.co_leader_user_id);
   }
 
-  const adminAuthIds = (adminsResult.data || []).map((a: { user_id: string | null }) => a.user_id).filter(Boolean);
+  const adminAuthIds = (adminsResult.data || [])
+    .map((a: { user_id: string | null }) => a.user_id)
+    .filter((id): id is string => !!id);
 
   let leaderAuthIds: string[] = [];
   const profileIdArray = [...profileIds];
@@ -167,7 +169,9 @@ async function loadQbrPostData(
       .from('profiles').select('user_id')
       .in('id', profileIdArray)
       .not('user_id', 'is', null);
-    leaderAuthIds = (profiles || []).map((p: { user_id: string | null }) => p.user_id).filter(Boolean);
+    leaderAuthIds = (profiles || [])
+      .map((p: { user_id: string | null }) => p.user_id)
+      .filter((id): id is string => !!id);
   }
 
   return {

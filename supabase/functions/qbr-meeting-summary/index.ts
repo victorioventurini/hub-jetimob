@@ -331,7 +331,7 @@ serve(async (req) => {
         deadline: d.deadline as string | undefined,
       })),
       crossCommitments: (snapshotData?.crossCommitments || []) as QbrMeetingAgentContext['crossCommitments'],
-      governanceChecklist: snapshotData?.governanceChecklist || {},
+      governanceChecklist: (snapshotData?.governanceChecklist || {}) as QbrMeetingAgentContext['governanceChecklist'],
     };
 
     console.log(`[${requestId}] Orchestrating AI agents for QBR Meeting summary...`);

@@ -401,23 +401,23 @@ serve(async (req) => {
         .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
         .map((k) => ({
           name: k.name as string,
-          currentValue: k.currentValue as number,
-          target: k.target as number,
+          currentValue: (k.currentValue ?? null) as number | null,
+          target: (k.target ?? null) as number | null,
           ragStatus: k.ragStatus as string,
-          variationVsLastMonth: k.variationVsLastMonth as number | undefined,
+          variationVsLastMonth: (k.variationVsLastMonth ?? null) as number | null,
           impactAssessment: k.impactAssessment as string | undefined,
         })),
       orgOkrsSummary: orgOkrSnapshots.map((o) => ({
         title: o.title as string,
         progress: o.progress as number,
-        trend: o.trend as string | undefined,
-        remainsStrategicPriority: o.remainsStrategicPriority as boolean | undefined,
+        trend: (o.trend ?? '') as string,
+        remainsStrategicPriority: (o.remainsStrategicPriority ?? false) as boolean,
       })),
       decisions: decisions.map((d) => ({
         text: d.text as string,
         category: d.category as string,
       })),
-      checklist,
+      checklist: checklist as MbrAgentContext['checklist'],
     };
 
     // Orchestrate AI agents

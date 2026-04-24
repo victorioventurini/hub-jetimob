@@ -305,7 +305,9 @@ serve(async (req) => {
     const { snapshot, buName, teamName, leaderAuthId } = await loadQbrPreData(serviceClient, sessionId, teamId, buId);
     if (!snapshot) return successResponse({ skipped: true, reason: 'no_snapshot' });
 
-    const snapshotData = snapshot?.data || snapshot;
+    const snapshotData = (snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) && 'data' in snapshot
+      ? (snapshot as { data?: unknown }).data
+      : snapshot) as Record<string, unknown> | undefined;
 
     // Load cycle name
     const { data: cycleInfo } = await serviceClient.from('cycles').select('name').eq('id', cycleId).single();
@@ -327,7 +329,7 @@ serve(async (req) => {
         .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
         .map((k) => ({
           name: k.name, currentValue: k.currentValue, target: k.target,
-          ragStatus: k.ragStatus, variationVsLastMonth: k.variationVsLastMonth,
+          ragStatus: k.ragStatus, variationVsLastMonth: k.variationVsLastMonth ?? null,
         })),
       zombieCandidates: (snap.zombieCandidates as QbrPreAgentContext['zombieCandidates']) || [],
       kpisToCreate: (snap.kpisToCreate as QbrPreAgentContext['kpisToCreate']) || [],
