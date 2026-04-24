@@ -4545,21 +4545,27 @@ export type Database = {
       milestone_krs: {
         Row: {
           created_at: string
+          id: string
           impact: Database["public"]["Enums"]["project_impact"]
-          key_result_id: string
+          key_result_id: string | null
           milestone_id: string
+          org_key_result_id: string | null
         }
         Insert: {
           created_at?: string
+          id?: string
           impact?: Database["public"]["Enums"]["project_impact"]
-          key_result_id: string
+          key_result_id?: string | null
           milestone_id: string
+          org_key_result_id?: string | null
         }
         Update: {
           created_at?: string
+          id?: string
           impact?: Database["public"]["Enums"]["project_impact"]
-          key_result_id?: string
+          key_result_id?: string | null
           milestone_id?: string
+          org_key_result_id?: string | null
         }
         Relationships: [
           {
@@ -4581,6 +4587,13 @@ export type Database = {
             columns: ["milestone_id"]
             isOneToOne: false
             referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "milestone_krs_org_key_result_id_fkey"
+            columns: ["org_key_result_id"]
+            isOneToOne: false
+            referencedRelation: "okr_org_key_results"
             referencedColumns: ["id"]
           },
         ]
@@ -7708,20 +7721,26 @@ export type Database = {
       project_krs: {
         Row: {
           created_at: string
+          id: string
           impact: Database["public"]["Enums"]["project_impact"]
-          key_result_id: string
+          key_result_id: string | null
+          org_key_result_id: string | null
           project_id: string
         }
         Insert: {
           created_at?: string
+          id?: string
           impact?: Database["public"]["Enums"]["project_impact"]
-          key_result_id: string
+          key_result_id?: string | null
+          org_key_result_id?: string | null
           project_id: string
         }
         Update: {
           created_at?: string
+          id?: string
           impact?: Database["public"]["Enums"]["project_impact"]
-          key_result_id?: string
+          key_result_id?: string | null
+          org_key_result_id?: string | null
           project_id?: string
         }
         Relationships: [
@@ -7738,6 +7757,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pending_checkins"
             referencedColumns: ["kr_id"]
+          },
+          {
+            foreignKeyName: "project_krs_org_key_result_id_fkey"
+            columns: ["org_key_result_id"]
+            isOneToOne: false
+            referencedRelation: "okr_org_key_results"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_krs_project_id_fkey"
