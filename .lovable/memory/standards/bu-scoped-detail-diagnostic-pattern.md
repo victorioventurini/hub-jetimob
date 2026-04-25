@@ -1,6 +1,6 @@
 ---
 name: BU-Scoped Detail Diagnostic Pattern
-description: Padrão para páginas de detalhe BU-scoped — gate de currentBuId, guard §A.3 obrigatório, filtro explícito por bu_id em todas as queries (inclusive diagnóstico), classificação correta de variants
+description: Padrão para páginas de detalhe BU-scoped — gate de currentBuId, guard §A.3, filtro explícito por bu_id, sync defensivo de header BU com retry one-shot, e diagnóstico tiered (existência → relação → permissão)
 type: standard
 ---
 
