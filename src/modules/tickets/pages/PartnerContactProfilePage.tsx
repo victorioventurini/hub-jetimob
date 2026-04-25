@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { queryKeys } from "@/lib/queryKeys";
