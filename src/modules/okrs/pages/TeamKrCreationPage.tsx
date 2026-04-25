@@ -114,9 +114,26 @@ export default function TeamKrCreationPage() {
     enabled: !!supabase && !!objectiveId && !!objective?.is_shared,
   });
 
+  // ── Contributor mode (cross-team KR) ──
+  const contributorTeamId = searchParams.get('contributor_team_id');
+  const isContribution = !!contributorTeamId && !!objective && contributorTeamId !== objective.team_id;
+
+  // Validate contributor authorization
+  useEffect(() => {
+    if (!isContribution || !objective || contributors === undefined) return;
+    const isAuthorized = contributors.some((c: any) => c.team_id === contributorTeamId);
+    if (!isAuthorized) {
+      toast.error('Seu time não está autorizado a contribuir com este objetivo.');
+      navigate(`/okrs?view=team&team_id=${contributorTeamId}`, { replace: true });
+    }
+  }, [isContribution, objective, contributors, contributorTeamId, navigate]);
+
   // ── Team data including members ──
-  const teamId = objective?.team_id;
-  const { data: teamData } = useTeam(teamId);
+  // effectiveTeamId = time DONO do KR (contribuidor em modo contribuição, owner do objetivo caso contrário)
+  const ownerTeamId = objective?.team_id;
+  const effectiveTeamId = isContribution ? contributorTeamId! : ownerTeamId;
+  const { data: teamData } = useTeam(effectiveTeamId);
+  const { data: ownerTeamData } = useTeam(isContribution ? ownerTeamId : undefined);
 
   // ── Draft management ──
   const {
@@ -130,9 +147,9 @@ export default function TeamKrCreationPage() {
     initializeDraft,
   } = useKrWizardDraft({
     objectiveId: objectiveId || '',
-    teamId: teamId || '',
+    teamId: effectiveTeamId || '',
     cycleId: objective?.cycle_id || null,
-    enabled: !!objectiveId && !!teamId,
+    enabled: !!objectiveId && !!effectiveTeamId,
   });
 
   // Initialize draft when objective loads
