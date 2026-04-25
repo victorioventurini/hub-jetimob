@@ -11,7 +11,7 @@ BU membership cache: toda mutação em bu_user_memberships/bu_units DEVE invalid
 BU selection race: BuContext respeita seleção recente do usuário (5s) e selectBu retenta após refetch quando cache está stale. Ver mem://standards/bu-selection-race-protection.
 Internal OKR navigation: links de OKRs usam `getShareableUrl()` (`/go/...`) para shares; rotas internas canônicas em `okrs.routes.tsx`. Ver mem://standards/links/internal-okr-navigation.
 Shared OKR insights: numerador e denominador SEMPRE no mesmo escopo (teamId+year). Ver mem://features/okrs/shared-okrs-insights-scope-standard.
-BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, manter guard §A.3, classificar `!data` via diagnóstico secundário (cancelled/context_loading/not_found). Ver mem://standards/bu-scoped-detail-diagnostic-pattern.
+BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, filtrar `.eq('bu_id', currentBuId)` em TODAS as queries (inclusive diagnóstico), manter guard §A.3, classificar `!data` apenas em cancelled/not_found. Ver mem://standards/bu-scoped-detail-diagnostic-pattern.
 
 ## Memories
 - [Rules of Hooks](mem://standards/frontend-rules-of-hooks) — Hooks antes de early-returns; deps array com chaves estáveis (não usar `length` como proxy)
@@ -26,6 +26,6 @@ BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, ma
 - [Shared OKR contributor view](mem://features/okrs/shared-okr-contributor-view-standard) — Bloco "OKRs Compartilhadas" no dashboard do time contribuidor; ContributingOkrCard read-only com KRs filtradas por kr.team_id
 - [Team contribution tab](mem://features/teams/team-contribution-tab-standard) — Aba /teams/:id?tab=contribution com 5 sub-tabs, toggle sub-times (off por padrão), sparkline de confidence; rota legada /okrs/team-contribution/:teamId redireciona
 - [BU selection race protection](mem://standards/bu-selection-race-protection) — lastUserSelectionAtRef + janela 5s; effect de init não sobrescreve seleção recente; selectBu retenta após refetch e mostra toast quando BU realmente inacessível
-- [BU detail diagnostic pattern](mem://standards/bu-scoped-detail-diagnostic-pattern) — Gate currentBuId + guard §A.3 + diagnóstico secundário classificando cancelled/context_loading/not_found; helper getBuScopedClientCurrentBuId só p/ telemetria
+- [BU detail diagnostic pattern](mem://standards/bu-scoped-detail-diagnostic-pattern) — Gate currentBuId + `.eq('bu_id', currentBuId)` em TODAS as queries (principal e diagnóstico) + guard §A.3; classifica em cancelled/not_found (sem context_loading enganoso)
 
 
