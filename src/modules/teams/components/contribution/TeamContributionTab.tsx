@@ -240,7 +240,7 @@ const TeamProjectsList = React.memo(function TeamProjectsList({
 }: {
   teamId: string;
 }) {
-  const { data: projects, isLoading } = useProjects({ teamId });
+  const { data: projects, isLoading } = useProjects({ team_id: teamId });
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (!projects || projects.length === 0) {
