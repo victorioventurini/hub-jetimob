@@ -1,7 +1,14 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Target, Share2, Building2, FolderKanban, ArrowRight } from 'lucide-react';
+import {
+  Target,
+  Share2,
+  Building2,
+  FolderKanban,
+  Rocket,
+  ArrowRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { TeamHealthSparkline } from './TeamHealthSparkline';
