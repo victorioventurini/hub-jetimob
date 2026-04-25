@@ -606,7 +606,7 @@ export default function OkrDashboardPage() {
           ) : activeView === 'team' && normalizedTeamId ? (
             <TeamOkrSections
               primaryObjectives={displayObjectives}
-              contributedObjectives={contributedObjectives || []}
+              contributedObjectives={filteredContributedObjectives}
               teamId={normalizedTeamId}
               teamName={
                 (displayObjectives[0] as any)?.team?.name
