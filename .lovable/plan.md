@@ -1,65 +1,87 @@
-## Plano — Aba Membros listar subtimes + membros dos subtimes
+# Aba Contribuição do Time — Iniciativas + Layout Full-Width
 
-### Contexto técnico (auditado)
+## Objetivo
+1. Exibir informações sobre iniciativas vinculadas às KRs do **ciclo atual** dentro da aba Contribuição.
+2. Expandir horizontalmente a análise (hoje comprimida em `lg:col-span-2` por causa da sidebar Líder/Time pai).
 
-- **Página alvo:** `src/modules/teams/pages/TeamDetailPage.tsx`, aba `members` (linhas 207–261).
-- **Hoje:** a aba lista somente `team.members`, vindos de `useTeam(id)`, que faz `profiles.team_id = teamId` (membros diretos apenas).
-- **Hierarquia:** a relação parent → child já é `teams.parent_team_id`. O hook canônico `useBuUsersDirectory` (`mem://standards/users/team-filter-includes-subteams`) já implementa expansão recursiva via `parent_team_id` quando recebe `teamId` + `includeSubteams=true` (default).
-- **Subtimes do time atual:** já vêm em `team.child_teams` (id, name, status) através do mesmo `useTeam(id)`.
-- **Sem novas tabelas, sem migrations, sem mudança de RLS.** Uso somente leituras já permitidas.
+## Diagnóstico
+- A aba vive sob `lg:col-span-2` em `TeamDetailPage.tsx` (linhas 167–359). Isso comprime KPIs e sparkline em telas grandes.
+- `useTeamContributionAnalytics` agrega 7 métricas mas **nunca consulta `okr_initiatives`**.
+- `useKrInitiatives(krId)` e `useKrInitiativesCount(krId)` já são canônicos.
+- "Ciclo atual" deve ser resolvido via `useActiveCycle().activeQuarterlyCycle ?? activeCycle` quando o filtro URL `cycle_id` está vazio.
 
-### Padrões aplicados (pré-checklist)
+## Mudanças
 
-- BU isolation: continua via `useBuScopedSupabase` / `useBuUsersDirectory` (já BU-scoped).
-- Soft-delete: `useBuUsersDirectory` já filtra `deleted_at` e `employment_status='terminated'`.
-- Query keys: novas leituras reutilizam `useBuUsersDirectory` (cache canônico) — sem chaves novas.
-- Sem `select('*')`; sem hardcode de roles; navegação interna via `<Link>`.
-- Memoização (`React.memo`) para o novo componente de grupo (lista densa).
+### 1) Layout full-width só para a aba Contribuição
+- `TeamDetailPage.tsx`: envolver apenas `TabsContent value="contribution"` em wrapper `lg:col-start-1 lg:col-end-4` (escapa da grid 2/3 + sidebar).
+- Outras abas (`members`, `squads`, `subteams`, `rituals`) preservam o layout atual.
 
-### Mudança proposta
+### 2) Hook estendido: `useTeamContributionAnalytics.ts`
+Novos campos no retorno:
+- `initiativesTotalCount`
+- `initiativesByStatus: { planned, in_progress, blocked, completed }`
+- `initiativesAtRiskCount` — `status='blocked' OR (expected_end_date < hoje AND status !== 'completed')`
+- `effectiveCycleId` — ciclo aplicado (passado pelo caller)
 
-Reescrever apenas o `<TabsContent value="members">` da `TeamDetailPage.tsx`. Resto da página permanece intacto.
+Nova SELECT em `okr_initiatives` por `kr_id IN (krIds) AND bu_id = currentBu.id AND deleted_at IS NULL`. Colunas explícitas: `id, status, expected_end_date`. Sem `select('*')`.
 
-Nova estrutura visual da aba "Membros":
+### 3) `TeamContributionTab.tsx`
+- Importar `useActiveCycle`. Quando `cycleId` URL está vazio, usar `activeQuarterlyCycle?.id ?? activeCycle?.id` como `effectiveCycleId` repassado ao hook.
+- `CycleSelect` placeholder muda para "Ciclo atual" quando vazio.
+- Adicionar sub-tab `initiatives` (label "Iniciativas") na constante `SUBTABS`.
+- Render: novo `<TeamInitiativesBlock teamId krIds cycleId />` na `TabsContent value="initiatives"`.
 
-1. **Bloco "Membros diretos do time"** (mantém o que já existe hoje — `team.members`).
-   - Mantém contador `({team.member_count})` no título do card.
-   - Estado vazio inalterado.
+### 4) `TeamContributionOverview.tsx`
+- KPI grid: `grid-cols-2 lg:grid-cols-4 xl:grid-cols-5` para acomodar o 5º card.
+- Novo `KpiCard` "Iniciativas":
+  - value = `initiativesTotalCount`
+  - hint = `${in_progress} em progresso · ${planned} planejadas · ${blocked} bloqueadas`
+  - cta "Ver iniciativas" → `onNavigateToSubtab('initiatives')`
+- Sparkline + Insights lado a lado em `lg:grid-cols-3` (sparkline `lg:col-span-2`, insights `lg:col-span-1`) aproveitando a largura ganha.
 
-2. **Para cada subtime** em `team.child_teams` (ordenado por `name`):
-   - Cabeçalho colapsável (Collapsible, default expandido) com:
-     - Ícone `Building2`, nome do subtime (link para `/teams/{subtime.id}`), badge "Inativo" se `status==='inactive'`, e contador `(N)`.
-   - Lista dos membros do subtime usando o **mesmo layout de linha** de membro já usado hoje (avatar + nome + cargo + ícone Mail). Reaproveitar um pequeno componente `<TeamMemberRow />` extraído da renderização atual para evitar duplicação.
-   - Os membros do subtime vêm de `useBuUsersDirectory({ teamId: subtime.id, includeSubteams: false, pageSize: 200 })`. `includeSubteams: false` aqui é proposital: cada subtime mostra apenas seus diretos; netos aparecem ao expandir o subtime na própria página dele. Isso evita duplicação de pessoas em múltiplos grupos e mantém a hierarquia legível.
-   - Estado vazio do bloco: "Este sub-time não possui membros".
+### 5) Novo: `TeamInitiativesBlock.tsx` (`src/modules/teams/components/contribution/`)
+- Recebe `teamId`, `krIds`, `cycleId`.
+- Query única em `okr_initiatives` (mesma forma que o hook agregador) trazendo todos os campos do `Initiative` + join leve em owners (reusar lógica de `useKrInitiatives` adaptada para múltiplos KRs).
+- Agrupa por KR. Para cada grupo, header com título do KR e lista de `InitiativeCard` (reuso obrigatório de `src/modules/okrs/components/initiatives/InitiativeCard.tsx`).
+- Filtro chips de status: `Todas / Em progresso / Planejadas / Bloqueadas / Atrasadas / Concluídas` — URL state `init_status`.
+- `React.memo` no componente raiz e nos sub-cards de grupo.
 
-3. **Resumo no topo da aba:** linha de texto discreta "X membros diretos · Y sub-times" (sem novo card; respeita as Quick Stats já existentes acima).
+### 6) `OrgKrContributionItem.tsx` (insight inline opcional)
+- Em cada item do time listado, exibir chip pequeno "**N iniciativas**" via `useKrInitiativesCount` (já existe). Sem mudar o layout do card. Se contagem = 0, omite.
 
-### Notas de implementação
+### 7) Query keys
+- `src/lib/queryKeys/teams.ts`: nova `teamsKeys.contributionInitiatives(teamId, buId, cycleId)`.
 
-- Criar um componente `SubteamMembersBlock` (memoizado) em `src/modules/teams/components/SubteamMembersBlock.tsx` que recebe `subteam: { id, name, status }` e usa `useBuUsersDirectory` com `enabled` correto.
-  - Isso isola a query por subtime (1 query por subtime expandido), mantém cache reaproveitável (mesma chave canônica do directory) e evita uma única query gigante.
-- Extrair `TeamMemberRow` (memoizado) em `src/modules/teams/components/TeamMemberRow.tsx` reutilizando o markup atual (`Avatar`, `Mail`, `Link to /users/:id`). Substituir o uso atual em "Membros do Time" por esse componente.
-- Adicionar `Collapsible` (já em `@/components/ui/collapsible`) para os blocos de subtime.
-- Skeletons leves (3 linhas) enquanto cada `useBuUsersDirectory` carrega.
-- Sem alteração em `useTeam`, em rotas, em hooks de teams ou em tabelas. Sem nova query key.
+### 8) Memória
+Atualizar `.lovable/memory/features/teams/team-contribution-tab-standard.md`:
+- Adicionar sub-tab `initiatives` à lista canônica
+- Novo KPI card "Iniciativas"
+- Layout full-width específico (`lg:col-end-4`)
+- Resolução automática de "ciclo atual" via `useActiveCycle`
 
-### Arquivos tocados
+## Standards (TCR)
+- ✅ #3 BU-scoped via `useOptionalBuClient`
+- ✅ #4 Sem `select('*')` — colunas explícitas
+- ✅ #5 Query keys via helpers em `src/lib/queryKeys/teams.ts`
+- ✅ #7 URL state para `subtab=initiatives` e `init_status`
+- ✅ Soft-delete `.is('deleted_at', null)` em `okr_initiatives`
+- ✅ React.memo em listas (`frontend-memoization-standard`)
+- ✅ Reuso obrigatório de `InitiativeCard` (não duplicar)
 
-- `src/modules/teams/pages/TeamDetailPage.tsx` — substituir o conteúdo da `TabsContent value="members"`.
-- `src/modules/teams/components/TeamMemberRow.tsx` — **novo** (extração + `React.memo`).
-- `src/modules/teams/components/SubteamMembersBlock.tsx` — **novo** (consome `useBuUsersDirectory`, `React.memo`).
+## Não-fazer
+- Não criar rota standalone.
+- Não criar migration / não tocar RLS.
+- Não duplicar `InitiativeCard` ou `OrgObjectiveContributionCard`.
+- Não alterar layout das demais abas do `TeamDetailPage`.
 
-### Fora do escopo
-
-- Aba "Sub-times" continua igual.
-- Sem mudanças em RLS, em migrations, em hooks compartilhados.
-- Não toco em nenhum outro pedido pendente desta thread.
-
-### Validação manual (após implementação)
-
-1. Abrir `/teams/d3247da9-3e07-4fa8-9d0a-2527fdf6548f` na BU Jetimob → aba Membros mostra: bloco "Membros diretos" + um bloco por subtime listado em "Sub-times", cada um com seus membros e contador correto.
-2. Subtime sem membros → mostra estado vazio dentro do bloco.
-3. Time sem subtimes → comportamento idêntico ao atual (só o bloco de membros diretos).
-4. Cliques em nome de subtime navegam para `/teams/{id}`; cliques em membros navegam para `/users/{id}`.
-5. Trocar para BU sem acesso ao time → continua redirecionando/erro como hoje (BU isolation preservada).
+## Arquivos
+| Arquivo | Ação |
+|---|---|
+| `src/modules/teams/pages/TeamDetailPage.tsx` | edit (wrapper full-width condicional) |
+| `src/modules/teams/hooks/useTeamContributionAnalytics.ts` | edit (campos de iniciativas) |
+| `src/modules/teams/components/contribution/TeamContributionTab.tsx` | edit (sub-tab + ciclo atual) |
+| `src/modules/teams/components/contribution/TeamContributionOverview.tsx` | edit (5º KPI + grid sparkline/insights) |
+| `src/modules/teams/components/contribution/TeamInitiativesBlock.tsx` | new |
+| `src/lib/queryKeys/teams.ts` | edit (nova key) |
+| `src/modules/okrs/components/team-contribution/OrgKrContributionItem.tsx` | edit (chip iniciativas) |
+| `.lovable/memory/features/teams/team-contribution-tab-standard.md` | update |
