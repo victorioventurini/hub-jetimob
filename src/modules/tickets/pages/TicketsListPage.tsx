@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Inbox } from "lucide-react";
 import { useTickets } from "@/modules/tickets/hooks";
 import { TicketsTable } from "../components/TicketsTable";
+import { TicketCard } from "../components/TicketCard";
 import { TicketFilters } from "../components/TicketFilters";
 import { parseResponsibleValue } from "../components/filters/TicketResponsibleSelect";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -144,7 +145,18 @@ export default function TicketsListPage() {
           onAction={canCreateTicket ? () => navigate("/tickets/new") : undefined}
         />
       ) : (
-        <TicketsTable tickets={tickets} />
+        <>
+          {/* Mobile: cards */}
+          <div className="space-y-3 md:hidden">
+            {tickets.map((ticket) => (
+              <TicketCard key={ticket.id} ticket={ticket} />
+            ))}
+          </div>
+          {/* Desktop: table */}
+          <div className="hidden md:block">
+            <TicketsTable tickets={tickets} />
+          </div>
+        </>
       )}
     </div>
   );
