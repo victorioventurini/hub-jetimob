@@ -235,7 +235,13 @@ export default function TeamKrCreationPage() {
   const { data: ownerTeamData } = useTeam(isContribution ? ownerTeamId : undefined);
 
   // ── Permission gate (evita erro RLS no submit) ──
+  // Em objetivo compartilhado, o líder do time dono também pode criar KRs
+  // para um time contribuidor já autorizado no mesmo objetivo.
   const { canManage, isLoading: canManageLoading } = useCanManageTeamOkr(effectiveTeamId);
+  const { canManage: canManageOwnerTeam, isLoading: canManageOwnerTeamLoading } = useCanManageTeamOkr(
+    isContribution ? ownerTeamId : undefined
+  );
+  const canCreateKrForContext = canManage || (isContribution && canManageOwnerTeam);
 
   // ── Draft management ──
   const {
@@ -427,7 +433,14 @@ export default function TeamKrCreationPage() {
   // Esperamos o BU client estar pronto + a query terminar (loading e fetched)
   // E o gate de permissão resolver. Sem isso, qualquer "esperando dependência"
   // virava loading infinito.
-  if (!isReady || !currentBuId || objectiveLoading || !objectiveFetched || canManageLoading) {
+  if (
+    !isReady ||
+    !currentBuId ||
+    objectiveLoading ||
+    !objectiveFetched ||
+    canManageLoading ||
+    (isContribution && canManageOwnerTeamLoading)
+  ) {
     return <LoadingState fullPage text="Carregando..." />;
   }
 
@@ -480,7 +493,7 @@ export default function TeamKrCreationPage() {
   }
 
   // ── Permission gate ──
-  if (!canManage) {
+  if (!canCreateKrForContext) {
     return (
       <div className="h-screen flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-4">
@@ -488,7 +501,7 @@ export default function TeamKrCreationPage() {
           <h2 className="text-xl font-semibold">Sem permissão para criar KRs</h2>
           <p className="text-muted-foreground text-sm">
             {isContribution
-              ? 'Você não pode criar KRs em nome deste time contribuidor. Apenas líderes do time (ou administradores) podem fazer isso.'
+              ? 'Você não pode criar KRs em nome deste time contribuidor. Apenas líderes do time contribuidor, líderes do time dono do objetivo ou administradores podem fazer isso.'
               : 'Você não tem permissão para criar KRs neste time.'}
           </p>
           <Button
