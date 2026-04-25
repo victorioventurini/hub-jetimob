@@ -52,6 +52,7 @@ interface ContributingOkrCardProps {
 export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   objective,
   currentTeamId,
+  canContribute = false,
 }: ContributingOkrCardProps) {
   const primaryTeamName = objective.team?.name || 'Time não definido';
   const allKrs = objective.key_results || [];
