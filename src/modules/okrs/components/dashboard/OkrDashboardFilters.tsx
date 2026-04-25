@@ -181,7 +181,7 @@ export function OkrDashboardFilters({
       />
 
       {/* Shared/Exclusive filter */}
-      {showSharedFilter && (
+      {sharedFilterVisible && (
         <Popover>
           <PopoverTrigger asChild>
             <Button 
