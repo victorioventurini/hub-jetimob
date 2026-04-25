@@ -327,10 +327,32 @@ export default function TeamKrCreationPage() {
   }, [teamData?.members]);
 
   // ── Loading state ──
-  if (objectiveLoading || !objective || !objectiveContext) {
+  if (objectiveLoading || !objective || !objectiveContext || canManageLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
+  // ── Permission gate ──
+  if (!canManage) {
+    return (
+      <div className="h-screen flex items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-4">
+          <ShieldAlert className="w-12 h-12 mx-auto text-warning" />
+          <h2 className="text-xl font-semibold">Sem permissão para criar KRs</h2>
+          <p className="text-muted-foreground text-sm">
+            {isContribution
+              ? 'Você não pode criar KRs em nome deste time contribuidor. Apenas líderes do time (ou administradores) podem fazer isso.'
+              : 'Você não tem permissão para criar KRs neste time.'}
+          </p>
+          <Button
+            onClick={() => navigate(`/okrs?view=team&team_id=${effectiveTeamId}`)}
+          >
+            Voltar para OKRs do time
+          </Button>
+        </div>
       </div>
     );
   }
