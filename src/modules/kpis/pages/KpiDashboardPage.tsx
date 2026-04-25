@@ -238,22 +238,22 @@ export default function KpiDashboardPage() {
           description={`KPIs e Métricas da ${currentBu?.name || 'organização'}`}
           breadcrumbs={[{ label: "Indicadores" }]}
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {/* v2.86.0: Filtros Salvos */}
               <SavedLinksPopover moduleSlug="kpis" />
-              
+
               {/* v2.87.0: Acesso ao Dashboard de Evolução */}
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild aria-label="Evolução">
                 <Link to="/kpis/evolution">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Evolução
+                  <TrendingUp className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Evolução</span>
                 </Link>
               </Button>
-              
+
               {canCreateIndicator && (
-                <Button onClick={() => setCreateOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Indicador
+                <Button onClick={() => setCreateOpen(true)} aria-label="Novo Indicador">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Novo Indicador</span>
                 </Button>
               )}
             </div>
