@@ -30,7 +30,7 @@ function useSharedObjectivesWithKrs(objectiveIds: string[]) {
       const { data, error } = await supabase
         .from('okr_team_key_results')
         .select(
-          'id, title, baseline, current_value, target, direction, unit, status, team_id, team_objective_id'
+          'id, title, baseline, current_value, target, direction, unit, status, team_id, team_objective_id, owner_user_id, updated_at, type, owner:profiles!okr_team_key_results_owner_user_id_fkey (id, display_name, photo_url)'
         )
         .in('team_objective_id', objectiveIds)
         .is('deleted_at', null)
