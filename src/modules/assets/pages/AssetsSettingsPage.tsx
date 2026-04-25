@@ -38,18 +38,21 @@ export default function AssetsSettingsPage() {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="categories" className="gap-2">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="categories" className="gap-2 flex-1 sm:flex-initial">
             <FolderTree className="h-4 w-4" />
-            Categorias
+            <span className="hidden sm:inline">Categorias</span>
+            <span className="sm:hidden text-xs">Categ.</span>
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="gap-2">
+          <TabsTrigger value="inventory" className="gap-2 flex-1 sm:flex-initial">
             <Package className="h-4 w-4" />
-            Inventário
+            <span className="hidden sm:inline">Inventário</span>
+            <span className="sm:hidden text-xs">Invent.</span>
           </TabsTrigger>
-          <TabsTrigger value="clavicularies" className="gap-2">
+          <TabsTrigger value="clavicularies" className="gap-2 flex-1 sm:flex-initial">
             <Key className="h-4 w-4" />
-            Claviculários
+            <span className="hidden sm:inline">Claviculários</span>
+            <span className="sm:hidden text-xs">Claves</span>
           </TabsTrigger>
         </TabsList>
 
