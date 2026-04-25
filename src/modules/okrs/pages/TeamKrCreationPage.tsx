@@ -121,7 +121,7 @@ export default function TeamKrCreationPage() {
       }
       return data || [];
     },
-    enabled: !!supabase && !!objectiveId && !!objective?.is_shared,
+    enabled: isReady && !!supabase && !!objectiveId && !!objective?.is_shared,
   });
 
   // ── Contributor mode (cross-team KR) ──
