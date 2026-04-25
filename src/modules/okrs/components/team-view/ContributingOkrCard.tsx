@@ -122,7 +122,7 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
           </div>
 
           <Button variant="ghost" size="sm" asChild className="shrink-0">
-            <Link to={`/okrs/team/${objective.team_id}`} aria-label="Abrir time proprietário">
+            <Link to={`/okrs?view=team&team_id=${objective.team_id}`} aria-label="Abrir time proprietário">
               <ExternalLink className="w-4 h-4" />
             </Link>
           </Button>
