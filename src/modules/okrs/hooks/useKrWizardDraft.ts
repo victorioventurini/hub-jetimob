@@ -79,11 +79,15 @@ export interface UseKrWizardDraftReturn {
 // CONSTANTS
 // ============================================================
 
-const DRAFT_VERSION = 2; // Bumped for AI insight persistence
+const DRAFT_VERSION = 3; // Bumped for per-team draft isolation (objectiveId + teamId scoping)
 const STORAGE_KEY_PREFIX = 'okr-draft.team-kr-creation';
 
-function getStorageKey(objectiveId: string): string {
-  return `${STORAGE_KEY_PREFIX}.${objectiveId}`;
+/**
+ * Storage key MUST include teamId for proper draft isolation between owner and
+ * contributor wizards on the same objective. See mem://standards/wizard-draft-isolation.
+ */
+function getStorageKey(objectiveId: string, teamId: string): string {
+  return `${STORAGE_KEY_PREFIX}.${objectiveId}.${teamId}`;
 }
 
 function createEmptyDraft(objectiveId: string, teamId: string, cycleId: string | null): TeamKrDraft {
