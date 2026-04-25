@@ -14,7 +14,19 @@ interface UsePageTitleOptions {
   hubOnly?: boolean;
   pageType?: PageType;
   customDescription?: string;
+  /**
+   * Permite indexação por mecanismos de busca.
+   * Default: false (Hub é uma aplicação privada autenticada).
+   */
+  indexable?: boolean;
 }
+
+/**
+ * Domínio canônico oficial do Hub.
+ * Garante que previews (id-preview--*.lovable.app) e o domínio publicado
+ * (hub-jetimob.lovable.app) não sejam tratados como conteúdo duplicado.
+ */
+const CANONICAL_ORIGIN = "https://hub.jetimob.com";
 
 /**
  * Hook para definir o meta title e meta description da página dinamicamente.
