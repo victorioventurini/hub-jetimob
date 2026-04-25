@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// Avatar primitives no longer used directly here — TeamMemberRow encapsulates them
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
