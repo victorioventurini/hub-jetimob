@@ -408,36 +408,6 @@ export default function TeamDetailPage() {
               </Card>
             )}
 
-            {/* Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Informações</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <Badge
-                    variant={
-                      team.status === "active" ? "default" : "secondary"
-                    }
-                  >
-                    {team.status === "active" ? "Ativo" : "Inativo"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Criado em</span>
-                  <span>
-                    {new Date(team.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Atualizado em</span>
-                  <span>
-                    {new Date(team.updated_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
