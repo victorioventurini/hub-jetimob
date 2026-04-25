@@ -118,7 +118,10 @@ export function useTeam(teamId: string | undefined) {
         .from("teams")
         .select(`
           id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id, area_id,
-          leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url, job_title, work_email)
+          leader:profiles!teams_leader_user_id_fkey(
+            id, display_name, photo_url, work_email,
+            job_title_rel:job_titles!job_title_id(name)
+          )
         `)
         .eq("id", teamId)
         .maybeSingle();
