@@ -1,41 +1,107 @@
-## Problema
+## Pré-checklist (consultas obrigatórias)
 
-A URL `/okrs/objectives/{objectiveId}/krs/create?contributor_team_id={teamId}` não permite criar KRs de contribuição quando já existe um draft do **time owner** (ou de outro time contribuidor) para o mesmo `objectiveId`. A causa-raiz é o `localStorage` key do `useKrWizardDraft` ser composto **apenas** por `objectiveId`, ignorando o `teamId` efetivo. Drafts de owner e de contribuidor se sobrescrevem, gerando estado inconsistente que bloqueia o submit.
+✅ `TECHNICAL_CONTEXT_REGISTRY.md` — lido
+✅ `mem://standards/wizard-draft-isolation` — chave de draft já isolada por `objectiveId+teamId` (fix anterior)
+✅ `mem://features/okrs/okr-methodology-standards` — tipologia Foundational/Contribution/Enabler é canônica
+✅ `mem://standards/frontend-rules-of-hooks` — hooks/side-effects em ordem estável, **nunca** em render
+✅ Codebase: comparei com `KrCreationWizard` (criação de OKR completo) que usa o mesmo `TeamOkrKrTypeStep` corretamente
 
-## Pré-checklist Canônico ✅
-- TCR consultado (wizard hierarchy + KR linked entities)
-- `mem://features/okrs/shared-okr-contributor-view-standard` revisado (URL contract com `contributor_team_id`)
-- `mem://features/okrs/creation-wizard-draft-hydration` revisado (política de hidratação)
-- `mem://standards/url-state-preservation` revisado
-- RLS `okr_team_key_results` (ownership) confirmada — não é bloqueio de permissão; é bug de estado client-side
+---
 
-## Plano de Ação
+## Diagnóstico
 
-### 1. `src/modules/okrs/hooks/useKrWizardDraft.ts`
-- Bump `DRAFT_VERSION` de `2` → `3` para invalidar drafts legados
-- Reescrever `getStorageKey(objectiveId, teamId)` → `okr-draft.team-kr-creation.${objectiveId}.${teamId}`
-- Adicionar `teamId` como dependência do `useEffect` de carregamento e do `storageKey`
-- Validar no load que `parsed.teamId === teamId` (além de `objectiveId`); se não bater, descartar silenciosamente
-- Manter migration silenciosa: legacy keys sem `teamId` são ignoradas (já cairão fora pelo version bump)
+**Sintoma:** Em `/okrs/objectives/:id/krs/create` o usuário não consegue adicionar KRs de **Contribuição** nem **Enabler**, e em alguns casos o wizard fica travado/oscilando.
 
-### 2. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
-- Garantir que `effectiveTeamId` (resolvido a partir de `contributor_team_id` da URL ou ownership do objetivo) é passado ao `useKrWizardDraft` **antes** da inicialização
-- Se draft existente tiver `teamId` divergente do `effectiveTeamId`, chamar `clearDraft()` + `initializeDraft()` automaticamente (auto-healing)
-- Log telemetria: `[wizardDraft] auto-clear: teamId mismatch`
+**Raiz dupla — `src/modules/okrs/pages/TeamKrCreationPage.tsx` linhas 395-398:**
 
-### 3. Memória SSOT
-- Criar `.lovable/memory/standards/wizard-draft-isolation.md`:
-  - Regra: **toda chave de draft de wizard DEVE incluir o escopo completo** (todos IDs que afetam ownership/visibilidade — `objectiveId`, `teamId`, `cycleId` quando aplicável)
-  - Aplicar a `useKrWizardDraft`, `useGenericWizardDraft` e futuros hooks
-- Atualizar `.lovable/memory/index.md` Core rules com one-liner
+```tsx
+case 'kr-type':
+  // Step oculto — pular para kr-detail
+  goNext();          // ⛔ SIDE-EFFECT NA RENDER → re-renders em cascata, loop em produção
+  return null;
+```
 
-## Arquivos
-- ✏️ `src/modules/okrs/hooks/useKrWizardDraft.ts`
-- ✏️ `src/modules/okrs/pages/TeamKrCreationPage.tsx`
-- ✏️ `.lovable/memory/index.md`
-- ➕ `.lovable/memory/standards/wizard-draft-isolation.md`
+**Por que isso quebra tudo:**
 
-## Validação
-1. Acessar URL com `contributor_team_id` → wizard inicializa limpo, sem bloqueio
-2. Owner e contribuidor podem manter drafts paralelos para mesmo objetivo
-3. Reabrir mesma URL preserva o draft correto do escopo
+1. **React anti-pattern (proibido pelo padrão `mem://standards/frontend-rules-of-hooks`)**
+   - `goNext()` dispara `setSearchParams` + `setStep` (que faz `setDraft`).
+   - Chamado durante render → React agenda novo render → render chama de novo → loop / `Maximum update depth exceeded` em produção.
+   - Em DEV o StrictMode pode mascarar, mas em produção (hub.jetimob.com) trava o componente.
+
+2. **Funcionalmente, o usuário fica sem o step de planejamento de KRs**
+   - O `KrTypeStep` (que existe e está pronto em `src/modules/okrs/components/wizards/team-kr-creation/KrTypeStep.tsx`, 286 linhas) é onde o usuário **escolhe quantos KRs de cada tipo** quer criar (`krPlan.foundational/contribution/enabler`).
+   - Pulando esse step, `krPlan` permanece no default `{ foundational: 1, contribution: 0, enabler: 0 }` (definido em `useKrWizardDraft.createEmptyDraft`).
+   - O `TeamOkrKrDetailStep` gera os slots de KR a partir de `krPlan` (linhas 109-124). Com plan default → só 1 slot Foundational. **Impossível** adicionar KRs de Contribuição ou Enabler.
+
+3. **UX quebrada na navegação**
+   - `kr-type` está listado em `WIZARD_CONFIGS['team-kr-creation'].steps` (linha 104 de `wizard-configs.ts`) → aparece no progress bar, mas se o usuário clicar nele para voltar, o `goNext()` em render o joga de volta para `kr-detail` instantaneamente.
+
+---
+
+## Plano de correção
+
+### 1. Renderizar o `KrTypeStep` corretamente em `TeamKrCreationPage.tsx`
+
+Substituir o bloco anti-pattern (linhas 395-398) por uma renderização normal do `KrTypeStep`, alimentando `krPlan` do draft e expondo handler de mudança:
+
+```tsx
+case 'kr-type':
+  return (
+    <KrTypeStep
+      objectiveTitle={objective.title}
+      isSharedObjective={objective.is_shared || false}
+      krPlan={draft.krPlan}
+      onKrPlanChange={(plan) => updateDraft({ krPlan: plan })}
+      onContinue={goNext}
+      onBack={goBack}
+    />
+  );
+```
+
+`KrTypeStep` já está importado em `team-kr-creation/index.ts` e em `TeamKrCreationPage.tsx` (linha 28), então é só usar.
+
+### 2. Atualizar `completedSteps` para refletir a regra real do `kr-type`
+
+Hoje (linhas 300-302) marca `kr-type` como completo se `krPlan.foundational > 0` — está OK, mas ajustar para considerar a soma total e refletir o novo fluxo:
+
+```tsx
+const totalKrs = draft.krPlan.foundational + draft.krPlan.contribution + draft.krPlan.enabler;
+if (totalKrs > 0 && WIZARD_STEPS.indexOf(draft.currentStep) > 2) {
+  completed.push('kr-type');
+}
+```
+
+### 3. Garantir que `goNext`/`goBack` percorrem `kr-type` normalmente
+
+Já percorrem (o array `WIZARD_STEPS` na linha 42-50 inclui `kr-type` na posição 2). Nenhum ajuste necessário aqui — apenas remover a lógica de "pular kr-type" que já não existe explicitamente; o problema era só o render side-effect.
+
+### 4. Validar persistência do `krPlan`
+
+`useKrWizardDraft` já persiste `krPlan` em localStorage e o tipo `KrPlan` em `useKrWizardDraft.ts` casa com o esperado pelo `KrTypeStep` (`{ foundational, contribution, enabler }`). Sem mudanças.
+
+### 5. Criar memória padronizando proibição de side-effects em render
+
+Criar `.lovable/memory/standards/no-render-side-effects.md`:
+
+> **Proibido** chamar setters de estado, navigate, setSearchParams, ou qualquer função que dispare update de state durante o corpo de render de um componente React. Sempre usar `useEffect`. Em wizards, "pular um step" deve ser feito via filtro no array de steps + lógica em `goNext`/`goBack`, **nunca** com `setX()` em render. Histórico: 2026-04-25 — `TeamKrCreationPage` chamava `goNext()` no `case 'kr-type'`, travando criação de KRs de contribuição.
+
+E adicionar referência em `mem://index.md` na seção Core:
+> **No-render-side-effects:** PROIBIDO chamar setState/navigate/setSearchParams durante render. Usar useEffect ou filtrar o caso antes de renderizar.
+
+---
+
+## Arquivos a modificar / criar
+
+- **Editar** `src/modules/okrs/pages/TeamKrCreationPage.tsx` — substituir o `case 'kr-type'` (linhas 395-398) por render real do `KrTypeStep`; ajustar `completedSteps` para `kr-type`.
+- **Criar** `.lovable/memory/standards/no-render-side-effects.md`.
+- **Editar** `.lovable/memory/index.md` — adicionar entrada Core + linha em "Memories — Standards & Patterns".
+
+## Validação pós-fix
+
+1. Rodar `tsc --noEmit` e checar que não há novos erros.
+2. Verificar manualmente em `/okrs/objectives/1470f9f5-fed4-42db-b5fa-406ade6cef6d/krs/create`: o step "Tipos de KR" deve aparecer e permitir incrementar Contribution/Enabler.
+3. Confirmar que após escolher 0 Foundational + 1 Contribution o `TeamOkrKrDetailStep` gera 1 slot do tipo Contribution.
+
+## Riscos
+
+- **Baixo.** Não toca em mutations, RLS ou schema. Apenas restaura comportamento de um step já implementado e remove um anti-pattern. O draft existente em localStorage continua compatível (mesma versão 3, mesma shape).
