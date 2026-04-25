@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { getBuScopedClientCurrentBuId } from '@/integrations/supabase/buScopedClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
@@ -94,11 +95,46 @@ export default function TeamKrCreationPage() {
 
       if (error) throw error;
       // Defensive BU isolation (RLS já filtra, mas garantimos no frontend
-      // conforme DEVELOPMENT_STANDARDS §A.3).
-      if (data && currentBuId && data.bu_id !== currentBuId) return null;
+      // conforme DEVELOPMENT_STANDARDS §A.3 / TCR regra inquebrável #1).
+      // Nunca remover este guard. Telemetria abaixo classifica falsos positivos.
+      if (data && currentBuId && data.bu_id !== currentBuId) {
+        console.warn('[TeamKrCreationPage] BU mismatch discard', {
+          objectiveId,
+          currentBuId,
+          dataBuId: data.bu_id,
+          headerBuId: getBuScopedClientCurrentBuId(),
+        });
+        return null;
+      }
       return data;
     },
-    enabled: isReady && !!supabase && !!objectiveId,
+    // Inclui currentBuId para evitar disparar a query antes do BU estabilizar
+    // (race onde header já está setado mas useBu() ainda retornou null).
+    enabled: isReady && !!supabase && !!objectiveId && !!currentBuId,
+  });
+
+  // ── Diagnóstico secundário: classifica por que `objective` veio null ──
+  // Roda APENAS quando a query principal terminou e retornou null. Usa o mesmo
+  // cliente BU-scoped (não cross-BU), preservando §A.3.
+  const { data: diagnostic } = useQuery({
+    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic'],
+    queryFn: async () => {
+      if (!supabase || !objectiveId) return null;
+      const { data } = await supabase
+        .from('okr_team_objectives')
+        .select('id, bu_id, cancelled_at')
+        .eq('id', objectiveId)
+        .maybeSingle();
+      return data;
+    },
+    enabled:
+      isReady &&
+      !!supabase &&
+      !!objectiveId &&
+      !!currentBuId &&
+      objectiveFetched &&
+      !objective,
+    staleTime: 0,
   });
 
   // ── Fetch contributors if shared ──
