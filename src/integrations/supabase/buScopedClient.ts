@@ -235,6 +235,14 @@ export function getOptionalBuScopedClient(buId: string | null): SupabaseClient<D
   return getBuScopedClient(buId);
 }
 
+/**
+ * Returns the BU ID currently injected by the BU-scoped fetch interceptor.
+ * Use ONLY for telemetry/diagnostics — never for business logic.
+ */
+export function getBuScopedClientCurrentBuId(): string | null {
+  return getCurrentBuId();
+}
+
 export function clearBuClientCache() {
   // Just reset the singleton reference - a new one will be created on next call
   setBuSingleton(null);
