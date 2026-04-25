@@ -167,17 +167,25 @@ export default function TeamKrCreationPage() {
   const currentStep = currentStepFromUrl || draft?.currentStep || 'kr-context';
   const currentStepIndex = WIZARD_STEPS.indexOf(currentStep);
 
-  // ── Sync URL with step ──
+  // ── Sync URL with step (preserva outros params como contributor_team_id) ──
   useEffect(() => {
     if (draft?.currentStep && draft.currentStep !== currentStepFromUrl) {
-      setSearchParams({ step: draft.currentStep }, { replace: true });
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.set('step', draft.currentStep);
+        return next;
+      }, { replace: true });
     }
   }, [draft?.currentStep, currentStepFromUrl, setSearchParams]);
 
   // ── Navigation handlers ──
   const goToStep = useCallback((step: KrWizardStep) => {
     setStep(step);
-    setSearchParams({ step }, { replace: true });
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('step', step);
+      return next;
+    }, { replace: true });
   }, [setStep, setSearchParams]);
 
   const goNext = useCallback(() => {
