@@ -60,11 +60,14 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
   });
 
   const { data: cycles = [] } = useCycles();
-  const cycleParam = cycleId || undefined;
+  const { activeQuarterlyCycle, activeCycle } = useActiveCycle();
+  // Quando o usuário não escolhe ciclo no select, aplicamos o ciclo atual (quarter > qualquer ativo)
+  const effectiveCycleId =
+    cycleId || activeQuarterlyCycle?.id || activeCycle?.id || undefined;
 
   const { data: analytics, isLoading } = useTeamContributionAnalytics(teamId, {
     includeSubteams,
-    cycleId: cycleParam,
+    cycleId: effectiveCycleId,
   });
 
   return (
