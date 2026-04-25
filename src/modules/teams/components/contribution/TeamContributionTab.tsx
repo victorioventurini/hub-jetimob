@@ -23,6 +23,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Target, FolderKanban } from 'lucide-react';
 import { OkrStatusBadge } from '@/modules/okrs/components/OkrStatusBadge';
 import { useProjects } from '@/modules/projects/hooks';
+import { getShareableUrl } from '@/lib/shareableLinks';
 
 interface TeamContributionTabProps {
   teamId: string;
