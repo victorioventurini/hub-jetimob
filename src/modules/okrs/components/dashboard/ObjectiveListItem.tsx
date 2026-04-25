@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,46 +11,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, ChevronDown, User, Plus, MoreHorizontal, Pencil, RefreshCw, Target, Users, Lightbulb, Heart, History, Wand2 } from 'lucide-react';
-import { InitiativesList } from '../initiatives';
-import { ProjectsForKrSection } from '@/modules/projects/components/ProjectsForKrSection';
-import { useKrInitiativesCount } from '../../hooks/useInitiatives';
-import { useProfileId } from '@/hooks/useIdentity';
+import { ChevronRight, Plus, MoreHorizontal, Pencil, Heart, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType, OkrStatus } from '../../types';
-import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
+import { calculateProgress, OkrStatus } from '../../types';
+import { STATUS_CONFIG } from '../../hooks/useOkrStatus';
 import { OrgKrFormDialog } from '../OrgKrFormDialog';
 import { TeamKrFormDialog } from '../TeamKrFormDialog';
 import { OrgObjectiveFormDialog } from '../OrgObjectiveFormDialog';
 import { TeamObjectiveFormDialog } from '../TeamObjectiveFormDialog';
 import { CheckinDialog } from '../CheckinDialog';
 import { SharedOkrBadge } from '../SharedOkrBadge';
-import { OkrScopeBadge, OkrOwnerInfo, RagSummary, OkrKrTypeBadge, KrPrimaryKpiBadge } from '../ui';
+import { OkrScopeBadge, OkrOwnerInfo, RagSummary } from '../ui';
 import { KrHistoryDialog } from '../KrHistoryDialog';
 import { useKrPrimaryKpiBatch } from '../../hooks';
-
-interface KeyResult {
-  id: string;
-  title: string;
-  baseline: number;
-  current_value: number;
-  target: number;
-  unit: string;
-  direction: OkrDirection;
-  status: OkrRagStatus;
-  updated_at: string;
-  type?: OkrKrType;
-  team_id?: string;
-  team_objective_id?: string | null;
-  org_objective_id?: string;
-  /** ID do profile do responsável pela KR */
-  owner_user_id?: string;
-  owner?: {
-    id?: string;
-    display_name: string;
-    photo_url?: string | null;
-  } | null;
-}
+import { KeyResultRow, type KeyResult } from './KeyResultRow';
 
 interface Objective {
   id: string;
