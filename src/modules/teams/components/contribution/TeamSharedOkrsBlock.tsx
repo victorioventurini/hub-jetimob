@@ -8,6 +8,7 @@ import {
   useTeamObjectivesWithSharedInfo,
   useTeamContributedObjectives,
 } from '@/modules/okrs/hooks';
+import { useCanManageTeamOkr } from '@/modules/okrs/hooks/useCanManageTeamOkr';
 import { useBu } from '@/contexts/BuContext';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useQuery } from '@tanstack/react-query';
