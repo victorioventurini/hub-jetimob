@@ -51,11 +51,15 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
     label: "ticket",
   },
   okr_org_objective: {
-    targetPath: (id) => `/okrs/org/${id}`,
+    // Rota canônica: /okrs/org-view/:objectiveId
+    targetPath: (id) => `/okrs/org-view/${id}`,
     label: "objetivo organizacional",
   },
   okr_team_objective: {
-    targetPath: (id) => `/okrs/team/${id}`,
+    // Não existe rota dedicada para team objective; o destino canônico é o
+    // dashboard de OKRs com o objetivo aberto/em foco via ?objective=:id.
+    // Ver mem://standards/links/internal-okr-navigation.
+    targetPath: (id) => `/okrs?objective=${id}`,
     label: "objetivo de time",
   },
   okr_org_kr: {

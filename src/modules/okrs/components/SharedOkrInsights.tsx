@@ -49,8 +49,15 @@ export function SharedOkrInsights({
   }
 
   // Insight: Percentage of shared OKRs
-  if (totalOkrsCount > 0 && sharedOkrsCount > 0) {
-    const percentage = Math.round((sharedOkrsCount / totalOkrsCount) * 100);
+  // SAFETY: numerador e denominador devem vir do mesmo escopo
+  // (ver mem://features/okrs/shared-okrs-insights-scope-standard).
+  // Se sharedOkrsCount > totalOkrsCount, há mismatch de escopo — não renderizamos
+  // o percentual para não exibir valores absurdos como "300%".
+  if (totalOkrsCount > 0 && sharedOkrsCount > 0 && sharedOkrsCount <= totalOkrsCount) {
+    const percentage = Math.min(
+      100,
+      Math.max(0, Math.round((sharedOkrsCount / totalOkrsCount) * 100)),
+    );
     if (percentage > 50) {
       insights.push({
         id: 'high-collaboration',
@@ -66,6 +73,12 @@ export function SharedOkrInsights({
         icon: Link2,
       });
     }
+  } else if (totalOkrsCount > 0 && sharedOkrsCount > totalOkrsCount) {
+    // Defesa: log + não renderiza percentual.
+    console.warn('[SharedOkrInsights] Inconsistent scope: sharedOkrsCount > totalOkrsCount', {
+      sharedOkrsCount,
+      totalOkrsCount,
+    });
   }
 
   // Insight: Overdue shared OKRs

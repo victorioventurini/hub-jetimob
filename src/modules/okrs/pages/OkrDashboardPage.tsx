@@ -116,6 +116,50 @@ export default function OkrDashboardPage() {
     }
   };
 
+  // Deep-linking: ?objective=:id → scroll para o card correspondente
+  // (rota canônica para okr_team_objective via ResolveContextPage)
+  // Ver mem://standards/links/internal-okr-navigation.
+  const objectiveIdFromUrl = searchParams.get('objective');
+  const hasScrolledToObjective = useRef(false);
+  useEffect(() => {
+    if (!objectiveIdFromUrl) return;
+    if (hasScrolledToObjective.current) return;
+    // Aguarda render do card (data-objective-id) — try after a tick
+    const tryScroll = (attempt = 0) => {
+      const el = document.querySelector(
+        `[data-objective-id="${objectiveIdFromUrl}"]`,
+      ) as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight visual temporário
+        el.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'rounded-lg');
+        setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'rounded-lg');
+        }, 2500);
+        hasScrolledToObjective.current = true;
+        // Limpa o param para não reagir em re-renders
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('objective');
+        setSearchParams(newParams, { replace: true });
+      } else if (attempt < 10) {
+        // Cards ainda não montaram — retry
+        setTimeout(() => tryScroll(attempt + 1), 300);
+      } else {
+        // Não encontrado: provavelmente filtro/view escondendo. Avisar.
+        toast.info(
+          'Objetivo não está visível com os filtros atuais. Ajuste a visualização.',
+        );
+        hasScrolledToObjective.current = true;
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('objective');
+        setSearchParams(newParams, { replace: true });
+      }
+    };
+    // Pequeno delay inicial para dados aparecerem
+    const timer = setTimeout(() => tryScroll(), 400);
+    return () => clearTimeout(timer);
+  }, [objectiveIdFromUrl, searchParams, setSearchParams]);
+
   // Queries
   const { data: teams, isLoading: teamsLoading } = useTeams();
   const { data: userProfile } = useUserProfile(effectiveUserId ?? undefined); // Usa userId que respeita impersonação
@@ -192,8 +236,13 @@ export default function OkrDashboardPage() {
     activeView === 'my' ? effectiveProfileId ?? undefined : undefined
   );
 
-  // Shared OKRs insights
-  const sharedInsights = useSharedOkrsInsights();
+  // Shared OKRs insights — escopo casa com a view ativa
+  // (numerador e denominador no MESMO escopo, evita "300% colaborativas")
+  // Ver mem://features/okrs/shared-okrs-insights-scope-standard.
+  const sharedInsights = useSharedOkrsInsights({
+    teamId: activeView === 'team' ? normalizedTeamId : null,
+    year: filters.year,
+  });
   
   // Permission checks for editing
   const { teams: manageableTeams, hasManageableTeams } = useManageableTeams();
@@ -421,11 +470,15 @@ export default function OkrDashboardPage() {
         </div>
 
 
-        {/* Shared OKRs Insights */}
+        {/* Shared OKRs Insights — totalOkrsCount usa MESMO escopo do numerador */}
         {sharedInsights.sharedOkrsCount > 0 && (
           <SharedOkrInsights
             sharedOkrsCount={sharedInsights.sharedOkrsCount}
-            totalOkrsCount={displayObjectives.length}
+            totalOkrsCount={
+              activeView === 'team'
+                ? (teamObjectives?.length ?? 0)
+                : displayObjectives.length
+            }
             overdueSharedOkrsCount={sharedInsights.overdueSharedOkrsCount}
             teamsWithMostDependencies={sharedInsights.teamsWithMostDependencies}
           />

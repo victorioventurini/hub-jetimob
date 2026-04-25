@@ -57,20 +57,52 @@ export function useTeamContributedOkrs(teamId?: string) {
 }
 
 // ============================================================
-// SHARED OKRS SUMMARY
+// SHARED OKRS SUMMARY (com escopo)
 // ============================================================
 
-export function useSharedOkrsSummary() {
+export interface SharedOkrsScope {
+  /** Filtra OKRs onde o time é dono OU contribuidor */
+  teamId?: string | null;
+  /** Filtra por ano (ciclo) */
+  year?: number | null;
+}
+
+/**
+ * Lista os OKRs compartilhados (is_shared=true) na BU atual.
+ *
+ * Quando `scope.teamId` é informado, retorna apenas OKRs onde o time é
+ * dono (primary_team_id) OU contribuidor (contributor_team_ids inclui o id).
+ * Quando `scope.year` é informado, filtra também pelo ano do objetivo.
+ *
+ * Sem escopo, retorna TODOS os shared OKRs visíveis pela RLS — útil apenas
+ * para visões BU-wide (ex: dashboard executivo).
+ */
+export function useSharedOkrsSummary(scope: SharedOkrsScope = {}) {
   const { client: supabase, isReady } = useOptionalBuClient();
+  const { teamId, year } = scope;
 
   return useQuery({
-    queryKey: queryKeys.okrs.sharedSummary(),
+    queryKey: queryKeys.okrs.sharedSummary(teamId ?? null, year ?? null),
     queryFn: async () => {
       if (!supabase) return [];
-      
-      const { data, error } = await supabase
+
+      let query = supabase
         .from('v_shared_okrs_summary')
         .select(AGGREGATE_FIELDS.sharedSummary);
+
+      if (teamId) {
+        // Time é dono OU consta na lista de contribuidores
+        // (postgrest: cs = contains para arrays)
+        query = query.or(
+          `primary_team_id.eq.${teamId},contributor_team_ids.cs.{${teamId}}`,
+        );
+      }
+
+      if (typeof year === 'number') {
+        query = query.eq('year', year);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching shared OKRs summary:', error);
@@ -84,8 +116,12 @@ export function useSharedOkrsSummary() {
   });
 }
 
-export function useSharedOkrsInsights() {
-  const { data: sharedOkrs } = useSharedOkrsSummary();
+/**
+ * Insights derivados do summary, com o MESMO escopo passado para o summary.
+ * Ver mem://features/okrs/shared-okrs-insights-scope-standard.
+ */
+export function useSharedOkrsInsights(scope: SharedOkrsScope = {}) {
+  const { data: sharedOkrs } = useSharedOkrsSummary(scope);
 
   const insights = {
     sharedOkrsCount: sharedOkrs?.length || 0,

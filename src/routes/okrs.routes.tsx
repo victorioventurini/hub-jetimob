@@ -6,7 +6,7 @@
  */
 
 import { lazy } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
@@ -49,6 +49,31 @@ function OkrRoute({ children, requiresBuAdmin = false }: { children: React.React
   );
 }
 
+/**
+ * Redirect legacy `/okrs/team-objective/:id` → `/go/okr_team_objective/:id`.
+ * URLs antigas espalhadas em emails, bookmarks e mensagens continuam funcionando.
+ * Ver mem://standards/links/internal-okr-navigation.
+ */
+function LegacyTeamObjectiveRedirect() {
+  const { objectiveId } = useParams<{ objectiveId: string }>();
+  return <Navigate to={`/go/okr_team_objective/${objectiveId}`} replace />;
+}
+
+/**
+ * Redirect legacy `/okrs/team/:id` (vindo de versões antigas do ResolveContextPage).
+ */
+function LegacyOkrsTeamRedirect() {
+  const { objectiveId } = useParams<{ objectiveId: string }>();
+  return <Navigate to={`/go/okr_team_objective/${objectiveId}`} replace />;
+}
+
+/**
+ * Redirect legacy `/okrs/org/:id` (vindo de versões antigas do ResolveContextPage).
+ */
+function LegacyOkrsOrgRedirect() {
+  const { objectiveId } = useParams<{ objectiveId: string }>();
+  return <Navigate to={`/okrs/org-view/${objectiveId}`} replace />;
+}
 export const okrRoutes = (
   <>
     {/* Dashboard */}
@@ -79,5 +104,10 @@ export const okrRoutes = (
     
     {/* Team Contribution */}
     <Route path="/okrs/team-contribution/:teamId" element={<OkrRoute><TeamContributionPage /></OkrRoute>} />
+
+    {/* Legacy redirects (URLs antigas em emails/bookmarks) */}
+    <Route path="/okrs/team-objective/:objectiveId" element={<LegacyTeamObjectiveRedirect />} />
+    <Route path="/okrs/team/:objectiveId" element={<LegacyOkrsTeamRedirect />} />
+    <Route path="/okrs/org/:objectiveId" element={<LegacyOkrsOrgRedirect />} />
   </>
 );
