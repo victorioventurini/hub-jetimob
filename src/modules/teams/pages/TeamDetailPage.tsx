@@ -32,6 +32,8 @@ import { useTeam, useDeleteTeam } from "../hooks";
 import { useSquads } from "../hooks";
 import { TeamFormDialog } from "../components/TeamFormDialog";
 import { SquadSection } from "../components/SquadSection";
+import { TeamMemberRow } from "../components/TeamMemberRow";
+import { SubteamMembersBlock } from "../components/SubteamMembersBlock";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
