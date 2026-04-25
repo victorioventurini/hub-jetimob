@@ -1,81 +1,73 @@
 
-## Diagnóstico (Pré-checklist concluído)
+## Contexto (pós-checklist)
 
-**Sintoma:** `/teams/d3247da9-...` quebra ao carregar.
+- **TCR / `mem://features/okrs/contributor-kr-uses-modal`**: KRs contribuidoras vivem em `okr_team_key_results` (Team KR). O `ContributingOkrCard` já é o ponto único de UI da contribuição.
+- **Padrão atual em Team KR (`ObjectiveListItem.tsx` linhas 729–749)**: quando expandida, uma KR de time mostra `<InitiativesList>` + `<ProjectsForKrSection>` lado a lado.
+- **Hooks já genéricos e reaproveitáveis** (sem novo código backend):
+  - `useKrInitiatives(krId)` — não distingue Team/Org KR.
+  - `useProjectsForKr(krId)` / `useMilestonesForKr(krId)` — consultam `project_krs.key_result_id` (Team KR), exatamente o caso da KR contribuidora.
+  - `useAddProjectKrLink({ kind: 'team' })` — já suporta o vínculo.
+  - `useCanManageTeamOkr(teamId)` — já governa permissão de líder do time contribuidor.
+- **`mem://features/projects/internal-linking-standard`** e **`mem://features/projects/kr-linking-standard`** definem que o componente correto é `ProjectsForKrSection` com popover de `w-[480px]` e impacto fixo `'medium'` (sem seletor).
+- **Gap**: `ContributingOkrCard` hoje exibe apenas título/progresso por KR contribuidora — **não** monta `InitiativesList` nem `ProjectsForKrSection`. É a única coisa que falta.
 
-**Root cause:** Em `src/modules/teams/hooks/useTeams.ts` (linha 121), o select do leader referencia `job_title` como coluna direta de `profiles`:
+Não há necessidade de migração de schema, novas RLS, novos hooks ou novos componentes — toda a infra já existe e é canônica.
 
-```ts
-leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url, job_title, work_email)
-```
+## Plano de execução
 
-Mas `profiles.job_title` NÃO existe — desde a Wave 2.6 (Multi-BU Job Titles), o vínculo é via FK `profiles.job_title_id → job_titles.id`. PostgREST retorna 400 e a página do time não renderiza.
+### 1. Expandir o card de KR contribuidora em `ContributingOkrCard.tsx`
 
-**Evidências canônicas:**
-- `docs/archive/fixes/FIX_JOB_TITLES_MULTI_BU_ISSUES.md` — documenta o padrão `job_title_rel`.
-- `useTeams.ts` linha 150 (membros) **já aplica** o padrão correto: `job_title_rel:job_titles!job_title_id(name)`.
-- `docs/qa/QA_JOB_TITLES_MULTI_BU.md` — Wave 2.6 confirma a remoção do acesso direto a `job_title`.
+Arquivo: `src/modules/okrs/components/team-view/ContributingOkrCard.tsx`
 
-## Plano de correção (cirúrgica, 1 arquivo)
+- Transformar cada item de `contributedKrs` num bloco expansível (toggle por chevron, ou expansor único como em `ObjectiveListItem`).
+- Quando expandido, renderizar abaixo do progresso da KR:
+  ```tsx
+  <InitiativesList
+    krId={kr.id}
+    krTitle={kr.title}
+    krContext={{
+      id: kr.id,
+      title: kr.title,
+      objectiveTitle: objective.title,
+      teamName: objective.team?.name,
+    }}
+    krTeamId={currentTeamId}                // time contribuidor é dono da KR
+    canEdit={canContribute}                 // mesma permissão que governa "Adicionar KR"
+    isDraft={objective.status === 'draft'}
+  />
+  <ProjectsForKrSection
+    krId={kr.id}
+    krKind="team"                            // KR contribuidora = Team KR
+    canEdit={canContribute}
+  />
+  ```
+- Estado local `expandedKrId: string | null` para controlar o expand (ou `Set` se quisermos múltiplos abertos — alinhar com padrão de `ObjectiveListItem`).
+- `React.memo` já está em uso; manter.
 
-### 1. `src/modules/teams/hooks/useTeams.ts` — função `useTeam()`
+### 2. Permissão (sem regressão)
 
-**Linha 121** — corrigir o select do leader para usar a relação canônica (mesmo padrão dos `members` na linha 150):
+`canContribute` no card já reflete "líder do time contribuidor ou admin", que é o mesmo critério que `useCanManageTeamOkr(currentTeamId)` aplica internamente em `InitiativesList`. Não há nova lógica de RBAC. RLS de `project_krs_insert` e `okr_initiatives` já cobrem o caso (KR pertence ao time do usuário).
 
-```ts
-leader:profiles!teams_leader_user_id_fkey(
-  id, display_name, photo_url, work_email,
-  job_title_rel:job_titles!job_title_id(name)
-)
-```
+### 3. Atualizar memória canônica
 
-**Linhas 175-181** — achatar `job_title_rel.name → job_title` no retorno, mantendo o contrato `TeamWithRelations` esperado por `TeamDetailPage` / `TeamMemberRow`:
+Atualizar `mem://features/okrs/contributor-kr-uses-modal` com a seção:
 
-```ts
-const leader = data.leader
-  ? {
-      id: data.leader.id,
-      display_name: data.leader.display_name,
-      photo_url: data.leader.photo_url,
-      work_email: data.leader.work_email,
-      job_title: (data.leader.job_title_rel as { name: string } | null)?.name || null,
-    }
-  : null;
+> **Iniciativas e Projetos em KR contribuidora**
+> Cada KR contribuidora exibida no `ContributingOkrCard` é expansível e renderiza `InitiativesList` + `ProjectsForKrSection` (`krKind="team"`), idêntico ao padrão de Team KR em `ObjectiveListItem`. Permissão herda de `canContribute`. Nenhum hook/RLS específico — reuso 100% do canon.
 
-return {
-  ...data,
-  leader,
-  child_teams: childTeams || [],
-  member_count: memberCount || 0,
-  members: members || [],
-  parent_team: parentTeam,
-} as unknown as TeamWithRelations & { members: any[] };
-```
+### 4. Validação
 
-### 2. Validação
+- `bunx tsc --noEmit -p tsconfig.app.json` — tipos limpos.
+- QA visual no preview: `/okrs?view=team&team_id=...` → expandir KR contribuidora → verificar (a) listar iniciativas existentes, (b) criar iniciativa, (c) vincular projeto via popover, (d) desvincular.
 
-- `tsc --noEmit` para garantir tipos.
-- Abrir `/teams/d3247da9-3e07-4fa8-9d0a-2527fdf6548f` e verificar:
-  - Página carrega sem erro 400.
-  - Card do líder exibe nome, foto, e-mail e cargo.
-  - BU isolation preservada (linha 130 intacta).
+## O que NÃO será feito (fora de escopo / já coberto)
 
-### 3. Memória (governança)
+- Não criar novos hooks, componentes ou rotas.
+- Não tocar em `useProjectsForKr`/`useMilestonesForKr` — já funcionam para Team KR.
+- Não alterar schema `project_krs`/`milestone_krs` nem RLS.
+- Não reintroduzir seletor de impacto (proibido por `mem://features/projects/kr-linking-standard`).
 
-Criar `mem://standards/users/job-title-relation-access` reforçando que **toda leitura de cargo de um profile deve usar `job_title_rel:job_titles!job_title_id(name)`**, nunca `job_title` direto. Atualizar `mem://index.md` adicionando a referência em "Standards & Patterns".
+## Arquivos afetados
 
-## Conformidade com regras inquebráveis
-
-| Regra | Status |
-|-------|--------|
-| BU-scoped query | ✅ mantida (linha 130 + `useBuScopedSupabase`) |
-| Sem `select('*')` | ✅ colunas explícitas |
-| Query keys via SSOT | ✅ `queryKeys.teams.detail` |
-| Identity convention | ✅ `profiles.id` para leader |
-| Padrão canônico (Wave 2.6) | ✅ `job_title_rel` (idêntico ao já aplicado em `members`) |
-
-## Escopo do que NÃO será alterado
-
-- `useTeams()` (lista) na linha 35 já usa apenas `id, display_name, photo_url` no leader — ok.
-- Nenhuma mudança em RLS, schema, types.ts ou outros componentes.
-- Sem código descentralizado: aplicação direta do padrão canônico já presente no mesmo arquivo.
+- `src/modules/okrs/components/team-view/ContributingOkrCard.tsx` (única mudança de código)
+- `.lovable/memory/features/okrs/contributor-kr-uses-modal.md` (atualização de doc)

@@ -29,3 +29,21 @@ O `BuUserSelect` do campo "Responsável" no `TeamKrFormDialog` recebe
 que apenas membros do time dono (ou contribuidor, em OKR compartilhada)
 e seus subtimes apareçam — nunca a BU inteira. Padrão alinhado com
 `mem://standards/users/team-filter-includes-subteams`.
+
+## Iniciativas e Projetos em KR contribuidora
+
+Cada KR contribuidora exibida em `ContributingOkrCard` é **expansível**
+(chevron à esquerda). Quando expandida, renderiza abaixo do progresso:
+
+- `<InitiativesList krId={kr.id} krTeamId={currentTeamId} canEdit={canContribute} isDraft={objective.status === 'draft'} />`
+- `<ProjectsForKrSection krId={kr.id} krKind="team" canEdit={canContribute} />`
+
+Idêntico ao padrão de Team KR em `ObjectiveListItem` (linhas 729–749).
+KR contribuidora é Team KR (`okr_team_key_results`), portanto:
+- Hooks `useKrInitiatives`, `useProjectsForKr`, `useMilestonesForKr`,
+  `useAddProjectKrLink({ kind: 'team' })` funcionam sem alteração.
+- RLS de `project_krs_insert` e `okr_initiatives` já cobrem (KR pertence
+  ao time do usuário contribuidor).
+- Permissão herda de `canContribute` (mesma que governa "Adicionar KR").
+
+Sem novo hook, schema, RLS ou rota — reuso 100% do canon.
