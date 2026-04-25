@@ -7,6 +7,8 @@ export interface TeamWithRelations extends Team {
     id: string;
     display_name: string;
     photo_url: string | null;
+    job_title?: string | null;
+    work_email?: string | null;
   } | null;
   parent_team?: {
     id: string;
