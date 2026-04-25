@@ -28,28 +28,30 @@ export default function TicketsSettingsPage() {
           ]}
         />
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="partners" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Empresas Parceiras
-            </TabsTrigger>
-            <TabsTrigger value="contacts" className="gap-2">
-              <Users className="h-4 w-4" />
-              Contatos
-            </TabsTrigger>
-            <TabsTrigger value="capabilities" className="gap-2">
-              <Zap className="h-4 w-4" />
-              Capacidades
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="gap-2">
-              <FolderTree className="h-4 w-4" />
-              Categorias
-            </TabsTrigger>
-            <TabsTrigger value="routing" className="gap-2">
-              <Route className="h-4 w-4" />
-              Roteamento
-            </TabsTrigger>
-          </TabsList>
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <TabsList className="w-max">
+              <TabsTrigger value="partners" className="gap-2">
+                <Building2 className="h-4 w-4" />
+                Empresas Parceiras
+              </TabsTrigger>
+              <TabsTrigger value="contacts" className="gap-2">
+                <Users className="h-4 w-4" />
+                Contatos
+              </TabsTrigger>
+              <TabsTrigger value="capabilities" className="gap-2">
+                <Zap className="h-4 w-4" />
+                Capacidades
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="gap-2">
+                <FolderTree className="h-4 w-4" />
+                Categorias
+              </TabsTrigger>
+              <TabsTrigger value="routing" className="gap-2">
+                <Route className="h-4 w-4" />
+                Roteamento
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="partners">
             <PartnerCompaniesTab />
