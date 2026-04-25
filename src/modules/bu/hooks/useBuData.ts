@@ -133,6 +133,8 @@ export function useCreateBu() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus(), refetchType: 'active' });
+      // Garantir que BuContext.userBus reflita a nova BU imediatamente
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBusPrefix(), refetchType: 'active' });
     },
   });
 }
