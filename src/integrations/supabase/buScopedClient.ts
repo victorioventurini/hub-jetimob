@@ -89,7 +89,12 @@ function getJwtRole(token: string): string | null {
 type GlobalThisWithBuSingleton = typeof globalThis & {
   __hubJet_buScopedClient?: SupabaseClient<Database> | null;
   __hubJet_currentBuId?: string | null;
+  /** Timestamp (ms) do último `clearBuClientCache(nextBuId)`. Define a janela
+   *  de proteção contra clobber por re-renders com closures stale. */
+  __hubJet_buSwitchAt?: number;
 };
+
+const BU_SWITCH_GUARD_WINDOW_MS = 5000;
 
 function getBuSingleton(): SupabaseClient<Database> | null {
   return (globalThis as GlobalThisWithBuSingleton).__hubJet_buScopedClient ?? null;
