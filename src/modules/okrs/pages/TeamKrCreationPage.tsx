@@ -16,7 +16,10 @@ import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
 import { WIZARD_CONFIGS } from '../types/wizard';
 import { useKrWizardDraft, useCreateTeamKrBundle, type KrWizardStep } from '@/modules/okrs/hooks';
+import { useCanManageTeamOkr } from '@/modules/okrs/hooks/useCanManageTeamOkr';
 import { useTeam } from '@/modules/teams/hooks';
+import { Button } from '@/components/ui/button';
+import { ShieldAlert } from 'lucide-react';
 
 // Steps
 import {
