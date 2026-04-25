@@ -101,21 +101,21 @@ export function CategoriesTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Categorias e Subcategorias</CardTitle>
             <CardDescription>
               Organize os tickets por categoria para facilitar o roteamento e filtros
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UrlSearchInput
               value={search}
               onChange={setSearch}
               placeholder="Buscar categoria..."
-              className="w-[200px]"
+              className="w-full sm:w-[200px]"
             />
-            <Button onClick={handleCreateCategory}>
+            <Button onClick={handleCreateCategory} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Nova Categoria
             </Button>
@@ -137,10 +137,10 @@ export function CategoriesTab() {
                   open={expandedCategories.has(category.id)}
                   onOpenChange={() => toggleCategory(category.id)}
                 >
-                  <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 rounded-lg border p-3 bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
                       <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
                           {expandedCategories.has(category.id) ? (
                             <ChevronDown className="h-4 w-4" />
                           ) : (
@@ -148,7 +148,7 @@ export function CategoriesTab() {
                           )}
                         </Button>
                       </CollapsibleTrigger>
-                      <span className="font-medium">{category.name}</span>
+                      <span className="font-medium truncate">{category.name}</span>
                       <Badge variant="outline" className="text-xs">
                         {SCOPE_LABELS[category.scope]}
                       </Badge>
@@ -156,14 +156,14 @@ export function CategoriesTab() {
                         ({category.subcategories?.length || 0} subcategorias)
                       </span>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 sm:shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleCreateSubcategory(category.id)}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Subcategoria
+                        <Plus className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Subcategoria</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -183,7 +183,7 @@ export function CategoriesTab() {
                     </div>
                   </div>
                   <CollapsibleContent>
-                    <div className="ml-8 mt-1 space-y-1">
+                    <div className="ml-4 mt-1 space-y-1 sm:ml-8">
                       {category.subcategories?.map((sub) => (
                         <div
                           key={sub.id}

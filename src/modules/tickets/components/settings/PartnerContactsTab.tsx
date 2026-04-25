@@ -81,25 +81,25 @@ export function PartnerContactsTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Contatos Externos</CardTitle>
             <CardDescription>
               Gerencie contatos de empresas parceiras que podem acessar tickets
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <UrlSearchInput
               value={search}
               onChange={setSearch}
               placeholder="Buscar contato..."
-              className="w-[200px]"
+              className="w-full sm:w-[200px]"
             />
             <Select
               value={selectedCompanyId || "all"}
               onValueChange={(v) => setSelectedCompanyId(v === "all" ? undefined : v)}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filtrar por empresa" />
               </SelectTrigger>
               <SelectContent>
@@ -111,16 +111,17 @@ export function PartnerContactsTab() {
                 ))}
               </SelectContent>
             </Select>
-            <Button 
-              variant="outline" 
-              onClick={() => setImportDialogOpen(true)} 
+            <Button
+              variant="outline"
+              onClick={() => setImportDialogOpen(true)}
               disabled={!selectedCompanyId}
               title={!selectedCompanyId ? "Selecione uma empresa para importar" : undefined}
+              className="w-full sm:w-auto"
             >
               <Upload className="h-4 w-4 mr-2" />
               Importar
             </Button>
-            <Button onClick={handleCreate} disabled={companies.length === 0}>
+            <Button onClick={handleCreate} disabled={companies.length === 0} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Novo Contato
             </Button>

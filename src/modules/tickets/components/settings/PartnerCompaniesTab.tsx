@@ -84,21 +84,21 @@ export function PartnerCompaniesTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Empresas Parceiras</CardTitle>
             <CardDescription>
               Gerencie empresas externas que podem criar tickets
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UrlSearchInput
               value={search}
               onChange={setSearch}
               placeholder="Buscar empresa..."
-              className="w-[250px]"
+              className="w-full sm:w-[250px]"
             />
-            <Button onClick={handleCreate}>
+            <Button onClick={handleCreate} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Nova Empresa
             </Button>

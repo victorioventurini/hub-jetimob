@@ -111,9 +111,9 @@ export function ContactCapabilitiesTab() {
 
           {/* Capabilities for Selected Company */}
           <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
-              <div>
-                <CardTitle className="text-base">
+            <CardHeader className="flex flex-col gap-3 space-y-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <CardTitle className="text-base truncate">
                   {selectedCompanyId 
                     ? companies.find(c => c.id === selectedCompanyId)?.name 
                     : "Selecione uma empresa"}
@@ -125,7 +125,7 @@ export function ContactCapabilitiesTab() {
                 </CardDescription>
               </div>
               {selectedCompanyId && (
-                <Button size="sm" onClick={() => setDialogOpen(true)}>
+                <Button size="sm" onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar
                 </Button>
@@ -153,14 +153,14 @@ export function ContactCapabilitiesTab() {
                   {capabilities.map((cap) => (
                     <div
                       key={cap.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                      className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card"
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{cap.contact?.name}</span>
-                          <span className="text-xs text-muted-foreground">{cap.contact?.email}</span>
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span className="font-medium truncate">{cap.contact?.name}</span>
+                          <span className="text-xs text-muted-foreground truncate">{cap.contact?.email}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="outline">{cap.category?.name}</Badge>
                           {cap.subcategory ? (
                             <Badge variant="secondary">{cap.subcategory.name}</Badge>
@@ -173,6 +173,7 @@ export function ContactCapabilitiesTab() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeleteTarget(cap)}
+                        className="shrink-0"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
