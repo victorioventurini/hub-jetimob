@@ -143,9 +143,9 @@ export default function PhoneLinesPage() {
 
         {canManagePhoneLines && (
           <div className="shrink-0 ml-auto">
-            <Button onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Linha
+            <Button onClick={handleCreate} aria-label="Nova Linha">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Nova Linha</span>
             </Button>
           </div>
         )}
