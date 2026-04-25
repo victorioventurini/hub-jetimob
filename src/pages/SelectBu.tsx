@@ -134,19 +134,19 @@ export default function SelectBu() {
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <img src={JetimobIcon} alt="Hub" className="w-6 h-6" style={{ filter: 'brightness(0) invert(1)' }} />
+      <header className="bg-card border-b border-border px-4 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <img src={JetimobIcon} alt="Hub" className="w-5 h-5 sm:w-6 sm:h-6" style={{ filter: 'brightness(0) invert(1)' }} />
             </div>
-            <span className="text-lg font-semibold">Hub</span>
+            <span className="text-base sm:text-lg font-semibold truncate">Hub</span>
           </div>
           
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 px-2">
+              <Button variant="ghost" className="flex items-center gap-2 sm:gap-3 px-2 shrink-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.photo_url || undefined} />
                   <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
@@ -191,18 +191,18 @@ export default function SelectBu() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="flex-1 flex items-center justify-center px-4 py-6 sm:p-6">
         <div className="w-full max-w-2xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="text-center mb-8"
+            className="text-center mb-6 sm:mb-8"
           >
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               Olá, {profile?.first_name || "Jetimober"}! 👋
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-base sm:text-lg">
               Selecione a Business Unit que deseja acessar
             </p>
           </motion.div>
