@@ -374,7 +374,7 @@ export default function TeamKrCreationPage() {
   // Esperamos o BU client estar pronto + a query terminar (loading e fetched)
   // E o gate de permissão resolver. Sem isso, qualquer "esperando dependência"
   // virava loading infinito.
-  if (!isReady || objectiveLoading || !objectiveFetched || canManageLoading) {
+  if (!isReady || !currentBuId || objectiveLoading || !objectiveFetched || canManageLoading) {
     return <LoadingState fullPage text="Carregando..." />;
   }
 
