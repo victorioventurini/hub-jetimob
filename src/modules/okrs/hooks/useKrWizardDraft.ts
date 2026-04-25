@@ -127,32 +127,48 @@ export function useKrWizardDraft(options: UseKrWizardDraftOptions): UseKrWizardD
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
   const initializedRef = useRef(false);
 
-  // Storage key
-  const storageKey = getStorageKey(objectiveId);
+  // Storage key — inclui teamId para isolar drafts de owner vs contribuidor
+  const storageKey = getStorageKey(objectiveId, teamId);
 
-  // ── Load from localStorage on mount ──
+  // ── Load from localStorage on mount (or when scope changes) ──
   useEffect(() => {
-    if (!enabled || !objectiveId || initializedRef.current) return;
+    if (!enabled || !objectiveId || !teamId) return;
+
+    // Reset flag quando o escopo muda (objectiveId/teamId)
+    initializedRef.current = false;
 
     const savedLocal = localStorage.getItem(storageKey);
 
     if (savedLocal) {
       try {
         const parsed = JSON.parse(savedLocal) as TeamKrDraft;
-        if (parsed.version === DRAFT_VERSION && parsed.objectiveId === objectiveId) {
+        if (
+          parsed.version === DRAFT_VERSION &&
+          parsed.objectiveId === objectiveId &&
+          parsed.teamId === teamId
+        ) {
           setDraft(parsed);
           setHasSavedDraft(true);
           initializedRef.current = true;
           return;
         }
+        // Escopo divergente ou versão antiga → descartar silenciosamente
+        console.warn('[useKrWizardDraft] discarding stale draft (scope/version mismatch)', {
+          storageKey,
+          parsedTeamId: parsed.teamId,
+          expectedTeamId: teamId,
+        });
+        localStorage.removeItem(storageKey);
       } catch (e) {
         console.error('Failed to parse local KR draft:', e);
         localStorage.removeItem(storageKey);
       }
     }
 
+    setDraft(null);
+    setHasSavedDraft(false);
     initializedRef.current = true;
-  }, [enabled, objectiveId, storageKey]);
+  }, [enabled, objectiveId, teamId, storageKey]);
 
   // ── Persist to localStorage when draft changes ──
   useEffect(() => {
