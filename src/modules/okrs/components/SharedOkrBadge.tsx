@@ -72,25 +72,56 @@ export function SharedOkrBadge({
 
   // Compact mode - just the badge with tooltip
   if (compact) {
+    const MAX_INLINE = 3;
+    const visibleTeams = inlineTeams ? contributingTeams.slice(0, MAX_INLINE) : [];
+    const hiddenCount = inlineTeams ? Math.max(0, contributingTeams.length - MAX_INLINE) : 0;
     return (
       <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "bg-status-purple-muted text-status-purple border-status-purple/30",
-                className
-              )}
+        <span className="inline-flex flex-wrap items-center gap-1 align-middle">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "bg-status-purple-muted text-status-purple border-status-purple/30",
+                  className
+                )}
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Compartilhada
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{tooltipContent}</TooltipContent>
+          </Tooltip>
+          {inlineTeams && visibleTeams.map((t) => (
+            <Badge
+              key={t.id}
+              variant="outline"
+              className="text-[10px] sm:text-xs border-status-purple/30 text-muted-foreground bg-transparent"
             >
-              <Users className="w-3 h-3 mr-1" />
-              Compartilhada
+              {t.name}
             </Badge>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {tooltipContent}
-          </TooltipContent>
-        </Tooltip>
+          ))}
+          {inlineTeams && hiddenCount > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] sm:text-xs border-status-purple/30 text-muted-foreground bg-transparent"
+                >
+                  +{hiddenCount}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <div className="text-xs space-y-0.5">
+                  {contributingTeams.slice(MAX_INLINE).map((t) => (
+                    <div key={t.id}>{t.name}</div>
+                  ))}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </span>
       </TooltipProvider>
     );
   }
