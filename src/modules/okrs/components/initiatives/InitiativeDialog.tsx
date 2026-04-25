@@ -35,23 +35,25 @@ interface InitiativeDialogProps {
   krId: string;
   krContext?: KrContext;
   initiative?: Initiative | null;
+  /**
+   * ID do time dono da KR. Quando informado, o seletor de Responsável e
+   * Contribuidores é escopado a este time + subtimes (padrão canônico
+   * `mem://standards/users/team-filter-includes-subteams`).
+   */
+  krTeamId?: string;
 }
 
 const statuses: InitiativeStatus[] = ['planned', 'in_progress', 'blocked', 'completed'];
 const priorities: InitiativePriority[] = ['low', 'medium', 'high'];
 
-export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiative }: InitiativeDialogProps) {
-  const { user } = useAuth();
+export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiative, krTeamId }: InitiativeDialogProps) {
+  const profileId = useProfileId();
   const { currentBu } = useBu();
   const createMutation = useCreateInitiative();
   const updateMutation = useUpdateInitiative();
-  const { data: profiles = [] } = useBuUsersDirectory({ pageSize: 200 });
-  
+
   const isEditing = !!initiative;
   const isLoading = createMutation.isPending || updateMutation.isPending;
-
-  const [ownerOpen, setOwnerOpen] = useState(false);
-  const [contributorsOpen, setContributorsOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
