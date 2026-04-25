@@ -75,9 +75,9 @@ export default function RecommendationsPage() {
           ]}
           actions={
             canManageRecommendations && (
-              <Button onClick={handleCreate}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Recomendação
+              <Button onClick={handleCreate} aria-label="Nova Recomendação">
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Nova Recomendação</span>
               </Button>
             )
           }
