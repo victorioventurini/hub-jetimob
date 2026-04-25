@@ -210,12 +210,12 @@ export default function TeamKrCreationPage() {
 
   // ── Submit handler ──
   const handleSubmit = useCallback(async () => {
-    if (!draft || !objectiveId || !teamId) return;
+    if (!draft || !objectiveId || !effectiveTeamId) return;
 
     try {
       await createKrBundle.mutateAsync({
         objectiveId,
-        teamId,
+        teamId: effectiveTeamId,
         keyResults: draft.draftKrs.map(kr => ({
           title: kr.title,
           type: kr.type,
@@ -236,11 +236,11 @@ export default function TeamKrCreationPage() {
       });
 
       clearDraft();
-      navigate('/okrs');
+      navigate(isContribution ? `/okrs?view=team&team_id=${effectiveTeamId}` : '/okrs');
     } catch (error) {
       console.error('Failed to create KRs:', error);
     }
-  }, [draft, objectiveId, teamId, createKrBundle, clearDraft, navigate]);
+  }, [draft, objectiveId, effectiveTeamId, isContribution, createKrBundle, clearDraft, navigate]);
 
   // ── Objective context for KrContextStep ──
   const objectiveContext: ObjectiveContext | null = useMemo(() => {
