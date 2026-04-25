@@ -57,6 +57,7 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   currentTeamId,
   canContribute = false,
 }: ContributingOkrCardProps) {
+  const [showAddKrDialog, setShowAddKrDialog] = useState(false);
   const primaryTeamName = objective.team?.name || 'Time não definido';
   const allKrs = objective.key_results || [];
 
