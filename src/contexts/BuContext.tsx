@@ -190,22 +190,51 @@ export function BuProvider({ children }: { children: ReactNode }) {
   const selectBu = useCallback((buId: string) => {
     const hasAccess = userBus.some(m => m.bu_id === buId);
     if (!hasAccess) {
-      // Cache stale: a BU pode ter sido criada/adicionada agora e ainda não
-      // refletida em `userBus`. Logamos para debug e forçamos refetch para
-      // que o próximo clique funcione. Não trocamos automaticamente para
-      // evitar loops/race conditions.
-      console.warn("[BuContext.selectBu] BU não acessível em userBus", {
+      // Cache stale OU usuário sem acesso. Forçamos refetch e, se a BU
+      // aparecer, retentamos a seleção uma única vez. Sem essa retentativa,
+      // o clique ficava silenciosamente sem efeito quando o membership tinha
+      // acabado de ser criado em outra aba.
+      console.warn("[BuContext.selectBu] BU não acessível em userBus — refetch+retry", {
         requestedBuId: buId,
         availableBuIds: userBus.map(m => m.bu_id),
       });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.bu.userBusPrefix(),
-        refetchType: 'active',
-      });
+      void queryClient
+        .invalidateQueries({
+          queryKey: queryKeys.bu.userBusPrefix(),
+          refetchType: 'active',
+        })
+        .then(async () => {
+          const refetched = queryClient.getQueriesData<UserBuMembership[]>({
+            queryKey: queryKeys.bu.userBusPrefix(),
+          });
+          const flat = refetched.flatMap(([, data]) => data ?? []);
+          const found = flat.some((m) => m.bu_id === buId);
+          if (found) {
+            console.info("[BuContext.selectBu] Retry após refetch — BU encontrada", { buId });
+            // Re-acionar selectBu agora que o cache está fresco.
+            // Próxima chamada cairá no caminho normal.
+            // Marcamos como seleção do usuário para o effect de init respeitar.
+            lastUserSelectionAtRef.current = Date.now();
+            setCurrentBuId(buId);
+            setBuSelected(true);
+            localStorage.setItem(BU_STORAGE_KEY, buId);
+            localStorage.setItem(BU_SELECTED_KEY, "true");
+            setTenantId(buId);
+            clearBuClientCache();
+            queryClient.clear();
+          } else {
+            console.warn("[BuContext.selectBu] BU ainda ausente após refetch — sem acesso", { buId });
+            toast.error("Você não tem acesso a esta Business Unit (ou ela ainda não foi sincronizada).");
+          }
+        });
       return;
     }
 
     const isChanging = currentBuId !== buId;
+    // Marca seleção explícita do usuário ANTES de qualquer setState para o
+    // guard do effect de init pegar (effects rodam após render).
+    lastUserSelectionAtRef.current = Date.now();
+    console.info("[BuContext.selectBu]", { buId, isChanging, prevBuId: currentBuId });
     setCurrentBuId(buId);
     setBuSelected(true);
     localStorage.setItem(BU_STORAGE_KEY, buId);
