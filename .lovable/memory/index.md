@@ -10,6 +10,7 @@ BU-scoped detail keys: query keys de detalhe DEVEM incluir `currentBuId` e separ
 BU membership cache: toda mutação em bu_user_memberships/bu_units DEVE invalidar `queryKeys.bu.userBusPrefix()`. Ver mem://standards/bu-membership-cache-invalidation.
 Internal OKR navigation: links de OKRs usam `getShareableUrl()` (`/go/...`) para shares; rotas internas canônicas em `okrs.routes.tsx`. Ver mem://standards/links/internal-okr-navigation.
 Shared OKR insights: numerador e denominador SEMPRE no mesmo escopo (teamId+year). Ver mem://features/okrs/shared-okrs-insights-scope-standard.
+BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, manter guard §A.3, classificar `!data` via diagnóstico secundário (cancelled/context_loading/not_found). Ver mem://standards/bu-scoped-detail-diagnostic-pattern.
 
 ## Memories
 - [Rules of Hooks](mem://standards/frontend-rules-of-hooks) — Hooks antes de early-returns; deps array com chaves estáveis (não usar `length` como proxy)
@@ -23,5 +24,6 @@ Shared OKR insights: numerador e denominador SEMPRE no mesmo escopo (teamId+year
 - [Shared OKR edit hydration](mem://features/okrs/shared-okr-edit-hydration-standard) — Caller deve passar is_shared/responsibility_model/org_objective_id; hidratação one-shot de contribuidores; diff no save
 - [Shared OKR contributor view](mem://features/okrs/shared-okr-contributor-view-standard) — Bloco "OKRs Compartilhadas" no dashboard do time contribuidor; ContributingOkrCard read-only com KRs filtradas por kr.team_id
 - [Team contribution tab](mem://features/teams/team-contribution-tab-standard) — Aba /teams/:id?tab=contribution com 5 sub-tabs, toggle sub-times (off por padrão), sparkline de confidence; rota legada /okrs/team-contribution/:teamId redireciona
+- [BU detail diagnostic pattern](mem://standards/bu-scoped-detail-diagnostic-pattern) — Gate currentBuId + guard §A.3 + diagnóstico secundário classificando cancelled/context_loading/not_found; helper getBuScopedClientCurrentBuId só p/ telemetria
 
 
