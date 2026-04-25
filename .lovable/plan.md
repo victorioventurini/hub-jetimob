@@ -1,24 +1,48 @@
-# Auditoria pós-correção (2026-04-25)
+# Habilitação de Partner: Ferrigolo Advogados Associados → BU Victorio Venturini
 
-## Reverso: janela `BU_SWITCH_GUARD_WINDOW_MS` em `buScopedClient.ts`
+## Auditoria Realizada (TCR + DB)
 
-**Decisão:** revertida. Era anti-pattern arquitetural por:
+| Verificação | Resultado |
+|---|---|
+| Partner `92ba2f29-28b3-4c9e-a23a-d8daf926db5a` (Ferrigolo Advogados, CNPJ 28.715.249/0001-00) | ✅ Existe em `external_companies`, status `active`, `deleted_at IS NULL` |
+| BU `2eeeb494-178b-4a6d-96ee-d103fda448a0` (Victorio Venturini) | ✅ Existe em `bu_units` (tabela canônica de BUs) |
+| Associação atual em `external_company_bu_associations` | Apenas Jetimob (`a0000000…`) e Jet Experience (`f3d2d8a5…`); **nenhuma com Victorio Venturini** |
+| Conflito UNIQUE(external_company_id, bu_id) | ✅ Sem conflito |
+| Schema da tabela | Coluna `role` NOT NULL com default `'partner'`; demais campos opcionais cobertos |
 
-1. **Camada errada.** Guards temporais de transição de tenant pertencem ao `BuContext` (que já expõe `isSwitchingBu`), não ao client de transporte.
-2. **Redundância.** O swap atômico em `clearBuClientCache(buId)` + fallback de `localStorage` no fetch interceptor já garantem coerência determinística do header `x-current-bu-id`.
-3. **Heurística temporal vs. determinismo.** O TCR §Conventions exige soluções determinísticas; janelas de tolerância introduzem incerteza e bugs latentes em CI/HMR/abas múltiplas.
-4. **Padrão canônico já existia.** `usePrefetchRoute` (e qualquer consumidor que dispare requests durante a janela de troca) deve gatear via `useBu().isSwitchingBu`. Esse é o contrato documentado.
+## Conformidade com Padrões
 
-## Mantidos (em conformidade com TCR + memórias)
+- **Soft-delete policy**: registro novo, `deleted_at IS NULL` (default). ✅
+- **BU-scoped data**: `bu_id` preenchido explicitamente. ✅
+- **Tipo de operação**: DML (INSERT de dados) → usar **insert tool**, não migration (conforme `<updating-tables>`). ✅
+- **Sem alteração de schema, RLS, código ou tipos gerados**.
 
-- `TeamKrCreationPage.tsx` — `ensureBuHeaderSync` + retry one-shot + diagnóstico tiered. Conforme `mem://standards/bu-scoped-detail-diagnostic-pattern` regras #8 e #9. Defesa em profundidade legítima contra: (a) HMR re-avaliando o módulo do singleton; (b) troca de BU em outra aba (multi-tab) propagada via `localStorage` mas não via `globalThis`.
-- `ResourceNotFoundState` — variante `permission_denied`. Pertence à camada de apresentação, sem impacto em segurança.
-- Standard `bu-scoped-detail-diagnostic-pattern` — atualizado com regras #8/#9.
+## Execução (única ação)
 
-## Conformidade com pré-checklist
+```sql
+INSERT INTO public.external_company_bu_associations
+  (external_company_id, bu_id, is_active, role, notes)
+VALUES
+  ('92ba2f29-28b3-4c9e-a23a-d8daf926db5a',
+   '2eeeb494-178b-4a6d-96ee-d103fda448a0',
+   true,
+   'partner',
+   'Habilitação manual solicitada pelo admin — Ferrigolo Advogados Associados na BU Victorio Venturini');
+```
 
-A próxima ação sobre `buScopedClient.ts` ou `BuContext.tsx` precisa consultar:
-- TCR §1 (Architecture) — modelo multi-BU
-- TCR §4 (Conventions) — RLS + queries determinísticas
-- `mem://architecture/auth/supabase-client-sync-standard` — globalClient é o único refresh holder
-- `mem://standards/bu-scoped-detail-diagnostic-pattern` — gates e diagnóstico de páginas de detalhe
+## Validação Pós-Execução
+
+```sql
+SELECT a.id, a.bu_id, b.name AS bu_name, a.is_active, a.role, a.created_at
+FROM external_company_bu_associations a
+JOIN bu_units b ON b.id = a.bu_id
+WHERE a.external_company_id = '92ba2f29-28b3-4c9e-a23a-d8daf926db5a'
+  AND a.deleted_at IS NULL
+ORDER BY a.created_at;
+```
+
+Esperado: 3 linhas (Jetimob, Jet Experience, **Victorio Venturini**).
+
+## Riscos
+
+Nenhum. Operação aditiva, idempotente em relação ao estado atual (a UNIQUE protege contra re-execução acidental), reversível via `UPDATE … SET deleted_at = now()` se necessário.
