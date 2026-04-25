@@ -52,14 +52,14 @@ export function KpiDashboardFilters({
   const scopeLabels = getScopeLabels(currentBu?.name);
   
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 w-full">
       {/* Tipo de Indicador - primary filter */}
       {onIndicatorTypeChange && (
         <Select
           value={indicatorType}
           onValueChange={(value) => onIndicatorTypeChange(value as KpiIndicatorType | "all")}
         >
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
@@ -79,7 +79,7 @@ export function KpiDashboardFilters({
           value={ragStatus}
           onValueChange={(value) => onRagStatusChange(value as KpiRagStatus | "all")}
         >
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +101,7 @@ export function KpiDashboardFilters({
           value={krLinkStatus}
           onValueChange={(value) => onKrLinkStatusChange(value as KpiKrLinkStatus | "all")}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Vínculo com KRs">
               {krLinkStatus === "all" ? (
                 "Todos os vínculos"
@@ -134,7 +134,7 @@ export function KpiDashboardFilters({
           onValueChange={(value) => onAreaChange(value ?? "all")}
           includeAll
           allLabel="Todas as áreas"
-          triggerClassName="w-[180px]"
+          triggerClassName="w-full sm:w-[180px]"
         />
       )}
 
@@ -144,7 +144,7 @@ export function KpiDashboardFilters({
           value={scope}
           onValueChange={(value) => onScopeChange(value as KpiScope | "all")}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Escopo" />
           </SelectTrigger>
           <SelectContent>
@@ -164,7 +164,7 @@ export function KpiDashboardFilters({
         onValueChange={(value) => onTeamChange(value ?? "all")}
         includeAll
         allLabel="Todos os times"
-        triggerClassName="w-[200px]"
+        triggerClassName="w-full sm:w-[200px]"
       />
     </div>
   );
