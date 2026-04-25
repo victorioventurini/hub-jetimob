@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { BuUnit, UserBuMembership } from "@/modules/bu/types";
 import { useUserBus } from "@/modules/bu/hooks";
 import { useExternalUserBus } from "@/modules/external/hooks";
@@ -63,6 +64,13 @@ export function BuProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem(BU_SELECTED_KEY) === "true";
   });
   const [hasInitialized, setHasInitialized] = useState(false);
+  // Timestamp da última seleção explícita do usuário. Usado pelo effect de
+  // inicialização para NÃO sobrescrever uma escolha recente (proteção contra
+  // race entre `queryClient.clear()` em `selectBu` e o refetch de `useUserBus`,
+  // que reordenaria estado e poderia cair no fallback `defaultBu = is_default`,
+  // restaurando a BU padrão por cima da escolha do usuário).
+  const lastUserSelectionAtRef = useRef<number>(0);
+  const RECENT_SELECTION_WINDOW_MS = 5000;
 
   // Combined loading state - wait for both auth AND buses to load
   const isLoading = authLoading || busLoading || (!hasInitialized && !!user);
