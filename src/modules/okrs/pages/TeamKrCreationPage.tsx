@@ -378,19 +378,35 @@ export default function TeamKrCreationPage() {
     return <LoadingState fullPage text="Carregando..." />;
   }
 
-  // ── Resource not found (objetivo inexistente, cancelado ou em outra BU) ──
+  // ── Resource not found (classificado pelo diagnóstico secundário) ──
   if (!objective) {
+    // Classificação: o diagnóstico usa o MESMO cliente BU-scoped, sem cross-BU lookup.
+    // - cancelled_at != null → objetivo foi cancelado.
+    // - row encontrada e ativa → guard §A.3 descartou por race de hidratação.
+    //   Mostramos estado "context_loading" e a query refaz quando currentBuId estabilizar.
+    // - row null → realmente inexistente / sem permissão RLS.
+    const isCancelled = !!diagnostic?.cancelled_at;
+    const isContextRace = !!diagnostic && !diagnostic.cancelled_at;
+    const variant = isCancelled
+      ? 'cancelled'
+      : isContextRace
+        ? 'context_loading'
+        : 'not_found';
+    const customMessage = isCancelled
+      ? 'Este objetivo foi cancelado e não pode mais receber novos Key Results.'
+      : isContextRace
+        ? 'Estamos finalizando o carregamento da sua Business Unit. Recarregue a página em alguns segundos.'
+        : isContribution
+          ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido removido ou seu time não está autorizado a contribuir.'
+          : 'O objetivo que você tentou acessar foi removido ou você não tem permissão para visualizá-lo.';
     return (
       <ResourceNotFoundState
         resourceType="objetivo"
         resourceId={objectiveId}
         moduleRoot="/okrs"
         viewAllLabel="Ver OKRs"
-        customMessage={
-          isContribution
-            ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido cancelado, removido ou está em outra Business Unit.'
-            : 'O objetivo que você tentou acessar foi removido, cancelado ou não está disponível na Business Unit atual.'
-        }
+        variant={variant}
+        customMessage={customMessage}
         showResourceId
       />
     );
