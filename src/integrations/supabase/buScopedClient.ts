@@ -89,12 +89,7 @@ function getJwtRole(token: string): string | null {
 type GlobalThisWithBuSingleton = typeof globalThis & {
   __hubJet_buScopedClient?: SupabaseClient<Database> | null;
   __hubJet_currentBuId?: string | null;
-  /** Timestamp (ms) do último `clearBuClientCache(nextBuId)`. Define a janela
-   *  de proteção contra clobber por re-renders com closures stale. */
-  __hubJet_buSwitchAt?: number;
 };
-
-const BU_SWITCH_GUARD_WINDOW_MS = 5000;
 
 function getBuSingleton(): SupabaseClient<Database> | null {
   return (globalThis as GlobalThisWithBuSingleton).__hubJet_buScopedClient ?? null;
@@ -189,23 +184,11 @@ function createBuAwareFetch() {
  */
 export function getBuScopedClient(buId: string): SupabaseClient<Database> {
   // Update current BU ID for the fetch interceptor.
-  // GUARD: durante a janela de proteção pós-`clearBuClientCache(nextBuId)`,
-  // NÃO sobrescrevemos `globalThis` com um buId diferente do recém-selecionado.
-  // Isso evita que um re-render com closure stale (componente que ainda referencia
-  // o currentBuId antigo via useMemo) clobbere o BU recém-trocado e dispare
-  // requests com o header errado (causando "abre módulo na BU antiga").
-  const switchAt = (globalThis as GlobalThisWithBuSingleton).__hubJet_buSwitchAt ?? 0;
-  const withinGuard = Date.now() - switchAt < BU_SWITCH_GUARD_WINDOW_MS;
-  const currentGlobalBuId = (globalThis as GlobalThisWithBuSingleton).__hubJet_currentBuId ?? null;
-  if (withinGuard && currentGlobalBuId && currentGlobalBuId !== buId) {
-    console.warn('[BuScopedClient] Suppressing stale getBuScopedClient(buId) within switch guard', {
-      requestedBuId: buId,
-      currentGlobalBuId,
-      switchAt,
-    });
-  } else {
-    setCurrentBuId(buId);
-  }
+  // The atomic swap on `clearBuClientCache(nextBuId)` (called from
+  // `BuContext.applyBuSwitch`) is the SSOT for tenant transitions; consumers
+  // that must NOT fire requests during the swap window gate themselves via
+  // `useBu().isSwitchingBu`. This function stays a dumb transport-layer helper.
+  setCurrentBuId(buId);
 
   // Return existing singleton if available
   const existing = getBuSingleton();
@@ -282,13 +265,6 @@ export function clearBuClientCache(nextBuId?: string | null) {
   // Atomically swap globalThis BU id. If `nextBuId` is provided, the fetch
   // interceptor immediately sees the new BU; otherwise null (logout path).
   setCurrentBuId(nextBuId ?? null);
-  // Open the protection window: subsequent calls to getBuScopedClient with a
-  // DIFFERENT buId (stale closures from re-renders) won't clobber globalThis.
-  if (nextBuId) {
-    (globalThis as GlobalThisWithBuSingleton).__hubJet_buSwitchAt = Date.now();
-  } else {
-    (globalThis as GlobalThisWithBuSingleton).__hubJet_buSwitchAt = 0;
-  }
 }
 
 /**
