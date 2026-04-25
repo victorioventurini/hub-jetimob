@@ -173,19 +173,19 @@ export default function InventoryPage() {
           />
         </ListPageFilters>
         
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
+        <div className="flex items-center gap-2 shrink-0 ml-auto flex-wrap">
           {canViewRecommendations && (
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild aria-label="Recomendações">
               <Link to="/assets/inventory/recommendations">
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Recomendações
+                <Lightbulb className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Recomendações</span>
               </Link>
             </Button>
           )}
           {canAddItem && (
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Item
+            <Button onClick={() => setDialogOpen(true)} aria-label="Novo Item">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Novo Item</span>
             </Button>
           )}
         </div>
