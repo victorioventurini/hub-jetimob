@@ -19,6 +19,8 @@ import { useKrWizardDraft, useCreateTeamKrBundle, type KrWizardStep } from '@/mo
 import { useCanManageTeamOkr } from '@/modules/okrs/hooks/useCanManageTeamOkr';
 import { useTeam } from '@/modules/teams/hooks';
 import { Button } from '@/components/ui/button';
+import { ResourceNotFoundState } from '@/components/ui/resource-not-found-state';
+import { LoadingState } from '@/components/ui/loading-state';
 import { ShieldAlert } from 'lucide-react';
 
 // Steps
@@ -58,14 +60,15 @@ export default function TeamKrCreationPage() {
   const navigate = useNavigate();
   const { objectiveId } = useParams<{ objectiveId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { client: supabase } = useOptionalBuClient();
+  const { client: supabase, isReady } = useOptionalBuClient();
   const { currentBuId } = useBu();
   
   const createKrBundle = useCreateTeamKrBundle();
 
   // ── Fetch objective data ──
-  const { data: objective, isLoading: objectiveLoading } = useQuery({
-    queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId || ''),
+  // BU incluído na key para evitar reuso de cache stale ao alternar de BU.
+  const { data: objective, isLoading: objectiveLoading, isFetched: objectiveFetched } = useQuery({
+    queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId),
     queryFn: async () => {
       if (!supabase || !objectiveId) return null;
       
@@ -80,6 +83,7 @@ export default function TeamKrCreationPage() {
           cycle_id,
           is_shared,
           responsibility_model,
+          bu_id,
           teams:team_id (id, name),
           org_objective:org_objective_id (title),
           cycle:cycle_id (name, year)
@@ -89,9 +93,12 @@ export default function TeamKrCreationPage() {
         .maybeSingle();
 
       if (error) throw error;
+      // Defensive BU isolation (RLS já filtra, mas garantimos no frontend
+      // conforme DEVELOPMENT_STANDARDS §A.3).
+      if (data && currentBuId && data.bu_id !== currentBuId) return null;
       return data;
     },
-    enabled: !!supabase && !!objectiveId,
+    enabled: isReady && !!supabase && !!objectiveId,
   });
 
   // ── Fetch contributors if shared ──
@@ -114,7 +121,7 @@ export default function TeamKrCreationPage() {
       }
       return data || [];
     },
-    enabled: !!supabase && !!objectiveId && !!objective?.is_shared,
+    enabled: isReady && !!supabase && !!objectiveId && !!objective?.is_shared,
   });
 
   // ── Contributor mode (cross-team KR) ──
@@ -328,12 +335,34 @@ export default function TeamKrCreationPage() {
   }, [teamData?.members]);
 
   // ── Loading state ──
-  if (objectiveLoading || !objective || !objectiveContext || canManageLoading) {
+  // Esperamos o BU client estar pronto + a query terminar (loading e fetched)
+  // E o gate de permissão resolver. Sem isso, qualquer "esperando dependência"
+  // virava loading infinito.
+  if (!isReady || objectiveLoading || !objectiveFetched || canManageLoading) {
+    return <LoadingState fullPage text="Carregando..." />;
+  }
+
+  // ── Resource not found (objetivo inexistente, cancelado ou em outra BU) ──
+  if (!objective) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
-      </div>
+      <ResourceNotFoundState
+        resourceType="objetivo"
+        resourceId={objectiveId}
+        moduleRoot="/okrs"
+        viewAllLabel="Ver OKRs"
+        customMessage={
+          isContribution
+            ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido cancelado, removido ou está em outra Business Unit.'
+            : 'O objetivo que você tentou acessar foi removido, cancelado ou não está disponível na Business Unit atual.'
+        }
+        showResourceId
+      />
     );
+  }
+
+  // ── Defensive: guarda do contexto do objetivo (caso derivação falhe) ──
+  if (!objectiveContext) {
+    return <LoadingState fullPage text="Carregando..." />;
   }
 
   // ── Permission gate ──

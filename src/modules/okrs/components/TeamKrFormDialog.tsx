@@ -137,7 +137,7 @@ export function TeamKrFormDialog({
   }, [kr]));
 
   const { data: teamObjective } = useQuery({
-    queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId),
+    queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId, buId ?? null),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('okr_team_objectives')

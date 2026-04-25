@@ -146,7 +146,12 @@ export const okrsKeys = {
     ['user-profile-for-wizard', userId, buId] as const,
   
   // Team objective detail
-  teamObjectiveDetail: (objectiveId: string) =>
+  // BU-scoped: incluímos buId para evitar reuso de cache (`null`/stale) entre BUs
+  // ao alternar contexto sem recarregar a página.
+  teamObjectiveDetail: (objectiveId: string, buId?: string | null) =>
+    ['okr-team-objective', objectiveId, buId ?? null] as const,
+  /** Prefix para invalidar todos os caches de detalhe de um objetivo (todas as BUs) */
+  teamObjectiveDetailPrefix: (objectiveId: string) =>
     ['okr-team-objective', objectiveId] as const,
     
   // Team KR detail (for deep-linking)
