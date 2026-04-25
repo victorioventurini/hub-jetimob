@@ -149,6 +149,7 @@ export const TeamSharedOkrsBlock = React.memo(function TeamSharedOkrsBlock({
               <ContributingOkrCard
                 key={obj.id}
                 currentTeamId={teamId}
+                canContribute={canContribute}
                 objective={{
                   id: obj.id,
                   title: obj.title,
