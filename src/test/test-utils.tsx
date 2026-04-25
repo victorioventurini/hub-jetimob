@@ -50,6 +50,7 @@ const defaultBuContext = {
   userRole: null,
   buSelected: true,
   isExternalUser: false,
+  isSwitchingBu: false,
   selectBu: () => {},
   switchBu: () => {},
   clearBuSelection: () => {},
