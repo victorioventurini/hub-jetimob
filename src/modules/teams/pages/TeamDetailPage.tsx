@@ -267,6 +267,8 @@ export default function TeamDetailPage() {
                 <TeamContributionTab teamId={team.id} teamName={team.name} />
               </TabsContent>
 
+              {/* Wrapper full-width: aplicado fora do col-span-2 abaixo */}
+
               <TabsContent value="squads" className="mt-4">
                 <SquadSection teamId={team.id} teamName={team.name} />
               </TabsContent>
