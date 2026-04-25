@@ -1,61 +1,93 @@
-## Plano Aprovado — Implementação
 
-### 1. Links de OKRs (Opção A + legacy)
+# Plano — Bugfix: "Este objetivo não existe mais" no TeamKrCreationPage
 
-**`src/lib/shareableLinks.ts`**
-- Adicionar `getInternalOkrUrl(entity, id)` para uso interno.
-- Manter `getShareableUrl` (`/go/...`) para shares externos.
+## Contexto
 
-**`src/pages/ResolveContextPage.tsx`**
-- Mapear `okr_team_objective` → `/okrs?objective=:id`
-- Mapear `okr_org_objective` → `/okrs/org-view/:id` (validar; senão `/okrs?org_objective=:id`)
-- Manter mapeamentos existentes para `okr_team_kr`, `okr_org_kr`.
+URL relatada: `/okrs/objectives/1470f9f5-fed4-42db-b5fa-406ade6cef6d/krs/create?contributor_team_id=d3247da9...`
 
-**`src/modules/teams/components/contribution/TeamContributionTab.tsx`**
-- Trocar links quebrados (`/okrs/team-objective/:id`) por `getShareableUrl('okr_team_objective', id)` (rota `/go/`).
+Verificado via DB: o objetivo **existe**, está na BU **Jetimob**, não está cancelado, é shared, e o time `d3247da9` (Tecnologia) consta como contribuidor autorizado. O usuário está logado e na BU Jetimob. Mesmo assim a UI mostra `ResourceNotFoundState`.
 
-**`src/App.tsx` (ou `okrs.routes.tsx`)**
-- Adicionar redirect legacy: `/okrs/team-objective/:id` → `/go/okr_team_objective/:id` via `<Navigate>`.
+## Conformidade com TCR / Canônicos (re-verificada)
 
-**`src/modules/okrs/pages/OkrDashboardPage.tsx`**
-- Ler search param `?objective=:id` e fazer scrollIntoView no card correspondente.
-- Limpar param após primeiro uso.
+- **TCR §A.3 (Defense-in-Depth):** filtro defensivo `data.bu_id !== currentBuId` é **obrigatório** e **NÃO será removido**. A versão anterior do plano que sugeria remoção foi descartada por violar a regra inquebrável #1 ("Respeitar PRE-BU vs POST-BU").
+- **DEVELOPMENT_STANDARDS:** `useOptionalBuClient` + gate `isReady` já é o padrão correto e está aplicado.
+- **Query Keys SSOT:** `queryKeys.okrs.teamObjectiveDetail(id, currentBuId)` — BU já está na key, conforme `mem://standards/bu-scoped-detail-query-keys`.
+- **Soft delete:** `.is('cancelled_at', null)` aplicado.
 
-### 2. Insights com escopo correto
+## Hipótese mais provável (após re-análise)
 
-**`src/modules/okrs/hooks/queries/useTeamContributedQueries.ts`**
-- `useSharedOkrsSummary(filters?: { teamId?, year?, cycleId? })`:
-  - Filtro `.or('primary_team_id.eq.X,contributor_team_ids.cs.{X}')` quando `teamId`.
-  - Filtro `.eq('year', Y)` quando `year`.
-  - Incluir filtros na query key.
-- `useSharedOkrsInsights(filters?)`: propagar filtros.
+O guard da linha 98 retorna `null` em **race condition de hidratação**: a query é habilitada quando `isReady && !!supabase && !!objectiveId`, mas `currentBuId` lido do `useBu()` em outro render tick pode estar momentaneamente diferente do `buId` que o `getOptionalBuScopedClient` usou no header. Quando o objetivo (header BU correto) volta da rede, `currentBuId` no closure já mudou — `data.bu_id !== currentBuId` dispara → cache de `null` é fixado → UI mostra "não existe".
 
-**`src/lib/queryKeys/okrs.ts`**
-- Atualizar `sharedSummary` para aceitar `teamId`, `year`, `cycleId`.
+Hipóteses alternativas que o diagnóstico precisa distinguir:
+- **H1** — Race de hidratação acima (mais provável).
+- **H2** — RLS bloqueia esse usuário específico nesse objetivo (menos provável; usuário diz ter acesso).
+- **H3** — `okr_team_objectives.cancelled_at` foi setado e o filtro `is null` exclui (verificável).
 
-**`src/modules/okrs/pages/OkrDashboardPage.tsx`**
-- Passar `teamId` e `year` ativos para `useSharedOkrsInsights`.
-- Garantir que numerador e denominador usam o mesmo escopo.
+## Mudanças propostas (cirúrgicas, sem violar §A.3)
 
-**`src/modules/okrs/components/SharedOkrInsights.tsx`**
-- Defesa: clamp `Math.min(100, ...)`.
-- Suprimir insight de "% colaborativas" se `sharedOkrsCount > totalOkrsCount`.
+### 1. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
 
-### 3. Memórias
+**Mantém** o guard defensivo da linha 98 (TCR §A.3). **Adiciona**:
 
-**Novos:**
-- `.lovable/memory/standards/links/internal-okr-navigation.md`
-- `.lovable/memory/features/okrs/shared-okrs-insights-scope-standard.md`
+a) **Telemetria estruturada** quando o guard descarta:
+```ts
+if (data && currentBuId && data.bu_id !== currentBuId) {
+  console.warn('[TeamKrCreationPage] BU mismatch discard', {
+    objectiveId, currentBuId, dataBuId: data.bu_id,
+    headerBuId: getBuScopedClientCurrentBuId?.(),
+  });
+  return null;
+}
+```
 
-**Atualizar:** `.lovable/memory/index.md`.
+b) **Gate adicional**: só habilitar a query quando `currentBuId` está estável:
+```ts
+enabled: isReady && !!supabase && !!objectiveId && !!currentBuId,
+```
+Isso elimina o caso em que `currentBuId` ainda é `null` no primeiro render mas o header já foi setado.
 
-### 4. Validação
+c) **Diagnóstico secundário** (apenas para classificar o erro, **não substitui o guard**): quando `objectiveFetched && !objective`, dispara um segundo `useQuery` que busca `select id, bu_id, cancelled_at` com o **mesmo** cliente BU-scoped. Resultados possíveis:
+- Retorna linha ativa → guard descartou por race → mostrar UI "Recarregando contexto..." com retry automático após `currentBuId` estabilizar.
+- Retorna linha com `cancelled_at` → mostrar "objetivo foi cancelado".
+- Retorna `null` → RLS/inexistente real → manter `ResourceNotFoundState` atual.
 
-- `tsc --noEmit`.
-- `rg` para localizar outros usos de `/okrs/team-objective/` ou `/okrs/team/`.
+Este diagnóstico **não** consulta cross-BU (não usa cliente global) — respeita §A.3 integralmente.
 
-### Arquivos
+### 2. `src/components/ui/resource-not-found-state.tsx`
 
-**Edit:** `src/lib/shareableLinks.ts`, `src/lib/shareableLinks.test.ts`, `src/pages/ResolveContextPage.tsx`, `src/modules/teams/components/contribution/TeamContributionTab.tsx`, `src/modules/okrs/pages/OkrDashboardPage.tsx`, `src/modules/okrs/hooks/queries/useTeamContributedQueries.ts`, `src/modules/okrs/components/SharedOkrInsights.tsx`, `src/lib/queryKeys/okrs.ts`, `src/App.tsx` (ou `okrs.routes.tsx`), `.lovable/memory/index.md`.
+Aceitar prop opcional `variant?: 'not_found' | 'cancelled' | 'context_loading'` para mensagens contextuais. Default mantém comportamento atual.
 
-**New:** `.lovable/memory/standards/links/internal-okr-navigation.md`, `.lovable/memory/features/okrs/shared-okrs-insights-scope-standard.md`.
+### 3. `mem://standards/bu-scoped-detail-diagnostic-pattern.md` (novo)
+
+Padrão para páginas de detalhe BU-scoped:
+- Sempre `enabled: isReady && !!supabase && !!entityId && !!currentBuId`.
+- Sempre manter guard defensivo §A.3.
+- Em caso de `null` após `isFetched`, classificar via segundo fetch BU-scoped.
+- Logs estruturados com prefixo `[<PageName>] BU mismatch discard`.
+
+### 4. `.lovable/memory/index.md`
+
+Linkar o novo standard.
+
+## Arquivos
+
+**Editados:**
+- `src/modules/okrs/pages/TeamKrCreationPage.tsx`
+- `src/components/ui/resource-not-found-state.tsx`
+- `.lovable/memory/index.md`
+
+**Criados:**
+- `.lovable/memory/standards/bu-scoped-detail-diagnostic-pattern.md`
+
+## Não-objetivos (explicitamente fora de escopo)
+
+- ❌ Remover guard defensivo §A.3 (rejeitado por violar TCR).
+- ❌ Cross-BU recovery / switch automático (usuário confirmou: OKRs só existem em Jetimob).
+- ❌ Refactor dos hooks de KPIs/Teams citados em proposta anterior (escopo expandido sem necessidade).
+
+## Validação pós-merge
+
+1. Reproduzir URL do bug em https://hub.jetimob.com → carregar wizard sem `ResourceNotFoundState`.
+2. Console deve mostrar `[TeamKrCreationPage] BU mismatch discard` zero vezes em fluxo normal.
+3. Trocar de BU → voltar para Jetimob → reabrir URL: deve carregar.
+4. `tsc --noEmit` sem regressões.
