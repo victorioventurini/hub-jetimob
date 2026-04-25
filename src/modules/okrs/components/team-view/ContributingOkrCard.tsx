@@ -60,8 +60,18 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   canContribute = false,
 }: ContributingOkrCardProps) {
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
+  const [expandedKrIds, setExpandedKrIds] = useState<Set<string>>(new Set());
   const primaryTeamName = objective.team?.name || 'Time não definido';
   const allKrs = objective.key_results || [];
+
+  const toggleKr = useCallback((krId: string) => {
+    setExpandedKrIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(krId)) next.delete(krId);
+      else next.add(krId);
+      return next;
+    });
+  }, []);
 
   // KRs owned by the current (contributing) team
   const contributedKrs = useMemo(
