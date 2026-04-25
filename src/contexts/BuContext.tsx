@@ -138,23 +138,36 @@ export function BuProvider({ children }: { children: ReactNode }) {
 
   const selectBu = useCallback((buId: string) => {
     const hasAccess = userBus.some(m => m.bu_id === buId);
-    if (hasAccess) {
-      const isChanging = currentBuId !== buId;
-      setCurrentBuId(buId);
-      setBuSelected(true);
-      localStorage.setItem(BU_STORAGE_KEY, buId);
-      localStorage.setItem(BU_SELECTED_KEY, "true");
-      
-      // Set tenant_id for GA4 tracking
-      setTenantId(buId);
-      
-      // Invalidate all BU-scoped queries and client cache when changing BU
-      if (isChanging) {
-        
-        // Clear BU-scoped Supabase client cache to force re-creation with new BU ID
-        clearBuClientCache();
-        queryClient.clear();
-      }
+    if (!hasAccess) {
+      // Cache stale: a BU pode ter sido criada/adicionada agora e ainda não
+      // refletida em `userBus`. Logamos para debug e forçamos refetch para
+      // que o próximo clique funcione. Não trocamos automaticamente para
+      // evitar loops/race conditions.
+      console.warn("[BuContext.selectBu] BU não acessível em userBus", {
+        requestedBuId: buId,
+        availableBuIds: userBus.map(m => m.bu_id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bu.userBusPrefix(),
+        refetchType: 'active',
+      });
+      return;
+    }
+
+    const isChanging = currentBuId !== buId;
+    setCurrentBuId(buId);
+    setBuSelected(true);
+    localStorage.setItem(BU_STORAGE_KEY, buId);
+    localStorage.setItem(BU_SELECTED_KEY, "true");
+
+    // Set tenant_id for GA4 tracking
+    setTenantId(buId);
+
+    // Invalidate all BU-scoped queries and client cache when changing BU
+    if (isChanging) {
+      // Clear BU-scoped Supabase client cache to force re-creation with new BU ID
+      clearBuClientCache();
+      queryClient.clear();
     }
   }, [userBus, currentBuId, queryClient]);
 
