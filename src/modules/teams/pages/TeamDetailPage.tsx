@@ -357,31 +357,31 @@ export default function TeamDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Leader Card */}
+            {/* Leader Card - alinhado visualmente com os Quick Stats à esquerda */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Líder do Time</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-muted-foreground uppercase font-medium mb-2">
+                  Líder do Time
+                </p>
                 {team.leader ? (
                   <Link
                     to={`/users/${team.leader.id}`}
-                    className="flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center justify-center gap-2 group"
                   >
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-8 w-8 shrink-0">
                       <AvatarImage src={team.leader.photo_url || undefined} />
-                      <AvatarFallback className="bg-accent/10 text-accent text-lg">
+                      <AvatarFallback className="bg-accent/10 text-accent text-sm">
                         {getInitials(team.leader.display_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium hover:text-accent transition-colors">{team.leader.display_name}</p>
-                    </div>
+                    <span className="font-medium text-sm group-hover:text-accent transition-colors truncate">
+                      {team.leader.display_name}
+                    </span>
                   </Link>
                 ) : (
-                  <div className="text-center py-4">
-                    <UserCircle className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Sem líder definido</p>
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <UserCircle className="h-6 w-6" />
+                    <span className="text-sm">Sem líder definido</span>
                   </div>
                 )}
               </CardContent>

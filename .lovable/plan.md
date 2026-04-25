@@ -1,53 +1,66 @@
-
-# Plano: Corrigir link de criação de KRs com `contributor_team_id`
-
-## Pré-checklist (executado)
-- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
-- ✅ `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — `okrs.kr.create` / `okrs.objective.create`
-- ✅ `docs/canonical/IDENTITY_CONVENTION.md` — uso de `realProfileId` em mutations
-- ✅ `mem://auth/okr-ownership-enforcement-rls` — RLS strict ownership
-- ✅ Código atual de `TeamKrCreationPage.tsx` (linhas 168–178) — bug confirmado
+## Objetivo
+Em `/teams/:id`, fazer o card "Líder do Time" (sidebar direita) ter a **mesma altura visual** dos 3 stats cards (Membros / Sub-times / Squads) que ficam na linha de cima da coluna esquerda, conforme print enviado.
 
 ## Diagnóstico
-URL `/okrs/objectives/:id/krs/create?contributor_team_id=...` quebra porque:
-1. **Linha 170** (`setSearchParams({ step: draft.currentStep })`) e **linha 177** (`setSearchParams({ step })`) **sobrescrevem toda a query string**, removendo `contributor_team_id` no primeiro render quando o draft já tem `currentStep`.
-2. Sem `contributor_team_id`, `isContribution=false`, `effectiveTeamId` vira o owner do objetivo, e o `useEffect` de validação (linha 122–129) passa silenciosamente — mas o usuário acaba criando KR para o time errado, ou o RLS `okr_team_key_results` rejeita o INSERT no submit (erro 42501).
+Estrutura atual em `src/modules/teams/pages/TeamDetailPage.tsx`:
 
-## Mudanças
+- **Coluna esquerda — Quick Stats (linhas 169-195)**: 3 cards compactos `<CardContent className="p-4 text-center">` (sem CardHeader). Altura ~95px.
+- **Sidebar direita — Líder do Time (linhas 361-388)**: Card com `CardHeader` (título "Líder do Time") + `CardContent` com avatar `h-12 w-12`. Altura ~180px.
 
-### 1. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
-- Substituir as duas chamadas de `setSearchParams({ step })` por uma versão que **preserva** os parâmetros existentes (functional update via `URLSearchParams`):
-  ```ts
-  const updateStepParam = useCallback((step: KrWizardStep) => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev);
-      next.set('step', step);
-      return next;
-    }, { replace: true });
-  }, [setSearchParams]);
-  ```
-- Usar `updateStepParam` no `useEffect` de sync (linha 168) e em `goToStep` (linha 175).
-- **Endurecer** o `useEffect` de validação de contribuidor: só redirecionar quando `objective` E `contributors` estiverem carregados (já está OK, mas adicionar guarda extra para `objective.is_shared === true` antes de exigir autorização — se não-shared, `isContribution` deve forçar fallback ao owner ou bloquear).
+A diferença gera o desalinhamento visual mostrado no print: o card do líder fica muito mais alto que os stats cards à esquerda, criando um "degrau" no topo do layout.
 
-### 2. Adicionar gate de permissão (recomendado)
-- Importar `useCanManageTeamOkr` de `@/modules/okrs/hooks/useCanManageTeamOkr`.
-- Após carregar `effectiveTeamId`, chamar `useCanManageTeamOkr(effectiveTeamId)`.
-- Se `!isLoading && !canManage`, renderizar bloco amigável:
-  > "Você não tem permissão para criar KRs neste time."
-  
-  Com botão "Voltar para OKRs do time" → navega para `/okrs?view=team&team_id=${effectiveTeamId}`.
-- Isso evita o erro RLS no submit e dá feedback imediato.
+## Mudanças propostas — `src/modules/teams/pages/TeamDetailPage.tsx`
 
-### 3. Documentação (memória)
-- Atualizar `mem://standards/url-state-preservation` (criar se não existir): "Em rotas com múltiplos params (step + filtros), `setSearchParams` DEVE usar functional update para preservar params existentes."
-- Adicionar referência cruzada em `mem://features/okrs/creation-wizard-draft-hydration`.
+Substituir o bloco do "Leader Card" (linhas 361-388) por uma versão **compacta** que segue o mesmo padrão visual dos stats cards (`p-4`, sem `CardHeader`, label pequena no topo):
 
-## Validações
-- ✅ Acessar `/okrs/objectives/:id/krs/create?contributor_team_id=X` e confirmar que a URL mantém o param após qualquer transição de step.
-- ✅ Time autorizado consegue criar KR (verificar `team_id` resultante = `contributor_team_id`).
-- ✅ Time NÃO autorizado vê tela de "sem permissão" antes de qualquer interação com o wizard.
-- ✅ Fluxo normal (sem `contributor_team_id`) continua funcionando inalterado.
+```tsx
+{/* Leader Card - alinhado visualmente com os Quick Stats à esquerda */}
+<Card>
+  <CardContent className="p-4 text-center">
+    <p className="text-xs text-muted-foreground uppercase font-medium mb-2">
+      Líder do Time
+    </p>
+    {team.leader ? (
+      <Link
+        to={`/users/${team.leader.id}`}
+        className="flex items-center justify-center gap-2 group"
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={team.leader.photo_url || undefined} />
+          <AvatarFallback className="bg-accent/10 text-accent text-sm">
+            {getInitials(team.leader.display_name)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="font-medium text-sm group-hover:text-accent transition-colors truncate">
+          {team.leader.display_name}
+        </span>
+      </Link>
+    ) : (
+      <div className="flex items-center justify-center gap-2 text-muted-foreground">
+        <UserCircle className="h-6 w-6" />
+        <span className="text-sm">Sem líder definido</span>
+      </div>
+    )}
+  </CardContent>
+</Card>
+```
 
-## Arquivos
-- **Editados**: `src/modules/okrs/pages/TeamKrCreationPage.tsx`, `.lovable/memory/index.md`
-- **Novos**: `.lovable/memory/standards/url-state-preservation.md`
+### Detalhes da decisão visual
+- **Sem `CardHeader`**: padronizado com os stats cards (`p-4` only).
+- **Label no topo (`text-xs uppercase`)**: substitui o título do header, mantendo identificação clara do card.
+- **Avatar `h-8 w-8`**: reduzido (era `h-12 w-12`) para casar com a densidade compacta dos stats.
+- **Layout horizontal (avatar + nome)**: mais econômico verticalmente que o layout original (avatar + bloco de texto).
+- **Empty state inline**: substitui o bloco vertical com ícone grande, mantendo a mesma altura quando não há líder.
+
+## Não-mudanças
+- ❌ NÃO alterar `Card` "Time Pai" (linhas 391-409) — fica abaixo na sidebar e tem propósito visual diferente (link de navegação).
+- ❌ NÃO mexer nos stats cards (Membros/Sub-times/Squads) — eles já estão no padrão correto.
+- ❌ NÃO adicionar `h-full` em grid stretching: o objetivo é igualar a altura por **densidade de conteúdo**, não por força CSS (que produziria espaços vazios estranhos).
+
+## Files
+- **Edit**: `src/modules/teams/pages/TeamDetailPage.tsx` (linhas 361-388)
+
+## Validação pós-implementação
+1. Acessar `/teams/d3247da9-3e07-4fa8-9d0a-2527fdf6548f` — confirmar que o topo da sidebar (Líder do Time) está visualmente alinhado com a base dos stats cards à esquerda.
+2. Testar com líder definido E sem líder definido (ambos devem ter altura equivalente).
+3. Testar nome longo de líder — verificar `truncate`.
