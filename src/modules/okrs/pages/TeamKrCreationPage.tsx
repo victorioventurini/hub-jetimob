@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { getBuScopedClientCurrentBuId } from '@/integrations/supabase/buScopedClient';
+import { getBuScopedClientCurrentBuId, clearBuClientCache } from '@/integrations/supabase/buScopedClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
