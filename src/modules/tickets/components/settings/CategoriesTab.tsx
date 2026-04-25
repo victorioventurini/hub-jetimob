@@ -183,7 +183,7 @@ export function CategoriesTab() {
                     </div>
                   </div>
                   <CollapsibleContent>
-                    <div className="ml-8 mt-1 space-y-1">
+                    <div className="ml-4 mt-1 space-y-1 sm:ml-8">
                       {category.subcategories?.map((sub) => (
                         <div
                           key={sub.id}
