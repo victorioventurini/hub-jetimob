@@ -37,6 +37,7 @@ const SUBTABS = [
   { value: 'team-okrs', label: 'OKRs do time' },
   { value: 'shared-okrs', label: 'Compartilhados' },
   { value: 'org-contribution', label: 'Org Objectives' },
+  { value: 'initiatives', label: 'Iniciativas' },
   { value: 'projects', label: 'Projetos' },
 ] as const;
 
