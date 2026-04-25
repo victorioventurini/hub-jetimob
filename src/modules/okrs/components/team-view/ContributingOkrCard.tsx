@@ -4,12 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Users, Crown, ExternalLink, Target } from 'lucide-react';
+import { Users, Crown, ExternalLink, Target, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from '../OkrStatusBadge';
 import { calculateProgress, OkrRagStatus } from '../../types';
 
 interface ContributingOkrCardProps {
+  /** Se o usuário pode criar KRs de contribuição em nome do time atual */
+  canContribute?: boolean;
   objective: {
     id: string;
     title: string;
