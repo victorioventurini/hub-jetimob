@@ -10,22 +10,32 @@
  *
  * Apenas rotas com handler conhecido fazem prefetch — chamadas para
  * paths não mapeados são silenciosamente ignoradas (sem custo).
+ *
+ * IMPORTANTE (TCR §A.3):
+ * - Prefetch usa cliente BU-scoped (header `x-current-bu-id`).
+ * - Prefetch é DESLIGADO durante uma troca de BU (`isSwitchingBu`) para
+ *   evitar disparar requests com a BU antiga durante a janela de transição
+ *   (ver mem://standards/bu-selection-race-protection).
  */
 
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useBu } from "@/contexts/BuContext";
+import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import type { Database } from "@/integrations/supabase/types";
 
-type Prefetcher = (queryClient: ReturnType<typeof useQueryClient>, ctx: { buId: string | null }) => Promise<unknown>;
+type Prefetcher = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  ctx: { buId: string; supabase: SupabaseClient<Database> },
+) => Promise<unknown>;
 
 /**
  * Mapeamento conservador: somente rotas críticas e idempotentes.
  * Cada handler deve ser idempotente e usar a mesma queryKey do hook real.
  */
 const ROUTE_PREFETCHERS: Record<string, Prefetcher> = {
-  "/": async (qc, { buId }) => {
-    if (!buId) return;
+  "/": async (qc, { buId, supabase }) => {
     return qc.prefetchQuery({
       queryKey: ["bu", buId, "home", "summary"],
       queryFn: async () => {
@@ -38,8 +48,7 @@ const ROUTE_PREFETCHERS: Record<string, Prefetcher> = {
       staleTime: 60_000,
     });
   },
-  "/tickets": async (qc, { buId }) => {
-    if (!buId) return;
+  "/tickets": async (qc, { buId, supabase }) => {
     return qc.prefetchQuery({
       queryKey: ["bu", buId, "tickets", "list", "preview"],
       queryFn: async () => {
@@ -55,8 +64,7 @@ const ROUTE_PREFETCHERS: Record<string, Prefetcher> = {
       staleTime: 30_000,
     });
   },
-  "/okrs": async (qc, { buId }) => {
-    if (!buId) return;
+  "/okrs": async (qc, { buId, supabase }) => {
     return qc.prefetchQuery({
       queryKey: ["bu", buId, "okrs", "objectives", "preview"],
       queryFn: async () => {
@@ -76,20 +84,25 @@ const ROUTE_PREFETCHERS: Record<string, Prefetcher> = {
 
 export function usePrefetchRoute() {
   const queryClient = useQueryClient();
-  const { currentBu } = useBu();
+  const { currentBu, isSwitchingBu } = useBu();
   const buId = currentBu?.id ?? null;
+  const supabase = useOptionalBuScopedSupabase();
 
   return useCallback(
     (route: string) => {
-      // Normaliza paths (ignora subrotas além do prefixo conhecido)
+      // Gate: durante uma troca de BU, o header `x-current-bu-id` pode estar
+      // em transição. Disparar prefetch agora cacheia dados da BU errada.
+      if (isSwitchingBu) return;
+      if (!buId || !supabase) return;
+
       const matchKey = Object.keys(ROUTE_PREFETCHERS).find((key) =>
         key === "/" ? route === "/" : route === key || route.startsWith(`${key}/`),
       );
       if (!matchKey) return;
       const handler = ROUTE_PREFETCHERS[matchKey];
       // Fire-and-forget; erros silenciados (best-effort)
-      void handler(queryClient, { buId }).catch(() => {});
+      void handler(queryClient, { buId, supabase }).catch(() => {});
     },
-    [queryClient, buId],
+    [queryClient, buId, supabase, isSwitchingBu],
   );
 }
