@@ -164,9 +164,15 @@ export default function TeamDetailPage() {
           }
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div
+          className={
+            activeTab === 'contribution'
+              ? 'grid grid-cols-1 gap-6'
+              : 'grid grid-cols-1 lg:grid-cols-3 gap-6'
+          }
+        >
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className={activeTab === 'contribution' ? 'space-y-6' : 'lg:col-span-2 space-y-6'}>
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4">
               <Card>
