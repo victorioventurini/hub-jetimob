@@ -37,6 +37,7 @@ A hidratação de `contributors` (com `team:teams(id, name)`) é responsabilidad
 3. **KRs do contribuidor são próprias**: o Time B cria suas próprias KRs em `okr_team_key_results` com `team_id = TimeB` e `team_objective_id = objective.id`. Essas KRs aparecem automaticamente em todos os ritos coletivos (Weekly/MBR/QBR/Team Check-in) que filtram por `kr.team_id`, e no Collaborator Check-in que filtra por `kr.owner_id`. **Nenhuma alteração nos ritos é necessária para suportar contribuição cross-team.**
 4. **Select correto**: `AGGREGATE_FIELDS.teamObjectiveWithKrs` em `aggregateUtils.ts` DEVE incluir `team_id` em `key_results` para permitir o filtro do contribuidor. Também inclui `is_shared`, `responsibility_model` e `org_objective_id` no objetivo.
 5. **Caller do `TeamObjectiveFormDialog`**: ver `mem://features/okrs/shared-okr-edit-hydration-standard` — passar `is_shared`, `responsibility_model` e `org_objective_id` ao editar.
+6. **Empty-state guard**: na view de time (`activeView === 'team' && !!normalizedTeamId`), o `OkrEmptyState` SÓ pode ser renderizado quando `displayObjectives.length === 0 && filteredContributedObjectives.length === 0`. `TeamOkrSections` deve ser sempre avaliado antes do empty-state — caso contrário, times sem objetivos próprios mas com OKRs compartilhadas recebidas verão tela vazia e o bloco "OKRs Compartilhadas" nunca renderiza. Implementação canônica em `OkrDashboardPage.tsx` usa um IIFE com a ordem: `isLoading → isTeamView (TeamOkrSections | empty) → empty → map plano`.
 
 ## Entry point para criação de KR de contribuição
 
