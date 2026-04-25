@@ -17,6 +17,11 @@ interface SharedOkrBadgeProps {
   compact?: boolean;
   expanded?: boolean; // Show all details in expanded mode
   showTeamList?: boolean; // Show list of teams below badge
+  /**
+   * Em modo `compact`, renderiza chips inline com o nome dos times contribuidores
+   * logo após o badge "Compartilhada" (limite 3 + "+N").
+   */
+  inlineTeams?: boolean;
   className?: string;
 }
 
