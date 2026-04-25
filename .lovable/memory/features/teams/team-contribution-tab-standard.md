@@ -16,13 +16,18 @@ Sub-tabs (URL param `subtab`, default `overview`):
 1. **overview** — KPI cards + sparkline + insights (`TeamContributionOverview`)
 2. **team-okrs** — Lista de objetivos próprios (`useTeamObjectives`)
 3. **shared-okrs** — Recebidos (dono com contribuidores) + Contribuídos (`TeamSharedOkrsBlock`)
-4. **org-contribution** — Org Objectives impactados (reuso de `OrgObjectiveContributionCard` + `useTeamContributionView`)
-5. **projects** — Projetos do time (`useProjects({ team_id })`)
+4. **initiatives** — Iniciativas vinculadas às KRs do time no ciclo (`TeamContributionInitiatives` + `useTeamKrInitiatives`). Cai para o ciclo ativo se nenhum `cycle_id` for selecionado. Agrupa por KR; reusa `InitiativeCard` em modo read-only.
+5. **kpis** — KPIs em 2 grupos (`TeamContributionKpis` + `useTeamKpisGrouped`):
+   - **Sob responsabilidade do time**: `kpi_metrics.responsible_team_id IN teamIds` OU (`team_id IN teamIds` AND `responsible_team_id IS NULL`) — fallback legado.
+   - **Sob responsabilidade de membros**: `owner_user_id IN memberIds` (membros = `profiles.team_id IN teamIds`, sem terminados), deduplicado contra o grupo "do time".
+   - Reusa `KpiCard`; sem CRUD nesta aba.
+6. **org-contribution** — Org Objectives impactados (reuso de `OrgObjectiveContributionCard` + `useTeamContributionView`)
+7. **projects** — Projetos do time (`useProjects({ team_id })`)
 
 ## Filtros (URL state)
 - `subtab` — sub-aba ativa
-- `include_subteams` — toggle, **default `false`**. Quando `true`, expande via `parent_team_id` recursivo client-side
-- `cycle_id` — filtro de ciclo opcional
+- `include_subteams` — toggle, **default `false`**. Quando `true`, expande via `parent_team_id` recursivo client-side. Aplica-se a `initiatives` e `kpis` também.
+- `cycle_id` — filtro de ciclo opcional. `initiatives` cai para o ciclo ativo se vazio.
 
 ## KPI cards (overview)
 - OKRs do time (count obj + count KR)
@@ -42,6 +47,8 @@ Sub-tabs (URL param `subtab`, default `overview`):
 ## Query keys (em `src/lib/queryKeys/teams.ts`)
 - `teamsKeys.contributionAnalytics(teamId, buId, includeSubteams, cycleId)`
 - `teamsKeys.contributionSubteamIds(teamId, includeSubteams)`
+- `teamsKeys.contributionKpis(teamId, buId, includeSubteams)`
+- `teamsKeys.contributionInitiatives(teamId, buId, includeSubteams, cycleId)`
 
 ## Rota legada
 `/okrs/team-contribution/:teamId` foi convertida em `<Navigate>` para
@@ -49,6 +56,7 @@ Sub-tabs (URL param `subtab`, default `overview`):
 SSOT: nova aba dentro do time.
 
 ## Não-fazer
-- Não duplicar `OrgObjectiveContributionCard` ou `TeamContributionInsights` — reuso obrigatório do módulo OKRs
+- Não duplicar `OrgObjectiveContributionCard`, `TeamContributionInsights`, `KpiCard`, `InitiativeCard` — reuso obrigatório
 - Não usar `select('*')` (Regra TCR #4)
 - Não criar nova rota standalone para essa visão
+- Não permitir CRUD nas sub-tabs `initiatives` e `kpis` — são views consolidadas; CRUD acontece nas SSOTs (`/okrs?view=team`, módulo KPIs)
