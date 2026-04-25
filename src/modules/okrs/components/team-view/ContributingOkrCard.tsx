@@ -208,22 +208,57 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
                   kr.target,
                   kr.direction
                 );
+                const isExpanded = expandedKrIds.has(kr.id);
                 return (
-                  <div
-                    key={kr.id}
-                    className="flex items-center gap-3 p-2 rounded-md bg-muted/30"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" title={kr.title}>
-                        {kr.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Progress value={Math.min(100, krProgress)} className="h-1.5 flex-1" />
-                        <span className="text-xs font-medium w-10 text-right">
-                          {krProgress.toFixed(0)}%
-                        </span>
+                  <div key={kr.id} className="rounded-md bg-muted/30 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleKr(kr.id)}
+                      className="w-full flex items-center gap-3 p-2 text-left hover:bg-muted/50 transition-colors"
+                      aria-expanded={isExpanded}
+                      aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} iniciativas e projetos de ${kr.title}`}
+                    >
+                      <ChevronRight
+                        className={cn(
+                          'w-4 h-4 text-muted-foreground shrink-0 transition-transform',
+                          isExpanded && 'rotate-90'
+                        )}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" title={kr.title}>
+                          {kr.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Progress value={Math.min(100, krProgress)} className="h-1.5 flex-1" />
+                          <span className="text-xs font-medium w-10 text-right">
+                            {krProgress.toFixed(0)}%
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-3 pb-3 pt-2 space-y-4 bg-background/40 border-t">
+                        <InitiativesList
+                          krId={kr.id}
+                          krTitle={kr.title}
+                          krContext={{
+                            id: kr.id,
+                            title: kr.title,
+                            objectiveTitle: objective.title,
+                            teamName: objective.team?.name,
+                          }}
+                          krTeamId={currentTeamId}
+                          canEdit={canContribute}
+                          isDraft={objective.status === 'draft'}
+                        />
+                        <ProjectsForKrSection
+                          krId={kr.id}
+                          krKind="team"
+                          canEdit={canContribute}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
