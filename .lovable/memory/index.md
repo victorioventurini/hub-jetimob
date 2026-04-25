@@ -7,6 +7,7 @@ URL state: `setSearchParams` DEVE usar functional update para preservar outros p
 Wizard drafts: chave de localStorage DEVE incluir todo escopo (objectiveId + teamId). Ver mem://standards/wizard-draft-isolation.
 No render side-effects: PROIBIDO chamar setState/navigate/setSearchParams/setStep durante render. Filtrar antes ou usar useEffect. Ver mem://standards/no-render-side-effects.
 BU-scoped detail keys: query keys de detalhe DEVEM incluir `currentBuId` e separar loading de not-found para evitar loading infinito. Ver mem://standards/bu-scoped-detail-query-keys.
+BU membership cache: toda mutação em bu_user_memberships/bu_units DEVE invalidar `queryKeys.bu.userBusPrefix()`. Ver mem://standards/bu-membership-cache-invalidation.
 
 ## Memories
 - [Rules of Hooks](mem://standards/frontend-rules-of-hooks) — Hooks antes de early-returns; deps array com chaves estáveis (não usar `length` como proxy)
