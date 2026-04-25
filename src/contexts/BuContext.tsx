@@ -6,6 +6,7 @@ import { useExternalUserBus } from "@/modules/external/hooks";
 import { AuthContext, type AuthContextType } from "@/hooks/useAuth";
 import { clearBuClientCache } from "@/integrations/supabase/buScopedClient";
 import { setTenantId } from "@/lib/analytics";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface BuContextType {
   /** Selected BU id (available even if bu_unit data isn't loaded) */
