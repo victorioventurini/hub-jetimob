@@ -104,5 +104,10 @@ export const okrRoutes = (
     
     {/* Team Contribution */}
     <Route path="/okrs/team-contribution/:teamId" element={<OkrRoute><TeamContributionPage /></OkrRoute>} />
+
+    {/* Legacy redirects (URLs antigas em emails/bookmarks) */}
+    <Route path="/okrs/team-objective/:objectiveId" element={<LegacyTeamObjectiveRedirect />} />
+    <Route path="/okrs/team/:objectiveId" element={<LegacyOkrsTeamRedirect />} />
+    <Route path="/okrs/org/:objectiveId" element={<LegacyOkrsOrgRedirect />} />
   </>
 );
