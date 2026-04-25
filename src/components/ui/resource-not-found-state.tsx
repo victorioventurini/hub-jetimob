@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { cn } from '@/lib/utils';
 
-export type ResourceNotFoundVariant = 'not_found' | 'cancelled' | 'context_loading';
+export type ResourceNotFoundVariant = 'not_found' | 'cancelled' | 'context_loading' | 'permission_denied';
 
 export interface ResourceNotFoundStateProps {
   /** Tipo do recurso em português (ex: "objetivo", "ticket", "ativo") */
@@ -71,11 +71,13 @@ export function ResourceNotFoundState({
     not_found: `Este ${resourceType} não existe mais`,
     cancelled: `Este ${resourceType} foi cancelado`,
     context_loading: 'Carregando contexto...',
+    permission_denied: `Você não tem permissão para acessar este ${resourceType}`,
   };
   const defaultMessageByVariant: Record<ResourceNotFoundVariant, string> = {
     not_found: `O ${resourceType} que você tentou acessar foi removido ou você não tem permissão para visualizá-lo.`,
     cancelled: `Este ${resourceType} foi cancelado e não pode mais receber alterações.`,
     context_loading: `Estamos finalizando o carregamento da sua Business Unit. Se a tela não atualizar em alguns segundos, recarregue a página.`,
+    permission_denied: `Seu time não está autorizado a acessar este ${resourceType} ou você não tem o permissionamento necessário.`,
   };
   const heading = headingByVariant[variant];
   const defaultMessage = defaultMessageByVariant[variant];
