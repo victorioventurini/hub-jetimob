@@ -32,8 +32,21 @@ Quando um objetivo de time está marcado como `is_shared=true` e contém entrada
 4. **Select correto**: `AGGREGATE_FIELDS.teamObjectiveWithKrs` em `aggregateUtils.ts` DEVE incluir `team_id` em `key_results` para permitir o filtro do contribuidor. Também inclui `is_shared`, `responsibility_model` e `org_objective_id` no objetivo.
 5. **Caller do `TeamObjectiveFormDialog`**: ver `mem://features/okrs/shared-okr-edit-hydration-standard` — passar `is_shared`, `responsibility_model` e `org_objective_id` ao editar.
 
+## Entry point para criação de KR de contribuição
+
+- **URL contract**: `/okrs/objectives/:objectiveId/krs/create?contributor_team_id={uuid}`.
+- **Origem do botão**: `ContributingOkrCard` no dashboard `/okrs?view=team&team_id={TimeB}`.
+- **Derivação de ownership no wizard** (`TeamKrCreationPage`):
+  - `isContribution = !!contributor_team_id && contributor_team_id !== objective.team_id`
+  - `effectiveTeamId = isContribution ? contributor_team_id : objective.team_id`
+  - `effectiveTeamId` é passado para `useKrWizardDraft`, `useTeam` (membros para owner do KR), e `createKrBundle.mutateAsync({ teamId })`.
+- **Validação obrigatória**: ao montar a página, valida que `contributor_team_id` consta em `okr_team_objective_contributors`. Se não, toast de erro + redirect para `/okrs?view=team&team_id={contributor_team_id}`.
+- **UX no Step 1 (`KrContextStep`)**: banner `InfoNotice variant="info"` quando `isContribution`, deixando claro que o KR pertencerá ao time contribuidor.
+- **Pós-criação**: redirect para `/okrs?view=team&team_id={contributor_team_id}` (não `/okrs` genérico) para o usuário ver imediatamente seu KR no card "Contribuição do seu time".
+
 ## Hooks/queries envolvidos
 
 - `useTeamContributedOkrs(teamId)` — lê `v_team_contributed_okrs` filtrando por `contributor_team_id`, depois carrega objetivos completos.
-- `useObjectiveContributors(objectiveId)` — lê `okr_team_objective_contributors` para popular o multiselect no form.
+- `useObjectiveContributors(objectiveId)` — lê `okr_team_objective_contributors` para popular o multiselect no form E para validar autorização no wizard de KR.
 - `useManageContributors()` — diff INSERT/DELETE em `okr_team_objective_contributors` (RLS V2).
+- `useCreateTeamKrBundle()` — recebe `teamId` por argumento de mutate; nenhuma mudança necessária para suportar contribuição (já é parametrizável).
