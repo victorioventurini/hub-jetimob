@@ -21,3 +21,11 @@ A inserção continua passando pelas RLS canônicas:
 Após criar, invalidar caches contribuidor:
 `objectiveContributors`, `teamContributedObjectives`, `teamContributedOkrs`,
 `sharedSummaryPrefix` e a query local `['shared-objectives-with-krs']`.
+
+## Campo Responsável escopado por teamId
+
+O `BuUserSelect` do campo "Responsável" no `TeamKrFormDialog` recebe
+**obrigatoriamente** `teamId={teamId}` + `includeSubteams`. Isso garante
+que apenas membros do time dono (ou contribuidor, em OKR compartilhada)
+e seus subtimes apareçam — nunca a BU inteira. Padrão alinhado com
+`mem://standards/users/team-filter-includes-subteams`.
