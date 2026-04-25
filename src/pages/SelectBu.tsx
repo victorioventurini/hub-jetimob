@@ -134,19 +134,19 @@ export default function SelectBu() {
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <img src={JetimobIcon} alt="Hub" className="w-6 h-6" style={{ filter: 'brightness(0) invert(1)' }} />
+      <header className="bg-card border-b border-border px-4 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <img src={JetimobIcon} alt="Hub" className="w-5 h-5 sm:w-6 sm:h-6" style={{ filter: 'brightness(0) invert(1)' }} />
             </div>
-            <span className="text-lg font-semibold">Hub</span>
+            <span className="text-base sm:text-lg font-semibold truncate">Hub</span>
           </div>
           
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 px-2">
+              <Button variant="ghost" className="flex items-center gap-2 sm:gap-3 px-2 shrink-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.photo_url || undefined} />
                   <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
@@ -191,18 +191,18 @@ export default function SelectBu() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="flex-1 flex items-center justify-center px-4 py-6 sm:p-6">
         <div className="w-full max-w-2xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="text-center mb-8"
+            className="text-center mb-6 sm:mb-8"
           >
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               Olá, {profile?.first_name || "Jetimober"}! 👋
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-base sm:text-lg">
               Selecione a Business Unit que deseja acessar
             </p>
           </motion.div>
@@ -227,11 +227,11 @@ export default function SelectBu() {
                     }`}
                     onClick={() => handleSelectBu(bu.id, hasAccess)}
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         {/* BU Logo/Icon */}
                         <div 
-                          className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0"
                           style={{ 
                             backgroundColor: bu.primary_color ? `${bu.primary_color}20` : 'hsl(var(--muted))'
                           }}
@@ -247,13 +247,13 @@ export default function SelectBu() {
 
                         {/* BU Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold truncate">{bu.name}</h3>
+                          <h3 className="text-base sm:text-lg font-semibold truncate">{bu.name}</h3>
                           {bu.description && (
-                            <p className="text-sm text-muted-foreground truncate">
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
                               {bu.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             {membership?.is_default && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground">
                                 Padrão
@@ -270,18 +270,22 @@ export default function SelectBu() {
 
                         {/* Access button */}
                         {hasAccess ? (
-                          <Button 
-                            variant="outline" 
-                            className="gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                            aria-label={`Acessar ${bu.name}`}
                           >
-                            Acessar
+                            <span className="hidden sm:inline">Acessar</span>
                             <ArrowRight className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             disabled
-                            className="gap-2"
+                            className="gap-2 shrink-0"
+                            aria-label="Sem acesso"
                           >
                             <Lock className="h-4 w-4" />
                           </Button>
