@@ -38,6 +38,7 @@ export function SharedOkrBadge({
   compact = false,
   expanded = false,
   showTeamList = true,
+  inlineTeams = false,
   className,
 }: SharedOkrBadgeProps) {
   if (!isShared) return null;
