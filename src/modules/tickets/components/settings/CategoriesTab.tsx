@@ -101,21 +101,21 @@ export function CategoriesTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Categorias e Subcategorias</CardTitle>
             <CardDescription>
               Organize os tickets por categoria para facilitar o roteamento e filtros
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UrlSearchInput
               value={search}
               onChange={setSearch}
               placeholder="Buscar categoria..."
-              className="w-[200px]"
+              className="w-full sm:w-[200px]"
             />
-            <Button onClick={handleCreateCategory}>
+            <Button onClick={handleCreateCategory} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Nova Categoria
             </Button>
