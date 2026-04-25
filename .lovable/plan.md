@@ -1,66 +1,41 @@
-## Objetivo
-Em `/teams/:id`, fazer o card "Líder do Time" (sidebar direita) ter a **mesma altura visual** dos 3 stats cards (Membros / Sub-times / Squads) que ficam na linha de cima da coluna esquerda, conforme print enviado.
+## Problema
 
-## Diagnóstico
-Estrutura atual em `src/modules/teams/pages/TeamDetailPage.tsx`:
+A URL `/okrs/objectives/{objectiveId}/krs/create?contributor_team_id={teamId}` não permite criar KRs de contribuição quando já existe um draft do **time owner** (ou de outro time contribuidor) para o mesmo `objectiveId`. A causa-raiz é o `localStorage` key do `useKrWizardDraft` ser composto **apenas** por `objectiveId`, ignorando o `teamId` efetivo. Drafts de owner e de contribuidor se sobrescrevem, gerando estado inconsistente que bloqueia o submit.
 
-- **Coluna esquerda — Quick Stats (linhas 169-195)**: 3 cards compactos `<CardContent className="p-4 text-center">` (sem CardHeader). Altura ~95px.
-- **Sidebar direita — Líder do Time (linhas 361-388)**: Card com `CardHeader` (título "Líder do Time") + `CardContent` com avatar `h-12 w-12`. Altura ~180px.
+## Pré-checklist Canônico ✅
+- TCR consultado (wizard hierarchy + KR linked entities)
+- `mem://features/okrs/shared-okr-contributor-view-standard` revisado (URL contract com `contributor_team_id`)
+- `mem://features/okrs/creation-wizard-draft-hydration` revisado (política de hidratação)
+- `mem://standards/url-state-preservation` revisado
+- RLS `okr_team_key_results` (ownership) confirmada — não é bloqueio de permissão; é bug de estado client-side
 
-A diferença gera o desalinhamento visual mostrado no print: o card do líder fica muito mais alto que os stats cards à esquerda, criando um "degrau" no topo do layout.
+## Plano de Ação
 
-## Mudanças propostas — `src/modules/teams/pages/TeamDetailPage.tsx`
+### 1. `src/modules/okrs/hooks/useKrWizardDraft.ts`
+- Bump `DRAFT_VERSION` de `2` → `3` para invalidar drafts legados
+- Reescrever `getStorageKey(objectiveId, teamId)` → `okr-draft.team-kr-creation.${objectiveId}.${teamId}`
+- Adicionar `teamId` como dependência do `useEffect` de carregamento e do `storageKey`
+- Validar no load que `parsed.teamId === teamId` (além de `objectiveId`); se não bater, descartar silenciosamente
+- Manter migration silenciosa: legacy keys sem `teamId` são ignoradas (já cairão fora pelo version bump)
 
-Substituir o bloco do "Leader Card" (linhas 361-388) por uma versão **compacta** que segue o mesmo padrão visual dos stats cards (`p-4`, sem `CardHeader`, label pequena no topo):
+### 2. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
+- Garantir que `effectiveTeamId` (resolvido a partir de `contributor_team_id` da URL ou ownership do objetivo) é passado ao `useKrWizardDraft` **antes** da inicialização
+- Se draft existente tiver `teamId` divergente do `effectiveTeamId`, chamar `clearDraft()` + `initializeDraft()` automaticamente (auto-healing)
+- Log telemetria: `[wizardDraft] auto-clear: teamId mismatch`
 
-```tsx
-{/* Leader Card - alinhado visualmente com os Quick Stats à esquerda */}
-<Card>
-  <CardContent className="p-4 text-center">
-    <p className="text-xs text-muted-foreground uppercase font-medium mb-2">
-      Líder do Time
-    </p>
-    {team.leader ? (
-      <Link
-        to={`/users/${team.leader.id}`}
-        className="flex items-center justify-center gap-2 group"
-      >
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={team.leader.photo_url || undefined} />
-          <AvatarFallback className="bg-accent/10 text-accent text-sm">
-            {getInitials(team.leader.display_name)}
-          </AvatarFallback>
-        </Avatar>
-        <span className="font-medium text-sm group-hover:text-accent transition-colors truncate">
-          {team.leader.display_name}
-        </span>
-      </Link>
-    ) : (
-      <div className="flex items-center justify-center gap-2 text-muted-foreground">
-        <UserCircle className="h-6 w-6" />
-        <span className="text-sm">Sem líder definido</span>
-      </div>
-    )}
-  </CardContent>
-</Card>
-```
+### 3. Memória SSOT
+- Criar `.lovable/memory/standards/wizard-draft-isolation.md`:
+  - Regra: **toda chave de draft de wizard DEVE incluir o escopo completo** (todos IDs que afetam ownership/visibilidade — `objectiveId`, `teamId`, `cycleId` quando aplicável)
+  - Aplicar a `useKrWizardDraft`, `useGenericWizardDraft` e futuros hooks
+- Atualizar `.lovable/memory/index.md` Core rules com one-liner
 
-### Detalhes da decisão visual
-- **Sem `CardHeader`**: padronizado com os stats cards (`p-4` only).
-- **Label no topo (`text-xs uppercase`)**: substitui o título do header, mantendo identificação clara do card.
-- **Avatar `h-8 w-8`**: reduzido (era `h-12 w-12`) para casar com a densidade compacta dos stats.
-- **Layout horizontal (avatar + nome)**: mais econômico verticalmente que o layout original (avatar + bloco de texto).
-- **Empty state inline**: substitui o bloco vertical com ícone grande, mantendo a mesma altura quando não há líder.
+## Arquivos
+- ✏️ `src/modules/okrs/hooks/useKrWizardDraft.ts`
+- ✏️ `src/modules/okrs/pages/TeamKrCreationPage.tsx`
+- ✏️ `.lovable/memory/index.md`
+- ➕ `.lovable/memory/standards/wizard-draft-isolation.md`
 
-## Não-mudanças
-- ❌ NÃO alterar `Card` "Time Pai" (linhas 391-409) — fica abaixo na sidebar e tem propósito visual diferente (link de navegação).
-- ❌ NÃO mexer nos stats cards (Membros/Sub-times/Squads) — eles já estão no padrão correto.
-- ❌ NÃO adicionar `h-full` em grid stretching: o objetivo é igualar a altura por **densidade de conteúdo**, não por força CSS (que produziria espaços vazios estranhos).
-
-## Files
-- **Edit**: `src/modules/teams/pages/TeamDetailPage.tsx` (linhas 361-388)
-
-## Validação pós-implementação
-1. Acessar `/teams/d3247da9-3e07-4fa8-9d0a-2527fdf6548f` — confirmar que o topo da sidebar (Líder do Time) está visualmente alinhado com a base dos stats cards à esquerda.
-2. Testar com líder definido E sem líder definido (ambos devem ter altura equivalente).
-3. Testar nome longo de líder — verificar `truncate`.
+## Validação
+1. Acessar URL com `contributor_team_id` → wizard inicializa limpo, sem bloqueio
+2. Owner e contribuidor podem manter drafts paralelos para mesmo objetivo
+3. Reabrir mesma URL preserva o draft correto do escopo
