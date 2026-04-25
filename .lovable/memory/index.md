@@ -25,6 +25,7 @@ BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, ma
 - [Shared OKR edit hydration](mem://features/okrs/shared-okr-edit-hydration-standard) — Caller deve passar is_shared/responsibility_model/org_objective_id; hidratação one-shot de contribuidores; diff no save
 - [Shared OKR contributor view](mem://features/okrs/shared-okr-contributor-view-standard) — Bloco "OKRs Compartilhadas" no dashboard do time contribuidor; ContributingOkrCard read-only com KRs filtradas por kr.team_id
 - [Team contribution tab](mem://features/teams/team-contribution-tab-standard) — Aba /teams/:id?tab=contribution com 5 sub-tabs, toggle sub-times (off por padrão), sparkline de confidence; rota legada /okrs/team-contribution/:teamId redireciona
+- [BU selection race protection](mem://standards/bu-selection-race-protection) — lastUserSelectionAtRef + janela 5s; effect de init não sobrescreve seleção recente; selectBu retenta após refetch e mostra toast quando BU realmente inacessível
 - [BU detail diagnostic pattern](mem://standards/bu-scoped-detail-diagnostic-pattern) — Gate currentBuId + guard §A.3 + diagnóstico secundário classificando cancelled/context_loading/not_found; helper getBuScopedClientCurrentBuId só p/ telemetria
 
 
