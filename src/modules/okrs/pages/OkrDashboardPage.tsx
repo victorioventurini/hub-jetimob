@@ -426,11 +426,15 @@ export default function OkrDashboardPage() {
         </div>
 
 
-        {/* Shared OKRs Insights */}
+        {/* Shared OKRs Insights — totalOkrsCount usa MESMO escopo do numerador */}
         {sharedInsights.sharedOkrsCount > 0 && (
           <SharedOkrInsights
             sharedOkrsCount={sharedInsights.sharedOkrsCount}
-            totalOkrsCount={displayObjectives.length}
+            totalOkrsCount={
+              activeView === 'team'
+                ? (teamObjectives?.length ?? 0)
+                : displayObjectives.length
+            }
             overdueSharedOkrsCount={sharedInsights.overdueSharedOkrsCount}
             teamsWithMostDependencies={sharedInsights.teamsWithMostDependencies}
           />
