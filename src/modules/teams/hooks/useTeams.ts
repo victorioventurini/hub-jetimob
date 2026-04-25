@@ -178,7 +178,7 @@ export function useTeam(teamId: string | undefined) {
         member_count: memberCount || 0,
         members: members || [],
         parent_team: parentTeam,
-      } as TeamWithRelations & { members: any[] };
+      } as unknown as TeamWithRelations & { members: any[] };
     },
     enabled: !!teamId,
     staleTime: 2 * 60 * 1000, // 2 minutes
