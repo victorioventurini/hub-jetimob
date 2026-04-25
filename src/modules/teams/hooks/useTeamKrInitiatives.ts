@@ -172,10 +172,10 @@ export function useTeamKrInitiatives(
         );
       }
 
-      const enrichedInits: Initiative[] = initiatives.map((i) => ({
+      const enrichedInits: Initiative[] = (initiatives as any[]).map((i) => ({
         ...i,
         owner: ownerMap.get(i.owner_user_id),
-      }));
+      })) as Initiative[];
 
       // 5) Time names para o header dos cards (somente se include_subteams)
       let teamNameMap = new Map<string, string>();
