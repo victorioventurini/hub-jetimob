@@ -104,6 +104,7 @@ export function TeamOkrSections({
                 key={objective.id}
                 objective={objective}
                 currentTeamId={teamId}
+                canContribute={canEdit}
               />
             ))}
           </div>
