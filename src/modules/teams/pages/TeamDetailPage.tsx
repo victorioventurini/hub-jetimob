@@ -270,10 +270,7 @@ export default function TeamDetailPage() {
               </TabsContent>
 
               <TabsContent value="contribution" className="mt-4">
-                {/* Sentinela: a aba Contribuição é renderizada FORA da grid 2/3 abaixo, para usar largura total. */}
-                <div className="lg:hidden">
-                  <TeamContributionTab teamId={team.id} teamName={team.name} />
-                </div>
+                <TeamContributionTab teamId={team.id} teamName={team.name} />
               </TabsContent>
 
               <TabsContent value="squads" className="mt-4">
