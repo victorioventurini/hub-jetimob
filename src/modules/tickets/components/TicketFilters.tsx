@@ -44,13 +44,13 @@ export function TicketFilters({
   onResponsibleChange,
 }: TicketFiltersProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-3">
       {/* Search */}
       <UrlSearchInput
         value={search}
         onChange={onSearchChange}
         placeholder="Buscar por título..."
-        className="flex-1 min-w-[200px]"
+        className="w-full sm:flex-1 sm:min-w-[200px]"
         debounceMs={300}
       />
 
@@ -60,7 +60,7 @@ export function TicketFilters({
         onValueChange={onTypeChange}
         includeAll
         allLabel="Todos os tipos"
-        triggerClassName="w-[140px]"
+        triggerClassName="w-full sm:w-[140px]"
       />
 
       {/* Status - using canonical component */}
@@ -69,7 +69,7 @@ export function TicketFilters({
         onValueChange={onStatusChange}
         includeAll
         allLabel="Todos os status"
-        triggerClassName="w-[160px]"
+        triggerClassName="w-full sm:w-[160px]"
       />
 
       {/* Category - using canonical component */}
@@ -78,7 +78,7 @@ export function TicketFilters({
         onValueChange={onCategoryChange}
         includeAll
         allLabel="Todas categorias"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-full sm:w-[180px]"
       />
 
       {/* Responsible - internal or external */}
@@ -87,7 +87,7 @@ export function TicketFilters({
         onValueChange={onResponsibleChange}
         includeAll
         allLabel="Todos responsáveis"
-        triggerClassName="w-[180px]"
+        triggerClassName="w-full sm:w-[180px]"
       />
 
       {/* Partner (only if external type selected) */}
@@ -97,7 +97,7 @@ export function TicketFilters({
           onValueChange={onPartnerChange}
           includeAll
           allLabel="Todos parceiros"
-          triggerClassName="w-[180px]"
+          triggerClassName="w-full sm:w-[180px]"
         />
       )}
     </div>
