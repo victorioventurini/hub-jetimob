@@ -335,12 +335,34 @@ export default function TeamKrCreationPage() {
   }, [teamData?.members]);
 
   // ── Loading state ──
-  if (objectiveLoading || !objective || !objectiveContext || canManageLoading) {
+  // Esperamos o BU client estar pronto + a query terminar (loading e fetched)
+  // E o gate de permissão resolver. Sem isso, qualquer "esperando dependência"
+  // virava loading infinito.
+  if (!isReady || objectiveLoading || !objectiveFetched || canManageLoading) {
+    return <LoadingState fullPage text="Carregando..." />;
+  }
+
+  // ── Resource not found (objetivo inexistente, cancelado ou em outra BU) ──
+  if (!objective) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
-      </div>
+      <ResourceNotFoundState
+        resourceType="objetivo"
+        resourceId={objectiveId}
+        moduleRoot="/okrs"
+        viewAllLabel="Ver OKRs"
+        customMessage={
+          isContribution
+            ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido cancelado, removido ou está em outra Business Unit.'
+            : 'O objetivo que você tentou acessar foi removido, cancelado ou não está disponível na Business Unit atual.'
+        }
+        showResourceId
+      />
     );
+  }
+
+  // ── Defensive: guarda do contexto do objetivo (caso derivação falhe) ──
+  if (!objectiveContext) {
+    return <LoadingState fullPage text="Carregando..." />;
   }
 
   // ── Permission gate ──
