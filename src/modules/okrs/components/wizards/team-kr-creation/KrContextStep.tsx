@@ -12,6 +12,7 @@ import { Target, Users, Share2, Crown, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
+import { InfoNotice } from '@/components/ui/info-notice';
 
 // ============================================================
 // TYPES
