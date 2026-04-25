@@ -92,7 +92,7 @@ export function ResourceNotFoundState({
       </div>
       
       <h2 className="text-xl font-semibold text-foreground mb-2">
-        Este {resourceType} não existe mais
+        {heading}
       </h2>
       
       <p className="text-muted-foreground max-w-md mb-6">
