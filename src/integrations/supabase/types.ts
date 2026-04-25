@@ -10683,6 +10683,15 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: string
       }
+      can_create_shared_team_kr_by_profile: {
+        Args: {
+          p_bu_id: string
+          p_kr_team_id: string
+          p_objective_id: string
+          p_profile_id: string
+        }
+        Returns: boolean
+      }
       can_manage_asset_inventory: {
         Args: { p_bu_id: string; p_user_id: string }
         Returns: boolean
