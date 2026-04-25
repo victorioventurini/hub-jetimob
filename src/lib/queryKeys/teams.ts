@@ -11,6 +11,15 @@ export const teamsKeys = {
   area: (teamId: string | undefined) => ['teams', 'area', teamId] as const,
   // v2.94.0: Teams by area filter
   byArea: (buId: string | null, areaId: string | null) => ['teams', 'by-area', buId, areaId] as const,
+  // v3.x: Contribution tab analytics aggregator
+  contributionAnalytics: (
+    teamId: string | null,
+    buId: string | null,
+    includeSubteams: boolean,
+    cycleId?: string | null
+  ) => ['teams', 'contribution-analytics', teamId, buId, includeSubteams, cycleId ?? null] as const,
+  contributionSubteamIds: (teamId: string | null, includeSubteams: boolean) =>
+    ['teams', 'contribution-subteam-ids', teamId, includeSubteams] as const,
 } as const;
 
 export const squadsKeys = {

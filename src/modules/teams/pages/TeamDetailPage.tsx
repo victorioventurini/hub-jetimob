@@ -36,6 +36,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
+import { TeamContributionTab } from "../components/contribution/TeamContributionTab";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageHeader } from "@/components/ui/page-header";
 // TeamsBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
@@ -260,20 +261,7 @@ export default function TeamDetailPage() {
               </TabsContent>
 
               <TabsContent value="contribution" className="mt-4">
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Target className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                    <h3 className="font-medium mb-2">Visualizar Contribuição Organizacional</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Veja como este time contribui para os Objetivos Organizacionais através de seus OKRs.
-                    </p>
-                    <Button asChild>
-                      <Link to={`/okrs/team-contribution/${team.id}`}>
-                        Ver Contribuição Completa
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
+                <TeamContributionTab teamId={team.id} teamName={team.name} />
               </TabsContent>
 
               <TabsContent value="squads" className="mt-4">
