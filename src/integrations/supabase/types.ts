@@ -11103,10 +11103,9 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_partner_contact_ticket_stats: {
-        Args: { p_contact_id: string }
-        Returns: Json
-      }
+      get_partner_contact_ticket_stats:
+        | { Args: { p_contact_id: string }; Returns: Json }
+        | { Args: { p_bu_id?: string; p_contact_id: string }; Returns: Json }
       get_partner_subcategories: {
         Args: { p_category_id: string; p_external_company_id: string }
         Returns: {

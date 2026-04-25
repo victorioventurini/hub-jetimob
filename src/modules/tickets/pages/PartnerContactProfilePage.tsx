@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useBu } from "@/contexts/BuContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { queryKeys } from "@/lib/queryKeys";
@@ -84,11 +85,12 @@ interface PartnerContactProfile {
 
 function usePartnerContactProfile(id: string | undefined) {
   const supabase = useOptionalBuScopedSupabase();
+  const { currentBuId } = useBu();
 
   return useQuery({
-    queryKey: queryKeys.tickets.partnerContactProfile(id || ""),
+    queryKey: [...queryKeys.tickets.partnerContactProfile(id || ""), currentBuId ?? "no-bu"],
     queryFn: async (): Promise<PartnerContactProfile | null> => {
-      if (!id || !supabase) return null;
+      if (!id || !supabase || !currentBuId) return null;
 
       // Fetch contact with company
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,7 +111,7 @@ function usePartnerContactProfile(id: string | undefined) {
 
       if (error || !contactData) return null;
 
-      // Fetch contact capabilities with category/subcategory info
+      // Fetch contact capabilities — scoped to active BU to avoid cross-BU duplicates
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: capabilitiesData } = await (supabase as any)
         .from("partner_contact_capabilities")
@@ -122,6 +124,7 @@ function usePartnerContactProfile(id: string | undefined) {
           ticket_subcategories(id, name)
         `)
         .eq("contact_id", id)
+        .eq("bu_id", currentBuId)
         .is("deleted_at", null);
 
       const capabilities: CapabilityWithCategory[] = (capabilitiesData || []).map((c: {
@@ -140,7 +143,7 @@ function usePartnerContactProfile(id: string | undefined) {
         is_active: c.is_active,
       }));
 
-      // Fetch company service mappings if company exists
+      // Fetch company service mappings if company exists — also scoped to active BU
       let companyServices: ServiceMapping[] = [];
       const companyId = contactData.external_company?.id;
       
@@ -156,6 +159,7 @@ function usePartnerContactProfile(id: string | undefined) {
             ticket_subcategories(id, name)
           `)
           .eq("external_company_id", companyId)
+          .eq("bu_id", currentBuId)
           .is("deleted_at", null);
 
         companyServices = (servicesData || []).map((s: {
@@ -173,10 +177,10 @@ function usePartnerContactProfile(id: string | undefined) {
         }));
       }
 
-      // Fetch ticket stats using RPC (handles RLS bypass for admins)
+      // Fetch ticket stats scoped to the active BU
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: ticketStatsData } = await (supabase as any)
-        .rpc("get_partner_contact_ticket_stats", { p_contact_id: id });
+        .rpc("get_partner_contact_ticket_stats", { p_contact_id: id, p_bu_id: currentBuId });
 
       const ticketStats = {
         waiting: ticketStatsData?.waiting ?? 0,
@@ -201,7 +205,7 @@ function usePartnerContactProfile(id: string | undefined) {
         ticket_stats: ticketStats,
       };
     },
-    enabled: !!id && !!supabase,
+    enabled: !!id && !!supabase && !!currentBuId,
   });
 }
 
