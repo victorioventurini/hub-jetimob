@@ -19,6 +19,8 @@ import { useKrWizardDraft, useCreateTeamKrBundle, type KrWizardStep } from '@/mo
 import { useCanManageTeamOkr } from '@/modules/okrs/hooks/useCanManageTeamOkr';
 import { useTeam } from '@/modules/teams/hooks';
 import { Button } from '@/components/ui/button';
+import { ResourceNotFoundState } from '@/components/ui/resource-not-found-state';
+import { LoadingState } from '@/components/ui/loading-state';
 import { ShieldAlert } from 'lucide-react';
 
 // Steps
