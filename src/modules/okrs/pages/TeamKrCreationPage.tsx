@@ -365,7 +365,7 @@ export default function TeamKrCreationPage() {
             objectiveTitle={objective.title}
             krPlan={draft.krPlan}
             draftKrs={draft.draftKrs}
-            teamId={teamId}
+            teamId={effectiveTeamId}
             onDraftKrsChange={(krs) => updateDraft({ draftKrs: krs })}
             onContinue={goNext}
             onBack={goBack}
@@ -405,7 +405,7 @@ export default function TeamKrCreationPage() {
           <TeamOkrInitiativesStep
             draftKrs={draft.draftKrs}
             initiatives={draft.initiatives}
-            teamId={teamId}
+            teamId={effectiveTeamId}
             onInitiativesChange={(inits) => updateDraft({ initiatives: inits })}
             onContinue={goNext}
             onBack={goBack}
