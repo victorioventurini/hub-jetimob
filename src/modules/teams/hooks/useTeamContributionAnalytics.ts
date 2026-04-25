@@ -200,15 +200,15 @@ export function useTeamContributionAnalytics(
         }
       }
 
-      // 6) Projetos ativos vinculados a KRs do time
+      // 6) Projetos ativos vinculados a KRs do time (via project_krs)
       let activeProjectsCount = 0;
       if (krIds.length > 0) {
         const { data: projectKrs } = await supabase
-          .from('project_key_results')
+          .from('project_krs')
           .select('project_id')
           .in('key_result_id', krIds);
         const projectIds = [
-          ...new Set((projectKrs || []).map((p) => p.project_id)),
+          ...new Set(((projectKrs as Array<{ project_id: string }> | null) || []).map((p) => p.project_id)),
         ];
         if (projectIds.length > 0) {
           const { data: projects } = await supabase
@@ -216,7 +216,7 @@ export function useTeamContributionAnalytics(
             .select('id, status')
             .in('id', projectIds)
             .is('deleted_at', null)
-            .in('status', ['planned', 'in_progress', 'at_risk']);
+            .in('status', ['planned', 'in_progress']);
           activeProjectsCount = projects?.length ?? 0;
         }
       }
