@@ -286,6 +286,16 @@ export default function OkrDashboardPage() {
   const isLoading = orgLoading || teamLoading || krsLoading || teamsLoading || 
     (activeView === 'my' && (myObjLoading || myKrsLoading));
   
+  // Aplica filtro de tipo (shared/exclusive). is_shared só existe em team_objectives,
+  // por isso o filtro é ignorado na company view.
+  const applySharedFilter = (objs: any[]) => {
+    const sf = filters.sharedFilter;
+    if (!sf || sf === 'all') return objs;
+    if (sf === 'shared') return objs.filter((o: any) => o?.is_shared === true);
+    if (sf === 'exclusive') return objs.filter((o: any) => !o?.is_shared);
+    return objs;
+  };
+
   const displayObjectives = useMemo(() => {
     if (activeView === 'company') {
       return orgObjectives || [];
@@ -294,22 +304,30 @@ export default function OkrDashboardPage() {
       // Filter objectives to only include KRs where the user is responsible
       const myKrIds = new Set(myKrs?.map(kr => kr.id) || []);
       
-      return (myObjectives || [])
+      const filtered = (myObjectives || [])
         .map(objective => ({
           ...objective,
           key_results: (objective.key_results || []).filter((kr: any) => myKrIds.has(kr.id))
         }))
         .filter(obj => obj.key_results.length > 0);
+      return applySharedFilter(filtered);
     }
     // Sort team objectives by team name (alphabetical), then by created_at desc
-    return [...(teamObjectives || [])].sort((a, b) => {
+    return applySharedFilter([...(teamObjectives || [])]).sort((a: any, b: any) => {
       const teamA = (a as any).team?.name?.toLowerCase() || '';
       const teamB = (b as any).team?.name?.toLowerCase() || '';
       if (teamA !== teamB) return teamA.localeCompare(teamB, 'pt-BR');
       // Same team: keep created_at desc (already from query)
       return 0;
     });
-  }, [activeView, orgObjectives, teamObjectives, myObjectives, myKrs]);
+  }, [activeView, orgObjectives, teamObjectives, myObjectives, myKrs, filters.sharedFilter]);
+
+  // Filtra contributedObjectives pelo mesmo critério (semântica: todos contribuídos
+  // são is_shared=true por natureza, então 'exclusive' resulta em lista vazia).
+  const filteredContributedObjectives = useMemo(
+    () => applySharedFilter(contributedObjectives || []),
+    [contributedObjectives, filters.sharedFilter],
+  );
 
   // Risk count for alert
   const atRiskCount = statusCounts.off_track + statusCounts.at_risk;
@@ -588,7 +606,7 @@ export default function OkrDashboardPage() {
           ) : activeView === 'team' && normalizedTeamId ? (
             <TeamOkrSections
               primaryObjectives={displayObjectives}
-              contributedObjectives={contributedObjectives || []}
+              contributedObjectives={filteredContributedObjectives}
               teamId={normalizedTeamId}
               teamName={
                 (displayObjectives[0] as any)?.team?.name

@@ -1,86 +1,77 @@
-# Padronizar UI de KRs em OKRs compartilhadas (paridade com Team KRs)
+# Bug: filtro `Compartilhadas` não funciona em `/okrs?shared=shared&view=team`
 
-## Contexto
+## Diagnóstico (TCR + docs canônicos)
 
-A imagem 2 mostra a KR contribuidora `teste` no card compartilhado renderizada de forma minimalista — só **chevron + título + barra de progresso**. Já a imagem 1 mostra como uma KR **do próprio time** aparece no `ObjectiveListItem` canônico: status calculado, valor atual/target, contagem de iniciativas, badges, **botões Histórico/Editar/Atualizar**, avatar do responsável e seções "Iniciativas (N)" + "Projetos vinculados" com menu "..." por iniciativa.
+1. `OkrDashboardPage.tsx` lê `sharedFilter` via `useUrlStates` (chave URL `shared`, valores `all|shared|exclusive`) — linha 81.
+2. `OkrDashboardFilters.tsx` expõe o seletor "Tipo" e atualiza `filters.sharedFilter` corretamente.
+3. **Defeito**: `displayObjectives` (memo nas linhas 289-312) **nunca consulta `filters.sharedFilter`**. O parâmetro vai para a URL, é mostrado como filtro ativo no chip ("Compartilhadas"), mas a lista renderizada permanece idêntica.
+4. Campo `is_shared` já está selecionado no `OKR_FIELDS.teamObjective` e `teamObjectiveWithKrs` (`okrFieldDefinitions.ts`), portanto não há custo extra de query.
+5. Aplicação canônica:
+   - `team` view → primário: `teamObjectives`; `TeamOkrSections` recebe também `contributedObjectives`. Filtro deve atuar em ambos.
+   - `my` view → `myObjectives` (já são team_objectives) — aplicar normalmente.
+   - `company` view → `is_shared` não existe em `okr_org_objectives`; o filtro deve ficar **oculto** nessa view (TCR: filtros sem efeito devem ser escondidos para não confundir UX).
 
-`InitiativesList` e `ProjectsForKrSection` já estão corretas dentro do `ContributingOkrCard` (área expandida) — não mudam. **O gap está na linha-resumo da KR contribuidora**, que não expõe os controles canônicos do `KeyResultRow` de `ObjectiveListItem`.
+## Pré-checklist atendido
 
-## Pré-checklist canônico (executado)
+- TCR consultado: regras de URL state (#7) e `select('*')` (#4) respeitadas — campo já existe.
+- `mem://features/okrs/shared-okr-contributor-view-standard` revisado: distinção dono vs contribuidor mantida.
+- `mem://standards/frontend-memoization-standard`: alterações dentro de `useMemo` existente, sem novo componente.
+- Sem mudanças em RLS, RPC, schema ou edge functions.
 
-- ✅ `mem://features/okrs/contributor-kr-uses-modal` — KR contribuidora é `okr_team_key_results` (Team KR); todo o canon de Team KR vale sem nova RLS/schema
-- ✅ `mem://features/okrs/shared-okr-contributor-view-standard` — objetivo é read-only; **as KRs próprias do time contribuidor são editáveis pelo próprio time contribuidor**
-- ✅ `mem://standards/users/team-filter-includes-subteams` — `BuUserSelect` com `teamId={currentTeamId}` + `includeSubteams` (já garantido em `TeamKrFormDialog` e `InitiativeDialog`)
-- ✅ `mem://auth/okr-ownership-enforcement-rls` — RLS de `okr_team_key_results` aceita edit/checkin/delete pelo time dono da KR (= `currentTeamId` no caso contribuidor)
-- ✅ `mem://standards/frontend-memoization-standard` — extração mantém `React.memo`
-- ✅ `mem://standards/query-optimization-standard` — toda query nova segue `select` explícito
-- ✅ `ObjectiveListItem.tsx` (linhas 535–751) é a SSOT visual da linha de Team KR
-- ✅ Hooks/dialogs canônicos reusáveis sem alteração: `TeamKrFormDialog` (edit), `CheckinDialog`, `KrHistoryDialog`, `useKrInitiativesCount`, `useKrPrimaryKpiBatch`, `STATUS_CONFIG`/`mapRagToCalculated`
+## Mudanças propostas
 
-## Princípio
+### 1. `src/modules/okrs/pages/OkrDashboardPage.tsx`
 
-**Reuso 100% — zero código descentralizado.** Em vez de duplicar a linha de KR no `ContributingOkrCard`, **extrair `KeyResultRow` de `ObjectiveListItem.tsx` para um componente canônico próprio** e consumi-lo nos dois lugares.
+**(a)** Estender o `useMemo` `displayObjectives` (linhas 289-312) para aplicar `filters.sharedFilter` quando `activeView !== 'company'`:
 
-## Mudanças
-
-### 1. Extrair `KeyResultRow` para componente canônico
-- Mover `KeyResultRow` (linhas 505–752) + tipos (`KeyResult`, `KeyResultRowProps`) para **`src/modules/okrs/components/dashboard/KeyResultRow.tsx`**
-- Aplicar `React.memo`
-- Reexportar via `dashboard/index.ts`
-- `ObjectiveListItem.tsx` passa a importar do novo arquivo (sem mudança comportamental)
-
-### 2. Refatorar `ContributingOkrCard.tsx` para consumir `KeyResultRow`
-- Remover o `<button>` minimalista interno (linhas 213–238) e a área expandida manual (linhas 240–261) — `KeyResultRow` já entrega tudo (chevron, expand, `InitiativesList`, `ProjectsForKrSection`)
-- Para cada KR contribuidora:
-
-```tsx
-<KeyResultRow
-  kr={kr}
-  type="team"
-  objectiveTitle={objective.title}
-  objectiveStatus={objective.status}
-  teamName={objective.team?.name}
-  canEdit={canContribute}
-  canCheckin={canContribute}
-  hasPrimaryKpi={primaryKpiMap.get(kr.id)?.hasPrimaryKpi}
-  primaryKpiInfo={primaryKpiMap.get(kr.id)?.info}
-  onEdit={() => setEditingKr(kr)}
-  onCheckin={() => setCheckinKr(kr)}
-  onShowHistory={() => setHistoryKr(kr)}
-/>
+```ts
+const applySharedFilter = (objs: any[]) => {
+  if (!filters.sharedFilter || filters.sharedFilter === 'all') return objs;
+  if (filters.sharedFilter === 'shared')   return objs.filter(o => o.is_shared === true);
+  if (filters.sharedFilter === 'exclusive') return objs.filter(o => !o.is_shared);
+  return objs;
+};
 ```
 
-- Adicionar dialogs canônicos (cópia do padrão de `ObjectiveListItem` linhas 421–500): `TeamKrFormDialog` em modo edit, `CheckinDialog`, `KrHistoryDialog`
-- Estado local: `editingKr`, `checkinKr`, `historyKr`
+- `my` view: aplicar `applySharedFilter` após o filtro de KRs do usuário.
+- `team` view: aplicar `applySharedFilter` antes do `sort` por nome de time.
+- `company` view: não aplicar (org objectives não têm `is_shared`).
 
-### 3. Hidratar campos faltantes no payload contribuidor
-A query `useSharedObjectivesWithKrs` em `TeamSharedOkrsBlock.tsx` (linhas 23–43) precisa trazer também:
-- `owner_user_id, updated_at, type` — necessários para `KrHistoryDialog`, `KrPrimaryKpiBadge`, badge owner
-- Embutir `owner:profiles!owner_user_id (id, display_name, photo_url)` na mesma query
-- Mantém `select` explícito por coluna
-- Verificar a mesma necessidade em `useTeamContributedObjectives` (consumido pelo `TeamOkrSections`); garantir os campos extras na query subjacente
+**(b)** Filtrar também `contributedObjectives` antes de passar para `TeamOkrSections` (linha 591):
 
-### 4. KPI primária (badge + valor efetivo)
-- Adicionar chamada a `useKrPrimaryKpiBatch(contributedKrs.map(k => k.id))` dentro do `ContributingOkrCard`
-- Passar `hasPrimaryKpi`/`primaryKpiInfo` para cada `KeyResultRow` — exatamente como `ObjectiveListItem` faz
+```ts
+const filteredContributed = useMemo(
+  () => applySharedFilter(contributedObjectives || []),
+  [contributedObjectives, filters.sharedFilter],
+);
+```
 
-### 5. Atualizar tipo `KeyResult` no card
-- Substituir o tipo inline em `ContributingOkrCardProps` (linhas 32–42) pelo tipo canônico `KeyResult` exportado de `KeyResultRow.tsx`
+> Observação: como `contributedObjectives` por definição já são compartilhados (`is_shared=true`), `shared` mantém todos e `exclusive` remove todos — comportamento semanticamente correto.
 
-### 6. Documentação canônica
-Atualizar `mem://features/okrs/contributor-kr-uses-modal.md` adicionando seção **"Linha da KR usa `KeyResultRow` canônico"**: registra que KR contribuidora reusa o mesmo `KeyResultRow` que Team KR (Histórico/Editar/Check-in/avatar/KPI primária/contagem de iniciativas), com `canEdit={canContribute}`/`canCheckin={canContribute}` — proibido reimplementar linha de KR localmente em qualquer card de OKR compartilhado.
+### 2. `src/modules/okrs/components/dashboard/OkrDashboardFilters.tsx`
 
-## O que **não muda** (já está canônico)
+Esconder o seletor "Tipo" quando `activeView === 'company'` (campo não existe em org objectives) — wrap do bloco `SHARED_FILTER_OPTIONS` (linhas ~190-220) com `{showSharedFilter && activeView !== 'company' && (...)}`.
 
-- `TeamKrFormDialog` para criação ("Adicionar KR") com `BuUserSelect` escopado por `teamId={currentTeamId}` + `includeSubteams`
-- `InitiativesList` + `ProjectsForKrSection` com `krTeamId={currentTeamId}` e `krKind="team"`
-- `InitiativeDialog` com selects canônicos escopados por `krTeamId`
-- RLS de `okr_team_key_results`, `okr_initiatives`, `project_krs`, `okr_checkins` — todas aceitam o time dono da KR (= time contribuidor)
+Atualizar `activeFilterCount` (linha 82) e `clearFilters` (linhas 95-103) para ignorar `sharedFilter` quando escondido.
 
-## Invalidações de cache
+### 3. Testes / verificação manual (sem novos arquivos de teste)
 
-Reusar as mesmas chaves que `ObjectiveListItem` já invalida (via mutações dentro de `TeamKrFormDialog`/`CheckinDialog`). Adicionalmente, invalidar a query local `['shared-objectives-with-krs', ...]` em `TeamSharedOkrsBlock` para refletir mudança de `current_value`/`status` na KR contribuidora.
+- `?view=team&shared=shared` → lista apenas objetivos do time com `is_shared=true` + objetivos contribuídos (todos shared por natureza).
+- `?view=team&shared=exclusive` → lista apenas objetivos do time com `is_shared=false`; bloco de contribuídos fica vazio.
+- `?view=my&shared=shared` → mostra somente objetivos onde sou KR-owner E `is_shared=true`.
+- `?view=company&shared=shared` → seletor não aparece; nenhum objetivo é filtrado por shared.
 
-## Resultado
+### 4. Sem mudanças necessárias
 
-Paridade visual e funcional total entre KRs do próprio time e KRs contribuidoras em OKRs compartilhadas, **sem duplicar código** — `KeyResultRow` vira o componente canônico único consumido por `ObjectiveListItem` e `ContributingOkrCard`.
+- `useTeamObjectives`, `useMyTeamObjectives`, `useTeamContributedOkrs`: `is_shared` já incluso.
+- Query keys: nenhuma mudança (filtragem é client-side, dados já hidratados).
+- Memory: padrão existente (`shared-okr-contributor-view-standard`) já cobre a diferenciação dono/contribuidor; não há nova regra de domínio para registrar — bug fix puramente de cabeamento.
+
+## Arquivos a alterar
+
+- `src/modules/okrs/pages/OkrDashboardPage.tsx` (memo `displayObjectives` + memo novo para contributed)
+- `src/modules/okrs/components/dashboard/OkrDashboardFilters.tsx` (esconder em company view)
+
+## Risco
+
+Baixo — alteração isolada, client-side, sem efeito em RLS/queries; campo `is_shared` já hidratado nos dados existentes.
