@@ -47,3 +47,19 @@ KR contribuidora é Team KR (`okr_team_key_results`), portanto:
 - Permissão herda de `canContribute` (mesma que governa "Adicionar KR").
 
 Sem novo hook, schema, RLS ou rota — reuso 100% do canon.
+
+## InitiativeDialog escopado por teamId
+
+`InitiativeDialog` (`src/modules/okrs/components/initiatives/InitiativeDialog.tsx`)
+recebe prop `krTeamId?: string` e usa **obrigatoriamente** os componentes
+canônicos `BuUserSelect` (Responsável) e `BuUserMultiSelect` (Contribuidores)
+com `teamId={krTeamId}` + `includeSubteams` + `excludeExternal`. Proibido
+reimplementar combobox manual via `Popover + Command + useBuUsersDirectory`.
+
+`InitiativesList` propaga `krTeamId` ao dialog. Cadeia de chamada:
+- KR de time próprio: `ObjectiveListItem` → `InitiativesList krTeamId={kr.team_id}` → dialog escopa ao time dono.
+- KR contribuidora (OKR compartilhado): `ContributingOkrCard` → `InitiativesList krTeamId={currentTeamId}` → dialog escopa ao **time contribuidor**, nunca à BU inteira.
+
+Padrão alinhado a `mem://standards/users/team-filter-includes-subteams`.
+RLS de `okr_initiatives` continua intacta (a KR pertence ao time correto).
+

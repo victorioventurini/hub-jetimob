@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,16 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useAuth } from "@/hooks/useAuth";
+import { BuUserSelect, BuUserMultiSelect } from "@/components/selects";
+import { useProfileId } from "@/hooks/useIdentity";
 import { useBu } from "@/contexts/BuContext";
-import { useBuUsersDirectory } from "@/hooks/useBuUsersDirectory";
 import { useCreateInitiative, useUpdateInitiative, useInitiativeNameValidation } from "../../hooks";
 import { getInitiativeStatusLabel, getInitiativePriorityLabel, type Initiative, type InitiativeStatus, type InitiativePriority } from "../../types/initiative";
-import { Loader2, Check, ChevronsUpDown, Target, Users, X } from "lucide-react";
+import { Target, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
@@ -38,23 +35,25 @@ interface InitiativeDialogProps {
   krId: string;
   krContext?: KrContext;
   initiative?: Initiative | null;
+  /**
+   * ID do time dono da KR. Quando informado, o seletor de Responsável e
+   * Contribuidores é escopado a este time + subtimes (padrão canônico
+   * `mem://standards/users/team-filter-includes-subteams`).
+   */
+  krTeamId?: string;
 }
 
 const statuses: InitiativeStatus[] = ['planned', 'in_progress', 'blocked', 'completed'];
 const priorities: InitiativePriority[] = ['low', 'medium', 'high'];
 
-export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiative }: InitiativeDialogProps) {
-  const { user } = useAuth();
+export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiative, krTeamId }: InitiativeDialogProps) {
+  const profileId = useProfileId();
   const { currentBu } = useBu();
   const createMutation = useCreateInitiative();
   const updateMutation = useUpdateInitiative();
-  const { data: profiles = [] } = useBuUsersDirectory({ pageSize: 200 });
-  
+
   const isEditing = !!initiative;
   const isLoading = createMutation.isPending || updateMutation.isPending;
-
-  const [ownerOpen, setOwnerOpen] = useState(false);
-  const [contributorsOpen, setContributorsOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -77,11 +76,6 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
     { disabled: !open || isEditing }
   );
 
-  // Get default owner (current user's profile id)
-  const currentUserProfile = useMemo(() => {
-    return profiles.find(p => p.user_id === user?.id);
-  }, [profiles, user?.id]);
-
   useEffect(() => {
     if (initiative) {
       setFormData({
@@ -101,7 +95,8 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
       setFormData({
         name: "",
         description: "",
-        owner_user_id: currentUserProfile?.id || "",
+        // Default owner = current user's profile id (if available in current scope)
+        owner_user_id: profileId || "",
         contributors: [],
         status: "planned",
         priority: "medium",
@@ -112,7 +107,7 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
         blocker_reason: "",
       });
     }
-  }, [initiative, open, currentUserProfile?.id]);
+  }, [initiative, open, profileId]);
 
   // Validation
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -169,24 +164,6 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
     } catch (error) {
       // Error handled by mutation
     }
-  };
-
-  const getProfileById = (id: string) => profiles.find(p => p.id === id);
-
-  const toggleContributor = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      contributors: prev.contributors.includes(id)
-        ? prev.contributors.filter(c => c !== id)
-        : [...prev.contributors, id]
-    }));
-  };
-
-  const removeContributor = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      contributors: prev.contributors.filter(c => c !== id)
-    }));
   };
 
   // Available statuses (can't start as completed when creating)
@@ -276,173 +253,50 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
             />
           </div>
 
-          {/* Owner Select */}
+          {/* Owner Select - canonical BuUserSelect, scoped by KR team + subteams */}
           <div className="space-y-2">
             <div className="flex items-center gap-1">
               <Label>Responsável *</Label>
-              <HelpTooltip 
-                content="Responsável é quem puxa, acompanha e ajusta. Não é quem 'ajuda'." 
+              <HelpTooltip
+                content="Responsável é quem puxa, acompanha e ajusta. Não é quem 'ajuda'."
                 size="sm"
               />
             </div>
-            <Popover open={ownerOpen} onOpenChange={setOwnerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={ownerOpen}
-                  className="w-full justify-between"
-                >
-                  {formData.owner_user_id ? (
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-5 h-5">
-                        <AvatarImage src={getProfileById(formData.owner_user_id)?.photo_url || undefined} />
-                        <AvatarFallback className="text-[10px]">
-                          {getProfileById(formData.owner_user_id)?.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="truncate">{getProfileById(formData.owner_user_id)?.display_name}</span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">Selecione o responsável</span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[350px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Buscar usuário..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
-                    <CommandGroup>
-                      {profiles.map((profile) => (
-                        <CommandItem
-                          key={profile.id}
-                          value={profile.display_name || profile.id}
-                          onSelect={() => {
-                            setFormData({ ...formData, owner_user_id: profile.id });
-                            setOwnerOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              formData.owner_user_id === profile.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <Avatar className="w-6 h-6 mr-2">
-                            <AvatarImage src={profile.photo_url || undefined} />
-                            <AvatarFallback className="text-[10px]">
-                              {profile.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span>{profile.display_name}</span>
-                            {profile.job_title_name && (
-                              <span className="text-xs text-muted-foreground">{profile.job_title_name}</span>
-                            )}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <BuUserSelect
+              value={formData.owner_user_id || undefined}
+              onValueChange={(value) =>
+                setFormData({ ...formData, owner_user_id: value || "" })
+              }
+              placeholder="Selecione o responsável"
+              teamId={krTeamId}
+              includeSubteams
+              excludeExternal
+              showBadges={false}
+            />
           </div>
 
-          {/* Contributors Multi-Select */}
+          {/* Contributors Multi-Select - canonical BuUserMultiSelect, scoped by KR team + subteams */}
           <div className="space-y-2">
             <div className="flex items-center gap-1">
               <Label>Contribuidores</Label>
-              <HelpTooltip 
-                content="Use contribuidores quando a iniciativa depende de mais pessoas, não para diluir responsabilidade." 
+              <HelpTooltip
+                content="Use contribuidores quando a iniciativa depende de mais pessoas, não para diluir responsabilidade."
                 size="sm"
               />
             </div>
-            <Popover open={contributorsOpen} onOpenChange={setContributorsOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={contributorsOpen}
-                  className="w-full justify-between min-h-9 h-auto"
-                >
-                  <span className="text-muted-foreground">
-                    {formData.contributors.length > 0 
-                      ? `${formData.contributors.length} selecionado(s)`
-                      : "Adicionar contribuidores (opcional)"
-                    }
-                  </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[350px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Buscar usuário..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
-                    <CommandGroup>
-                      {profiles
-                        .filter(p => p.id !== formData.owner_user_id)
-                        .map((profile) => (
-                          <CommandItem
-                            key={profile.id}
-                            value={profile.display_name || profile.id}
-                            onSelect={() => toggleContributor(profile.id)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.contributors.includes(profile.id) ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            <Avatar className="w-6 h-6 mr-2">
-                              <AvatarImage src={profile.photo_url || undefined} />
-                              <AvatarFallback className="text-[10px]">
-                                {profile.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{profile.display_name}</span>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-
-            {/* Selected contributors chips */}
-            {formData.contributors.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {formData.contributors.map((id) => {
-                  const profile = getProfileById(id);
-                  if (!profile) return null;
-                  return (
-                    <Badge
-                      key={id}
-                      variant="secondary"
-                      className="gap-1 pr-1"
-                    >
-                      <Avatar className="w-4 h-4">
-                        <AvatarImage src={profile.photo_url || undefined} />
-                        <AvatarFallback className="text-[8px]">
-                          {profile.display_name?.slice(0, 2).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs">{profile.display_name?.split(' ')[0]}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeContributor(id)}
-                        className="ml-0.5 hover:bg-muted rounded-sm"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            )}
+            <BuUserMultiSelect
+              value={formData.contributors}
+              onValueChange={(value) =>
+                setFormData({ ...formData, contributors: value })
+              }
+              placeholder="Adicionar contribuidores (opcional)"
+              teamId={krTeamId}
+              includeSubteams
+              excludeExternal
+              excludeUserIds={
+                formData.owner_user_id ? [formData.owner_user_id] : []
+              }
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
