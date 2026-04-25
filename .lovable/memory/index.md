@@ -7,6 +7,7 @@ URL state: `setSearchParams` DEVE usar functional update para preservar outros p
 Wizard drafts: chave de localStorage DEVE incluir todo escopo (objectiveId + teamId). Ver mem://standards/wizard-draft-isolation.
 No render side-effects: PROIBIDO chamar setState/navigate/setSearchParams/setStep durante render. Filtrar antes ou usar useEffect. Ver mem://standards/no-render-side-effects.
 BU-scoped detail keys: query keys de detalhe DEVEM incluir `currentBuId` e separar loading de not-found para evitar loading infinito. Ver mem://standards/bu-scoped-detail-query-keys.
+BU membership cache: toda mutação em bu_user_memberships/bu_units DEVE invalidar `queryKeys.bu.userBusPrefix()`. Ver mem://standards/bu-membership-cache-invalidation.
 
 ## Memories
 - [Rules of Hooks](mem://standards/frontend-rules-of-hooks) — Hooks antes de early-returns; deps array com chaves estáveis (não usar `length` como proxy)
@@ -14,6 +15,7 @@ BU-scoped detail keys: query keys de detalhe DEVEM incluir `currentBuId` e separ
 - [Wizard draft isolation](mem://standards/wizard-draft-isolation) — Key de draft inclui objectiveId+teamId; valida scope no load; evita owner sobrescrever contribuidor
 - [No render side-effects](mem://standards/no-render-side-effects) — Nunca chamar setState/setSearchParams/navigate em render; filtrar steps ou usar useEffect
 - [BU-scoped detail query keys](mem://standards/bu-scoped-detail-query-keys) — Incluir buId em keys de detalhe; separar loading de not-found; usar prefix para invalidar
+- [BU membership cache invalidation](mem://standards/bu-membership-cache-invalidation) — Mutações em bu_user_memberships/bu_units invalidam userBusPrefix(); selectBu defensivo refeta no miss
 - [Shared OKR edit hydration](mem://features/okrs/shared-okr-edit-hydration-standard) — Caller deve passar is_shared/responsibility_model/org_objective_id; hidratação one-shot de contribuidores; diff no save
 - [Shared OKR contributor view](mem://features/okrs/shared-okr-contributor-view-standard) — Bloco "OKRs Compartilhadas" no dashboard do time contribuidor; ContributingOkrCard read-only com KRs filtradas por kr.team_id
 - [Team contribution tab](mem://features/teams/team-contribution-tab-standard) — Aba /teams/:id?tab=contribution com 5 sub-tabs, toggle sub-times (off por padrão), sparkline de confidence; rota legada /okrs/team-contribution/:teamId redireciona
