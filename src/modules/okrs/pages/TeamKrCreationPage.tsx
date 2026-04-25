@@ -266,8 +266,10 @@ export default function TeamKrCreationPage() {
       })) || [],
       cycleName: cycle?.name || null,
       year: cycle?.year || undefined,
+      isContribution,
+      contributorTeamName: isContribution ? (teamData?.name || null) : null,
     };
-  }, [objective, contributors]);
+  }, [objective, contributors, isContribution, teamData?.name]);
 
   // ── Completed steps ──
   const completedSteps = useMemo(() => {
