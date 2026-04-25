@@ -179,7 +179,10 @@ const TeamOwnOkrsList = React.memo(function TeamOwnOkrsList({
         <Card key={obj.id}>
           <CardHeader className="pb-2 flex-row items-start justify-between gap-2">
             <CardTitle className="text-base">
-              <Link to={`/okrs/team-objective/${obj.id}`} className="hover:text-accent">
+              <Link
+                to={getShareableUrl('okr_team_objective', obj.id)}
+                className="hover:text-accent"
+              >
                 {obj.title}
               </Link>
             </CardTitle>
