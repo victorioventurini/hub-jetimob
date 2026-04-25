@@ -65,9 +65,13 @@ export default function KeysPage() {
           className="flex-1"
         />
         {canManageKeys && (
-          <Button onClick={() => setKeyringDialogOpen(true)} className="shrink-0">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Chaveiro
+          <Button
+            onClick={() => setKeyringDialogOpen(true)}
+            className="shrink-0"
+            aria-label="Novo Chaveiro"
+          >
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Novo Chaveiro</span>
           </Button>
         )}
       </div>
