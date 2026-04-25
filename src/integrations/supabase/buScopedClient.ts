@@ -265,13 +265,6 @@ export function clearBuClientCache(nextBuId?: string | null) {
   // Atomically swap globalThis BU id. If `nextBuId` is provided, the fetch
   // interceptor immediately sees the new BU; otherwise null (logout path).
   setCurrentBuId(nextBuId ?? null);
-  // Open the protection window: subsequent calls to getBuScopedClient with a
-  // DIFFERENT buId (stale closures from re-renders) won't clobber globalThis.
-  if (nextBuId) {
-    (globalThis as GlobalThisWithBuSingleton).__hubJet_buSwitchAt = Date.now();
-  } else {
-    (globalThis as GlobalThisWithBuSingleton).__hubJet_buSwitchAt = 0;
-  }
 }
 
 /**
