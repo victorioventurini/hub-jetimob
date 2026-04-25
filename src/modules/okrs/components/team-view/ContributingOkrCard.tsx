@@ -219,6 +219,16 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
           )}
         </div>
       </CardContent>
+
+      {canContribute && (
+        <TeamKrFormDialog
+          open={showAddKrDialog}
+          onOpenChange={setShowAddKrDialog}
+          objectiveId={objective.id}
+          teamId={currentTeamId}
+          buId={objective.bu_id || undefined}
+        />
+      )}
     </Card>
   );
 });
