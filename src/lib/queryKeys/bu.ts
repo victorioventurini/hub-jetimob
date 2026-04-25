@@ -5,6 +5,8 @@ export const buKeys = {
   all: () => ['bu'] as const,
   allBus: () => ['all-bus'] as const,
   userBus: (userId: string | null) => ['user-bus', userId] as const,
+  /** Prefix helper para invalidar `userBus` independente do userId no segmento */
+  userBusPrefix: () => ['user-bus'] as const,
   unit: (buId: string | null) => ['bu-unit', buId] as const,
   detail: (buId: string) => ['bu', 'detail', buId] as const,
   locations: (buId: string | null) => ['bu', 'locations', buId] as const,
