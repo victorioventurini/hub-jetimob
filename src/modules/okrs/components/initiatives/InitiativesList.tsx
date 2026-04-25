@@ -172,6 +172,7 @@ export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = 
         open={dialogOpen}
         onOpenChange={handleCloseDialog}
         krId={krId}
+        krTeamId={krTeamId}
         krContext={krContext || (krTitle ? { id: krId, title: krTitle } : undefined)}
         initiative={editingInitiative}
       />
