@@ -297,7 +297,8 @@ export default function TeamKrCreationPage() {
     if (draft.strategicReflection || WIZARD_STEPS.indexOf(draft.currentStep) > 1) {
       completed.push('kr-alignment');
     }
-    if (draft.krPlan.foundational > 0 && WIZARD_STEPS.indexOf(draft.currentStep) > 1) {
+    const totalKrs = draft.krPlan.foundational + draft.krPlan.contribution + draft.krPlan.enabler;
+    if (totalKrs > 0 && WIZARD_STEPS.indexOf(draft.currentStep) > 2) {
       completed.push('kr-type');
     }
     if (draft.draftKrs.length > 0 && draft.draftKrs.every(kr => kr.title && kr.owner_user_id)) {
