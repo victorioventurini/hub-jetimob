@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Users, Crown, ExternalLink, Target, Plus } from 'lucide-react';
+import { Users, Crown, ExternalLink, Target, Plus, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from '../OkrStatusBadge';
 import { TeamKrFormDialog } from '../TeamKrFormDialog';
+import { InitiativesList } from '../initiatives';
+import { ProjectsForKrSection } from '@/modules/projects/components/ProjectsForKrSection';
 import { calculateProgress, OkrRagStatus } from '../../types';
 
 interface ContributingOkrCardProps {
