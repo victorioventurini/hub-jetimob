@@ -364,7 +364,8 @@ export default function TeamDetailPage() {
             </Tabs>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar — escondida na aba Contribuição (full-width) */}
+          {activeTab !== 'contribution' && (
           <div className="space-y-6">
             {/* Leader Card - alinhado visualmente com os Quick Stats à esquerda */}
             <Card>
