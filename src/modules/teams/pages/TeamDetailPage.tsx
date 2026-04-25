@@ -206,60 +206,61 @@ export default function TeamDetailPage() {
                 <TabsTrigger value="rituals">Rituais</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="members" className="mt-4">
+              <TabsContent value="members" className="mt-4 space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">
-                      Membros do Time ({team.member_count})
+                      Membros diretos do time ({team.member_count})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {team.members && team.members.length > 0 ? (
                       <div className="space-y-3">
                         {team.members.map((member: any) => (
-                          <Link
+                          <TeamMemberRow
                             key={member.id}
-                            to={`/users/${member.id}`}
-                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage
-                                  src={member.photo_url || undefined}
-                                />
-                                <AvatarFallback className="bg-accent/10 text-accent">
-                                  {getInitials(member.display_name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium group-hover:text-accent transition-colors">
-                                  {member.display_name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {member.job_title}
-                                </p>
-                              </div>
-                            </div>
-                            <a
-                              href={`mailto:${member.work_email}`}
-                              className="text-muted-foreground hover:text-accent"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Mail className="h-4 w-4" />
-                            </a>
-                          </Link>
+                            id={member.id}
+                            display_name={member.display_name}
+                            photo_url={member.photo_url}
+                            job_title={member.job_title}
+                            work_email={member.work_email}
+                          />
                         ))}
                       </div>
                     ) : (
                       <div className="text-center py-8">
                         <Users className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                         <p className="text-muted-foreground">
-                          Nenhum membro neste time
+                          Nenhum membro direto neste time
                         </p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
+
+                {team.child_teams && team.child_teams.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        Membros dos sub-times ({team.child_teams.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {[...team.child_teams]
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((subteam) => (
+                            <SubteamMembersBlock
+                              key={subteam.id}
+                              id={subteam.id}
+                              name={subteam.name}
+                              status={subteam.status}
+                            />
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="contribution" className="mt-4">
