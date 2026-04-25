@@ -419,6 +419,7 @@ export default function TeamDetailPage() {
             )}
 
           </div>
+          )}
         </div>
       </div>
 
