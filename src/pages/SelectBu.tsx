@@ -227,11 +227,11 @@ export default function SelectBu() {
                     }`}
                     onClick={() => handleSelectBu(bu.id, hasAccess)}
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         {/* BU Logo/Icon */}
                         <div 
-                          className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0"
                           style={{ 
                             backgroundColor: bu.primary_color ? `${bu.primary_color}20` : 'hsl(var(--muted))'
                           }}
@@ -247,13 +247,13 @@ export default function SelectBu() {
 
                         {/* BU Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold truncate">{bu.name}</h3>
+                          <h3 className="text-base sm:text-lg font-semibold truncate">{bu.name}</h3>
                           {bu.description && (
-                            <p className="text-sm text-muted-foreground truncate">
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
                               {bu.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             {membership?.is_default && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground">
                                 Padrão
@@ -270,18 +270,22 @@ export default function SelectBu() {
 
                         {/* Access button */}
                         {hasAccess ? (
-                          <Button 
-                            variant="outline" 
-                            className="gap-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                            aria-label={`Acessar ${bu.name}`}
                           >
-                            Acessar
+                            <span className="hidden sm:inline">Acessar</span>
                             <ArrowRight className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             disabled
-                            className="gap-2"
+                            className="gap-2 shrink-0"
+                            aria-label="Sem acesso"
                           >
                             <Lock className="h-4 w-4" />
                           </Button>
