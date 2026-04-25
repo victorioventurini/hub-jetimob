@@ -27,13 +27,26 @@ Quando um objetivo de time está marcado como `is_shared=true` e contém entrada
 ## Regras invioláveis
 
 1. **Ownership único**: o objetivo NÃO é duplicado — `okr_team_objectives.team_id` permanece apontando apenas para o Time A. O bloco no Time B vem da view `v_team_contributed_okrs` (filtrada por `contributor_team_id`).
-2. **Read-only no contribuidor**: `canEdit` é forçadamente `false` no bloco "OKRs Compartilhadas". O card não expõe edição, cancelamento ou criação de KR — apenas link "Ver detalhes" para o time owner.
+2. **Read-only no contribuidor (visualização do objetivo)**: o card `ContributingOkrCard` não expõe edição/cancelamento do objetivo nem das KRs alheias. A ÚNICA ação de escrita permitida é o botão **"+ Adicionar KR"** (gated por `canContribute`, herdado de `canEdit` do dashboard do time contribuidor) que inicia o wizard de KR no modo contribuição.
 3. **KRs do contribuidor são próprias**: o Time B cria suas próprias KRs em `okr_team_key_results` com `team_id = TimeB` e `team_objective_id = objective.id`. Essas KRs aparecem automaticamente em todos os ritos coletivos (Weekly/MBR/QBR/Team Check-in) que filtram por `kr.team_id`, e no Collaborator Check-in que filtra por `kr.owner_id`. **Nenhuma alteração nos ritos é necessária para suportar contribuição cross-team.**
 4. **Select correto**: `AGGREGATE_FIELDS.teamObjectiveWithKrs` em `aggregateUtils.ts` DEVE incluir `team_id` em `key_results` para permitir o filtro do contribuidor. Também inclui `is_shared`, `responsibility_model` e `org_objective_id` no objetivo.
 5. **Caller do `TeamObjectiveFormDialog`**: ver `mem://features/okrs/shared-okr-edit-hydration-standard` — passar `is_shared`, `responsibility_model` e `org_objective_id` ao editar.
 
+## Entry point para criação de KR de contribuição
+
+- **URL contract**: `/okrs/objectives/:objectiveId/krs/create?contributor_team_id={uuid}`.
+- **Origem do botão**: `ContributingOkrCard` no dashboard `/okrs?view=team&team_id={TimeB}`.
+- **Derivação de ownership no wizard** (`TeamKrCreationPage`):
+  - `isContribution = !!contributor_team_id && contributor_team_id !== objective.team_id`
+  - `effectiveTeamId = isContribution ? contributor_team_id : objective.team_id`
+  - `effectiveTeamId` é passado para `useKrWizardDraft`, `useTeam` (membros para owner do KR), e `createKrBundle.mutateAsync({ teamId })`.
+- **Validação obrigatória**: ao montar a página, valida que `contributor_team_id` consta em `okr_team_objective_contributors`. Se não, toast de erro + redirect para `/okrs?view=team&team_id={contributor_team_id}`.
+- **UX no Step 1 (`KrContextStep`)**: banner `InfoNotice variant="info"` quando `isContribution`, deixando claro que o KR pertencerá ao time contribuidor.
+- **Pós-criação**: redirect para `/okrs?view=team&team_id={contributor_team_id}` (não `/okrs` genérico) para o usuário ver imediatamente seu KR no card "Contribuição do seu time".
+
 ## Hooks/queries envolvidos
 
 - `useTeamContributedOkrs(teamId)` — lê `v_team_contributed_okrs` filtrando por `contributor_team_id`, depois carrega objetivos completos.
-- `useObjectiveContributors(objectiveId)` — lê `okr_team_objective_contributors` para popular o multiselect no form.
+- `useObjectiveContributors(objectiveId)` — lê `okr_team_objective_contributors` para popular o multiselect no form E para validar autorização no wizard de KR.
 - `useManageContributors()` — diff INSERT/DELETE em `okr_team_objective_contributors` (RLS V2).
+- `useCreateTeamKrBundle()` — recebe `teamId` por argumento de mutate; nenhuma mudança necessária para suportar contribuição (já é parametrizável).

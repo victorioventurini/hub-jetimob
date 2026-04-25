@@ -4,12 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Users, Crown, ExternalLink, Target } from 'lucide-react';
+import { Users, Crown, ExternalLink, Target, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from '../OkrStatusBadge';
 import { calculateProgress, OkrRagStatus } from '../../types';
 
 interface ContributingOkrCardProps {
+  /** Se o usuário pode criar KRs de contribuição em nome do time atual */
+  canContribute?: boolean;
   objective: {
     id: string;
     title: string;
@@ -50,6 +52,7 @@ interface ContributingOkrCardProps {
 export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   objective,
   currentTeamId,
+  canContribute = false,
 }: ContributingOkrCardProps) {
   const primaryTeamName = objective.team?.name || 'Time não definido';
   const allKrs = objective.key_results || [];
@@ -161,6 +164,22 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
             <Badge variant="outline" className="text-xs">
               {contributedKrs.length} KR{contributedKrs.length !== 1 ? 's' : ''}
             </Badge>
+            {canContribute && (
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="ml-auto h-7 px-2 text-xs gap-1"
+              >
+                <Link
+                  to={`/okrs/objectives/${objective.id}/krs/create?contributor_team_id=${currentTeamId}`}
+                  aria-label="Adicionar KR de contribuição"
+                >
+                  <Plus className="w-3 h-3" />
+                  Adicionar KR
+                </Link>
+              </Button>
+            )}
           </div>
 
           {contributedKrs.length === 0 ? (

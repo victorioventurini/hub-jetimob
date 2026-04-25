@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useBu } from '@/contexts/BuContext';
@@ -113,9 +114,26 @@ export default function TeamKrCreationPage() {
     enabled: !!supabase && !!objectiveId && !!objective?.is_shared,
   });
 
+  // ── Contributor mode (cross-team KR) ──
+  const contributorTeamId = searchParams.get('contributor_team_id');
+  const isContribution = !!contributorTeamId && !!objective && contributorTeamId !== objective.team_id;
+
+  // Validate contributor authorization
+  useEffect(() => {
+    if (!isContribution || !objective || contributors === undefined) return;
+    const isAuthorized = contributors.some((c: any) => c.team_id === contributorTeamId);
+    if (!isAuthorized) {
+      toast.error('Seu time não está autorizado a contribuir com este objetivo.');
+      navigate(`/okrs?view=team&team_id=${contributorTeamId}`, { replace: true });
+    }
+  }, [isContribution, objective, contributors, contributorTeamId, navigate]);
+
   // ── Team data including members ──
-  const teamId = objective?.team_id;
-  const { data: teamData } = useTeam(teamId);
+  // effectiveTeamId = time DONO do KR (contribuidor em modo contribuição, owner do objetivo caso contrário)
+  const ownerTeamId = objective?.team_id;
+  const effectiveTeamId = isContribution ? contributorTeamId! : ownerTeamId;
+  const { data: teamData } = useTeam(effectiveTeamId);
+  const { data: ownerTeamData } = useTeam(isContribution ? ownerTeamId : undefined);
 
   // ── Draft management ──
   const {
@@ -129,9 +147,9 @@ export default function TeamKrCreationPage() {
     initializeDraft,
   } = useKrWizardDraft({
     objectiveId: objectiveId || '',
-    teamId: teamId || '',
+    teamId: effectiveTeamId || '',
     cycleId: objective?.cycle_id || null,
-    enabled: !!objectiveId && !!teamId,
+    enabled: !!objectiveId && !!effectiveTeamId,
   });
 
   // Initialize draft when objective loads
@@ -192,12 +210,12 @@ export default function TeamKrCreationPage() {
 
   // ── Submit handler ──
   const handleSubmit = useCallback(async () => {
-    if (!draft || !objectiveId || !teamId) return;
+    if (!draft || !objectiveId || !effectiveTeamId) return;
 
     try {
       await createKrBundle.mutateAsync({
         objectiveId,
-        teamId,
+        teamId: effectiveTeamId,
         keyResults: draft.draftKrs.map(kr => ({
           title: kr.title,
           type: kr.type,
@@ -218,11 +236,11 @@ export default function TeamKrCreationPage() {
       });
 
       clearDraft();
-      navigate('/okrs');
+      navigate(isContribution ? `/okrs?view=team&team_id=${effectiveTeamId}` : '/okrs');
     } catch (error) {
       console.error('Failed to create KRs:', error);
     }
-  }, [draft, objectiveId, teamId, createKrBundle, clearDraft, navigate]);
+  }, [draft, objectiveId, effectiveTeamId, isContribution, createKrBundle, clearDraft, navigate]);
 
   // ── Objective context for KrContextStep ──
   const objectiveContext: ObjectiveContext | null = useMemo(() => {
@@ -248,8 +266,10 @@ export default function TeamKrCreationPage() {
       })) || [],
       cycleName: cycle?.name || null,
       year: cycle?.year || undefined,
+      isContribution,
+      contributorTeamName: isContribution ? (teamData?.name || null) : null,
     };
-  }, [objective, contributors]);
+  }, [objective, contributors, isContribution, teamData?.name]);
 
   // ── Completed steps ──
   const completedSteps = useMemo(() => {
@@ -347,7 +367,7 @@ export default function TeamKrCreationPage() {
             objectiveTitle={objective.title}
             krPlan={draft.krPlan}
             draftKrs={draft.draftKrs}
-            teamId={teamId}
+            teamId={effectiveTeamId}
             onDraftKrsChange={(krs) => updateDraft({ draftKrs: krs })}
             onContinue={goNext}
             onBack={goBack}
@@ -387,7 +407,7 @@ export default function TeamKrCreationPage() {
           <TeamOkrInitiativesStep
             draftKrs={draft.draftKrs}
             initiatives={draft.initiatives}
-            teamId={teamId}
+            teamId={effectiveTeamId}
             onInitiativesChange={(inits) => updateDraft({ initiatives: inits })}
             onContinue={goNext}
             onBack={goBack}

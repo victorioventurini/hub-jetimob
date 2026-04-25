@@ -12,6 +12,7 @@ import { Target, Users, Share2, Crown, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
+import { InfoNotice } from '@/components/ui/info-notice';
 
 // ============================================================
 // TYPES
@@ -30,6 +31,9 @@ export interface ObjectiveContext {
   contributingTeams?: Array<{ id: string; name: string }>;
   cycleName?: string | null;
   year?: number;
+  /** Modo contribuição cross-team: KR pertencerá a outro time, não ao owner do objetivo */
+  isContribution?: boolean;
+  contributorTeamName?: string | null;
 }
 
 export interface KrContextStepProps {
@@ -69,6 +73,15 @@ export function KrContextStep({
               Revise o objetivo antes de definir como medir o sucesso.
             </p>
           </div>
+
+          {/* Contribution mode banner */}
+          {objective.isContribution && objective.contributorTeamName && (
+            <InfoNotice variant="info">
+              Você está criando um <strong>KR de contribuição</strong>. Este KR pertencerá ao{' '}
+              <strong>{objective.contributorTeamName}</strong> e contribuirá para o objetivo do{' '}
+              <strong>{objective.primaryTeamName || objective.teamName}</strong>.
+            </InfoNotice>
+          )}
 
           {/* Vic Quote */}
           <div className="p-4 border rounded-lg bg-primary/5 border-primary/20">
