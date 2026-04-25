@@ -172,16 +172,12 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
               <Button
                 variant="outline"
                 size="sm"
-                asChild
+                onClick={() => setShowAddKrDialog(true)}
                 className="ml-auto h-7 px-2 text-xs gap-1"
+                aria-label="Adicionar KR de contribuição"
               >
-                <Link
-                  to={`/okrs/objectives/${objective.id}/krs/create?contributor_team_id=${currentTeamId}`}
-                  aria-label="Adicionar KR de contribuição"
-                >
-                  <Plus className="w-3 h-3" />
-                  Adicionar KR
-                </Link>
+                <Plus className="w-3 h-3" />
+                Adicionar KR
               </Button>
             )}
           </div>
