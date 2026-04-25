@@ -175,8 +175,21 @@ export function useTeam(teamId: string | undefined) {
         parentTeam = pt;
       }
 
+      // Flatten leader.job_title_rel.name → leader.job_title (canonical pattern, Wave 2.6)
+      const leader = data.leader
+        ? {
+            id: (data.leader as any).id,
+            display_name: (data.leader as any).display_name,
+            photo_url: (data.leader as any).photo_url,
+            work_email: (data.leader as any).work_email,
+            job_title:
+              ((data.leader as any).job_title_rel as { name: string } | null)?.name || null,
+          }
+        : null;
+
       return {
         ...data,
+        leader,
         child_teams: childTeams || [],
         member_count: memberCount || 0,
         members: members || [],
