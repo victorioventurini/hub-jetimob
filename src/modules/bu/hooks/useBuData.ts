@@ -159,7 +159,8 @@ export function useUpdateBu() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bu.allBus(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.bu.unit(variables.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBus(null), refetchType: 'active' });
+      // Prefix garante invalidação independente do userId no segmento da key
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBusPrefix(), refetchType: 'active' });
     },
   });
 }
