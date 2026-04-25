@@ -12,6 +12,7 @@ BU selection race: BuContext respeita seleção recente do usuário (5s) e selec
 Internal OKR navigation: links de OKRs usam `getShareableUrl()` (`/go/...`) para shares; rotas internas canônicas em `okrs.routes.tsx`. Ver mem://standards/links/internal-okr-navigation.
 Shared OKR insights: numerador e denominador SEMPRE no mesmo escopo (teamId+year). Ver mem://features/okrs/shared-okrs-insights-scope-standard.
 BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, filtrar `.eq('bu_id', currentBuId)` em TODAS as queries (inclusive diagnóstico), manter guard §A.3, classificar `!data` apenas em cancelled/not_found. Ver mem://standards/bu-scoped-detail-diagnostic-pattern.
+Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_id(name)` — `profiles.job_title` NÃO existe (Wave 2.6). Ver mem://standards/users/job-title-relation-access.
 
 ## Memories
 - [Rules of Hooks](mem://standards/frontend-rules-of-hooks) — Hooks antes de early-returns; deps array com chaves estáveis (não usar `length` como proxy)
@@ -28,5 +29,6 @@ BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, fi
 - [BU selection race protection](mem://standards/bu-selection-race-protection) — lastUserSelectionAtRef + janela 5s; effect de init não sobrescreve seleção recente; selectBu retenta após refetch e mostra toast quando BU realmente inacessível
 - [BU detail diagnostic pattern](mem://standards/bu-scoped-detail-diagnostic-pattern) — Gate currentBuId + `.eq('bu_id', currentBuId)` em TODAS as queries (principal e diagnóstico) + guard §A.3; classifica em cancelled/not_found (sem context_loading enganoso)
 - [Contributor KR uses modal](mem://features/okrs/contributor-kr-uses-modal) — "Adicionar KR" no card de OKR compartilhada abre TeamKrFormDialog (não wizard); passa objectiveId, teamId=contributor, buId=objective.bu_id; invalida caches de contribuição
+- [Job title relation access](mem://standards/users/job-title-relation-access) — Wave 2.6: profiles não tem coluna `job_title`; sempre usar relação `job_title_rel:job_titles!job_title_id(name)` e achatar no consumo
 
 

@@ -118,7 +118,10 @@ export function useTeam(teamId: string | undefined) {
         .from("teams")
         .select(`
           id, name, description, status, parent_team_id, bu_id, created_at, updated_at, deleted_at, leader_user_id, area_id,
-          leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url, job_title, work_email)
+          leader:profiles!teams_leader_user_id_fkey(
+            id, display_name, photo_url, work_email,
+            job_title_rel:job_titles!job_title_id(name)
+          )
         `)
         .eq("id", teamId)
         .maybeSingle();
@@ -172,8 +175,21 @@ export function useTeam(teamId: string | undefined) {
         parentTeam = pt;
       }
 
+      // Flatten leader.job_title_rel.name → leader.job_title (canonical pattern, Wave 2.6)
+      const leader = data.leader
+        ? {
+            id: (data.leader as any).id,
+            display_name: (data.leader as any).display_name,
+            photo_url: (data.leader as any).photo_url,
+            work_email: (data.leader as any).work_email,
+            job_title:
+              ((data.leader as any).job_title_rel as { name: string } | null)?.name || null,
+          }
+        : null;
+
       return {
         ...data,
+        leader,
         child_teams: childTeams || [],
         member_count: memberCount || 0,
         members: members || [],
