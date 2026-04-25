@@ -6,7 +6,7 @@
  */
 
 import { lazy } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
