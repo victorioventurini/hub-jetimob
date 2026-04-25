@@ -74,6 +74,15 @@ export function KrContextStep({
             </p>
           </div>
 
+          {/* Contribution mode banner */}
+          {objective.isContribution && objective.contributorTeamName && (
+            <InfoNotice variant="info">
+              Você está criando um <strong>KR de contribuição</strong>. Este KR pertencerá ao{' '}
+              <strong>{objective.contributorTeamName}</strong> e contribuirá para o objetivo do{' '}
+              <strong>{objective.primaryTeamName || objective.teamName}</strong>.
+            </InfoNotice>
+          )}
+
           {/* Vic Quote */}
           <div className="p-4 border rounded-lg bg-primary/5 border-primary/20">
             <div className="flex items-start gap-3">
