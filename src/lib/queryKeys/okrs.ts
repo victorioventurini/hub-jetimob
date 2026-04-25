@@ -62,7 +62,16 @@ export const okrsKeys = {
     ['team-contributed-okrs', teamId] as const,
   teamContributionView: (teamId: string | null, buId: string | null) => 
     ['team-contribution-view', teamId, buId] as const,
-  sharedSummary: () => 
+  /**
+   * Shared OKRs summary com escopo opcional.
+   * IMPORTANTE: numerador (`sharedOkrsCount`) e denominador (`totalOkrsCount`)
+   * em SharedOkrInsights DEVEM usar o mesmo escopo (teamId + year).
+   * Ver mem://features/okrs/shared-okrs-insights-scope-standard.
+   */
+  sharedSummary: (teamId?: string | null, year?: number | null) => 
+    ['shared-okrs-summary', teamId ?? null, year ?? null] as const,
+  /** Prefix para invalidação ampla independente de teamId/year */
+  sharedSummaryPrefix: () => 
     ['shared-okrs-summary'] as const,
   objectiveContributors: (objectiveId: string | null) =>
     ['okr-objective-contributors', objectiveId] as const,
