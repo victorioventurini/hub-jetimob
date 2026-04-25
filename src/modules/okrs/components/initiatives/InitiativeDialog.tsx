@@ -76,11 +76,6 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
     { disabled: !open || isEditing }
   );
 
-  // Get default owner (current user's profile id)
-  const currentUserProfile = useMemo(() => {
-    return profiles.find(p => p.user_id === user?.id);
-  }, [profiles, user?.id]);
-
   useEffect(() => {
     if (initiative) {
       setFormData({
@@ -100,7 +95,8 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
       setFormData({
         name: "",
         description: "",
-        owner_user_id: currentUserProfile?.id || "",
+        // Default owner = current user's profile id (if available in current scope)
+        owner_user_id: profileId || "",
         contributors: [],
         status: "planned",
         priority: "medium",
@@ -111,7 +107,7 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
         blocker_reason: "",
       });
     }
-  }, [initiative, open, currentUserProfile?.id]);
+  }, [initiative, open, profileId]);
 
   // Validation
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -168,24 +164,6 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
     } catch (error) {
       // Error handled by mutation
     }
-  };
-
-  const getProfileById = (id: string) => profiles.find(p => p.id === id);
-
-  const toggleContributor = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      contributors: prev.contributors.includes(id)
-        ? prev.contributors.filter(c => c !== id)
-        : [...prev.contributors, id]
-    }));
-  };
-
-  const removeContributor = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      contributors: prev.contributors.filter(c => c !== id)
-    }));
   };
 
   // Available statuses (can't start as completed when creating)
