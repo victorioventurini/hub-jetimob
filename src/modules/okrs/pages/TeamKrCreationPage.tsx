@@ -66,13 +66,33 @@ export default function TeamKrCreationPage() {
   
   const createKrBundle = useCreateTeamKrBundle();
 
+  // ── Helper: defensive BU header sync check ──
+  // Detecta dessincronia entre currentBuId (BuContext) e o header
+  // x-current-bu-id efetivamente injetado pelo singleton. Se divergir,
+  // limpa o cache do cliente e dispara retry one-shot via React Query.
+  const ensureBuHeaderSync = useCallback((stage: string) => {
+    if (!currentBuId) return;
+    const headerBuId = getBuScopedClientCurrentBuId();
+    if (headerBuId && headerBuId !== currentBuId) {
+      console.warn('[TeamKrCreationPage] BU header desync detected', {
+        stage,
+        currentBuId,
+        headerBuId,
+      });
+      // Swap atômico: força próxima request a usar o BU correto.
+      clearBuClientCache(currentBuId);
+      throw new Error('BU_HEADER_DESYNC_RETRY');
+    }
+  }, [currentBuId]);
+
   // ── Fetch objective data ──
   // BU incluído na key para evitar reuso de cache stale ao alternar de BU.
   const { data: objective, isLoading: objectiveLoading, isFetched: objectiveFetched } = useQuery({
     queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId),
     queryFn: async () => {
       if (!supabase || !objectiveId) return null;
-      
+      ensureBuHeaderSync('objective.fetch');
+
       const { data, error } = await supabase
         .from('okr_team_objectives')
         .select(`
@@ -112,25 +132,51 @@ export default function TeamKrCreationPage() {
     // Inclui currentBuId para evitar disparar a query antes do BU estabilizar
     // (race onde header já está setado mas useBu() ainda retornou null).
     enabled: isReady && !!supabase && !!objectiveId && !!currentBuId,
+    retry: (count, err: any) => count < 1 && err?.message === 'BU_HEADER_DESYNC_RETRY',
+    retryDelay: 50,
   });
 
-  // ── Diagnóstico secundário: classifica por que `objective` veio null ──
-  // Roda APENAS quando a query principal terminou e retornou null. Usa o mesmo
-  // cliente BU-scoped E filtra explicitamente por currentBuId — assim só
-  // detectamos `cancelled` quando a row REALMENTE existe no contexto atual.
-  // Se a row não estiver na BU atual, classifica como `not_found` em vez de
-  // mascarar como `context_loading`.
+  // ── Diagnóstico tiered: classifica por que `objective` veio null ──
+  // Tier 1 (existência + soft-delete): row na BU atual? cancelada?
+  // Tier 2 (relação contribuição): time tentando contribuir está autorizado?
+  // Roda APENAS quando a query principal terminou e retornou null.
+  const contributorTeamIdParam = searchParams.get('contributor_team_id');
   const { data: diagnostic } = useQuery({
-    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic'],
+    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic', contributorTeamIdParam],
     queryFn: async () => {
       if (!supabase || !objectiveId || !currentBuId) return null;
-      const { data } = await supabase
+      ensureBuHeaderSync('objective.diagnostic');
+
+      // Tier 1: existência + estado da row na BU atual
+      const { data: existence } = await supabase
         .from('okr_team_objectives')
-        .select('id, bu_id, cancelled_at')
+        .select('id, bu_id, cancelled_at, deleted_at, status')
         .eq('id', objectiveId)
         .eq('bu_id', currentBuId)
         .maybeSingle();
-      return data;
+
+      let contributionAuthorized: boolean | null = null;
+      if (existence && contributorTeamIdParam && contributorTeamIdParam !== existence.id) {
+        // Tier 2: row existe → checar se time-contribuidor está autorizado
+        const { data: contribRow } = await supabase
+          .from('okr_team_objective_contributors')
+          .select('team_id')
+          .eq('objective_id', objectiveId)
+          .eq('team_id', contributorTeamIdParam)
+          .maybeSingle();
+        contributionAuthorized = !!contribRow;
+      }
+
+      console.warn('[TeamKrCreationPage] diagnostic result', {
+        objectiveId,
+        currentBuId,
+        headerBuId: getBuScopedClientCurrentBuId(),
+        contributorTeamIdParam,
+        existence,
+        contributionAuthorized,
+      });
+
+      return { existence, contributionAuthorized };
     },
     enabled:
       isReady &&
@@ -140,6 +186,8 @@ export default function TeamKrCreationPage() {
       objectiveFetched &&
       !objective,
     staleTime: 0,
+    retry: (count, err: any) => count < 1 && err?.message === 'BU_HEADER_DESYNC_RETRY',
+    retryDelay: 50,
   });
 
   // ── Fetch contributors if shared ──
