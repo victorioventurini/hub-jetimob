@@ -8,6 +8,7 @@ Wizard drafts: chave de localStorage DEVE incluir todo escopo (objectiveId + tea
 No render side-effects: PROIBIDO chamar setState/navigate/setSearchParams/setStep durante render. Filtrar antes ou usar useEffect. Ver mem://standards/no-render-side-effects.
 BU-scoped detail keys: query keys de detalhe DEVEM incluir `currentBuId` e separar loading de not-found para evitar loading infinito. Ver mem://standards/bu-scoped-detail-query-keys.
 BU membership cache: toda mutação em bu_user_memberships/bu_units DEVE invalidar `queryKeys.bu.userBusPrefix()`. Ver mem://standards/bu-membership-cache-invalidation.
+BU selection race: BuContext respeita seleção recente do usuário (5s) e selectBu retenta após refetch quando cache está stale. Ver mem://standards/bu-selection-race-protection.
 Internal OKR navigation: links de OKRs usam `getShareableUrl()` (`/go/...`) para shares; rotas internas canônicas em `okrs.routes.tsx`. Ver mem://standards/links/internal-okr-navigation.
 Shared OKR insights: numerador e denominador SEMPRE no mesmo escopo (teamId+year). Ver mem://features/okrs/shared-okrs-insights-scope-standard.
 BU detail diagnostic: páginas de detalhe BU-scoped DEVEM gate `currentBuId`, manter guard §A.3, classificar `!data` via diagnóstico secundário (cancelled/context_loading/not_found). Ver mem://standards/bu-scoped-detail-diagnostic-pattern.
