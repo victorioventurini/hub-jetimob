@@ -66,13 +66,7 @@ export default function TeamDetailPage() {
   
   // Verificar se usuário pode gerenciar ESTE time específico
   const canManageThisTeam = id ? canManageTeam(id) : false;
-  const getInitials = (name: string) =>
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+
 
   if (isLoading) {
     return (
