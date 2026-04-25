@@ -220,6 +220,7 @@ export const EnhancedObjectiveCard = React.memo(function EnhancedObjectiveCard({
                       contributingTeams={contributingTeams}
                       responsibilityModel={responsibilityModel}
                       compact
+                      inlineTeams
                     />
                   )}
 
