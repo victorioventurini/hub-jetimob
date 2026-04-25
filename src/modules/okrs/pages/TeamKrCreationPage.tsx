@@ -90,6 +90,7 @@ export default function TeamKrCreationPage() {
           cycle:cycle_id (name, year)
         `)
         .eq('id', objectiveId)
+        .eq('bu_id', currentBuId!) // BU-scope explícito (DEVELOPMENT_STANDARDS §A.3)
         .is('cancelled_at', null)
         .maybeSingle();
 

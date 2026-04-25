@@ -1,93 +1,73 @@
+# Plano — Correção da criação de KR de contribuição
 
-# Plano — Bugfix: "Este objetivo não existe mais" no TeamKrCreationPage
+## Diagnóstico confirmado
 
-## Contexto
+A URL reportada aponta para um objetivo e um time contribuidor válidos dentro da **mesma BU Jetimob**:
+- objetivo `1470f9f5-fed4-42db-b5fa-406ade6cef6d` existe, está ativo e `is_shared = true`
+- `contributor_team_id = d3247da9-3e07-4fa8-9d0a-2527fdf6548f` está cadastrado como contribuidor autorizado
+- ambos pertencem à BU **Jetimob**
 
-URL relatada: `/okrs/objectives/1470f9f5-fed4-42db-b5fa-406ade6cef6d/krs/create?contributor_team_id=d3247da9...`
+O problema atual não é falta de dados. É um **falso positivo do estado `context_loading`**.
 
-Verificado via DB: o objetivo **existe**, está na BU **Jetimob**, não está cancelado, é shared, e o time `d3247da9` (Tecnologia) consta como contribuidor autorizado. O usuário está logado e na BU Jetimob. Mesmo assim a UI mostra `ResourceNotFoundState`.
+## Causa raiz
 
-## Conformidade com TCR / Canônicos (re-verificada)
+Em `TeamKrCreationPage.tsx`:
+1. a query principal mantém corretamente o guard defensivo do TCR (`data.bu_id !== currentBuId -> null`)
+2. quando esse guard descarta o objetivo, a query secundária de diagnóstico roda
+3. essa query secundária busca o objetivo **sem filtro explícito por `bu_id = currentBuId`**
+4. como a RLS de `okr_team_objectives` é baseada em membership da BU (não no contexto atual), ela ainda encontra o objetivo da Jetimob
+5. a UI interpreta isso como `context_loading`, mesmo quando o contexto já não vai se auto-recuperar
 
-- **TCR §A.3 (Defense-in-Depth):** filtro defensivo `data.bu_id !== currentBuId` é **obrigatório** e **NÃO será removido**. A versão anterior do plano que sugeria remoção foi descartada por violar a regra inquebrável #1 ("Respeitar PRE-BU vs POST-BU").
-- **DEVELOPMENT_STANDARDS:** `useOptionalBuClient` + gate `isReady` já é o padrão correto e está aplicado.
-- **Query Keys SSOT:** `queryKeys.okrs.teamObjectiveDetail(id, currentBuId)` — BU já está na key, conforme `mem://standards/bu-scoped-detail-query-keys`.
-- **Soft delete:** `.is('cancelled_at', null)` aplicado.
+Resultado: a página fica presa em “Carregando contexto...” em vez de resolver o mismatch real de contexto/seleção.
 
-## Hipótese mais provável (após re-análise)
+## Implementação proposta
 
-O guard da linha 98 retorna `null` em **race condition de hidratação**: a query é habilitada quando `isReady && !!supabase && !!objectiveId`, mas `currentBuId` lido do `useBu()` em outro render tick pode estar momentaneamente diferente do `buId` que o `getOptionalBuScopedClient` usou no header. Quando o objetivo (header BU correto) volta da rede, `currentBuId` no closure já mudou — `data.bu_id !== currentBuId` dispara → cache de `null` é fixado → UI mostra "não existe".
+### 1. Corrigir a query principal do detalhe
+Em `src/modules/okrs/pages/TeamKrCreationPage.tsx`:
+- manter o guard obrigatório do TCR
+- adicionar filtro explícito `.eq('bu_id', currentBuId)` na query principal do objetivo
+- preservar `enabled: isReady && !!supabase && !!objectiveId && !!currentBuId`
 
-Hipóteses alternativas que o diagnóstico precisa distinguir:
-- **H1** — Race de hidratação acima (mais provável).
-- **H2** — RLS bloqueia esse usuário específico nesse objetivo (menos provável; usuário diz ter acesso).
-- **H3** — `okr_team_objectives.cancelled_at` foi setado e o filtro `is null` exclui (verificável).
+### 2. Corrigir a query secundária de diagnóstico
+Na mesma página:
+- aplicar o mesmo filtro `.eq('bu_id', currentBuId)` no diagnóstico secundário
+- manter select mínimo (`id, bu_id, cancelled_at`)
+- reclassificar o comportamento:
+  - `cancelled` quando `cancelled_at != null`
+  - `not_found` quando a linha não vier no contexto atual
+- parar de usar `context_loading` para um caso que já não é race transitória
 
-## Mudanças propostas (cirúrgicas, sem violar §A.3)
+### 3. Ajustar a UX do estado vazio
+Em `src/components/ui/resource-not-found-state.tsx` e no branch de erro da página:
+- remover a mensagem enganosa de “finalizando carregamento da BU” para esse fluxo
+- mostrar mensagem objetiva para criação de KR de contribuição quando o objetivo não estiver acessível no contexto atual
 
-### 1. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
-
-**Mantém** o guard defensivo da linha 98 (TCR §A.3). **Adiciona**:
-
-a) **Telemetria estruturada** quando o guard descarta:
-```ts
-if (data && currentBuId && data.bu_id !== currentBuId) {
-  console.warn('[TeamKrCreationPage] BU mismatch discard', {
-    objectiveId, currentBuId, dataBuId: data.bu_id,
-    headerBuId: getBuScopedClientCurrentBuId?.(),
-  });
-  return null;
-}
-```
-
-b) **Gate adicional**: só habilitar a query quando `currentBuId` está estável:
-```ts
-enabled: isReady && !!supabase && !!objectiveId && !!currentBuId,
-```
-Isso elimina o caso em que `currentBuId` ainda é `null` no primeiro render mas o header já foi setado.
-
-c) **Diagnóstico secundário** (apenas para classificar o erro, **não substitui o guard**): quando `objectiveFetched && !objective`, dispara um segundo `useQuery` que busca `select id, bu_id, cancelled_at` com o **mesmo** cliente BU-scoped. Resultados possíveis:
-- Retorna linha ativa → guard descartou por race → mostrar UI "Recarregando contexto..." com retry automático após `currentBuId` estabilizar.
-- Retorna linha com `cancelled_at` → mostrar "objetivo foi cancelado".
-- Retorna `null` → RLS/inexistente real → manter `ResourceNotFoundState` atual.
-
-Este diagnóstico **não** consulta cross-BU (não usa cliente global) — respeita §A.3 integralmente.
-
-### 2. `src/components/ui/resource-not-found-state.tsx`
-
-Aceitar prop opcional `variant?: 'not_found' | 'cancelled' | 'context_loading'` para mensagens contextuais. Default mantém comportamento atual.
-
-### 3. `mem://standards/bu-scoped-detail-diagnostic-pattern.md` (novo)
-
-Padrão para páginas de detalhe BU-scoped:
-- Sempre `enabled: isReady && !!supabase && !!entityId && !!currentBuId`.
-- Sempre manter guard defensivo §A.3.
-- Em caso de `null` após `isFetched`, classificar via segundo fetch BU-scoped.
-- Logs estruturados com prefixo `[<PageName>] BU mismatch discard`.
-
-### 4. `.lovable/memory/index.md`
-
-Linkar o novo standard.
+### 4. Revisar o padrão documentado
+Atualizar o standard recém-criado para refletir a regra correta:
+- o diagnóstico secundário BU-scoped também deve respeitar **filtro explícito por `currentBuId`** em entidades operacionais com RLS por membership
+- `context_loading` só deve ser usado quando houver evidência real de race transitória, não apenas porque a linha existe em alguma BU acessível
 
 ## Arquivos
 
-**Editados:**
+### Editar
 - `src/modules/okrs/pages/TeamKrCreationPage.tsx`
 - `src/components/ui/resource-not-found-state.tsx`
+- `.lovable/memory/standards/bu-scoped-detail-diagnostic-pattern.md`
 - `.lovable/memory/index.md`
 
-**Criados:**
-- `.lovable/memory/standards/bu-scoped-detail-diagnostic-pattern.md`
+## Conformidade com TCR e canônicos
 
-## Não-objetivos (explicitamente fora de escopo)
+- TCR e `DEVELOPMENT_STANDARDS` revisados antes da análise
+- guard defensivo §A.3 será mantido
+- cliente continua POST-BU e BU-scoped
+- queries continuam sem `select('*')`
+- correção reforça a regra canônica de filtro explícito por BU no frontend
 
-- ❌ Remover guard defensivo §A.3 (rejeitado por violar TCR).
-- ❌ Cross-BU recovery / switch automático (usuário confirmou: OKRs só existem em Jetimob).
-- ❌ Refactor dos hooks de KPIs/Teams citados em proposta anterior (escopo expandido sem necessidade).
+## Validação após implementação
 
-## Validação pós-merge
+1. Abrir a URL reportada na BU Jetimob
+2. O wizard deve carregar normalmente
+3. O estado `Carregando contexto...` não deve mais aparecer nesse caso
+4. Se a BU ativa estiver errada de fato, a tela deve cair em estado consistente de não encontrado/acesso, não em loading infinito mascarado
 
-1. Reproduzir URL do bug em https://hub.jetimob.com → carregar wizard sem `ResourceNotFoundState`.
-2. Console deve mostrar `[TeamKrCreationPage] BU mismatch discard` zero vezes em fluxo normal.
-3. Trocar de BU → voltar para Jetimob → reabrir URL: deve carregar.
-4. `tsc --noEmit` sem regressões.
+<final-text>Se você aprovar, eu implemento essa correção cirúrgica agora.</final-text>
