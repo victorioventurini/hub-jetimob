@@ -13,10 +13,12 @@ import {
   useTeamContributionView,
 } from '@/modules/okrs/hooks';
 import { useCycles, useTeamObjectives } from '@/modules/okrs/hooks';
+import { useActiveCycle } from '@/modules/okrs/hooks/useActiveCycle';
 import { CycleSelect } from '@/components/selects/CycleSelect';
 import { useBu } from '@/contexts/BuContext';
 import { TeamContributionOverview } from './TeamContributionOverview';
 import { TeamSharedOkrsBlock } from './TeamSharedOkrsBlock';
+import { TeamInitiativesBlock } from './TeamInitiativesBlock';
 import { OrgObjectiveContributionCard } from '@/modules/okrs/components/team-contribution/OrgObjectiveContributionCard';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
