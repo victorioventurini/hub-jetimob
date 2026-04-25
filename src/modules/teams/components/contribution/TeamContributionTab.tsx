@@ -17,6 +17,8 @@ import { CycleSelect } from '@/components/selects/CycleSelect';
 import { useBu } from '@/contexts/BuContext';
 import { TeamContributionOverview } from './TeamContributionOverview';
 import { TeamSharedOkrsBlock } from './TeamSharedOkrsBlock';
+import { TeamContributionInitiatives } from './TeamContributionInitiatives';
+import { TeamContributionKpis } from './TeamContributionKpis';
 import { OrgObjectiveContributionCard } from '@/modules/okrs/components/team-contribution/OrgObjectiveContributionCard';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -34,6 +36,8 @@ const SUBTABS = [
   { value: 'overview', label: 'Visão Geral' },
   { value: 'team-okrs', label: 'OKRs do time' },
   { value: 'shared-okrs', label: 'Compartilhados' },
+  { value: 'initiatives', label: 'Iniciativas' },
+  { value: 'kpis', label: 'KPIs' },
   { value: 'org-contribution', label: 'Org Objectives' },
   { value: 'projects', label: 'Projetos' },
 ] as const;
@@ -128,6 +132,23 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
 
         <TabsContent value="shared-okrs" className="mt-4">
           <TeamSharedOkrsBlock teamId={teamId} />
+        </TabsContent>
+
+        <TabsContent value="initiatives" className="mt-4">
+          <TeamContributionInitiatives
+            teamId={teamId}
+            resolvedTeamIds={analytics?.resolvedTeamIds || [teamId]}
+            includeSubteams={includeSubteams}
+            cycleId={cycleParam}
+          />
+        </TabsContent>
+
+        <TabsContent value="kpis" className="mt-4">
+          <TeamContributionKpis
+            teamId={teamId}
+            resolvedTeamIds={analytics?.resolvedTeamIds || [teamId]}
+            includeSubteams={includeSubteams}
+          />
         </TabsContent>
 
         <TabsContent value="org-contribution" className="mt-4">
