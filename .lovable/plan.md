@@ -1,92 +1,46 @@
-# Plano — Fix race no switch de BU (Victorio Venturini → Jetimob)
+# Plano: Corrigir falso negativo em `/okrs/objectives/:id/krs/create`
 
-## Pré-checklist (executado)
-- [x] TCR §A.3 (Defense-in-Depth, multi-tenancy isolation)
-- [x] `mem://standards/bu-selection-race-protection` (guard `recentlySelected`)
-- [x] `mem://standards/bundling-no-manual-chunks` (irrelevante mas verificado)
-- [x] `mem://architecture/auth/supabase-client-sync-standard` (somente globalClient com autoRefresh)
-- [x] `BuContext.tsx`, `ModuleContext.tsx`, `buScopedClient.ts`, `useBuData.ts`, `BuRequiredRoute`, `ModuleRoute`, `usePrefetchRoute`
+## Diagnóstico confirmado
 
-## Causa raiz
+- Objetivo `1470f9f5-fed4-42db-b5fa-406ade6cef6d` existe, está ativo (`deleted_at`/`cancelled_at` null, status válido), `is_shared=true`, e pertence à BU **Jetimob**.
+- Time contribuidor `d3247da9-3e07-4fa8-9d0a-2527fdf6548f` pertence à BU **Jetimob** e está registrado em `okr_team_objective_contributors` para esse objetivo.
+- O usuário está, ao clicar, com a BU **Jetimob** ativa no `BuContext`.
+- Apesar disso, a query principal em `TeamKrCreationPage.tsx` retorna `null` e cai no branch `not_found`.
 
-A janela de proteção `recentlySelected` em `BuContext.tsx` linhas 103-112 só protege se **`currentBuId` já está em `userBus`**. Quando uma BU foi criada recentemente:
+**Causa raiz**: dessincronia entre `currentBuId` (estado React do `BuContext`) e o header `x-current-bu-id` injetado pelo singleton em `buScopedClient.ts` no momento do `queryFn`. Isso acontece quando há transição/hidratação recente de BU e o cache do cliente BU-scoped ainda carrega o header anterior, fazendo a RLS filtrar o objetivo. O diagnóstico secundário roda no MESMO cliente desincronizado e também volta `null`, classificando incorretamente como `not_found`.
 
-1. `selectBu('victorio-id')` chama `queryClient.clear()` → `useUserBus` é refetched
-2. Effect de init roda com `userBus` antigo (Jetimob apenas) → `currentBuId='victorio-id'` NÃO está em `userBus` → cai em `else if (storedBuId && !validBu)` (linha 132), preserva `currentBuId` e dispara refetch — ok
-3. Refetch chega: effect re-roda; `currentBuId='victorio-id'` agora ESTÁ em `userBus` → guard `recentlySelected` ativa → **OK até aqui**
-4. **Problema:** entre os passos 2 e 3, o `useEffect` de init pode ter caído no ramo `defaultBu` se `userBus` voltou primeiro mas SEM Victorio (replicação eventual / refetch chegou antes do membership ser visível no Postgres). Aí `currentBuId` é sobrescrito para Jetimob. Quando Victorio finalmente aparece, o guard verifica `currentBuId` (= Jetimob agora) que existe em userBus → **o guard passa preservando Jetimob** ❌
+## Mudanças
 
-Adicionalmente, em `selectBu` linhas 218-224 (caminho de retry), a ordem é:
-```
-setCurrentBuId(buId); setBuSelected(true); localStorage.setItem(...);
-clearBuClientCache(); queryClient.clear();
-```
-mas **não há guarda contra o effect re-rodar** com cache stale. Mesmo problema do caminho normal.
+### 1. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
+- No `queryFn` da query principal e da diagnóstica:
+  - Comparar `getBuScopedClientCurrentBuId()` com `currentBuId` do contexto.
+  - Se divergir: chamar `clearBuClientCache(currentBuId)` (swap atômico) e lançar `Error('BU_HEADER_DESYNC_RETRY')`.
+- Configurar `retry: (count, err) => count < 1 && err?.message === 'BU_HEADER_DESYNC_RETRY'` em ambas queries.
+- Gate adicional: `enabled` só dispara quando `identity.isReady && !isSwitchingBu && !!currentBuId`.
+- Diagnóstico tiered (3 tiers, todos BU-scoped com `.eq('bu_id', currentBuId)`):
+  1. Existência + soft-delete (`id, bu_id, cancelled_at, deleted_at, status`)
+  2. Relação de contribuição (`okr_team_objective_contributors` por `objective_id` + `team_id`)
+  3. Permissão (verificação via `usePermissions`)
+- Manter guard §A.3 obrigatório.
+- Telemetria estruturada com `console.warn('[TeamKrCreationPage]', { stage, currentBuId, headerBuId, ... })`.
 
-## Correção (cirúrgica, em conformidade com TCR §A.3)
+### 2. `src/components/ui/resource-not-found-state.tsx`
+- Adicionar variante `permission_denied` ao type `ResourceNotFoundVariant`.
+- Adicionar entradas em `headingByVariant` e `defaultMessageByVariant` para `permission_denied` (heading: "Você não tem permissão para acessar este {resourceType}").
 
-### 1) `src/contexts/BuContext.tsx` — endurecer guard com **`requestedBuId`**, não `currentBuId`
-
-Trocar a semântica do guard: ao invés de verificar se `currentBuId` (estado React, que pode ter sido sobrescrito por uma execução anterior do effect) está em `userBus`, manter **a BU exatamente solicitada pelo usuário** (`pendingSelectionBuIdRef`) e proteger ESSA referência durante a janela de 5s.
-
-Mudanças:
-- Adicionar `pendingSelectionBuIdRef = useRef<string | null>(null)` setado em `selectBu` junto com `lastUserSelectionAtRef`.
-- No effect de init, se `recentlySelected && pendingSelectionBuIdRef.current`:
-  - Se a BU pendente já apareceu em `userBus` → setar `currentBuId = pendingSelectionBuIdRef.current` (idempotente, restaura se foi sobrescrito) e **limpar a ref**.
-  - Se ainda não apareceu → invalidar `userBusPrefix()`, NÃO mexer em `currentBuId`, **manter** a ref para a próxima execução do effect.
-- Quando a janela expira (>5s) sem a BU aparecer → toast.error("BU ainda não sincronizada") e limpar a ref.
-
-Isso resolve a inversão temporal do passo 4 acima: Victorio nunca mais é "esquecida".
-
-### 2) `src/contexts/BuContext.tsx` — `selectBu` registra `pendingSelectionBuIdRef` no caminho normal E no retry
-
-Ambos os fluxos (linha 218 e linha 238) devem setar `pendingSelectionBuIdRef.current = buId` junto com `lastUserSelectionAtRef.current = Date.now()`.
-
-### 3) `src/integrations/supabase/buScopedClient.ts` — `clearBuClientCache(nextBuId?)` opcional
-
-Atualmente `clearBuClientCache()` zera `__hubJet_currentBuId = null`. Em ambiente sob race, o fetch interceptor cai no fallback `localStorage` — que **deveria** ser o BU novo, mas só se o `localStorage.setItem` rodou ANTES. Hoje a ordem em `selectBu` está correta (setItem antes de clearCache), mas é frágil.
-
-Adicionar parâmetro opcional: `clearBuClientCache(nextBuId?: string | null)`. Se passado, ao invés de zerar para null, **substitui** por `nextBuId`. Assim o globalThis nunca fica null durante a janela de transição. Manter retrocompatibilidade (sem arg = comportamento atual).
-
-Em `BuContext.selectBu`, passar `clearBuClientCache(buId)` em ambos os caminhos.
-
-### 4) `src/hooks/usePrefetchRoute.ts` — gating durante switch (já mencionado em plano anterior, agora obrigatório)
-
-Não disparar prefetch se `currentBuId` mudou nos últimos 5s OU se `pendingSelectionBuIdRef !== currentBuId`. Adicionar export em `BuContext`: `isSwitchingBu: boolean`.
-
-Atualizar `usePrefetchRoute` para `if (isSwitchingBu) return;` no callback.
-
-### 5) Atualizar `mem://standards/bu-selection-race-protection.md`
-
-Documentar:
-- `pendingSelectionBuIdRef` como mecanismo canônico (substitui só `currentBuId`-based guard)
-- Ordem canônica em `selectBu`: ref→state→storage→`clearBuClientCache(buId)`→`queryClient.clear()`
-- `isSwitchingBu` para gating de prefetch
-- Janela de 5s com fallback de toast
+### 3. `.lovable/memory/standards/bu-scoped-detail-diagnostic-pattern.md`
+- Adicionar regra 8: **Verificação defensiva de header sync** no `queryFn` antes de qualquer query BU-scoped em página de detalhe; com retry one-shot ao detectar dessync.
+- Adicionar regra 9: **Diagnóstico tiered** (existência → relação → permissão) para classificar o erro corretamente.
+- Atualizar exemplos de implementação apontando para `TeamKrCreationPage.tsx`.
 
 ## Não-objetivos
+- ❌ Não vamos implementar troca automática de BU (TCR §A.3 inquebrável).
+- ❌ Não vamos remover o guard §A.3.
+- ❌ Não vamos usar cliente global em nenhuma das queries.
 
-- ❌ Trocar `queryClient.clear()` por algo mais granular (mantido por TCR §A.3)
-- ❌ Reduzir `RECENT_SELECTION_WINDOW_MS` (5s já é o mínimo seguro para replicação Postgres)
-- ❌ Mexer em `useBuScopedSupabase` ou em RLS (o problema é puramente de propagação client-side)
-- ❌ Adicionar `bu_id` ao Realtime channel (fora de escopo)
-
-## Files
-
-**Modificar:**
-- `src/contexts/BuContext.tsx` — `pendingSelectionBuIdRef`, `isSwitchingBu`, guard endurecido
-- `src/integrations/supabase/buScopedClient.ts` — `clearBuClientCache(nextBuId?)`
-- `src/hooks/usePrefetchRoute.ts` — gating `isSwitchingBu`
-
-**Documentação:**
-- `.lovable/memory/standards/bu-selection-race-protection.md` — atualizar regras
-
-## Validação manual (pós-implementação)
-
-1. Login com `victorio@jetimob.com`
-2. Confirmar BU ativa = Jetimob
-3. Switch para Victorio Venturini via dropdown → checar console:
-   - `[BuContext.selectBu]` com buId=victorio
-   - SEM `[BuContext.init] Falling back to default BU`
-4. Acessar `/tickets` → deve abrir contexto de Victorio (header `x-current-bu-id` = victorio em DevTools Network)
-5. Switch de volta para Jetimob → mesmo comportamento simétrico
+## Validação pós-implementação
+1. Acessar o link do erro com BU Jetimob ativa → deve carregar o wizard de criação de KR sem erro.
+2. Verificar console: se houve dessync, deve aparecer log `BU_HEADER_DESYNC_RETRY` seguido de query bem-sucedida.
+3. Tentar acessar com BU diferente ativa → deve mostrar `not_found` claro (não `permission_denied` nem `cancelled`).
+4. Testar com objetivo cancelado → variante `cancelled`.
+5. Testar com usuário sem permissão `okrs.kr.create` no time → variante `permission_denied`.
