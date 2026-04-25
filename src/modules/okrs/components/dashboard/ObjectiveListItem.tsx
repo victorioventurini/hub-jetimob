@@ -176,7 +176,9 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
 
   return (
     <>
-      <Card className={cn(
+      <Card
+        data-objective-id={objective.id}
+        className={cn(
         "transition-all duration-200",
         isExpanded && "ring-1 ring-border shadow-md",
         isObjectiveDraft && "opacity-80 border-dashed"
