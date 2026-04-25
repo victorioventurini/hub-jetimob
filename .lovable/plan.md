@@ -1,95 +1,53 @@
-# Plano: Aba Contribuição Robusta — `/teams/:id?tab=contribution`
 
-## Decisões aprovadas pelo usuário
-1. **Substituir** o CTA atual pela aba completa (não criar rota nova)
-2. Toggle "Incluir sub-times" — **desligado** por padrão
-3. Visibilidade — **qualquer membro da BU** (sem gating por liderança)
-4. **Sparkline simples** de evolução incluído na v1
+# Plano: Corrigir link de criação de KRs com `contributor_team_id`
 
-## Pré-checklist canônico ✅
-- TCR (BU isolation, soft-delete, query keys, RBAC, URL state) — respeitado
-- `useBuScopedSupabase` para queries operacionais
-- `useUrlState` para subtab/filtros (links compartilháveis — Regra #7)
-- Reuso de hooks existentes: `useTeamContributionView`, `useTeamObjectives`, `useTeamObjectiveContributions`, `useTeamRituals`, `useProjects`, `useKpis`
-- Memoization mandatória (React.memo) para listas
-- Soft-delete: `.is('deleted_at', null)` em todas as agregações
+## Pré-checklist (executado)
+- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
+- ✅ `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — `okrs.kr.create` / `okrs.objective.create`
+- ✅ `docs/canonical/IDENTITY_CONVENTION.md` — uso de `realProfileId` em mutations
+- ✅ `mem://auth/okr-ownership-enforcement-rls` — RLS strict ownership
+- ✅ Código atual de `TeamKrCreationPage.tsx` (linhas 168–178) — bug confirmado
 
-## Arquitetura
+## Diagnóstico
+URL `/okrs/objectives/:id/krs/create?contributor_team_id=...` quebra porque:
+1. **Linha 170** (`setSearchParams({ step: draft.currentStep })`) e **linha 177** (`setSearchParams({ step })`) **sobrescrevem toda a query string**, removendo `contributor_team_id` no primeiro render quando o draft já tem `currentStep`.
+2. Sem `contributor_team_id`, `isContribution=false`, `effectiveTeamId` vira o owner do objetivo, e o `useEffect` de validação (linha 122–129) passa silenciosamente — mas o usuário acaba criando KR para o time errado, ou o RLS `okr_team_key_results` rejeita o INSERT no submit (erro 42501).
 
-### 1. `TeamDetailPage.tsx` — substituir TabsContent "contribution"
-Substituir o card CTA (linhas 262-277) por `<TeamContributionTab teamId={team.id} teamName={team.name} />`.
+## Mudanças
 
-### 2. Novo componente: `src/modules/teams/components/contribution/TeamContributionTab.tsx`
-Container principal com sub-navegação via URL state (`subtab` + `include_subteams`):
+### 1. `src/modules/okrs/pages/TeamKrCreationPage.tsx`
+- Substituir as duas chamadas de `setSearchParams({ step })` por uma versão que **preserva** os parâmetros existentes (functional update via `URLSearchParams`):
+  ```ts
+  const updateStepParam = useCallback((step: KrWizardStep) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('step', step);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+  ```
+- Usar `updateStepParam` no `useEffect` de sync (linha 168) e em `goToStep` (linha 175).
+- **Endurecer** o `useEffect` de validação de contribuidor: só redirecionar quando `objective` E `contributors` estiverem carregados (já está OK, mas adicionar guarda extra para `objective.is_shared === true` antes de exigir autorização — se não-shared, `isContribution` deve forçar fallback ao owner ou bloquear).
 
-```tsx
-const [subtab, setSubtab] = useUrlState({ key: 'subtab', defaultValue: 'overview' });
-const [includeSubteams, setIncludeSubteams] = useUrlState({ key: 'include_subteams', defaultValue: 'false' });
-```
+### 2. Adicionar gate de permissão (recomendado)
+- Importar `useCanManageTeamOkr` de `@/modules/okrs/hooks/useCanManageTeamOkr`.
+- Após carregar `effectiveTeamId`, chamar `useCanManageTeamOkr(effectiveTeamId)`.
+- Se `!isLoading && !canManage`, renderizar bloco amigável:
+  > "Você não tem permissão para criar KRs neste time."
+  
+  Com botão "Voltar para OKRs do time" → navega para `/okrs?view=team&team_id=${effectiveTeamId}`.
+- Isso evita o erro RLS no submit e dá feedback imediato.
 
-Sub-tabs:
-- **overview** — Visão Geral (KPI cards + sparkline + insights)
-- **team-okrs** — OKRs do Time (próprios)
-- **shared-okrs** — OKRs Compartilhados (recebidos + contribuídos)
-- **org-contribution** — Contribuição Organizacional (lista de Org Objectives impactados — reuso da view existente)
-- **projects-kpis** — Projetos & KPIs vinculados
-
-Header da aba: toggle `Switch` "Incluir sub-times" (off por padrão) + filtro de ciclo (reuso `CycleSelect`).
-
-### 3. `TeamContributionOverview.tsx` (sub-tab principal)
-Grid de KPI cards + sparkline:
-- **Card 1** — Total OKRs próprios (count + breakdown por status efetivo)
-- **Card 2** — OKRs compartilhados (recebidos como contribuidor)
-- **Card 3** — Org Objectives impactados (count distinct via `useTeamContributionView`)
-- **Card 4** — Projetos ativos vinculados a KRs do time
-- **Sparkline** — Evolução do healthscore médio dos últimos 8 check-ins (linha simples via Recharts `Line` + `ResponsiveContainer`, altura 60px, sem eixos)
-- **Insights** — Reuso de `TeamContributionInsights` (já existente)
-
-### 4. `TeamSharedOkrsBlock.tsx` (sub-tab shared-okrs)
-Duas seções:
-- **Recebidos** — OKRs onde o time é dono e tem contribuidores externos (via `okr_team_objective_contributors` com `objective.team_id = teamId`)
-- **Contribuídos** — OKRs de outros times onde este time aparece em `okr_team_objective_contributors`
-Reuso de `ContributingOkrCard` para listagem.
-
-### 5. `useTeamContributionAnalytics.ts` (novo hook agregador)
-```ts
-export function useTeamContributionAnalytics(teamId: string, opts: { includeSubteams: boolean; cycleId?: string })
-```
-- Resolve lista de teamIds (próprio ± descendentes via `parent_team_id` recursivo — reuso do padrão `team-filter-includes-subteams`)
-- Retorna: `{ ownOkrsCount, sharedReceivedCount, sharedContributedCount, orgObjectivesImpactedCount, activeProjectsCount, healthscoreSeries }`
-- `healthscoreSeries`: agrega `okr_checkins.healthscore` dos últimos 8 check-ins (média ponderada por KR)
-- Query key: `teamsKeys.contributionAnalytics(teamId, includeSubteams, cycleId)` em `src/lib/queryKeys/teams.ts`
-
-### 6. Migração da rota standalone
-Manter `/okrs/team-contribution/:teamId` funcionando (deep-links externos), mas a página `TeamContributionPage` passa a ser uma **redireção** para `/teams/:id?tab=contribution&subtab=org-contribution` para manter SSOT.
-
-> Alternativa considerada: deixar ambas independentes. **Rejeitada** — duplicação de lógica viola DRY e cria divergência de UX.
-
-## Arquivos a criar
-- `src/modules/teams/components/contribution/TeamContributionTab.tsx`
-- `src/modules/teams/components/contribution/TeamContributionOverview.tsx`
-- `src/modules/teams/components/contribution/TeamSharedOkrsBlock.tsx`
-- `src/modules/teams/components/contribution/TeamHealthSparkline.tsx`
-- `src/modules/teams/hooks/useTeamContributionAnalytics.ts`
-
-## Arquivos a editar
-- `src/modules/teams/pages/TeamDetailPage.tsx` — substituir TabsContent "contribution"
-- `src/lib/queryKeys/teams.ts` — adicionar `contributionAnalytics` key
-- `src/modules/okrs/pages/TeamContributionPage.tsx` — converter em redirect
-- `.lovable/memory/features/okrs/` — criar memória `team-contribution-tab-standard.md`
+### 3. Documentação (memória)
+- Atualizar `mem://standards/url-state-preservation` (criar se não existir): "Em rotas com múltiplos params (step + filtros), `setSearchParams` DEVE usar functional update para preservar params existentes."
+- Adicionar referência cruzada em `mem://features/okrs/creation-wizard-draft-hydration`.
 
 ## Validações
-- [ ] Toggle "Incluir sub-times" persiste em URL e expande corretamente via `parent_team_id`
-- [ ] Sparkline renderiza com 0 dados (estado vazio) e com 1 ponto (degenerate)
-- [ ] Sub-tab inicial é `overview` (default URL state)
-- [ ] Membros sem permissão de liderança veem a aba (qualquer membro da BU)
-- [ ] Soft-delete respeitado em todas as agregações
-- [ ] Query keys via prefix helpers (Regra #5)
-- [ ] Sem `select('*')` (Regra #4)
-- [ ] Navegação interna via `<Link>` (Regra #9)
+- ✅ Acessar `/okrs/objectives/:id/krs/create?contributor_team_id=X` e confirmar que a URL mantém o param após qualquer transição de step.
+- ✅ Time autorizado consegue criar KR (verificar `team_id` resultante = `contributor_team_id`).
+- ✅ Time NÃO autorizado vê tela de "sem permissão" antes de qualquer interação com o wizard.
+- ✅ Fluxo normal (sem `contributor_team_id`) continua funcionando inalterado.
 
-## Fora do escopo (v2)
-- Comparativo cross-time (benchmark com outros times da BU)
-- Heatmap de contribuição por colaborador
-- Exportação PDF/CSV
-- Filtros avançados (por área, por tipo de OKR)
+## Arquivos
+- **Editados**: `src/modules/okrs/pages/TeamKrCreationPage.tsx`, `.lovable/memory/index.md`
+- **Novos**: `.lovable/memory/standards/url-state-preservation.md`

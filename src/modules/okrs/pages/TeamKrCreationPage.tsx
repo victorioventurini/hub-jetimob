@@ -16,7 +16,10 @@ import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
 import { WIZARD_CONFIGS } from '../types/wizard';
 import { useKrWizardDraft, useCreateTeamKrBundle, type KrWizardStep } from '@/modules/okrs/hooks';
+import { useCanManageTeamOkr } from '@/modules/okrs/hooks/useCanManageTeamOkr';
 import { useTeam } from '@/modules/teams/hooks';
+import { Button } from '@/components/ui/button';
+import { ShieldAlert } from 'lucide-react';
 
 // Steps
 import {
@@ -135,6 +138,9 @@ export default function TeamKrCreationPage() {
   const { data: teamData } = useTeam(effectiveTeamId);
   const { data: ownerTeamData } = useTeam(isContribution ? ownerTeamId : undefined);
 
+  // ── Permission gate (evita erro RLS no submit) ──
+  const { canManage, isLoading: canManageLoading } = useCanManageTeamOkr(effectiveTeamId);
+
   // ── Draft management ──
   const {
     draft,
@@ -164,17 +170,25 @@ export default function TeamKrCreationPage() {
   const currentStep = currentStepFromUrl || draft?.currentStep || 'kr-context';
   const currentStepIndex = WIZARD_STEPS.indexOf(currentStep);
 
-  // ── Sync URL with step ──
+  // ── Sync URL with step (preserva outros params como contributor_team_id) ──
   useEffect(() => {
     if (draft?.currentStep && draft.currentStep !== currentStepFromUrl) {
-      setSearchParams({ step: draft.currentStep }, { replace: true });
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.set('step', draft.currentStep);
+        return next;
+      }, { replace: true });
     }
   }, [draft?.currentStep, currentStepFromUrl, setSearchParams]);
 
   // ── Navigation handlers ──
   const goToStep = useCallback((step: KrWizardStep) => {
     setStep(step);
-    setSearchParams({ step }, { replace: true });
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('step', step);
+      return next;
+    }, { replace: true });
   }, [setStep, setSearchParams]);
 
   const goNext = useCallback(() => {
@@ -313,10 +327,32 @@ export default function TeamKrCreationPage() {
   }, [teamData?.members]);
 
   // ── Loading state ──
-  if (objectiveLoading || !objective || !objectiveContext) {
+  if (objectiveLoading || !objective || !objectiveContext || canManageLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
+  // ── Permission gate ──
+  if (!canManage) {
+    return (
+      <div className="h-screen flex items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-4">
+          <ShieldAlert className="w-12 h-12 mx-auto text-warning" />
+          <h2 className="text-xl font-semibold">Sem permissão para criar KRs</h2>
+          <p className="text-muted-foreground text-sm">
+            {isContribution
+              ? 'Você não pode criar KRs em nome deste time contribuidor. Apenas líderes do time (ou administradores) podem fazer isso.'
+              : 'Você não tem permissão para criar KRs neste time.'}
+          </p>
+          <Button
+            onClick={() => navigate(`/okrs?view=team&team_id=${effectiveTeamId}`)}
+          >
+            Voltar para OKRs do time
+          </Button>
+        </div>
       </div>
     );
   }
