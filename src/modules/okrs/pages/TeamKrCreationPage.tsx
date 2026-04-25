@@ -385,25 +385,20 @@ export default function TeamKrCreationPage() {
 
   // ── Resource not found (classificado pelo diagnóstico secundário) ──
   if (!objective) {
-    // Classificação: o diagnóstico usa o MESMO cliente BU-scoped, sem cross-BU lookup.
-    // - cancelled_at != null → objetivo foi cancelado.
-    // - row encontrada e ativa → guard §A.3 descartou por race de hidratação.
-    //   Mostramos estado "context_loading" e a query refaz quando currentBuId estabilizar.
-    // - row null → realmente inexistente / sem permissão RLS.
+    // Classificação: o diagnóstico usa o MESMO cliente BU-scoped E filtra por
+    // currentBuId. Resultados possíveis no contexto da BU atual:
+    // - row com cancelled_at != null → objetivo cancelado.
+    // - row null → objetivo não pertence à BU atual ou usuário sem acesso.
+    // (Não usamos `context_loading` aqui porque a query principal já está
+    // gated por `currentBuId`; se chegou neste branch, não há race transitória
+    // a aguardar.)
     const isCancelled = !!diagnostic?.cancelled_at;
-    const isContextRace = !!diagnostic && !diagnostic.cancelled_at;
-    const variant = isCancelled
-      ? 'cancelled'
-      : isContextRace
-        ? 'context_loading'
-        : 'not_found';
+    const variant = isCancelled ? 'cancelled' : 'not_found';
     const customMessage = isCancelled
       ? 'Este objetivo foi cancelado e não pode mais receber novos Key Results.'
-      : isContextRace
-        ? 'Estamos finalizando o carregamento da sua Business Unit. Recarregue a página em alguns segundos.'
-        : isContribution
-          ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido removido ou seu time não está autorizado a contribuir.'
-          : 'O objetivo que você tentou acessar foi removido ou você não tem permissão para visualizá-lo.';
+      : isContribution
+        ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Verifique se você está na Business Unit correta e se seu time está autorizado a contribuir.'
+        : 'O objetivo que você tentou acessar não está disponível na Business Unit atual ou você não tem permissão para visualizá-lo.';
     return (
       <ResourceNotFoundState
         resourceType="objetivo"
