@@ -29,5 +29,6 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [BU selection race protection](mem://standards/bu-selection-race-protection) — lastUserSelectionAtRef + janela 5s; effect de init não sobrescreve seleção recente; selectBu retenta após refetch e mostra toast quando BU realmente inacessível
 - [BU detail diagnostic pattern](mem://standards/bu-scoped-detail-diagnostic-pattern) — Gate currentBuId + `.eq('bu_id', currentBuId)` em TODAS as queries (principal e diagnóstico) + guard §A.3; classifica em cancelled/not_found (sem context_loading enganoso)
 - [Contributor KR uses modal](mem://features/okrs/contributor-kr-uses-modal) — "Adicionar KR" no card de OKR compartilhada abre TeamKrFormDialog (não wizard); passa objectiveId, teamId=contributor, buId=objective.bu_id; invalida caches de contribuição
+- [Job title relation access](mem://standards/users/job-title-relation-access) — Wave 2.6: profiles não tem coluna `job_title`; sempre usar relação `job_title_rel:job_titles!job_title_id(name)` e achatar no consumo
 
 
