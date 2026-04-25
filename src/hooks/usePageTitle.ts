@@ -83,11 +83,32 @@ export function usePageTitle(
     }
     metaDescriptionTag.setAttribute("content", metaDescription);
 
+    // Canonical: sempre apontar para o domínio oficial, sem query/hash,
+    // para evitar duplicidade entre preview, lovable.app e hub.jetimob.com.
+    const canonicalHref = `${CANONICAL_ORIGIN}${window.location.pathname}`;
+    let canonicalTag = document.querySelector('link[rel="canonical"]');
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalTag);
+    }
+    canonicalTag.setAttribute("href", canonicalHref);
+
+    // Robots: Hub é privado; só permitir indexação se explicitamente marcado.
+    const robotsContent = options?.indexable ? "index,follow" : "noindex,nofollow";
+    let robotsTag = document.querySelector('meta[name="robots"]');
+    if (!robotsTag) {
+      robotsTag = document.createElement("meta");
+      robotsTag.setAttribute("name", "robots");
+      document.head.appendChild(robotsTag);
+    }
+    robotsTag.setAttribute("content", robotsContent);
+
     // Cleanup
     return () => {
       document.title = "Hub";
     };
-  }, [title, currentBu, buSelected, options?.skipBu, options?.hubOnly, options?.pageType, options?.customDescription]);
+  }, [title, currentBu, buSelected, options?.skipBu, options?.hubOnly, options?.pageType, options?.customDescription, options?.indexable]);
 }
 
 function getDescriptionForPage(title: string, buName: string, pageType?: PageType, customDescription?: string): string {
