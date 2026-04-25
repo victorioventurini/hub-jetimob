@@ -138,6 +138,9 @@ export default function TeamKrCreationPage() {
   const { data: teamData } = useTeam(effectiveTeamId);
   const { data: ownerTeamData } = useTeam(isContribution ? ownerTeamId : undefined);
 
+  // ── Permission gate (evita erro RLS no submit) ──
+  const { canManage, isLoading: canManageLoading } = useCanManageTeamOkr(effectiveTeamId);
+
   // ── Draft management ──
   const {
     draft,
