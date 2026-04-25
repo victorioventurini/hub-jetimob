@@ -1,135 +1,65 @@
+## Plano — Aba Membros listar subtimes + membros dos subtimes
 
-# Plano de Execução — Habilitar tickets externos da Ferrigolo na BU Victorio Venturini
+### Contexto técnico (auditado)
 
-## Contexto auditado (read-only confirmado)
+- **Página alvo:** `src/modules/teams/pages/TeamDetailPage.tsx`, aba `members` (linhas 207–261).
+- **Hoje:** a aba lista somente `team.members`, vindos de `useTeam(id)`, que faz `profiles.team_id = teamId` (membros diretos apenas).
+- **Hierarquia:** a relação parent → child já é `teams.parent_team_id`. O hook canônico `useBuUsersDirectory` (`mem://standards/users/team-filter-includes-subteams`) já implementa expansão recursiva via `parent_team_id` quando recebe `teamId` + `includeSubteams=true` (default).
+- **Subtimes do time atual:** já vêm em `team.child_teams` (id, name, status) através do mesmo `useTeam(id)`.
+- **Sem novas tabelas, sem migrations, sem mudança de RLS.** Uso somente leituras já permitidas.
 
-| Item | Valor |
-|---|---|
-| BU destino | Victorio Venturini — `2eeeb494-178b-4a6d-96ee-d103fda448a0` |
-| BU origem (espelho) | Jetimob — `a0000000-0000-0000-0000-000000000001` |
-| Empresa parceira | Ferrigolo Advogados Associados — `92ba2f29-28b3-4c9e-a23a-d8daf926db5a` |
-| Categoria origem | "Jurídico" (`f14e0f87-4774-445c-951d-58856c1410e7`, scope=`external`) |
-| Subcategorias origem | **21 ativas** |
-| Contatos ativos Ferrigolo | **12** |
-| Capacidades a replicar | **35** (categoria + subcategoria) |
-| Conflitos detectados | Nenhum — Victorio não tem categorias nem associações de contato com Ferrigolo |
+### Padrões aplicados (pré-checklist)
 
----
+- BU isolation: continua via `useBuScopedSupabase` / `useBuUsersDirectory` (já BU-scoped).
+- Soft-delete: `useBuUsersDirectory` já filtra `deleted_at` e `employment_status='terminated'`.
+- Query keys: novas leituras reutilizam `useBuUsersDirectory` (cache canônico) — sem chaves novas.
+- Sem `select('*')`; sem hardcode de roles; navegação interna via `<Link>`.
+- Memoização (`React.memo`) para o novo componente de grupo (lista densa).
 
-## Etapa 1 — Criar categoria "Jurídico" na Victorio Venturini
+### Mudança proposta
 
-```sql
-INSERT INTO public.ticket_categories (bu_id, name, scope, status)
-VALUES ('2eeeb494-178b-4a6d-96ee-d103fda448a0', 'Jurídico', 'external', 'active');
-```
+Reescrever apenas o `<TabsContent value="members">` da `TeamDetailPage.tsx`. Resto da página permanece intacto.
 
-## Etapa 2 — Replicar as 21 subcategorias (preservando os nomes)
+Nova estrutura visual da aba "Membros":
 
-```sql
-INSERT INTO public.ticket_subcategories (bu_id, category_id, name, status, default_initial_message)
-SELECT 
-  '2eeeb494-178b-4a6d-96ee-d103fda448a0' AS bu_id,
-  (SELECT id FROM ticket_categories 
-   WHERE bu_id='2eeeb494-178b-4a6d-96ee-d103fda448a0' 
-     AND name='Jurídico' AND deleted_at IS NULL) AS category_id,
-  s.name,
-  s.status,
-  s.default_initial_message
-FROM ticket_subcategories s
-WHERE s.category_id = 'f14e0f87-4774-445c-951d-58856c1410e7'
-  AND s.deleted_at IS NULL;
-```
+1. **Bloco "Membros diretos do time"** (mantém o que já existe hoje — `team.members`).
+   - Mantém contador `({team.member_count})` no título do card.
+   - Estado vazio inalterado.
 
-## Etapa 3 — Vincular os 12 contatos da Ferrigolo à BU Victorio Venturini
+2. **Para cada subtime** em `team.child_teams` (ordenado por `name`):
+   - Cabeçalho colapsável (Collapsible, default expandido) com:
+     - Ícone `Building2`, nome do subtime (link para `/teams/{subtime.id}`), badge "Inativo" se `status==='inactive'`, e contador `(N)`.
+   - Lista dos membros do subtime usando o **mesmo layout de linha** de membro já usado hoje (avatar + nome + cargo + ícone Mail). Reaproveitar um pequeno componente `<TeamMemberRow />` extraído da renderização atual para evitar duplicação.
+   - Os membros do subtime vêm de `useBuUsersDirectory({ teamId: subtime.id, includeSubteams: false, pageSize: 200 })`. `includeSubteams: false` aqui é proposital: cada subtime mostra apenas seus diretos; netos aparecem ao expandir o subtime na própria página dele. Isso evita duplicação de pessoas em múltiplos grupos e mantém a hierarquia legível.
+   - Estado vazio do bloco: "Este sub-time não possui membros".
 
-```sql
-INSERT INTO public.partner_contact_bu_associations 
-  (partner_contact_id, bu_id, is_active, notes)
-SELECT 
-  pc.id,
-  '2eeeb494-178b-4a6d-96ee-d103fda448a0',
-  true,
-  'Habilitação manual — Ferrigolo na BU Victorio Venturini'
-FROM partner_contacts pc
-WHERE pc.external_company_id = '92ba2f29-28b3-4c9e-a23a-d8daf926db5a'
-  AND pc.status = 'active'
-  AND pc.deleted_at IS NULL;
-```
+3. **Resumo no topo da aba:** linha de texto discreta "X membros diretos · Y sub-times" (sem novo card; respeita as Quick Stats já existentes acima).
 
-## Etapa 4 — Replicar as 35 capacidades, remapeando IDs por NOME
+### Notas de implementação
 
-A chave do remapeamento é casar `subcategory.name` entre origem e destino, já que as subcategorias são recriadas com novos UUIDs mas mesmo nome.
+- Criar um componente `SubteamMembersBlock` (memoizado) em `src/modules/teams/components/SubteamMembersBlock.tsx` que recebe `subteam: { id, name, status }` e usa `useBuUsersDirectory` com `enabled` correto.
+  - Isso isola a query por subtime (1 query por subtime expandido), mantém cache reaproveitável (mesma chave canônica do directory) e evita uma única query gigante.
+- Extrair `TeamMemberRow` (memoizado) em `src/modules/teams/components/TeamMemberRow.tsx` reutilizando o markup atual (`Avatar`, `Mail`, `Link to /users/:id`). Substituir o uso atual em "Membros do Time" por esse componente.
+- Adicionar `Collapsible` (já em `@/components/ui/collapsible`) para os blocos de subtime.
+- Skeletons leves (3 linhas) enquanto cada `useBuUsersDirectory` carrega.
+- Sem alteração em `useTeam`, em rotas, em hooks de teams ou em tabelas. Sem nova query key.
 
-```sql
-INSERT INTO public.partner_contact_capabilities 
-  (bu_id, external_company_id, contact_id, category_id, subcategory_id, is_active)
-SELECT 
-  '2eeeb494-178b-4a6d-96ee-d103fda448a0' AS bu_id,
-  pcc.external_company_id,
-  pcc.contact_id,
-  new_cat.id AS category_id,
-  new_sub.id AS subcategory_id,
-  true
-FROM partner_contact_capabilities pcc
-JOIN ticket_subcategories old_sub ON old_sub.id = pcc.subcategory_id
-JOIN ticket_categories new_cat 
-  ON new_cat.bu_id = '2eeeb494-178b-4a6d-96ee-d103fda448a0'
-  AND new_cat.name = 'Jurídico'
-  AND new_cat.deleted_at IS NULL
-JOIN ticket_subcategories new_sub 
-  ON new_sub.category_id = new_cat.id
-  AND new_sub.name = old_sub.name
-  AND new_sub.deleted_at IS NULL
-WHERE pcc.external_company_id = '92ba2f29-28b3-4c9e-a23a-d8daf926db5a'
-  AND pcc.bu_id = 'a0000000-0000-0000-0000-000000000001'
-  AND pcc.category_id = 'f14e0f87-4774-445c-951d-58856c1410e7'
-  AND pcc.is_active = true
-  AND pcc.deleted_at IS NULL;
-```
+### Arquivos tocados
 
----
+- `src/modules/teams/pages/TeamDetailPage.tsx` — substituir o conteúdo da `TabsContent value="members"`.
+- `src/modules/teams/components/TeamMemberRow.tsx` — **novo** (extração + `React.memo`).
+- `src/modules/teams/components/SubteamMembersBlock.tsx` — **novo** (consome `useBuUsersDirectory`, `React.memo`).
 
-## Etapa 5 — Validação pós-execução
+### Fora do escopo
 
-```sql
--- (a) categoria + subcategorias na destino
-SELECT c.name AS categoria, COUNT(s.id) AS total_subcategorias
-FROM ticket_categories c
-LEFT JOIN ticket_subcategories s ON s.category_id = c.id AND s.deleted_at IS NULL
-WHERE c.bu_id = '2eeeb494-178b-4a6d-96ee-d103fda448a0'
-  AND c.name = 'Jurídico' AND c.deleted_at IS NULL
-GROUP BY c.name;
--- esperado: 1 linha, total_subcategorias=21
+- Aba "Sub-times" continua igual.
+- Sem mudanças em RLS, em migrations, em hooks compartilhados.
+- Não toco em nenhum outro pedido pendente desta thread.
 
--- (b) contatos vinculados
-SELECT COUNT(*) AS contatos_vinculados
-FROM partner_contact_bu_associations pcba
-JOIN partner_contacts pc ON pc.id = pcba.partner_contact_id
-WHERE pc.external_company_id = '92ba2f29-28b3-4c9e-a23a-d8daf926db5a'
-  AND pcba.bu_id = '2eeeb494-178b-4a6d-96ee-d103fda448a0'
-  AND pcba.deleted_at IS NULL;
--- esperado: 12
+### Validação manual (após implementação)
 
--- (c) capabilities replicadas
-SELECT COUNT(*) AS capabilities_destino
-FROM partner_contact_capabilities
-WHERE bu_id = '2eeeb494-178b-4a6d-96ee-d103fda448a0'
-  AND external_company_id = '92ba2f29-28b3-4c9e-a23a-d8daf926db5a'
-  AND deleted_at IS NULL AND is_active = true;
--- esperado: 35
-```
-
----
-
-## Conformidade com TCR / Padrões Canônicos
-
-- ✅ **BU Isolation**: cada `INSERT` carrega `bu_id` da BU destino explicitamente.
-- ✅ **Soft delete**: todos os filtros usam `deleted_at IS NULL`.
-- ✅ **Ferramenta correta**: operação puramente DML → `supabase--insert` (não migration).
-- ✅ **Sem alteração de schema**: zero risco para o resto da plataforma.
-- ✅ **Sem código**: não toca `src/`, não requer deploy.
-- ✅ **Idempotência verificada**: pré-checagens confirmaram zero duplicatas.
-
-## Resultado esperado
-
-A BU Victorio Venturini passa a permitir abertura de tickets externos da categoria **Jurídico** com a Ferrigolo, com os mesmos 12 contatos e mesmas 35 capacidades de roteamento (categoria → subcategoria) que já existem na Jetimob.
+1. Abrir `/teams/d3247da9-3e07-4fa8-9d0a-2527fdf6548f` na BU Jetimob → aba Membros mostra: bloco "Membros diretos" + um bloco por subtime listado em "Sub-times", cada um com seus membros e contador correto.
+2. Subtime sem membros → mostra estado vazio dentro do bloco.
+3. Time sem subtimes → comportamento idêntico ao atual (só o bloco de membros diretos).
+4. Cliques em nome de subtime navegam para `/teams/{id}`; cliques em membros navegam para `/users/{id}`.
+5. Trocar para BU sem acesso ao time → continua redirecionando/erro como hoje (BU isolation preservada).
