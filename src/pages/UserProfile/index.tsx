@@ -342,7 +342,7 @@ export default function UserProfile() {
                       Projetos {projectsCount > 0 && <span className="ml-1 text-muted-foreground">({projectsCount})</span>}
                     </TabsTrigger>
                     <TabsTrigger value="okrs" className="text-xs">
-                      OKRs & KRs {(objectivesCount + krsCount) > 0 && <span className="ml-1 text-muted-foreground">({objectivesCount + krsCount})</span>}
+                      KRs {krsCount > 0 && <span className="ml-1 text-muted-foreground">({krsCount})</span>}
                     </TabsTrigger>
                     <TabsTrigger value="initiatives" className="text-xs">
                       Iniciativas {initiativesCount > 0 && <span className="ml-1 text-muted-foreground">({initiativesCount})</span>}
