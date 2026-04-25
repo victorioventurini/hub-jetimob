@@ -101,7 +101,13 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
               value={cycleId}
               onValueChange={setCycleId}
               cycles={cycles}
-              placeholder="Todos os ciclos"
+              placeholder={
+                effectiveCycleId && !cycleId
+                  ? `Ciclo atual${
+                      activeQuarterlyCycle?.name ? ` · ${activeQuarterlyCycle.name}` : ''
+                    }`
+                  : 'Todos os ciclos'
+              }
             />
           </div>
         </CardContent>
@@ -128,7 +134,7 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
         <TabsContent value="team-okrs" className="mt-4">
           <TeamOwnOkrsList
             teamIds={analytics?.resolvedTeamIds || [teamId]}
-            cycleId={cycleParam}
+            cycleId={effectiveCycleId}
           />
         </TabsContent>
 
@@ -138,6 +144,15 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
 
         <TabsContent value="org-contribution" className="mt-4">
           <OrgContributionList teamId={teamId} />
+        </TabsContent>
+
+        <TabsContent value="initiatives" className="mt-4">
+          <TeamInitiativesBlock
+            teamId={teamId}
+            krIds={analytics?.ownKrIds ?? []}
+            cycleId={effectiveCycleId ?? null}
+            isLoadingKrs={isLoading}
+          />
         </TabsContent>
 
         <TabsContent value="projects" className="mt-4">
