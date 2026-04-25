@@ -63,6 +63,7 @@ export default function TeamKrCreationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { client: supabase, isReady } = useOptionalBuClient();
   const { currentBuId } = useBu();
+  const contributorTeamId = searchParams.get('contributor_team_id');
   
   const createKrBundle = useCreateTeamKrBundle();
 
@@ -88,33 +89,22 @@ export default function TeamKrCreationPage() {
   // ── Fetch objective data ──
   // BU incluído na key para evitar reuso de cache stale ao alternar de BU.
   const { data: objective, isLoading: objectiveLoading, isFetched: objectiveFetched } = useQuery({
-    queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId),
+    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), contributorTeamId ?? null],
     queryFn: async () => {
       if (!supabase || !objectiveId) return null;
       ensureBuHeaderSync('objective.fetch');
 
-      const { data, error } = await supabase
-        .from('okr_team_objectives')
-        .select(`
-          id,
-          title,
-          description,
-          team_id,
-          org_objective_id,
-          cycle_id,
-          is_shared,
-          responsibility_model,
-          bu_id,
-          teams:team_id (id, name),
-          org_objective:org_objective_id (title),
-          cycle:cycle_id (name, year)
-        `)
-        .eq('id', objectiveId)
-        .eq('bu_id', currentBuId!) // BU-scope explícito (DEVELOPMENT_STANDARDS §A.3)
-        .is('cancelled_at', null)
+      const { data, error } = await (supabase as any)
+        .rpc('get_team_kr_creation_context', {
+          p_objective_id: objectiveId,
+          p_contributor_team_id: contributorTeamId || null,
+        })
         .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) return null;
+
       // Defensive BU isolation (RLS já filtra, mas garantimos no frontend
       // conforme DEVELOPMENT_STANDARDS §A.3 / TCR regra inquebrável #1).
       // Nunca remover este guard. Telemetria abaixo classifica falsos positivos.
@@ -127,7 +117,25 @@ export default function TeamKrCreationPage() {
         });
         return null;
       }
-      return data;
+
+      if (contributorTeamId && contributorTeamId !== data.team_id && !data.contribution_authorized) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        team_id: data.team_id,
+        org_objective_id: data.org_objective_id,
+        cycle_id: data.cycle_id,
+        is_shared: data.is_shared,
+        responsibility_model: data.responsibility_model,
+        bu_id: data.bu_id,
+        teams: { id: data.team_id, name: data.team_name },
+        org_objective: data.org_objective_title ? { title: data.org_objective_title } : null,
+        cycle: data.cycle_id ? { name: data.cycle_name, year: data.cycle_year } : null,
+      };
     },
     // Inclui currentBuId para evitar disparar a query antes do BU estabilizar
     // (race onde header já está setado mas useBu() ainda retornou null).
@@ -140,9 +148,8 @@ export default function TeamKrCreationPage() {
   // Tier 1 (existência + soft-delete): row na BU atual? cancelada?
   // Tier 2 (relação contribuição): time tentando contribuir está autorizado?
   // Roda APENAS quando a query principal terminou e retornou null.
-  const contributorTeamIdParam = searchParams.get('contributor_team_id');
   const { data: diagnostic } = useQuery({
-    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic', contributorTeamIdParam],
+    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic', contributorTeamId],
     queryFn: async () => {
       if (!supabase || !objectiveId || !currentBuId) return null;
       ensureBuHeaderSync('objective.diagnostic');
@@ -156,13 +163,13 @@ export default function TeamKrCreationPage() {
         .maybeSingle();
 
       let contributionAuthorized: boolean | null = null;
-      if (existence && contributorTeamIdParam && contributorTeamIdParam !== existence.id) {
+      if (existence && contributorTeamId && contributorTeamId !== existence.id) {
         // Tier 2: row existe → checar se time-contribuidor está autorizado
         const { data: contribRow } = await supabase
           .from('okr_team_objective_contributors')
           .select('team_id')
           .eq('objective_id', objectiveId)
-          .eq('team_id', contributorTeamIdParam)
+          .eq('team_id', contributorTeamId)
           .maybeSingle();
         contributionAuthorized = !!contribRow;
       }
@@ -171,7 +178,7 @@ export default function TeamKrCreationPage() {
         objectiveId,
         currentBuId,
         headerBuId: getBuScopedClientCurrentBuId(),
-        contributorTeamIdParam,
+        contributorTeamId,
         existence,
         contributionAuthorized,
       });
@@ -214,7 +221,6 @@ export default function TeamKrCreationPage() {
   });
 
   // ── Contributor mode (cross-team KR) ──
-  const contributorTeamId = searchParams.get('contributor_team_id');
   const isContribution = !!contributorTeamId && !!objective && contributorTeamId !== objective.team_id;
 
   // Validate contributor authorization
