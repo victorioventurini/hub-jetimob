@@ -47,6 +47,9 @@ export const TeamSharedOkrsBlock = React.memo(function TeamSharedOkrsBlock({
   teamId,
 }: TeamSharedOkrsBlockProps) {
   const { currentBu } = useBu();
+  // canContribute: usuário pode gerenciar OKRs deste time (líder/admin) →
+  // habilita criar/editar/check-in nas KRs contribuidoras (Team KR é deste time).
+  const { canManage: canContribute } = useCanManageTeamOkr(teamId);
   const { data: ownShared, isLoading: loadingOwn } = useTeamObjectivesWithSharedInfo(
     currentBu?.id ?? null,
     teamId
