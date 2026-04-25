@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { getBuScopedClientCurrentBuId } from '@/integrations/supabase/buScopedClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
@@ -94,11 +95,46 @@ export default function TeamKrCreationPage() {
 
       if (error) throw error;
       // Defensive BU isolation (RLS já filtra, mas garantimos no frontend
-      // conforme DEVELOPMENT_STANDARDS §A.3).
-      if (data && currentBuId && data.bu_id !== currentBuId) return null;
+      // conforme DEVELOPMENT_STANDARDS §A.3 / TCR regra inquebrável #1).
+      // Nunca remover este guard. Telemetria abaixo classifica falsos positivos.
+      if (data && currentBuId && data.bu_id !== currentBuId) {
+        console.warn('[TeamKrCreationPage] BU mismatch discard', {
+          objectiveId,
+          currentBuId,
+          dataBuId: data.bu_id,
+          headerBuId: getBuScopedClientCurrentBuId(),
+        });
+        return null;
+      }
       return data;
     },
-    enabled: isReady && !!supabase && !!objectiveId,
+    // Inclui currentBuId para evitar disparar a query antes do BU estabilizar
+    // (race onde header já está setado mas useBu() ainda retornou null).
+    enabled: isReady && !!supabase && !!objectiveId && !!currentBuId,
+  });
+
+  // ── Diagnóstico secundário: classifica por que `objective` veio null ──
+  // Roda APENAS quando a query principal terminou e retornou null. Usa o mesmo
+  // cliente BU-scoped (não cross-BU), preservando §A.3.
+  const { data: diagnostic } = useQuery({
+    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic'],
+    queryFn: async () => {
+      if (!supabase || !objectiveId) return null;
+      const { data } = await supabase
+        .from('okr_team_objectives')
+        .select('id, bu_id, cancelled_at')
+        .eq('id', objectiveId)
+        .maybeSingle();
+      return data;
+    },
+    enabled:
+      isReady &&
+      !!supabase &&
+      !!objectiveId &&
+      !!currentBuId &&
+      objectiveFetched &&
+      !objective,
+    staleTime: 0,
   });
 
   // ── Fetch contributors if shared ──
@@ -338,23 +374,39 @@ export default function TeamKrCreationPage() {
   // Esperamos o BU client estar pronto + a query terminar (loading e fetched)
   // E o gate de permissão resolver. Sem isso, qualquer "esperando dependência"
   // virava loading infinito.
-  if (!isReady || objectiveLoading || !objectiveFetched || canManageLoading) {
+  if (!isReady || !currentBuId || objectiveLoading || !objectiveFetched || canManageLoading) {
     return <LoadingState fullPage text="Carregando..." />;
   }
 
-  // ── Resource not found (objetivo inexistente, cancelado ou em outra BU) ──
+  // ── Resource not found (classificado pelo diagnóstico secundário) ──
   if (!objective) {
+    // Classificação: o diagnóstico usa o MESMO cliente BU-scoped, sem cross-BU lookup.
+    // - cancelled_at != null → objetivo foi cancelado.
+    // - row encontrada e ativa → guard §A.3 descartou por race de hidratação.
+    //   Mostramos estado "context_loading" e a query refaz quando currentBuId estabilizar.
+    // - row null → realmente inexistente / sem permissão RLS.
+    const isCancelled = !!diagnostic?.cancelled_at;
+    const isContextRace = !!diagnostic && !diagnostic.cancelled_at;
+    const variant = isCancelled
+      ? 'cancelled'
+      : isContextRace
+        ? 'context_loading'
+        : 'not_found';
+    const customMessage = isCancelled
+      ? 'Este objetivo foi cancelado e não pode mais receber novos Key Results.'
+      : isContextRace
+        ? 'Estamos finalizando o carregamento da sua Business Unit. Recarregue a página em alguns segundos.'
+        : isContribution
+          ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido removido ou seu time não está autorizado a contribuir.'
+          : 'O objetivo que você tentou acessar foi removido ou você não tem permissão para visualizá-lo.';
     return (
       <ResourceNotFoundState
         resourceType="objetivo"
         resourceId={objectiveId}
         moduleRoot="/okrs"
         viewAllLabel="Ver OKRs"
-        customMessage={
-          isContribution
-            ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Ele pode ter sido cancelado, removido ou está em outra Business Unit.'
-            : 'O objetivo que você tentou acessar foi removido, cancelado ou não está disponível na Business Unit atual.'
-        }
+        variant={variant}
+        customMessage={customMessage}
         showResourceId
       />
     );

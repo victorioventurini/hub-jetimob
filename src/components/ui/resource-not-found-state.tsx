@@ -24,6 +24,8 @@ import { Button } from '@/components/ui/button';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { cn } from '@/lib/utils';
 
+export type ResourceNotFoundVariant = 'not_found' | 'cancelled' | 'context_loading';
+
 export interface ResourceNotFoundStateProps {
   /** Tipo do recurso em português (ex: "objetivo", "ticket", "ativo") */
   resourceType: string;
@@ -39,6 +41,12 @@ export interface ResourceNotFoundStateProps {
   className?: string;
   /** Se true, mostra o ID do recurso para debug */
   showResourceId?: boolean;
+  /**
+   * Variante de mensagem. Default 'not_found'.
+   * - 'cancelled': recurso foi explicitamente cancelado/arquivado
+   * - 'context_loading': contexto (BU) ainda hidratando — sugere recarregar
+   */
+  variant?: ResourceNotFoundVariant;
 }
 
 export function ResourceNotFoundState({
@@ -49,6 +57,7 @@ export function ResourceNotFoundState({
   customMessage,
   className,
   showResourceId = false,
+  variant = 'not_found',
 }: ResourceNotFoundStateProps) {
   const navigate = useNavigate();
   const goBack = useSafeBack({ moduleRoot });
@@ -58,7 +67,18 @@ export function ResourceNotFoundState({
     ? resourceType.replace(/ão$/, 'ões')
     : resourceType + 's';
   
-  const defaultMessage = `O ${resourceType} que você tentou acessar foi removido ou você não tem permissão para visualizá-lo.`;
+  const headingByVariant: Record<ResourceNotFoundVariant, string> = {
+    not_found: `Este ${resourceType} não existe mais`,
+    cancelled: `Este ${resourceType} foi cancelado`,
+    context_loading: 'Carregando contexto...',
+  };
+  const defaultMessageByVariant: Record<ResourceNotFoundVariant, string> = {
+    not_found: `O ${resourceType} que você tentou acessar foi removido ou você não tem permissão para visualizá-lo.`,
+    cancelled: `Este ${resourceType} foi cancelado e não pode mais receber alterações.`,
+    context_loading: `Estamos finalizando o carregamento da sua Business Unit. Se a tela não atualizar em alguns segundos, recarregue a página.`,
+  };
+  const heading = headingByVariant[variant];
+  const defaultMessage = defaultMessageByVariant[variant];
   
   return (
     <div
@@ -72,7 +92,7 @@ export function ResourceNotFoundState({
       </div>
       
       <h2 className="text-xl font-semibold text-foreground mb-2">
-        Este {resourceType} não existe mais
+        {heading}
       </h2>
       
       <p className="text-muted-foreground max-w-md mb-6">
