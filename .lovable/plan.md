@@ -1,87 +1,45 @@
-# Aba Contribuição do Time — Iniciativas + Layout Full-Width
+Plano de ação
 
-## Objetivo
-1. Exibir informações sobre iniciativas vinculadas às KRs do **ciclo atual** dentro da aba Contribuição.
-2. Expandir horizontalmente a análise (hoje comprimida em `lg:col-span-2` por causa da sidebar Líder/Time pai).
+Pré-checklist executado:
+- Consultei o TCR canônico, Development Standards, Data Model Registry, Identity Convention e Permissions/RBAC.
+- Auditei as implementações existentes de OKRs compartilhados, contributors, RLS/policies e o modal `TeamKrFormDialog`.
+- Validei no banco que o objetivo `1470f9f5-fed4-42db-b5fa-406ade6cef6d` e o time contribuidor `d3247da9-3e07-4fa8-9d0a-2527fdf6548f` estão na mesma BU Jetimob, e que o vínculo de contribuição existe. Portanto o problema não deve ser tratado como “cross-BU”.
 
-## Diagnóstico
-- A aba vive sob `lg:col-span-2` em `TeamDetailPage.tsx` (linhas 167–359). Isso comprime KPIs e sparkline em telas grandes.
-- `useTeamContributionAnalytics` agrega 7 métricas mas **nunca consulta `okr_initiatives`**.
-- `useKrInitiatives(krId)` e `useKrInitiativesCount(krId)` já são canônicos.
-- "Ciclo atual" deve ser resolvido via `useActiveCycle().activeQuarterlyCycle ?? activeCycle` quando o filtro URL `cycle_id` está vazio.
+O que vou mudar
 
-## Mudanças
+1. Parar de abrir o wizard para KR de contribuição
+- No card de OKR compartilhada/contribuída, trocar o botão “Adicionar KR” de link para `/okrs/objectives/:id/krs/create?contributor_team_id=...` por abertura direta do modal existente `TeamKrFormDialog`.
+- O modal receberá:
+  - `objectiveId` = objetivo compartilhado original
+  - `teamId` = time contribuidor atual
+  - `buId` = BU do objetivo/time, quando disponível
+- Isso cria a KR como KR do time contribuidor dentro do objetivo compartilhado, sem passar pelo wizard full-page.
 
-### 1) Layout full-width só para a aba Contribuição
-- `TeamDetailPage.tsx`: envolver apenas `TabsContent value="contribution"` em wrapper `lg:col-start-1 lg:col-end-4` (escapa da grid 2/3 + sidebar).
-- Outras abas (`members`, `squads`, `subteams`, `rituals`) preservam o layout atual.
+2. Ajustar dados mínimos do card contribuído
+- Garantir que `ContributingOkrCard` tenha `bu_id` disponível no objeto do objetivo.
+- Atualizar as queries/hidratações usadas por `TeamOkrSections` e `TeamSharedOkrsBlock` para carregar/propagar `bu_id` explicitamente, respeitando a regra de não usar `select('*')`.
 
-### 2) Hook estendido: `useTeamContributionAnalytics.ts`
-Novos campos no retorno:
-- `initiativesTotalCount`
-- `initiativesByStatus: { planned, in_progress, blocked, completed }`
-- `initiativesAtRiskCount` — `status='blocked' OR (expected_end_date < hoje AND status !== 'completed')`
-- `effectiveCycleId` — ciclo aplicado (passado pelo caller)
+3. Manter o wizard apenas para contextos próprios
+- Não remover a rota nem o wizard agora, porque ainda pode ser usado em objetivos próprios.
+- O desvio será específico para o fluxo de objetivo compartilhado/contribuidor, que é o fluxo que está travando.
 
-Nova SELECT em `okr_initiatives` por `kr_id IN (krIds) AND bu_id = currentBu.id AND deleted_at IS NULL`. Colunas explícitas: `id, status, expected_end_date`. Sem `select('*')`.
+4. Corrigir permissão/UX do modal no modo contribuição
+- Revisar `TeamKrFormDialog` para garantir que ele permita criar quando o `teamId` recebido é o time contribuidor.
+- Manter o gate existente por `useCanManageTeamOkr(teamId)`, porque o usuário deve poder gerenciar o time para o qual está criando a KR.
+- Preservar as regras de RLS existentes: a inserção continuará passando por `okr_team_key_results_insert_v2` e `can_create_shared_team_kr_by_profile`, sem bypass.
 
-### 3) `TeamContributionTab.tsx`
-- Importar `useActiveCycle`. Quando `cycleId` URL está vazio, usar `activeQuarterlyCycle?.id ?? activeCycle?.id` como `effectiveCycleId` repassado ao hook.
-- `CycleSelect` placeholder muda para "Ciclo atual" quando vazio.
-- Adicionar sub-tab `initiatives` (label "Iniciativas") na constante `SUBTABS`.
-- Render: novo `<TeamInitiativesBlock teamId krIds cycleId />` na `TabsContent value="initiatives"`.
+5. Invalidar caches certos após criação
+- Ao criar a KR pelo modal, invalidar também os caches de OKRs compartilhados/contribuídos:
+  - contributors do objetivo
+  - objectives with KRs
+  - team contributed objectives/OKRs
+  - summary de shared OKRs
+- Assim a KR recém-criada aparece imediatamente na seção “Contribuição do seu time”.
 
-### 4) `TeamContributionOverview.tsx`
-- KPI grid: `grid-cols-2 lg:grid-cols-4 xl:grid-cols-5` para acomodar o 5º card.
-- Novo `KpiCard` "Iniciativas":
-  - value = `initiativesTotalCount`
-  - hint = `${in_progress} em progresso · ${planned} planejadas · ${blocked} bloqueadas`
-  - cta "Ver iniciativas" → `onNavigateToSubtab('initiatives')`
-- Sparkline + Insights lado a lado em `lg:grid-cols-3` (sparkline `lg:col-span-2`, insights `lg:col-span-1`) aproveitando a largura ganha.
+6. Testes/validação
+- Atualizar/adicionar teste simples do componente para confirmar que o botão de KR contribuidora abre o modal em vez de navegar para o wizard.
+- Rodar os testes/checagem disponível do projeto após a alteração.
 
-### 5) Novo: `TeamInitiativesBlock.tsx` (`src/modules/teams/components/contribution/`)
-- Recebe `teamId`, `krIds`, `cycleId`.
-- Query única em `okr_initiatives` (mesma forma que o hook agregador) trazendo todos os campos do `Initiative` + join leve em owners (reusar lógica de `useKrInitiatives` adaptada para múltiplos KRs).
-- Agrupa por KR. Para cada grupo, header com título do KR e lista de `InitiativeCard` (reuso obrigatório de `src/modules/okrs/components/initiatives/InitiativeCard.tsx`).
-- Filtro chips de status: `Todas / Em progresso / Planejadas / Bloqueadas / Atrasadas / Concluídas` — URL state `init_status`.
-- `React.memo` no componente raiz e nos sub-cards de grupo.
+Resultado esperado
 
-### 6) `OrgKrContributionItem.tsx` (insight inline opcional)
-- Em cada item do time listado, exibir chip pequeno "**N iniciativas**" via `useKrInitiativesCount` (já existe). Sem mudar o layout do card. Se contagem = 0, omite.
-
-### 7) Query keys
-- `src/lib/queryKeys/teams.ts`: nova `teamsKeys.contributionInitiatives(teamId, buId, cycleId)`.
-
-### 8) Memória
-Atualizar `.lovable/memory/features/teams/team-contribution-tab-standard.md`:
-- Adicionar sub-tab `initiatives` à lista canônica
-- Novo KPI card "Iniciativas"
-- Layout full-width específico (`lg:col-end-4`)
-- Resolução automática de "ciclo atual" via `useActiveCycle`
-
-## Standards (TCR)
-- ✅ #3 BU-scoped via `useOptionalBuClient`
-- ✅ #4 Sem `select('*')` — colunas explícitas
-- ✅ #5 Query keys via helpers em `src/lib/queryKeys/teams.ts`
-- ✅ #7 URL state para `subtab=initiatives` e `init_status`
-- ✅ Soft-delete `.is('deleted_at', null)` em `okr_initiatives`
-- ✅ React.memo em listas (`frontend-memoization-standard`)
-- ✅ Reuso obrigatório de `InitiativeCard` (não duplicar)
-
-## Não-fazer
-- Não criar rota standalone.
-- Não criar migration / não tocar RLS.
-- Não duplicar `InitiativeCard` ou `OrgObjectiveContributionCard`.
-- Não alterar layout das demais abas do `TeamDetailPage`.
-
-## Arquivos
-| Arquivo | Ação |
-|---|---|
-| `src/modules/teams/pages/TeamDetailPage.tsx` | edit (wrapper full-width condicional) |
-| `src/modules/teams/hooks/useTeamContributionAnalytics.ts` | edit (campos de iniciativas) |
-| `src/modules/teams/components/contribution/TeamContributionTab.tsx` | edit (sub-tab + ciclo atual) |
-| `src/modules/teams/components/contribution/TeamContributionOverview.tsx` | edit (5º KPI + grid sparkline/insights) |
-| `src/modules/teams/components/contribution/TeamInitiativesBlock.tsx` | new |
-| `src/lib/queryKeys/teams.ts` | edit (nova key) |
-| `src/modules/okrs/components/team-contribution/OrgKrContributionItem.tsx` | edit (chip iniciativas) |
-| `.lovable/memory/features/teams/team-contribution-tab-standard.md` | update |
+Na página de OKRs compartilhadas do time Comercial, ao clicar em “Adicionar KR” para apoiar o objetivo do BizOps, o sistema abre o modal padrão de criação de KR. Ao salvar, a KR será criada com `team_id = d3247da9-3e07-4fa8-9d0a-2527fdf6548f` e `team_objective_id = 1470f9f5-fed4-42db-b5fa-406ade6cef6d`, dentro da mesma BU Jetimob.

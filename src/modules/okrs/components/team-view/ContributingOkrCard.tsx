@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Users, Crown, ExternalLink, Target, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from '../OkrStatusBadge';
+import { TeamKrFormDialog } from '../TeamKrFormDialog';
 import { calculateProgress, OkrRagStatus } from '../../types';
 
 interface ContributingOkrCardProps {
@@ -20,6 +21,8 @@ interface ContributingOkrCardProps {
     is_shared: boolean;
     responsibility_model?: string | null;
     team_id: string;
+    /** BU do objetivo dono — usada para criar a KR contribuidora na mesma BU */
+    bu_id?: string | null;
     team?: {
       id: string;
       name: string;
@@ -54,6 +57,7 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   currentTeamId,
   canContribute = false,
 }: ContributingOkrCardProps) {
+  const [showAddKrDialog, setShowAddKrDialog] = useState(false);
   const primaryTeamName = objective.team?.name || 'Time não definido';
   const allKrs = objective.key_results || [];
 
@@ -168,16 +172,12 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
               <Button
                 variant="outline"
                 size="sm"
-                asChild
+                onClick={() => setShowAddKrDialog(true)}
                 className="ml-auto h-7 px-2 text-xs gap-1"
+                aria-label="Adicionar KR de contribuição"
               >
-                <Link
-                  to={`/okrs/objectives/${objective.id}/krs/create?contributor_team_id=${currentTeamId}`}
-                  aria-label="Adicionar KR de contribuição"
-                >
-                  <Plus className="w-3 h-3" />
-                  Adicionar KR
-                </Link>
+                <Plus className="w-3 h-3" />
+                Adicionar KR
               </Button>
             )}
           </div>
@@ -219,6 +219,16 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
           )}
         </div>
       </CardContent>
+
+      {canContribute && (
+        <TeamKrFormDialog
+          open={showAddKrDialog}
+          onOpenChange={setShowAddKrDialog}
+          objectiveId={objective.id}
+          teamId={currentTeamId}
+          buId={objective.bu_id || undefined}
+        />
+      )}
     </Card>
   );
 });

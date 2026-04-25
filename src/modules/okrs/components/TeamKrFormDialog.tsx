@@ -232,6 +232,12 @@ export function TeamKrFormDialog({
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null), refetchType: 'active' });
+      // Caches de OKRs compartilhados/contribuídos (modo contribuição)
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.objectiveContributors(objectiveId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamContributedObjectives(teamId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamContributedOkrs(teamId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.sharedSummaryPrefix(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['shared-objectives-with-krs'], refetchType: 'active' });
       toast.success(isEditing ? 'KR atualizado com sucesso!' : 'Key Result criado com sucesso!');
       onOpenChange(false);
     },

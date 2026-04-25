@@ -20,13 +20,6 @@ export const teamsKeys = {
   ) => ['teams', 'contribution-analytics', teamId, buId, includeSubteams, cycleId ?? null] as const,
   contributionSubteamIds: (teamId: string | null, includeSubteams: boolean) =>
     ['teams', 'contribution-subteam-ids', teamId, includeSubteams] as const,
-  // v3.x: Iniciativas vinculadas às KRs do time no ciclo aplicado
-  contributionInitiatives: (
-    teamId: string | null,
-    buId: string | null,
-    cycleId?: string | null,
-    includeSubteams?: boolean,
-  ) => ['teams', 'contribution-initiatives', teamId, buId, cycleId ?? null, !!includeSubteams] as const,
 } as const;
 
 export const squadsKeys = {
