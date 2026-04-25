@@ -27,7 +27,7 @@ Quando um objetivo de time está marcado como `is_shared=true` e contém entrada
 ## Regras invioláveis
 
 1. **Ownership único**: o objetivo NÃO é duplicado — `okr_team_objectives.team_id` permanece apontando apenas para o Time A. O bloco no Time B vem da view `v_team_contributed_okrs` (filtrada por `contributor_team_id`).
-2. **Read-only no contribuidor**: `canEdit` é forçadamente `false` no bloco "OKRs Compartilhadas". O card não expõe edição, cancelamento ou criação de KR — apenas link "Ver detalhes" para o time owner.
+2. **Read-only no contribuidor (visualização do objetivo)**: o card `ContributingOkrCard` não expõe edição/cancelamento do objetivo nem das KRs alheias. A ÚNICA ação de escrita permitida é o botão **"+ Adicionar KR"** (gated por `canContribute`, herdado de `canEdit` do dashboard do time contribuidor) que inicia o wizard de KR no modo contribuição.
 3. **KRs do contribuidor são próprias**: o Time B cria suas próprias KRs em `okr_team_key_results` com `team_id = TimeB` e `team_objective_id = objective.id`. Essas KRs aparecem automaticamente em todos os ritos coletivos (Weekly/MBR/QBR/Team Check-in) que filtram por `kr.team_id`, e no Collaborator Check-in que filtra por `kr.owner_id`. **Nenhuma alteração nos ritos é necessária para suportar contribuição cross-team.**
 4. **Select correto**: `AGGREGATE_FIELDS.teamObjectiveWithKrs` em `aggregateUtils.ts` DEVE incluir `team_id` em `key_results` para permitir o filtro do contribuidor. Também inclui `is_shared`, `responsibility_model` e `org_objective_id` no objetivo.
 5. **Caller do `TeamObjectiveFormDialog`**: ver `mem://features/okrs/shared-okr-edit-hydration-standard` — passar `is_shared`, `responsibility_model` e `org_objective_id` ao editar.
