@@ -90,6 +90,8 @@ export function AddToBuDialog({ open, onOpenChange, existingProfile }: AddToBuDi
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(currentBu?.id ?? null), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.buMembers(currentBu?.id ?? null), refetchType: 'active' });
+      // Se o user adicionado é o próprio user logado, BuContext.userBus precisa refletir a nova BU
+      queryClient.invalidateQueries({ queryKey: queryKeys.bu.userBusPrefix(), refetchType: 'active' });
       toast.success(`${existingProfile?.display_name} adicionado à ${currentBu?.name}!`);
       onOpenChange(false);
     },
