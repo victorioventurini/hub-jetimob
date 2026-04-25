@@ -11171,6 +11171,25 @@ export type Database = {
         }[]
       }
       get_system_setting: { Args: { p_key: string }; Returns: Json }
+      get_team_kr_creation_context: {
+        Args: { p_contributor_team_id?: string; p_objective_id: string }
+        Returns: {
+          bu_id: string
+          contribution_authorized: boolean
+          cycle_id: string
+          cycle_name: string
+          cycle_year: number
+          description: string
+          id: string
+          is_shared: boolean
+          org_objective_id: string
+          org_objective_title: string
+          responsibility_model: string
+          team_id: string
+          team_name: string
+          title: string
+        }[]
+      }
       get_team_member_ids: {
         Args: { p_include_subtree?: boolean; p_team_id: string }
         Returns: string[]
