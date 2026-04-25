@@ -13,10 +13,12 @@ import {
   useTeamContributionView,
 } from '@/modules/okrs/hooks';
 import { useCycles, useTeamObjectives } from '@/modules/okrs/hooks';
+import { useActiveCycle } from '@/modules/okrs/hooks/useActiveCycle';
 import { CycleSelect } from '@/components/selects/CycleSelect';
 import { useBu } from '@/contexts/BuContext';
 import { TeamContributionOverview } from './TeamContributionOverview';
 import { TeamSharedOkrsBlock } from './TeamSharedOkrsBlock';
+import { TeamInitiativesBlock } from './TeamInitiativesBlock';
 import { OrgObjectiveContributionCard } from '@/modules/okrs/components/team-contribution/OrgObjectiveContributionCard';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -35,6 +37,7 @@ const SUBTABS = [
   { value: 'team-okrs', label: 'OKRs do time' },
   { value: 'shared-okrs', label: 'Compartilhados' },
   { value: 'org-contribution', label: 'Org Objectives' },
+  { value: 'initiatives', label: 'Iniciativas' },
   { value: 'projects', label: 'Projetos' },
 ] as const;
 
@@ -57,11 +60,14 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
   });
 
   const { data: cycles = [] } = useCycles();
-  const cycleParam = cycleId || undefined;
+  const { activeQuarterlyCycle, activeCycle } = useActiveCycle();
+  // Quando o usuário não escolhe ciclo no select, aplicamos o ciclo atual (quarter > qualquer ativo)
+  const effectiveCycleId =
+    cycleId || activeQuarterlyCycle?.id || activeCycle?.id || undefined;
 
   const { data: analytics, isLoading } = useTeamContributionAnalytics(teamId, {
     includeSubteams,
-    cycleId: cycleParam,
+    cycleId: effectiveCycleId,
   });
 
   return (
@@ -95,7 +101,13 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
               value={cycleId}
               onValueChange={setCycleId}
               cycles={cycles}
-              placeholder="Todos os ciclos"
+              placeholder={
+                effectiveCycleId && !cycleId
+                  ? `Ciclo atual${
+                      activeQuarterlyCycle?.name ? ` · ${activeQuarterlyCycle.name}` : ''
+                    }`
+                  : 'Todos os ciclos'
+              }
             />
           </div>
         </CardContent>
@@ -122,7 +134,7 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
         <TabsContent value="team-okrs" className="mt-4">
           <TeamOwnOkrsList
             teamIds={analytics?.resolvedTeamIds || [teamId]}
-            cycleId={cycleParam}
+            cycleId={effectiveCycleId}
           />
         </TabsContent>
 
@@ -132,6 +144,15 @@ export function TeamContributionTab({ teamId, teamName }: TeamContributionTabPro
 
         <TabsContent value="org-contribution" className="mt-4">
           <OrgContributionList teamId={teamId} />
+        </TabsContent>
+
+        <TabsContent value="initiatives" className="mt-4">
+          <TeamInitiativesBlock
+            teamId={teamId}
+            krIds={analytics?.ownKrIds ?? []}
+            cycleId={effectiveCycleId ?? null}
+            isLoadingKrs={isLoading}
+          />
         </TabsContent>
 
         <TabsContent value="projects" className="mt-4">

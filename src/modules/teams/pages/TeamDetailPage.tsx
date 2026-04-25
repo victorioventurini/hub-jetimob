@@ -164,9 +164,15 @@ export default function TeamDetailPage() {
           }
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div
+          className={
+            activeTab === 'contribution'
+              ? 'grid grid-cols-1 gap-6'
+              : 'grid grid-cols-1 lg:grid-cols-3 gap-6'
+          }
+        >
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className={activeTab === 'contribution' ? 'space-y-6' : 'lg:col-span-2 space-y-6'}>
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4">
               <Card>
@@ -358,7 +364,8 @@ export default function TeamDetailPage() {
             </Tabs>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar — escondida na aba Contribuição (full-width) */}
+          {activeTab !== 'contribution' && (
           <div className="space-y-6">
             {/* Leader Card - alinhado visualmente com os Quick Stats à esquerda */}
             <Card>
@@ -412,6 +419,7 @@ export default function TeamDetailPage() {
             )}
 
           </div>
+          )}
         </div>
       </div>
 

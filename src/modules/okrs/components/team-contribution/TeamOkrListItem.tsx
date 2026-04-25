@@ -1,15 +1,10 @@
 import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Circle, AlertTriangle, CheckCircle2, Activity } from "lucide-react";
+import { Circle, AlertTriangle, CheckCircle2, Rocket } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useKrInitiativesCount } from "../../hooks";
 import type { TeamOkrContribution } from "../../hooks";
 
 interface TeamOkrListItemProps {
@@ -31,6 +26,7 @@ const statusColors = {
 export const TeamOkrListItem = React.memo(function TeamOkrListItem({ okr }: TeamOkrListItemProps) {
   const StatusIcon = statusIcons[okr.status];
   const statusColor = statusColors[okr.status];
+  const { data: initiativesCount = 0 } = useKrInitiativesCount(okr.id);
 
   const lastCheckin = okr.lastCheckinAt
     ? formatDistanceToNow(new Date(okr.lastCheckinAt), { 
@@ -48,7 +44,13 @@ export const TeamOkrListItem = React.memo(function TeamOkrListItem({ okr }: Team
         </span>
       </div>
 
-      <div className="flex items-center gap-4 flex-shrink-0">
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {initiativesCount > 0 && (
+          <Badge variant="outline" className="text-[10px] gap-1 h-5 px-1.5">
+            <Rocket className="h-3 w-3" />
+            {initiativesCount} iniciativa{initiativesCount === 1 ? '' : 's'}
+          </Badge>
+        )}
         <div className="flex items-center gap-2">
           <Progress value={okr.progress} className="h-1.5 w-16" />
           <span className="text-xs font-medium text-muted-foreground w-8 text-right">

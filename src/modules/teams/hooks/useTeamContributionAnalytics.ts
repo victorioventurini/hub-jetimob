@@ -17,15 +17,27 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useBu } from '@/contexts/BuContext';
 import { teamsKeys } from '@/lib/queryKeys/teams';
 
+export interface InitiativesByStatus {
+  planned: number;
+  in_progress: number;
+  blocked: number;
+  completed: number;
+}
+
 export interface TeamContributionAnalytics {
   ownObjectivesCount: number;
   ownKrsCount: number;
+  ownKrIds: string[];
   sharedReceivedCount: number;
   sharedContributedCount: number;
   orgObjectivesImpactedCount: number;
   activeProjectsCount: number;
+  initiativesTotalCount: number;
+  initiativesByStatus: InitiativesByStatus;
+  initiativesAtRiskCount: number;
   healthSeries: Array<{ date: string; value: number }>;
   resolvedTeamIds: string[];
+  effectiveCycleId: string | null;
 }
 
 const CONFIDENCE_TO_SCORE: Record<string, number> = {
@@ -249,15 +261,50 @@ export function useTeamContributionAnalytics(
           .sort((a, b) => a.date.localeCompare(b.date));
       }
 
+      // 8) Iniciativas vinculadas às KRs do time (escopo do ciclo aplicado via krIds)
+      let initiativesTotalCount = 0;
+      const initiativesByStatus: InitiativesByStatus = {
+        planned: 0,
+        in_progress: 0,
+        blocked: 0,
+        completed: 0,
+      };
+      let initiativesAtRiskCount = 0;
+      if (krIds.length > 0) {
+        const { data: initiatives, error: initErr } = await supabase
+          .from('okr_initiatives')
+          .select('id, status, expected_end_date')
+          .eq('bu_id', currentBu.id)
+          .in('kr_id', krIds)
+          .is('deleted_at', null);
+        if (initErr) throw initErr;
+        const today = new Date().toISOString().slice(0, 10);
+        for (const it of initiatives || []) {
+          initiativesTotalCount += 1;
+          const status = (it.status || 'planned') as keyof InitiativesByStatus;
+          if (status in initiativesByStatus) initiativesByStatus[status] += 1;
+          const isOverdue =
+            !!it.expected_end_date &&
+            it.expected_end_date < today &&
+            status !== 'completed';
+          if (status === 'blocked' || isOverdue) initiativesAtRiskCount += 1;
+        }
+      }
+
       return {
         ownObjectivesCount: ownObjs?.length ?? 0,
         ownKrsCount,
+        ownKrIds: krIds,
         sharedReceivedCount: sharedReceived?.length ?? 0,
         sharedContributedCount,
         orgObjectivesImpactedCount,
         activeProjectsCount,
+        initiativesTotalCount,
+        initiativesByStatus,
+        initiativesAtRiskCount,
         healthSeries,
         resolvedTeamIds: teamIds,
+        effectiveCycleId: cycleId ?? null,
       };
     },
     enabled: !!teamId && !!currentBu?.id && isReady && !!supabase,
