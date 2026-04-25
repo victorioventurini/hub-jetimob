@@ -295,7 +295,7 @@ const KrInitiativesGroup = React.memo(function KrInitiativesGroup({
                 <KeyRound className="h-4 w-4 text-muted-foreground shrink-0" />
                 <CardTitle className="text-sm font-medium truncate">
                   <Link
-                    to={getShareableUrl('okr_team_key_result', krId)}
+                    to={getShareableUrl('okr_team_kr', krId)}
                     className="hover:text-accent"
                     onClick={(e) => e.stopPropagation()}
                   >
