@@ -1,45 +1,69 @@
-Plano de ação
+# Plano: Alinhar card "Líder do Time" à sidebar de TeamDetailPage
 
-Pré-checklist executado:
-- Consultei o TCR canônico, Development Standards, Data Model Registry, Identity Convention e Permissions/RBAC.
-- Auditei as implementações existentes de OKRs compartilhados, contributors, RLS/policies e o modal `TeamKrFormDialog`.
-- Validei no banco que o objetivo `1470f9f5-fed4-42db-b5fa-406ade6cef6d` e o time contribuidor `d3247da9-3e07-4fa8-9d0a-2527fdf6548f` estão na mesma BU Jetimob, e que o vínculo de contribuição existe. Portanto o problema não deve ser tratado como “cross-BU”.
+## Contexto
+Em `/teams/:id`, o card "Líder do Time" usa um layout centrado e minimalista (avatar 8x8, sem `CardHeader/CardTitle`, sem job/email), enquanto os demais cards da sidebar (ex.: "Time Pai") seguem o padrão `CardHeader` + `CardContent` left-aligned. Isso causa quebra visual e desconexão na coluna lateral.
 
-O que vou mudar
+## Pré-checklist canônico
+- ✅ `DEVELOPMENT_STANDARDS.md` — padrão de Card + reuso de componentes (`TeamMemberRow` já existe e é memoizado).
+- ✅ `IDENTITY_CONVENTION.md` — rota canônica do perfil é `/users/:id` (já em uso no `TeamMemberRow`).
+- ✅ Memoization Standard (`mem://standards/frontend-memoization-standard`) — `TeamMemberRow` está com `React.memo`.
+- ✅ BU isolation — não há nova query introduzida; reuso do `team.leader` já carregado por `useTeam`.
 
-1. Parar de abrir o wizard para KR de contribuição
-- No card de OKR compartilhada/contribuída, trocar o botão “Adicionar KR” de link para `/okrs/objectives/:id/krs/create?contributor_team_id=...` por abertura direta do modal existente `TeamKrFormDialog`.
-- O modal receberá:
-  - `objectiveId` = objetivo compartilhado original
-  - `teamId` = time contribuidor atual
-  - `buId` = BU do objetivo/time, quando disponível
-- Isso cria a KR como KR do time contribuidor dentro do objetivo compartilhado, sem passar pelo wizard full-page.
+## Mudanças
 
-2. Ajustar dados mínimos do card contribuído
-- Garantir que `ContributingOkrCard` tenha `bu_id` disponível no objeto do objetivo.
-- Atualizar as queries/hidratações usadas por `TeamOkrSections` e `TeamSharedOkrsBlock` para carregar/propagar `bu_id` explicitamente, respeitando a regra de não usar `select('*')`.
+### 1. Estender `useTeam` para hidratar job/email do líder
+**Arquivo:** `src/modules/teams/hooks/useTeams.ts` (linha 121)
 
-3. Manter o wizard apenas para contextos próprios
-- Não remover a rota nem o wizard agora, porque ainda pode ser usado em objetivos próprios.
-- O desvio será específico para o fluxo de objetivo compartilhado/contribuidor, que é o fluxo que está travando.
+Adicionar `job_title, work_email` ao select do leader:
+```ts
+leader:profiles!teams_leader_user_id_fkey(id, display_name, photo_url, job_title, work_email)
+```
 
-4. Corrigir permissão/UX do modal no modo contribuição
-- Revisar `TeamKrFormDialog` para garantir que ele permita criar quando o `teamId` recebido é o time contribuidor.
-- Manter o gate existente por `useCanManageTeamOkr(teamId)`, porque o usuário deve poder gerenciar o time para o qual está criando a KR.
-- Preservar as regras de RLS existentes: a inserção continuará passando por `okr_team_key_results_insert_v2` e `can_create_shared_team_kr_by_profile`, sem bypass.
+Sem `select('*')` (continua explícito) e sem mudar BU isolation.
 
-5. Invalidar caches certos após criação
-- Ao criar a KR pelo modal, invalidar também os caches de OKRs compartilhados/contribuídos:
-  - contributors do objetivo
-  - objectives with KRs
-  - team contributed objectives/OKRs
-  - summary de shared OKRs
-- Assim a KR recém-criada aparece imediatamente na seção “Contribuição do seu time”.
+### 2. Refatorar card "Líder do Time" em `TeamDetailPage.tsx` (linhas 363-391)
 
-6. Testes/validação
-- Atualizar/adicionar teste simples do componente para confirmar que o botão de KR contribuidora abre o modal em vez de navegar para o wizard.
-- Rodar os testes/checagem disponível do projeto após a alteração.
+Substituir pelo padrão canônico:
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle className="text-base">Líder do Time</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {team.leader ? (
+      <TeamMemberRow
+        id={team.leader.id}
+        display_name={team.leader.display_name}
+        photo_url={team.leader.photo_url}
+        job_title={team.leader.job_title ?? null}
+        work_email={team.leader.work_email ?? null}
+      />
+    ) : (
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-muted-foreground">
+        <UserCircle className="h-5 w-5" />
+        <span className="text-sm">Sem líder definido</span>
+      </div>
+    )}
+  </CardContent>
+</Card>
+```
 
-Resultado esperado
+Ganhos:
+- Mesma estrutura `CardHeader/CardTitle` do card "Time Pai" abaixo.
+- Avatar maior (h-10), job title e atalho de e-mail (consistente com aba Membros).
+- Empty state visualmente alinhado (bg-muted/50, padding p-3).
 
-Na página de OKRs compartilhadas do time Comercial, ao clicar em “Adicionar KR” para apoiar o objetivo do BizOps, o sistema abre o modal padrão de criação de KR. Ao salvar, a KR será criada com `team_id = d3247da9-3e07-4fa8-9d0a-2527fdf6548f` e `team_objective_id = 1470f9f5-fed4-42db-b5fa-406ade6cef6d`, dentro da mesma BU Jetimob.
+### 3. Limpeza de imports
+- Remover `Avatar`, `AvatarFallback`, `AvatarImage` do import se não forem mais usados em outras partes do arquivo (verificar antes de remover — `getInitials` no avatar de header pode ainda usar).
+- Manter `UserCircle` para o empty state.
+
+## Arquivos afetados
+- `src/modules/teams/hooks/useTeams.ts` (1 linha)
+- `src/modules/teams/pages/TeamDetailPage.tsx` (bloco de ~30 linhas)
+
+## Riscos
+- Baixo. `TeamMemberRow` já existe, é memoizado, navega para `/users/:id` (canônico). `job_title`/`work_email` são nullable na tabela `profiles`, o componente já trata ambos como `string | null`.
+
+## Validação
+- Conferir visualmente em `/teams/d3247da9-...`: card do líder agora compartilha header com "Time Pai", spacing `space-y-6` mantido.
+- Empty state ("Sem líder definido") segue mesmo visual de bloco interno.

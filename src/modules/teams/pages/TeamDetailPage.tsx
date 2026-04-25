@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,13 +66,7 @@ export default function TeamDetailPage() {
   
   // Verificar se usuário pode gerenciar ESTE time específico
   const canManageThisTeam = id ? canManageTeam(id) : false;
-  const getInitials = (name: string) =>
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+
 
   if (isLoading) {
     return (
@@ -360,30 +353,23 @@ export default function TeamDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Leader Card - alinhado visualmente com os Quick Stats à esquerda */}
+            {/* Leader Card — alinhado ao padrão dos demais cards da sidebar */}
             <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground uppercase font-medium mb-2">
-                  Líder do Time
-                </p>
+              <CardHeader>
+                <CardTitle className="text-base">Líder do Time</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {team.leader ? (
-                  <Link
-                    to={`/users/${team.leader.id}`}
-                    className="flex items-center justify-center gap-2 group"
-                  >
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={team.leader.photo_url || undefined} />
-                      <AvatarFallback className="bg-accent/10 text-accent text-sm">
-                        {getInitials(team.leader.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium text-sm group-hover:text-accent transition-colors truncate">
-                      {team.leader.display_name}
-                    </span>
-                  </Link>
+                  <TeamMemberRow
+                    id={team.leader.id}
+                    display_name={team.leader.display_name}
+                    photo_url={team.leader.photo_url}
+                    job_title={team.leader.job_title ?? null}
+                    work_email={team.leader.work_email ?? null}
+                  />
                 ) : (
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <UserCircle className="h-6 w-6" />
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-muted-foreground">
+                    <UserCircle className="h-5 w-5" />
                     <span className="text-sm">Sem líder definido</span>
                   </div>
                 )}
