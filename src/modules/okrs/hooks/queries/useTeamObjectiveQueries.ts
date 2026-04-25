@@ -71,13 +71,31 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
+      // Hidrata contributors (id, team_id, team.name) para objetivos compartilhados
+      // — necessário para exibição inline dos times no SharedOkrBadge.
+      const sharedIds = (data || []).filter((o: any) => o.is_shared).map((o: any) => o.id);
+      const contributorsByObj = new Map<string, Array<{ id: string; team_id: string; team: { id: string; name: string } | null }>>();
+      if (sharedIds.length > 0) {
+        const { data: contribs, error: contribErr } = await supabase
+          .from('okr_team_objective_contributors')
+          .select('id, objective_id, team_id, team:teams(id, name)')
+          .in('objective_id', sharedIds);
+        if (contribErr) throw contribErr;
+        for (const c of contribs || []) {
+          const arr = contributorsByObj.get((c as any).objective_id) || [];
+          arr.push({ id: (c as any).id, team_id: (c as any).team_id, team: (c as any).team || null });
+          contributorsByObj.set((c as any).objective_id, arr);
+        }
+      }
+
       // Filter out deleted/cancelled KRs from the nested results
       return (data || []).map(obj => ({
         ...obj,
         key_results: (obj.key_results || []).filter(
           (kr: any) => !kr.deleted_at && !kr.cancelled_at
         ),
+        contributors: contributorsByObj.get((obj as any).id) || [],
       }));
     },
     enabled: !!buId && !!supabase,
