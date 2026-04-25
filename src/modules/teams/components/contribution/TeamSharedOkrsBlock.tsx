@@ -153,6 +153,7 @@ export const TeamSharedOkrsBlock = React.memo(function TeamSharedOkrsBlock({
                   is_shared: obj.is_shared,
                   responsibility_model: obj.responsibility_model,
                   team_id: obj.team_id,
+                  bu_id: obj.bu_id,
                   team: obj.team,
                   key_results: krsByObj.get(obj.id) || [],
                 }}
