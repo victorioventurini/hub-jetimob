@@ -634,24 +634,23 @@ export default function OkrDashboardPage() {
               );
             }
 
-            return null;
+            return (
+              <div className="space-y-6">
+                {displayObjectives.map((objective: any) => (
+                  <ObjectiveListItem
+                    key={objective.id}
+                    objective={objective}
+                    keyResults={objective.key_results || []}
+                    type={activeView === 'company' ? 'org' : 'team'}
+                    teamName={objective.team?.name}
+                    canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
+                    canCheckin={activeView === 'my'}
+                    filterInitiativesForUser={activeView === 'my' ? effectiveProfileId ?? undefined : undefined}
+                  />
+                ))}
+              </div>
+            );
           })()}
-          ) : (
-            <div className="space-y-6">
-              {displayObjectives.map((objective: any) => (
-                <ObjectiveListItem
-                  key={objective.id}
-                  objective={objective}
-                  keyResults={objective.key_results || []}
-                  type={activeView === 'company' ? 'org' : 'team'}
-                  teamName={objective.team?.name}
-                  canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
-                  canCheckin={activeView === 'my'}
-                  filterInitiativesForUser={activeView === 'my' ? effectiveProfileId ?? undefined : undefined}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
