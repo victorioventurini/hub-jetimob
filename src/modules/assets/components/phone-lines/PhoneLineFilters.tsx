@@ -46,7 +46,7 @@ export function PhoneLineFilters({
   return (
     <>
       <Select value={statusFilter} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-[160px] h-9">
+        <SelectTrigger className="w-full sm:w-[160px] h-9">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
@@ -59,7 +59,7 @@ export function PhoneLineFilters({
       </Select>
 
       <Select value={carrierFilter} onValueChange={onCarrierChange}>
-        <SelectTrigger className="w-[160px] h-9">
+        <SelectTrigger className="w-full sm:w-[160px] h-9">
           <SelectValue placeholder="Operadora" />
         </SelectTrigger>
         <SelectContent>
@@ -77,7 +77,7 @@ export function PhoneLineFilters({
         value={responsibleUserFilter === "all" ? undefined : responsibleUserFilter}
         onValueChange={(val) => onResponsibleUserChange(val ?? "all")}
         placeholder="Todos os responsáveis"
-        className="w-[200px]"
+        className="w-full sm:w-[200px]"
         showSearch
         allowNone
         noneLabel="Todos os responsáveis"
@@ -91,7 +91,7 @@ export function PhoneLineFilters({
         placeholder="Todos os times"
         includeAll
         allLabel="Todos os times"
-        triggerClassName="w-[180px] h-9"
+        triggerClassName="w-full sm:w-[180px] h-9"
       />
     </>
   );

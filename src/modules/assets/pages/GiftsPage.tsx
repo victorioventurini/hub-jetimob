@@ -84,14 +84,16 @@ export default function GiftsPage() {
           className="flex-1"
         />
         {canManageGifts && (
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setMovementDialogOpen(true)}>
-              <ArrowUp className="h-4 w-4 mr-2" />
-              Registrar Saída
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <Button variant="outline" onClick={() => setMovementDialogOpen(true)} aria-label="Registrar Saída" className="flex-1 sm:flex-initial">
+              <ArrowUp className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Registrar Saída</span>
+              <span className="sm:hidden">Saída</span>
             </Button>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Brinde
+            <Button onClick={() => setDialogOpen(true)} aria-label="Novo Brinde" className="flex-1 sm:flex-initial">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Novo Brinde</span>
+              <span className="sm:hidden">Novo</span>
             </Button>
           </div>
         )}

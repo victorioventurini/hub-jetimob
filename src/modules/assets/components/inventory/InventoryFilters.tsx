@@ -48,7 +48,7 @@ export function InventoryFilters({
         onValueChange={onStatusChange}
         includeAll
         allLabel="Todos os status"
-        triggerClassName="w-[160px] h-9"
+        triggerClassName="w-full sm:w-[160px] h-9"
       />
 
       {/* Categoria - hierarchical using AssetCategorySelect */}
@@ -59,7 +59,7 @@ export function InventoryFilters({
         placeholder="Categoria"
         includeNone
         noneLabel="Todas as categorias"
-        triggerClassName="w-[180px] h-9"
+        triggerClassName="w-full sm:w-[180px] h-9"
       />
 
       {/* Localização - hierarchical using canonical component */}
@@ -70,7 +70,7 @@ export function InventoryFilters({
         placeholder="Localização"
         includeAll
         allLabel="Todas as localizações"
-        triggerClassName="w-[180px] h-9"
+        triggerClassName="w-full sm:w-[180px] h-9"
       />
 
       {/* Jetimober (holder) - using canonical BuUserSelect */}
@@ -78,7 +78,7 @@ export function InventoryFilters({
         value={holderFilter === "all" ? undefined : holderFilter}
         onValueChange={(val) => onHolderChange(val ?? "all")}
         placeholder="Todos os Jetimobers"
-        className="w-[180px]"
+        className="w-full sm:w-[180px]"
         showSearch
         allowNone
         noneLabel="Todos os Jetimobers"

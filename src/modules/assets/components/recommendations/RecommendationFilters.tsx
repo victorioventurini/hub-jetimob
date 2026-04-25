@@ -50,7 +50,7 @@ export function RecommendationFilters({
   return (
     <div className="flex flex-wrap gap-3 items-center">
       {/* Search */}
-      <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+      <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-[300px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar recomendação..."
@@ -61,7 +61,7 @@ export function RecommendationFilters({
       </div>
 
       {/* Category/Subcategory filter - hierarchical */}
-      <div className="w-[200px]">
+      <div className="w-full sm:w-[200px]">
         <AssetCategorySelect
           value={filters.categoryId}
           onValueChange={(val) => onFiltersChange({ ...filters, categoryId: val })}
@@ -72,7 +72,7 @@ export function RecommendationFilters({
       </div>
 
       {/* Team filter */}
-      <div className="w-[200px]">
+      <div className="w-full sm:w-[200px]">
         <MultiTeamSelect
           value={filters.teamId ? [filters.teamId] : []}
           onValueChange={(value) => 
@@ -83,7 +83,7 @@ export function RecommendationFilters({
       </div>
 
       {/* Job Title filter */}
-      <div className="w-[200px]">
+      <div className="w-full sm:w-[200px]">
         <MultiJobTitleSelect
           value={filters.jobTitleId ? [filters.jobTitleId] : []}
           onValueChange={(value) => 
@@ -103,7 +103,7 @@ export function RecommendationFilters({
           })
         }
       >
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-full sm:w-[150px]">
           <SelectValue placeholder="Status revisão" />
         </SelectTrigger>
         <SelectContent>
@@ -126,7 +126,7 @@ export function RecommendationFilters({
           })
         }
       >
-        <SelectTrigger className="w-[130px]">
+        <SelectTrigger className="w-full sm:w-[130px]">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
