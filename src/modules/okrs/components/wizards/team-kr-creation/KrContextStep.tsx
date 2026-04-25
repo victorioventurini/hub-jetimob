@@ -31,6 +31,9 @@ export interface ObjectiveContext {
   contributingTeams?: Array<{ id: string; name: string }>;
   cycleName?: string | null;
   year?: number;
+  /** Modo contribuição cross-team: KR pertencerá a outro time, não ao owner do objetivo */
+  isContribution?: boolean;
+  contributorTeamName?: string | null;
 }
 
 export interface KrContextStepProps {
