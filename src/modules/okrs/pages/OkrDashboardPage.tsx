@@ -558,80 +558,99 @@ export default function OkrDashboardPage() {
             </div>
           )}
           
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <ObjectiveListItem 
-                  key={i} 
-                  objective={{ id: '', title: '', year: currentYear, status: 'draft' }} 
-                  isLoading
-                  type={activeView === 'company' ? 'org' : 'team'}
+          {(() => {
+            const isTeamView = activeView === 'team' && !!normalizedTeamId;
+            const teamViewIsEmpty =
+              isTeamView &&
+              displayObjectives.length === 0 &&
+              filteredContributedObjectives.length === 0;
+
+            if (isLoading) {
+              return (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <ObjectiveListItem
+                      key={i}
+                      objective={{ id: '', title: '', year: currentYear, status: 'draft' }}
+                      isLoading
+                      type={activeView === 'company' ? 'org' : 'team'}
+                    />
+                  ))}
+                </div>
+              );
+            }
+
+            if (isTeamView && !teamViewIsEmpty) {
+              return (
+                <TeamOkrSections
+                  primaryObjectives={displayObjectives}
+                  contributedObjectives={filteredContributedObjectives}
+                  teamId={normalizedTeamId!}
+                  teamName={
+                    (displayObjectives[0] as any)?.team?.name
+                    || teams?.find(t => t.id === normalizedTeamId)?.name
+                    || 'Time'
+                  }
+                  isLoading={contributedLoading}
+                  canEdit={manageableTeamIds.has(normalizedTeamId!)}
                 />
-              ))}
-            </div>
-          ) : displayObjectives.length === 0 ? (
-            <OkrEmptyState
-              title={`Nenhum objetivo ${activeView === 'company' ? `da ${currentBu?.name || 'empresa'}` : 'do time'}`}
-              description={
-                activeView === 'company'
-                  ? "Comece definindo objetivos estratégicos para o ano."
-                  : "Os times ainda não criaram objetivos."
-              }
-              actionLabel={
-                activeView === 'company' && canCreateOrg
-                  ? "Criar Objetivo"
-                  : activeView !== 'company' && canCreateTeam
-                  ? "Criar Objetivo do Time"
-                  : undefined
-              }
-              onAction={
-                activeView === 'company' && canCreateOrg
-                  ? () => setShowCreateOrgDialog(true)
-                  : activeView !== 'company' && canCreateTeam
-                  ? () => {
-                      // Only use userProfile?.team_id if it's in the manageable teams list (same BU)
-                      const userTeamInCurrentBu = userProfile?.team_id && manageableTeamIds.has(userProfile.team_id)
-                        ? userProfile.team_id
-                        : undefined;
-                      const effectiveTeamId = normalizedTeamId || userTeamInCurrentBu || manageableTeams[0]?.id;
-                      if (effectiveTeamId) {
-                        navigate(`/okrs/create?team=${effectiveTeamId}`);
-                      } else {
-                        toast.error('Nenhum time disponível para criar OKRs');
-                      }
-                    }
-                  : undefined
-              }
-            />
-          ) : activeView === 'team' && normalizedTeamId ? (
-            <TeamOkrSections
-              primaryObjectives={displayObjectives}
-              contributedObjectives={filteredContributedObjectives}
-              teamId={normalizedTeamId}
-              teamName={
-                (displayObjectives[0] as any)?.team?.name
-                || teams?.find(t => t.id === normalizedTeamId)?.name
-                || 'Time'
-              }
-              isLoading={contributedLoading}
-              canEdit={manageableTeamIds.has(normalizedTeamId)}
-            />
-          ) : (
-            <div className="space-y-6">
-              {displayObjectives.map((objective: any) => (
-                <ObjectiveListItem
-                  key={objective.id}
-                  objective={objective}
-                  keyResults={objective.key_results || []}
-                  type={activeView === 'company' ? 'org' : 'team'}
-                  teamName={objective.team?.name}
-                  canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
-                  canCheckin={activeView === 'my'}
-                  filterInitiativesForUser={activeView === 'my' ? effectiveProfileId ?? undefined : undefined}
+              );
+            }
+
+            if (displayObjectives.length === 0) {
+              return (
+                <OkrEmptyState
+                  title={`Nenhum objetivo ${activeView === 'company' ? `da ${currentBu?.name || 'empresa'}` : 'do time'}`}
+                  description={
+                    activeView === 'company'
+                      ? "Comece definindo objetivos estratégicos para o ano."
+                      : "Os times ainda não criaram objetivos próprios nem recebem contribuições neste filtro."
+                  }
+                  actionLabel={
+                    activeView === 'company' && canCreateOrg
+                      ? "Criar Objetivo"
+                      : activeView !== 'company' && canCreateTeam
+                      ? "Criar Objetivo do Time"
+                      : undefined
+                  }
+                  onAction={
+                    activeView === 'company' && canCreateOrg
+                      ? () => setShowCreateOrgDialog(true)
+                      : activeView !== 'company' && canCreateTeam
+                      ? () => {
+                          const userTeamInCurrentBu = userProfile?.team_id && manageableTeamIds.has(userProfile.team_id)
+                            ? userProfile.team_id
+                            : undefined;
+                          const effectiveTeamId = normalizedTeamId || userTeamInCurrentBu || manageableTeams[0]?.id;
+                          if (effectiveTeamId) {
+                            navigate(`/okrs/create?team=${effectiveTeamId}`);
+                          } else {
+                            toast.error('Nenhum time disponível para criar OKRs');
+                          }
+                        }
+                      : undefined
+                  }
                 />
-              ))}
-            </div>
-          )}
+              );
+            }
+
+            return (
+              <div className="space-y-6">
+                {displayObjectives.map((objective: any) => (
+                  <ObjectiveListItem
+                    key={objective.id}
+                    objective={objective}
+                    keyResults={objective.key_results || []}
+                    type={activeView === 'company' ? 'org' : 'team'}
+                    teamName={objective.team?.name}
+                    canEdit={activeView === 'company' ? canManageOrg : manageableTeamIds.has(objective.team_id)}
+                    canCheckin={activeView === 'my'}
+                    filterInitiativesForUser={activeView === 'my' ? effectiveProfileId ?? undefined : undefined}
+                  />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
