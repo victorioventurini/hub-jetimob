@@ -78,8 +78,8 @@ export const TeamContributionOverview = React.memo(function TeamContributionOver
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-28 w-full" />
           ))}
         </div>
@@ -90,9 +90,23 @@ export const TeamContributionOverview = React.memo(function TeamContributionOver
 
   if (!analytics) return null;
 
+  const initiativeHintParts: string[] = [];
+  if (analytics.initiativesByStatus.in_progress > 0)
+    initiativeHintParts.push(`${analytics.initiativesByStatus.in_progress} em progresso`);
+  if (analytics.initiativesByStatus.planned > 0)
+    initiativeHintParts.push(`${analytics.initiativesByStatus.planned} planejadas`);
+  if (analytics.initiativesByStatus.blocked > 0)
+    initiativeHintParts.push(`${analytics.initiativesByStatus.blocked} bloqueadas`);
+  if (analytics.initiativesAtRiskCount > 0 && analytics.initiativesByStatus.blocked === 0)
+    initiativeHintParts.push(`${analytics.initiativesAtRiskCount} em risco`);
+  const initiativeHint =
+    initiativeHintParts.length > 0
+      ? initiativeHintParts.join(' · ')
+      : 'Nenhuma vinculada';
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiCard
           icon={Target}
           label="OKRs do time"
@@ -118,33 +132,52 @@ export const TeamContributionOverview = React.memo(function TeamContributionOver
           onClick={() => onNavigateToSubtab('org-contribution')}
         />
         <KpiCard
+          icon={Rocket}
+          label="Iniciativas"
+          value={analytics.initiativesTotalCount}
+          hint={initiativeHint}
+          cta="Ver iniciativas"
+          onClick={() => onNavigateToSubtab('initiatives')}
+        />
+        <KpiCard
           icon={FolderKanban}
           label="Projetos ativos"
           value={analytics.activeProjectsCount}
           hint="Vinculados a KRs"
+          cta="Ver projetos"
+          onClick={() => onNavigateToSubtab('projects')}
         />
       </div>
 
-      <Card>
-        <CardContent className="p-4">
-          <TeamHealthSparkline data={analytics.healthSeries} height={70} />
-        </CardContent>
-      </Card>
-
-      {contribView && contribView.contributions.length > 0 && (
-        <TeamContributionInsights data={contribView} />
-      )}
-
-      {contribView && contribView.contributions.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Este time ainda não possui KRs vinculados a Objetivos Organizacionais.{' '}
-            <Link to="/okrs" className="text-accent hover:underline">
-              Configurar OKRs
-            </Link>
+      {/* Sparkline + Insights lado a lado em telas largas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
+          <CardContent className="p-4">
+            <TeamHealthSparkline data={analytics.healthSeries} height={70} />
           </CardContent>
         </Card>
-      )}
+
+        <div className="lg:col-span-1">
+          {contribView && contribView.contributions.length > 0 && (
+            <TeamContributionInsights data={contribView} />
+          )}
+          {contribView && contribView.contributions.length === 0 && (
+            <Card className="h-full">
+              <CardContent className="p-6 text-center text-sm text-muted-foreground h-full flex flex-col items-center justify-center">
+                <p>
+                  Este time ainda não possui KRs vinculados a Objetivos Organizacionais.
+                </p>
+                <Link
+                  to="/okrs"
+                  className="text-accent hover:underline mt-2 inline-block"
+                >
+                  Configurar OKRs
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 });
