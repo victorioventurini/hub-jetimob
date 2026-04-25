@@ -86,7 +86,7 @@ export const TeamContributionInitiatives = React.memo(
                   </div>
                   <CardTitle className="text-base">
                     <Link
-                      to={getShareableUrl('okr_team_key_result', group.kr.id)}
+                      to={getShareableUrl('okr_team_kr', group.kr.id)}
                       className="hover:text-accent"
                     >
                       {group.kr.title}
