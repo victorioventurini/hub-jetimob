@@ -243,10 +243,24 @@ export function getBuScopedClientCurrentBuId(): string | null {
   return getCurrentBuId();
 }
 
-export function clearBuClientCache() {
-  // Just reset the singleton reference - a new one will be created on next call
+/**
+ * Reset the BU-scoped singleton. Optionally seed the next BU id atomically
+ * so that requests in flight during a BU switch never read a stale `null`
+ * from `globalThis` and never fall back to whatever happens to be in
+ * `localStorage` mid-transition.
+ *
+ * - `clearBuClientCache()` (no arg) — legacy behavior, used on logout.
+ * - `clearBuClientCache(nextBuId)` — used on `selectBu` to keep the header
+ *   source-of-truth coherent across the switch window.
+ */
+export function clearBuClientCache(nextBuId?: string | null) {
+  // Drop the singleton so next call to getBuScopedClient() rebuilds it
+  // bound to the new BU header (header is injected per-request, but the
+  // singleton may have stale auth listeners attached).
   setBuSingleton(null);
-  setCurrentBuId(null);
+  // Atomically swap globalThis BU id. If `nextBuId` is provided, the fetch
+  // interceptor immediately sees the new BU; otherwise null (logout path).
+  setCurrentBuId(nextBuId ?? null);
 }
 
 /**
