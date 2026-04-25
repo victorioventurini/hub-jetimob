@@ -173,7 +173,22 @@ export function useMyTeamObjectives(buId?: string | null, userId?: string) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Hidrata contributors para objetivos compartilhados (mesmo padrão de useTeamObjectives)
+      const sharedIds = (data || []).filter((o: any) => o.is_shared).map((o: any) => o.id);
+      if (sharedIds.length === 0) return data;
+      const { data: contribs, error: contribErr } = await supabase
+        .from('okr_team_objective_contributors')
+        .select('id, objective_id, team_id, team:teams(id, name)')
+        .in('objective_id', sharedIds);
+      if (contribErr) throw contribErr;
+      const map = new Map<string, any[]>();
+      for (const c of contribs || []) {
+        const arr = map.get((c as any).objective_id) || [];
+        arr.push({ id: (c as any).id, team_id: (c as any).team_id, team: (c as any).team || null });
+        map.set((c as any).objective_id, arr);
+      }
+      return (data || []).map((obj: any) => ({ ...obj, contributors: map.get(obj.id) || [] }));
     },
     enabled: !!buId && !!userId && !!supabase,
     staleTime: OKR_STALE_TIME.list,
