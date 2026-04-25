@@ -9,6 +9,12 @@ Quando um objetivo de time está marcado como `is_shared=true` e contém entrada
 1. **Time proprietário (Time A)**: aparece no bloco principal "OKRs do {Time A}", editável (badge `Compartilhado`).
 2. **Time contribuidor (Time B)**: aparece em bloco separado abaixo dos próprios, intitulado **"OKRs Compartilhadas"**, **read-only**.
 
+## Visualização inline dos times contribuidores (todos os cards)
+
+Em todo card/lista de objetivo compartilhado, o badge `Compartilhada` (`SharedOkrBadge`) DEVE ser usado com `compact inlineTeams` para renderizar os nomes dos times contribuidores como chips imediatamente após o badge (limite 3 + chip `+N` com tooltip). Isso vale para `ObjectiveListItem` (dashboard `/okrs?view=team`) e `EnhancedObjectiveCard`. `TeamObjectiveCard` já mostra os times em linha dedicada e por isso NÃO usa `inlineTeams`.
+
+A hidratação de `contributors` (com `team:teams(id, name)`) é responsabilidade dos hooks de listagem — `useTeamObjectives` e `useMyTeamObjectives` em `useTeamObjectiveQueries.ts` fazem batch único após o select principal, filtrando por `is_shared=true`. Componentes NÃO devem fazer fetch próprio de contributors.
+
 ## Componentes canônicos (não duplicar)
 
 - **`OkrDashboardPage.tsx`**: quando `activeView === 'team'` E `normalizedTeamId` está definido, renderiza `<TeamOkrSections>` em vez do map plano de `ObjectiveListItem`. Carrega `useTeamContributedOkrs(teamId)` em paralelo aos `useTeamObjectives`.

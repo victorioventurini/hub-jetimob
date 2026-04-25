@@ -71,13 +71,31 @@ function useTeamObjectivesImpl(options: UseTeamObjectivesOptions = {}) {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
+      // Hidrata contributors (id, team_id, team.name) para objetivos compartilhados
+      // — necessário para exibição inline dos times no SharedOkrBadge.
+      const sharedIds = (data || []).filter((o: any) => o.is_shared).map((o: any) => o.id);
+      const contributorsByObj = new Map<string, Array<{ id: string; team_id: string; team: { id: string; name: string } | null }>>();
+      if (sharedIds.length > 0) {
+        const { data: contribs, error: contribErr } = await supabase
+          .from('okr_team_objective_contributors')
+          .select('id, objective_id, team_id, team:teams(id, name)')
+          .in('objective_id', sharedIds);
+        if (contribErr) throw contribErr;
+        for (const c of contribs || []) {
+          const arr = contributorsByObj.get((c as any).objective_id) || [];
+          arr.push({ id: (c as any).id, team_id: (c as any).team_id, team: (c as any).team || null });
+          contributorsByObj.set((c as any).objective_id, arr);
+        }
+      }
+
       // Filter out deleted/cancelled KRs from the nested results
       return (data || []).map(obj => ({
         ...obj,
         key_results: (obj.key_results || []).filter(
           (kr: any) => !kr.deleted_at && !kr.cancelled_at
         ),
+        contributors: contributorsByObj.get((obj as any).id) || [],
       }));
     },
     enabled: !!buId && !!supabase,
@@ -155,7 +173,22 @@ export function useMyTeamObjectives(buId?: string | null, userId?: string) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Hidrata contributors para objetivos compartilhados (mesmo padrão de useTeamObjectives)
+      const sharedIds = (data || []).filter((o: any) => o.is_shared).map((o: any) => o.id);
+      if (sharedIds.length === 0) return data;
+      const { data: contribs, error: contribErr } = await supabase
+        .from('okr_team_objective_contributors')
+        .select('id, objective_id, team_id, team:teams(id, name)')
+        .in('objective_id', sharedIds);
+      if (contribErr) throw contribErr;
+      const map = new Map<string, any[]>();
+      for (const c of contribs || []) {
+        const arr = map.get((c as any).objective_id) || [];
+        arr.push({ id: (c as any).id, team_id: (c as any).team_id, team: (c as any).team || null });
+        map.set((c as any).objective_id, arr);
+      }
+      return (data || []).map((obj: any) => ({ ...obj, contributors: map.get(obj.id) || [] }));
     },
     enabled: !!buId && !!userId && !!supabase,
     staleTime: OKR_STALE_TIME.list,

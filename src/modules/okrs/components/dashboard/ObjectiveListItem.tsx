@@ -213,6 +213,7 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
                             })) || []}
                             responsibilityModel={objective.responsibility_model as 'collaborative' | 'primary_led'}
                             compact
+                            inlineTeams
                           />
                         )}
                       </div>

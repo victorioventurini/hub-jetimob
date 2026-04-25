@@ -1,77 +1,51 @@
-# Bug: filtro `Compartilhadas` não funciona em `/okrs?shared=shared&view=team`
+## Objetivo
+Em todos os locais que renderizam um Objetivo compartilhado, mostrar **inline, ao lado do badge "Compartilhada"**, os nomes dos times com quem o objetivo está compartilhado. Hoje a tag aparece sozinha (modo `compact`) e a lista de times só é visível dentro do tooltip — não é descobrível.
 
-## Diagnóstico (TCR + docs canônicos)
+## Diagnóstico
+- `OkrDashboardPage` (view=team) usa `useTeamObjectives` → `OKR_FIELDS.teamObjectiveWithKrs` que **NÃO** carrega `contributors`. Consequência: `ObjectiveListItem` chama `<SharedOkrBadge contributingTeams={objective.contributors?...|| []}/>`, que nesse contexto vem vazio, e em modo `compact` o badge nem renderiza a lista.
+- `useTeamObjectivesWithSharedInfo` (usado em `TeamSharedOkrsBlock`) já carrega `contributors` com `team:teams(id, name)`. Vamos reaproveitar o **mesmo padrão de hidratação**.
+- `SharedOkrBadge` já suporta `showTeamList` no modo padrão e tem variante `compact`. Vamos adicionar uma exibição enxuta de chips inline (sem inflar layout) reutilizando o componente — sem código novo descentralizado.
 
-1. `OkrDashboardPage.tsx` lê `sharedFilter` via `useUrlStates` (chave URL `shared`, valores `all|shared|exclusive`) — linha 81.
-2. `OkrDashboardFilters.tsx` expõe o seletor "Tipo" e atualiza `filters.sharedFilter` corretamente.
-3. **Defeito**: `displayObjectives` (memo nas linhas 289-312) **nunca consulta `filters.sharedFilter`**. O parâmetro vai para a URL, é mostrado como filtro ativo no chip ("Compartilhadas"), mas a lista renderizada permanece idêntica.
-4. Campo `is_shared` já está selecionado no `OKR_FIELDS.teamObjective` e `teamObjectiveWithKrs` (`okrFieldDefinitions.ts`), portanto não há custo extra de query.
-5. Aplicação canônica:
-   - `team` view → primário: `teamObjectives`; `TeamOkrSections` recebe também `contributedObjectives`. Filtro deve atuar em ambos.
-   - `my` view → `myObjectives` (já são team_objectives) — aplicar normalmente.
-   - `company` view → `is_shared` não existe em `okr_org_objectives`; o filtro deve ficar **oculto** nessa view (TCR: filtros sem efeito devem ser escondidos para não confundir UX).
+## Mudanças propostas (canônicas, sem duplicação)
 
-## Pré-checklist atendido
+### 1) Hidratar `contributors` no fluxo principal de team OKRs
+- Em `src/modules/okrs/hooks/queries/useTeamObjectiveQueries.ts` (`useTeamObjectives`), após carregar os objetivos, buscar contributors em **uma única query batched** para todos os `is_shared=true` do resultset:
+  ```ts
+  const sharedIds = data.filter(o => o.is_shared).map(o => o.id);
+  if (sharedIds.length) {
+    const { data: contribs } = await supabase
+      .from('okr_team_objective_contributors')
+      .select('id, objective_id, team_id, team:teams(id, name)')
+      .in('objective_id', sharedIds);
+    // map e merge contributors[] em cada objetivo
+  }
+  ```
+- Mantém soft-delete (`deleted_at`/`cancelled_at` via tabela já filtrada), respeita BU isolation (consulta scoped pelo cliente atual), zero `select('*')`, query key inalterada (cache continua válido).
 
-- TCR consultado: regras de URL state (#7) e `select('*')` (#4) respeitadas — campo já existe.
-- `mem://features/okrs/shared-okr-contributor-view-standard` revisado: distinção dono vs contribuidor mantida.
-- `mem://standards/frontend-memoization-standard`: alterações dentro de `useMemo` existente, sem novo componente.
-- Sem mudanças em RLS, RPC, schema ou edge functions.
+### 2) Ajuste visual em `SharedOkrBadge` (canônico)
+- Adicionar uma nova prop opcional `inlineTeams?: boolean` que, quando `true` **junto com `compact`**, renderiza chips compactos `<Badge variant="outline" size=xs>` com o nome de cada time contribuidor logo após o badge "Compartilhada" — limitando a 3 e exibindo `+N` quando exceder, com tooltip listando todos.
+- Mantém `compact` puro (apenas badge + tooltip) como fallback, sem breaking changes nos demais consumidores.
 
-## Mudanças propostas
+### 3) Aplicar `inlineTeams` nos pontos de uso
+- `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx` (linha ~206): passar `inlineTeams` ao `SharedOkrBadge` no header do card.
+- `src/modules/okrs/components/EnhancedObjectiveCard.tsx` (linha ~217) e `src/modules/okrs/components/TeamObjectiveCard.tsx` (linha ~142): mesma alteração para consistência cross-views.
+- `TeamSharedOkrsBlock` já mostra contribuidores em bloco próprio — sem mudança lá.
 
-### 1. `src/modules/okrs/pages/OkrDashboardPage.tsx`
+### 4) Documentação
+- Atualizar `mem://features/okrs/shared-okr-contributor-view-standard` registrando que **toda exibição de objetivo compartilhado deve mostrar os times contribuidores inline via `SharedOkrBadge inlineTeams`**, e que a hidratação de `contributors` é responsabilidade do hook de listagem de team objectives (não do componente).
 
-**(a)** Estender o `useMemo` `displayObjectives` (linhas 289-312) para aplicar `filters.sharedFilter` quando `activeView !== 'company'`:
+## Arquivos a editar
+- `src/modules/okrs/hooks/queries/useTeamObjectiveQueries.ts` — hidratar `contributors` em batch
+- `src/modules/okrs/components/SharedOkrBadge.tsx` — nova prop `inlineTeams` (compatível)
+- `src/modules/okrs/components/dashboard/ObjectiveListItem.tsx` — passar `inlineTeams`
+- `src/modules/okrs/components/EnhancedObjectiveCard.tsx` — idem
+- `src/modules/okrs/components/TeamObjectiveCard.tsx` — idem
+- `.lovable/memory/features/okrs/shared-okr-contributor-view-standard.md` — registro do padrão
 
-```ts
-const applySharedFilter = (objs: any[]) => {
-  if (!filters.sharedFilter || filters.sharedFilter === 'all') return objs;
-  if (filters.sharedFilter === 'shared')   return objs.filter(o => o.is_shared === true);
-  if (filters.sharedFilter === 'exclusive') return objs.filter(o => !o.is_shared);
-  return objs;
-};
-```
+## Não-objetivos
+- Não alterar RLS, schema ou query keys.
+- Não criar componente novo de chip de time (reuso de `Badge` existente).
+- Não tocar em `useTeamObjectivesWithSharedInfo` (já completo).
 
-- `my` view: aplicar `applySharedFilter` após o filtro de KRs do usuário.
-- `team` view: aplicar `applySharedFilter` antes do `sort` por nome de time.
-- `company` view: não aplicar (org objectives não têm `is_shared`).
-
-**(b)** Filtrar também `contributedObjectives` antes de passar para `TeamOkrSections` (linha 591):
-
-```ts
-const filteredContributed = useMemo(
-  () => applySharedFilter(contributedObjectives || []),
-  [contributedObjectives, filters.sharedFilter],
-);
-```
-
-> Observação: como `contributedObjectives` por definição já são compartilhados (`is_shared=true`), `shared` mantém todos e `exclusive` remove todos — comportamento semanticamente correto.
-
-### 2. `src/modules/okrs/components/dashboard/OkrDashboardFilters.tsx`
-
-Esconder o seletor "Tipo" quando `activeView === 'company'` (campo não existe em org objectives) — wrap do bloco `SHARED_FILTER_OPTIONS` (linhas ~190-220) com `{showSharedFilter && activeView !== 'company' && (...)}`.
-
-Atualizar `activeFilterCount` (linha 82) e `clearFilters` (linhas 95-103) para ignorar `sharedFilter` quando escondido.
-
-### 3. Testes / verificação manual (sem novos arquivos de teste)
-
-- `?view=team&shared=shared` → lista apenas objetivos do time com `is_shared=true` + objetivos contribuídos (todos shared por natureza).
-- `?view=team&shared=exclusive` → lista apenas objetivos do time com `is_shared=false`; bloco de contribuídos fica vazio.
-- `?view=my&shared=shared` → mostra somente objetivos onde sou KR-owner E `is_shared=true`.
-- `?view=company&shared=shared` → seletor não aparece; nenhum objetivo é filtrado por shared.
-
-### 4. Sem mudanças necessárias
-
-- `useTeamObjectives`, `useMyTeamObjectives`, `useTeamContributedOkrs`: `is_shared` já incluso.
-- Query keys: nenhuma mudança (filtragem é client-side, dados já hidratados).
-- Memory: padrão existente (`shared-okr-contributor-view-standard`) já cobre a diferenciação dono/contribuidor; não há nova regra de domínio para registrar — bug fix puramente de cabeamento.
-
-## Arquivos a alterar
-
-- `src/modules/okrs/pages/OkrDashboardPage.tsx` (memo `displayObjectives` + memo novo para contributed)
-- `src/modules/okrs/components/dashboard/OkrDashboardFilters.tsx` (esconder em company view)
-
-## Risco
-
-Baixo — alteração isolada, client-side, sem efeito em RLS/queries; campo `is_shared` já hidratado nos dados existentes.
+## Resultado visual esperado
+`[👥 Customer Success] [Em Risco] [♥ 0%] [👥 Compartilhada] [Time A] [Time B] [+2]`
