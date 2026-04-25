@@ -164,6 +164,22 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
             <Badge variant="outline" className="text-xs">
               {contributedKrs.length} KR{contributedKrs.length !== 1 ? 's' : ''}
             </Badge>
+            {canContribute && (
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="ml-auto h-7 px-2 text-xs gap-1"
+              >
+                <Link
+                  to={`/okrs/objectives/${objective.id}/krs/create?contributor_team_id=${currentTeamId}`}
+                  aria-label="Adicionar KR de contribuição"
+                >
+                  <Plus className="w-3 h-3" />
+                  Adicionar KR
+                </Link>
+              </Button>
+            )}
           </div>
 
           {contributedKrs.length === 0 ? (
