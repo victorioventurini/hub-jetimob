@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { BuUnit, UserBuMembership } from "@/modules/bu/types";
 import { useUserBus } from "@/modules/bu/hooks";
 import { useExternalUserBus } from "@/modules/external/hooks";
@@ -63,6 +64,13 @@ export function BuProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem(BU_SELECTED_KEY) === "true";
   });
   const [hasInitialized, setHasInitialized] = useState(false);
+  // Timestamp da última seleção explícita do usuário. Usado pelo effect de
+  // inicialização para NÃO sobrescrever uma escolha recente (proteção contra
+  // race entre `queryClient.clear()` em `selectBu` e o refetch de `useUserBus`,
+  // que reordenaria estado e poderia cair no fallback `defaultBu = is_default`,
+  // restaurando a BU padrão por cima da escolha do usuário).
+  const lastUserSelectionAtRef = useRef<number>(0);
+  const RECENT_SELECTION_WINDOW_MS = 5000;
 
   // Combined loading state - wait for both auth AND buses to load
   const isLoading = authLoading || busLoading || (!hasInitialized && !!user);
@@ -87,6 +95,22 @@ export function BuProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Proteção contra race: se o usuário acabou de selecionar uma BU
+    // explicitamente (via dropdown / SelectBu / ResolveContext), NÃO sobrescrever
+    // sua escolha quando o effect re-rodar por causa do refetch de userBus.
+    // Sem este guard, um cache stale (que ainda não inclui a BU recém-aberta)
+    // cairia no fallback `defaultBu = is_default` e restauraria a BU padrão.
+    const recentlySelected =
+      Date.now() - lastUserSelectionAtRef.current < RECENT_SELECTION_WINDOW_MS;
+    if (recentlySelected && currentBuId && userBus.some((m) => m.bu_id === currentBuId)) {
+      console.debug("[BuContext.init] Skipping re-init: recent user selection", {
+        currentBuId,
+        ageMs: Date.now() - lastUserSelectionAtRef.current,
+      });
+      setHasInitialized(true);
+      return;
+    }
+
     const storedBuId = localStorage.getItem(BU_STORAGE_KEY);
     const storedSelected = localStorage.getItem(BU_SELECTED_KEY) === "true";
     
@@ -97,6 +121,32 @@ export function BuProvider({ children }: { children: ReactNode }) {
       // User had previously selected a BU - restore it
       setCurrentBuId(storedBuId);
       setBuSelected(true);
+    } else if (validBu && !storedSelected) {
+      // Stored BU é válida mas a flag `selected` foi perdida (ex: limpeza
+      // parcial de storage). Restaurar mesmo assim — o id no storage é a
+      // intenção mais recente do usuário.
+      console.debug("[BuContext.init] Restoring storedBuId without selected flag", { storedBuId });
+      setCurrentBuId(storedBuId);
+      setBuSelected(true);
+      localStorage.setItem(BU_SELECTED_KEY, "true");
+    } else if (storedBuId && !validBu) {
+      // Stored BU não está em userBus. Pode ser cache stale (refetch em voo)
+      // OU o usuário perdeu acesso. Não cair no fallback de is_default ainda
+      // — aguardar refetch confirmar antes de mudar de BU.
+      console.warn("[BuContext.init] storedBuId not in userBus", {
+        storedBuId,
+        availableBuIds: userBus.map((m) => m.bu_id),
+      });
+      // Forçar refetch defensivo (pode já estar em voo, é idempotente)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bu.userBusPrefix(),
+        refetchType: 'active',
+      });
+      // Mantém currentBuId atual; só força fallback se o refetch confirmar perda
+      // de acesso (próxima execução do effect com userBus atualizado e ainda
+      // sem o storedBuId — então o ramo abaixo aplicará o default).
+      setHasInitialized(true);
+      return;
     } else if (userBus.length === 1) {
       // Single BU user - auto-select
       const singleBu = userBus[0];
@@ -110,6 +160,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
       // after login and keep behavior consistent with backend current_bu_id() fallback.
       const defaultBu = userBus.find((m) => m.is_default);
       if (defaultBu) {
+        console.debug("[BuContext.init] Falling back to default BU", { defaultBuId: defaultBu.bu_id });
         setCurrentBuId(defaultBu.bu_id);
         setBuSelected(true);
         localStorage.setItem(BU_STORAGE_KEY, defaultBu.bu_id);
@@ -122,7 +173,7 @@ export function BuProvider({ children }: { children: ReactNode }) {
     }
     
     setHasInitialized(true);
-  }, [userBus, authLoading, busLoading, user]);
+  }, [userBus, authLoading, busLoading, user, currentBuId, queryClient]);
 
   // Clear BU when user logs out (avoid clearing during initial auth loading)
   useEffect(() => {
@@ -139,22 +190,51 @@ export function BuProvider({ children }: { children: ReactNode }) {
   const selectBu = useCallback((buId: string) => {
     const hasAccess = userBus.some(m => m.bu_id === buId);
     if (!hasAccess) {
-      // Cache stale: a BU pode ter sido criada/adicionada agora e ainda não
-      // refletida em `userBus`. Logamos para debug e forçamos refetch para
-      // que o próximo clique funcione. Não trocamos automaticamente para
-      // evitar loops/race conditions.
-      console.warn("[BuContext.selectBu] BU não acessível em userBus", {
+      // Cache stale OU usuário sem acesso. Forçamos refetch e, se a BU
+      // aparecer, retentamos a seleção uma única vez. Sem essa retentativa,
+      // o clique ficava silenciosamente sem efeito quando o membership tinha
+      // acabado de ser criado em outra aba.
+      console.warn("[BuContext.selectBu] BU não acessível em userBus — refetch+retry", {
         requestedBuId: buId,
         availableBuIds: userBus.map(m => m.bu_id),
       });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.bu.userBusPrefix(),
-        refetchType: 'active',
-      });
+      void queryClient
+        .invalidateQueries({
+          queryKey: queryKeys.bu.userBusPrefix(),
+          refetchType: 'active',
+        })
+        .then(async () => {
+          const refetched = queryClient.getQueriesData<UserBuMembership[]>({
+            queryKey: queryKeys.bu.userBusPrefix(),
+          });
+          const flat = refetched.flatMap(([, data]) => data ?? []);
+          const found = flat.some((m) => m.bu_id === buId);
+          if (found) {
+            console.info("[BuContext.selectBu] Retry após refetch — BU encontrada", { buId });
+            // Re-acionar selectBu agora que o cache está fresco.
+            // Próxima chamada cairá no caminho normal.
+            // Marcamos como seleção do usuário para o effect de init respeitar.
+            lastUserSelectionAtRef.current = Date.now();
+            setCurrentBuId(buId);
+            setBuSelected(true);
+            localStorage.setItem(BU_STORAGE_KEY, buId);
+            localStorage.setItem(BU_SELECTED_KEY, "true");
+            setTenantId(buId);
+            clearBuClientCache();
+            queryClient.clear();
+          } else {
+            console.warn("[BuContext.selectBu] BU ainda ausente após refetch — sem acesso", { buId });
+            toast.error("Você não tem acesso a esta Business Unit (ou ela ainda não foi sincronizada).");
+          }
+        });
       return;
     }
 
     const isChanging = currentBuId !== buId;
+    // Marca seleção explícita do usuário ANTES de qualquer setState para o
+    // guard do effect de init pegar (effects rodam após render).
+    lastUserSelectionAtRef.current = Date.now();
+    console.info("[BuContext.selectBu]", { buId, isChanging, prevBuId: currentBuId });
     setCurrentBuId(buId);
     setBuSelected(true);
     localStorage.setItem(BU_STORAGE_KEY, buId);
