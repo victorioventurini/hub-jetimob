@@ -17,15 +17,27 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useBu } from '@/contexts/BuContext';
 import { teamsKeys } from '@/lib/queryKeys/teams';
 
+export interface InitiativesByStatus {
+  planned: number;
+  in_progress: number;
+  blocked: number;
+  completed: number;
+}
+
 export interface TeamContributionAnalytics {
   ownObjectivesCount: number;
   ownKrsCount: number;
+  ownKrIds: string[];
   sharedReceivedCount: number;
   sharedContributedCount: number;
   orgObjectivesImpactedCount: number;
   activeProjectsCount: number;
+  initiativesTotalCount: number;
+  initiativesByStatus: InitiativesByStatus;
+  initiativesAtRiskCount: number;
   healthSeries: Array<{ date: string; value: number }>;
   resolvedTeamIds: string[];
+  effectiveCycleId: string | null;
 }
 
 const CONFIDENCE_TO_SCORE: Record<string, number> = {
