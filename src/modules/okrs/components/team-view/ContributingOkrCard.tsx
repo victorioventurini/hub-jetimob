@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Users, Crown, ExternalLink, Target, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from '../OkrStatusBadge';
+import { TeamKrFormDialog } from '../TeamKrFormDialog';
 import { calculateProgress, OkrRagStatus } from '../../types';
 
 interface ContributingOkrCardProps {
@@ -20,6 +21,8 @@ interface ContributingOkrCardProps {
     is_shared: boolean;
     responsibility_model?: string | null;
     team_id: string;
+    /** BU do objetivo dono — usada para criar a KR contribuidora na mesma BU */
+    bu_id?: string | null;
     team?: {
       id: string;
       name: string;
