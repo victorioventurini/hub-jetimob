@@ -192,8 +192,13 @@ export default function OkrDashboardPage() {
     activeView === 'my' ? effectiveProfileId ?? undefined : undefined
   );
 
-  // Shared OKRs insights
-  const sharedInsights = useSharedOkrsInsights();
+  // Shared OKRs insights — escopo casa com a view ativa
+  // (numerador e denominador no MESMO escopo, evita "300% colaborativas")
+  // Ver mem://features/okrs/shared-okrs-insights-scope-standard.
+  const sharedInsights = useSharedOkrsInsights({
+    teamId: activeView === 'team' ? normalizedTeamId : null,
+    year: filters.year,
+  });
   
   // Permission checks for editing
   const { teams: manageableTeams, hasManageableTeams } = useManageableTeams();
