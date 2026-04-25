@@ -431,22 +431,36 @@ export default function TeamKrCreationPage() {
     return <LoadingState fullPage text="Carregando..." />;
   }
 
-  // ── Resource not found (classificado pelo diagnóstico secundário) ──
+  // ── Resource not found (classificado pelo diagnóstico tiered) ──
   if (!objective) {
-    // Classificação: o diagnóstico usa o MESMO cliente BU-scoped E filtra por
-    // currentBuId. Resultados possíveis no contexto da BU atual:
-    // - row com cancelled_at != null → objetivo cancelado.
-    // - row null → objetivo não pertence à BU atual ou usuário sem acesso.
-    // (Não usamos `context_loading` aqui porque a query principal já está
-    // gated por `currentBuId`; se chegou neste branch, não há race transitória
-    // a aguardar.)
-    const isCancelled = !!diagnostic?.cancelled_at;
-    const variant = isCancelled ? 'cancelled' : 'not_found';
-    const customMessage = isCancelled
-      ? 'Este objetivo foi cancelado e não pode mais receber novos Key Results.'
-      : isContribution
+    // Classificação tiered:
+    // - existence == null → objetivo não pertence à BU atual / removido / RLS
+    // - existence.cancelled_at != null → cancelado
+    // - existence.deleted_at != null → soft-deletado (tratado como not_found)
+    // - existence ok + contributionAuthorized === false → permissão de contribuição negada
+    const existence = diagnostic?.existence ?? null;
+    const isCancelled = !!existence?.cancelled_at;
+    const isDeleted = !!existence?.deleted_at;
+    const contributionUnauthorized =
+      !!existence && diagnostic?.contributionAuthorized === false;
+
+    let variant: 'cancelled' | 'permission_denied' | 'not_found';
+    let customMessage: string;
+    if (isCancelled) {
+      variant = 'cancelled';
+      customMessage = 'Este objetivo foi cancelado e não pode mais receber novos Key Results.';
+    } else if (contributionUnauthorized) {
+      variant = 'permission_denied';
+      customMessage = 'Seu time não está autorizado a contribuir com este objetivo. Solicite ao responsável que adicione seu time como contribuidor.';
+    } else if (isDeleted) {
+      variant = 'not_found';
+      customMessage = 'Este objetivo foi removido.';
+    } else {
+      variant = 'not_found';
+      customMessage = isContribution
         ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Verifique se você está na Business Unit correta e se seu time está autorizado a contribuir.'
         : 'O objetivo que você tentou acessar não está disponível na Business Unit atual ou você não tem permissão para visualizá-lo.';
+    }
     return (
       <ResourceNotFoundState
         resourceType="objetivo"
