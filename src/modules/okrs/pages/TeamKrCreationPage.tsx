@@ -116,15 +116,19 @@ export default function TeamKrCreationPage() {
 
   // ── Diagnóstico secundário: classifica por que `objective` veio null ──
   // Roda APENAS quando a query principal terminou e retornou null. Usa o mesmo
-  // cliente BU-scoped (não cross-BU), preservando §A.3.
+  // cliente BU-scoped E filtra explicitamente por currentBuId — assim só
+  // detectamos `cancelled` quando a row REALMENTE existe no contexto atual.
+  // Se a row não estiver na BU atual, classifica como `not_found` em vez de
+  // mascarar como `context_loading`.
   const { data: diagnostic } = useQuery({
     queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic'],
     queryFn: async () => {
-      if (!supabase || !objectiveId) return null;
+      if (!supabase || !objectiveId || !currentBuId) return null;
       const { data } = await supabase
         .from('okr_team_objectives')
         .select('id, bu_id, cancelled_at')
         .eq('id', objectiveId)
+        .eq('bu_id', currentBuId)
         .maybeSingle();
       return data;
     },
