@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { getBuScopedClientCurrentBuId } from '@/integrations/supabase/buScopedClient';
+import { getBuScopedClientCurrentBuId, clearBuClientCache } from '@/integrations/supabase/buScopedClient';
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { FullPageWizardShell } from '../components/wizards/shared/FullPageWizardShell';
@@ -66,13 +66,33 @@ export default function TeamKrCreationPage() {
   
   const createKrBundle = useCreateTeamKrBundle();
 
+  // ── Helper: defensive BU header sync check ──
+  // Detecta dessincronia entre currentBuId (BuContext) e o header
+  // x-current-bu-id efetivamente injetado pelo singleton. Se divergir,
+  // limpa o cache do cliente e dispara retry one-shot via React Query.
+  const ensureBuHeaderSync = useCallback((stage: string) => {
+    if (!currentBuId) return;
+    const headerBuId = getBuScopedClientCurrentBuId();
+    if (headerBuId && headerBuId !== currentBuId) {
+      console.warn('[TeamKrCreationPage] BU header desync detected', {
+        stage,
+        currentBuId,
+        headerBuId,
+      });
+      // Swap atômico: força próxima request a usar o BU correto.
+      clearBuClientCache(currentBuId);
+      throw new Error('BU_HEADER_DESYNC_RETRY');
+    }
+  }, [currentBuId]);
+
   // ── Fetch objective data ──
   // BU incluído na key para evitar reuso de cache stale ao alternar de BU.
   const { data: objective, isLoading: objectiveLoading, isFetched: objectiveFetched } = useQuery({
     queryKey: queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId),
     queryFn: async () => {
       if (!supabase || !objectiveId) return null;
-      
+      ensureBuHeaderSync('objective.fetch');
+
       const { data, error } = await supabase
         .from('okr_team_objectives')
         .select(`
@@ -112,25 +132,51 @@ export default function TeamKrCreationPage() {
     // Inclui currentBuId para evitar disparar a query antes do BU estabilizar
     // (race onde header já está setado mas useBu() ainda retornou null).
     enabled: isReady && !!supabase && !!objectiveId && !!currentBuId,
+    retry: (count, err: any) => count < 1 && err?.message === 'BU_HEADER_DESYNC_RETRY',
+    retryDelay: 50,
   });
 
-  // ── Diagnóstico secundário: classifica por que `objective` veio null ──
-  // Roda APENAS quando a query principal terminou e retornou null. Usa o mesmo
-  // cliente BU-scoped E filtra explicitamente por currentBuId — assim só
-  // detectamos `cancelled` quando a row REALMENTE existe no contexto atual.
-  // Se a row não estiver na BU atual, classifica como `not_found` em vez de
-  // mascarar como `context_loading`.
+  // ── Diagnóstico tiered: classifica por que `objective` veio null ──
+  // Tier 1 (existência + soft-delete): row na BU atual? cancelada?
+  // Tier 2 (relação contribuição): time tentando contribuir está autorizado?
+  // Roda APENAS quando a query principal terminou e retornou null.
+  const contributorTeamIdParam = searchParams.get('contributor_team_id');
   const { data: diagnostic } = useQuery({
-    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic'],
+    queryKey: [...queryKeys.okrs.teamObjectiveDetail(objectiveId || '', currentBuId), 'diagnostic', contributorTeamIdParam],
     queryFn: async () => {
       if (!supabase || !objectiveId || !currentBuId) return null;
-      const { data } = await supabase
+      ensureBuHeaderSync('objective.diagnostic');
+
+      // Tier 1: existência + estado da row na BU atual
+      const { data: existence } = await supabase
         .from('okr_team_objectives')
-        .select('id, bu_id, cancelled_at')
+        .select('id, bu_id, cancelled_at, deleted_at, status')
         .eq('id', objectiveId)
         .eq('bu_id', currentBuId)
         .maybeSingle();
-      return data;
+
+      let contributionAuthorized: boolean | null = null;
+      if (existence && contributorTeamIdParam && contributorTeamIdParam !== existence.id) {
+        // Tier 2: row existe → checar se time-contribuidor está autorizado
+        const { data: contribRow } = await supabase
+          .from('okr_team_objective_contributors')
+          .select('team_id')
+          .eq('objective_id', objectiveId)
+          .eq('team_id', contributorTeamIdParam)
+          .maybeSingle();
+        contributionAuthorized = !!contribRow;
+      }
+
+      console.warn('[TeamKrCreationPage] diagnostic result', {
+        objectiveId,
+        currentBuId,
+        headerBuId: getBuScopedClientCurrentBuId(),
+        contributorTeamIdParam,
+        existence,
+        contributionAuthorized,
+      });
+
+      return { existence, contributionAuthorized };
     },
     enabled:
       isReady &&
@@ -140,6 +186,8 @@ export default function TeamKrCreationPage() {
       objectiveFetched &&
       !objective,
     staleTime: 0,
+    retry: (count, err: any) => count < 1 && err?.message === 'BU_HEADER_DESYNC_RETRY',
+    retryDelay: 50,
   });
 
   // ── Fetch contributors if shared ──
@@ -383,22 +431,36 @@ export default function TeamKrCreationPage() {
     return <LoadingState fullPage text="Carregando..." />;
   }
 
-  // ── Resource not found (classificado pelo diagnóstico secundário) ──
+  // ── Resource not found (classificado pelo diagnóstico tiered) ──
   if (!objective) {
-    // Classificação: o diagnóstico usa o MESMO cliente BU-scoped E filtra por
-    // currentBuId. Resultados possíveis no contexto da BU atual:
-    // - row com cancelled_at != null → objetivo cancelado.
-    // - row null → objetivo não pertence à BU atual ou usuário sem acesso.
-    // (Não usamos `context_loading` aqui porque a query principal já está
-    // gated por `currentBuId`; se chegou neste branch, não há race transitória
-    // a aguardar.)
-    const isCancelled = !!diagnostic?.cancelled_at;
-    const variant = isCancelled ? 'cancelled' : 'not_found';
-    const customMessage = isCancelled
-      ? 'Este objetivo foi cancelado e não pode mais receber novos Key Results.'
-      : isContribution
+    // Classificação tiered:
+    // - existence == null → objetivo não pertence à BU atual / removido / RLS
+    // - existence.cancelled_at != null → cancelado
+    // - existence.deleted_at != null → soft-deletado (tratado como not_found)
+    // - existence ok + contributionAuthorized === false → permissão de contribuição negada
+    const existence = diagnostic?.existence ?? null;
+    const isCancelled = !!existence?.cancelled_at;
+    const isDeleted = !!existence?.deleted_at;
+    const contributionUnauthorized =
+      !!existence && diagnostic?.contributionAuthorized === false;
+
+    let variant: 'cancelled' | 'permission_denied' | 'not_found';
+    let customMessage: string;
+    if (isCancelled) {
+      variant = 'cancelled';
+      customMessage = 'Este objetivo foi cancelado e não pode mais receber novos Key Results.';
+    } else if (contributionUnauthorized) {
+      variant = 'permission_denied';
+      customMessage = 'Seu time não está autorizado a contribuir com este objetivo. Solicite ao responsável que adicione seu time como contribuidor.';
+    } else if (isDeleted) {
+      variant = 'not_found';
+      customMessage = 'Este objetivo foi removido.';
+    } else {
+      variant = 'not_found';
+      customMessage = isContribution
         ? 'Não foi possível abrir o objetivo para criação de KR de contribuição. Verifique se você está na Business Unit correta e se seu time está autorizado a contribuir.'
         : 'O objetivo que você tentou acessar não está disponível na Business Unit atual ou você não tem permissão para visualizá-lo.';
+    }
     return (
       <ResourceNotFoundState
         resourceType="objetivo"

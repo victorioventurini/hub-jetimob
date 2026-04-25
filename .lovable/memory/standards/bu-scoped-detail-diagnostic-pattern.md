@@ -1,6 +1,6 @@
 ---
 name: BU-Scoped Detail Diagnostic Pattern
-description: Padrão para páginas de detalhe BU-scoped — gate de currentBuId, guard §A.3 obrigatório, filtro explícito por bu_id em todas as queries (inclusive diagnóstico), classificação correta de variants
+description: Padrão para páginas de detalhe BU-scoped — gate de currentBuId, guard §A.3, filtro explícito por bu_id, sync defensivo de header BU com retry one-shot, e diagnóstico tiered (existência → relação → permissão)
 type: standard
 ---
 
@@ -47,9 +47,17 @@ Páginas de detalhe que carregam uma entidade BU-scoped (objetivo, KR, ticket, a
 
 7. **Query keys**: incluir `currentBuId` na key principal; key do diagnóstico = `[...principalKey, 'diagnostic']`.
 
+8. **Verificação defensiva de header sync (queryFn-side)**: dentro do `queryFn` da principal e da diagnóstica, comparar `getBuScopedClientCurrentBuId()` com o `currentBuId` do `BuContext`. Se divergir (transição/HMR/race de hidratação do singleton), chamar `clearBuClientCache(currentBuId)` (swap atômico) e lançar `Error('BU_HEADER_DESYNC_RETRY')`. A query deve ter `retry: (count, err) => count < 1 && err?.message === 'BU_HEADER_DESYNC_RETRY'` e `retryDelay: 50`. Isso evita falsos `not_found` quando o BU foi recém-trocado mas o header ainda carrega o BU anterior. NÃO faz cross-BU recovery — apenas garante que a request use o BU que o usuário realmente selecionou.
+
+9. **Diagnóstico tiered (3 tiers)** — classifica corretamente o motivo do `null`:
+   - **Tier 1 — existência + soft-delete** (`id, bu_id, cancelled_at, deleted_at, status`): se `null` → `not_found` (BU errada / removido / RLS nega). Se `cancelled_at` → `cancelled`. Se `deleted_at` → `not_found`.
+   - **Tier 2 — relação de contribuição** (quando há `contributor_team_id` na URL): consultar `okr_team_objective_contributors` por `objective_id` + `team_id`. Se row ausente → `permission_denied`.
+   - **Tier 3 — permissão de domínio** (opcional): usar hooks como `useCanManageTeamOkr`. Falha aqui → `permission_denied`.
+   Variants disponíveis em `ResourceNotFoundState`: `not_found`, `cancelled`, `permission_denied`, `context_loading`.
+
 ## Implementação de referência
 
-`src/modules/okrs/pages/TeamKrCreationPage.tsx` — query principal e diagnóstico secundário ambos com `.eq('bu_id', currentBuId)`; branch `!objective` classifica `cancelled` vs `not_found`.
+`src/modules/okrs/pages/TeamKrCreationPage.tsx` — query principal e diagnóstico tiered ambos com `.eq('bu_id', currentBuId)` + `ensureBuHeaderSync()` no `queryFn` + `retry` one-shot; branch `!objective` classifica `cancelled` / `permission_denied` / `not_found`.
 
 ## Helper exportado
 
