@@ -1,19 +1,21 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Users, Crown, ExternalLink, Target, Plus, ChevronRight } from 'lucide-react';
+import { Users, Crown, ExternalLink, Target, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OkrStatusBadge } from '../OkrStatusBadge';
 import { TeamKrFormDialog } from '../TeamKrFormDialog';
-import { InitiativesList } from '../initiatives';
-import { ProjectsForKrSection } from '@/modules/projects/components/ProjectsForKrSection';
-import { calculateProgress, OkrRagStatus } from '../../types';
+import { CheckinDialog } from '../CheckinDialog';
+import { KrHistoryDialog } from '../KrHistoryDialog';
+import { KeyResultRow, type KeyResult } from '../dashboard/KeyResultRow';
+import { useKrPrimaryKpiBatch } from '../../hooks';
+import { calculateProgress } from '../../types';
 
 interface ContributingOkrCardProps {
-  /** Se o usuário pode criar KRs de contribuição em nome do time atual */
+  /** Se o usuário pode criar/editar KRs de contribuição em nome do time atual */
   canContribute?: boolean;
   objective: {
     id: string;
@@ -29,17 +31,7 @@ interface ContributingOkrCardProps {
       id: string;
       name: string;
     };
-    key_results?: Array<{
-      id: string;
-      title: string;
-      baseline: number;
-      current_value: number;
-      target: number;
-      direction: 'up' | 'down';
-      unit: string;
-      status: OkrRagStatus;
-      team_id?: string;
-    }>;
+    key_results?: KeyResult[];
   };
   currentTeamId: string;
 }
@@ -48,11 +40,13 @@ interface ContributingOkrCardProps {
  * Card component for displaying shared OKRs where the current team
  * is a contributor (not the primary team).
  *
- * Shows:
- * - Owner team (Time A) + responsibility model
- * - KRs owned by the current team (Time B) — its actual contribution
- * - Contribution state badge (estratégica / operacional / apenas visível)
- * - Read-only: edit/cancel are not exposed here.
+ * KRs próprias do time contribuidor são renderizadas via `KeyResultRow`
+ * canônico (mesmo componente usado em `ObjectiveListItem`), garantindo
+ * paridade total: badge de KPI primária, status efetivo, valor atual/target,
+ * contagem de iniciativas, botões Histórico/Editar/Atualizar, avatar do
+ * responsável e seções expansíveis de Iniciativas + Projetos vinculados.
+ *
+ * Padrão registrado em mem://features/okrs/contributor-kr-uses-modal.
  */
 export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   objective,
@@ -60,24 +54,22 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
   canContribute = false,
 }: ContributingOkrCardProps) {
   const [showAddKrDialog, setShowAddKrDialog] = useState(false);
-  const [expandedKrIds, setExpandedKrIds] = useState<Set<string>>(new Set());
+  const [editingKr, setEditingKr] = useState<KeyResult | null>(null);
+  const [checkinKr, setCheckinKr] = useState<KeyResult | null>(null);
+  const [historyKr, setHistoryKr] = useState<KeyResult | null>(null);
+
   const primaryTeamName = objective.team?.name || 'Time não definido';
   const allKrs = objective.key_results || [];
-
-  const toggleKr = useCallback((krId: string) => {
-    setExpandedKrIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(krId)) next.delete(krId);
-      else next.add(krId);
-      return next;
-    });
-  }, []);
 
   // KRs owned by the current (contributing) team
   const contributedKrs = useMemo(
     () => allKrs.filter((kr) => kr.team_id === currentTeamId),
     [allKrs, currentTeamId]
   );
+
+  // v3.4.2: batch KPI primária para as KRs contribuidoras (Team KR)
+  const krIds = useMemo(() => contributedKrs.map((kr) => kr.id), [contributedKrs]);
+  const { hasKrPrimaryKpi, getKrPrimaryKpi } = useKrPrimaryKpiBatch(krIds, 'team');
 
   // Overall objective progress (all KRs)
   const avgProgress = useMemo(() => {
@@ -91,10 +83,7 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
     );
   }, [allKrs]);
 
-  // Contribution-state badge:
-  // - Estratégica: ≥1 KR own by this team
-  // - Apenas visível: nothing concrete linked yet
-  // (Operacional via projects/initiatives is deferred — would require extra data fetch.)
+  // Contribution-state badge
   const contribState: 'strategic' | 'visible' = contributedKrs.length > 0 ? 'strategic' : 'visible';
 
   return (
@@ -200,73 +189,32 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
               materializar a contribuição.
             </p>
           ) : (
-            <div className="space-y-2">
-              {contributedKrs.map((kr) => {
-                const krProgress = calculateProgress(
-                  kr.baseline,
-                  kr.current_value,
-                  kr.target,
-                  kr.direction
-                );
-                const isExpanded = expandedKrIds.has(kr.id);
-                return (
-                  <div key={kr.id} className="rounded-md bg-muted/30 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleKr(kr.id)}
-                      className="w-full flex items-center gap-3 p-2 text-left hover:bg-muted/50 transition-colors"
-                      aria-expanded={isExpanded}
-                      aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} iniciativas e projetos de ${kr.title}`}
-                    >
-                      <ChevronRight
-                        className={cn(
-                          'w-4 h-4 text-muted-foreground shrink-0 transition-transform',
-                          isExpanded && 'rotate-90'
-                        )}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" title={kr.title}>
-                          {kr.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Progress value={Math.min(100, krProgress)} className="h-1.5 flex-1" />
-                          <span className="text-xs font-medium w-10 text-right">
-                            {krProgress.toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="px-3 pb-3 pt-2 space-y-4 bg-background/40 border-t">
-                        <InitiativesList
-                          krId={kr.id}
-                          krTitle={kr.title}
-                          krContext={{
-                            id: kr.id,
-                            title: kr.title,
-                            objectiveTitle: objective.title,
-                            teamName: objective.team?.name,
-                          }}
-                          krTeamId={currentTeamId}
-                          canEdit={canContribute}
-                          isDraft={objective.status === 'draft'}
-                        />
-                        <ProjectsForKrSection
-                          krId={kr.id}
-                          krKind="team"
-                          canEdit={canContribute}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="rounded-md border bg-background overflow-hidden">
+              <div className="divide-y divide-border/50">
+                {contributedKrs.map((kr) => (
+                  <KeyResultRow
+                    key={kr.id}
+                    kr={kr}
+                    type="team"
+                    objectiveTitle={objective.title}
+                    objectiveStatus={objective.status}
+                    teamName={objective.team?.name}
+                    canEdit={canContribute}
+                    canCheckin={canContribute}
+                    hasPrimaryKpi={hasKrPrimaryKpi(kr.id)}
+                    primaryKpiInfo={getKrPrimaryKpi(kr.id)}
+                    onEdit={() => setEditingKr(kr)}
+                    onCheckin={() => setCheckinKr(kr)}
+                    onShowHistory={() => setHistoryKr(kr)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
       </CardContent>
 
+      {/* Create KR Dialog */}
       {canContribute && (
         <TeamKrFormDialog
           open={showAddKrDialog}
@@ -274,6 +222,72 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
           objectiveId={objective.id}
           teamId={currentTeamId}
           buId={objective.bu_id || undefined}
+        />
+      )}
+
+      {/* Edit KR Dialog (Team KR) */}
+      {editingKr && editingKr.team_id && (
+        <TeamKrFormDialog
+          open={!!editingKr}
+          onOpenChange={(open) => !open && setEditingKr(null)}
+          objectiveId={objective.id}
+          teamId={editingKr.team_id}
+          kr={{
+            id: editingKr.id,
+            team_id: editingKr.team_id,
+            team_objective_id: editingKr.team_objective_id,
+            title: editingKr.title,
+            type: editingKr.type || 'contribution',
+            baseline: editingKr.baseline,
+            current_value: editingKr.current_value,
+            target: editingKr.target,
+            direction: editingKr.direction,
+            unit: editingKr.unit,
+            status: editingKr.status,
+            owner_user_id: editingKr.owner_user_id,
+          }}
+        />
+      )}
+
+      {/* Checkin Dialog */}
+      {checkinKr && checkinKr.team_id && (
+        <CheckinDialog
+          open={!!checkinKr}
+          onOpenChange={(open) => !open && setCheckinKr(null)}
+          kr={{
+            id: checkinKr.id,
+            title: checkinKr.title,
+            baseline: checkinKr.baseline,
+            current_value: checkinKr.current_value,
+            target: checkinKr.target,
+            direction: checkinKr.direction,
+            unit: checkinKr.unit,
+            status: checkinKr.status,
+            team_id: checkinKr.team_id,
+          }}
+        />
+      )}
+
+      {/* KR History Dialog */}
+      {historyKr && (
+        <KrHistoryDialog
+          open={!!historyKr}
+          onOpenChange={(open) => !open && setHistoryKr(null)}
+          kr={{
+            id: historyKr.id,
+            title: historyKr.title,
+            baseline: historyKr.baseline,
+            current_value: historyKr.current_value,
+            target: historyKr.target,
+            unit: historyKr.unit,
+            direction: historyKr.direction,
+            status: historyKr.status,
+            type: historyKr.type || 'contribution',
+            owner_name: historyKr.owner?.display_name,
+            owner_photo: historyKr.owner?.photo_url,
+            team_name: objective.team?.name,
+            objective_title: objective.title,
+          }}
         />
       )}
     </Card>

@@ -8,6 +8,7 @@ import {
   useTeamObjectivesWithSharedInfo,
   useTeamContributedObjectives,
 } from '@/modules/okrs/hooks';
+import { useCanManageTeamOkr } from '@/modules/okrs/hooks/useCanManageTeamOkr';
 import { useBu } from '@/contexts/BuContext';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
 import { useQuery } from '@tanstack/react-query';
@@ -29,7 +30,7 @@ function useSharedObjectivesWithKrs(objectiveIds: string[]) {
       const { data, error } = await supabase
         .from('okr_team_key_results')
         .select(
-          'id, title, baseline, current_value, target, direction, unit, status, team_id, team_objective_id'
+          'id, title, baseline, current_value, target, direction, unit, status, team_id, team_objective_id, owner_user_id, updated_at, type, owner:profiles!okr_team_key_results_owner_profile_fkey (id, display_name, photo_url)'
         )
         .in('team_objective_id', objectiveIds)
         .is('deleted_at', null)
@@ -46,6 +47,9 @@ export const TeamSharedOkrsBlock = React.memo(function TeamSharedOkrsBlock({
   teamId,
 }: TeamSharedOkrsBlockProps) {
   const { currentBu } = useBu();
+  // canContribute: usuário pode gerenciar OKRs deste time (líder/admin) →
+  // habilita criar/editar/check-in nas KRs contribuidoras (Team KR é deste time).
+  const { canManage: canContribute } = useCanManageTeamOkr(teamId);
   const { data: ownShared, isLoading: loadingOwn } = useTeamObjectivesWithSharedInfo(
     currentBu?.id ?? null,
     teamId
@@ -145,6 +149,7 @@ export const TeamSharedOkrsBlock = React.memo(function TeamSharedOkrsBlock({
               <ContributingOkrCard
                 key={obj.id}
                 currentTeamId={teamId}
+                canContribute={canContribute}
                 objective={{
                   id: obj.id,
                   title: obj.title,

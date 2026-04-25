@@ -30,21 +30,46 @@ que apenas membros do time dono (ou contribuidor, em OKR compartilhada)
 e seus subtimes apareçam — nunca a BU inteira. Padrão alinhado com
 `mem://standards/users/team-filter-includes-subteams`.
 
+## Linha da KR usa `KeyResultRow` canônico
+
+A linha-resumo de cada KR contribuidora em `ContributingOkrCard` é
+renderizada via **`KeyResultRow`** de
+`src/modules/okrs/components/dashboard/KeyResultRow.tsx` — exatamente o
+mesmo componente usado em `ObjectiveListItem` para Team KRs próprias.
+**Proibido** reimplementar localmente botão/expand/progresso/avatar de KR
+em qualquer card de OKR (compartilhado ou não).
+
+Paridade garantida: badge "Rascunho", `KrPrimaryKpiBadge` (KPI primária),
+status efetivo (`mapRagToCalculated` + `STATUS_CONFIG`), valor atual/target
+com unidade efetiva, contagem de iniciativas (`useKrInitiativesCount`),
+botões **Histórico/Editar/Atualizar** e avatar do responsável. A área
+expandida (Iniciativas + Projetos) também vem do próprio `KeyResultRow`.
+
+Em `ContributingOkrCard`, `canEdit` e `canCheckin` recebem `canContribute`
+(derivado de `useCanManageTeamOkr(currentTeamId)`), pois a KR contribuidora
+é `okr_team_key_results` do time contribuidor — RLS canônica
+(`mem://auth/okr-ownership-enforcement-rls`) já valida pelo time dono.
+Dialogs reusados sem fork: `TeamKrFormDialog` (criar/editar),
+`CheckinDialog`, `KrHistoryDialog`.
+
+Hidratação obrigatória do payload do KR contribuidor (em
+`useSharedObjectivesWithKrs` de `TeamSharedOkrsBlock`):
+`owner_user_id, updated_at, type` + `owner:profiles!okr_team_key_results_owner_profile_fkey (id, display_name, photo_url)`.
+Sem isso `KrHistoryDialog` e o avatar do responsável quebram.
+
 ## Iniciativas e Projetos em KR contribuidora
 
-Cada KR contribuidora exibida em `ContributingOkrCard` é **expansível**
-(chevron à esquerda). Quando expandida, renderiza abaixo do progresso:
+Como `KeyResultRow` já renderiza `InitiativesList` e `ProjectsForKrSection`
+internamente quando a linha é expandida, o `ContributingOkrCard` **não**
+chama esses componentes diretamente. A propagação de `krTeamId` continua
+correta: `KeyResultRow` passa `krTeamId={kr.team_id}` (= `currentTeamId`
+no caso contribuidor, pois a KR pertence ao time contribuidor).
 
-- `<InitiativesList krId={kr.id} krTeamId={currentTeamId} canEdit={canContribute} isDraft={objective.status === 'draft'} />`
-- `<ProjectsForKrSection krId={kr.id} krKind="team" canEdit={canContribute} />`
-
-Idêntico ao padrão de Team KR em `ObjectiveListItem` (linhas 729–749).
 KR contribuidora é Team KR (`okr_team_key_results`), portanto:
 - Hooks `useKrInitiatives`, `useProjectsForKr`, `useMilestonesForKr`,
   `useAddProjectKrLink({ kind: 'team' })` funcionam sem alteração.
-- RLS de `project_krs_insert` e `okr_initiatives` já cobrem (KR pertence
-  ao time do usuário contribuidor).
-- Permissão herda de `canContribute` (mesma que governa "Adicionar KR").
+- RLS de `project_krs_insert` e `okr_initiatives` já cobrem.
+- Permissão herda de `canEdit || canCheckin` (= `canContribute`).
 
 Sem novo hook, schema, RLS ou rota — reuso 100% do canon.
 
@@ -57,8 +82,8 @@ com `teamId={krTeamId}` + `includeSubteams` + `excludeExternal`. Proibido
 reimplementar combobox manual via `Popover + Command + useBuUsersDirectory`.
 
 `InitiativesList` propaga `krTeamId` ao dialog. Cadeia de chamada:
-- KR de time próprio: `ObjectiveListItem` → `InitiativesList krTeamId={kr.team_id}` → dialog escopa ao time dono.
-- KR contribuidora (OKR compartilhado): `ContributingOkrCard` → `InitiativesList krTeamId={currentTeamId}` → dialog escopa ao **time contribuidor**, nunca à BU inteira.
+- KR de time próprio: `ObjectiveListItem` → `KeyResultRow` → `InitiativesList krTeamId={kr.team_id}` → dialog escopa ao time dono.
+- KR contribuidora (OKR compartilhado): `ContributingOkrCard` → `KeyResultRow` → `InitiativesList krTeamId={kr.team_id}` (= `currentTeamId`) → dialog escopa ao **time contribuidor**, nunca à BU inteira.
 
 Padrão alinhado a `mem://standards/users/team-filter-includes-subteams`.
 RLS de `okr_initiatives` continua intacta (a KR pertence ao time correto).
