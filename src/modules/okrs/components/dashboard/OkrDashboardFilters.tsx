@@ -73,13 +73,15 @@ export function OkrDashboardFilters({
 
   const isCompanyView = activeView === 'company';
   const showQuarterFilter = !isCompanyView;
+  // is_shared só existe em okr_team_objectives — esconder o filtro "Tipo" na company view.
+  const sharedFilterVisible = showSharedFilter && !isCompanyView;
 
   const activeFilterCount = [
     filters.teamId,
     filters.parentTeamId,
     filters.cycleId,
     filters.statuses.length < STATUS_OPTIONS.length && filters.statuses.length > 0,
-    filters.sharedFilter && filters.sharedFilter !== 'all',
+    sharedFilterVisible && filters.sharedFilter && filters.sharedFilter !== 'all',
     filters.primaryTeamId,
     filters.contributorTeamId,
   ].filter(Boolean).length;
