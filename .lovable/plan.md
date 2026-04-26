@@ -1,71 +1,122 @@
-## Diagnóstico confirmado (pós-checklist canônico)
+## Pré-checklist canônico ✅
 
-**Erro real (Postgres):** `COALESCE types text and project_status cannot be matched`
-**Local:** `public.update_project_v2`, linha 153 da migração `20260424205425_...sql`
-**Causa:** `NULLIF(p_payload->>'status','')` retorna `text`, mas a coluna `projects.status` é do enum `project_status`. O `COALESCE` exige tipos compatíveis em todos os ramos.
+- **TCR / DATA_MODEL_REGISTRY** revisado — `projects.owner_id` → `profiles.id`
+- **IDENTITY_CONVENTION** — mutações com `realProfileId`
+- **PERMISSIONS_AND_RBAC_MODEL** — permission key `projects.project.update:bu` (já usada no RPC atual)
+- **mem://features/projects/holistic-module-architecture-v2** — spec do módulo
+- **Soft-delete policy** — arquivados via `deleted_at IS NOT NULL`
+- **Query keys standard** — `projectsKeys.list(buId, filters)` ✓
+- **BU isolation** — `currentBuId` síncrono ✓
 
-**Por que afeta a Natalia:** ela é owner do projeto `ab89e575-...` → autorização passa (linha 134), mas o `UPDATE` falha no parser antes mesmo de aplicar mudanças. Qualquer usuário (admin, leader, owner) cai no mesmo erro ao salvar edição que envie o campo `status`.
+---
 
-## Verificação canônica (pré-checklist concluído)
-- ✅ `DATA_MODEL_REGISTRY.md` linha 264 → confirma enum `project_status`
-- ✅ `mem://features/projects/holistic-module-architecture-v2` → RBAC V2 inalterado
-- ✅ `IDENTITY_CONVENTION` → função já usa `my_profile_id()` corretamente
-- ✅ `BU_SCOPED_SUPABASE_RULES` → SECURITY DEFINER lê `bu_id` do registro (correto)
-- ✅ `CHECK_CONSTRAINT_PROHIBITION` → solução respeita uso de enum (sem CHECK)
-- ✅ `useProjectMutations.ts` → frontend já envia `status` como string; nenhum ajuste necessário
+## Diagnóstico
 
-## Mudança proposta (cirúrgica, 1 linha)
+A view `?view=gantt` aparenta "filtros quebrados" por **3 bugs distintos**, todos confirmados via leitura de código:
 
-Nova migração `supabase/migrations/<timestamp>_fix_update_project_v2_status_cast.sql`:
+### Bug #1 — Milestones ignoram o filtro de status do projeto
+**Local:** `src/modules/projects/hooks/useGanttData.ts` (linhas 38-59)
+
+`useGanttData` itera `project.milestones` sem aplicar nenhum filtro. Quando o usuário seleciona `status=in_progress`, os projetos são filtrados corretamente no SQL (`useProjects.ts` linha 35), mas todos os milestones (incluindo `done` e `todo`) continuam aparecendo embaixo de cada projeto, dando impressão de que o filtro "não funcionou".
+
+### Bug #2 — Aba "Arquivados" no Gantt não mostra milestones/teams/KRs
+**Local:** RPC `public.list_archived_projects` (verificado via DB)
 
 ```sql
--- Fix: cast explícito do status text → project_status no UPDATE
-CREATE OR REPLACE FUNCTION public.update_project_v2(p_project_id uuid, p_payload jsonb)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_auth_uid uuid := auth.uid();
-  v_actor_profile uuid;
-  v_bu_id uuid;
-  v_owner_id uuid;
-  v_deleted_at timestamptz;
-  v_authorized boolean := false;
-BEGIN
-  -- (mesmo corpo de validação/autorização da v1.6)
-  ...
-  UPDATE projects
-     SET
-       name         = COALESCE(NULLIF(p_payload->>'name', ''), name),
-       description  = CASE WHEN p_payload ? 'description' THEN NULLIF(p_payload->>'description','') ELSE description END,
-       owner_id     = CASE WHEN p_payload ? 'owner_id' AND NULLIF(p_payload->>'owner_id','') IS NOT NULL
-                           THEN (p_payload->>'owner_id')::uuid ELSE owner_id END,
-       status       = COALESCE(
-                        NULLIF(p_payload->>'status','')::public.project_status,  -- ← CAST adicionado
-                        status
-                      ),
-       start_date   = CASE WHEN p_payload ? 'start_date' THEN NULLIF(p_payload->>'start_date','')::date ELSE start_date END,
-       due_date     = CASE WHEN p_payload ? 'due_date'   THEN NULLIF(p_payload->>'due_date','')::date   ELSE due_date END,
-       external_url = CASE WHEN p_payload ? 'external_url' THEN NULLIF(p_payload->>'external_url','') ELSE external_url END
-   WHERE id = p_project_id;
-
-  RETURN jsonb_build_object('ok', true, 'code', 'UPDATED', 'project_id', p_project_id, 'bu_id', v_bu_id);
-END;
-$$;
-
-COMMENT ON FUNCTION public.update_project_v2(uuid, jsonb) IS
-'v1.7 — Fix cast text→project_status no COALESCE de status. Demais regras inalteradas.';
+RETURNS SETOF projects  -- só colunas da tabela, sem joins
 ```
 
-## Frontend
-**Nenhuma alteração necessária.** `useProjectMutations.ts` já envia `status` como string conforme contrato.
+Em `useProjects.ts` linha 70, `p.project_milestones` é `undefined` para arquivados. Consequências:
+- `computeHealth([])` → sempre `on_track`
+- `computeCompletion([])` → sempre `0%`
+- Gantt não desenha barras de milestones de projetos arquivados
+- Filtro `team_id` **nunca matcha** projetos arquivados (sem `project_teams` no payload)
+- Filtro `linked_to_kr` também quebra para arquivados
 
-## Validação pós-deploy
-1. Reproduzir cenário da Natalia: editar projeto `ab89e575-0b55-44c1-8461-35beea8c38a5` alterando qualquer campo (com ou sem mudar status) → deve retornar `{ ok: true, code: 'UPDATED' }`.
-2. Conferir nos logs do Postgres que não há mais `COALESCE types ... cannot be matched`.
-3. Smoke test: editar status (`planned → in_progress`) por owner, por leader, por admin.
+### Bug #3 — Mensagem enganosa quando filtros esvaziam o resultado
+**Local:** `src/modules/projects/components/GanttTimeline.tsx` (linhas 134-146)
+
+Quando o filtro de team/owner/KR remove todos os projetos, o Gantt mostra "Nenhum item com datas definidas para exibir" — diagnóstico errado (a causa real é o filtro, não datas faltantes). O usuário interpreta como bug de filtro.
+
+---
+
+## Mudanças propostas
+
+### 1. `useGanttData.ts` — Milestones respeitam status do projeto pai
+
+Adicionar parâmetro opcional `statusFilter` e filtrar milestones para casar com o status do projeto. Como o filtro de status já é aplicado em `useProjects` (server-side para ativos, client-side para arquivados), o ajuste no Gantt é **filtrar milestones para mostrar apenas os que casam com o status efetivo do projeto** (alinhamento visual).
+
+Comportamento:
+- `status=all` → mostra todos os milestones (atual)
+- `status=in_progress` → mostra apenas milestones `in_progress` sob cada projeto
+- `status=done` → mostra apenas milestones `done`
+- etc.
+
+Mudança cirúrgica: aceitar `statusFilter?: ProjectStatus | 'all'` e filtrar `project.milestones` antes do loop de inserção. `MilestoneGanttChart` (página de detalhe) **não muda** — continua mostrando todos os milestones do projeto.
+
+### 2. Migration — `list_archived_projects` retorna `jsonb` com joins
+
+Substituir `RETURNS SETOF projects` por `RETURNS jsonb` com a mesma forma do branch ativo (project + owner + project_teams + project_krs + project_milestones aninhados via `jsonb_build_object` / `jsonb_agg`).
+
+**Autorização inalterada** — mesmo bloco RBAC v1.6 do RPC atual:
+- `is_super_admin` OR `is_bu_admin` OR `has_permission(...,'projects.project.update:bu')` → todos arquivados da BU
+- senão: owner OR `is_leader_of_project_owner`
+
+**Mantém SECURITY DEFINER + search_path = public**, REVOKE PUBLIC + GRANT EXECUTE TO authenticated, COMMENT versionado (v1.1).
+
+### 3. `useProjects.ts` — Consumir nova forma JSONB do RPC arquivados
+
+`fetchArchived` passa a tratar `data` como array de objetos JSON com `project_milestones`, `project_teams`, `project_krs` aninhados (mesma forma do `PROJECT_LIST_FIELDS`). O `.map(...)` downstream (linhas 69-110) **não precisa mudar** — a forma fica idêntica ao branch ativo. Remove a marcação manual `_is_archived` (passa a vir computada via `deleted_at != null` que já é o fallback na linha 85).
+
+### 4. `GanttTimeline.tsx` — Mensagem condicional
+
+Diferenciar dois estados vazios:
+- `items.length === 0 && excludedCount === 0` → "Nenhum projeto corresponde aos filtros aplicados."
+- `items.length === 0 && excludedCount > 0` → mensagem atual ("Nenhum item com datas definidas...")
+- `items.length > 0 && validItems.length === 0` → mensagem atual
+
+### 5. `ProjectsPage.tsx` — Passar `statusFilter` para `useGanttData`
+
+```ts
+const { items: ganttItems, excludedCount: ganttExcluded } = useGanttData(
+  projects,
+  { statusFilter: filters.status }
+);
+```
+
+---
+
+## Arquivos afetados
+
+| Arquivo | Tipo | Mudança |
+|---|---|---|
+| `supabase/migrations/<ts>_list_archived_projects_jsonb.sql` | Novo | RPC retorna jsonb com joins (auth inalterada) |
+| `src/modules/projects/hooks/useGanttData.ts` | Edit | Aceita `{ statusFilter }`, filtra milestones |
+| `src/modules/projects/hooks/useProjects.ts` | Edit | Consome novo formato jsonb do RPC arquivados |
+| `src/modules/projects/pages/ProjectsPage.tsx` | Edit | Passa `statusFilter` ao hook |
+| `src/modules/projects/components/GanttTimeline.tsx` | Edit | Mensagem condicional para resultado vazio por filtro |
+| `src/modules/projects/hooks/__tests__/useGanttData.test.ts` | Edit | Testes para `statusFilter` |
+
+---
+
+## Não-mudanças (escopo controlado)
+
+- ❌ `MilestoneGanttChart` (página de detalhe) — sem alteração; sempre mostra todos os milestones do projeto
+- ❌ Whitelist/RBAC do `update_project_v2` — já corrigida na migration anterior
+- ❌ Query keys / contratos React Query — `projectsKeys.list` já inclui `filters` no hash
+- ❌ Filtros de lista (`ProjectsTable`) — funcionam corretamente
+- ❌ `ProjectFiltersBar` — UI dos filtros já está correta
+
+---
 
 ## Risco
-**Baixíssimo.** Mudança isolada em 1 expressão SQL, sem alterar autorização, whitelist de campos ou contrato da RPC. Não toca em RLS, triggers ou frontend.
+
+**Baixo.** A migration substitui apenas a forma de retorno do RPC (sem mudar autorização). O frontend é puramente aditivo (filtro novo opcional + mensagem nova). Cache invalida automaticamente porque a query key já depende de `filters` completos.
+
+## Validação pós-deploy
+
+1. `/projects?view=gantt&status=in_progress` → milestones mostradas devem ser apenas `in_progress`
+2. `/projects?view=gantt&archived=archived` → projetos arquivados devem mostrar barras de milestones e respeitar `team_id`
+3. `/projects?view=gantt&teamId=<id-sem-projetos>` → mensagem "Nenhum projeto corresponde aos filtros aplicados"
+4. `/projects?view=gantt` (sem filtro) → comportamento idêntico ao atual
+5. RLS smoke test: usuário sem permissão `:bu` vê apenas seus arquivados / liderados
