@@ -1,73 +1,71 @@
-# Corrigir empty-state que oculta OKRs compartilhadas no dashboard do time
+## Diagnóstico confirmado (pós-checklist canônico)
 
-## Pré-checklist executado
+**Erro real (Postgres):** `COALESCE types text and project_status cannot be matched`
+**Local:** `public.update_project_v2`, linha 153 da migração `20260424205425_...sql`
+**Causa:** `NULLIF(p_payload->>'status','')` retorna `text`, mas a coluna `projects.status` é do enum `project_status`. O `COALESCE` exige tipos compatíveis em todos os ramos.
 
-- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (referência geral)
-- ✅ `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — sem impacto (mudança puramente de renderização)
-- ✅ `docs/canonical/QUERY_KEYS_STANDARD.md` — sem novas queries
-- ✅ `mem://features/okrs/shared-okr-contributor-view-standard` — SSOT do bloco "OKRs Compartilhadas". Confirma que `TeamOkrSections` é o componente canônico que renderiza `contributedObjectives` quando `activeView === 'team'` e `normalizedTeamId` está definido.
-- ✅ Código atual em `src/modules/okrs/pages/OkrDashboardPage.tsx` linhas 561–619.
+**Por que afeta a Natalia:** ela é owner do projeto `ab89e575-...` → autorização passa (linha 134), mas o `UPDATE` falha no parser antes mesmo de aplicar mudanças. Qualquer usuário (admin, leader, owner) cai no mesmo erro ao salvar edição que envie o campo `status`.
 
-## Diagnóstico
+## Verificação canônica (pré-checklist concluído)
+- ✅ `DATA_MODEL_REGISTRY.md` linha 264 → confirma enum `project_status`
+- ✅ `mem://features/projects/holistic-module-architecture-v2` → RBAC V2 inalterado
+- ✅ `IDENTITY_CONVENTION` → função já usa `my_profile_id()` corretamente
+- ✅ `BU_SCOPED_SUPABASE_RULES` → SECURITY DEFINER lê `bu_id` do registro (correto)
+- ✅ `CHECK_CONSTRAINT_PROHIBITION` → solução respeita uso de enum (sem CHECK)
+- ✅ `useProjectMutations.ts` → frontend já envia `status` como string; nenhum ajuste necessário
 
-Em `/okrs?view=team&team_id={Product Design}` o objetivo compartilhado pelo time Tecnologia não aparece porque a **ordem dos guards de renderização** em `OkrDashboardPage.tsx` curto-circuita:
+## Mudança proposta (cirúrgica, 1 linha)
 
+Nova migração `supabase/migrations/<timestamp>_fix_update_project_v2_status_cast.sql`:
+
+```sql
+-- Fix: cast explícito do status text → project_status no UPDATE
+CREATE OR REPLACE FUNCTION public.update_project_v2(p_project_id uuid, p_payload jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_auth_uid uuid := auth.uid();
+  v_actor_profile uuid;
+  v_bu_id uuid;
+  v_owner_id uuid;
+  v_deleted_at timestamptz;
+  v_authorized boolean := false;
+BEGIN
+  -- (mesmo corpo de validação/autorização da v1.6)
+  ...
+  UPDATE projects
+     SET
+       name         = COALESCE(NULLIF(p_payload->>'name', ''), name),
+       description  = CASE WHEN p_payload ? 'description' THEN NULLIF(p_payload->>'description','') ELSE description END,
+       owner_id     = CASE WHEN p_payload ? 'owner_id' AND NULLIF(p_payload->>'owner_id','') IS NOT NULL
+                           THEN (p_payload->>'owner_id')::uuid ELSE owner_id END,
+       status       = COALESCE(
+                        NULLIF(p_payload->>'status','')::public.project_status,  -- ← CAST adicionado
+                        status
+                      ),
+       start_date   = CASE WHEN p_payload ? 'start_date' THEN NULLIF(p_payload->>'start_date','')::date ELSE start_date END,
+       due_date     = CASE WHEN p_payload ? 'due_date'   THEN NULLIF(p_payload->>'due_date','')::date   ELSE due_date END,
+       external_url = CASE WHEN p_payload ? 'external_url' THEN NULLIF(p_payload->>'external_url','') ELSE external_url END
+   WHERE id = p_project_id;
+
+  RETURN jsonb_build_object('ok', true, 'code', 'UPDATED', 'project_id', p_project_id, 'bu_id', v_bu_id);
+END;
+$$;
+
+COMMENT ON FUNCTION public.update_project_v2(uuid, jsonb) IS
+'v1.7 — Fix cast text→project_status no COALESCE de status. Demais regras inalteradas.';
 ```
-linha 572  ) : displayObjectives.length === 0 ? (
-linha 573      <OkrEmptyState ... />
-linha 606  ) : activeView === 'team' && normalizedTeamId ? (
-linha 607      <TeamOkrSections ... contributedObjectives={filteredContributedObjectives} />
-```
 
-Como Product Design não possui objetivos próprios no ciclo, `displayObjectives.length === 0` é avaliado primeiro e renderiza o empty-state — `TeamOkrSections` (única coisa que renderiza `filteredContributedObjectives`) nunca é alcançado. Isso viola o SSOT em `mem://features/okrs/shared-okr-contributor-view-standard`, que define que o bloco "OKRs Compartilhadas" deve aparecer sempre que `contributedObjectives.length > 0`, independente de o time ter objetivos próprios.
+## Frontend
+**Nenhuma alteração necessária.** `useProjectMutations.ts` já envia `status` como string conforme contrato.
 
-## Mudanças propostas
+## Validação pós-deploy
+1. Reproduzir cenário da Natalia: editar projeto `ab89e575-0b55-44c1-8461-35beea8c38a5` alterando qualquer campo (com ou sem mudar status) → deve retornar `{ ok: true, code: 'UPDATED' }`.
+2. Conferir nos logs do Postgres que não há mais `COALESCE types ... cannot be matched`.
+3. Smoke test: editar status (`planned → in_progress`) por owner, por leader, por admin.
 
-### 1. `src/modules/okrs/pages/OkrDashboardPage.tsx`
-
-Reordenar os guards para que, na visão de time com `team_id` definido, `TeamOkrSections` seja avaliado **antes** do empty-state. O empty-state só dispara quando ambas as listas estão vazias.
-
-```tsx
-const isTeamView = activeView === 'team' && !!normalizedTeamId;
-const teamViewIsEmpty =
-  isTeamView &&
-  displayObjectives.length === 0 &&
-  filteredContributedObjectives.length === 0;
-
-isLoading
-  ? <skeletons />
-  : isTeamView
-    ? (teamViewIsEmpty
-        ? <OkrEmptyState ... />
-        : <TeamOkrSections
-            primaryObjectives={displayObjectives}
-            contributedObjectives={filteredContributedObjectives}
-            teamId={normalizedTeamId}
-            ...
-          />)
-    : displayObjectives.length === 0
-      ? <OkrEmptyState ... />
-      : <div>{displayObjectives.map(o => <ObjectiveListItem .../>)}</div>
-```
-
-`TeamOkrSections` já trata internamente o caso `primaryObjectives.length === 0` (renderizando apenas o bloco compartilhado), então nenhuma mudança interna nele é necessária — basta deixar de bloqueá-lo aqui.
-
-### 2. Mensagem do empty-state (refinamento leve)
-
-Quando `filters.sharedFilter === 'exclusive'` e a lista filtrada ficou vazia por causa do filtro (e não por ausência de dados), trocar o `description` para algo como _"Nenhum objetivo exclusivo neste filtro. Tente ‘Todos’ ou ‘Compartilhadas’."_
-
-### 3. Documentação
-
-Atualizar `mem://features/okrs/shared-okr-contributor-view-standard` adicionando à seção "Regras invioláveis":
-
-> **Empty-state guard**: na view de time, o empty-state só pode aparecer quando `displayObjectives.length === 0 && contributedObjectives.length === 0`. `TeamOkrSections` deve ser sempre avaliado antes do empty-state.
-
-## Não-objetivos
-
-- Sem alterações em hooks, queries, RLS ou schema.
-- Sem mexer em `TeamOkrSections`, `ContributingOkrCard` ou `useTeamContributedOkrs`.
-- Sem alterar a lógica do filtro `sharedFilter` (já corrigida em iteração anterior).
-
-## Resultado esperado
-
-Em `/okrs?cycle_id=...&view=team&team_id={Product Design}&shared=shared`, o bloco "OKRs Compartilhadas" passa a renderizar o objetivo compartilhado pelo time Tecnologia, mesmo Product Design não tendo objetivos próprios no ciclo.
+## Risco
+**Baixíssimo.** Mudança isolada em 1 expressão SQL, sem alterar autorização, whitelist de campos ou contrato da RPC. Não toca em RLS, triggers ou frontend.
