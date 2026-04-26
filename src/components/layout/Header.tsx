@@ -17,6 +17,8 @@ import { useBu } from "@/contexts/BuContext";
 import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
+import { BuSymbol } from "@/modules/bu/components/BuSymbol";
+import { useBuBranding } from "@/modules/bu/hooks";
 import { NotificationCenter } from "@/components/notifications";
 import { UserImpersonationDialog } from "@/components/impersonation";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
