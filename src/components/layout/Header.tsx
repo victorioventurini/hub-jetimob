@@ -97,7 +97,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
           {currentBuId && (
             <Link
               to="/"
-              className="flex items-center gap-2 min-h-[44px] px-1"
+              className="flex items-center min-h-[44px] px-1"
               aria-label={`Ir para Home — ${buName}`}
             >
               <div
@@ -111,7 +111,6 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
                   size="md"
                 />
               </div>
-              <span className="text-sm font-semibold truncate max-w-[120px]">{buName}</span>
             </Link>
           )}
         </div>
