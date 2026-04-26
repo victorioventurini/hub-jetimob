@@ -157,16 +157,16 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
                   fallbackClassName="bg-accent text-accent-foreground text-sm font-semibold"
                 />
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium">{displayName}</span>
-                  <span className="text-xs text-muted-foreground">{jobTitleLabel}</span>
+                  <span className="text-sm font-medium" spellCheck={false} translate="no">{displayName}</span>
+                  <span className="text-xs text-muted-foreground" spellCheck={false} translate="no">{jobTitleLabel}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="cursor-default">
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-medium no-underline">{displayName}</span>
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="font-medium no-underline" spellCheck={false} translate="no">{displayName}</span>
+                  <span className="text-xs font-normal text-muted-foreground" spellCheck={false} translate="no">
                     {email}
                   </span>
                 </div>
