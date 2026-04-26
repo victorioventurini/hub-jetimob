@@ -17,6 +17,8 @@ import { useBu } from "@/contexts/BuContext";
 import { useCloseOnRouteChange } from "@/hooks/useCloseOnRouteChange";
 import { toast } from "sonner";
 import { BuSelector } from "@/modules/bu/components/BuSelector";
+import { BuSymbol } from "@/modules/bu/components/BuSymbol";
+import { useBuBranding } from "@/modules/bu/hooks";
 import { NotificationCenter } from "@/components/notifications";
 import { UserImpersonationDialog } from "@/components/impersonation";
 import { useOptionalImpersonation } from "@/contexts/ImpersonationContext";
@@ -38,6 +40,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const isHubPage = location.pathname.startsWith("/hub");
   const { isImpersonating } = useOptionalImpersonation();
   const { isExternal, externalInfo } = useExternalUser();
+  const { symbolUrl, buName, primaryColor } = useBuBranding();
   
   // Estado para controlar o dropdown do usuário
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -80,16 +83,38 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
       )}
     >
       <div className="flex items-center justify-between h-full px-3 sm:px-4 lg:px-8">
-        {/* Mobile menu button */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="lg:hidden min-w-[44px] min-h-[44px]"
-          onClick={onMobileMenuToggle}
-          aria-label="Abrir menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        {/* Mobile: menu button + BU logo (logo sempre visível, menu aberto ou fechado) */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="min-w-[44px] min-h-[44px]"
+            onClick={onMobileMenuToggle}
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          {currentBuId && (
+            <Link
+              to="/"
+              className="flex items-center gap-2 min-h-[44px] px-1"
+              aria-label={`Ir para Home — ${buName}`}
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: primaryColor ? `${primaryColor}20` : undefined }}
+              >
+                <BuSymbol
+                  symbolUrl={symbolUrl}
+                  primaryColor={primaryColor}
+                  name={buName}
+                  size="md"
+                />
+              </div>
+              <span className="text-sm font-semibold truncate max-w-[120px]">{buName}</span>
+            </Link>
+          )}
+        </div>
 
         {/* Cycle Progress Indicator */}
         {!isHubPage && currentBuId && <CycleProgressHeader variant="segmented" />}
