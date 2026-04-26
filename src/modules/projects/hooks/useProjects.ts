@@ -65,7 +65,18 @@ export function useProjects(filters: ProjectFilters = {}) {
           ? await fetchActive()
           : archivedState === 'archived'
             ? await fetchArchived()
-            : (await Promise.all([fetchActive(), fetchArchived()])).flat();
+            : (() => {
+                // Modo "all": dedup defensivo por id (um projeto recém-arquivado pode aparecer
+                // em ambas as branches por timing entre soft-delete e cache da RPC).
+                return null;
+              })();
+
+      const combinedData =
+        rawData ??
+        (await Promise.all([fetchActive(), fetchArchived()])).flat().reduce<any[]>((acc, p) => {
+          if (!acc.some((x) => x.id === p.id)) acc.push(p);
+          return acc;
+        }, []);
 
       let results = (rawData || []).map((p: any) => {
         const milestones = p.project_milestones || [];
