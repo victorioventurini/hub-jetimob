@@ -40,6 +40,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const isHubPage = location.pathname.startsWith("/hub");
   const { isImpersonating } = useOptionalImpersonation();
   const { isExternal, externalInfo } = useExternalUser();
+  const { symbolUrl, buName, primaryColor } = useBuBranding();
   
   // Estado para controlar o dropdown do usuário
   const [userMenuOpen, setUserMenuOpen] = useState(false);
