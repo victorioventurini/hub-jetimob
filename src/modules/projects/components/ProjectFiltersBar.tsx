@@ -58,7 +58,8 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         value={filters.owner_id || undefined}
         onValueChange={(v) => onFiltersChange({ ...filters, owner_id: v ?? undefined })}
         placeholder="Responsável"
-        allowNone={false}
+        allowNone
+        noneLabel="Todos os responsáveis"
         className="w-full sm:w-[200px]"
       />
 
