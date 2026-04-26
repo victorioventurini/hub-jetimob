@@ -163,10 +163,10 @@ export function useProjects(filters: ProjectFilters = {}) {
         });
       }
 
-      // Team filter
-      if (filters.team_id) {
+      // Team filter (inclui descendentes — ver mem://standards/users/team-filter-includes-subteams)
+      if (teamIdsFilter) {
         results = results.filter((p) =>
-          p.teams.some((t) => t.team_id === filters.team_id)
+          p.teams.some((t) => teamIdsFilter!.has(t.team_id))
         );
       }
 
