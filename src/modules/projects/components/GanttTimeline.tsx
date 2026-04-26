@@ -132,9 +132,18 @@ export function GanttTimeline({ items, excludedCount, showLegend = true, onItemC
   }, [items]);
 
   if (!validItems.length) {
+    // Diferenciar três estados vazios para mensagem mais clara:
+    //  1) items vazio + excludedCount === 0  → filtros esvaziaram o resultado
+    //  2) items vazio + excludedCount > 0    → todos os itens existentes não têm datas
+    //  3) items > 0 mas nenhum válido        → datas inválidas
+    const filteredEmpty = items.length === 0 && excludedCount === 0;
     return (
       <div className="text-center py-12 space-y-2">
-        <p className="text-muted-foreground">Nenhum item com datas definidas para exibir.</p>
+        <p className="text-muted-foreground">
+          {filteredEmpty
+            ? 'Nenhum projeto corresponde aos filtros aplicados.'
+            : 'Nenhum item com datas definidas para exibir.'}
+        </p>
         {excludedCount > 0 && (
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
             <AlertCircle className="h-4 w-4" />

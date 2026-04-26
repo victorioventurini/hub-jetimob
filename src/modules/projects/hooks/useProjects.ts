@@ -43,20 +43,21 @@ export function useProjects(filters: ProjectFilters = {}) {
         return (data || []) as any[];
       };
 
-      // ── Archived branch (RPC SECURITY DEFINER) ──
+      // ── Archived branch (RPC SECURITY DEFINER, v1.1 retorna jsonb com joins) ──
       const fetchArchived = async () => {
         const { data, error } = await supabase.rpc('list_archived_projects');
         if (error) throw error;
-        // RPC retorna SETOF projects (sem joins). Aplicamos status/owner client-side.
-        let rows = (data || []) as any[];
+        // v1.1: RPC retorna jsonb (array) com owner/project_teams/project_krs/project_milestones aninhados,
+        // mesma forma do branch ativo (PROJECT_LIST_FIELDS). Filtros client-side de status/owner permanecem
+        // por consistência com o comportamento anterior (a RPC não aceita parâmetros).
+        let rows = (Array.isArray(data) ? data : []) as any[];
         if (filters.status && filters.status !== 'all') {
           rows = rows.filter((p) => p.status === filters.status);
         }
         if (filters.owner_id) {
           rows = rows.filter((p) => p.owner_id === filters.owner_id);
         }
-        // Marca como arquivado para o mapeamento downstream.
-        return rows.map((p) => ({ ...p, _is_archived: true }));
+        return rows;
       };
 
       const rawData =
@@ -82,7 +83,7 @@ export function useProjects(filters: ProjectFilters = {}) {
           impact: pk.impact,
         }));
 
-        const isArchived = p._is_archived === true || p.deleted_at != null;
+        const isArchived = p.deleted_at != null;
 
         return {
           id: p.id,

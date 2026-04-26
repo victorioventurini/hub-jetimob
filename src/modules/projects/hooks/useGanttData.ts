@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react';
 import { parseISO, isValid } from 'date-fns';
-import type { ProjectWithRelations, GanttItem } from '../types';
+import type { ProjectStatus, MilestoneStatus, ProjectWithRelations, GanttItem } from '../types';
 
 function isValidDateStr(d: string | null | undefined): d is string {
   if (!d) return false;
@@ -18,7 +18,39 @@ interface UseGanttDataResult {
   excludedCount: number;
 }
 
-export function useGanttData(projects: ProjectWithRelations[] | undefined): UseGanttDataResult {
+interface UseGanttDataOptions {
+  /**
+   * Quando definido (e diferente de 'all'), milestones cujo status não casa
+   * com o filtro são omitidas do Gantt para alinhar a visualização ao filtro
+   * de status aplicado em /projects. Projetos continuam sendo filtrados em
+   * useProjects (server-side para ativos, client-side para arquivados).
+   *
+   * Mapeamento ProjectStatus → MilestoneStatus aceito visualmente:
+   *  - 'in_progress' → mostra apenas milestones 'in_progress'
+   *  - 'done'        → mostra apenas milestones 'done'
+   *  - 'planned' | 'paused' | 'cancelled' → mostra apenas milestones 'todo'
+   *    (estados sem equivalente direto no enum de milestone)
+   */
+  statusFilter?: ProjectStatus | 'all';
+}
+
+function milestoneMatchesProjectStatus(
+  msStatus: MilestoneStatus,
+  projectStatusFilter: ProjectStatus | 'all' | undefined,
+): boolean {
+  if (!projectStatusFilter || projectStatusFilter === 'all') return true;
+  if (projectStatusFilter === 'in_progress') return msStatus === 'in_progress';
+  if (projectStatusFilter === 'done') return msStatus === 'done';
+  // planned / paused / cancelled — sem equivalente direto; mostramos apenas pendentes ('todo')
+  return msStatus === 'todo';
+}
+
+export function useGanttData(
+  projects: ProjectWithRelations[] | undefined,
+  options: UseGanttDataOptions = {},
+): UseGanttDataResult {
+  const { statusFilter } = options;
+
   return useMemo(() => {
     if (!projects?.length) return { items: [], excludedCount: 0 };
 
@@ -48,6 +80,7 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
       if (project.milestones?.length) {
         for (const ms of project.milestones) {
           if (ms.deleted_at || !isValidDateStr(ms.due_date)) continue;
+          if (!milestoneMatchesProjectStatus(ms.status, statusFilter)) continue;
           const msStart = isValidDateStr(ms.start_date)
             ? ms.start_date
             : isValidDateStr(ms.created_at)
@@ -69,5 +102,5 @@ export function useGanttData(projects: ProjectWithRelations[] | undefined): UseG
     }
 
     return { items, excludedCount };
-  }, [projects]);
+  }, [projects, statusFilter]);
 }
