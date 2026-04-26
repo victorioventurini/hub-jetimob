@@ -11366,29 +11366,7 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["kpi_rag_status"]
       }
-      list_archived_projects: {
-        Args: never
-        Returns: {
-          bu_id: string
-          created_at: string
-          deleted_at: string | null
-          description: string | null
-          due_date: string | null
-          external_url: string | null
-          id: string
-          name: string
-          owner_id: string
-          start_date: string | null
-          status: Database["public"]["Enums"]["project_status"]
-          updated_at: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
+      list_archived_projects: { Args: never; Returns: Json }
       list_partner_companies_with_privacy: {
         Args: { p_bu_id: string }
         Returns: {
