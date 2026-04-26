@@ -65,18 +65,47 @@ export function useProjects(filters: ProjectFilters = {}) {
           ? await fetchActive()
           : archivedState === 'archived'
             ? await fetchArchived()
-            : (() => {
-                // Modo "all": dedup defensivo por id (um projeto recém-arquivado pode aparecer
-                // em ambas as branches por timing entre soft-delete e cache da RPC).
-                return null;
-              })();
+            : (await Promise.all([fetchActive(), fetchArchived()]))
+                .flat()
+                // Dedup defensivo: um projeto recém-arquivado pode aparecer em ambas as branches
+                // por timing entre soft-delete e cache da RPC.
+                .reduce<any[]>((acc, p) => {
+                  if (!acc.some((x) => x.id === p.id)) acc.push(p);
+                  return acc;
+                }, []);
 
-      const combinedData =
-        rawData ??
-        (await Promise.all([fetchActive(), fetchArchived()])).flat().reduce<any[]>((acc, p) => {
-          if (!acc.some((x) => x.id === p.id)) acc.push(p);
-          return acc;
-        }, []);
+      // Resolve team filter to include descendant subteams (canonical pattern,
+      // ver mem://standards/users/team-filter-includes-subteams).
+      let teamIdsFilter: Set<string> | null = null;
+      if (filters.team_id) {
+        const { data: allTeams, error: teamsErr } = await supabase
+          .from('teams')
+          .select('id, parent_team_id')
+          .eq('bu_id', buId)
+          .is('deleted_at', null);
+        if (teamsErr) throw teamsErr;
+
+        const childrenByParent = new Map<string, string[]>();
+        (allTeams ?? []).forEach((t) => {
+          if (!t.parent_team_id) return;
+          const arr = childrenByParent.get(t.parent_team_id) ?? [];
+          arr.push(t.id);
+          childrenByParent.set(t.parent_team_id, arr);
+        });
+
+        const collected = new Set<string>([filters.team_id]);
+        const stack = [filters.team_id];
+        while (stack.length) {
+          const cur = stack.pop()!;
+          for (const c of childrenByParent.get(cur) ?? []) {
+            if (!collected.has(c)) {
+              collected.add(c);
+              stack.push(c);
+            }
+          }
+        }
+        teamIdsFilter = collected;
+      }
 
       let results = (rawData || []).map((p: any) => {
         const milestones = p.project_milestones || [];
