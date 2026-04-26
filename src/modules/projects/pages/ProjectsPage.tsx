@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { HubLayout } from '@/components/layout/HubLayout';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -37,6 +38,7 @@ export default function ProjectsPage() {
   const { profileId, realProfileId } = useIdentity();
   const { currentBuId } = useBu();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [, setSearchParams] = useSearchParams();
 
   // URL state — canonical pattern
   const statusState = useUrlState<ProjectStatus | 'all'>({ key: 'status', defaultValue: 'all' });
@@ -57,15 +59,32 @@ export default function ProjectsPage() {
   };
 
   const handleFiltersChange = useCallback((newFilters: ProjectFilters) => {
-    statusState.set(newFilters.status ?? 'all');
-    ownerState.set(newFilters.owner_id ?? '');
-    teamState.set(newFilters.team_id ?? '');
     setSearch(newFilters.search ?? '');
-    krLinkState.set(
-      newFilters.linked_to_kr === true ? 'linked' : newFilters.linked_to_kr === false ? 'not_linked' : ''
-    );
-    archivedState.set(newFilters.archived_state ?? 'active');
-  }, [statusState, ownerState, teamState, setSearch, krLinkState, archivedState]);
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+
+      const status = newFilters.status ?? 'all';
+      if (status === 'all') next.delete('status');
+      else next.set('status', status);
+
+      if (newFilters.owner_id) next.set('owner', newFilters.owner_id);
+      else next.delete('owner');
+
+      if (newFilters.team_id) next.set('teamId', newFilters.team_id);
+      else next.delete('teamId');
+
+      if (newFilters.linked_to_kr === true) next.set('krLink', 'linked');
+      else if (newFilters.linked_to_kr === false) next.set('krLink', 'not_linked');
+      else next.delete('krLink');
+
+      const archived = newFilters.archived_state ?? 'active';
+      if (archived === 'active') next.delete('archived');
+      else next.set('archived', archived);
+
+      return next;
+    }, { replace: true });
+  }, [setSearch, setSearchParams]);
 
   const { data: projects, isLoading, error } = useProjects(filters);
   const { items: ganttItems, excludedCount: ganttExcluded } = useGanttData(projects, {
