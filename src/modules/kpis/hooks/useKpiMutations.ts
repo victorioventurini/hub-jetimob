@@ -3,7 +3,7 @@ import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScoped
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
-import { KpiScope, KpiIndicatorType, KpiLifecycleStatus } from "../types";
+import { KpiScope, KpiIndicatorType, KpiLifecycleStatus, KpiFrequencyValue } from "../types";
 
 interface UpdateKpiData {
   id: string;
@@ -13,7 +13,12 @@ interface UpdateKpiData {
   category?: string;
   unit: string;
   direction: 'up' | 'down';
+  /** @deprecated v3.0.0 — escrito como espelho enquanto a coluna for NOT NULL no DB. */
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  // v3.0.0 frequency split
+  consolidation_frequency?: KpiFrequencyValue;
+  update_frequency?: KpiFrequencyValue;
+  frequency_migration_reviewed?: boolean;
   team_id: string | null;
   owner_user_id: string | null;
   target_value: number | null;

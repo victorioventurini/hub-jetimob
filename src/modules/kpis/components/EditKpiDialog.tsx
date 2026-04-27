@@ -22,7 +22,7 @@ import {
 import { useBu } from '@/contexts/BuContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useEditKpiForm } from './edit-kpi/useEditKpiForm';
-import type { DbKpiFrequency, EditKpiFormValues } from './edit-kpi/editKpiSchema';
+import type { EditKpiFormValues } from './edit-kpi/editKpiSchema';
 import { EditKpiBasicFields } from './edit-kpi/EditKpiBasicFields';
 import { EditKpiScopeSection } from './edit-kpi/EditKpiScopeSection';
 import { EditKpiOwnershipSection } from './edit-kpi/EditKpiOwnershipSection';
@@ -94,6 +94,14 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
 
     setIsSubmitting(true);
     try {
+      // v3.0.0: persistir os dois campos novos. `frequency` legado (NOT NULL no DB)
+      // é mantido como espelho de consolidation_frequency até remoção física futura.
+      const legacyFrequencyMirror = (
+        ['daily', 'weekly', 'monthly', 'quarterly'] as const
+      ).includes(values.consolidation_frequency as never)
+        ? (values.consolidation_frequency as 'daily' | 'weekly' | 'monthly' | 'quarterly')
+        : 'monthly';
+
       await updateKpi.mutateAsync({
         id: kpi.id,
         name: values.name,
@@ -101,7 +109,11 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         category: kpi.category || 'operacoes', // DEPRECATED
         unit: values.unit,
         direction: values.direction as KpiDirection,
-        frequency: values.frequency as DbKpiFrequency,
+        frequency: legacyFrequencyMirror,
+        // v3.0.0 split + flag de revisão
+        consolidation_frequency: values.consolidation_frequency,
+        update_frequency: values.update_frequency,
+        frequency_migration_reviewed: true,
         team_id: values.scope === 'team' ? values.team_id || null : null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
