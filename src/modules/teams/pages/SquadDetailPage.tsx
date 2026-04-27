@@ -35,6 +35,7 @@ import {
 import { AddSquadMemberDialog } from "../components/AddSquadMemberDialog";
 import { SquadFormDialog } from "../components/SquadFormDialog";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useBu } from "@/contexts/BuContext";
 
 export default function SquadDetailPage() {
   const { id } = useParams<{ id: string }>();
