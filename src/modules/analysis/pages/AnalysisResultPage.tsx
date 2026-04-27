@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useBu } from "@/contexts/BuContext";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
