@@ -104,9 +104,10 @@ export function useSquads(teamId?: string) {
 
 export function useSquad(squadId: string | undefined) {
   const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
 
   return useQuery({
-    queryKey: queryKeys.squads.detail(squadId ?? ''),
+    queryKey: queryKeys.squads.detail(squadId ?? '', currentBuId),
     queryFn: async () => {
       if (!squadId) return null;
 
@@ -118,6 +119,9 @@ export function useSquad(squadId: string | undefined) {
 
       if (error) throw error;
       if (!data) return null;
+
+      // BU isolation: ensure squad belongs to current BU
+      if (currentBuId && data.bu_id !== currentBuId) return null;
 
       // Get linked teams
       const { data: squadTeams } = await supabase
@@ -267,7 +271,7 @@ export function useUpdateSquad() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.id), refetchType: 'active' });
       toast.success("Squad atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -316,7 +320,7 @@ export function useAddSquadMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.squadId), refetchType: 'active' });
       toast.success("Membro adicionado ao squad");
     },
     onError: (error: Error) => {
@@ -348,7 +352,7 @@ export function useUpdateSquadMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.squadId), refetchType: 'active' });
       toast.success("Papel atualizado");
     },
     onError: () => {
@@ -379,7 +383,7 @@ export function useRemoveSquadMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.squadId), refetchType: 'active' });
       toast.success("Membro removido do squad");
     },
     onError: () => {

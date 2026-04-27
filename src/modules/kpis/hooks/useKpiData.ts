@@ -398,7 +398,7 @@ export function useKpiDetail(kpiId: string) {
   const { currentBuId } = useBu();
   
   const { data: kpi, isLoading } = useQuery({
-    queryKey: queryKeys.kpis.detail(kpiId),
+    queryKey: queryKeys.kpis.detail(kpiId, currentBuId),
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     queryFn: async () => {
       if (!supabase) return null;

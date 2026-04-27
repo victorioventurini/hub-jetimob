@@ -47,14 +47,24 @@ describe('teamsKeys', () => {
   });
 
   describe('detail', () => {
-    it('should return key with teamId', () => {
+    it('should return key with teamId and null buId by default', () => {
       const key = teamsKeys.detail('team-456');
-      expect(key).toEqual(['team', 'team-456']);
+      expect(key).toEqual(['team', 'team-456', null]);
+    });
+
+    it('should include buId when provided', () => {
+      const key = teamsKeys.detail('team-456', 'bu-1');
+      expect(key).toEqual(['team', 'team-456', 'bu-1']);
     });
 
     it('should handle undefined teamId', () => {
       const key = teamsKeys.detail(undefined);
-      expect(key).toEqual(['team', undefined]);
+      expect(key).toEqual(['team', undefined, null]);
+    });
+
+    it('detailPrefix matches across BUs', () => {
+      const prefix = teamsKeys.detailPrefix('team-456');
+      expect(prefix).toEqual(['team', 'team-456']);
     });
   });
 
@@ -103,9 +113,19 @@ describe('squadsKeys', () => {
   });
 
   describe('detail', () => {
-    it('should return key with squadId', () => {
+    it('should return key with squadId and null buId by default', () => {
       const key = squadsKeys.detail('squad-789');
-      expect(key).toEqual(['squads', 'detail', 'squad-789']);
+      expect(key).toEqual(['squads', 'detail', 'squad-789', null]);
+    });
+
+    it('should include buId when provided', () => {
+      const key = squadsKeys.detail('squad-789', 'bu-1');
+      expect(key).toEqual(['squads', 'detail', 'squad-789', 'bu-1']);
+    });
+
+    it('detailPrefix matches across BUs', () => {
+      const prefix = squadsKeys.detailPrefix('squad-789');
+      expect(prefix).toEqual(['squads', 'detail', 'squad-789']);
     });
   });
 });

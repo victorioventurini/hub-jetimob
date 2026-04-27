@@ -1,88 +1,127 @@
-## Diagnóstico do bug
 
-Você está na BU **Jetimob** mas vê o ticket "Carro para PCD" (categoria Jurídico → Civil, criado por Victorio Venturini) — que pertence à BU **Victorio Venturini**. Isso é uma violação de isolamento de BU.
+# Wave: Isolamento Cross-BU em Todos os Módulos
 
-### Causa raiz (3 camadas falham simultaneamente)
+## Pré-checklist consultado
+- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` v4.1.0 — regras inquebráveis de filtragem `.eq('bu_id', currentBuId)` por camada
+- `docs/canonical/QUERY_KEYS_STANDARD.md` — query keys devem incluir `buId` para evitar reuso de cache cross-BU
+- `mem://features/tickets/cross-bu-isolation` — padrão canônico de defesa em 4 camadas estabelecido nesta sessão
+- `mem://standards/bu-isolation-master` — filtro mandatório, query gating, cross-BU profiles
 
-1. **RLS permissivo** — A função `can_view_ticket` (usada por `tickets_select_policy`) retorna `true` se você é creator/owner do ticket E membro da BU do ticket. Como você é membro de ambas as BUs e foi creator/owner do ticket original, o backend libera a leitura **mesmo com a BU ativa diferente**. Não há check `current_bu_id() = ticket.bu_id`.
+## Diagnóstico — auditoria de páginas de detalhe operacionais
 
-2. **Hook `useTicket` sem filtro de BU** — `src/modules/tickets/hooks/useTicketQueries.ts` (linhas 175-180) faz `select(...).eq("id", ticketId)` sem `.eq("bu_id", buId)`. Depende exclusivamente do RLS.
+Apliquei o padrão `Tickets v2026-04-27` (RLS + frontend filter + query key + UX guard) a cada rota com `:id` que carrega entidade BU-scoped:
 
-3. **Query key sem `buId`** — `queryKeys.tickets.detail(ticketId) = ['ticket', ticketId]` não inclui a BU. Ao trocar de BU, o React Query reaproveita o cache do ticket carregado na BU anterior.
+| Módulo | Rota | Hook detalhe | Query key inclui `buId`? | Guard pós-fetch (`return null` se BU != atual)? | UX guard na página? |
+|---|---|---|---|---|---|
+| Tickets | `/tickets/:id` | `useTicket` | ✅ (corrigido) | ✅ | ✅ |
+| Projetos | `/projects/:id` | `useProject` | ✅ | ✅ (linha 63) | ❌ |
+| KPIs | `/kpis/:kpiId` | `useKpiDetail` | ❌ key sem buId | ✅ (linha 424) | ❌ |
+| Times | `/teams/:id` | `useTeam` | ❌ key sem buId | ✅ (linha 133) | ❌ |
+| Squads | `/squads/:id` | `useSquad` | ❌ key sem buId | ❌ ausente | ❌ |
+| Análise | `/analysis/:reportId` | `useAnalysisReport` | ❌ key sem buId | ❌ ausente | ❌ |
+| OKRs Org View | `/okrs/org-view/:objectiveId` | `useOrgObjectiveView` | ✅ | ❌ ausente | ❌ |
+| OKRs Team Contribution | `/okrs/team-contribution/:teamId` | inline | ❌ | ❌ ausente | ❌ |
+| Parceiros (BU-scoped) | `/settings/partners/:partnerId` | `usePartnerById` | ❌ | parcial | ❌ (mas é multi-BU por design — manter) |
 
-### Como o cenário acontece
-- Você abriu o ticket enquanto estava em "Victorio Venturini" → o ticket foi cacheado.
-- Trocou para "Jetimob" → cache reaproveitado E, mesmo se refetch, RLS libera.
-- Resultado: tela do shell Jetimob renderiza dados de ticket da outra BU.
+> **Eventos** (`/events/...`) e **Agentes/Integrações Hub** (`/hub/integrations/...`) usam mocks ou são intencionalmente platform-wide → fora do escopo desta wave.
+>
+> **Parceiros globais** (`/hub/partners/:partnerId`) são platform-level → fora do escopo (não há conceito de "BU correta").
 
-## Plano de correção
+## Plano de execução (4 camadas por módulo)
 
-### 1. Backend — Endurecer RLS de tickets
+Para cada módulo afetado aplicaremos o mesmo padrão consolidado:
 
-Atualizar `can_view_ticket(p_ticket_id, p_profile_id)` para exigir que o ticket pertença à BU ativa do header `x-current-bu-id`:
+### 1. Query keys — incluir `buId`
+Atualizar em `src/lib/queryKeys/`:
+- `kpis.ts` → `detail: (buId, kpiId) => ['kpis', 'detail', kpiId, buId]` + `detailPrefix(kpiId)`
+- `teams.ts` → `teams.detail: (buId, teamId)` + `squads.detail: (buId, squadId)` + prefixes
+- `analysis.ts` → `detail: (buId, id)` + prefix
+- `okrs.ts` → `teamContribution: (buId, teamId, cycleId?)`
+- `participantKeys.ts` (squad memberships) — manter (não muda BU)
 
-```text
-v_current_bu := current_bu_id();  -- já existe como helper
-IF v_current_bu IS NULL OR v_current_bu <> v_ticket.bu_id THEN
-  RETURN false;
-END IF;
+Atualizar todos os `invalidateQueries` em hooks de mutação para passar `buId` (ou usar `detailPrefix` quando se quer invalidar sem conhecer buId).
+
+### 2. Frontend filter explícito + post-fetch guard
+Adicionar `.eq("bu_id", buId)` no select onde a coluna existir, ou garantir validação pós-fetch `if (data.bu_id !== currentBuId) return null` em:
+- `useSquad` (não tem nem um nem outro)
+- `useAnalysisReport` (não tem `.eq('bu_id')` nem post-fetch validation)
+- `useOrgObjectiveView` (precisa post-fetch validation: objective.bu_id !== currentBuId → null)
+- `useTeamContributionPage` query inline → mover para hook nomeado com guard
+
+### 3. UX guard nas páginas de detalhe
+Padrão idêntico ao `TicketDetailPage`: comparar `entity.bu_id !== currentBu.id` e renderizar `VicErrorState` instruindo o usuário a trocar de BU. Aplicar em:
+- `ProjectDetailPage`
+- `KpiDetailPage`
+- `TeamDetailPage`
+- `SquadDetailPage`
+- `AnalysisResultPage`
+- `OrgObjectiveViewPage`
+
+### 4. RLS hardening (banco) — onde necessário
+Auditar e endurecer funções `can_view_*` para exigir `current_bu_id() = entity.bu_id` (com bypass para `is_platform_admin`). Apliquei a Tickets; replicar para entidades sem BU guard no RLS:
+
+- `okr_team_objectives`, `okr_team_key_results`, `okr_initiatives`, `okr_org_objectives`, `okr_org_key_results` — verificar policies SELECT e adicionar cláusula `bu_id = current_bu_id() OR is_platform_admin()`
+- `kpi_metrics`, `kpi_values` — idem
+- `projects`, `project_milestones` — verificar `can_view_project` (se existir)
+- `teams`, `squads` — idem
+- `analysis_reports`, `analysis_decisions`, `analysis_comments` — idem
+
+Migration única consolidada com revisão policy-a-policy. Funções `SECURITY DEFINER` com `SET search_path = public`. Sem CHECK constraints.
+
+## Detalhes técnicos
+
+### Pseudocódigo do UX guard (replicado por página)
+```tsx
+const { currentBu } = useBu();
+const { data: entity, isLoading } = useEntity(id);
+
+if (isLoading) return <Loader />;
+if (!entity) return <NotFound />;
+if (currentBu && entity.bu_id !== currentBu.id) {
+  return (
+    <VicErrorState
+      title="Conteúdo de outra BU"
+      description="Este registro pertence a outra Business Unit. Troque de BU para visualizá-lo."
+    />
+  );
+}
 ```
 
-Inserir esse check **logo após** carregar `v_ticket`, **antes** dos checks 1-5. Isso garante isolamento absoluto: mesmo se o usuário é creator, owner ou participante, ele só vê o ticket quando está logado na BU correta.
-
-Exceção controlada: platform admins (via `is_platform_admin(auth.uid())`) podem bypassar — mantém capacidade de suporte cross-BU. Se a função `current_bu_id()` retornar NULL (ex: jobs internos), bloqueia.
-
-Aplicar a mesma proteção em:
-- `ticket_messages` (policy `Users can view messages of tickets they can see`) — já delega via `can_view_ticket`, herdará automaticamente.
-- `ticket_attachments` — idem.
-- `ticket_participants` — idem.
-
-### 2. Frontend — Filtrar `bu_id` em `useTicket`
-
-Em `src/modules/tickets/hooks/useTicketQueries.ts` (`useTicket`):
-- Adicionar `.eq("bu_id", buId)` no `select` do detail.
-- Se o ticket retornar `null` (não pertence à BU ativa), navegar para `/tickets` com toast: "Este ticket pertence a outra BU. Selecione a BU correta para visualizá-lo."
-
-### 3. Frontend — Incluir `buId` na query key
-
-Em `src/lib/queryKeys/tickets.ts`:
-```text
-detail: (buId: string | null, ticketId: string | null) =>
-  ['ticket', buId, ticketId] as const,
+### Query key pattern (replicado por módulo)
+```ts
+detail: (buId: string | null, id: string | null) => 
+  ['<module>', 'detail', id, buId] as const,
+detailPrefix: (id: string) => 
+  ['<module>', 'detail', id] as const,
 ```
-Atualizar todos os call-sites (`useTicket`, invalidações em `useTicketMutations`, `useTicketMessageMutations`, `useTransferTicket`, `usePinMessage`, `TicketsListPage`, `TicketDetailPage`).
 
-### 4. Frontend — Invalidar cache no switch de BU
+### Migration RLS (esqueleto)
+```sql
+-- Para cada policy SELECT em tabelas operacionais:
+DROP POLICY IF EXISTS "<old_select_policy>" ON public.<table>;
+CREATE POLICY "<table>_select_v2" ON public.<table>
+FOR SELECT
+USING (
+  is_platform_admin()
+  OR (bu_id = current_bu_id() AND <existing_ownership_check>)
+);
+```
 
-Adicionar limpeza explícita do cache de tickets em `BuContext.applyBuSwitch` (já remove `clearBuClientCache`; garantir que `queryClient.removeQueries({ queryKey: ['ticket'] })` e `['tickets']` também roda — verificar se já existe handler global de invalidação).
+## Ordem de execução (atomic per module)
 
-### 5. Guard de UX em `TicketDetailPage`
+1. **Wave 1 — Query keys SSOT**: atualizar todas as `detail`/`detailPrefix` keys de uma vez. Risco baixo, alto blast radius.
+2. **Wave 2 — Hooks**: `useSquad`, `useAnalysisReport`, `useOrgObjectiveView`, `useTeamContributionPage`. Adicionar guards.
+3. **Wave 3 — UX guards**: aplicar `VicErrorState` nas 6 páginas listadas.
+4. **Wave 4 — Migration RLS**: hardening backend em uma migration consolidada e revisada.
+5. **Wave 5 — Testes & memória**: atualizar testes de query keys; atualizar `mem://standards/bu-isolation-master` com novo padrão de UX guard universal e tabela de cobertura.
 
-Após carregar `ticket`, comparar `ticket.bu_id !== currentBu?.id`:
-- Se diferente, exibir `VicErrorState` com CTA "Trocar para a BU correta" ou voltar para `/tickets`.
-- Não renderizar conteúdo do ticket nesse estado (defesa em profundidade contra dados em cache).
+## Riscos & mitigações
 
-### 6. QA e validação
+- **Cache invalidations existentes**: alguns `invalidateQueries(['kpis', 'detail', id])` deixam de matchar com a nova key. Usar `detailPrefix` para garantir compatibilidade.
+- **Realtime subscriptions** que filtram por id (sem buId) continuam funcionando — apenas a chave do React Query muda.
+- **Multi-BU users (admins)** que abrem links profundos de outras BUs vão ver `VicErrorState` em vez de carregar — comportamento desejado e consistente com Tickets.
+- **OKRs Cross BU rituals** (QBR C-Level) usam `is_platform_admin()` bypass — manter intacto.
 
-- Cenário A: Usuário multi-BU abre ticket via URL direta de outra BU → tela de erro + redirect.
-- Cenário B: Trocar BU enquanto ticket aberto → redireciona automaticamente.
-- Cenário C: Platform admin → mantém capacidade de visualização (RLS bypass).
-- Adicionar entrada em `docs/qa/QA_BU_SCOPE.md` (Teste 8 — Tickets cross-BU).
-- Migration nota: `current_bu_id()` retorna NULL fora de requests com header — qualquer trigger interno que precise ler ticket usará `SECURITY DEFINER` próprio.
-
-## Arquivos afetados
-
-- `supabase/migrations/<novo>.sql` — patch em `can_view_ticket`.
-- `src/modules/tickets/hooks/useTicketQueries.ts` — filtro `bu_id` no detail.
-- `src/lib/queryKeys/tickets.ts` — `detail` agora inclui `buId`.
-- `src/modules/tickets/hooks/useTicketMutations.ts`, `useTicketMessageMutations.ts`, `useTransferTicket.ts`, `usePinMessage.ts` — invalidações com novo formato.
-- `src/modules/tickets/pages/TicketDetailPage.tsx` — guard UX cross-BU.
-- `docs/qa/QA_BU_SCOPE.md` — novo cenário documentado.
-- `mem://standards/bu-isolation-master` — adicionar nota sobre detail pages exigirem `bu_id` no select E na query key.
-
-## Conformidade com docs canônicos
-
-- Respeita **Regra 1 (PRE-BU vs POST-BU)**: continua usando `useBuScopedSupabase`.
-- Respeita **Regra 3 (BU-scoped)**: adiciona o filtro explícito que faltava.
-- Respeita **Query Keys SSOT**: alteração centralizada em `src/lib/queryKeys/tickets.ts`.
-- Alinha com `mem://standards/bu-isolation-master` e `mem://standards/bu-scoped-detail-query-keys`.
+## Documentação
+- Atualizar `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` adicionando seção "UX Guard Universal" e tabela de incidentes (2026-04-27 Tickets cross-BU).
+- Atualizar `mem://standards/bu-isolation-master` consolidando o padrão de 4 camadas como SSOT.

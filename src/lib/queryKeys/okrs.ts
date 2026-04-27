@@ -502,7 +502,14 @@ export const kpisKeys = {
   all: (buId: string | null) => ['kpis', buId] as const,
   list: (buId: string | null, filters?: Record<string, unknown>) => 
     ['kpis', 'list', buId, filters] as const,
-  detail: (kpiId: string) => ['kpis', 'detail', kpiId] as const,
+  /**
+   * BU-scoped detail key. Inclui buId para evitar reuso de cache cross-BU
+   * quando admins multi-BU alternam contexto sem recarregar a página.
+   * Use detailPrefixById(kpiId) para invalidar todas as variantes.
+   */
+  detail: (kpiId: string, buId?: string | null) => ['kpis', 'detail', kpiId, buId ?? null] as const,
+  /** Prefix para invalidar todas as variantes de detalhe de uma KPI (todas as BUs) */
+  detailPrefixById: (kpiId: string) => ['kpis', 'detail', kpiId] as const,
   values: (kpiId: string) => ['kpis', 'values', kpiId] as const,
   sources: (buId: string | null) => ['kpis', 'sources', buId] as const,
   categories: (buId: string | null) => ['kpis', 'categories', buId] as const,

@@ -141,7 +141,7 @@ export function KpiSelect({
 
   // Query para buscar o KPI selecionado caso não esteja na lista
   const { data: selectedKpi } = useQuery({
-    queryKey: [...queryKeys.kpis.detail(value ?? ''), 'selected'],
+    queryKey: [...queryKeys.kpis.detail(value ?? '', currentBuId), 'selected'],
     queryFn: async () => {
       if (!supabase || !value || value === NONE_VALUE) return null;
       

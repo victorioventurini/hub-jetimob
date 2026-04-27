@@ -53,6 +53,10 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
         return null;
       }
 
+      // BU isolation: ensure objective belongs to current BU
+      const buId = currentBu?.id ?? null;
+      if (buId && (objective as any).bu_id !== buId) return null;
+
       // Fetch org KRs (exclude cancelled)
       const { data: orgKrs, error: krsError } = await supabase
         .from('okr_org_key_results')

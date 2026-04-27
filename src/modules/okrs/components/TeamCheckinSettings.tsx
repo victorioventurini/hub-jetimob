@@ -70,7 +70,7 @@ export function TeamCheckinSettings({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detailPrefix(teamId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.all(null), refetchType: 'active' });
       toast({
         title: 'Configurações atualizadas',

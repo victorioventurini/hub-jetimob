@@ -38,8 +38,10 @@ describe("analysisKeys — chaves específicas", () => {
     ]);
   });
 
-  it("detail é determinístico por id", () => {
-    expect(analysisKeys.detail("rep-1")).toEqual(["analysis", "detail", "rep-1"]);
+  it("detail é determinístico por id e inclui buId", () => {
+    expect(analysisKeys.detail("rep-1")).toEqual(["analysis", "detail", "rep-1", null]);
+    expect(analysisKeys.detail("rep-1", "bu-1")).toEqual(["analysis", "detail", "rep-1", "bu-1"]);
+    expect(analysisKeys.detailPrefix("rep-1")).toEqual(["analysis", "detail", "rep-1"]);
   });
 
   it("templates inclui bu_id", () => {
