@@ -36,16 +36,21 @@ import { useKpiData } from "../hooks";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
   KpiDirection,
-  KpiFrequency,
+  KpiFrequencyValue,
   KpiIndicatorType,
   KpiLifecycleStatus,
   KpiScope,
-  FREQUENCY_LABELS,
+  FREQUENCY_VALUE_LABELS,
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
   getScopeLabels,
 } from "../types";
+import {
+  FREQUENCY_ORDER,
+  getValidUpdateFrequencies,
+  isUpdateFrequencyValid,
+} from "../utils/frequency";
 import { useBu } from "@/contexts/BuContext";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -73,7 +78,12 @@ const formSchema = z.object({
   description: z.string().max(500).optional(),
   unit: z.string().min(1, "Unidade é obrigatória"),
   direction: z.enum(["up", "down"]),
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]),
+  consolidation_frequency: z.enum([
+    "daily","weekly","biweekly","monthly","quarterly","semiannual","annual",
+  ]),
+  update_frequency: z.enum([
+    "daily","weekly","biweekly","monthly","quarterly","semiannual","annual",
+  ]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
   target_value: z.preprocess(
