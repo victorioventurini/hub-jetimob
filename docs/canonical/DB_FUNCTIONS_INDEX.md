@@ -1052,3 +1052,28 @@ _Sem descrição._
 
 ---
 
+
+## KPI Frequency Split — v3.0.0
+
+### `kpi_frequency_to_days(f kpi_frequency_value) → int`
+Helper IMMUTABLE. Mapeia enum para dias: `daily=1, weekly=7, biweekly=14, monthly=30, quarterly=90, semiannual=180, annual=365`.
+
+### `validate_kpi_frequency_relationship() → trigger`
+Trigger `kpi_frequency_validation` (BEFORE INSERT/UPDATE em `kpi_metrics`). Garante `update_frequency ≤ consolidation_frequency` em dias.
+
+### `derive_kpi_value_confidence() → trigger`
+Trigger `trg_kpi_value_derive_confidence` (BEFORE INSERT em `kpi_values`). Quando `confidence='medium'` (default não-informado), deriva: `consolidated → high`, `projection → medium`. Override explícito do usuário sempre prevalece.
+
+### `kpi_calculate_period_v2(reference_date date, freq kpi_frequency_value) → (period_start, period_end, period_label)`
+Overload coexistente da `kpi_calculate_period` legada. Semântica formal:
+- `daily` → dia.
+- `weekly` → segunda-domingo (ISO).
+- `biweekly` → janela de 14 dias ancorada na primeira segunda-feira do ano.
+- `monthly` → mês calendário.
+- `quarterly` → Q1/Q2/Q3/Q4 calendário.
+- `semiannual` → H1=jan-jun, H2=jul-dez.
+- `annual` → ano calendário.
+
+A função antiga foi preservada sem mudanças para não quebrar callsites.
+
+---
