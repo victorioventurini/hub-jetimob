@@ -293,6 +293,30 @@ export default function TicketDetailPage() {
     );
   }
 
+  // BU SCOPE GUARD (defense-in-depth): even if cache somehow held a ticket
+  // from another BU, refuse to render its contents while the active BU differs.
+  if (currentBu?.id && ticket.bu_id && ticket.bu_id !== currentBu.id) {
+    return (
+      <HubLayout>
+        <div className="space-y-6">
+          <PageHeader
+            title="Ticket de outra BU"
+            breadcrumbs={[
+              { label: "Tickets", href: "/tickets" },
+              { label: "Acesso negado" },
+            ]}
+          />
+          <VicErrorState
+            title="Esse ticket pertence a outra BU 🔒"
+            description="Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+            onBack={goBack}
+            backLabel="Voltar para tickets"
+          />
+        </div>
+      </HubLayout>
+    );
+  }
+
   return (
     <HubLayout>
       <div className="space-y-6">
