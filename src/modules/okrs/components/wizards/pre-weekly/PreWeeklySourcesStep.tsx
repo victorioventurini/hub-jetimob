@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/useAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { getRitualLabel } from '@/modules/okrs/constants/ritualLabels';
@@ -58,13 +58,13 @@ interface SessionItem {
 }
 
 function useUserWeeklySources(referenceWeek: string) {
-  const { user } = useAuth();
+  const { profileId } = useIdentity();
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
 
   return useQuery({
-    queryKey: preWeeklyKeys.userSources(currentBuId, user?.id, referenceWeek),
-    enabled: !!currentBuId && !!user?.id,
+    queryKey: preWeeklyKeys.userSources(currentBuId, profileId, referenceWeek),
+    enabled: !!currentBuId && !!profileId,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<SessionItem[]> => {
       const ref = referenceWeek ? new Date(referenceWeek) : new Date();
@@ -74,7 +74,7 @@ function useUserWeeklySources(referenceWeek: string) {
       const { data, error } = await buSupabase
         .from('okr_wizard_sessions')
         .select('id, wizard_type, completed_at, status')
-        .eq('started_by', user!.id)
+        .eq('started_by', profileId!)
         .in('wizard_type', ['collaborator', 'leader-prep', 'team-checkin'])
         .gte('completed_at', weekStart)
         .lte('completed_at', weekEnd)
