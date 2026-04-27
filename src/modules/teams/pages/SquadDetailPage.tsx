@@ -117,6 +117,26 @@ export default function SquadDetailPage() {
     );
   }
 
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir um squad de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && (squad as any).bu_id && (squad as any).bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Esse squad pertence a outra BU 🔒</h2>
+          <p className="text-muted-foreground mb-4 max-w-md text-center">
+            Você está visualizando o Hub em uma BU diferente da BU desse squad.
+            Selecione a BU correta no topo da tela para acessá-lo.
+          </p>
+          <Button asChild>
+            <Link to="/teams">Voltar para Times</Link>
+          </Button>
+        </div>
+      </HubLayout>
+    );
+  }
+
   // Group members by role
   const leaders = squad.members?.filter((m) => m.role !== "member") || [];
   const regularMembers = squad.members?.filter((m) => m.role === "member") || [];
