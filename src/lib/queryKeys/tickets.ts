@@ -13,7 +13,9 @@ export const ticketsKeys = {
   myTicketsPrefix: (buId: string | null) => ['my-tickets', buId] as const,
   myTickets: (buId: string | null, profileId?: string) => ['my-tickets', buId, profileId] as const,
 
-  detail: (ticketId: string | null) => ['ticket', ticketId] as const,
+  /** Prefix helper to invalidate ticket detail across BUs (e.g. on impersonation toggle). */
+  detailPrefix: (ticketId: string | null) => ['ticket', ticketId] as const,
+  detail: (buId: string | null, ticketId: string | null) => ['ticket', ticketId, buId] as const,
   messages: (ticketId: string) => ['tickets', 'messages', ticketId] as const,
   attachments: (ticketId: string | null) => ['ticket-attachments', ticketId] as const,
   categories: (buId: string | null, scope?: string) => ['tickets', 'categories', buId, scope] as const,
