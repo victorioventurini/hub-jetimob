@@ -85,6 +85,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
           .from('kpi_metrics')
           .select(`
             id, name, unit, target_value, direction, frequency,
+            consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id,
             area_id, scope,
             owner:profiles!owner_user_id(id, display_name, photo_url),
@@ -124,7 +125,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         
         const { data: latestValues } = await supabase
           .from('kpi_values')
-          .select('kpi_id, value, reference_date, rag_status, confidence, period_label')
+          .select('kpi_id, value, reference_date, rag_status, confidence, period_label, input_type')
           .in('kpi_id', kpiIds)
           .order('reference_date', { ascending: false });
         
