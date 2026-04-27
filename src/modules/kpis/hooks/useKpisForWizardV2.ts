@@ -14,13 +14,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { kpisKeys } from "@/lib/queryKeys/okrs";
-import type { 
+import type {
   KpiForWizardV2,
   UseKpisForWizardV2Options,
   UseKpisForWizardV2Result,
-  KpiRagStatus, 
-  KpiConfidenceLevel, 
+  KpiRagStatus,
+  KpiConfidenceLevel,
   KpiFrequency,
+  KpiFrequencyValue,
+  KpiInputType,
   KpiLifecycleStatus,
   KpiDirection,
   KpiScope,
@@ -28,6 +30,10 @@ import type {
   KpiDisplayMode,
   KpiAlertReason,
 } from "../types";
+import {
+  FREQUENCY_DAYS,
+  legacyFrequencyToValue,
+} from "../utils/frequency";
 
 // ============================================================
 // Hook
