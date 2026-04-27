@@ -1,84 +1,110 @@
-# Reagrupamento da sub-tab KPIs por Escopo
+# Correção: Bloco "Área" não aparece em /teams/:id?tab=contribution&subtab=kpis
 
-URL: `/teams/:id?tab=contribution&subtab=kpis`
+## Pré-checklist (cumprido nesta análise)
+- ✅ TCR (`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` §2.3 + §2862) — modelo `kpi_metrics` v2.82/v2.90.
+- ✅ DATA_MODEL_REGISTRY — `kpi_metrics` BU-scoped.
+- ✅ DEVELOPMENT_STANDARDS — sem `select('*')`, sem alterar query keys.
+- ✅ Memória canônica `mem://features/teams/team-contribution-tab-standard.md` — sub-tab KPIs.
+- ✅ Schema SSOT de KPI: `src/modules/kpis/types.ts` + `editKpiSchema.ts`.
 
-## Objetivo
-Substituir os 2 grupos atuais ("Sob responsabilidade do time" / "Sob responsabilidade de membros") por **4 grupos por escopo canônico**, alinhados ao enum `KpiScope` (`org`/`area`/`team`) + o conceito de owner pessoal:
+## Diagnóstico (com base no schema canônico — não no que pensei na 1ª iteração)
 
-1. **{NomeDaBU}** (escopo `org`, ex: "Jetimob") — KPIs globais da BU
-2. **Área** (escopo `area`) — agrupados por `responsible_area_id` (fallback `area_id`), com sub-cabeçalho por área
-3. **Time** (escopo `team`) — KPIs cuja responsabilidade é do(s) time(s) selecionado(s)
-4. **Responsável** — KPIs cujo owner é membro do time, mas que não se enquadram nos blocos acima
+Semântica oficial dos campos de `kpi_metrics` (TCR + `types.ts` + `editKpiSchema.ts`):
 
-## TCR e canônicos consultados
-- `mem://features/teams/team-contribution-tab-standard.md` — define a estrutura canônica das sub-tabs e proíbe duplicar `KpiCard`
-- `src/modules/kpis/types.ts` — `KpiScope = 'team' | 'area' | 'org'` e `getScopeLabels(buName)` (label dinâmico com nome da BU — já existe SSOT)
-- `src/modules/teams/hooks/useTeamKpisGrouped.ts` — hook agregador atual (vai ser reescrito mantendo o mesmo nome e contrato externo)
-- `src/components/ui/area-badge.tsx` (via `KpiCard`) e `OkrScopeBadge` — padrão visual já existente
+| Campo | Significado | Obrigatoriedade |
+|---|---|---|
+| `area_id` (v2.82) | **Área dona estratégica** do KPI | Obrigatório quando `scope='area'` ativo |
+| `responsible_area_id` (v2.90) | **Responsabilidade operacional** (override) | Obrigatório só para `scope='org'` ativo; opcional nos demais |
+| `responsible_team_id` (v2.90) | Time operacional responsável | Opcional |
 
-## Critérios de inclusão por bloco (ordem de prioridade — sem duplicação)
+Ou seja: para `scope='area'`, `area_id` é a **fonte primária** do vínculo de área, e `responsible_area_id` é um override operacional opcional.
 
-Resolução em cascata: cada KPI entra em **exatamente um** bloco, na ordem abaixo.
+### Dados verificados no banco (time Comercial `d3247da9-...`, área Revenue `8e8bdffb-...`)
 
-1. **{BU} (org)** — `kpi_metrics.scope = 'org'` E vinculado ao time via:
-   - `responsible_team_id IN teamIds` OU
-   - `team_id IN teamIds` (legado) OU
-   - `responsible_area_id` = área do time OU
-   - `owner_user_id IN memberIds`
-   - (KPIs `scope=org` que não tocam o time não aparecem — mantém escopo da aba)
+3 KPIs ativos `scope='area'` da Revenue, **corretamente cadastrados**:
 
-2. **Área** — `kpi_metrics.scope = 'area'` (mesmos critérios de vínculo acima). Sub-agrupado por `responsible_area_id ?? area_id`, com `AreaBadge` no cabeçalho de cada sub-grupo.
+| Nome | scope | area_id | responsible_area_id |
+|---|---|---|---|
+| MRR Total | area | Revenue | NULL |
+| Crescimento de MRR (%) | area | Revenue | NULL |
+| Ticket medio | area | Revenue | NULL |
 
-3. **Time** — `kpi_metrics.scope = 'team'` E (`responsible_team_id IN teamIds` OU `team_id IN teamIds` quando `responsible_team_id IS NULL`).
+### Bug em `useTeamKpisGrouped.ts`
 
-4. **Responsável** — qualquer KPI restante cujo `owner_user_id IN memberIds` e que não tenha entrado nos blocos 1–3. Sub-agrupado por owner (`display_name` + avatar).
+A consulta e o predicado de classificação ignoram `area_id` (a fonte primária), checando apenas `responsible_area_id` (o override opcional). Resultado: nenhum dos 3 KPIs entra no resultado.
 
-`memberIds` = `profiles.team_id IN resolvedTeamIds` (sem terminados), como hoje.
+**Query (linhas 231-233):**
+```ts
+...(teamAreaIds.length > 0
+  ? [q.in('responsible_area_id', teamAreaIds)]   // falta o irmão por area_id
+  : []),
+```
 
-## Mudanças
+**Predicado `isLinkedToTeam` (linhas 287-291):**
+```ts
+areaIdSet.has(raw.responsible_area_id) ||   // falta fallback area_id
+```
+
+A inversão de prioridade já estava certa no agrupamento interno (linha 311: `responsible_area_id ?? area_id` para a chave do bucket), mas inconsistente com o filtro de inclusão.
+
+## Correção
 
 ### `src/modules/teams/hooks/useTeamKpisGrouped.ts`
-Reescrever `queryFn` para:
-- Buscar em paralelo (3 queries `kpi_metrics` filtrando por `scope` + critérios + 1 query `profiles` para members + 1 query `kpi_values` em batch — mesmo padrão atual).
-- Retornar nova shape:
-  ```ts
-  export interface TeamKpisGroupedByScope {
-    org:    { buLabel: string; kpis: KpiWithValues[] };
-    area:   { areaId: string | null; areaName: string; areaColor: string | null; kpis: KpiWithValues[] }[];
-    team:   KpiWithValues[];
-    owners: { ownerId: string; ownerName: string; photoUrl: string | null; kpis: KpiWithValues[] }[];
-    memberCount: number;
-    totalCount: number;
-  }
-  ```
-- Manter query key `teamsKeys.contributionKpis(teamId, buId, includeSubteams)` (sem ampliar — mesma chave, só shape interna muda; cache será invalidado naturalmente no deploy).
-- Continua respeitando: BU isolation (`useOptionalBuClient`), soft-delete, sem `select('*')`, `KPI_FIELDS` já inclui `scope`/`responsible_area_id`/`responsible_team_id`/`area`.
 
-### `src/modules/teams/components/contribution/TeamContributionKpis.tsx`
-Reescrever para renderizar 4 seções na ordem **BU → Área → Time → Responsável**, cada uma com:
-- Ícone + título + `Badge` de contagem (padrão visual atual mantido).
-- Skeleton/empty-state por bloco (esconder bloco vazio em vez de mostrar card "Nenhum...", para reduzir ruído quando não há nada).
-- Empty-state global apenas se `totalCount === 0`.
+**A. `linkBy`** — adicionar critério irmão por `area_id`:
 
-Detalhes visuais:
-- **BU**: ícone `Building2`, título dinâmico via `getScopeLabels(currentBu?.name).org` (ex: "Jetimob (Global)").
-- **Área**: ícone `Layers`; sub-grupos com `AreaBadge` (reuso) — mesma divisória visual de `KpiAreaSection`.
-- **Time**: ícone `Users`, título "Time" + nome do time. Quando `includeSubteams=true`, complementar com `({N} times)`.
-- **Responsável**: ícone `User`; sub-grupos com avatar + nome do owner.
+```ts
+const linkBy = (q: any) => [
+  q.in('responsible_team_id', resolvedTeamIds),
+  q.is('responsible_team_id', null).in('team_id', resolvedTeamIds),
+  ...(teamAreaIds.length > 0
+    ? [
+        q.in('responsible_area_id', teamAreaIds),
+        // fonte primária quando não há override operacional
+        q.is('responsible_area_id', null).in('area_id', teamAreaIds),
+      ]
+    : []),
+  ...(memberIds.length > 0 ? [q.in('owner_user_id', memberIds)] : []),
+];
+```
 
-Reuso obrigatório: `KpiCard` em todos os blocos, sem CRUD (regra do padrão da aba).
+A condicional `is('responsible_area_id', null)` evita duplicar KPIs já cobertos pela query irmã (e o dedup global por id continua sendo a barreira final).
 
-## Não-fazer
-- Não criar nova rota nem nova SSOT de KPIs — só reagrupar a view consolidada.
-- Não duplicar `KpiCard`, `AreaBadge`, `getScopeLabels` — reusar.
-- Não usar `select('*')`.
-- Não alterar a query key (evita refetch desnecessário em outras telas).
-- Não mostrar KPIs `scope=org` não relacionados ao time (mantém o escopo "contribuição do time").
+**B. `isLinkedToTeam`** — fallback `area_id` quando `responsible_area_id` é NULL:
 
-## Atualização de memória
-Atualizar `mem://features/teams/team-contribution-tab-standard.md` no item 5 (sub-tab `kpis`) para refletir o novo agrupamento por escopo canônico (BU → Área → Time → Responsável) com regra de cascata sem duplicação.
+```ts
+const isLinkedToTeam = (raw: any) =>
+  teamIdSet.has(raw.responsible_team_id) ||
+  (!raw.responsible_team_id && teamIdSet.has(raw.team_id)) ||
+  areaIdSet.has(raw.responsible_area_id) ||
+  (!raw.responsible_area_id && areaIdSet.has(raw.area_id)) ||  // novo
+  memberIdSet.has(raw.owner_user_id);
+```
+
+A chave do bucket (linha 311 — `responsible_area_id ?? area_id`) já está alinhada e não precisa mudar — o sub-agrupamento por área permanece correto.
+
+### Sem outras alterações
+- `TeamContributionKpis.tsx`: nenhuma mudança.
+- Query key: inalterada.
+- Sem migrations.
+- Documentação canônica: o standard `team-contribution-tab-standard.md` já descreve o agrupamento por escopo correto; nada a atualizar.
+
+## Conformidade com regras inquebráveis
+- Regra 3 (BU-scoped): `useOptionalBuClient` + `bu_id` filter mantidos.
+- Regra 4 (sem `select('*')`): `KPI_FIELDS` explícito mantido.
+- Regra 5 (query keys via `teamsKeys`): inalterado.
+- Soft-delete: `deleted_at IS NULL` mantido.
+
+## Validação esperada
+Após a correção, no time **Comercial**:
+- Bloco **Área (Revenue)** exibe 3 indicadores: MRR Total, Crescimento de MRR (%), Ticket medio.
+- Bloco **Responsável** não duplica esses KPIs (cascata garante prioridade do bloco Área, e dedup por id elimina sobreposição da query "owner em members").
 
 ## Arquivos afetados
-- `src/modules/teams/hooks/useTeamKpisGrouped.ts` (rewrite do queryFn + novo tipo de retorno)
-- `src/modules/teams/components/contribution/TeamContributionKpis.tsx` (rewrite das seções)
-- `.lovable/memory/features/teams/team-contribution-tab-standard.md` (atualização do item 5)
+- `src/modules/teams/hooks/useTeamKpisGrouped.ts` (2 edições pontuais: `linkBy` + `isLinkedToTeam`)
+
+## Não-fazer
+- Não migrar dados (`area_id` é o campo canônico v2.82 — NÃO é legado a ser eliminado).
+- Não alterar shape do retorno do hook nem o componente de UI.
+- Não usar `select('*')`.
+- Não criar nova rota nem nova SSOT.
