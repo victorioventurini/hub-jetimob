@@ -41,6 +41,7 @@ export default function SquadDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: squad, isLoading } = useSquad(id);
   const { has, isWildcard } = usePermissions();
+  const { currentBuId } = useBu();
   const updateMember = useUpdateSquadMember();
   const removeMember = useRemoveSquadMember();
   
