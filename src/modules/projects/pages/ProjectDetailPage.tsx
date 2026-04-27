@@ -481,14 +481,14 @@ export default function ProjectDetailPage() {
                 projectDueDate={project.due_date}
               />
             ) : (
-              <MilestoneList
+              <MilestonesTable
                 milestones={milestones || project.milestones || []}
-                projectId={project.id}
-                onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
-                onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
-                onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
-                canEdit={canEditMilestone}
                 ownerProfiles={ownerProfiles}
+                onStatusChange={handleMilestoneStatusChange}
+                onEdit={(m) => setEditingMilestone(m)}
+                onDelete={(m) => setDeletingMilestone(m)}
+                canEditMilestone={canEditMilestoneRow}
+                canDeleteMilestone={canDeleteMilestoneRow}
               />
             )}
           </CardContent>
