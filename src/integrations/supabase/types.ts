@@ -4147,11 +4147,15 @@ export type Database = {
           area_id: string | null
           bu_id: string | null
           category: Database["public"]["Enums"]["kpi_category"] | null
+          consolidation_frequency:
+            | Database["public"]["Enums"]["kpi_frequency_value"]
+            | null
           created_at: string
           deleted_at: string | null
           description: string | null
           direction: Database["public"]["Enums"]["kpi_direction"]
           frequency: Database["public"]["Enums"]["kpi_frequency"]
+          frequency_migration_reviewed: boolean
           id: string
           indicator_type: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global: boolean
@@ -4168,6 +4172,10 @@ export type Database = {
           target_value: number | null
           team_id: string | null
           unit: string
+          update_frequency:
+            | Database["public"]["Enums"]["kpi_frequency_value"]
+            | null
+          update_mode: Database["public"]["Enums"]["kpi_update_mode"]
           updated_at: string
           zombie_candidate: boolean
         }
@@ -4175,11 +4183,15 @@ export type Database = {
           area_id?: string | null
           bu_id?: string | null
           category?: Database["public"]["Enums"]["kpi_category"] | null
+          consolidation_frequency?:
+            | Database["public"]["Enums"]["kpi_frequency_value"]
+            | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
           direction?: Database["public"]["Enums"]["kpi_direction"]
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
+          frequency_migration_reviewed?: boolean
           id?: string
           indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global?: boolean
@@ -4196,6 +4208,10 @@ export type Database = {
           target_value?: number | null
           team_id?: string | null
           unit?: string
+          update_frequency?:
+            | Database["public"]["Enums"]["kpi_frequency_value"]
+            | null
+          update_mode?: Database["public"]["Enums"]["kpi_update_mode"]
           updated_at?: string
           zombie_candidate?: boolean
         }
@@ -4203,11 +4219,15 @@ export type Database = {
           area_id?: string | null
           bu_id?: string | null
           category?: Database["public"]["Enums"]["kpi_category"] | null
+          consolidation_frequency?:
+            | Database["public"]["Enums"]["kpi_frequency_value"]
+            | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
           direction?: Database["public"]["Enums"]["kpi_direction"]
           frequency?: Database["public"]["Enums"]["kpi_frequency"]
+          frequency_migration_reviewed?: boolean
           id?: string
           indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
           is_global?: boolean
@@ -4224,6 +4244,10 @@ export type Database = {
           target_value?: number | null
           team_id?: string | null
           unit?: string
+          update_frequency?:
+            | Database["public"]["Enums"]["kpi_frequency_value"]
+            | null
+          update_mode?: Database["public"]["Enums"]["kpi_update_mode"]
           updated_at?: string
           zombie_candidate?: boolean
         }
@@ -4381,6 +4405,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          input_type: Database["public"]["Enums"]["kpi_input_type"]
           kpi_id: string
           notes: string | null
           period_end: string | null
@@ -4396,6 +4421,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          input_type?: Database["public"]["Enums"]["kpi_input_type"]
           kpi_id: string
           notes?: string | null
           period_end?: string | null
@@ -4411,6 +4437,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          input_type?: Database["public"]["Enums"]["kpi_input_type"]
           kpi_id?: string
           notes?: string | null
           period_end?: string | null
@@ -11364,6 +11391,13 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
+      kpi_calculate_period_v2: {
+        Args: {
+          p_frequency: Database["public"]["Enums"]["kpi_frequency_value"]
+          p_reference_date: string
+        }
+        Returns: Record<string, unknown>
+      }
       kpi_calculate_rag: {
         Args: {
           p_direction: Database["public"]["Enums"]["kpi_direction"]
@@ -11371,6 +11405,10 @@ export type Database = {
           p_value: number
         }
         Returns: Database["public"]["Enums"]["kpi_rag_status"]
+      }
+      kpi_frequency_to_days: {
+        Args: { f: Database["public"]["Enums"]["kpi_frequency_value"] }
+        Returns: number
       }
       list_archived_projects: { Args: never; Returns: Json }
       list_partner_companies_with_privacy: {
@@ -11784,11 +11822,21 @@ export type Database = {
       kpi_contributor_role: "data_entry" | "reviewer"
       kpi_direction: "up" | "down"
       kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
+      kpi_frequency_value:
+        | "daily"
+        | "weekly"
+        | "biweekly"
+        | "monthly"
+        | "quarterly"
+        | "semiannual"
+        | "annual"
       kpi_indicator_type: "kpi" | "metric"
+      kpi_input_type: "projection" | "consolidated"
       kpi_lifecycle_status: "proposed" | "active" | "observing" | "deprecated"
       kpi_rag_status: "on_track" | "at_risk" | "off_track" | "no_data"
       kpi_scope: "team" | "area" | "org"
       kpi_status: "active" | "inactive"
+      kpi_update_mode: "manual" | "automatic"
       kpi_value_source:
         | "manual"
         | "integration"
@@ -12086,11 +12134,22 @@ export const Constants = {
       kpi_contributor_role: ["data_entry", "reviewer"],
       kpi_direction: ["up", "down"],
       kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
+      kpi_frequency_value: [
+        "daily",
+        "weekly",
+        "biweekly",
+        "monthly",
+        "quarterly",
+        "semiannual",
+        "annual",
+      ],
       kpi_indicator_type: ["kpi", "metric"],
+      kpi_input_type: ["projection", "consolidated"],
       kpi_lifecycle_status: ["proposed", "active", "observing", "deprecated"],
       kpi_rag_status: ["on_track", "at_risk", "off_track", "no_data"],
       kpi_scope: ["team", "area", "org"],
       kpi_status: ["active", "inactive"],
+      kpi_update_mode: ["manual", "automatic"],
       kpi_value_source: [
         "manual",
         "integration",
