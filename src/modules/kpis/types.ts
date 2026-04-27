@@ -387,7 +387,11 @@ export interface KpiForWizardV2 {
   unit: string;
   target_value: number | null;
   direction: KpiDirection;
+  /** @deprecated v3.0.0 — use update_frequency / consolidation_frequency. */
   frequency: KpiFrequency;
+  // v3.0.0 frequency split
+  consolidation_frequency: KpiFrequencyValue | null;
+  update_frequency: KpiFrequencyValue | null;
   lifecycle_status: KpiLifecycleStatus;
   recovery_protocol: string | null;
   team_id: string | null;
@@ -400,7 +404,11 @@ export interface KpiForWizardV2 {
   latest_rag_status: KpiRagStatus;
   latest_confidence: KpiConfidenceLevel | null;
   latest_period_label: string | null;
+  /** v3.0.0 — tipo do último input registrado. */
+  latest_input_type: KpiInputType | null;
   needs_update: boolean;
+  /** v3.0.0 — desvio percentual já pré-calculado (latest vs target). */
+  deviation_pct: number | null;
   // v2.83.0: Role-based classification
   userRole: KpiUserRole;
   isStrategic: boolean;
