@@ -171,6 +171,8 @@ export function KpiValuesTable({
   direction,
   isLoading,
   kpiName = "",
+  consolidationFrequency,
+  updateFrequency,
   canEdit = false,
   onUpdateValue,
   onDeleteValue,
@@ -371,6 +373,8 @@ export function KpiValuesTable({
           kpiValue={editingValue}
           kpiName={kpiName}
           unit={unit}
+          consolidationFrequency={consolidationFrequency}
+          updateFrequency={updateFrequency}
           open={!!editingValue}
           onOpenChange={(open) => { if (!open) setEditingValue(null); }}
           onSave={onUpdateValue}
