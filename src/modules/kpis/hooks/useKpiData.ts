@@ -38,6 +38,11 @@ interface DbKpiMetric {
   unit: string;
   direction: 'up' | 'down';
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  /** v3.0.0 — split de frequência (consolidação × atualização). */
+  consolidation_frequency?: import('../types').KpiFrequencyValue | null;
+  update_frequency?: import('../types').KpiFrequencyValue | null;
+  update_mode?: import('../types').KpiUpdateMode;
+  frequency_migration_reviewed?: boolean;
   target_value: number | null;
   status: 'active' | 'inactive';
   is_global: boolean;
@@ -86,6 +91,8 @@ interface DbKpiValue {
   period_label: string | null;
   confidence: 'high' | 'medium' | 'low';
   rag_status: string | null;
+  /** v3.0.0 — tipo do input. */
+  input_type?: import('../types').KpiInputType;
 }
 
 export function useKpiData(options: UseKpiDataOptions = {}) {
