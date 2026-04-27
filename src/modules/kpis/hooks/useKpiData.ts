@@ -416,7 +416,9 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_metrics")
         .select(`
           id, name, description, category, bu_id, owner_user_id, team_id,
-          unit, direction, frequency, target_value, status, is_global,
+          unit, direction, frequency,
+          consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed,
+          target_value, status, is_global,
           created_at, updated_at, deleted_at,
           indicator_type, lifecycle_status, target_source, recovery_protocol,
           area_id, scope, responsible_area_id, responsible_team_id,
@@ -447,7 +449,7 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_values")
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, confidence, rag_status
+          period_start, period_end, period_label, confidence, rag_status, input_type
         `)
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: false });
