@@ -1,0 +1,1 @@
+ALTER TYPE public.kpi_input_type RENAME VALUE 'projection' TO 'partial';

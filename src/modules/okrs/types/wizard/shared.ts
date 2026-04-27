@@ -91,7 +91,8 @@ export interface TeamCheckinDecision {
   /**
    * v3.0.0 — Metadata estruturada para auditoria. Ex: decisões disparadas
    * pelo KPI Gate gravam `{ source: 'kpi_gate', kpi_id, kpi_input_type,
-   * kpi_confidence, kpi_rag_status }`. Campo livre (jsonb), sem schema rígido.
+   * kpi_confidence, kpi_rag_status }` (kpi_input_type ∈ partial|consolidated).
+   * Campo livre (jsonb), sem schema rígido.
    */
   metadata?: Record<string, unknown>;
 }

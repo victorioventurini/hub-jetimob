@@ -345,7 +345,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       notes?: string;
       created_by?: string;
       confidence?: 'high' | 'medium' | 'low';
-      input_type?: 'projection' | 'consolidated';
+      input_type?: 'partial' | 'consolidated';
     }) => {
       const client = assertSupabaseClient(supabase, "addKpiValue");
       const insertPayload = {

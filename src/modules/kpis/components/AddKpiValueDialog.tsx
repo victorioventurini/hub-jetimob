@@ -44,7 +44,7 @@ const formSchema = z.object({
       return isBefore(selectedDate, today);
     }, { message: validation.consolidatedDate("Data de referência") }),
   notes: z.string().max(500).optional(),
-  input_type: z.enum(['consolidated', 'projection']),
+  input_type: z.enum(['consolidated', 'partial']),
   override_confidence: z.boolean().optional(),
   confidence: z.enum(['high', 'medium', 'low']).optional(),
 });
@@ -213,11 +213,11 @@ export function AddKpiValueDialog({
                         </Label>
                       </div>
                       <div className="flex items-start gap-2">
-                        <RadioGroupItem value="projection" id="ait-projection" className="mt-0.5" />
-                        <Label htmlFor="ait-projection" className="font-normal cursor-pointer">
-                          <span className="font-medium">Projeção</span>
+                        <RadioGroupItem value="partial" id="ait-partial" className="mt-0.5" />
+                        <Label htmlFor="ait-partial" className="font-normal cursor-pointer">
+                          <span className="font-medium">Parcial</span>
                           <span className="block text-xs text-muted-foreground">
-                            Estimativa enquanto o período ainda não fechou.
+                            Valor atingido até a data, antes do período fechar.
                           </span>
                         </Label>
                       </div>
@@ -229,7 +229,7 @@ export function AddKpiValueDialog({
                       <strong>{FREQUENCY_VALUE_LABELS[consolidationFrequency].toLowerCase()}</strong>{' '}
                       mas é atualizado{' '}
                       <strong>{FREQUENCY_VALUE_LABELS[updateFrequency].toLowerCase()}</strong>.
-                      Inputs antes do fechamento são tratados como projeção.
+                      Inputs antes do fechamento são tratados como parciais.
                     </p>
                   )}
                   <FormMessage />

@@ -31,7 +31,7 @@ export type KpiFrequencyValue =
   | 'annual';
 
 export type KpiUpdateMode = 'manual' | 'automatic';
-export type KpiInputType = 'projection' | 'consolidated';
+export type KpiInputType = 'partial' | 'consolidated';
 
 export type KpiStatus = 'active' | 'inactive';
 export type KpiValueSource = 'manual' | 'api' | 'webhook' | 'spreadsheet' | 'database' | 'integration' | 'calculation';
@@ -214,7 +214,7 @@ export const FREQUENCY_VALUE_LABELS: Record<KpiFrequencyValue, string> = {
 };
 
 export const INPUT_TYPE_LABELS: Record<KpiInputType, string> = {
-  projection: 'Projeção',
+  partial: 'Parcial',
   consolidated: 'Consolidado',
 };
 

@@ -234,7 +234,7 @@ export function KpiValuesTable({
                 const variationColor = variation !== null ? getVariationColor(variation, direction) : "";
                 const hasNotes = !!value.notes?.trim();
                 const SourceIcon = sourceIcons[value.source] || Edit;
-                const isProjection = value.input_type === 'projection';
+                const isPartial = value.input_type === 'partial';
                 const confidence = value.confidence;
                 const confCfg = confidence ? confidenceConfig[confidence] : null;
 
@@ -244,7 +244,7 @@ export function KpiValuesTable({
                     className={cn(
                       "group/row",
                       index % 2 === 0 ? "bg-muted/20" : "",
-                      isProjection && "opacity-80",
+                      isPartial && "opacity-80",
                     )}
                   >
                     <TableCell className="font-medium">
@@ -296,17 +296,17 @@ export function KpiValuesTable({
                       )}
                     </TableCell>
 
-                    {/* v3.0.0 — Tipo (Projeção/Consolidado) + Confidence */}
+                    {/* v3.0.0 — Tipo (Parcial/Consolidado) + Confidence */}
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1 flex-wrap">
                         <Badge
-                          variant={isProjection ? 'outline' : 'secondary'}
+                          variant={isPartial ? 'outline' : 'secondary'}
                           className={cn(
                             'text-[10px] h-5 font-normal',
-                            isProjection && 'border-dashed text-muted-foreground',
+                            isPartial && 'border-dashed text-muted-foreground',
                           )}
                         >
-                          {isProjection ? 'Projeção' : 'Consolidado'}
+                          {isPartial ? 'Parcial' : 'Consolidado'}
                         </Badge>
                         {confCfg && (
                           <Tooltip>

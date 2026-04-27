@@ -1,412 +1,128 @@
-# Refatoração de Frequência, Confidence e Ordenação no KPI Gate (v2)
+# Plano — Renomear "Projeção" → "Parcial" em inputs de KPI
 
-> Revisão crítica aplicada sobre o prompt original. Ajusta UX/escalabilidade e remove dívida técnica prematura.
+## Pré-checklist obrigatório (executado)
 
-## Princípios
+| Doc consultado | Achado relevante |
+|---|---|
+| `TECHNICAL_CONTEXT_REGISTRY.md` v3.29.0 | Cita explicitamente "projeção × consolidado" e "63/63 valores marcados consolidated" — precisa bump v3.29.1 com renomeação |
+| `SCHEMA_QUICK_REFERENCE.md` | Linhas 184 e 189 listam `projection` no enum `kpi_input_type` |
+| `DB_FUNCTIONS_INDEX.md` linha 1065 | Texto descritivo cita `projection → medium`; **função real no banco não usa o literal** (só testa `consolidated`), então só a doc precisa ajuste |
+| `DEVELOPMENT_STANDARDS.md` v1.30.0 | Sem regras específicas afetadas; referência ao TCR pode ficar como está |
+| `mem://features/kpis/kpis-master-standard` | Linhas 30, 36, 86, 104 mencionam `projection` — atualizar SSOT |
+| `mem://standards/database/check-constraint-prohibition` | **Confirma:** usar ENUM (e não CHECK) — alinhado com `ALTER TYPE RENAME VALUE` |
+| `IDENTITY_CONVENTION.md` / `PERMISSIONS_AND_RBAC_MODEL.md` | Não impactados (mudança não toca identidade nem RBAC) |
+| `BU_SCOPED_SUPABASE_RULES.md` | Não impactado (sem novas queries) |
+| `DATA_MODEL_REGISTRY.md` | Sem menção a `input_type`/`projection` — não exige update |
+| Auditoria DB | 0 registros com `'projection'` (todos os 63 são `consolidated`); função `derive_kpi_value_confidence` **não cita literal `projection`** → seguro renomear |
 
-- Conformidade total com docs canônicos: `TECHNICAL_CONTEXT_REGISTRY.md`, `DATA_MODEL_REGISTRY.md`, `PERMISSIONS_AND_RBAC_MODEL.md`, `SCHEMA_QUICK_REFERENCE.md`, `DEVELOPMENT_STANDARDS.md`.
-- Standards aplicados: ENUMs + triggers (não CHECK), sem `select('*')`, `kpisKeys.*` para invalidação, `prevIdRef` em reset de form, BU isolation, soft-delete, RBAC via permission keys.
-- Nenhuma dívida técnica prematura: o que não tem entrega imediata não aparece na UI.
+### Validações contra o prompt do Claude
 
-## Ajustes vs. plano v1
-
-1. `update_mode` **fica fora do formulário** (banco preparado, UI fixa em `manual`).
-2. UI captura **apenas `input_type`**; `confidence` é derivado por trigger DB com possibilidade de override em campo "Avançado" colapsado.
-3. **Banner global no Dashboard** + banner discreto por KPI (não banner por KPI em massa).
-4. Semântica de `biweekly`/`semiannual` formalmente definida.
-5. Decisões disparadas pelo KPI Gate gravam `kpi_input_type`/`kpi_confidence` em metadata (auditoria).
-6. `kpi_calculate_period` antiga preservada; cria-se overload `kpi_calculate_period_v2` coexistente.
-7. Toggle "apenas consolidados" via **URL state** (`useUrlState`).
+| Item | Prompt sugeria | Realidade no projeto | Decisão |
+|---|---|---|---|
+| Coluna `input_type` | CHECK constraint | ENUM `kpi_input_type` | Usar `ALTER TYPE ... RENAME VALUE` (não DROP/ADD CHECK) |
+| Migração de dados | UPDATE em massa | 0 linhas afetadas | Migração é só de schema (rename) |
+| Editar `src/integrations/supabase/types.ts` | Sim | **NUNCA** (auto-gerado) | Confiar na regeneração automática |
+| Funções DB usam string `'projection'` | — | Não | Sem alteração em funções/triggers |
 
 ---
 
-## Fase 1 — Schema DB
+## Fase 1 — Migração de banco
 
-### 1.1 ENUMs
+Uma única migration, atômica, instantânea, sem rewrite, sem perda de dados:
 
 ```sql
-CREATE TYPE kpi_frequency_value AS ENUM
-  ('daily','weekly','biweekly','monthly','quarterly','semiannual','annual');
-CREATE TYPE kpi_update_mode AS ENUM ('manual','automatic');
-CREATE TYPE kpi_input_type  AS ENUM ('projection','consolidated');
+ALTER TYPE public.kpi_input_type RENAME VALUE 'projection' TO 'partial';
 ```
 
-### 1.2 Colunas em `kpi_metrics`
-
-```sql
-ALTER TABLE kpi_metrics
-  ADD COLUMN consolidation_frequency kpi_frequency_value,
-  ADD COLUMN update_frequency        kpi_frequency_value,
-  ADD COLUMN update_mode             kpi_update_mode NOT NULL DEFAULT 'manual',
-  ADD COLUMN frequency_migration_reviewed boolean NOT NULL DEFAULT false;
-
-COMMENT ON COLUMN kpi_metrics.frequency IS
-  'DEPRECATED v3.0: use consolidation_frequency + update_frequency. Removido em fase futura.';
-```
-
-### 1.3 Coluna em `kpi_values`
-
-```sql
-ALTER TABLE kpi_values
-  ADD COLUMN input_type kpi_input_type NOT NULL DEFAULT 'consolidated';
-```
-
-### 1.4 Helpers e validação cruzada (sem CHECK)
-
-```sql
-CREATE OR REPLACE FUNCTION public.kpi_frequency_to_days(f kpi_frequency_value)
-RETURNS int LANGUAGE sql IMMUTABLE AS $$
-  SELECT CASE f
-    WHEN 'daily' THEN 1 WHEN 'weekly' THEN 7 WHEN 'biweekly' THEN 14
-    WHEN 'monthly' THEN 30 WHEN 'quarterly' THEN 90
-    WHEN 'semiannual' THEN 180 WHEN 'annual' THEN 365 END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.validate_kpi_frequency_relationship()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-  IF NEW.consolidation_frequency IS NOT NULL AND NEW.update_frequency IS NOT NULL
-     AND public.kpi_frequency_to_days(NEW.update_frequency)
-       > public.kpi_frequency_to_days(NEW.consolidation_frequency) THEN
-    RAISE EXCEPTION 'update_frequency cannot be less frequent than consolidation_frequency';
-  END IF;
-  RETURN NEW;
-END $$;
-
-CREATE TRIGGER kpi_frequency_validation
-BEFORE INSERT OR UPDATE ON kpi_metrics
-FOR EACH ROW EXECUTE FUNCTION public.validate_kpi_frequency_relationship();
-```
-
-### 1.5 `kpi_calculate_period_v2` (overload coexistente)
-
-Função nova aceita `kpi_frequency_value` (7 valores) e devolve `(p_start, p_end, p_label)`. **Antiga preservada** sem modificações para não quebrar callsites.
-
-**Semântica formal:**
-- `daily` → dia.
-- `weekly` → segunda-domingo (ISO).
-- `biweekly` → janela de 14 dias **ancorada na primeira segunda-feira do ano** (cálculo determinístico, mesmo resultado para qualquer usuário).
-- `monthly` → mês calendário.
-- `quarterly` → Q1/Q2/Q3/Q4 calendário.
-- `semiannual` → **H1 = jan-jun, H2 = jul-dez** (fixo).
-- `annual` → ano calendário.
-
-Documentar em `docs/canonical/DB_FUNCTIONS_INDEX.md`.
-
-### 1.6 Trigger `trg_kpi_value_validation` (atualização)
-
-Passa a usar `kpi_calculate_period_v2(NEW.reference_date, COALESCE(m.consolidation_frequency, m.frequency::text::kpi_frequency_value))` com fallback ao enum legado por cast. RAG continua sendo calculado e gravado **no momento da escrita** (lógica preservada).
-
-### 1.7 Trigger de derivação de `confidence`
-
-```sql
-CREATE OR REPLACE FUNCTION public.derive_kpi_value_confidence()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-  -- Só derivar se o usuário NÃO informou confidence explicitamente
-  -- (default da coluna é 'medium'; tratamos como "não informado" se input_type já foi escolhido)
-  IF TG_OP = 'INSERT' AND NEW.confidence = 'medium' THEN
-    NEW.confidence := CASE NEW.input_type
-      WHEN 'consolidated' THEN 'high'::kpi_confidence_level
-      WHEN 'projection'   THEN 'medium'::kpi_confidence_level
-    END;
-  END IF;
-  RETURN NEW;
-END $$;
-
-CREATE TRIGGER trg_kpi_value_derive_confidence
-BEFORE INSERT ON kpi_values
-FOR EACH ROW EXECUTE FUNCTION public.derive_kpi_value_confidence();
-```
-
-> O usuário **pode** sobrescrever via campo "Avançado". Quando a UI envia explicitamente `confidence`, o valor enviado prevalece.
-
-### 1.8 Backfill
-
-```sql
-UPDATE kpi_metrics SET
-  consolidation_frequency = CASE frequency
-    WHEN 'daily' THEN 'daily'::kpi_frequency_value
-    WHEN 'weekly' THEN 'weekly' WHEN 'monthly' THEN 'monthly'
-    WHEN 'quarterly' THEN 'quarterly' ELSE NULL END,
-  update_frequency = CASE frequency
-    WHEN 'daily' THEN 'daily'::kpi_frequency_value
-    WHEN 'weekly' THEN 'weekly' WHEN 'monthly' THEN 'monthly'
-    WHEN 'quarterly' THEN 'quarterly' ELSE NULL END,
-  update_mode = 'manual',
-  frequency_migration_reviewed = false;
-
-UPDATE kpi_values SET input_type = 'consolidated' WHERE input_type IS NULL;
-```
-
-### 1.9 RLS
-
-Sem mudança. Colunas novas herdam policies existentes.
+Após o rename:
+- A função `derive_kpi_value_confidence` continua válida (não referencia `projection`).
+- Trigger `kpi_frequency_validation` não é afetado.
+- RLS, índices, views, FKs: zero impacto.
+- `src/integrations/supabase/types.ts` é regenerado automaticamente pelo Lovable Cloud com `kpi_input_type: "partial" | "consolidated"`.
 
 ---
 
-## Fase 2 — Tipos e utilitários
+## Fase 2 — Tipos & utilitários TypeScript
 
-### 2.1 `src/modules/kpis/types.ts`
-
-- `KpiFrequency` marcado `@deprecated`.
-- Novos: `KpiFrequencyValue`, `KpiUpdateMode`, `KpiInputType`.
-- `KpiMetric` ganha `consolidation_frequency`, `update_frequency`, `update_mode`, `frequency_migration_reviewed`.
-- `KpiValue` ganha `input_type`.
-- `KpiForWizardV2` ganha `update_frequency`, `consolidation_frequency`, `last_input_type`, `last_confidence`, `deviation_pct` (calculado **uma vez** no enriquecimento).
-
-### 2.2 `src/modules/kpis/utils/frequency.ts`
-
-- `FREQUENCY_DAYS` (7 valores).
-- `isUpdateFrequencyValid(consolidation, update)`.
-- `getFrequencyLabel(value)` pt-BR.
-- `suggestInputType(kpi, inputDate)` — espelhando regra do trigger DB.
-- `getConsolidationPeriod(freq, date)` com `date-fns` (`startOfWeek`/`startOfMonth`/`startOfQuarter` + cálculo manual de biweekly/semiannual respeitando semântica da Fase 1.5).
-- `UPDATE_OVERDUE_THRESHOLDS` (igual a `FREQUENCY_DAYS`).
-
-### 2.3 Testes
-
-`utils/__tests__/frequency.test.ts` — cobertura completa, incluindo casos MRR (mensal × semanal) e edge cases de biweekly/semiannual.
+| Arquivo | Mudança |
+|---|---|
+| `src/modules/kpis/types.ts` L34 | `KpiInputType = 'partial' \| 'consolidated'` |
+| `src/modules/kpis/types.ts` L216-218 | `INPUT_TYPE_LABELS = { partial: 'Parcial', consolidated: 'Consolidado' }` |
+| `src/modules/kpis/utils/frequency.ts` L221-235 | `suggestInputType` retorna `'partial'` no lugar de `'projection'` |
+| `src/modules/kpis/hooks/useKpiData.ts` L348, L358 | Literal `'projection'` → `'partial'` |
+| `src/modules/kpis/hooks/useKpiMutations.ts` L214 | Literal `'projection'` → `'partial'` |
+| `src/modules/okrs/types/wizard/mbr.ts` L61 | `latestInputType?: 'partial' \| 'consolidated' \| null` |
+| `src/modules/okrs/types/wizard/shared.ts` L93 | Comentário do payload de decisão |
 
 ---
 
-## Fase 3 — Formulário de KPI ✅
+## Fase 3 — Componentes UI (KPIs)
 
-### 3.1 `editKpiSchema.ts` + `formSchema` (CreateKpiDialog)
-
-- Substituiu `frequency` por `consolidation_frequency` + `update_frequency` (enums de 7 valores).
-- `superRefine` aplica `isUpdateFrequencyValid` em ambos os schemas.
-- `DbKpiFrequency` marcado `@deprecated`; mantido para escrita-espelho.
-
-### 3.2 `EditKpiBasicFields.tsx` / `CreateKpiDialog.tsx`
-
-- Dois selects dependentes lado-a-lado: **Frequência de consolidação** + **Frequência de atualização**.
-- Update select desabilita opções menos frequentes que consolidation; auto-clear quando inválido.
-- Hint visual quando intermediário: *"Inputs intermediários serão tratados como projeção"*.
-- Tooltips com exemplo MRR.
-
-### 3.3 `useEditKpiForm.ts` / `CreateKpiDialog.tsx`
-
-- Hidrata os 2 campos novos (fallback `legacyFrequencyToValue` para KPIs ainda não migrados manualmente).
-- Reset segue padrão `prevIdRef`.
-- Mutation escreve `consolidation_frequency`, `update_frequency`, `frequency` (espelho enquanto NOT NULL no DB) e `frequency_migration_reviewed=true`.
-- `useKpiMutations.UpdateKpiData` e `useKpiData.createKpi` aceitam os campos novos.
+| Arquivo | Mudança |
+|---|---|
+| `AddKpiValueDialog.tsx` L47, L196+ | `z.enum(['consolidated','partial'])`; radio label **"Parcial"** + descrição **"Valor atingido até a data, antes do período fechar"**; default via `suggestInputType` continua funcionando |
+| `EditKpiValueDialog.tsx` L46, L106, L131, L187+ | Idem (schema, hidratação, label, descrição) |
+| `KpiValuesTable.tsx` L237, L309 | `isProjection` → `isPartial`; texto **"Parcial"**; manter visual diferenciado (border-dashed) |
+| `KpiEvolutionChart.tsx` L35, L68, L88 | Filtro `v.input_type !== 'partial'`; legenda "Parcial"; comentários v3.0.0 |
+| `KpiHistoryDialog.tsx` L131, L135 | Filtros `!== 'partial'` e contador `=== 'partial'`; toggle "Apenas consolidados" mantido |
+| `KpiActionsMenu.tsx` L46 | Comentário atualizado |
 
 ---
 
-## Fase 4 — Captura de input em valores (UI simplificada) ✅
+## Fase 4 — Componentes UI (Ritos / KPI Gate)
 
-### 4.1 `AddKpiValueDialog.tsx` / `EditKpiValueDialog.tsx`
-
-- Novas props opcionais `consolidationFrequency` / `updateFrequency` (sem quebra de callers existentes).
-- Radio **Tipo do input** (`consolidated` / `projection`) com default por `suggestInputType` no Add e hidratado de `kpiValue.input_type` no Edit.
-- No Add, ao mudar `reference_date`, re-sugere `input_type` automaticamente.
-- Hint visual quando `update_frequency < consolidation_frequency`: explica que inputs antes do fechamento são projeções.
-- Bloco `<details>` "Avançado" com checkbox "Sobrescrever confidence" → revela RadioGroup `Alta/Média/Baixa`.
-- Quando `override_confidence` está desligado, o front **não** envia `confidence`, deixando o trigger `derive_kpi_value_confidence` aplicar o default (`high` para consolidado, `medium` para projeção).
-- Schema Zod estendido com `input_type` (obrigatório), `override_confidence` (opcional) e `confidence` (opcional).
-
-### 4.2 Mutations (`useKpiData.addKpiValue`, `useKpiMutations.updateKpiValue`)
-
-- Aceitam `input_type` e `confidence?`. `confidence` só é enviado quando explicitamente fornecido pelo usuário.
-- `addKpiValue` faz default `input_type='consolidated'` quando ausente.
-
-### 4.3 Selects ampliados
-
-- `useKpiDetail` agora seleciona `consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed` em `kpi_metrics` e `input_type` em `kpi_values`.
-- `KpiValuesTable`, `KpiDetailContent`, `KpiHistoryDialog`, `KpiDashboardPage` e `KpiActionsMenu` repassam as frequências para os diálogos.
-
-### 4.4 Permissões (sem mudança)
-
-- Inserção: `kpis.value.add:bu`.
-- Edição: `kpis.value.update_own:bu` (autor).
-
+| Arquivo | Mudança |
+|---|---|
+| `MbrKpiGateStep.tsx` L153, L156, L159, L213 | `=== 'projection'` → `=== 'partial'`; badge **"Parcial"** (border-dashed); payload `kpi_input_type: 'partial'` |
+| `wizards/shared/framework/components/KpiGateStep.tsx` L55, L72 | `isProjection` → `isPartial`; badge **"Parcial"** |
+| `wizards/shared/framework/config/stepContentAdapters.ts` L177, L199 | Comentário v3.0.0; tipo herda do novo `KpiInputType` |
+| `useKpisForWizardV2.ts` | Sem mudança de literal (já usa o tipo) — só herda |
 
 ---
 
-## Fase 5 — `useKpisForWizardV2` ✅
+## Fase 5 — UX adicional pedida pelo prompt
 
-- `select` de `kpi_metrics` agora inclui `consolidation_frequency` e `update_frequency`.
-- `select` de `kpi_values` inclui `input_type`.
-- `checkNeedsUpdate` refatorada: usa `update_frequency` (com fallback `legacyFrequencyToValue(kpi.frequency)`); KPIs sem frequência (ex-`manual` não revisados) retornam `false` e ficam fora de `kpisToUpdate`.
-- Threshold por cadência via `FREQUENCY_DAYS` (7 valores).
-- `KpiForWizardV2` ganhou `consolidation_frequency`, `update_frequency`, `latest_input_type` e `deviation_pct` (pré-calculado uma vez no enriquecimento, sensível à `direction`).
-- 5 buckets retornados permanecem inalterados (compatibilidade).
-- Testes: 142 passando (incluindo `CollaboratorContextStep` atualizado para o novo shape).
-
-### Tech debt registrada (não nesta entrega)
-
-Adicionar comentário `// PERF: considerar materialização via view/RPC se BU > 50 KPIs ativos` no topo do hook.
+- **Hint em decisões críticas no KPI Gate:** quando `kpi.lastInputType === 'partial'`, exibir aviso já existente reformulado para:
+  > "Este KPI tem valor parcial — o período ainda não fechou. A decisão será tomada com base no que foi atingido até agora, não no valor consolidado final."
+  
+  Verificar se já existe componente de aviso em `KpiGateStep`/`MbrKpiGateStep`; se não houver, adicionar `Alert` discreto inline (sem novo componente reutilizável — escopo enxuto).
 
 ---
 
-## Fase 6 — Ordenação 6-blocos no KPI Gate ✅
+## Fase 6 — Documentação canônica & memória
 
-Arquivos: `stepContentAdapters.ts`, `KpiGateStep.tsx` (genérico), `MbrKpiGateStep.tsx`, `types/wizard/mbr.ts`.
-
-- **`classifyKpiGateBuckets(input)`** retorna 6 grupos com precedência por `seen` (KPI aparece em apenas 1 bucket):
-  1. `overdue` (= `kpisToUpdate`)
-  2. `critical` (= `kpisInAlert ∩ off_track`, exclui overdue)
-  3. `guardrailViolated` (= `guardrailsViolated`, exclui anteriores)
-  4. `attention` (= `kpisInAlert ∩ at_risk`, exclui overdue)
-  5. `healthy` (= `kpisStrategic ∩ on_track`)
-  6. `teamContext` (`kpisTeamContext`, **colapsado por default** via `COLLAPSED_BY_DEFAULT`).
-- **Ordenação intra-bloco**: `byUpdateFrequencyThenDeviation` — usa `update_frequency → FREQUENCY_DAYS` (mais frequente primeiro), desempata por `|deviation_pct|` desc.
-- **`KpiGateItem`** estendido com campos opcionais `lastInputType`, `lastConfidence`, `updateFrequency`, `deviationPct` (sem quebra para callers existentes).
-- **`KpiGateStep`** (genérico) ganhou prop opcional `buckets?: KpiGateBucket[]`. Quando fornecida, renderiza blocos colapsáveis com badges `Projeção`/`Consolidado` + `Conf: Alta/Média/Baixa` (destructive em `low`). Quando ausente, mantém comportamento legacy (lista chapada).
-- **`MbrKpiGateStep`**: adicionadas badges `Projeção/Consolidado` + Confidence quando o snapshot fornecer `latestInputType`/`latestConfidence` (campos opcionais novos em `MbrKpiSnapshot`). Gate de avanço (toggle "Exige decisão estratégica" + decisão registrada) preservado.
-- **Adapter**: `kpiForWizardV2ToGateItem(kpi, opts)` é o ponto de adaptação canônico; mapeia `latest_rag_status` para `status` e popula os 4 metadados v3.0.0.
-- **Tests**: 315 passando (todas as suítes de wizards/MBR/KPI utils). TS limpo.
-
-### Pendências de fase futura (não nesta entrega)
-
-- Hidratação de `latestInputType`/`latestConfidence` no builder do `MbrKpiSnapshot` (depende do snapshot loader do MBR — fora deste escopo de UI).
-- Rituais que consomem `KpiGateStep` genérico (Collaborator/Leader Prep) precisam passar `buckets={classifyKpiGateBuckets(...)}` no consumidor — gancho deixado pronto, ativação por rito é troca pontual.
-- Hint de confidence baixa em modal de confirmação de decisão crítica → segue para Fase 7 (auditoria de decisões).
-
-**Weekly**: o repo não tem step KPI Gate na Weekly hoje. **Fora deste escopo** — registrar como follow-up.
+| Arquivo | Mudança |
+|---|---|
+| `docs/canonical/SCHEMA_QUICK_REFERENCE.md` L184, L189 | `kpi_input_type: partial \| consolidated` + texto descritivo |
+| `docs/canonical/DB_FUNCTIONS_INDEX.md` L1065 | Trecho do trigger: "consolidated → high, partial → medium" |
+| `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` L4 | Bump **v3.29.0 → v3.29.1** com nota: "Renomeado `kpi_input_type.projection` → `partial` (semântica correta: valor parcial observado até a data, não estimativa de futuro). Migration via `ALTER TYPE RENAME VALUE`, zero registros afetados." |
+| `mem://features/kpis/kpis-master-standard` L30, L36, L86, L104 | Substituir `projection` por `partial`; ajustar bloco JSON de decisões; reescrever §6 ("projeções com dot oco" → "parciais com dot oco") |
+| `mem://index.md` | One-liner do KPI Master ajustado se necessário |
 
 ---
 
-## Fase 7 — Auditoria de decisões disparadas pelo KPI Gate ✅
+## Fase 7 — Verificação final
 
-Arquivos: `src/modules/okrs/types/wizard/shared.ts`, `InlineDecisionInput.tsx`, `MbrKpiGateStep.tsx`.
-
-- **`TeamCheckinDecision.metadata?: Record<string, unknown>`** adicionado ao tipo. Campo livre (jsonb), serializado junto com o restante da decisão na persistência atual (sem mudança de schema DB — decisões são gravadas como jsonb dentro do payload do rito).
-- **`InlineDecisionInput`** ganhou prop opcional `metadataFactory?: () => Record<string, unknown> | undefined`. Quando presente, é chamada na criação de cada decisão e o retorno é mesclado em `decision.metadata` (apenas se `Object.keys.length > 0`).
-- **`MbrKpiGateStep`** passa `metadataFactory` ao `InlineDecisionInput` do KPI Gate gravando:
-  ```json
-  {
-    "source": "kpi_gate",
-    "kpi_id": "...",
-    "kpi_rag_status": "red|yellow|...",
-    "kpi_input_type": "projection|consolidated",  // se disponível
-    "kpi_confidence": "low|medium|high"           // se disponível
-  }
-  ```
-- Permite post-mortem: filtrar decisões tomadas sobre projeções de baixa confidence.
-- Sem mudança de schema DB; sem quebra de callers (prop opcional).
-- **Tests**: 338 passando. TS limpo.
-
-### Pendência futura
-- Replicar `metadataFactory` no `KpiGateStep` genérico quando rituais (Collaborator/Leader Prep) usarem decisão por KPI individual (hoje só MBR tem essa interação granular).
-- Modal de confirmação extra para decisões com `kpi_confidence='low'` — registrado como follow-up de UX (não-bloqueante).
+1. `rg -n "projection|Projeção" src/ docs/canonical/` — esperado: zero ocorrências (apenas `src/integrations/supabase/types.ts` antes da regeneração; após regen, zero).
+2. `tsc --noEmit` limpo.
+3. Auditoria SQL: `SELECT input_type, count(*) FROM kpi_values GROUP BY input_type` — esperado `consolidated: 63`.
+4. Smoke manual: AddKpiValueDialog mostra label "Parcial" + nova descrição; KpiValuesTable / KpiEvolutionChart / KPI Gate exibem "Parcial".
 
 ---
 
-## Fase 8 — Visualização de `input_type` na evolução ✅
+## Riscos & mitigações
 
-Arquivos: `KpiEvolutionChart.tsx`, `KpiValuesTable.tsx`, `KpiHistoryDialog.tsx`.
-
-- **`KpiEvolutionChart`**: prop `onlyConsolidated?: boolean`. `dot` customizado: consolidado sólido; projeção oco + `strokeDasharray='2 2'` + `opacity: 0.7`. Tooltip mostra `(projeção)`.
-- **`KpiValuesTable`**: nova coluna **Tipo** (Badge `Projeção/Consolidado`, `border-dashed` em projeção) + Badge **Confiança** com tooltip; row de projeção com `opacity-80`.
-- **`KpiHistoryDialog`**: toggle **"Apenas consolidados"** via `useUrlState({ key: 'evolution_only_consolidated' })`. Switch aparece só quando há projeções; mostra contador `−N`. Filtra chart e tabela via `filteredValues` memo.
-- **Tests**: 100 passando no módulo KPIs. TS limpo.
-
-### Pendência
-- `KpiDetailContent`: bloco resumo *"Último consolidado / Última projeção / Próxima consolidação esperada"* — follow-up de UX.
+- **Sessões antigas (bundle pré-rename) tentando inserir `'projection'`:** PostgreSQL retorna `invalid input value for enum`. Aceitável; janela curtíssima (rename é instantâneo, deploy do front segue logo após). Sem necessidade de alias temporário.
+- **Regeneração de `types.ts`:** Lovable Cloud regenera automaticamente. Caso haja lag, o tipo manual `KpiInputType` em `src/modules/kpis/types.ts` mantém o frontend compilando.
+- **Zero impacto** em RLS, triggers, funções, índices, views, edge functions, RBAC, BU isolation.
 
 ---
 
-## Fase 9 — Banner de revisão (UX escalável) ✅
+## Entregáveis
 
-Arquivos: `KpiMigrationBanner.tsx` (novo), `KpiDashboardPage.tsx`, `KpiDetailContent.tsx`, `useKpiData.ts`.
+1. 1 migration SQL (uma linha funcional).
+2. Patches em ~13 arquivos TS/TSX.
+3. 3 docs canônicos atualizados (SCHEMA, DB_FUNCTIONS, TCR) + 1 memória SSOT KPIs atualizada.
+4. Verificação por `rg` confirmando zero ocorrências de `projection`/`Projeção` no código de aplicação.
 
-- **`KpiMigrationBanner`** com 3 variantes:
-  - `dashboard-global`: `<Alert>` info com contador + CTA "Ver indicadores pendentes".
-  - `detail-pending`: `<Alert>` info + CTA "Revisar agora" → abre `EditKpiDialog`.
-  - `detail-missing`: `<Alert variant="destructive">` quando `consolidation_frequency IS NULL` (ex-`manual`) + CTA "Configurar agora".
-- **Dashboard `/kpis`**:
-  - URL state `?needs_review=1` (`useUrlState`) filtra `frequency_migration_reviewed=false`.
-  - `pendingReviewCount` calculado sobre base não filtrada (mostra contagem real mesmo durante o filtro).
-  - Banner global aparece para usuários com `kpis.settings.manage:bu` quando `count > 0` e filtro não ativo.
-  - Quando filtro ativo, mostra barra discreta com botão "Limpar filtro".
-- **`KpiDetailContent`**:
-  - Banner discreto/destacado abaixo do header conforme `consolidation_frequency`/`frequency_migration_reviewed`.
-  - CTA abre `EditKpiDialog` controlado por `editOpen` local.
-  - Restrito a `canEdit` via `useCanEditKpi`.
-- **`useKpiData`** lista agora seleciona `consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed`.
-- **Tests**: 100 passando no módulo KPIs. TS limpo.
-
-### Pendência futura (não bloqueante)
-- Salvar último filtro ativo via SavedLinks. Hoje o filtro é compartilhável via URL, suficiente para a entrega.
-- Toast de "X indicadores migrados com sucesso" após bulk review (futuro, fora desta fase).
-
----
-
-
-## Fase 10 — Componentes secundários ✅
-
-Arquivos: `KpiCard.tsx`.
-
-- **`KpiCard`**: substituído `FREQUENCY_LABELS[kpi.frequency]` por `getFrequencyLabel(effectiveUpdateFreq)` onde `effectiveUpdateFreq = update_frequency ?? legacyFrequencyToValue(frequency)`.
-- **Stale threshold** agora derivado de `FREQUENCY_DAYS[effectiveUpdateFreq] * 1.2` (mínimo 2 dias), substituindo o `if/else` hard-coded de 4 valores. Suporta `biweekly`/`semiannual`/`annual` automaticamente.
-- **`KpiContextSection`**: já não exibia frequency — sem mudanças necessárias.
-- `React.memo` preservado.
-- **Tests**: 100 passando no módulo KPIs. TS limpo.
-
----
-
-## Fase 11 — Auditoria pós-migração ✅
-
-Arquivos: `scripts/audit-kpi-frequency-migration.ts`, relatório em `/home/lovable/kpi-frequency-migration-report.md` (`/mnt/documents` indisponível).
-
-**Resultados (executados via `psql` em 2026-04-27):**
-
-| Métrica | Valor |
-|---|---:|
-| KPIs ativos | 32 |
-| `consolidation_frequency NOT NULL` | 32 (100%) |
-| `update_frequency NOT NULL` | 32 (100%) |
-| Sem migração (`frequency NOT NULL` sem `consolidation_frequency`) | **0** ✅ |
-| Pendentes de revisão (UX banner) | 32 |
-| `kpi_values.input_type='consolidated'` | 63 |
-| `kpi_values.input_type='projection'` | 0 |
-
-**Distribuição:** monthly/monthly=27, quarterly/quarterly=3, weekly/weekly=2. Invariante `update ≤ consolidation` íntegra (trigger `kpi_frequency_validation` operando).
-
-**Conclusão:** integridade técnica do backfill 100%. Apenas revisões humanas pendentes (UX-driven, não bloqueante). Após >80% revisados, considerar Fase 13 (drop da coluna legada `frequency`).
-
----
-
-## Fase 12 — Documentação canônica ✅
-
-Entregas:
-
-1. ✅ `docs/canonical/SCHEMA_QUICK_REFERENCE.md` — colunas v3.0.0 em `kpi_metrics`/`kpi_values` + bloco Enums KPIs.
-2. ✅ `docs/canonical/DB_FUNCTIONS_INDEX.md` — nova seção "KPI Frequency Split — v3.0.0" com `kpi_frequency_to_days`, `validate_kpi_frequency_relationship`, `derive_kpi_value_confidence`, `kpi_calculate_period_v2` (semântica formal de `biweekly`/`semiannual`).
-3. ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — versão **3.29.0** com nota completa sobre KPI Frequency Split v3.0.0.
-4. ✅ `mem://features/kpis/kpis-master-standard` criado (modelo de dados, utilitários canônicos, permissões, ritual gates 6-bucket, UX de migração, visualização projeção × consolidado, standards).
-5. ✅ `mem://index.md` — descrição do KPIs Master atualizada para refletir v3.0.0.
-
-`DATA_MODEL_REGISTRY.md` mantém `kpi_metrics`/`kpi_values` listados; campos detalhados são consultados via `SCHEMA_QUICK_REFERENCE.md` (já atualizado), padrão do projeto.
-
----
-
-## Confirmações finais
-
-- ✅ ENUMs (não CHECK) — alinhado a `mem://standards/database/check-constraint-prohibition`.
-- ✅ `frequency` antigo preservado na Fase 1.
-- ✅ KPIs com `frequency='manual'` ficam fora dos ritos até revisão.
-- ✅ `useKpisForWizardV2` usa `update_frequency`; `checkNeedsUpdate` refatorada.
-- ✅ Ordenação 6-blocos; `kpisTeamContext` colapsado.
-- ✅ Detecção `no_data` por atraso usa `update_frequency`.
-- ✅ Captura **só `input_type`** na UI; `confidence` derivado por trigger; override em "Avançado".
-- ✅ Decisões críticas gravam `kpi_input_type`/`kpi_confidence` em metadata (auditoria).
-- ✅ Visualização diferenciada projeção × consolidado; toggle via URL state.
-- ✅ Banner global + discreto (não banner por KPI).
-- ✅ Semântica formal de biweekly (segunda-âncora) e semiannual (H1/H2).
-- ✅ `kpi_calculate_period` antiga preservada; v2 coexistente.
-- ✅ Permission key `kpis.value.add:bu` (canônica).
-- ✅ Query keys via `kpisKeys.*`.
-- ✅ Padrão `prevIdRef` no reset do form.
-- ✅ RAG calculado e gravado no momento da escrita (preservado).
-- ✅ BU isolation, RLS, RBAC, soft-delete preservados.
-- ✅ Docs canônicos atualizados na mesma entrega.
-
-## Fora deste escopo (follow-ups)
-
-- Step "KPI Gate" dedicado dentro da **Weekly**.
-- Implementação de `update_mode='automatic'` (integrações).
-- Remoção física de `frequency` (Fase 2/3 futuras).
-- Materialização SQL de `useKpisForWizardV2` se BU passar de ~50 KPIs ativos.
+Posso prosseguir com a implementação?

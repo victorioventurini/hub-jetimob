@@ -102,14 +102,14 @@ describe('frequency.ts — KPI Frequency utilities', () => {
       };
       expect(suggestInputType(kpi, new Date('2026-04-15'))).toBe('consolidated');
     });
-    it('retorna projection para MRR (mensal × semanal) durante o mês', () => {
+    it('retorna partial para MRR (mensal × semanal) durante o mês', () => {
       const kpi = {
         consolidation_frequency: 'monthly' as const,
         update_frequency: 'weekly' as const,
         frequency: 'monthly' as const,
       };
       // Input feito no dia atual (período em aberto)
-      expect(suggestInputType(kpi, new Date())).toBe('projection');
+      expect(suggestInputType(kpi, new Date())).toBe('partial');
     });
     it('fallback para frequência legada quando v3 ausente', () => {
       const kpi = {

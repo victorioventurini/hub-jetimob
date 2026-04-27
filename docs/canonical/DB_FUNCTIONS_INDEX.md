@@ -1062,7 +1062,7 @@ Helper IMMUTABLE. Mapeia enum para dias: `daily=1, weekly=7, biweekly=14, monthl
 Trigger `kpi_frequency_validation` (BEFORE INSERT/UPDATE em `kpi_metrics`). Garante `update_frequency ≤ consolidation_frequency` em dias.
 
 ### `derive_kpi_value_confidence() → trigger`
-Trigger `trg_kpi_value_derive_confidence` (BEFORE INSERT em `kpi_values`). Quando `confidence='medium'` (default não-informado), deriva: `consolidated → high`, `projection → medium`. Override explícito do usuário sempre prevalece.
+Trigger `trg_kpi_value_derive_confidence` (BEFORE INSERT em `kpi_values`). Quando `confidence='medium'` (default não-informado) e `input_type='consolidated'`, deriva `confidence='high'`. Inputs `partial` mantêm `confidence='medium'` (default). Override explícito do usuário sempre prevalece.
 
 ### `kpi_calculate_period_v2(reference_date date, freq kpi_frequency_value) → (period_start, period_end, period_label)`
 Overload coexistente da `kpi_calculate_period` legada. Semântica formal:

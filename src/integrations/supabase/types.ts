@@ -11831,7 +11831,7 @@ export type Database = {
         | "semiannual"
         | "annual"
       kpi_indicator_type: "kpi" | "metric"
-      kpi_input_type: "projection" | "consolidated"
+      kpi_input_type: "partial" | "consolidated"
       kpi_lifecycle_status: "proposed" | "active" | "observing" | "deprecated"
       kpi_rag_status: "on_track" | "at_risk" | "off_track" | "no_data"
       kpi_scope: "team" | "area" | "org"
@@ -12144,7 +12144,7 @@ export const Constants = {
         "annual",
       ],
       kpi_indicator_type: ["kpi", "metric"],
-      kpi_input_type: ["projection", "consolidated"],
+      kpi_input_type: ["partial", "consolidated"],
       kpi_lifecycle_status: ["proposed", "active", "observing", "deprecated"],
       kpi_rag_status: ["on_track", "at_risk", "off_track", "no_data"],
       kpi_scope: ["team", "area", "org"],

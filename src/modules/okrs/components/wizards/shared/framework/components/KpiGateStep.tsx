@@ -3,7 +3,7 @@
  *
  * v3.0.0: passa a aceitar `buckets` opcional (6 grupos ordenados, ver
  * `classifyKpiGateBuckets`). Quando `buckets` é fornecido, a UI renderiza
- * os blocos colapsáveis com badges (`Projeção`/`Consolidado` + Confidence).
+ * os blocos colapsáveis com badges (`Parcial`/`Consolidado` + Confidence).
  * Quando ausente, mantém o comportamento legacy de listar `data` chapado.
  */
 
@@ -52,7 +52,7 @@ const CONFIDENCE_LABEL: Record<string, string> = {
 const COLLAPSED_BY_DEFAULT: ReadonlySet<KpiGateBucketId> = new Set(['teamContext']);
 
 function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
-  const isProjection = kpi.lastInputType === 'projection';
+  const isPartial = kpi.lastInputType === 'partial';
   const isLowConfidence = kpi.lastConfidence === 'low';
   return (
     <Card className={cn('p-4 border', STATUS_STYLES[kpi.status])}>
@@ -66,10 +66,10 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
             <div className="flex flex-wrap gap-1.5 mt-2">
               {kpi.lastInputType && (
                 <Badge
-                  variant={isProjection ? 'outline' : 'secondary'}
-                  className={cn('text-[10px] h-5', isProjection && 'border-dashed')}
+                  variant={isPartial ? 'outline' : 'secondary'}
+                  className={cn('text-[10px] h-5', isPartial && 'border-dashed')}
                 >
-                  {isProjection ? 'Projeção' : 'Consolidado'}
+                  {isPartial ? 'Parcial' : 'Consolidado'}
                 </Badge>
               )}
               {kpi.lastConfidence && (

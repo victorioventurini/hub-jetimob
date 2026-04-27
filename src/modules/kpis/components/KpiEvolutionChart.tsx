@@ -32,7 +32,7 @@ export interface KpiEvolutionChartProps {
   className?: string;
   compact?: boolean;
   /**
-   * v3.0.0 — Quando true, oculta valores com `input_type='projection'`.
+   * v3.0.0 — Quando true, oculta valores com `input_type='partial'`.
    * O toggle é controlado pelo parent (ex: KpiHistoryDialog via useUrlState).
    */
   onlyConsolidated?: boolean;
@@ -65,7 +65,7 @@ function useKpiChartData(
 ) {
   return useMemo(() => {
     const filtered = onlyConsolidated
-      ? values.filter((v) => v.input_type !== 'projection')
+      ? values.filter((v) => v.input_type !== 'partial')
       : values;
 
     if (!filtered?.length) {
@@ -161,7 +161,7 @@ export function KpiEvolutionChart({
             content={({ active, payload }) => {
               if (!active || !payload?.[0]) return null;
               const item = payload[0].payload;
-              const isProjection = item.inputType === 'projection';
+              const isPartial = item.inputType === 'partial';
               return (
                 <div className="bg-popover border rounded-lg shadow-lg p-2 text-xs">
                   <p className="font-medium">{item.fullDate}</p>
@@ -170,9 +170,9 @@ export function KpiEvolutionChart({
                     <span className="text-foreground font-medium">
                       {formatValue(item.value, unit)}
                     </span>
-                    {isProjection && (
+                    {isPartial && (
                       <span className="ml-1 text-[10px] italic text-muted-foreground">
-                        (projeção)
+                        (parcial)
                       </span>
                     )}
                   </p>
@@ -217,18 +217,18 @@ export function KpiEvolutionChart({
               if (cx == null || cy == null) {
                 return <g key={`dot-empty-${index ?? 0}`} />;
               }
-              const isProjection = payload?.inputType === 'projection';
+              const isPartial = payload?.inputType === 'partial';
               return (
                 <circle
                   key={`dot-${index ?? cx}`}
                   cx={cx}
                   cy={cy}
                   r={3}
-                  fill={isProjection ? 'hsl(var(--background))' : 'hsl(var(--primary))'}
+                  fill={isPartial ? 'hsl(var(--background))' : 'hsl(var(--primary))'}
                   stroke="hsl(var(--primary))"
-                  strokeWidth={isProjection ? 1.5 : 0}
-                  strokeDasharray={isProjection ? '2 2' : undefined}
-                  opacity={isProjection ? 0.7 : 1}
+                  strokeWidth={isPartial ? 1.5 : 0}
+                  strokeDasharray={isPartial ? '2 2' : undefined}
+                  opacity={isPartial ? 0.7 : 1}
                 />
               );
             }}
