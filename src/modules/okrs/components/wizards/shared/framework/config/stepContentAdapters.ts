@@ -167,3 +167,141 @@ export function groupDecisionsBySourceStep(
     decisions: list,
   }));
 }
+
+// ============================================================
+// KPI GATE — classificação 6-blocos + ordenação
+// ============================================================
+
+/**
+ * Adapta um `KpiForWizardV2` para `KpiGateItem` preservando os
+ * metadados v3.0.0 (input_type, confidence, update_frequency, deviation_pct).
+ */
+export function kpiForWizardV2ToGateItem(
+  kpi: KpiForWizardV2,
+  opts: { requiresDecision?: boolean; resolvedIds?: Set<string> } = {},
+): KpiGateItem {
+  const status: KpiGateItem['status'] =
+    kpi.latest_rag_status === 'on_track'
+      ? 'green'
+      : kpi.latest_rag_status === 'at_risk'
+      ? 'amber'
+      : kpi.latest_rag_status === 'off_track'
+      ? 'red'
+      : 'unknown';
+  return {
+    id: kpi.id,
+    name: kpi.name,
+    status,
+    currentValue: kpi.latest_value != null ? String(kpi.latest_value) : undefined,
+    target: kpi.target_value != null ? String(kpi.target_value) : undefined,
+    requiresDecision: opts.requiresDecision ?? (status === 'red' || status === 'amber'),
+    resolved: opts.resolvedIds?.has(kpi.id) ?? false,
+    lastInputType: kpi.latest_input_type,
+    lastConfidence: kpi.latest_confidence,
+    updateFrequency: kpi.update_frequency,
+    deviationPct: kpi.deviation_pct,
+  };
+}
+
+/**
+ * Comparator: por update_frequency (mais frequente primeiro), depois por
+ * `|deviation_pct|` decrescente (maior desvio primeiro). KPIs sem frequência
+ * vão para o final; sem deviation, considera 0.
+ */
+export function byUpdateFrequencyThenDeviation(a: KpiGateItem, b: KpiGateItem): number {
+  const freqDays = (item: KpiGateItem): number => {
+    const f = item.updateFrequency;
+    if (!f) return Number.POSITIVE_INFINITY;
+    return FREQUENCY_DAYS[f] ?? Number.POSITIVE_INFINITY;
+  };
+  const da = freqDays(a);
+  const db = freqDays(b);
+  if (da !== db) return da - db;
+  const ad = Math.abs(a.deviationPct ?? 0);
+  const bd = Math.abs(b.deviationPct ?? 0);
+  return bd - ad;
+}
+
+const BUCKET_LABELS: Record<KpiGateBucketId, { label: string; description?: string }> = {
+  overdue: { label: 'Atrasados', description: 'Sem atualização dentro da cadência esperada' },
+  critical: { label: 'Críticos', description: 'Em alerta e fora da meta (off-track)' },
+  guardrailViolated: { label: 'Guardrails violados', description: 'Guardrails de KRs em risco' },
+  attention: { label: 'Atenção', description: 'Em alerta com risco moderado (at-risk)' },
+  healthy: { label: 'Saudáveis (estratégicos)', description: 'On-track' },
+  teamContext: { label: 'Contexto do time', description: 'Read-only (colapsado)' },
+};
+
+export interface ClassifyKpiGateInput {
+  kpisToUpdate: KpiForWizardV2[];
+  kpisInAlert: KpiForWizardV2[];
+  kpisStrategic: KpiForWizardV2[];
+  kpisTeamContext: KpiForWizardV2[];
+  guardrailsViolated: KpiForWizardV2[];
+  resolvedIds?: Set<string>;
+}
+
+/**
+ * Classifica os KPIs em 6 buckets ordenados (Fase 6 — refator de
+ * frequência/confidence). Cada KPI aparece em apenas um bucket; a
+ * precedência segue a ordem dos blocos (overdue > critical > guardrail
+ * > attention > healthy > teamContext).
+ *
+ * Ordenação intra-bloco: `byUpdateFrequencyThenDeviation`.
+ */
+export function classifyKpiGateBuckets(input: ClassifyKpiGateInput): KpiGateBucket[] {
+  const seen = new Set<string>();
+  const resolvedIds = input.resolvedIds ?? new Set<string>();
+
+  const take = (
+    list: KpiForWizardV2[],
+    predicate: (k: KpiForWizardV2) => boolean,
+    requiresDecision?: boolean,
+  ): KpiGateItem[] => {
+    const items: KpiGateItem[] = [];
+    for (const k of list) {
+      if (seen.has(k.id)) continue;
+      if (!predicate(k)) continue;
+      seen.add(k.id);
+      items.push(kpiForWizardV2ToGateItem(k, { requiresDecision, resolvedIds }));
+    }
+    return items.sort(byUpdateFrequencyThenDeviation);
+  };
+
+  // 1. Overdue (precisam atualização)
+  const overdue = take(input.kpisToUpdate, () => true, true);
+  // 2. Críticos = inAlert ∩ off_track (já excluindo overdue por `seen`)
+  const critical = take(
+    input.kpisInAlert,
+    (k) => k.latest_rag_status === 'off_track',
+    true,
+  );
+  // 3. Guardrails violados
+  const guardrailViolated = take(input.guardrailsViolated, () => true, true);
+  // 4. Atenção = inAlert ∩ at_risk
+  const attention = take(
+    input.kpisInAlert,
+    (k) => k.latest_rag_status === 'at_risk',
+    true,
+  );
+  // 5. Saudáveis (estratégicos on_track)
+  const healthy = take(
+    input.kpisStrategic,
+    (k) => k.latest_rag_status === 'on_track',
+    false,
+  );
+  // 6. Contexto do time
+  const teamContext = take(input.kpisTeamContext, () => true, false);
+
+  return [
+    { id: 'overdue', items: overdue, ...BUCKET_LABELS.overdue },
+    { id: 'critical', items: critical, ...BUCKET_LABELS.critical },
+    { id: 'guardrailViolated', items: guardrailViolated, ...BUCKET_LABELS.guardrailViolated },
+    { id: 'attention', items: attention, ...BUCKET_LABELS.attention },
+    { id: 'healthy', items: healthy, ...BUCKET_LABELS.healthy },
+    { id: 'teamContext', items: teamContext, ...BUCKET_LABELS.teamContext },
+  ];
+}
+
+// Garantir referência ao helper legacy (utilitário disponível para callers
+// que ainda precisem mapear a frequência antiga para `KpiFrequencyValue`).
+export { legacyFrequencyToValue };
