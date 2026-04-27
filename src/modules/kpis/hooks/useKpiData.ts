@@ -336,19 +336,26 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       notes?: string;
       created_by?: string;
       confidence?: 'high' | 'medium' | 'low';
+      input_type?: 'projection' | 'consolidated';
     }) => {
       const client = assertSupabaseClient(supabase, "addKpiValue");
+      const insertPayload: Record<string, unknown> = {
+        kpi_id: data.kpi_id,
+        value: data.value,
+        reference_date: data.reference_date,
+        source: data.source || "manual",
+        notes: data.notes || null,
+        created_by: data.created_by || null,
+        input_type: data.input_type ?? 'consolidated',
+      };
+      // Só envia confidence se explicitamente informado — caso contrário,
+      // o trigger derive_kpi_value_confidence aplica a regra padrão.
+      if (data.confidence) {
+        insertPayload.confidence = data.confidence;
+      }
       const { data: result, error } = await client
         .from("kpi_values")
-        .insert({
-          kpi_id: data.kpi_id,
-          value: data.value,
-          reference_date: data.reference_date,
-          source: data.source || "manual",
-          notes: data.notes || null,
-          created_by: data.created_by || null,
-          confidence: data.confidence || 'medium',
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
