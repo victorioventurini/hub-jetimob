@@ -268,22 +268,29 @@ Arquivos: `stepContentAdapters.ts`, `KpiGateStep.tsx` (genérico), `MbrKpiGateSt
 
 ---
 
-## Fase 7 — Auditoria de decisões disparadas pelo KPI Gate
+## Fase 7 — Auditoria de decisões disparadas pelo KPI Gate ✅
 
-Quando o condutor registra decisão sobre um KPI vermelho via `InlineDecisionsSlot`:
+Arquivos: `src/modules/okrs/types/wizard/shared.ts`, `InlineDecisionInput.tsx`, `MbrKpiGateStep.tsx`.
 
-- O payload da decisão grava em `metadata` (jsonb):
+- **`TeamCheckinDecision.metadata?: Record<string, unknown>`** adicionado ao tipo. Campo livre (jsonb), serializado junto com o restante da decisão na persistência atual (sem mudança de schema DB — decisões são gravadas como jsonb dentro do payload do rito).
+- **`InlineDecisionInput`** ganhou prop opcional `metadataFactory?: () => Record<string, unknown> | undefined`. Quando presente, é chamada na criação de cada decisão e o retorno é mesclado em `decision.metadata` (apenas se `Object.keys.length > 0`).
+- **`MbrKpiGateStep`** passa `metadataFactory` ao `InlineDecisionInput` do KPI Gate gravando:
   ```json
   {
     "source": "kpi_gate",
     "kpi_id": "...",
-    "kpi_input_type": "projection|consolidated",
-    "kpi_confidence": "low|medium|high",
-    "kpi_rag_status": "off_track"
+    "kpi_rag_status": "red|yellow|...",
+    "kpi_input_type": "projection|consolidated",  // se disponível
+    "kpi_confidence": "low|medium|high"           // se disponível
   }
   ```
 - Permite post-mortem: filtrar decisões tomadas sobre projeções de baixa confidence.
-- Sem mudança de schema (campo `metadata` já existe em `okr_decisions`).
+- Sem mudança de schema DB; sem quebra de callers (prop opcional).
+- **Tests**: 338 passando. TS limpo.
+
+### Pendência futura
+- Replicar `metadataFactory` no `KpiGateStep` genérico quando rituais (Collaborator/Leader Prep) usarem decisão por KPI individual (hoje só MBR tem essa interação granular).
+- Modal de confirmação extra para decisões com `kpi_confidence='low'` — registrado como follow-up de UX (não-bloqueante).
 
 ---
 

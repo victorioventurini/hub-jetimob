@@ -27,6 +27,12 @@ export interface InlineDecisionInputProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   sourceStep: string;
   placeholder?: string;
+  /**
+   * v3.0.0 — Fábrica opcional de metadata. Quando presente, é chamada no
+   * momento da criação de cada decisão e o retorno é gravado em
+   * `decision.metadata` para auditoria (ex: `{ source: 'kpi_gate', ... }`).
+   */
+  metadataFactory?: () => Record<string, unknown> | undefined;
 }
 
 // ============================================================
@@ -49,6 +55,7 @@ export function InlineDecisionInput({
   onDecisionsChange,
   sourceStep,
   placeholder = 'Registrar decisão, ajuste de foco ou próximo passo...',
+  metadataFactory,
 }: InlineDecisionInputProps) {
   const isMobile = useIsMobile();
   // Mobile: collapsed por padrão para liberar viewport.
@@ -63,11 +70,13 @@ export function InlineDecisionInput({
   const handleAdd = () => {
     if (!text.trim()) return;
 
+    const metadata = metadataFactory?.();
     const newDecision: TeamCheckinDecision = {
       id: `decision-${Date.now()}`,
       text: text.trim(),
       category,
       sourceStep: sourceStep as TeamCheckinDecision['sourceStep'],
+      ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
 
     onDecisionsChange([...decisions, newDecision]);
