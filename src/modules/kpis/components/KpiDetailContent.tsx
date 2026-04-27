@@ -148,6 +148,16 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         <KpiActionsMenu kpi={kpi} alwaysVisible />
       </div>
 
+      {/* v3.0.0: Banner de migração de frequência */}
+      {canEdit && kpi.consolidation_frequency == null && (
+        <KpiMigrationBanner variant="detail-missing" onReview={() => setEditOpen(true)} />
+      )}
+      {canEdit &&
+        kpi.consolidation_frequency != null &&
+        kpi.frequency_migration_reviewed === false && (
+          <KpiMigrationBanner variant="detail-pending" onReview={() => setEditOpen(true)} />
+        )}
+
       {/* Current Value */}
       <div className="flex items-baseline gap-3">
         <span className="text-4xl font-bold text-foreground">
