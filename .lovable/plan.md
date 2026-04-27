@@ -240,24 +240,29 @@ Adicionar comentário `// PERF: considerar materialização via view/RPC se BU >
 
 ---
 
-## Fase 6 — Ordenação 6-blocos no KPI Gate
+## Fase 6 — Ordenação 6-blocos no KPI Gate ✅
 
-Arquivo: `src/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters.ts`
+Arquivos: `stepContentAdapters.ts`, `KpiGateStep.tsx` (genérico), `MbrKpiGateStep.tsx`, `types/wizard/mbr.ts`.
 
-- Função nova `classifyKpiGateBuckets(wizardData)` retorna 6 grupos:
+- **`classifyKpiGateBuckets(input)`** retorna 6 grupos com precedência por `seen` (KPI aparece em apenas 1 bucket):
   1. `overdue` (= `kpisToUpdate`)
   2. `critical` (= `kpisInAlert ∩ off_track`, exclui overdue)
-  3. `guardrailViolated`
+  3. `guardrailViolated` (= `guardrailsViolated`, exclui anteriores)
   4. `attention` (= `kpisInAlert ∩ at_risk`, exclui overdue)
   5. `healthy` (= `kpisStrategic ∩ on_track`)
-  6. `teamContext` (colapsado por default)
-- Ordenação intra-bloco: `byUpdateFrequencyThenDeviation` (usa `deviation_pct` já pré-calculado).
-- `KpiGateStep` (compartilhado) e `MbrKpiGateStep` renderizam os 6 blocos com:
-  - Badge "Projeção"/"Consolidado" no último input.
-  - Badge "Conf: Alta/Média/Baixa".
-  - Badge sutil quando `last_confidence='low'` ou `last_input_type='projection'`.
-- Hint de confidence baixa em decisões críticas (modal de confirmação).
-- Gate de avanço continua via `KpiGateStepConfig.requireResolution` existente.
+  6. `teamContext` (`kpisTeamContext`, **colapsado por default** via `COLLAPSED_BY_DEFAULT`).
+- **Ordenação intra-bloco**: `byUpdateFrequencyThenDeviation` — usa `update_frequency → FREQUENCY_DAYS` (mais frequente primeiro), desempata por `|deviation_pct|` desc.
+- **`KpiGateItem`** estendido com campos opcionais `lastInputType`, `lastConfidence`, `updateFrequency`, `deviationPct` (sem quebra para callers existentes).
+- **`KpiGateStep`** (genérico) ganhou prop opcional `buckets?: KpiGateBucket[]`. Quando fornecida, renderiza blocos colapsáveis com badges `Projeção`/`Consolidado` + `Conf: Alta/Média/Baixa` (destructive em `low`). Quando ausente, mantém comportamento legacy (lista chapada).
+- **`MbrKpiGateStep`**: adicionadas badges `Projeção/Consolidado` + Confidence quando o snapshot fornecer `latestInputType`/`latestConfidence` (campos opcionais novos em `MbrKpiSnapshot`). Gate de avanço (toggle "Exige decisão estratégica" + decisão registrada) preservado.
+- **Adapter**: `kpiForWizardV2ToGateItem(kpi, opts)` é o ponto de adaptação canônico; mapeia `latest_rag_status` para `status` e popula os 4 metadados v3.0.0.
+- **Tests**: 315 passando (todas as suítes de wizards/MBR/KPI utils). TS limpo.
+
+### Pendências de fase futura (não nesta entrega)
+
+- Hidratação de `latestInputType`/`latestConfidence` no builder do `MbrKpiSnapshot` (depende do snapshot loader do MBR — fora deste escopo de UI).
+- Rituais que consomem `KpiGateStep` genérico (Collaborator/Leader Prep) precisam passar `buckets={classifyKpiGateBuckets(...)}` no consumidor — gancho deixado pronto, ativação por rito é troca pontual.
+- Hint de confidence baixa em modal de confirmação de decisão crítica → segue para Fase 7 (auditoria de decisões).
 
 **Weekly**: o repo não tem step KPI Gate na Weekly hoje. **Fora deste escopo** — registrar como follow-up.
 
