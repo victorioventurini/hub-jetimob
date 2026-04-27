@@ -343,6 +343,7 @@ export function useAllOrgObjectivesView(year?: number, cycleId?: string | null) 
 
         return {
           id: objective.id,
+          bu_id: (objective as any).bu_id ?? null,
           title: objective.title,
           description: objective.description,
           year: objective.year,
