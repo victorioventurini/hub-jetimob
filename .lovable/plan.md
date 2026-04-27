@@ -1,54 +1,71 @@
-# Corrigir Pré-Weekly Step 1 — não reconhece ritos da semana
+# Correção: Pré-Weekly Step 1 não lista ritos da semana atual (bug de timezone)
 
-## Problema (causa raiz confirmada por dados)
+## Pré-checklist canônico — feito
 
-`PreWeeklySourcesStep.tsx` mostra "Nenhum rito registrado por você nesta semana ainda" mesmo quando há `team-checkin` e `leader-prep` concluídos.
+- TCR consultado: sem regra específica para parse de date-only.
+- SSOTs Pré-Weekly v2, Weekly v2 e Cycles & Rituals: nenhum padrão conflita com a correção.
+- Identity (`mem://auth/identity-rbac-master`): mantido `useIdentity().profileId` (correção anterior preservada).
+- Descoberta adicional: o mesmo bug existe em `useWeeklyPreWeeklyAggregation.ts` — incluído no plano.
 
-O hook `useUserWeeklySources` filtra:
+## Diagnóstico (validado em produção)
+
+**Sintoma:** em `/rituals/pre-weekly?team=...`, o card "Ritos concluídos por você nesta semana" mostra "Nenhum rito registrado…", mesmo com `team-checkin` e `leader-prep` concluídos hoje.
+
+**Dados reais (consultados via DB):**
+- `vitor.severo@jetimob.com` → `profile_id = 110f72b1-...`
+- Sessões `status=completed` na semana:
+  - `team-checkin` em `2026-04-27 14:52:09Z`
+  - `leader-prep` em `2026-04-27 14:36:52Z`
+  - `collaborator` em `2026-04-20 19:48:50Z`
+
+A query filtra `started_by` e `wizard_type` corretamente. O problema é a **janela de datas**.
+
+**Causa raiz — parse de date-only como UTC:**
+
+1. `PreWeeklyPage.currentReferenceWeek()` produz `"2026-04-27"` (segunda local BRT).
+2. `useUserWeeklySources` re-parseia com `new Date(referenceWeek)`. Strings `"YYYY-MM-DD"` no padrão ISO são interpretadas como **UTC midnight**, então `new Date("2026-04-27")` em BRT vira **sábado 26/04 21:00 local**.
+3. `startOfWeek(sábado, weekStartsOn:1)` → segunda anterior = `2026-04-20`.
+4. `endOfWeek(...).toISOString()` → `2026-04-27T02:59:59Z`.
+5. Os ritos de hoje (`14:52Z`, `14:36Z`) ficam **fora** dessa janela e somem.
+
+O bug afeta praticamente toda a semana em fuso BRT (e fuso similar) — em particular a segunda inteira.
+
+O **mesmo padrão errado** está em `useWeeklyPreWeeklyAggregation.ts:80`, alimentando a agregação que vai para a Weekly. Sem corrigir lá, a Weekly perde os mesmos ritos.
+
+## Correção (2 arquivos, ~2 linhas cada)
+
+### 1. `src/modules/okrs/components/wizards/pre-weekly/PreWeeklySourcesStep.tsx`
+
 ```ts
-.eq('started_by', user!.id)   // user.id = auth.users.id
+// antes
+const ref = referenceWeek ? new Date(referenceWeek) : new Date();
+
+// depois — interpreta como data local
+const ref = referenceWeek
+  ? new Date(`${referenceWeek}T00:00:00`)
+  : new Date();
 ```
-Mas `okr_wizard_sessions.started_by` armazena **`profiles.id`**, não `auth.users.id`. O filtro JS nunca bate, mesmo quando RLS permitiria e os registros existem.
 
-Validado em produção: Vitor (`profiles.id = 110f72b1-…022e`, `auth.users.id = 0519fa0e-…b27`) tem hoje (27/04/2026) `team-checkin` (Marketing, 14:52 UTC) e `leader-prep` (Marketing, 14:36 UTC) com `bu_id` correto e `status='completed'`. Query SQL direta retorna os 2 registros — falha apenas no filtro JS.
+### 2. `src/modules/okrs/hooks/useWeeklyPreWeeklyAggregation.ts`
 
-## Conformidade canônica
+Mesma substituição na linha 80.
 
-- `docs/canonical/IDENTITY_CONVENTION.md` (l.135, 142, 191-227): leituras profile-scoped devem usar `useIdentity().profileId`; mutations usam `realProfileId`.
-- Core memory: *"Use `realProfileId` from `useIdentity` for mutations to avoid RLS 42501 errors during impersonation"*.
-- Padrão já vigente em `useWizardSession`, `useWizardDraft`, `useGenericWizardDraft`, `useCarryOverDecisions` (todos filtram `started_by` por `profile.id`). `PreWeeklySourcesStep` é o único desviante.
+## Validação esperada
 
-**Decisão**: usar `useIdentity().profileId` (não `realProfileId`). Em impersonation, "Suas fontes" devem refletir o perfil em uso na sessão do wizard — coerente com leitura e com o restante do Pré-Weekly.
+Após a correção, em `/rituals/pre-weekly?team=c8e5d7a7-...`:
+- "Ritos concluídos por você nesta semana" deve listar:
+  - **Check-in do Time** — 1 sessão
+  - **Preparação do Líder** — 1 sessão
+- A Weekly (agregação Pré-Weekly) também passa a contar ritos do mesmo dia.
 
-## Mudança (1 arquivo, ~5 linhas)
+## Conformidade
 
-**`src/modules/okrs/components/wizards/pre-weekly/PreWeeklySourcesStep.tsx`**
+- Sem mudança de schema, RLS, query keys ou permissões.
+- Mantém `profileId` (Identity).
+- Mantém `useBuScopedSupabase` (BU-scoped).
+- Sem `select('*')`.
+- Edição mínima e localizada.
 
-1. Remover `import { useAuth } from '@/hooks/useAuth';`
-2. Adicionar `import { useIdentity } from '@/hooks/useIdentity';`
-3. Em `useUserWeeklySources(referenceWeek)`:
-   - `const { profileId } = useIdentity();` (no lugar de `const { user } = useAuth();`)
-   - `enabled: !!currentBuId && !!profileId`
-   - `queryKey: preWeeklyKeys.userSources(currentBuId, profileId, referenceWeek)`
-   - `.eq('started_by', profileId!)`
+## Pós (opcional)
 
-Mantém: filtro por `wizard_type IN ('collaborator','leader-prep','team-checkin')`, janela `weekStart..weekEnd` (Mon-Sun), `status='completed'`, `useBuScopedSupabase` (BU isolation), `select` enxuto (sem `*`).
-
-## Validação pós-fix
-
-1. Como Vitor em `/rituals/pre-weekly?team=…Marketing…`, o Step 1 deve listar:
-   - Check-in do time — 1 sessão
-   - Preparação do líder — 1 sessão
-2. Mensagem "Nenhum rito registrado…" desaparece.
-3. `tsc` clean; sem novos warnings de query keys (helper já tipado a `string | undefined`).
-
-## Fora de escopo (anotar como follow-up, não bloqueante)
-
-- Query não filtra por `team_id`. Como o título é "**Suas** fontes desta semana" (visão pessoal multi-time), comportamento atual é defensável; decisão de produto se deve restringir ao `team` da URL — não é bug.
-- Memória `mem://features/rituals/pre-weekly-v2-standard` está referenciada no índice mas o arquivo não existe. Gap documental separado, não bloqueia esta correção.
-
-## Impacto
-
-- 1 arquivo editado, mudança mínima.
-- Sem migração de banco, sem alteração de RLS, tipos ou docs canônicos.
-- **Alinha** ao padrão canônico de identidade já praticado no resto do módulo OKRs.
+Se aprovado, posso registrar uma memória curta sob `mem://standards/datetime/parse-date-only-as-local` para evitar o reaparecimento do padrão errado em outros wizards/agregações que recebem `"YYYY-MM-DD"` por prop.
