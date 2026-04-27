@@ -58,18 +58,22 @@ function formatValue(value: number, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-function useKpiChartData(values: KpiValue[], targetValue: number | null) {
+function useKpiChartData(
+  values: KpiValue[],
+  targetValue: number | null,
+  onlyConsolidated: boolean,
+) {
   return useMemo(() => {
-    if (!values?.length) {
-      return {
-        data: [],
-        minValue: 0,
-        maxValue: 100,
-      };
+    const filtered = onlyConsolidated
+      ? values.filter((v) => v.input_type !== 'projection')
+      : values;
+
+    if (!filtered?.length) {
+      return { data: [], minValue: 0, maxValue: 100 };
     }
 
     // Reverse to show oldest first in chart
-    const sortedValues = [...values].sort(
+    const sortedValues = [...filtered].sort(
       (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime()
     );
 
@@ -81,6 +85,7 @@ function useKpiChartData(values: KpiValue[], targetValue: number | null) {
       confidence: v.confidence,
       notes: v.notes,
       ragStatus: v.rag_status,
+      inputType: v.input_type ?? 'consolidated',
     }));
 
     const chartValues = sortedValues.map((v) => v.value);
@@ -94,7 +99,7 @@ function useKpiChartData(values: KpiValue[], targetValue: number | null) {
       minValue: Math.floor(min - padding),
       maxValue: Math.ceil(max + padding),
     };
-  }, [values, targetValue]);
+  }, [values, targetValue, onlyConsolidated]);
 }
 
 export function KpiEvolutionChart({
