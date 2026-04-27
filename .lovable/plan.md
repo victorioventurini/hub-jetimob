@@ -224,20 +224,15 @@ Sem mudança. Colunas novas herdam policies existentes.
 
 ---
 
-## Fase 5 — `useKpisForWizardV2`
+## Fase 5 — `useKpisForWizardV2` ✅
 
-Arquivo: `src/modules/kpis/hooks/useKpisForWizardV2.ts`
-
-- `select` de `kpi_metrics` adiciona `consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed` (mantém `frequency` para fallback Fase 1).
-- `select` de `kpi_values` adiciona `input_type`.
-- **`checkNeedsUpdate(kpi, lastValueDate)`** refatorada:
-  - Usa `kpi.update_frequency ?? legacyMap(kpi.frequency)`.
-  - Se nulo → `false` (KPI ex-`manual` sem revisão fica fora de `kpisToUpdate`).
-  - Sem valor lançado → `true`.
-  - Senão → `daysSinceLastInput >= UPDATE_OVERDUE_THRESHOLDS[update_frequency]`.
-- Helper novo `filterKpisForRitual(kpis, ritualType)`: filtra por compatibilidade `update_frequency ≤ ritualMax` + sempre inclui em alerta.
-- Enriquecimento calcula `deviation_pct` **uma vez** e armazena em `KpiForWizardV2`.
+- `select` de `kpi_metrics` agora inclui `consolidation_frequency` e `update_frequency`.
+- `select` de `kpi_values` inclui `input_type`.
+- `checkNeedsUpdate` refatorada: usa `update_frequency` (com fallback `legacyFrequencyToValue(kpi.frequency)`); KPIs sem frequência (ex-`manual` não revisados) retornam `false` e ficam fora de `kpisToUpdate`.
+- Threshold por cadência via `FREQUENCY_DAYS` (7 valores).
+- `KpiForWizardV2` ganhou `consolidation_frequency`, `update_frequency`, `latest_input_type` e `deviation_pct` (pré-calculado uma vez no enriquecimento, sensível à `direction`).
 - 5 buckets retornados permanecem inalterados (compatibilidade).
+- Testes: 142 passando (incluindo `CollaboratorContextStep` atualizado para o novo shape).
 
 ### Tech debt registrada (não nesta entrega)
 
