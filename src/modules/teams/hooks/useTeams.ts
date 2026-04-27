@@ -110,7 +110,7 @@ export function useTeam(teamId: string | undefined) {
   const { currentBuId } = useBu();
   
   return useQuery({
-    queryKey: queryKeys.teams.detail(teamId),
+    queryKey: queryKeys.teams.detail(teamId, currentBuId),
     queryFn: async () => {
       if (!teamId) return null;
 
@@ -394,7 +394,7 @@ export function useUpdateTeam() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(null, false), exact: false });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(null, true), exact: false });
-      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detailPrefix(variables.id) });
       toast.success("Time atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -556,7 +556,7 @@ export function useDeleteTeam() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, false) });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams.list(buId, true) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teams.detailPrefix(undefined) });
       queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all(buId) });
       toast.success("Time excluído com sucesso");
     },
