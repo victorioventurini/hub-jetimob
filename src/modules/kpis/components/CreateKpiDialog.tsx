@@ -36,16 +36,21 @@ import { useKpiData } from "../hooks";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
   KpiDirection,
-  KpiFrequency,
+  KpiFrequencyValue,
   KpiIndicatorType,
   KpiLifecycleStatus,
   KpiScope,
-  FREQUENCY_LABELS,
+  FREQUENCY_VALUE_LABELS,
   DIRECTION_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
   getScopeLabels,
 } from "../types";
+import {
+  FREQUENCY_ORDER,
+  getValidUpdateFrequencies,
+  isUpdateFrequencyValid,
+} from "../utils/frequency";
 import { useBu } from "@/contexts/BuContext";
 import { VicActionButton } from "@/modules/vic";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -73,7 +78,12 @@ const formSchema = z.object({
   description: z.string().max(500).optional(),
   unit: z.string().min(1, "Unidade é obrigatória"),
   direction: z.enum(["up", "down"]),
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly"]),
+  consolidation_frequency: z.enum([
+    "daily","weekly","biweekly","monthly","quarterly","semiannual","annual",
+  ]),
+  update_frequency: z.enum([
+    "daily","weekly","biweekly","monthly","quarterly","semiannual","annual",
+  ]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
   target_value: z.preprocess(
@@ -137,6 +147,14 @@ const formSchema = z.object({
       path: ["target_source"],
     });
   }
+  // v3.0.0: update_frequency não pode ser menos frequente que consolidation_frequency
+  if (!isUpdateFrequencyValid(data.consolidation_frequency, data.update_frequency)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Frequência de atualização não pode ser menos frequente que a de consolidação",
+      path: ["update_frequency"],
+    });
+  }
 });
 
 type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
@@ -172,7 +190,8 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       description: "",
       unit: "%",
       direction: "up",
-      frequency: "monthly",
+      consolidation_frequency: "monthly",
+      update_frequency: "monthly",
       indicator_type: "metric",
       lifecycle_status: "proposed",
       target_source: "",
@@ -243,12 +262,22 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       // Determinar area_id final (inferido ou selecionado)
       const finalAreaId = values.scope === 'team' ? inferredAreaId : values.area_id;
 
+      // v3.0.0: persiste split + flag de revisão; `frequency` legado é espelho
+      const legacyMirror = (
+        ['daily', 'weekly', 'monthly', 'quarterly'] as const
+      ).includes(values.consolidation_frequency as never)
+        ? (values.consolidation_frequency as 'daily' | 'weekly' | 'monthly' | 'quarterly')
+        : 'monthly';
+
       await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
         unit: values.unit,
         direction: values.direction as KpiDirection,
-        frequency: values.frequency as DbKpiFrequency,
+        frequency: legacyMirror,
+        consolidation_frequency: values.consolidation_frequency,
+        update_frequency: values.update_frequency,
+        frequency_migration_reviewed: true,
         team_id: values.scope === 'team' ? values.team_id || null : null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
@@ -299,7 +328,8 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                           unit: form.watch("unit"),
                           additionalData: {
                             direction: form.watch("direction"),
-                            frequency: form.watch("frequency"),
+                            consolidation_frequency: form.watch("consolidation_frequency"),
+                            update_frequency: form.watch("update_frequency"),
                             indicator_type: form.watch("indicator_type"),
                           },
                         }}
@@ -456,32 +486,89 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
 
               <FormField
                 control={form.control}
-                name="frequency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Frequência
-                      <HelpTooltip content="Periodicidade esperada de atualização do indicador. Influencia alertas de dados desatualizados." />
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(Object.keys(FREQUENCY_LABELS) as KpiFrequency[])
-                          .filter(f => f !== 'manual')
-                          .map((freq) => (
+                name="consolidation_frequency"
+                render={({ field }) => {
+                  const currentUpdate = form.getValues("update_frequency") as KpiFrequencyValue;
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Frequência de consolidação
+                        <HelpTooltip content="Periodicidade em que o valor é fechado oficialmente. Ex: MRR consolida mensalmente." />
+                      </FormLabel>
+                      <Select
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          const valid = getValidUpdateFrequencies(v as KpiFrequencyValue);
+                          if (!valid.includes(currentUpdate)) {
+                            form.setValue("update_frequency", v as KpiFrequencyValue, { shouldDirty: true });
+                          }
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {FREQUENCY_ORDER.map((freq) => (
                             <SelectItem key={freq} value={freq}>
-                              {FREQUENCY_LABELS[freq]}
+                              {FREQUENCY_VALUE_LABELS[freq]}
                             </SelectItem>
                           ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="update_frequency"
+                render={({ field }) => {
+                  const cons = form.watch("consolidation_frequency") as KpiFrequencyValue;
+                  const validUpdates = getValidUpdateFrequencies(cons);
+                  const isIntermediate = field.value && cons && field.value !== cons;
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Frequência de atualização
+                        <HelpTooltip content="Periodicidade em que novos valores são lançados (pode ser mais frequente que a consolidação — inputs intermediários viram projeção)." />
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {FREQUENCY_ORDER.map((freq) => (
+                            <SelectItem
+                              key={freq}
+                              value={freq}
+                              disabled={!validUpdates.includes(freq)}
+                            >
+                              {FREQUENCY_VALUE_LABELS[freq]}
+                              {!validUpdates.includes(freq) && (
+                                <span className="text-muted-foreground ml-1 text-xs">(inválido)</span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isIntermediate && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Inputs intermediários serão tratados como projeção.
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
 

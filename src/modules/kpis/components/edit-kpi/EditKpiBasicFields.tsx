@@ -25,14 +25,18 @@ import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Info } from 'lucide-react';
 import {
   DIRECTION_LABELS,
-  FREQUENCY_LABELS,
+  FREQUENCY_VALUE_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
   type KpiDirection,
-  type KpiFrequency,
+  type KpiFrequencyValue,
   type KpiIndicatorType,
   type KpiLifecycleStatus,
 } from '../../types';
+import {
+  FREQUENCY_ORDER,
+  getValidUpdateFrequencies,
+} from '../../utils/frequency';
 import type { EditKpiFormValues } from './editKpiSchema';
 
 interface EditKpiBasicFieldsProps {
@@ -166,51 +170,139 @@ export function EditKpiBasicFields({ form, canCreateKpi }: EditKpiBasicFieldsPro
         />
       </div>
 
+      <FormField
+        control={form.control}
+        name="unit"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Unidade</FormLabel>
+            <FormControl>
+              <UnitSelect
+                value={field.value}
+                onChange={field.onChange}
+                showLabel={false}
+                showCustomOption={true}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
-          name="unit"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Unidade</FormLabel>
-              <FormControl>
-                <UnitSelect
+          name="consolidation_frequency"
+          render={({ field }) => {
+            const consolidation = field.value as KpiFrequencyValue;
+            const currentUpdate = form.getValues('update_frequency') as KpiFrequencyValue;
+            return (
+              <FormItem>
+                <FormLabel>
+                  Frequência de consolidação
+                  <HelpTooltip
+                    content={
+                      <div className="space-y-1">
+                        <p>Periodicidade em que o valor é fechado oficialmente.</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Ex: MRR Commit consolida <strong>mensalmente</strong>.
+                        </p>
+                      </div>
+                    }
+                  />
+                </FormLabel>
+                <Select
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    // Auto-clear update_frequency se ficou inválida
+                    const validUpdates = getValidUpdateFrequencies(v as KpiFrequencyValue);
+                    if (!validUpdates.includes(currentUpdate)) {
+                      form.setValue('update_frequency', v as KpiFrequencyValue, {
+                        shouldDirty: true,
+                      });
+                    }
+                  }}
                   value={field.value}
-                  onChange={field.onChange}
-                  showLabel={false}
-                  showCustomOption={true}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {FREQUENCY_ORDER.map((freq) => (
+                      <SelectItem key={freq} value={freq}>
+                        {FREQUENCY_VALUE_LABELS[freq]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+                {field.value !== consolidation /* placeholder for future hint */ && null}
+              </FormItem>
+            );
+          }}
         />
 
         <FormField
           control={form.control}
-          name="frequency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Frequência</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {(Object.keys(FREQUENCY_LABELS) as KpiFrequency[])
-                    .filter((f) => f !== 'manual')
-                    .map((freq) => (
-                      <SelectItem key={freq} value={freq}>
-                        {FREQUENCY_LABELS[freq]}
+          name="update_frequency"
+          render={({ field }) => {
+            const consolidation = form.watch('consolidation_frequency') as KpiFrequencyValue;
+            const validUpdates = getValidUpdateFrequencies(consolidation);
+            const isIntermediate =
+              field.value && consolidation && field.value !== consolidation;
+            return (
+              <FormItem>
+                <FormLabel>
+                  Frequência de atualização
+                  <HelpTooltip
+                    content={
+                      <div className="space-y-1">
+                        <p>
+                          Periodicidade em que novos valores são lançados (pode ser mais
+                          frequente que a consolidação).
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Ex: MRR Commit pode ser atualizado <strong>semanalmente</strong>{' '}
+                          como projeção até o fechamento mensal.
+                        </p>
+                      </div>
+                    }
+                  />
+                </FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {FREQUENCY_ORDER.map((freq) => (
+                      <SelectItem
+                        key={freq}
+                        value={freq}
+                        disabled={!validUpdates.includes(freq)}
+                      >
+                        {FREQUENCY_VALUE_LABELS[freq]}
+                        {!validUpdates.includes(freq) && (
+                          <span className="text-muted-foreground ml-1 text-xs">
+                            (inválido)
+                          </span>
+                        )}
                       </SelectItem>
                     ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+                  </SelectContent>
+                </Select>
+                {isIntermediate && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Inputs intermediários serão tratados como projeção.
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
       </div>
 

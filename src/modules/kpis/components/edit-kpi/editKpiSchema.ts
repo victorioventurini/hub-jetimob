@@ -1,8 +1,20 @@
 /**
  * EditKpiDialog — Schema Zod e tipos derivados
  * Extraído de EditKpiDialog.tsx (refatoração P1.4)
+ * v3.0.0 — Frequency split: consolidation_frequency × update_frequency.
  */
 import { z } from 'zod';
+import { isUpdateFrequencyValid } from '../../utils/frequency';
+
+const FREQUENCY_VALUES = [
+  'daily',
+  'weekly',
+  'biweekly',
+  'monthly',
+  'quarterly',
+  'semiannual',
+  'annual',
+] as const;
 
 export const editKpiSchema = z
   .object({
@@ -10,7 +22,9 @@ export const editKpiSchema = z
     description: z.string().max(500).optional(),
     unit: z.string().min(1, 'Unidade é obrigatória'),
     direction: z.enum(['up', 'down']),
-    frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly']),
+    // v3.0.0: split into two cadences
+    consolidation_frequency: z.enum(FREQUENCY_VALUES),
+    update_frequency: z.enum(FREQUENCY_VALUES),
     team_id: z.string().optional(),
     owner_user_id: z.string().optional(),
     target_value: z.preprocess(
@@ -68,7 +82,17 @@ export const editKpiSchema = z
         path: ['target_source'],
       });
     }
+    // v3.0.0: update_frequency não pode ser menos frequente que consolidation_frequency
+    if (!isUpdateFrequencyValid(data.consolidation_frequency, data.update_frequency)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Frequência de atualização não pode ser menos frequente que a de consolidação',
+        path: ['update_frequency'],
+      });
+    }
   });
 
 export type EditKpiFormValues = z.infer<typeof editKpiSchema>;
+/** @deprecated v3.0.0 — campo legado preservado para escrita-espelho enquanto o banco ainda exige `frequency` NOT NULL. */
 export type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';

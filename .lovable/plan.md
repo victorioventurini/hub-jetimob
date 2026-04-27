@@ -170,27 +170,27 @@ Sem mudança. Colunas novas herdam policies existentes.
 
 ---
 
-## Fase 3 — Formulário de KPI
+## Fase 3 — Formulário de KPI ✅
 
-### 3.1 `editKpiSchema.ts` + `CreateKpiDialog`
+### 3.1 `editKpiSchema.ts` + `formSchema` (CreateKpiDialog)
 
-- Substitui `frequency` por `consolidation_frequency` + `update_frequency`.
-- **Sem campo `update_mode` na UI** — fica `manual` por default no banco.
-- `superRefine`: aplica `isUpdateFrequencyValid`.
+- Substituiu `frequency` por `consolidation_frequency` + `update_frequency` (enums de 7 valores).
+- `superRefine` aplica `isUpdateFrequencyValid` em ambos os schemas.
+- `DbKpiFrequency` marcado `@deprecated`; mantido para escrita-espelho.
 
 ### 3.2 `EditKpiBasicFields.tsx` / `CreateKpiDialog.tsx`
 
-- **Frequência de consolidação** (select obrigatório, 7 opções).
-- **Frequência de atualização** (select dependente; opções menos frequentes ocultadas; auto-clear se inválido).
-- Tooltips com exemplo MRR Commit.
-- Hint visual ao escolher `update_frequency < consolidation_frequency`: *"Inputs intermediários serão tratados como projeção"*.
+- Dois selects dependentes lado-a-lado: **Frequência de consolidação** + **Frequência de atualização**.
+- Update select desabilita opções menos frequentes que consolidation; auto-clear quando inválido.
+- Hint visual quando intermediário: *"Inputs intermediários serão tratados como projeção"*.
+- Tooltips com exemplo MRR.
 
-### 3.3 `useEditKpiForm.ts`
+### 3.3 `useEditKpiForm.ts` / `CreateKpiDialog.tsx`
 
-- Hidrata os 2 campos novos (consolidation/update).
-- Reset segue padrão `prevIdRef` (DEVELOPMENT_STANDARDS.md §EditKpiDialog).
-- Mutação não escreve em `frequency` antigo.
-- Após salvar, sempre marca `frequency_migration_reviewed=true`.
+- Hidrata os 2 campos novos (fallback `legacyFrequencyToValue` para KPIs ainda não migrados manualmente).
+- Reset segue padrão `prevIdRef`.
+- Mutation escreve `consolidation_frequency`, `update_frequency`, `frequency` (espelho enquanto NOT NULL no DB) e `frequency_migration_reviewed=true`.
+- `useKpiMutations.UpdateKpiData` e `useKpiData.createKpi` aceitam os campos novos.
 
 ---
 
