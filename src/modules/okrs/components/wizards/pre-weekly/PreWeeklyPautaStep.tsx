@@ -93,7 +93,6 @@ export function PreWeeklyPautaStep({
       id: `topic-${Date.now()}`,
       title: '',
       category: 'performance',
-      priority: 'medium',
       context: '',
     };
     onTopicsChange([...topics, newTopic]);
