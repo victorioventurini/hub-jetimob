@@ -5,6 +5,7 @@
  * Recebe `kpiId` e renderiza toda a informação do KPI.
  */
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AreaBadge } from "@/components/ui/area-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +17,8 @@ import { LinkedKrsSection } from "./LinkedKrsSection";
 import { KpiValuesTable } from "./KpiValuesTable";
 import { KpiTargetHistorySection } from "./KpiTargetHistorySection";
 import { KpiActionsMenu } from "./KpiActionsMenu";
+import { KpiMigrationBanner } from "./KpiMigrationBanner";
+import { EditKpiDialog } from "./EditKpiDialog";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
 import { useBu } from "@/contexts/BuContext";
