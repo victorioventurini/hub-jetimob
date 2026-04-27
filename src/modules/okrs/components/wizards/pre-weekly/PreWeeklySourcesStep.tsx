@@ -43,11 +43,13 @@ export interface PreWeeklySourcesStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   referenceWeek: string; // YYYY-MM-DD
+  /** Quando presente, filtra fontes por time (admin/líder vendo contexto de outro time). */
+  teamId?: string | null;
   onContinue: () => void;
 }
 
 // ============================================================
-// HOOK — fontes da semana do gestor logado
+// HOOK — fontes da semana (por time quando contexto presente, senão por usuário)
 // ============================================================
 
 interface SessionItem {
@@ -57,14 +59,18 @@ interface SessionItem {
   status: string;
 }
 
-function useUserWeeklySources(referenceWeek: string) {
+function useWeeklySources(referenceWeek: string, teamId: string | null | undefined) {
   const { profileId } = useIdentity();
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
 
+  const scope: 'team' | 'user' = teamId ? 'team' : 'user';
+  const scopeKey = teamId ?? profileId ?? null;
+  const enabled = !!currentBuId && (teamId ? true : !!profileId);
+
   return useQuery({
-    queryKey: preWeeklyKeys.userSources(currentBuId, profileId, referenceWeek),
-    enabled: !!currentBuId && !!profileId,
+    queryKey: preWeeklyKeys.sources(currentBuId, scope, scopeKey, referenceWeek),
+    enabled,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<SessionItem[]> => {
       // Parse "YYYY-MM-DD" como data local (evita shift de fuso que joga para a semana anterior)
@@ -72,16 +78,25 @@ function useUserWeeklySources(referenceWeek: string) {
       const weekStart = startOfWeek(ref, { weekStartsOn: 1 }).toISOString();
       const weekEnd = endOfWeek(ref, { weekStartsOn: 1 }).toISOString();
 
-      const { data, error } = await buSupabase
+      let query = buSupabase
         .from('okr_wizard_sessions')
         .select('id, wizard_type, completed_at, status')
-        .eq('started_by', profileId!)
         .in('wizard_type', ['collaborator', 'leader-prep', 'team-checkin'])
         .gte('completed_at', weekStart)
         .lte('completed_at', weekEnd)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false });
 
+      if (teamId) {
+        // Modo time: tudo que o time registrou nesta semana (independente do started_by).
+        // RLS já bloqueia acesso indevido (admin BU, líder do time, líder de área).
+        query = query.eq('team_id', teamId);
+      } else {
+        // Modo pessoal: só o que o próprio usuário iniciou.
+        query = query.eq('started_by', profileId!);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as SessionItem[];
     },
@@ -98,9 +113,11 @@ export function PreWeeklySourcesStep({
   decisions,
   onDecisionsChange,
   referenceWeek,
+  teamId,
   onContinue,
 }: PreWeeklySourcesStepProps) {
-  const { data: sessions, isLoading } = useUserWeeklySources(referenceWeek);
+  const { data: sessions, isLoading } = useWeeklySources(referenceWeek, teamId);
+  const isTeamScope = !!teamId;
 
   const grouped = useMemo(() => {
     const map = new Map<string, SessionItem[]>();
@@ -119,8 +136,12 @@ export function PreWeeklySourcesStep({
       header={
         <WizardStepHeader
           icon={Inbox}
-          title="Suas fontes desta semana"
-          description="O que você já registrou e vai destilar para a Weekly"
+          title={isTeamScope ? 'Fontes do time esta semana' : 'Suas fontes desta semana'}
+          description={
+            isTeamScope
+              ? 'Ritos concluídos pelo time que você vai destilar para a Weekly'
+              : 'O que você já registrou e vai destilar para a Weekly'
+          }
           variant="primary"
         />
       }
@@ -144,7 +165,9 @@ export function PreWeeklySourcesStep({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Ritos concluídos por você nesta semana
+              {isTeamScope
+                ? 'Ritos concluídos pelo time nesta semana'
+                : 'Ritos concluídos por você nesta semana'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -153,8 +176,9 @@ export function PreWeeklySourcesStep({
             )}
             {!isLoading && !hasSources && (
               <p className="text-sm text-muted-foreground">
-                Nenhum rito registrado por você nesta semana ainda. Você pode
-                seguir adiante mesmo assim — a destilação é livre.
+                {isTeamScope
+                  ? 'Nenhum rito registrado para este time nesta semana ainda. Você pode seguir adiante mesmo assim — a destilação é livre.'
+                  : 'Nenhum rito registrado por você nesta semana ainda. Você pode seguir adiante mesmo assim — a destilação é livre.'}
               </p>
             )}
             {!isLoading && hasSources && (

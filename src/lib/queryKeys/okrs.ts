@@ -465,11 +465,25 @@ export const mbrKeys = {
 /** Pre-Weekly wizard keys */
 export const preWeeklyKeys = {
   prefix: () => ['pre-weekly'] as const,
+  /**
+   * @deprecated Prefer `sources` — kept para retrocompat de caches existentes.
+   */
   userSources: (
     buId: string | null,
     userId: string | null | undefined,
     referenceWeek: string
   ) => ['pre-weekly', 'user-sources', buId, userId, referenceWeek] as const,
+  /**
+   * Fontes da semana — escopadas por time quando `?team=` está presente,
+   * ou pelo usuário logado em fluxos sem contexto de time.
+   * `scopeKey` deve ser o `teamId` (modo time) ou o `profileId` (modo pessoal).
+   */
+  sources: (
+    buId: string | null,
+    scope: 'team' | 'user',
+    scopeKey: string | null | undefined,
+    referenceWeek: string
+  ) => ['pre-weekly', 'sources', buId, scope, scopeKey, referenceWeek] as const,
 } as const;
 
 /** Quarter Review (executive page) keys */
