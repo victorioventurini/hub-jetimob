@@ -21,7 +21,7 @@ import { Info } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { KpiValue, KpiDirection, SOURCE_TYPE_LABELS } from "../types";
+import type { KpiValue, KpiDirection } from "../types";
 import { useMemo } from "react";
 
 export interface KpiEvolutionChartProps {
@@ -31,6 +31,11 @@ export interface KpiEvolutionChartProps {
   direction: KpiDirection;
   className?: string;
   compact?: boolean;
+  /**
+   * v3.0.0 — Quando true, oculta valores com `input_type='projection'`.
+   * O toggle é controlado pelo parent (ex: KpiHistoryDialog via useUrlState).
+   */
+  onlyConsolidated?: boolean;
 }
 
 const sourceLabels: Record<string, string> = {
