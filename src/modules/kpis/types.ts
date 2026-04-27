@@ -69,11 +69,11 @@ export interface KpiMetric {
   direction: KpiDirection;
   /** @deprecated v3.0.0 — use consolidation_frequency + update_frequency. */
   frequency: KpiFrequency;
-  // v3.0.0 frequency split
-  consolidation_frequency: KpiFrequencyValue | null;
-  update_frequency: KpiFrequencyValue | null;
-  update_mode: KpiUpdateMode;
-  frequency_migration_reviewed: boolean;
+  // v3.0.0 frequency split (opcional durante migração; populated by selects when needed)
+  consolidation_frequency?: KpiFrequencyValue | null;
+  update_frequency?: KpiFrequencyValue | null;
+  update_mode?: KpiUpdateMode;
+  frequency_migration_reviewed?: boolean;
   target_value: number | null;
   status: KpiStatus;
   source_type: KpiValueSource;
@@ -137,8 +137,8 @@ export interface KpiValue {
   period_label: string | null;
   confidence: KpiConfidenceLevel;
   rag_status: KpiRagStatus | null;
-  // v3.0.0 input type (projeção vs consolidado)
-  input_type: KpiInputType;
+  // v3.0.0 input type (projeção vs consolidado) — opcional durante migração
+  input_type?: KpiInputType;
   // Relations
   created_by_user?: {
     id: string;
