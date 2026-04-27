@@ -145,6 +145,35 @@ export function MbrKpiGateStep({
                   </Badge>
                 </div>
 
+                {/* v3.0.0 — Badges Projeção/Consolidado + Confidence */}
+                {(kpi.latestInputType || kpi.latestConfidence) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {kpi.latestInputType && (
+                      <Badge
+                        variant={kpi.latestInputType === 'projection' ? 'outline' : 'secondary'}
+                        className={cn(
+                          'text-[10px] h-5',
+                          kpi.latestInputType === 'projection' && 'border-dashed',
+                        )}
+                      >
+                        {kpi.latestInputType === 'projection' ? 'Projeção' : 'Consolidado'}
+                      </Badge>
+                    )}
+                    {kpi.latestConfidence && (
+                      <Badge
+                        variant={kpi.latestConfidence === 'low' ? 'destructive' : 'secondary'}
+                        className="text-[10px] h-5"
+                      >
+                        {kpi.latestConfidence === 'high'
+                          ? 'Conf: Alta'
+                          : kpi.latestConfidence === 'medium'
+                          ? 'Conf: Média'
+                          : 'Conf: Baixa'}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
                 {/* Impact assessment */}
                 <div className="space-y-1.5 min-w-0">
                   <Label className="text-xs text-muted-foreground">
