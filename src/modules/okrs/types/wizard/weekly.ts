@@ -46,8 +46,12 @@ export interface PreWeeklyPeopleSignal {
 export interface PreWeeklyDraftData {
   /** Semana de referência (YYYY-MM-DD da segunda-feira) */
   referenceWeek: string;
-  /** Reflexão livre sobre as fontes desta semana (Step 1) */
-  sourcesReflection: string;
+  /**
+   * @deprecated Removido do Step 1 em 2026-04-27 (Reflexão livre não pertence à
+   * preparação; a produção começa no Step 2). Mantido como opcional para
+   * retrocompat de drafts antigos — não exibido em UI nova.
+   */
+  sourcesReflection?: string;
   /** Até 3 temas que sobem para a Weekly (Step 2) */
   topics: PreWeeklyTopic[];
   /** Sinais de pessoas (Step 3) */
