@@ -103,7 +103,31 @@ export default function ProjectDetailPage() {
 
   // Milestone CRUD: bloqueado em projetos arquivados (read-only canônico).
   const canAddMilestone = !isArchived && rawCanAddMilestone;
-  const canEditMilestone = !isArchived && rawCanEditMilestone;
+
+  /**
+   * Gating row-aware das milestones (espelha a RLS canônica v2026-04-27):
+   * - Editar: project owner OR milestone owner OR estrutural (admin/líder/`projects.milestone.update:bu`).
+   * - Remover: project owner OR estrutural (admin/líder/`projects.milestone.delete:bu`).
+   * Em projetos arquivados, ambas as ações são bloqueadas (read-only canônico).
+   */
+  const canEditMilestoneRow = (m: ProjectMilestone): boolean => {
+    if (isArchived || !permissionsResolved) return false;
+    return canEditMilestoneRecord(
+      m.owner_id,
+      project?.owner_id ?? null,
+      writerProfileId,
+      isLeaderOfOwner,
+    );
+  };
+
+  const canDeleteMilestoneRow = (_m: ProjectMilestone): boolean => {
+    if (isArchived || !permissionsResolved) return false;
+    return canDeleteMilestoneRecord(
+      project?.owner_id ?? null,
+      writerProfileId,
+      isLeaderOfOwner,
+    );
+  };
 
   // Observabilidade: gating row-aware do detalhe do projeto.
   // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
