@@ -207,7 +207,7 @@ export default function KpiDashboardPage() {
     () => allKpis.filter((k) => k.frequency_migration_reviewed === false).length,
     [allKpis],
   );
-  const canManageKpis = hasPermission("kpis.settings.manage:bu") || isWildcardPlaceholder;
+  const canManageKpis = hasPermission("kpis.settings.manage:bu");
 
   // Calculate summary from filtered data
   const summary = {
