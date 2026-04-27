@@ -194,27 +194,33 @@ Sem mudança. Colunas novas herdam policies existentes.
 
 ---
 
-## Fase 4 — Captura de input em valores (UI simplificada)
+## Fase 4 — Captura de input em valores (UI simplificada) ✅
 
 ### 4.1 `AddKpiValueDialog.tsx` / `EditKpiValueDialog.tsx`
 
-- Recebe prop `kpi: KpiMetric` (atualmente recebe só id/name/unit — ampliar).
-- Novo radio **Tipo do input**: `consolidated` / `projection`. Default por `suggestInputType`.
-- **Confidence**: NÃO aparece por padrão. Campo dentro de `<details>` "Avançado":
-  ```
-  ▸ Avançado
-    ☐ Sobrescrever confidence (auto: alta para consolidado, média para projeção)
-  ```
-  Se usuário marca, exibe radio high/medium/low.
-- Hint quando `update_frequency < consolidation_frequency`:
-  > *Este KPI consolida {X}, mas é atualizado {Y}. Inputs antes do fechamento são projeções.*
-- Schema Zod estende com `input_type` (obrigatório) e `confidence` (opcional — backend deriva quando ausente).
-- `useKpiMutations.addKpiValue` e edição passam `input_type` + `confidence?`.
+- Novas props opcionais `consolidationFrequency` / `updateFrequency` (sem quebra de callers existentes).
+- Radio **Tipo do input** (`consolidated` / `projection`) com default por `suggestInputType` no Add e hidratado de `kpiValue.input_type` no Edit.
+- No Add, ao mudar `reference_date`, re-sugere `input_type` automaticamente.
+- Hint visual quando `update_frequency < consolidation_frequency`: explica que inputs antes do fechamento são projeções.
+- Bloco `<details>` "Avançado" com checkbox "Sobrescrever confidence" → revela RadioGroup `Alta/Média/Baixa`.
+- Quando `override_confidence` está desligado, o front **não** envia `confidence`, deixando o trigger `derive_kpi_value_confidence` aplicar o default (`high` para consolidado, `medium` para projeção).
+- Schema Zod estendido com `input_type` (obrigatório), `override_confidence` (opcional) e `confidence` (opcional).
 
-### 4.2 Permissões
+### 4.2 Mutations (`useKpiData.addKpiValue`, `useKpiMutations.updateKpiValue`)
 
-- Inserção: `kpis.value.add:bu` (chave canônica confirmada em `PERMISSIONS_AND_RBAC_MODEL.md`).
+- Aceitam `input_type` e `confidence?`. `confidence` só é enviado quando explicitamente fornecido pelo usuário.
+- `addKpiValue` faz default `input_type='consolidated'` quando ausente.
+
+### 4.3 Selects ampliados
+
+- `useKpiDetail` agora seleciona `consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed` em `kpi_metrics` e `input_type` em `kpi_values`.
+- `KpiValuesTable`, `KpiDetailContent`, `KpiHistoryDialog`, `KpiDashboardPage` e `KpiActionsMenu` repassam as frequências para os diálogos.
+
+### 4.4 Permissões (sem mudança)
+
+- Inserção: `kpis.value.add:bu`.
 - Edição: `kpis.value.update_own:bu` (autor).
+
 
 ---
 
