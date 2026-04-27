@@ -4,7 +4,12 @@
 export const teamsKeys = {
   all: (buId: string | null) => ['teams', buId] as const,
   list: (buId: string | null, includeInactive = false) => ['teams', 'list', buId, includeInactive] as const,
-  detail: (teamId: string | undefined) => ['team', teamId] as const,
+  /**
+   * BU-scoped detail key — inclui buId para evitar reuso de cache cross-BU.
+   * Use detailPrefix(teamId) para invalidar todas as variantes.
+   */
+  detail: (teamId: string | undefined, buId?: string | null) => ['team', teamId, buId ?? null] as const,
+  detailPrefix: (teamId: string | undefined) => ['team', teamId] as const,
   members: (teamId: string) => ['teams', 'members', teamId] as const,
   availableLeaders: (buId: string | null) => ['available-leaders', buId] as const,
   // v2.82.0: Team area for auto-inference
@@ -39,7 +44,12 @@ export const teamsKeys = {
 export const squadsKeys = {
   all: (buId: string | null) => ['squads', buId] as const,
   byTeam: (teamId: string) => ['squads', 'byTeam', teamId] as const,
-  detail: (squadId: string) => ['squads', 'detail', squadId] as const,
+  /**
+   * BU-scoped detail key — inclui buId para evitar reuso de cache cross-BU.
+   * Use detailPrefix(squadId) para invalidar todas as variantes.
+   */
+  detail: (squadId: string, buId?: string | null) => ['squads', 'detail', squadId, buId ?? null] as const,
+  detailPrefix: (squadId: string) => ['squads', 'detail', squadId] as const,
 } as const;
 
 export const managersKeys = {

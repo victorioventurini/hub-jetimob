@@ -11,7 +11,12 @@ export const analysisKeys = {
   // ── Specific keys ──
   list: (buId: string | null, filters?: Record<string, unknown>) =>
     ["analysis", "list", buId, filters] as const,
-  detail: (id: string) => ["analysis", "detail", id] as const,
+  /**
+   * BU-scoped detail key — inclui buId para evitar reuso de cache cross-BU.
+   * Use detailPrefix(id) para invalidar todas as variantes.
+   */
+  detail: (id: string, buId?: string | null) => ["analysis", "detail", id, buId ?? null] as const,
+  detailPrefix: (id: string) => ["analysis", "detail", id] as const,
   templates: (buId: string | null) =>
     ["analysis", "templates", buId] as const,
   feedback: (reportId: string) =>
