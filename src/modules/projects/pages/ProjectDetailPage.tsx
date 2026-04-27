@@ -243,10 +243,7 @@ export default function ProjectDetailPage() {
     updateMilestone.mutate({ id: milestoneId, project_id: id, status });
   };
 
-  const handleMilestoneUpdate = (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string | null; notes?: string | null }) => {
-    if (!id) return;
-    updateMilestone.mutate({ id: milestoneId, project_id: id, ...updates });
-  };
+
 
   const handleMilestoneEditSubmit = (data: MilestoneDialogSubmitValues) => {
     if (!id || !editingMilestone) return;
