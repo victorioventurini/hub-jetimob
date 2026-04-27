@@ -93,28 +93,43 @@ export function useSoftDeleteMilestone() {
     mutationFn: async ({
       id,
       project_id,
-      bu_id,
+      bu_id: _bu_id,
     }: {
       id: string;
       project_id: string;
-      /** BU do registro (project_milestones.bu_id). Defesa em profundidade — ver mem://standards/cross-bu-isolation-pattern */
+      /** Mantido na assinatura para compatibilidade dos chamadores; a RPC valida BU server-side. */
       bu_id: string;
     }) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { data, error } = await supabase
-        .from('project_milestones')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('bu_id', bu_id)
-        .select('id, project_id');
+      // Padrão Projects v1.8: RPC SECURITY DEFINER que valida autorização canônica
+      // server-side e retorna { ok, code } categorizado. Elimina o mascaramento de
+      // PostgrestError → "erro desconhecido". Ver:
+      //   mem://features/projects/holistic-module-architecture-v2 (RPC v1.8 pattern)
+      //   mem://features/projects/milestone-permissions-row-aware
+      const { data, error } = await supabase.rpc(
+        'archive_milestone_v2' as never,
+        { p_milestone_id: id } as never,
+      );
 
-      if (error) throw error;
-      // RLS pode bloquear silenciosamente (0 rows) — tornar explícito.
-      if (!data || data.length === 0) {
-        throw new Error('Sem permissão para remover esta milestone');
+      if (error) {
+        // PostgrestError NÃO é instanceof Error — extrair diagnóstico real.
+        const pgErr = error as { message?: string; details?: string; hint?: string; code?: string };
+        const msg = pgErr.message || pgErr.details || pgErr.hint || pgErr.code || 'Falha ao remover milestone';
+        throw new Error(msg);
       }
-      return { project_id };
+
+      const result = (data ?? {}) as { ok?: boolean; code?: string; project_id?: string };
+      if (!result.ok) {
+        const codeMap: Record<string, string> = {
+          UNAUTHENTICATED: 'Sessão expirada — faça login novamente',
+          NOT_FOUND: 'Milestone não encontrada ou já removida',
+          FORBIDDEN: 'Apenas o dono do projeto, líder de área ou admin podem remover milestones',
+        };
+        throw new Error(codeMap[result.code ?? ''] ?? `Falha ao remover milestone (${result.code ?? 'desconhecido'})`);
+      }
+
+      return { project_id: result.project_id ?? project_id };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
