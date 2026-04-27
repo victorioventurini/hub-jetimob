@@ -35,6 +35,8 @@ interface EntityNamesCellProps {
   teamNames?: string[];
   /** Squad names */
   squadNames?: string[];
+  /** Key Result titles */
+  krNames?: string[];
   /** Max visible badges before "+N" */
   maxVisible?: number;
   /** Badge variant for visible items */
@@ -47,6 +49,7 @@ export function EntityNamesCell({
   userNames = [],
   teamNames = [],
   squadNames = [],
+  krNames = [],
   maxVisible = 2,
   variant = "secondary",
   emptyText = "-",
@@ -55,6 +58,7 @@ export function EntityNamesCell({
     ...userNames.map((name) => ({ name, icon: <Users className="h-3 w-3 mr-1 shrink-0" /> })),
     ...teamNames.map((name) => ({ name, icon: <Building2 className="h-3 w-3 mr-1 shrink-0" /> })),
     ...squadNames.map((name) => ({ name, icon: <Target className="h-3 w-3 mr-1 shrink-0" /> })),
+    ...krNames.map((name) => ({ name, icon: <KeyRound className="h-3 w-3 mr-1 shrink-0" /> })),
   ];
 
   if (allItems.length === 0) {
@@ -74,6 +78,9 @@ export function EntityNamesCell({
   }
   if (squadNames.length > 0) {
     groups.push({ label: "Squads", icon: <Target className="h-3 w-3" />, names: squadNames });
+  }
+  if (krNames.length > 0) {
+    groups.push({ label: "KRs", icon: <KeyRound className="h-3 w-3" />, names: krNames });
   }
 
   const tooltipContent = (
