@@ -19,6 +19,7 @@ import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
+import { KpiMigrationBanner } from "../components/KpiMigrationBanner";
 import { KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch } from "@/shared/url";
@@ -78,6 +79,14 @@ export default function KpiDashboardPage() {
     defaultValue: 'cards',
     parse: (v) => v as KpiViewMode,
   });
+
+  // v3.0.0: Filter "indicadores pendentes de revisão"
+  const needsReviewState = useUrlState<"0" | "1">({
+    key: 'needs_review',
+    defaultValue: '0',
+    parse: (v) => (v === '1' ? '1' : '0'),
+  });
+  const needsReviewOnly = needsReviewState.value === '1';
   
   // v2.87.0: Text search with URL sync
   const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
@@ -184,9 +193,21 @@ export default function KpiDashboardPage() {
         return searchableFields.includes(query);
       });
     }
-    
+
+    // v3.0.0: Filter by "needs review" (frequency_migration_reviewed=false)
+    if (needsReviewOnly) {
+      result = result.filter((kpi) => kpi.frequency_migration_reviewed === false);
+    }
+
     return result;
-  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly]);
+
+  // v3.0.0: Count of KPIs pending migration review (uses unfiltered base)
+  const pendingReviewCount = useMemo(
+    () => allKpis.filter((k) => k.frequency_migration_reviewed === false).length,
+    [allKpis],
+  );
+  const canManageKpis = hasPermission("kpis.settings.manage:bu");
 
   // Calculate summary from filtered data
   const summary = {
@@ -259,6 +280,25 @@ export default function KpiDashboardPage() {
             </div>
           }
         />
+
+        {/* v3.0.0: Banner global de migração de frequência */}
+        {canManageKpis && pendingReviewCount > 0 && !needsReviewOnly && (
+          <KpiMigrationBanner
+            variant="dashboard-global"
+            count={pendingReviewCount}
+            onReview={() => needsReviewState.set('1')}
+          />
+        )}
+        {needsReviewOnly && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              Mostrando apenas indicadores pendentes de revisão de frequência.
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => needsReviewState.set('0')}>
+              Limpar filtro
+            </Button>
+          </div>
+        )}
 
         {/* Status Summary */}
         <KpiStatusSummary
