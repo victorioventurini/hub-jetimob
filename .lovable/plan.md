@@ -347,13 +347,25 @@ Arquivos: `KpiCard.tsx`.
 
 ---
 
-## Fase 11 — Auditoria pós-migração
+## Fase 11 — Auditoria pós-migração ✅
 
-Script `scripts/audit-kpi-frequency-migration.ts`:
-- Conta KPIs migrados por categoria.
-- Lista KPIs com `consolidation_frequency IS NULL` (ex-`manual`).
-- Confere que nenhum KPI com `frequency NOT NULL` ficou sem migração.
-- Saída em `/mnt/documents/kpi-frequency-migration-report.md`.
+Arquivos: `scripts/audit-kpi-frequency-migration.ts`, relatório em `/home/lovable/kpi-frequency-migration-report.md` (`/mnt/documents` indisponível).
+
+**Resultados (executados via `psql` em 2026-04-27):**
+
+| Métrica | Valor |
+|---|---:|
+| KPIs ativos | 32 |
+| `consolidation_frequency NOT NULL` | 32 (100%) |
+| `update_frequency NOT NULL` | 32 (100%) |
+| Sem migração (`frequency NOT NULL` sem `consolidation_frequency`) | **0** ✅ |
+| Pendentes de revisão (UX banner) | 32 |
+| `kpi_values.input_type='consolidated'` | 63 |
+| `kpi_values.input_type='projection'` | 0 |
+
+**Distribuição:** monthly/monthly=27, quarterly/quarterly=3, weekly/weekly=2. Invariante `update ≤ consolidation` íntegra (trigger `kpi_frequency_validation` operando).
+
+**Conclusão:** integridade técnica do backfill 100%. Apenas revisões humanas pendentes (UX-driven, não bloqueante). Após >80% revisados, considerar Fase 13 (drop da coluna legada `frequency`).
 
 ---
 
