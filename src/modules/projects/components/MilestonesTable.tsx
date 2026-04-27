@@ -1,18 +1,20 @@
 /**
  * MilestonesTable — visualização tabular dos milestones (espelha padrão de TicketsTable).
  *
- * - Colunas: Status, Nome, Responsável, Início, Prazo, Observações, Ações.
+ * - Colunas auto-ajustáveis ao conteúdo; coluna "Nome" ocupa o espaço restante.
  * - Status com edição inline (MilestoneStatusSelect) quando `onStatusChange` definido.
+ * - Observações renderizadas em uma linha extra logo abaixo da principal, em fonte
+ *   menor e exibindo o texto completo (sem truncar).
  * - Coluna Ações com DropdownMenu (Editar / Remover), gating row-aware via callbacks.
  * - React.memo no componente e nas linhas (canônico mem://standards/frontend-memoization-standard).
  * - Cliques nos itens do DropdownMenu usam stopPropagation para isolar do Portal
  *   (canônico mem://ui/portal-event-isolation-standard).
  */
 
-import { memo, useMemo } from 'react';
+import { memo, Fragment, useMemo } from 'react';
 import { format, parseISO, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MoreHorizontal, FileText, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Table,
@@ -24,7 +26,6 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +62,8 @@ interface MilestoneRowProps {
   canDelete: boolean;
 }
 
+const TOTAL_COLUMNS = 6;
+
 const MilestoneRow = memo(function MilestoneRow({
   milestone,
   ownerProfile,
@@ -76,135 +79,138 @@ const MilestoneRow = memo(function MilestoneRow({
     isPast(parseISO(milestone.due_date));
 
   const showActionsMenu = (canEdit && !!onEdit) || (canDelete && !!onDelete);
+  const hasNotes = !!milestone.notes?.trim();
 
   return (
-    <TableRow className={cn(isOverdue && 'bg-status-red-muted/30')}>
-      {/* Status */}
-      <TableCell className="w-[140px]">
-        <MilestoneStatusSelect
-          value={milestone.status}
-          onValueChange={(status) => onStatusChange?.(milestone.id, status)}
-          disabled={!onStatusChange || !canEdit}
-        />
-      </TableCell>
-
-      {/* Nome */}
-      <TableCell>
-        <span
-          className={cn(
-            'text-sm font-medium line-clamp-1',
-            milestone.status === 'done' && 'line-through text-muted-foreground',
-          )}
-        >
-          {milestone.name}
-        </span>
-      </TableCell>
-
-      {/* Responsável */}
-      <TableCell className="w-[200px]">
-        {ownerProfile ? (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={ownerProfile.photo_url ?? undefined} />
-              <AvatarFallback className="text-[10px]">
-                {(ownerProfile.display_name ?? '?').slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm line-clamp-1">{ownerProfile.display_name ?? '—'}</span>
-          </div>
-        ) : (
-          <span className="text-sm text-muted-foreground">—</span>
+    <Fragment>
+      <TableRow
+        className={cn(
+          isOverdue && 'bg-status-red-muted/30',
+          hasNotes && 'border-b-0',
         )}
-      </TableCell>
+      >
+        {/* Status */}
+        <TableCell className="w-px whitespace-nowrap align-top">
+          <MilestoneStatusSelect
+            value={milestone.status}
+            onValueChange={(status) => onStatusChange?.(milestone.id, status)}
+            disabled={!onStatusChange || !canEdit}
+          />
+        </TableCell>
 
-      {/* Início */}
-      <TableCell className="w-[120px]">
-        {milestone.start_date ? (
-          <span className="text-sm text-muted-foreground">
-            {format(parseISO(milestone.start_date), "dd MMM yyyy", { locale: ptBR })}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </TableCell>
-
-      {/* Prazo */}
-      <TableCell className="w-[120px]">
-        {milestone.due_date ? (
+        {/* Nome */}
+        <TableCell className="w-full align-top">
           <span
             className={cn(
-              'text-sm',
-              isOverdue ? 'text-status-red font-medium' : 'text-muted-foreground',
+              'text-sm font-medium',
+              milestone.status === 'done' && 'line-through text-muted-foreground',
             )}
           >
-            {format(parseISO(milestone.due_date), "dd MMM yyyy", { locale: ptBR })}
+            {milestone.name}
           </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </TableCell>
+        </TableCell>
 
-      {/* Observações */}
-      <TableCell className="w-[60px]">
-        {milestone.notes ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs whitespace-pre-wrap text-xs">
-              {milestone.notes}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </TableCell>
+        {/* Responsável */}
+        <TableCell className="w-px whitespace-nowrap align-top">
+          {ownerProfile ? (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={ownerProfile.photo_url ?? undefined} />
+                <AvatarFallback className="text-[10px]">
+                  {(ownerProfile.display_name ?? '?').slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm">{ownerProfile.display_name ?? '—'}</span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          )}
+        </TableCell>
 
-      {/* Ações */}
-      <TableCell className="w-[60px] text-right">
-        {showActionsMenu ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="Ações da milestone"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              {canEdit && onEdit && (
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(milestone);
-                  }}
-                >
-                  <Pencil className="mr-2 h-3.5 w-3.5" />
-                  Editar
-                </DropdownMenuItem>
+        {/* Início */}
+        <TableCell className="w-px whitespace-nowrap align-top">
+          {milestone.start_date ? (
+            <span className="text-sm text-muted-foreground">
+              {format(parseISO(milestone.start_date), 'dd MMM yyyy', { locale: ptBR })}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+
+        {/* Prazo */}
+        <TableCell className="w-px whitespace-nowrap align-top">
+          {milestone.due_date ? (
+            <span
+              className={cn(
+                'text-sm',
+                isOverdue ? 'text-status-red font-medium' : 'text-muted-foreground',
               )}
-              {canEdit && canDelete && onEdit && onDelete && <DropdownMenuSeparator />}
-              {canDelete && onDelete && (
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(milestone);
-                  }}
+            >
+              {format(parseISO(milestone.due_date), 'dd MMM yyyy', { locale: ptBR })}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+
+        {/* Ações */}
+        <TableCell className="w-px whitespace-nowrap text-right align-top">
+          {showActionsMenu ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="Ações da milestone"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  Remover
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
-      </TableCell>
-    </TableRow>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                {canEdit && onEdit && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(milestone);
+                    }}
+                  >
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Editar
+                  </DropdownMenuItem>
+                )}
+                {canEdit && canDelete && onEdit && onDelete && <DropdownMenuSeparator />}
+                {canDelete && onDelete && (
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(milestone);
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                    Remover
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </TableCell>
+      </TableRow>
+
+      {hasNotes && (
+        <TableRow className={cn(isOverdue && 'bg-status-red-muted/30')}>
+          <TableCell
+            colSpan={TOTAL_COLUMNS}
+            className="pt-0 pb-3 px-4 text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed"
+          >
+            {milestone.notes}
+          </TableCell>
+        </TableRow>
+      )}
+    </Fragment>
   );
 });
 
@@ -240,13 +246,12 @@ export const MilestonesTable = memo(function MilestonesTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[140px]">Status</TableHead>
-            <TableHead>Nome</TableHead>
-            <TableHead className="w-[200px]">Responsável</TableHead>
-            <TableHead className="w-[120px]">Início</TableHead>
-            <TableHead className="w-[120px]">Prazo</TableHead>
-            <TableHead className="w-[60px]">Obs.</TableHead>
-            <TableHead className="w-[60px] text-right">Ações</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-full">Nome</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Responsável</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Início</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Prazo</TableHead>
+            <TableHead className="w-px whitespace-nowrap text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
