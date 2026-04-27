@@ -128,11 +128,11 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
 
   const filteredValues = useMemo<KpiValue[]>(() => {
     const all = historyData?.values ?? [];
-    return onlyConsolidated ? all.filter((v) => v.input_type !== 'projection') : all;
+    return onlyConsolidated ? all.filter((v) => v.input_type !== 'partial') : all;
   }, [historyData?.values, onlyConsolidated]);
 
   const projectionCount = useMemo(
-    () => (historyData?.values ?? []).filter((v) => v.input_type === 'projection').length,
+    () => (historyData?.values ?? []).filter((v) => v.input_type === 'partial').length,
     [historyData?.values],
   );
 

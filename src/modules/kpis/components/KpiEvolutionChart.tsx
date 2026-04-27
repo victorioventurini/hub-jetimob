@@ -32,7 +32,7 @@ export interface KpiEvolutionChartProps {
   className?: string;
   compact?: boolean;
   /**
-   * v3.0.0 — Quando true, oculta valores com `input_type='projection'`.
+   * v3.0.0 — Quando true, oculta valores com `input_type='partial'`.
    * O toggle é controlado pelo parent (ex: KpiHistoryDialog via useUrlState).
    */
   onlyConsolidated?: boolean;
@@ -65,7 +65,7 @@ function useKpiChartData(
 ) {
   return useMemo(() => {
     const filtered = onlyConsolidated
-      ? values.filter((v) => v.input_type !== 'projection')
+      ? values.filter((v) => v.input_type !== 'partial')
       : values;
 
     if (!filtered?.length) {

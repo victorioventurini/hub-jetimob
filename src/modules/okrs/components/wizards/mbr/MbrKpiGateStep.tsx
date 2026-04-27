@@ -145,18 +145,18 @@ export function MbrKpiGateStep({
                   </Badge>
                 </div>
 
-                {/* v3.0.0 — Badges Projeção/Consolidado + Confidence */}
+                {/* v3.0.0 — Badges Parcial/Consolidado + Confidence */}
                 {(kpi.latestInputType || kpi.latestConfidence) && (
                   <div className="flex flex-wrap gap-1.5">
                     {kpi.latestInputType && (
                       <Badge
-                        variant={kpi.latestInputType === 'projection' ? 'outline' : 'secondary'}
+                        variant={kpi.latestInputType === 'partial' ? 'outline' : 'secondary'}
                         className={cn(
                           'text-[10px] h-5',
-                          kpi.latestInputType === 'projection' && 'border-dashed',
+                          kpi.latestInputType === 'partial' && 'border-dashed',
                         )}
                       >
-                        {kpi.latestInputType === 'projection' ? 'Projeção' : 'Consolidado'}
+                        {kpi.latestInputType === 'partial' ? 'Parcial' : 'Consolidado'}
                       </Badge>
                     )}
                     {kpi.latestConfidence && (

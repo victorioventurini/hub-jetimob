@@ -43,7 +43,7 @@ const formSchema = z.object({
       return isBefore(selectedDate, today);
     }, { message: validation.consolidatedDate("Data de referência") }),
   notes: z.string().max(500).optional(),
-  input_type: z.enum(['consolidated', 'projection']),
+  input_type: z.enum(['consolidated', 'partial']),
   override_confidence: z.boolean().optional(),
   confidence: z.enum(['high', 'medium', 'low']).optional(),
 });
@@ -204,11 +204,11 @@ export function EditKpiValueDialog({
                         </Label>
                       </div>
                       <div className="flex items-start gap-2">
-                        <RadioGroupItem value="projection" id="eit-projection" className="mt-0.5" />
-                        <Label htmlFor="eit-projection" className="font-normal cursor-pointer">
-                          <span className="font-medium">Projeção</span>
+                        <RadioGroupItem value="partial" id="eit-partial" className="mt-0.5" />
+                        <Label htmlFor="eit-partial" className="font-normal cursor-pointer">
+                          <span className="font-medium">Parcial</span>
                           <span className="block text-xs text-muted-foreground">
-                            Estimativa enquanto o período ainda não fechou.
+                            Valor atingido até a data, antes do período fechar.
                           </span>
                         </Label>
                       </div>
