@@ -69,8 +69,9 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
   const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpiId);
   const { currentBu } = useBu();
   const scopeLabels = getScopeLabels(currentBu?.name);
-  const { canUpdateValues } = useCanEditKpi(kpi || undefined);
+  const { canEdit, canUpdateValues } = useCanEditKpi(kpi || undefined);
   const { updateKpiValue, deleteKpiValue } = useKpiMutations();
+  const [editOpen, setEditOpen] = useState(false);
 
   if (isLoading || !kpi) {
     return (
