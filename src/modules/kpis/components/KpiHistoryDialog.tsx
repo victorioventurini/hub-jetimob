@@ -46,7 +46,12 @@ import {
   type KpiRagStatus,
   type KpiIndicatorType,
   type KpiFrequency,
+  type KpiValue,
 } from "../types";
+import { useUrlState } from "@/shared/url/useUrlState";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useMemo } from "react";
 
 export interface KpiHistoryDialogData {
   id: string;
