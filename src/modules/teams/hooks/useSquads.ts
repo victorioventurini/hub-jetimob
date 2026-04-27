@@ -104,9 +104,10 @@ export function useSquads(teamId?: string) {
 
 export function useSquad(squadId: string | undefined) {
   const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
 
   return useQuery({
-    queryKey: queryKeys.squads.detail(squadId ?? ''),
+    queryKey: queryKeys.squads.detail(squadId ?? '', currentBuId),
     queryFn: async () => {
       if (!squadId) return null;
 
@@ -118,6 +119,9 @@ export function useSquad(squadId: string | undefined) {
 
       if (error) throw error;
       if (!data) return null;
+
+      // BU isolation: ensure squad belongs to current BU
+      if (currentBuId && data.bu_id !== currentBuId) return null;
 
       // Get linked teams
       const { data: squadTeams } = await supabase
