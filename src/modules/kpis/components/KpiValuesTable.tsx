@@ -65,10 +65,22 @@ export interface KpiValuesTableProps {
   isLoading: boolean;
   /** KPI name for dialog title */
   kpiName?: string;
+  /** v3.0.0 — frequencies para input_type smart defaults na edição. */
+  consolidationFrequency?: import('../types').KpiFrequencyValue | null;
+  updateFrequency?: import('../types').KpiFrequencyValue | null;
   /** Whether the user can edit/delete values */
   canEdit?: boolean;
   /** Callback to update a value */
-  onUpdateValue?: (id: string, data: { value: number; reference_date: string; notes?: string }) => Promise<void>;
+  onUpdateValue?: (
+    id: string,
+    data: {
+      value: number;
+      reference_date: string;
+      notes?: string;
+      input_type?: import('../types').KpiInputType;
+      confidence?: import('../types').KpiConfidenceLevel;
+    },
+  ) => Promise<void>;
   /** Callback to delete a value */
   onDeleteValue?: (id: string) => Promise<void>;
 }

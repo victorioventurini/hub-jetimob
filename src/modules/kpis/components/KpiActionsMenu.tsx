@@ -43,6 +43,9 @@ interface KpiForActions {
   unit?: string;
   direction?: KpiDirection | string;
   frequency?: KpiFrequency | string;
+  // v3.0.0 — opcional para sugestão automática de input_type
+  consolidation_frequency?: import('../types').KpiFrequencyValue | null;
+  update_frequency?: import('../types').KpiFrequencyValue | null;
   target_value?: number | null;
   source_type?: KpiValueSource | string;
   source_config?: Record<string, unknown> | null;
@@ -226,6 +229,8 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
         kpiId={kpi.id}
         kpiName={kpi.name}
         unit={kpi.unit ?? '%'}
+        consolidationFrequency={kpi.consolidation_frequency ?? null}
+        updateFrequency={kpi.update_frequency ?? null}
         open={updateValueOpen}
         onOpenChange={setUpdateValueOpen}
       />
