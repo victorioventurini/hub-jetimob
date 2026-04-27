@@ -35,15 +35,15 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[300px]">Projeto</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Saúde</TableHead>
-            <TableHead>Responsável</TableHead>
-            <TableHead>Times</TableHead>
-            <TableHead>Progresso</TableHead>
-            <TableHead className="text-center">Marcos</TableHead>
-            <TableHead>Prazo</TableHead>
-            <TableHead className="text-right">KRs</TableHead>
+            <TableHead className="w-full min-w-[280px]">Projeto</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Saúde</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Responsável</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Times</TableHead>
+            <TableHead className="w-[180px]">Progresso</TableHead>
+            <TableHead className="w-px whitespace-nowrap text-center">Marcos</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Prazo</TableHead>
+            <TableHead className="w-px whitespace-nowrap text-right">KRs</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -92,17 +92,17 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                 </TableCell>
 
                 {/* Status */}
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <ProjectStatusBadge status={project.status} />
                 </TableCell>
 
                 {/* Health */}
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <ProjectHealthBadge health={project.health} />
                 </TableCell>
 
                 {/* Owner */}
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   {project.owner ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
@@ -130,19 +130,17 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
 
                 {/* Progress */}
                 <TableCell>
-                  <div className="min-w-[100px] max-w-[160px]">
-                    <ProjectProgressBar
-                      total={project.milestones_total}
-                      done={project.milestones_done}
-                      pct={project.completion_pct}
-                      showLabel={false}
-                      showPct
-                    />
-                  </div>
+                  <ProjectProgressBar
+                    total={project.milestones_total}
+                    done={project.milestones_done}
+                    pct={project.completion_pct}
+                    showLabel={false}
+                    showPct
+                  />
                 </TableCell>
 
                 {/* Milestones count */}
-                <TableCell className="text-center">
+                <TableCell className="whitespace-nowrap text-center">
                   <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
                     <Milestone className="h-3.5 w-3.5" />
                     <span>
@@ -152,7 +150,7 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                 </TableCell>
 
                 {/* Due date */}
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   {project.due_date ? (
                     <div
                       className={cn(
@@ -169,13 +167,13 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                 </TableCell>
 
                 {/* KRs */}
-                <TableCell className="text-right">
+                <TableCell className="whitespace-nowrap text-right">
                   {project.krs.length > 0 ? (
-                    <div className="flex items-center gap-1 justify-end flex-wrap">
+                    <div className="flex items-center gap-1 justify-end flex-nowrap">
                       {project.krs.slice(0, 2).map((kr) => (
                         <span
                           key={kr.key_result_id}
-                          className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium truncate max-w-[120px]"
+                          className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium truncate max-w-[140px]"
                           title={kr.kr_title}
                         >
                           {kr.kr_title}
