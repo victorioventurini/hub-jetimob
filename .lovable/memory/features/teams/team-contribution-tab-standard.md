@@ -17,10 +17,12 @@ Sub-tabs (URL param `subtab`, default `overview`):
 2. **team-okrs** — Lista de objetivos próprios (`useTeamObjectives`)
 3. **shared-okrs** — Recebidos (dono com contribuidores) + Contribuídos (`TeamSharedOkrsBlock`)
 4. **initiatives** — Iniciativas vinculadas às KRs do time no ciclo (`TeamContributionInitiatives` + `useTeamKrInitiatives`). Cai para o ciclo ativo se nenhum `cycle_id` for selecionado. Agrupa por KR; reusa `InitiativeCard` em modo read-only.
-5. **kpis** — KPIs em 2 grupos (`TeamContributionKpis` + `useTeamKpisGrouped`):
-   - **Sob responsabilidade do time**: `kpi_metrics.responsible_team_id IN teamIds` OU (`team_id IN teamIds` AND `responsible_team_id IS NULL`) — fallback legado.
-   - **Sob responsabilidade de membros**: `owner_user_id IN memberIds` (membros = `profiles.team_id IN teamIds`, sem terminados), deduplicado contra o grupo "do time".
-   - Reusa `KpiCard`; sem CRUD nesta aba.
+5. **kpis** — KPIs agrupados por **escopo canônico** (`TeamContributionKpis` + `useTeamKpisGrouped`), em cascata sem duplicação:
+   - **{NomeDaBU} (Global)** — `scope='org'` vinculado ao time (responsible_team_id, team_id legado, responsible_area_id da área do time, ou owner em member). Label dinâmico via `getScopeLabels(buName).org`.
+   - **Área** — `scope='area'` (mesmos critérios), sub-agrupado por `responsible_area_id ?? area_id` com `AreaBadge`.
+   - **Time** — `scope='team'` AND (`responsible_team_id IN teamIds` OU `team_id IN teamIds` quando `responsible_team_id IS NULL`).
+   - **Responsável** — restantes (qualquer scope) cujo `owner_user_id IN memberIds`, sub-agrupado por owner (avatar + nome).
+   - Reusa `KpiCard` e `AreaBadge`; sem CRUD nesta aba. Blocos vazios são ocultados.
 6. **org-contribution** — Org Objectives impactados (reuso de `OrgObjectiveContributionCard` + `useTeamContributionView`)
 7. **projects** — Projetos do time (`useProjects({ team_id })`)
 
