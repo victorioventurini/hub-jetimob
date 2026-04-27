@@ -1681,7 +1681,7 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `ProjectProgressBar` | Barra de progresso de milestones |
 | `ProjectKrLinkSection` | Seção de KRs vinculadas a projeto |
 | `MilestoneCreateForm` | Form inline para criar milestone com notes |
-| `MilestoneList` | Lista de milestones com edição inline (status, due_date, owner, notes) |
+| `MilestonesTable` | Tabela de milestones (status inline, owner, datas, notas em linha-extra, menu de ações Editar/Remover com gating row-aware) |
 | `MilestoneGanttChart` | Gantt de milestones dentro do projeto |
 | `MilestoneKrLinkSection` | Seção de KRs vinculadas a milestone |
 | `ProjectCommentsSection` | Thread de comentários com menções, reply, pin e anexos |
