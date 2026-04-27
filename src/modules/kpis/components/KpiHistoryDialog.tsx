@@ -118,6 +118,24 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
     scope: kpi.scope,
   } : null);
 
+  // v3.0.0 — toggle "apenas consolidados" via URL state
+  const { value: onlyConsolidated, set: setOnlyConsolidated } = useUrlState<boolean>({
+    key: 'evolution_only_consolidated',
+    defaultValue: false,
+    parse: (v) => v === '1' || v === 'true',
+    serialize: (v) => (v ? '1' : null),
+  });
+
+  const filteredValues = useMemo<KpiValue[]>(() => {
+    const all = historyData?.values ?? [];
+    return onlyConsolidated ? all.filter((v) => v.input_type !== 'projection') : all;
+  }, [historyData?.values, onlyConsolidated]);
+
+  const projectionCount = useMemo(
+    () => (historyData?.values ?? []).filter((v) => v.input_type === 'projection').length,
+    [historyData?.values],
+  );
+
   if (!kpi) return null;
 
   const handleUpdateValue = async (id: string, data: { value: number; reference_date: string; notes?: string }) => {
