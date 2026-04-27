@@ -35,15 +35,15 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[300px]">Projeto</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Saúde</TableHead>
-            <TableHead>Responsável</TableHead>
-            <TableHead>Times</TableHead>
-            <TableHead>Progresso</TableHead>
-            <TableHead className="text-center">Marcos</TableHead>
-            <TableHead>Prazo</TableHead>
-            <TableHead className="text-right">KRs</TableHead>
+            <TableHead className="w-full min-w-[280px]">Projeto</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Saúde</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Responsável</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Times</TableHead>
+            <TableHead className="w-[180px]">Progresso</TableHead>
+            <TableHead className="w-px whitespace-nowrap text-center">Marcos</TableHead>
+            <TableHead className="w-px whitespace-nowrap">Prazo</TableHead>
+            <TableHead className="w-px whitespace-nowrap text-right">KRs</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
