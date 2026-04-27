@@ -259,7 +259,12 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       description: string | null;
       unit: string;
       direction: 'up' | 'down';
+      /** @deprecated v3.0.0 — espelho de consolidation_frequency. */
       frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+      // v3.0.0 frequency split
+      consolidation_frequency?: import('../types').KpiFrequencyValue;
+      update_frequency?: import('../types').KpiFrequencyValue;
+      frequency_migration_reviewed?: boolean;
       team_id: string | null;
       owner_user_id: string | null;
       target_value: number | null;

@@ -254,12 +254,22 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       // Determinar area_id final (inferido ou selecionado)
       const finalAreaId = values.scope === 'team' ? inferredAreaId : values.area_id;
 
+      // v3.0.0: persiste split + flag de revisão; `frequency` legado é espelho
+      const legacyMirror = (
+        ['daily', 'weekly', 'monthly', 'quarterly'] as const
+      ).includes(values.consolidation_frequency as never)
+        ? (values.consolidation_frequency as 'daily' | 'weekly' | 'monthly' | 'quarterly')
+        : 'monthly';
+
       await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
         unit: values.unit,
         direction: values.direction as KpiDirection,
-        frequency: values.frequency as DbKpiFrequency,
+        frequency: legacyMirror,
+        consolidation_frequency: values.consolidation_frequency,
+        update_frequency: values.update_frequency,
+        frequency_migration_reviewed: true,
         team_id: values.scope === 'team' ? values.team_id || null : null,
         owner_user_id: values.owner_user_id || null,
         target_value: values.target_value || null,
