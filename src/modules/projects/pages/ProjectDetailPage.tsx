@@ -248,9 +248,40 @@ export default function ProjectDetailPage() {
     updateMilestone.mutate({ id: milestoneId, project_id: id, ...updates });
   };
 
+  const handleMilestoneEditSubmit = (data: MilestoneDialogSubmitValues) => {
+    if (!id || !editingMilestone) return;
+    // Defesa em profundidade: revalidar permissão antes de disparar mutation.
+    if (!canEditMilestoneRow(editingMilestone)) {
+      setEditingMilestone(null);
+      return;
+    }
+    updateMilestone.mutate(
+      {
+        id: editingMilestone.id,
+        project_id: id,
+        name: data.name,
+        start_date: data.start_date,
+        due_date: data.due_date,
+        owner_id: data.owner_id,
+        notes: data.notes,
+      },
+      { onSuccess: () => setEditingMilestone(null) },
+    );
+  };
+
   const handleMilestoneDelete = (milestoneId: string) => {
     if (!id) return;
     deleteMilestone.mutate({ id: milestoneId, project_id: id });
+  };
+
+  const handleConfirmMilestoneDelete = () => {
+    if (!deletingMilestone) return;
+    if (!canDeleteMilestoneRow(deletingMilestone)) {
+      setDeletingMilestone(null);
+      return;
+    }
+    handleMilestoneDelete(deletingMilestone.id);
+    setDeletingMilestone(null);
   };
 
   const handleEdit = (values: any) => {
