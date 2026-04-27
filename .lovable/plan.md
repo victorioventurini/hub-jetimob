@@ -294,13 +294,17 @@ Arquivos: `src/modules/okrs/types/wizard/shared.ts`, `InlineDecisionInput.tsx`, 
 
 ---
 
-## Fase 8 — Visualização de `input_type` na evolução
+## Fase 8 — Visualização de `input_type` na evolução ✅
 
-- `KpiEvolutionChart.tsx`:
-  - Pontos `consolidated` sólidos; `projection` com `strokeDasharray` + opacidade reduzida.
-  - **Toggle "Mostrar apenas consolidados" via URL state** (`useUrlState({ key: 'evolution_only_consolidated', schema: ... })`) — respeita `mem://standards/url-state-preservation`.
-- `KpiValuesTable.tsx` / `KpiHistoryDialog.tsx`: nova coluna **Tipo** + badge **Confidence**; row de projeção com `bg-muted/30`.
-- `KpiDetailContent.tsx`: bloco resumo *"Último consolidado / Última projeção / Próxima consolidação esperada"* (calculada via `getConsolidationPeriod`).
+Arquivos: `KpiEvolutionChart.tsx`, `KpiValuesTable.tsx`, `KpiHistoryDialog.tsx`.
+
+- **`KpiEvolutionChart`**: prop `onlyConsolidated?: boolean`. `dot` customizado: consolidado sólido; projeção oco + `strokeDasharray='2 2'` + `opacity: 0.7`. Tooltip mostra `(projeção)`.
+- **`KpiValuesTable`**: nova coluna **Tipo** (Badge `Projeção/Consolidado`, `border-dashed` em projeção) + Badge **Confiança** com tooltip; row de projeção com `opacity-80`.
+- **`KpiHistoryDialog`**: toggle **"Apenas consolidados"** via `useUrlState({ key: 'evolution_only_consolidated' })`. Switch aparece só quando há projeções; mostra contador `−N`. Filtra chart e tabela via `filteredValues` memo.
+- **Tests**: 100 passando no módulo KPIs. TS limpo.
+
+### Pendência
+- `KpiDetailContent`: bloco resumo *"Último consolidado / Última projeção / Próxima consolidação esperada"* — follow-up de UX.
 
 ---
 
