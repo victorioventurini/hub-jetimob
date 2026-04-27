@@ -10,6 +10,13 @@
  */
 
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type {
+  KpiForWizardV2,
+  KpiInputType,
+  KpiConfidenceLevel,
+  KpiFrequencyValue,
+} from '@/modules/kpis/types';
+import { FREQUENCY_DAYS, legacyFrequencyToValue } from '@/modules/kpis/utils/frequency';
 
 // ============================================================
 // SHARED SHAPES (contratos consumidos pelo framework)
