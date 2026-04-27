@@ -120,7 +120,7 @@ Lista completa das tabelas no schema `public`:
 | `project_comments` | ✅ | ✅ | Comentários de projetos (v3.20.0) |
 | `projects` | ✅ | ✅ | Projetos estratégicos (v3.16.0) |
 | `project_krs` | ✅ | ✅ | Junction project ↔ KR com impacto |
-| `project_milestones` | ✅ | ✅ | Marcos de projeto com notes, status, due_date |
+| `project_milestones` | ✅ | ✅ | Marcos de projeto (notes, status, due_date). Trigger `enforce_milestone_soft_delete_authority` restringe soft-delete (`deleted_at`) a project owner / admin / líder / `projects.milestone.delete:bu` (v2026-04-27). Ver `mem://features/projects/milestone-permissions-row-aware`. |
 | `project_milestone_dependencies` | ✅ | ✅ | Dependências entre milestones |
 | `project_teams` | ✅ | ✅ | Junction project ↔ team |
 | `milestone_krs` | ✅ | ✅ | Junction milestone ↔ KR com impacto (v3.19.0) |
