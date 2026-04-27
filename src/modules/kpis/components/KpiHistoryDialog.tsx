@@ -279,28 +279,47 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
         <ScrollArea className="flex-1 -mx-6 px-6">
           <div className="space-y-4 pb-4">
             <Tabs defaultValue="chart" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="chart" className="gap-2">
-                  <ChartLine className="h-4 w-4" />
-                  <span className="hidden sm:inline">Evolução</span>
-                </TabsTrigger>
-                <TabsTrigger value="table" className="gap-2">
-                  <TableIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Histórico Completo</span>
-                  {historyData?.totalValues ? (
-                    <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
-                      {historyData.totalValues}
-                    </Badge>
-                  ) : null}
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <TabsList className="grid w-full sm:w-auto grid-cols-2">
+                  <TabsTrigger value="chart" className="gap-2">
+                    <ChartLine className="h-4 w-4" />
+                    <span className="hidden sm:inline">Evolução</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="table" className="gap-2">
+                    <TableIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Histórico Completo</span>
+                    {historyData?.totalValues ? (
+                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
+                        {historyData.totalValues}
+                      </Badge>
+                    ) : null}
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* v3.0.0 — Toggle "apenas consolidados" (URL state) */}
+                {projectionCount > 0 && (
+                  <div className="flex items-center gap-2 px-1">
+                    <Switch
+                      id="only-consolidated"
+                      checked={onlyConsolidated}
+                      onCheckedChange={setOnlyConsolidated}
+                    />
+                    <Label htmlFor="only-consolidated" className="text-xs cursor-pointer">
+                      Apenas consolidados
+                      <Badge variant="outline" className="ml-1.5 text-[10px] h-4 px-1">
+                        −{projectionCount}
+                      </Badge>
+                    </Label>
+                  </div>
+                )}
+              </div>
 
               <TabsContent value="chart" className="mt-4">
                 {isLoading ? (
                   <Skeleton className="h-48 w-full" />
-                ) : historyData?.values?.length ? (
+                ) : filteredValues.length ? (
                   <KpiEvolutionChart
-                    values={historyData.values}
+                    values={filteredValues}
                     targetValue={kpi.target_value}
                     unit={kpi.unit}
                     direction={kpi.direction}
@@ -308,14 +327,18 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
                     <ChartLine className="h-12 w-12 opacity-30 mb-3" />
-                    <p className="text-sm">Nenhum valor registrado ainda.</p>
+                    <p className="text-sm">
+                      {onlyConsolidated
+                        ? 'Nenhum valor consolidado registrado.'
+                        : 'Nenhum valor registrado ainda.'}
+                    </p>
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="table" className="mt-4">
                 <KpiValuesTable
-                  values={historyData?.values || []}
+                  values={filteredValues}
                   unit={kpi.unit}
                   direction={kpi.direction}
                   isLoading={isLoading}
