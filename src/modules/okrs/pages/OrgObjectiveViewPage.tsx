@@ -15,6 +15,7 @@ import { LinkedTeamObjectivesSection } from '../components/org-view/LinkedTeamOb
 import { SimpleSelect } from '@/components/selects';
 import { useUrlState } from '@/shared/url';
 import { PageHeader } from '@/components/ui/page-header';
+import { useBu } from '@/contexts/BuContext';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 // OkrOrgObjectiveDetailBreadcrumb removido - usando PageHeader.breadcrumbs (padrão canônico)
