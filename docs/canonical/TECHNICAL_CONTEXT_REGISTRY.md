@@ -360,6 +360,7 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 | **Avatar otimizado** | `OptimizedAvatar` | Avatar com lazy loading e fallback |
 | **Guard de permissão** | `PermissionGuard` | Renderiza children se permissão existe |
 | **Require permissão** | `RequirePermission` | Bloqueia acesso se permissão não existe |
+| **Lista + tooltip de overflow** | `EntityNamesCell` | **SSOT obrigatório** para qualquer célula/lista que mostre múltiplas entidades (Times, Usuários, Squads, KRs, ...) com truncamento e tooltip detalhado. Para novos tipos: estender o próprio componente (nova prop + grupo no tooltip), nunca criar tooltip paralelo (`title=` HTML, Tooltip ad-hoc). |
 
 #### Views Canônicas (Supabase)
 
