@@ -12,6 +12,7 @@ export const modulesSection: TcrSection = {
 | **KPIs** | Métricas e indicadores de performance |
 | **Tickets** | Sistema de chamados internos |
 | **Assets** | Inventário de ativos (patrimônio, chaves, brindes) |
+| **Projects** | Iniciativas estratégicas com marcos (milestones) e vínculo a KRs |
 | **Admin** | Configurações, usuários, permissões |
 | **Notifications** | Central de notificações multi-canal |
 | **Automations** | Webhooks e integrações externas |
