@@ -43,11 +43,13 @@ export interface PreWeeklySourcesStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   referenceWeek: string; // YYYY-MM-DD
+  /** Quando presente, filtra fontes por time (admin/líder vendo contexto de outro time). */
+  teamId?: string | null;
   onContinue: () => void;
 }
 
 // ============================================================
-// HOOK — fontes da semana do gestor logado
+// HOOK — fontes da semana (por time quando contexto presente, senão por usuário)
 // ============================================================
 
 interface SessionItem {
@@ -57,14 +59,18 @@ interface SessionItem {
   status: string;
 }
 
-function useUserWeeklySources(referenceWeek: string) {
+function useWeeklySources(referenceWeek: string, teamId: string | null | undefined) {
   const { profileId } = useIdentity();
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
 
+  const scope: 'team' | 'user' = teamId ? 'team' : 'user';
+  const scopeKey = teamId ?? profileId ?? null;
+  const enabled = !!currentBuId && (teamId ? true : !!profileId);
+
   return useQuery({
-    queryKey: preWeeklyKeys.userSources(currentBuId, profileId, referenceWeek),
-    enabled: !!currentBuId && !!profileId,
+    queryKey: preWeeklyKeys.sources(currentBuId, scope, scopeKey, referenceWeek),
+    enabled,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<SessionItem[]> => {
       // Parse "YYYY-MM-DD" como data local (evita shift de fuso que joga para a semana anterior)
@@ -72,16 +78,25 @@ function useUserWeeklySources(referenceWeek: string) {
       const weekStart = startOfWeek(ref, { weekStartsOn: 1 }).toISOString();
       const weekEnd = endOfWeek(ref, { weekStartsOn: 1 }).toISOString();
 
-      const { data, error } = await buSupabase
+      let query = buSupabase
         .from('okr_wizard_sessions')
         .select('id, wizard_type, completed_at, status')
-        .eq('started_by', profileId!)
         .in('wizard_type', ['collaborator', 'leader-prep', 'team-checkin'])
         .gte('completed_at', weekStart)
         .lte('completed_at', weekEnd)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false });
 
+      if (teamId) {
+        // Modo time: tudo que o time registrou nesta semana (independente do started_by).
+        // RLS já bloqueia acesso indevido (admin BU, líder do time, líder de área).
+        query = query.eq('team_id', teamId);
+      } else {
+        // Modo pessoal: só o que o próprio usuário iniciou.
+        query = query.eq('started_by', profileId!);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as SessionItem[];
     },
