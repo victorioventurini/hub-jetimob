@@ -544,6 +544,50 @@ export default function ProjectDetailPage() {
         />
       )}
 
+      {/* Milestone Edit Dialog — montado por demanda quando o usuário escolhe editar */}
+      {editingMilestone && canEditMilestoneRow(editingMilestone) && (
+        <MilestoneDialog
+          open={!!editingMilestone}
+          onOpenChange={(open) => { if (!open) setEditingMilestone(null); }}
+          onSubmit={handleMilestoneEditSubmit}
+          isSubmitting={updateMilestone.isPending}
+          title="Editar milestone"
+          defaultValues={{
+            name: editingMilestone.name,
+            start_date: editingMilestone.start_date ?? '',
+            due_date: editingMilestone.due_date ?? '',
+            owner_id: editingMilestone.owner_id ?? '',
+            notes: editingMilestone.notes ?? '',
+          }}
+        />
+      )}
+
+      {/* Milestone Delete Confirmation — só montado quando há permissão real para esta linha */}
+      {deletingMilestone && canDeleteMilestoneRow(deletingMilestone) && (
+        <AlertDialog
+          open={!!deletingMilestone}
+          onOpenChange={(open) => { if (!open) setDeletingMilestone(null); }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover milestone?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O milestone "{deletingMilestone.name}" será removido. Essa ação não pode ser desfeita pela interface.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmMilestoneDelete}
+                disabled={deleteMilestone.isPending}
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
       {/* Edit Dialog */}
       <ProjectDialog
         open={editOpen}
