@@ -213,6 +213,7 @@ export function KpiValuesTable({
                 <TableHead className="w-[100px] text-right">Anterior</TableHead>
                 <TableHead className="w-[100px] text-right">Atual</TableHead>
                 <TableHead className="w-[90px] text-right">Variação</TableHead>
+                <TableHead className="w-[100px] text-center">Tipo</TableHead>
                 <TableHead className="w-[90px] text-center">Origem</TableHead>
                 <TableHead className="w-[50px] text-center">Info</TableHead>
                 {showActions && (
@@ -233,9 +234,19 @@ export function KpiValuesTable({
                 const variationColor = variation !== null ? getVariationColor(variation, direction) : "";
                 const hasNotes = !!value.notes?.trim();
                 const SourceIcon = sourceIcons[value.source] || Edit;
+                const isProjection = value.input_type === 'projection';
+                const confidence = value.confidence;
+                const confCfg = confidence ? confidenceConfig[confidence] : null;
 
                 return (
-                  <TableRow key={value.id} className={cn("group/row", index % 2 === 0 ? "bg-muted/20" : "")}>
+                  <TableRow
+                    key={value.id}
+                    className={cn(
+                      "group/row",
+                      index % 2 === 0 ? "bg-muted/20" : "",
+                      isProjection && "opacity-80",
+                    )}
+                  >
                     <TableCell className="font-medium">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -283,6 +294,34 @@ export function KpiValuesTable({
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
+                    </TableCell>
+
+                    {/* v3.0.0 — Tipo (Projeção/Consolidado) + Confidence */}
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1 flex-wrap">
+                        <Badge
+                          variant={isProjection ? 'outline' : 'secondary'}
+                          className={cn(
+                            'text-[10px] h-5 font-normal',
+                            isProjection && 'border-dashed text-muted-foreground',
+                          )}
+                        >
+                          {isProjection ? 'Projeção' : 'Consolidado'}
+                        </Badge>
+                        {confCfg && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant="outline"
+                                className={cn('text-[10px] h-5 font-normal', confCfg.className)}
+                              >
+                                {confCfg.label}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Confiança: {confCfg.label}</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                     </TableCell>
 
                     <TableCell className="text-center">

@@ -21,7 +21,7 @@ import { Info } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { KpiValue, KpiDirection, SOURCE_TYPE_LABELS } from "../types";
+import type { KpiValue, KpiDirection } from "../types";
 import { useMemo } from "react";
 
 export interface KpiEvolutionChartProps {
@@ -31,6 +31,11 @@ export interface KpiEvolutionChartProps {
   direction: KpiDirection;
   className?: string;
   compact?: boolean;
+  /**
+   * v3.0.0 — Quando true, oculta valores com `input_type='projection'`.
+   * O toggle é controlado pelo parent (ex: KpiHistoryDialog via useUrlState).
+   */
+  onlyConsolidated?: boolean;
 }
 
 const sourceLabels: Record<string, string> = {
@@ -53,18 +58,22 @@ function formatValue(value: number, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-function useKpiChartData(values: KpiValue[], targetValue: number | null) {
+function useKpiChartData(
+  values: KpiValue[],
+  targetValue: number | null,
+  onlyConsolidated: boolean,
+) {
   return useMemo(() => {
-    if (!values?.length) {
-      return {
-        data: [],
-        minValue: 0,
-        maxValue: 100,
-      };
+    const filtered = onlyConsolidated
+      ? values.filter((v) => v.input_type !== 'projection')
+      : values;
+
+    if (!filtered?.length) {
+      return { data: [], minValue: 0, maxValue: 100 };
     }
 
     // Reverse to show oldest first in chart
-    const sortedValues = [...values].sort(
+    const sortedValues = [...filtered].sort(
       (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime()
     );
 
@@ -76,6 +85,7 @@ function useKpiChartData(values: KpiValue[], targetValue: number | null) {
       confidence: v.confidence,
       notes: v.notes,
       ragStatus: v.rag_status,
+      inputType: v.input_type ?? 'consolidated',
     }));
 
     const chartValues = sortedValues.map((v) => v.value);
@@ -89,18 +99,19 @@ function useKpiChartData(values: KpiValue[], targetValue: number | null) {
       minValue: Math.floor(min - padding),
       maxValue: Math.ceil(max + padding),
     };
-  }, [values, targetValue]);
+  }, [values, targetValue, onlyConsolidated]);
 }
 
 export function KpiEvolutionChart({
   values,
   targetValue,
   unit,
-  direction,
+  direction: _direction,
   className,
   compact = false,
+  onlyConsolidated = false,
 }: KpiEvolutionChartProps) {
-  const { data, minValue, maxValue } = useKpiChartData(values, targetValue);
+  const { data, minValue, maxValue } = useKpiChartData(values, targetValue, onlyConsolidated);
 
   if (data.length === 0) {
     return (
@@ -150,6 +161,7 @@ export function KpiEvolutionChart({
             content={({ active, payload }) => {
               if (!active || !payload?.[0]) return null;
               const item = payload[0].payload;
+              const isProjection = item.inputType === 'projection';
               return (
                 <div className="bg-popover border rounded-lg shadow-lg p-2 text-xs">
                   <p className="font-medium">{item.fullDate}</p>
@@ -158,6 +170,11 @@ export function KpiEvolutionChart({
                     <span className="text-foreground font-medium">
                       {formatValue(item.value, unit)}
                     </span>
+                    {isProjection && (
+                      <span className="ml-1 text-[10px] italic text-muted-foreground">
+                        (projeção)
+                      </span>
+                    )}
                   </p>
                   <p className="text-muted-foreground">
                     Origem:{" "}
@@ -195,7 +212,26 @@ export function KpiEvolutionChart({
             stroke="hsl(var(--primary))"
             strokeWidth={2}
             fill="url(#kpi-gradient)"
-            dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 3 }}
+            dot={(props: { cx?: number; cy?: number; payload?: { inputType?: string }; index?: number }) => {
+              const { cx, cy, payload, index } = props;
+              if (cx == null || cy == null) {
+                return <g key={`dot-empty-${index ?? 0}`} />;
+              }
+              const isProjection = payload?.inputType === 'projection';
+              return (
+                <circle
+                  key={`dot-${index ?? cx}`}
+                  cx={cx}
+                  cy={cy}
+                  r={3}
+                  fill={isProjection ? 'hsl(var(--background))' : 'hsl(var(--primary))'}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={isProjection ? 1.5 : 0}
+                  strokeDasharray={isProjection ? '2 2' : undefined}
+                  opacity={isProjection ? 0.7 : 1}
+                />
+              );
+            }}
             activeDot={{ r: 5, strokeWidth: 0 }}
           />
         </AreaChart>
