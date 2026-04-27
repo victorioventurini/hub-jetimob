@@ -211,7 +211,7 @@ export function useKpiMutations() {
       value: number;
       reference_date: string;
       notes?: string;
-      input_type?: 'projection' | 'consolidated';
+      input_type?: 'partial' | 'consolidated';
       confidence?: 'high' | 'medium' | 'low';
     }) => {
       const client = assertSupabaseClient(supabase, "updateKpiValue");

@@ -224,10 +224,11 @@ export function getConsolidationPeriod(
  * Sugere `consolidated` quando a data de input cai dentro do
  * período de consolidação corrente E o KPI tem `update_frequency`
  * igual a `consolidation_frequency` (sem janela intermediária).
- * Caso contrário sugere `projection`.
+ * Caso contrário sugere `partial` (valor atingido até a data,
+ * antes do período fechar — não é estimativa de futuro).
  *
  * Espelha a regra implícita do trigger DB: inputs antes do
- * fechamento de período são projeções.
+ * fechamento de período são parciais.
  */
 export function suggestInputType(
   kpi: Pick<KpiMetric, 'consolidation_frequency' | 'update_frequency' | 'frequency'>,
@@ -241,12 +242,12 @@ export function suggestInputType(
   if (!cons) return 'consolidated'; // sem cadência definida → trata como consolidado
   if (!upd || upd === cons) return 'consolidated';
 
-  // update mais frequente que consolidation: input em período aberto = projeção
+  // update mais frequente que consolidation: input em período aberto = parcial
   const period = getConsolidationPeriod(cons, inputDate);
   // Se input cai dentro do período corrente e ele ainda não fechou
-  // (end > now), é projeção
+  // (end > now), é parcial
   const now = new Date();
-  return period.end > now ? 'projection' : 'consolidated';
+  return period.end > now ? 'partial' : 'consolidated';
 }
 
 // === Helpers de UI ===

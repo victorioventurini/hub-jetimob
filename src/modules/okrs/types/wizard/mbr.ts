@@ -57,8 +57,8 @@ export interface MbrKpiSnapshot {
   areaColor?: string | null;
   teamId?: string | null;
   teamName?: string | null;
-  /** v3.0.0 — tipo do último input registrado (consolidado/projeção). */
-  latestInputType?: 'projection' | 'consolidated' | null;
+  /** v3.0.0 — tipo do último input registrado (consolidado/parcial). */
+  latestInputType?: 'partial' | 'consolidated' | null;
   /** v3.0.0 — confidence do último input registrado. */
   latestConfidence?: 'high' | 'medium' | 'low' | null;
 }
