@@ -47,6 +47,8 @@ export default function ProjectDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<ProjectMilestone | null>(null);
+  const [deletingMilestone, setDeletingMilestone] = useState<ProjectMilestone | null>(null);
   const [milestoneView, setMilestoneView] = useState<'list' | 'gantt'>('list');
 
   const { data: project, isLoading } = useProject(id);
