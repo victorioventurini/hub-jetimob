@@ -107,16 +107,17 @@ export function NotificationCenter() {
     setOpen(newOpen);
   };
 
-  // Fetch notifications
+  // Fetch notifications (BU-scoped: key + filter + RLS — cross-bu-isolation-pattern)
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: queryKeys.notifications.all(user?.id ?? ''),
+    queryKey: queryKeys.notifications.all(user?.id ?? '', currentBuId ?? null),
     queryFn: async () => {
-      if (!user?.id || !supabaseBu) return [];
+      if (!user?.id || !supabaseBu || !currentBuId) return [];
 
       const { data, error } = await supabaseBu
         .from('notifications')
-        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at')
+        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at, bu_id')
         .eq('user_id', user.id)
+        .eq('bu_id', currentBuId)
         .order('created_at', { ascending: false })
         .limit(4);
 
