@@ -205,12 +205,27 @@ export function useKpiMutations() {
 
   // Update KPI value entry
   const updateKpiValue = useMutation({
-    mutationFn: async (data: { id: string; kpi_id: string; value: number; reference_date: string; notes?: string }) => {
+    mutationFn: async (data: {
+      id: string;
+      kpi_id: string;
+      value: number;
+      reference_date: string;
+      notes?: string;
+      input_type?: 'projection' | 'consolidated';
+      confidence?: 'high' | 'medium' | 'low';
+    }) => {
       const client = assertSupabaseClient(supabase, "updateKpiValue");
       const { id, kpi_id, ...updateData } = data;
+      const updatePayload: Record<string, unknown> = {
+        value: updateData.value,
+        reference_date: updateData.reference_date,
+        notes: updateData.notes || null,
+      };
+      if (updateData.input_type) updatePayload.input_type = updateData.input_type;
+      if (updateData.confidence) updatePayload.confidence = updateData.confidence;
       const { data: result, error } = await client
         .from("kpi_values")
-        .update({ value: updateData.value, reference_date: updateData.reference_date, notes: updateData.notes || null })
+        .update(updatePayload)
         .eq("id", id)
         .select()
         .single();
