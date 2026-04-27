@@ -369,16 +369,17 @@ Arquivos: `scripts/audit-kpi-frequency-migration.ts`, relatório em `/home/lovab
 
 ---
 
-## Fase 12 — Documentação canônica
+## Fase 12 — Documentação canônica ✅
 
-Atualizações **obrigatórias** na mesma entrega:
+Entregas:
 
-1. `docs/canonical/SCHEMA_QUICK_REFERENCE.md` — colunas novas em `kpi_metrics`/`kpi_values`, novos enums.
-2. `docs/canonical/DATA_MODEL_REGISTRY.md` — seção 2.3 (KPIs) + 9 (enums).
-3. `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — versão bumped + nota sobre os 3 campos novos.
-4. `docs/canonical/DB_FUNCTIONS_INDEX.md` — `kpi_calculate_period_v2`, `derive_kpi_value_confidence`, `validate_kpi_frequency_relationship` + semântica formal de biweekly/semiannual.
-5. **Criar** `mem://features/kpis/kpis-master-standard` (referenciado no índice mas inexistente).
-6. Atualizar `mem://index.md` referenciando as mudanças.
+1. ✅ `docs/canonical/SCHEMA_QUICK_REFERENCE.md` — colunas v3.0.0 em `kpi_metrics`/`kpi_values` + bloco Enums KPIs.
+2. ✅ `docs/canonical/DB_FUNCTIONS_INDEX.md` — nova seção "KPI Frequency Split — v3.0.0" com `kpi_frequency_to_days`, `validate_kpi_frequency_relationship`, `derive_kpi_value_confidence`, `kpi_calculate_period_v2` (semântica formal de `biweekly`/`semiannual`).
+3. ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — versão **3.29.0** com nota completa sobre KPI Frequency Split v3.0.0.
+4. ✅ `mem://features/kpis/kpis-master-standard` criado (modelo de dados, utilitários canônicos, permissões, ritual gates 6-bucket, UX de migração, visualização projeção × consolidado, standards).
+5. ✅ `mem://index.md` — descrição do KPIs Master atualizada para refletir v3.0.0.
+
+`DATA_MODEL_REGISTRY.md` mantém `kpi_metrics`/`kpi_values` listados; campos detalhados são consultados via `SCHEMA_QUICK_REFERENCE.md` (já atualizado), padrão do projeto.
 
 ---
 
