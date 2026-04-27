@@ -64,7 +64,8 @@ export default function ProjectDetailPage() {
     canEditProjectRecord,
     canDeleteProjectRecord,
     canCreateMilestone: rawCanAddMilestone,
-    canEditMilestone: rawCanEditMilestone,
+    canEditMilestoneRecord,
+    canDeleteMilestoneRecord,
   } = useProjectPermissionsV2();
 
   // Gate canônico: enquanto identidade ou permissões estiverem carregando,
