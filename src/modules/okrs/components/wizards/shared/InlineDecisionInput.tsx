@@ -27,6 +27,12 @@ export interface InlineDecisionInputProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   sourceStep: string;
   placeholder?: string;
+  /**
+   * v3.0.0 — Fábrica opcional de metadata. Quando presente, é chamada no
+   * momento da criação de cada decisão e o retorno é gravado em
+   * `decision.metadata` para auditoria (ex: `{ source: 'kpi_gate', ... }`).
+   */
+  metadataFactory?: () => Record<string, unknown> | undefined;
 }
 
 // ============================================================
