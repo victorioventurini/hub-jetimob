@@ -31,6 +31,7 @@ const QUARTER_OPTIONS = [
 export default function OrgObjectiveViewPage() {
   const { objectiveId } = useParams<{ objectiveId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { currentBuId } = useBu();
 
   // Quarter filter
   const quarterState = useUrlState<string>({ key: 'quarter', defaultValue: 'all' });
