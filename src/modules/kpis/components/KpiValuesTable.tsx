@@ -213,6 +213,7 @@ export function KpiValuesTable({
                 <TableHead className="w-[100px] text-right">Anterior</TableHead>
                 <TableHead className="w-[100px] text-right">Atual</TableHead>
                 <TableHead className="w-[90px] text-right">Variação</TableHead>
+                <TableHead className="w-[100px] text-center">Tipo</TableHead>
                 <TableHead className="w-[90px] text-center">Origem</TableHead>
                 <TableHead className="w-[50px] text-center">Info</TableHead>
                 {showActions && (
