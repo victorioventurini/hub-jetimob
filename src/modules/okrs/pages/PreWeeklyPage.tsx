@@ -62,7 +62,6 @@ function currentReferenceWeek(): string {
 
 const DEFAULT_DATA: PreWeeklyDraftData = {
   referenceWeek: currentReferenceWeek(),
-  sourcesReflection: '',
   topics: [],
   peopleSignals: [],
   decisions: [],
