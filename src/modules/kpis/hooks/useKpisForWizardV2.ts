@@ -166,9 +166,27 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         // 5. Enrich and classify KPIs
         const allEnriched: KpiForWizardV2[] = kpis.map(kpi => {
           const latest = latestByKpi.get(kpi.id);
-          const needsUpdate = checkNeedsUpdate(kpi.frequency as KpiFrequency, latest?.reference_date);
+          const consolidationFreq =
+            (kpi.consolidation_frequency as KpiFrequencyValue | null | undefined) ??
+            legacyFrequencyToValue(kpi.frequency as KpiFrequency);
+          const updateFreq =
+            (kpi.update_frequency as KpiFrequencyValue | null | undefined) ??
+            legacyFrequencyToValue(kpi.frequency as KpiFrequency);
+          const needsUpdate = checkNeedsUpdate(updateFreq, latest?.reference_date);
           const ragStatus = (latest?.rag_status as KpiRagStatus) ?? 'no_data';
-          
+
+          // Pré-calculo de desvio percentual (latest vs target).
+          // Direção é considerada: down (menor é melhor) inverte o sinal.
+          let deviationPct: number | null = null;
+          if (
+            latest?.value != null &&
+            kpi.target_value != null &&
+            kpi.target_value !== 0
+          ) {
+            const raw = ((latest.value - kpi.target_value) / Math.abs(kpi.target_value)) * 100;
+            deviationPct = (kpi.direction as KpiDirection) === 'down' ? -raw : raw;
+          }
+
           // Determine user role
           let userRole: KpiUserRole = 'viewer';
           if (kpi.owner_user_id === userId) {
@@ -176,7 +194,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
           } else if (contributedKpiIds.has(kpi.id)) {
             userRole = 'contributor';
           }
-          
+
           // Determine display mode
           let displayMode: KpiDisplayMode = 'readonly';
           if ((userRole === 'owner' || userRole === 'contributor') && needsUpdate) {
@@ -184,18 +202,18 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
           } else if (ragStatus === 'off_track' || ragStatus === 'at_risk') {
             displayMode = 'alert';
           }
-          
+
           // Determine alert reason
           let alertReason: KpiAlertReason | null = null;
           if (ragStatus === 'off_track') alertReason = 'off_track';
           else if (ragStatus === 'at_risk') alertReason = 'at_risk';
           else if (needsUpdate) alertReason = 'outdated';
-          
+
           // Check if guardrail is violated
-          const isGuardrailAtRisk = guardrailKpiIds.has(kpi.id) && 
+          const isGuardrailAtRisk = guardrailKpiIds.has(kpi.id) &&
             (ragStatus === 'off_track' || ragStatus === 'at_risk');
           if (isGuardrailAtRisk) alertReason = 'guardrail_violated';
-          
+
           return {
             id: kpi.id,
             name: kpi.name,
@@ -203,6 +221,8 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             target_value: kpi.target_value,
             direction: kpi.direction as KpiDirection,
             frequency: kpi.frequency as KpiFrequency,
+            consolidation_frequency: consolidationFreq,
+            update_frequency: updateFreq,
             lifecycle_status: kpi.lifecycle_status as KpiLifecycleStatus,
             recovery_protocol: kpi.recovery_protocol,
             team_id: kpi.team_id,
@@ -214,7 +234,9 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             latest_rag_status: ragStatus,
             latest_confidence: (latest?.confidence as KpiConfidenceLevel) ?? null,
             latest_period_label: latest?.period_label ?? null,
+            latest_input_type: (latest?.input_type as KpiInputType | undefined) ?? null,
             needs_update: needsUpdate,
+            deviation_pct: deviationPct,
             // Role-based fields
             userRole,
             isStrategic: kpi.scope === 'org',
@@ -297,21 +319,23 @@ function emptyResult() {
 }
 
 /**
- * Check if KPI needs update based on frequency
+ * Check if KPI needs update based on update_frequency.
+ *
+ * v3.0.0: usa `update_frequency` (cadência de atualização) em vez de
+ * `frequency` legado. KPIs sem `update_frequency` (ex-`manual` não revisados)
+ * ficam fora do bucket `kpisToUpdate` retornando `false`.
  */
-function checkNeedsUpdate(frequency: KpiFrequency, lastDate: string | null | undefined): boolean {
+function checkNeedsUpdate(
+  updateFrequency: KpiFrequencyValue | null,
+  lastDate: string | null | undefined,
+): boolean {
+  // Sem update_frequency definida → KPI não entra no fluxo de cobrança.
+  if (!updateFrequency) return false;
+  // Sem valor lançado → precisa update.
   if (!lastDate) return true;
-  
+
   const last = new Date(lastDate);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
-  
-  switch (frequency) {
-    case 'daily': return diffDays >= 1;
-    case 'weekly': return diffDays >= 7;
-    case 'monthly': return diffDays >= 30;
-    case 'quarterly': return diffDays >= 90;
-    case 'manual': return false;
-    default: return false;
-  }
+  return diffDays >= FREQUENCY_DAYS[updateFrequency];
 }
