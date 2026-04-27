@@ -55,6 +55,7 @@ export function InlineDecisionInput({
   onDecisionsChange,
   sourceStep,
   placeholder = 'Registrar decisão, ajuste de foco ou próximo passo...',
+  metadataFactory,
 }: InlineDecisionInputProps) {
   const isMobile = useIsMobile();
   // Mobile: collapsed por padrão para liberar viewport.
@@ -69,11 +70,13 @@ export function InlineDecisionInput({
   const handleAdd = () => {
     if (!text.trim()) return;
 
+    const metadata = metadataFactory?.();
     const newDecision: TeamCheckinDecision = {
       id: `decision-${Date.now()}`,
       text: text.trim(),
       category,
       sourceStep: sourceStep as TeamCheckinDecision['sourceStep'],
+      ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
 
     onDecisionsChange([...decisions, newDecision]);
