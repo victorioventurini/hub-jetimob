@@ -25,14 +25,18 @@ import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Info } from 'lucide-react';
 import {
   DIRECTION_LABELS,
-  FREQUENCY_LABELS,
+  FREQUENCY_VALUE_LABELS,
   INDICATOR_TYPE_LABELS,
   LIFECYCLE_STATUS_LABELS,
   type KpiDirection,
-  type KpiFrequency,
+  type KpiFrequencyValue,
   type KpiIndicatorType,
   type KpiLifecycleStatus,
 } from '../../types';
+import {
+  FREQUENCY_ORDER,
+  getValidUpdateFrequencies,
+} from '../../utils/frequency';
 import type { EditKpiFormValues } from './editKpiSchema';
 
 interface EditKpiBasicFieldsProps {
