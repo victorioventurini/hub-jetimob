@@ -296,6 +296,34 @@ export function KpiValuesTable({
                       )}
                     </TableCell>
 
+                    {/* v3.0.0 — Tipo (Projeção/Consolidado) + Confidence */}
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1 flex-wrap">
+                        <Badge
+                          variant={isProjection ? 'outline' : 'secondary'}
+                          className={cn(
+                            'text-[10px] h-5 font-normal',
+                            isProjection && 'border-dashed text-muted-foreground',
+                          )}
+                        >
+                          {isProjection ? 'Projeção' : 'Consolidado'}
+                        </Badge>
+                        {confCfg && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant="outline"
+                                className={cn('text-[10px] h-5 font-normal', confCfg.className)}
+                              >
+                                {confCfg.label}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Confiança: {confCfg.label}</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TableCell>
+
                     <TableCell className="text-center">
                       <Tooltip>
                         <TooltipTrigger asChild>
