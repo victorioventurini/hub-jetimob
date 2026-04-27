@@ -204,7 +204,7 @@ export function useCreateMessage(author: CreateMessageAuthor, ticketContext?: Ti
         refetchType: 'active',
       });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.tickets.detail(variables.ticketId),
+        queryKey: queryKeys.tickets.detailPrefix(variables.ticketId),
         refetchType: 'active',
       });
       queryClient.invalidateQueries({

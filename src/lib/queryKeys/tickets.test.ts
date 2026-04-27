@@ -23,7 +23,8 @@ describe('ticketsKeys', () => {
   });
 
   it('detail/messages/attachments', () => {
-    expect(ticketsKeys.detail('t1')).toEqual(['ticket', 't1']);
+    expect(ticketsKeys.detail('bu1', 't1')).toEqual(['ticket', 't1', 'bu1']);
+    expect(ticketsKeys.detailPrefix('t1')).toEqual(['ticket', 't1']);
     expect(ticketsKeys.messages('t1')).toEqual(['tickets', 'messages', 't1']);
     expect(ticketsKeys.attachments('t1')).toEqual(['ticket-attachments', 't1']);
   });

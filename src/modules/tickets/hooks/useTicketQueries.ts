@@ -152,10 +152,10 @@ export function useTicket(ticketId: string | null) {
   const { isImpersonating, impersonatedUserId } = useOptionalImpersonation();
 
   return useQuery({
-    queryKey: queryKeys.tickets.detail(ticketId),
+    queryKey: queryKeys.tickets.detail(buId ?? null, ticketId),
     staleTime: TICKET_STALE_TIME.detail,
     queryFn: async () => {
-      if (!ticketId) return null;
+      if (!ticketId || !buId) return null;
 
       // Durante impersonação, verificar se o usuário impersonado pode ver o ticket
       if (isImpersonating && impersonatedUserId) {
@@ -172,15 +172,19 @@ export function useTicket(ticketId: string | null) {
         }
       }
 
+      // BU SCOPE GUARD: Always filter by bu_id explicitly (defense-in-depth on top of RLS).
+      // RLS already enforces this via current_bu_id() header, but the explicit filter
+      // prevents stale React Query cache from leaking cross-BU data during BU switches.
       const { data, error } = await supabase
         .from("tickets")
         .select(TICKET_FIELDS.ticketDetail)
         .eq("id", ticketId)
+        .eq("bu_id", buId)
         .is("deleted_at", null)
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (data) {
         return normalizeTicketRelations(data);
       }
