@@ -79,6 +79,14 @@ export default function KpiDashboardPage() {
     defaultValue: 'cards',
     parse: (v) => v as KpiViewMode,
   });
+
+  // v3.0.0: Filter "indicadores pendentes de revisão"
+  const needsReviewState = useUrlState<"0" | "1">({
+    key: 'needs_review',
+    defaultValue: '0',
+    parse: (v) => (v === '1' ? '1' : '0'),
+  });
+  const needsReviewOnly = needsReviewState.value === '1';
   
   // v2.87.0: Text search with URL sync
   const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
