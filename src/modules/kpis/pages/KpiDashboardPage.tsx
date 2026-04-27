@@ -193,9 +193,21 @@ export default function KpiDashboardPage() {
         return searchableFields.includes(query);
       });
     }
-    
+
+    // v3.0.0: Filter by "needs review" (frequency_migration_reviewed=false)
+    if (needsReviewOnly) {
+      result = result.filter((kpi) => kpi.frequency_migration_reviewed === false);
+    }
+
     return result;
-  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly]);
+
+  // v3.0.0: Count of KPIs pending migration review (uses unfiltered base)
+  const pendingReviewCount = useMemo(
+    () => allKpis.filter((k) => k.frequency_migration_reviewed === false).length,
+    [allKpis],
+  );
+  const canManageKpis = hasPermission("kpis.settings.manage:bu") || isWildcardPlaceholder;
 
   // Calculate summary from filtered data
   const summary = {
