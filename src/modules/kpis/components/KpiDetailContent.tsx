@@ -360,6 +360,9 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
           }}
         />
       </div>
+
+      {/* v3.0.0: Edit dialog disparado pelo banner de migração */}
+      <EditKpiDialog kpi={kpi} open={editOpen} onOpenChange={setEditOpen} />
     </div>
   );
 }
