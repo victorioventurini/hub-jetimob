@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import type { KpiMetric, KpiScope } from '../../types';
-import { editKpiSchema, type EditKpiFormValues, type DbKpiFrequency } from './editKpiSchema';
+import { editKpiSchema, type EditKpiFormValues } from './editKpiSchema';
+import { legacyFrequencyToValue } from '../../utils/frequency';
 
 export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -20,7 +21,8 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
       description: '',
       unit: '%',
       direction: 'up',
-      frequency: 'monthly',
+      consolidation_frequency: 'monthly',
+      update_frequency: 'monthly',
       indicator_type: 'kpi',
       lifecycle_status: 'active',
       target_source: '',
@@ -35,13 +37,18 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
   const resetFormWithKpiData = useCallback(() => {
     if (!kpi) return;
 
+    // v3.0.0: prefer new fields, fallback to legacy `frequency`
+    const legacyMapped = legacyFrequencyToValue(kpi.frequency) ?? 'monthly';
+    const consolidation = kpi.consolidation_frequency ?? legacyMapped;
+    const update = kpi.update_frequency ?? consolidation;
+
     form.reset({
       name: kpi.name,
       description: kpi.description || '',
       unit: kpi.unit,
       direction: kpi.direction,
-      frequency:
-        kpi.frequency === 'manual' ? 'monthly' : (kpi.frequency as DbKpiFrequency),
+      consolidation_frequency: consolidation,
+      update_frequency: update,
       team_id: kpi.team_id || undefined,
       owner_user_id: kpi.owner_user_id || undefined,
       target_value: kpi.target_value || undefined,
