@@ -138,14 +138,15 @@ function NotificationList() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: [...queryKeys.notifications.all(user?.id ?? ''), 'paginated', debouncedSearch],
+    queryKey: [...queryKeys.notifications.all(user?.id ?? '', currentBuId ?? null), 'paginated', debouncedSearch],
     queryFn: async ({ pageParam = 0 }) => {
-      if (!user?.id || !supabaseBu) return { notifications: [], nextPage: null };
+      if (!user?.id || !supabaseBu || !currentBuId) return { notifications: [], nextPage: null };
 
       let query = supabaseBu
         .from('notifications')
-        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at')
+        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at, bu_id')
         .eq('user_id', user.id)
+        .eq('bu_id', currentBuId)
         .order('created_at', { ascending: false })
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
