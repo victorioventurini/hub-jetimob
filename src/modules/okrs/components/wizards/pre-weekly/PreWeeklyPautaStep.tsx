@@ -184,52 +184,27 @@ export function PreWeeklyPautaStep({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Categoria</Label>
-                  <Select
-                    value={topic.category}
-                    onValueChange={(v) =>
-                      handleUpdate(topic.id, { category: v as PreWeeklyTopicCategory })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(CATEGORY_LABEL) as PreWeeklyTopicCategory[]).map(
-                        (c) => (
-                          <SelectItem key={c} value={c}>
-                            {CATEGORY_LABEL[c]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Prioridade</Label>
-                  <Select
-                    value={topic.priority}
-                    onValueChange={(v) =>
-                      handleUpdate(topic.id, { priority: v as PreWeeklyTopicPriority })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(PRIORITY_LABEL) as PreWeeklyTopicPriority[]).map(
-                        (p) => (
-                          <SelectItem key={p} value={p}>
-                            {PRIORITY_LABEL[p]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Categoria</Label>
+                <Select
+                  value={normalizeCategory(topic.category)}
+                  onValueChange={(v) =>
+                    handleUpdate(topic.id, { category: v as PreWeeklyTopicCategory })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(CATEGORY_LABEL) as PreWeeklyTopicCategory[]).map(
+                      (c) => (
+                        <SelectItem key={c} value={c}>
+                          {CATEGORY_LABEL[c]}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1">
@@ -246,11 +221,8 @@ export function PreWeeklyPautaStep({
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge className={cn('text-xs border-0', PRIORITY_BADGE[topic.priority])}>
-                  {PRIORITY_LABEL[topic.priority]}
-                </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {CATEGORY_LABEL[topic.category]}
+                  {CATEGORY_LABEL[normalizeCategory(topic.category)]}
                 </Badge>
               </div>
             </CardContent>
