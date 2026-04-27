@@ -67,7 +67,8 @@ function useUserWeeklySources(referenceWeek: string) {
     enabled: !!currentBuId && !!profileId,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<SessionItem[]> => {
-      const ref = referenceWeek ? new Date(referenceWeek) : new Date();
+      // Parse "YYYY-MM-DD" como data local (evita shift de fuso que joga para a semana anterior)
+      const ref = referenceWeek ? new Date(`${referenceWeek}T00:00:00`) : new Date();
       const weekStart = startOfWeek(ref, { weekStartsOn: 1 }).toISOString();
       const weekEnd = endOfWeek(ref, { weekStartsOn: 1 }).toISOString();
 
