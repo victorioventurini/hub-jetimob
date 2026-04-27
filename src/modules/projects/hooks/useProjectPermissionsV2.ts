@@ -46,7 +46,10 @@ export function useProjectPermissionsV2() {
   // === Milestone permissions ===
   const canViewMilestones = hasFullAccess || has("projects.milestone.read:bu");
   const canCreateMilestone = hasFullAccess || has("projects.milestone.create:bu");
+  // Permissão estrutural ampla (BU/wildcard) — pode editar qualquer milestone na BU
   const canEditMilestone = hasFullAccess || has("projects.milestone.update:bu");
+  // Permissão estrutural ampla para deletar qualquer milestone na BU
+  const canDeleteMilestone = hasFullAccess || has("projects.milestone.delete:bu");
 
   // === Row-aware helpers (preferidos para gating de UI por registro) ===
   const canEditProjectRecord = useCallback(
