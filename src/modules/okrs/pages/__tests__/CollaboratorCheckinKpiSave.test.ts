@@ -72,7 +72,7 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
       const kpiId = 'kpi-123';
       const invalidatedKeys = [
         queryKeys.kpis.forWizard({}),
-        queryKeys.kpis.detail(kpiId),
+        queryKeys.kpis.detailPrefixById(kpiId),
         queryKeys.okrs.teamKeyResultsPrefix(),
         queryKeys.kpis.valuesPrefix(),
         queryKeys.kpis.all(null),
