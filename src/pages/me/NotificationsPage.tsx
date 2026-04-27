@@ -210,23 +210,24 @@ function NotificationList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.allPrefix(user?.id), refetchType: 'active' });
     },
   });
 
-  // Mark all as read
+  // Mark all as read (BU-scoped)
   const markAllAsRead = useMutation({
     mutationFn: async () => {
-      if (!supabaseBu || !user?.id) throw new Error('No context');
+      if (!supabaseBu || !user?.id || !currentBuId) throw new Error('No context');
       const { error } = await supabaseBu
         .from('notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('user_id', user.id)
+        .eq('bu_id', currentBuId)
         .eq('is_read', false);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.allPrefix(user?.id), refetchType: 'active' });
       toast.success('Todas as notificações foram marcadas como lidas');
     },
   });
