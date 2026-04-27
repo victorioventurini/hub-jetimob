@@ -63,6 +63,7 @@ export default function TeamDetailPage() {
   const [deletingSubteamId, setDeletingSubteamId] = useState<string | null>(null);
   const [deletingSubteamName, setDeletingSubteamName] = useState<string>("");
   const { isAdmin, user } = useAuth();
+  const { currentBuId } = useBu();
   const { canManageTeam } = useTeamManagement();
   
   // Verificar se usuário pode gerenciar ESTE time específico
