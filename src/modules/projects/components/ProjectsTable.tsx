@@ -167,27 +167,15 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
                 </TableCell>
 
                 {/* KRs */}
-                <TableCell className="whitespace-nowrap text-right">
-                  {project.krs.length > 0 ? (
-                    <div className="flex items-center gap-1 justify-end flex-nowrap">
-                      {project.krs.slice(0, 2).map((kr) => (
-                        <span
-                          key={kr.key_result_id}
-                          className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium truncate max-w-[140px]"
-                          title={kr.kr_title}
-                        >
-                          {kr.kr_title}
-                        </span>
-                      ))}
-                      {project.krs.length > 2 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{project.krs.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">—</span>
-                  )}
+                <TableCell className="whitespace-nowrap">
+                  <div className="flex justify-end">
+                    <EntityNamesCell
+                      krNames={project.krs.map((k) => k.kr_title)}
+                      maxVisible={2}
+                      variant="outline"
+                      emptyText="—"
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             );
