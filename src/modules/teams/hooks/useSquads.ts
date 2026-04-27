@@ -271,7 +271,7 @@ export function useUpdateSquad() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.id), refetchType: 'active' });
       toast.success("Squad atualizado com sucesso");
     },
     onError: (error: Error) => {
@@ -320,7 +320,7 @@ export function useAddSquadMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(currentBu?.id ?? null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.squadId), refetchType: 'active' });
       toast.success("Membro adicionado ao squad");
     },
     onError: (error: Error) => {
@@ -352,7 +352,7 @@ export function useUpdateSquadMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.squadId), refetchType: 'active' });
       toast.success("Papel atualizado");
     },
     onError: () => {
@@ -383,7 +383,7 @@ export function useRemoveSquadMember() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.squads.all(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detail(variables.squadId), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.squads.detailPrefix(variables.squadId), refetchType: 'active' });
       toast.success("Membro removido do squad");
     },
     onError: () => {
