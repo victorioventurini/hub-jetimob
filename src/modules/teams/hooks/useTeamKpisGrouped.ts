@@ -224,12 +224,19 @@ export function useTeamKpisGrouped(
 
       const queries: any[] = [];
 
-      // Para scope=org e scope=area: 4 critérios de vínculo
+      // Para scope=org e scope=area: critérios de vínculo
+      // Nota canônica (v2.82/v2.90): area_id é a "área dona estratégica" (fonte primária);
+      // responsible_area_id é override operacional opcional. Por isso buscamos pelos dois,
+      // priorizando o override quando presente.
       const linkBy = (q: any) => [
         q.in('responsible_team_id', resolvedTeamIds),
         q.is('responsible_team_id', null).in('team_id', resolvedTeamIds),
         ...(teamAreaIds.length > 0
-          ? [q.in('responsible_area_id', teamAreaIds)]
+          ? [
+              q.in('responsible_area_id', teamAreaIds),
+              // fonte primária quando não há override operacional
+              q.is('responsible_area_id', null).in('area_id', teamAreaIds),
+            ]
           : []),
         ...(memberIds.length > 0 ? [q.in('owner_user_id', memberIds)] : []),
       ];
@@ -288,6 +295,7 @@ export function useTeamKpisGrouped(
         teamIdSet.has(raw.responsible_team_id) ||
         (!raw.responsible_team_id && teamIdSet.has(raw.team_id)) ||
         areaIdSet.has(raw.responsible_area_id) ||
+        (!raw.responsible_area_id && areaIdSet.has(raw.area_id)) ||
         memberIdSet.has(raw.owner_user_id);
 
       const isTeamScopeMatch = (raw: any) =>
