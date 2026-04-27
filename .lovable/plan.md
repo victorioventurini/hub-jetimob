@@ -335,10 +335,15 @@ Arquivos: `KpiMigrationBanner.tsx` (novo), `KpiDashboardPage.tsx`, `KpiDetailCon
 ---
 
 
-## Fase 10 — Componentes secundários
+## Fase 10 — Componentes secundários ✅
 
-- `KpiCard.tsx`, `KpiContextSection.tsx`: substituir exibição de `frequency` por `update_frequency` (com fallback ao antigo enquanto Fase 1).
-- Memoização preservada (`React.memo` já obrigatório).
+Arquivos: `KpiCard.tsx`.
+
+- **`KpiCard`**: substituído `FREQUENCY_LABELS[kpi.frequency]` por `getFrequencyLabel(effectiveUpdateFreq)` onde `effectiveUpdateFreq = update_frequency ?? legacyFrequencyToValue(frequency)`.
+- **Stale threshold** agora derivado de `FREQUENCY_DAYS[effectiveUpdateFreq] * 1.2` (mínimo 2 dias), substituindo o `if/else` hard-coded de 4 valores. Suporta `biweekly`/`semiannual`/`annual` automaticamente.
+- **`KpiContextSection`**: já não exibia frequency — sem mudanças necessárias.
+- `React.memo` preservado.
+- **Tests**: 100 passando no módulo KPIs. TS limpo.
 
 ---
 

@@ -6,7 +6,8 @@ import { AreaBadge } from "@/components/ui/area-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { KpiWithValues, FREQUENCY_LABELS, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
+import { KpiWithValues, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
+import { FREQUENCY_DAYS, getFrequencyLabel, legacyFrequencyToValue } from "../utils/frequency";
 import { KpiActionsMenu } from "./KpiActionsMenu";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -71,10 +72,15 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
     }
   };
 
+  // v3.0.0: usa update_frequency com fallback ao legacy `frequency` enquanto Fase 1 não removeu a coluna.
+  const effectiveUpdateFreq =
+    kpi.update_frequency ?? legacyFrequencyToValue(kpi.frequency);
   const lastUpdate = kpi.last_updated_at ? parseISO(kpi.last_updated_at) : null;
+  const staleThresholdDays = effectiveUpdateFreq
+    ? Math.max(2, Math.round(FREQUENCY_DAYS[effectiveUpdateFreq] * 1.2))
+    : 100;
   const isStale = lastUpdate
-    ? differenceInDays(new Date(), lastUpdate) >
-      (kpi.frequency === "daily" ? 2 : kpi.frequency === "weekly" ? 10 : kpi.frequency === "monthly" ? 35 : 100)
+    ? differenceInDays(new Date(), lastUpdate) > staleThresholdDays
     : true;
 
   // Format last update info for display
@@ -282,7 +288,7 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
               </Tooltip>
             )}
             <span className="text-sm text-muted-foreground">
-              {FREQUENCY_LABELS[kpi.frequency]}
+              {effectiveUpdateFreq ? getFrequencyLabel(effectiveUpdateFreq) : '—'}
             </span>
           </div>
 
