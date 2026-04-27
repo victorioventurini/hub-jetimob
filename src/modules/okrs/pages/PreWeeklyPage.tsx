@@ -62,7 +62,6 @@ function currentReferenceWeek(): string {
 
 const DEFAULT_DATA: PreWeeklyDraftData = {
   referenceWeek: currentReferenceWeek(),
-  sourcesReflection: '',
   topics: [],
   peopleSignals: [],
   decisions: [],
@@ -91,6 +90,14 @@ export default function PreWeeklyPage() {
     if (!teamIdParam) return null;
     return allTeams?.find((t) => t.id === teamIdParam) ?? null;
   }, [teamIdParam, allTeams]);
+
+  // collaborator é "esperado" como fonte apenas quando o usuário logado lidera/integra
+  // o time ativo (heurística: aparece em manageableTeams). Admin observando outro time
+  // não tem expectativa pessoal de check-in individual.
+  const isCollaboratorExpected = useMemo(
+    () => !!teamIdParam && manageableTeams.some((t) => t.id === teamIdParam),
+    [teamIdParam, manageableTeams],
+  );
 
   // Auto-seleção: líder com exatamente 1 time → popula URL
   useEffect(() => {
@@ -258,16 +265,13 @@ export default function PreWeeklyPage() {
       case 'sources':
         return (
           <PreWeeklySourcesStep
-            sourcesReflection={draft.data.sourcesReflection}
-            onSourcesReflectionChange={(sourcesReflection) =>
-              updateDraft({ sourcesReflection })
-            }
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })
             }
             referenceWeek={draft.data.referenceWeek}
             teamId={teamIdParam}
+            isCollaboratorExpected={isCollaboratorExpected}
             onContinue={goNext}
           />
         );

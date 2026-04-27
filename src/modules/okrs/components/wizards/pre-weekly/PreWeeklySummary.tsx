@@ -6,7 +6,7 @@
  * backend) consumir e propor a abertura executiva da Weekly.
  */
 
-import { Send, ListChecks, Users, FileText } from 'lucide-react';
+import { Send, ListChecks, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,7 @@ export function PreWeeklySummary({
   onComplete,
   onBack,
 }: PreWeeklySummaryProps) {
-  const { topics, peopleSignals, sourcesReflection } = draftData;
+  const { topics, peopleSignals } = draftData;
 
   return (
     <WizardStepScaffold
@@ -67,25 +67,6 @@ export function PreWeeklySummary({
       }
     >
       <div className="p-4 sm:p-6 space-y-4">
-        {/* Reflexão */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Reflexão da semana
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sourcesReflection.trim() ? (
-              <p className="text-sm whitespace-pre-wrap">{sourcesReflection}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Sem reflexão registrada.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Tópicos */}
         <Card>
           <CardHeader className="pb-2">
