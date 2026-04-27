@@ -281,6 +281,25 @@ export default function KpiDashboardPage() {
           }
         />
 
+        {/* v3.0.0: Banner global de migração de frequência */}
+        {canManageKpis && pendingReviewCount > 0 && !needsReviewOnly && (
+          <KpiMigrationBanner
+            variant="dashboard-global"
+            count={pendingReviewCount}
+            onReview={() => needsReviewState.set('1')}
+          />
+        )}
+        {needsReviewOnly && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              Mostrando apenas indicadores pendentes de revisão de frequência.
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => needsReviewState.set('0')}>
+              Limpar filtro
+            </Button>
+          </div>
+        )}
+
         {/* Status Summary */}
         <KpiStatusSummary
           total={summary.total}
