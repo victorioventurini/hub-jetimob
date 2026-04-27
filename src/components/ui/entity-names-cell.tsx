@@ -1,12 +1,16 @@
 /**
- * EntityNamesCell
- * 
- * Displays resolved entity names (users, teams, squads) with
- * truncation and tooltip. Follows the ScopeNamesCell pattern
- * from assets/recommendations.
- * 
- * Accepts pre-resolved names — the parent component is responsible
- * for resolving IDs to names before passing them here.
+ * EntityNamesCell — SSOT canônico para células com lista truncada + tooltip.
+ *
+ * **OBRIGATÓRIO**: Toda célula de tabela ou lista densa que precise mostrar
+ * múltiplas entidades com overflow ("+N") e tooltip detalhado DEVE usar este
+ * componente. Não criar tooltips paralelos (`title=` HTML, Tooltip ad-hoc, etc.)
+ * para esse caso de uso.
+ *
+ * Para suportar um novo tipo de entidade (ex.: projetos, iniciativas):
+ * 1) adicionar nova prop `xxxNames?: string[]`;
+ * 2) incluí-la no array `allItems` com ícone próprio;
+ * 3) adicionar grupo correspondente no tooltip.
+ * Nunca duplicar este componente.
  */
 
 import {
@@ -16,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { Users, Building2, Target } from "lucide-react";
+import { Users, Building2, Target, KeyRound } from "lucide-react";
 
 interface EntityGroup {
   label: string;
