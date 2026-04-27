@@ -72,10 +72,15 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
     }
   };
 
+  // v3.0.0: usa update_frequency com fallback ao legacy `frequency` enquanto Fase 1 não removeu a coluna.
+  const effectiveUpdateFreq =
+    kpi.update_frequency ?? legacyFrequencyToValue(kpi.frequency);
   const lastUpdate = kpi.last_updated_at ? parseISO(kpi.last_updated_at) : null;
+  const staleThresholdDays = effectiveUpdateFreq
+    ? Math.max(2, Math.round(FREQUENCY_DAYS[effectiveUpdateFreq] * 1.2))
+    : 100;
   const isStale = lastUpdate
-    ? differenceInDays(new Date(), lastUpdate) >
-      (kpi.frequency === "daily" ? 2 : kpi.frequency === "weekly" ? 10 : kpi.frequency === "monthly" ? 35 : 100)
+    ? differenceInDays(new Date(), lastUpdate) > staleThresholdDays
     : true;
 
   // Format last update info for display
