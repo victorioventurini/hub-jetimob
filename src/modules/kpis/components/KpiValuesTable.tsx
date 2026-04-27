@@ -234,9 +234,19 @@ export function KpiValuesTable({
                 const variationColor = variation !== null ? getVariationColor(variation, direction) : "";
                 const hasNotes = !!value.notes?.trim();
                 const SourceIcon = sourceIcons[value.source] || Edit;
+                const isProjection = value.input_type === 'projection';
+                const confidence = value.confidence;
+                const confCfg = confidence ? confidenceConfig[confidence] : null;
 
                 return (
-                  <TableRow key={value.id} className={cn("group/row", index % 2 === 0 ? "bg-muted/20" : "")}>
+                  <TableRow
+                    key={value.id}
+                    className={cn(
+                      "group/row",
+                      index % 2 === 0 ? "bg-muted/20" : "",
+                      isProjection && "opacity-80",
+                    )}
+                  >
                     <TableCell className="font-medium">
                       <Tooltip>
                         <TooltipTrigger asChild>
