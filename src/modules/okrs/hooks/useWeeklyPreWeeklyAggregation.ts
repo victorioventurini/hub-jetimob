@@ -83,6 +83,7 @@ export function useWeeklyPreWeeklyAggregation(
       const weekEnd = endOfWeek(ref, { weekStartsOn: 1 }).toISOString();
 
       // 1) Sessões de Pré-Weekly concluídas dentro da semana
+      // NOTA: okr_wizard_sessions NÃO possui coluna `deleted_at` — não filtrar.
       const { data: sessions, error: sessionsError } = await supabase
         .from('okr_wizard_sessions')
         .select('id, team_id, started_by, reflection_data')
@@ -90,8 +91,7 @@ export function useWeeklyPreWeeklyAggregation(
         .eq('wizard_type', 'pre-weekly')
         .eq('status', 'completed')
         .gte('completed_at', weekStart)
-        .lte('completed_at', weekEnd)
-        .is('deleted_at', null);
+        .lte('completed_at', weekEnd);
       if (sessionsError) throw sessionsError;
 
       const rows = (sessions ?? []) as SessionRow[];
