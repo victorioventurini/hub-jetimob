@@ -19,6 +19,7 @@ import { KpiDetailDialog } from "../components/KpiDetailDialog";
 import { CreateKpiDialog } from "../components/CreateKpiDialog";
 import { AddKpiValueDialog } from "../components/AddKpiValueDialog";
 import { KpiStatusSummary } from "../components/KpiStatusSummary";
+import { KpiMigrationBanner } from "../components/KpiMigrationBanner";
 import { KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, KpiWithValues } from "../types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch } from "@/shared/url";
