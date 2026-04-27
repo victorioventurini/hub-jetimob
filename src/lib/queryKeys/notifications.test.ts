@@ -16,6 +16,19 @@ describe('notificationsKeys.all overload', () => {
     expect(notificationsKeys.all()).toEqual(['notifications']);
     expect(notificationsKeys.all(null)).toEqual(['notifications']);
   });
+  it('com userId + buId isola por BU', () => {
+    expect(notificationsKeys.all('u1', 'bu1')).toEqual(['notifications', 'u1', 'bu1']);
+    expect(notificationsKeys.all('u1', 'bu2')).toEqual(['notifications', 'u1', 'bu2']);
+    expect(notificationsKeys.all('u1', null)).toEqual(['notifications', 'u1', null]);
+  });
+});
+
+describe('notificationsKeys.allPrefix', () => {
+  it('retorna prefixo para invalidar todas as variantes de BU', () => {
+    expect(notificationsKeys.allPrefix('u1')).toEqual(['notifications', 'u1']);
+    expect(notificationsKeys.allPrefix()).toEqual(['notifications']);
+    expect(notificationsKeys.allPrefix(null)).toEqual(['notifications']);
+  });
 });
 
 describe('notificationsKeys — user-scoped', () => {
