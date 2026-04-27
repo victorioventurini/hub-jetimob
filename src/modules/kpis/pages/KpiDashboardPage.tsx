@@ -375,6 +375,8 @@ export default function KpiDashboardPage() {
           kpiId={addValueKpi.id}
           kpiName={addValueKpi.name}
           unit={addValueKpi.unit}
+          consolidationFrequency={addValueKpi.consolidation_frequency ?? null}
+          updateFrequency={addValueKpi.update_frequency ?? null}
           open={addValueOpen}
           onOpenChange={setAddValueOpen}
         />

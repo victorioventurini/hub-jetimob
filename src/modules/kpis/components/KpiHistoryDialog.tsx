@@ -58,6 +58,8 @@ export interface KpiHistoryDialogData {
   indicator_type: KpiIndicatorType;
   rag_status: KpiRagStatus;
   frequency?: KpiFrequency;
+  consolidation_frequency?: import('../types').KpiFrequencyValue | null;
+  update_frequency?: import('../types').KpiFrequencyValue | null;
   bu_id?: string;
   owner_user_id?: string | null;
   team_id?: string | null;
@@ -295,6 +297,8 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                   direction={kpi.direction}
                   isLoading={isLoading}
                   kpiName={kpi.name}
+                  consolidationFrequency={kpi.consolidation_frequency ?? null}
+                  updateFrequency={kpi.update_frequency ?? null}
                   canEdit={canUpdateValues}
                   onUpdateValue={handleUpdateValue}
                   onDeleteValue={handleDeleteValue}

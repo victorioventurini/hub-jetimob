@@ -38,6 +38,11 @@ interface DbKpiMetric {
   unit: string;
   direction: 'up' | 'down';
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  /** v3.0.0 — split de frequência (consolidação × atualização). */
+  consolidation_frequency?: import('../types').KpiFrequencyValue | null;
+  update_frequency?: import('../types').KpiFrequencyValue | null;
+  update_mode?: import('../types').KpiUpdateMode;
+  frequency_migration_reviewed?: boolean;
   target_value: number | null;
   status: 'active' | 'inactive';
   is_global: boolean;
@@ -86,6 +91,8 @@ interface DbKpiValue {
   period_label: string | null;
   confidence: 'high' | 'medium' | 'low';
   rag_status: string | null;
+  /** v3.0.0 — tipo do input. */
+  input_type?: import('../types').KpiInputType;
 }
 
 export function useKpiData(options: UseKpiDataOptions = {}) {
@@ -336,19 +343,24 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       notes?: string;
       created_by?: string;
       confidence?: 'high' | 'medium' | 'low';
+      input_type?: 'projection' | 'consolidated';
     }) => {
       const client = assertSupabaseClient(supabase, "addKpiValue");
+      const insertPayload = {
+        kpi_id: data.kpi_id,
+        value: data.value,
+        reference_date: data.reference_date,
+        source: data.source || "manual",
+        notes: data.notes || null,
+        created_by: data.created_by || null,
+        input_type: data.input_type ?? 'consolidated',
+        // Só envia confidence se explicitamente informado — caso contrário,
+        // o trigger derive_kpi_value_confidence aplica a regra padrão.
+        ...(data.confidence ? { confidence: data.confidence } : {}),
+      };
       const { data: result, error } = await client
         .from("kpi_values")
-        .insert({
-          kpi_id: data.kpi_id,
-          value: data.value,
-          reference_date: data.reference_date,
-          source: data.source || "manual",
-          notes: data.notes || null,
-          created_by: data.created_by || null,
-          confidence: data.confidence || 'medium',
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -411,7 +423,9 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_metrics")
         .select(`
           id, name, description, category, bu_id, owner_user_id, team_id,
-          unit, direction, frequency, target_value, status, is_global,
+          unit, direction, frequency,
+          consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed,
+          target_value, status, is_global,
           created_at, updated_at, deleted_at,
           indicator_type, lifecycle_status, target_source, recovery_protocol,
           area_id, scope, responsible_area_id, responsible_team_id,
@@ -442,7 +456,7 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_values")
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, confidence, rag_status
+          period_start, period_end, period_label, confidence, rag_status, input_type
         `)
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: false });
