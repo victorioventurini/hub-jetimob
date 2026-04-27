@@ -14,7 +14,25 @@
 export type KpiCategory = 'financeiro' | 'growth' | 'cs' | 'produto' | 'operacoes' | 'pessoas';
 
 export type KpiDirection = 'up' | 'down';
+/**
+ * @deprecated v3.0.0 — use KpiFrequencyValue with consolidation_frequency + update_frequency.
+ * Mantido para compatibilidade durante migração.
+ */
 export type KpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'manual';
+
+// === v3.0.0 Frequency split (consolidation × update) ===
+export type KpiFrequencyValue =
+  | 'daily'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'semiannual'
+  | 'annual';
+
+export type KpiUpdateMode = 'manual' | 'automatic';
+export type KpiInputType = 'projection' | 'consolidated';
+
 export type KpiStatus = 'active' | 'inactive';
 export type KpiValueSource = 'manual' | 'api' | 'webhook' | 'spreadsheet' | 'database' | 'integration' | 'calculation';
 export type KpiVisibility = 'restricted' | 'team' | 'bu';
@@ -49,7 +67,13 @@ export interface KpiMetric {
   team_id: string | null;
   unit: string;
   direction: KpiDirection;
+  /** @deprecated v3.0.0 — use consolidation_frequency + update_frequency. */
   frequency: KpiFrequency;
+  // v3.0.0 frequency split
+  consolidation_frequency: KpiFrequencyValue | null;
+  update_frequency: KpiFrequencyValue | null;
+  update_mode: KpiUpdateMode;
+  frequency_migration_reviewed: boolean;
   target_value: number | null;
   status: KpiStatus;
   source_type: KpiValueSource;
@@ -113,6 +137,8 @@ export interface KpiValue {
   period_label: string | null;
   confidence: KpiConfidenceLevel;
   rag_status: KpiRagStatus | null;
+  // v3.0.0 input type (projeção vs consolidado)
+  input_type: KpiInputType;
   // Relations
   created_by_user?: {
     id: string;
