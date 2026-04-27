@@ -113,9 +113,11 @@ export function PreWeeklySourcesStep({
   decisions,
   onDecisionsChange,
   referenceWeek,
+  teamId,
   onContinue,
 }: PreWeeklySourcesStepProps) {
-  const { data: sessions, isLoading } = useUserWeeklySources(referenceWeek);
+  const { data: sessions, isLoading } = useWeeklySources(referenceWeek, teamId);
+  const isTeamScope = !!teamId;
 
   const grouped = useMemo(() => {
     const map = new Map<string, SessionItem[]>();
