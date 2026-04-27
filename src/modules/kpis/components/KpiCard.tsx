@@ -288,7 +288,7 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
               </Tooltip>
             )}
             <span className="text-sm text-muted-foreground">
-              {FREQUENCY_LABELS[kpi.frequency]}
+              {effectiveUpdateFreq ? getFrequencyLabel(effectiveUpdateFreq) : '—'}
             </span>
           </div>
 
