@@ -98,8 +98,10 @@ export function WeeklyPeopleStep({
 }: WeeklyPeopleStepProps) {
   const { topics, peopleSignals, isLoading } = useWeeklyPreWeeklyAggregation(referenceWeek);
 
+  // Drafts antigos podem trazer category === 'pessoas' (categoria removida da Pauta v2026-04-27).
+  // Mantemos o filtro defensivo via cast para não perder dados legados.
   const channel1 = useMemo(
-    () => topics.filter((t) => t.topic.category === 'pessoas'),
+    () => topics.filter((t) => (t.topic.category as string) === 'pessoas'),
     [topics],
   );
 

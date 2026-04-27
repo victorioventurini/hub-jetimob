@@ -16,15 +16,21 @@ export type PreWeeklyStep = 'sources' | 'pauta' | 'pessoas' | 'summary';
 /**
  * Categorização do tema selecionado para subir à Weekly da BU.
  * Performance = números/KPIs/KRs do time. Projetos = entregas estruturais.
+ * Pessoas é tratado em etapa dedicada (Step 3) — não aparece como categoria de tema.
  */
-export type PreWeeklyTopicCategory = 'performance' | 'projetos' | 'pessoas';
+export type PreWeeklyTopicCategory = 'performance' | 'projetos';
+/**
+ * @deprecated Removido da Pauta — todos os temas selecionados são, por definição, prioritários.
+ * Mantido apenas para compatibilidade de leitura de drafts antigos.
+ */
 export type PreWeeklyTopicPriority = 'low' | 'medium' | 'high';
 
 export interface PreWeeklyTopic {
   id: string;
   title: string;
   category: PreWeeklyTopicCategory;
-  priority: PreWeeklyTopicPriority;
+  /** @deprecated Removido da UI — drafts antigos podem trazer este campo. */
+  priority?: PreWeeklyTopicPriority;
   /** Resumo livre do contexto/decisão proposta */
   context?: string;
 }

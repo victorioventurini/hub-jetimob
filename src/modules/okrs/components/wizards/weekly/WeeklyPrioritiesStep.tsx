@@ -87,8 +87,9 @@ export function WeeklyPrioritiesStep({
 }: WeeklyPrioritiesStepProps) {
   const { topics, isLoading } = useWeeklyPreWeeklyAggregation(referenceWeek);
 
+  // Drafts antigos podem trazer category === 'pessoas' (categoria removida da Pauta v2026-04-27).
   const cross = useMemo(
-    () => topics.filter((t) => t.topic.category !== 'pessoas'),
+    () => topics.filter((t) => (t.topic.category as string) !== 'pessoas'),
     [topics],
   );
 

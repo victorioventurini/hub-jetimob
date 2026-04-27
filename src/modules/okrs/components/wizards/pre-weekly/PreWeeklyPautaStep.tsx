@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+
 import {
   WizardStepHeader,
   WizardStepFooter,
@@ -37,7 +37,6 @@ import {
 import type {
   PreWeeklyTopic,
   PreWeeklyTopicCategory,
-  PreWeeklyTopicPriority,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 
@@ -50,20 +49,16 @@ const MAX_TOPICS = 3;
 const CATEGORY_LABEL: Record<PreWeeklyTopicCategory, string> = {
   performance: 'Performance',
   projetos: 'Projetos',
-  pessoas: 'Pessoas',
 };
 
-const PRIORITY_LABEL: Record<PreWeeklyTopicPriority, string> = {
-  high: 'Alta',
-  medium: 'Média',
-  low: 'Baixa',
-};
-
-const PRIORITY_BADGE: Record<PreWeeklyTopicPriority, string> = {
-  high: 'bg-status-red-muted text-status-red',
-  medium: 'bg-status-amber-muted text-status-amber',
-  low: 'bg-muted text-muted-foreground',
-};
+/**
+ * Normaliza categorias legadas (drafts antigos com 'pessoas') para uma categoria válida.
+ * Pessoas tem etapa dedicada (Step 3) — não aparece como categoria de tema.
+ */
+function normalizeCategory(category: string | undefined): PreWeeklyTopicCategory {
+  if (category === 'projetos') return 'projetos';
+  return 'performance';
+}
 
 // ============================================================
 // TYPES
@@ -98,7 +93,6 @@ export function PreWeeklyPautaStep({
       id: `topic-${Date.now()}`,
       title: '',
       category: 'performance',
-      priority: 'medium',
       context: '',
     };
     onTopicsChange([...topics, newTopic]);
@@ -190,52 +184,27 @@ export function PreWeeklyPautaStep({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Categoria</Label>
-                  <Select
-                    value={topic.category}
-                    onValueChange={(v) =>
-                      handleUpdate(topic.id, { category: v as PreWeeklyTopicCategory })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(CATEGORY_LABEL) as PreWeeklyTopicCategory[]).map(
-                        (c) => (
-                          <SelectItem key={c} value={c}>
-                            {CATEGORY_LABEL[c]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Prioridade</Label>
-                  <Select
-                    value={topic.priority}
-                    onValueChange={(v) =>
-                      handleUpdate(topic.id, { priority: v as PreWeeklyTopicPriority })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(PRIORITY_LABEL) as PreWeeklyTopicPriority[]).map(
-                        (p) => (
-                          <SelectItem key={p} value={p}>
-                            {PRIORITY_LABEL[p]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Categoria</Label>
+                <Select
+                  value={normalizeCategory(topic.category)}
+                  onValueChange={(v) =>
+                    handleUpdate(topic.id, { category: v as PreWeeklyTopicCategory })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(CATEGORY_LABEL) as PreWeeklyTopicCategory[]).map(
+                      (c) => (
+                        <SelectItem key={c} value={c}>
+                          {CATEGORY_LABEL[c]}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1">
@@ -252,11 +221,8 @@ export function PreWeeklyPautaStep({
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge className={cn('text-xs border-0', PRIORITY_BADGE[topic.priority])}>
-                  {PRIORITY_LABEL[topic.priority]}
-                </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {CATEGORY_LABEL[topic.category]}
+                  {CATEGORY_LABEL[normalizeCategory(topic.category)]}
                 </Badge>
               </div>
             </CardContent>
