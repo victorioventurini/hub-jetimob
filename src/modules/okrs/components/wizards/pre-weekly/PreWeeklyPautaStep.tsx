@@ -37,7 +37,6 @@ import {
 import type {
   PreWeeklyTopic,
   PreWeeklyTopicCategory,
-  PreWeeklyTopicPriority,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 
@@ -50,20 +49,16 @@ const MAX_TOPICS = 3;
 const CATEGORY_LABEL: Record<PreWeeklyTopicCategory, string> = {
   performance: 'Performance',
   projetos: 'Projetos',
-  pessoas: 'Pessoas',
 };
 
-const PRIORITY_LABEL: Record<PreWeeklyTopicPriority, string> = {
-  high: 'Alta',
-  medium: 'Média',
-  low: 'Baixa',
-};
-
-const PRIORITY_BADGE: Record<PreWeeklyTopicPriority, string> = {
-  high: 'bg-status-red-muted text-status-red',
-  medium: 'bg-status-amber-muted text-status-amber',
-  low: 'bg-muted text-muted-foreground',
-};
+/**
+ * Normaliza categorias legadas (drafts antigos com 'pessoas') para uma categoria válida.
+ * Pessoas tem etapa dedicada (Step 3) — não aparece como categoria de tema.
+ */
+function normalizeCategory(category: string | undefined): PreWeeklyTopicCategory {
+  if (category === 'projetos') return 'projetos';
+  return 'performance';
+}
 
 // ============================================================
 // TYPES
