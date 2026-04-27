@@ -20,8 +20,8 @@ import { notificationsSection } from "./notifications.ts";
 
 export type { TcrSection };
 
-export const TCR_VERSION = "3.28.0";
-export const TCR_UPDATED_AT = "2026-04-22";
+export const TCR_VERSION = "3.29.0";
+export const TCR_UPDATED_AT = "2026-04-27";
 
 export const TCR_SECTIONS: Record<string, TcrSection> = {
   architecture: architectureSection,
