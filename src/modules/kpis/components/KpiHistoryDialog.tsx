@@ -297,7 +297,7 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                 </TabsList>
 
                 {/* v3.0.0 — Toggle "apenas consolidados" (URL state) */}
-                {projectionCount > 0 && (
+                {partialCount > 0 && (
                   <div className="flex items-center gap-2 px-1">
                     <Switch
                       id="only-consolidated"
@@ -307,7 +307,7 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                     <Label htmlFor="only-consolidated" className="text-xs cursor-pointer">
                       Apenas consolidados
                       <Badge variant="outline" className="ml-1.5 text-[10px] h-4 px-1">
-                        −{projectionCount}
+                        −{partialCount}
                       </Badge>
                     </Label>
                   </div>
