@@ -193,12 +193,34 @@ export const CATEGORY_ICONS: Record<KpiCategory, string> = {
   pessoas: 'Users',
 };
 
+/** @deprecated v3.0.0 — use FREQUENCY_VALUE_LABELS. */
 export const FREQUENCY_LABELS: Record<KpiFrequency, string> = {
   daily: 'Diário',
   weekly: 'Semanal',
   monthly: 'Mensal',
   quarterly: 'Trimestral',
   manual: 'Manual',
+};
+
+// === v3.0.0 Frequency labels ===
+export const FREQUENCY_VALUE_LABELS: Record<KpiFrequencyValue, string> = {
+  daily: 'Diário',
+  weekly: 'Semanal',
+  biweekly: 'Quinzenal',
+  monthly: 'Mensal',
+  quarterly: 'Trimestral',
+  semiannual: 'Semestral',
+  annual: 'Anual',
+};
+
+export const INPUT_TYPE_LABELS: Record<KpiInputType, string> = {
+  projection: 'Projeção',
+  consolidated: 'Consolidado',
+};
+
+export const UPDATE_MODE_LABELS: Record<KpiUpdateMode, string> = {
+  manual: 'Manual',
+  automatic: 'Automático',
 };
 
 export const DIRECTION_LABELS: Record<KpiDirection, string> = {
