@@ -187,6 +187,29 @@ export default function OrgObjectiveViewPage() {
     );
   }
 
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir um objetivo de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && objective.bu_id && objective.bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Building2 className="w-12 h-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Esse objetivo pertence a outra BU 🔒</h2>
+          <p className="text-muted-foreground mb-4 max-w-md text-center">
+            Você está visualizando o Hub em uma BU diferente da BU desse objetivo.
+            Selecione a BU correta no topo da tela para acessá-lo.
+          </p>
+          <Button asChild variant="outline">
+            <Link to="/okrs/org-view">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar para Visão Organizacional
+            </Link>
+          </Button>
+        </div>
+      </HubLayout>
+    );
+  }
+
   return (
     <HubLayout>
       <div className="space-y-6">
