@@ -222,7 +222,7 @@ export function useTeamKpisGrouped(
         return scope ? base.eq('scope', scope) : base;
       };
 
-      const queries: Promise<any>[] = [];
+      const queries: any[] = [];
 
       // Para scope=org e scope=area: 4 critérios de vínculo
       const linkBy = (q: any) => [
