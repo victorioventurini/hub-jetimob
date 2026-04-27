@@ -1,122 +1,84 @@
-## Pré-checklist canônico ✅
+# Reagrupamento da sub-tab KPIs por Escopo
 
-- **TCR / DATA_MODEL_REGISTRY** revisado — `projects.owner_id` → `profiles.id`
-- **IDENTITY_CONVENTION** — mutações com `realProfileId`
-- **PERMISSIONS_AND_RBAC_MODEL** — permission key `projects.project.update:bu` (já usada no RPC atual)
-- **mem://features/projects/holistic-module-architecture-v2** — spec do módulo
-- **Soft-delete policy** — arquivados via `deleted_at IS NOT NULL`
-- **Query keys standard** — `projectsKeys.list(buId, filters)` ✓
-- **BU isolation** — `currentBuId` síncrono ✓
+URL: `/teams/:id?tab=contribution&subtab=kpis`
 
----
+## Objetivo
+Substituir os 2 grupos atuais ("Sob responsabilidade do time" / "Sob responsabilidade de membros") por **4 grupos por escopo canônico**, alinhados ao enum `KpiScope` (`org`/`area`/`team`) + o conceito de owner pessoal:
 
-## Diagnóstico
+1. **{NomeDaBU}** (escopo `org`, ex: "Jetimob") — KPIs globais da BU
+2. **Área** (escopo `area`) — agrupados por `responsible_area_id` (fallback `area_id`), com sub-cabeçalho por área
+3. **Time** (escopo `team`) — KPIs cuja responsabilidade é do(s) time(s) selecionado(s)
+4. **Responsável** — KPIs cujo owner é membro do time, mas que não se enquadram nos blocos acima
 
-A view `?view=gantt` aparenta "filtros quebrados" por **3 bugs distintos**, todos confirmados via leitura de código:
+## TCR e canônicos consultados
+- `mem://features/teams/team-contribution-tab-standard.md` — define a estrutura canônica das sub-tabs e proíbe duplicar `KpiCard`
+- `src/modules/kpis/types.ts` — `KpiScope = 'team' | 'area' | 'org'` e `getScopeLabels(buName)` (label dinâmico com nome da BU — já existe SSOT)
+- `src/modules/teams/hooks/useTeamKpisGrouped.ts` — hook agregador atual (vai ser reescrito mantendo o mesmo nome e contrato externo)
+- `src/components/ui/area-badge.tsx` (via `KpiCard`) e `OkrScopeBadge` — padrão visual já existente
 
-### Bug #1 — Milestones ignoram o filtro de status do projeto
-**Local:** `src/modules/projects/hooks/useGanttData.ts` (linhas 38-59)
+## Critérios de inclusão por bloco (ordem de prioridade — sem duplicação)
 
-`useGanttData` itera `project.milestones` sem aplicar nenhum filtro. Quando o usuário seleciona `status=in_progress`, os projetos são filtrados corretamente no SQL (`useProjects.ts` linha 35), mas todos os milestones (incluindo `done` e `todo`) continuam aparecendo embaixo de cada projeto, dando impressão de que o filtro "não funcionou".
+Resolução em cascata: cada KPI entra em **exatamente um** bloco, na ordem abaixo.
 
-### Bug #2 — Aba "Arquivados" no Gantt não mostra milestones/teams/KRs
-**Local:** RPC `public.list_archived_projects` (verificado via DB)
+1. **{BU} (org)** — `kpi_metrics.scope = 'org'` E vinculado ao time via:
+   - `responsible_team_id IN teamIds` OU
+   - `team_id IN teamIds` (legado) OU
+   - `responsible_area_id` = área do time OU
+   - `owner_user_id IN memberIds`
+   - (KPIs `scope=org` que não tocam o time não aparecem — mantém escopo da aba)
 
-```sql
-RETURNS SETOF projects  -- só colunas da tabela, sem joins
-```
+2. **Área** — `kpi_metrics.scope = 'area'` (mesmos critérios de vínculo acima). Sub-agrupado por `responsible_area_id ?? area_id`, com `AreaBadge` no cabeçalho de cada sub-grupo.
 
-Em `useProjects.ts` linha 70, `p.project_milestones` é `undefined` para arquivados. Consequências:
-- `computeHealth([])` → sempre `on_track`
-- `computeCompletion([])` → sempre `0%`
-- Gantt não desenha barras de milestones de projetos arquivados
-- Filtro `team_id` **nunca matcha** projetos arquivados (sem `project_teams` no payload)
-- Filtro `linked_to_kr` também quebra para arquivados
+3. **Time** — `kpi_metrics.scope = 'team'` E (`responsible_team_id IN teamIds` OU `team_id IN teamIds` quando `responsible_team_id IS NULL`).
 
-### Bug #3 — Mensagem enganosa quando filtros esvaziam o resultado
-**Local:** `src/modules/projects/components/GanttTimeline.tsx` (linhas 134-146)
+4. **Responsável** — qualquer KPI restante cujo `owner_user_id IN memberIds` e que não tenha entrado nos blocos 1–3. Sub-agrupado por owner (`display_name` + avatar).
 
-Quando o filtro de team/owner/KR remove todos os projetos, o Gantt mostra "Nenhum item com datas definidas para exibir" — diagnóstico errado (a causa real é o filtro, não datas faltantes). O usuário interpreta como bug de filtro.
+`memberIds` = `profiles.team_id IN resolvedTeamIds` (sem terminados), como hoje.
 
----
+## Mudanças
 
-## Mudanças propostas
+### `src/modules/teams/hooks/useTeamKpisGrouped.ts`
+Reescrever `queryFn` para:
+- Buscar em paralelo (3 queries `kpi_metrics` filtrando por `scope` + critérios + 1 query `profiles` para members + 1 query `kpi_values` em batch — mesmo padrão atual).
+- Retornar nova shape:
+  ```ts
+  export interface TeamKpisGroupedByScope {
+    org:    { buLabel: string; kpis: KpiWithValues[] };
+    area:   { areaId: string | null; areaName: string; areaColor: string | null; kpis: KpiWithValues[] }[];
+    team:   KpiWithValues[];
+    owners: { ownerId: string; ownerName: string; photoUrl: string | null; kpis: KpiWithValues[] }[];
+    memberCount: number;
+    totalCount: number;
+  }
+  ```
+- Manter query key `teamsKeys.contributionKpis(teamId, buId, includeSubteams)` (sem ampliar — mesma chave, só shape interna muda; cache será invalidado naturalmente no deploy).
+- Continua respeitando: BU isolation (`useOptionalBuClient`), soft-delete, sem `select('*')`, `KPI_FIELDS` já inclui `scope`/`responsible_area_id`/`responsible_team_id`/`area`.
 
-### 1. `useGanttData.ts` — Milestones respeitam status do projeto pai
+### `src/modules/teams/components/contribution/TeamContributionKpis.tsx`
+Reescrever para renderizar 4 seções na ordem **BU → Área → Time → Responsável**, cada uma com:
+- Ícone + título + `Badge` de contagem (padrão visual atual mantido).
+- Skeleton/empty-state por bloco (esconder bloco vazio em vez de mostrar card "Nenhum...", para reduzir ruído quando não há nada).
+- Empty-state global apenas se `totalCount === 0`.
 
-Adicionar parâmetro opcional `statusFilter` e filtrar milestones para casar com o status do projeto. Como o filtro de status já é aplicado em `useProjects` (server-side para ativos, client-side para arquivados), o ajuste no Gantt é **filtrar milestones para mostrar apenas os que casam com o status efetivo do projeto** (alinhamento visual).
+Detalhes visuais:
+- **BU**: ícone `Building2`, título dinâmico via `getScopeLabels(currentBu?.name).org` (ex: "Jetimob (Global)").
+- **Área**: ícone `Layers`; sub-grupos com `AreaBadge` (reuso) — mesma divisória visual de `KpiAreaSection`.
+- **Time**: ícone `Users`, título "Time" + nome do time. Quando `includeSubteams=true`, complementar com `({N} times)`.
+- **Responsável**: ícone `User`; sub-grupos com avatar + nome do owner.
 
-Comportamento:
-- `status=all` → mostra todos os milestones (atual)
-- `status=in_progress` → mostra apenas milestones `in_progress` sob cada projeto
-- `status=done` → mostra apenas milestones `done`
-- etc.
+Reuso obrigatório: `KpiCard` em todos os blocos, sem CRUD (regra do padrão da aba).
 
-Mudança cirúrgica: aceitar `statusFilter?: ProjectStatus | 'all'` e filtrar `project.milestones` antes do loop de inserção. `MilestoneGanttChart` (página de detalhe) **não muda** — continua mostrando todos os milestones do projeto.
+## Não-fazer
+- Não criar nova rota nem nova SSOT de KPIs — só reagrupar a view consolidada.
+- Não duplicar `KpiCard`, `AreaBadge`, `getScopeLabels` — reusar.
+- Não usar `select('*')`.
+- Não alterar a query key (evita refetch desnecessário em outras telas).
+- Não mostrar KPIs `scope=org` não relacionados ao time (mantém o escopo "contribuição do time").
 
-### 2. Migration — `list_archived_projects` retorna `jsonb` com joins
-
-Substituir `RETURNS SETOF projects` por `RETURNS jsonb` com a mesma forma do branch ativo (project + owner + project_teams + project_krs + project_milestones aninhados via `jsonb_build_object` / `jsonb_agg`).
-
-**Autorização inalterada** — mesmo bloco RBAC v1.6 do RPC atual:
-- `is_super_admin` OR `is_bu_admin` OR `has_permission(...,'projects.project.update:bu')` → todos arquivados da BU
-- senão: owner OR `is_leader_of_project_owner`
-
-**Mantém SECURITY DEFINER + search_path = public**, REVOKE PUBLIC + GRANT EXECUTE TO authenticated, COMMENT versionado (v1.1).
-
-### 3. `useProjects.ts` — Consumir nova forma JSONB do RPC arquivados
-
-`fetchArchived` passa a tratar `data` como array de objetos JSON com `project_milestones`, `project_teams`, `project_krs` aninhados (mesma forma do `PROJECT_LIST_FIELDS`). O `.map(...)` downstream (linhas 69-110) **não precisa mudar** — a forma fica idêntica ao branch ativo. Remove a marcação manual `_is_archived` (passa a vir computada via `deleted_at != null` que já é o fallback na linha 85).
-
-### 4. `GanttTimeline.tsx` — Mensagem condicional
-
-Diferenciar dois estados vazios:
-- `items.length === 0 && excludedCount === 0` → "Nenhum projeto corresponde aos filtros aplicados."
-- `items.length === 0 && excludedCount > 0` → mensagem atual ("Nenhum item com datas definidas...")
-- `items.length > 0 && validItems.length === 0` → mensagem atual
-
-### 5. `ProjectsPage.tsx` — Passar `statusFilter` para `useGanttData`
-
-```ts
-const { items: ganttItems, excludedCount: ganttExcluded } = useGanttData(
-  projects,
-  { statusFilter: filters.status }
-);
-```
-
----
+## Atualização de memória
+Atualizar `mem://features/teams/team-contribution-tab-standard.md` no item 5 (sub-tab `kpis`) para refletir o novo agrupamento por escopo canônico (BU → Área → Time → Responsável) com regra de cascata sem duplicação.
 
 ## Arquivos afetados
-
-| Arquivo | Tipo | Mudança |
-|---|---|---|
-| `supabase/migrations/<ts>_list_archived_projects_jsonb.sql` | Novo | RPC retorna jsonb com joins (auth inalterada) |
-| `src/modules/projects/hooks/useGanttData.ts` | Edit | Aceita `{ statusFilter }`, filtra milestones |
-| `src/modules/projects/hooks/useProjects.ts` | Edit | Consome novo formato jsonb do RPC arquivados |
-| `src/modules/projects/pages/ProjectsPage.tsx` | Edit | Passa `statusFilter` ao hook |
-| `src/modules/projects/components/GanttTimeline.tsx` | Edit | Mensagem condicional para resultado vazio por filtro |
-| `src/modules/projects/hooks/__tests__/useGanttData.test.ts` | Edit | Testes para `statusFilter` |
-
----
-
-## Não-mudanças (escopo controlado)
-
-- ❌ `MilestoneGanttChart` (página de detalhe) — sem alteração; sempre mostra todos os milestones do projeto
-- ❌ Whitelist/RBAC do `update_project_v2` — já corrigida na migration anterior
-- ❌ Query keys / contratos React Query — `projectsKeys.list` já inclui `filters` no hash
-- ❌ Filtros de lista (`ProjectsTable`) — funcionam corretamente
-- ❌ `ProjectFiltersBar` — UI dos filtros já está correta
-
----
-
-## Risco
-
-**Baixo.** A migration substitui apenas a forma de retorno do RPC (sem mudar autorização). O frontend é puramente aditivo (filtro novo opcional + mensagem nova). Cache invalida automaticamente porque a query key já depende de `filters` completos.
-
-## Validação pós-deploy
-
-1. `/projects?view=gantt&status=in_progress` → milestones mostradas devem ser apenas `in_progress`
-2. `/projects?view=gantt&archived=archived` → projetos arquivados devem mostrar barras de milestones e respeitar `team_id`
-3. `/projects?view=gantt&teamId=<id-sem-projetos>` → mensagem "Nenhum projeto corresponde aos filtros aplicados"
-4. `/projects?view=gantt` (sem filtro) → comportamento idêntico ao atual
-5. RLS smoke test: usuário sem permissão `:bu` vê apenas seus arquivados / liderados
+- `src/modules/teams/hooks/useTeamKpisGrouped.ts` (rewrite do queryFn + novo tipo de retorno)
+- `src/modules/teams/components/contribution/TeamContributionKpis.tsx` (rewrite das seções)
+- `.lovable/memory/features/teams/team-contribution-tab-standard.md` (atualização do item 5)
