@@ -74,5 +74,5 @@ Defesa em 4 camadas para soft-delete de marcos (\`project_milestones\`):
 ⚠️ Milestone owner **não pode remover** o próprio marco — apenas editar. Tentativa retorna \`ERRCODE 42501\` com mensagem \`INSUFFICIENT_PRIVILEGE: only the project owner can remove milestones\`.
 
 Ver canônico: \`mem://features/projects/milestone-permissions-row-aware\`.
-\`,
+`,
 };
