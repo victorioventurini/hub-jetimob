@@ -295,6 +295,8 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                   direction={kpi.direction}
                   isLoading={isLoading}
                   kpiName={kpi.name}
+                  consolidationFrequency={kpi.consolidation_frequency ?? null}
+                  updateFrequency={kpi.update_frequency ?? null}
                   canEdit={canUpdateValues}
                   onUpdateValue={handleUpdateValue}
                   onDeleteValue={handleDeleteValue}

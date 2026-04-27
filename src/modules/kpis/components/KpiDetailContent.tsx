@@ -335,6 +335,8 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
           direction={kpi.direction}
           isLoading={false}
           kpiName={kpi.name}
+          consolidationFrequency={kpi.consolidation_frequency ?? null}
+          updateFrequency={kpi.update_frequency ?? null}
           canEdit={canUpdateValues}
           onUpdateValue={async (id, data) => {
             await updateKpiValue.mutateAsync({ id, kpi_id: kpi.id, ...data });
