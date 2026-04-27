@@ -308,44 +308,32 @@ Arquivos: `KpiEvolutionChart.tsx`, `KpiValuesTable.tsx`, `KpiHistoryDialog.tsx`.
 
 ---
 
-## Fase 9 — Banner de revisão (UX escalável)
+## Fase 9 — Banner de revisão (UX escalável) ✅
 
-### 9.1 Banner GLOBAL no Dashboard `/kpis`
+Arquivos: `KpiMigrationBanner.tsx` (novo), `KpiDashboardPage.tsx`, `KpiDetailContent.tsx`, `useKpiData.ts`.
 
-Quando `count(frequency_migration_reviewed=false) > 0`:
+- **`KpiMigrationBanner`** com 3 variantes:
+  - `dashboard-global`: `<Alert>` info com contador + CTA "Ver indicadores pendentes".
+  - `detail-pending`: `<Alert>` info + CTA "Revisar agora" → abre `EditKpiDialog`.
+  - `detail-missing`: `<Alert variant="destructive">` quando `consolidation_frequency IS NULL` (ex-`manual`) + CTA "Configurar agora".
+- **Dashboard `/kpis`**:
+  - URL state `?needs_review=1` (`useUrlState`) filtra `frequency_migration_reviewed=false`.
+  - `pendingReviewCount` calculado sobre base não filtrada (mostra contagem real mesmo durante o filtro).
+  - Banner global aparece para usuários com `kpis.settings.manage:bu` quando `count > 0` e filtro não ativo.
+  - Quando filtro ativo, mostra barra discreta com botão "Limpar filtro".
+- **`KpiDetailContent`**:
+  - Banner discreto/destacado abaixo do header conforme `consolidation_frequency`/`frequency_migration_reviewed`.
+  - CTA abre `EditKpiDialog` controlado por `editOpen` local.
+  - Restrito a `canEdit` via `useCanEditKpi`.
+- **`useKpiData`** lista agora seleciona `consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed`.
+- **Tests**: 100 passando no módulo KPIs. TS limpo.
 
-```
-ℹ️ {N} indicadores precisam de revisão de frequência
-   [Ver indicadores pendentes]
-```
-
-CTA aplica filtro `?needs_review=1` no URL state, listando apenas os pendentes.
-
-### 9.2 Banner discreto no detalhe individual
-
-Apenas no KPI atual quando `frequency_migration_reviewed=false`:
-
-```
-ℹ️ Configuração migrada — revise consolidação e atualização.
-   [Revisar agora]
-```
-
-CTA abre `EditKpiDialog` direto na seção Cálculo.
-
-### 9.3 Variante destacada para ex-`manual`
-
-Quando `consolidation_frequency IS NULL`:
-
-```
-⚠️ Este indicador precisa ter sua frequência configurada
-   para aparecer corretamente nos ritos.
-```
-
-### 9.4 Permissão
-
-Banners e CTA aparecem apenas para usuários com `kpis.settings.manage:bu` (`useCanEditKpi`).
+### Pendência futura (não bloqueante)
+- Salvar último filtro ativo via SavedLinks. Hoje o filtro é compartilhável via URL, suficiente para a entrega.
+- Toast de "X indicadores migrados com sucesso" após bulk review (futuro, fora desta fase).
 
 ---
+
 
 ## Fase 10 — Componentes secundários
 
