@@ -231,7 +231,7 @@ export function useUpdateTicket() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detailPrefix(variables.id), refetchType: 'active' });
     },
   });
 }
@@ -298,7 +298,7 @@ export function useUpdateTicketStatus() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.listPrefix(buId), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(buId), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detailPrefix(variables.id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.messages(variables.id), refetchType: 'active' });
     },
   });

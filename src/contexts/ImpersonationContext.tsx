@@ -128,7 +128,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     await queryClient.invalidateQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detailPrefix(null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
     await queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard(null, '') });
@@ -153,7 +153,7 @@ export function ImpersonationProvider({ children }: ImpersonationProviderProps) 
     await queryClient.invalidateQueries({ queryKey: queryKeys.teamManagement.manageableTeams(null, null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.assets.inventory.all(null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(null) });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(null) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detailPrefix(null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.tickets.myTicketsPrefix(null) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamObjectivesPrefix() });
     await queryClient.invalidateQueries({ queryKey: queryKeys.home.dashboard(null, '') });

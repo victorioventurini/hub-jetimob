@@ -164,7 +164,7 @@ export function useTransferTicket(transferredByProfileId: string | null, transfe
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.tickets.detail(result.ticketId),
+        queryKey: queryKeys.tickets.detailPrefix(result.ticketId),
         refetchType: "active",
       });
       queryClient.invalidateQueries({
