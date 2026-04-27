@@ -174,10 +174,19 @@
 ## KPIs
 
 ### kpi_metrics
-`id, name, description, category, owner_user_id, team_id, unit, direction, frequency, target_value, status, created_at, updated_at, deleted_at, bu_id, is_global`
+`id, name, description, category, owner_user_id, team_id, unit, direction, frequency, consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed, target_value, status, created_at, updated_at, deleted_at, bu_id, is_global`
+
+> **v3.0.0:** `frequency` está deprecated — usar `consolidation_frequency` (quando o valor é fechado) e `update_frequency` (cadência de input). Validação cruzada via trigger `kpi_frequency_validation` (`update ≤ consolidation`). `update_mode` (`manual|automatic`) e `frequency_migration_reviewed` controlam UX/migração.
 
 ### kpi_values
-`id, kpi_id, value, reference_date, source, notes, created_by, created_at`
+`id, kpi_id, value, reference_date, source, notes, created_by, created_at, period_start, period_end, period_label, confidence, rag_status, input_type`
+
+> **v3.0.0:** `input_type` (`consolidated|projection`) registra a natureza do input. Trigger `derive_kpi_value_confidence` deriva `confidence` automaticamente quando o usuário não sobrescreve.
+
+### Enums KPIs (v3.0.0)
+- `kpi_frequency_value`: `daily|weekly|biweekly|monthly|quarterly|semiannual|annual`
+- `kpi_update_mode`: `manual|automatic`
+- `kpi_input_type`: `projection|consolidated`
 
 ---
 
