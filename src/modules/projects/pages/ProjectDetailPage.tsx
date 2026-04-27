@@ -173,6 +173,27 @@ export default function ProjectDetailPage() {
     );
   }
 
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir um projeto de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && project.bu_id && project.bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="text-center py-12 space-y-3">
+          <p className="text-base font-medium text-foreground">
+            Esse projeto pertence a outra BU 🔒
+          </p>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Você está visualizando o Hub em uma BU diferente da BU desse projeto.
+            Selecione a BU correta no topo da tela para acessá-lo.
+          </p>
+          <Button variant="outline" className="mt-4" asChild>
+            <Link to="/projects">Voltar para projetos</Link>
+          </Button>
+        </div>
+      </HubLayout>
+    );
+  }
+
   const handleAddMilestone = (data: MilestoneDialogSubmitValues) => {
     if (!currentBuId || !id) return;
     createMilestone.mutate(

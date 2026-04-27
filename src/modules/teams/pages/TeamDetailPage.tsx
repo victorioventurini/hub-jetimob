@@ -34,6 +34,7 @@ import { SquadSection } from "../components/SquadSection";
 import { TeamMemberRow } from "../components/TeamMemberRow";
 import { SubteamMembersBlock } from "../components/SubteamMembersBlock";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
@@ -62,6 +63,7 @@ export default function TeamDetailPage() {
   const [deletingSubteamId, setDeletingSubteamId] = useState<string | null>(null);
   const [deletingSubteamName, setDeletingSubteamName] = useState<string>("");
   const { isAdmin, user } = useAuth();
+  const { currentBuId } = useBu();
   const { canManageTeam } = useTeamManagement();
   
   // Verificar se usuário pode gerenciar ESTE time específico
@@ -119,6 +121,30 @@ export default function TeamDetailPage() {
           <ErrorState
             title="Time não encontrado"
             description="O time que você está procurando não existe ou foi removido."
+            onBack={goBack}
+            backLabel="Voltar para Times"
+          />
+        </div>
+      </HubLayout>
+    );
+  }
+
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir um time de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && (team as any).bu_id && (team as any).bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="p-6 space-y-6">
+          <PageHeader
+            title="Time de outra BU"
+            breadcrumbs={[
+              { label: "Times", href: "/teams" },
+              { label: "Acesso negado" }
+            ]}
+          />
+          <ErrorState
+            title="Esse time pertence a outra BU 🔒"
+            description="Você está visualizando o Hub em uma BU diferente da BU desse time. Selecione a BU correta no topo da tela para acessá-lo."
             onBack={goBack}
             backLabel="Voltar para Times"
           />

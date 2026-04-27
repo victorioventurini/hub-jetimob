@@ -35,11 +35,13 @@ import {
 import { AddSquadMemberDialog } from "../components/AddSquadMemberDialog";
 import { SquadFormDialog } from "../components/SquadFormDialog";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useBu } from "@/contexts/BuContext";
 
 export default function SquadDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: squad, isLoading } = useSquad(id);
   const { has, isWildcard } = usePermissions();
+  const { currentBuId } = useBu();
   const updateMember = useUpdateSquadMember();
   const removeMember = useRemoveSquadMember();
   
@@ -106,6 +108,26 @@ export default function SquadDetailPage() {
           <h2 className="text-xl font-semibold mb-2">Squad não encontrado</h2>
           <p className="text-muted-foreground mb-4">
             O squad que você está procurando não existe ou foi removido.
+          </p>
+          <Button asChild>
+            <Link to="/teams">Voltar para Times</Link>
+          </Button>
+        </div>
+      </HubLayout>
+    );
+  }
+
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir um squad de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && (squad as any).bu_id && (squad as any).bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Esse squad pertence a outra BU 🔒</h2>
+          <p className="text-muted-foreground mb-4 max-w-md text-center">
+            Você está visualizando o Hub em uma BU diferente da BU desse squad.
+            Selecione a BU correta no topo da tela para acessá-lo.
           </p>
           <Button asChild>
             <Link to="/teams">Voltar para Times</Link>

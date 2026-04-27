@@ -51,6 +51,7 @@ export interface LinkedTeamObjective {
 
 export interface OrgObjectiveWithKrs {
   id: string;
+  bu_id: string | null;
   title: string;
   description: string | null;
   year: number;
