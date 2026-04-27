@@ -214,7 +214,7 @@ export default function CollaboratorCheckinPage() {
     onSuccess: (_result, variables) => {
       // Invalidate silently
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.forWizard({}), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detailPrefixById(variables.kpi_id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResultsPrefix(), refetchType: 'active' });
       // Invalidar queries do módulo /kpis para refletir valores salvos
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });

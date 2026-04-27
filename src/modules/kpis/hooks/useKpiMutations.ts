@@ -80,7 +80,7 @@ export function useKpiMutations() {
       // Invalidate list and evolution queries using prefix helpers
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detailPrefixById(variables.id), refetchType: 'active' });
       // Also invalidate values and target history for complete reactivity
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
       
@@ -215,7 +215,7 @@ export function useKpiMutations() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detailPrefixById(variables.kpi_id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
       // Invalidate OKR queries for primary KPI reactivity
@@ -240,7 +240,7 @@ export function useKpiMutations() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.listPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.valuesPrefix(), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detail(variables.kpi_id), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kpis.detailPrefixById(variables.kpi_id), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.kpis.evolutionListPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.kpiValuesBatchPrefix(), refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krPrimaryKpiPrefix(), refetchType: 'active' });
