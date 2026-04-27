@@ -206,6 +206,13 @@ export function MbrKpiGateStep({
                       onDecisionsChange={onDecisionsChange}
                       sourceStep="kpi-gate"
                       placeholder={`Decisão sobre ${kpi.name}...`}
+                      metadataFactory={() => ({
+                        source: 'kpi_gate',
+                        kpi_id: kpi.kpiId,
+                        kpi_rag_status: kpi.ragStatus,
+                        ...(kpi.latestInputType ? { kpi_input_type: kpi.latestInputType } : {}),
+                        ...(kpi.latestConfidence ? { kpi_confidence: kpi.latestConfidence } : {}),
+                      })}
                     />
                   </div>
                 )}
