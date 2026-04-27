@@ -36,7 +36,7 @@ export function useAnalysisReport(reportId: string | undefined) {
   const buId = currentBu?.id ?? null;
 
   return useQuery({
-    queryKey: analysisKeys.detail(reportId ?? ""),
+    queryKey: analysisKeys.detail(reportId ?? "", buId),
     enabled: !!reportId && !!buId,
     refetchInterval: (q) => {
       const data = q.state.data as AnalysisReport | undefined;
@@ -52,6 +52,9 @@ export function useAnalysisReport(reportId: string | undefined) {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
+
+      // BU isolation: ensure report belongs to current BU
+      if (buId && (data as any).bu_id !== buId) return null;
 
       const report = data as unknown as AnalysisReport;
 
