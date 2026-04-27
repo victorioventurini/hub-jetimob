@@ -1,127 +1,105 @@
+# Wave Hardening — Notificações Cross-BU
 
-# Wave: Isolamento Cross-BU em Todos os Módulos
+## Diagnóstico
 
-## Pré-checklist consultado
-- `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` v4.1.0 — regras inquebráveis de filtragem `.eq('bu_id', currentBuId)` por camada
-- `docs/canonical/QUERY_KEYS_STANDARD.md` — query keys devem incluir `buId` para evitar reuso de cache cross-BU
-- `mem://features/tickets/cross-bu-isolation` — padrão canônico de defesa em 4 camadas estabelecido nesta sessão
-- `mem://standards/bu-isolation-master` — filtro mandatório, query gating, cross-BU profiles
+**Bug confirmado:** Estando na BU **Jetimob**, o usuário recebe no sino notificações de tickets criados na BU **Victorio Venturini** (ex.: "Carro para PCD").
 
-## Diagnóstico — auditoria de páginas de detalhe operacionais
+**Causa raiz:** As queries da tabela `notifications` filtram apenas por `user_id`, sem `bu_id`:
 
-Apliquei o padrão `Tickets v2026-04-27` (RLS + frontend filter + query key + UX guard) a cada rota com `:id` que carrega entidade BU-scoped:
+- `src/components/notifications/NotificationCenter.tsx` (l.116-121) — sino do header.
+- `src/pages/me/NotificationsPage.tsx` (l.145-150 listagem; l.205-208 markAsRead; l.220-224 markAllRead) — página completa.
 
-| Módulo | Rota | Hook detalhe | Query key inclui `buId`? | Guard pós-fetch (`return null` se BU != atual)? | UX guard na página? |
-|---|---|---|---|---|---|
-| Tickets | `/tickets/:id` | `useTicket` | ✅ (corrigido) | ✅ | ✅ |
-| Projetos | `/projects/:id` | `useProject` | ✅ | ✅ (linha 63) | ❌ |
-| KPIs | `/kpis/:kpiId` | `useKpiDetail` | ❌ key sem buId | ✅ (linha 424) | ❌ |
-| Times | `/teams/:id` | `useTeam` | ❌ key sem buId | ✅ (linha 133) | ❌ |
-| Squads | `/squads/:id` | `useSquad` | ❌ key sem buId | ❌ ausente | ❌ |
-| Análise | `/analysis/:reportId` | `useAnalysisReport` | ❌ key sem buId | ❌ ausente | ❌ |
-| OKRs Org View | `/okrs/org-view/:objectiveId` | `useOrgObjectiveView` | ✅ | ❌ ausente | ❌ |
-| OKRs Team Contribution | `/okrs/team-contribution/:teamId` | inline | ❌ | ❌ ausente | ❌ |
-| Parceiros (BU-scoped) | `/settings/partners/:partnerId` | `usePartnerById` | ❌ | parcial | ❌ (mas é multi-BU por design — manter) |
+**Banco:**
+- `public.notifications.bu_id uuid` existe, todas as 767 linhas atuais já têm `bu_id` preenchido (zero nulos).
+- RLS atual (`notifications_own_v2`, `notifications_select_own_v2`, etc.) usa apenas `user_id = auth.uid()` — **não enforça `bu_id`**. O cliente BU-scoped envia o header `x-current-bu-id`, mas as policies não o validam, então o Postgres retorna linhas de qualquer BU do usuário.
+- RPCs `mark_notification_read` e `mark_all_notifications_read` precisam ser auditados (provavelmente também ignoram BU).
 
-> **Eventos** (`/events/...`) e **Agentes/Integrações Hub** (`/hub/integrations/...`) usam mocks ou são intencionalmente platform-wide → fora do escopo desta wave.
->
-> **Parceiros globais** (`/hub/partners/:partnerId`) são platform-level → fora do escopo (não há conceito de "BU correta").
+**Realtime:** o canal usa filtro `user_id=eq.${user.id}` no client global — também sem filtro de BU. Resultado: badge pisca em qualquer BU ao receber qualquer notificação.
 
-## Plano de execução (4 camadas por módulo)
+## Plano (4 camadas — padrão `cross-bu-isolation-pattern`)
 
-Para cada módulo afetado aplicaremos o mesmo padrão consolidado:
+### Camada 1 — Frontend filter (queries)
+- `NotificationCenter.tsx`: adicionar `.eq('bu_id', currentBuId)` na query do sino.
+- `NotificationsPage.tsx`:
+  - Listagem paginada: `.eq('bu_id', currentBuId)`.
+  - `markAllAsRead`: `.eq('bu_id', currentBuId)` além do `user_id`.
+  - `markAsRead` por id: confiar na RLS endurecida (camada 4) — id já é único.
 
-### 1. Query keys — incluir `buId`
-Atualizar em `src/lib/queryKeys/`:
-- `kpis.ts` → `detail: (buId, kpiId) => ['kpis', 'detail', kpiId, buId]` + `detailPrefix(kpiId)`
-- `teams.ts` → `teams.detail: (buId, teamId)` + `squads.detail: (buId, squadId)` + prefixes
-- `analysis.ts` → `detail: (buId, id)` + prefix
-- `okrs.ts` → `teamContribution: (buId, teamId, cycleId?)`
-- `participantKeys.ts` (squad memberships) — manter (não muda BU)
+### Camada 2 — Query keys com `buId`
+- Atualizar `src/lib/queryKeys/notifications.ts` (criar se ausente) para incluir `buId` na chave `all` e em `paginated`:
+  ```ts
+  all: (userId?: string, buId?: string | null) =>
+    ['notifications', 'all', userId ?? null, buId ?? null] as const,
+  allPrefix: (userId?: string) => ['notifications', 'all', userId ?? null] as const,
+  ```
+- Atualizar `NotificationCenter.tsx` e `NotificationsPage.tsx` para passar `currentBuId` na chave.
+- Invalidations passam a usar `allPrefix(user.id)` para limpar todas as variantes de BU em paralelo (mesmo padrão de Tickets).
 
-Atualizar todos os `invalidateQueries` em hooks de mutação para passar `buId` (ou usar `detailPrefix` quando se quer invalidar sem conhecer buId).
+### Camada 3 — Realtime BU-aware
+- Mudar o canal realtime para incluir `bu_id` no filtro. O Postgres realtime só aceita um `eq`; usar dois filtros via `or` não é suportado de forma estável. Solução: assinar com `user_id=eq.X` e, dentro do callback, descartar payloads cujo `new.bu_id !== currentBuId` antes de invalidar.
 
-### 2. Frontend filter explícito + post-fetch guard
-Adicionar `.eq("bu_id", buId)` no select onde a coluna existir, ou garantir validação pós-fetch `if (data.bu_id !== currentBuId) return null` em:
-- `useSquad` (não tem nem um nem outro)
-- `useAnalysisReport` (não tem `.eq('bu_id')` nem post-fetch validation)
-- `useOrgObjectiveView` (precisa post-fetch validation: objective.bu_id !== currentBuId → null)
-- `useTeamContributionPage` query inline → mover para hook nomeado com guard
+### Camada 4 — RLS hardening (migration)
+Substituir as policies de SELECT/UPDATE/DELETE da `notifications` para exigir match de BU além de ownership:
 
-### 3. UX guard nas páginas de detalhe
-Padrão idêntico ao `TicketDetailPage`: comparar `entity.bu_id !== currentBu.id` e renderizar `VicErrorState` instruindo o usuário a trocar de BU. Aplicar em:
-- `ProjectDetailPage`
-- `KpiDetailPage`
-- `TeamDetailPage`
-- `SquadDetailPage`
-- `AnalysisResultPage`
-- `OrgObjectiveViewPage`
-
-### 4. RLS hardening (banco) — onde necessário
-Auditar e endurecer funções `can_view_*` para exigir `current_bu_id() = entity.bu_id` (com bypass para `is_platform_admin`). Apliquei a Tickets; replicar para entidades sem BU guard no RLS:
-
-- `okr_team_objectives`, `okr_team_key_results`, `okr_initiatives`, `okr_org_objectives`, `okr_org_key_results` — verificar policies SELECT e adicionar cláusula `bu_id = current_bu_id() OR is_platform_admin()`
-- `kpi_metrics`, `kpi_values` — idem
-- `projects`, `project_milestones` — verificar `can_view_project` (se existir)
-- `teams`, `squads` — idem
-- `analysis_reports`, `analysis_decisions`, `analysis_comments` — idem
-
-Migration única consolidada com revisão policy-a-policy. Funções `SECURITY DEFINER` com `SET search_path = public`. Sem CHECK constraints.
-
-## Detalhes técnicos
-
-### Pseudocódigo do UX guard (replicado por página)
-```tsx
-const { currentBu } = useBu();
-const { data: entity, isLoading } = useEntity(id);
-
-if (isLoading) return <Loader />;
-if (!entity) return <NotFound />;
-if (currentBu && entity.bu_id !== currentBu.id) {
-  return (
-    <VicErrorState
-      title="Conteúdo de outra BU"
-      description="Este registro pertence a outra Business Unit. Troque de BU para visualizá-lo."
-    />
-  );
-}
-```
-
-### Query key pattern (replicado por módulo)
-```ts
-detail: (buId: string | null, id: string | null) => 
-  ['<module>', 'detail', id, buId] as const,
-detailPrefix: (id: string) => 
-  ['<module>', 'detail', id] as const,
-```
-
-### Migration RLS (esqueleto)
 ```sql
--- Para cada policy SELECT em tabelas operacionais:
-DROP POLICY IF EXISTS "<old_select_policy>" ON public.<table>;
-CREATE POLICY "<table>_select_v2" ON public.<table>
-FOR SELECT
-USING (
-  is_platform_admin()
-  OR (bu_id = current_bu_id() AND <existing_ownership_check>)
-);
+-- Drop policies antigas
+DROP POLICY IF EXISTS notifications_own_v2 ON public.notifications;
+DROP POLICY IF EXISTS notifications_select_own_v2 ON public.notifications;
+DROP POLICY IF EXISTS notifications_update_own_v2 ON public.notifications;
+DROP POLICY IF EXISTS notifications_delete_own_v2 ON public.notifications;
+DROP POLICY IF EXISTS notifications_insert_own_v2 ON public.notifications;
+
+-- SELECT: dono + BU ativa (com bypass para platform admin via política existente notifications_admin_select_v2)
+CREATE POLICY notifications_select_own_bu_v3 ON public.notifications
+  FOR SELECT USING (
+    user_id = auth.uid()
+    AND (bu_id IS NULL OR is_current_bu(bu_id))
+  );
+
+CREATE POLICY notifications_update_own_bu_v3 ON public.notifications
+  FOR UPDATE USING (
+    user_id = auth.uid() AND (bu_id IS NULL OR is_current_bu(bu_id))
+  ) WITH CHECK (
+    user_id = auth.uid() AND (bu_id IS NULL OR is_current_bu(bu_id))
+  );
+
+CREATE POLICY notifications_delete_own_bu_v3 ON public.notifications
+  FOR DELETE USING (
+    user_id = auth.uid() AND (bu_id IS NULL OR is_current_bu(bu_id))
+  );
+
+CREATE POLICY notifications_insert_own_bu_v3 ON public.notifications
+  FOR INSERT WITH CHECK (
+    user_id = auth.uid() AND (bu_id IS NULL OR is_current_bu(bu_id))
+  );
 ```
 
-## Ordem de execução (atomic per module)
+Auditar as functions `mark_notification_read(p_notification_id)` e `mark_all_notifications_read()` — se forem `SECURITY DEFINER`, adicionar guard `is_current_bu(bu_id)` antes do update (e em mark_all, filtrar por `bu_id = current_bu_id()`).
 
-1. **Wave 1 — Query keys SSOT**: atualizar todas as `detail`/`detailPrefix` keys de uma vez. Risco baixo, alto blast radius.
-2. **Wave 2 — Hooks**: `useSquad`, `useAnalysisReport`, `useOrgObjectiveView`, `useTeamContributionPage`. Adicionar guards.
-3. **Wave 3 — UX guards**: aplicar `VicErrorState` nas 6 páginas listadas.
-4. **Wave 4 — Migration RLS**: hardening backend em uma migration consolidada e revisada.
-5. **Wave 5 — Testes & memória**: atualizar testes de query keys; atualizar `mem://standards/bu-isolation-master` com novo padrão de UX guard universal e tabela de cobertura.
+### Camada 5 — UX guard (defense-in-depth)
+Quando a notificação é clicada e tem `context_url`, navegar é seguro (RLS da entidade alvo já bloqueia conteúdo de outra BU). Não precisa de `VicErrorState` no sino — o filtro server-side + cache key BU-scoped já evita exibição cruzada.
 
-## Riscos & mitigações
+## Memória / Documentação
+Atualizar `mem://standards/cross-bu-isolation-pattern` adicionando notificações ao inventário de módulos cobertos e criar `mem://features/notifications/cross-bu-isolation` resumindo as 4 camadas aplicadas aqui.
 
-- **Cache invalidations existentes**: alguns `invalidateQueries(['kpis', 'detail', id])` deixam de matchar com a nova key. Usar `detailPrefix` para garantir compatibilidade.
-- **Realtime subscriptions** que filtram por id (sem buId) continuam funcionando — apenas a chave do React Query muda.
-- **Multi-BU users (admins)** que abrem links profundos de outras BUs vão ver `VicErrorState` em vez de carregar — comportamento desejado e consistente com Tickets.
-- **OKRs Cross BU rituals** (QBR C-Level) usam `is_platform_admin()` bypass — manter intacto.
+## Arquivos impactados
 
-## Documentação
-- Atualizar `docs/canonical/BU_SCOPED_SUPABASE_RULES.md` adicionando seção "UX Guard Universal" e tabela de incidentes (2026-04-27 Tickets cross-BU).
-- Atualizar `mem://standards/bu-isolation-master` consolidando o padrão de 4 camadas como SSOT.
+**Frontend**
+- `src/lib/queryKeys/notifications.ts` (criar/atualizar) + teste
+- `src/lib/queryKeys/index.ts` (export)
+- `src/components/notifications/NotificationCenter.tsx`
+- `src/pages/me/NotificationsPage.tsx`
+
+**Backend**
+- Nova migration: `..._notifications_bu_isolation_rls.sql`
+- Auditoria/ajuste das RPCs `mark_notification_read` e `mark_all_notifications_read` (mesma migration)
+
+**Memória**
+- `mem://features/notifications/cross-bu-isolation` (novo)
+- `mem://standards/cross-bu-isolation-pattern` (append)
+
+## Resultado esperado
+- Estando na BU Jetimob, o sino e a página `/me/notifications` mostram **somente** notificações com `bu_id = Jetimob`.
+- Realtime continua funcionando, mas só atualiza badge/cache da BU ativa.
+- Ao trocar de BU, cache é separado por chave (sem race) e a lista correta aparece imediatamente.
+- Mesmo se o frontend falhar, RLS bloqueia leitura cruzada no banco.

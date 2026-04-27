@@ -2,7 +2,19 @@
  * Notifications Query Keys
  */
 export const notificationsKeys = {
-  all: (userId?: string | null) => userId ? ['notifications', userId] as const : ['notifications'] as const,
+  /**
+   * Lista de notificações para um usuário em uma BU específica.
+   * Inclui buId na chave para isolamento de cache cross-BU (padrão cross-bu-isolation-pattern).
+   * Compatível com chamadas legadas sem buId (cache global por user).
+   */
+  all: (userId?: string | null, buId?: string | null) => {
+    if (!userId) return ['notifications'] as const;
+    if (buId === undefined) return ['notifications', userId] as const;
+    return ['notifications', userId, buId ?? null] as const;
+  },
+  /** Prefixo para invalidar todas as variantes de BU de um usuário. */
+  allPrefix: (userId?: string | null) =>
+    userId ? ['notifications', userId] as const : ['notifications'] as const,
   unread: (userId: string) => ['notifications', 'unread', userId] as const,
   count: (userId: string) => ['notifications', 'count', userId] as const,
   settings: (userId: string, buId: string) => ['notifications', 'settings', userId, buId] as const,

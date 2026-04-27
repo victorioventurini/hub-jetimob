@@ -107,16 +107,17 @@ export function NotificationCenter() {
     setOpen(newOpen);
   };
 
-  // Fetch notifications
+  // Fetch notifications (BU-scoped: key + filter + RLS — cross-bu-isolation-pattern)
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: queryKeys.notifications.all(user?.id ?? ''),
+    queryKey: queryKeys.notifications.all(user?.id ?? '', currentBuId ?? null),
     queryFn: async () => {
-      if (!user?.id || !supabaseBu) return [];
+      if (!user?.id || !supabaseBu || !currentBuId) return [];
 
       const { data, error } = await supabaseBu
         .from('notifications')
-        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at')
+        .select('id, type, title, message, context_type, context_id, context_url, actor_id, is_read, read_at, created_at, bu_id')
         .eq('user_id', user.id)
+        .eq('bu_id', currentBuId)
         .order('created_at', { ascending: false })
         .limit(4);
 
@@ -181,7 +182,8 @@ export function NotificationCenter() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Subscribe to realtime notifications (uses global client for realtime)
+  // Subscribe to realtime notifications (uses global client for realtime).
+  // BU guard: descarta payloads de outras BUs antes de invalidar (cross-bu-isolation).
   useEffect(() => {
     if (!user?.id) return;
 
@@ -195,8 +197,13 @@ export function NotificationCenter() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+        (payload) => {
+          const newRow = payload.new as { bu_id?: string | null } | null;
+          // Drop events from other BUs to evitar badge cross-BU
+          if (currentBuId && newRow?.bu_id && newRow.bu_id !== currentBuId) {
+            return;
+          }
+          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.allPrefix(user.id) });
         }
       )
       .subscribe();
@@ -204,7 +211,7 @@ export function NotificationCenter() {
     return () => {
       supabaseGlobal.removeChannel(channel);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, currentBuId, queryClient]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -218,7 +225,7 @@ export function NotificationCenter() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.allPrefix(user?.id), refetchType: 'active' });
     },
   });
 
@@ -229,7 +236,7 @@ export function NotificationCenter() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all(), refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.allPrefix(user?.id), refetchType: 'active' });
     },
   });
 
