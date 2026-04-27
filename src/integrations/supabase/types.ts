@@ -10688,6 +10688,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      archive_milestone_v2: { Args: { p_milestone_id: string }; Returns: Json }
       archive_project_v2: { Args: { p_project_id: string }; Returns: Json }
       assert_bu_scope: { Args: { p_bu_id: string }; Returns: boolean }
       assert_profile_identity: {
