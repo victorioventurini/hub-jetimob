@@ -90,25 +90,42 @@ export function useSoftDeleteMilestone() {
   const { client: supabase } = useOptionalBuClient();
 
   return useMutation({
-    mutationFn: async ({ id, project_id }: { id: string; project_id: string }) => {
+    mutationFn: async ({
+      id,
+      project_id,
+      bu_id,
+    }: {
+      id: string;
+      project_id: string;
+      /** BU do registro (project_milestones.bu_id). Defesa em profundidade — ver mem://standards/cross-bu-isolation-pattern */
+      bu_id: string;
+    }) => {
       if (!supabase) throw new Error('Client not ready');
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('project_milestones')
         .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('bu_id', bu_id)
+        .select('id, project_id');
 
       if (error) throw error;
+      // RLS pode bloquear silenciosamente (0 rows) — tornar explícito.
+      if (!data || data.length === 0) {
+        throw new Error('Sem permissão para remover esta milestone');
+      }
       return { project_id };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectsKeys.milestonesFor(data.project_id) });
       queryClient.invalidateQueries({ queryKey: projectsKeys.listPrefix() });
       queryClient.invalidateQueries({ queryKey: projectsKeys.detailFor(data.project_id) });
+      toast.success('Milestone removido');
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('Error deleting milestone:', error);
-      toast.error('Erro ao remover milestone');
+      const msg = error instanceof Error ? error.message : 'erro desconhecido';
+      toast.error(`Erro ao remover milestone: ${msg}`);
     },
   });
 }

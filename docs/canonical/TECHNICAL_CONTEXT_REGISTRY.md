@@ -1681,7 +1681,7 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 | `ProjectProgressBar` | Barra de progresso de milestones |
 | `ProjectKrLinkSection` | Seção de KRs vinculadas a projeto |
 | `MilestoneCreateForm` | Form inline para criar milestone com notes |
-| `MilestoneList` | Lista de milestones com edição inline (status, due_date, owner, notes) |
+| `MilestonesTable` | Tabela de milestones (status inline, owner, datas, notas em linha-extra, menu de ações Editar/Remover com gating row-aware) |
 | `MilestoneGanttChart` | Gantt de milestones dentro do projeto |
 | `MilestoneKrLinkSection` | Seção de KRs vinculadas a milestone |
 | `ProjectCommentsSection` | Thread de comentários com menções, reply, pin e anexos |
@@ -1699,9 +1699,22 @@ Módulos operacionais podem ser habilitados/desabilitados por BU através de:
 - `projects.project.read:bu`, `projects.project.create:bu`, `projects.project.update:bu`, `projects.project.delete:self_or_owner`
 - `projects.milestone.read:bu`, `projects.milestone.create:bu`, `projects.milestone.update:bu`, `projects.milestone.delete:bu`
 
-**Hook:** `useProjectPermissionsV2` — flags: `canViewProjects`, `canCreateProject`, `canEditProject`, `canDeleteProject`, `canViewMilestones`, `canCreateMilestone`, `canEditMilestone`, `hasFullAccess`, `isLoading`
+**Hook:** `useProjectPermissionsV2` — flags: `canViewProjects`, `canCreateProject`, `canEditProject`, `canDeleteProject`, `canViewMilestones`, `canCreateMilestone`, `canEditMilestone`, `canDeleteMilestone`, `hasFullAccess`, `isLoading` + helpers row-aware: `canEditProjectRecord`, `canDeleteProjectRecord`, `canEditMilestoneRecord`, `canDeleteMilestoneRecord`.
 
 **Module Access:** Registrado em `MODULE_VIEW_PERMISSIONS` com keys `projects.project.read:bu` e `projects.milestone.read:bu` (sidebar + ModuleRoute guard)
+
+##### Autoridade de Soft-Delete de Milestones (v2026-04-27)
+
+Defesa em 4 camadas (UI → Hook → RLS → Trigger DB):
+
+| Ação | Quem pode |
+|------|-----------|
+| Editar marco (todos os campos exceto `deleted_at`) | Project owner, milestone owner, líder do project owner, bu admin, `projects.milestone.update:bu` |
+| Remover marco (soft-delete) | Project owner, líder do project owner, bu admin, `projects.milestone.delete:bu` |
+
+⚠️ Milestone owner **NÃO pode remover** o próprio marco — apenas editar.
+
+A barreira definitiva é o trigger `enforce_milestone_soft_delete_authority` (BEFORE UPDATE OF `deleted_at` em `project_milestones`), que retorna `ERRCODE 42501` com mensagem `INSUFFICIENT_PRIVILEGE: only the project owner can remove milestones` quando a lista de autorizados não inclui o ator. SSOT canônico: `mem://features/projects/milestone-permissions-row-aware`.
 
 #### URL State Parameters (Projects)
 
