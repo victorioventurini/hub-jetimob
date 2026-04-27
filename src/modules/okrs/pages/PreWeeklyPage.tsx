@@ -267,6 +267,7 @@ export default function PreWeeklyPage() {
               updateDraft({ decisions })
             }
             referenceWeek={draft.data.referenceWeek}
+            teamId={teamIdParam}
             onContinue={goNext}
           />
         );
