@@ -181,12 +181,12 @@
 ### kpi_values
 `id, kpi_id, value, reference_date, source, notes, created_by, created_at, period_start, period_end, period_label, confidence, rag_status, input_type`
 
-> **v3.0.0:** `input_type` (`consolidated|projection`) registra a natureza do input. Trigger `derive_kpi_value_confidence` deriva `confidence` automaticamente quando o usuário não sobrescreve.
+> **v3.0.0:** `input_type` (`consolidated|partial`) registra a natureza do input. Trigger `derive_kpi_value_confidence` deriva `confidence` automaticamente quando o usuário não sobrescreve. **v3.29.1 (2026-04-27):** valor `projection` renomeado para `partial` — semântica correta: valor atingido até a data, antes do período fechar (não é estimativa de futuro).
 
 ### Enums KPIs (v3.0.0)
 - `kpi_frequency_value`: `daily|weekly|biweekly|monthly|quarterly|semiannual|annual`
 - `kpi_update_mode`: `manual|automatic`
-- `kpi_input_type`: `projection|consolidated`
+- `kpi_input_type`: `partial|consolidated`
 
 ---
 
