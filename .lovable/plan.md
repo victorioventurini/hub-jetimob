@@ -1,105 +1,88 @@
-## Contexto (TCR + docs canônicos consultados)
+## Diagnóstico do bug
 
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`, `DATA_MODEL_REGISTRY.md`, `DEVELOPMENT_STANDARDS.md`, `IDENTITY_CONVENTION.md` revisados.
-- Padrão imediato de referência: migração `20260427150836_*.sql` (Tickets) — helper `_ticket_email_metadata` + atualização de triggers + templates HTML padronizados. Replicar a mesma anatomia para Projetos/Milestones (consistência de SSOT).
-- Estado atual no banco:
-  - **Eventos:** `project.status.changed`, `milestone.status.changed` (apenas e-mail). Menções em projetos hoje caem no `mention.created` genérico.
-  - **Triggers/funções:** `notify_project_status_changed`, `notify_milestone_status_changed`, `notify_project_mention` — todas emitem metadados parciais (faltam responsável, datas, status do projeto pai, etc.).
-  - **Templates `notification_templates`** (canal `email`):
-    - `project.status.changed` (1.270 chars) — sem bloco de contexto padronizado.
-    - `milestone.status.changed` (1.529 chars) — idem.
-    - Não existe template específico de menção em projeto.
-  - **Tabelas confirmadas:** `projects(id, name, owner_id, status, start_date, due_date, bu_id, ...)`, `project_milestones(id, project_id, name, owner_id, status, start_date, due_date, bu_id, ...)`. Todos os campos requeridos pelo usuário existem.
+Você está na BU **Jetimob** mas vê o ticket "Carro para PCD" (categoria Jurídico → Civil, criado por Victorio Venturini) — que pertence à BU **Victorio Venturini**. Isso é uma violação de isolamento de BU.
 
-## Objetivo
+### Causa raiz (3 camadas falham simultaneamente)
 
-Aprimorar todos os e-mails relacionados a Projetos e Milestones para exibirem um bloco de contexto consistente com os campos solicitados:
+1. **RLS permissivo** — A função `can_view_ticket` (usada por `tickets_select_policy`) retorna `true` se você é creator/owner do ticket E membro da BU do ticket. Como você é membro de ambas as BUs e foi creator/owner do ticket original, o backend libera a leitura **mesmo com a BU ativa diferente**. Não há check `current_bu_id() = ticket.bu_id`.
 
-- **Projeto:** BU, Nome, Responsável, Data início / Data conclusão, Status.
-- **Milestone:** Nome, Status, Responsável, Data início / Data conclusão (mais o bloco do projeto-pai como contexto).
+2. **Hook `useTicket` sem filtro de BU** — `src/modules/tickets/hooks/useTicketQueries.ts` (linhas 175-180) faz `select(...).eq("id", ticketId)` sem `.eq("bu_id", buId)`. Depende exclusivamente do RLS.
 
-## Mudanças propostas
+3. **Query key sem `buId`** — `queryKeys.tickets.detail(ticketId) = ['ticket', ticketId]` não inclui a BU. Ao trocar de BU, o React Query reaproveita o cache do ticket carregado na BU anterior.
 
-### 1. Migração SQL (helpers + triggers)
+### Como o cenário acontece
+- Você abriu o ticket enquanto estava em "Victorio Venturini" → o ticket foi cacheado.
+- Trocou para "Jetimob" → cache reaproveitado E, mesmo se refetch, RLS libera.
+- Resultado: tela do shell Jetimob renderiza dados de ticket da outra BU.
 
-Criar `supabase/migrations/<timestamp>_project_email_metadata.sql`:
+## Plano de correção
 
-1. **Helper `public._project_email_metadata(p_project_id uuid)`** (SECURITY DEFINER, search_path `public`) — retorna JSONB canônico:
-   - `bu_name`
-   - `project_id`, `project_name`
-   - `project_owner_name`
-   - `project_start_at` (formato pt-BR `DD/MM/YYYY` ou `—`)
-   - `project_due_at` (idem)
-   - `project_status` (label via `project_status_label`)
-   - `project_url` (`/projects/{id}`)
+### 1. Backend — Endurecer RLS de tickets
 
-2. **Helper `public._milestone_email_metadata(p_milestone_id uuid)`** — retorna JSONB canônico:
-   - Todos os campos do projeto-pai (via merge com `_project_email_metadata`)
-   - `milestone_id`, `milestone_name`
-   - `milestone_owner_name`
-   - `milestone_start_at` (formatado)
-   - `milestone_due_at` (formatado)
-   - `milestone_status` (label via `milestone_status_label`)
+Atualizar `can_view_ticket(p_ticket_id, p_profile_id)` para exigir que o ticket pertença à BU ativa do header `x-current-bu-id`:
 
-3. **Refatorar triggers** para reaproveitar o helper:
-   - `notify_project_status_changed`: substituir `jsonb_build_object` atual por `_project_email_metadata(NEW.id) || jsonb_build_object('old_status', …, 'new_status', …, 'actor_name', …)`.
-   - `notify_milestone_status_changed`: usar `_milestone_email_metadata(NEW.id) || jsonb_build_object('old_status', …, 'new_status', …, 'actor_name', …)`.
-   - `notify_project_mention`: emitir novo evento `project.mention.created` (ver passo 4) com `_project_email_metadata(v_project.id) || jsonb_build_object('actor_name', …, 'is_external', …)`. Mantém compatibilidade com a notificação genérica desativando o caminho atual `mention.created` para entidade `project_comment`.
-
-4. **Novo evento `project.mention.created`** em `notification_events` (espelho do `ticket.mention.created`).
-
-### 2. Templates de e-mail (`notification_templates`)
-
-Atualizar/criar via `INSERT … ON CONFLICT DO UPDATE` (canal `email` e `in_app` quando aplicável):
-
-- `project.status.changed` (email) — manter assunto `[{{bu_name}}] {{project_name}} — {{new_status}}` e injetar bloco de contexto padrão.
-- `milestone.status.changed` (email) — assunto `[{{bu_name}}] {{project_name}} / {{milestone_name}} — {{new_status}}` + bloco de contexto Projeto + bloco Milestone.
-- `project.mention.created` (email + in_app — novo) — assunto `[{{bu_name}}] {{project_name}} — Você foi mencionado` + bloco de contexto Projeto.
-
-Bloco HTML de contexto (consistente com o padrão de Tickets):
-
-```html
-<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;font-size:14px;color:#0f172a;">
-  <p style="margin:0 0 8px"><strong>BU:</strong> {{bu_name}}</p>
-  <p style="margin:0 0 8px"><strong>Projeto:</strong> {{project_name}}</p>
-  <p style="margin:0 0 8px"><strong>Responsável:</strong> {{project_owner_name}}</p>
-  <p style="margin:0 0 8px"><strong>Início → Conclusão:</strong> {{project_start_at}} → {{project_due_at}}</p>
-  <p style="margin:0"><strong>Status do projeto:</strong> {{project_status}}</p>
-</div>
+```text
+v_current_bu := current_bu_id();  -- já existe como helper
+IF v_current_bu IS NULL OR v_current_bu <> v_ticket.bu_id THEN
+  RETURN false;
+END IF;
 ```
 
-Em milestones, adicionar logo abaixo:
+Inserir esse check **logo após** carregar `v_ticket`, **antes** dos checks 1-5. Isso garante isolamento absoluto: mesmo se o usuário é creator, owner ou participante, ele só vê o ticket quando está logado na BU correta.
 
-```html
-<div style="…">
-  <p><strong>Milestone:</strong> {{milestone_name}}</p>
-  <p><strong>Responsável:</strong> {{milestone_owner_name}}</p>
-  <p><strong>Início → Conclusão:</strong> {{milestone_start_at}} → {{milestone_due_at}}</p>
-  <p><strong>Status:</strong> {{milestone_status}}</p>
-</div>
+Exceção controlada: platform admins (via `is_platform_admin(auth.uid())`) podem bypassar — mantém capacidade de suporte cross-BU. Se a função `current_bu_id()` retornar NULL (ex: jobs internos), bloqueia.
+
+Aplicar a mesma proteção em:
+- `ticket_messages` (policy `Users can view messages of tickets they can see`) — já delega via `can_view_ticket`, herdará automaticamente.
+- `ticket_attachments` — idem.
+- `ticket_participants` — idem.
+
+### 2. Frontend — Filtrar `bu_id` em `useTicket`
+
+Em `src/modules/tickets/hooks/useTicketQueries.ts` (`useTicket`):
+- Adicionar `.eq("bu_id", buId)` no `select` do detail.
+- Se o ticket retornar `null` (não pertence à BU ativa), navegar para `/tickets` com toast: "Este ticket pertence a outra BU. Selecione a BU correta para visualizá-lo."
+
+### 3. Frontend — Incluir `buId` na query key
+
+Em `src/lib/queryKeys/tickets.ts`:
+```text
+detail: (buId: string | null, ticketId: string | null) =>
+  ['ticket', buId, ticketId] as const,
 ```
+Atualizar todos os call-sites (`useTicket`, invalidações em `useTicketMutations`, `useTicketMessageMutations`, `useTransferTicket`, `usePinMessage`, `TicketsListPage`, `TicketDetailPage`).
 
-### 3. Atualização documental
+### 4. Frontend — Invalidar cache no switch de BU
 
-- Atualizar `docs/canonical/DB_FUNCTIONS_INDEX.md` com os novos helpers.
-- Adicionar seção "Projetos & Milestones" no doc canônico de notificações (criar `docs/canonical/NOTIFICATION_CONTEXT_STANDARD.md` se ainda não existir, ou complementar `docs/qa/QA_EMAIL_CONTEXT_URL.md`).
-- Memória: anotar SSOT de helpers de e-mail em `mem://standards/notifications/email-context-helpers`.
+Adicionar limpeza explícita do cache de tickets em `BuContext.applyBuSwitch` (já remove `clearBuClientCache`; garantir que `queryClient.removeQueries({ queryKey: ['ticket'] })` e `['tickets']` também roda — verificar se já existe handler global de invalidação).
 
-## Detalhes técnicos
+### 5. Guard de UX em `TicketDetailPage`
 
-- Fallbacks: `COALESCE` em todos os campos (`'—'` para datas/strings vazias, `'Não atribuído'` para responsáveis, `'Hub'` para BU). Mantém comportamento idêntico ao helper de tickets.
-- Datas formatadas via `to_char(date, 'DD/MM/YYYY')` no servidor (alinhado ao helper de tickets) — evita variações de timezone no template.
-- Helpers SECURITY DEFINER para preservar acesso mesmo quando o trigger roda em contexto sem permissão direta nas tabelas referenciadas (segue o padrão atual das funções de notificação).
-- Eventos novos seguem RLS já existente em `notification_templates` e `notification_events` (apenas leitura para usuários, mutação via migrations).
-- Idempotência: triggers continuam emitindo apenas em mudança de status (`OLD.status IS DISTINCT FROM NEW.status`).
+Após carregar `ticket`, comparar `ticket.bu_id !== currentBu?.id`:
+- Se diferente, exibir `VicErrorState` com CTA "Trocar para a BU correta" ou voltar para `/tickets`.
+- Não renderizar conteúdo do ticket nesse estado (defesa em profundidade contra dados em cache).
 
-## Fora do escopo
+### 6. QA e validação
 
-- Não criar e-mails para criação/edição de campos não-status (o usuário pediu "atualização de milestones e projetos" no contexto dos eventos atuais; novos eventos disparáveis ficam para um próximo plano).
-- Não alterar canal in-app dos eventos de status (já cobertos hoje).
+- Cenário A: Usuário multi-BU abre ticket via URL direta de outra BU → tela de erro + redirect.
+- Cenário B: Trocar BU enquanto ticket aberto → redireciona automaticamente.
+- Cenário C: Platform admin → mantém capacidade de visualização (RLS bypass).
+- Adicionar entrada em `docs/qa/QA_BU_SCOPE.md` (Teste 8 — Tickets cross-BU).
+- Migration nota: `current_bu_id()` retorna NULL fora de requests com header — qualquer trigger interno que precise ler ticket usará `SECURITY DEFINER` próprio.
 
-## QA
+## Arquivos afetados
 
-- Forçar transição de status em projeto e milestone de teste, conferir `email_send_log` e renderização do HTML.
-- Mencionar usuário em comentário de projeto e validar que o evento emitido é `project.mention.created` com bloco completo.
-- Verificar que tickets continuam funcionando inalterados (helpers separados).
+- `supabase/migrations/<novo>.sql` — patch em `can_view_ticket`.
+- `src/modules/tickets/hooks/useTicketQueries.ts` — filtro `bu_id` no detail.
+- `src/lib/queryKeys/tickets.ts` — `detail` agora inclui `buId`.
+- `src/modules/tickets/hooks/useTicketMutations.ts`, `useTicketMessageMutations.ts`, `useTransferTicket.ts`, `usePinMessage.ts` — invalidações com novo formato.
+- `src/modules/tickets/pages/TicketDetailPage.tsx` — guard UX cross-BU.
+- `docs/qa/QA_BU_SCOPE.md` — novo cenário documentado.
+- `mem://standards/bu-isolation-master` — adicionar nota sobre detail pages exigirem `bu_id` no select E na query key.
+
+## Conformidade com docs canônicos
+
+- Respeita **Regra 1 (PRE-BU vs POST-BU)**: continua usando `useBuScopedSupabase`.
+- Respeita **Regra 3 (BU-scoped)**: adiciona o filtro explícito que faltava.
+- Respeita **Query Keys SSOT**: alteração centralizada em `src/lib/queryKeys/tickets.ts`.
+- Alinha com `mem://standards/bu-isolation-master` e `mem://standards/bu-scoped-detail-query-keys`.
