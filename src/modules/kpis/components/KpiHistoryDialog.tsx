@@ -131,7 +131,7 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
     return onlyConsolidated ? all.filter((v) => v.input_type !== 'partial') : all;
   }, [historyData?.values, onlyConsolidated]);
 
-  const projectionCount = useMemo(
+  const partialCount = useMemo(
     () => (historyData?.values ?? []).filter((v) => v.input_type === 'partial').length,
     [historyData?.values],
   );

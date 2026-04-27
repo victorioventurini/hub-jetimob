@@ -3,7 +3,7 @@
  *
  * v3.0.0: passa a aceitar `buckets` opcional (6 grupos ordenados, ver
  * `classifyKpiGateBuckets`). Quando `buckets` é fornecido, a UI renderiza
- * os blocos colapsáveis com badges (`Projeção`/`Consolidado` + Confidence).
+ * os blocos colapsáveis com badges (`Parcial`/`Consolidado` + Confidence).
  * Quando ausente, mantém o comportamento legacy de listar `data` chapado.
  */
 
