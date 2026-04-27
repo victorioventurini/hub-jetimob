@@ -136,8 +136,12 @@ export function PreWeeklySourcesStep({
       header={
         <WizardStepHeader
           icon={Inbox}
-          title="Suas fontes desta semana"
-          description="O que você já registrou e vai destilar para a Weekly"
+          title={isTeamScope ? 'Fontes do time esta semana' : 'Suas fontes desta semana'}
+          description={
+            isTeamScope
+              ? 'Ritos concluídos pelo time que você vai destilar para a Weekly'
+              : 'O que você já registrou e vai destilar para a Weekly'
+          }
           variant="primary"
         />
       }
@@ -161,7 +165,9 @@ export function PreWeeklySourcesStep({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Ritos concluídos por você nesta semana
+              {isTeamScope
+                ? 'Ritos concluídos pelo time nesta semana'
+                : 'Ritos concluídos por você nesta semana'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -170,8 +176,9 @@ export function PreWeeklySourcesStep({
             )}
             {!isLoading && !hasSources && (
               <p className="text-sm text-muted-foreground">
-                Nenhum rito registrado por você nesta semana ainda. Você pode
-                seguir adiante mesmo assim — a destilação é livre.
+                {isTeamScope
+                  ? 'Nenhum rito registrado para este time nesta semana ainda. Você pode seguir adiante mesmo assim — a destilação é livre.'
+                  : 'Nenhum rito registrado por você nesta semana ainda. Você pode seguir adiante mesmo assim — a destilação é livre.'}
               </p>
             )}
             {!isLoading && hasSources && (
