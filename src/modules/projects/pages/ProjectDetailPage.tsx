@@ -267,8 +267,8 @@ export default function ProjectDetailPage() {
   };
 
   const handleMilestoneDelete = (milestoneId: string) => {
-    if (!id) return;
-    deleteMilestone.mutate({ id: milestoneId, project_id: id });
+    if (!id || !project) return;
+    deleteMilestone.mutate({ id: milestoneId, project_id: id, bu_id: project.bu_id });
   };
 
   const handleConfirmMilestoneDelete = () => {
