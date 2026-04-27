@@ -383,6 +383,7 @@ function AnalysisCommentSection({ reportId }: { reportId: string }) {
 export default function AnalysisResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
   const { data: report, isLoading } = useAnalysisReport(reportId);
+  const { currentBuId } = useBu();
   const [shareOpen, setShareOpen] = useState(false);
 
   usePageTitle(report?.title || report?.premise?.slice(0, 60) || "Análise");
@@ -395,6 +396,29 @@ export default function AnalysisResultPage() {
           <Card>
             <CardContent className="p-6">
               <LoadingRotativo />
+            </CardContent>
+          </Card>
+        </div>
+      </HubLayout>
+    );
+  }
+
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir uma análise de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && report.bu_id && report.bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="w-full min-w-0 space-y-6 overflow-x-hidden">
+          <PageHeader title="Análise de outra BU" backTo="/analysis" backLabel="Voltar para Análises" />
+          <Card>
+            <CardContent className="p-6 text-center space-y-2">
+              <p className="text-base font-medium text-foreground">
+                Essa análise pertence a outra BU 🔒
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Você está visualizando o Hub em uma BU diferente da BU dessa análise.
+                Selecione a BU correta no topo da tela para acessá-la.
+              </p>
             </CardContent>
           </Card>
         </div>
