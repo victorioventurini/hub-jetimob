@@ -10638,6 +10638,7 @@ export type Database = {
       }
     }
     Functions: {
+      _ticket_email_metadata: { Args: { p_ticket_id: string }; Returns: Json }
       acknowledge_health_alert: {
         Args: { p_alert_id: string; p_notes?: string }
         Returns: boolean
