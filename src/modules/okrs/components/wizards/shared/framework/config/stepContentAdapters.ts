@@ -38,6 +38,31 @@ export interface KpiGateItem {
   /** Quando true, o KPI está em alerta e precisa de decisão para liberar gate */
   requiresDecision: boolean;
   resolved?: boolean;
+  // v3.0.0 — metadados opcionais usados nas badges do KPI Gate
+  lastInputType?: KpiInputType | null;
+  lastConfidence?: KpiConfidenceLevel | null;
+  updateFrequency?: KpiFrequencyValue | null;
+  deviationPct?: number | null;
+}
+
+/**
+ * v3.0.0 — Buckets ordenados (6 grupos) usados pelo KpiGateStep para
+ * apresentar KPIs em ordem de prioridade decrescente. `teamContext`
+ * é colapsado por default no UI.
+ */
+export type KpiGateBucketId =
+  | 'overdue'
+  | 'critical'
+  | 'guardrailViolated'
+  | 'attention'
+  | 'healthy'
+  | 'teamContext';
+
+export interface KpiGateBucket {
+  id: KpiGateBucketId;
+  label: string;
+  description?: string;
+  items: KpiGateItem[];
 }
 
 export interface KrsItem {
