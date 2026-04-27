@@ -147,6 +147,14 @@ const formSchema = z.object({
       path: ["target_source"],
     });
   }
+  // v3.0.0: update_frequency não pode ser menos frequente que consolidation_frequency
+  if (!isUpdateFrequencyValid(data.consolidation_frequency, data.update_frequency)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Frequência de atualização não pode ser menos frequente que a de consolidação",
+      path: ["update_frequency"],
+    });
+  }
 });
 
 type DbKpiFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
