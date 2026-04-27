@@ -129,6 +129,30 @@ export default function TeamDetailPage() {
     );
   }
 
+  // BU SCOPE GUARD (defense-in-depth): se o cache servir um time de outra BU,
+  // recusa renderização enquanto a BU ativa for diferente.
+  if (currentBuId && (team as any).bu_id && (team as any).bu_id !== currentBuId) {
+    return (
+      <HubLayout>
+        <div className="p-6 space-y-6">
+          <PageHeader
+            title="Time de outra BU"
+            breadcrumbs={[
+              { label: "Times", href: "/teams" },
+              { label: "Acesso negado" }
+            ]}
+          />
+          <ErrorState
+            title="Esse time pertence a outra BU 🔒"
+            description="Você está visualizando o Hub em uma BU diferente da BU desse time. Selecione a BU correta no topo da tela para acessá-lo."
+            onBack={goBack}
+            backLabel="Voltar para Times"
+          />
+        </div>
+      </HubLayout>
+    );
+  }
+
   return (
     <HubLayout>
       <div className="space-y-6">
