@@ -46,7 +46,10 @@ export function useProjectPermissionsV2() {
   // === Milestone permissions ===
   const canViewMilestones = hasFullAccess || has("projects.milestone.read:bu");
   const canCreateMilestone = hasFullAccess || has("projects.milestone.create:bu");
+  // Permissão estrutural ampla (BU/wildcard) — pode editar qualquer milestone na BU
   const canEditMilestone = hasFullAccess || has("projects.milestone.update:bu");
+  // Permissão estrutural ampla para deletar qualquer milestone na BU
+  const canDeleteMilestone = hasFullAccess || has("projects.milestone.delete:bu");
 
   // === Row-aware helpers (preferidos para gating de UI por registro) ===
   const canEditProjectRecord = useCallback(
@@ -67,6 +70,54 @@ export function useProjectPermissionsV2() {
     [hasFullAccess, canDeleteOwnProject],
   );
 
+  /**
+   * Milestone — quem pode editar uma milestone (gating row-aware, espelha RLS v2026-04-27):
+   * - hasFullAccess (admin/wildcard)
+   * - permissão estrutural `projects.milestone.update:bu`
+   * - líder do responsável do projeto (canal estrutural canônico)
+   * - responsável do projeto (project.owner_id === actor)
+   * - responsável da própria milestone (milestone.owner_id === actor)  ← novo
+   */
+  const canEditMilestoneRecord = useCallback(
+    (
+      milestoneOwnerId: string | null | undefined,
+      projectOwnerId: string | null | undefined,
+      actorProfileId: string | null | undefined,
+      isLeaderOfProjectOwner: boolean,
+    ) => {
+      if (canEditMilestone) return true;
+      if (!actorProfileId) return false;
+      if (isLeaderOfProjectOwner) return true;
+      if (projectOwnerId && projectOwnerId === actorProfileId) return true;
+      if (milestoneOwnerId && milestoneOwnerId === actorProfileId) return true;
+      return false;
+    },
+    [canEditMilestone],
+  );
+
+  /**
+   * Milestone — quem pode REMOVER uma milestone:
+   * - hasFullAccess (admin/wildcard)
+   * - permissão estrutural `projects.milestone.delete:bu`
+   * - líder do responsável do projeto
+   * - responsável do projeto (project.owner_id === actor)
+   * (Responsável da milestone NÃO pode remover — apenas editar.)
+   */
+  const canDeleteMilestoneRecord = useCallback(
+    (
+      projectOwnerId: string | null | undefined,
+      actorProfileId: string | null | undefined,
+      isLeaderOfProjectOwner: boolean,
+    ) => {
+      if (canDeleteMilestone) return true;
+      if (!actorProfileId) return false;
+      if (isLeaderOfProjectOwner) return true;
+      if (projectOwnerId && projectOwnerId === actorProfileId) return true;
+      return false;
+    },
+    [canDeleteMilestone],
+  );
+
   // Observabilidade: snapshot das permissões efetivas do módulo Projects.
   // TEMP: ajuda a distinguir bundle stale vs gating real no live.
   const lastSnapshotRef = useRef<string>("");
@@ -84,6 +135,7 @@ export function useProjectPermissionsV2() {
       canViewMilestones,
       canCreateMilestone,
       canEditMilestone,
+      canDeleteMilestone,
     });
     if (snapshot === lastSnapshotRef.current) return;
     lastSnapshotRef.current = snapshot;
@@ -101,6 +153,7 @@ export function useProjectPermissionsV2() {
     canViewMilestones,
     canCreateMilestone,
     canEditMilestone,
+    canDeleteMilestone,
   ]);
 
   return useMemo(() => ({
@@ -115,8 +168,11 @@ export function useProjectPermissionsV2() {
     canViewMilestones,
     canCreateMilestone,
     canEditMilestone,
+    canDeleteMilestone,
     canEditProjectRecord,
     canDeleteProjectRecord,
+    canEditMilestoneRecord,
+    canDeleteMilestoneRecord,
   }), [
     isLoading,
     hasFullAccess,
@@ -129,7 +185,10 @@ export function useProjectPermissionsV2() {
     canViewMilestones,
     canCreateMilestone,
     canEditMilestone,
+    canDeleteMilestone,
     canEditProjectRecord,
     canDeleteProjectRecord,
+    canEditMilestoneRecord,
+    canDeleteMilestoneRecord,
   ]);
 }

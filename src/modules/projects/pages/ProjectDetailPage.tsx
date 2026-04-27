@@ -22,7 +22,8 @@ import { useBu } from '@/contexts/BuContext';
 import { ProjectHealthBadge } from '../components/ProjectHealthBadge';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { ProjectProgressBar } from '../components/ProjectProgressBar';
-import { MilestoneList } from '../components/MilestoneList';
+
+import { MilestonesTable } from '../components/MilestonesTable';
 import { MilestoneDialog, type MilestoneDialogSubmitValues } from '../components/MilestoneDialog';
 import { MilestoneGanttChart } from '../components/MilestoneGanttChart';
 import { ProjectDialog } from '../components/ProjectDialog';
@@ -32,7 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { MilestoneStatus } from '../types';
+import type { MilestoneStatus, ProjectMilestone } from '../types';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -46,6 +47,8 @@ export default function ProjectDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<ProjectMilestone | null>(null);
+  const [deletingMilestone, setDeletingMilestone] = useState<ProjectMilestone | null>(null);
   const [milestoneView, setMilestoneView] = useState<'list' | 'gantt'>('list');
 
   const { data: project, isLoading } = useProject(id);
@@ -61,7 +64,8 @@ export default function ProjectDetailPage() {
     canEditProjectRecord,
     canDeleteProjectRecord,
     canCreateMilestone: rawCanAddMilestone,
-    canEditMilestone: rawCanEditMilestone,
+    canEditMilestoneRecord,
+    canDeleteMilestoneRecord,
   } = useProjectPermissionsV2();
 
   // Gate canônico: enquanto identidade ou permissões estiverem carregando,
@@ -99,7 +103,31 @@ export default function ProjectDetailPage() {
 
   // Milestone CRUD: bloqueado em projetos arquivados (read-only canônico).
   const canAddMilestone = !isArchived && rawCanAddMilestone;
-  const canEditMilestone = !isArchived && rawCanEditMilestone;
+
+  /**
+   * Gating row-aware das milestones (espelha a RLS canônica v2026-04-27):
+   * - Editar: project owner OR milestone owner OR estrutural (admin/líder/`projects.milestone.update:bu`).
+   * - Remover: project owner OR estrutural (admin/líder/`projects.milestone.delete:bu`).
+   * Em projetos arquivados, ambas as ações são bloqueadas (read-only canônico).
+   */
+  const canEditMilestoneRow = (m: ProjectMilestone): boolean => {
+    if (isArchived || !permissionsResolved) return false;
+    return canEditMilestoneRecord(
+      m.owner_id,
+      project?.owner_id ?? null,
+      writerProfileId,
+      isLeaderOfOwner,
+    );
+  };
+
+  const canDeleteMilestoneRow = (_m: ProjectMilestone): boolean => {
+    if (isArchived || !permissionsResolved) return false;
+    return canDeleteMilestoneRecord(
+      project?.owner_id ?? null,
+      writerProfileId,
+      isLeaderOfOwner,
+    );
+  };
 
   // Observabilidade: gating row-aware do detalhe do projeto.
   // TEMP: instrumentação para diferenciar bundle stale vs RLS legítima no live.
@@ -215,14 +243,42 @@ export default function ProjectDetailPage() {
     updateMilestone.mutate({ id: milestoneId, project_id: id, status });
   };
 
-  const handleMilestoneUpdate = (milestoneId: string, updates: { start_date?: string; due_date?: string | null; owner_id?: string | null; notes?: string | null }) => {
-    if (!id) return;
-    updateMilestone.mutate({ id: milestoneId, project_id: id, ...updates });
+
+
+  const handleMilestoneEditSubmit = (data: MilestoneDialogSubmitValues) => {
+    if (!id || !editingMilestone) return;
+    // Defesa em profundidade: revalidar permissão antes de disparar mutation.
+    if (!canEditMilestoneRow(editingMilestone)) {
+      setEditingMilestone(null);
+      return;
+    }
+    updateMilestone.mutate(
+      {
+        id: editingMilestone.id,
+        project_id: id,
+        name: data.name,
+        start_date: data.start_date,
+        due_date: data.due_date,
+        owner_id: data.owner_id,
+        notes: data.notes,
+      },
+      { onSuccess: () => setEditingMilestone(null) },
+    );
   };
 
   const handleMilestoneDelete = (milestoneId: string) => {
     if (!id) return;
     deleteMilestone.mutate({ id: milestoneId, project_id: id });
+  };
+
+  const handleConfirmMilestoneDelete = () => {
+    if (!deletingMilestone) return;
+    if (!canDeleteMilestoneRow(deletingMilestone)) {
+      setDeletingMilestone(null);
+      return;
+    }
+    handleMilestoneDelete(deletingMilestone.id);
+    setDeletingMilestone(null);
   };
 
   const handleEdit = (values: any) => {
@@ -453,14 +509,14 @@ export default function ProjectDetailPage() {
                 projectDueDate={project.due_date}
               />
             ) : (
-              <MilestoneList
+              <MilestonesTable
                 milestones={milestones || project.milestones || []}
-                projectId={project.id}
-                onStatusChange={canEditMilestone ? handleMilestoneStatusChange : undefined}
-                onUpdate={canEditMilestone ? handleMilestoneUpdate : undefined}
-                onDelete={canEditMilestone ? handleMilestoneDelete : undefined}
-                canEdit={canEditMilestone}
                 ownerProfiles={ownerProfiles}
+                onStatusChange={handleMilestoneStatusChange}
+                onEdit={(m) => setEditingMilestone(m)}
+                onDelete={(m) => setDeletingMilestone(m)}
+                canEditMilestone={canEditMilestoneRow}
+                canDeleteMilestone={canDeleteMilestoneRow}
               />
             )}
           </CardContent>
@@ -486,6 +542,50 @@ export default function ProjectDetailPage() {
           isSubmitting={createMilestone.isPending}
           title="Novo milestone"
         />
+      )}
+
+      {/* Milestone Edit Dialog — montado por demanda quando o usuário escolhe editar */}
+      {editingMilestone && canEditMilestoneRow(editingMilestone) && (
+        <MilestoneDialog
+          open={!!editingMilestone}
+          onOpenChange={(open) => { if (!open) setEditingMilestone(null); }}
+          onSubmit={handleMilestoneEditSubmit}
+          isSubmitting={updateMilestone.isPending}
+          title="Editar milestone"
+          defaultValues={{
+            name: editingMilestone.name,
+            start_date: editingMilestone.start_date ?? '',
+            due_date: editingMilestone.due_date ?? '',
+            owner_id: editingMilestone.owner_id ?? '',
+            notes: editingMilestone.notes ?? '',
+          }}
+        />
+      )}
+
+      {/* Milestone Delete Confirmation — só montado quando há permissão real para esta linha */}
+      {deletingMilestone && canDeleteMilestoneRow(deletingMilestone) && (
+        <AlertDialog
+          open={!!deletingMilestone}
+          onOpenChange={(open) => { if (!open) setDeletingMilestone(null); }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover milestone?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O milestone "{deletingMilestone.name}" será removido. Essa ação não pode ser desfeita pela interface.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmMilestoneDelete}
+                disabled={deleteMilestone.isPending}
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       {/* Edit Dialog */}
