@@ -34,6 +34,7 @@ import { SquadSection } from "../components/SquadSection";
 import { TeamMemberRow } from "../components/TeamMemberRow";
 import { SubteamMembersBlock } from "../components/SubteamMembersBlock";
 import { useAuth } from "@/hooks/useAuth";
+import { useBu } from "@/contexts/BuContext";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
