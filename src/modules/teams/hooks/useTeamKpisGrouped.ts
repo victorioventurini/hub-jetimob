@@ -2,20 +2,18 @@
  * useTeamKpisGrouped
  *
  * Hook agregador para a aba "Contribuição" do time.
- * Retorna KPIs em 2 grupos:
- *  - team:    KPIs sob responsabilidade do(s) time(s) (responsible_team_id IN teamIds
- *             OU team_id IN teamIds quando responsible_team_id é NULL — fallback legado)
- *  - members: KPIs sob responsabilidade pessoal de membros do time
- *             (owner_user_id IN memberIds, deduplicados contra o grupo "team")
+ * Retorna KPIs agrupados por escopo canônico (KpiScope) com cascata sem duplicação:
+ *
+ *   1) org    — KPIs scope='org' que tocam o time (responsible_team_id, team_id legado,
+ *               responsible_area_id da área do time, ou owner em member)
+ *   2) area   — KPIs scope='area' (mesmos critérios), sub-agrupados por área
+ *   3) team   — KPIs scope='team' (responsible_team_id IN teamIds OU team_id legado)
+ *   4) owners — Restantes cujo owner é membro do time, sub-agrupados por owner
  *
  * Reaproveita os tipos de @/modules/kpis (KpiWithValues + calculateRagStatus)
  * para que o componente de UI possa renderizar com KpiCard sem alterações.
  *
- * Respeita:
- *  - BU isolation (useOptionalBuClient)
- *  - Soft-delete (.is('deleted_at', null))
- *  - Sem select('*')
- *  - Query keys via teamsKeys.contributionKpis
+ * Respeita: BU isolation, soft-delete, sem select('*'), query keys via teamsKeys.
  */
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
@@ -129,17 +127,43 @@ function hydrateKpi(kpi: any, allValues: any[]): KpiWithValues {
   };
 }
 
-export interface TeamKpisGrouped {
+export interface AreaKpiGroup {
+  areaId: string | null;
+  areaName: string;
+  areaColor: string | null;
+  kpis: KpiWithValues[];
+}
+
+export interface OwnerKpiGroup {
+  ownerId: string;
+  ownerName: string;
+  photoUrl: string | null;
+  kpis: KpiWithValues[];
+}
+
+export interface TeamKpisGroupedByScope {
+  org: KpiWithValues[];
+  area: AreaKpiGroup[];
   team: KpiWithValues[];
-  members: KpiWithValues[];
+  owners: OwnerKpiGroup[];
   memberCount: number;
+  totalCount: number;
 }
 
 interface Options {
-  /** Quando true, expande para os mesmos teamIds resolvidos (sub-times incluídos). */
+  /** TeamIds expandidos (sub-times incluídos quando aplicável). */
   resolvedTeamIds: string[];
   includeSubteams: boolean;
 }
+
+const EMPTY: TeamKpisGroupedByScope = {
+  org: [],
+  area: [],
+  team: [],
+  owners: [],
+  memberCount: 0,
+  totalCount: 0,
+};
 
 export function useTeamKpisGrouped(
   teamId: string | undefined,
@@ -154,70 +178,94 @@ export function useTeamKpisGrouped(
       currentBu?.id ?? null,
       includeSubteams
     ),
-    queryFn: async (): Promise<TeamKpisGrouped> => {
+    queryFn: async (): Promise<TeamKpisGroupedByScope> => {
       if (!teamId || !currentBu?.id || !supabase || resolvedTeamIds.length === 0) {
-        return { team: [], members: [], memberCount: 0 };
+        return EMPTY;
       }
 
-      // 1) KPIs do time: responsible_team_id IN teamIds OR team_id IN teamIds (legado)
-      const [byResponsibleRes, byLegacyTeamRes] = await Promise.all([
+      // 1) Resolver members + areas dos times em paralelo
+      const [membersRes, teamsAreasRes] = await Promise.all([
         supabase
-          .from('kpi_metrics')
-          .select(KPI_FIELDS)
-          .eq('bu_id', currentBu.id)
-          .eq('status', 'active')
+          .from('profiles')
+          .select('id')
+          .in('team_id', resolvedTeamIds)
           .is('deleted_at', null)
-          .in('responsible_team_id', resolvedTeamIds),
+          .neq('employment_status', 'terminated'),
         supabase
-          .from('kpi_metrics')
-          .select(KPI_FIELDS)
-          .eq('bu_id', currentBu.id)
-          .eq('status', 'active')
-          .is('deleted_at', null)
-          .is('responsible_team_id', null)
-          .in('team_id', resolvedTeamIds),
+          .from('teams')
+          .select('id, area_id')
+          .in('id', resolvedTeamIds)
+          .is('deleted_at', null),
       ]);
+      if (membersRes.error) throw membersRes.error;
+      if (teamsAreasRes.error) throw teamsAreasRes.error;
 
-      if (byResponsibleRes.error) throw byResponsibleRes.error;
-      if (byLegacyTeamRes.error) throw byLegacyTeamRes.error;
+      const memberIds = (membersRes.data || []).map((m: any) => m.id);
+      const teamAreaIds = Array.from(
+        new Set(
+          (teamsAreasRes.data || [])
+            .map((t: any) => t.area_id)
+            .filter((id: string | null): id is string => !!id)
+        )
+      );
 
-      const teamKpisMap = new Map<string, any>();
-      for (const k of byResponsibleRes.data || []) teamKpisMap.set(k.id, k);
-      for (const k of byLegacyTeamRes.data || []) {
-        if (!teamKpisMap.has(k.id)) teamKpisMap.set(k.id, k);
-      }
-      const teamKpisRaw = Array.from(teamKpisMap.values());
-
-      // 2) Resolver members do(s) time(s)
-      const { data: membersData, error: membersErr } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('team_id', resolvedTeamIds)
-        .is('deleted_at', null)
-        .neq('employment_status', 'terminated');
-      if (membersErr) throw membersErr;
-      const memberIds = (membersData || []).map((m) => m.id);
-
-      // 3) KPIs cujo owner é um membro do time, exceto os já listados em "team"
-      let memberKpisRaw: any[] = [];
-      if (memberIds.length > 0) {
-        const { data: ownerKpisData, error: ownerErr } = await supabase
+      // 2) Buscar KPIs em 4 fronteiras paralelas (deduplicados por id depois)
+      // Cada query filtra por scope + UM critério de vínculo, depois fazemos union.
+      // Critério "owner é membro" aplica-se a todos os scopes para o bloco "Responsável".
+      const buildFilters = (scope: KpiScope | null) => {
+        const base = supabase
           .from('kpi_metrics')
           .select(KPI_FIELDS)
           .eq('bu_id', currentBu.id)
           .eq('status', 'active')
-          .is('deleted_at', null)
-          .in('owner_user_id', memberIds);
-        if (ownerErr) throw ownerErr;
-        memberKpisRaw = (ownerKpisData || []).filter((k) => !teamKpisMap.has(k.id));
-      }
+          .is('deleted_at', null);
+        return scope ? base.eq('scope', scope) : base;
+      };
 
-      // 4) Buscar valores em batch para todos os KPIs (team + members)
-      const allKpiIds = [
-        ...teamKpisRaw.map((k) => k.id),
-        ...memberKpisRaw.map((k) => k.id),
+      const queries: Promise<any>[] = [];
+
+      // Para scope=org e scope=area: 4 critérios de vínculo
+      const linkBy = (q: any) => [
+        q.in('responsible_team_id', resolvedTeamIds),
+        q.is('responsible_team_id', null).in('team_id', resolvedTeamIds),
+        ...(teamAreaIds.length > 0
+          ? [q.in('responsible_area_id', teamAreaIds)]
+          : []),
+        ...(memberIds.length > 0 ? [q.in('owner_user_id', memberIds)] : []),
       ];
 
+      // org
+      queries.push(...linkBy(buildFilters('org')));
+      // area
+      queries.push(...linkBy(buildFilters('area')));
+      // team — apenas critérios de time
+      queries.push(
+        buildFilters('team').in('responsible_team_id', resolvedTeamIds),
+        buildFilters('team')
+          .is('responsible_team_id', null)
+          .in('team_id', resolvedTeamIds)
+      );
+      // owners — qualquer scope, owner em members
+      if (memberIds.length > 0) {
+        queries.push(buildFilters(null).in('owner_user_id', memberIds));
+      }
+
+      const results = await Promise.all(queries);
+      for (const r of results) {
+        if (r.error) throw r.error;
+      }
+
+      // Dedup global por id
+      const allKpisMap = new Map<string, any>();
+      for (const r of results) {
+        for (const k of r.data || []) {
+          if (!allKpisMap.has(k.id)) allKpisMap.set(k.id, k);
+        }
+      }
+      const allKpisRaw = Array.from(allKpisMap.values());
+
+      // 3) Buscar valores em batch
+      const allKpiIds = allKpisRaw.map((k) => k.id);
       let allValues: any[] = [];
       if (allKpiIds.length > 0) {
         const { data: valsData, error: valsErr } = await supabase
@@ -229,14 +277,100 @@ export function useTeamKpisGrouped(
         allValues = valsData || [];
       }
 
-      const team = teamKpisRaw
-        .map((k) => hydrateKpi(k, allValues))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      const members = memberKpisRaw
-        .map((k) => hydrateKpi(k, allValues))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      // 4) Hidratar e classificar em cascata
+      const hydrated = allKpisRaw.map((k) => ({ raw: k, kpi: hydrateKpi(k, allValues) }));
 
-      return { team, members, memberCount: memberIds.length };
+      const teamIdSet = new Set(resolvedTeamIds);
+      const areaIdSet = new Set(teamAreaIds);
+      const memberIdSet = new Set(memberIds);
+
+      const isLinkedToTeam = (raw: any) =>
+        teamIdSet.has(raw.responsible_team_id) ||
+        (!raw.responsible_team_id && teamIdSet.has(raw.team_id)) ||
+        areaIdSet.has(raw.responsible_area_id) ||
+        memberIdSet.has(raw.owner_user_id);
+
+      const isTeamScopeMatch = (raw: any) =>
+        teamIdSet.has(raw.responsible_team_id) ||
+        (!raw.responsible_team_id && teamIdSet.has(raw.team_id));
+
+      const orgKpis: KpiWithValues[] = [];
+      const areaBuckets = new Map<string, AreaKpiGroup>();
+      const teamKpis: KpiWithValues[] = [];
+      const ownerBuckets = new Map<string, OwnerKpiGroup>();
+
+      for (const { raw, kpi } of hydrated) {
+        // 1) org
+        if (raw.scope === 'org' && isLinkedToTeam(raw)) {
+          orgKpis.push(kpi);
+          continue;
+        }
+        // 2) area
+        if (raw.scope === 'area' && isLinkedToTeam(raw)) {
+          const aid: string | null =
+            raw.responsible_area_id ?? raw.area_id ?? null;
+          const key = aid ?? '__no_area__';
+          if (!areaBuckets.has(key)) {
+            const areaInfo = raw.area;
+            areaBuckets.set(key, {
+              areaId: aid,
+              areaName: areaInfo?.name || 'Sem área definida',
+              areaColor: areaInfo?.color ?? null,
+              kpis: [],
+            });
+          }
+          areaBuckets.get(key)!.kpis.push(kpi);
+          continue;
+        }
+        // 3) team
+        if (raw.scope === 'team' && isTeamScopeMatch(raw)) {
+          teamKpis.push(kpi);
+          continue;
+        }
+        // 4) owners (fallback) — restante cujo owner é membro
+        if (raw.owner_user_id && memberIdSet.has(raw.owner_user_id)) {
+          const oid = raw.owner_user_id;
+          if (!ownerBuckets.has(oid)) {
+            ownerBuckets.set(oid, {
+              ownerId: oid,
+              ownerName: raw.owner?.display_name || 'Sem nome',
+              photoUrl: raw.owner?.photo_url ?? null,
+              kpis: [],
+            });
+          }
+          ownerBuckets.get(oid)!.kpis.push(kpi);
+        }
+        // KPIs que sobrarem (improvável dado os filtros) são ignorados.
+      }
+
+      // Ordenações
+      const byName = (a: KpiWithValues, b: KpiWithValues) =>
+        a.name.localeCompare(b.name);
+      orgKpis.sort(byName);
+      teamKpis.sort(byName);
+
+      const areaGroups = Array.from(areaBuckets.values())
+        .map((g) => ({ ...g, kpis: g.kpis.sort(byName) }))
+        .sort((a, b) => a.areaName.localeCompare(b.areaName));
+
+      const ownerGroups = Array.from(ownerBuckets.values())
+        .map((g) => ({ ...g, kpis: g.kpis.sort(byName) }))
+        .sort((a, b) => a.ownerName.localeCompare(b.ownerName));
+
+      const totalCount =
+        orgKpis.length +
+        areaGroups.reduce((acc, g) => acc + g.kpis.length, 0) +
+        teamKpis.length +
+        ownerGroups.reduce((acc, g) => acc + g.kpis.length, 0);
+
+      return {
+        org: orgKpis,
+        area: areaGroups,
+        team: teamKpis,
+        owners: ownerGroups,
+        memberCount: memberIds.length,
+        totalCount,
+      };
     },
     enabled:
       !!teamId &&
