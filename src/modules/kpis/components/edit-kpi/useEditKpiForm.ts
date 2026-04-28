@@ -9,6 +9,7 @@ import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import type { KpiMetric, KpiScope } from '../../types';
 import { editKpiSchema, type EditKpiFormValues } from './editKpiSchema';
 import { legacyFrequencyToValue } from '../../utils/frequency';
+import { useKpiPrimaryDataEntry } from '../../hooks/useKpiPrimaryDataEntry';
 
 export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
   const lastKpiIdRef = useRef<string | null>(null);
