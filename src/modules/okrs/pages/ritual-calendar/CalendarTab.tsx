@@ -102,7 +102,7 @@ export function CalendarTab() {
   }, [userFilter, occurrences]);
 
   const { data: userSessionIds } = useQuery({
-    queryKey: okrsKeys.calendarUserSessions(userFilter || undefined, sessionIds),
+    queryKey: okrsKeys.calendarUserSessions(userFilter || null, sessionIds),
     queryFn: async () => {
       if (!userFilter || sessionIds.length === 0) return new Set<string>();
       const { data } = await buSupabase
