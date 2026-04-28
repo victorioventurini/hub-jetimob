@@ -1,6 +1,11 @@
 /**
  * CalendarTab — visão mensal das ocorrências de rituais com filtros.
  * Extraído de `RitualCalendarPage.tsx` em P3.2.
+ *
+ * Padrões canônicos aplicados:
+ * - Filtros via `ListPageFilters` + `UrlSelect` + URL state (`useUrlState`).
+ * - Cabeçalho de ações via `ViewOptionsBar` (contador à esquerda, controles à direita).
+ * - `Tipo`, `Time` e `Usuário` persistidos na URL para links compartilháveis.
  */
 
 import { useState, useMemo } from 'react';
@@ -19,13 +24,14 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { okrsKeys } from '@/lib/queryKeys/okrs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, XCircle, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { UrlSelect } from '@/shared/filters/UrlSelect';
+import { ListPageFilters } from '@/components/ui/list-page-filters';
+import { ViewOptionsBar } from '@/components/ui/view-options-bar';
 import { useUrlState } from '@/shared/url';
 import { WIZARD_TYPE_LABELS } from '../../hooks/useRitualHistory';
 import {
@@ -43,18 +49,33 @@ import {
 } from './RitualCalendarViewToggle';
 import { BulkRescheduleDialog } from './BulkRescheduleDialog';
 
+const wizardTypeOptions = RECURRENT_WIZARD_TYPES.map((wt) => ({
+  value: wt,
+  label: WIZARD_TYPE_LABELS[wt] || wt,
+}));
+
 export function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedOccurrence, setSelectedOccurrence] = useState<RitualOccurrence | null>(null);
-  const [teamFilter, setTeamFilter] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<string>('');
-  const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
   const [showBulkReschedule, setShowBulkReschedule] = useState(false);
+
+  // URL state — filtros persistidos para links compartilháveis
+  const { value: typeFilter, set: setTypeFilter } = useUrlState<string>({
+    key: 'type',
+    defaultValue: '',
+  });
+  const { value: teamFilter, set: setTeamFilter } = useUrlState<string>({
+    key: 'team',
+    defaultValue: '',
+  });
+  const { value: userFilter, set: setUserFilter } = useUrlState<string>({
+    key: 'user',
+    defaultValue: '',
+  });
   const { value: viewMode, set: setViewMode } = useUrlState<RitualCalendarViewMode>({
     key: 'view',
     defaultValue: 'calendar',
-    // Aceita 'grid' como alias retrocompatível para 'calendar'.
     parse: (v) => (v === 'list' ? 'list' : 'calendar'),
   });
 
@@ -81,7 +102,7 @@ export function CalendarTab() {
   }, [userFilter, occurrences]);
 
   const { data: userSessionIds } = useQuery({
-    queryKey: okrsKeys.calendarUserSessions(userFilter, sessionIds),
+    queryKey: okrsKeys.calendarUserSessions(userFilter || undefined, sessionIds),
     queryFn: async () => {
       if (!userFilter || sessionIds.length === 0) return new Set<string>();
       const { data } = await buSupabase
@@ -150,8 +171,40 @@ export function CalendarTab() {
 
   return (
     <div className="space-y-4">
-      {/* Header: ações + view toggle alinhados à direita (padrão /projects) */}
-      <div className="flex items-center justify-end gap-2">
+      {/* Filtros canônicos (URL state) */}
+      <ListPageFilters hideSearch>
+        <UrlSelect
+          value={typeFilter || 'all'}
+          onChange={(v) => setTypeFilter(v === 'all' ? '' : v)}
+          options={wizardTypeOptions}
+          includeAllOption
+          allOptionLabel="Todos os ritos"
+          triggerClassName="w-full sm:w-[200px]"
+        />
+        <TeamSelect
+          value={teamFilter || undefined}
+          onValueChange={(v) => setTeamFilter(v ?? '')}
+          includeAll
+          allLabel="Todos os times"
+          placeholder="Time"
+          triggerClassName="w-full sm:w-[200px]"
+        />
+        <BuUserSelect
+          value={userFilter || undefined}
+          onValueChange={(v) => setUserFilter(v ?? '')}
+          placeholder="Usuário"
+          allowNone
+          noneLabel="Todos os usuários"
+          className="w-full sm:w-[220px]"
+        />
+      </ListPageFilters>
+
+      {/* Linha de visualização: contador + ações + view toggle */}
+      <ViewOptionsBar
+        resultCount={filteredOccurrences.length}
+        resultCountLabel="ocorrências"
+        resultCountLabelSingular="ocorrência"
+      >
         <Button
           variant="outline"
           size="sm"
@@ -161,65 +214,7 @@ export function CalendarTab() {
           Reagendar em massa
         </Button>
         <RitualCalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="flex items-center gap-1 sm:col-span-2 lg:col-span-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setHasAutoNavigated(true); }}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-semibold flex-1 text-center capitalize">
-                {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
-              </span>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Rito</Label>
-              <Select value={typeFilter || 'all'} onValueChange={v => setTypeFilter(v === 'all' ? '' : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os ritos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os ritos</SelectItem>
-                  {RECURRENT_WIZARD_TYPES.map(wt => (
-                    <SelectItem key={wt} value={wt}>
-                      {WIZARD_TYPE_LABELS[wt] || wt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Time</Label>
-              <TeamSelect
-                value={teamFilter ?? undefined}
-                onValueChange={setTeamFilter}
-                includeAll
-                allLabel="Todos os times"
-                placeholder="Todos os times"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Usuário</Label>
-              <BuUserSelect
-                value={userFilter}
-                onValueChange={(v) => setUserFilter(v ?? undefined)}
-                placeholder="Todos os usuários"
-                allowNone
-                noneLabel="Todos os usuários"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      </ViewOptionsBar>
 
       {error && (
         <Card>
@@ -235,6 +230,29 @@ export function CalendarTab() {
       ) : (
         <Card>
           <CardContent className="p-4">
+            {/* Navegação de mês — comum às duas views */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setHasAutoNavigated(true); }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-semibold capitalize min-w-[160px] text-center">
+                {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
             {viewMode === 'calendar' ? (
               <>
                 {filteredOccurrences.length === 0 && !error && (
