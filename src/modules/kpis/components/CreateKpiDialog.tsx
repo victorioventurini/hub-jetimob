@@ -121,6 +121,13 @@ const formSchema = z.object({
         path: ["owner_user_id"],
       });
     }
+    if (!data.updated_by_user_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Atualizado por é obrigatório para indicadores ativos",
+        path: ["updated_by_user_id"],
+      });
+    }
     // Área obrigatória apenas para scope=area (e ativos)
     if (data.scope === 'area' && !data.area_id) {
       ctx.addIssue({
