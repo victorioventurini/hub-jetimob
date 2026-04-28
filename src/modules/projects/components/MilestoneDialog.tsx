@@ -56,7 +56,20 @@ interface MilestoneDialogProps {
   isSubmitting?: boolean;
   title?: string;
   defaultValues?: Partial<FormValues>;
+  /** Milestones já cadastrados no projeto (para painel de contexto). */
+  existingMilestones?: ScheduleMilestone[];
+  /** Identifica o próprio milestone em modo edição (excluído de conflitos). */
+  currentMilestoneId?: string;
+  projectStartDate?: string | null;
+  projectDueDate?: string | null;
 }
+
+export function MilestoneDialog({
+  open, onOpenChange, onSubmit, isSubmitting,
+  title = 'Novo milestone', defaultValues,
+  existingMilestones, currentMilestoneId,
+  projectStartDate, projectDueDate,
+}: MilestoneDialogProps) {
 
 export function MilestoneDialog({
   open, onOpenChange, onSubmit, isSubmitting,
