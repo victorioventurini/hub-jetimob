@@ -2,7 +2,7 @@
  * QbrCLevelDirectivesStep - Step 4: Direcionamentos e Decisões
  * 
  * Direcionamentos com categorias (strategic_question, hypothesis, non_priority, challenge).
- * Decisões via DecisionCard + InlineDecisionInput com category 'strategic_proposal'.
+ * Decisões via DecisionCard com category 'strategic_proposal'.
  */
 
 import { useState } from 'react';
