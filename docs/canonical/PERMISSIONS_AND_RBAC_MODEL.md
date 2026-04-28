@@ -156,6 +156,30 @@ O catálogo completo está em `permission_catalog`. Algumas categorias:
 | Atualizar valores | `kpis.value.add:bu` | `kpis_operate_v2` |
 | Gerenciar (arquivar/excluir) | `kpis.settings.manage:bu` | `kpis_admin_v2` |
 
+##### Matriz por Escopo (sobreposta às permission keys — **liderança hierárquica**)
+
+A liderança hierárquica **NÃO** é template; é resolvida em runtime via
+`useHierarchicalLeadership` (frontend) e helpers SQL `user_can_manage_kpi` /
+`user_can_create_kpi` (RLS), que herdam: líder de área → todos os times daquela
+área; líder de time → time + subtimes (via `parent_team_id`).
+
+| Escopo da KPI | Cadastro | Edição (metadados) | Remoção |
+|---------------|----------|--------------------|---------|
+| **Global** (`scope=org`) | super_admin, admin | super_admin, admin, responsável, atualizado-por | super_admin, admin |
+| **Área** (`scope=area`) | super_admin, admin, líder da área | super_admin, admin, líder da área, responsável, atualizado-por | super_admin, admin, líder da área |
+| **Time / Subtime** (`scope=team`) | super_admin, admin, líder da área, líder do time, líder do subtime | super_admin, admin, líder da área, líder do time, líder do subtime, responsável, atualizado-por | super_admin, admin, líder da área, líder do time, líder do subtime |
+
+**Métricas (`indicator_type='metric'`)**
+
+- Sempre `scope='team'` (forçado por trigger `enforce_metric_scope_team`).
+- **Cadastro:** super_admin, admin, líder hierárquico do time **OU membro do time**.
+- **Edição:** super_admin, admin, líder hierárquico, responsável, atualizado-por.
+- **Remoção:** super_admin, admin, líder hierárquico, responsável, atualizado-por.
+
+> **"Contribuidor" = "Atualizado por"**: o usuário registrado em
+> `kpi_data_contributors` com role `data_entry` (responsável por inserir valores).
+
+
 ---
 
 ## 4. Templates V2
