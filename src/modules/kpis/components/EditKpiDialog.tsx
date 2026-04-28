@@ -124,6 +124,17 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         responsible_area_id: values.responsible_area_id || null,
         responsible_team_id: values.responsible_team_id || null,
       });
+
+      // Sincroniza "Atualizado por" (data_entry contributor)
+      try {
+        await upsertDataEntry.mutateAsync({
+          kpiId: kpi.id,
+          userId: values.updated_by_user_id ?? null,
+        });
+      } catch (err) {
+        console.error('[EditKpiDialog] Falha ao sincronizar "Atualizado por":', err);
+      }
+
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);
