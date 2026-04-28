@@ -29,6 +29,15 @@ export interface MbrDecisionsStepProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   previousMbrPendingItems: TeamCheckinDecision[];
+  /** Itens sinalizados pelos líderes no MBR-PRE como "needs_decision" ou "cross_dependency" */
+  mbrPreSurfacedItems?: Array<{
+    key: string;
+    teamId: string;
+    kind: 'needs_decision' | 'cross_dependency';
+    text: string;
+  }>;
+  /** Mapa teamId → nome para exibir origem dos itens sinalizados */
+  teamNamesById?: Record<string, string>;
   onContinue: () => void;
   onBack: () => void;
 }
