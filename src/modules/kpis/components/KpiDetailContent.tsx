@@ -234,7 +234,7 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         {kpi.owner && (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Owner:</span>
+            <span className="text-sm text-muted-foreground">Responsável:</span>
             <div className="flex items-center gap-2">
               <Avatar className="h-5 w-5">
                 <AvatarImage src={kpi.owner.photo_url || undefined} />
@@ -243,6 +243,25 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm">{kpi.owner.display_name}</span>
+            </div>
+          </div>
+        )}
+        {primaryDataEntry && (
+          <div className="flex items-center gap-2">
+            <Edit3 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Atualizado por:</span>
+            <div className="flex items-center gap-2">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={primaryDataEntry.photo_url || undefined} />
+                <AvatarFallback className="text-[10px]">
+                  {(primaryDataEntry.display_name ?? "?")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm">{primaryDataEntry.display_name ?? "—"}</span>
             </div>
           </div>
         )}
