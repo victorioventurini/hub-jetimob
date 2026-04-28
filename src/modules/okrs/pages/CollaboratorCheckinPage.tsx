@@ -444,6 +444,7 @@ export default function CollaboratorCheckinPage() {
         return (
           <CollaboratorInitiativesStep
             krs={krs}
+            effectiveUserId={effectiveUserId}
             onContinue={(markedAtRisk) => {
               updateDraft({ initiativesMarkedAtRisk: markedAtRisk });
               goNext();
