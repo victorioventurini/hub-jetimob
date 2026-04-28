@@ -58,6 +58,7 @@ export const BULK_RESCHEDULABLE_WIZARD_TYPES: WizardPersona[] = [
   'mbr',
   'mbr-pre',
   'qbr-pre',
-  'qbr',
-  'qbr-clevel',
+  'qbr-pre-clevel',
+  'qbr-meeting',
+  'qbr-post',
 ];
