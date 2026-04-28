@@ -22,10 +22,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, XCircle, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { useUrlState } from '@/shared/url';
 import { WIZARD_TYPE_LABELS } from '../../hooks/useRitualHistory';
 import {
   useRitualOccurrences,
@@ -35,6 +36,9 @@ import { useCollaboratorCheckinCounts } from '../../hooks/useCollaboratorCheckin
 import type { WizardPersona } from '../../types/wizard';
 import { DAY_LABELS, STATUS_CONFIG, RECURRENT_WIZARD_TYPES } from './constants';
 import { OccurrenceSheet } from './OccurrenceSheet';
+import { CalendarListView } from './CalendarListView';
+
+type CalendarViewMode = 'grid' | 'list';
 
 export function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
