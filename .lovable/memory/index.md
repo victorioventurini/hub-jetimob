@@ -33,3 +33,4 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [Optional Select Clearable](mem://standards/ui/optional-select-include-none) — TeamSelect/AreaSelect/BuUserSelect em campos opcionais exigem includeNone/allowNone para permitir limpar a seleção (Radix Select não limpa nativamente)
 
 
+- [KPIs Permissions Matrix](mem://features/kpis/kpis-permissions-matrix) — Matriz scope-oriented (org/area/team) com herança hierárquica; Métricas travadas em scope=team; helpers SQL user_can_manage_kpi/user_can_create_kpi
