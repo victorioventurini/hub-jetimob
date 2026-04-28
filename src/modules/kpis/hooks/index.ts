@@ -12,6 +12,8 @@ export { useKpiMutations } from "./useKpiMutations";
 export { useKpisForWizard } from "./useKpisForWizard";
 export { useKpisForWizardV2 } from "./useKpisForWizardV2";
 export { useKpiContributors, useUserContributedKpis } from "./useKpiContributors";
+export { useKpiPrimaryDataEntry, useUpsertKpiPrimaryDataEntry } from "./useKpiPrimaryDataEntry";
+export type { PrimaryDataEntry } from "./useKpiPrimaryDataEntry";
 export { useTeamArea } from "./useTeamArea";
 export { useKpiLinkedKrs } from "./useKpiLinkedKrs";
 export { useCanEditKpi } from "./useCanEditKpi";
