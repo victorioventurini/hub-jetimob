@@ -162,6 +162,17 @@ export function OccurrenceSheet({
             </div>
           )}
 
+          {isBulkEligible && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowBulk(true)}
+            >
+              <CalendarRange className="h-4 w-4 mr-2" />
+              Reagendar todos os times deste rito
+            </Button>
+          )}
+
           {occurrence.sessionId && (
             <Button variant="outline" className="w-full" asChild>
               <Link to={`/rituals/history?session=${occurrence.sessionId}`}>
@@ -171,6 +182,13 @@ export function OccurrenceSheet({
           )}
         </div>
       </SheetContent>
+
+      <BulkRescheduleDialog
+        open={showBulk}
+        onOpenChange={setShowBulk}
+        initialWizardType={occurrence.wizardType}
+        initialDate={occurrence.plannedDate}
+      />
     </Sheet>
   );
 }
