@@ -81,11 +81,13 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
   
   const { archiveKpi, reactivateKpi, deleteKpi } = useKpiMutations();
   const { has: hasPermission, isLoading: permissionLoading } = usePermissions();
-  const { canEdit, canUpdateValues, isLoading: canEditLoading } = useCanEditKpi(kpi);
-  
-  // Pode gerenciar (arquivar/excluir) - apenas admins
-  const canManage = hasPermission("kpis.settings.manage:bu");
-  
+  const { canEdit, canDelete, canUpdateValues, isLoading: canEditLoading } = useCanEditKpi(kpi);
+
+  // Arquivar continua restrito a admins de configuração de KPIs.
+  // Excluir agora respeita a matriz hierárquica (canDelete = admins + líderes hierárquicos
+  // + responsável/atualizado-por para Métricas).
+  const canArchive = hasPermission("kpis.settings.manage:bu");
+
   const isLoading = permissionLoading || canEditLoading;
 
   // Early return if no permission at all (after hooks)
@@ -195,23 +197,26 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
               Editar
             </DropdownMenuItem>
           )}
-          {/* Arquivar/Excluir apenas para admins */}
-          {canManage && (
+          {/* Arquivar: admins de configuração */}
+          {canArchive && (
+            <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
+              {isArchived ? (
+                <>
+                  <ArchiveRestore className="mr-2 h-4 w-4" />
+                  Reativar
+                </>
+              ) : (
+                <>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Arquivar
+                </>
+              )}
+            </DropdownMenuItem>
+          )}
+          {/* Excluir: respeita canDelete (admins + líderes hierárquicos; +responsável/atualizado-por p/ Métricas) */}
+          {canDelete && (
             <>
-              <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
-                {isArchived ? (
-                  <>
-                    <ArchiveRestore className="mr-2 h-4 w-4" />
-                    Reativar
-                  </>
-                ) : (
-                  <>
-                    <Archive className="mr-2 h-4 w-4" />
-                    Arquivar
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {canArchive && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => setDeleteOpen(true)}
