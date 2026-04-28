@@ -136,12 +136,12 @@ export const MilestoneScheduleContext = memo(function MilestoneScheduleContext({
   if (sorted.length === 0) return null;
 
   return (
-    <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="min-w-0 space-y-2 overflow-hidden rounded-lg border bg-muted/20 p-3">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <h4 className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Milestones do projeto ({sorted.length})
         </h4>
-        <div className="hidden sm:block">
+        <div className="hidden shrink-0 sm:block">
           <ProjectViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
       </div>
@@ -154,9 +154,9 @@ export const MilestoneScheduleContext = memo(function MilestoneScheduleContext({
           conflictIds={conflictIds}
         />
       </div>
-      <div className="hidden sm:block">
+      <div className="hidden min-w-0 sm:block">
         {viewMode === 'gantt' ? (
-          <div className="max-h-[200px] overflow-y-auto">
+          <div className="min-w-0 max-h-[220px] overflow-auto">
             <GanttTimeline items={ganttItems} excludedCount={0} showLegend={false} />
           </div>
         ) : (

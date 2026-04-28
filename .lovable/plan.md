@@ -1,99 +1,31 @@
-# Painel de milestones existentes no MilestoneDialog (Mini Gantt + toggle Lista/Gantt)
+# Corrigir overflow do Gantt no modal de milestone
 
-## Pré-checklist canônico — concluído
-- **TCR (`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` §Projetos, linhas 1652–1758):** confirmado que a criação/edição é feita exclusivamente via `MilestoneDialog`; `MilestonesTable` e `MilestoneGanttChart` são as visualizações canônicas; permissões row-aware via `useProjectPermissionsV2` + trigger `enforce_milestone_soft_delete_authority`.
-- **`mem://features/projects/holistic-module-architecture-v2` (v1.9):** padrão Dialog + RHF + Zod + `useDialogFormReset` deve ser preservado; `MilestoneCreateForm` inline foi descontinuado; vínculo KR↔milestone removido da UI.
-- **`mem://features/projects/milestone-permissions-row-aware`:** mudança é apenas UI/leitura — não toca em RLS, trigger, hooks de mutation nem em `canEditMilestoneRecord`.
-- **Standards aplicáveis:** sem novas queries (reaproveita dados que os callers já têm) → não há novo query key (`mem://standards/query-key-prefix-standard`), nenhum `select('*')`, nenhum CHECK constraint, sem novo cliente Supabase. Cumpre `mem://standards/frontend-memoization-standard` (`React.memo` no painel).
-- **Componentes existentes reutilizados:** `GanttTimeline` (já usado por `MilestoneGanttChart`), `ProjectViewToggle` (`list | gantt`, ícones e padrão visual), `DIALOG_SIZES.lg` (640px) de `src/lib/dialog-sizes.ts`.
+## Problema
 
-## Objetivo
-Mostrar dentro do `MilestoneDialog` os milestones já cadastrados do mesmo projeto (com preview em tempo real do milestone em edição/criação) para apoiar o encaixe de datas sem fechar o modal.
+No modal de criação/edição de milestones, o painel "Milestones do projeto" em modo Gantt está com o conteúdo (cabeçalho de meses e barras) extrapolando a largura do modal. Visível no screenshot: as barras "Validação técnica", "Recadastro das assinaturas" e "Lançamento novas assinaturas" ficam cortadas/saindo pela direita do `DialogContent`.
 
-## Escopo (apenas UI/presentation)
+## Causa raiz
 
-### 1. `MilestoneDialog.tsx`
-Adiciona props opcionais e renderiza painel acima do form:
-- `existingMilestones?: Array<{ id; name; start_date; due_date; status }>`
-- `currentMilestoneId?: string` (identifica o próprio em modo edição)
-- `projectStartDate?: string | null` / `projectDueDate?: string | null` (escala mínima do gantt quando o projeto é maior que a janela dos milestones)
+- `GanttTimeline` força `min-width: 700px` no conteúdo interno e usa `overflow-x-auto` no wrapper.
+- `MilestoneDialog` usa `DIALOG_SIZES.lg` (640px) com padding interno (~48px), restando ~590px úteis — menos que os 700px do Gantt.
+- O wrapper do Gantt em `MilestoneScheduleContext` (`<div className="max-h-[200px] overflow-y-auto">`) **não tem `min-w-0`**, então o flex/grid pai permite que o conteúdo intrínseco do Gantt empurre o `DialogContent` além do `max-width`, gerando o vazamento visual visto no screenshot.
 
-Layout dentro do `DialogContent`:
-1. Header existente.
-2. **Novo:** `<MilestoneScheduleContext>` (componente novo) — só renderiza se `existingMilestones?.length > 0`.
-3. Form atual (sem mudanças de regras/validação).
-4. Footer existente.
+## Correção (UI/CSS apenas)
 
-`DialogContent` passa de `sm:max-w-[500px]` para `DIALOG_SIZES.lg` (640px) para acomodar a faixa visual; mantém `max-h-[90vh] overflow-y-auto`.
+Em `src/modules/projects/components/MilestoneScheduleContext.tsx`:
 
-### 2. Novo componente `MilestoneScheduleContext.tsx`
-Localizado em `src/modules/projects/components/`. Estado interno: `viewMode: 'list' | 'gantt'` (default `'gantt'`, sem persistência).
+1. Adicionar `min-w-0` no container raiz do painel (`<div className="space-y-2 rounded-lg border bg-muted/20 p-3">` → adicionar `min-w-0 overflow-hidden`).
+2. No wrapper do Gantt desktop, trocar `max-h-[200px] overflow-y-auto` por `max-h-[220px] overflow-auto min-w-0` para permitir scroll horizontal interno (já suportado pelo `GanttTimeline`) e impedir que o conteúdo expanda o pai.
+3. Garantir que o cabeçalho ("Milestones do projeto (n)" + toggle) tenha `min-w-0` também, para não competir por largura.
 
-Header do painel:
-```
-┌─ Milestones do projeto (4)                  [Lista] [Gantt] ┐
-```
-Usa `ProjectViewToggle` já existente.
+Resultado: o painel respeita a largura do modal; quando o Gantt precisa de mais espaço que os ~590px disponíveis, aparece scroll horizontal **dentro** do painel (padrão consistente com o uso do Gantt em outras telas), sem quebrar o layout do `DialogContent`.
 
-#### Modo Gantt (default)
-Faixa visual reaproveitando `GanttTimeline` (mesma técnica HTML/CSS, cores por status, linha "hoje"):
-```
-                                            mai    jun    jul
-┌─────────────────────────────────────────────────────────────┐
-│ Discovery          ▰▰▰                                      │
-│ Integração API         ▰▰▰▰▰  (este)                        │
-│ Migração base                ▰▰▰▰                           │
-│ Go-live                            ▰▰                       │
-│ ────────────────────────────────────────────────────────────│
-│ ░░░░░░░  ← preview do form (start_date/due_date digitados)  │
-└─────────────────────────────────────────────────────────────┘
-                          ▲ hoje
-```
-- Construção dos `GanttItem[]` no estilo do `MilestoneGanttChart` (filtra `deleted_at` nulo, exige `due_date` e `start_date` válidos; itens inválidos vão para `excludedCount`).
-- Linha "preview" extra montada a partir de `form.watch('start_date'/'due_date')` quando ambas são datas válidas e `start <= due`. Renderizada com tracejado/`opacity-60`.
-- Em modo edição, o item `currentMilestoneId` recebe badge "(este)" e o preview substitui visualmente seu intervalo original.
-- Altura limitada (`max-h-[180px] overflow-y-auto`) para não sufocar o form em telas pequenas.
+## Arquivos alterados
 
-#### Modo Lista
-Tabela densa, mesma fonte de dados:
-```
-● Discovery          12 mai → 26 mai   concluído
-● Integração API     27 mai → 14 jun   em andamento  (este)
-◌ Migração base      15 jun → 30 jun   a fazer
-◌ Go-live            01 jul → 10 jul   a fazer
-```
-- Bullet colorido por status (mesma paleta do Gantt).
-- Datas formatadas `dd MMM` em pt-BR (`date-fns/locale`).
-- Linha do `currentMilestoneId` com fundo `bg-muted` e tag "(este)".
-- Linhas com **sobreposição** com o intervalo digitado no form ganham texto âmbar discreto e ícone `AlertTriangle` (apenas aviso visual).
+- `src/modules/projects/components/MilestoneScheduleContext.tsx` (apenas classes Tailwind)
 
-### 3. Aviso de conflito (compartilhado pelos dois modos)
-Abaixo do campo "Prazo", quando o intervalo do form se sobrepõe a outro milestone (excluindo o próprio), mostrar `Alert variant="warning"` discreto:
-> "As datas escolhidas se sobrepõem a: Integração API (27 mai → 14 jun)."
+## Não altera
 
-**Não bloqueia** o submit — apenas alerta. Sobreposições são legítimas em projetos com paralelismo.
-
-### 4. Atualização dos callers (passar dados; sem nova query)
-- **`src/modules/projects/pages/ProjectDetailPage.tsx`:** já chama `useMilestones(id)` → passar `existingMilestones={milestones}`, `currentMilestoneId={editingMilestone?.id}`, `projectStartDate={project?.start_date}`, `projectDueDate={project?.due_date}` para os dois usos do `MilestoneDialog` (criar e editar).
-- **`src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`:** já tem `project.milestones` no escopo do botão de edição → passar a mesma prop. Sem nova chamada Supabase no wizard (preserva isolamento de draft, `mem://standards/wizard-draft-isolation`).
-
-## Detalhes técnicos
-- **Componentes novos:** apenas `MilestoneScheduleContext.tsx` (envolto em `React.memo`).
-- **Sem novos hooks, query keys, RPCs, edge functions ou migrações.**
-- **Sem mudança em `entityLimits`, RBAC, ou ritual labels SSOT.**
-- **Acessibilidade:** toggle herda padrão do `ProjectViewToggle` (botões com label sr-only em mobile); barras do gantt mantêm `title` com nome + datas; aviso de conflito usa `role="status"`.
-- **Mobile (`sm:`):** painel colapsa para apenas modo Lista quando viewport `< 640px` (Gantt fica inviável); toggle escondido nesse breakpoint.
-- **Performance:** `useMemo` para itens do gantt e cálculo de conflitos; `existingMilestones` filtrado uma única vez (deleted_at nulo, ordenado por `start_date`).
-
-## Fora de escopo
-- Drag-and-drop nas barras.
-- Edição/reordenação de outros milestones a partir do dialog.
-- Persistir preferência Lista/Gantt do usuário entre sessões.
-- Mostrar dependências entre milestones (`project_milestone_dependencies`).
-- Qualquer mudança em RLS, hooks de mutation, RPCs ou schema.
-
-## Arquivos tocados
-- `src/modules/projects/components/MilestoneDialog.tsx` (props + render do painel + largura).
-- `src/modules/projects/components/MilestoneScheduleContext.tsx` (novo).
-- `src/modules/projects/pages/ProjectDetailPage.tsx` (passar props nos 2 usos).
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx` (passar props no uso de edição).
+- Nenhuma lógica de negócio, queries, RLS, BU scoping, schema ou dados.
+- `MilestoneDialog.tsx` permanece em `DIALOG_SIZES.lg` (não aumentamos para preservar SSOT de tamanhos de modais).
+- `GanttTimeline.tsx` permanece intacto (já oferece scroll horizontal corretamente).
