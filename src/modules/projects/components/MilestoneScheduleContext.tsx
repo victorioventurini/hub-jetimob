@@ -123,7 +123,7 @@ export const MilestoneScheduleContext = memo(function MilestoneScheduleContext({
         name: `${previewName?.trim() || 'Novo milestone'} (prévia)`,
         start_date: previewStart!,
         due_date: previewDue!,
-        status: 'planned' as MilestoneStatus,
+        status: 'todo' as MilestoneStatus,
         owner_id: undefined,
         notes: null,
       });
