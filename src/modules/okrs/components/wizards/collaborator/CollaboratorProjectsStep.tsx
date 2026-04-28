@@ -338,6 +338,17 @@ export function CollaboratorProjectsStep({
                     {project.name}
                   </h3>
                   <ProjectHealthBadge health={project.health} />
+                  {project.isProjectOwner && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs shrink-0"
+                      onClick={() => setEditingProject(project)}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editar projeto
+                    </Button>
+                  )}
                 </div>
 
                 {/* Progress */}
@@ -354,35 +365,51 @@ export function CollaboratorProjectsStep({
                     <p className="text-xs text-muted-foreground font-medium">
                       Marcos pendentes
                     </p>
-                    {project.milestones.map(milestone => (
-                      <div
-                        key={milestone.id}
-                        className="flex items-center gap-2 py-1 min-w-0"
-                      >
-                        <MilestoneStatusSelect
-                          value={milestone.status}
-                          onValueChange={(newStatus) =>
-                            handleMilestoneStatusChange(milestone.id, project.id, newStatus)
-                          }
-                        />
-                        <span className="text-sm text-foreground truncate flex-1 min-w-0">
-                          {milestone.name}
-                        </span>
-                        {milestone.due_date && (
-                          <span className={cn(
-                            'text-xs whitespace-nowrap shrink-0',
-                            new Date(milestone.due_date) < new Date()
-                              ? 'text-destructive'
-                              : 'text-muted-foreground'
-                          )}>
-                            {new Date(milestone.due_date).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: 'short',
-                            })}
+                    {project.milestones.map(milestone => {
+                      const canEdit = canEditMilestoneRow(project, milestone.owner_id);
+                      return (
+                        <div
+                          key={milestone.id}
+                          className="flex items-center gap-2 py-1 min-w-0"
+                        >
+                          <MilestoneStatusSelect
+                            value={milestone.status}
+                            onValueChange={(newStatus) =>
+                              handleMilestoneStatusChange(milestone.id, project.id, newStatus)
+                            }
+                          />
+                          <span className="text-sm text-foreground truncate flex-1 min-w-0">
+                            {milestone.name}
                           </span>
-                        )}
-                      </div>
-                    ))}
+                          {milestone.due_date && (
+                            <span className={cn(
+                              'text-xs whitespace-nowrap shrink-0',
+                              new Date(milestone.due_date) < new Date()
+                                ? 'text-destructive'
+                                : 'text-muted-foreground'
+                            )}>
+                              {new Date(milestone.due_date).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                            </span>
+                          )}
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              aria-label="Editar milestone"
+                              onClick={() =>
+                                setEditingMilestone({ projectId: project.id, milestone })
+                              }
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground italic">
@@ -394,6 +421,46 @@ export function CollaboratorProjectsStep({
           </div>
         )}
       </div>
+
+      {/* Milestone Edit Dialog (canonical) — montado por demanda */}
+      {editingMilestone && (
+        <MilestoneDialog
+          open={!!editingMilestone}
+          onOpenChange={(open) => { if (!open) setEditingMilestone(null); }}
+          onSubmit={handleMilestoneEditSubmit}
+          isSubmitting={updateMilestone.isPending}
+          title="Editar milestone"
+          defaultValues={{
+            name: editingMilestone.milestone.name,
+            start_date: editingMilestone.milestone.start_date ?? '',
+            due_date: editingMilestone.milestone.due_date ?? '',
+            owner_id: editingMilestone.milestone.owner_id ?? '',
+            notes: editingMilestone.milestone.notes ?? '',
+          }}
+        />
+      )}
+
+      {/* Project Edit Dialog (canonical) — montado por demanda */}
+      {editingProject && (
+        <ProjectDialog
+          open={!!editingProject}
+          onOpenChange={(open) => { if (!open) setEditingProject(null); }}
+          onSubmit={handleProjectEditSubmit}
+          isSubmitting={updateProject.isPending}
+          title="Editar projeto"
+          currentOwnerId={editingProject.owner_id ?? undefined}
+          defaultValues={{
+            name: editingProject.name,
+            description: editingProject.description ?? '',
+            owner_id: editingProject.owner_id ?? '',
+            team_ids: editingProject.team_ids,
+            status: editingProject.status,
+            start_date: editingProject.start_date ?? '',
+            due_date: editingProject.due_date ?? '',
+            external_url: editingProject.external_url ?? '',
+          }}
+        />
+      )}
     </WizardStepScaffold>
   );
 }
