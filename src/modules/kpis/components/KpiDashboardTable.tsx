@@ -21,6 +21,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { KpiWithValues, RAG_STATUS_CONFIG, INDICATOR_TYPE_LABELS } from "../types";
 import { KpiActionsMenu } from "./KpiActionsMenu";
+import { KpiScopeBadge } from "./KpiScopeBadge";
+import { useBu } from "@/contexts/BuContext";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -92,6 +94,7 @@ function TableSkeleton() {
 }
 
 export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardTableProps) {
+  const { currentBu } = useBu();
   if (isLoading) {
     return <TableSkeleton />;
   }
@@ -152,11 +155,13 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
 
                 {/* Área */}
                 <TableCell>
-                  {kpi.area ? (
-                    <AreaBadge area={kpi.area} />
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {kpi.area && <AreaBadge area={kpi.area} />}
+                    <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
+                    {!kpi.area && kpi.scope !== "org" && (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
                 </TableCell>
 
                 {/* Valor Atual */}

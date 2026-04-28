@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { KpiWithValues, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
 import { FREQUENCY_DAYS, getFrequencyLabel, legacyFrequencyToValue } from "../utils/frequency";
 import { KpiActionsMenu } from "./KpiActionsMenu";
+import { KpiScopeBadge } from "./KpiScopeBadge";
+import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,6 +39,7 @@ const SourceIcon = ({ type }: { type: string }) => {
 export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProps) {
   const { openPanel } = useVic();
   const { isEnabled: vicEnabled } = useVicEnabled();
+  const { currentBu } = useBu();
   
   const TrendIcon = kpi.trend === "up" ? TrendingUp : kpi.trend === "down" ? TrendingDown : Minus;
 
@@ -117,6 +120,7 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
               {kpi.area && (
                 <AreaBadge area={kpi.area} className="shrink-0" />
               )}
+              <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={cn(
