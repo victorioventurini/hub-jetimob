@@ -1,86 +1,88 @@
-# Reagendamento em massa de ritos no Calendário
-
 ## Pré-checklist (concluído)
-- TCR + DATA_MODEL_REGISTRY: `ritual_occurrences` é BU-scoped (v3.21.0).
-- RLS verificado: `UPDATE` exige `is_bu_admin OR is_platform_admin` — alinhado com a rota `/settings/rituals`.
-- IDENTITY_CONVENTION: mutação não requer `realProfileId` (RLS usa `auth.uid()`).
-- Memórias `comprehensive-calendar-architecture-v2` e `mbr-multi-date-governance` confirmam: ritos globais materializam 1 ocorrência por time, e mover ocorrências individuais não conflita com a cadência.
-- Standards: BU isolation, query keys via prefix helpers, sem `select('*')`.
+- **TCR + DATA_MODEL_REGISTRY**: `ritual_occurrences` BU-scoped (v3.21.0), confirmado.
+- **RLS verificada via DB**: `bu_admin_occurrences_all` permite `UPDATE` para admins da BU — coerente com `/settings/rituals`.
+- **IDENTITY_CONVENTION**: política usa `is_bu_admin(auth.uid(), bu_id)`; não exige `realProfileId` para a mutação (já validado no plano original).
+- **Memórias**: `comprehensive-calendar-architecture-v2`, `mbr-multi-date-governance`, `ritual-reopen-mechanism` revisadas — apenas `scheduled`/`missed` são mutáveis.
+- **Standards**: `BULK_RESCHEDULABLE_WIZARD_TYPES` já tipado como `WizardPersona[]` em `constants.ts`. Query keys via `okrsKeys` prefix. `useBuScopedSupabase` mandatório.
+- **Hook + Dialog + botão do header**: já implementados corretamente. **Esta iteração é puramente UI/UX no `OccurrenceSheet`.**
 
-## Problema
-Ritos globais (`mbr`, `mbr-pre`, `qbr-pre`, `qbr`, `qbr-clevel`) geram **uma `ritual_occurrence` por time ativo**. Hoje só existe reagendamento individual via `OccurrenceSheet`, inviabilizando "mover o `mbr-pre` de 05/ago de todos os times".
+## Problema observado (print do usuário)
+O `OccurrenceSheet` para um `mbr-pre` agendado mostra apenas:
+- Status "Agendado", time "BizOps", "Data prevista 05/05/2026"
+- Campo "Nova data" + botão "Confirmar" cinza (reagendamento individual já expandido)
+
+**O botão "Reagendar todos os times deste rito" não está visível**, embora o código em `OccurrenceSheet.tsx:165-174` o renderize quando `isBulkEligible === true` (que é o caso para `mbr-pre` + `scheduled`).
+
+Causa provável: o botão **está renderizado**, mas fica abaixo da dobra do `SheetContent` porque:
+1. O formulário individual (`Reagendar`) aparece **antes** no JSX (linhas 120-163), com Calendar Popover + botão Confirmar grande, ocupando muito espaço vertical.
+2. O `SheetContent` não tem scroll explícito, então o conteúdo overflowa silenciosamente.
+3. Hierarquia visual invertida: ação **menos comum** (reagendar 1 time de um rito global) está em destaque acima da ação **mais comum** (reagendar todos os times daquela data).
 
 ## Objetivo
-Permitir que um Admin reagende, em uma única ação, **todas as ocorrências do mesmo rito que caem na mesma data**, para todos os times da BU ativa. Status elegíveis: `scheduled` e `missed`.
+Tornar o reagendamento em massa **descobrível e prioritário** quando a ocorrência for de um rito global (`mbr`, `mbr-pre`, `qbr-*`), sem alterar lógica de negócio.
 
-## Mudanças
+## Mudanças (apenas em `src/modules/okrs/pages/ritual-calendar/OccurrenceSheet.tsx`)
 
-### 1. Hook — `useRescheduleOccurrencesBulk`
-Em `src/modules/okrs/hooks/useRitualOccurrences.ts`.
+### 1. Reordenar ações abaixo do `Separator`
+Quando `isBulkEligible === true`:
+- **1ª ação (destaque, `variant="default"`)**: "Reagendar todos os times deste rito" (atual bulk).
+- **2ª ação (`variant="outline"`)**: "Reagendar apenas este time" (atual individual, label renomeado).
 
-Entrada: `{ wizardType: string; plannedDate: string; newDate: string }`.
+Quando `isBulkEligible === false` (ex.: `collaborator`, `team-checkin`):
+- Apenas a ação individual aparece, com label original "Reagendar".
 
-Comportamento:
-- Cliente: `useBuScopedSupabase`.
-- 1º SELECT (`id, planned_date, rescheduled_from`) com filtros `bu_id`, `wizard_type`, `planned_date`, `status IN ('scheduled','missed')`.
-- Para cada linha, `UPDATE` preservando `rescheduled_from` (mantém valor original se já existir; senão usa `planned_date`), define `rescheduled_to = newDate`, `planned_date = newDate`, `status = 'rescheduled'`.
-- Retorna `{ count }`.
-- Invalida `queryKeys.okrs.ritualOccurrencesPrefix(buId)` e `ritualAdherencePrefix(buId)`.
-- Toast: "N ocorrências reagendadas".
+### 2. Hint contextual
+Acima dos botões, quando `isBulkEligible`, exibir texto sutil:
+> "Este rito ocorre em todos os times nesta data."
 
-Justificativa do loop client-side: N ≤ nº de times ativos (~10-50). RLS já protege; não precisa de RPC/edge.
+### 3. Garantir scroll do `SheetContent`
+Envolver o conteúdo abaixo do `SheetHeader` em um wrapper com `max-h-[calc(100vh-6rem)] overflow-y-auto pr-1` para garantir que o formulário individual expandido nunca esconda o botão de bulk.
 
-### 2. UI — `BulkRescheduleDialog` (novo)
-`src/modules/okrs/pages/ritual-calendar/BulkRescheduleDialog.tsx`.
+### 4. Status `missed` também elegível
+Hoje o bloco de reagendamento individual (linha 120) só renderiza para `status === 'scheduled'`. Como `isBulkEligible` aceita `scheduled` **ou** `missed`, ajustar a condição do bloco individual para `(occurrence.status === 'scheduled' || occurrence.status === 'missed')` — mantém consistência entre as duas ações.
 
-Props: `{ open, onOpenChange, initialWizardType?, initialDate? }`.
+## Snippet de referência
+```tsx
+{(occurrence.status === 'scheduled' || occurrence.status === 'missed') && (
+  <div className="space-y-3">
+    {isBulkEligible && (
+      <p className="text-xs text-muted-foreground">
+        Este rito ocorre em todos os times nesta data.
+      </p>
+    )}
 
-- Vindo do Sheet: campos pré-preenchidos e bloqueados.
-- Vindo do header: `Select` de rito (lista `BULK_RESCHEDULABLE_WIZARD_TYPES`) + `Calendar` Popover de data origem.
-- Preview: query secundária retorna contagem + lista de times num `ScrollArea` ("X ocorrências em Y times serão reagendadas").
-- `Calendar` Popover de nova data.
-- Aviso: "Apenas ocorrências com status 'agendada' ou 'perdida' serão afetadas."
-- Confirmar desabilitado sem nova data ou se preview = 0.
+    {isBulkEligible && (
+      <Button className="w-full" onClick={() => setShowBulk(true)}>
+        <CalendarRange className="h-4 w-4 mr-2" />
+        Reagendar todos os times deste rito
+      </Button>
+    )}
 
-### 3. Constantes
-Em `src/modules/okrs/pages/ritual-calendar/constants.ts`:
-```ts
-export const BULK_RESCHEDULABLE_WIZARD_TYPES: WizardPersona[] = [
-  'mbr', 'mbr-pre', 'qbr-pre', 'qbr', 'qbr-clevel',
-];
+    {!showReschedule ? (
+      <Button variant="outline" className="w-full" onClick={() => setShowReschedule(true)}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        {isBulkEligible ? 'Reagendar apenas este time' : 'Reagendar'}
+      </Button>
+    ) : (
+      /* formulário individual existente — Calendar Popover + Confirmar */
+    )}
+  </div>
+)}
 ```
 
-### 4. Gatilhos
-**a) `OccurrenceSheet.tsx`**: botão "Reagendar todos os times deste rito" quando `wizardType ∈ BULK_RESCHEDULABLE_WIZARD_TYPES` e `status ∈ ['scheduled','missed']`.
-
-**b) `CalendarTab.tsx`**: botão "Reagendar em massa" no header (junto ao `RitualCalendarViewToggle`).
-
-### 5. Query keys
-Adicionar em `src/lib/queryKeys/okrs.ts`:
-```ts
-ritualOccurrencesEligibleForBulk: (buId, wizardType, plannedDate) =>
-  [...prefix, 'eligible-bulk', buId, wizardType, plannedDate] as const,
-```
-
-### 6. Testes
-- `useRitualOccurrences.test.ts` (estender): filtro correto, preservação de `rescheduled_from`, contagem retornada, ignora `completed_*` e `rescheduled`.
-- `BulkRescheduleDialog.test.tsx`: render pré-preenchido vs livre, desabilitado sem nova data, payload correto.
-
-### 7. Fora de escopo
-- Sem alteração em `sync-ritual-calendar-from-cycles`, `ritual_cadences`, RLS, ou `useRescheduleOccurrence` individual.
-- Sem alteração em `pickCompositeWindow` ou `firstTuesdayOfMonth` — apenas datas de ocorrências individuais são movidas.
-
-## Arquivos afetados
-- `src/modules/okrs/hooks/useRitualOccurrences.ts`
-- `src/lib/queryKeys/okrs.ts`
-- `src/modules/okrs/pages/ritual-calendar/constants.ts`
-- `src/modules/okrs/pages/ritual-calendar/BulkRescheduleDialog.tsx` (novo)
-- `src/modules/okrs/pages/ritual-calendar/OccurrenceSheet.tsx`
-- `src/modules/okrs/pages/ritual-calendar/CalendarTab.tsx`
-- Testes correspondentes
+## Fora de escopo
+- Hooks (`useRescheduleOccurrence`, `useRescheduleOccurrencesBulk`): inalterados.
+- `BulkRescheduleDialog`: inalterado.
+- Botão "Reagendar em massa" no header do `CalendarTab`: inalterado.
+- RLS, query keys, edge functions, constantes: sem mudanças.
 
 ## Validação manual
-1. `/settings/rituals?tab=calendar` → abrir uma ocorrência `mbr-pre` de agosto → "Reagendar todos os times deste rito" → escolher nova data → confirmar.
-2. Conferir no calendário e via SQL: `mbr-pre` saiu da data antiga, apareceu na nova com `status='rescheduled'`, `rescheduled_to=novaData`, `rescheduled_from` preservado.
-3. Repetir via botão do header com seleção manual (rito + data origem + nova data).
-4. Data origem sem ocorrências elegíveis → preview 0 e Confirmar desabilitado.
+1. `/settings/rituals?tab=calendar` → clicar em ocorrência `Pré-MBR` (status Agendado).
+2. Conferir que o **primeiro** botão visível abaixo dos metadados é "Reagendar todos os times deste rito" (variant default, destaque).
+3. Conferir que "Reagendar apenas este time" aparece logo abaixo, em outline.
+4. Clicar em ocorrência de `collaborator` → conferir que apenas "Reagendar" aparece.
+5. Clicar em ocorrência `mbr-pre` com status "Não executado" (`missed`) → ambas as ações devem aparecer.
+6. Expandir o reagendamento individual → o botão de bulk continua visível acima; se necessário, scroll funciona dentro do Sheet.
+
+## Arquivos afetados
+- `src/modules/okrs/pages/ritual-calendar/OccurrenceSheet.tsx` (única alteração)
