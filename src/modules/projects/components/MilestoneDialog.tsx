@@ -20,6 +20,11 @@ import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
 import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
+import { DIALOG_SIZES } from '@/lib/dialog-sizes';
+import {
+  MilestoneScheduleContext,
+  type ScheduleMilestone,
+} from './MilestoneScheduleContext';
 
 const schema = z.object({
   name: z.string()
