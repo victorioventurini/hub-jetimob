@@ -72,6 +72,7 @@ interface ProjectWithMilestones {
 interface EditingMilestoneCtx {
   projectId: string;
   milestone: ProjectWithMilestones['milestones'][number];
+  projectMilestones: ProjectWithMilestones['milestones'];
 }
 
 // ============================================================
@@ -401,7 +402,7 @@ export function CollaboratorProjectsStep({
                               className="h-7 w-7 shrink-0"
                               aria-label="Editar milestone"
                               onClick={() =>
-                                setEditingMilestone({ projectId: project.id, milestone })
+                                setEditingMilestone({ projectId: project.id, milestone, projectMilestones: project.milestones })
                               }
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -437,6 +438,8 @@ export function CollaboratorProjectsStep({
             owner_id: editingMilestone.milestone.owner_id ?? '',
             notes: editingMilestone.milestone.notes ?? '',
           }}
+          existingMilestones={editingMilestone.projectMilestones}
+          currentMilestoneId={editingMilestone.milestone.id}
         />
       )}
 

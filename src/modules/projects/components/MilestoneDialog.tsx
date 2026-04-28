@@ -20,6 +20,11 @@ import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
 import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
+import { DIALOG_SIZES } from '@/lib/dialog-sizes';
+import {
+  MilestoneScheduleContext,
+  type ScheduleMilestone,
+} from './MilestoneScheduleContext';
 
 const schema = z.object({
   name: z.string()
@@ -51,11 +56,19 @@ interface MilestoneDialogProps {
   isSubmitting?: boolean;
   title?: string;
   defaultValues?: Partial<FormValues>;
+  /** Milestones já cadastrados no projeto (para painel de contexto). */
+  existingMilestones?: ScheduleMilestone[];
+  /** Identifica o próprio milestone em modo edição (excluído de conflitos). */
+  currentMilestoneId?: string;
+  projectStartDate?: string | null;
+  projectDueDate?: string | null;
 }
 
 export function MilestoneDialog({
   open, onOpenChange, onSubmit, isSubmitting,
   title = 'Novo milestone', defaultValues,
+  existingMilestones, currentMilestoneId,
+  projectStartDate, projectDueDate,
 }: MilestoneDialogProps) {
   const defaults: FormValues = {
     name: '',
@@ -87,10 +100,22 @@ export function MilestoneDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className={`${DIALOG_SIZES.lg} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+
+        {existingMilestones && existingMilestones.length > 0 && (
+          <MilestoneScheduleContext
+            milestones={existingMilestones}
+            currentMilestoneId={currentMilestoneId}
+            previewStart={form.watch('start_date')}
+            previewDue={form.watch('due_date')}
+            previewName={form.watch('name')}
+            projectStartDate={projectStartDate}
+            projectDueDate={projectDueDate}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
