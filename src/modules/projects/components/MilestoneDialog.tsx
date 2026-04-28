@@ -70,11 +70,6 @@ export function MilestoneDialog({
   existingMilestones, currentMilestoneId,
   projectStartDate, projectDueDate,
 }: MilestoneDialogProps) {
-
-export function MilestoneDialog({
-  open, onOpenChange, onSubmit, isSubmitting,
-  title = 'Novo milestone', defaultValues,
-}: MilestoneDialogProps) {
   const defaults: FormValues = {
     name: '',
     start_date: '',
