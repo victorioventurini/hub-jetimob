@@ -7,6 +7,7 @@ import { memo, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { EntityNamesCell } from '@/components/ui/entity-names-cell';
 import { cn } from '@/lib/utils';
 import { WIZARD_TYPE_LABELS } from '../../hooks/useRitualHistory';
 import type { RitualOccurrence } from '../../hooks/useRitualOccurrences';
@@ -38,25 +39,27 @@ const CalendarListRow = memo(function CalendarListRow({
     <button
       type="button"
       onClick={() => onSelect(occurrence)}
-      className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 sm:items-center px-3 py-2 rounded-md hover:bg-muted/50 transition-colors border border-transparent hover:border-border"
+      className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 sm:items-center px-3 py-2 rounded-md hover:bg-muted/50 transition-colors border border-transparent hover:border-border"
     >
       <div className="flex items-center gap-2 min-w-0">
         <div className={cn('h-2 w-2 rounded-full shrink-0', status.dotColor)} />
         <span className="text-sm font-medium truncate">{personaLabel}</span>
-        {occurrence.teamName && (
-          <span className="text-xs text-muted-foreground truncate">· {occurrence.teamName}</span>
-        )}
       </div>
-      <div className="flex items-center gap-2">
+      {occurrence.teamName ? (
+        <EntityNamesCell teamNames={[occurrence.teamName]} maxVisible={1} />
+      ) : (
+        <span className="text-xs text-muted-foreground">-</span>
+      )}
+      <div className="flex items-center gap-2 justify-end">
         {collaboratorLabel && (
           <span className="text-xs font-medium text-muted-foreground tabular-nums">
             {collaboratorLabel}
           </span>
         )}
-        <Badge variant="outline" className={cn('text-[10px] font-normal', status.color)}>
-          {status.label}
-        </Badge>
       </div>
+      <Badge variant="outline" className={cn('text-[10px] font-normal justify-self-end', status.color)}>
+        {status.label}
+      </Badge>
     </button>
   );
 });
