@@ -759,7 +759,6 @@ export default function MbrPage() {
             onKpiSnapshotsChange={(kpiSnapshots: MbrKpiSnapshot[]) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
-            signaledZombieKpiIds={signaledZombieKpiIds}
             teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
             proposedKpis={proposedKpis}
             onContinue={goNext}
