@@ -329,6 +329,19 @@ export function CollaboratorInitiativesStep({
           </Button>
         </div>
       </div>
+
+      {/* Quick update dialog (canonical) — montado por demanda */}
+      <InitiativeQuickUpdateDialog
+        open={!!editingInitiative}
+        onOpenChange={(open) => { if (!open) setEditingInitiative(null); }}
+        initiative={editingInitiative}
+        krContext={(() => {
+          if (!editingInitiative) return undefined;
+          const kr = krs.find(k => k.id === editingInitiative.kr_id);
+          if (!kr) return undefined;
+          return { id: kr.id, title: kr.title };
+        })()}
+      />
     </div>
   );
 }
