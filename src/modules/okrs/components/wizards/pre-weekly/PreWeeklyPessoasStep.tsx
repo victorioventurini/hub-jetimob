@@ -110,14 +110,6 @@ export function PreWeeklyPessoasStep({
           }
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="pre-weekly-pessoas"
-          placeholder="Registrar decisão sobre pessoas…"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

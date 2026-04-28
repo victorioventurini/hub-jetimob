@@ -119,13 +119,6 @@ export function MbrPreNextStepsStep({
           variant="primary"
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="mbr-pre-next-steps"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

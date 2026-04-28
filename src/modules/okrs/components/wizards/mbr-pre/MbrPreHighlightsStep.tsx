@@ -95,13 +95,6 @@ export function MbrPreHighlightsStep({
           variant="amber"
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="mbr-pre-highlights"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

@@ -93,13 +93,6 @@ export function QbrCLevelDirectivesStep({
           badge={`${directives.length} itens`}
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-clevel-directives"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

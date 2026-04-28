@@ -109,13 +109,6 @@ export function QbrBalanceStep({
           badge={`${totalKrs} KRs`}
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-balance"
-        />
-      }
       footer={
         <WizardFirstStepFooter
           onPrimary={onContinue}

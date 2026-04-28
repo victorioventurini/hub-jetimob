@@ -64,13 +64,6 @@ export function QbrCLevelStrategicStep({
           variant="purple"
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-clevel-strategic"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

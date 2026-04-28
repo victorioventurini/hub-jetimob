@@ -87,13 +87,6 @@ export function QbrLearningsStep({
           variant="purple"
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-learnings"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

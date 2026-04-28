@@ -93,13 +93,6 @@ export function QbrKpiAnalysisStep({
           badge={`${kpiSnapshots.length} KPIs`}
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-kpi-analysis"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

@@ -127,14 +127,6 @@ export function PreWeeklyPautaStep({
           }
         />
       }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="pre-weekly-pauta"
-          placeholder="Registrar decisão sobre prioridade ou priorização…"
-        />
-      }
       footer={
         <WizardStepFooter
           onBack={onBack}

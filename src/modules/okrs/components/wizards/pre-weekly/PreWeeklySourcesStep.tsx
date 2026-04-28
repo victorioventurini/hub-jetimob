@@ -389,14 +389,6 @@ export function PreWeeklySourcesStep({
             variant="primary"
           />
         }
-        bottomFixed={
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={onDecisionsChange}
-            sourceStep="pre-weekly-sources"
-            placeholder="Registrar uma decisão ou observação a partir das fontes…"
-          />
-        }
         footer={
           <WizardFirstStepFooter
             onPrimary={onContinue}
