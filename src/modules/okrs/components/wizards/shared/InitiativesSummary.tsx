@@ -111,6 +111,8 @@ export function InitiativesSummary({
   markedAtRisk = [],
   className,
   editable = false,
+  onEdit,
+  canEdit,
 }: InitiativesSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [comments, setComments] = useState<Record<string, string>>({});
