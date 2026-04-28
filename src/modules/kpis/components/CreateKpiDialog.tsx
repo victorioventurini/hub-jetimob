@@ -882,7 +882,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               />
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {watchScope === 'team' && (
                 <FormField
                   control={form.control}
@@ -909,9 +909,32 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 name="owner_user_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="flex items-center gap-1">
                       Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
-                      <HelpTooltip content="Pessoa accountable pela saúde deste indicador. Será notificada em caso de desvios." />
+                      <HelpTooltip content="Pessoa accountable pelo resultado deste indicador. Monitora desvios e age para 'mover o ponteiro'." />
+                    </FormLabel>
+                    <FormControl>
+                      <BuUserSelect
+                        value={field.value}
+                        onValueChange={(val) => field.onChange(val ?? undefined)}
+                        placeholder="Selecione..."
+                        className="w-full"
+                        excludeExternal
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="updated_by_user_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      Atualizado por {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      <HelpTooltip content="Pessoa responsável por inserir/atualizar os valores deste indicador. Pode ser a mesma do Responsável." />
                     </FormLabel>
                     <FormControl>
                       <BuUserSelect
