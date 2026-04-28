@@ -72,6 +72,7 @@ interface ProjectWithMilestones {
 interface EditingMilestoneCtx {
   projectId: string;
   milestone: ProjectWithMilestones['milestones'][number];
+  projectMilestones: ProjectWithMilestones['milestones'];
 }
 
 // ============================================================
