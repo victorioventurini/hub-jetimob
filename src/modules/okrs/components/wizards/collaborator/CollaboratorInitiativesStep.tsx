@@ -27,6 +27,7 @@ import { projectsKeys } from '@/lib/queryKeys/projects';
 import { InitiativesSummary } from '../shared/InitiativesSummary';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
+import { InitiativeQuickUpdateDialog } from '@/modules/okrs/components/initiatives/InitiativeQuickUpdateDialog';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { Initiative } from '@/modules/okrs/types/initiative';
 import type { ProjectHealth } from '@/modules/projects/types';
@@ -37,6 +38,8 @@ import type { ProjectHealth } from '@/modules/projects/types';
 
 export interface CollaboratorInitiativesStepProps {
   krs: WizardKr[];
+  /** Profile id efetivo do colaborador — usado para gating row-aware. */
+  effectiveUserId: string | null;
   onContinue: (markedAtRisk: string[]) => void;
   onBack: () => void;
   onSkip: () => void;
@@ -48,12 +51,14 @@ export interface CollaboratorInitiativesStepProps {
 
 export function CollaboratorInitiativesStep({
   krs,
+  effectiveUserId,
   onContinue,
   onBack,
   onSkip,
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
   const [markedAtRisk, setMarkedAtRisk] = useState<string[]>([]);
+  const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
   // Get KR IDs
   const krIds = useMemo(() => krs.map(kr => kr.id), [krs]);
@@ -265,6 +270,10 @@ export function CollaboratorInitiativesStep({
                   markedAtRisk={markedAtRisk}
                   onMarkAtRisk={handleMarkAtRisk}
                   editable
+                  onEdit={(init) => setEditingInitiative(init)}
+                  canEdit={(init) =>
+                    !!effectiveUserId && init.owner_user_id === effectiveUserId
+                  }
                 />
 
                 {/* Projects linked to this KR */}
@@ -320,6 +329,19 @@ export function CollaboratorInitiativesStep({
           </Button>
         </div>
       </div>
+
+      {/* Quick update dialog (canonical) — montado por demanda */}
+      <InitiativeQuickUpdateDialog
+        open={!!editingInitiative}
+        onOpenChange={(open) => { if (!open) setEditingInitiative(null); }}
+        initiative={editingInitiative}
+        krContext={(() => {
+          if (!editingInitiative) return undefined;
+          const kr = krs.find(k => k.id === editingInitiative.kr_id);
+          if (!kr) return undefined;
+          return { id: kr.id, title: kr.title };
+        })()}
+      />
     </div>
   );
 }

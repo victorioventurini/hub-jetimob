@@ -26,6 +26,7 @@ import {
   Ban,
   CheckCircle2,
   ClipboardList,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Initiative, InitiativeStatus } from '@/modules/okrs/types/initiative';
@@ -41,6 +42,14 @@ export interface InitiativesSummaryProps {
   markedAtRisk?: string[];
   className?: string;
   editable?: boolean;
+  /**
+   * Quando informado, exibe um botão "Atualizar" no item — apenas para
+   * iniciativas onde `canEdit?.(initiative)` retornar true (ou sempre, se
+   * `canEdit` não for passado). Persistência fica a cargo do consumidor
+   * (ex.: abrir InitiativeQuickUpdateDialog).
+   */
+  onEdit?: (initiative: Initiative) => void;
+  canEdit?: (initiative: Initiative) => boolean;
 }
 
 // ============================================================
@@ -102,6 +111,8 @@ export function InitiativesSummary({
   markedAtRisk = [],
   className,
   editable = false,
+  onEdit,
+  canEdit,
 }: InitiativesSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [comments, setComments] = useState<Record<string, string>>({});
@@ -262,6 +273,18 @@ export function InitiativesSummary({
                           </div>
                         )}
                       </div>
+
+                      {onEdit && (!canEdit || canEdit(init)) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => onEdit(init)}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Atualizar
+                        </Button>
+                      )}
 
                       {editable && (
                         <Button

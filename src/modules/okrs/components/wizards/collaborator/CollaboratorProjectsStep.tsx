@@ -8,23 +8,28 @@
  * sem alterar draft state. Mutations são persistidas imediatamente.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FolderKanban } from 'lucide-react';
+import { FolderKanban, Pencil } from 'lucide-react';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
+import { useUpdateProject } from '@/modules/projects/hooks/useProjectMutations';
+import { useProjectPermissionsV2 } from '@/modules/projects/hooks/useProjectPermissionsV2';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
 import { MilestoneStatusSelect } from '@/modules/projects/components/MilestoneStatusSelect';
+import { MilestoneDialog, type MilestoneDialogSubmitValues } from '@/modules/projects/components/MilestoneDialog';
+import { ProjectDialog } from '@/modules/projects/components/ProjectDialog';
+import { Button } from '@/components/ui/button';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { MilestoneStatus, ProjectHealth } from '@/modules/projects/types';
+import type { MilestoneStatus, ProjectHealth, ProjectStatus } from '@/modules/projects/types';
 
 // ============================================================
 // TYPES
@@ -40,20 +45,33 @@ export interface CollaboratorProjectsStepProps {
 interface ProjectWithMilestones {
   id: string;
   name: string;
-  status: string;
+  bu_id: string;
+  owner_id: string | null;
+  description: string | null;
+  external_url: string | null;
+  status: ProjectStatus;
+  start_date: string | null;
   due_date: string | null;
+  team_ids: string[];
   health: ProjectHealth;
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  isProjectOwner: boolean;
   milestones: Array<{
     id: string;
     name: string;
     status: MilestoneStatus;
+    start_date: string | null;
     due_date: string | null;
     owner_id: string | null;
     notes: string | null;
   }>;
+}
+
+interface EditingMilestoneCtx {
+  projectId: string;
+  milestone: ProjectWithMilestones['milestones'][number];
 }
 
 // ============================================================
@@ -85,6 +103,18 @@ export function CollaboratorProjectsStep({
   const { currentBu } = useBu();
   const buId = currentBu?.id ?? null;
   const updateMilestone = useUpdateMilestone();
+  const updateProject = useUpdateProject();
+  const { canEditMilestoneRecord } = useProjectPermissionsV2();
+
+  const [editingMilestone, setEditingMilestone] = useState<EditingMilestoneCtx | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectWithMilestones | null>(null);
+
+  // Colunas explícitas (sem select '*'); inclui campos necessários para abrir
+  // os dialogs canônicos de edição.
+  const PROJECT_COLUMNS =
+    'id, name, bu_id, owner_id, description, external_url, status, start_date, due_date, ' +
+    'project_teams(team_id), ' +
+    'project_milestones(id, name, status, start_date, due_date, owner_id, notes, deleted_at)';
 
   // Query: projects where user owns milestones
   const { data: milestoneProjects, isLoading: isLoadingMilestones } = useQuery({
@@ -92,7 +122,7 @@ export function CollaboratorProjectsStep({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, status, due_date, project_milestones!inner(id, name, status, start_date, due_date, owner_id, notes, deleted_at)')
+        .select(PROJECT_COLUMNS.replace('project_milestones(', 'project_milestones!inner('))
         .eq('bu_id', buId!)
         .eq('project_milestones.owner_id', effectiveUserId!)
         .in('status', ['planned', 'in_progress', 'paused'])
@@ -110,7 +140,7 @@ export function CollaboratorProjectsStep({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, status, start_date, due_date, project_milestones(id, name, status, start_date, due_date, owner_id, notes, deleted_at)')
+        .select(PROJECT_COLUMNS)
         .eq('bu_id', buId!)
         .eq('owner_id', effectiveUserId!)
         .in('status', ['planned', 'in_progress', 'paused'])
@@ -140,18 +170,28 @@ export function CollaboratorProjectsStep({
       map.set(p.id, {
         id: p.id,
         name: p.name,
-        status: p.status,
+        bu_id: p.bu_id,
+        owner_id: p.owner_id ?? null,
+        description: p.description ?? null,
+        external_url: p.external_url ?? null,
+        status: p.status as ProjectStatus,
+        start_date: p.start_date ?? null,
         due_date: p.due_date,
+        team_ids: Array.isArray(p.project_teams)
+          ? p.project_teams.map((t: any) => t.team_id).filter(Boolean)
+          : [],
         health: computeHealth(p.status, p.due_date, pct),
         milestones_total: total,
         milestones_done: done,
         completion_pct: pct,
+        isProjectOwner: !!effectiveUserId && p.owner_id === effectiveUserId,
         milestones: rawMilestones
           .filter((m: any) => m.status !== 'done')
           .map((m: any) => ({
             id: m.id,
             name: m.name,
             status: m.status as MilestoneStatus,
+            start_date: m.start_date ?? null,
             due_date: m.due_date,
             owner_id: m.owner_id,
             notes: m.notes,
@@ -163,7 +203,7 @@ export function CollaboratorProjectsStep({
     (ownedProjects ?? []).forEach(processProject);
 
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [milestoneProjects, ownedProjects]);
+  }, [milestoneProjects, ownedProjects, effectiveUserId]);
 
   // Handle milestone status change (fire-and-forget, fail-safe)
   const handleMilestoneStatusChange = (milestoneId: string, projectId: string, newStatus: MilestoneStatus) => {
@@ -177,6 +217,67 @@ export function CollaboratorProjectsStep({
       console.warn('[CollaboratorProjectsStep] Milestone update failed:', error);
       toast.warning('Não foi possível atualizar o milestone. Tente novamente pelo módulo de Projetos.');
     }
+  };
+
+  // Permissão row-aware para abrir o MilestoneDialog em modo edit.
+  // Não consultamos `useIsLeaderOfProjectOwner` aqui (seria 1 RPC por projeto
+  // dentro de um loop). A query do step já restringe a projetos onde o
+  // colaborador é owner do projeto OU owner do milestone — exatamente os
+  // dois caminhos que `canEditMilestoneRecord` libera no frontend. Líderes
+  // editam pelo módulo de Projetos.
+  const canEditMilestoneRow = (
+    project: ProjectWithMilestones,
+    milestoneOwnerId: string | null,
+  ) =>
+    canEditMilestoneRecord(
+      milestoneOwnerId,
+      project.owner_id,
+      effectiveUserId,
+      false,
+    );
+
+  const handleMilestoneEditSubmit = (data: MilestoneDialogSubmitValues) => {
+    if (!editingMilestone) return;
+    updateMilestone.mutate(
+      {
+        id: editingMilestone.milestone.id,
+        project_id: editingMilestone.projectId,
+        name: data.name,
+        start_date: data.start_date,
+        due_date: data.due_date,
+        owner_id: data.owner_id,
+        notes: data.notes,
+      },
+      { onSuccess: () => setEditingMilestone(null) },
+    );
+  };
+
+  const handleProjectEditSubmit = (values: {
+    name: string;
+    description?: string;
+    owner_id: string;
+    team_ids?: string[];
+    status: ProjectStatus;
+    start_date: string;
+    due_date: string;
+    external_url?: string;
+  }) => {
+    if (!editingProject) return;
+    updateProject.mutate(
+      {
+        id: editingProject.id,
+        bu_id: editingProject.bu_id,
+        name: values.name,
+        description: values.description ?? null,
+        owner_id: values.owner_id,
+        status: values.status,
+        start_date: values.start_date,
+        due_date: values.due_date,
+        external_url: values.external_url || null,
+        team_ids: values.team_ids ?? [],
+      },
+      { onSuccess: () => setEditingProject(null) },
+    );
   };
 
   const pendingMilestonesCount = projects.reduce((acc, p) => acc + p.milestones.length, 0);
@@ -237,6 +338,17 @@ export function CollaboratorProjectsStep({
                     {project.name}
                   </h3>
                   <ProjectHealthBadge health={project.health} />
+                  {project.isProjectOwner && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs shrink-0"
+                      onClick={() => setEditingProject(project)}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editar projeto
+                    </Button>
+                  )}
                 </div>
 
                 {/* Progress */}
@@ -253,35 +365,51 @@ export function CollaboratorProjectsStep({
                     <p className="text-xs text-muted-foreground font-medium">
                       Marcos pendentes
                     </p>
-                    {project.milestones.map(milestone => (
-                      <div
-                        key={milestone.id}
-                        className="flex items-center gap-2 py-1 min-w-0"
-                      >
-                        <MilestoneStatusSelect
-                          value={milestone.status}
-                          onValueChange={(newStatus) =>
-                            handleMilestoneStatusChange(milestone.id, project.id, newStatus)
-                          }
-                        />
-                        <span className="text-sm text-foreground truncate flex-1 min-w-0">
-                          {milestone.name}
-                        </span>
-                        {milestone.due_date && (
-                          <span className={cn(
-                            'text-xs whitespace-nowrap shrink-0',
-                            new Date(milestone.due_date) < new Date()
-                              ? 'text-destructive'
-                              : 'text-muted-foreground'
-                          )}>
-                            {new Date(milestone.due_date).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: 'short',
-                            })}
+                    {project.milestones.map(milestone => {
+                      const canEdit = canEditMilestoneRow(project, milestone.owner_id);
+                      return (
+                        <div
+                          key={milestone.id}
+                          className="flex items-center gap-2 py-1 min-w-0"
+                        >
+                          <MilestoneStatusSelect
+                            value={milestone.status}
+                            onValueChange={(newStatus) =>
+                              handleMilestoneStatusChange(milestone.id, project.id, newStatus)
+                            }
+                          />
+                          <span className="text-sm text-foreground truncate flex-1 min-w-0">
+                            {milestone.name}
                           </span>
-                        )}
-                      </div>
-                    ))}
+                          {milestone.due_date && (
+                            <span className={cn(
+                              'text-xs whitespace-nowrap shrink-0',
+                              new Date(milestone.due_date) < new Date()
+                                ? 'text-destructive'
+                                : 'text-muted-foreground'
+                            )}>
+                              {new Date(milestone.due_date).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                            </span>
+                          )}
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              aria-label="Editar milestone"
+                              onClick={() =>
+                                setEditingMilestone({ projectId: project.id, milestone })
+                              }
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground italic">
@@ -293,6 +421,46 @@ export function CollaboratorProjectsStep({
           </div>
         )}
       </div>
+
+      {/* Milestone Edit Dialog (canonical) — montado por demanda */}
+      {editingMilestone && (
+        <MilestoneDialog
+          open={!!editingMilestone}
+          onOpenChange={(open) => { if (!open) setEditingMilestone(null); }}
+          onSubmit={handleMilestoneEditSubmit}
+          isSubmitting={updateMilestone.isPending}
+          title="Editar milestone"
+          defaultValues={{
+            name: editingMilestone.milestone.name,
+            start_date: editingMilestone.milestone.start_date ?? '',
+            due_date: editingMilestone.milestone.due_date ?? '',
+            owner_id: editingMilestone.milestone.owner_id ?? '',
+            notes: editingMilestone.milestone.notes ?? '',
+          }}
+        />
+      )}
+
+      {/* Project Edit Dialog (canonical) — montado por demanda */}
+      {editingProject && (
+        <ProjectDialog
+          open={!!editingProject}
+          onOpenChange={(open) => { if (!open) setEditingProject(null); }}
+          onSubmit={handleProjectEditSubmit}
+          isSubmitting={updateProject.isPending}
+          title="Editar projeto"
+          currentOwnerId={editingProject.owner_id ?? undefined}
+          defaultValues={{
+            name: editingProject.name,
+            description: editingProject.description ?? '',
+            owner_id: editingProject.owner_id ?? '',
+            team_ids: editingProject.team_ids,
+            status: editingProject.status,
+            start_date: editingProject.start_date ?? '',
+            due_date: editingProject.due_date ?? '',
+            external_url: editingProject.external_url ?? '',
+          }}
+        />
+      )}
     </WizardStepScaffold>
   );
 }
