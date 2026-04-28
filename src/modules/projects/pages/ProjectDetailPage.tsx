@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useProject } from '../hooks/useProject';
 import { useMilestones } from '../hooks/useMilestones';
+import { useMilestoneOwnerProfiles } from '../hooks/useMilestoneOwnerProfiles';
 import { useUpdateProject, useSoftDeleteProject, useRestoreProject } from '../hooks/useProjectMutations';
 import { useCreateMilestone, useUpdateMilestone, useSoftDeleteMilestone } from '../hooks/useMilestoneMutations';
 import { useProjectPermissionsV2 } from '../hooks/useProjectPermissionsV2';
@@ -165,9 +166,20 @@ export default function ProjectDetailPage() {
     }
   }, [deleteOpen, canDeleteThisProject]);
 
-  // Build owner profiles map from project owner + any future sources
+  // Build owner profiles map: project owner + responsáveis (owner_id) de cada milestone.
+  // Sem isso, milestones com responsável diferente do owner do projeto ficavam sem
+  // avatar/nome na view de detalhe.
+  const milestoneList = milestones || project?.milestones || [];
+  const milestoneOwnerIds = useMemo(
+    () => milestoneList.map((m) => m.owner_id).filter(Boolean) as string[],
+    [milestoneList],
+  );
+  const milestoneOwnerProfiles = useMilestoneOwnerProfiles(milestoneOwnerIds);
+
   const ownerProfiles = useMemo(() => {
-    const map: Record<string, { display_name: string | null; photo_url: string | null }> = {};
+    const map: Record<string, { display_name: string | null; photo_url: string | null }> = {
+      ...milestoneOwnerProfiles,
+    };
     if (project?.owner) {
       map[project.owner.id] = {
         display_name: project.owner.display_name,
@@ -175,7 +187,7 @@ export default function ProjectDetailPage() {
       };
     }
     return map;
-  }, [project?.owner]);
+  }, [project?.owner, milestoneOwnerProfiles]);
 
   if (isLoading) {
     return (
