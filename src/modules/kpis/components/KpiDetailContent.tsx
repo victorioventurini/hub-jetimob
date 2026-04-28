@@ -67,6 +67,7 @@ export interface KpiDetailContentProps {
 
 export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
   const { kpi, values, isLoading } = useKpiDetail(kpiId);
+  const { data: primaryDataEntry } = useKpiPrimaryDataEntry(kpiId);
   const { primaryKrs, guardrailKrs, isLoading: isLoadingKrs } = useKpiLinkedKrs(kpiId);
   const { currentBu } = useBu();
   const scopeLabels = getScopeLabels(currentBu?.name);
