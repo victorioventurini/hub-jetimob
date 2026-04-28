@@ -33,6 +33,7 @@ import { TeamSelect, BuUserSelect, AreaSelect, UnitSelect } from "@/components/s
 import { Badge } from "@/components/ui/badge";
 import { InfoNotice } from "@/components/ui/info-notice";
 import { useKpiData } from "../hooks";
+import { useCanCreateKpi } from "../hooks/useCanCreateKpi";
 import { useUpsertKpiPrimaryDataEntry } from "../hooks/useKpiPrimaryDataEntry";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
@@ -217,7 +218,16 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const watchScope = form.watch("scope");
   const watchLifecycleStatus = form.watch("lifecycle_status");
   const watchTeamId = form.watch("team_id");
+  const watchAreaId = form.watch("area_id");
   const watchIndicatorType = form.watch("indicator_type");
+
+  // Permissão row-aware (admins + líderes hierárquicos + membros do time p/ Métrica)
+  const { canCreate: canCreateForCurrentForm, blockedReason } = useCanCreateKpi({
+    scope: watchScope,
+    areaId: watchAreaId ?? null,
+    teamId: watchTeamId ?? null,
+    indicatorType: watchIndicatorType,
+  });
 
   // Auto-inferência de área quando scope=team
   const { areaId: inferredAreaId, areaName: inferredAreaName, isLoading: isLoadingArea } = useTeamArea(
@@ -238,6 +248,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
     }
   }, [isLoadingPermission, canCreateKpi, form]);
 
+  // Métricas: forçar scope=team (UI esconde org/area; trigger SQL também valida)
+  useEffect(() => {
+    if (watchIndicatorType === 'metric' && watchScope !== 'team') {
+      form.setValue("scope", "team");
+    }
+  }, [watchIndicatorType, watchScope, form]);
+
   // Defense in Depth: block render if no permission
   if (!isLoadingPermission && !canCreateIndicator) {
     return null;
@@ -245,12 +262,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
 
   // Limpar campos quando mudar escopo
   const handleScopeChange = (newScope: KpiScope) => {
+    // Métricas devem permanecer em "team"
+    if (watchIndicatorType === 'metric' && newScope !== 'team') return;
     form.setValue("scope", newScope);
     if (newScope !== "team") {
       form.setValue("team_id", undefined);
       form.setValue("area_id", undefined);
     }
-    // Limpar responsible fields ao mudar escopo
     if (newScope !== "org") {
       form.setValue("responsible_area_id", undefined);
     }
@@ -265,6 +283,9 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       return;
     }
     form.setValue("indicator_type", type);
+    if (type === 'metric') {
+      form.setValue("scope", "team");
+    }
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -727,18 +748,23 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
-                          <SelectItem 
-                            key={sc} 
-                            value={sc}
-                            disabled={(sc === 'org' || sc === 'area') && !canCreateStrategicScopes}
-                          >
-                            {scopeLabels[sc]}
-                            {(sc === 'org' || sc === 'area') && !canCreateStrategicScopes && (
-                              <Lock className="h-3 w-3 inline ml-1 text-muted-foreground" />
-                            )}
-                          </SelectItem>
-                        ))}
+                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => {
+                          const isMetricBlocked = watchIndicatorType === 'metric' && sc !== 'team';
+                          const isStrategicBlocked = (sc === 'org' || sc === 'area') && !canCreateStrategicScopes;
+                          if (isMetricBlocked) return null;
+                          return (
+                            <SelectItem
+                              key={sc}
+                              value={sc}
+                              disabled={isStrategicBlocked}
+                            >
+                              {scopeLabels[sc]}
+                              {isStrategicBlocked && (
+                                <Lock className="h-3 w-3 inline ml-1 text-muted-foreground" />
+                              )}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -992,7 +1018,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               </CollapsibleContent>
             </Collapsible>
 
-            <DialogFooter>
+            <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+              {!canCreateForCurrentForm && blockedReason && (
+                <p className="text-xs text-muted-foreground sm:mr-auto sm:text-left">
+                  <Lock className="h-3 w-3 inline mr-1" />
+                  {blockedReason}
+                </p>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -1000,7 +1032,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" isLoading={isSubmitting} loadingText="Criando...">
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                loadingText="Criando..."
+                disabled={!canCreateForCurrentForm}
+                title={!canCreateForCurrentForm ? blockedReason ?? undefined : undefined}
+              >
                 Criar Indicador
               </Button>
             </DialogFooter>

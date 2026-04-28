@@ -1,78 +1,108 @@
 import { useMemo } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { useHierarchicalLeadership } from "@/hooks/useHierarchicalLeadership";
 import { KpiScope } from "../types";
 
-/**
- * Interface mínima de KPI para verificação de permissão de alteração de escopo.
- */
 interface KpiForScopeChange {
   id: string;
   scope?: KpiScope | string;
   team_id?: string | null;
+  area_id?: string | null;
+  indicator_type?: "kpi" | "metric" | string | null;
 }
 
 export interface ScopeChangePermissions {
-  /** Pode alterar o campo escopo */
   canChangeScope: boolean;
-  /** Escopos para os quais pode alterar */
   allowedScopes: KpiScope[];
   /** IDs de times permitidos (vazio = todos) */
   allowedTeamIds: string[];
+  /** IDs de áreas permitidas (vazio = todas) */
+  allowedAreaIds: string[];
   isLoading: boolean;
 }
 
 /**
- * Hook para determinar se o usuário pode alterar o escopo de um KPI.
+ * Define se o usuário pode alterar o escopo do KPI/Métrica.
  *
- * v2.91.0: Alteração hierárquica de escopo
- *
- * Regras:
- * - Admin/Super Admin: pode alterar livremente (org ↔ area ↔ team)
- * - Líder de Time: pode mover KPI de time → outro time que lidera (não pode subir)
- * - Colaborador: não pode alterar escopo
- *
- * @example
- * ```tsx
- * const { canChangeScope, allowedScopes, allowedTeamIds } = useCanChangeKpiScope(kpi);
- * ```
+ * Regras (alinhadas com a matriz de permissões e RLS v3):
+ * - Métricas: nunca podem mudar de escopo (forçadas a `team`).
+ * - Admin / settings.manage:bu: livre (org ↔ area ↔ team).
+ * - Líder de área: pode mover entre area↔team dentro da sua área.
+ * - Líder de time (direto/ancestral): pode manter `team` e mover entre seus times.
+ * - Demais: não.
  */
-export function useCanChangeKpiScope(kpi: KpiForScopeChange | null | undefined): ScopeChangePermissions {
+export function useCanChangeKpiScope(
+  kpi: KpiForScopeChange | null | undefined,
+): ScopeChangePermissions {
   const { isWildcard, has: hasPermission, isLoading: permLoading } = usePermissions();
-  const { manageableTeamIds, canManageTeam, isLoading: teamLoading } = useTeamManagement();
+  const {
+    ledAreaIds,
+    manageableTeamIds,
+    canManageTeamHierarchical,
+    canManageAreaScope,
+    isLoading: leadershipLoading,
+  } = useHierarchicalLeadership();
 
-  const isLoading = permLoading || teamLoading;
+  const isLoading = permLoading || leadershipLoading;
 
-  const result = useMemo(() => {
-    if (!kpi) {
-      return { canChangeScope: false, allowedScopes: [] as KpiScope[], allowedTeamIds: [] as string[] };
+  return useMemo<ScopeChangePermissions>(() => {
+    const empty: ScopeChangePermissions = {
+      canChangeScope: false,
+      allowedScopes: [],
+      allowedTeamIds: [],
+      allowedAreaIds: [],
+      isLoading,
+    };
+    if (!kpi) return empty;
+
+    // Métricas: escopo travado em "team"
+    if (kpi.indicator_type === "metric") {
+      return empty;
     }
 
-    // Admin/Super Admin: acesso total
     if (isWildcard || hasPermission("kpis.settings.manage:bu")) {
       return {
         canChangeScope: true,
-        allowedScopes: ["org", "area", "team"] as KpiScope[],
-        allowedTeamIds: [], // vazio = todos permitidos
+        allowedScopes: ["org", "area", "team"],
+        allowedTeamIds: [],
+        allowedAreaIds: [],
+        isLoading,
       };
     }
 
-    // Não-admin com KPI Global ou de Área: não pode alterar
-    if (kpi.scope === "org" || kpi.scope === "area") {
-      return { canChangeScope: false, allowedScopes: [] as KpiScope[], allowedTeamIds: [] as string[] };
-    }
-
-    // Líder verificando KPI de time: pode mover apenas para times que gerencia
-    if (kpi.scope === "team" && kpi.team_id && canManageTeam(kpi.team_id)) {
+    // Líder da área do KPI atual
+    if (kpi.scope === "area" && kpi.area_id && canManageAreaScope(kpi.area_id)) {
       return {
         canChangeScope: true,
-        allowedScopes: ["team"] as KpiScope[], // só pode manter escopo team
+        allowedScopes: ["area", "team"],
         allowedTeamIds: manageableTeamIds,
+        allowedAreaIds: [kpi.area_id],
+        isLoading,
       };
     }
 
-    return { canChangeScope: false, allowedScopes: [] as KpiScope[], allowedTeamIds: [] as string[] };
-  }, [kpi, isWildcard, hasPermission, canManageTeam, manageableTeamIds]);
+    if (kpi.scope === "team" && kpi.team_id && canManageTeamHierarchical(kpi.team_id, null)) {
+      // Líder de área (que cobre o time) pode subir para area
+      const allowedScopes: KpiScope[] = ["team"];
+      if (ledAreaIds.length > 0) allowedScopes.push("area");
+      return {
+        canChangeScope: true,
+        allowedScopes,
+        allowedTeamIds: manageableTeamIds,
+        allowedAreaIds: ledAreaIds,
+        isLoading,
+      };
+    }
 
-  return { ...result, isLoading };
+    return empty;
+  }, [
+    kpi,
+    isWildcard,
+    hasPermission,
+    canManageAreaScope,
+    canManageTeamHierarchical,
+    ledAreaIds,
+    manageableTeamIds,
+    isLoading,
+  ]);
 }

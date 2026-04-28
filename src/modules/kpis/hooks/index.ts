@@ -17,6 +17,8 @@ export type { PrimaryDataEntry } from "./useKpiPrimaryDataEntry";
 export { useTeamArea } from "./useTeamArea";
 export { useKpiLinkedKrs } from "./useKpiLinkedKrs";
 export { useCanEditKpi } from "./useCanEditKpi";
+export { useCanCreateKpi } from "./useCanCreateKpi";
+export type { CanCreateKpiResult } from "./useCanCreateKpi";
 export { useCanChangeKpiScope } from "./useCanChangeKpiScope";
 export type { ScopeChangePermissions } from "./useCanChangeKpiScope";
 export { useKpiTargetHistory } from "./useKpiTargetHistory";

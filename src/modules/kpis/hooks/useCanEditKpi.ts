@@ -2,16 +2,11 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useProfileId } from "@/hooks/useIdentity";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { useHierarchicalLeadership } from "@/hooks/useHierarchicalLeadership";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
-import { areasKeys } from "@/lib/queryKeys/areas";
 import { KpiScope } from "../types";
 
-/**
- * Interface mínima de KPI necessária para verificação de permissão.
- * Permite reutilização com diferentes representações de KPI/Métrica.
- */
 interface KpiForPermission {
   id: string;
   bu_id: string;
@@ -20,149 +15,111 @@ interface KpiForPermission {
   area_id?: string | null;
   responsible_team_id?: string | null;
   scope?: KpiScope | string;
+  indicator_type?: "kpi" | "metric" | string | null;
 }
 
 /**
- * Hook para verificar se o usuário atual pode editar um KPI/Métrica específico.
- * 
- * v3.9.0: Hierarquia de atualização de valores (canUpdateValues)
- * 
- * Regras de permissão para EDITAR METADADOS (canEdit):
- * - scope=org / scope=area: Apenas Admin/Super Admin
- * - scope=team: Admin/Super Admin, Líder do time, Owner
- * 
- * Regras de permissão para ATUALIZAR VALORES (canUpdateValues):
- * - Admin BU: Qualquer KPI da BU (via isWildcard)
- * - Líder de Área: KPIs com area_id da área que lidera
- * - Líder de Time: KPIs com team_id OU responsible_team_id do time que lidera
- * - Owner do KPI
- * - Contribuidores (kpi_data_contributors)
- * 
- * @param kpi - O KPI a verificar (pode ser null/undefined durante loading)
- * @returns { canEdit, canUpdateValues, isLoading }
+ * Permissões row-aware para um KPI/Métrica.
+ *
+ * Espelha as funções SQL `user_can_manage_kpi` (gestão) + RLS `kpi_metrics_*_v3/v4`.
+ *
+ * Retorna:
+ * - `canEdit`     → pode editar metadados (admins + líderes hierárquicos + responsável + atualizado-por)
+ * - `canDelete`   → pode excluir (admins + líderes hierárquicos; para métricas, também responsável e atualizado-por)
+ * - `canUpdateValues` → pode lançar valores (mesmo de canEdit + líderes do team_id/responsible_team_id + área)
  */
 export function useCanEditKpi(kpi: KpiForPermission | null | undefined) {
   const profileId = useProfileId();
-  const { client, isReady, buId } = useOptionalBuClient();
+  const { client, isReady } = useOptionalBuClient();
   const { has: hasPermission, isWildcard, isLoading: permissionLoading } = usePermissions();
-  const { canManageTeam, isLoading: teamLoading } = useTeamManagement();
+  const {
+    canManageTeamHierarchical,
+    canManageAreaScope,
+    isLoading: leadershipLoading,
+  } = useHierarchicalLeadership();
 
-  // Buscar contribuidores deste KPI
+  // Contribuidores ("Atualizado por" = role data_entry; consideramos qualquer ativo conservadoramente)
   const { data: contributors = [], isLoading: contributorsLoading } = useQuery({
     queryKey: queryKeys.kpis.contributors(kpi?.id ?? null),
     queryFn: async () => {
       if (!client || !kpi?.id) return [];
-
       const { data, error } = await client
         .from("kpi_data_contributors")
         .select("contributor_user_id")
         .eq("kpi_id", kpi.id)
         .is("deleted_at", null);
-
       if (error) {
-        console.error("[useCanEditKpi] Error fetching contributors:", error);
+        console.error("[useCanEditKpi] contributors error:", error);
         return [];
       }
-
-      return data?.map(c => c.contributor_user_id) ?? [];
+      return data?.map((c) => c.contributor_user_id) ?? [];
     },
     enabled: isReady && !!kpi?.id,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Buscar áreas onde o usuário é líder (para hierarquia de área)
-  const { data: ledAreaIds = [], isLoading: areasLoading } = useQuery({
-    queryKey: [...areasKeys.all(buId ?? null), "leader", profileId],
+  // Área do time do KPI (necessário para resolver "líder da área do time")
+  const { data: teamAreaId, isLoading: teamAreaLoading } = useQuery({
+    queryKey: ["kpi-permission", "team-area", kpi?.team_id ?? null],
     queryFn: async () => {
-      if (!client || !profileId || !buId) return [];
-
+      if (!client || !kpi?.team_id) return null;
       const { data, error } = await client
-        .from("areas")
-        .select("id")
-        .eq("bu_id", buId)
-        .eq("leader_user_id", profileId)
-        .is("deleted_at", null);
-
+        .from("teams")
+        .select("area_id")
+        .eq("id", kpi.team_id)
+        .maybeSingle();
       if (error) {
-        console.error("[useCanEditKpi] Error fetching led areas:", error);
-        return [];
+        console.error("[useCanEditKpi] team area error:", error);
+        return null;
       }
-
-      return data?.map(a => a.id) ?? [];
+      return (data?.area_id as string | null) ?? null;
     },
-    enabled: isReady && !!profileId && !!buId && !isWildcard,
+    enabled: isReady && !!kpi?.team_id && !isWildcard,
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = !isReady || permissionLoading || contributorsLoading || teamLoading || areasLoading;
+  const isLoading =
+    !isReady || permissionLoading || leadershipLoading || contributorsLoading || teamAreaLoading;
 
-  /**
-   * canEdit: Pode editar METADADOS do KPI (nome, descrição, meta, escopo, etc)
-   * 
-   * Regras por escopo:
-   * - scope=org: Apenas Admin/Super Admin
-   * - scope=area: Apenas Admin/Super Admin
-   * - scope=team: Admin/Super Admin, Líder do time, Owner
-   */
-  const canEdit = useMemo(() => {
+  /** Líder hierárquico para o escopo deste KPI? (espelha user_can_manage_kpi) */
+  const isHierarchicalManager = useMemo(() => {
     if (!kpi || !profileId) return false;
-
-    // Admin sempre pode editar (wildcard)
     if (isWildcard) return true;
-
-    // Tem permissão de gerenciamento (admin)
     if (hasPermission("kpis.settings.manage:bu")) return true;
 
-    const scope = kpi.scope as KpiScope | undefined;
-
-    // KPIs Globais e de Área: APENAS admins podem editar
-    if (scope === 'org' || scope === 'area') {
-      return false;
-    }
-
-    // KPIs de Time: verificar liderança
-    if (scope === 'team' && kpi.team_id) {
-      // Líder do time pode editar
-      if (canManageTeam(kpi.team_id)) return true;
-    }
-
-    // É owner do KPI (para scope=team)
-    if (kpi.owner_user_id === profileId) return true;
-
+    const scope = (kpi.scope as KpiScope | undefined) ?? undefined;
+    if (scope === "org") return false;
+    if (scope === "area") return canManageAreaScope(kpi.area_id ?? null);
+    if (scope === "team") return canManageTeamHierarchical(kpi.team_id ?? null, teamAreaId ?? null);
     return false;
-  }, [kpi, profileId, isWildcard, hasPermission, canManageTeam]);
+  }, [kpi, profileId, isWildcard, hasPermission, canManageAreaScope, canManageTeamHierarchical, teamAreaId]);
 
-  /**
-   * canUpdateValues: Pode ATUALIZAR VALORES do KPI (check-ins, entries)
-   * 
-   * Hierarquia completa:
-   * 1. Admin BU (wildcard) — qualquer KPI
-   * 2. Líder de Área — KPIs com area_id da área liderada
-   * 3. Líder de Time — KPIs com team_id ou responsible_team_id do time liderado
-   * 4. Owner do KPI
-   * 5. Contribuidores (kpi_data_contributors)
-   */
+  const isOwner = !!kpi && !!profileId && kpi.owner_user_id === profileId;
+  const isContributor = !!profileId && contributors.includes(profileId);
+
+  const canEdit = useMemo(() => {
+    if (!kpi || !profileId) return false;
+    return isHierarchicalManager || isOwner || isContributor;
+  }, [kpi, profileId, isHierarchicalManager, isOwner, isContributor]);
+
+  const canDelete = useMemo(() => {
+    if (!kpi || !profileId) return false;
+    if (isHierarchicalManager) return true;
+    // Para Métricas, owner e contribuidor também podem excluir
+    if (kpi.indicator_type === "metric" && (isOwner || isContributor)) return true;
+    return false;
+  }, [kpi, profileId, isHierarchicalManager, isOwner, isContributor]);
+
   const canUpdateValues = useMemo(() => {
     if (!kpi || !profileId) return false;
-
-    // Quem pode editar, pode atualizar valores
     if (canEdit) return true;
-
-    // É owner do KPI
-    if (kpi.owner_user_id === profileId) return true;
-
-    // Líder de Time: verifica team_id e responsible_team_id
-    if (kpi.team_id && canManageTeam(kpi.team_id)) return true;
-    if (kpi.responsible_team_id && canManageTeam(kpi.responsible_team_id)) return true;
-
-    // Líder de Área: verifica area_id do KPI
-    if (kpi.area_id && ledAreaIds.includes(kpi.area_id)) return true;
-
-    // É contribuidor
-    if (contributors.includes(profileId)) return true;
-
+    if (isOwner) return true;
+    if (kpi.team_id && canManageTeamHierarchical(kpi.team_id, teamAreaId ?? null)) return true;
+    if (kpi.responsible_team_id && canManageTeamHierarchical(kpi.responsible_team_id, null)) return true;
+    if (kpi.area_id && canManageAreaScope(kpi.area_id)) return true;
+    if (isContributor) return true;
     return false;
-  }, [kpi, profileId, canEdit, canManageTeam, ledAreaIds, contributors]);
+  }, [kpi, profileId, canEdit, isOwner, isContributor, canManageTeamHierarchical, canManageAreaScope, teamAreaId]);
 
-  return { canEdit, canUpdateValues, isLoading };
+  return { canEdit, canDelete, canUpdateValues, isLoading };
 }
