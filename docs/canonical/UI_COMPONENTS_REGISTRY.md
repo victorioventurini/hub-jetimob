@@ -425,15 +425,55 @@ Para seleção múltipla de usuários internos.
 
 **Arquivo:** `src/components/selects/TeamSelect.tsx`
 
-Para seleção de times/squads da BU.
+Para seleção de times/squads da BU, com hierarquia indentada (parent > child).
 
 ```tsx
+// ✅ CORRETO: campo opcional → DEVE habilitar "Nenhum"
 <TeamSelect
   value={teamId}
   onValueChange={setTeamId}
   placeholder="Selecione o time"
+  includeNone               // mandatório quando o campo é .optional() no Zod
+  noneLabel="Nenhum time"
+/>
+
+// ❌ PROIBIDO: campo opcional sem includeNone — usuário fica preso ao 1º valor
+<TeamSelect value={teamId} onValueChange={setTeamId} />
+```
+
+**Props relevantes:**
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `value` | `string \| undefined \| null` | ID do time selecionado |
+| `onValueChange` | `(id: string \| null) => void` | `null` quando o usuário escolhe "Nenhum" |
+| `includeNone` | `boolean` | **Obrigatório** quando o campo é opcional. Sem isso, Radix Select não permite limpar |
+| `noneLabel` | `string` | Label da opção nula (padrão: `"Nenhum"`) |
+| `includeAll` | `boolean` | Adiciona "Todos" (use em filtros, não em forms) |
+| `excludeIds` / `filterTeamIds` | `string[]` | Restringe a lista exibida |
+
+> **Regra:** se o campo correspondente no Zod é `.optional()`, `includeNone` é mandatório. Ver `mem://standards/ui/optional-select-include-none`.
+
+### 6.3.1 AreaSelect
+
+**Arquivo:** `src/components/selects/AreaSelect.tsx`
+
+Para seleção de Áreas da BU. Mesmo padrão de `TeamSelect`.
+
+```tsx
+// ✅ CORRETO: campo opcional + condicional reativo a outro field
+<AreaSelect
+  value={responsibleAreaId}
+  onValueChange={(val) => field.onChange(val ?? undefined)}
+  placeholder="Selecione a área"
+  includeNone={lifecycleStatus !== 'active'}   // só permite limpar quando não-obrigatório
+  noneLabel="Nenhuma área"
 />
 ```
+
+**Props relevantes:** mesmas semânticas de `TeamSelect` (`includeNone`, `noneLabel`, `includeAll`, `allLabel`, `includeInactive`).
+
+> **Regra de obrigatoriedade reativa:** quando outro campo do form torna o select obrigatório (ex.: `lifecycle_status === 'active'` força `responsible_area_id` no KPI Global), passe `includeNone={!isRequired}` reativo via `form.watch(...)`.
 
 ### 6.4 UnitSelect
 
@@ -809,6 +849,7 @@ O componente `KpiActionsMenu` (`src/modules/kpis/components/KpiActionsMenu.tsx`)
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
+| 1.8.0 | 2026-04-28 | Seção 6.3 reescrita + nova 6.3.1 AreaSelect: regra `includeNone` obrigatório em campos opcionais (caso EditKpiScopeSection — `responsible_team_id` impossível de limpar) |
 | 1.7.0 | 2026-02-09 | Adicionado UnitSelect canônico (seção 6.4) + anti-patterns #17 e #18 |
 | 1.6.0 | 2026-02-06 | Anti-pattern #16 (rotas standalone) |
 | 1.5.0 | 2026-02-04 | Anti-patterns #14 e #15 (botões complementares no PageHeader, labels sem "Ver") |
