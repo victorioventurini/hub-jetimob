@@ -50,6 +50,7 @@ interface EditKpiDialogProps {
 export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateKpi } = useKpiMutations();
+  const upsertDataEntry = useUpsertKpiPrimaryDataEntry();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   const { currentBu } = useBu();
 
