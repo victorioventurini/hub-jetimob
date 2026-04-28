@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, XCircle, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
@@ -41,6 +41,7 @@ import {
   RitualCalendarViewToggle,
   type RitualCalendarViewMode,
 } from './RitualCalendarViewToggle';
+import { BulkRescheduleDialog } from './BulkRescheduleDialog';
 
 export function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -49,6 +50,7 @@ export function CalendarTab() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  const [showBulkReschedule, setShowBulkReschedule] = useState(false);
   const { value: viewMode, set: setViewMode } = useUrlState<RitualCalendarViewMode>({
     key: 'view',
     defaultValue: 'calendar',
@@ -148,8 +150,16 @@ export function CalendarTab() {
 
   return (
     <div className="space-y-4">
-      {/* Header: view toggle alinhado à direita (padrão /projects) */}
-      <div className="flex items-center justify-end">
+      {/* Header: ações + view toggle alinhados à direita (padrão /projects) */}
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowBulkReschedule(true)}
+        >
+          <CalendarRange className="h-4 w-4 mr-2" />
+          Reagendar em massa
+        </Button>
         <RitualCalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
 
@@ -328,6 +338,11 @@ export function CalendarTab() {
           completedCount={selectedOccurrence.wizardType === 'collaborator' ? (completedByDate.get(selectedOccurrence.plannedDate) ?? 0) : undefined}
         />
       )}
+
+      <BulkRescheduleDialog
+        open={showBulkReschedule}
+        onOpenChange={setShowBulkReschedule}
+      />
     </div>
   );
 }

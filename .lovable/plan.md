@@ -1,54 +1,86 @@
-# Padronizar toggle do Calendário de Ritos no formato /projects
+# Reagendamento em massa de ritos no Calendário
+
+## Pré-checklist (concluído)
+- TCR + DATA_MODEL_REGISTRY: `ritual_occurrences` é BU-scoped (v3.21.0).
+- RLS verificado: `UPDATE` exige `is_bu_admin OR is_platform_admin` — alinhado com a rota `/settings/rituals`.
+- IDENTITY_CONVENTION: mutação não requer `realProfileId` (RLS usa `auth.uid()`).
+- Memórias `comprehensive-calendar-architecture-v2` e `mbr-multi-date-governance` confirmam: ritos globais materializam 1 ocorrência por time, e mover ocorrências individuais não conflita com a cadência.
+- Standards: BU isolation, query keys via prefix helpers, sem `select('*')`.
+
+## Problema
+Ritos globais (`mbr`, `mbr-pre`, `qbr-pre`, `qbr`, `qbr-clevel`) geram **uma `ritual_occurrence` por time ativo**. Hoje só existe reagendamento individual via `OccurrenceSheet`, inviabilizando "mover o `mbr-pre` de 05/ago de todos os times".
 
 ## Objetivo
-Substituir o toggle atual (dois ícones colados num grupo bordado, sem rótulo) na aba Calendário em `/settings/rituals?tab=calendar` pelo mesmo padrão visual usado em `/projects` (pílulas com ícone + rótulo, fundo `bg-muted`, item ativo com `bg-background shadow-sm`), conforme a screenshot enviada.
-
-## Pré-checklist (executado)
-- TCR / `DEVELOPMENT_STANDARDS` revisados — sem mudanças de estado/URL exigidas além do que já existe (`useUrlState({ key: 'view' })` já aplicado).
-- Componente de referência: `src/modules/projects/components/ProjectViewToggle.tsx` (já é o padrão canônico de toggle de visualização do projeto).
-- Sem impacto em RLS, BU-scoping, query keys, permissões ou edge functions — mudança puramente de UI/presentation.
-- Memória `mem://standards/url-state-preservation` mantida (continuamos persistindo `view` na URL).
+Permitir que um Admin reagende, em uma única ação, **todas as ocorrências do mesmo rito que caem na mesma data**, para todos os times da BU ativa. Status elegíveis: `scheduled` e `missed`.
 
 ## Mudanças
 
-### 1. Criar `RitualCalendarViewToggle` (novo)
-Arquivo: `src/modules/okrs/pages/ritual-calendar/RitualCalendarViewToggle.tsx`
+### 1. Hook — `useRescheduleOccurrencesBulk`
+Em `src/modules/okrs/hooks/useRitualOccurrences.ts`.
 
-- Espelha 1:1 a estrutura/markup do `ProjectViewToggle` (mesmas classes Tailwind, mesmo comportamento de hover/active, mesmo breakpoint para esconder o rótulo no mobile).
-- Opções:
-  - `calendar` → ícone `CalendarDays`, rótulo "Calendário"
-  - `list` → ícone `List`, rótulo "Lista"
-- Props: `viewMode: 'calendar' | 'list'`, `onViewModeChange(mode)`.
-- Tipo exportado: `RitualCalendarViewMode`.
+Entrada: `{ wizardType: string; plannedDate: string; newDate: string }`.
 
-Observação: mantemos o nome semântico "Calendário" (não "Grade") porque a aba já se chama Calendário e o modo grid é literalmente o calendário mensal — alinhado ao mental model do usuário.
+Comportamento:
+- Cliente: `useBuScopedSupabase`.
+- 1º SELECT (`id, planned_date, rescheduled_from`) com filtros `bu_id`, `wizard_type`, `planned_date`, `status IN ('scheduled','missed')`.
+- Para cada linha, `UPDATE` preservando `rescheduled_from` (mantém valor original se já existir; senão usa `planned_date`), define `rescheduled_to = newDate`, `planned_date = newDate`, `status = 'rescheduled'`.
+- Retorna `{ count }`.
+- Invalida `queryKeys.okrs.ritualOccurrencesPrefix(buId)` e `ritualAdherencePrefix(buId)`.
+- Toast: "N ocorrências reagendadas".
 
-### 2. Atualizar `CalendarTab.tsx`
-Arquivo: `src/modules/okrs/pages/ritual-calendar/CalendarTab.tsx`
+Justificativa do loop client-side: N ≤ nº de times ativos (~10-50). RLS já protege; não precisa de RPC/edge.
 
-- Renomear tipo local `CalendarViewMode` para reusar `RitualCalendarViewMode` do novo componente.
-- Trocar literais `'grid'` por `'calendar'` em:
-  - `useUrlState` (defaultValue + parse)
-  - condicional de renderização (`viewMode === 'calendar' ? <Grade> : <CalendarListView>`)
-- Substituir o bloco `<div role="group" …>` com os dois `Button` ícone-only pelo `<RitualCalendarViewToggle />`.
-- Reposicionar o toggle: hoje ele fica grudado ao navegador de mês; manter no mesmo container do header de filtros, mas alinhado à direita (espelhando `/projects`, que mostra o toggle no canto superior direito da listagem). Implementação: envolver navegador de mês e toggle num `flex justify-between` dentro da primeira célula do grid de filtros, ou mover o toggle para fora do grid (acima do Card, à direita do contador). Escolha: **mover para fora do Card de filtros**, num header `flex items-center justify-between` acima do calendário, igual ao layout de `/projects`. Isso aproxima o visual da screenshot enviada.
+### 2. UI — `BulkRescheduleDialog` (novo)
+`src/modules/okrs/pages/ritual-calendar/BulkRescheduleDialog.tsx`.
 
-### 3. Compatibilidade de URL
-- `?view=grid` legado: o `parse` aceitará `'grid'` como alias para `'calendar'` (retrocompatível com qualquer link salvo).
-- `?view=list` continua funcionando sem mudanças.
+Props: `{ open, onOpenChange, initialWizardType?, initialDate? }`.
 
-### 4. Testes
-- Adicionar `src/modules/okrs/pages/ritual-calendar/__tests__/RitualCalendarViewToggle.test.tsx` espelhando o teste de `ProjectViewToggle` (renderiza ambas as opções, dispara callback nos cliques).
+- Vindo do Sheet: campos pré-preenchidos e bloqueados.
+- Vindo do header: `Select` de rito (lista `BULK_RESCHEDULABLE_WIZARD_TYPES`) + `Calendar` Popover de data origem.
+- Preview: query secundária retorna contagem + lista de times num `ScrollArea` ("X ocorrências em Y times serão reagendadas").
+- `Calendar` Popover de nova data.
+- Aviso: "Apenas ocorrências com status 'agendada' ou 'perdida' serão afetadas."
+- Confirmar desabilitado sem nova data ou se preview = 0.
 
-## Arquivos afetados
-
-```text
-NOVO   src/modules/okrs/pages/ritual-calendar/RitualCalendarViewToggle.tsx
-NOVO   src/modules/okrs/pages/ritual-calendar/__tests__/RitualCalendarViewToggle.test.tsx
-EDIT   src/modules/okrs/pages/ritual-calendar/CalendarTab.tsx
+### 3. Constantes
+Em `src/modules/okrs/pages/ritual-calendar/constants.ts`:
+```ts
+export const BULK_RESCHEDULABLE_WIZARD_TYPES: WizardPersona[] = [
+  'mbr', 'mbr-pre', 'qbr-pre', 'qbr', 'qbr-clevel',
+];
 ```
 
-## Fora do escopo
-- Não muda comportamento de filtros, dados, RLS ou hooks.
-- Não altera `CalendarListView` nem o grid mensal em si.
-- Não muda copy de outras abas (Cadências, Saúde).
+### 4. Gatilhos
+**a) `OccurrenceSheet.tsx`**: botão "Reagendar todos os times deste rito" quando `wizardType ∈ BULK_RESCHEDULABLE_WIZARD_TYPES` e `status ∈ ['scheduled','missed']`.
+
+**b) `CalendarTab.tsx`**: botão "Reagendar em massa" no header (junto ao `RitualCalendarViewToggle`).
+
+### 5. Query keys
+Adicionar em `src/lib/queryKeys/okrs.ts`:
+```ts
+ritualOccurrencesEligibleForBulk: (buId, wizardType, plannedDate) =>
+  [...prefix, 'eligible-bulk', buId, wizardType, plannedDate] as const,
+```
+
+### 6. Testes
+- `useRitualOccurrences.test.ts` (estender): filtro correto, preservação de `rescheduled_from`, contagem retornada, ignora `completed_*` e `rescheduled`.
+- `BulkRescheduleDialog.test.tsx`: render pré-preenchido vs livre, desabilitado sem nova data, payload correto.
+
+### 7. Fora de escopo
+- Sem alteração em `sync-ritual-calendar-from-cycles`, `ritual_cadences`, RLS, ou `useRescheduleOccurrence` individual.
+- Sem alteração em `pickCompositeWindow` ou `firstTuesdayOfMonth` — apenas datas de ocorrências individuais são movidas.
+
+## Arquivos afetados
+- `src/modules/okrs/hooks/useRitualOccurrences.ts`
+- `src/lib/queryKeys/okrs.ts`
+- `src/modules/okrs/pages/ritual-calendar/constants.ts`
+- `src/modules/okrs/pages/ritual-calendar/BulkRescheduleDialog.tsx` (novo)
+- `src/modules/okrs/pages/ritual-calendar/OccurrenceSheet.tsx`
+- `src/modules/okrs/pages/ritual-calendar/CalendarTab.tsx`
+- Testes correspondentes
+
+## Validação manual
+1. `/settings/rituals?tab=calendar` → abrir uma ocorrência `mbr-pre` de agosto → "Reagendar todos os times deste rito" → escolher nova data → confirmar.
+2. Conferir no calendário e via SQL: `mbr-pre` saiu da data antiga, apareceu na nova com `status='rescheduled'`, `rescheduled_to=novaData`, `rescheduled_from` preservado.
+3. Repetir via botão do header com seleção manual (rito + data origem + nova data).
+4. Data origem sem ocorrências elegíveis → preview 0 e Confirmar desabilitado.

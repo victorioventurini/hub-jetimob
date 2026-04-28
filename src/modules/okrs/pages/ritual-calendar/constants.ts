@@ -49,3 +49,16 @@ export const STATUS_CONFIG: Record<
 
 /** Catálogo canônico de ritos exibidos em filtros e criação manual */
 export const RECURRENT_WIZARD_TYPES: WizardPersona[] = ALL_RITUAL_WIZARD_TYPES;
+
+/**
+ * Ritos elegíveis para reagendamento em massa (ritos globais que materializam
+ * uma ocorrência por time da BU em uma mesma data).
+ */
+export const BULK_RESCHEDULABLE_WIZARD_TYPES: WizardPersona[] = [
+  'mbr',
+  'mbr-pre',
+  'qbr-pre',
+  'qbr-pre-clevel',
+  'qbr-meeting',
+  'qbr-post',
+];

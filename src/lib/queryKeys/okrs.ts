@@ -286,6 +286,11 @@ export const okrsKeys = {
     ['ritual-occurrences', buId, filters] as const,
   ritualOccurrenceBySession: (sessionId: string | null) =>
     ['ritual-occurrence-by-session', sessionId] as const,
+  ritualOccurrencesEligibleForBulk: (
+    buId: string | null,
+    wizardType: string | null,
+    plannedDate: string | null,
+  ) => ['ritual-occurrences', buId, 'eligible-bulk', wizardType, plannedDate] as const,
   ritualAdherence: (buId: string | null, filters?: Record<string, unknown>) =>
     ['ritual-adherence', buId, filters] as const,
   collaboratorCheckinExpected: (buId: string | null, teamId: string | null, cycleId: string | null) =>
