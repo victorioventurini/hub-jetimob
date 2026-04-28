@@ -1,10 +1,10 @@
 /**
  * QbrKpiAnalysisStep tests
- * Validates KPI rendering, zombie toggle, and KPI creation form
+ * Validates KPI rendering by RAG status. ("Zombie?" toggle removido em 2026-04-28.)
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@/test/test-utils';
+import { render, screen } from '@/test/test-utils';
 import { QbrKpiAnalysisStep, type QbrKpiAnalysisStepProps } from '../QbrKpiAnalysisStep';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
 
@@ -50,10 +50,6 @@ function createKpi(overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnapshot {
 function renderStep(overrides: Partial<QbrKpiAnalysisStepProps> = {}) {
   const defaultProps: QbrKpiAnalysisStepProps = {
     kpiSnapshots: [],
-    zombieCandidates: [],
-    onZombieCandidatesChange: vi.fn(),
-    kpisToCreate: [],
-    onKpisToCreateChange: vi.fn(),
     decisions: [],
     onDecisionsChange: vi.fn(),
     onContinue: vi.fn(),
@@ -91,40 +87,6 @@ describe('QbrKpiAnalysisStep', () => {
     expect(screen.getByText(/KPIs na meta \(1\)/)).toBeInTheDocument();
   });
 
-  it('toggles zombie candidate', () => {
-    const onZombieCandidatesChange = vi.fn();
-    const kpi = createKpi({ kpiId: 'kpi-1', ragStatus: 'red' });
-    renderStep({
-      kpiSnapshots: [kpi],
-      zombieCandidates: [],
-      onZombieCandidatesChange,
-    });
-    // Click the zombie checkbox
-    const checkbox = screen.getAllByRole('checkbox')[0];
-    fireEvent.click(checkbox);
-    expect(onZombieCandidatesChange).toHaveBeenCalledWith(['kpi-1']);
-  });
-
-  it('removes zombie candidate when already selected', () => {
-    const onZombieCandidatesChange = vi.fn();
-    const kpi = createKpi({ kpiId: 'kpi-1', ragStatus: 'red' });
-    renderStep({
-      kpiSnapshots: [kpi],
-      zombieCandidates: ['kpi-1'],
-      onZombieCandidatesChange,
-    });
-    const checkbox = screen.getAllByRole('checkbox')[0];
-    fireEvent.click(checkbox);
-    expect(onZombieCandidatesChange).toHaveBeenCalledWith([]);
-  });
-
-  it('shows zombie summary when candidates exist', () => {
-    renderStep({ zombieCandidates: ['kpi-1', 'kpi-2'] });
-    expect(screen.getByText(/2 KPIs marcados como potencialmente zombie/)).toBeInTheDocument();
-  });
-
-  // KPI creation UI removed from this step (props kept as deprecated for backward compat)
-
   it('calls onContinue and onBack', () => {
     const onContinue = vi.fn();
     const onBack = vi.fn();
@@ -135,3 +97,4 @@ describe('QbrKpiAnalysisStep', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 });
+
