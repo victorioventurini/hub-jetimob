@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Users, RefreshCw, CalendarIcon } from 'lucide-react';
+import { Users, RefreshCw, CalendarIcon, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WIZARD_TYPE_LABELS } from '../../hooks/useRitualHistory';
 import {
@@ -23,7 +23,8 @@ import {
   type RitualOccurrence,
 } from '../../hooks/useRitualOccurrences';
 import type { WizardPersona } from '../../types/wizard';
-import { STATUS_CONFIG } from './constants';
+import { STATUS_CONFIG, BULK_RESCHEDULABLE_WIZARD_TYPES } from './constants';
+import { BulkRescheduleDialog } from './BulkRescheduleDialog';
 
 interface OccurrenceSheetProps {
   occurrence: RitualOccurrence;
@@ -43,6 +44,11 @@ export function OccurrenceSheet({
   const { mutate: reschedule, isPending } = useRescheduleOccurrence();
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>();
   const [showReschedule, setShowReschedule] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+
+  const isBulkEligible =
+    BULK_RESCHEDULABLE_WIZARD_TYPES.includes(occurrence.wizardType as WizardPersona) &&
+    (occurrence.status === 'scheduled' || occurrence.status === 'missed');
 
   const statusCfg = STATUS_CONFIG[occurrence.status];
 
