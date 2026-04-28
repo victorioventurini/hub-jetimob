@@ -22,10 +22,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, XCircle, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
+import { useUrlState } from '@/shared/url';
 import { WIZARD_TYPE_LABELS } from '../../hooks/useRitualHistory';
 import {
   useRitualOccurrences,
@@ -35,6 +36,9 @@ import { useCollaboratorCheckinCounts } from '../../hooks/useCollaboratorCheckin
 import type { WizardPersona } from '../../types/wizard';
 import { DAY_LABELS, STATUS_CONFIG, RECURRENT_WIZARD_TYPES } from './constants';
 import { OccurrenceSheet } from './OccurrenceSheet';
+import { CalendarListView } from './CalendarListView';
+
+type CalendarViewMode = 'grid' | 'list';
 
 export function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -43,6 +47,11 @@ export function CalendarTab() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  const { value: viewMode, set: setViewMode } = useUrlState<CalendarViewMode>({
+    key: 'view',
+    defaultValue: 'grid',
+    parse: (v) => (v === 'list' ? 'list' : 'grid'),
+  });
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -150,6 +159,34 @@ export function CalendarTab() {
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
+              <div
+                role="group"
+                aria-label="Modo de visualização"
+                className="ml-2 inline-flex items-center rounded-md border bg-background"
+              >
+                <Button
+                  type="button"
+                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-8 w-8 rounded-r-none"
+                  aria-label="Grade"
+                  aria-pressed={viewMode === 'grid'}
+                  onClick={() => setViewMode('grid')}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-8 w-8 rounded-l-none"
+                  aria-label="Lista"
+                  aria-pressed={viewMode === 'list'}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -208,77 +245,87 @@ export function CalendarTab() {
       ) : (
         <Card>
           <CardContent className="p-4">
-            {filteredOccurrences.length === 0 && !error && (
-              <div className="text-center py-4 mb-3 rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma ocorrência neste mês. Use as setas para navegar entre meses.
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {DAY_LABELS.map(d => (
-                <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: startDow }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-20" />
-              ))}
-
-              {days.map(day => {
-                const dateStr = format(day, 'yyyy-MM-dd');
-                const dayOccs = byDate.get(dateStr) || [];
-                const isToday = format(new Date(), 'yyyy-MM-dd') === dateStr;
-
-                return (
-                  <div
-                    key={dateStr}
-                    className={cn(
-                      'h-20 rounded-lg border p-1.5 text-xs overflow-hidden',
-                      isToday && 'border-primary/50 bg-primary/5',
-                      dayOccs.length > 0 && 'cursor-pointer hover:bg-muted/50',
-                    )}
-                    onClick={() => dayOccs.length > 0 && setSelectedOccurrence(dayOccs[0])}
-                  >
-                    <span className={cn('font-medium', isToday && 'text-primary')}>
-                      {format(day, 'd')}
-                    </span>
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      {dayOccs.slice(0, 2).map(occ => {
-                        const collabLabel = getCollaboratorLabel(occ);
-                        return (
-                          <div
-                            key={occ.id}
-                            className={cn(
-                              'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] leading-tight truncate',
-                              STATUS_CONFIG[occ.status].color,
-                            )}
-                            title={`${WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona] || occ.wizardType} — ${STATUS_CONFIG[occ.status].label}${collabLabel ? ` (${collabLabel})` : ''}`}
-                          >
-                            <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_CONFIG[occ.status].dotColor)} />
-                            <span className="truncate">
-                              {WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona]?.split(' ')[0] || occ.wizardType}
-                            </span>
-                            {collabLabel && (
-                              <span className="ml-auto shrink-0 font-medium">{collabLabel}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {dayOccs.length > 2 && (
-                        <span className="text-[10px] text-muted-foreground pl-1">
-                          +{dayOccs.length - 2} mais
-                        </span>
-                      )}
-                    </div>
+            {viewMode === 'grid' ? (
+              <>
+                {filteredOccurrences.length === 0 && !error && (
+                  <div className="text-center py-4 mb-3 rounded-lg bg-muted/30">
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma ocorrência neste mês. Use as setas para navegar entre meses.
+                    </p>
                   </div>
-                );
-              })}
-            </div>
+                )}
+
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {DAY_LABELS.map(d => (
+                    <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: startDow }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-20" />
+                  ))}
+
+                  {days.map(day => {
+                    const dateStr = format(day, 'yyyy-MM-dd');
+                    const dayOccs = byDate.get(dateStr) || [];
+                    const isToday = format(new Date(), 'yyyy-MM-dd') === dateStr;
+
+                    return (
+                      <div
+                        key={dateStr}
+                        className={cn(
+                          'h-20 rounded-lg border p-1.5 text-xs overflow-hidden',
+                          isToday && 'border-primary/50 bg-primary/5',
+                          dayOccs.length > 0 && 'cursor-pointer hover:bg-muted/50',
+                        )}
+                        onClick={() => dayOccs.length > 0 && setSelectedOccurrence(dayOccs[0])}
+                      >
+                        <span className={cn('font-medium', isToday && 'text-primary')}>
+                          {format(day, 'd')}
+                        </span>
+                        <div className="flex flex-col gap-0.5 mt-1">
+                          {dayOccs.slice(0, 2).map(occ => {
+                            const collabLabel = getCollaboratorLabel(occ);
+                            return (
+                              <div
+                                key={occ.id}
+                                className={cn(
+                                  'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] leading-tight truncate',
+                                  STATUS_CONFIG[occ.status].color,
+                                )}
+                                title={`${WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona] || occ.wizardType} — ${STATUS_CONFIG[occ.status].label}${collabLabel ? ` (${collabLabel})` : ''}`}
+                              >
+                                <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_CONFIG[occ.status].dotColor)} />
+                                <span className="truncate">
+                                  {WIZARD_TYPE_LABELS[occ.wizardType as WizardPersona]?.split(' ')[0] || occ.wizardType}
+                                </span>
+                                {collabLabel && (
+                                  <span className="ml-auto shrink-0 font-medium">{collabLabel}</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {dayOccs.length > 2 && (
+                            <span className="text-[10px] text-muted-foreground pl-1">
+                              +{dayOccs.length - 2} mais
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <CalendarListView
+                occurrences={filteredOccurrences}
+                onSelect={setSelectedOccurrence}
+                getCollaboratorLabel={getCollaboratorLabel}
+              />
+            )}
 
             <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t">
               {Object.entries(STATUS_CONFIG).map(([status, cfg]) => (
