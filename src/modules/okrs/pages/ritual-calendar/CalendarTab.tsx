@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, XCircle, LayoutGrid, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
@@ -37,8 +37,10 @@ import type { WizardPersona } from '../../types/wizard';
 import { DAY_LABELS, STATUS_CONFIG, RECURRENT_WIZARD_TYPES } from './constants';
 import { OccurrenceSheet } from './OccurrenceSheet';
 import { CalendarListView } from './CalendarListView';
-
-type CalendarViewMode = 'grid' | 'list';
+import {
+  RitualCalendarViewToggle,
+  type RitualCalendarViewMode,
+} from './RitualCalendarViewToggle';
 
 export function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -47,10 +49,11 @@ export function CalendarTab() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
-  const { value: viewMode, set: setViewMode } = useUrlState<CalendarViewMode>({
+  const { value: viewMode, set: setViewMode } = useUrlState<RitualCalendarViewMode>({
     key: 'view',
-    defaultValue: 'grid',
-    parse: (v) => (v === 'list' ? 'list' : 'grid'),
+    defaultValue: 'calendar',
+    // Aceita 'grid' como alias retrocompatível para 'calendar'.
+    parse: (v) => (v === 'list' ? 'list' : 'calendar'),
   });
 
   const year = currentMonth.getFullYear();
@@ -145,6 +148,11 @@ export function CalendarTab() {
 
   return (
     <div className="space-y-4">
+      {/* Header: view toggle alinhado à direita (padrão /projects) */}
+      <div className="flex items-center justify-end">
+        <RitualCalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+      </div>
+
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
@@ -159,34 +167,6 @@ export function CalendarTab() {
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <div
-                role="group"
-                aria-label="Modo de visualização"
-                className="ml-2 inline-flex items-center rounded-md border bg-background"
-              >
-                <Button
-                  type="button"
-                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="h-8 w-8 rounded-r-none"
-                  aria-label="Grade"
-                  aria-pressed={viewMode === 'grid'}
-                  onClick={() => setViewMode('grid')}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="h-8 w-8 rounded-l-none"
-                  aria-label="Lista"
-                  aria-pressed={viewMode === 'list'}
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
 
             <div className="space-y-1">
@@ -245,7 +225,7 @@ export function CalendarTab() {
       ) : (
         <Card>
           <CardContent className="p-4">
-            {viewMode === 'grid' ? (
+            {viewMode === 'calendar' ? (
               <>
                 {filteredOccurrences.length === 0 && !error && (
                   <div className="text-center py-4 mb-3 rounded-lg bg-muted/30">
