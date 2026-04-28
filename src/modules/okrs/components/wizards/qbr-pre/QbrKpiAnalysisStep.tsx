@@ -18,7 +18,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
   KpiStatusBlocks,
 } from '../shared';
 import type {
@@ -91,13 +91,6 @@ export function QbrKpiAnalysisStep({
           description="Revise a saúde dos indicadores e sinalize oportunidades"
           variant="amber"
           badge={`${kpiSnapshots.length} KPIs`}
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-kpi-analysis"
         />
       }
       footer={

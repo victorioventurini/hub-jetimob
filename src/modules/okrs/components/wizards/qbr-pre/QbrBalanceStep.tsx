@@ -14,7 +14,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
   KrLinkedDetails,
   CarryOverDecisionsSection,
 } from '../shared';
@@ -107,13 +107,6 @@ export function QbrBalanceStep({
           description="Revise o desempenho dos KRs do ciclo que está encerrando"
           variant="primary"
           badge={`${totalKrs} KRs`}
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-balance"
         />
       }
       footer={

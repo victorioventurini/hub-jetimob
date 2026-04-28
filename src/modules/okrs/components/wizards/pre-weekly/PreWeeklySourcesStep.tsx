@@ -50,7 +50,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type { TeamCheckinDecision, WizardPersona } from '@/modules/okrs/types/wizard';
 
@@ -387,14 +387,6 @@ export function PreWeeklySourcesStep({
                 : 'Revise o que você já registrou antes de destilar a pauta da Weekly'
             }
             variant="primary"
-          />
-        }
-        bottomFixed={
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={onDecisionsChange}
-            sourceStep="pre-weekly-sources"
-            placeholder="Registrar uma decisão ou observação a partir das fontes…"
           />
         }
         footer={

@@ -16,7 +16,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
   ReflectionQuestions,
 } from '../shared';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -93,13 +93,6 @@ export function MbrPreHighlightsStep({
           tooltip="mbr-pre-highlights"
           description="O que acelerou, o que travou e o que precisa de decisão coletiva"
           variant="amber"
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="mbr-pre-highlights"
         />
       }
       footer={

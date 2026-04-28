@@ -26,7 +26,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type {
   PreWeeklyPeopleSignal,
@@ -108,14 +108,6 @@ export function PreWeeklyPessoasStep({
               {peopleSignals.length === 1 ? 'sinal' : 'sinais'}
             </Badge>
           }
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="pre-weekly-pessoas"
-          placeholder="Registrar decisão sobre pessoas…"
         />
       }
       footer={

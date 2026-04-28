@@ -32,7 +32,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type {
   PreWeeklyTopic,
@@ -125,14 +125,6 @@ export function PreWeeklyPautaStep({
               {topics.length}/{MAX_TOPICS}
             </Badge>
           }
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="pre-weekly-pauta"
-          placeholder="Registrar decisão sobre prioridade ou priorização…"
         />
       }
       footer={

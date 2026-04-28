@@ -14,7 +14,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type { QbrCLevelSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
@@ -62,13 +62,6 @@ export function QbrCLevelStrategicStep({
           tooltip="qbr-clevel-strategic"
           description="Registre o que a visão consolidada revelou. Esses insights pautam a reunião."
           variant="purple"
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-clevel-strategic"
         />
       }
       footer={

@@ -21,7 +21,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
@@ -117,13 +117,6 @@ export function MbrPreNextStepsStep({
           tooltip="mbr-pre-next-steps"
           description="O que o time planeja executar nas próximas semanas"
           variant="primary"
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="mbr-pre-next-steps"
         />
       }
       footer={

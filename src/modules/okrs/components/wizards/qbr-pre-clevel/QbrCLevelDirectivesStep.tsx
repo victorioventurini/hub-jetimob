@@ -2,7 +2,7 @@
  * QbrCLevelDirectivesStep - Step 4: Direcionamentos e Decisões
  * 
  * Direcionamentos com categorias (strategic_question, hypothesis, non_priority, challenge).
- * Decisões via DecisionCard + InlineDecisionInput com category 'strategic_proposal'.
+ * Decisões via DecisionCard com category 'strategic_proposal'.
  */
 
 import { useState } from 'react';
@@ -23,7 +23,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type { QbrCLevelSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
@@ -91,13 +91,6 @@ export function QbrCLevelDirectivesStep({
           description="Defina o que a sala precisa debater e decidir. Esses itens abrem a reunião."
           variant="amber"
           badge={`${directives.length} itens`}
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-clevel-directives"
         />
       }
       footer={

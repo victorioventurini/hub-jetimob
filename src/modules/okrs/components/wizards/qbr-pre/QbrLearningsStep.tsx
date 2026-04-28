@@ -14,7 +14,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
   ReflectionQuestions,
 } from '../shared';
 import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -85,13 +85,6 @@ export function QbrLearningsStep({
           tooltip="qbr-learnings"
           description="Reflexão estruturada sobre o que levar e o que deixar"
           variant="purple"
-        />
-      }
-      bottomFixed={
-        <InlineDecisionInput
-          decisions={decisions}
-          onDecisionsChange={onDecisionsChange}
-          sourceStep="qbr-learnings"
         />
       }
       footer={

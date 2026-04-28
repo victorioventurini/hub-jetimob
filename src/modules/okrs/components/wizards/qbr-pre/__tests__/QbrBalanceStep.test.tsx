@@ -112,11 +112,6 @@ describe('QbrBalanceStep', () => {
     expect(screen.getByText('Alcançados')).toBeInTheDocument();
   });
 
-  it('shows InlineDecisionInput', () => {
-    renderStep();
-    expect(screen.getByTestId('inline-decision-input')).toBeInTheDocument();
-  });
-
   it('calls onContinue when primary button clicked', async () => {
     const onContinue = vi.fn();
     renderStep({ onContinue });
