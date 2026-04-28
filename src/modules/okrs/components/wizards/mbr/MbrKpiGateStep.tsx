@@ -26,6 +26,12 @@ export interface MbrKpiGateStepProps {
   onKpiSnapshotsChange: (snapshots: MbrKpiSnapshot[]) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** KPI IDs sinalizados como "zumbi" pelos líderes no MBR-PRE */
+  signaledZombieKpiIds?: string[];
+  /** Mapa teamId → nome para exibir origem das sinalizações */
+  teamNamesById?: Record<string, string>;
+  /** KPIs propostos pelos líderes no MBR-PRE */
+  proposedKpis?: Array<{ teamId: string; name: string; rationale?: string }>;
   onContinue: () => void;
   onBack: () => void;
 }
