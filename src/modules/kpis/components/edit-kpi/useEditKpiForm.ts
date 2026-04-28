@@ -34,6 +34,9 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
     },
   });
 
+  // Hidrata "Atualizado por" a partir do contribuidor data_entry ativo
+  const { data: primaryDataEntry } = useKpiPrimaryDataEntry(kpi?.id, open);
+
   const resetFormWithKpiData = useCallback(() => {
     if (!kpi) return;
 
@@ -60,10 +63,12 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
       scope: kpi.scope || 'team',
       responsible_area_id: kpi.responsible_area_id || undefined,
       responsible_team_id: kpi.responsible_team_id || undefined,
+      updated_by_user_id:
+        primaryDataEntry?.contributor_user_id ?? kpi.owner_user_id ?? undefined,
     });
 
     lastKpiIdRef.current = kpi.id;
-  }, [kpi, form]);
+  }, [kpi, form, primaryDataEntry]);
 
   // Canonical: only reset on closed→open transition
   useDialogFormReset(open, resetFormWithKpiData);
@@ -74,6 +79,19 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
       resetFormWithKpiData();
     }
   }, [open, kpi, resetFormWithKpiData]);
+
+  // Quando a query do data_entry resolver depois do open inicial, atualiza só esse campo
+  useEffect(() => {
+    if (!open || !kpi) return;
+    if (primaryDataEntry?.contributor_user_id) {
+      const current = form.getValues('updated_by_user_id');
+      if (!current) {
+        form.setValue('updated_by_user_id', primaryDataEntry.contributor_user_id, {
+          shouldDirty: false,
+        });
+      }
+    }
+  }, [open, kpi, primaryDataEntry, form]);
 
   // Deterministic scope change handler
   const handleScopeChange = useCallback(
