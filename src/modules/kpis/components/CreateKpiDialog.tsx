@@ -1018,7 +1018,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               </CollapsibleContent>
             </Collapsible>
 
-            <DialogFooter>
+            <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+              {!canCreateForCurrentForm && blockedReason && (
+                <p className="text-xs text-muted-foreground sm:mr-auto sm:text-left">
+                  <Lock className="h-3 w-3 inline mr-1" />
+                  {blockedReason}
+                </p>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -1026,7 +1032,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" isLoading={isSubmitting} loadingText="Criando...">
+              <Button
+                type="submit"
+                isLoading={isSubmitting}
+                loadingText="Criando..."
+                disabled={!canCreateForCurrentForm}
+                title={!canCreateForCurrentForm ? blockedReason ?? undefined : undefined}
+              >
                 Criar Indicador
               </Button>
             </DialogFooter>
