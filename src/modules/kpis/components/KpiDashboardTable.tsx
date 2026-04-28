@@ -3,7 +3,7 @@
  * v2.87.0: Adiciona coluna de ações com menu de editar/arquivar/excluir
  */
 
-import { TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Clock, Users } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -140,9 +140,6 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                 <TableCell>
                   <div className="min-w-0">
                     <p className="font-medium truncate max-w-[200px]">{kpi.name}</p>
-                    {kpi.team && (
-                      <p className="text-xs text-muted-foreground truncate">{kpi.team.name}</p>
-                    )}
                   </div>
                 </TableCell>
 
@@ -157,8 +154,14 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                 <TableCell>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {kpi.area && <AreaBadge area={kpi.area} />}
+                    {kpi.team && (
+                      <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                        <Users className="h-3 w-3" />
+                        {kpi.team.name}
+                      </Badge>
+                    )}
                     <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
-                    {!kpi.area && kpi.scope !== "org" && (
+                    {!kpi.area && !kpi.team && kpi.scope !== "org" && (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </div>
