@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useKpiMutations } from '../hooks/useKpiMutations';
+import { useUpsertKpiPrimaryDataEntry } from '../hooks/useKpiPrimaryDataEntry';
 import { useTeamArea } from '../hooks/useTeamArea';
 import { useCanChangeKpiScope } from '../hooks/useCanChangeKpiScope';
 import {
@@ -49,6 +50,7 @@ interface EditKpiDialogProps {
 export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateKpi } = useKpiMutations();
+  const upsertDataEntry = useUpsertKpiPrimaryDataEntry();
   const { has: hasPermission, isLoading: isLoadingPermission } = usePermissions();
   const { currentBu } = useBu();
 
@@ -122,6 +124,17 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
         responsible_area_id: values.responsible_area_id || null,
         responsible_team_id: values.responsible_team_id || null,
       });
+
+      // Sincroniza "Atualizado por" (data_entry contributor)
+      try {
+        await upsertDataEntry.mutateAsync({
+          kpiId: kpi.id,
+          userId: values.updated_by_user_id ?? null,
+        });
+      } catch (err) {
+        console.error('[EditKpiDialog] Falha ao sincronizar "Atualizado por":', err);
+      }
+
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);

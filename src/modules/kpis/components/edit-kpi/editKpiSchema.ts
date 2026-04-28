@@ -39,6 +39,8 @@ export const editKpiSchema = z
     scope: z.enum(['team', 'area', 'org']),
     responsible_area_id: z.string().optional(),
     responsible_team_id: z.string().optional(),
+    /** v2.92.0 — usuário data_entry (1 por KPI). Persistido em kpi_data_contributors. */
+    updated_by_user_id: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.scope === 'team' && !data.team_id) {
@@ -54,6 +56,13 @@ export const editKpiSchema = z
           code: z.ZodIssueCode.custom,
           message: 'Responsável é obrigatório para indicadores ativos',
           path: ['owner_user_id'],
+        });
+      }
+      if (!data.updated_by_user_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Atualizado por é obrigatório para indicadores ativos',
+          path: ['updated_by_user_id'],
         });
       }
       if (data.scope === 'area' && !data.area_id) {

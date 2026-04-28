@@ -33,6 +33,7 @@ import { TeamSelect, BuUserSelect, AreaSelect, UnitSelect } from "@/components/s
 import { Badge } from "@/components/ui/badge";
 import { InfoNotice } from "@/components/ui/info-notice";
 import { useKpiData } from "../hooks";
+import { useUpsertKpiPrimaryDataEntry } from "../hooks/useKpiPrimaryDataEntry";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
   KpiDirection,
@@ -86,6 +87,8 @@ const formSchema = z.object({
   ]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
+  /** v2.92.0 — usuário data_entry (1 por KPI). Persistido em kpi_data_contributors. */
+  updated_by_user_id: z.string().optional(),
   target_value: z.preprocess(
     (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
     z.number().optional()
@@ -117,6 +120,13 @@ const formSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: "Responsável é obrigatório para indicadores ativos",
         path: ["owner_user_id"],
+      });
+    }
+    if (!data.updated_by_user_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Atualizado por é obrigatório para indicadores ativos",
+        path: ["updated_by_user_id"],
       });
     }
     // Área obrigatória apenas para scope=area (e ativos)
@@ -170,6 +180,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { createKpi } = useKpiData();
+  const upsertDataEntry = useUpsertKpiPrimaryDataEntry();
   const { has: hasPermission, isLoading: isLoadingPermission, isWildcard } = usePermissions();
   const { currentBu } = useBu();
   
@@ -269,7 +280,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         ? (values.consolidation_frequency as 'daily' | 'weekly' | 'monthly' | 'quarterly')
         : 'monthly';
 
-      await createKpi.mutateAsync({
+      const created = await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
         unit: values.unit,
@@ -292,6 +303,20 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         responsible_area_id: values.responsible_area_id || null,
         responsible_team_id: values.responsible_team_id || null,
       });
+
+      // v2.92.0: registra "Atualizado por" como contribuidor data_entry
+      const newKpiId = (created as { id?: string } | null)?.id;
+      if (newKpiId && values.updated_by_user_id) {
+        try {
+          await upsertDataEntry.mutateAsync({
+            kpiId: newKpiId,
+            userId: values.updated_by_user_id,
+          });
+        } catch (err) {
+          console.error('[CreateKpiDialog] Falha ao registrar "Atualizado por":', err);
+        }
+      }
+
       form.reset();
       setShowAdvanced(false);
       onOpenChange(false);
@@ -857,7 +882,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
               />
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {watchScope === 'team' && (
                 <FormField
                   control={form.control}
@@ -884,9 +909,32 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 name="owner_user_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="flex items-center gap-1">
                       Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
-                      <HelpTooltip content="Pessoa accountable pela saúde deste indicador. Será notificada em caso de desvios." />
+                      <HelpTooltip content="Pessoa accountable pelo resultado deste indicador. Monitora desvios e age para 'mover o ponteiro'." />
+                    </FormLabel>
+                    <FormControl>
+                      <BuUserSelect
+                        value={field.value}
+                        onValueChange={(val) => field.onChange(val ?? undefined)}
+                        placeholder="Selecione..."
+                        className="w-full"
+                        excludeExternal
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="updated_by_user_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      Atualizado por {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      <HelpTooltip content="Pessoa responsável por inserir/atualizar os valores deste indicador. Pode ser a mesma do Responsável." />
                     </FormLabel>
                     <FormControl>
                       <BuUserSelect
