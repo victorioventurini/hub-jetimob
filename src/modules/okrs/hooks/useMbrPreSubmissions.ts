@@ -99,18 +99,18 @@ export function useMbrPreSubmissions({
       // 2) Addendums dessas sessões
       let addendumsBySession = new Map<string, MbrPreSubmissionAddendum[]>();
       if (sessionIds.length > 0) {
-        const { data: addRows } = await buSupabase
-          .from('okr_wizard_session_addendums')
-          .select('session_id, content, created_at, created_by')
+        const { data: addRows } = await (buSupabase as any)
+          .from('okr_wizard_addendums')
+          .select('session_id, text, created_at, created_by')
           .in('session_id', sessionIds)
           .order('created_at', { ascending: true });
 
-        for (const a of addRows ?? []) {
+        for (const a of (addRows ?? []) as Array<{ session_id: string; text: string; created_at: string; created_by: string }>) {
           const list = addendumsBySession.get(a.session_id) ?? [];
           list.push({
-            text: String(a.content ?? ''),
-            created_at: a.created_at as string,
-            created_by: (a.created_by as string) ?? '',
+            text: String(a.text ?? ''),
+            created_at: a.created_at,
+            created_by: a.created_by ?? '',
           });
           addendumsBySession.set(a.session_id, list);
         }
