@@ -8,7 +8,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Send, BarChart3, Activity, BookOpen, Target, Ghost } from 'lucide-react';
+import { Send, BarChart3, Activity, BookOpen, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
