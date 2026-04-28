@@ -2,7 +2,7 @@
  * EditKpiDialog — Hook que centraliza form state e reset behavior
  * Extraído de EditKpiDialog.tsx (refatoração P1.4)
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
