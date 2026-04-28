@@ -1,82 +1,69 @@
+## Contexto (pré-checklist concluído)
+
+- **TCR**: módulo "Ritual Calendar & Cadences v1.0" ativo. Tabelas envolvidas: `ritual_cadences`, `ritual_occurrences`. Última evolução: "Ritual Calendar Health Filters v1.0" (mesmo layout de filtros entre abas).
+- **DEVELOPMENT_STANDARDS §E (URL State)**: filtros, ordenação e modos de visualização vão para URL via `useUrlState` de `@/shared/url` (API object, não tuple legado).
+- **Memory `frontend-memoization-standard`**: linhas de listas densas devem usar `React.memo`.
+- **Memory `url-state-preservation`**: `setSearchParams` em rotas multi-param usa functional update — coberto pelo `useUrlState` canônico.
+- **Memory `entity-names-cell-tooltip-standard`**: para listar times em tooltip, usar `EntityNamesCell` (não criar tooltip paralelo).
+- **Sem impactos**: RLS, query keys, edge functions, schema. Mudança 100% UI/presentation.
+
 ## Objetivo
 
-Remover, de **todos os ritos**, a funcionalidade do usuário marcar/sinalizar um KPI como **"Zombie?"**, mantendo o restante da análise de KPIs intacta (RAG, valor atual, variação, decisões inline).
+Adicionar um toggle **Grade / Lista** na aba **Calendário** de `/settings/rituals`, mantendo todos os filtros atuais (mês, rito, time, usuário) e o `OccurrenceSheet` existente.
 
-## Pré-checklist canônico — concluído
+## Escopo
 
-- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (linha 2091 menciona o conceito no QBR-Pre)
-- ✅ `docs/canonical/DATA_MODEL_REGISTRY.md` / `SCHEMA_QUICK_REFERENCE.md` (campo presente em `okr_wizard_sessions.draft_data` + coluna `kpi_metrics.zombie_candidate`)
-- ✅ `mem://features/kpis/kpis-master-standard` — KPIs Master v3.0.0 (não cita zombie como conceito governado; é só sinalização de rito)
-- ✅ `mem://features/rituals/qbr-master-standard` e `mem://features/okrs/cycles-and-rituals-master`
-- ✅ Mapeamento de uso no código (105 ocorrências em ~20 arquivos: QBR-Pre, QBR-Pre-CLevel, MBR-Pre, MBR, Executive Quarter Review, edge function `qbr-pre-summary`, types, tests, migration histórica)
+- **Editar**: `src/modules/okrs/pages/ritual-calendar/CalendarTab.tsx`
+- **Criar**: `src/modules/okrs/pages/ritual-calendar/CalendarListView.tsx` (subcomponente da própria aba)
+- **Não tocar**: `useRitualOccurrences`, `OccurrenceSheet`, `CadencesTab`, `HealthTab`, `constants.ts` (a menos que precise de label novo), nada em `lib/queryKeys`, RLS, edge.
 
-## Escopo da remoção
+## Comportamento
 
-### Ritos afetados (UI do usuário)
-1. **QBR-Pre** → `QbrKpiAnalysisStep` — remove os 3 toggles "Zombie?" (alerta / saudáveis / sem dados) e o resumo "X KPIs marcados como potencialmente zombie".
-2. **MBR-Pre** → mantém o draft funcionando, mas remove qualquer UI/contagem de zombie no `MbrPreSummary`.
-3. **MBR** → `MbrKpiGateStep` deixa de receber/exibir o destaque "sinalizado como zumbi por: [time]". A prop `signaledZombieKpiIds` e o `useMemo` em `MbrPage` são removidos.
-4. **QBR-Pre-CLevel** → `QbrCLevelSystemReadStep` remove o card/contador "X KPIs zombie sinalizados" e o helper `aggregateZombieKpis`.
-5. **Executive Quarter Review** → remove o bloco "KPIs zombie" da seção de aprendizados.
+### Toggle
+- `ToggleGroup` (shadcn) com 2 opções: **Grade** (`LayoutGrid`, default) e **Lista** (`List`).
+- Posição: dentro do mesmo Card de filtros, alinhado à direita do navegador de mês (acima dos selects em mobile).
+- Estado em URL com `useUrlState({ key: 'view', defaultValue: 'grid' })` — valores `'grid' | 'list'`. URL compartilhável (`?view=list`).
+- Trocar de modo preserva mês, rito, time e usuário.
 
-### Camada de dados (compatibilidade)
-- **Não dropar** a coluna `kpi_metrics.zombie_candidate` nem mexer em migrations passadas (mantém compatibilidade com snapshots históricos e evita risco em produção).
-- **Manter** `zombieCandidates: string[]` nos types `MbrPreDraftData` / `QbrPreDraftData` como **opcional/legacy** (drafts antigos no banco continuam carregando sem erro), mas:
-  - Inicialização nova → sempre `[]`
-  - Nenhum lugar do código grava novos valores
-  - Nenhuma UI lê para exibir
-- **Edge function `qbr-pre-summary`**: remover a menção a "zombie candidates" do prompt da IA (a IA deixa de ser instruída a destacar zombies; o campo `kpisZombie` no relatório executivo deixa de ser populado proativamente).
-- **Hook `useMbrPreSubmissions`**: parar de propagar `zombieCandidates` no objeto retornado (ou mantém como `[]` para não quebrar consumidores).
+### Modo Grade
+- Sem alterações no layout atual (grid 7 colunas, pills, legenda, auto-navigate).
 
-### Testes
-- Remover os testes de toggle/summary de zombie em `QbrKpiAnalysisStep.test.tsx` e `QbrCLevelSteps.test.tsx`.
-- Atualizar fixtures que usam `zombieCandidates: ['kpi-1']` → `[]`.
+### Modo Lista
+- Mesma fonte: `filteredOccurrences` (já memoizado, herda todos os filtros e o auto-navigate de mês vazio).
+- Layout de tabela leve, agrupada por dia:
+  - Sub-header sticky por data: `qua, 05/mai/2026` (capitalizado, `date-fns/ptBR`).
+  - Linhas: badge de persona (`WIZARD_TYPE_LABELS`), nome do time (quando `teamId` presente — resolvido via mesma fonte que o grid usa), badge de status (`STATUS_CONFIG`), contagem `completed/expected` para `collaborator` (mesma lógica de `getCollaboratorLabel`).
+  - Click na linha → abre o mesmo `OccurrenceSheet` que o grid abre.
+- Ordenação: `plannedDate` ASC, depois persona.
+- Linha implementada como `CalendarListRow` com `React.memo` (padrão `frontend-memoization-standard`).
+- Empty state: reutiliza a mesma mensagem ("Nenhuma ocorrência neste mês").
+- Mantém a legenda de status no rodapé, idêntica ao grid.
+
+### Header de mês
+- O navegador `◀ mês ▶` continua governando o intervalo em ambos os modos.
+- Sem date-range customizado nesta entrega (escopo separado).
 
 ## Detalhes técnicos
 
-**Arquivos a editar:**
+- **URL state**: `useUrlState<'grid' | 'list'>({ key: 'view', defaultValue: 'grid' })` de `@/shared/url`.
+- **Acessibilidade**: `ToggleGroup` com `aria-label="Modo de visualização"` e `aria-pressed` por botão; tabela em modo lista com `<table>` semântica e `<th scope="col">`.
+- **Mobile (≤ sm)**: cada item da lista colapsa em duas linhas (data+persona em cima; time+status embaixo). Toggle continua acessível.
+- **i18n**: reutiliza labels existentes; novas strings somente "Grade" e "Lista".
+- **Sem novas queries**, sem novas tabelas, sem mudança de query key.
 
-| Arquivo | Mudança |
-|---|---|
-| `src/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep.tsx` | Remover Checkbox + Label "Zombie?" das 3 seções, handler `handleToggleZombie`, props `zombieCandidates`/`onZombieCandidatesChange`, bloco de resumo, import `Ghost` |
-| `src/modules/okrs/components/wizards/qbr-pre/QbrPreSummary.tsx` | Remover bloco que conta `zombieCandidates.length` |
-| `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx` | Idem |
-| `src/modules/okrs/components/wizards/mbr/MbrKpiGateStep.tsx` | Remover prop `signaledZombieKpiIds`, lógica de destaque visual e tooltip |
-| `src/modules/okrs/components/wizards/qbr-pre-clevel/QbrCLevelSystemReadStep.tsx` | Remover `aggregateZombieKpis`, `zombieCount`, card de exibição |
-| `src/modules/okrs/pages/MbrPage.tsx` | Remover `useMemo` de `signaledZombieKpiIds` e prop passada ao step |
-| `src/modules/okrs/pages/QbrPrePage.tsx` | Remover props `zombieCandidates`/`onZombieCandidatesChange` passadas ao step |
-| `src/modules/okrs/pages/MbrPrePage.tsx` | Idem (sem step de toggle, mas remove props se houver) |
-| `src/modules/okrs/pages/ExecutiveQuarterReviewPage.tsx` | Remover bloco UI "KPIs zombie" + normalização `zombieKpis` |
-| `src/modules/okrs/hooks/useMbrPreSubmissions.ts` | Parar de mapear `zombieCandidates` |
-| `supabase/functions/qbr-pre-summary/index.ts` | Remover instrução "zombie candidates" do prompt + campo derivado |
-| Tests: `QbrKpiAnalysisStep.test.tsx`, `QbrCLevelSteps.test.tsx`, `QbrPreSummary.test.tsx` | Remover casos de teste |
+## Não-objetivos
 
-**Não tocar:**
-- Migration histórica `20260325024414_*.sql`
-- Coluna `kpi_metrics.zombie_candidate` (compatibilidade com snapshots)
-- `src/integrations/supabase/types.ts` (auto-gerado)
-- Type field `zombieCandidates` em `mbr.ts`/`qbr.ts` (vira opcional/legacy para hidratação de drafts antigos sem quebra)
+- Filtro de intervalo customizado (date range).
+- Exportação `.csv` / `.ics`.
+- Visão consolidada anual.
+- Edição inline de cadência.
 
-## Documentação a atualizar
+## Critérios de aceite
 
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` linha 2091 — remover menção "Sinalização de KPIs zombie".
-- `docs/HUB_TECHNICAL_DEEP_DIVE.md` linha 907 — atualizar descrição do `QbrKpiAnalysisStep`.
-- `.lovable/plan.md` — pode ficar como está (é histórico do MBR-PRE → MBR; será sobrescrito no próximo ciclo).
-- `mem://features/kpis/kpis-master-standard` — adicionar nota: "Conceito de 'Zombie KPI' como sinalização manual em ritos foi removido em 2026-04-28. Detecção de KPIs ociosos passa a depender exclusivamente de regras automáticas baseadas em frequency/no-update windows (futuro)."
-
-## Validação após implementação
-
-1. Build TypeScript verde (sem props órfãs).
-2. Smoke test mental: abrir QBR-Pre → step "Análise de KPIs" não mostra checkbox Zombie; abrir MBR → KPI Gate não mostra badge "sinalizado por time".
-3. Drafts antigos no banco com `zombieCandidates: ['x']` continuam abrindo sem crash (campo é lido como opcional, ignorado na render).
-4. Edge function `qbr-pre-summary` continua respondendo (prompt simplificado).
-5. Testes: `bunx vitest run src/modules/okrs/components/wizards/qbr-pre src/modules/okrs/components/wizards/qbr-pre-clevel`.
-
-## Riscos & mitigação
-
-| Risco | Mitigação |
-|---|---|
-| Drafts antigos com `zombieCandidates` populados | Type fica opcional, nenhuma UI lê → ignorado silenciosamente |
-| Coluna DB `kpi_metrics.zombie_candidate` órfã | Mantida; nenhuma escrita nova; pode ser removida em wave de housekeeping futura |
-| Memória `kpis-master-standard` cita o conceito? | Verificado: não governa; só atualizar nota histórica |
-| Quebra de import (`Ghost` icon) | Removido junto |
+1. Toggle Grade/Lista visível no Calendário, default = Grade.
+2. Trocar para Lista mantém mês, rito, time e usuário; voltar para Grade idem.
+3. Lista exibe a mesma quantidade e identidade de ocorrências do grid, ordenadas por data ASC.
+4. Click em linha abre o `OccurrenceSheet` correto, com `expectedCount`/`completedCount` corretos para `collaborator`.
+5. URL reflete o modo (`?view=list`) e é compartilhável.
+6. Layout sem overflow em viewport ≤ 993px.
+7. Sem regressão nas abas Cadências, Saúde nem no fluxo de reagendamento.
