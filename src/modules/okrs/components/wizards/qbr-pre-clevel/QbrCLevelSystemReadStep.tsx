@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
-  Eye, Target, Activity, BookOpen, Ghost, AlertTriangle,
+  Eye, Target, Activity, BookOpen, AlertTriangle,
   TrendingUp, TrendingDown, Minus, Sparkles, Loader2, FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
