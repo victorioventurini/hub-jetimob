@@ -86,6 +86,8 @@ const formSchema = z.object({
   ]),
   team_id: z.string().optional(),
   owner_user_id: z.string().optional(),
+  /** v2.92.0 — usuário data_entry (1 por KPI). Persistido em kpi_data_contributors. */
+  updated_by_user_id: z.string().optional(),
   target_value: z.preprocess(
     (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
     z.number().optional()
