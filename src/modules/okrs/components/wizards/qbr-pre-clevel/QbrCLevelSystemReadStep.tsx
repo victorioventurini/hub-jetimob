@@ -74,13 +74,7 @@ function aggregateKrStates(submissions: LeaderPreSubmission[]) {
   return { achieved, atRisk, offTrack, other, total: achieved + atRisk + offTrack + other };
 }
 
-function aggregateZombieKpis(submissions: LeaderPreSubmission[]) {
-  const all = new Set<string>();
-  for (const sub of submissions) {
-    for (const id of sub.snapshot.zombieCandidates) all.add(id);
-  }
-  return all.size;
-}
+
 
 
 function extractTopLearnings(submissions: LeaderPreSubmission[], field: 'whatWorked' | 'whatDidntWork' | 'debts'): Array<{ text: string; teamName: string }> {
@@ -109,7 +103,7 @@ export function QbrCLevelSystemReadStep({
 }: QbrCLevelSystemReadStepProps) {
   const buSupabase = useBuScopedSupabase();
   const krAgg = useMemo(() => aggregateKrStates(leaderSubmissions), [leaderSubmissions]);
-  const zombieCount = useMemo(() => aggregateZombieKpis(leaderSubmissions), [leaderSubmissions]);
+  
   
   const topLearnings = useMemo(() => ({
     worked: extractTopLearnings(leaderSubmissions, 'whatWorked'),
@@ -307,17 +301,8 @@ export function QbrCLevelSystemReadStep({
         {/* KPIs desatualizados e pendentes */}
         <KpiStatusBlocks kpiSnapshots={orgKpiSnapshots} />
 
-        {/* Sinalizações dos líderes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {zombieCount > 0 && (
-            <Card className="border-dashed">
-              <CardContent className="p-3 flex items-center gap-2">
-                <Ghost className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{zombieCount} KPI{zombieCount > 1 ? 's' : ''} zombie sinalizados</span>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+
+
 
         {/* Adendos dos líderes — section after signals */}
         {teamsWithAddendums.length > 0 && (

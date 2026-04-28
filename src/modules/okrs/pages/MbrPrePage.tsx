@@ -445,8 +445,6 @@ export default function MbrPrePage() {
         return (
           <QbrKpiAnalysisStep
             kpiSnapshots={draft.data.kpiSnapshots}
-            zombieCandidates={draft.data.zombieCandidates}
-            onZombieCandidatesChange={(zombieCandidates) => updateDraft({ zombieCandidates })}
             kpisToCreate={draft.data.kpisToCreate}
             onKpisToCreateChange={(kpisToCreate) => updateDraft({ kpisToCreate })}
             decisions={draft.data.decisions}

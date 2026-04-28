@@ -154,7 +154,7 @@ export function useMbrPreSubmissions({
           submittedByName: session.started_by ? namesById.get(session.started_by) ?? null : null,
           highlights: draftData.highlights ?? { accelerated: '', blocked: '', needsDecision: '' },
           nextSteps: draftData.nextSteps ?? { focus: '', prioritizedItems: [], crossDependencies: [] },
-          zombieCandidates: Array.isArray(draftData.zombieCandidates) ? draftData.zombieCandidates : [],
+          zombieCandidates: [],
           kpisToCreate: Array.isArray(draftData.kpisToCreate) ? draftData.kpisToCreate : [],
           krFinalStates: Array.isArray(draftData.krFinalStates) ? draftData.krFinalStates : [],
           addendums,

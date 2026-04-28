@@ -127,7 +127,6 @@ function extractLearnings(reflectionData: Record<string, any> | null) {
   const keep = data.keep ?? data.learnings?.keep ?? data.whatWorked ?? [];
   const stop = data.stop ?? data.learnings?.stop ?? data.stopDoing ?? [];
   const debts = data.debitos ?? data.debts ?? data.learnings?.debts ?? [];
-  const zombieKpis = data.zombieKpis ?? data.kpisZombie ?? [];
   const nextStepItems = data.nextSteps ?? data.itensDecisao ?? [];
 
   const toArray = (value: any): string[] => {
@@ -140,7 +139,6 @@ function extractLearnings(reflectionData: Record<string, any> | null) {
     keep: toArray(keep),
     stop: toArray(stop),
     debts: toArray(debts),
-    zombieKpis: toArray(zombieKpis),
     nextStepItems: toArray(nextStepItems),
   };
 }
@@ -863,12 +861,7 @@ export default function ExecutiveQuarterReviewPage() {
                       <p className="text-muted-foreground line-clamp-2">{learnings.debts.join(' • ') || '—'}</p>
                     </div>
 
-                    {learnings.zombieKpis.length > 0 ? (
-                      <div>
-                        <p className="font-medium">KPIs zombie</p>
-                        <p className="text-muted-foreground line-clamp-2">{learnings.zombieKpis.join(' • ')}</p>
-                      </div>
-                    ) : null}
+
 
                     {decisions.length > 0 ? (
                       <div>
