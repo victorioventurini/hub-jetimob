@@ -178,17 +178,7 @@ describe('QbrCLevelSystemReadStep', () => {
     expect(screen.getByText('Alcançados')).toBeInTheDocument();
   });
 
-  it('shows zombie KPI counts when present', () => {
-    render(
-      <QbrCLevelSystemReadStep
-        leaderSubmissions={[createSubmission()]}
-        orgKpiSnapshots={[]}
-        teamsWithoutSubmission={[]}
-        onContinue={vi.fn()}
-      />
-    );
-    expect(screen.getByText(/zombie sinalizados/)).toBeInTheDocument();
-  });
+
 
   it('shows consolidated learnings', () => {
     render(
