@@ -54,6 +54,7 @@ interface QbrPreAgentContext {
     ragStatus: string;
     variationVsLastMonth: number | null;
   }>;
+  /** @deprecated "Zombie KPI" removido em 2026-04-28 — mantido como [] p/ retrocompat */
   zombieCandidates: string[];
   kpisToCreate: Array<{
     description: string;
@@ -331,7 +332,7 @@ serve(async (req) => {
           name: k.name, currentValue: k.currentValue, target: k.target,
           ragStatus: k.ragStatus, variationVsLastMonth: k.variationVsLastMonth ?? null,
         })),
-      zombieCandidates: (snap.zombieCandidates as QbrPreAgentContext['zombieCandidates']) || [],
+      zombieCandidates: [],
       kpisToCreate: (snap.kpisToCreate as QbrPreAgentContext['kpisToCreate']) || [],
       learnings: (snap.learnings as QbrPreAgentContext['learnings']) || { whatWorked: '', whatDidntWork: '', debts: '' },
       decisions: ((snap.decisions as DecisionSnapshot[] | undefined) || []).map((d) => ({ text: d.text, category: d.category })),
