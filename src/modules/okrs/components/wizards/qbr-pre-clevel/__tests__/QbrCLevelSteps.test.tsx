@@ -84,7 +84,7 @@ function createSubmission(overrides: Partial<LeaderPreSubmission> = {}): LeaderP
         { krId: 'kr-2', krTitle: 'KR 2', state: 'at_risk', finalProgress: 40, paceStatus: 'behind_pace' },
       ],
       kpiSnapshot: [],
-      zombieCandidates: ['zombie-1'],
+      zombieCandidates: [],
       kpisToCreate: [{ description: 'Novo KPI', suggestedScope: 'team', relatedKrTitle: '' }],
       learnings: { whatWorked: 'Rotinas', whatDidntWork: 'Deploys', debts: 'Testes' },
       proposedOkrs: [] as any,
@@ -178,17 +178,7 @@ describe('QbrCLevelSystemReadStep', () => {
     expect(screen.getByText('Alcançados')).toBeInTheDocument();
   });
 
-  it('shows zombie KPI counts when present', () => {
-    render(
-      <QbrCLevelSystemReadStep
-        leaderSubmissions={[createSubmission()]}
-        orgKpiSnapshots={[]}
-        teamsWithoutSubmission={[]}
-        onContinue={vi.fn()}
-      />
-    );
-    expect(screen.getByText(/zombie sinalizados/)).toBeInTheDocument();
-  });
+
 
   it('shows consolidated learnings', () => {
     render(

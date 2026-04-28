@@ -166,19 +166,7 @@ export default function MbrPage() {
   const mbrPreAddendumsByTeam = mbrPre?.addendumsByTeam ?? {};
   const mbrPreSubmittedCount = mbrPre?.submittedCount ?? 0;
 
-  // KPI ids sinalizados como "zumbi" por algum time (agregação cross-team)
-  const signaledZombieKpiIds = useMemo(() => {
-    const map = new Map<string, string[]>(); // kpiId → [teamName]
-    for (const sub of Object.values(mbrPreByTeam)) {
-      for (const kpiId of sub.zombieCandidates ?? []) {
-        const list = map.get(kpiId) ?? [];
-        // teamName resolveremos via teamOkrSnapshots no step
-        list.push(sub.teamId);
-        map.set(kpiId, list);
-      }
-    }
-    return map;
-  }, [mbrPreByTeam]);
+
 
   // Sugestões de KPIs propostos pelos líderes (cross-team)
   const proposedKpis = useMemo(() => {
@@ -759,7 +747,6 @@ export default function MbrPage() {
             onKpiSnapshotsChange={(kpiSnapshots: MbrKpiSnapshot[]) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
-            signaledZombieKpiIds={signaledZombieKpiIds}
             teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
             proposedKpis={proposedKpis}
             onContinue={goNext}

@@ -8,7 +8,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Send, BarChart3, Activity, BookOpen, Target, Ghost } from 'lucide-react';
+import { Send, BarChart3, Activity, BookOpen, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
@@ -41,7 +41,7 @@ export function QbrPreSummary({
   onComplete,
   onBack,
 }: QbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, zombieCandidates, learnings, proposedOkrs: rawProposedOkrs } = draftData;
+  const { krFinalStates, kpiSnapshots, learnings, proposedOkrs: rawProposedOkrs } = draftData;
   const proposedOkrs = normalizeProposedOkrs(rawProposedOkrs);
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
@@ -111,19 +111,6 @@ export function QbrPreSummary({
               KPIs ({kpiSnapshots.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3 flex-wrap">
-              {zombieCandidates.length > 0 && (
-                <Badge variant="outline" className="text-xs gap-1">
-                  <Ghost className="h-3 w-3" />
-                  {zombieCandidates.length} zombie{zombieCandidates.length > 1 ? 's' : ''}
-                </Badge>
-              )}
-              {zombieCandidates.length === 0 && (
-                <span className="text-xs text-muted-foreground">Sem sinalizações</span>
-              )}
-            </div>
-          </CardContent>
         </Card>
 
         {/* Aprendizados */}

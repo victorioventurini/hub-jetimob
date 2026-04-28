@@ -54,6 +54,7 @@ interface QbrPreAgentContext {
     ragStatus: string;
     variationVsLastMonth: number | null;
   }>;
+  /** @deprecated "Zombie KPI" removido em 2026-04-28 — mantido como [] p/ retrocompat */
   zombieCandidates: string[];
   kpisToCreate: Array<{
     description: string;
@@ -194,7 +195,7 @@ async function orchestrateAgents(
     invokeAgentDirect(serviceClient, 'analista-kpis',
       `Contexto do Pré-QBR (Quarterly Business Review) do time "${ctx.teamName}":\n${contextJson}\n\n${CANONICAL_PROGRESS_INTERPRETATION_RULES}\n\nGere um resumo executivo focando em:
 1. Balanço final das KRs (progresso, ritmo, estados finais)
-2. Saúde dos KPIs (indicadores em alerta, zombie candidates)
+2. Saúde dos KPIs (indicadores em alerta)
 3. Indicadores sugeridos para criação
 Retorne em formato JSON com as chaves:
 - kr_balance_summary: balanço das KRs do ciclo (lista markdown)
@@ -331,7 +332,7 @@ serve(async (req) => {
           name: k.name, currentValue: k.currentValue, target: k.target,
           ragStatus: k.ragStatus, variationVsLastMonth: k.variationVsLastMonth ?? null,
         })),
-      zombieCandidates: (snap.zombieCandidates as QbrPreAgentContext['zombieCandidates']) || [],
+      zombieCandidates: [],
       kpisToCreate: (snap.kpisToCreate as QbrPreAgentContext['kpisToCreate']) || [],
       learnings: (snap.learnings as QbrPreAgentContext['learnings']) || { whatWorked: '', whatDidntWork: '', debts: '' },
       decisions: ((snap.decisions as DecisionSnapshot[] | undefined) || []).map((d) => ({ text: d.text, category: d.category })),
