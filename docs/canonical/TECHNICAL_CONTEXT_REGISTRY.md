@@ -354,8 +354,10 @@ Antes de criar qualquer componente ou hook novo, **OBRIGATÓRIO** verificar se j
 
 | Domínio | Componente | Descrição |
 |---------|------------|-----------|
-| **Select de usuário** | `BuUserSelect` | Dropdown para selecionar 1 usuário |
+| **Select de usuário** | `BuUserSelect` | Dropdown para selecionar 1 usuário. Campo opcional → exigir `allowNone` |
 | **Multi-select de usuários** | `BuUserMultiSelect` | Dropdown para selecionar múltiplos usuários |
+| **Select de time** | `TeamSelect` | Dropdown hierárquico de times. **Campo opcional → exigir `includeNone noneLabel="..."`** (Radix Select não limpa nativamente). Ver `mem://standards/ui/optional-select-include-none` |
+| **Select de área** | `AreaSelect` | Dropdown de áreas. Mesma regra de `includeNone` para campos opcionais; quando obrigatoriedade é reativa a outro campo (ex.: `lifecycle_status === 'active'`), usar `includeNone={!isRequired}` |
 | **Select de unidades** | `UnitSelect` | Dropdown categorizado para unidades de medida (KRs, KPIs, Wizards) |
 | **Avatar otimizado** | `OptimizedAvatar` | Avatar com lazy loading e fallback |
 | **Guard de permissão** | `PermissionGuard` | Renderiza children se permissão existe |
