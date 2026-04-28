@@ -61,7 +61,7 @@ export function OccurrenceSheet({
           </SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
           <div className="flex items-center gap-2">
             <Badge className={statusCfg.color}>{statusCfg.label}</Badge>
           </div>
