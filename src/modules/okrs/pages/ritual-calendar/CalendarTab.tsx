@@ -47,6 +47,11 @@ export function CalendarTab() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  const { value: viewMode, set: setViewMode } = useUrlState<CalendarViewMode>({
+    key: 'view',
+    defaultValue: 'grid',
+    parse: (v) => (v === 'list' ? 'list' : 'grid'),
+  });
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
