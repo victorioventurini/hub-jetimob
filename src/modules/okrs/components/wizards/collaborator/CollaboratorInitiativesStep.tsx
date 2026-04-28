@@ -270,6 +270,10 @@ export function CollaboratorInitiativesStep({
                   markedAtRisk={markedAtRisk}
                   onMarkAtRisk={handleMarkAtRisk}
                   editable
+                  onEdit={(init) => setEditingInitiative(init)}
+                  canEdit={(init) =>
+                    !!effectiveUserId && init.owner_user_id === effectiveUserId
+                  }
                 />
 
                 {/* Projects linked to this KR */}
