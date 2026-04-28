@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useUrlState, useLocalSearch } from "@/shared/url";
 import { useBu } from "@/contexts/BuContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useHierarchicalLeadership } from "@/hooks/useHierarchicalLeadership";
 import { SavedLinksPopover } from "@/shared/saved-links";
 
 /**
@@ -43,8 +44,15 @@ import { SavedLinksPopover } from "@/shared/saved-links";
 export default function KpiDashboardPage() {
   usePageTitle("Indicadores");
   const { has: hasPermission } = usePermissions();
-  // Pode criar se tiver permissão de criar métricas OU gerenciar KPIs
-  const canCreateIndicator = hasPermission("kpis.metric.create:bu") || hasPermission("kpis.settings.manage:bu");
+  // Pode criar se tiver permissão de criar métricas, gerenciar KPIs ou for líder hierárquico
+  // (líder de área/time pode cadastrar KPIs/Métricas no seu escopo). O CreateKpiDialog filtra
+  // os escopos disponíveis via useCanCreateKpi.
+  const { manageableTeamIds, ledAreaIds } = useHierarchicalLeadership();
+  const canCreateIndicator =
+    hasPermission("kpis.metric.create:bu") ||
+    hasPermission("kpis.settings.manage:bu") ||
+    manageableTeamIds.length > 0 ||
+    ledAreaIds.length > 0;
   const { currentBu } = useBu();
   
   // URL State for filters
