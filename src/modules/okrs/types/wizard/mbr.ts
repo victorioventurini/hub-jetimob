@@ -211,3 +211,33 @@ export interface MbrPreDraftData {
   nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
   decisions: TeamCheckinDecision[];
 }
+
+// ============================================================
+// MBR PRE → MBR (consumo agregado)
+// ============================================================
+
+/** Addendum vinculado a uma sessão `mbr-pre` (formato canônico do AddendumBadge) */
+export interface MbrPreSubmissionAddendum {
+  text: string;
+  created_at: string;
+  created_by: string;
+}
+
+/**
+ * Submissão `mbr-pre` consolidada de UM time, no mês de referência do MBR.
+ * Derivada de `okr_wizard_sessions.reflection_data` + `okr_wizard_addendums`.
+ * **NÃO** persistida no draft do MBR — sempre re-derivada via hook.
+ */
+export interface MbrPreTeamSubmission {
+  sessionId: string;
+  teamId: string;
+  submittedAt: string;
+  submittedBy: string | null;
+  submittedByName: string | null;
+  highlights: MbrPreDraftData['highlights'];
+  nextSteps: MbrPreDraftData['nextSteps'];
+  zombieCandidates: MbrPreDraftData['zombieCandidates'];
+  kpisToCreate: MbrPreDraftData['kpisToCreate'];
+  krFinalStates: MbrPreDraftData['krFinalStates'];
+  addendums: MbrPreSubmissionAddendum[];
+}

@@ -460,6 +460,12 @@ export const mbrKeys = {
   ) => ['mbr-pre', 'team-krs', buId, teamId, cycleId] as const,
   preTeamKpis: (teamId: string | null | undefined, buId: string | null) =>
     ['mbr-pre', 'team-kpis', teamId, buId] as const,
+  /**
+   * Submissões `mbr-pre` agregadas no mês de referência (BU-scoped).
+   * Consumido pelo MBR para alimentar Panorama / KPI Gate / Detail / Decisions.
+   */
+  preSubmissions: (buId: string | null, referenceMonth: string) =>
+    ['mbr-pre', 'submissions-by-team', buId, referenceMonth] as const,
 } as const;
 
 /** Pre-Weekly wizard keys */

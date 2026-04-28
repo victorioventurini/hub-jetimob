@@ -20,6 +20,7 @@ import {
   useOrgObjectives,
   useAllOrgObjectivesView,
   useCarryOverDecisions,
+  useMbrPreSubmissions,
 } from '@/modules/okrs/hooks';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { calculateKrState } from '@/modules/okrs/hooks';
@@ -156,6 +157,67 @@ export default function MbrPage() {
     wizardType: 'mbr',
     teamId: null,
   });
+
+  // ── MBR-PRE submissions (mês de referência do draft) ──
+  const { data: mbrPre } = useMbrPreSubmissions({
+    referenceMonth: draft.data.referenceMonth,
+  });
+  const mbrPreByTeam = mbrPre?.byTeam ?? {};
+  const mbrPreAddendumsByTeam = mbrPre?.addendumsByTeam ?? {};
+  const mbrPreSubmittedCount = mbrPre?.submittedCount ?? 0;
+
+  // KPI ids sinalizados como "zumbi" por algum time (agregação cross-team)
+  const signaledZombieKpiIds = useMemo(() => {
+    const map = new Map<string, string[]>(); // kpiId → [teamName]
+    for (const sub of Object.values(mbrPreByTeam)) {
+      for (const kpiId of sub.zombieCandidates ?? []) {
+        const list = map.get(kpiId) ?? [];
+        // teamName resolveremos via teamOkrSnapshots no step
+        list.push(sub.teamId);
+        map.set(kpiId, list);
+      }
+    }
+    return map;
+  }, [mbrPreByTeam]);
+
+  // Sugestões de KPIs propostos pelos líderes (cross-team)
+  const proposedKpis = useMemo(() => {
+    return Object.values(mbrPreByTeam).flatMap(sub =>
+      (sub.kpisToCreate ?? []).map(k => ({
+        ...k,
+        teamId: sub.teamId,
+        submittedByName: sub.submittedByName,
+      }))
+    );
+  }, [mbrPreByTeam]);
+
+  // Itens trazidos pelos pré-MBR (needsDecision + crossDependencies)
+  const mbrPreSurfacedItems = useMemo(() => {
+    const items: Array<{
+      key: string;
+      teamId: string;
+      kind: 'needs_decision' | 'cross_dependency';
+      text: string;
+    }> = [];
+    for (const sub of Object.values(mbrPreByTeam)) {
+      const nd = sub.highlights?.needsDecision?.trim();
+      if (nd) {
+        items.push({ key: `${sub.teamId}-nd`, teamId: sub.teamId, kind: 'needs_decision', text: nd });
+      }
+      for (const dep of sub.nextSteps?.crossDependencies ?? []) {
+        if (dep?.trim()) {
+          items.push({
+            key: `${sub.teamId}-dep-${items.length}`,
+            teamId: sub.teamId,
+            kind: 'cross_dependency',
+            text: dep.trim(),
+          });
+        }
+      }
+    }
+    return items;
+  }, [mbrPreByTeam]);
+
 
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
   const { currentBuId } = useBu();
@@ -670,6 +732,9 @@ export default function MbrPage() {
             scorecardMetrics={scorecardMetrics}
             orgObjectives={orgObjView ?? []}
             currentStepIndex={0}
+            mbrPreSubmittedCount={mbrPreSubmittedCount}
+            mbrPreNeedsDecisionCount={mbrPreSurfacedItems.filter(i => i.kind === 'needs_decision').length}
+            mbrPreCrossDepCount={mbrPreSurfacedItems.filter(i => i.kind === 'cross_dependency').length}
             topSlot={
               <>
                 <RitualPreparationStatus
@@ -694,6 +759,9 @@ export default function MbrPage() {
             onKpiSnapshotsChange={(kpiSnapshots: MbrKpiSnapshot[]) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            signaledZombieKpiIds={signaledZombieKpiIds}
+            teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
+            proposedKpis={proposedKpis}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -719,6 +787,8 @@ export default function MbrPage() {
             onCurrentTeamIndexChange={(currentTeamIndex: number) => updateDraft({ currentTeamIndex })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            teamAddendums={mbrPreAddendumsByTeam}
+            mbrPreByTeam={mbrPreByTeam}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -747,6 +817,8 @@ export default function MbrPage() {
                 ? draft.data.previousMbrPendingItems
                 : mbrCarryOver
             }
+            mbrPreSurfacedItems={mbrPreSurfacedItems}
+            teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
             onContinue={goNext}
             onBack={goBack}
           />

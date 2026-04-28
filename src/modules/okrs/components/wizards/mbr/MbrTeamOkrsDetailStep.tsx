@@ -10,7 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
@@ -21,7 +22,7 @@ import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
-import type { MbrTeamOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -36,6 +37,8 @@ export interface MbrTeamOkrsDetailStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   /** Addendums from mbr-pre sessions, keyed by teamId */
   teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
+  /** Submissão pré-MBR consolidada por time (highlights, nextSteps, etc.) */
+  mbrPreByTeam?: Record<string, MbrPreTeamSubmission>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -63,6 +66,7 @@ export function MbrTeamOkrsDetailStep({
   decisions,
   onDecisionsChange,
   teamAddendums = {},
+  mbrPreByTeam = {},
   onContinue,
   onBack,
 }: MbrTeamOkrsDetailStepProps) {
@@ -236,6 +240,83 @@ export function MbrTeamOkrsDetailStep({
           {teamAddendums[currentTeam.teamId]?.length > 0 && (
             <AddendumBadge addendums={teamAddendums[currentTeam.teamId]} />
           )}
+
+          {/* Preparação do líder (vinda do pré-MBR) */}
+          {(() => {
+            const sub = mbrPreByTeam[currentTeam.teamId];
+            if (!sub) {
+              return (
+                <Card className="border-dashed">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Sem pré-MBR submetido neste mês.
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            }
+            const { highlights, nextSteps, submittedByName, submittedAt } = sub;
+            const hasAny =
+              highlights.accelerated.trim() ||
+              highlights.blocked.trim() ||
+              highlights.needsDecision.trim() ||
+              nextSteps.focus.trim() ||
+              nextSteps.prioritizedItems.length > 0 ||
+              nextSteps.crossDependencies.length > 0;
+            if (!hasAny) return null;
+            return (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <p className="text-xs font-semibold">Preparação do líder</p>
+                    <Badge variant="outline" className="text-[10px] ml-auto">
+                      {submittedByName ?? 'Líder'} · {new Date(submittedAt).toLocaleDateString('pt-BR')}
+                    </Badge>
+                  </div>
+                  {highlights.accelerated.trim() && (
+                    <div className="flex gap-2 text-xs">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-status-green shrink-0 mt-0.5" />
+                      <p className="text-muted-foreground"><span className="font-medium text-status-green">Acelerou:</span> {highlights.accelerated}</p>
+                    </div>
+                  )}
+                  {highlights.blocked.trim() && (
+                    <div className="flex gap-2 text-xs">
+                      <XCircle className="h-3.5 w-3.5 text-status-red shrink-0 mt-0.5" />
+                      <p className="text-muted-foreground"><span className="font-medium text-status-red">Travou:</span> {highlights.blocked}</p>
+                    </div>
+                  )}
+                  {highlights.needsDecision.trim() && (
+                    <div className="flex gap-2 text-xs">
+                      <AlertTriangle className="h-3.5 w-3.5 text-status-amber shrink-0 mt-0.5" />
+                      <p className="text-muted-foreground"><span className="font-medium text-status-amber">Precisa de decisão:</span> {highlights.needsDecision}</p>
+                    </div>
+                  )}
+                  {nextSteps.focus.trim() && (
+                    <div className="flex gap-2 text-xs">
+                      <Compass className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                      <p className="text-muted-foreground"><span className="font-medium">Foco do mês:</span> {nextSteps.focus}</p>
+                    </div>
+                  )}
+                  {nextSteps.prioritizedItems.length > 0 && (
+                    <div className="text-xs text-muted-foreground space-y-0.5 pl-5">
+                      {nextSteps.prioritizedItems.slice(0, 5).map((item, i) => (
+                        <p key={i}>{i + 1}. {item}</p>
+                      ))}
+                    </div>
+                  )}
+                  {nextSteps.crossDependencies.length > 0 && (
+                    <div className="pl-5">
+                      <Badge variant="outline" className="text-[10px]">
+                        {nextSteps.crossDependencies.length} dependência{nextSteps.crossDependencies.length > 1 ? 's' : ''} cross-team
+                      </Badge>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* OKRs for current team */}
           {currentTeam.objectives.map((objective) => (

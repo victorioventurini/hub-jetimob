@@ -61,6 +61,12 @@ export interface MbrPanoramaStepProps {
   currentStepIndex?: number;
   /** Slot opcional renderizado no topo do conteúdo (ex.: PreparationStatusCard) */
   topSlot?: ReactNode;
+  /** Cobertura: quantos times submeteram pré-MBR neste mês */
+  mbrPreSubmittedCount?: number;
+  /** Sinalizações: quantos itens pedem decisão coletiva */
+  mbrPreNeedsDecisionCount?: number;
+  /** Dependências cross-team trazidas pelos times */
+  mbrPreCrossDepCount?: number;
 }
 
 interface KpiGroup {
@@ -325,6 +331,9 @@ export function MbrPanoramaStep({
   orgObjectives,
   currentStepIndex = 0,
   topSlot,
+  mbrPreSubmittedCount = 0,
+  mbrPreNeedsDecisionCount = 0,
+  mbrPreCrossDepCount = 0,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
