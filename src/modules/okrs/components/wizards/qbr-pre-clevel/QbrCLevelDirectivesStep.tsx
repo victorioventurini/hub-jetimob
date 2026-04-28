@@ -23,7 +23,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type { QbrCLevelSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 

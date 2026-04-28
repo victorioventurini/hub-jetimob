@@ -50,7 +50,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
 } from '../shared';
 import type { TeamCheckinDecision, WizardPersona } from '@/modules/okrs/types/wizard';
 

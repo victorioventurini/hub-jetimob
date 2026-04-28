@@ -14,7 +14,7 @@ import {
   WizardStepHeader,
   WizardFirstStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
   KrLinkedDetails,
   CarryOverDecisionsSection,
 } from '../shared';

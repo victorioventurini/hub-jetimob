@@ -16,7 +16,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  InlineDecisionInput,
+  
   ReflectionQuestions,
 } from '../shared';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
