@@ -402,7 +402,7 @@ export function CollaboratorProjectsStep({
                               className="h-7 w-7 shrink-0"
                               aria-label="Editar milestone"
                               onClick={() =>
-                                setEditingMilestone({ projectId: project.id, milestone })
+                                setEditingMilestone({ projectId: project.id, milestone, projectMilestones: project.milestones })
                               }
                             >
                               <Pencil className="h-3.5 w-3.5" />
