@@ -117,16 +117,32 @@ export function OccurrenceSheet({
 
           <Separator />
 
-          {occurrence.status === 'scheduled' && (
+          {(occurrence.status === 'scheduled' || occurrence.status === 'missed') && (
             <div className="space-y-3">
+              {isBulkEligible && (
+                <p className="text-xs text-muted-foreground">
+                  Este rito ocorre em todos os times nesta data.
+                </p>
+              )}
+
+              {isBulkEligible && (
+                <Button
+                  className="w-full"
+                  onClick={() => setShowBulk(true)}
+                >
+                  <CalendarRange className="h-4 w-4 mr-2" />
+                  Reagendar todos os times deste rito
+                </Button>
+              )}
+
               {!showReschedule ? (
                 <Button variant="outline" className="w-full" onClick={() => setShowReschedule(true)}>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Reagendar
+                  {isBulkEligible ? 'Reagendar apenas este time' : 'Reagendar'}
                 </Button>
               ) : (
                 <div className="space-y-2">
-                  <Label>Nova data</Label>
+                  <Label>Nova data {isBulkEligible && '(apenas este time)'}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className={cn("w-full justify-start", !rescheduleDate && "text-muted-foreground")}>
@@ -145,6 +161,7 @@ export function OccurrenceSheet({
                     </PopoverContent>
                   </Popover>
                   <Button
+                    variant="outline"
                     className="w-full"
                     disabled={!rescheduleDate || isPending}
                     onClick={() => {
@@ -160,17 +177,6 @@ export function OccurrenceSheet({
                 </div>
               )}
             </div>
-          )}
-
-          {isBulkEligible && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowBulk(true)}
-            >
-              <CalendarRange className="h-4 w-4 mr-2" />
-              Reagendar todos os times deste rito
-            </Button>
           )}
 
           {occurrence.sessionId && (
