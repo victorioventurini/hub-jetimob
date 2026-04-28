@@ -39,6 +39,8 @@ export const editKpiSchema = z
     scope: z.enum(['team', 'area', 'org']),
     responsible_area_id: z.string().optional(),
     responsible_team_id: z.string().optional(),
+    /** v2.92.0 — usuário data_entry (1 por KPI). Persistido em kpi_data_contributors. */
+    updated_by_user_id: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.scope === 'team' && !data.team_id) {
