@@ -438,6 +438,8 @@ export function CollaboratorProjectsStep({
             owner_id: editingMilestone.milestone.owner_id ?? '',
             notes: editingMilestone.milestone.notes ?? '',
           }}
+          existingMilestones={editingMilestone.projectMilestones}
+          currentMilestoneId={editingMilestone.milestone.id}
         />
       )}
 
