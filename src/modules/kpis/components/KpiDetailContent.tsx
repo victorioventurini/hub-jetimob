@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Minus, Calendar, User, Target, Activity, Plug, FileSpreadsheet, Database, Edit3, Webhook, Clock, Building2, Globe } from "lucide-react";
 import { useKpiDetail, useKpiLinkedKrs, useKpiMutations } from "@/modules/kpis/hooks";
+import { useKpiPrimaryDataEntry } from "../hooks/useKpiPrimaryDataEntry";
 import { useCanEditKpi } from "../hooks/useCanEditKpi";
 import { LinkedKrsSection } from "./LinkedKrsSection";
 import { KpiValuesTable } from "./KpiValuesTable";
