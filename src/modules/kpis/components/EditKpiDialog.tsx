@@ -26,7 +26,6 @@ import type { EditKpiFormValues } from './edit-kpi/editKpiSchema';
 import { EditKpiBasicFields } from './edit-kpi/EditKpiBasicFields';
 import { EditKpiScopeSection } from './edit-kpi/EditKpiScopeSection';
 import { EditKpiOwnershipSection } from './edit-kpi/EditKpiOwnershipSection';
-import { EditKpiAdvancedSection } from './edit-kpi/EditKpiAdvancedSection';
 
 /**
  * v2.82.0 - Formulário de edição de Indicadores
@@ -62,10 +61,7 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
     hasPermission('kpis.settings.manage:bu');
   const canCreateKpi = hasPermission('kpis.settings.manage:bu');
 
-  const { form, showAdvanced, setShowAdvanced, handleScopeChange } = useEditKpiForm(
-    kpi,
-    open,
-  );
+  const { form, handleScopeChange } = useEditKpiForm(kpi, open);
 
   const watchScope = form.watch('scope');
   const watchTeamId = form.watch('team_id');
@@ -159,12 +155,6 @@ export function EditKpiDialog({ kpi, open, onOpenChange }: EditKpiDialogProps) {
             <EditKpiOwnershipSection
               form={form}
               allowedTeamIds={scopePermissions.allowedTeamIds}
-            />
-
-            <EditKpiAdvancedSection
-              form={form}
-              showAdvanced={showAdvanced}
-              setShowAdvanced={setShowAdvanced}
             />
 
             <DialogFooter>
