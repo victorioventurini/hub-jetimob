@@ -553,6 +553,9 @@ export default function ProjectDetailPage() {
           onSubmit={handleAddMilestone}
           isSubmitting={createMilestone.isPending}
           title="Novo milestone"
+          existingMilestones={milestones || project.milestones || []}
+          projectStartDate={project?.start_date}
+          projectDueDate={project?.due_date}
         />
       )}
 
@@ -571,6 +574,10 @@ export default function ProjectDetailPage() {
             owner_id: editingMilestone.owner_id ?? '',
             notes: editingMilestone.notes ?? '',
           }}
+          existingMilestones={milestones || project.milestones || []}
+          currentMilestoneId={editingMilestone.id}
+          projectStartDate={project?.start_date}
+          projectDueDate={project?.due_date}
         />
       )}
 
