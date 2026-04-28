@@ -159,6 +159,34 @@ export function CalendarTab() {
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setHasAutoNavigated(true); }}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
+              <div
+                role="group"
+                aria-label="Modo de visualização"
+                className="ml-2 inline-flex items-center rounded-md border bg-background"
+              >
+                <Button
+                  type="button"
+                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-8 w-8 rounded-r-none"
+                  aria-label="Grade"
+                  aria-pressed={viewMode === 'grid'}
+                  onClick={() => setViewMode('grid')}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-8 w-8 rounded-l-none"
+                  aria-label="Lista"
+                  aria-pressed={viewMode === 'list'}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-1">
