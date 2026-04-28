@@ -280,7 +280,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         ? (values.consolidation_frequency as 'daily' | 'weekly' | 'monthly' | 'quarterly')
         : 'monthly';
 
-      await createKpi.mutateAsync({
+      const created = await createKpi.mutateAsync({
         name: values.name,
         description: values.description || null,
         unit: values.unit,
@@ -303,6 +303,20 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
         responsible_area_id: values.responsible_area_id || null,
         responsible_team_id: values.responsible_team_id || null,
       });
+
+      // v2.92.0: registra "Atualizado por" como contribuidor data_entry
+      const newKpiId = (created as { id?: string } | null)?.id;
+      if (newKpiId && values.updated_by_user_id) {
+        try {
+          await upsertDataEntry.mutateAsync({
+            kpiId: newKpiId,
+            userId: values.updated_by_user_id,
+          });
+        } catch (err) {
+          console.error('[CreateKpiDialog] Falha ao registrar "Atualizado por":', err);
+        }
+      }
+
       form.reset();
       setShowAdvanced(false);
       onOpenChange(false);
