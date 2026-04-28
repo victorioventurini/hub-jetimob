@@ -748,18 +748,23 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => (
-                          <SelectItem 
-                            key={sc} 
-                            value={sc}
-                            disabled={(sc === 'org' || sc === 'area') && !canCreateStrategicScopes}
-                          >
-                            {scopeLabels[sc]}
-                            {(sc === 'org' || sc === 'area') && !canCreateStrategicScopes && (
-                              <Lock className="h-3 w-3 inline ml-1 text-muted-foreground" />
-                            )}
-                          </SelectItem>
-                        ))}
+                        {(Object.keys(scopeLabels) as KpiScope[]).map((sc) => {
+                          const isMetricBlocked = watchIndicatorType === 'metric' && sc !== 'team';
+                          const isStrategicBlocked = (sc === 'org' || sc === 'area') && !canCreateStrategicScopes;
+                          if (isMetricBlocked) return null;
+                          return (
+                            <SelectItem
+                              key={sc}
+                              value={sc}
+                              disabled={isStrategicBlocked}
+                            >
+                              {scopeLabels[sc]}
+                              {isStrategicBlocked && (
+                                <Lock className="h-3 w-3 inline ml-1 text-muted-foreground" />
+                              )}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
