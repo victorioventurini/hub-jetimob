@@ -798,7 +798,7 @@ Definição de KPIs com lifecycle e classificação.
 | category | enum | `financeiro`, `growth`, `cs`, `produto`, `operacoes`, `pessoas` |
 | bu_id | uuid | FK para bu_units |
 | team_id | uuid | FK para teams (opcional) |
-| owner_user_id | uuid | Responsável |
+| owner_user_id | uuid | **Responsável (Accountable)** — dono do resultado, monitora desvios e age para "mover o ponteiro". Distinto de "Atualizado por" (ver `kpi_data_contributors` role=`data_entry`). |
 | unit | text | Unidade |
 | direction | enum | `up`, `down` |
 | frequency | enum | `daily`, `weekly`, `monthly`, `quarterly`, `manual` |
