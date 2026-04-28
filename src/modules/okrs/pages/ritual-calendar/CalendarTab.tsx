@@ -338,6 +338,11 @@ export function CalendarTab() {
           completedCount={selectedOccurrence.wizardType === 'collaborator' ? (completedByDate.get(selectedOccurrence.plannedDate) ?? 0) : undefined}
         />
       )}
+
+      <BulkRescheduleDialog
+        open={showBulkReschedule}
+        onOpenChange={setShowBulkReschedule}
+      />
     </div>
   );
 }
