@@ -180,6 +180,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { createKpi } = useKpiData();
+  const upsertDataEntry = useUpsertKpiPrimaryDataEntry();
   const { has: hasPermission, isLoading: isLoadingPermission, isWildcard } = usePermissions();
   const { currentBu } = useBu();
   
