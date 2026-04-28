@@ -11701,6 +11701,21 @@ export type Database = {
         Args: { new_role: string; target_user_id: string }
         Returns: undefined
       }
+      user_can_create_kpi: {
+        Args: {
+          p_area_id: string
+          p_bu_id: string
+          p_indicator_type: Database["public"]["Enums"]["kpi_indicator_type"]
+          p_profile_id: string
+          p_scope: Database["public"]["Enums"]["kpi_scope"]
+          p_team_id: string
+        }
+        Returns: boolean
+      }
+      user_can_manage_kpi: {
+        Args: { p_kpi_id: string; p_profile_id: string }
+        Returns: boolean
+      }
       user_can_manage_team: {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
