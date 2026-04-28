@@ -218,7 +218,16 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
   const watchScope = form.watch("scope");
   const watchLifecycleStatus = form.watch("lifecycle_status");
   const watchTeamId = form.watch("team_id");
+  const watchAreaId = form.watch("area_id");
   const watchIndicatorType = form.watch("indicator_type");
+
+  // Permissão row-aware (admins + líderes hierárquicos + membros do time p/ Métrica)
+  const { canCreate: canCreateForCurrentForm, blockedReason } = useCanCreateKpi({
+    scope: watchScope,
+    areaId: watchAreaId ?? null,
+    teamId: watchTeamId ?? null,
+    indicatorType: watchIndicatorType,
+  });
 
   // Auto-inferência de área quando scope=team
   const { areaId: inferredAreaId, areaName: inferredAreaName, isLoading: isLoadingArea } = useTeamArea(
@@ -239,6 +248,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
     }
   }, [isLoadingPermission, canCreateKpi, form]);
 
+  // Métricas: forçar scope=team (UI esconde org/area; trigger SQL também valida)
+  useEffect(() => {
+    if (watchIndicatorType === 'metric' && watchScope !== 'team') {
+      form.setValue("scope", "team");
+    }
+  }, [watchIndicatorType, watchScope, form]);
+
   // Defense in Depth: block render if no permission
   if (!isLoadingPermission && !canCreateIndicator) {
     return null;
@@ -246,12 +262,13 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
 
   // Limpar campos quando mudar escopo
   const handleScopeChange = (newScope: KpiScope) => {
+    // Métricas devem permanecer em "team"
+    if (watchIndicatorType === 'metric' && newScope !== 'team') return;
     form.setValue("scope", newScope);
     if (newScope !== "team") {
       form.setValue("team_id", undefined);
       form.setValue("area_id", undefined);
     }
-    // Limpar responsible fields ao mudar escopo
     if (newScope !== "org") {
       form.setValue("responsible_area_id", undefined);
     }
@@ -266,6 +283,9 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
       return;
     }
     form.setValue("indicator_type", type);
+    if (type === 'metric') {
+      form.setValue("scope", "team");
+    }
   };
 
   const onSubmit = async (values: FormValues) => {
