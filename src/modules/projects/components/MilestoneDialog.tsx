@@ -100,10 +100,22 @@ export function MilestoneDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className={`${DIALOG_SIZES.lg} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+
+        {existingMilestones && existingMilestones.length > 0 && (
+          <MilestoneScheduleContext
+            milestones={existingMilestones}
+            currentMilestoneId={currentMilestoneId}
+            previewStart={form.watch('start_date')}
+            previewDue={form.watch('due_date')}
+            previewName={form.watch('name')}
+            projectStartDate={projectStartDate}
+            projectDueDate={projectDueDate}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
