@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, XCircle, LayoutGrid, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
@@ -37,8 +37,10 @@ import type { WizardPersona } from '../../types/wizard';
 import { DAY_LABELS, STATUS_CONFIG, RECURRENT_WIZARD_TYPES } from './constants';
 import { OccurrenceSheet } from './OccurrenceSheet';
 import { CalendarListView } from './CalendarListView';
-
-type CalendarViewMode = 'grid' | 'list';
+import {
+  RitualCalendarViewToggle,
+  type RitualCalendarViewMode,
+} from './RitualCalendarViewToggle';
 
 export function CalendarTab() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -47,10 +49,11 @@ export function CalendarTab() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [userFilter, setUserFilter] = useState<string | undefined>(undefined);
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
-  const { value: viewMode, set: setViewMode } = useUrlState<CalendarViewMode>({
+  const { value: viewMode, set: setViewMode } = useUrlState<RitualCalendarViewMode>({
     key: 'view',
-    defaultValue: 'grid',
-    parse: (v) => (v === 'list' ? 'list' : 'grid'),
+    defaultValue: 'calendar',
+    // Aceita 'grid' como alias retrocompatível para 'calendar'.
+    parse: (v) => (v === 'list' ? 'list' : 'calendar'),
   });
 
   const year = currentMonth.getFullYear();
