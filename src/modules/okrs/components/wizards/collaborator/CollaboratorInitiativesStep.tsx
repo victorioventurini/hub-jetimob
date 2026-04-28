@@ -51,12 +51,14 @@ export interface CollaboratorInitiativesStepProps {
 
 export function CollaboratorInitiativesStep({
   krs,
+  effectiveUserId,
   onContinue,
   onBack,
   onSkip,
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
   const [markedAtRisk, setMarkedAtRisk] = useState<string[]>([]);
+  const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
   // Get KR IDs
   const krIds = useMemo(() => krs.map(kr => kr.id), [krs]);
