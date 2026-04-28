@@ -421,7 +421,7 @@ describe('EditKpiDialog - Scope-dependent field visibility', () => {
     await waitFor(() => {
       expect(screen.getByTestId('area-select')).toBeInTheDocument();
       // scope=area also has a TeamSelect for responsible_team_id (optional)
-      expect(screen.getByText('Time Responsável (opcional)')).toBeInTheDocument();
+      expect(screen.getByText('Time Responsável')).toBeInTheDocument();
     });
   });
 
