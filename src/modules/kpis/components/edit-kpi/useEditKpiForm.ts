@@ -11,7 +11,6 @@ import { editKpiSchema, type EditKpiFormValues } from './editKpiSchema';
 import { legacyFrequencyToValue } from '../../utils/frequency';
 
 export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const lastKpiIdRef = useRef<string | null>(null);
 
   const form = useForm<EditKpiFormValues>({
@@ -62,10 +61,6 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
       responsible_team_id: kpi.responsible_team_id || undefined,
     });
 
-    if (kpi.target_source || kpi.recovery_protocol) {
-      setShowAdvanced(true);
-    }
-
     lastKpiIdRef.current = kpi.id;
   }, [kpi, form]);
 
@@ -97,8 +92,6 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
 
   return {
     form,
-    showAdvanced,
-    setShowAdvanced,
     handleScopeChange,
   };
 }
