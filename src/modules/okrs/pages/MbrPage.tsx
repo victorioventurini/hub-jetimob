@@ -158,6 +158,67 @@ export default function MbrPage() {
     teamId: null,
   });
 
+  // ── MBR-PRE submissions (mês de referência do draft) ──
+  const { data: mbrPre } = useMbrPreSubmissions({
+    referenceMonth: draft.data.referenceMonth,
+  });
+  const mbrPreByTeam = mbrPre?.byTeam ?? {};
+  const mbrPreAddendumsByTeam = mbrPre?.addendumsByTeam ?? {};
+  const mbrPreSubmittedCount = mbrPre?.submittedCount ?? 0;
+
+  // KPI ids sinalizados como "zumbi" por algum time (agregação cross-team)
+  const signaledZombieKpiIds = useMemo(() => {
+    const map = new Map<string, string[]>(); // kpiId → [teamName]
+    for (const sub of Object.values(mbrPreByTeam)) {
+      for (const kpiId of sub.zombieCandidates ?? []) {
+        const list = map.get(kpiId) ?? [];
+        // teamName resolveremos via teamOkrSnapshots no step
+        list.push(sub.teamId);
+        map.set(kpiId, list);
+      }
+    }
+    return map;
+  }, [mbrPreByTeam]);
+
+  // Sugestões de KPIs propostos pelos líderes (cross-team)
+  const proposedKpis = useMemo(() => {
+    return Object.values(mbrPreByTeam).flatMap(sub =>
+      (sub.kpisToCreate ?? []).map(k => ({
+        ...k,
+        teamId: sub.teamId,
+        submittedByName: sub.submittedByName,
+      }))
+    );
+  }, [mbrPreByTeam]);
+
+  // Itens trazidos pelos pré-MBR (needsDecision + crossDependencies)
+  const mbrPreSurfacedItems = useMemo(() => {
+    const items: Array<{
+      key: string;
+      teamId: string;
+      kind: 'needs_decision' | 'cross_dependency';
+      text: string;
+    }> = [];
+    for (const sub of Object.values(mbrPreByTeam)) {
+      const nd = sub.highlights?.needsDecision?.trim();
+      if (nd) {
+        items.push({ key: `${sub.teamId}-nd`, teamId: sub.teamId, kind: 'needs_decision', text: nd });
+      }
+      for (const dep of sub.nextSteps?.crossDependencies ?? []) {
+        if (dep?.trim()) {
+          items.push({
+            key: `${sub.teamId}-dep-${items.length}`,
+            teamId: sub.teamId,
+            kind: 'cross_dependency',
+            text: dep.trim(),
+          });
+        }
+      }
+    }
+    return items;
+  }, [mbrPreByTeam]);
+
+
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
   const { currentBuId } = useBu();
   const { data: allBuKpis, isLoading: isLoadingKpis } = useQuery({
