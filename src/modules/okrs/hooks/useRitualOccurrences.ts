@@ -149,6 +149,120 @@ export function useRescheduleOccurrence() {
 }
 
 /**
+ * Preview de ocorrências elegíveis para reagendamento em massa.
+ * Retorna todas as `ritual_occurrences` com mesmo wizard_type + planned_date
+ * cujo status seja 'scheduled' ou 'missed' na BU ativa.
+ */
+export function useBulkRescheduleEligibleOccurrences(params: {
+  wizardType: string | null;
+  plannedDate: string | null;
+  enabled?: boolean;
+}) {
+  const { currentBu } = useBu();
+  const buSupabase = useBuScopedSupabase();
+  const { wizardType, plannedDate, enabled = true } = params;
+
+  return useQuery({
+    queryKey: queryKeys.okrs.ritualOccurrencesEligibleForBulk(
+      currentBu?.id ?? null,
+      wizardType,
+      plannedDate,
+    ),
+    queryFn: async () => {
+      if (!currentBu?.id || !wizardType || !plannedDate) return [];
+
+      const { data, error } = await buSupabase
+        .from('ritual_occurrences')
+        .select(`id, team_id, planned_date, status, rescheduled_from, teams!ritual_occurrences_team_id_fkey ( name )`)
+        .eq('bu_id', currentBu.id)
+        .eq('wizard_type', wizardType)
+        .eq('planned_date', plannedDate)
+        .in('status', ['scheduled', 'missed'])
+        .order('team_id', { ascending: true });
+
+      if (error) throw error;
+      return (data ?? []).map((row: any) => ({
+        id: row.id as string,
+        teamId: row.team_id as string | null,
+        teamName: (row.teams?.name ?? null) as string | null,
+        plannedDate: row.planned_date as string,
+        status: row.status as OccurrenceStatus,
+        rescheduledFrom: row.rescheduled_from as string | null,
+      }));
+    },
+    enabled: enabled && !!currentBu?.id && !!wizardType && !!plannedDate,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Reagenda em massa todas as ocorrências do mesmo rito + mesma data
+ * (status 'scheduled' ou 'missed') para uma nova data, em todos os times da BU.
+ */
+export function useRescheduleOccurrencesBulk() {
+  const { currentBu } = useBu();
+  const buSupabase = useBuScopedSupabase();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      wizardType,
+      plannedDate,
+      newDate,
+    }: {
+      wizardType: string;
+      plannedDate: string;
+      newDate: string;
+    }) => {
+      if (!currentBu?.id) throw new Error('BU não selecionada');
+
+      const { data: rows, error: fetchErr } = await buSupabase
+        .from('ritual_occurrences')
+        .select('id, planned_date, rescheduled_from')
+        .eq('bu_id', currentBu.id)
+        .eq('wizard_type', wizardType)
+        .eq('planned_date', plannedDate)
+        .in('status', ['scheduled', 'missed']);
+
+      if (fetchErr) throw fetchErr;
+      const list = rows ?? [];
+      if (list.length === 0) return { count: 0 };
+
+      const results = await Promise.all(
+        list.map((row: any) =>
+          buSupabase
+            .from('ritual_occurrences')
+            .update({
+              status: 'rescheduled',
+              rescheduled_from: row.rescheduled_from || row.planned_date,
+              rescheduled_to: newDate,
+              planned_date: newDate,
+            })
+            .eq('id', row.id),
+        ),
+      );
+
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
+
+      return { count: list.length };
+    },
+    onSuccess: ({ count }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.okrs.ritualOccurrencesPrefix(currentBu?.id ?? null),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.okrs.ritualAdherencePrefix(currentBu?.id ?? null),
+      });
+      toast.success(`${count} ocorrência(s) reagendada(s)`);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message ?? 'Erro ao reagendar em massa');
+    },
+  });
+}
+
+/**
  * Get occurrence linked to a session (for history enrichment)
  */
 export function useOccurrenceBySession(sessionId: string | null) {
