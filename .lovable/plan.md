@@ -1,43 +1,52 @@
 ## Objetivo
 
-Quando uma KPI tiver time vinculado (`kpi.team`), exibir um **badge com o nome do time** ao lado do `AreaBadge` na coluna **Área** do `KpiDashboardTable`.
+Remover o input inline **"Registros de nota e decisão"** (`InlineDecisionInput`) das etapas dos ritos de **preparação**, mantendo intactos os ritos coletivos (Team Check-in, Weekly, QBR Meeting/Post, MBR, C-Level Check-in).
 
-## Estado atual
+## Escopo (ritos afetados)
 
-- Coluna "Área" hoje renderiza `AreaBadge` + `KpiScopeBadge` (escopo).
-- O nome do time aparece como subtexto cinza abaixo do nome do indicador (linhas 143-145 de `KpiDashboardTable.tsx`).
-- `kpi.team` (id + name) já vem no payload — não há mudança de hook/query.
+| Rito | Wizard | Status |
+|------|--------|--------|
+| Pré-Check-in do Time | `leader-prep` | Já não usa `InlineDecisionInput` — sem mudança |
+| Pré-Weekly | `pre-weekly` | Remover dos 3 steps |
+| Pré-QBR (líder) | `qbr-pre` | Remover dos 3 steps |
+| Pré-QBR C-Level | `qbr-pre-clevel` | Remover dos 2 steps |
+| Pré-MBR | `mbr-pre` | Remover dos 2 steps |
 
-## Alteração
+## O que muda
 
-**Arquivo:** `src/modules/kpis/components/KpiDashboardTable.tsx`
+Em cada arquivo abaixo: remover a importação de `InlineDecisionInput` do barrel `../shared`, remover o bloco JSX `<InlineDecisionInput ... />` no fim do step e limpar props/handlers que ficarem órfãos (ex.: `onAddDecision`/`decisions` se passados só para o input).
 
-1. **Coluna Área (linhas 156-165)** — adicionar badge de time logo após o `AreaBadge`:
-   ```tsx
-   {kpi.area && <AreaBadge area={kpi.area} />}
-   {kpi.team && (
-     <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
-       <Users className="h-3 w-3" />
-       {kpi.team.name}
-     </Badge>
-   )}
-   <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
-   ```
-   - Importar `Users` de `lucide-react`.
-   - O wrapper já tem `flex-wrap gap-1.5`, então não precisa de mudança de layout.
-   - O fallback `—` (quando não há área e scope ≠ org) é mantido apenas se também não houver time.
+**Pré-Weekly** (`src/modules/okrs/components/wizards/pre-weekly/`)
+- `PreWeeklySourcesStep.tsx`
+- `PreWeeklyPautaStep.tsx`
+- `PreWeeklyPessoasStep.tsx`
 
-2. **Coluna Indicador (linhas 143-145)** — remover o subtexto cinza com nome do time, já que agora ele está como badge na coluna correta. Evita duplicação visual.
+**Pré-QBR** (`src/modules/okrs/components/wizards/qbr-pre/`)
+- `QbrBalanceStep.tsx`
+- `QbrKpiAnalysisStep.tsx`
+- `QbrLearningsStep.tsx`
 
-3. **Skeleton (linha 80)** — opcional: aumentar largura do skeleton da coluna Área para acomodar o segundo badge.
+**Pré-QBR C-Level** (`src/modules/okrs/components/wizards/qbr-pre-clevel/`)
+- `QbrCLevelStrategicStep.tsx`
+- `QbrCLevelDirectivesStep.tsx`
 
-## Fora do escopo
+**Pré-MBR** (`src/modules/okrs/components/wizards/mbr-pre/`)
+- `MbrPreHighlightsStep.tsx`
+- `MbrPreNextStepsStep.tsx`
 
-- `KpiCard` (vista de cards) — não foi mencionado pelo usuário; o time já aparece no card como linha separada.
-- Mudanças em hook/query: `kpi.team` já é hidratado.
-- Mudanças no badge de área (`AreaBadge`).
+## O que NÃO muda
 
-## Validação
+- **Bloco "Notas e decisões" nos Resumos** (`PreWeeklySummary`, `QbrPreSummary`, `MbrPreSummary`): preservado para exibir decisões herdadas/legadas.
+- **Tipo `decisions` no draft** (`PreWeeklyDraftData`, etc.): preservado — só o input é removido; a estrutura de dados continua válida para leitura.
+- **Outros ritos** (Team, Weekly, QBR Meeting/Post, MBR, C-Level): inalterados.
+- **Testes**: arquivos `__tests__` dos pré-ritos serão revisados; se houver assertion direta sobre o input, será removida (não há expectativa de criar novos testes).
 
-- Inspecionar `/kpis` em vista tabela: KPIs com escopo `team` devem mostrar `[Área] [👥 Time] [Escopo]`.
-- KPIs `org`/`area` sem time vinculado devem manter aparência atual.
+## Validação pós-mudança
+
+1. Build limpo (sem import órfão de `InlineDecisionInput`).
+2. Abrir cada wizard pré-rito e confirmar que o card de cadastro de decisão sumiu.
+3. Confirmar que o Resumo final ainda renderiza o bloco "Notas e decisões" quando há registros legados.
+
+## Memória
+
+Atualizar `mem://architecture/wizards/wizards-master-standard` com nota: "Inline decisions input desativado em ritos de preparação (leader-prep, pre-weekly, qbr-pre, qbr-pre-clevel, mbr-pre); permanece em ritos coletivos."
