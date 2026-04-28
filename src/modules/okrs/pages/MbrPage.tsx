@@ -732,6 +732,9 @@ export default function MbrPage() {
             scorecardMetrics={scorecardMetrics}
             orgObjectives={orgObjView ?? []}
             currentStepIndex={0}
+            mbrPreSubmittedCount={mbrPreSubmittedCount}
+            mbrPreNeedsDecisionCount={mbrPreSurfacedItems.filter(i => i.kind === 'needs_decision').length}
+            mbrPreCrossDepCount={mbrPreSurfacedItems.filter(i => i.kind === 'cross_dependency').length}
             topSlot={
               <>
                 <RitualPreparationStatus
@@ -756,6 +759,9 @@ export default function MbrPage() {
             onKpiSnapshotsChange={(kpiSnapshots: MbrKpiSnapshot[]) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            signaledZombieKpiIds={signaledZombieKpiIds}
+            teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
+            proposedKpis={proposedKpis}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -781,6 +787,8 @@ export default function MbrPage() {
             onCurrentTeamIndexChange={(currentTeamIndex: number) => updateDraft({ currentTeamIndex })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            teamAddendums={mbrPreAddendumsByTeam}
+            mbrPreByTeam={mbrPreByTeam}
             onContinue={goNext}
             onBack={goBack}
           />
@@ -809,6 +817,8 @@ export default function MbrPage() {
                 ? draft.data.previousMbrPendingItems
                 : mbrCarryOver
             }
+            mbrPreSurfacedItems={mbrPreSurfacedItems}
+            teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
             onContinue={goNext}
             onBack={goBack}
           />
