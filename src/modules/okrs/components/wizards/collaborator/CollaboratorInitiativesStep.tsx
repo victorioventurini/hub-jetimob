@@ -27,6 +27,7 @@ import { projectsKeys } from '@/lib/queryKeys/projects';
 import { InitiativesSummary } from '../shared/InitiativesSummary';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
+import { InitiativeQuickUpdateDialog } from '@/modules/okrs/components/initiatives/InitiativeQuickUpdateDialog';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { Initiative } from '@/modules/okrs/types/initiative';
 import type { ProjectHealth } from '@/modules/projects/types';
@@ -37,6 +38,8 @@ import type { ProjectHealth } from '@/modules/projects/types';
 
 export interface CollaboratorInitiativesStepProps {
   krs: WizardKr[];
+  /** Profile id efetivo do colaborador — usado para gating row-aware. */
+  effectiveUserId: string | null;
   onContinue: (markedAtRisk: string[]) => void;
   onBack: () => void;
   onSkip: () => void;
