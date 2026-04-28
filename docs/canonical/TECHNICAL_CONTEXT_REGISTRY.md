@@ -849,6 +849,34 @@ Histórico de valores com período e confiança.
 
 ---
 
+#### **kpi_data_contributors** — Contribuidores operacionais (v2.83.0+)
+Separa **quem é responsável pelo resultado** (`kpi_metrics.owner_user_id`) de **quem atualiza os valores** (este registro com `role='data_entry'`).
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | uuid | PK |
+| kpi_id | uuid | FK para kpi_metrics (ON DELETE CASCADE) |
+| contributor_user_id | uuid | FK para profiles |
+| role | enum `kpi_contributor_role` | `data_entry` (atualiza valores) ou `reviewer` (revisa) |
+| notes | text | Observações |
+| bu_id | uuid | FK para bu_units (BU isolation) |
+| created_by | uuid | FK para profiles |
+| deleted_at | timestamptz | Soft delete |
+
+**Unique:** `uq_kpi_contributor (kpi_id, contributor_user_id, deleted_at)` NULLS NOT DISTINCT
+**Escopo:** Por BU
+
+**Convenção UI "Atualizado por" (v2.92.0):**
+- Cada KPI tem **1 único** contribuidor `data_entry` ativo, exposto na UI como campo "**Atualizado por**" ao lado de "Responsável" em Criar/Editar KPI.
+- Helper canônico: `useKpiPrimaryDataEntry(kpiId)` (leitura) e `useUpsertKpiPrimaryDataEntry()` (escrita idempotente: soft-delete antigos + insert novo).
+- **Obrigatório** quando `lifecycle_status='active'` (mesma regra de `owner_user_id`).
+- **Backfill (2026-04-28):** todos os KPIs ativos com `owner_user_id` receberam um registro `data_entry` copiado do responsável (idempotente, respeita `uq_kpi_contributor`).
+- Múltiplos contribuidores e role `reviewer` permanecem suportados no schema/RLS, mas hoje a UI canônica é single-user. Não usar `KpiContributorsManager` (componente órfão) sem decisão explícita.
+
+**RLS:** SELECT por membro da BU; INSERT/UPDATE/DELETE para `has_permission(... 'kpis.metric.update:bu')` ou owner do KPI (`kpi_metrics.owner_user_id = my_profile_id()`).
+
+---
+
 ### 2.4 Módulo Assets (Patrimônio)
 
 O módulo Assets controla bens patrimoniais, chaves, brindes e linhas telefônicas com **4 sub-módulos independentes**, cada um com permissões próprias.
