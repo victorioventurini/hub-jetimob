@@ -207,6 +207,8 @@ export function EditKpiScopeSection({
                       onValueChange={(val) => field.onChange(val ?? undefined)}
                       placeholder="Selecione..."
                       triggerClassName="w-full"
+                      includeNone={watchLifecycleStatus !== 'active'}
+                      noneLabel="Nenhuma área"
                     />
                   </FormControl>
                   <FormMessage />
@@ -229,6 +231,8 @@ export function EditKpiScopeSection({
                       onValueChange={(val) => field.onChange(val ?? undefined)}
                       placeholder="Selecione..."
                       triggerClassName="w-full"
+                      includeNone
+                      noneLabel="Nenhum time"
                     />
                   </FormControl>
                   <FormMessage />
@@ -260,6 +264,8 @@ export function EditKpiScopeSection({
                   onValueChange={(val) => field.onChange(val ?? undefined)}
                   placeholder="Selecione..."
                   triggerClassName="w-full"
+                  includeNone
+                  noneLabel="Nenhum time"
                 />
               </FormControl>
               <FormMessage />
