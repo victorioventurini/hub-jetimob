@@ -33,6 +33,7 @@ import { TeamSelect, BuUserSelect, AreaSelect, UnitSelect } from "@/components/s
 import { Badge } from "@/components/ui/badge";
 import { InfoNotice } from "@/components/ui/info-notice";
 import { useKpiData } from "../hooks";
+import { useUpsertKpiPrimaryDataEntry } from "../hooks/useKpiPrimaryDataEntry";
 import { useTeamArea } from "../hooks/useTeamArea";
 import {
   KpiDirection,
