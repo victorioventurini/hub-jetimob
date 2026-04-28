@@ -857,7 +857,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Time Responsável (opcional)
+                          Time Responsável
                         </FormLabel>
                         <FormControl>
                           <TeamSelect
@@ -888,7 +888,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Time Responsável (opcional)
+                      Time Responsável
                       <HelpTooltip content="Qual time é o principal responsável por acompanhar este indicador?" />
                     </FormLabel>
                     <FormControl>

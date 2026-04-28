@@ -222,7 +222,7 @@ export function EditKpiScopeSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Time Responsável (opcional)
+                    Time Responsável
                     <HelpTooltip content="Opcionalmente, especifique um time dentro da área responsável." />
                   </FormLabel>
                   <FormControl>
@@ -255,7 +255,7 @@ export function EditKpiScopeSection({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Time Responsável (opcional)
+                Time Responsável
                 <HelpTooltip content="Qual time é o principal responsável por acompanhar este indicador da área?" />
               </FormLabel>
               <FormControl>
