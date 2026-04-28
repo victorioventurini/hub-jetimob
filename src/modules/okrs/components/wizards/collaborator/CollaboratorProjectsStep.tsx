@@ -45,20 +45,33 @@ export interface CollaboratorProjectsStepProps {
 interface ProjectWithMilestones {
   id: string;
   name: string;
-  status: string;
+  bu_id: string;
+  owner_id: string | null;
+  description: string | null;
+  external_url: string | null;
+  status: ProjectStatus;
+  start_date: string | null;
   due_date: string | null;
+  team_ids: string[];
   health: ProjectHealth;
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  isProjectOwner: boolean;
   milestones: Array<{
     id: string;
     name: string;
     status: MilestoneStatus;
+    start_date: string | null;
     due_date: string | null;
     owner_id: string | null;
     notes: string | null;
   }>;
+}
+
+interface EditingMilestoneCtx {
+  projectId: string;
+  milestone: ProjectWithMilestones['milestones'][number];
 }
 
 // ============================================================
