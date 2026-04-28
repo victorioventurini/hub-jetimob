@@ -274,6 +274,18 @@ export function InitiativesSummary({
                         )}
                       </div>
 
+                      {onEdit && (!canEdit || canEdit(init)) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => onEdit(init)}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Atualizar
+                        </Button>
+                      )}
+
                       {editable && (
                         <Button
                           variant="ghost"
