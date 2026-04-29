@@ -31,6 +31,7 @@ import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheck
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { formatValueWithUnit } from '@/shared/constants/units';
+import { variationVsLast, variationVsTarget as deriveVariationVsTarget } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 
@@ -176,17 +177,23 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
                   Meta: {kpi.target != null ? formatValueWithUnit(kpi.target, kpi.unit ?? '%') : '—'}
                 </p>
               </div>
-              <div className="text-right space-y-1">
-                <div className="flex items-center gap-1 justify-end">
-                  <TrendIcon value={kpi.variationVsLastMonth} />
-                  <span className="text-xs">{formatVariation(kpi.variationVsLastMonth)} vs mês ant.</span>
-                </div>
-                <div className="flex items-center gap-1 justify-end">
-                  <span className="text-xs text-muted-foreground">
-                    {formatVariation(kpi.variationVsTarget)} vs meta
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const vsLast = variationVsLast(kpi.currentValue, kpi.previousValue);
+                const vsTarget = deriveVariationVsTarget(kpi.currentValue, kpi.target);
+                return (
+                  <div className="text-right space-y-1">
+                    <div className="flex items-center gap-1 justify-end">
+                      <TrendIcon value={vsLast} />
+                      <span className="text-xs">{formatVariation(vsLast)} vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1 justify-end">
+                      <span className="text-xs text-muted-foreground">
+                        {formatVariation(vsTarget)} vs meta
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <KpiLastUpdateLabel date={kpi.lastValueAt} />
           </CardContent>

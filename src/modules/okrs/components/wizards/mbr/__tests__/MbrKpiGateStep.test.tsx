@@ -29,8 +29,6 @@ const createKpi = (overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnapshot => (
   previousValue: 8,
   target: 15,
   ragStatus: 'red',
-  variationVsLastMonth: 25,
-  variationVsTarget: -33,
   requiresStrategicDecision: false,
   ...overrides,
 });

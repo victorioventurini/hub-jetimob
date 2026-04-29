@@ -22,6 +22,7 @@ import {
   useCarryOverDecisions,
   useMbrPreSubmissions,
 } from '@/modules/okrs/hooks';
+import { usePreviousMbrPendingItems } from '@/modules/okrs/hooks/usePreviousMbrPendingItems';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { calculateKrState } from '@/modules/okrs/hooks';
 
@@ -91,7 +92,6 @@ const DEFAULT_DATA: MbrDraftData = {
     nextMbrScheduled: false,
   },
   ritualFeedback: [],
-  previousMbrPendingItems: [],
   qbrFollowUpItems: [],
 };
 
@@ -272,11 +272,6 @@ export default function MbrPage() {
     }
 
     const snapshots: MbrKpiSnapshot[] = allBuKpis.map(kpi => {
-      const variation = kpi.target_value && kpi.latest_value != null
-        ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
-        : null;
-
-
       return {
         kpiId: kpi.id,
         name: kpi.name,
@@ -287,8 +282,6 @@ export default function MbrPage() {
           : kpi.latest_rag_status === 'at_risk' ? 'yellow'
           : kpi.latest_rag_status === 'off_track' ? 'red'
           : 'no_data',
-        variationVsLastMonth: null,
-        variationVsTarget: variation,
         requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
         unit: kpi.unit ?? '%',
         lastValueAt: kpi.latest_reference_date ?? null,
@@ -589,38 +582,9 @@ export default function MbrPage() {
   }, [orgObjectives, isLoadingOkrs, draft.data.orgOkrSnapshots.length, updateDraft]);
 
   // Load previous MBR pending items on first load
-  useEffect(() => {
-    if (!currentBu?.id || draft.data.previousMbrPendingItems.length > 0) return;
-
-    const loadPrevious = async () => {
-      try {
-        const { data } = await buSupabase
-          .from('okr_wizard_sessions')
-          .select('reflection_data')
-          .eq('wizard_type', 'mbr')
-          .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data?.reflection_data) {
-          const prevData = (data.reflection_data as any)?.data as MbrDraftData | undefined;
-          if (prevData?.decisions) {
-            const pending = prevData.decisions.filter(
-              d => d.category === 'next_step' || d.category === 'focus_adjustment'
-            );
-            if (pending.length > 0) {
-              updateDraft({ previousMbrPendingItems: pending });
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to load previous MBR items:', e);
-      }
-    };
-
-    loadPrevious();
-  }, [currentBu?.id]);
+  // Carry-over de itens pendentes do MBR anterior — re-derivado via hook
+  // (substituiu o campo previousMbrPendingItems no draft).
+  const { data: previousMbrPendingItems = [] } = usePreviousMbrPendingItems(sessionId ?? null);
 
   // Navigation
   const completedSteps = useMemo(() => {
@@ -800,8 +764,8 @@ export default function MbrPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             previousMbrPendingItems={
-              draft.data.previousMbrPendingItems.length > 0
-                ? draft.data.previousMbrPendingItems
+              previousMbrPendingItems.length > 0
+                ? previousMbrPendingItems
                 : mbrCarryOver
             }
             mbrPreSurfacedItems={mbrPreSurfacedItems}

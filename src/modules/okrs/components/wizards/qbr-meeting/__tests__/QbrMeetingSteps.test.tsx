@@ -64,8 +64,6 @@ function createKpiSnapshot(overrides: Partial<MbrKpiSnapshot> = {}): MbrKpiSnaps
     currentValue: 100,
     previousValue: 90,
     target: 120,
-    variationVsLastMonth: 5,
-    variationVsTarget: -16,
     requiresStrategicDecision: false,
     ...overrides,
   };

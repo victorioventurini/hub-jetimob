@@ -399,14 +399,23 @@ serve(async (req) => {
       referenceMonth,
       criticalKpis: kpiSnapshots
         .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
-        .map((k) => ({
-          name: k.name as string,
-          currentValue: (k.currentValue ?? null) as number | null,
-          target: (k.target ?? null) as number | null,
-          ragStatus: k.ragStatus as string,
-          variationVsLastMonth: (k.variationVsLastMonth ?? null) as number | null,
-          impactAssessment: k.impactAssessment as string | undefined,
-        })),
+        .map((k) => {
+          const curr = (k.currentValue ?? null) as number | null;
+          const prev = (k.previousValue ?? null) as number | null;
+          // Backward-compat: snapshots antigos ainda trazem variationVsLastMonth no JSONB.
+          // Snapshots novos derivam em runtime a partir de current/previous.
+          const legacyVar = (k as { variationVsLastMonth?: number | null }).variationVsLastMonth;
+          const derivedVar =
+            curr != null && prev != null && prev !== 0 ? ((curr - prev) / prev) * 100 : null;
+          return {
+            name: k.name as string,
+            currentValue: curr,
+            target: (k.target ?? null) as number | null,
+            ragStatus: k.ragStatus as string,
+            variationVsLastMonth: legacyVar ?? derivedVar,
+            impactAssessment: k.impactAssessment as string | undefined,
+          };
+        }),
       orgOkrsSummary: orgOkrSnapshots.map((o) => ({
         title: o.title as string,
         progress: o.progress as number,

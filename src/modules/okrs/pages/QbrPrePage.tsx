@@ -284,9 +284,6 @@ export default function QbrPrePage() {
 
       return kpis.map(kpi => {
         const latest = latestByKpi.get(kpi.id);
-        const variation = kpi.target_value && latest?.value != null
-          ? ((latest.value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
-          : null;
         return {
           kpiId: kpi.id,
           name: kpi.name,
@@ -297,8 +294,6 @@ export default function QbrPrePage() {
             : latest?.rag_status === 'at_risk' ? 'yellow'
             : latest?.rag_status === 'off_track' ? 'red'
             : 'no_data',
-          variationVsLastMonth: null,
-          variationVsTarget: variation,
           requiresStrategicDecision: latest?.rag_status === 'off_track',
           unit: kpi.unit ?? '%',
           lastValueAt: latest?.reference_date ?? null,

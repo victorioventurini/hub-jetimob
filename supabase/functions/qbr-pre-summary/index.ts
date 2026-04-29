@@ -316,7 +316,14 @@ serve(async (req) => {
 
     // Build agent context
     interface KrSnapshot { krTitle: string; state: string; finalProgress: number; paceStatus: string }
-    interface KpiSnapshot { name: string; currentValue: number | null; target: number | null; ragStatus: string; variationVsLastMonth?: number | null }
+    interface KpiSnapshot {
+      name: string;
+      currentValue: number | null;
+      previousValue?: number | null;
+      target: number | null;
+      ragStatus: string;
+      variationVsLastMonth?: number | null;
+    }
     interface DecisionSnapshot { text: string; category: string }
     const snap = (snapshotData ?? {}) as Record<string, unknown>;
     const agentContext: QbrPreAgentContext = {
@@ -328,10 +335,21 @@ serve(async (req) => {
       })),
       criticalKpis: (((snap.kpiSnapshot ?? snap.kpiSnapshots) as KpiSnapshot[] | undefined) || [])
         .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')
-        .map((k) => ({
-          name: k.name, currentValue: k.currentValue, target: k.target,
-          ragStatus: k.ragStatus, variationVsLastMonth: k.variationVsLastMonth ?? null,
-        })),
+        .map((k) => {
+          // Backward-compat: snapshots antigos trazem variationVsLastMonth no JSONB.
+          // Snapshots novos derivam em runtime a partir de currentValue / previousValue.
+          const derived =
+            k.currentValue != null && k.previousValue != null && k.previousValue !== 0
+              ? ((k.currentValue - k.previousValue) / k.previousValue) * 100
+              : null;
+          return {
+            name: k.name,
+            currentValue: k.currentValue,
+            target: k.target,
+            ragStatus: k.ragStatus,
+            variationVsLastMonth: k.variationVsLastMonth ?? derived,
+          };
+        }),
       zombieCandidates: [],
       kpisToCreate: (snap.kpisToCreate as QbrPreAgentContext['kpisToCreate']) || [],
       learnings: (snap.learnings as QbrPreAgentContext['learnings']) || { whatWorked: '', whatDidntWork: '', debts: '' },

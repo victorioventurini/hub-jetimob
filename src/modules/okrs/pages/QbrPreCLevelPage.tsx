@@ -188,8 +188,6 @@ export default function QbrPreCLevelPage() {
             : latest?.rag_status === 'at_risk' ? 'yellow'
             : latest?.rag_status === 'off_track' ? 'red'
             : 'no_data',
-          variationVsLastMonth: null,
-          variationVsTarget: null,
           requiresStrategicDecision: latest?.rag_status === 'off_track',
           unit: kpi.unit ?? '%',
           lastValueAt: null,
