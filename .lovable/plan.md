@@ -1,88 +1,137 @@
-## Pré-checklist (concluído)
-- **TCR + DATA_MODEL_REGISTRY**: `ritual_occurrences` BU-scoped (v3.21.0), confirmado.
-- **RLS verificada via DB**: `bu_admin_occurrences_all` permite `UPDATE` para admins da BU — coerente com `/settings/rituals`.
-- **IDENTITY_CONVENTION**: política usa `is_bu_admin(auth.uid(), bu_id)`; não exige `realProfileId` para a mutação (já validado no plano original).
-- **Memórias**: `comprehensive-calendar-architecture-v2`, `mbr-multi-date-governance`, `ritual-reopen-mechanism` revisadas — apenas `scheduled`/`missed` são mutáveis.
-- **Standards**: `BULK_RESCHEDULABLE_WIZARD_TYPES` já tipado como `WizardPersona[]` em `constants.ts`. Query keys via `okrsKeys` prefix. `useBuScopedSupabase` mandatório.
-- **Hook + Dialog + botão do header**: já implementados corretamente. **Esta iteração é puramente UI/UX no `OccurrenceSheet`.**
-
-## Problema observado (print do usuário)
-O `OccurrenceSheet` para um `mbr-pre` agendado mostra apenas:
-- Status "Agendado", time "BizOps", "Data prevista 05/05/2026"
-- Campo "Nova data" + botão "Confirmar" cinza (reagendamento individual já expandido)
-
-**O botão "Reagendar todos os times deste rito" não está visível**, embora o código em `OccurrenceSheet.tsx:165-174` o renderize quando `isBulkEligible === true` (que é o caso para `mbr-pre` + `scheduled`).
-
-Causa provável: o botão **está renderizado**, mas fica abaixo da dobra do `SheetContent` porque:
-1. O formulário individual (`Reagendar`) aparece **antes** no JSX (linhas 120-163), com Calendar Popover + botão Confirmar grande, ocupando muito espaço vertical.
-2. O `SheetContent` não tem scroll explícito, então o conteúdo overflowa silenciosamente.
-3. Hierarquia visual invertida: ação **menos comum** (reagendar 1 time de um rito global) está em destaque acima da ação **mais comum** (reagendar todos os times daquela data).
-
 ## Objetivo
-Tornar o reagendamento em massa **descobrível e prioritário** quando a ocorrência for de um rito global (`mbr`, `mbr-pre`, `qbr-*`), sem alterar lógica de negócio.
 
-## Mudanças (apenas em `src/modules/okrs/pages/ritual-calendar/OccurrenceSheet.tsx`)
+Gerar um único documento `Markdown` em `/mnt/documents/ritos-hub-jet.md` descrevendo **todos os 12 ritos ativos** do Hub da Jet, no maior nível de profundidade possível extraído das memórias canônicas, do SSOT de labels (`src/modules/okrs/constants/ritualLabels.ts`), das specs de wizards e da governança de ciclos. Exclui apenas os ritos de **criação** (`team-okr-creation`, `team-kr-creation`).
 
-### 1. Reordenar ações abaixo do `Separator`
-Quando `isBulkEligible === true`:
-- **1ª ação (destaque, `variant="default"`)**: "Reagendar todos os times deste rito" (atual bulk).
-- **2ª ação (`variant="outline"`)**: "Reagendar apenas este time" (atual individual, label renomeado).
+Entrega como **artifact** (`<lov-artifact>`) para download/preview.
 
-Quando `isBulkEligible === false` (ex.: `collaborator`, `team-checkin`):
-- Apenas a ação individual aparece, com label original "Reagendar".
+---
 
-### 2. Hint contextual
-Acima dos botões, quando `isBulkEligible`, exibir texto sutil:
-> "Este rito ocorre em todos os times nesta data."
+## Escopo dos 12 ritos
 
-### 3. Garantir scroll do `SheetContent`
-Envolver o conteúdo abaixo do `SheetHeader` em um wrapper com `max-h-[calc(100vh-6rem)] overflow-y-auto pr-1` para garantir que o formulário individual expandido nunca esconda o botão de bulk.
+**Semanais — escopo time/individual:**
+1. Check-in Individual (`collaborator`)
+2. Pré-Check-in do Time (`leader-prep`)
+3. Check-in do Time (`team-checkin`)
+4. Check-in Executivo (`clevel-checkin`)
 
-### 4. Status `missed` também elegível
-Hoje o bloco de reagendamento individual (linha 120) só renderiza para `status === 'scheduled'`. Como `isBulkEligible` aceita `scheduled` **ou** `missed`, ajustar a condição do bloco individual para `(occurrence.status === 'scheduled' || occurrence.status === 'missed')` — mantém consistência entre as duas ações.
+**Semanais — destilação + BU:**
+5. Pré-Weekly (`pre-weekly`, v2)
+6. Weekly (`weekly`, v2)
 
-## Snippet de referência
-```tsx
-{(occurrence.status === 'scheduled' || occurrence.status === 'missed') && (
-  <div className="space-y-3">
-    {isBulkEligible && (
-      <p className="text-xs text-muted-foreground">
-        Este rito ocorre em todos os times nesta data.
-      </p>
-    )}
+**Mensais:**
+7. Pré-MBR (`mbr-pre`, v3)
+8. MBR (`mbr`, v4)
 
-    {isBulkEligible && (
-      <Button className="w-full" onClick={() => setShowBulk(true)}>
-        <CalendarRange className="h-4 w-4 mr-2" />
-        Reagendar todos os times deste rito
-      </Button>
-    )}
+**Trimestrais — família QBR:**
+9. Pré-QBR (`qbr-pre`, v3)
+10. Pré-QBR Executivo (`qbr-pre-clevel`)
+11. QBR (`qbr-meeting`, v4)
+12. Pós-QBR (`qbr-post`, v4)
 
-    {!showReschedule ? (
-      <Button variant="outline" className="w-full" onClick={() => setShowReschedule(true)}>
-        <RefreshCw className="h-4 w-4 mr-2" />
-        {isBulkEligible ? 'Reagendar apenas este time' : 'Reagendar'}
-      </Button>
-    ) : (
-      /* formulário individual existente — Calendar Popover + Confirmar */
-    )}
-  </div>
-)}
+---
+
+## Estrutura do documento
+
+```text
+# Ritos de Gestão — Hub da Jet
+  Versão, data, fonte, escopo, sumário
+
+## 1. Arquitetura de Cadência
+  - Filosofia (Pré→Rito; individual→coletivo; semanal→mensal→trimestral)
+  - Diagrama ASCII do fluxo completo
+  - Regra de substituição MBR↔QBR no M3 do quarter
+  - Materialização em `ritual_occurrences` e cálculo de janelas em dias úteis
+  - Acessibilidade off-cycle (quais ritos sobrevivem sem ciclo ativo)
+
+## 2. Conceitos transversais (aplicam-se a todos os ritos)
+  - Wizard framework v2/v3/v4 e versionamento de structure
+  - Rascunho (draft) único por autor+time, isolamento e re-hidratação
+  - CompletedRitualView read-only + addendums imutáveis
+  - Reabertura por BU Admin (backup pre_reopen_backup)
+  - InlineDecisionInput ubíquo (exceto closing/summary)
+  - Avaliações de participantes (1–5 + feedback) em addendums JSONB
+  - PreparationStatusCard (5 modos × 4 estados)
+  - HierarchyContextSwitcher para ritos team-scope
+  - Decisões: scope self/team/area/all em /decisions
+
+## 3. Calendário e janelas (tabela única consolidada)
+  Tabela: persona | frequência | gerado em | janela em dias úteis | gates | bloqueios
+
+## 4. Catálogo dos 12 ritos
+  Para cada rito, uma seção com este template fixo:
+
+  ### N. <Nome canônico> (`slug`, vN)
+  - **Resumo executivo** (1 parágrafo)
+  - **Quem participa** (persona, permissões, RBAC)
+  - **Quando ocorre** (frequência, janela em dias úteis, materialização em occurrences)
+  - **Steps detalhados** (lista numerada com title/subtitle do SSOT + descrição
+    do conteúdo de cada step extraído do código do wizard)
+  - **Gates e bloqueios**
+  - **Saída e snapshots** (drafts, snapshots imutáveis, addendums)
+  - **Integração com outros ritos** (alimenta / é alimentado por)
+  - **Particularidades técnicas** (rota, agentes IA, edge functions, hooks
+    chave, tabelas: okr_wizard_sessions, ritual_occurrences, ritual_cadences)
+  - **Antipadrões** (o que NÃO é o rito)
+
+## 5. Apêndices
+  A. Tabela de personas (slug → label canônico)
+  B. Mapa de substituição MBR↔QBR no quarter
+  C. Checklist do facilitador por rito
+  D. Glossário (BU, KR, KPI, RAG, addendum, snapshot, occurrence, cadence)
+  E. Referências cruzadas (paths de código + memórias canônicas consultadas)
 ```
 
-## Fora de escopo
-- Hooks (`useRescheduleOccurrence`, `useRescheduleOccurrencesBulk`): inalterados.
-- `BulkRescheduleDialog`: inalterado.
-- Botão "Reagendar em massa" no header do `CalendarTab`: inalterado.
-- RLS, query keys, edge functions, constantes: sem mudanças.
+---
 
-## Validação manual
-1. `/settings/rituals?tab=calendar` → clicar em ocorrência `Pré-MBR` (status Agendado).
-2. Conferir que o **primeiro** botão visível abaixo dos metadados é "Reagendar todos os times deste rito" (variant default, destaque).
-3. Conferir que "Reagendar apenas este time" aparece logo abaixo, em outline.
-4. Clicar em ocorrência de `collaborator` → conferir que apenas "Reagendar" aparece.
-5. Clicar em ocorrência `mbr-pre` com status "Não executado" (`missed`) → ambas as ações devem aparecer.
-6. Expandir o reagendamento individual → o botão de bulk continua visível acima; se necessário, scroll funciona dentro do Sheet.
+## Fontes de verdade que serão consolidadas
 
-## Arquivos afetados
-- `src/modules/okrs/pages/ritual-calendar/OccurrenceSheet.tsx` (única alteração)
+**Memórias acessíveis (já lidas):**
+- `mem://features/rituals/ritual-addendum-standard`
+- `mem://features/rituals/ritual-reopen-mechanism`
+- `mem://features/rituals/participant-evaluations-standard`
+- `mem://features/rituals/off-cycle-accessibility-standard`
+- `mem://features/rituals/collaborator-checkin-pending-items-step`
+- `mem://features/rituals/scorecard-evaluation-cycle-standard`
+- `mem://features/rituals/cross-team-scorecard-visibility-logic`
+- `mem://ui/rituals/hierarchy-context-switcher-standard`
+- `mem://features/decisions/scope-resolution-standard`
+- `.lovable/memory/features/rituals/*.md` (4 arquivos)
+- `.lovable/memory/features/okrs/{mbr-*,ritual-*,management-*}.md`
+
+**Código fonte:**
+- `src/modules/okrs/constants/ritualLabels.ts` (SSOT de labels)
+- `src/modules/okrs/constants/ritualWizardTypes.ts`
+- `src/modules/okrs/types/wizard/*.ts` (core, weekly, etc.)
+- `src/modules/okrs/components/wizards/{collaborator,leader-prep,team-checkin,clevel-checkin,pre-weekly,weekly,mbr-pre,mbr,qbr-pre,qbr-pre-clevel,qbr-meeting,qbr-post}/*.tsx`
+- `src/modules/okrs/pages/ritual-calendar/constants.ts`
+
+**Documentos canônicos:**
+- `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md`
+- `docs/canonical/AI_AGENTS_PHILOSOPHY.md` (referência)
+
+---
+
+## Procedimento técnico de geração
+
+1. **Leitura ampla**: para cada um dos 12 ritos, abrir o `index.ts` da pasta do wizard e os 2–3 steps mais representativos para extrair os campos do draft, gates e textos de UI canônicos.
+2. **Extração estruturada**: montar dicionário `persona → { steps[], gates[], drafts, integrações }` em memória.
+3. **Renderização Markdown** via script Node/Bash em `/tmp/`, escrevendo direto em `/mnt/documents/ritos-hub-jet.md`.
+4. **QA**: ler de volta o arquivo gerado, validar (a) presença das 12 seções, (b) tabela de calendário com 12 linhas, (c) sumário com âncoras, (d) ausência de ritos de criação (`team-okr-creation`, `team-kr-creation`).
+5. **Entrega**: emitir `<lov-artifact path="ritos-hub-jet.md" mime_type="text/markdown">`.
+
+---
+
+## Notas de escopo
+
+- **NÃO inclui** `team-okr-creation` nem `team-kr-creation` (criação de OKRs/KRs).
+- **Inclui** os históricos `mbr-first` e `mbr-pre-first` apenas em nota de rodapé (back-compat), não como ritos do catálogo.
+- O documento é descritivo (não é manual operacional puro nem spec técnica de implementação) — segue o nível "Completo" pedido: tudo que existe nas memórias canônicas + SSOT de código.
+- Tamanho estimado: 40–60 KB de Markdown.
+
+---
+
+## Detalhes técnicos relevantes
+
+- Localização final: `/mnt/documents/ritos-hub-jet.md`.
+- Sem dependências externas; geração via `bash`/`node` com heredoc.
+- Sem alterações no codebase do projeto.
