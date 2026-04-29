@@ -12,6 +12,7 @@
 
 // Núcleo + transversais
 export * from './core';
+export * from './vocabulary';
 export * from './shared';
 
 // Personas

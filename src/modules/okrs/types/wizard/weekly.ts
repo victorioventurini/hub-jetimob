@@ -51,7 +51,7 @@ export interface PreWeeklyTopic {
 export interface PreWeeklyPeopleSignal {
   id: string;
   /** Tipo de sinal estrutural */
-  type: 'celebracao' | 'risco' | 'mudanca' | 'feedback';
+  type: RitualPeopleSignalType;
   description: string;
 }
 
