@@ -5,7 +5,11 @@
  * e QBR Post. Inclui snapshots imutáveis, drafts e helpers de normalização.
  */
 
-import type { TeamCheckinDecision, RitualImprovementFeedback } from './shared';
+import type {
+  TeamCheckinDecision,
+  RitualImprovementFeedback,
+  KrFinalStateSnapshot,
+} from './shared';
 import type { DirectiveCategory } from './vocabulary';
 import type { MbrKpiSnapshot } from './mbr';
 import type {
@@ -123,16 +127,7 @@ export interface QbrPreSnapshot {
   cycleId: string;
   teamId: string;
   submittedAt: string;
-  krFinalStates: Array<{
-    krId: string;
-    krTitle: string;
-    objectiveId: string;
-    objectiveTitle: string;
-    /** KrState from useKrStateInsights */
-    state: string;
-    finalProgress: number;
-    paceStatus: string;
-  }>;
+  krFinalStates: KrFinalStateSnapshot[];
   kpiSnapshot: MbrKpiSnapshot[];
   /** kpi_ids sinalizados pelo líder */
   zombieCandidates: string[];
