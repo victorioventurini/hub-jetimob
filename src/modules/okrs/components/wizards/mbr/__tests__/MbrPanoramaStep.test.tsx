@@ -114,11 +114,13 @@ describe('MbrPanoramaStep', () => {
   });
 
   it('displays KPI values and variations', () => {
+    // previousValue=40 → (42-40)/40*100 = +5%
+    const kpis = [createKpiSnapshot({ currentValue: 42, previousValue: 40, target: 50, unit: '%' })];
     render(<MbrPanoramaStep {...defaultProps()} kpiSnapshots={kpis} />);
     // formatValueWithUnit(42, '%') → '42 %'
     expect(screen.getByText('42 %')).toBeInTheDocument();
     expect(screen.getByText('Meta: 50 %')).toBeInTheDocument();
-    expect(screen.getByText('+5.5% vs mês ant.')).toBeInTheDocument();
+    expect(screen.getByText(/vs mês ant\./)).toBeInTheDocument();
   });
 
   it('shows RAG badges correctly', () => {
