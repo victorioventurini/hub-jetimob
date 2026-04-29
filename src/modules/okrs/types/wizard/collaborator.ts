@@ -6,7 +6,9 @@ import type { WizardKr } from '../../hooks/useTeamPendingKrs';
 
 export interface CollaboratorCheckinResult {
   krId: string;
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`. */
   krTitle: string;
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` pelo objective_id do KR. */
   objectiveTitle: string;
   previousValue: number;
   newValue: number;
@@ -27,6 +29,7 @@ export interface CollaboratorReflection {
  */
 export interface KpiCheckinResult {
   kpiId: string;
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useKpiMetrics` por `kpiId`. */
   kpiName: string;
   previousValue: number | null;
   newValue: number;

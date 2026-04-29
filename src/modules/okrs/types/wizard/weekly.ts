@@ -122,6 +122,7 @@ export interface WeeklyPriorityItem {
   id: string;
   sourcePreWeeklyId: string;
   teamId: string | null;
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useTeams` por `teamId`. */
   teamName: string;
   topic: PreWeeklyTopic;
 }
@@ -130,6 +131,7 @@ export interface WeeklyPeopleSignalAggregated {
   id: string;
   sourcePreWeeklyId: string;
   teamId: string | null;
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useTeams` por `teamId`. */
   teamName: string;
   signal: PreWeeklyPeopleSignal;
 }
