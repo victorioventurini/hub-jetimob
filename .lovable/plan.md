@@ -1,42 +1,71 @@
-# Fix: erro `column "v_bu_id" does not exist` ao criar KPI
+## Objetivo
 
-## Pré-checklist (executado)
-- ✅ TCR / `PERMISSIONS_AND_RBAC_MODEL.md` v1.5.0 — `kpis.settings.manage:bu` é a key canônica para criar KPIs estratégicos; `user_can_create_kpi` é a helper RLS oficial.
-- ✅ `mem://features/kpis/kpis-permissions-matrix.md` (v3) — matriz scope-oriented (org/area/team) + métricas restritas a `team` confirmada.
-- ✅ `mem://identity-rbac-master` — admin de BU (`is_bu_admin`) deve ter passe livre via short-circuit no início da função.
-- ✅ `mem://standards/bu-isolation-master` — função recebe `p_bu_id` explicitamente; nenhuma mudança de isolamento.
-- ✅ Codebase — frontend (`useCanCreateKpi.ts`, `CreateKpiDialog.tsx`) e RLS de `kpi_metrics` chamam a função passando `bu_id` corretamente; nada a alterar fora do SQL.
+Restringir o rito **Weekly** (`/rituals/weekly`) para **líderes de área + admins** (mesmo padrão usado hoje pelos rituais C-Level / QBR), tanto no guard de rota quanto no card do hub `/rituals`.
 
-## Diagnóstico
-Migration `20260428103721_*.sql` introduziu `public.user_can_create_kpi(p_profile_id, p_bu_id, p_scope, p_area_id, p_team_id, p_indicator_type)` com **dois bugs de variável**: o corpo referencia `v_bu_id` (não declarada, não populada) em vez de `p_bu_id`:
+Hoje:
+- A rota `/rituals/weekly` é apenas `RitualRoute` (qualquer usuário com módulo `okrs` ativo entra).
+- O card "Weekly" no hub aparece para qualquer `requiredRole: 'leader'` (líder de **time**, não de área).
 
-```sql
--- linhas atuais (quebradas)
-IF v_user_id IS NOT NULL AND (is_platform_admin(v_user_id) OR is_bu_admin(v_user_id, v_bu_id)) THEN ...
-IF has_permission(p_profile_id, v_bu_id, 'kpis.settings.manage:bu') THEN ...
-```
+## Critério de acesso (decidido)
 
-Quando o caller não é platform admin (caso do Uriel — admin de BU Jetimob), o Postgres tenta resolver `v_bu_id`, falha e devolve `column "v_bu_id" does not exist` ao frontend, bloqueando criação de **qualquer KPI/Métrica** (a função é chamada pela política `kpi_metrics_insert_v3`).
+Acesso liberado quando **qualquer uma** for verdadeira:
+- `isWildcard` (platform admin ou BU admin) — via `usePermissions`
+- usuário é `leader_user_id` de pelo menos uma `areas` ativa na BU corrente
+  (mesma checagem já implementada em `src/components/auth/CLevelRitualRoute.tsx`)
 
-`user_can_manage_kpi` já está correta — declara e popula `v_bu_id` a partir de `kpi_metrics`. Não precisa mudança.
+## Mudanças
 
-## Correção (1 migration, sem mudança de assinatura)
-Recriar `public.user_can_create_kpi` trocando as duas ocorrências de `v_bu_id` por `p_bu_id`:
+### 1. Extrair hook reutilizável `useIsAreaLeader`
 
-```text
-is_bu_admin(v_user_id, v_bu_id)        →  is_bu_admin(v_user_id, p_bu_id)
-has_permission(p_profile_id, v_bu_id,…) →  has_permission(p_profile_id, p_bu_id,…)
-```
+Novo arquivo: `src/modules/okrs/hooks/useIsAreaLeader.ts`
 
-Mantém: assinatura, `SECURITY DEFINER`, `STABLE`, `SET search_path = public`, demais branches da matriz (org/area/team + métrica/membro) intactos. Sem mudança em RLS, triggers, frontend, query keys ou tipos.
+- Replica a query do `CLevelRitualRoute` (busca `profiles.id` e checa `areas.leader_user_id` na BU ativa, `deleted_at IS NULL`).
+- Usa `useOptionalBuClient` + `useAuth` + `queryKeys.identity.permissions(...).concat('area-leader-check')` (mesma key já usada para reaproveitar cache).
+- Retorna `{ isAreaLeader, isLoading }`.
+- Refatorar `CLevelRitualRoute.tsx` para consumir o novo hook (remove duplicação).
 
-## Validação pós-fix
-1. SQL direto (Uriel/Jetimob, escopo Time = Customer Success):
-   `SELECT public.user_can_create_kpi(<profile_uriel>, '<bu_jetimob>', 'team', NULL, '<team_cs_id>', 'kpi');` → `true`.
-2. Reproduzir o fluxo do screenshot (KPI %, mensal/semanal, escopo Time = Customer Success, responsável Laura) → criar sem erro.
-3. Conferir que um usuário sem `kpis.settings.manage:bu` e sem liderança continua bloqueado para `scope=org` e para times fora da hierarquia (matriz v3 preservada).
-4. Smoke test: criar Métrica em time do qual o usuário é membro (regra hierárquica de `metric` preservada).
+### 2. Novo guard `WeeklyRitualRoute`
 
-## Fora de escopo
-- Sem alterações em `user_can_manage_kpi`, RLS de `kpi_metrics`, hooks frontend, templates ou nomenclatura de permissões.
-- Sem refactor adicional da função além do bug de variável.
+Novo arquivo: `src/components/auth/WeeklyRitualRoute.tsx`
+
+- Estrutura igual ao `CLevelRitualRoute`: libera quando `isWildcard || isAreaLeader`; caso contrário `<Navigate to="/" replace />`.
+- Usa `useIsAreaLeader` (sem reimplementar query).
+
+> Alternativa avaliada: reutilizar diretamente `CLevelRitualRoute`. Foi descartada para não acoplar semântica — Weekly não é C-Level, e regras podem divergir no futuro. O hook compartilhado já evita duplicação real.
+
+### 3. Aplicar guard na rota
+
+`src/routes/rituals.routes.tsx`:
+
+- Importar `WeeklyRitualRoute`.
+- Estender `RitualRoute` para aceitar `requiresAreaLeader?: boolean` (espelhando `requiresCLevel`), envolvendo o `inner` com `WeeklyRitualRoute` quando ligado.
+- Trocar a rota:
+  ```
+  <Route path="/rituals/weekly" element={<RitualRoute requiresAreaLeader><WeeklyPage /></RitualRoute>} />
+  ```
+
+### 4. Esconder card do Weekly no hub para não-líderes-de-área
+
+`src/pages/Wizards.tsx`:
+
+- Importar e chamar `useIsAreaLeader`.
+- Adicionar `'area-leader'` ao set `userRoles` quando `isAreaLeader` for true (e sempre quando `isWildcard`).
+- Trocar `requiredRole: 'leader'` → `requiredRole: 'area-leader'` **apenas** no item `id: 'weekly'`.
+- Atualizar o type `WizardDefinition.requiredRole` para incluir `'area-leader'`.
+- Garantir que a seção "OKRs – Líderes de Time" continua visível mesmo quando o único wizard restrito é o Weekly (o filtro existente `wizards.length > 0` já cuida disso; demais cards permanecem).
+
+> Pré-Weekly continua aberto a líderes de time (não escopo desta task).
+
+## Validação
+
+1. Login como líder de time **não-líder de área**: card "Weekly" não aparece em `/rituals`; navegação direta para `/rituals/weekly` redireciona para `/`.
+2. Login como líder de área (`areas.leader_user_id`): card visível; rota acessível.
+3. Login como admin de BU (`isWildcard`): card visível; rota acessível.
+4. Conferir que o rito Pré-Weekly e demais cards continuam visíveis para líderes de time.
+5. Build limpo (sem TS errors no novo type `requiredRole`).
+
+## Fora do escopo
+
+- Mudanças em `usePermissions` ou criação de permission key dedicada (`rituals.weekly.run`). Pode ser feito numa onda futura se quisermos governar via templates v2; hoje o critério "líder de área" não está modelado como key.
+- Alterações no Pré-Weekly, MBR-pre, ou qualquer outro rito.
+- Mudanças em RLS — Weekly não tem tabela própria com escrita restrita a líder de área (curadoria roda no contexto da BU). Acesso é puramente UX/route guard.
