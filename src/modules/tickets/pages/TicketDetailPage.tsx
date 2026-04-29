@@ -14,6 +14,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useBu } from "@/contexts/BuContext";
+import { usePermissions } from "@/hooks/usePermissions";
 // TicketsBreadcrumb removido - integrado no TicketDetailHeader (padrão canônico)
 import { TicketMessageBubble } from "../components/TicketMessageBubble";
 import { TicketMessageComposer } from "../components/TicketMessageComposer";
@@ -29,6 +30,8 @@ export default function TicketDetailPage() {
   const { profileId, realProfileId, userId } = useIdentity();
   const { isExternal, externalContacts } = useExternalUser();
   const { currentBu } = useBu();
+  const { isWildcard, has } = usePermissions();
+  const isTicketAdmin = isWildcard || has("tickets.settings.manage:bu");
   const goBack = useSafeBack({ moduleRoot: "/tickets" });
 
   // Get the correct contactId for the current BU (if external user)
@@ -87,26 +90,30 @@ export default function TicketDetailPage() {
   // Check if user can pin messages
   const canPin = useMemo(() => {
     if (!ticket || !profileId) return false;
-    return canUserPinMessages(ticket, profileId, currentBuContactId);
-  }, [ticket, profileId, currentBuContactId]);
+    return canUserPinMessages(ticket, profileId, currentBuContactId, isTicketAdmin);
+  }, [ticket, profileId, currentBuContactId, isTicketAdmin]);
 
   // Check if user can change ticket status (creator, owner/responsible, or admin)
+  // Espelha can_update_ticket_status() do banco (admin override via tickets.settings.manage:bu).
   const canChangeStatus = useMemo(() => {
     if (!ticket || !profileId) return false;
-    
+
+    // Admin override (super_admin / BU admin / tickets_admin_v2)
+    if (isTicketAdmin) return true;
+
     // Creator can always change status
     if (ticket.created_by_user_id === profileId) return true;
-    
+
     // Owner (internal responsible) can change status
     if (ticket.owner_user_id === profileId) return true;
-    
+
     // For external tickets: assigned contact can change status (if they have a linked profile)
     if (ticket.type === 'external' && currentBuContactId && ticket.assigned_contact_id === currentBuContactId) {
       return true;
     }
-    
+
     return false;
-  }, [ticket, profileId, currentBuContactId]);
+  }, [ticket, profileId, currentBuContactId, isTicketAdmin]);
 
   // SEO - Meta title e description
   usePageTitle(

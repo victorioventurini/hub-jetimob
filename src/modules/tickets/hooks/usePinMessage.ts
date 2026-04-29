@@ -33,6 +33,8 @@ export interface PinMessageParams {
  * @param ticket - Dados do ticket
  * @param profileId - ID do profile do usuário atual
  * @param contactId - ID do contato externo (se aplicável)
+ * @param isAdmin - Override: true quando o usuário é admin/super_admin (wildcard ou tickets.settings.manage:bu).
+ *                  Espelha o admin override de can_update_ticket_status / can_pin_ticket_message no banco.
  */
 export function canUserPinMessages(
   ticket: {
@@ -42,9 +44,13 @@ export function canUserPinMessages(
     type: "internal" | "external";
   },
   profileId: string | null,
-  contactId?: string | null
+  contactId?: string | null,
+  isAdmin: boolean = false
 ): boolean {
   if (!profileId) return false;
+
+  // Admin override (canônico via permission key — ver PERMISSIONS_AND_RBAC_MODEL.md)
+  if (isAdmin) return true;
 
   // Criador ou owner podem fixar
   if (ticket.created_by_user_id === profileId) return true;
