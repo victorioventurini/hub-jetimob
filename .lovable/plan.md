@@ -1,71 +1,66 @@
+# Plano — Bloquear "Criação de OKRs do Time" fora da janela
+
 ## Objetivo
+Liberar o rito **Criação de OKRs do Time** apenas quando há janela de criação aberta. Fora dessa janela, esconder o card no hub `/rituals` e bloquear a rota `/okrs/create` com a tela canônica `RitualUnavailableScreen`. Admins (BU admin / platform admin) ignoram a restrição.
 
-Restringir o rito **Weekly** (`/rituals/weekly`) para **líderes de área + admins** (mesmo padrão usado hoje pelos rituais C-Level / QBR), tanto no guard de rota quanto no card do hub `/rituals`.
+## Critério de janela (regra de negócio)
+**Janela aberta** ⇔ existe pelo menos um **ciclo trimestral em status `planning`** na BU ativa.
 
-Hoje:
-- A rota `/rituals/weekly` é apenas `RitualRoute` (qualquer usuário com módulo `okrs` ativo entra).
-- O card "Weekly" no hub aparece para qualquer `requiredRole: 'leader'` (líder de **time**, não de área).
-
-## Critério de acesso (decidido)
-
-Acesso liberado quando **qualquer uma** for verdadeira:
-- `isWildcard` (platform admin ou BU admin) — via `usePermissions`
-- usuário é `leader_user_id` de pelo menos uma `areas` ativa na BU corrente
-  (mesma checagem já implementada em `src/components/auth/CLevelRitualRoute.tsx`)
+- Esse status é setado quando o Pós-QBR abre o próximo quarter para planejamento.
+- É a mesma fonte que o wizard já usa hoje em `useActiveCycle().planningCycles` para popular `planningQuarterlyCycles`.
+- Se só existe quarter `active` rodando (e nenhum `planning`), a janela está fechada.
+- Override: usuários com `isWildcard` (BU admin / platform admin) sempre passam.
 
 ## Mudanças
 
-### 1. Extrair hook reutilizável `useIsAreaLeader`
+### 1. Novo hook `useTeamOkrCreationWindow`
+`src/modules/okrs/hooks/useTeamOkrCreationWindow.ts`
 
-Novo arquivo: `src/modules/okrs/hooks/useIsAreaLeader.ts`
+- Consome `useActiveCycle()` (já existente, BU-scoped).
+- Retorna `{ isOpen: boolean, nextOpensHint: string | null, isLoading: boolean }`.
+- `isOpen = planningQuarterlyCycles.length > 0` (filtra `type === 'quarter'`).
+- Exporta também o nome do(s) quarter(es) em planning para mensagem amigável.
+- Exportar via `src/modules/okrs/hooks/index.ts`.
 
-- Replica a query do `CLevelRitualRoute` (busca `profiles.id` e checa `areas.leader_user_id` na BU ativa, `deleted_at IS NULL`).
-- Usa `useOptionalBuClient` + `useAuth` + `queryKeys.identity.permissions(...).concat('area-leader-check')` (mesma key já usada para reaproveitar cache).
-- Retorna `{ isAreaLeader, isLoading }`.
-- Refatorar `CLevelRitualRoute.tsx` para consumir o novo hook (remove duplicação).
+### 2. Guard de rota `TeamOkrCreationRoute`
+`src/components/auth/TeamOkrCreationRoute.tsx`
 
-### 2. Novo guard `WeeklyRitualRoute`
-
-Novo arquivo: `src/components/auth/WeeklyRitualRoute.tsx`
-
-- Estrutura igual ao `CLevelRitualRoute`: libera quando `isWildcard || isAreaLeader`; caso contrário `<Navigate to="/" replace />`.
-- Usa `useIsAreaLeader` (sem reimplementar query).
-
-> Alternativa avaliada: reutilizar diretamente `CLevelRitualRoute`. Foi descartada para não acoplar semântica — Weekly não é C-Level, e regras podem divergir no futuro. O hook compartilhado já evita duplicação real.
-
-### 3. Aplicar guard na rota
-
-`src/routes/rituals.routes.tsx`:
-
-- Importar `WeeklyRitualRoute`.
-- Estender `RitualRoute` para aceitar `requiresAreaLeader?: boolean` (espelhando `requiresCLevel`), envolvendo o `inner` com `WeeklyRitualRoute` quando ligado.
-- Trocar a rota:
+- Combina `useIdentity` (`isWildcard`) + `useTeamOkrCreationWindow`.
+- Se `isLoading` → render `LoadingState`.
+- Se `isWildcard` → libera.
+- Se `isOpen` → libera.
+- Senão → renderiza `RitualUnavailableScreen` com:
+  - `wizardType="team-okr-creation"` (label já existe no SSOT `ritualLabels.ts`).
+  - `reason="not_yet"` e mensagem: *"A criação de OKRs do time abre quando um novo quarter entra em planejamento (ao final do Pós-QBR)."*
+- Aplicar em `src/routes/okrs.routes.tsx` envolvendo `<OkrCreationPage />`:
   ```
-  <Route path="/rituals/weekly" element={<RitualRoute requiresAreaLeader><WeeklyPage /></RitualRoute>} />
+  <OkrRoute><TeamOkrCreationRoute><OkrCreationPage /></TeamOkrCreationRoute></OkrRoute>
   ```
 
-### 4. Esconder card do Weekly no hub para não-líderes-de-área
+### 3. Esconder card no hub `/rituals`
+`src/pages/Wizards.tsx`
 
-`src/pages/Wizards.tsx`:
+- Importar `useTeamOkrCreationWindow` e `useIdentity`.
+- Computar `canSeeTeamOkrCreation = isWildcard || isOpen`.
+- Adicionar campo opcional `isVisible?: boolean` ao `WizardDefinition` (ou usar `gate` callback) e filtrar wizards com `isVisible === false` antes do render.
+- Setar `isVisible: canSeeTeamOkrCreation` no card `team-okr-creation`.
+- Não tocar nos demais cards.
 
-- Importar e chamar `useIsAreaLeader`.
-- Adicionar `'area-leader'` ao set `userRoles` quando `isAreaLeader` for true (e sempre quando `isWildcard`).
-- Trocar `requiredRole: 'leader'` → `requiredRole: 'area-leader'` **apenas** no item `id: 'weekly'`.
-- Atualizar o type `WizardDefinition.requiredRole` para incluir `'area-leader'`.
-- Garantir que a seção "OKRs – Líderes de Time" continua visível mesmo quando o único wizard restrito é o Weekly (o filtro existente `wizards.length > 0` já cuida disso; demais cards permanecem).
-
-> Pré-Weekly continua aberto a líderes de time (não escopo desta task).
+### 4. Atualizar `RitualUnavailableScreen` (se necessário)
+- Verificar que o componente aceita `wizardType` desconhecido sem janela computada (já é o caso — recebe `opensAt`/`message` como props). Passar `opensAt={null}` e mensagem custom; nenhum ajuste deve ser necessário.
 
 ## Validação
+- **Sem ciclo planning, usuário líder de time**: card oculto no hub; acesso direto a `/okrs/create` mostra `RitualUnavailableScreen`.
+- **Sem ciclo planning, BU admin**: card visível e rota acessível.
+- **Com ciclo planning**: comportamento atual preservado para todos os perfis com `okrs.team_objective.create:team`.
+- Garantir que `useTeamOkrCreationWindow` respeita BU isolation (via `useActiveCycle`, que já filtra por `currentBuId`).
+- Smoke: navegar pelo hub e por `/okrs/create` em ambos cenários.
 
-1. Login como líder de time **não-líder de área**: card "Weekly" não aparece em `/rituals`; navegação direta para `/rituals/weekly` redireciona para `/`.
-2. Login como líder de área (`areas.leader_user_id`): card visível; rota acessível.
-3. Login como admin de BU (`isWildcard`): card visível; rota acessível.
-4. Conferir que o rito Pré-Weekly e demais cards continuam visíveis para líderes de time.
-5. Build limpo (sem TS errors no novo type `requiredRole`).
+## Não-objetivos
+- Não altera lógica do wizard, draft, criação de OKR ou RLS de `okr_team_objectives`.
+- Não cria janela em dias úteis no `useRitualAvailability` (este rito não é cycle-date-driven; depende do status do ciclo, não de data).
+- Não mexe em outros cards do hub.
 
-## Fora do escopo
-
-- Mudanças em `usePermissions` ou criação de permission key dedicada (`rituals.weekly.run`). Pode ser feito numa onda futura se quisermos governar via templates v2; hoje o critério "líder de área" não está modelado como key.
-- Alterações no Pré-Weekly, MBR-pre, ou qualquer outro rito.
-- Mudanças em RLS — Weekly não tem tabela própria com escrita restrita a líder de área (curadoria roda no contexto da BU). Acesso é puramente UX/route guard.
+## Arquivos
+- **Criar**: `src/modules/okrs/hooks/useTeamOkrCreationWindow.ts`, `src/components/auth/TeamOkrCreationRoute.tsx`
+- **Editar**: `src/modules/okrs/hooks/index.ts`, `src/routes/okrs.routes.tsx`, `src/pages/Wizards.tsx`

@@ -11,6 +11,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { TeamOkrCreationRoute } from '@/components/auth/TeamOkrCreationRoute';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
 const OkrsPage = lazy(() => import('@/modules/okrs/pages/OkrsPage'));
@@ -84,7 +85,7 @@ export const okrRoutes = (
     <Route path="/okrs/executive/qbr-report" element={<OkrRoute><QbrExecutiveReportPage /></OkrRoute>} />
     
     {/* Creation */}
-    <Route path="/okrs/create" element={<OkrRoute><OkrCreationPage /></OkrRoute>} />
+    <Route path="/okrs/create" element={<OkrRoute><TeamOkrCreationRoute><OkrCreationPage /></TeamOkrCreationRoute></OkrRoute>} />
     <Route path="/okrs/objectives/:objectiveId/krs/create" element={<OkrRoute><TeamKrCreationPage /></OkrRoute>} />
     
     {/* Check-ins (non-ritual) */}

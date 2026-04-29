@@ -37,7 +37,7 @@ import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useIsAreaLeader } from '@/modules/okrs/hooks/useIsAreaLeader';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useActiveCycle } from '@/modules/okrs/hooks';
+import { useActiveCycle, useTeamOkrCreationWindow } from '@/modules/okrs/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { qbrKeys } from '@/lib/queryKeys/okrs';
@@ -312,6 +312,7 @@ export default function WizardsPage() {
   const { teams: allTeams } = useHierarchicalTeamList();
   const { qbrStatus, isLoading: qbrLoading } = useQbrStatus();
   const { isAreaLeader } = useIsAreaLeader();
+  const { isOpen: isTeamOkrCreationOpen, isLoading: creationWindowLoading } = useTeamOkrCreationWindow();
 
   // Determine user role hierarchy
   const userRoles = useMemo(() => {
@@ -355,8 +356,13 @@ export default function WizardsPage() {
     if (wizard.permissionKey && !has(wizard.permissionKey)) {
       if (!isWildcard) return false;
     }
+    // Janela do rito "Criação de OKRs do Time": exige quarter em planning,
+    // exceto para admins (isWildcard ignora a janela).
+    if (wizard.id === 'team-okr-creation' && !isWildcard && !isTeamOkrCreationOpen) {
+      return false;
+    }
     return true;
-  }, [userRoles, has, isWildcard]);
+  }, [userRoles, has, isWildcard, isTeamOkrCreationOpen]);
 
   // Filter sections based on user access
   const visibleSections = useMemo(() => {
@@ -397,7 +403,7 @@ export default function WizardsPage() {
     navigate(wizard.route);
   }, [leaderTeams, allTeams, isWildcard, navigate]);
 
-  const isLoading = permissionsLoading || qbrLoading;
+  const isLoading = permissionsLoading || qbrLoading || creationWindowLoading;
 
   return (
     <HubLayout>
