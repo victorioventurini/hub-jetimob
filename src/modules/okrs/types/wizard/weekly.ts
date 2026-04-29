@@ -6,6 +6,19 @@
  */
 
 import type { TeamCheckinDecision } from './shared';
+import type {
+  PreWeeklyBlock,
+  RitualBlock,
+  RitualPeopleSignalType,
+  RitualThemeActionType,
+} from './vocabulary';
+
+// Re-export para retrocompat de imports antigos.
+export type { RitualBlock, RitualPeopleSignalType, RitualThemeActionType };
+/** @deprecated Use `RitualBlock` from `./vocabulary`. */
+export type WeeklyThemeBlock = RitualBlock;
+/** @deprecated Use `RitualThemeActionType` from `./vocabulary`. */
+export type WeeklyThemeType = RitualThemeActionType;
 
 // ============================================================
 // PRÉ-WEEKLY (DESTILAÇÃO INDIVIDUAL DA SEMANA)
@@ -18,7 +31,7 @@ export type PreWeeklyStep = 'sources' | 'pauta' | 'pessoas' | 'summary';
  * Performance = números/KPIs/KRs do time. Projetos = entregas estruturais.
  * Pessoas é tratado em etapa dedicada (Step 3) — não aparece como categoria de tema.
  */
-export type PreWeeklyTopicCategory = 'performance' | 'projetos';
+export type PreWeeklyTopicCategory = PreWeeklyBlock;
 /**
  * @deprecated Removido da Pauta — todos os temas selecionados são, por definição, prioritários.
  * Mantido apenas para compatibilidade de leitura de drafts antigos.
@@ -38,7 +51,7 @@ export interface PreWeeklyTopic {
 export interface PreWeeklyPeopleSignal {
   id: string;
   /** Tipo de sinal estrutural */
-  type: 'celebracao' | 'risco' | 'mudanca' | 'feedback';
+  type: RitualPeopleSignalType;
   description: string;
 }
 
@@ -70,14 +83,8 @@ export type WeeklyStep =
   | 'people'
   | 'closing';
 
-/** Bloco temático curado pelo agente curador-orquestrador. */
-export type WeeklyThemeBlock = 'performance' | 'projetos' | 'pessoas';
-export type WeeklyThemeType =
-  | 'risco'
-  | 'oportunidade'
-  | 'decisao'
-  | 'celebracao'
-  | 'alerta';
+/** Bloco temático curado pelo agente curador-orquestrador.
+ *  Aliases `WeeklyThemeBlock` e `WeeklyThemeType` declarados no topo do arquivo. */
 
 export interface WeeklyTheme {
   id: string;
