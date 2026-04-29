@@ -25,7 +25,7 @@ export const WIZARD_TYPE_OPTIONS: { value: WizardPersona | 'all'; label: string 
   { value: 'team-checkin', label: 'Check-in do Time' },
   { value: 'collaborator', label: 'Check-in Individual' },
   { value: 'leader-prep', label: 'Pré-Check-in do Time' },
-  { value: 'clevel-checkin', label: 'Check-in Executivo' },
+  // 'clevel-checkin' removido do filtro — rito descontinuado (sessões históricas continuam renderizando).
   { value: 'qbr-pre', label: 'Pré-QBR' },
   { value: 'qbr-pre-clevel', label: 'Pré-QBR Executivo' },
   { value: 'qbr-meeting', label: 'QBR' },

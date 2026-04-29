@@ -26,7 +26,6 @@ export const RITUAL_LABELS: Record<WizardPersona, string> = {
   'collaborator': 'Check-in Individual',
   'leader-prep': 'Pré-Check-in do Time',
   'team-checkin': 'Check-in do Time',
-  'clevel-checkin': 'Check-in Executivo',
   'team-okr-creation': 'Criação de OKRs do Time',
   'team-kr-creation': 'Criação de KRs do Time',
   'pre-weekly': 'Pré-Weekly',
@@ -40,6 +39,7 @@ export const RITUAL_LABELS: Record<WizardPersona, string> = {
 
   // Históricos / descontinuados (back-compat de registros antigos)
   'managers-checkin': 'Check-in de Gestores (descontinuado)',
+  'clevel-checkin': 'Check-in Executivo (descontinuado)',
   'mbr-first': 'MBR (histórico)',
   'mbr-pre-first': 'Pré-MBR (histórico)',
 };

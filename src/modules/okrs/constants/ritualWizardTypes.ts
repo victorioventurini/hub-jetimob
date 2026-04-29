@@ -8,7 +8,7 @@ export const ALL_RITUAL_WIZARD_TYPES: WizardPersona[] = [
   'leader-prep',
   'team-checkin',
   // 'managers-checkin' removido — rito descontinuado, substituído pelo MBR.
-  'clevel-checkin',
+  // 'clevel-checkin' removido — rito descontinuado.
   'team-okr-creation',
   'team-kr-creation',
   // Onda 4 — semanais

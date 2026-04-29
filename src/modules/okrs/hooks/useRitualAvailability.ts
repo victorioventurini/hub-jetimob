@@ -137,12 +137,7 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
       closes: parseDate(c.end_date),
     }),
   },
-  'clevel-checkin': {
-    getWindow: (c) => ({
-      opens: parseDate(c.start_date),
-      closes: parseDate(c.end_date),
-    }),
-  },
+  // 'clevel-checkin' removido — rito descontinuado (sem janela = indisponível).
 
   // MBR / Pré-MBR — janela composta (MBR₁ sobre review_date_first_month + MBR₂ sobre review_date).
   // Retorna a janela ativa se `today` estiver dentro de alguma; caso contrário, a próxima futura.

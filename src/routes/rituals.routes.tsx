@@ -19,7 +19,7 @@ const WizardsPage = lazy(() => import('@/pages/Wizards'));
 const CollaboratorCheckinPage = lazy(() => import('@/modules/okrs/pages/CollaboratorCheckinPage'));
 const LeaderPrepPage = lazy(() => import('@/modules/okrs/pages/LeaderPrepPage'));
 const TeamCheckinPage = lazy(() => import('@/modules/okrs/pages/TeamCheckinPage'));
-const CLevelCheckinPage = lazy(() => import('@/modules/okrs/pages/CLevelCheckinPage'));
+// CLevelCheckinPage removido do roteamento — rito 'clevel-checkin' descontinuado.
 const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
 const MbrPrePage = lazy(() => import('@/modules/okrs/pages/MbrPrePage'));
 const QbrPrePage = lazy(() => import('@/modules/okrs/pages/QbrPrePage'));
@@ -80,7 +80,8 @@ export const ritualRoutes = (
     <Route path="/rituals/team-checkin" element={<RitualRoute><TeamCheckinPage /></RitualRoute>} />
     {/* managers-checkin: rito descontinuado — substituído pelo MBR. Redireciona para /rituals. */}
     <Route path="/rituals/managers-checkin" element={<Navigate to="/rituals" replace />} />
-    <Route path="/rituals/clevel-checkin" element={<RitualRoute><CLevelCheckinPage /></RitualRoute>} />
+    {/* clevel-checkin: rito descontinuado. Redireciona para /rituals. */}
+    <Route path="/rituals/clevel-checkin" element={<Navigate to="/rituals" replace />} />
     
     {/* Semanais — Onda 4 */}
     <Route path="/rituals/pre-weekly" element={<RitualRoute><PreWeeklyPage /></RitualRoute>} />
@@ -112,7 +113,8 @@ export const ritualRoutes = (
     <Route path="/okrs/team-checkin" element={<RedirectWithParams to="/rituals/team-checkin" />} />
     {/* managers-checkin: rito descontinuado — redireciona para hub de rituais. */}
     <Route path="/okrs/managers-checkin" element={<Navigate to="/rituals" replace />} />
-    <Route path="/okrs/clevel-checkin" element={<RedirectWithParams to="/rituals/clevel-checkin" />} />
+    {/* clevel-checkin: rito descontinuado — redireciona para hub de rituais. */}
+    <Route path="/okrs/clevel-checkin" element={<Navigate to="/rituals" replace />} />
     <Route path="/okrs/mbr" element={<RedirectWithParams to="/rituals/mbr" />} />
     <Route path="/okrs/mbr-pre" element={<RedirectWithParams to="/rituals/mbr-pre" />} />
     <Route path="/okrs/qbr-pre" element={<RedirectWithParams to="/rituals/qbr-pre" />} />

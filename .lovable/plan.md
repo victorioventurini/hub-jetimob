@@ -1,137 +1,82 @@
 ## Objetivo
 
-Gerar um único documento `Markdown` em `/mnt/documents/ritos-hub-jet.md` descrevendo **todos os 12 ritos ativos** do Hub da Jet, no maior nível de profundidade possível extraído das memórias canônicas, do SSOT de labels (`src/modules/okrs/constants/ritualLabels.ts`), das specs de wizards e da governança de ciclos. Exclui apenas os ritos de **criação** (`team-okr-creation`, `team-kr-creation`).
-
-Entrega como **artifact** (`<lov-artifact>`) para download/preview.
+Desativar o rito **Check-in Executivo** (`clevel-checkin`) e remover sua presença na UI, seguindo exatamente o padrão já adotado para o rito `managers-checkin` (descontinuado, substituído pelo MBR). Mantém-se compatibilidade retroativa para sessões históricas (`okr_wizard_sessions`) e ocorrências passadas (`ritual_occurrences`) — nada é apagado do banco.
 
 ---
 
-## Escopo dos 12 ritos
+## Princípios da remoção (espelhando `managers-checkin`)
 
-**Semanais — escopo time/individual:**
-1. Check-in Individual (`collaborator`)
-2. Pré-Check-in do Time (`leader-prep`)
-3. Check-in do Time (`team-checkin`)
-4. Check-in Executivo (`clevel-checkin`)
-
-**Semanais — destilação + BU:**
-5. Pré-Weekly (`pre-weekly`, v2)
-6. Weekly (`weekly`, v2)
-
-**Mensais:**
-7. Pré-MBR (`mbr-pre`, v3)
-8. MBR (`mbr`, v4)
-
-**Trimestrais — família QBR:**
-9. Pré-QBR (`qbr-pre`, v3)
-10. Pré-QBR Executivo (`qbr-pre-clevel`)
-11. QBR (`qbr-meeting`, v4)
-12. Pós-QBR (`qbr-post`, v4)
+1. **Não remover do enum/tipo `WizardPersona`** — sessões antigas precisam continuar legíveis.
+2. **Manter renderer de relatório** (`CLevelCheckinReport`) e label canônico (com sufixo "(descontinuado)") para histórico.
+3. **Remover todos os entry points de UI**: cards, hub de wizards, dashboard executivo, filtros do calendário/criação, opções de filtro do histórico.
+4. **Bloquear a rota** redirecionando `/rituals/clevel-checkin` (e alias `/okrs/clevel-checkin`) para `/rituals`.
+5. **Parar a materialização futura** no `sync-ritual-calendar-from-cycles` e na lista canônica `ALL_RITUAL_WIZARD_TYPES`.
+6. **Não deletar** a edge function `clevel-checkin-summary` nem a página `CLevelCheckinPage` neste momento — apenas deixá-las órfãs (rota desligada). Justificativa: minimizar superfície de mudança e permitir reativação rápida se decidido. A limpeza física pode ser feita em uma onda futura de housekeeping.
 
 ---
 
-## Estrutura do documento
+## Mudanças por arquivo
 
-```text
-# Ritos de Gestão — Hub da Jet
-  Versão, data, fonte, escopo, sumário
+### Frontend — entry points (remoção visual)
 
-## 1. Arquitetura de Cadência
-  - Filosofia (Pré→Rito; individual→coletivo; semanal→mensal→trimestral)
-  - Diagrama ASCII do fluxo completo
-  - Regra de substituição MBR↔QBR no M3 do quarter
-  - Materialização em `ritual_occurrences` e cálculo de janelas em dias úteis
-  - Acessibilidade off-cycle (quais ritos sobrevivem sem ciclo ativo)
+- `src/pages/Index.tsx`: remover import e renderização de `CLevelCheckinWizardCard` (linhas 19, 133+).
+- `src/modules/okrs/pages/ExecutiveDashboardPage.tsx`: remover import e o bloco que renderiza `<CLevelCheckinWizardCard ... />` (linhas 16, 85+). Ajustar grid se necessário para não deixar coluna vazia.
+- `src/pages/Wizards.tsx`: remover o item `{ id: 'clevel-checkin', ... }` do array de wizards do grupo "OKRs – Gestores e Executivos" (linhas 178–192).
 
-## 2. Conceitos transversais (aplicam-se a todos os ritos)
-  - Wizard framework v2/v3/v4 e versionamento de structure
-  - Rascunho (draft) único por autor+time, isolamento e re-hidratação
-  - CompletedRitualView read-only + addendums imutáveis
-  - Reabertura por BU Admin (backup pre_reopen_backup)
-  - InlineDecisionInput ubíquo (exceto closing/summary)
-  - Avaliações de participantes (1–5 + feedback) em addendums JSONB
-  - PreparationStatusCard (5 modos × 4 estados)
-  - HierarchyContextSwitcher para ritos team-scope
-  - Decisões: scope self/team/area/all em /decisions
+### Frontend — catálogos e filtros
 
-## 3. Calendário e janelas (tabela única consolidada)
-  Tabela: persona | frequência | gerado em | janela em dias úteis | gates | bloqueios
+- `src/modules/okrs/constants/ritualWizardTypes.ts`: remover `'clevel-checkin'` do array `ALL_RITUAL_WIZARD_TYPES` (deixa de aparecer em filtros do calendário, em criação manual de ocorrências e na geração de cadências). Adicionar comentário no estilo do `managers-checkin`: `// 'clevel-checkin' removido — rito descontinuado.`.
+- `src/modules/okrs/pages/ritual-history/constants.ts`: remover a entrada `{ value: 'clevel-checkin', label: 'Check-in Executivo' }` do filtro do histórico (linha 28). O renderer continua funcionando para sessões já existentes via `RITUAL_LABELS`.
+- `src/modules/okrs/constants/ritualLabels.ts`: mover `'clevel-checkin'` da seção "Ativos" para "Históricos / descontinuados" e mudar o label para `'Check-in Executivo (descontinuado)'`. Manter a entrada para back-compat de sessões históricas.
 
-## 4. Catálogo dos 12 ritos
-  Para cada rito, uma seção com este template fixo:
+### Frontend — rotas
 
-  ### N. <Nome canônico> (`slug`, vN)
-  - **Resumo executivo** (1 parágrafo)
-  - **Quem participa** (persona, permissões, RBAC)
-  - **Quando ocorre** (frequência, janela em dias úteis, materialização em occurrences)
-  - **Steps detalhados** (lista numerada com title/subtitle do SSOT + descrição
-    do conteúdo de cada step extraído do código do wizard)
-  - **Gates e bloqueios**
-  - **Saída e snapshots** (drafts, snapshots imutáveis, addendums)
-  - **Integração com outros ritos** (alimenta / é alimentado por)
-  - **Particularidades técnicas** (rota, agentes IA, edge functions, hooks
-    chave, tabelas: okr_wizard_sessions, ritual_occurrences, ritual_cadences)
-  - **Antipadrões** (o que NÃO é o rito)
+- `src/routes/rituals.routes.tsx`:
+  - Substituir `<Route path="/rituals/clevel-checkin" element={<RitualRoute><CLevelCheckinPage /></RitualRoute>} />` por `<Route path="/rituals/clevel-checkin" element={<Navigate to="/rituals" replace />} />` (mesmo padrão do `managers-checkin`).
+  - Substituir o alias legado `/okrs/clevel-checkin` por `<Navigate to="/rituals" replace />`.
+  - Remover o import de `CLevelCheckinPage` se não restar uso.
+  - Adicionar comentário: `// clevel-checkin: rito descontinuado.`
 
-## 5. Apêndices
-  A. Tabela de personas (slug → label canônico)
-  B. Mapa de substituição MBR↔QBR no quarter
-  C. Checklist do facilitador por rito
-  D. Glossário (BU, KR, KPI, RAG, addendum, snapshot, occurrence, cadence)
-  E. Referências cruzadas (paths de código + memórias canônicas consultadas)
-```
+### Frontend — disponibilidade
+
+- `src/modules/okrs/hooks/useRitualAvailability.ts`: remover o bloco `'clevel-checkin': { ... }` do `WINDOW_DEFS` (linhas 140–146). Sem entrada, o hook trata como indisponível por padrão.
+
+### Frontend — wizard card (componente fica órfão)
+
+- `src/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard.tsx`: **manter o arquivo** mas sem mais imports apontando pra ele (verificar com `rg`). Não removemos os steps/renderer para preservar a página `CLevelCheckinPage` caso seja acessada via URL antiga (que agora redireciona — então de fato fica inerte). Opcional: remover o export do barrel `clevel-checkin/index.ts`. Decisão recomendada: **manter os arquivos como código morto** nesta passada, alinhado com o tratamento histórico do `managers-checkin`.
+- `src/modules/okrs/components/wizards/index.ts`: remover o re-export `CLevelCheckinWizardCard` se existir, para evitar consumo acidental.
+
+### Backend — parar materialização de novas ocorrências
+
+- `supabase/functions/sync-ritual-calendar-from-cycles/index.ts`: remover `'clevel-checkin'` da lista de personas materializadas (linha 28) e o bloco que cria a cadência semanal (linha ~134). Sem mudança de schema — apenas para a função de sincronização.
+
+### Itens **não alterados** (intencional)
+
+- `supabase/functions/clevel-checkin-summary/*` — mantida (sem caller ativo, mas sem custo).
+- `src/modules/okrs/components/ritual-report/SnapshotReportView.tsx` — mantém `'clevel-checkin': CLevelCheckinReport` para renderizar relatórios de sessões históricas.
+- `src/modules/vic/types/ask-to-vic.ts`, `useAskToVic.ts` — referências de tipo permanecem (alinhado com `managers-checkin`).
+- `src/modules/okrs/hooks/useWizardAI.ts` (linha 128) — sem efeito após rota desligada; manter para coerência tipológica.
+- `src/modules/okrs/types/wizard/*` (`core.ts`, `wizard-configs.ts`, `vic-context.ts`) — manter persona no union type.
+- Migrations existentes — não alteradas. Nenhuma migration nova.
+- Banco de dados — nada deletado: `okr_wizard_sessions` e `ritual_occurrences` históricos preservados.
 
 ---
 
-## Fontes de verdade que serão consolidadas
+## QA pós-implementação
 
-**Memórias acessíveis (já lidas):**
-- `mem://features/rituals/ritual-addendum-standard`
-- `mem://features/rituals/ritual-reopen-mechanism`
-- `mem://features/rituals/participant-evaluations-standard`
-- `mem://features/rituals/off-cycle-accessibility-standard`
-- `mem://features/rituals/collaborator-checkin-pending-items-step`
-- `mem://features/rituals/scorecard-evaluation-cycle-standard`
-- `mem://features/rituals/cross-team-scorecard-visibility-logic`
-- `mem://ui/rituals/hierarchy-context-switcher-standard`
-- `mem://features/decisions/scope-resolution-standard`
-- `.lovable/memory/features/rituals/*.md` (4 arquivos)
-- `.lovable/memory/features/okrs/{mbr-*,ritual-*,management-*}.md`
-
-**Código fonte:**
-- `src/modules/okrs/constants/ritualLabels.ts` (SSOT de labels)
-- `src/modules/okrs/constants/ritualWizardTypes.ts`
-- `src/modules/okrs/types/wizard/*.ts` (core, weekly, etc.)
-- `src/modules/okrs/components/wizards/{collaborator,leader-prep,team-checkin,clevel-checkin,pre-weekly,weekly,mbr-pre,mbr,qbr-pre,qbr-pre-clevel,qbr-meeting,qbr-post}/*.tsx`
-- `src/modules/okrs/pages/ritual-calendar/constants.ts`
-
-**Documentos canônicos:**
-- `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md`
-- `docs/canonical/AI_AGENTS_PHILOSOPHY.md` (referência)
-
----
-
-## Procedimento técnico de geração
-
-1. **Leitura ampla**: para cada um dos 12 ritos, abrir o `index.ts` da pasta do wizard e os 2–3 steps mais representativos para extrair os campos do draft, gates e textos de UI canônicos.
-2. **Extração estruturada**: montar dicionário `persona → { steps[], gates[], drafts, integrações }` em memória.
-3. **Renderização Markdown** via script Node/Bash em `/tmp/`, escrevendo direto em `/mnt/documents/ritos-hub-jet.md`.
-4. **QA**: ler de volta o arquivo gerado, validar (a) presença das 12 seções, (b) tabela de calendário com 12 linhas, (c) sumário com âncoras, (d) ausência de ritos de criação (`team-okr-creation`, `team-kr-creation`).
-5. **Entrega**: emitir `<lov-artifact path="ritos-hub-jet.md" mime_type="text/markdown">`.
+1. **Hub `/rituals`** (`src/pages/Wizards.tsx`): card "Check-in Executivo" não aparece mais; demais ritos do grupo "Gestores e Executivos" continuam.
+2. **Home `/`** (`src/pages/Index.tsx`): card sumiu da home executiva.
+3. **`ExecutiveDashboardPage`**: layout sem buracos.
+4. **Calendário de Ritos** (`/rituals/calendar`): persona `clevel-checkin` ausente do filtro e da criação manual; ocorrências passadas continuam visíveis (banco preservado).
+5. **Histórico** (`/rituals/history`): filtro não lista mais "Check-in Executivo" como opção, mas sessões antigas dessa persona continuam abrindo o renderer correto com label "(descontinuado)".
+6. **Rotas**: `/rituals/clevel-checkin` e `/okrs/clevel-checkin` redirecionam para `/rituals`.
+7. **Sincronização de cadências** (`/settings/rituals` após próximo run do sync): cadência `clevel-checkin` deixa de ser recriada para novos ciclos.
+8. **Build/Test**: `useRitualAvailability` test, `WizardCards.test.tsx`, `SnapshotReportView.test.tsx`, `structureVersions.test.ts` continuam passando (renderer e tipos preservados; testes não exigem entrada de menu).
 
 ---
 
 ## Notas de escopo
 
-- **NÃO inclui** `team-okr-creation` nem `team-kr-creation` (criação de OKRs/KRs).
-- **Inclui** os históricos `mbr-first` e `mbr-pre-first` apenas em nota de rodapé (back-compat), não como ritos do catálogo.
-- O documento é descritivo (não é manual operacional puro nem spec técnica de implementação) — segue o nível "Completo" pedido: tudo que existe nas memórias canônicas + SSOT de código.
-- Tamanho estimado: 40–60 KB de Markdown.
-
----
-
-## Detalhes técnicos relevantes
-
-- Localização final: `/mnt/documents/ritos-hub-jet.md`.
-- Sem dependências externas; geração via `bash`/`node` com heredoc.
-- Sem alterações no codebase do projeto.
+- **Reversível**: como o componente, a página e o renderer permanecem no repo, reativar o rito significa restaurar (1) a rota real, (2) o card no hub/home/dashboard, (3) a entrada em `ALL_RITUAL_WIZARD_TYPES`, (4) a janela em `useRitualAvailability` e (5) a entry no `sync`.
+- **Sem migration**: não há mudança de schema, enums (a coluna `wizard_type` é `text`), nem RLS.
+- **Documento `ritos-hub-jet.md`** (gerado anteriormente em `/mnt/documents/`): não será atualizado nesta passada — pode ser regenerado depois marcando o rito como descontinuado.
