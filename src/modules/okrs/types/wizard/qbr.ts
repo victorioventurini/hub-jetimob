@@ -212,6 +212,38 @@ export interface QbrMeetingGovernanceChecklist {
   feedbackLinkSent: boolean;
 }
 
+/**
+ * Compromisso transversal entre times (cross-team commitment).
+ * Canônico para QBR Meeting e QBR Post; `dependencyId` só é populado no Post
+ * quando o compromisso é promovido a `team_dependencies` no banco.
+ */
+export interface QbrCrossCommitment {
+  fromTeamId: string;
+  toTeamId: string;
+  description: string;
+  deadline: string;
+  linkedOkrId?: string;
+  responsibleUserId?: string;
+  responsibleUserName?: string;
+  /** Populado no Post ao formalizar o compromisso como dependência. */
+  dependencyId?: string;
+}
+
+/**
+ * Ajuste estruturado de KR aplicado quando um OKR é aprovado "com mudanças"
+ * no QBR Meeting/Post. Canônico — usado também no shape inline de
+ * `QbrMeetingSnapshot.approvals[].changes` (forma de array).
+ */
+export interface QbrKrAdjustment {
+  krIndex: number;
+  /** Marcador opcional usado no Post para distinguir ajustes vazios. */
+  hasAdjustment?: boolean;
+  newTitle?: string;
+  newTarget?: string;
+  newOwnerId?: string;
+  newOwnerName?: string;
+}
+
 /** Snapshot do wizard QBR Meeting */
 export interface QbrMeetingSnapshot {
   cycleId: string;
@@ -220,27 +252,11 @@ export interface QbrMeetingSnapshot {
     teamId: string;
     sessionId: string;
     status: QbrApprovalStatus;
-    changes?:
-      | Partial<TeamOkrCreationWizardState>
-      | Array<{
-          krIndex: number;
-          newTitle?: string;
-          newTarget?: string;
-          newOwnerId?: string;
-          newOwnerName?: string;
-        }>;
+    changes?: Partial<TeamOkrCreationWizardState> | QbrKrAdjustment[];
     discardReason?: string;
   }>;
   decisions: TeamCheckinDecision[];
-  crossCommitments: Array<{
-    fromTeamId: string;
-    toTeamId: string;
-    description: string;
-    deadline: string;
-    linkedOkrId?: string;
-    responsibleUserId?: string;
-    responsibleUserName?: string;
-  }>;
+  crossCommitments: QbrCrossCommitment[];
   governanceChecklist: QbrMeetingGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   ritualFeedbackSentAt?: string;
@@ -255,7 +271,7 @@ export interface QbrMeetingDraftData {
   approvals: QbrMeetingSnapshot['approvals'];
   currentTeamIndex: number;
   decisions: TeamCheckinDecision[];
-  crossCommitments: QbrMeetingSnapshot['crossCommitments'];
+  crossCommitments: QbrCrossCommitment[];
   governanceChecklist: QbrMeetingGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   /** IDs de KRs org marcadas como "gap intencional" no mapa de cobertura */
@@ -276,15 +292,11 @@ export interface QbrPostGovernanceChecklist {
   nextCycleOkrsActive: boolean;
 }
 
-/** KR adjustment for approved_with_changes OKRs */
-export interface QbrPostKrAdjustment {
-  krIndex: number;
-  hasAdjustment: boolean;
-  newTitle?: string;
-  newTarget?: string;
-  newOwnerId?: string;
-  newOwnerName?: string;
-}
+/**
+ * @deprecated Use `QbrKrAdjustment` (canônico). Alias mantido para
+ * retrocompat de imports antigos.
+ */
+export type QbrPostKrAdjustment = QbrKrAdjustment;
 
 /** Snapshot do wizard pós-QBR */
 export interface QbrPostSnapshot {
@@ -294,16 +306,7 @@ export interface QbrPostSnapshot {
   /** Ciclo de destino para promoção dos OKRs */
   destinationCycleId?: string;
   decisions: TeamCheckinDecision[];
-  crossCommitments: Array<{
-    fromTeamId: string;
-    toTeamId: string;
-    description: string;
-    deadline: string;
-    dependencyId: string;
-    responsibleUserId?: string;
-    responsibleUserName?: string;
-    linkedOkrId?: string;
-  }>;
+  crossCommitments: QbrCrossCommitment[];
   followUpCadence: {
     nextMbrDate?: string;
     firstCheckinDate?: string;
@@ -324,7 +327,7 @@ export interface QbrPostDraftData {
   /** Ciclo de destino para promoção */
   destinationCycleId?: string;
   decisions: TeamCheckinDecision[];
-  crossCommitments: QbrPostSnapshot['crossCommitments'];
+  crossCommitments: QbrCrossCommitment[];
   followUpCadence: QbrPostSnapshot['followUpCadence'];
   executiveMinutes: string;
   /** Carta de contexto do CEO */
@@ -333,5 +336,5 @@ export interface QbrPostDraftData {
   /** Notas de ajuste por sessionId — para OKRs aprovados "com ajustes" (legacy) */
   adjustmentNotes?: Record<string, string>;
   /** Ajustes estruturados por KR, indexados por sessionId */
-  krAdjustments?: Record<string, QbrPostKrAdjustment[]>;
+  krAdjustments?: Record<string, QbrKrAdjustment[]>;
 }
