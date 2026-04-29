@@ -22,6 +22,7 @@ import {
   useCarryOverDecisions,
   useMbrPreSubmissions,
 } from '@/modules/okrs/hooks';
+import { usePreviousMbrPendingItems } from '@/modules/okrs/hooks/usePreviousMbrPendingItems';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { calculateKrState } from '@/modules/okrs/hooks';
 
@@ -583,7 +584,7 @@ export default function MbrPage() {
   // Load previous MBR pending items on first load
   // Carry-over de itens pendentes do MBR anterior — re-derivado via hook
   // (substituiu o campo previousMbrPendingItems no draft).
-  const { data: previousMbrPendingItems = [] } = usePreviousMbrPendingItems(draft.session?.id ?? null);
+  const { data: previousMbrPendingItems = [] } = usePreviousMbrPendingItems(sessionId ?? null);
 
   // Navigation
   const completedSteps = useMemo(() => {
@@ -763,8 +764,8 @@ export default function MbrPage() {
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             previousMbrPendingItems={
-              draft.data.previousMbrPendingItems.length > 0
-                ? draft.data.previousMbrPendingItems
+              previousMbrPendingItems.length > 0
+                ? previousMbrPendingItems
                 : mbrCarryOver
             }
             mbrPreSurfacedItems={mbrPreSurfacedItems}
