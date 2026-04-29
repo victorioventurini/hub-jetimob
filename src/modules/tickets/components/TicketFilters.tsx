@@ -54,67 +54,65 @@ export function TicketFilters({
   const isStatusAll = status === "all";
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-        {/* Search */}
-        <UrlSearchInput
-          value={search}
-          onChange={onSearchChange}
-          placeholder="Buscar por título..."
-          className="w-full sm:flex-1 sm:min-w-[200px]"
-          debounceMs={300}
-        />
+    <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+      {/* Search */}
+      <UrlSearchInput
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Buscar por título..."
+        className="w-full sm:flex-1 sm:min-w-[200px]"
+        debounceMs={300}
+      />
 
-        {/* Type - using canonical component */}
-        <TicketTypeSelect
-          value={type}
-          onValueChange={onTypeChange}
-          includeAll
-          allLabel="Todos os tipos"
-          triggerClassName="w-full sm:w-[140px]"
-        />
+      {/* Type - using canonical component */}
+      <TicketTypeSelect
+        value={type}
+        onValueChange={onTypeChange}
+        includeAll
+        allLabel="Todos os tipos"
+        triggerClassName="w-full sm:w-[140px]"
+      />
 
-        {/* Status - using canonical component */}
-        <TicketStatusSelect
-          value={status}
-          onValueChange={onStatusChange}
-          includeAll
-          allLabel="Todos os status"
-          triggerClassName="w-full sm:w-[160px]"
-        />
+      {/* Status - using canonical component */}
+      <TicketStatusSelect
+        value={status}
+        onValueChange={onStatusChange}
+        includeAll
+        allLabel="Todos os status"
+        triggerClassName="w-full sm:w-[160px]"
+      />
 
-        {/* Category - using canonical component */}
-        <TicketCategorySelect
-          value={categoryId}
-          onValueChange={onCategoryChange}
+      {/* Category - using canonical component */}
+      <TicketCategorySelect
+        value={categoryId}
+        onValueChange={onCategoryChange}
+        includeAll
+        allLabel="Todas categorias"
+        triggerClassName="w-full sm:w-[180px]"
+      />
+
+      {/* Responsible - internal or external */}
+      <TicketResponsibleSelect
+        value={responsibleId}
+        onValueChange={onResponsibleChange}
+        includeAll
+        allLabel="Todos responsáveis"
+        triggerClassName="w-full sm:w-[180px]"
+      />
+
+      {/* Partner (only if external type selected) */}
+      {type === "external" && (
+        <PartnerCompanySelect
+          value={partnerId}
+          onValueChange={onPartnerChange}
           includeAll
-          allLabel="Todas categorias"
+          allLabel="Todos parceiros"
           triggerClassName="w-full sm:w-[180px]"
         />
+      )}
 
-        {/* Responsible - internal or external */}
-        <TicketResponsibleSelect
-          value={responsibleId}
-          onValueChange={onResponsibleChange}
-          includeAll
-          allLabel="Todos responsáveis"
-          triggerClassName="w-full sm:w-[180px]"
-        />
-
-        {/* Partner (only if external type selected) */}
-        {type === "external" && (
-          <PartnerCompanySelect
-            value={partnerId}
-            onValueChange={onPartnerChange}
-            includeAll
-            allLabel="Todos parceiros"
-            triggerClassName="w-full sm:w-[180px]"
-          />
-        )}
-      </div>
-
-      {/* Toggle: incluir concluídos e descartados (default OFF) */}
-      <div className="flex items-center gap-2">
+      {/* Toggle inline: incluir concluídos e descartados */}
+      <div className="flex items-center gap-2 sm:ml-auto">
         <Switch
           id="include-closed-toggle"
           checked={includeClosed}
@@ -123,7 +121,7 @@ export function TicketFilters({
         />
         <Label
           htmlFor="include-closed-toggle"
-          className={`text-sm cursor-pointer ${!isStatusAll ? "text-muted-foreground" : ""}`}
+          className={`text-sm cursor-pointer whitespace-nowrap ${!isStatusAll ? "text-muted-foreground" : ""}`}
         >
           Incluir concluídos e descartados
         </Label>
