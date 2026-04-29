@@ -101,3 +101,23 @@ Centraliza 5 vocabulários e 1 mapeamento:
 
 ### Memory registrada
 - `mem://standards/wizard-vocabulary-canonical` — SSOT do vocabulário.
+
+---
+
+## Status final — Onda 3 (Fase 3 — unificação de tipos canônicos) executada
+
+### Concluído
+
+1. **`shared.ts`**: adicionados `KrFinalStateSnapshot` (extraído de `QbrPreSnapshot.krFinalStates`) e re-export `KpiRitualSnapshot` como alias canônico de `MbrKpiSnapshot`.
+2. **`qbr.ts`**:
+   - `QbrCrossCommitment` canônico (com `dependencyId?` opcional) — substitui shapes inline em `QbrMeetingSnapshot/Draft` e `QbrPostSnapshot/Draft`.
+   - `QbrKrAdjustment` canônico (com `hasAdjustment?` opcional) — usado em `QbrMeetingSnapshot.approvals[].changes` e `QbrPostDraftData.krAdjustments`.
+   - `QbrPostKrAdjustment` mantido como `@deprecated` alias de `QbrKrAdjustment`.
+   - `QbrPreSnapshot.krFinalStates` agora tipado como `KrFinalStateSnapshot[]`.
+3. **`WeeklyPriorityItem`**: já era flat — sem mudanças necessárias.
+4. **Barrel** (`index.ts`): tipos novos disponíveis automaticamente via `export *`.
+
+### Validação
+- Suite OKRs: 1765/1766 (única falha pré-existente em `index.test.ts > StatusDistributionBar`, não relacionada).
+- Suíte global: mesmas 31 falhas pré-existentes (queryKeys/kpis, useCanChangeKpiScope, ProjectDetailPage) — nenhuma introduzida por esta onda.
+- Zero consumidor precisou ser tocado (aliases backward-compat preservam imports antigos).

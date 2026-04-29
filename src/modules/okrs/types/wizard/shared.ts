@@ -111,3 +111,30 @@ export interface RitualImprovementFeedback {
   status: 'pending' | 'implement' | 'evaluated' | 'discarded';
   createdAt: string;
 }
+
+// ============================================================
+// CANONICAL KR / KPI SNAPSHOTS (Onda 3 — Fase 3)
+// ============================================================
+
+/**
+ * Snapshot do estado final de um KR ao fechar um ciclo (usado por QBR Pre).
+ * Extraído do shape inline para permitir reuso entre ritos sem duplicação.
+ */
+export interface KrFinalStateSnapshot {
+  krId: string;
+  krTitle: string;
+  objectiveId: string;
+  objectiveTitle: string;
+  /** KrState from useKrStateInsights */
+  state: string;
+  finalProgress: number;
+  paceStatus: string;
+}
+
+/**
+ * Alias canônico para snapshots de KPI usados em qualquer rito.
+ * Re-exportado de `./mbr` (definição original) para evitar import cíclico.
+ * Use `KpiRitualSnapshot` em código novo; `MbrKpiSnapshot` é mantido como
+ * legado para retrocompat de imports antigos e snapshots históricos.
+ */
+export type { MbrKpiSnapshot as KpiRitualSnapshot } from './mbr';
