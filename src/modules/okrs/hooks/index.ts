@@ -87,6 +87,10 @@ export {
 // Active cycle (status-based)
 export { useActiveCycle, type CycleWithStatus } from './useActiveCycle';
 export { useCycleActions } from './useCycleActions';
+export {
+  useTeamOkrCreationWindow,
+  type TeamOkrCreationWindow,
+} from './useTeamOkrCreationWindow';
 
 // =========================
 // MUTATIONS
