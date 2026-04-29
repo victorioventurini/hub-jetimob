@@ -1,82 +1,117 @@
 ## Objetivo
 
-Desativar o rito **Check-in Executivo** (`clevel-checkin`) e remover sua presença na UI, seguindo exatamente o padrão já adotado para o rito `managers-checkin` (descontinuado, substituído pelo MBR). Mantém-se compatibilidade retroativa para sessões históricas (`okr_wizard_sessions`) e ocorrências passadas (`ritual_occurrences`) — nada é apagado do banco.
+Produzir um **único relatório Markdown** (`/mnt/documents/auditoria-campos-ritos.md`) auditando todos os campos dos 11 ritos do Hub (Cadeia Semanal, Mensal, Trimestral) à luz dos 4 critérios de remoção e das 2 dimensões de coerência (mesmos campos atravessam a cadeia / vocabulário unificado). O relatório é **somente leitura**: nenhum código, banco ou configuração será modificado.
+
+Saída entregue como `<lov-artifact>` para download.
 
 ---
 
-## Princípios da remoção (espelhando `managers-checkin`)
+## Escopo (11 ritos)
 
-1. **Não remover do enum/tipo `WizardPersona`** — sessões antigas precisam continuar legíveis.
-2. **Manter renderer de relatório** (`CLevelCheckinReport`) e label canônico (com sufixo "(descontinuado)") para histórico.
-3. **Remover todos os entry points de UI**: cards, hub de wizards, dashboard executivo, filtros do calendário/criação, opções de filtro do histórico.
-4. **Bloquear a rota** redirecionando `/rituals/clevel-checkin` (e alias `/okrs/clevel-checkin`) para `/rituals`.
-5. **Parar a materialização futura** no `sync-ritual-calendar-from-cycles` e na lista canônica `ALL_RITUAL_WIZARD_TYPES`.
-6. **Não deletar** a edge function `clevel-checkin-summary` nem a página `CLevelCheckinPage` neste momento — apenas deixá-las órfãs (rota desligada). Justificativa: minimizar superfície de mudança e permitir reativação rápida se decidido. A limpeza física pode ser feita em uma onda futura de housekeeping.
+**Cadeia 1 — Semanal (5):** Check-in Individual (`collaborator`), Pré-Check-in do Time (`leader-prep`), Check-in do Time (`team-checkin`), Pré-Weekly (`pre-weekly`), Weekly (`weekly`).
 
----
+**Cadeia 2 — Mensal (2):** Pré-MBR (`mbr-pre`), MBR (`mbr`).
 
-## Mudanças por arquivo
+**Cadeia 3 — Trimestral (4):** Pré-QBR (`qbr-pre`), Pré-QBR Executivo (`qbr-pre-clevel`), QBR (`qbr-meeting`), Pós-QBR (`qbr-post`).
 
-### Frontend — entry points (remoção visual)
-
-- `src/pages/Index.tsx`: remover import e renderização de `CLevelCheckinWizardCard` (linhas 19, 133+).
-- `src/modules/okrs/pages/ExecutiveDashboardPage.tsx`: remover import e o bloco que renderiza `<CLevelCheckinWizardCard ... />` (linhas 16, 85+). Ajustar grid se necessário para não deixar coluna vazia.
-- `src/pages/Wizards.tsx`: remover o item `{ id: 'clevel-checkin', ... }` do array de wizards do grupo "OKRs – Gestores e Executivos" (linhas 178–192).
-
-### Frontend — catálogos e filtros
-
-- `src/modules/okrs/constants/ritualWizardTypes.ts`: remover `'clevel-checkin'` do array `ALL_RITUAL_WIZARD_TYPES` (deixa de aparecer em filtros do calendário, em criação manual de ocorrências e na geração de cadências). Adicionar comentário no estilo do `managers-checkin`: `// 'clevel-checkin' removido — rito descontinuado.`.
-- `src/modules/okrs/pages/ritual-history/constants.ts`: remover a entrada `{ value: 'clevel-checkin', label: 'Check-in Executivo' }` do filtro do histórico (linha 28). O renderer continua funcionando para sessões já existentes via `RITUAL_LABELS`.
-- `src/modules/okrs/constants/ritualLabels.ts`: mover `'clevel-checkin'` da seção "Ativos" para "Históricos / descontinuados" e mudar o label para `'Check-in Executivo (descontinuado)'`. Manter a entrada para back-compat de sessões históricas.
-
-### Frontend — rotas
-
-- `src/routes/rituals.routes.tsx`:
-  - Substituir `<Route path="/rituals/clevel-checkin" element={<RitualRoute><CLevelCheckinPage /></RitualRoute>} />` por `<Route path="/rituals/clevel-checkin" element={<Navigate to="/rituals" replace />} />` (mesmo padrão do `managers-checkin`).
-  - Substituir o alias legado `/okrs/clevel-checkin` por `<Navigate to="/rituals" replace />`.
-  - Remover o import de `CLevelCheckinPage` se não restar uso.
-  - Adicionar comentário: `// clevel-checkin: rito descontinuado.`
-
-### Frontend — disponibilidade
-
-- `src/modules/okrs/hooks/useRitualAvailability.ts`: remover o bloco `'clevel-checkin': { ... }` do `WINDOW_DEFS` (linhas 140–146). Sem entrada, o hook trata como indisponível por padrão.
-
-### Frontend — wizard card (componente fica órfão)
-
-- `src/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard.tsx`: **manter o arquivo** mas sem mais imports apontando pra ele (verificar com `rg`). Não removemos os steps/renderer para preservar a página `CLevelCheckinPage` caso seja acessada via URL antiga (que agora redireciona — então de fato fica inerte). Opcional: remover o export do barrel `clevel-checkin/index.ts`. Decisão recomendada: **manter os arquivos como código morto** nesta passada, alinhado com o tratamento histórico do `managers-checkin`.
-- `src/modules/okrs/components/wizards/index.ts`: remover o re-export `CLevelCheckinWizardCard` se existir, para evitar consumo acidental.
-
-### Backend — parar materialização de novas ocorrências
-
-- `supabase/functions/sync-ritual-calendar-from-cycles/index.ts`: remover `'clevel-checkin'` da lista de personas materializadas (linha 28) e o bloco que cria a cadência semanal (linha ~134). Sem mudança de schema — apenas para a função de sincronização.
-
-### Itens **não alterados** (intencional)
-
-- `supabase/functions/clevel-checkin-summary/*` — mantida (sem caller ativo, mas sem custo).
-- `src/modules/okrs/components/ritual-report/SnapshotReportView.tsx` — mantém `'clevel-checkin': CLevelCheckinReport` para renderizar relatórios de sessões históricas.
-- `src/modules/vic/types/ask-to-vic.ts`, `useAskToVic.ts` — referências de tipo permanecem (alinhado com `managers-checkin`).
-- `src/modules/okrs/hooks/useWizardAI.ts` (linha 128) — sem efeito após rota desligada; manter para coerência tipológica.
-- `src/modules/okrs/types/wizard/*` (`core.ts`, `wizard-configs.ts`, `vic-context.ts`) — manter persona no union type.
-- Migrations existentes — não alteradas. Nenhuma migration nova.
-- Banco de dados — nada deletado: `okr_wizard_sessions` e `ritual_occurrences` históricos preservados.
+Excluídos: `team-okr-creation`, `team-kr-creation` (criação, fora do escopo da cadeia de gestão) e `clevel-checkin` (descontinuado).
 
 ---
 
-## QA pós-implementação
+## Procedimento técnico de extração
 
-1. **Hub `/rituals`** (`src/pages/Wizards.tsx`): card "Check-in Executivo" não aparece mais; demais ritos do grupo "Gestores e Executivos" continuam.
-2. **Home `/`** (`src/pages/Index.tsx`): card sumiu da home executiva.
-3. **`ExecutiveDashboardPage`**: layout sem buracos.
-4. **Calendário de Ritos** (`/rituals/calendar`): persona `clevel-checkin` ausente do filtro e da criação manual; ocorrências passadas continuam visíveis (banco preservado).
-5. **Histórico** (`/rituals/history`): filtro não lista mais "Check-in Executivo" como opção, mas sessões antigas dessa persona continuam abrindo o renderer correto com label "(descontinuado)".
-6. **Rotas**: `/rituals/clevel-checkin` e `/okrs/clevel-checkin` redirecionam para `/rituals`.
-7. **Sincronização de cadências** (`/settings/rituals` após próximo run do sync): cadência `clevel-checkin` deixa de ser recriada para novos ciclos.
-8. **Build/Test**: `useRitualAvailability` test, `WizardCards.test.tsx`, `SnapshotReportView.test.tsx`, `structureVersions.test.ts` continuam passando (renderer e tipos preservados; testes não exigem entrada de menu).
+Para cada rito, três fontes vão ser cruzadas para listar todos os campos:
+
+1. **Tipos TypeScript do draft/state** — `src/modules/okrs/types/wizard/{collaborator,leader-prep,team-checkin,weekly,mbr,qbr,...}.ts`. Aqui estão as interfaces que definem o shape persistido em `okr_wizard_sessions.payload`/`structure`.
+2. **Steps do wizard** — `src/modules/okrs/components/wizards/<rito>/<Step>.tsx`. Cada step revela inputs reais (campos efetivamente preenchidos pelo usuário), enums de UI e categorias.
+3. **Edge functions de sumarização** — `supabase/functions/{collaborator-checkin-summary,team-checkin-summary,weekly-curate-opening,mbr-summary,qbr-pre-summary,qbr-meeting-summary,qbr-post-summary,qbr-clevel-learnings-summary,qbr-executive-report}/index.ts`. Aqui se confirma quais campos são realmente **lidos** (consumidos a jusante). Campo presente no payload mas ausente em qualquer summary/report é forte candidato ao Critério 1.
+
+**Sinais de consumo cross-rito** (para Critérios 1 e 3 + Dimensão A):
+- `addendums` em `ritual_occurrences` / `okr_wizard_sessions`.
+- `okr_decisions` (decisões salvas via `InlineDecisionInput`).
+- Renderers em `src/modules/okrs/components/ritual-report/renderers/*Report.tsx` (mostram quais campos viram visualização permanente no histórico).
+- Hooks que carregam o rito anterior dentro do rito seguinte (`useLastCompletedSession`, `usePreWeeklyData`, `useMbrPreData`, `useQbrPreData`, etc.) — o que é importado define o que **atravessa** a cadeia.
+
+**Sinais de vocabulário** (Dimensão C):
+- Listagem de todos os enums/uniões (`type Bloco = 'performance' | 'projetos' | 'pessoas'`, `type SinalPessoa = ...`) por rito.
+- Cross-comparação dos rótulos exibidos (importados de `ritualLabels.ts` e dos próprios steps).
+
+---
+
+## Estrutura do relatório (`/mnt/documents/auditoria-campos-ritos.md`)
+
+```text
+# Auditoria de campos dos ritos
+  Versão, data, escopo (11 ritos), método
+
+## 1. Sumário executivo
+  - Total de campos analisados
+  - Total de candidatos à remoção (por critério 1/2/3/4)
+  - Total de divergências de vocabulário
+  - Total de divergências estruturais (Pré → principal)
+  - Top 5 redundâncias críticas
+
+## 2. Auditoria por rito (11 subseções)
+  ### 2.1 Check-in Individual (collaborator)
+  Tabela: | Campo | Tipo | Critério | Ação | Justificativa | Localização |
+  Resumo: total / remover / renomear / manter
+  ... (idem para cada um dos 11 ritos)
+
+## 3. Análise da cadeia (Dimensão A — atravessa)
+  ### 3.1 Cadeia Semanal
+  Diagrama ASCII do fluxo de dados (Pré-Weekly → Weekly etc.)
+  Tabela de incoerências estruturais
+  ### 3.2 Cadeia Mensal
+  ### 3.3 Cadeia Trimestral
+
+## 4. Análise de vocabulário (Dimensão C — unificado)
+  ### 4.1 Glossário atual
+  Tabela: termo × como cada rito o usa
+  ### 4.2 Conflitos identificados
+  Tabela: conceito × variações × recomendação
+
+## 5. Top 10 redundâncias críticas
+  Lista ordenada por impacto, com (1) o que está duplicado, (2) onde aparece,
+  (3) por que é problema, (4) recomendação concreta
+
+## 6. Mapa de ações sugeridas
+  Tabela consolidada: | Ação | Impacto | Complexidade | Prioridade |
+  Esta tabela é o input para Etapa 2 (decisão) e Prompt 2 (refatoração).
+
+## Apêndice
+  - Lista de arquivos consultados (paths exatos)
+  - Tabelas/views do banco consultadas (okr_wizard_sessions, ritual_occurrences,
+    okr_decisions, ritual_addendums)
+  - Notas sobre incertezas (campos com consumo incerto marcados explicitamente)
+```
+
+---
+
+## Convenções e tom
+
+- **Citação obrigatória de localização** em cada linha das tabelas (`src/modules/okrs/types/wizard/weekly.ts:42`, etc.) para facilitar revisão.
+- **Critério violado**: `nenhum`, `1`, `2`, `3`, `4` (ou combinação `2+3`). Justificativa de **uma frase**.
+- **Honestidade sobre incerteza**: campos cujo consumo não pôde ser determinado por leitura estática (ex.: lidos por agentes IA via prompt dinâmico) são marcados como `consumo incerto, requer revisão manual` e não contam como remoção.
+- **Sem hedge linguístico**, sem repetição entre seções, tabelas bem formatadas.
+- **Tamanho estimado**: 80–120 KB de Markdown.
+
+---
+
+## Procedimento operacional
+
+1. Ler em paralelo todos os arquivos de `src/modules/okrs/types/wizard/*.ts` e os `index.ts`/steps de cada pasta de wizard.
+2. Ler todas as edge functions de summary/report para mapear consumo.
+3. Inspecionar `okr_wizard_sessions` (sample de payloads recentes por persona) com `supabase--read_query` apenas em modo leitura, para confirmar quais chaves do JSONB são efetivamente usadas (sinaliza Critério 1 quando campo aparece sempre `null`/ausente).
+4. Construir dicionários intermediários em memória: `persona → { campos[], enums[], steps[], consumido_em[] }` e `termo → { ritos_onde_aparece[], significado_em_cada_um[] }`.
+5. Renderizar Markdown via script Node/Bash em `/tmp/`, escrevendo direto em `/mnt/documents/auditoria-campos-ritos.md`.
+6. **QA do relatório**: validar (a) presença das 11 seções 2.X, (b) cada cadeia tem diagrama na Seção 3, (c) Seção 4 tem glossário e conflitos, (d) Seção 6 entrega tabela acionável. Não convertemos para imagem — Markdown puro é o entregável.
+7. Emitir `<lov-artifact>`.
 
 ---
 
 ## Notas de escopo
 
-- **Reversível**: como o componente, a página e o renderer permanecem no repo, reativar o rito significa restaurar (1) a rota real, (2) o card no hub/home/dashboard, (3) a entrada em `ALL_RITUAL_WIZARD_TYPES`, (4) a janela em `useRitualAvailability` e (5) a entry no `sync`.
-- **Sem migration**: não há mudança de schema, enums (a coluna `wizard_type` é `text`), nem RLS.
-- **Documento `ritos-hub-jet.md`** (gerado anteriormente em `/mnt/documents/`): não será atualizado nesta passada — pode ser regenerado depois marcando o rito como descontinuado.
+- **Não modifica** nenhum arquivo do projeto, nenhuma migração, nenhuma configuração.
+- **Não propõe SQL de remoção** — o relatório é insumo da Etapa 2 (decisão) e do Prompt 2 (refatoração), não a refatoração em si.
+- **Cobertura honesta**: se a leitura estática + samples de payload não conseguirem determinar o consumo de um campo, ele entra como "consumo incerto" e fica fora da contagem de candidatos à remoção. Isso protege contra falso positivo.
+- **Saída final**: um arquivo `auditoria-campos-ritos.md` em `/mnt/documents/`, entregue como artifact.
