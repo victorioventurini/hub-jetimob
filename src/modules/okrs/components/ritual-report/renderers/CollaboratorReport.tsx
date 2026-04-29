@@ -1,13 +1,24 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Target, BarChart3, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Target, BarChart3, MessageSquare } from 'lucide-react';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { ReportSection, EmptyState, ConfidenceBadge } from './shared';
 
+/** Onda 4 Fase 2: nomes (KR/Objetivo/KPI) resolvidos via useEntityLookup. */
 export function CollaboratorReport({ data }: { data: Record<string, any> }) {
   const results = Array.isArray(data.results) ? data.results : [];
   const kpiResults = Array.isArray(data.kpiResults) ? data.kpiResults : [];
   const reflection = data.reflection || {};
   const atRisk = Array.isArray(data.initiativesMarkedAtRisk) ? data.initiativesMarkedAtRisk : [];
+
+  const krIds: string[] = results.map((r: any) => r?.krId).filter(Boolean);
+  const objectiveIds: string[] = results.map((r: any) => r?.objectiveId).filter(Boolean);
+  const kpiIds: string[] = kpiResults.map((k: any) => k?.kpiId).filter(Boolean);
+
+  const lookups = useEntityLookup({
+    teamKrIds: krIds,
+    teamObjectiveIds: objectiveIds,
+    kpiIds,
+  });
 
   return (
     <div className="space-y-4">
