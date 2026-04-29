@@ -73,7 +73,7 @@ export interface DecisionThreadMessage {
 export interface TeamCheckinDecision {
   id: string;
   text: string;
-  category: 'decision' | 'focus_adjustment' | 'next_step' | 'strategic_proposal';
+  category: DecisionCategory;
   sourceStep?: TeamCheckinDecisionSourceStep;
   owner?: {
     id: string;

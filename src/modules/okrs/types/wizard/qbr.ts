@@ -6,6 +6,7 @@
  */
 
 import type { TeamCheckinDecision, RitualImprovementFeedback } from './shared';
+import type { DirectiveCategory } from './vocabulary';
 import type { MbrKpiSnapshot } from './mbr';
 import type {
   DraftTeamKr,
@@ -185,7 +186,7 @@ export interface QbrCLevelSnapshot {
   }>;
   directives: Array<{
     text: string;
-    category: 'strategic_question' | 'hypothesis' | 'non_priority' | 'challenge';
+    category: DirectiveCategory;
     targetTeamId?: string;
   }>;
   decisions: TeamCheckinDecision[];
