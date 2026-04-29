@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Target, BarChart3, MessageSquare } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Target, BarChart3, MessageSquare, AlertTriangle } from 'lucide-react';
 import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { ReportSection, EmptyState, ConfidenceBadge } from './shared';
 
