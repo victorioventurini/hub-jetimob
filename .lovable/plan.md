@@ -1,50 +1,42 @@
-# Replicação Tickets Externos: Jetimob → Jet Experience
+# Fix: erro `column "v_bu_id" does not exist` ao criar KPI
 
-## Objetivo
-Migração one-shot, idempotente e somente de dados (sem schema/RLS/código) para que abrir um ticket externo na BU **Jet Experience** ofereça as mesmas opções da BU **Jetimob**.
+## Pré-checklist (executado)
+- ✅ TCR / `PERMISSIONS_AND_RBAC_MODEL.md` v1.5.0 — `kpis.settings.manage:bu` é a key canônica para criar KPIs estratégicos; `user_can_create_kpi` é a helper RLS oficial.
+- ✅ `mem://features/kpis/kpis-permissions-matrix.md` (v3) — matriz scope-oriented (org/area/team) + métricas restritas a `team` confirmada.
+- ✅ `mem://identity-rbac-master` — admin de BU (`is_bu_admin`) deve ter passe livre via short-circuit no início da função.
+- ✅ `mem://standards/bu-isolation-master` — função recebe `p_bu_id` explicitamente; nenhuma mudança de isolamento.
+- ✅ Codebase — frontend (`useCanCreateKpi.ts`, `CreateKpiDialog.tsx`) e RLS de `kpi_metrics` chamam a função passando `bu_id` corretamente; nada a alterar fora do SQL.
 
-- **Source BU:** Jetimob
-- **Target BU:** Jet Experience (`f3d2d8a5-2143-42f0-8738-9b51fb74b49f`)
+## Diagnóstico
+Migration `20260428103721_*.sql` introduziu `public.user_can_create_kpi(p_profile_id, p_bu_id, p_scope, p_area_id, p_team_id, p_indicator_type)` com **dois bugs de variável**: o corpo referencia `v_bu_id` (não declarada, não populada) em vez de `p_bu_id`:
 
-## Escopo (4 etapas em uma migração)
+```sql
+-- linhas atuais (quebradas)
+IF v_user_id IS NOT NULL AND (is_platform_admin(v_user_id) OR is_bu_admin(v_user_id, v_bu_id)) THEN ...
+IF has_permission(p_profile_id, v_bu_id, 'kpis.settings.manage:bu') THEN ...
+```
 
-### 1. Empresas externas (`external_company_bu_associations`)
-- Replicar para Jet Experience todas as associações ativas de empresas que existem em Jetimob e ainda não estão associadas na target.
-- Foco confirmado inclui **Ferrigolo Advogados** e **Supervisão Contabilidade**, mas a operação cobre todas as empresas ativas da Jetimob.
-- Reativa registros soft-deleted existentes na target (set `is_active=true`, `deleted_at=null`) em vez de duplicar.
+Quando o caller não é platform admin (caso do Uriel — admin de BU Jetimob), o Postgres tenta resolver `v_bu_id`, falha e devolve `column "v_bu_id" does not exist` ao frontend, bloqueando criação de **qualquer KPI/Métrica** (a função é chamada pela política `kpi_metrics_insert_v3`).
 
-### 2. Contatos externos (`partner_contact_bu_associations`)
-- Para cada `partner_contact` ligado a empresas replicadas e ativo em Jetimob, criar associação em Jet Experience se não existir.
-- Inclui os 5 contatos pendentes de Supervisão Contabilidade.
-- Mesma regra de reativação para soft-deleted.
+`user_can_manage_kpi` já está correta — declara e popula `v_bu_id` a partir de `kpi_metrics`. Não precisa mudança.
 
-### 3. Categorias e subcategorias (`ticket_categories`, `ticket_subcategories`)
-- Criar em Jet Experience as categorias `external` e `both` que existem em Jetimob e faltam na target (matching por `name + scope`), preservando `scope` original.
-  - Inclui categoria **Contábil** (faltante).
-- Para cada categoria correspondente (existente ou nova), inserir as subcategorias faltantes por nome.
-  - Inclui sync das subcategorias de **Jurídico** e **Contábil**.
-- `created_by` = NULL (nullable) ou Platform Admin se schema exigir.
+## Correção (1 migration, sem mudança de assinatura)
+Recriar `public.user_can_create_kpi` trocando as duas ocorrências de `v_bu_id` por `p_bu_id`:
 
-### 4. Mapeamentos parceiro→categoria (`partner_service_mappings`)
-- Para cada mapping ativo em Jetimob cuja empresa está associada à Jet Experience, criar mapping equivalente na target resolvendo os IDs locais (categoria/subcategoria recém-replicadas).
-- Inclui mappings de Ferrigolo (Jurídico) e Supervisão (Contábil).
+```text
+is_bu_admin(v_user_id, v_bu_id)        →  is_bu_admin(v_user_id, p_bu_id)
+has_permission(p_profile_id, v_bu_id,…) →  has_permission(p_profile_id, p_bu_id,…)
+```
 
-## Garantias técnicas
-- **Idempotência:** todos os inserts usam `WHERE NOT EXISTS` com matching por nome/escopo/IDs lógicos.
-- **Soft-delete aware:** filtra `deleted_at IS NULL` na origem; reativa em vez de duplicar na target.
-- **BU isolation:** todas as inserções carimbam `bu_id = target` explicitamente; nenhuma leitura cruza BU além do passo de cópia.
-- **Sem mudanças de schema, RLS, triggers ou código frontend.**
-- **Reversível:** uma única migração; rollback documentado por `bu_id` da target + timestamps.
+Mantém: assinatura, `SECURITY DEFINER`, `STABLE`, `SET search_path = public`, demais branches da matriz (org/area/team + métrica/membro) intactos. Sem mudança em RLS, triggers, frontend, query keys ou tipos.
 
-## Validação pós-migração
-Queries de verificação retornarão zero diffs:
-- Empresas ativas em Jetimob ∖ ativas em Jet Experience = ∅
-- Contatos ativos (das empresas replicadas) em Jetimob ∖ ativos em Jet Experience = ∅
-- Categorias `external/both` em Jetimob ∖ existentes (por nome+scope) em Jet Experience = ∅
-- Subcategorias por categoria correspondente = ∅
-- Partner mappings ativos (Ferrigolo, Supervisão) presentes em Jet Experience
+## Validação pós-fix
+1. SQL direto (Uriel/Jetimob, escopo Time = Customer Success):
+   `SELECT public.user_can_create_kpi(<profile_uriel>, '<bu_jetimob>', 'team', NULL, '<team_cs_id>', 'kpi');` → `true`.
+2. Reproduzir o fluxo do screenshot (KPI %, mensal/semanal, escopo Time = Customer Success, responsável Laura) → criar sem erro.
+3. Conferir que um usuário sem `kpis.settings.manage:bu` e sem liderança continua bloqueado para `scope=org` e para times fora da hierarquia (matriz v3 preservada).
+4. Smoke test: criar Métrica em time do qual o usuário é membro (regra hierárquica de `metric` preservada).
 
-## Detalhes técnicos
-- Ferramenta: `supabase--migration` única, com 4 blocos `INSERT ... SELECT ... WHERE NOT EXISTS` + UPDATEs para reativação.
-- Ordem obrigatória: empresas → contatos → categorias → subcategorias → mappings (dependências de FK).
-- Sem uso de `auth.uid()` (operação administrativa).
+## Fora de escopo
+- Sem alterações em `user_can_manage_kpi`, RLS de `kpi_metrics`, hooks frontend, templates ou nomenclatura de permissões.
+- Sem refactor adicional da função além do bug de variável.
