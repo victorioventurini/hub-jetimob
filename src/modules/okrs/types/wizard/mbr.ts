@@ -74,6 +74,10 @@ export interface MbrOrgOkrSnapshot {
     title: string;
     progress: number;
     status: string;
+    /**
+     * @deprecated Onda 4 Fase 1 — Resolver via lookup de profiles por `owner_user_id`
+     * do KR. Mantido para retrocompat de snapshots gravados.
+     */
     ownerName: string | null;
     baseline: number;
     current: number;
@@ -99,6 +103,9 @@ export interface MbrTeamOkrObjectiveSnapshot {
     title: string;
     progress: number;
     status: string;
+    /**
+     * @deprecated Onda 4 Fase 1 — Resolver via lookup de profiles por `owner_user_id`.
+     */
     ownerName: string | null;
     baseline: number;
     current: number;
@@ -111,6 +118,9 @@ export interface MbrTeamOkrObjectiveSnapshot {
 
 export interface MbrTeamOkrSnapshot {
   teamId: string;
+  /**
+   * @deprecated Onda 4 Fase 1 — Resolver via lookup `useTeams` por `teamId`.
+   */
   teamName: string;
   objectives: MbrTeamOkrObjectiveSnapshot[];
   healthScore: number;
@@ -190,8 +200,10 @@ export interface MbrPreDraftData {
    */
   krFinalStates: Array<{
     krId: string;
+    /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`. */
     krTitle: string;
     objectiveId: string;
+    /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` por `objectiveId`. */
     objectiveTitle: string;
     state: string;
     finalProgress: number;
@@ -202,6 +214,10 @@ export interface MbrPreDraftData {
   kpisToCreate: Array<{
     description: string;
     suggestedScope: string;
+    /**
+     * @deprecated Onda 4 Fase 1 — Sugerir KR por `krId` (a adicionar) e resolver
+     * título via lookup. Atualmente livre/textual no input do líder.
+     */
     relatedKrTitle: string;
   }>;
   highlights: { accelerated: string; blocked: string; needsDecision: string };
@@ -230,6 +246,9 @@ export interface MbrPreTeamSubmission {
   teamId: string;
   submittedAt: string;
   submittedBy: string | null;
+  /**
+   * @deprecated Onda 4 Fase 1 — Resolver via lookup de profiles por `submittedBy`.
+   */
   submittedByName: string | null;
   highlights: MbrPreDraftData['highlights'];
   nextSteps: MbrPreDraftData['nextSteps'];

@@ -134,6 +134,9 @@ export interface QbrPreSnapshot {
   kpisToCreate: Array<{
     description: string;
     suggestedScope: string;
+    /**
+     * @deprecated Onda 4 Fase 1 — Sugerir KR por `krId` e resolver título via lookup.
+     */
     relatedKrTitle: string;
   }>;
   learnings: {

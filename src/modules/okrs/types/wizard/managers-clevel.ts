@@ -10,6 +10,7 @@
 // ============================================================
 
 export interface AreaOkrSummary {
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useTeams` por `teamId` (área = time pai). */
   areaName: string;
   teamId: string;
   okrCount: number;
@@ -38,6 +39,7 @@ export interface ManagersWizardState {
 
 export interface CompanyOkrSummary {
   objectiveId: string;
+  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` por `objectiveId`. */
   objectiveTitle: string;
   progress: number;
   trend: 'improving' | 'stable' | 'declining';
