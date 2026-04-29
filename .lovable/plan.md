@@ -1,98 +1,71 @@
-# Plano — super_admin/admin podem atuar livremente em qualquer ticket
+# Plano — Esconder tickets concluídos/descartados por padrão em /tickets
 
 ## Pré-checklist (executado)
-- ✅ TCR: módulo Tickets ativo; Pinned Messages v1.0, Transfer System v1.0, RLS Audit v1.0.
-- ✅ `PERMISSIONS_AND_RBAC_MODEL.md`: anti-pattern explícito proíbe `if (role === 'admin')`. Usar **permission keys** + `isWildcard` (que cobre `*`).
-- ✅ `RBAC_TEMPLATES_V3.md`: template `tickets_admin_v2` contém `tickets.ticket.update_status:bu` e `tickets.settings.manage:bu`.
-- ✅ Catálogo (`permission_catalog`): chaves canônicas confirmadas.
-- ✅ DB: função `can_update_ticket_status(ticket_id, profile_id)` **já trata admin** via `tickets.settings.manage:bu` (Check 4). RLS de `tickets` UPDATE permite qualquer membro da BU. **Não precisa migration para mudar status**.
-- ✅ DB: função `can_pin_ticket_message` **NÃO trata admin** e é usada na RLS `ticket_messages_update_v3`. Para admin fixar mensagens, é preciso migration.
-- ✅ Front hoje (`TicketDetailPage.canChangeStatus` e `usePinMessage.canUserPinMessages`) duplica a regra antiga sem o admin override → este é o bug.
+- ✅ TCR / `Tickets` ativo; `tickets` é um módulo com Saved Links v1.4 (`SavedLinksPopover moduleSlug="tickets"` já está em `TicketsPage`).
+- ✅ Standard de URL state respeitado (filtros já moram em `useUrlState` em `TicketsListPage.tsx`).
+- ✅ Hook `useTickets` (em `useTicketQueries.ts`) já aceita `status` como `TicketStatus | TicketStatus[]` e usa `.in("status", ...)` quando array. **Não precisa migration nem mudar tipos**.
+- ✅ Componente canônico `TicketStatusSelect` já é usado nos filtros — qualquer multi-select deve nascer dele para não fragmentar.
+- ✅ Hoje já há regra implícita: quando `status="all"`, `TicketsListPage` envia `['waiting','paused','in_progress','done']` ao hook (exclui apenas `discarded`). Concluídos continuam aparecendo — é exatamente a queixa.
+- ✅ Deep-links existentes da Home (`/tickets`, `/tickets?overdue=true`, `/tickets?due_today=true`) não setam `status`, portanto continuam funcionando com o novo default.
 
-## Diagnóstico do bug
-O super_admin/admin não consegue mudar status porque a verificação **client-side** em `TicketDetailPage` ignora admins. Mesma lacuna em `canUserPinMessages`. RLS de tickets já permite a operação — o bloqueio é puramente de UX.
+## Diagnóstico
+"Todos os status" hoje significa "tudo menos descartados". Concluídos ficam misturados com em-andamento, gerando ruído visual. As três opções do usuário são viáveis; abaixo a recomendação.
 
-## Mudanças
+## Recomendação: opção 2 + abertura para evoluir para multi-select depois
 
-### 1. Front: alinhar com a regra canônica do banco
-`src/modules/tickets/pages/TicketDetailPage.tsx`
-- Importar `usePermissions`. Ler `isWildcard` e `has`.
-- Adicionar override admin em `canChangeStatus`:
+Toggle único e óbvio "Mostrar concluídos e descartados" ao lado dos filtros, persistido em URL. É o caminho de menor atrito, resolve 95% dos casos com 1 clique, e mantém compatibilidade com Saved Links sem precisar reformular o select de status.
+
+Por quê não a opção 1 agora:
+- Multi-select de status custa: trocar `TicketStatusSelect` (canônico) ou criar variante; ajustar `useUrlState` para CSV; reformatar UI; risco de regressão em outros consumos do select. Pode ser feito numa segunda iteração se houver mais demanda por combinações arbitrárias (ex.: "só waiting + paused").
+
+Por quê não inventar uma 3ª opção: o toggle já cobre o pedido com clareza máxima e zero curva de aprendizado.
+
+## Mudanças (escopo cirúrgico)
+
+### 1. Novo URL state `include_closed` (boolean, default `false`)
+`src/modules/tickets/pages/TicketsListPage.tsx`
+- Adicionar:
   ```ts
-  if (isWildcard) return true;
-  if (has('tickets.settings.manage:bu')) return true;
+  const includeClosedState = useUrlState<boolean>({
+    key: 'include_closed',
+    defaultValue: false,
+    parse: parsers.boolean,
+  });
+  const includeClosed = includeClosedState.value;
   ```
-  (mantém regras atuais: criador, owner, contato externo assignado).
-- Em `canPin`, propagar admin para a função pura (ver item 2).
+- Atualizar `DEFAULT_STATUSES` para refletir o toggle:
+  ```ts
+  const DEFAULT_STATUSES: TicketStatus[] = includeClosed
+    ? ['waiting', 'paused', 'in_progress', 'done', 'discarded']
+    : ['waiting', 'paused', 'in_progress'];
+  ```
+- Comportamento preservado quando o usuário escolhe explicitamente um status no select (`statusFilter !== "all"`): o filtro pontual sempre vence o toggle (ex.: selecionar "Concluído" mostra concluídos mesmo com toggle desligado).
+- Incluir `includeClosed` nas dependências do `useMemo` de `queryFilters`.
 
-### 2. Hook `canUserPinMessages` aceita admin
-`src/modules/tickets/hooks/usePinMessage.ts`
-- Adicionar parâmetro opcional `isAdmin: boolean = false`. Se `true`, retornar `true` cedo (após o guard `!profileId`).
-- JSDoc atualizado.
-`src/modules/tickets/hooks/usePinMessage.test.ts`
-- Cobrir: admin sem ser criador/owner pode fixar; comportamento sem flag preservado.
-`src/modules/tickets/pages/TicketDetailPage.tsx`
-- Passar `isWildcard || has('tickets.settings.manage:bu')` como `isAdmin` ao chamar `canUserPinMessages(...)`.
+### 2. UI do toggle no filtro
+`src/modules/tickets/components/TicketFilters.tsx`
+- Adicionar `includeClosed` e `onIncludeClosedChange` às props.
+- Renderizar um `Toggle`/`Switch` canônico (usar o mesmo padrão de `showOverdue` se existir; ver `TicketFilters` atual — hoje `overdue` está fora deste componente, então seguir a convenção que já estiver em uso na página).
+- Texto: **"Incluir concluídos e descartados"** (off por padrão). Ícone discreto à direita dos selects, alinhado com o restante.
+- Quando o usuário escolhe "Concluído" ou "Descartado" no select de status, o toggle fica desabilitado/visualmente neutro (não tem efeito porque o filtro pontual prevalece).
 
-### 3. Backend: incluir admin na função do banco (para liberar UPDATE de pin via RLS)
-Migration nova (sem alterar tipos gerados):
-```sql
-CREATE OR REPLACE FUNCTION public.can_pin_ticket_message(p_ticket_id uuid, p_profile_id uuid)
-RETURNS boolean
-LANGUAGE plpgsql
-STABLE SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_ticket RECORD;
-  v_contact_profile_id uuid;
-BEGIN
-  SELECT created_by_user_id, owner_user_id, assigned_contact_id, type, bu_id
-  INTO v_ticket
-  FROM public.tickets
-  WHERE id = p_ticket_id AND deleted_at IS NULL;
-  IF NOT FOUND THEN RETURN false; END IF;
+### 3. Indicador visual sutil (opcional, de baixo custo)
+- No `EmptyState` "nenhum ticket encontrado", quando `!includeClosed && statusFilter === 'all'`, sugerir: "Concluídos e descartados estão ocultos. Ative 'Incluir concluídos e descartados' para vê-los." — só mostra quando a tela está vazia.
 
-  -- Admin override (espelha can_update_ticket_status)
-  IF has_permission(p_profile_id, v_ticket.bu_id, 'tickets.settings.manage:bu') THEN
-    RETURN true;
-  END IF;
-
-  -- Criador / owner
-  IF v_ticket.created_by_user_id = p_profile_id THEN RETURN true; END IF;
-  IF v_ticket.owner_user_id = p_profile_id THEN RETURN true; END IF;
-
-  -- Externo: contato assignee (mesmo critério atual)
-  IF v_ticket.type = 'external' AND v_ticket.assigned_contact_id IS NOT NULL THEN
-    SELECT pr.id INTO v_contact_profile_id
-    FROM public.partner_contacts pc
-    JOIN public.profiles pr ON pr.user_id = pc.user_id
-    WHERE pc.id = v_ticket.assigned_contact_id AND pc.user_id IS NOT NULL;
-    IF v_contact_profile_id = p_profile_id THEN RETURN true; END IF;
-  END IF;
-
-  RETURN false;
-END;
-$function$;
-
-COMMENT ON FUNCTION public.can_pin_ticket_message IS
-'Pinning gate: admin com tickets.settings.manage:bu, criador, owner ou contato externo assignado.';
-```
-
-### 4. Não-objetivos
-- Não mudar RLS de `tickets` (UPDATE já cobre admin via `user_has_bu_access`).
-- Não criar nova permission key (já temos `tickets.settings.manage:bu`).
-- Não tocar em listagem, criação, transferência ou anexos — admin já passa pelas RLS dessas operações; nenhum bloqueio client-side reportado.
-- Não alterar `tickets.ts` types (auto-gerado).
+## Não-objetivos
+- Não trocar `TicketStatusSelect` por multi-select (fica para evolução futura, se necessário).
+- Não tocar em RLS, RPC, `useTickets`, queries ou tipos.
+- Não alterar comportamento do detalhe do ticket nem dos cards da Home.
+- Não criar Saved Link novo automaticamente — o usuário pode salvar a URL com `?include_closed=true` ou sem, conforme uso.
 
 ## Validação
-- Como super_admin (e como BU admin) em ticket criado por outro usuário:
-  1. Selector de status habilitado e troca persiste (toast de sucesso, log de auditoria).
-  2. Botão "Fixar" aparece e funciona em mensagens (RLS aceita após migration).
-- Como usuário comum (não criador/owner/contato): comportamento atual preservado (status read-only, sem pin).
-- Rodar `usePinMessage.test.ts`.
-- Smoke do link reportado: `/tickets/b22c4726-54b7-4b84-84d1-eb36e618c8ee` logado como admin.
+1. `/tickets` (default) lista apenas `waiting`, `paused`, `in_progress`. Concluídos e descartados sumiram.
+2. Toggle ON → reaparecem; URL ganha `?include_closed=true`; refresh preserva.
+3. Selecionar status específico "Concluído" no select → mostra concluídos independentemente do toggle.
+4. Saved Links: salvar a URL atual e reabrir reproduz o estado.
+5. Deep-links da Home (`?overdue=true`, `?due_today=true`) continuam funcionando e sem concluídos por padrão.
+6. Como super_admin (ticket de outra pessoa) — comportamento de listagem inalterado, apenas o conjunto exibido muda.
 
 ## Arquivos
-- **Editar**: `src/modules/tickets/pages/TicketDetailPage.tsx`, `src/modules/tickets/hooks/usePinMessage.ts`, `src/modules/tickets/hooks/usePinMessage.test.ts`
-- **Migration nova**: `supabase/migrations/<timestamp>_admin_can_pin_ticket_message.sql`
+- **Editar**: `src/modules/tickets/pages/TicketsListPage.tsx`, `src/modules/tickets/components/TicketFilters.tsx`
+- **Sem migration, sem mudanças em hooks/tipos/RLS.**
