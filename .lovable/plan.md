@@ -72,3 +72,32 @@ Centraliza 5 vocabulários e 1 mapeamento:
 - **Onda 4 candidata** — Fase 1 (denormalização de nomes/títulos — ~18 campos).
 - Aplicar `DIRECTIVE_TO_DECISION_MAP` na promoção `directive → decision` no QBR Meeting (requer decisão de UX).
 
+
+---
+
+## Status final — Onda 2 (Fase 4 — vocabulário canônico) executada
+
+### Concluído
+
+1. **Criado** `src/modules/okrs/types/wizard/vocabulary.ts` com:
+   - `DecisionCategory` + `DECISION_CATEGORIES`
+   - `DirectiveCategory` + `DIRECTIVE_CATEGORIES`
+   - `RitualBlock` + `RITUAL_BLOCKS` + `PreWeeklyBlock`
+   - `RitualPeopleSignalType` + `RITUAL_PEOPLE_SIGNAL_TYPES`
+   - `RitualThemeActionType` + `RITUAL_THEME_ACTION_TYPES`
+   - `DIRECTIVE_TO_DECISION_MAP`
+2. **`shared.ts`**: `TeamCheckinDecision.category` agora usa `DecisionCategory`.
+3. **`qbr.ts`**: `QbrCLevelSnapshot.directives[].category` agora usa `DirectiveCategory`.
+4. **`weekly.ts`**: 
+   - `WeeklyThemeBlock` e `WeeklyThemeType` viraram aliases `@deprecated` para `RitualBlock`/`RitualThemeActionType`.
+   - `PreWeeklyTopicCategory` agora é alias de `PreWeeklyBlock`.
+   - `PreWeeklyPeopleSignal.type` usa `RitualPeopleSignalType`.
+5. **`index.ts`**: barrel re-exporta `./vocabulary`.
+
+### Validação
+- `bunx vitest run src/modules/okrs`: **1766/1766 passando**.
+- Build TypeScript verde (zero erros após edits).
+- Zero consumidor (steps/renderers/hooks/testes) precisou ser tocado — literais permanecem idênticos.
+
+### Memory registrada
+- `mem://standards/wizard-vocabulary-canonical` — SSOT do vocabulário.
