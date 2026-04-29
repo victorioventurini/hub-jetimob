@@ -272,11 +272,6 @@ export default function MbrPage() {
     }
 
     const snapshots: MbrKpiSnapshot[] = allBuKpis.map(kpi => {
-      const variation = kpi.target_value && kpi.latest_value != null
-        ? ((kpi.latest_value - kpi.target_value) / Math.abs(kpi.target_value)) * 100
-        : null;
-
-
       return {
         kpiId: kpi.id,
         name: kpi.name,
@@ -287,8 +282,6 @@ export default function MbrPage() {
           : kpi.latest_rag_status === 'at_risk' ? 'yellow'
           : kpi.latest_rag_status === 'off_track' ? 'red'
           : 'no_data',
-        variationVsLastMonth: null,
-        variationVsTarget: variation,
         requiresStrategicDecision: kpi.latest_rag_status === 'off_track',
         unit: kpi.unit ?? '%',
         lastValueAt: kpi.latest_reference_date ?? null,
