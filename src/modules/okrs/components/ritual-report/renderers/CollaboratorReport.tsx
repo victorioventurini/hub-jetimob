@@ -40,9 +40,11 @@ export function CollaboratorReport({ data }: { data: Record<string, any> }) {
               {results.map((r: any, i: number) => (
                 <TableRow key={r.krId || i}>
                   <TableCell className="text-sm">
-                    <div>{r.krTitle}</div>
-                    {r.objectiveTitle && (
-                      <span className="text-xs text-muted-foreground">{r.objectiveTitle}</span>
+                    <div>{resolveName(lookups.teamKrs, r.krId, r.krTitle)}</div>
+                    {(r.objectiveId || r.objectiveTitle) && (
+                      <span className="text-xs text-muted-foreground">
+                        {resolveName(lookups.teamObjectives, r.objectiveId, r.objectiveTitle, '')}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-right text-sm">{r.previousValue ?? '—'}</TableCell>
@@ -73,7 +75,7 @@ export function CollaboratorReport({ data }: { data: Record<string, any> }) {
             <TableBody>
               {kpiResults.map((k: any, i: number) => (
                 <TableRow key={k.kpiId || i}>
-                  <TableCell className="text-sm">{k.kpiName}</TableCell>
+                  <TableCell className="text-sm">{resolveName(lookups.kpis, k.kpiId, k.kpiName)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">{k.newValue ?? '—'}</TableCell>
                   <TableCell><ConfidenceBadge level={k.confidence} /></TableCell>
                   <TableCell className="text-sm text-muted-foreground">{k.notes || '—'}</TableCell>
