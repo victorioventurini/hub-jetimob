@@ -35,11 +35,3 @@ export interface KpiCheckinResult {
   notes?: string;
   skipped: boolean;
 }
-
-export interface CollaboratorWizardState {
-  krs: WizardKr[];
-  results: CollaboratorCheckinResult[];
-  kpiResults: KpiCheckinResult[];
-  reflection: CollaboratorReflection;
-  initiativesMarkedAtRisk: string[];
-}

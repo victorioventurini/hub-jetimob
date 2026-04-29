@@ -41,10 +41,3 @@ export interface LeaderHighlight {
   relatedUserId?: string;
   priority: 'low' | 'medium' | 'high';
 }
-
-export interface LeaderPrepWizardState {
-  metrics: LeaderOverviewMetrics | null;
-  highlights: LeaderHighlight[];
-  krActions: KrAction[];
-  meetingNotes: string;
-}

@@ -10,9 +10,3 @@ export interface TeamCheckinChecklist {
   knowWhatNotToDo: boolean;
   knowWhoIsResponsible: boolean;
 }
-
-export interface TeamCheckinWizardState {
-  krsToReview: WizardKr[];
-  decisions: TeamCheckinDecision[];
-  checklist: TeamCheckinChecklist;
-}
