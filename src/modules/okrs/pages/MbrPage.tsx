@@ -91,7 +91,6 @@ const DEFAULT_DATA: MbrDraftData = {
     nextMbrScheduled: false,
   },
   ritualFeedback: [],
-  previousMbrPendingItems: [],
   qbrFollowUpItems: [],
 };
 
@@ -582,38 +581,9 @@ export default function MbrPage() {
   }, [orgObjectives, isLoadingOkrs, draft.data.orgOkrSnapshots.length, updateDraft]);
 
   // Load previous MBR pending items on first load
-  useEffect(() => {
-    if (!currentBu?.id || draft.data.previousMbrPendingItems.length > 0) return;
-
-    const loadPrevious = async () => {
-      try {
-        const { data } = await buSupabase
-          .from('okr_wizard_sessions')
-          .select('reflection_data')
-          .eq('wizard_type', 'mbr')
-          .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data?.reflection_data) {
-          const prevData = (data.reflection_data as any)?.data as MbrDraftData | undefined;
-          if (prevData?.decisions) {
-            const pending = prevData.decisions.filter(
-              d => d.category === 'next_step' || d.category === 'focus_adjustment'
-            );
-            if (pending.length > 0) {
-              updateDraft({ previousMbrPendingItems: pending });
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to load previous MBR items:', e);
-      }
-    };
-
-    loadPrevious();
-  }, [currentBu?.id]);
+  // Carry-over de itens pendentes do MBR anterior — re-derivado via hook
+  // (substituiu o campo previousMbrPendingItems no draft).
+  const { data: previousMbrPendingItems = [] } = usePreviousMbrPendingItems(draft.session?.id ?? null);
 
   // Navigation
   const completedSteps = useMemo(() => {

@@ -457,6 +457,9 @@ export const mbrKeys = {
     ['mbr', 'team-objectives', buId, cycleId] as const,
   qbrFollowup: (buId: string | null) =>
     ['mbr', 'qbr-followup', buId] as const,
+  /** Itens pendentes do MBR anterior (decisões next_step / focus_adjustment). */
+  previousPendingItems: (buId: string | null | undefined, currentSessionId: string | null) =>
+    ['mbr', 'previous-pending-items', buId ?? null, currentSessionId] as const,
 
   preTeamKrs: (
     buId: string | null,

@@ -165,7 +165,6 @@ export interface MbrDraftData {
   decisions: TeamCheckinDecision[];
   checklist: MbrGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
-  previousMbrPendingItems: TeamCheckinDecision[];
   qbrFollowUpItems: QbrFollowUpItem[];
 }
 
