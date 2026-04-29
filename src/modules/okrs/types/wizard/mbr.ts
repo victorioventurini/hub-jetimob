@@ -42,8 +42,6 @@ export interface MbrKpiSnapshot {
   previousValue: number | null;
   target: number | null;
   ragStatus: string;
-  variationVsLastMonth: number | null;
-  variationVsTarget: number | null;
   requiresStrategicDecision: boolean;
   impactAssessment?: string;
   /** Unidade de medida do KPI (ex: '%', 'R$', 'Número') */
