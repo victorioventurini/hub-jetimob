@@ -3,7 +3,7 @@
  *
  * Cada componente do framework consome um formato padronizado. Os adapters
  * vivem aqui como funções puras: recebem o estado completo do rito (ex:
- * `MbrDraftData`, `LeaderPrepWizardState`) e produzem o shape esperado
+ * `MbrDraftData`, `LeaderPrepDraftData`) e produzem o shape esperado
  * pelo componente genérico.
  *
  * Não importar nada de UI aqui. Apenas data → data.

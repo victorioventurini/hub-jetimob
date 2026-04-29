@@ -206,3 +206,28 @@ Estes pontos do prompt original **não foram implementados** nesta onda por dive
 - Render manual de uma sessão `completed` antiga (smoke test em preview) sem erro.
 - Criação de nova sessão MBR e QBR Meeting sem erro até `closing`.
 - Edge functions `mbr-summary` e `qbr-pre-summary` curl OK com payload sem `variationVsLastMonth`.
+
+---
+
+## Status final — Onda 1 (executada)
+
+### Concluído
+
+1. **kpiVariations.ts** — util criado. Consumidores migrados: `MbrPanoramaStep`, `MbrPage`, `MbrPrePage`, `QbrPrePage`, `QbrPreCLevelPage`, edge functions `mbr-summary` e `qbr-pre-summary` (com fallback `legacyVar` p/ snapshots antigos).
+2. **`variationVsLastMonth` / `variationVsTarget`** — removidos dos tipos (`mbr.ts`, `qbr.ts`) e dos 5 testes afetados.
+3. **`usePreviousMbrPendingItems`** — hook criado, query key registrada (`mbrKeys.previousPendingItems`). Campo `previousMbrPendingItems` removido do `MbrDraftData`, `DEFAULT_DATA` e useEffect de hidratação em `MbrPage`.
+4. **Tipos órfãos removidos** — `LeaderPrepWizardState`, `TeamCheckinWizardState`, `CollaboratorWizardState` deletados (zero importadores). Comentário JSDoc em `stepContentAdapters.ts` atualizado.
+
+### Não executado (e por quê)
+
+- **`QbrPostKrAdjustment.hasAdjustment`** — tem checkbox ativa em `QbrPostOkrPromotionStep.tsx` (linhas 194-201) controlando renderização condicional dos campos de ajuste. Removê-lo exigiria re-desenhar o step (sempre mostrar os campos), o que viola o princípio "refatoração não muda comportamento". Devolvido a produto.
+
+### Validação
+
+- `bunx vitest run` nos testes de MBR/QBR-meeting/QBR-pre/QBR-pre-clevel: **201/201 passando**.
+
+### Próximas ondas (ainda em aberto)
+- Fase 1 (denormalização ~18 campos)
+- Fase 3 (unificação de tipos canônicos)
+- Fase 4 (vocabulário canônico)
+- Itens devolvidos a produto: `nextThirtyDays`, `offAgenda`, `hasAdjustment`
