@@ -65,16 +65,29 @@ export default function TicketsListPage() {
   });
   const showDueToday = dueTodayState.value;
 
+  // Toggle: incluir concluídos e descartados na listagem padrão (status="all").
+  // Default OFF — esconde 'done' e 'discarded' para não poluir a lista de tickets ativos.
+  const includeClosedState = useUrlState<boolean>({
+    key: "include_closed",
+    defaultValue: false,
+    parse: parsers.boolean,
+  });
+  const includeClosed = includeClosedState.value;
+  const setIncludeClosed = includeClosedState.set;
+
   // Parse responsible filter into owner_user_id or assigned_contact_id
   const parsedResponsible = useMemo(() => parseResponsibleValue(responsibleId), [responsibleId]);
 
-  // Default statuses: exclude "discarded" when showing "all"
-  const DEFAULT_STATUSES: TicketStatus[] = ['waiting', 'paused', 'in_progress', 'done'];
+  // Default statuses quando o usuário escolhe "Todos os status".
+  // Filtro pontual de status (statusFilter !== "all") sempre prevalece sobre o toggle.
+  const DEFAULT_STATUSES: TicketStatus[] = includeClosed
+    ? ['waiting', 'paused', 'in_progress', 'done', 'discarded']
+    : ['waiting', 'paused', 'in_progress'];
 
   // Build query filters
   const queryFilters = useMemo(() => ({
     type: typeFilter !== "all" ? typeFilter : undefined,
-    // When "all" is selected, show only non-discarded tickets by default
+    // When "all" is selected, apply DEFAULT_STATUSES (respeita toggle includeClosed).
     status: statusFilter !== "all" ? statusFilter : DEFAULT_STATUSES,
     category_id: categoryId !== "all" ? categoryId : undefined,
     external_company_id: partnerId !== "all" ? partnerId : undefined,
@@ -83,7 +96,7 @@ export default function TicketsListPage() {
     search: search || undefined,
     overdue: showOverdue || undefined,
     due_today: showDueToday || undefined,
-  }), [typeFilter, statusFilter, categoryId, partnerId, parsedResponsible, search, showOverdue, showDueToday]);
+  }), [typeFilter, statusFilter, categoryId, partnerId, parsedResponsible, search, showOverdue, showDueToday, includeClosed]);
 
   const { 
     data: tickets = [], 
@@ -126,6 +139,8 @@ export default function TicketsListPage() {
         onResponsibleChange={setResponsibleId}
         showOverdueOnly={showOverdue}
         onOverdueChange={setShowOverdue}
+        includeClosed={includeClosed}
+        onIncludeClosedChange={setIncludeClosed}
       />
 
       {/* Content */}
@@ -140,7 +155,11 @@ export default function TicketsListPage() {
         <EmptyState
           icon={Inbox}
           title="Nenhum ticket encontrado"
-          description="Não há tickets que correspondam aos filtros selecionados."
+          description={
+            !includeClosed && statusFilter === "all"
+              ? "Concluídos e descartados estão ocultos. Ative \"Incluir concluídos e descartados\" para vê-los."
+              : "Não há tickets que correspondam aos filtros selecionados."
+          }
           actionLabel={canCreateTicket ? "Criar primeiro ticket" : undefined}
           onAction={canCreateTicket ? () => navigate("/tickets/new") : undefined}
         />
