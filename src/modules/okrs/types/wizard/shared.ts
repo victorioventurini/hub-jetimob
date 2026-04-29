@@ -6,6 +6,8 @@
  * personas que os referenciam (collaborator, team-checkin, mbr, qbr, weekly).
  */
 
+import type { DecisionCategory } from './vocabulary';
+
 // ============================================================
 // TEAM CHECKIN DECISION SOURCE STEPS
 // ============================================================
