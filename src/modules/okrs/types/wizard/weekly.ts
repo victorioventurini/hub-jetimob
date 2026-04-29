@@ -6,6 +6,19 @@
  */
 
 import type { TeamCheckinDecision } from './shared';
+import type {
+  PreWeeklyBlock,
+  RitualBlock,
+  RitualPeopleSignalType,
+  RitualThemeActionType,
+} from './vocabulary';
+
+// Re-export para retrocompat de imports antigos.
+export type { RitualBlock, RitualPeopleSignalType, RitualThemeActionType };
+/** @deprecated Use `RitualBlock` from `./vocabulary`. */
+export type WeeklyThemeBlock = RitualBlock;
+/** @deprecated Use `RitualThemeActionType` from `./vocabulary`. */
+export type WeeklyThemeType = RitualThemeActionType;
 
 // ============================================================
 // PRÉ-WEEKLY (DESTILAÇÃO INDIVIDUAL DA SEMANA)
@@ -18,7 +31,7 @@ export type PreWeeklyStep = 'sources' | 'pauta' | 'pessoas' | 'summary';
  * Performance = números/KPIs/KRs do time. Projetos = entregas estruturais.
  * Pessoas é tratado em etapa dedicada (Step 3) — não aparece como categoria de tema.
  */
-export type PreWeeklyTopicCategory = 'performance' | 'projetos';
+export type PreWeeklyTopicCategory = PreWeeklyBlock;
 /**
  * @deprecated Removido da Pauta — todos os temas selecionados são, por definição, prioritários.
  * Mantido apenas para compatibilidade de leitura de drafts antigos.
