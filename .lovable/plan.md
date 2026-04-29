@@ -77,3 +77,43 @@ A intenção original do plano (linha 72) era **A** ("histórico passa a mostrar
 
 Sugiro **fazer apenas Etapas 1 + 3 nesta onda** (auditoria + deprecar campos como opcionais com `@deprecated`), e tratar Etapas 2/4/5 como ondas separadas após confirmação da decisão de produto. Isso mantém o padrão "zero mudança funcional" das ondas 2 e 3 e permite que a remoção real seja feita com segurança e em paralelo com QA.
 
+
+---
+
+## Status final — Onda 4 Fase 1 (denormalização — Etapas 1+3 parciais) executada
+
+### Decisão de produto registrada
+
+- **Opção A** (snapshot vivo / nomes atuais via lookup) escolhida implicitamente conforme intenção original do plano.
+- Execução em **sub-ondas conservadoras**: Fase 1 apenas marca campos como `@deprecated`, sem remover writers nem alterar readers. Zero mudança funcional.
+
+### Concluído
+
+1. **Auditoria** — 23 campos identificados; 16 em snapshots persistidos foram marcados; 7 excluídos por escopo (thread/runtime/UI ephemeral).
+2. **Deprecação** aplicada em:
+   - `shared.ts` → `KrFinalStateSnapshot.{krTitle,objectiveTitle}`
+   - `mbr.ts` → `MbrOrgOkrSnapshot.keyResults[].ownerName`, `MbrTeamOkrObjectiveSnapshot.keyResults[].ownerName`, `MbrTeamOkrSnapshot.teamName`, `MbrPreDraftData.krFinalStates[].{krTitle,objectiveTitle}`, `MbrPreDraftData.kpisToCreate[].relatedKrTitle`, `MbrPreTeamSubmission.submittedByName`
+   - `qbr.ts` → `QbrPreDraftData.kpisToCreate[].relatedKrTitle`
+   - `weekly.ts` → `WeeklyPriorityItem.teamName`, `WeeklyPeopleSignalAggregated.teamName`
+   - `collaborator.ts` → `CollaboratorCheckinResult.{krTitle,objectiveTitle}`, `KpiCheckinResult.kpiName`
+   - `managers-clevel.ts` → `AreaOkrSummary.areaName`, `CompanyOkrSummary.objectiveTitle`
+3. **Memory** registrada: `mem://standards/wizard-snapshot-denormalized-fields-deprecation`.
+
+### Exclusões intencionais
+
+- `DecisionThreadMessage.authorName` (semântica de comentário).
+- `WizardVicContext.{krTitle,objectiveTitle,teamName}` (contexto runtime).
+- `DraftKrMetricLink.kpiName` (UI ephemeral pré-save).
+
+### Validação
+
+- `bunx vitest run src/modules/okrs`: **1766/1766 passando** ✅
+- Build TS verde — `@deprecated` é metadata JSDoc, não altera tipo.
+- Zero consumidor (steps/renderers/edge functions) precisou ser tocado.
+
+### Pendente para sub-ondas futuras (Etapas 2/4/5 do plano)
+
+- Criar hook `useEntityLookup` consolidado.
+- Atualizar renderers para preferir lookup com fallback ao campo `@deprecated`.
+- Atualizar writers para parar de gravar nomes (após confirmação de readers todos atualizados).
+- Drop dos campos do schema/types após N meses.
