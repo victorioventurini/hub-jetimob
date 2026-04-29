@@ -83,14 +83,8 @@ export type WeeklyStep =
   | 'people'
   | 'closing';
 
-/** Bloco temático curado pelo agente curador-orquestrador. */
-export type WeeklyThemeBlock = 'performance' | 'projetos' | 'pessoas';
-export type WeeklyThemeType =
-  | 'risco'
-  | 'oportunidade'
-  | 'decisao'
-  | 'celebracao'
-  | 'alerta';
+/** Bloco temático curado pelo agente curador-orquestrador.
+ *  Aliases `WeeklyThemeBlock` e `WeeklyThemeType` declarados no topo do arquivo. */
 
 export interface WeeklyTheme {
   id: string;
