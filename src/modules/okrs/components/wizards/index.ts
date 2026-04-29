@@ -17,8 +17,8 @@ export * from './team-checkin';
 // Wizard 4: Managers Check-in — DESCONTINUADO (substituído pelo MBR).
 // Componentes removidos; snapshot reports antigos seguem renderizados via ManagersCheckinReport.
 
-// Wizard 5: C-Level Check-in
-export * from './clevel-checkin';
+// Wizard 5: C-Level Check-in — DESCONTINUADO.
+// Re-export removido; arquivos preservados para back-compat de tipos e renderer de histórico.
 
 // Wizard 6: Team OKR Creation
 export * from './team-okr-creation';

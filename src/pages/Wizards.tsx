@@ -177,18 +177,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
     description: 'Rituais para alinhamento estratégico e cross-functional',
     icon: Crown,
     wizards: [
-      {
-        id: 'clevel-checkin',
-        name: 'Check-in Executivo',
-        description: 'Visão estratégica e direcionamentos para a empresa',
-        icon: BarChart3,
-        module: 'okrs',
-        requiredRole: 'executive',
-        badge: 'C-Level',
-        badgeVariant: 'secondary',
-        requiresTeam: false,
-        route: '/rituals/clevel-checkin',
-      },
+      // 'clevel-checkin' removido — rito descontinuado.
       {
         id: 'mbr',
         name: 'MBR',

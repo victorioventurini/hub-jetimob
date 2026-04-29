@@ -25,7 +25,7 @@ const ALL_WIZARD_TYPES = [
   'leader-prep',
   'team-checkin',
   // 'managers-checkin' removido — rito descontinuado.
-  'clevel-checkin',
+  // 'clevel-checkin' removido — rito descontinuado.
   'team-okr-creation',
   'team-kr-creation',
   'mbr',
@@ -130,15 +130,7 @@ Deno.serve(async (req) => {
         cycle_derived: false,
       },
       // managers-checkin removido — rito descontinuado (substituído pelo MBR).
-      {
-        wizard_type: 'clevel-checkin',
-        frequency: 'monthly',
-        month_week_ordinal: 1,
-        day_of_week: 2,
-        day_of_month: null,
-        start_date: firstQuarterStart,
-        cycle_derived: false,
-      },
+      // clevel-checkin removido — rito descontinuado.
       {
         wizard_type: 'team-okr-creation',
         frequency: 'quarterly',

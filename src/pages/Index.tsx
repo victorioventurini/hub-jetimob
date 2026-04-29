@@ -16,7 +16,7 @@ import { MyProjectsCard } from "@/components/home/MyProjectsCard";
 import { MyPendingDecisionsCard } from "@/modules/home/components/shared/MyPendingDecisionsCard";
 import { LeaderDashboard } from "@/modules/home/components/LeaderDashboard";
 import { CollaboratorWizardCard } from "@/modules/okrs/components/wizards/collaborator/CollaboratorWizardCard";
-import { CLevelCheckinWizardCard } from "@/modules/okrs/components/wizards/clevel-checkin/CLevelCheckinWizardCard";
+// CLevelCheckinWizardCard removido — rito 'clevel-checkin' descontinuado.
 import { useLeaderTeams } from "@/modules/home/hooks";
 import { useExternalUser } from "@/modules/external/hooks/useExternalUser";
 import { useAuth } from "@/hooks/useAuth";
@@ -127,23 +127,7 @@ const Index = () => {
             {/* Leader Dashboard - Leaders only (not executives) */}
             {isLeader && !isExecutive && <LeaderDashboard />}
 
-            {/* Executive Wizards */}
-            {isExecutive && (
-              <div className="grid grid-cols-1 gap-4">
-                <CLevelCheckinWizardCard 
-                  overallProgress={
-                    dashboardData.okrSummary.onTrack + 
-                    dashboardData.okrSummary.atRisk + 
-                    dashboardData.okrSummary.offTrack > 0 
-                      ? (dashboardData.okrSummary.onTrack / 
-                        (dashboardData.okrSummary.onTrack + dashboardData.okrSummary.atRisk + dashboardData.okrSummary.offTrack)) * 100 
-                      : 0
-                  }
-                  atRiskCount={dashboardData.okrSummary.offTrack}
-                  isLoading={dashboardData.isLoading}
-                />
-              </div>
-            )}
+            {/* Executive Wizards — clevel-checkin descontinuado; demais ritos executivos via /rituals e Dashboard Executivo. */}
           </section>
         )}
 
