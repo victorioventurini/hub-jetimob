@@ -66,10 +66,10 @@ export default function TicketsListPage() {
   const showDueToday = dueTodayState.value;
 
   // Toggle: incluir concluídos e descartados na listagem padrão (status="all").
-  // Default OFF — esconde 'done' e 'discarded' para não poluir a lista de tickets ativos.
+  // Default ON — exibe todos os status. Usuário pode desligar para focar em ativos.
   const includeClosedState = useUrlState<boolean>({
     key: "include_closed",
-    defaultValue: false,
+    defaultValue: true,
     parse: parsers.boolean,
   });
   const includeClosed = includeClosedState.value;
