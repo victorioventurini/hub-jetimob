@@ -1,13 +1,23 @@
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Target, Link2, FileText, CalendarDays } from 'lucide-react';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { ReportSection, EmptyState } from './shared';
 
+/**
+ * Onda 4 Fase 2: OKRs promovidos resolvidos por título via useEntityLookup
+ * (tenta team objectives e org objectives para suportar ambos contextos).
+ */
 export function QbrPostReport({ data }: { data: Record<string, any> }) {
-  const promotedOkrIds = Array.isArray(data.promotedOkrIds) ? data.promotedOkrIds : [];
+  const promotedOkrIds: string[] = Array.isArray(data.promotedOkrIds) ? data.promotedOkrIds : [];
   const crossCommitments = Array.isArray(data.crossCommitments) ? data.crossCommitments : [];
   const executiveMinutes = data.executiveMinutes || '';
   const followUpCadence = data.followUpCadence || {};
   const checklist = data.governanceChecklist || {};
+
+  const lookups = useEntityLookup({
+    teamObjectiveIds: promotedOkrIds,
+    orgObjectiveIds: promotedOkrIds,
+  });
 
   const hasContent = promotedOkrIds.length > 0 || crossCommitments.length > 0 ||
     executiveMinutes || Object.keys(checklist).length > 0;
@@ -20,11 +30,17 @@ export function QbrPostReport({ data }: { data: Record<string, any> }) {
       {promotedOkrIds.length > 0 && (
         <ReportSection title={`OKRs promovidos (${promotedOkrIds.length})`} icon={<Target className="h-4 w-4" />}>
           <div className="flex flex-wrap gap-2">
-            {promotedOkrIds.map((id: string) => (
-              <Badge key={id} variant="secondary" className="text-xs">
-                {id.slice(0, 8)}…
-              </Badge>
-            ))}
+            {promotedOkrIds.map((id: string) => {
+              const name =
+                lookups.teamObjectives.get(id)?.name ||
+                lookups.orgObjectives.get(id)?.name ||
+                resolveName(lookups.teamObjectives, id);
+              return (
+                <Badge key={id} variant="secondary" className="text-xs">
+                  {name}
+                </Badge>
+              );
+            })}
           </div>
         </ReportSection>
       )}
