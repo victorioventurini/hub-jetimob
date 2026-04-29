@@ -157,10 +157,10 @@ export function useEntityLookup(args: UseEntityLookupArgs): UseEntityLookupResul
     queryFn: async () => {
       const { data, error } = await supabase!
         .from('profiles')
-        .select('id, full_name')
+        .select('id, display_name')
         .in('id', profileIds);
       if (error) throw error;
-      return toMap(data?.map((r) => ({ id: r.id, name: r.full_name ?? '' })));
+      return toMap(data?.map((r) => ({ id: r.id, name: r.display_name ?? '' })));
     },
     enabled: ready && profileIds.length > 0,
     staleTime: STALE_5MIN,
