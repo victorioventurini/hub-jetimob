@@ -12,6 +12,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
 import { CLevelRitualRoute } from '@/components/auth/CLevelRitualRoute';
+import { WeeklyRitualRoute } from '@/components/auth/WeeklyRitualRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
 
 // Ritual pages
@@ -34,7 +35,7 @@ const DecisionsPage = lazy(() => import('@/modules/okrs/pages/DecisionsPage'));
 /**
  * Wrapper padrão para rotas de rituais
  */
-function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean }) {
+function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false, requiresAreaLeader = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean; requiresAreaLeader?: boolean }) {
   const inner = (
     <ModuleRoute moduleSlug="okrs">
       {children}
@@ -44,6 +45,8 @@ function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false
   let guarded = inner;
   if (requiresCLevel) {
     guarded = <CLevelRitualRoute>{inner}</CLevelRitualRoute>;
+  } else if (requiresAreaLeader) {
+    guarded = <WeeklyRitualRoute>{inner}</WeeklyRitualRoute>;
   } else if (requiresBuAdmin) {
     guarded = <BuAdminRoute>{inner}</BuAdminRoute>;
   }
@@ -85,7 +88,7 @@ export const ritualRoutes = (
     
     {/* Semanais — Onda 4 */}
     <Route path="/rituals/pre-weekly" element={<RitualRoute><PreWeeklyPage /></RitualRoute>} />
-    <Route path="/rituals/weekly" element={<RitualRoute><WeeklyPage /></RitualRoute>} />
+    <Route path="/rituals/weekly" element={<RitualRoute requiresAreaLeader><WeeklyPage /></RitualRoute>} />
 
     {/* MBR */}
     <Route path="/rituals/mbr-pre" element={<RitualRoute><MbrPrePage /></RitualRoute>} />
