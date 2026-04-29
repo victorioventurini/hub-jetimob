@@ -57,4 +57,17 @@ describe('canUserPinMessages', () => {
     expect(canUserPinMessages(ticket, 'creator-1')).toBe(true);
     expect(canUserPinMessages(ticket, 'random-user')).toBe(false);
   });
+
+  it('should allow admin to pin even when not creator/owner/contact', () => {
+    expect(canUserPinMessages(internalTicket, 'random-user', null, true)).toBe(true);
+    expect(canUserPinMessages(externalTicket, 'random-user', 'contact-wrong', true)).toBe(true);
+  });
+
+  it('should still deny when isAdmin=false and user has no relation', () => {
+    expect(canUserPinMessages(internalTicket, 'random-user', null, false)).toBe(false);
+  });
+
+  it('should still require profileId even for admin', () => {
+    expect(canUserPinMessages(internalTicket, null, null, true)).toBe(false);
+  });
 });
