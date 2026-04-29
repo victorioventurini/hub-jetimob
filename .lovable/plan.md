@@ -1,123 +1,79 @@
-## Contexto
+## Onda 4 — Fase 1: Denormalização de nomes/títulos em snapshots
 
-Hoje o domínio de ritos OKR usa string literals duplicadas em vários tipos:
+### Contexto
 
-- `TeamCheckinDecision.category`: `'decision' | 'focus_adjustment' | 'next_step' | 'strategic_proposal'` (em `shared.ts`)
-- `QbrCLevelSnapshot.directives[].category`: `'strategic_question' | 'hypothesis' | 'non_priority' | 'challenge'` (em `qbr.ts`)
-- `WeeklyThemeBlock`: `'performance' | 'projetos' | 'pessoas'` (em `weekly.ts`)
-- `PreWeeklyTopicCategory`: `'performance' | 'projetos'` (em `weekly.ts`)
-- `PreWeeklyPeopleSignal.type`: `'celebracao' | 'risco' | 'mudanca' | 'feedback'` (em `weekly.ts`)
-- `WeeklyThemeType`: `'risco' | 'oportunidade' | 'decisao' | 'celebracao' | 'alerta'` (em `weekly.ts`)
+Hoje os snapshots de ritos (`okr_wizard_sessions.reflection_data`) gravam **nomes/títulos junto com IDs**. Isso causa três problemas:
 
-Cada string aparece em ~25 arquivos (steps, renderers, testes, utils, hooks). Não há SSOT — qualquer renomeio quebra parcialmente. O objetivo da Fase 4 é centralizar este vocabulário em **um único módulo** (`src/modules/okrs/types/wizard/vocabulary.ts`) sem mudar comportamento.
+1. **Duplicação**: 18 campos espelham dados disponíveis via join (`teamName`, `krTitle`, `objectiveTitle`, `ownerName`, `kpiName`, `areaName`, `submittedByName`, `authorName`, `relatedKrTitle`).
+2. **Tipos inflados**: cada step que constrói snapshot precisa buscar e empilhar nome + ID.
+3. **Dados desatualizados**: se um KR foi renomeado depois do rito, o snapshot ainda mostra o nome antigo.
 
-## Princípios desta onda
+### Decisão crítica de produto (PRECISA SER FEITA ANTES DE IMPLEMENTAR)
 
-- **Zero mudança funcional**: nenhum literal renomeado, nenhuma label de UI alterada, nenhuma migração de dados. As strings ficam idênticas.
-- **Adição não-quebrante**: novos types/consts apontam para os mesmos literais já existentes; tipos antigos viram `re-exports` ou aliases deprecados com `@deprecated` JSDoc.
-- **Não tocar** snapshots em `okr_wizard_sessions.reflection_data` — strings persistidas continuam válidas porque os literais não mudam.
+Há **dois comportamentos possíveis** ao remover os campos denormalizados, e eles são incompatíveis:
 
-## O que será criado
+**A) Snapshot vivo (nomes atuais via join)**
+- Renderers de ritos buscam nomes em runtime via `useTeams`/`useKeyResults`/`useProfiles`.
+- Se um KR foi renomeado, o rito histórico mostra o nome novo.
+- Se o KR foi excluído (soft-delete), o renderer mostra "—" ou "(removido)".
+- Vantagem: consistência — nomes sempre corretos.
+- Risco: regressão visual em ritos antigos onde times foram renomeados/divididos.
 
-### Novo arquivo `src/modules/okrs/types/wizard/vocabulary.ts`
+**B) Snapshot imutável (nomes congelados, mas via campo único)**
+- Mantém os nomes no snapshot, mas extrai um tipo canônico (`EntityRef = { id; name }`) e remove a duplicação **estrutural** sem perder o histórico.
+- Não resolve o problema de "dados desatualizados" porque é justamente isso que se quer preservar (auditoria).
+- Vantagem: zero regressão; auditoria preservada.
+- Custo: a "denormalização" vira refator cosmético — deduplica shape, não dados.
 
-Centraliza 5 vocabulários e 1 mapeamento:
+A intenção original do plano (linha 72) era **A** ("histórico passa a mostrar nomes atuais"). Ritos OKR são instrumentos de **gestão**, não de auditoria contábil — nomes atuais costumam ser preferíveis. Mas isso precisa ser confirmado.
 
-1. **`DecisionCategory`** = `'decision' | 'focus_adjustment' | 'next_step' | 'strategic_proposal'`
-   + const array `DECISION_CATEGORIES` para iteração em UI.
-2. **`DirectiveCategory`** = `'strategic_question' | 'hypothesis' | 'non_priority' | 'challenge'`
-   + const array `DIRECTIVE_CATEGORIES`.
-3. **`RitualBlock`** = `'performance' | 'projetos' | 'pessoas'`
-   (substitui `WeeklyThemeBlock`; também cobre `PreWeeklyTopicCategory` como subset via `PreWeeklyBlock = Exclude<RitualBlock, 'pessoas'>`).
-4. **`RitualPeopleSignalType`** = `'celebracao' | 'risco' | 'mudanca' | 'feedback'`
-   (substitui o type inline em `PreWeeklyPeopleSignal`).
-5. **`RitualThemeActionType`** = `'risco' | 'oportunidade' | 'decisao' | 'celebracao' | 'alerta'`
-   (substitui `WeeklyThemeType`).
-6. **`DIRECTIVE_TO_DECISION_MAP: Record<DirectiveCategory, DecisionCategory>`** — mapeamento canônico para quando uma diretiva C-Level vira decisão no QBR Meeting:
-   - `strategic_question` → `next_step`
-   - `hypothesis` → `strategic_proposal`
-   - `non_priority` → `focus_adjustment`
-   - `challenge` → `decision`
+### Escopo proposto (assumindo opção A)
 
-   *(Mapeamento derivado da semântica atual — pode ser ajustado no review do PR.)*
+#### Etapa 1 — Auditar consumidores
+- Para cada um dos 23 campos identificados (`teamName`, `krTitle`, `objectiveTitle`, `ownerName`, `kpiName`, `areaName`, `submittedByName`, `authorName`, `relatedKrTitle`), localizar:
+  - Steps que **escrevem** o campo no snapshot.
+  - Renderers/cards/exports que **leem** o campo.
+  - Edge functions (`mbr-summary`, `qbr-clevel-learnings-summary`, `get-tcr`, `team-checkin-summary`) que recebem snapshot.
+- Saída: tabela `campo → escritores → leitores → backend consumer`.
 
-### Re-exports nos arquivos atuais (retrocompat)
+#### Etapa 2 — Criar lookups canônicos para renderers
+- Hook `useEntityLookup({ teamIds, krIds, objectiveIds, profileIds, kpiIds })` retornando `Map<id, { name }>` com fallback `(removido)`.
+- Já existem hooks individuais — esta etapa só consolida e padroniza fallback.
 
-- `shared.ts` importa `DecisionCategory` e usa em `TeamCheckinDecision.category`.
-- `qbr.ts` importa `DirectiveCategory` e usa em `QbrCLevelSnapshot.directives[].category`.
-- `weekly.ts` re-exporta `RitualBlock as WeeklyThemeBlock` (deprecado), `RitualPeopleSignalType` substitui o type inline, `RitualThemeActionType as WeeklyThemeType` (deprecado).
+#### Etapa 3 — Remover campos dos types e dos writers
+- Editar 13 tipos em `src/modules/okrs/types/wizard/*` removendo os 18 campos.
+- Atualizar steps que escrevem snapshot para parar de empilhar nomes (apenas IDs).
+- Manter `authorName` (em `DecisionThreadMessage`) — caso especial: thread de mensagens é mais semântica de "comentário" do que "snapshot estruturado". Decisão: **manter** (fora de escopo).
 
-## O que NÃO será feito nesta onda
+#### Etapa 4 — Atualizar renderers para usar lookups
+- Cada renderer (`renderers/*.tsx`, cards de ritual report, exports) recebe `lookups` por prop ou via hook e resolve `id → name` em runtime.
 
-- Não renomear `WeeklyThemeBlock` → `RitualBlock` no código consumidor (apenas alias). Isso é cosmético e seria onda futura.
-- Não consolidar `PreWeeklyTopicCategory` em `RitualBlock` no nível dos consumidores (apenas mostrar a relação por subset type).
-- Não criar UI/labels para o `DIRECTIVE_TO_DECISION_MAP` — apenas exportar a constante. Quem quiser usar, importa.
-- Não tocar em `MbrChecklist`/`QbrPostGovernanceChecklist` (escopo da Fase 5, que foi descartada).
+#### Etapa 5 — Compatibilidade com snapshots antigos
+- Snapshots já gravados ainda têm os campos. Decisão: **não migrar dados**. Os tipos passam a marcar os campos como `@deprecated` mas opcionais (`?`), permitindo leitura defensiva: `snapshot.teamName ?? lookups.teams.get(snapshot.teamId)?.name ?? '(removido)'`.
+- Após N meses (decisão futura), drop dos campos.
 
-## Arquivos tocados
+#### Etapa 6 — Validação
+- Snapshots antigos: abrir 3 ritos completados (1 MBR, 1 QBR, 1 Weekly) e validar render.
+- Snapshots novos: completar 1 rito de cada tipo e validar render.
+- `bunx vitest run src/modules/okrs` verde.
+- Build TypeScript verde.
 
-- **Criar**: `src/modules/okrs/types/wizard/vocabulary.ts`
-- **Editar (imports + alias)**: `shared.ts`, `qbr.ts`, `weekly.ts`, `index.ts` (re-export do novo módulo)
-- Total: 1 novo + 4 editados. Nenhum consumidor (steps/renderers/testes) precisa ser tocado.
+### Arquivos tocados (estimativa)
+- 13 types em `types/wizard/*` (remover/deprecar campos)
+- ~20 steps de wizard (parar de gravar nomes)
+- ~15 renderers (usar lookup)
+- 4 edge functions (ajustar contrato — pode ser feito em onda separada se quebrar muito)
+- 1 hook novo (`useEntityLookup`)
 
-## Validação
+### Risco
+**Médio-alto.** Mexe em renderers exibidos para usuários finais. Edge functions podem precisar mudança de contrato. Recomendado fazer em sub-ondas: types primeiro (deprecar), depois writers, depois readers, depois drop.
 
-- `bunx vitest run src/modules/okrs/components/wizards/**/__tests__` — esperado verde sem mudanças.
-- Build TypeScript verde (sem erros de tipo nos consumidores existentes — os literais permanecem compatíveis).
-- Smoke test: abrir QBR Meeting Decisions, confirmar dropdown de categorias funcionando.
+### Decisão necessária do usuário
 
-## Próximas ondas (não nesta)
+1. **Confirmar opção A vs B?** (snapshot vivo vs imutável)
+2. **Escopo desta onda**: tudo de uma vez, ou só Etapa 1 (auditoria) + Etapa 3 (deprecar campos sem remover writers)?
 
-- **Onda 3 candidata** — Fase 3 (unificação de tipos canônicos: `KrFinalStateSnapshot`, `KpiRitualSnapshot`, `QbrKrAdjustment`, `QbrCrossCommitment`, achatamento `WeeklyPriorityItem`).
-- **Onda 4 candidata** — Fase 1 (denormalização de nomes/títulos — ~18 campos).
-- Aplicar `DIRECTIVE_TO_DECISION_MAP` na promoção `directive → decision` no QBR Meeting (requer decisão de UX).
+### Recomendação
 
+Sugiro **fazer apenas Etapas 1 + 3 nesta onda** (auditoria + deprecar campos como opcionais com `@deprecated`), e tratar Etapas 2/4/5 como ondas separadas após confirmação da decisão de produto. Isso mantém o padrão "zero mudança funcional" das ondas 2 e 3 e permite que a remoção real seja feita com segurança e em paralelo com QA.
 
----
-
-## Status final — Onda 2 (Fase 4 — vocabulário canônico) executada
-
-### Concluído
-
-1. **Criado** `src/modules/okrs/types/wizard/vocabulary.ts` com:
-   - `DecisionCategory` + `DECISION_CATEGORIES`
-   - `DirectiveCategory` + `DIRECTIVE_CATEGORIES`
-   - `RitualBlock` + `RITUAL_BLOCKS` + `PreWeeklyBlock`
-   - `RitualPeopleSignalType` + `RITUAL_PEOPLE_SIGNAL_TYPES`
-   - `RitualThemeActionType` + `RITUAL_THEME_ACTION_TYPES`
-   - `DIRECTIVE_TO_DECISION_MAP`
-2. **`shared.ts`**: `TeamCheckinDecision.category` agora usa `DecisionCategory`.
-3. **`qbr.ts`**: `QbrCLevelSnapshot.directives[].category` agora usa `DirectiveCategory`.
-4. **`weekly.ts`**: 
-   - `WeeklyThemeBlock` e `WeeklyThemeType` viraram aliases `@deprecated` para `RitualBlock`/`RitualThemeActionType`.
-   - `PreWeeklyTopicCategory` agora é alias de `PreWeeklyBlock`.
-   - `PreWeeklyPeopleSignal.type` usa `RitualPeopleSignalType`.
-5. **`index.ts`**: barrel re-exporta `./vocabulary`.
-
-### Validação
-- `bunx vitest run src/modules/okrs`: **1766/1766 passando**.
-- Build TypeScript verde (zero erros após edits).
-- Zero consumidor (steps/renderers/hooks/testes) precisou ser tocado — literais permanecem idênticos.
-
-### Memory registrada
-- `mem://standards/wizard-vocabulary-canonical` — SSOT do vocabulário.
-
----
-
-## Status final — Onda 3 (Fase 3 — unificação de tipos canônicos) executada
-
-### Concluído
-
-1. **`shared.ts`**: adicionados `KrFinalStateSnapshot` (extraído de `QbrPreSnapshot.krFinalStates`) e re-export `KpiRitualSnapshot` como alias canônico de `MbrKpiSnapshot`.
-2. **`qbr.ts`**:
-   - `QbrCrossCommitment` canônico (com `dependencyId?` opcional) — substitui shapes inline em `QbrMeetingSnapshot/Draft` e `QbrPostSnapshot/Draft`.
-   - `QbrKrAdjustment` canônico (com `hasAdjustment?` opcional) — usado em `QbrMeetingSnapshot.approvals[].changes` e `QbrPostDraftData.krAdjustments`.
-   - `QbrPostKrAdjustment` mantido como `@deprecated` alias de `QbrKrAdjustment`.
-   - `QbrPreSnapshot.krFinalStates` agora tipado como `KrFinalStateSnapshot[]`.
-3. **`WeeklyPriorityItem`**: já era flat — sem mudanças necessárias.
-4. **Barrel** (`index.ts`): tipos novos disponíveis automaticamente via `export *`.
-
-### Validação
-- Suite OKRs: 1765/1766 (única falha pré-existente em `index.test.ts > StatusDistributionBar`, não relacionada).
-- Suíte global: mesmas 31 falhas pré-existentes (queryKeys/kpis, useCanChangeKpiScope, ProjectDetailPage) — nenhuma introduzida por esta onda.
-- Zero consumidor precisou ser tocado (aliases backward-compat preservam imports antigos).
