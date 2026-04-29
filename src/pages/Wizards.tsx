@@ -35,6 +35,7 @@ import {
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
+import { useIsAreaLeader } from '@/modules/okrs/hooks/useIsAreaLeader';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveCycle } from '@/modules/okrs/hooks';
 import { useQuery } from '@tanstack/react-query';
@@ -53,7 +54,7 @@ interface WizardDefinition {
   description: string;
   icon: typeof Target;
   module: 'okrs';
-  requiredRole: 'collaborator' | 'leader' | 'manager' | 'executive' | 'admin';
+  requiredRole: 'collaborator' | 'leader' | 'area-leader' | 'manager' | 'executive' | 'admin';
   permissionKey?: string;
   badge?: string;
   badgeVariant?: 'default' | 'secondary' | 'outline';
@@ -152,7 +153,7 @@ const WIZARD_SECTIONS: WizardSection[] = [
         description: 'Rito executivo semanal da BU com curadoria orquestrada',
         icon: Sparkles,
         module: 'okrs',
-        requiredRole: 'leader',
+        requiredRole: 'area-leader',
         badge: 'Terça-feira',
         badgeVariant: 'outline',
         requiresTeam: false,
@@ -310,19 +311,22 @@ export default function WizardsPage() {
   const { isLeader, teams: leaderTeams } = useLeaderTeams();
   const { teams: allTeams } = useHierarchicalTeamList();
   const { qbrStatus, isLoading: qbrLoading } = useQbrStatus();
+  const { isAreaLeader } = useIsAreaLeader();
 
   // Determine user role hierarchy
   const userRoles = useMemo(() => {
     const roles: Set<string> = new Set(['collaborator']);
     if (isLeader) roles.add('leader');
+    if (isAreaLeader) roles.add('area-leader');
     if (isWildcard) {
       roles.add('manager');
       roles.add('leader');
+      roles.add('area-leader');
       roles.add('executive');
       roles.add('admin');
     }
     return roles;
-  }, [isLeader, isWildcard]);
+  }, [isLeader, isAreaLeader, isWildcard]);
 
   // Build sections with dynamic QBR wizards injected
   const sectionsWithQbr = useMemo(() => {
