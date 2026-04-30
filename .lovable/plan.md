@@ -97,3 +97,35 @@ Para cada writer:
 - Edge functions (Fase 4).
 - Drop dos campos dos types/schema (Fase 5).
 - Campos `@deprecated` por outras razões (vocabulary, UI cleanup).
+---
+
+## Onda 4 Fase 3 — Writers param de gravar denormalizados ✅ CONCLUÍDA
+
+### Entregue
+
+**Tipos (campos tornados opcionais):**
+- `KrFinalStateSnapshot.{krTitle, objectiveTitle}` — `shared.ts`
+- `CollaboratorCheckinResult.{krTitle, objectiveTitle}` — `collaborator.ts`
+- `KpiCheckinResult.kpiName` — `collaborator.ts`
+- `MbrPreDraftData.krFinalStates[].{krTitle, objectiveTitle}` — `mbr.ts`
+
+**Writers persistentes migrados (4):**
+- `MbrPrePage.tsx` — seed de `krFinalStates` não grava mais título.
+- `QbrPrePage.tsx` — seed de `krFinalStates` não grava mais título.
+- `CollaboratorCheckinStep.tsx` — `handleSave` + `handleSkip` não gravam mais título.
+- `CollaboratorKpiStep.tsx` — `onComplete` não grava mais `kpiName`.
+
+**Tests:**
+- `CollaboratorKpiStep.test.tsx` ajustado para não esperar `kpiName` no payload.
+
+### Refinamento de escopo (registrado na memory)
+
+A maioria dos 16 campos `@deprecated` Fase 1 vive em tipos derivados em runtime (`useWizardAI`, `useManagersPanorama`, `useWeeklyPreWeeklyAggregation`, `useCompanyOkrs`, `useMbrPreSubmissions`) — **não persistem em snapshot**. Não exigem migração de writer; permanecem `@deprecated` apenas como sinal arquitetural.
+
+`kpisToCreate[].relatedKrTitle` foi diferido para Fase 5: hoje é input livre/textual do líder, sem `krId` associado. Migração exige redesenhar UI (autocomplete por KR), fora do escopo de "parar de gravar".
+
+### Validação
+- `bunx vitest run src/modules/okrs`: **1769/1769 passing** (baseline mantido).
+
+### Memory
+- `mem://standards/wizard-snapshot-denormalized-fields-deprecation` atualizada (versão Fases 1-3).
