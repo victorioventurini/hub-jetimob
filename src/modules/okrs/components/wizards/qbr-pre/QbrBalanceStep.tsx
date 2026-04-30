@@ -17,13 +17,18 @@ import {
   
   KrLinkedDetails,
   CarryOverDecisionsSection,
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import {
   KR_STATE_CONFIG,
   type KrState,
 } from '@/modules/okrs/hooks';
 import { UnlinkedProjectsList } from './UnlinkedProjectsList';
-import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type {
+  QbrPreDraftData,
+  TeamCheckinDecision,
+  RitualAgendaSuggestion,
+} from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
