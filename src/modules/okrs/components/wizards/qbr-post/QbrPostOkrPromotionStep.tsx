@@ -28,7 +28,7 @@ import type {
   QbrCLevelSnapshot,
   QbrMeetingSnapshot,
   QbrCalibrationFlag,
-  QbrPostKrAdjustment,
+  QbrKrAdjustment,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -58,8 +58,8 @@ export interface QbrPostOkrPromotionStepProps {
   crossCommitments?: QbrMeetingSnapshot['crossCommitments'];
   adjustmentNotes: Record<string, string>;
   onAdjustmentNotesChange: (notes: Record<string, string>) => void;
-  krAdjustments?: Record<string, QbrPostKrAdjustment[]>;
-  onKrAdjustmentsChange?: (adjustments: Record<string, QbrPostKrAdjustment[]>) => void;
+  krAdjustments?: Record<string, QbrKrAdjustment[]>;
+  onKrAdjustmentsChange?: (adjustments: Record<string, QbrKrAdjustment[]>) => void;
   teams?: Array<{ id: string; name: string }>;
   /** Scorecard de entrega por time (derivado de orgObjectives) */
   teamScorecards?: TeamDeliveryScorecardData[];
@@ -162,17 +162,17 @@ function StructuredKrAdjustments({
 }: {
   sessionId: string;
   proposedOkrs: ProposedObjectiveEntry[];
-  adjustments: QbrPostKrAdjustment[];
-  onAdjustmentsChange: (sessionId: string, adj: QbrPostKrAdjustment[]) => void;
+  adjustments: QbrKrAdjustment[];
+  onAdjustmentsChange: (sessionId: string, adj: QbrKrAdjustment[]) => void;
 }) {
   const allKrs = proposedOkrs.flatMap((entry, _oi) =>
     entry.draftKrs.map((kr, ki) => ({ kr, krIndex: ki, objectiveTitle: entry.objective.title }))
   );
 
-  const getAdj = (krIndex: number): QbrPostKrAdjustment =>
+  const getAdj = (krIndex: number): QbrKrAdjustment =>
     adjustments.find(a => a.krIndex === krIndex) || { krIndex, hasAdjustment: false };
 
-  const updateAdj = (krIndex: number, updates: Partial<QbrPostKrAdjustment>) => {
+  const updateAdj = (krIndex: number, updates: Partial<QbrKrAdjustment>) => {
     const existing = adjustments.filter(a => a.krIndex !== krIndex);
     const current = getAdj(krIndex);
     onAdjustmentsChange(sessionId, [...existing, { ...current, ...updates }]);
@@ -300,7 +300,7 @@ export function QbrPostOkrPromotionStep({
   };
   const getTeamScorecard = (teamId: string) => teamScorecards.find(s => s.teamId === teamId);
 
-  const handleKrAdjustmentsChange = (sessionId: string, adj: QbrPostKrAdjustment[]) => {
+  const handleKrAdjustmentsChange = (sessionId: string, adj: QbrKrAdjustment[]) => {
     onKrAdjustmentsChange?.({ ...krAdjustments, [sessionId]: adj });
   };
 
