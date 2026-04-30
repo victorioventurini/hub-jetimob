@@ -172,7 +172,7 @@ export function groupDecisionsBySourceStep(
 
 /**
  * Adapta um `KpiForWizardV2` para `KpiGateItem` preservando os
- * metadados v3.0.0 (input_type, confidence, update_frequency, deviation_pct).
+ * metadados v3.0.0 (input_type, update_frequency, deviation_pct).
  */
 export function kpiForWizardV2ToGateItem(
   kpi: KpiForWizardV2,
@@ -239,7 +239,7 @@ export interface ClassifyKpiGateInput {
 
 /**
  * Classifica os KPIs em 6 buckets ordenados (Fase 6 — refator de
- * frequência/confidence). Cada KPI aparece em apenas um bucket; a
+ * frequência). Cada KPI aparece em apenas um bucket; a
  * precedência segue a ordem dos blocos (overdue > critical > guardrail
  * > attention > healthy > teamContext).
  *
