@@ -260,12 +260,6 @@ export function getScopeLabels(buName?: string): Record<KpiScope, string> {
   };
 }
 
-export const CONFIDENCE_LABELS: Record<KpiConfidenceLevel, string> = {
-  high: 'Alta',
-  medium: 'Média',
-  low: 'Baixa',
-};
-
 export const SOURCE_TYPE_LABELS: Record<KpiValueSource, string> = {
   manual: 'Manual',
   api: 'API',
