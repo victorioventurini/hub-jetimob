@@ -139,6 +139,14 @@ export default function TicketDetailPage() {
     return map;
   }, [attachments]);
 
+  // Lookup map: message id → message (used as fallback to hydrate citations
+  // for retroactive replies whose `reply_to` JOIN didn't materialize).
+  const messagesById = useMemo(() => {
+    const map = new Map<string, TicketMessage>();
+    messages.forEach((m) => map.set(m.id, m));
+    return map;
+  }, [messages]);
+
   const handleStatusChange = async (newStatus: TicketStatus) => {
     if (!ticket) return;
     await updateStatus.mutateAsync({ 
