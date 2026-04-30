@@ -1,8 +1,14 @@
+/**
+ * MbrReport — Onda 4 Fase 2: nomes (Time/Objetivo/KPI/Profile) via
+ * useEntityLookup com fallback ao snapshot legado.
+ */
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BarChart3, Target, Users, CheckCircle2, CalendarDays } from 'lucide-react';
-import { ReportSection, EmptyState, RagBadge, formatValue } from './shared';
+import { ReportSection, RagBadge, formatValue } from './shared';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { cn } from '@/lib/utils';
 
 export function MbrReport({ data }: { data: Record<string, any> }) {
@@ -12,6 +18,22 @@ export function MbrReport({ data }: { data: Record<string, any> }) {
   const orgOkrSnapshots = Array.isArray(data.orgOkrSnapshots) ? data.orgOkrSnapshots : [];
   const checklist = data.checklist || {};
   const qbrFollowUpItems = Array.isArray(data.qbrFollowUpItems) ? data.qbrFollowUpItems : [];
+
+  const teamIds: string[] = teamOkrSnapshots.map((t: any) => t?.teamId).filter(Boolean);
+  const teamObjIds: string[] = teamOkrSnapshots
+    .flatMap((t: any) => (Array.isArray(t?.objectives) ? t.objectives.map((o: any) => o?.objectiveId) : []))
+    .filter(Boolean);
+  const orgObjIds: string[] = orgOkrSnapshots.map((o: any) => o?.objectiveId).filter(Boolean);
+  const kpiIds: string[] = kpiSnapshots.map((k: any) => k?.kpiId).filter(Boolean);
+  const profileIds: string[] = qbrFollowUpItems.map((it: any) => it?.owner?.id).filter(Boolean);
+
+  const lookups = useEntityLookup({
+    teamIds,
+    teamObjectiveIds: teamObjIds,
+    orgObjectiveIds: orgObjIds,
+    kpiIds,
+    profileIds,
+  });
 
   return (
     <div className="space-y-4">
@@ -40,7 +62,7 @@ export function MbrReport({ data }: { data: Record<string, any> }) {
             <TableBody>
               {kpiSnapshots.map((kpi: any, i: number) => (
                 <TableRow key={kpi.kpiId || i}>
-                  <TableCell className="text-sm">{kpi.name}</TableCell>
+                  <TableCell className="text-sm">{resolveName(lookups.kpis, kpi.kpiId, kpi.name)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">
                     {formatValue(kpi.currentValue, kpi.unit)}
                   </TableCell>
@@ -65,7 +87,7 @@ export function MbrReport({ data }: { data: Record<string, any> }) {
             {teamOkrSnapshots.map((team: any, i: number) => (
               <div key={team.teamId || i} className="p-3 rounded-lg border space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{team.teamName}</span>
+                  <span className="text-sm font-medium">{resolveName(lookups.teams, team.teamId, team.teamName)}</span>
                   <Badge variant="outline" className={cn('text-[10px]',
                     team.healthStatus === 'healthy' ? 'bg-status-green-muted text-status-green' :
                     team.healthStatus === 'attention' ? 'bg-status-amber-muted text-status-amber' :
@@ -78,7 +100,7 @@ export function MbrReport({ data }: { data: Record<string, any> }) {
                 {Array.isArray(team.objectives) && team.objectives.map((obj: any, j: number) => (
                   <div key={obj.objectiveId || j} className="pl-3 border-l-2 border-muted space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm flex-1 truncate">{obj.title}</span>
+                      <span className="text-sm flex-1 truncate">{resolveName(lookups.teamObjectives, obj.objectiveId, obj.title)}</span>
                       <span className="text-xs font-medium">{Math.round(obj.progress ?? 0)}%</span>
                     </div>
                     <Progress value={Math.min(obj.progress ?? 0, 100)} className="h-1.5" />
@@ -97,7 +119,7 @@ export function MbrReport({ data }: { data: Record<string, any> }) {
             {orgOkrSnapshots.map((obj: any, i: number) => (
               <div key={obj.objectiveId || i} className="p-3 rounded-lg border">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium flex-1 truncate">{obj.title}</span>
+                  <span className="text-sm font-medium flex-1 truncate">{resolveName(lookups.orgObjectives, obj.objectiveId, obj.title)}</span>
                   <span className="text-xs font-medium">{Math.round(obj.progress ?? 0)}%</span>
                   <RagBadge status={obj.status} />
                 </div>
@@ -119,15 +141,20 @@ export function MbrReport({ data }: { data: Record<string, any> }) {
       {qbrFollowUpItems.length > 0 && (
         <ReportSection title={`Follow-up QBR (${qbrFollowUpItems.length})`}>
           <div className="space-y-1.5">
-            {qbrFollowUpItems.map((item: any) => (
-              <div key={item.id} className="flex items-center gap-2 p-2 rounded border text-sm">
-                <div className={cn('h-2 w-2 rounded-full shrink-0', item.resolved ? 'bg-status-green' : 'bg-status-amber')} />
-                <span className="flex-1">{item.text}</span>
-                {item.owner?.name && (
-                  <span className="text-xs text-muted-foreground">{item.owner.name}</span>
-                )}
-              </div>
-            ))}
+            {qbrFollowUpItems.map((item: any) => {
+              const ownerName = item.owner?.id
+                ? resolveName(lookups.profiles, item.owner.id, item.owner.name, '')
+                : (item.owner?.name ?? '');
+              return (
+                <div key={item.id} className="flex items-center gap-2 p-2 rounded border text-sm">
+                  <div className={cn('h-2 w-2 rounded-full shrink-0', item.resolved ? 'bg-status-green' : 'bg-status-amber')} />
+                  <span className="flex-1">{item.text}</span>
+                  {ownerName && (
+                    <span className="text-xs text-muted-foreground">{ownerName}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </ReportSection>
       )}
