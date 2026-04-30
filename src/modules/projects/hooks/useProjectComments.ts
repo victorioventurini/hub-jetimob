@@ -37,7 +37,8 @@ export function useProjectComments(projectId: string | null) {
           reply_to:project_comments!reply_to_comment_id(
             id,
             body_richtext,
-            author_user:profiles!author_user_id(id, display_name)
+            author_user:profiles!author_user_id(id, display_name),
+            attachments:project_comment_attachments!comment_id(id, file_name, mime_type, deleted_at)
           )
         `)
         .eq('project_id', projectId)

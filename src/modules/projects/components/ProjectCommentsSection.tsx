@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, Send, Paperclip, X, FileIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageBubble, ReplyPreview } from '@/components/messaging';
+import { richtextToPlain } from '@/components/messaging/richtextToPlain';
 import type { GenericMessage, MessageThreadConfig } from '@/components/messaging/types';
 import { MentionInput, type ParsedMention } from '@/components/mentions';
 import { useProjectComments, useProjectCommentAttachments } from '../hooks/useProjectComments';
@@ -41,12 +42,7 @@ const ALLOWED_TYPES = [
 ];
 
 function getMessageText(body: RichTextContent): string {
-  if (typeof body === 'string') return body;
-  if (body && typeof body === 'object') {
-    const content = (body as any).content;
-    if (typeof content === 'string') return content;
-  }
-  return '';
+  return richtextToPlain(body);
 }
 
 function commentToGeneric(
@@ -56,13 +52,23 @@ function commentToGeneric(
   const authorName = comment.author_user?.display_name ?? 'Alguém';
   const commentAttachments = attachments.filter((a) => a.comment_id === comment.id);
 
-  const replyTo = comment.reply_to
-    ? {
+  let replyTo: GenericMessage['replyTo'] = null;
+  if (comment.reply_to) {
+    const replyContent = getMessageText(comment.reply_to.body_richtext as RichTextContent);
+    const replyAttachments = (comment.reply_to.attachments ?? [])
+      .filter((a) => !a.deleted_at)
+      .map((a) => ({ id: a.id, fileName: a.file_name, mimeType: a.mime_type }));
+    const hasContent = replyContent.trim().length > 0;
+    const hasAttachments = replyAttachments.length > 0;
+    if (hasContent || hasAttachments) {
+      replyTo = {
         id: comment.reply_to.id,
-        content: getMessageText(comment.reply_to.body_richtext as RichTextContent),
+        content: replyContent,
         authorName: comment.reply_to.author_user?.display_name ?? 'Alguém',
-      }
-    : null;
+        attachments: replyAttachments,
+      };
+    }
+  }
 
   return {
     id: comment.id,

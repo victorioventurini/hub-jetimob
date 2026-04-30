@@ -31,6 +31,12 @@ export interface ProjectComment {
     id: string;
     body_richtext: RichTextContent;
     author_user: { id: string; display_name: string | null } | null;
+    attachments?: Array<{
+      id: string;
+      file_name: string;
+      mime_type: string | null;
+      deleted_at: string | null;
+    }>;
   } | null;
 }
 
