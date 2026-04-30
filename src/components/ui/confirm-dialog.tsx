@@ -1,8 +1,8 @@
 /**
  * ConfirmDialog - Componente genérico para confirmações
  * 
- * Consolida DeleteConfirmDialog e implementações inline de AlertDialog.
- * Suporta variantes: destructive, warning, info
+ * Componente canônico para confirmações modais.
+ * Suporta variantes: destructive, warning, info, default.
  */
 
 import { ReactNode } from "react";
