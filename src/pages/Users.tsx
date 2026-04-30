@@ -31,7 +31,7 @@ import { useUrlState } from "@/shared/url";
 
 import { useDeleteProfile, useTransferDependencies } from "@/hooks/useProfiles";
 import { useUserDependencies } from "@/hooks/useUserDependencies";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { UserDependenciesDialog } from "@/components/users/UserDependenciesDialog";
 
 // Permission management
@@ -500,7 +500,7 @@ export default function UsersPage() {
       />
 
       {/* Simple Delete Dialog - shown when user has NO mandatory dependencies */}
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);

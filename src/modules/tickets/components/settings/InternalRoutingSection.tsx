@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   useInternalRoutingRules,
   useDeleteInternalRoutingRule,
@@ -271,7 +271,7 @@ export function InternalRoutingSection() {
         categories={internalCategories}
       />
 
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={!!deleteId}
         onOpenChange={() => setDeleteId(null)}
         onConfirm={handleDelete}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Plus, Search, Users, Trash2, FolderTree } from "lucide-react";
 import { usePartnerCompanies, usePartnerContacts, useContactCapabilities, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
 import { ContactCapabilityDialog } from "./ContactCapabilityDialog";
@@ -196,7 +196,7 @@ export function ContactCapabilitiesTab() {
       )}
 
       {/* Delete Confirmation */}
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}

@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePartnerCompanies, useDeletePartnerCompany, usePartnerServices } from "../../hooks";
 import { PartnerCompanyDialog } from "./PartnerCompanyDialog";
@@ -147,7 +147,7 @@ export function PartnerCompaniesTab() {
         company={editingCompany}
       />
 
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={!!deleteId}
         onOpenChange={() => setDeleteId(null)}
         onConfirm={handleDelete}

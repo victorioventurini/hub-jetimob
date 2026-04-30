@@ -40,7 +40,7 @@ import { PrimaryKpiLockBanner } from './shared/PrimaryKpiLockBanner';
 import { validateOrgKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
-import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCancelOrgKeyResult, usePrimaryKpiForKr } from '@/modules/okrs/hooks';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection } from '../types';
@@ -467,7 +467,7 @@ export function OrgKrFormDialog({
       </Dialog>
 
       {isEditing && (
-        <DeleteConfirmDialog
+        <ConfirmDialog variant="destructive"
           open={showCancelConfirm}
           onOpenChange={setShowCancelConfirm}
           onConfirm={handleCancel}

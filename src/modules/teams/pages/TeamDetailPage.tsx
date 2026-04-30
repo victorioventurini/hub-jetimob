@@ -36,7 +36,7 @@ import { SubteamMembersBlock } from "../components/SubteamMembersBlock";
 import { useAuth } from "@/hooks/useAuth";
 import { useBu } from "@/contexts/BuContext";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TeamCheckinSettings } from "@/modules/okrs/components/TeamCheckinSettings";
 import { TeamContributionTab } from "../components/contribution/TeamContributionTab";
 import { ErrorState } from "@/components/ui/error-state";
@@ -435,7 +435,7 @@ export default function TeamDetailPage() {
       />
 
       {/* Delete Subteam Dialog */}
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);
