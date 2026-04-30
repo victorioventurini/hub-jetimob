@@ -128,6 +128,16 @@ export function QbrBalanceStep({
           primaryLabel="Continuar"
         />
       }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-balance"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
+      }
     >
       <div className="p-6 space-y-6">
         {topSlot}
