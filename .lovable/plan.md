@@ -1,26 +1,28 @@
-# Onda 6 — Limpeza @deprecated (Frentes A/B/C — CONCLUÍDA 2026-04-30)
+# Onda 7 — Auditorias & cleanup seguro (CONCLUÍDA 2026-04-30)
 
 ## Resultado consolidado
-- **63 → 52** ocorrências `@deprecated` (-11 totais nas Ondas 5+6).
-- Build limpo, zero quebras.
+- **52 → 47** ocorrências `@deprecated` (-5: campos legacy de AnalysisSuggestedAction).
+- 1 entregável documental: `docs/audits/KPI_FREQUENCY_SUNSET_PLAN.md`.
+- 1 correção de memory (Permissions V1 já estava sunsetado no DB).
 
-## Frente A — KPI `frequency` sunset (REVERTIDA)
-Drop tentado mas com dependências profundas em hooks (`useKpiData`, `useKpiEvolutionList`, `useKpisForWizard*`) e edge (`hub-tools`). Rollback completo (DB + frontend). Adiada para wave dedicada com auditoria prévia.
+## Frente 1 — Analysis legacy shapes (CONCLUÍDA)
+Validado em produção: 0/4 registros usam shape legacy. Removidos 5 campos `@deprecated`
++ fallbacks em `AnalysisResultPage.tsx`. Teste atualizado.
 
-## Frente B — DeleteConfirmDialog → ConfirmDialog (CONCLUÍDA)
-- 15 consumidores migrados para `<ConfirmDialog variant="destructive">`.
-- Shim `delete-confirm-dialog.tsx` deletado, alias `DeleteConfirmDialogV2` removido.
-- `SettingsUiCatalog` atualizado.
+## Frente 2 — Permissions V1 sunset prep (CONCLUÍDA — sem ação)
+Tabelas V1 já dropadas. Zero `@deprecated` no módulo. Memory corrigido.
 
-## Frente C — Auditoria pós-Wave 7 (CONCLUÍDA)
-- `QbrPostKrAdjustment` → `QbrKrAdjustment`: 8 refs migradas, alias removido.
-- Demais aliases avaliados: bloqueados por janela de observação, dependências DB, ou volume de consumidores.
+## Frente 3 — KPI frequency audit + plano (CONCLUÍDA — documental)
+Plano faseado em 4 etapas. DB 100% migrado (31/31). Pronto para Onda 8 executar Fase 1
+(refactor frontend de 8 consumidores) sem riscos como na Onda 6 Frente A revertida.
 
-## Bloqueados / próximas ondas
+## Próxima onda recomendada (Onda 8)
+- **Executar Fase 1 do KPI frequency plan**: refactor de 8 arquivos frontend para usar
+  `update_frequency`/`consolidation_frequency` diretamente.
+- Após 1 semana de observação → Fases 2-4 (drop DB + cleanup helpers).
+
+## Bloqueados / próximas ondas (mantidos)
 - **Onda 4 snapshots** (16 campos): observação até 2026-07-30.
-- **KPIs v3 `frequency`** + **v2.82.0 `category`**: requer wave dedicada com migration DB + regressão visual.
-- **Permissions V1** (4 tabelas + hooks): drop em Wave 8/9.
-- **Analysis legacy shapes**: auditoria JSONB necessária.
 - **`qbr-pre-summary.zombieCandidates`**: migração coordenada de 11 pontos.
 
-Detalhes em `mem://standards/deprecated-cleanup-log`.
+Detalhes em `mem://standards/deprecated-cleanup-log` e `docs/audits/KPI_FREQUENCY_SUNSET_PLAN.md`.
