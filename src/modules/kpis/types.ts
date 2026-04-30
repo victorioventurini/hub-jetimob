@@ -387,9 +387,7 @@ export interface KpiForWizardV2 {
   unit: string;
   target_value: number | null;
   direction: KpiDirection;
-  /** @deprecated v3.0.0 — use update_frequency / consolidation_frequency. */
-  frequency: KpiFrequency;
-  // v3.0.0 frequency split
+  // v3.0.0 frequency split (campos canônicos)
   consolidation_frequency: KpiFrequencyValue | null;
   update_frequency: KpiFrequencyValue | null;
   lifecycle_status: KpiLifecycleStatus;
