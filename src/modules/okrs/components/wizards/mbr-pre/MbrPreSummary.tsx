@@ -1,22 +1,30 @@
 /**
  * MbrPreSummary - Step 5: Resumo e envio do pré-MBR
- * 
- * Revisão consolidada de tudo que foi preenchido.
- * Ao confirmar, congela snapshot em reflection_data.
- * Segue padrão do QbrPreSummary.
+ *
+ * Revisão consolidada e EDITÁVEL de tudo que foi preenchido nos steps
+ * anteriores. Cada bloco aceita modificação inline; ao confirmar, congela
+ * snapshot em reflection_data.
+ *
+ * Mantém simetria visual e arquitetural com QbrPreSummary, reaproveitando
+ * componentes shared (SummaryKrBalance, SummaryKpiList, InlineStringListEditor,
+ * InlineDecisionInput, AgendaSuggestionsPrioritizer, DecisionCard).
  */
 
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Send, BarChart3, Activity, AlertTriangle, Compass } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Send, AlertTriangle, Compass, CheckCircle2, XCircle, AlertCircle, Lightbulb } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardLastStepFooter,
   WizardStepScaffold,
   AgendaSuggestionsPrioritizer,
+  SummaryKrBalance,
+  SummaryKpiList,
+  InlineStringListEditor,
+  InlineDecisionInput,
+  DecisionCard,
 } from '../shared';
-import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
@@ -34,6 +42,9 @@ export interface MbrPreSummaryProps {
   onComplete: () => void;
   onBack: () => void;
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  onHighlightsChange?: (next: MbrPreDraftData['highlights']) => void;
+  onNextStepsChange?: (next: MbrPreDraftData['nextSteps']) => void;
+  onDecisionsChange?: (next: TeamCheckinDecision[]) => void;
 }
 
 // ============================================================
@@ -47,13 +58,23 @@ export function MbrPreSummary({
   onComplete,
   onBack,
   onAgendaSuggestionsChange,
+  onHighlightsChange,
+  onNextStepsChange,
+  onDecisionsChange,
 }: MbrPreSummaryProps) {
   const { krFinalStates, kpiSnapshots, highlights, nextSteps } = draftData;
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
-  const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
-  const hasHighlights = highlights.accelerated.trim() || highlights.blocked.trim() || highlights.needsDecision.trim();
-  const hasNextSteps = nextSteps.focus.trim() || nextSteps.prioritizedItems.length > 0;
+  const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
+    onHighlightsChange?.({ ...highlights, [field]: value });
+  };
+
+  const handleDecisionUpdate = (id: string, updates: Partial<TeamCheckinDecision>) => {
+    onDecisionsChange?.(decisions.map((d) => (d.id === id ? { ...d, ...updates } : d)));
+  };
+  const handleDecisionRemove = (id: string) => {
+    onDecisionsChange?.(decisions.filter((d) => d.id !== id));
+  };
 
   return (
     <WizardStepScaffold
@@ -62,7 +83,7 @@ export function MbrPreSummary({
           icon={Send}
           title="Resumo e Envio"
           tooltip="mbr-pre-summary"
-          description="Revise antes de submeter — os dados serão congelados"
+          description="Revise e ajuste antes de submeter — os dados serão congelados ao confirmar"
           variant="green"
         />
       }
@@ -75,122 +96,168 @@ export function MbrPreSummary({
       }
     >
       <div className="p-6 space-y-6">
-        {/* Balanço KRs */}
+        {/* 1) Balanço KRs */}
+        <SummaryKrBalance title="Balanço do Mês" items={krFinalStates} />
+
+        {/* 2) KPIs */}
+        <SummaryKpiList kpis={kpiSnapshots} />
+
+        {/* 3) Destaques e Riscos — editável */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Balanço do Mês
+              <AlertTriangle className="h-4 w-4" />
+              Destaques e Riscos
             </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs">
-                {krFinalStates.length} KRs total
-              </Badge>
-              <Badge variant="outline" className="text-xs text-status-green">
-                {achievedKrs.length} alcançados
-              </Badge>
-            </div>
-            {krFinalStates.slice(0, 5).map((kr) => {
-              const config = KR_STATE_CONFIG[(kr.state as KrState) || 'not_started'];
-              return (
-                <div key={kr.krId} className="flex items-center gap-2 text-xs">
-                  <config.icon className={cn('h-3 w-3', config.colorClass)} />
-                  <span className="truncate flex-1">{kr.krTitle}</span>
-                  <span className="text-muted-foreground">{Math.round(kr.finalProgress)}%</span>
-                </div>
-              );
-            })}
-            {krFinalStates.length > 5 && (
+            {onHighlightsChange && (
               <p className="text-xs text-muted-foreground">
-                +{krFinalStates.length - 5} KRs
+                Editável — alterações são salvas no rascunho automaticamente.
               </p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2 text-xs font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5 text-status-green" />
+                O que acelerou
+              </Label>
+              {onHighlightsChange ? (
+                <Textarea
+                  value={highlights.accelerated}
+                  onChange={(e) => updateHighlight('accelerated', e.target.value)}
+                  placeholder="Conquistas, movimentos positivos..."
+                  className="min-h-[70px] text-sm"
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  {highlights.accelerated || '—'}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2 text-xs font-medium">
+                <XCircle className="h-3.5 w-3.5 text-status-red" />
+                O que travou
+              </Label>
+              {onHighlightsChange ? (
+                <Textarea
+                  value={highlights.blocked}
+                  onChange={(e) => updateHighlight('blocked', e.target.value)}
+                  placeholder="Bloqueios, dependências..."
+                  className="min-h-[70px] text-sm"
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  {highlights.blocked || '—'}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2 text-xs font-medium">
+                <AlertCircle className="h-3.5 w-3.5 text-status-amber" />
+                Precisa de decisão na reunião
+              </Label>
+              {onHighlightsChange ? (
+                <Textarea
+                  value={highlights.needsDecision}
+                  onChange={(e) => updateHighlight('needsDecision', e.target.value)}
+                  placeholder="Itens que o líder precisa trazer ao grupo..."
+                  className="min-h-[70px] text-sm"
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  {highlights.needsDecision || '—'}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4) Próximos Passos — editável */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Compass className="h-4 w-4" />
+              Próximos Passos
+            </CardTitle>
+            {onNextStepsChange && (
+              <p className="text-xs text-muted-foreground">
+                Editável — ajuste foco, iniciativas e dependências antes de enviar.
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Foco do próximo mês</Label>
+              {onNextStepsChange ? (
+                <Textarea
+                  value={nextSteps.focus}
+                  onChange={(e) =>
+                    onNextStepsChange({ ...nextSteps, focus: e.target.value })
+                  }
+                  placeholder="Descreva o foco principal..."
+                  className="min-h-[70px] text-sm"
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  {nextSteps.focus || '—'}
+                </p>
+              )}
+            </div>
+
+            {onNextStepsChange ? (
+              <>
+                <InlineStringListEditor
+                  label="Iniciativas / projetos priorizados"
+                  items={nextSteps.prioritizedItems}
+                  onItemsChange={(prioritizedItems) =>
+                    onNextStepsChange({ ...nextSteps, prioritizedItems })
+                  }
+                  placeholder="Adicionar iniciativa ou projeto..."
+                  marker="numbered"
+                  emptyHint="Nenhuma iniciativa priorizada."
+                />
+                <InlineStringListEditor
+                  label="Dependências de outros times"
+                  items={nextSteps.crossDependencies}
+                  onItemsChange={(crossDependencies) =>
+                    onNextStepsChange({ ...nextSteps, crossDependencies })
+                  }
+                  placeholder="Ex: Precisamos que o time X entregue Y..."
+                  marker="bullet"
+                  emptyHint="Nenhuma dependência registrada."
+                />
+              </>
+            ) : (
+              <>
+                {nextSteps.prioritizedItems.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium">Iniciativas priorizadas</p>
+                    {nextSteps.prioritizedItems.map((item, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">
+                        {i + 1}. {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {nextSteps.crossDependencies.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium">Dependências cross-team</p>
+                    {nextSteps.crossDependencies.map((d, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">
+                        • {d}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
 
-        {/* KPIs */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              KPIs ({kpiSnapshots.length})
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* Highlights */}
-        {hasHighlights && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Destaques e Riscos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {highlights.accelerated.trim() && (
-                <div>
-                  <p className="text-xs font-medium text-status-green">✓ Acelerou</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{highlights.accelerated}</p>
-                </div>
-              )}
-              {highlights.blocked.trim() && (
-                <div>
-                  <p className="text-xs font-medium text-status-red">✗ Travou</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{highlights.blocked}</p>
-                </div>
-              )}
-              {highlights.needsDecision.trim() && (
-                <div>
-                  <p className="text-xs font-medium text-status-amber">⚠ Precisa de decisão</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{highlights.needsDecision}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Next Steps */}
-        {hasNextSteps && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Compass className="h-4 w-4" />
-                Próximos Passos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {nextSteps.focus.trim() && (
-                <p className="text-xs text-muted-foreground line-clamp-3">{nextSteps.focus}</p>
-              )}
-              {nextSteps.prioritizedItems.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium">{nextSteps.prioritizedItems.length} itens priorizados</p>
-                  {nextSteps.prioritizedItems.slice(0, 3).map((item, i) => (
-                    <p key={i} className="text-xs text-muted-foreground">
-                      {i + 1}. {item}
-                    </p>
-                  ))}
-                  {nextSteps.prioritizedItems.length > 3 && (
-                    <p className="text-xs text-muted-foreground">
-                      +{nextSteps.prioritizedItems.length - 3} itens
-                    </p>
-                  )}
-                </div>
-              )}
-              {nextSteps.crossDependencies.length > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {nextSteps.crossDependencies.length} dependência{nextSteps.crossDependencies.length > 1 ? 's' : ''} cross-team
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Sugestões de pauta — adicionar/remover/priorizar (até 3).
-            Renderiza sempre, permitindo registrar pautas direto na summary. */}
+        {/* 5) Sugestões de pauta — adicionar/remover/priorizar (até 3) */}
         {onAgendaSuggestionsChange && (
           <AgendaSuggestionsPrioritizer
             suggestions={agendaSuggestions}
@@ -199,23 +266,55 @@ export function MbrPreSummary({
           />
         )}
 
-        {/* Decisions summary */}
-        {decisions.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">
-                Notas e decisões ({decisions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {decisions.map((d) => (
-                <p key={d.id} className="text-xs text-muted-foreground">
-                  • {d.text}
-                </p>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        {/* 6) Notas e decisões — editáveis */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Lightbulb className="h-4 w-4" />
+              Notas e decisões ({decisions.length})
+            </CardTitle>
+            {onDecisionsChange && (
+              <p className="text-xs text-muted-foreground">
+                Adicione, edite ou remova registros antes de enviar.
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {decisions.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">
+                Nenhuma decisão registrada ainda.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {decisions.map((decision) =>
+                  onDecisionsChange ? (
+                    <DecisionCard
+                      key={decision.id}
+                      decision={decision}
+                      onUpdate={handleDecisionUpdate}
+                      onRemove={handleDecisionRemove}
+                      showReclassify
+                      showOwnerDeadline
+                    />
+                  ) : (
+                    <p key={decision.id} className="text-xs text-muted-foreground">
+                      • {decision.text}
+                    </p>
+                  )
+                )}
+              </div>
+            )}
+
+            {onDecisionsChange && (
+              <InlineDecisionInput
+                decisions={decisions}
+                onDecisionsChange={onDecisionsChange}
+                sourceStep="mbr-pre-summary"
+                placeholder="Registrar nova decisão, ajuste ou próximo passo..."
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
     </WizardStepScaffold>
   );
