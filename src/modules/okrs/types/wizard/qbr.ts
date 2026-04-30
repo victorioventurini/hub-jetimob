@@ -9,6 +9,7 @@ import type {
   TeamCheckinDecision,
   RitualImprovementFeedback,
   KrFinalStateSnapshot,
+  RitualAgendaSuggestion,
 } from './shared';
 import type { DirectiveCategory } from './vocabulary';
 import type { MbrKpiSnapshot } from './mbr';
