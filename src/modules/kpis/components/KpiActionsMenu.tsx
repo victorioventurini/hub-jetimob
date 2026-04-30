@@ -22,6 +22,7 @@ import {
 import { useKpiMutations } from "../hooks/useKpiMutations";
 import { useCanEditKpi } from "../hooks/useCanEditKpi";
 import { KpiMetric, KpiValueSource, KpiVisibility, KpiIndicatorType, KpiLifecycleStatus, KpiScope, KpiDirection, KpiFrequency } from "../types";
+import { valueFrequencyToLegacy } from "../utils/frequency";
 import { EditKpiDialog } from "./EditKpiDialog";
 import { AddKpiValueDialog } from "./AddKpiValueDialog";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -136,8 +137,8 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
     team_id: kpi.team_id ?? null,
     unit: kpi.unit ?? '%',
     direction: (kpi.direction ?? 'up') as KpiDirection,
-    // v3.0.0: campo legacy `frequency` é NOT NULL no DB. Mantemos espelho derivado de update_frequency.
-    frequency: ((kpi.update_frequency ?? 'monthly') as KpiFrequency),
+    // v3.0.0: legacy `frequency` é NOT NULL no DB. Espelho derivado de update_frequency via mapeamento canônico.
+    frequency: valueFrequencyToLegacy(kpi.update_frequency ?? null),
     target_value: kpi.target_value ?? null,
     status: kpi.status,
     source_type: (kpi.source_type ?? 'manual') as KpiValueSource,
