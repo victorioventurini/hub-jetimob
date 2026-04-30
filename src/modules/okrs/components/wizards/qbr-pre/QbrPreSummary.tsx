@@ -14,9 +14,10 @@ import {
   WizardStepHeader,
   WizardLastStepFooter,
   WizardStepScaffold,
+  AgendaSuggestionsPrioritizer,
 } from '../shared';
 import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks';
-import { normalizeProposedOkrs, type QbrPreDraftData, type TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import { normalizeProposedOkrs, type QbrPreDraftData, type TeamCheckinDecision, type RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -28,6 +29,7 @@ export interface QbrPreSummaryProps {
   isCompleting: boolean;
   onComplete: () => void;
   onBack: () => void;
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
 }
 
 // ============================================================
@@ -40,9 +42,11 @@ export function QbrPreSummary({
   isCompleting,
   onComplete,
   onBack,
+  onAgendaSuggestionsChange,
 }: QbrPreSummaryProps) {
   const { krFinalStates, kpiSnapshots, learnings, proposedOkrs: rawProposedOkrs } = draftData;
   const proposedOkrs = normalizeProposedOkrs(rawProposedOkrs);
+  const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
   const hasLearnings = learnings.whatWorked.trim() || learnings.whatDidntWork.trim() || learnings.debts.trim();
@@ -170,6 +174,15 @@ export function QbrPreSummary({
               })}
             </CardContent>
           </Card>
+        )}
+
+        {/* Sugestões de pauta — priorização (até 3) */}
+        {agendaSuggestions.length > 0 && onAgendaSuggestionsChange && (
+          <AgendaSuggestionsPrioritizer
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            ritualLabel="QBR"
+          />
         )}
 
         {/* Decisions summary */}

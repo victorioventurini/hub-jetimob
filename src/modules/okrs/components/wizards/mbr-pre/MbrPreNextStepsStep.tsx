@@ -22,10 +22,11 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
-import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { TeamCheckinDecision, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -46,6 +47,9 @@ export interface MbrPreNextStepsStepProps {
   teamId?: string;
   onContinue: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
 
 // ============================================================
@@ -60,6 +64,9 @@ export function MbrPreNextStepsStep({
   teamId,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: MbrPreNextStepsStepProps) {
   const [newPriority, setNewPriority] = useState('');
   const [newDependency, setNewDependency] = useState('');
@@ -125,6 +132,16 @@ export function MbrPreNextStepsStep({
           onPrimary={onContinue}
           primaryDisabled={!hasContent}
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="mbr-pre-next-steps"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-6 space-y-6">

@@ -18,8 +18,9 @@ import {
   WizardStepScaffold,
   
   ReflectionQuestions,
+  InlineAgendaSuggestionInput,
 } from '../shared';
-import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { TeamCheckinDecision, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 import type { ReflectionQuestion } from '../shared/ReflectionQuestions';
 
 // ============================================================
@@ -64,6 +65,9 @@ export interface MbrPreHighlightsStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
 
 // ============================================================
@@ -77,6 +81,9 @@ export function MbrPreHighlightsStep({
   onDecisionsChange,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: MbrPreHighlightsStepProps) {
   const updateField = (field: keyof MbrPreHighlights, value: string) => {
     onHighlightsChange({ ...highlights, [field]: value });
@@ -101,6 +108,16 @@ export function MbrPreHighlightsStep({
           onPrimary={onContinue}
           primaryDisabled={!hasContent}
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="mbr-pre-highlights"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-6 space-y-6">

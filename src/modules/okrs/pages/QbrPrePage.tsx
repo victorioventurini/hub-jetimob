@@ -598,6 +598,9 @@ export default function QbrPrePage() {
             onContinue={goNext}
             teamId={teamIdParam || undefined}
             carryOverDecisions={carryOverDecisions}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
             topSlot={
               <RitualPreparationStatus
                 ritualType="qbr-pre"
@@ -616,6 +619,9 @@ export default function QbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
           />
         );
 
@@ -628,6 +634,9 @@ export default function QbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
           />
         );
 
@@ -639,6 +648,9 @@ export default function QbrPrePage() {
             onProposedOkrsChange={(proposedOkrs) => updateDraft({ proposedOkrs })}
             onContinue={goNext}
             onBack={goBack}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
           />
         );
 
@@ -650,6 +662,7 @@ export default function QbrPrePage() {
             isCompleting={false}
             onComplete={handleComplete}
             onBack={goBack}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
           />
         );
 
