@@ -16,6 +16,7 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         notes: 'Test note',
         created_by: 'user-456',
         confidence: 'high' as const,
+        input_type: 'partial' as const,
       };
 
       const insertPayload = {
@@ -26,6 +27,7 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         notes: data.notes || null,
         created_by: data.created_by || null,
         confidence: data.confidence || 'medium',
+        input_type: data.input_type ?? 'consolidated',
       };
 
       expect(insertPayload.kpi_id).toBe('kpi-123');
@@ -33,6 +35,7 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
       expect(insertPayload.reference_date).toBe('2026-03-01');
       expect(insertPayload.source).toBe('manual');
       expect(insertPayload.confidence).toBe('high');
+      expect(insertPayload.input_type).toBe('partial');
     });
 
     it('uses defaults when optional fields are omitted', () => {
@@ -50,12 +53,14 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         notes: (data as any).notes || null,
         created_by: (data as any).created_by || null,
         confidence: (data as any).confidence || 'medium',
+        input_type: (data as any).input_type ?? 'consolidated',
       };
 
       expect(insertPayload.source).toBe('manual');
       expect(insertPayload.notes).toBeNull();
       expect(insertPayload.created_by).toBeNull();
       expect(insertPayload.confidence).toBe('medium');
+      expect(insertPayload.input_type).toBe('consolidated');
     });
 
     it('persists value = 0 correctly (not treated as falsy)', () => {

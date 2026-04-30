@@ -1,37 +1,19 @@
 /**
- * CollaboratorKpiStep - Etapa de Preenchimento de KPIs no Wizard Colaborador
- * 
- * Permite ao colaborador registrar valores para os KPIs que ele é responsável.
- * Segue o padrão fail-safe: erros no módulo KPI não bloqueiam o wizard.
- * 
- * Regra de negócio: Data de referência deve ser consolidada (dia anterior a hoje).
+ * CollaboratorKpiStep — Etapa de Atualização de KPIs (rito Colaborador)
+ *
+ * v3 (2026-04-30): migrado para `KpiValueEntryForm` (SSOT compartilhado com
+ * `AddKpiValueDialog`). O step agora reaproveita 100% dos campos canônicos
+ * (Valor, Data, **Tipo do input**, Confiança, Observações) — eliminando
+ * divergência com o módulo /kpis. A moldura do wizard (header com KPI/RAG,
+ * footer Voltar/Pular/Próximo, regra de notes obrigatórias quando RAG≠verde)
+ * permanece local.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { format, subDays, startOfDay, isBefore } from 'date-fns';
+import { useCallback, useMemo, useState } from 'react';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   ArrowLeft,
   ArrowRight,
@@ -46,11 +28,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
-import { validation } from '@/lib/validationMessages';
-import { RAG_STATUS_COLORS, CONFIDENCE_COLORS } from '@/lib/colors';
+import { KpiValueEntryForm } from '@/modules/kpis/components/shared';
+import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
-import type { KpiConfidenceLevel, KpiRagStatus } from '@/modules/kpis/types';
+import type { KpiInputType, KpiRagStatus } from '@/modules/kpis/types';
 import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
 // Re-export for convenience
@@ -66,27 +48,6 @@ export interface CollaboratorKpiStepProps {
 }
 
 // ============================================================
-// FORM SCHEMA
-// ============================================================
-
-const formSchema = z.object({
-  value: z.coerce.number({ required_error: validation.required('Valor') }),
-  reference_date: z.string()
-    .min(1, validation.required('Data de referência'))
-    .refine((date) => {
-      const selectedDate = startOfDay(new Date(date));
-      const today = startOfDay(new Date());
-      return isBefore(selectedDate, today);
-    }, { message: validation.consolidatedDate('Data de referência') }),
-  confidence: z.enum(['high', 'medium', 'low'], {
-    required_error: validation.requiredSelect('Confiança'),
-  }),
-  notes: z.string().max(500).optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-// ============================================================
 // HELPERS
 // ============================================================
 
@@ -95,12 +56,6 @@ const RAG_CONFIG: Record<KpiRagStatus, { label: string; className: string; icon:
   at_risk: { label: 'Em risco', className: RAG_STATUS_COLORS.yellow.badge, icon: AlertTriangle },
   off_track: { label: 'Fora da meta', className: RAG_STATUS_COLORS.red.badge, icon: AlertTriangle },
   no_data: { label: 'Sem dados', className: 'bg-muted text-muted-foreground', icon: BarChart3 },
-};
-
-const CONFIDENCE_CONFIG: Record<KpiConfidenceLevel, { label: string; emoji: string }> = {
-  high: { label: 'Alta', emoji: '🟢' },
-  medium: { label: 'Média', emoji: '🟡' },
-  low: { label: 'Baixa', emoji: '🔴' },
 };
 
 // v3.0.0: labels alinhados a KpiFrequencyValue (split consolidation × update).
@@ -113,6 +68,8 @@ const FREQUENCY_LABELS: Record<string, string> = {
   semiannual: 'Semestral',
   annual: 'Anual',
 };
+
+const FORM_ID = 'collaborator-kpi-form';
 
 // ============================================================
 // COMPONENT
@@ -127,32 +84,19 @@ export function CollaboratorKpiStep({
   onBack,
 }: CollaboratorKpiStepProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Data máxima permitida: ontem (dados consolidados)
-  const maxDate = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      value: '' as unknown as number, // Start empty to avoid controlled/uncontrolled warning
-      reference_date: maxDate,
-      confidence: 'medium',
-      notes: '',
-    },
-  });
-  
-  const watchedValue = form.watch('value');
-  
+  const [currentValue, setCurrentValue] = useState<number | undefined>(undefined);
+  const [currentInputType, setCurrentInputType] = useState<KpiInputType>('consolidated');
+
   // Estimar RAG status baseado no valor inserido
   const estimatedRag = useMemo((): KpiRagStatus | null => {
-    if (watchedValue === undefined || watchedValue === null || kpi.target_value === null) {
+    if (currentValue === undefined || currentValue === null || kpi.target_value === null) {
       return null;
     }
-    
+
     const target = kpi.target_value;
-    const value = watchedValue;
+    const value = currentValue;
     const direction = kpi.direction;
-    
+
     let percentOfTarget: number;
     if (direction === 'up') {
       percentOfTarget = target > 0 ? (value / target) * 100 : 0;
@@ -163,60 +107,60 @@ export function CollaboratorKpiStep({
       const diff = Math.abs(value - target);
       percentOfTarget = target > 0 ? ((target - diff) / target) * 100 : 100;
     }
-    
+
     if (percentOfTarget >= 70) return 'on_track';
     if (percentOfTarget >= 40) return 'at_risk';
     return 'off_track';
-  }, [watchedValue, kpi.target_value, kpi.direction]);
-  
+  }, [currentValue, kpi.target_value, kpi.direction]);
+
   // Notes obrigatórias para RAG amarelo/vermelho
-  const notesRequired = estimatedRag && estimatedRag !== 'on_track';
-  
-  const onSubmit = useCallback(async (values: FormValues) => {
-    // Validar notes se RAG não é verde
-    if (notesRequired && (!values.notes || values.notes.trim().length === 0)) {
-      form.setError('notes', {
-        type: 'manual',
-        message: 'Justificativa obrigatória para indicadores fora da meta',
-      });
-      // Focus the notes field so the user sees the error
-      setTimeout(() => form.setFocus('notes'), 50);
-      return;
-    }
-    
-    setIsSubmitting(true);
-    try {
-      onComplete({
-        kpiId: kpi.id,
-        // Onda 4 Fase 3: kpiName não é mais gravado — readers resolvem via lookup por kpiId.
-        previousValue: kpi.latest_value,
-        newValue: values.value,
-        referenceDate: values.reference_date,
-        confidence: values.confidence,
-        notes: values.notes,
-        skipped: false,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [onComplete, kpi, notesRequired, form]);
-  
+  const notesRequired = !!estimatedRag && estimatedRag !== 'on_track';
+
+  // Calcular variação se houver valor anterior
+  const valueChange = useMemo(() => {
+    if (currentValue === undefined || kpi.latest_value === null) return null;
+    return currentValue - kpi.latest_value;
+  }, [currentValue, kpi.latest_value]);
+
+  const handleValidSubmit = useCallback(
+    async (values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string; confidence?: 'high' | 'medium' | 'low' }) => {
+      // Validação extra de rito: notes obrigatória quando RAG ≠ verde
+      if (notesRequired && (!values.notes || values.notes.trim().length === 0)) {
+        // Sinaliza visualmente — o KpiValueEntryForm já aplica border-warning + asterisco.
+        // Aqui apenas bloqueamos o avanço.
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        onComplete({
+          kpiId: kpi.id,
+          // Onda 4 Fase 3: kpiName não é mais gravado — readers resolvem via lookup por kpiId.
+          previousValue: kpi.latest_value,
+          newValue: values.value,
+          referenceDate: values.reference_date,
+          inputType: values.input_type,
+          confidence: values.confidence ?? 'medium',
+          notes: values.notes,
+          skipped: false,
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [onComplete, kpi, notesRequired],
+  );
+
   const handleSkip = useCallback(() => {
     onSkip();
   }, [onSkip]);
-  
+
   const ragConfig = RAG_CONFIG[kpi.latest_rag_status];
   const RagIcon = ragConfig.icon;
-  
-  // Calcular variação se houver valor anterior
-  const valueChange = useMemo(() => {
-    if (watchedValue === undefined || kpi.latest_value === null) return null;
-    return watchedValue - kpi.latest_value;
-  }, [watchedValue, kpi.latest_value]);
 
   // v2.83.0: Get owner name for contributor clarity message
-  const ownerName = (kpi as any).owner_name || null;
-  const isContributor = (kpi as any).userRole === 'contributor';
+  const ownerName = (kpi as { owner_name?: string | null }).owner_name || null;
+  const isContributor = (kpi as { userRole?: string }).userRole === 'contributor';
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -244,18 +188,18 @@ export function CollaboratorKpiStep({
               </p>
             </div>
           </div>
-          
+
           <Badge variant="outline" className="gap-1">
             <Calendar className="h-3 w-3" />
             {kpi.update_frequency ? (FREQUENCY_LABELS[kpi.update_frequency] ?? kpi.update_frequency) : '—'}
           </Badge>
         </div>
-        
+
         {/* v2.83.0: Contributor clarity message */}
         {isContributor && ownerName && (
           <div className="mt-3 p-3 rounded-lg bg-info-muted border border-info/30">
             <p className="text-xs text-info-muted-foreground">
-              <strong>Você é contribuidor de dados.</strong> Você está atualizando este indicador 
+              <strong>Você é contribuidor de dados.</strong> Você está atualizando este indicador
               porque contribui com os dados operacionais. O responsável final por este KPI é{' '}
               <span className="font-medium">{ownerName}</span>.
             </p>
@@ -280,7 +224,7 @@ export function CollaboratorKpiStep({
               )}
             </div>
           </div>
-          
+
           <div className="text-right flex-shrink-0">
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Target className="h-4 w-4" />
@@ -298,7 +242,7 @@ export function CollaboratorKpiStep({
             )}
           </div>
         </div>
-        
+
         {/* Recovery Protocol (se existir) */}
         {kpi.recovery_protocol && kpi.latest_rag_status !== 'on_track' && (
           <div className="mt-3 p-2 rounded bg-warning-muted border border-warning/30">
@@ -312,126 +256,71 @@ export function CollaboratorKpiStep({
         )}
       </div>
 
-      {/* Form */}
+      {/* Form (SSOT compartilhado com /kpis) */}
       <div className="flex-1 overflow-auto px-6 py-4">
-        <Form {...form}>
-          <form id="kpi-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Value Input */}
-            <FormField
-              control={form.control}
-              name="value"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Novo Valor ({kpi.unit})</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder={`Ex: ${kpi.target_value || 100}`}
-                        className="pr-20"
-                        {...field}
-                      />
-                      {valueChange !== null && (
-                        <div className={cn(
-                          'absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm font-medium',
-                          valueChange > 0 ? 'text-success' : valueChange < 0 ? 'text-destructive' : 'text-muted-foreground'
-                        )}>
-                          {valueChange > 0 ? <TrendingUp className="h-4 w-4" /> : valueChange < 0 ? <TrendingDown className="h-4 w-4" /> : null}
-                          {valueChange > 0 ? '+' : ''}{valueChange.toFixed(2)}
-                        </div>
-                      )}
-                    </div>
-                  </FormControl>
-                  {estimatedRag && (
-                    <p className={cn(
-                      'text-xs',
-                      estimatedRag === 'on_track' ? 'text-success' : 
-                      estimatedRag === 'at_risk' ? 'text-warning' : 'text-destructive'
-                    )}>
-                      Status estimado: {RAG_CONFIG[estimatedRag].label}
-                    </p>
+        <KpiValueEntryForm
+          unit={kpi.unit}
+          consolidationFrequency={kpi.consolidation_frequency ?? null}
+          updateFrequency={kpi.update_frequency ?? null}
+          placeholderValue={kpi.target_value ?? 100}
+          confidenceMode="always-visible"
+          defaultConfidence="medium"
+          formId={FORM_ID}
+          notesRequired={notesRequired}
+          notesPlaceholder={
+            notesRequired
+              ? 'Explique o desvio da meta (obrigatório para indicadores amarelo/vermelho)'
+              : 'Contexto adicional sobre este valor...'
+          }
+          notesHeaderSlot={
+            notesRequired ? (
+              <p className="text-xs text-warning">
+                Justificativa obrigatória para indicadores fora da meta
+              </p>
+            ) : null
+          }
+          valueAdornmentSlot={
+            <div className="flex items-center justify-between gap-2 mt-1">
+              {valueChange !== null && (
+                <span
+                  className={cn(
+                    'flex items-center gap-1 text-sm font-medium',
+                    valueChange > 0
+                      ? 'text-success'
+                      : valueChange < 0
+                        ? 'text-destructive'
+                        : 'text-muted-foreground',
                   )}
-                  <FormMessage />
-                </FormItem>
+                >
+                  {valueChange > 0 ? (
+                    <TrendingUp className="h-4 w-4" />
+                  ) : valueChange < 0 ? (
+                    <TrendingDown className="h-4 w-4" />
+                  ) : null}
+                  {valueChange > 0 ? '+' : ''}
+                  {valueChange.toFixed(2)}
+                </span>
               )}
-            />
-            
-            {/* Reference Date */}
-            <FormField
-              control={form.control}
-              name="reference_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data de Referência</FormLabel>
-                  <FormControl>
-                    <Input type="date" max={maxDate} {...field} />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Informe o último dia do período consolidado (até ontem)
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* Confidence */}
-            <FormField
-              control={form.control}
-              name="confidence"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confiança no Valor</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a confiança" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.entries(CONFIDENCE_CONFIG).map(([value, config]) => (
-                        <SelectItem key={value} value={value}>
-                          {config.emoji} {config.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* Notes */}
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Observações {notesRequired && <span className="text-destructive">*</span>}
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder={
-                        notesRequired
-                          ? 'Explique o desvio da meta (obrigatório para indicadores amarelo/vermelho)'
-                          : 'Contexto adicional sobre este valor...'
-                      }
-                      className={cn(notesRequired && 'border-warning')}
-                      {...field}
-                    />
-                  </FormControl>
-                  {notesRequired && (
-                    <p className="text-xs text-warning">
-                      Justificativa obrigatória para indicadores fora da meta
-                    </p>
+              {estimatedRag && (
+                <span
+                  className={cn(
+                    'text-xs ml-auto',
+                    estimatedRag === 'on_track'
+                      ? 'text-success'
+                      : estimatedRag === 'at_risk'
+                        ? 'text-warning'
+                        : 'text-destructive',
                   )}
-                  <FormMessage />
-                </FormItem>
+                >
+                  Status estimado: {RAG_CONFIG[estimatedRag].label}
+                </span>
               )}
-            />
-          </form>
-        </Form>
+            </div>
+          }
+          onValueChange={setCurrentValue}
+          onInputTypeChange={setCurrentInputType}
+          onValidSubmit={handleValidSubmit}
+        />
       </div>
 
       {/* Footer */}
@@ -444,13 +333,13 @@ export function CollaboratorKpiStep({
           </div>
           <Progress value={((currentIndex + 1) / totalCount) * 100} className="h-1.5" />
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={onBack} size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>
-          
+
           <Button
             variant="ghost"
             onClick={handleSkip}
@@ -460,12 +349,13 @@ export function CollaboratorKpiStep({
             <SkipForward className="h-4 w-4 mr-1" />
             Pular
           </Button>
-          
+
           <Button
             type="submit"
-            form="kpi-form"
+            form={FORM_ID}
             className="flex-1"
             disabled={isSubmitting}
+            data-input-type={currentInputType}
           >
             {currentIndex < totalCount - 1 ? (
               <>

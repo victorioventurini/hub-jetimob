@@ -259,6 +259,11 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-sm font-bold">{kpi.newValue}</span>
+                          {kpi.inputType && (
+                            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                              {kpi.inputType === 'consolidated' ? 'Consolidado' : 'Parcial'}
+                            </Badge>
+                          )}
                           <Badge 
                             variant="secondary"
                             className={cn(
