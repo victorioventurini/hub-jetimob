@@ -212,7 +212,6 @@ export function useKpiMutations() {
       reference_date: string;
       notes?: string;
       input_type?: 'partial' | 'consolidated';
-      confidence?: 'high' | 'medium' | 'low';
     }) => {
       const client = assertSupabaseClient(supabase, "updateKpiValue");
       const { id, kpi_id, ...updateData } = data;
@@ -222,7 +221,6 @@ export function useKpiMutations() {
         notes: updateData.notes || null,
       };
       if (updateData.input_type) updatePayload.input_type = updateData.input_type;
-      if (updateData.confidence) updatePayload.confidence = updateData.confidence;
       const { data: result, error } = await client
         .from("kpi_values")
         .update(updatePayload)

@@ -165,7 +165,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         .from("kpi_values")
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, confidence, rag_status
+          period_start, period_end, period_label, rag_status
         `)
         .in(
           "kpi_id",
@@ -206,7 +206,6 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
     const mappedValues: KpiValue[] = values.map(v => ({
       ...v,
       source: mapSource(v.source),
-      confidence: v.confidence || 'medium',
       rag_status: v.rag_status as KpiValue['rag_status'],
     }));
 
@@ -335,7 +334,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
     },
   });
 
-  // Add KPI value (supports v2.1 confidence field)
+  // Add KPI value
   const addKpiValue = useMutation({
     mutationFn: async (data: {
       kpi_id: string;
@@ -344,7 +343,6 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       source?: 'manual' | 'integration' | 'calculation';
       notes?: string;
       created_by?: string;
-      confidence?: 'high' | 'medium' | 'low';
       input_type?: 'partial' | 'consolidated';
     }) => {
       const client = assertSupabaseClient(supabase, "addKpiValue");
@@ -356,9 +354,6 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         notes: data.notes || null,
         created_by: data.created_by || null,
         input_type: data.input_type ?? 'consolidated',
-        // Só envia confidence se explicitamente informado — caso contrário,
-        // o trigger derive_kpi_value_confidence aplica a regra padrão.
-        ...(data.confidence ? { confidence: data.confidence } : {}),
       };
       const { data: result, error } = await client
         .from("kpi_values")
@@ -458,7 +453,7 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_values")
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, confidence, rag_status, input_type
+          period_start, period_end, period_label, rag_status, input_type
         `)
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: false });
@@ -497,7 +492,6 @@ export function useKpiDetail(kpiId: string) {
       return rawValues.map((value) => ({
         ...value,
         source: mapSource(value.source),
-        confidence: value.confidence || "medium",
         rag_status: value.rag_status as KpiValue["rag_status"],
         created_by_user: value.created_by ? userMap[value.created_by] || null : null,
       }));
