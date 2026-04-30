@@ -13,6 +13,26 @@ Registro consolidado das varreduras `@deprecated` e do que foi limpo a cada onda
 - **Total de marcações `@deprecated`:** 52 (após Onda 6 Frente C)
 - **Próxima auditoria recomendada:** após 2026-07-30 (T0 da janela Onda 4 Fase 5).
 
+## Onda 6 — Frente C: Auditoria pós-Wave 7 (2026-04-30)
+
+### Migrado (1 alias)
+
+- **`QbrPostKrAdjustment` → `QbrKrAdjustment`**: 8 referências em `QbrPostOkrPromotionStep.tsx` migradas para o canônico; alias removido de `src/modules/okrs/types/wizard/qbr.ts`.
+
+### Avaliados e mantidos (sem ganho seguro nesta onda)
+
+| Item | Razão |
+|---|---|
+| Permissions V1 (4 tabelas + 4 hooks) | Wave 8/9 — drop coordenado planejado, READ-ONLY por design. |
+| KPI `frequency`/`category` | Bloqueado por DB (NOT NULL) e regressão visual de filtros. |
+| Onda 4 snapshots (16 campos) | Janela de observação até 2026-07-30. |
+| Analysis legacy shapes (5 campos) | Risco de dados históricos JSONB; precisa auditoria de produção. |
+| `qbr-pre-summary.zombieCandidates` | 11 lugares estruturais; remoção exige migração coordenada. |
+| `queryKeys.ts` barrel | 204 consumidores; comment é guidance para novos usos. |
+| `WIZARD_TYPE_LABELS` re-export | 7 consumidores ativos via `useRitualHistory`. |
+| `MilestoneList.onLinkKr` | Assinatura defensiva, doc-only. |
+| `profiles.job_title`, `send_test_notification` v1 (DB) | Baixo uso/baixa prioridade. |
+
 ## Onda 6 — Frente B: DeleteConfirmDialog → ConfirmDialog (2026-04-30)
 
 ### Migrado (15 consumidores + catálogo + shim)
