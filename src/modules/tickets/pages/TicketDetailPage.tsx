@@ -405,6 +405,8 @@ export default function TicketDetailPage() {
                             onTogglePin={(msgId, pin) => pinMessage.mutate({ messageId: msgId, ticketId: ticket.id, pin })}
                             isPinning={pinMessage.isPending}
                             onReply={(msg) => setReplyingTo(msg)}
+                            messagesById={messagesById}
+                            attachmentsByMessage={attachmentsByMessage}
                             onScrollToMessage={(messageId) => {
                               const el = document.getElementById(`message-${messageId}`);
                               if (el) {
