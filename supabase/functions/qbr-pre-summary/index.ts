@@ -315,7 +315,7 @@ serve(async (req) => {
     const cycleName = cycleInfo?.name || 'Ciclo';
 
     // Build agent context
-    interface KrSnapshot { krTitle: string; state: string; finalProgress: number; paceStatus: string }
+    interface KrSnapshot { krId?: string; krTitle?: string; state: string; finalProgress: number; paceStatus: string }
     interface KpiSnapshot {
       name: string;
       currentValue: number | null;
@@ -326,12 +326,31 @@ serve(async (req) => {
     }
     interface DecisionSnapshot { text: string; category: string }
     const snap = (snapshotData ?? {}) as Record<string, unknown>;
+
+    // Onda 4 Fase 4: resolve KR titles via lookup (writers Fase 3 não gravam mais krTitle).
+    // Fallback ao snapshot legado quando lookup miss.
+    const krSnapshots = (snap.krFinalStates as KrSnapshot[] | undefined) || [];
+    const krIds = krSnapshots.map((kr) => kr.krId).filter((v): v is string => Boolean(v));
+    const krTitleById = new Map<string, string>();
+    if (krIds.length > 0) {
+      const { data: krRows } = await serviceClient
+        .from('okr_team_key_results')
+        .select('id, title')
+        .in('id', krIds);
+      for (const row of krRows || []) {
+        if (row.id && row.title) krTitleById.set(row.id, row.title);
+      }
+    }
+
     const agentContext: QbrPreAgentContext = {
       buName,
       teamName,
       cycleName,
-      krFinalStates: ((snap.krFinalStates as KrSnapshot[] | undefined) || []).map((kr) => ({
-        krTitle: kr.krTitle, state: kr.state, finalProgress: kr.finalProgress, paceStatus: kr.paceStatus,
+      krFinalStates: krSnapshots.map((kr) => ({
+        krTitle: (kr.krId && krTitleById.get(kr.krId)) || kr.krTitle || '(KR removido)',
+        state: kr.state,
+        finalProgress: kr.finalProgress,
+        paceStatus: kr.paceStatus,
       })),
       criticalKpis: (((snap.kpiSnapshot ?? snap.kpiSnapshots) as KpiSnapshot[] | undefined) || [])
         .filter((k) => k.ragStatus === 'red' || k.ragStatus === 'yellow')

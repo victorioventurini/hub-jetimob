@@ -129,3 +129,27 @@ A maioria dos 16 campos `@deprecated` Fase 1 vive em tipos derivados em runtime 
 
 ### Memory
 - `mem://standards/wizard-snapshot-denormalized-fields-deprecation` atualizada (versão Fases 1-3).
+
+---
+
+## Onda 4 Fase 4 — Edge functions param de ler denormalizados ✅ CONCLUÍDA
+
+### Entregue
+
+**Edge functions migradas (2):**
+- `qbr-pre-summary/index.ts` — adicionado lookup em `okr_team_key_results` por `krId` para resolver `krTitle` (linhas 318-355). Fallback ao `kr.krTitle` legado preservado, com `'(KR removido)'` como último recurso.
+- `collaborator-checkin-summary/index.ts` — adicionado lookup paralelo (`Promise.all`) em `okr_team_key_results` por `krId` + `kpi_metrics` por `kpiId` (linhas 390-440). Fallback triplo: lookup → snapshot legado (`krTitle`/`title` ou `name`/`kpiName`) → `'(KR removido)'`/`'(KPI removido)'`.
+
+**Edge functions inspecionadas e fora de escopo:**
+- `mbr-summary`: passa snapshot inteiro como JSON ao LLM (não desestrutura).
+- `qbr-clevel-learnings-summary`: `teamName` vem do payload do cliente.
+- `qbr-executive-report`, `okr-org-health-review`, `weekly-curate-opening`, `okr-construction-review`: nomes em inputs/outputs derivados em runtime, sem leitura de snapshot.
+
+### Validação
+
+- `bunx vitest run src/modules/okrs`: **1769/1769 passing** (suíte frontend não regredida).
+- Edge functions deployam automaticamente via Lovable Cloud.
+
+### Memory
+
+- `mem://standards/wizard-snapshot-denormalized-fields-deprecation` atualizada com lista de edge functions migradas (Fase 4).
