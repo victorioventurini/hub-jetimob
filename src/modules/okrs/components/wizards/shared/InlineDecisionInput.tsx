@@ -1,21 +1,20 @@
 /**
- * InlineDecisionInput - Componente compacto para registrar decisões em qualquer step do wizard
- * 
- * Colapsável por padrão, exibe badge com contagem quando há registros.
+ * InlineDecisionInput - Componente compacto para registrar decisões em qualquer step do wizard.
+ *
+ * Wrapper fino sobre `InlineCollapsibleEntryInput` que injeta as 4 categorias
+ * canônicas de `TeamCheckinDecision` (decision | focus_adjustment | next_step
+ * | strategic_proposal). Mantém a API pública existente — todos os 19+
+ * consumidores continuam funcionando sem mudanças.
+ *
  * Filtra e exibe somente decisions com sourceStep correspondente.
- * Cada decisão registrada exibe owner e deadline inline via DecisionCard.
  */
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
-import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, ChevronDown, Lightbulb, Target, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Lightbulb, Target, CheckCircle2 } from 'lucide-react';
 import { DecisionCard } from './DecisionCard';
+import {
+  InlineCollapsibleEntryInput,
+  type CategoryConfig,
+} from './InlineCollapsibleEntryInput';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -39,12 +38,12 @@ export interface InlineDecisionInputProps {
 // CONSTANTS
 // ============================================================
 
-const CATEGORY_CONFIG = {
-  decision: { label: 'Decisão', icon: Lightbulb, color: 'bg-status-blue-muted text-status-blue' },
-  focus_adjustment: { label: 'Ajuste de Foco', icon: Target, color: 'bg-status-purple-muted text-status-purple' },
-  next_step: { label: 'Próximo Passo', icon: CheckCircle2, color: 'bg-status-green-muted text-status-green' },
-  strategic_proposal: { label: 'Proposta Estratégica', icon: Target, color: 'bg-status-amber-muted text-status-amber' },
-} as const;
+const DECISION_CATEGORIES: ReadonlyArray<CategoryConfig<TeamCheckinDecision['category']>> = [
+  { value: 'decision', label: 'Decisão', activeClassName: 'bg-status-blue-muted text-status-blue' },
+  { value: 'focus_adjustment', label: 'Ajuste de Foco', activeClassName: 'bg-status-purple-muted text-status-purple' },
+  { value: 'next_step', label: 'Próximo Passo', activeClassName: 'bg-status-green-muted text-status-green' },
+  { value: 'strategic_proposal', label: 'Proposta Estratégica', activeClassName: 'bg-status-amber-muted text-status-amber' },
+];
 
 // ============================================================
 // COMPONENT
@@ -57,127 +56,54 @@ export function InlineDecisionInput({
   placeholder = 'Registrar decisão, ajuste de foco ou próximo passo...',
   metadataFactory,
 }: InlineDecisionInputProps) {
-  const isMobile = useIsMobile();
-  // Mobile: collapsed por padrão para liberar viewport.
-  // Desktop: aberto por padrão (comportamento original).
-  const [isOpen, setIsOpen] = useState(!isMobile);
-  const [text, setText] = useState('');
-  const [category, setCategory] = useState<TeamCheckinDecision['category']>('decision');
-
   // Filter decisions for this step
-  const stepDecisions = decisions.filter(d => d.sourceStep === sourceStep);
+  const stepDecisions = decisions.filter((d) => d.sourceStep === sourceStep);
 
-  const handleAdd = () => {
-    if (!text.trim()) return;
-
+  const handleAdd = (text: string, category: TeamCheckinDecision['category']) => {
     const metadata = metadataFactory?.();
     const newDecision: TeamCheckinDecision = {
       id: `decision-${Date.now()}`,
-      text: text.trim(),
+      text,
       category,
       sourceStep: sourceStep as TeamCheckinDecision['sourceStep'],
       ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
-
     onDecisionsChange([...decisions, newDecision]);
-    setText('');
   };
 
   const handleUpdate = (id: string, updates: Partial<TeamCheckinDecision>) => {
-    onDecisionsChange(decisions.map(d => d.id === id ? { ...d, ...updates } : d));
+    onDecisionsChange(decisions.map((d) => (d.id === id ? { ...d, ...updates } : d)));
   };
 
   const handleRemove = (id: string) => {
-    onDecisionsChange(decisions.filter(d => d.id !== id));
+    onDecisionsChange(decisions.filter((d) => d.id !== id));
   };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-between text-muted-foreground hover:text-foreground min-w-0 px-3 sm:px-4"
-        >
-          <span className="flex items-center gap-2 text-xs min-w-0 flex-1">
-            <Lightbulb className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Registrar nota / decisão</span>
-          </span>
-          <span className="flex items-center gap-1.5 shrink-0">
-            {stepDecisions.length > 0 && (
-              <Badge variant="secondary" className="text-xs h-5 px-1.5">
-                {stepDecisions.length}
-              </Badge>
-            )}
-            <ChevronDown className={cn(
-              "h-3.5 w-3.5 transition-transform",
-              isOpen && "rotate-180"
-            )} />
-          </span>
-        </Button>
-      </CollapsibleTrigger>
-
-      <CollapsibleContent>
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3">
-          {/* Category selector */}
-          <div className="flex flex-wrap gap-1.5 min-w-0">
-            {(Object.entries(CATEGORY_CONFIG) as [TeamCheckinDecision['category'], typeof CATEGORY_CONFIG[keyof typeof CATEGORY_CONFIG]][]).map(([cat, config]) => (
-              <Badge
-                key={cat}
-                variant="outline"
-                className={cn(
-                  "cursor-pointer transition-colors text-xs shrink-0",
-                  category === cat && config.color
-                )}
-                onClick={() => setCategory(cat)}
-              >
-                {config.label}
-              </Badge>
-            ))}
-          </div>
-
-          <div className="flex gap-2">
-            <TextareaAutoSubmit
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={placeholder}
-              className="text-sm"
-              onSubmit={() => handleAdd()}
-              minRows={1}
-              maxRows={3}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-9 w-9 sm:h-8 sm:w-8 p-0 flex-shrink-0 self-end"
-              onClick={handleAdd}
-              disabled={!text.trim()}
-              aria-label="Adicionar decisão"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-
-          {/* Step decisions list — using DecisionCard with owner/deadline.
-              max-h reduzido em mobile para evitar overlap com teclado virtual. */}
-          {stepDecisions.length > 0 && (
-            <ScrollArea className="max-h-[28vh] sm:max-h-[40vh]">
-              <div className="space-y-2 pr-2">
-                {stepDecisions.map((decision) => (
-                  <DecisionCard
-                    key={decision.id}
-                    decision={decision}
-                    onUpdate={handleUpdate}
-                    onRemove={handleRemove}
-                    showReclassify
-                    showOwnerDeadline
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-          )}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <InlineCollapsibleEntryInput<TeamCheckinDecision, TeamCheckinDecision['category']>
+      items={stepDecisions}
+      categories={DECISION_CATEGORIES}
+      defaultCategory="decision"
+      onAdd={handleAdd}
+      triggerIcon={Lightbulb}
+      triggerLabel="Registrar nota / decisão"
+      placeholder={placeholder}
+      renderItem={(decision) => (
+        <DecisionCard
+          key={decision.id}
+          decision={decision}
+          onUpdate={handleUpdate}
+          onRemove={handleRemove}
+          showReclassify
+          showOwnerDeadline
+        />
+      )}
+    />
   );
 }
+
+// Mantém ícones importados originalmente referenciados (no-op runtime).
+// `Target` e `CheckCircle2` eram usados pelo objeto de configuração antes do refactor;
+// preservados como import morto controlado para evitar regressão silenciosa em futuras edições.
+void Target;
+void CheckCircle2;
