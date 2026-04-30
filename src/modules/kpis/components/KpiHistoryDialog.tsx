@@ -62,7 +62,8 @@ export interface KpiHistoryDialogData {
   current_value: number | null;
   indicator_type: KpiIndicatorType;
   rag_status: KpiRagStatus;
-  frequency?: KpiFrequency;
+  /** @deprecated v3.0.0 — preserve apenas para compat de callers; use update_frequency. */
+  frequency?: KpiFrequencyValue;
   consolidation_frequency?: import('../types').KpiFrequencyValue | null;
   update_frequency?: import('../types').KpiFrequencyValue | null;
   bu_id?: string;
