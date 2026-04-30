@@ -31,7 +31,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIdentity } from '@/hooks/useIdentity';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
+
 
 // Step components
 import { TeamOkrIntroStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrIntroStep';
@@ -245,20 +245,8 @@ export default function OkrCreationPage() {
     }));
   }, [orgOkrsContext]);
   
-  // Fetch all active team members (regardless of HUB login status)
-  const { data: teamMembersData = [] } = useBuUsersDirectory({
-    teamId: teamIdParam ?? undefined,
-    enabled: !!teamIdParam,
-  });
-  
   const strategicKpis: StrategicKpi[] = useMemo(() => [], []);
-  const teamMembers: TeamMember[] = useMemo(() => {
-    return teamMembersData.map(member => ({
-      id: member.id,
-      fullName: member.display_name || [member.first_name, member.last_name].filter(Boolean).join(' ') || 'Usuário',
-      avatarUrl: member.photo_url ?? undefined,
-    }));
-  }, [teamMembersData]);
+
   
   // Create bundle mutation
   const createBundle = useCreateTeamOkrBundle();
