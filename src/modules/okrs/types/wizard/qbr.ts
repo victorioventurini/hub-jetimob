@@ -297,12 +297,6 @@ export interface QbrPostGovernanceChecklist {
   nextCycleOkrsActive: boolean;
 }
 
-/**
- * @deprecated Use `QbrKrAdjustment` (canônico). Alias mantido para
- * retrocompat de imports antigos.
- */
-export type QbrPostKrAdjustment = QbrKrAdjustment;
-
 /** Snapshot do wizard pós-QBR */
 export interface QbrPostSnapshot {
   cycleId: string;
