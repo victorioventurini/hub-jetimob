@@ -1,76 +1,73 @@
-## Plano — Sugestões de pauta nos ritos pré-MBR e pré-QBR (Fase 2/2)
+# Plano — Empilhar colaboradores em linhas de até 6 no Organograma
 
-Conclusão da feature iniciada na fase anterior. Componentes já existem (`InlineAgendaSuggestionInput`, `AgendaSuggestionsPrioritizer`, tipos `RitualAgendaSuggestion`, `agendaSuggestions` nos drafts). Falta integrar nos steps restantes, fazer o wiring nas páginas e exibir o priorizador no resumo.
+## Contexto
 
-### O que já está pronto (não tocar)
+No organograma (`/teams` → aba Organograma), quando um time tem muitos colaboradores (ex.: Tecnologia com 9+ pessoas), todos aparecem em uma única linha horizontal que estoura a largura da tela. Além disso, qualquer tentativa ingênua de "quebrar linha" gera uma cascata vertical que parece indicar que a pessoa de baixo se reporta à de cima — o que é incorreto: todos os colaboradores são pares (irmãos) sob o mesmo time pai.
 
-- Tipos: `RitualAgendaSuggestion`, `agendaSuggestions[]` em `MbrPreDraftData` e `QbrPreDraftData`.
-- Componentes shared: `InlineCollapsibleEntryInput`, `InlineAgendaSuggestionInput`, `AgendaSuggestionsPrioritizer`.
-- Steps QBR (Balance, KpiAnalysis, Learnings): já recebem props opcionais (`agendaSuggestions`, `onAgendaSuggestionsChange`, `agendaTriggerLabel`) e renderizam o input no `bottomFixed`.
-- Default data nos drafts já contém `agendaSuggestions: []`.
+## Objetivo
 
-### O que falta (esta fase)
+- Exibir no máximo **6 cards de colaboradores (`type: 'person'`) por linha**.
+- A partir do 7º, quebrar para uma nova linha.
+- Garantir que a apresentação visual deixe claro que **todos são irmãos** (pares) sob o mesmo nó pai — sem sugerir relação hierárquica vertical entre eles.
 
-#### 1. Steps MBR específicos (mesma extensão dos QBR)
-- `MbrPreHighlightsStep.tsx` — adicionar props opcionais de agenda + render no `bottomFixed`.
-- `MbrPreNextStepsStep.tsx` — idem.
+## Escopo
 
-(Os steps 1 e 2 do MBR-pré reusam `QbrBalanceStep` e `QbrKpiAnalysisStep`, que já aceitam as props.)
+Mudança puramente de UI/layout em **um único componente já centralizado**:
 
-#### 2. Wiring nas páginas
+- `src/modules/teams/components/organogram/OrganogramNode.tsx`
 
-**`MbrPrePage.tsx`** — passar para os 4 steps de captura:
-```ts
-agendaSuggestions={draft.data.agendaSuggestions ?? []}
-onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
-agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
+Não criar novos componentes — estender o existente conforme as instruções do projeto (não duplicar). Sem mudanças em tipos, hooks, queries, RLS ou dados.
+
+## Conformidade com TCR / docs canônicos
+
+- `WIZARDS_FRAMEWORK_BOUNDARY.md`: N/A (módulo Teams, não wizards).
+- `DEVELOPMENT_STANDARDS.md`: mudança UI-only, sem violar regras de BU/RLS/queries.
+- Componente único e centralizado (`OrganogramNode.tsx`) já é o SSOT da renderização — não há duplicação.
+- `BU_SCOPED_SUPABASE_RULES.md`: N/A (sem queries).
+- `QUERY_KEYS_STANDARD.md`: N/A.
+
+## Comportamento detalhado
+
+1. Ao renderizar `node.children`, separar:
+   - **`personChildren`**: filhos com `type === 'person'`.
+   - **`nonPersonChildren`**: áreas, times, subtimes, squads (mantêm o comportamento atual em linha única horizontal).
+
+2. Para `nonPersonChildren`: manter o layout atual (linha única horizontal com conector em "T" invertido).
+
+3. Para `personChildren`: agrupar em chunks de até **6 por linha** e renderizar como uma **grade de linhas empilhadas**, onde:
+   - Cada linha de pessoas é independente.
+   - Cada card de pessoa tem seu próprio conector vertical curto vindo de uma linha horizontal acima daquela linha.
+   - Não há conector vertical ligando uma pessoa à outra de outra linha — eliminando a falsa hierarquia.
+   - Entre linhas de pessoas há um espaçamento (`gap-y`) que reforça que são grupos paralelos sob o mesmo pai.
+
+4. Quando houver mistura de `nonPersonChildren` e `personChildren` sob o mesmo pai (raro, mas possível com squads + pessoas): renderizar primeiro a linha de não-pessoas, depois as linhas de pessoas empilhadas, ambas visualmente conectadas ao mesmo pai pelo conector vertical principal.
+
+## Layout visual esperado (Tecnologia com 9 colaboradores)
+
+```text
+                    [ Tecnologia ]
+                          │
+        ┌─────────────────┼─────────────────┐
+        │     │     │     │     │     │
+       [P1] [P2] [P3] [P4] [P5] [P6]
+        ┌─────┬─────┐
+        │     │     │
+       [P7] [P8] [P9]
 ```
 
-**`QbrPrePage.tsx`** — idem nos 4 steps de captura (Balance, KpiAnalysis, Learnings, OkrProposal), com label `"Registrar sugestão de pauta para o QBR"`.
+Cada linha de pessoas tem sua própria barra horizontal acima, ancorada ao centro da linha — não há linha vertical entre P1 e P7 (que seria interpretada como "P7 se reporta a P1").
 
-#### 3. Step OkrProposal (QBR) — adicionar suporte
-- `QbrOkrProposalStep.tsx` ainda não tem as props. Estender com o mesmo padrão dos demais steps QBR (props opcionais + `bottomFixed`). Sem mudar a lógica de proposta.
+## Detalhes técnicos
 
-#### 4. Summaries — integrar `AgendaSuggestionsPrioritizer`
+- Constante local `MAX_PERSONS_PER_ROW = 6` no topo do arquivo.
+- Helper `chunk<T>(arr: T[], size: number): T[][]` inline (não justifica utilitário compartilhado).
+- Reuso do mesmo padrão de conectores já presente no componente (linha vertical `w-px h-4 bg-border` + linha horizontal absoluta sobre os filhos).
+- Aplicar a lógica nos **dois locais** onde hoje renderizamos `node.children` em loop dentro de `OrganogramNodeCard` (apenas o branch normal — o `CeoCard` só tem áreas como filhos, não precisa de mudança).
+- Sem mudanças em props da API pública dos componentes.
+- Manter `memo`, manter acessibilidade e foco.
 
-**`MbrPreSummary.tsx`**:
-- Adicionar import do `AgendaSuggestionsPrioritizer`.
-- Renderizar antes da seção de decisões (ou perto do final, antes do footer):
-```tsx
-<AgendaSuggestionsPrioritizer
-  suggestions={draftData.agendaSuggestions ?? []}
-  onSuggestionsChange={...}
-  ritualLabel="MBR"
-/>
-```
-- Adicionar prop `onAgendaSuggestionsChange` ao `MbrPreSummaryProps` e propagar em `MbrPrePage` (`updateDraft({ agendaSuggestions: next })`).
+## Verificação
 
-**`QbrPreSummary.tsx`**: idêntico, com `ritualLabel="QBR"`. Mesma adição de prop e wiring na page.
-
-#### 5. Persistência no completar
-- Os `agendaSuggestions` já fazem parte do `draft.data` (JSONB), então o snapshot atual em `reflection_data` já vai gravá-los automaticamente — sem mudanças no `handleComplete` nem migrations.
-- Apenas um log/toast mais descritivo é opcional; manter o fluxo atual.
-
-### Arquivos editados
-
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep.tsx`
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep.tsx`
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx`
-- `src/modules/okrs/components/wizards/qbr-pre/QbrOkrProposalStep.tsx`
-- `src/modules/okrs/components/wizards/qbr-pre/QbrPreSummary.tsx`
-- `src/modules/okrs/pages/MbrPrePage.tsx`
-- `src/modules/okrs/pages/QbrPrePage.tsx`
-
-### Garantias de design / arquitetura
-
-- **Não duplica componentes**: 100% reutiliza `InlineAgendaSuggestionInput` e `AgendaSuggestionsPrioritizer` já criados.
-- **Vocabulário canônico**: categorias `RitualBlock` (Performance/Projetos/Pessoas) — SSOT em `vocabulary.ts`.
-- **BU isolation**: dado é mantido no draft do wizard; persistência segue o mesmo path do `agendaSuggestions` no JSONB do `reflection_data` que já obedece RLS por `bu_id`.
-- **Sem migrations**: nenhuma tabela nova; sem CHECK constraints.
-- **Tokens semânticos**: prioritizer já usa `border-status-amber/30`, `bg-status-amber-muted/40`, `border-primary/40` etc.
-- **Limite de 3 priorizações**: enforced no `AgendaSuggestionsPrioritizer` (checkbox disabled na 4ª tentativa + banner informativo quando 0 marcadas).
-- **Compatibilidade retro**: drafts antigos sem `agendaSuggestions` resolvem com `?? []` em todos os pontos.
-
-### Fora de escopo
-
-- Nenhuma alteração em `MbrPage` (rito ao vivo) ou `QbrPage`. As pautas priorizadas serão consumidas por esses ritos numa fase futura — esta entrega cobre apenas captura + priorização nos PRÉ.
+- Build automático.
+- Inspeção visual no preview em `/teams` na aba Organograma com o time Tecnologia (9+ pessoas) e em times menores (≤6 pessoas) para garantir que o comportamento antigo continua idêntico quando não há overflow.
+- Confirmar que a mudança não quebra o zoom (`OrganogramChart` continua intocado).

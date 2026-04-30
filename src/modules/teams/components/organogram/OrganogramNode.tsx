@@ -18,6 +18,17 @@ interface OrganogramNodeCardProps {
   expansionMode?: 'default' | 'all' | 'none';
 }
 
+const MAX_PERSONS_PER_ROW = 6;
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  if (size <= 0) return [arr];
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+}
+
 const TYPE_CONFIG = {
   ceo: {
     icon: Crown,
@@ -260,40 +271,53 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
       </Link>
 
       {/* Children */}
-      {hasChildren && isExpanded && (
-        <div className="flex flex-col items-center mt-3">
-          {/* Connector line down */}
-          <div className="w-px h-4 bg-border" />
-          
-          {/* Children container */}
-          <div className="flex flex-nowrap justify-center gap-3 relative">
-            {/* Horizontal line connecting children */}
-            {node.children.length > 1 && (
-              <div 
-                className="absolute top-0 h-px bg-border"
-                style={{
-                  left: 'calc(50% - ' + ((node.children.length - 1) * 50) + '%)',
-                  right: 'calc(50% - ' + ((node.children.length - 1) * 50) + '%)',
-                  minWidth: '50%',
-                }}
-              />
-            )}
-            
-            {node.children.map((child) => (
-              <div key={child.id} className="flex flex-col items-center">
-                {/* Connector line up */}
-                <div className="w-px h-4 bg-border" />
-                <OrganogramNodeWrapper 
-                  node={child} 
-                  parentColor={areaColor}
-                  depth={depth + 1}
-                  expansionMode={expansionMode}
+      {hasChildren && isExpanded && (() => {
+        const personChildren = node.children.filter((c) => c.type === 'person');
+        const nonPersonChildren = node.children.filter((c) => c.type !== 'person');
+        const personRows = chunk(personChildren, MAX_PERSONS_PER_ROW);
+
+        const renderRow = (rowChildren: typeof node.children, rowKey: string) => (
+          <div key={rowKey} className="flex flex-col items-center">
+            {/* Connector line down from parent (or from previous separator) */}
+            <div className="w-px h-4 bg-border" />
+
+            {/* Children container */}
+            <div className="flex flex-nowrap justify-center gap-3 relative">
+              {/* Horizontal line connecting siblings in this row */}
+              {rowChildren.length > 1 && (
+                <div
+                  className="absolute top-0 h-px bg-border"
+                  style={{
+                    left: 'calc(50% - ' + ((rowChildren.length - 1) * 50) + '%)',
+                    right: 'calc(50% - ' + ((rowChildren.length - 1) * 50) + '%)',
+                    minWidth: '50%',
+                  }}
                 />
-              </div>
-            ))}
+              )}
+
+              {rowChildren.map((child) => (
+                <div key={child.id} className="flex flex-col items-center">
+                  {/* Connector line up */}
+                  <div className="w-px h-4 bg-border" />
+                  <OrganogramNodeWrapper
+                    node={child}
+                    parentColor={areaColor}
+                    depth={depth + 1}
+                    expansionMode={expansionMode}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+
+        return (
+          <div className="flex flex-col items-center mt-3 gap-2">
+            {nonPersonChildren.length > 0 && renderRow(nonPersonChildren, 'non-person')}
+            {personRows.map((row, idx) => renderRow(row, `person-row-${idx}`))}
+          </div>
+        );
+      })()}
     </div>
   );
 });
