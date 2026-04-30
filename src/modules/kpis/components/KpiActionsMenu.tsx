@@ -136,7 +136,8 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
     team_id: kpi.team_id ?? null,
     unit: kpi.unit ?? '%',
     direction: (kpi.direction ?? 'up') as KpiDirection,
-    frequency: (kpi.frequency ?? 'monthly') as KpiFrequency,
+    // v3.0.0: campo legacy `frequency` é NOT NULL no DB. Mantemos espelho derivado de update_frequency.
+    frequency: ((kpi.update_frequency ?? 'monthly') as KpiFrequency),
     target_value: kpi.target_value ?? null,
     status: kpi.status,
     source_type: (kpi.source_type ?? 'manual') as KpiValueSource,
