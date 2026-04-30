@@ -81,6 +81,7 @@ const DEFAULT_DATA: MbrPreDraftData = {
   highlights: { accelerated: '', blocked: '', needsDecision: '' },
   nextSteps: { focus: '', prioritizedItems: [], crossDependencies: [] },
   decisions: [],
+  agendaSuggestions: [],
 };
 
 // ============================================================
