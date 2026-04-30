@@ -1,25 +1,45 @@
-# Onda 7 — Auditorias & cleanup seguro (CONCLUÍDA 2026-04-30)
+# Onda 8 — KPI frequency Fase 1 (CONCLUÍDA 2026-04-30)
 
 ## Resultado consolidado
-- **52 → 47** ocorrências `@deprecated` (-5: campos legacy de AnalysisSuggestedAction).
-- 1 entregável documental: `docs/audits/KPI_FREQUENCY_SUNSET_PLAN.md`.
-- 1 correção de memory (Permissions V1 já estava sunsetado no DB).
+- **47 → 48** ocorrências `@deprecated` (+1: `legacyFrequencyToValue` agora marcado como uso interno).
+- Removidas **8/8 leituras frontend** de `kpi.frequency`.
+- 1 CI guard novo: `scripts/check-no-kpi-frequency.sh` integrado a `compliance-all.yml`.
 
-## Frente 1 — Analysis legacy shapes (CONCLUÍDA)
-Validado em produção: 0/4 registros usam shape legacy. Removidos 5 campos `@deprecated`
-+ fallbacks em `AnalysisResultPage.tsx`. Teste atualizado.
+## O que foi feito (Fase 1 do KPI sunset plan)
 
-## Frente 2 — Permissions V1 sunset prep (CONCLUÍDA — sem ação)
-Tabelas V1 já dropadas. Zero `@deprecated` no módulo. Memory corrigido.
+### Refactor frontend (8 pontos)
+| Arquivo | Mudança |
+|---|---|
+| `KpiCard.tsx` | Removido fallback `legacyFrequencyToValue` — usa `update_frequency` direto. |
+| `KpiDetailContent.tsx` | `FREQUENCY_LABELS[kpi.frequency]` → `FREQUENCY_VALUE_LABELS[kpi.update_frequency]`. |
+| `KpiHistoryDialog.tsx` | Idem + tipo `KpiFrequency` removido do shape de dados. |
+| `KpiActionsMenu.tsx` | Mapping para `KpiMetric.frequency` agora deriva via `valueFrequencyToLegacy(update_frequency)` (DB ainda NOT NULL). |
+| `useEditKpiForm.ts` | Removido `legacyFrequencyToValue`; usa `consolidation_frequency`/`update_frequency` direto. |
+| `KpiEvolutionPage.tsx` | Removido cast `as any`; passa `update_frequency` + `consolidation_frequency` para o histórico. |
+| `useKpisForWizard.ts` | Tipo refeito (`update_frequency`/`consolidation_frequency`); `needsUpdate` agora usa `update_frequency` (semântica correta de gate). |
+| `useKpisForWizardV2.ts` | Removido `frequency` do select, do mapping e do tipo `KpiForWizardV2`. |
 
-## Frente 3 — KPI frequency audit + plano (CONCLUÍDA — documental)
-Plano faseado em 4 etapas. DB 100% migrado (31/31). Pronto para Onda 8 executar Fase 1
-(refactor frontend de 8 consumidores) sem riscos como na Onda 6 Frente A revertida.
+### Tipos
+- `KpiForWizard.frequency` → substituído por `update_frequency`/`consolidation_frequency`.
+- `KpiForWizardV2.frequency` → removido (era `@deprecated`).
+- `KpiHistoryDialogData.frequency` → marcado `@deprecated`, mantido opcional para compat.
+- `KpiEvolutionItem.frequency` → substituído por `update_frequency`/`consolidation_frequency`.
 
-## Próxima onda recomendada (Onda 8)
-- **Executar Fase 1 do KPI frequency plan**: refactor de 8 arquivos frontend para usar
-  `update_frequency`/`consolidation_frequency` diretamente.
-- Após 1 semana de observação → Fases 2-4 (drop DB + cleanup helpers).
+### Tests atualizados
+- `CollaboratorKpiStep.test.tsx` — fixture usa `update_frequency`/`consolidation_frequency`.
+- `CollaboratorContextStep.test.tsx` — removido `frequency`.
+- `CLevelSteps.test.tsx` — fixture v2 atualizada.
+- `frequency.test.ts` — sem mudanças (helpers legacy preservados, deprecated).
+
+### CI guard
+`scripts/check-no-kpi-frequency.sh` bloqueia novos `kpi.frequency` em código de aplicação.
+Allowlist: utils/frequency.ts, types.ts, KpiActionsMenu.tsx (escrita-espelho), useTeamKpisGrouped.ts (pass-through).
+
+## Próximas fases (não executadas — exigem janela)
+
+- **Fase 2 — Auditoria pós-deploy**: 1 semana de produção observando Sentry/console.
+- **Fase 3 — Drop DB**: `ALTER TABLE kpi_metrics DROP NOT NULL` (kpi_metrics.frequency) → wave seguinte → `DROP COLUMN`.
+- **Fase 4 — Cleanup helpers**: remover `legacyFrequencyToValue`, `valueFrequencyToLegacy`, `FREQUENCY_LABELS`, `KpiFrequency` enum.
 
 ## Bloqueados / próximas ondas (mantidos)
 - **Onda 4 snapshots** (16 campos): observação até 2026-07-30.
