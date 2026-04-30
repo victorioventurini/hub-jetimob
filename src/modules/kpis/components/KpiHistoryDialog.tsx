@@ -41,11 +41,11 @@ import {
   RAG_STATUS_CONFIG, 
   INDICATOR_TYPE_LABELS, 
   DIRECTION_LABELS,
-  FREQUENCY_LABELS,
+  FREQUENCY_VALUE_LABELS,
   type KpiDirection,
   type KpiRagStatus,
   type KpiIndicatorType,
-  type KpiFrequency,
+  type KpiFrequencyValue,
   type KpiValue,
 } from "../types";
 import { useUrlState } from "@/shared/url/useUrlState";
@@ -268,9 +268,9 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
               )}
               <span>{DIRECTION_LABELS[kpi.direction]}</span>
             </div>
-            {kpi.frequency && (
+            {kpi.update_frequency && (
               <div className="flex items-center gap-1">
-                <span>Frequência: {FREQUENCY_LABELS[kpi.frequency]}</span>
+                <span>Frequência: {FREQUENCY_VALUE_LABELS[kpi.update_frequency]}</span>
               </div>
             )}
           </div>
