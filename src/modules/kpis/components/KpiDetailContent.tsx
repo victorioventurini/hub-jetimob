@@ -21,7 +21,7 @@ import { KpiActionsMenu } from "./KpiActionsMenu";
 import { KpiMigrationBanner } from "./KpiMigrationBanner";
 import { EditKpiDialog } from "./EditKpiDialog";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { FREQUENCY_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
+import { FREQUENCY_VALUE_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -268,7 +268,9 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Frequência:</span>
-          <span className="text-sm">{FREQUENCY_LABELS[kpi.frequency]}</span>
+          <span className="text-sm">
+            {kpi.update_frequency ? FREQUENCY_VALUE_LABELS[kpi.update_frequency] : "—"}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-muted-foreground" />

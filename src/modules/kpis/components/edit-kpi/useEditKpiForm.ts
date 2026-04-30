@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
 import type { KpiMetric, KpiScope } from '../../types';
 import { editKpiSchema, type EditKpiFormValues } from './editKpiSchema';
-import { legacyFrequencyToValue } from '../../utils/frequency';
+
 import { useKpiPrimaryDataEntry } from '../../hooks/useKpiPrimaryDataEntry';
 
 export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
@@ -40,9 +40,8 @@ export function useEditKpiForm(kpi: KpiMetric | null, open: boolean) {
   const resetFormWithKpiData = useCallback(() => {
     if (!kpi) return;
 
-    // v3.0.0: prefer new fields, fallback to legacy `frequency`
-    const legacyMapped = legacyFrequencyToValue(kpi.frequency) ?? 'monthly';
-    const consolidation = kpi.consolidation_frequency ?? legacyMapped;
+    // v3.0.0: campos canônicos. DB garante NOT NULL após migração v3.0.0.
+    const consolidation = kpi.consolidation_frequency ?? 'monthly';
     const update = kpi.update_frequency ?? consolidation;
 
     form.reset({

@@ -8,10 +8,36 @@ type: reference
 
 Registro consolidado das varreduras `@deprecated` e do que foi limpo a cada onda.
 
-## Estado atual (atualizado 2026-04-30 — pós Onda 7)
+## Estado atual (atualizado 2026-04-30 — pós Onda 8)
 
-- **Total de marcações `@deprecated`:** 47 (-5 nesta onda: 5 campos legacy de `AnalysisSuggestedAction`)
+- **Total de marcações `@deprecated`:** 48 (+1 nesta onda: `legacyFrequencyToValue` agora marcado uso interno; 8 leituras de `kpi.frequency` no frontend ELIMINADAS).
 - **Próxima auditoria recomendada:** após 2026-07-30 (T0 da janela Onda 4 Fase 5).
+
+## Onda 8 — KPI frequency Fase 1 (2026-04-30)
+
+### Frontend 100% migrado
+
+8 consumidores refatorados para `update_frequency`/`consolidation_frequency`:
+
+- `KpiCard.tsx`, `KpiDetailContent.tsx`, `KpiHistoryDialog.tsx`, `KpiActionsMenu.tsx`,
+- `useEditKpiForm.ts`, `KpiEvolutionPage.tsx`, `useKpisForWizard.ts`, `useKpisForWizardV2.ts`.
+
+Tipos refeitos: `KpiForWizard.frequency` substituído; `KpiForWizardV2.frequency` removido;
+`KpiEvolutionItem.frequency` substituído; `KpiHistoryDialogData.frequency` marcado deprecated.
+
+`needsUpdate(...)` agora usa `update_frequency` (semântica correta — cadência de input).
+
+### CI guard adicionado
+
+`scripts/check-no-kpi-frequency.sh` integrado a `compliance-all.yml`. Bloqueia novos
+`kpi.frequency` em código de aplicação. Allowlist: utils/frequency.ts, types.ts,
+KpiActionsMenu.tsx (escrita-espelho enquanto DB exige NOT NULL), useTeamKpisGrouped.ts.
+
+### Próximas fases (mantidas para janela dedicada)
+
+- Fase 2: 1 semana observação produção.
+- Fase 3: drop DB `kpi_metrics.frequency` (NOT NULL → drop column).
+- Fase 4: remover `legacyFrequencyToValue`, `valueFrequencyToLegacy`, `FREQUENCY_LABELS`, enum `KpiFrequency`.
 
 ## Onda 7 — Frentes 1+2+3 (2026-04-30)
 

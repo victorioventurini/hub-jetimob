@@ -20,7 +20,6 @@ import type {
   UseKpisForWizardV2Result,
   KpiRagStatus,
   KpiConfidenceLevel,
-  KpiFrequency,
   KpiFrequencyValue,
   KpiInputType,
   KpiLifecycleStatus,
@@ -30,10 +29,7 @@ import type {
   KpiDisplayMode,
   KpiAlertReason,
 } from "../types";
-import {
-  FREQUENCY_DAYS,
-  legacyFrequencyToValue,
-} from "../utils/frequency";
+import { FREQUENCY_DAYS } from "../utils/frequency";
 
 // ============================================================
 // Hook
@@ -84,7 +80,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         let kpiQuery = supabase
           .from('kpi_metrics')
           .select(`
-            id, name, unit, target_value, direction, frequency,
+            id, name, unit, target_value, direction,
             consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id,
             area_id, scope,
@@ -167,11 +163,9 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         const allEnriched: KpiForWizardV2[] = kpis.map(kpi => {
           const latest = latestByKpi.get(kpi.id);
           const consolidationFreq =
-            (kpi.consolidation_frequency as KpiFrequencyValue | null | undefined) ??
-            legacyFrequencyToValue(kpi.frequency as KpiFrequency);
+            (kpi.consolidation_frequency as KpiFrequencyValue | null | undefined) ?? null;
           const updateFreq =
-            (kpi.update_frequency as KpiFrequencyValue | null | undefined) ??
-            legacyFrequencyToValue(kpi.frequency as KpiFrequency);
+            (kpi.update_frequency as KpiFrequencyValue | null | undefined) ?? null;
           const needsUpdate = checkNeedsUpdate(updateFreq, latest?.reference_date);
           const ragStatus = (latest?.rag_status as KpiRagStatus) ?? 'no_data';
 
@@ -220,7 +214,6 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             unit: kpi.unit,
             target_value: kpi.target_value,
             direction: kpi.direction as KpiDirection,
-            frequency: kpi.frequency as KpiFrequency,
             consolidation_frequency: consolidationFreq,
             update_frequency: updateFreq,
             lifecycle_status: kpi.lifecycle_status as KpiLifecycleStatus,

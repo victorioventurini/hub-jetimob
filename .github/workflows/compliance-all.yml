@@ -83,6 +83,9 @@ jobs:
           # Ensure scripts can find all files
           NODE_ENV: production
 
+      - name: KPI frequency sunset guard (v3.0.0)
+        run: bash scripts/check-no-kpi-frequency.sh
+
       - name: Upload Compliance Report
         if: always()
         uses: actions/upload-artifact@v4

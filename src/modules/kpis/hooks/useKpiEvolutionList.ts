@@ -10,9 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient";
 import { queryKeys } from "@/lib/queryKeys";
-import type { KpiIndicatorType, KpiScope, KpiRagStatus, KpiDirection } from "../types";
+import type { KpiIndicatorType, KpiScope, KpiRagStatus, KpiDirection, KpiFrequencyValue } from "../types";
 import { calculateRagStatus } from "../types";
-import { valueFrequencyToLegacy } from "../utils/frequency";
 
 export interface KpiEvolutionItem {
   id: string;
@@ -20,7 +19,8 @@ export interface KpiEvolutionItem {
   description: string | null;
   unit: string;
   direction: KpiDirection;
-  frequency: string;
+  update_frequency: KpiFrequencyValue | null;
+  consolidation_frequency: KpiFrequencyValue | null;
   target_value: number | null;
   indicator_type: KpiIndicatorType;
   scope: KpiScope;
@@ -93,7 +93,7 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
       let query = supabase
         .from('kpi_metrics')
         .select(`
-          id, name, description, unit, direction, consolidation_frequency, target_value,
+          id, name, description, unit, direction, consolidation_frequency, update_frequency, target_value,
           indicator_type, scope, created_at,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
@@ -178,7 +178,8 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           description: kpi.description,
           unit: kpi.unit,
           direction: kpi.direction as KpiDirection,
-          frequency: valueFrequencyToLegacy(kpi.consolidation_frequency ?? null),
+          update_frequency: (kpi.update_frequency ?? null) as KpiFrequencyValue | null,
+          consolidation_frequency: (kpi.consolidation_frequency ?? null) as KpiFrequencyValue | null,
           target_value: kpi.target_value,
           indicator_type: (kpi.indicator_type || 'kpi') as KpiIndicatorType,
           scope: (kpi.scope || 'team') as KpiScope,

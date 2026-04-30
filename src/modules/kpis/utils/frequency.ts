@@ -70,6 +70,10 @@ export const FREQUENCY_ORDER: KpiFrequencyValue[] = [
  * Converte o enum legado `KpiFrequency` para `KpiFrequencyValue`.
  * Retorna `null` para `'manual'` — KPIs manuais ficam fora dos
  * ritos até serem revisados (Fase 9 banner).
+ *
+ * @deprecated v3.0.0 — uso interno apenas (suggestInputType e migrações).
+ *   Novos consumidores devem ler `consolidation_frequency`/`update_frequency`
+ *   diretamente. Será removido na Fase 4 do KPI sunset plan.
  */
 export function legacyFrequencyToValue(
   legacy: KpiFrequency | null | undefined,
