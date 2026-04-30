@@ -1,48 +1,50 @@
-# Onda 8 — KPI frequency Fase 1 (CONCLUÍDA 2026-04-30)
+## Objetivo
 
-## Resultado consolidado
-- **47 → 48** ocorrências `@deprecated` (+1: `legacyFrequencyToValue` agora marcado como uso interno).
-- Removidas **8/8 leituras frontend** de `kpi.frequency`.
-- 1 CI guard novo: `scripts/check-no-kpi-frequency.sh` integrado a `compliance-all.yml`.
+Remover **completamente** o campo `zombieCandidates` de todos os ritos — sem retrocompat, sem fallback. Snapshots antigos persistidos seguirão tendo o campo no JSON, mas o código simplesmente não o lerá mais (TypeScript ignora propriedades extras em parse).
 
-## O que foi feito (Fase 1 do KPI sunset plan)
+## Escopo (11 pontos de código + 4 de docs)
 
-### Refactor frontend (8 pontos)
-| Arquivo | Mudança |
-|---|---|
-| `KpiCard.tsx` | Removido fallback `legacyFrequencyToValue` — usa `update_frequency` direto. |
-| `KpiDetailContent.tsx` | `FREQUENCY_LABELS[kpi.frequency]` → `FREQUENCY_VALUE_LABELS[kpi.update_frequency]`. |
-| `KpiHistoryDialog.tsx` | Idem + tipo `KpiFrequency` removido do shape de dados. |
-| `KpiActionsMenu.tsx` | Mapping para `KpiMetric.frequency` agora deriva via `valueFrequencyToLegacy(update_frequency)` (DB ainda NOT NULL). |
-| `useEditKpiForm.ts` | Removido `legacyFrequencyToValue`; usa `consolidation_frequency`/`update_frequency` direto. |
-| `KpiEvolutionPage.tsx` | Removido cast `as any`; passa `update_frequency` + `consolidation_frequency` para o histórico. |
-| `useKpisForWizard.ts` | Tipo refeito (`update_frequency`/`consolidation_frequency`); `needsUpdate` agora usa `update_frequency` (semântica correta de gate). |
-| `useKpisForWizardV2.ts` | Removido `frequency` do select, do mapping e do tipo `KpiForWizardV2`. |
+### 1. Tipos (4 ocorrências em 2 arquivos)
+- `src/modules/okrs/types/wizard/qbr.ts` — remover `zombieCandidates: string[]` de:
+  - `QbrPreSnapshot` (linha 133)
+  - `QbrPreDraftData` (linha 159)
+- `src/modules/okrs/types/wizard/mbr.ts` — remover de:
+  - `MbrPreDraftData` (linha 219)
+  - `MbrPreTeamSubmission` (linha 262)
 
-### Tipos
-- `KpiForWizard.frequency` → substituído por `update_frequency`/`consolidation_frequency`.
-- `KpiForWizardV2.frequency` → removido (era `@deprecated`).
-- `KpiHistoryDialogData.frequency` → marcado `@deprecated`, mantido opcional para compat.
-- `KpiEvolutionItem.frequency` → substituído por `update_frequency`/`consolidation_frequency`.
+### 2. Initializers de draft (3 arquivos)
+- `src/modules/okrs/pages/QbrPrePage.tsx` — remover linha `zombieCandidates: []` do default state.
+- `src/modules/okrs/pages/MbrPrePage.tsx` — idem.
+- `src/modules/okrs/hooks/useMbrPreSubmissions.ts` — remover do mapeamento `byTeam[teamId]` (linha 157).
 
-### Tests atualizados
-- `CollaboratorKpiStep.test.tsx` — fixture usa `update_frequency`/`consolidation_frequency`.
-- `CollaboratorContextStep.test.tsx` — removido `frequency`.
-- `CLevelSteps.test.tsx` — fixture v2 atualizada.
-- `frequency.test.ts` — sem mudanças (helpers legacy preservados, deprecated).
+### 3. Edge function (2 ocorrências)
+- `supabase/functions/qbr-pre-summary/index.ts`:
+  - Remover do tipo `QbrPreAgentContext` (linha 57-58, com o `@deprecated`).
+  - Remover do `agentContext` montado (linha 372).
+  - Conferir que nenhum prompt em `orchestrateAgents` referencia o campo (verificação rápida durante a execução).
 
-### CI guard
-`scripts/check-no-kpi-frequency.sh` bloqueia novos `kpi.frequency` em código de aplicação.
-Allowlist: utils/frequency.ts, types.ts, KpiActionsMenu.tsx (escrita-espelho), useTeamKpisGrouped.ts (pass-through).
+### 4. Tests (2 arquivos)
+- `src/modules/okrs/components/wizards/qbr-pre/__tests__/QbrPreSummary.test.tsx` — remover fixture (linha 53).
+- `src/modules/okrs/components/wizards/qbr-pre-clevel/__tests__/QbrCLevelSteps.test.tsx` — remover fixture (linha 87).
 
-## Próximas fases (não executadas — exigem janela)
+### 5. Docs/memória (limpeza)
+- `.lovable/memory/standards/deprecated-cleanup-log.md` — remover linhas 74 e 123 (item resolvido).
+- `.lovable/memory/standards/wizard-snapshot-denormalized-fields-deprecation.md` — limpar nota linha 102.
+- `.lovable/plan.md` — remover linha "qbr-pre-summary.zombieCandidates" do bloco "Bloqueados".
+- `docs/HUB_TECHNICAL_DEEP_DIVE.md` (linha 907) e `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (linha 2091) — remover menções a "Sinalização de zombies" / "KPIs zombie".
 
-- **Fase 2 — Auditoria pós-deploy**: 1 semana de produção observando Sentry/console.
-- **Fase 3 — Drop DB**: `ALTER TABLE kpi_metrics DROP NOT NULL` (kpi_metrics.frequency) → wave seguinte → `DROP COLUMN`.
-- **Fase 4 — Cleanup helpers**: remover `legacyFrequencyToValue`, `valueFrequencyToLegacy`, `FREQUENCY_LABELS`, `KpiFrequency` enum.
+## Fora de escopo
 
-## Bloqueados / próximas ondas (mantidos)
-- **Onda 4 snapshots** (16 campos): observação até 2026-07-30.
-- **`qbr-pre-summary.zombieCandidates`**: migração coordenada de 11 pontos.
+- **Coluna DB `kpi_metrics.zombie_candidate`**: tabela diferente (não-rito), exige migração + janela própria. Mantida intocada.
+- **Migração de snapshots persistidos**: snapshots antigos em `okr_wizard_sessions.reflection_data` continuam carregando o campo no JSON. Não há limpeza retroativa — readers simplesmente ignoram chaves desconhecidas.
 
-Detalhes em `mem://standards/deprecated-cleanup-log` e `docs/audits/KPI_FREQUENCY_SUNSET_PLAN.md`.
+## Verificação
+
+1. `rg -n "zombieCandidates" src supabase` deve retornar **zero**.
+2. Build automática (typecheck) — garantir que nenhum consumidor esquecido referencia o campo.
+3. Vitest dos 2 testes editados.
+4. Smoke no preview: abrir `MbrPrePage` e `QbrPrePage`, montar draft, salvar.
+
+## Estimativa
+
+11 edits pequenos (search-replace), todos triviais. Sem migração de DB, sem mudança de comportamento observável (a feature já estava morta visualmente desde 2026-04-28).

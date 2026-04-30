@@ -50,7 +50,6 @@ function createBaseDraftData(overrides: Partial<QbrPreDraftData> = {}): QbrPreDr
     teamId: 'team-1',
     krFinalStates: [],
     kpiSnapshots: [],
-    zombieCandidates: [],
     kpisToCreate: [],
     learnings: { whatWorked: '', whatDidntWork: '', debts: '' },
     proposedOkrs: [],

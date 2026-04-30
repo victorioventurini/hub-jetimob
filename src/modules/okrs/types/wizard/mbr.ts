@@ -216,7 +216,6 @@ export interface MbrPreDraftData {
     paceStatus: string;
   }>;
   kpiSnapshots: MbrKpiSnapshot[];
-  zombieCandidates: string[];
   kpisToCreate: Array<{
     description: string;
     suggestedScope: string;
@@ -259,7 +258,6 @@ export interface MbrPreTeamSubmission {
   submittedByName: string | null;
   highlights: MbrPreDraftData['highlights'];
   nextSteps: MbrPreDraftData['nextSteps'];
-  zombieCandidates: MbrPreDraftData['zombieCandidates'];
   kpisToCreate: MbrPreDraftData['kpisToCreate'];
   krFinalStates: MbrPreDraftData['krFinalStates'];
   addendums: MbrPreSubmissionAddendum[];
