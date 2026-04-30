@@ -18,7 +18,7 @@ interface OrganogramNodeCardProps {
   expansionMode?: 'default' | 'all' | 'none';
 }
 
-const MAX_PERSONS_PER_ROW = 6;
+const MAX_CHILDREN_PER_ROW = 6;
 
 function chunk<T>(arr: T[], size: number): T[][] {
   if (size <= 0) return [arr];
@@ -272,19 +272,32 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
 
       {/* Children */}
       {hasChildren && isExpanded && (() => {
+        // Unify all children as siblings of the same parent.
+        // Order: subteams/areas first, squads next, persons last —
+        // all on the same horizontal band, max 6 per row.
+        const subteamChildren = node.children.filter((c) => c.type === 'team' || c.type === 'area');
+        const squadChildren = node.children.filter((c) => c.type === 'squad');
         const personChildren = node.children.filter((c) => c.type === 'person');
-        const nonPersonChildren = node.children.filter((c) => c.type !== 'person');
-        const personRows = chunk(personChildren, MAX_PERSONS_PER_ROW);
+        const otherChildren = node.children.filter(
+          (c) => c.type !== 'team' && c.type !== 'area' && c.type !== 'squad' && c.type !== 'person'
+        );
+        const allChildren = [...subteamChildren, ...squadChildren, ...otherChildren, ...personChildren];
+        const rows = chunk(allChildren, MAX_CHILDREN_PER_ROW);
 
-        const renderRow = (rowChildren: typeof node.children, rowKey: string) => (
+        const renderRow = (
+          rowChildren: typeof node.children,
+          rowKey: string,
+          isFirstRow: boolean,
+        ) => (
           <div key={rowKey} className="flex flex-col items-center">
-            {/* Connector line down from parent (or from previous separator) */}
-            <div className="w-px h-4 bg-border" />
+            {/* Vertical trunk from parent — only on the first row to avoid implying
+                that lower rows report to upper rows. */}
+            {isFirstRow && <div className="w-px h-4 bg-border" />}
 
             {/* Children container */}
             <div className="flex flex-nowrap justify-center gap-3 relative">
-              {/* Horizontal line connecting siblings in this row */}
-              {rowChildren.length > 1 && (
+              {/* Horizontal sibling bar — only on the first row, when >1 sibling. */}
+              {isFirstRow && rowChildren.length > 1 && (
                 <div
                   className="absolute top-0 h-px bg-border"
                   style={{
@@ -297,8 +310,8 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
 
               {rowChildren.map((child) => (
                 <div key={child.id} className="flex flex-col items-center">
-                  {/* Connector line up */}
-                  <div className="w-px h-4 bg-border" />
+                  {/* Vertical stub up to the sibling bar — only on first row. */}
+                  {isFirstRow && <div className="w-px h-4 bg-border" />}
                   <OrganogramNodeWrapper
                     node={child}
                     parentColor={areaColor}
@@ -313,8 +326,7 @@ export const OrganogramNodeCard = memo(function OrganogramNodeCard({
 
         return (
           <div className="flex flex-col items-center mt-3 gap-2">
-            {nonPersonChildren.length > 0 && renderRow(nonPersonChildren, 'non-person')}
-            {personRows.map((row, idx) => renderRow(row, `person-row-${idx}`))}
+            {rows.map((row, idx) => renderRow(row, `child-row-${idx}`, idx === 0))}
           </div>
         );
       })()}
