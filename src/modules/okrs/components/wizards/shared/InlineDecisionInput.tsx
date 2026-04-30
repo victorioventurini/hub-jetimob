@@ -9,7 +9,7 @@
  * Filtra e exibe somente decisions com sourceStep correspondente.
  */
 
-import { Lightbulb, Target, CheckCircle2 } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { DecisionCard } from './DecisionCard';
 import {
   InlineCollapsibleEntryInput,
