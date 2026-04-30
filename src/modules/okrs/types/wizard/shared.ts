@@ -100,8 +100,29 @@ export interface TeamCheckinDecision {
 }
 
 // ============================================================
-// IMPROVEMENT FEEDBACK (rituais)
+// RITUAL AGENDA SUGGESTION (transversal — MBR-pré, QBR-pré, futuros)
 // ============================================================
+
+/**
+ * Sugestão de pauta registrada inline ao longo de um rito preparatório
+ * (MBR-pré, QBR-pré, etc.) para ser consumida no rito-mãe.
+ *
+ * Categorias seguem `RitualBlock` (performance | projetos | pessoas) — SSOT
+ * único de blocos temáticos transversais (ver `vocabulary.ts`).
+ */
+export interface RitualAgendaSuggestion {
+  id: string;
+  text: string;
+  category: RitualBlock;
+  /** Step do wizard onde foi registrada (livre — string opaca) */
+  sourceStep: string;
+  /** Marcada como prioritária no Step de Resumo (até 3 por rito) */
+  prioritized?: boolean;
+  /** Ordem 1-3 da priorização (gravada na ordem em que o usuário marca) */
+  priorityRank?: 1 | 2 | 3;
+  /** ISO timestamp de criação */
+  createdAt: string;
+}
 
 /** Feedback anônimo sobre melhoria do rito */
 export interface RitualImprovementFeedback {
