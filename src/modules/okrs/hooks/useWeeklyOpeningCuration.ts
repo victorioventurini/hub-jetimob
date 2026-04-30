@@ -15,8 +15,8 @@ import { useIdentity } from '@/hooks/useIdentity';
 import type {
   WeeklyExecutiveOpening,
   WeeklyTheme,
-  WeeklyThemeBlock,
-  WeeklyThemeType,
+  RitualBlock,
+  RitualThemeActionType,
   WeeklyPriorityItem,
   WeeklyPeopleSignalAggregated,
 } from '@/modules/okrs/types/wizard';
@@ -56,7 +56,7 @@ interface CurateEdgeResponse {
 // HELPERS
 // ============================================================
 
-const BLOCK_KEY_MAP: Record<keyof NonNullable<CuratorOutput['blocks']>, WeeklyThemeBlock> = {
+const BLOCK_KEY_MAP: Record<keyof NonNullable<CuratorOutput['blocks']>, RitualBlock> = {
   performance: 'performance',
   projects: 'projetos',
   people: 'pessoas',
@@ -77,7 +77,7 @@ function mapCuratorOutputToOpening(
     items.forEach((item, idx) => {
       const title = (item.title || '').trim();
       if (!title) return;
-      const themeType: WeeklyThemeType =
+      const themeType: RitualThemeActionType =
         item.urgency === 'alta' ? 'risco' : item.urgency === 'baixa' ? 'oportunidade' : 'alerta';
       themes.push({
         id: `${dstBlock}-${idx}-${Date.now()}`,

@@ -2,13 +2,10 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface UserLinkProps {
-  /** 
+  /**
    * Profile ID (profiles.id) - DOMAIN IDENTITY
-   * Use this prop (it accepts both profileId and legacy userId for backwards compatibility)
    */
   profileId?: string;
-  /** @deprecated Use profileId instead - kept for backwards compatibility */
-  userId?: string;
   displayName: string;
   className?: string;
   /** Render as plain text without link */
@@ -19,24 +16,22 @@ interface UserLinkProps {
 
 /**
  * UserLink - Link padronizado para perfil de usuário
- * 
+ *
  * IMPORTANTE: Sempre passe profileId (profiles.id), não auth.users.id!
- * 
+ *
  * Uso:
  * - <UserLink profileId={profile.id} displayName={user.name} />
  * - <UserLink profileId={profile.id} displayName={user.name} openInNewTab />
  * - <UserLink profileId={profile.id} displayName={user.name} showAsText />
  */
-export function UserLink({ 
+export function UserLink({
   profileId,
-  userId, // legacy prop, deprecated
-  displayName, 
-  className, 
+  displayName,
+  className,
   showAsText = false,
   openInNewTab = false,
 }: UserLinkProps) {
-  // Use profileId if provided, fallback to userId for backwards compatibility
-  const id = profileId || userId;
+  const id = profileId;
   if (showAsText) {
     return <span className={className}>{displayName}</span>;
   }

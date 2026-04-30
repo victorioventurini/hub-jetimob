@@ -71,7 +71,7 @@ export function InitiativeCard({ initiative, isDraft = false, onQuickUpdate, onE
                   <AvatarImage src={initiative.owner?.photo_url || undefined} />
                   <AvatarFallback className="text-[9px]">{ownerInitials}</AvatarFallback>
                 </Avatar>
-                <UserLink userId={initiative.owner_user_id} displayName={ownerName} className="text-xs" />
+                <UserLink profileId={initiative.owner_user_id} displayName={ownerName} className="text-xs" />
               </div>
 
               {/* Dates */}

@@ -155,59 +155,11 @@ export function useDeleteTicketCategory() {
 // ===========================================
 // SUBCATEGORIES
 // ===========================================
-
-/**
- * @deprecated Use subcategories embedded in useTicketCategories() instead.
- * 
- * This hook filters subcategories by the current BU's bu_id, which causes issues
- * when categories are shared across BUs. The embedded subcategories in the category
- * object are already filtered by status and properly associated with their parent.
- * 
- * Example migration:
- * ```typescript
- * // Before (deprecated):
- * const { data: subcategories } = useTicketSubcategories(categoryId);
- * 
- * // After (preferred):
- * const { data: categories } = useTicketCategories();
- * const selectedCategory = categories.find(c => c.id === categoryId);
- * const subcategories = selectedCategory?.subcategories || [];
- * ```
- */
-export function useTicketSubcategories(categoryId?: string) {
-  const { currentBu } = useBu();
-  const buId = currentBu?.id;
-  const supabase = useBuScopedSupabase();
-
-  return useQuery({
-    queryKey: queryKeys.tickets.subcategories(buId ?? null, categoryId),
-    staleTime: 5 * 60 * 1000, // 5 minutes - subcategories change rarely
-    queryFn: async () => {
-      if (!buId) return [];
-
-      let query = supabase
-        .from("ticket_subcategories")
-        .select(`
-          id, bu_id, category_id, name, description, status, created_at, updated_at,
-          category:ticket_categories(id, name)
-        `)
-        .eq("bu_id", buId)
-        .is("deleted_at", null)
-        .eq("status", "active")
-        .order("name");
-
-      if (categoryId) {
-        query = query.eq("category_id", categoryId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as unknown as TicketSubcategory[];
-    },
-    enabled: !!buId,
-  });
-}
+//
+// NOTE: O hook GET `useTicketSubcategories` foi removido em 2026-04-30
+// (Onda 5 — limpeza @deprecated). As subcategorias já vêm embutidas em
+// `useTicketCategories()` (campo `subcategories` por categoria).
+// Os hooks Create/Update/Delete abaixo continuam disponíveis.
 
 export function useCreateTicketSubcategory() {
   const queryClient = useQueryClient();

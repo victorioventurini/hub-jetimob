@@ -13,8 +13,6 @@ export {
   trackEvent,
   pushToDataLayer,
   initSessionContext,
-  // Deprecated
-  initGA4,
 } from './gtag';
 
 export { useGtmConfig } from './useGtmConfig';
