@@ -113,7 +113,7 @@ describe('okrsKeys', () => {
 
     it('should create initiativesByUser key', () => {
       const key = okrsKeys.initiativesByUser('profile-123');
-      expect(key).toEqual(['okr-initiatives', 'user', 'profile-123']);
+      expect(key).toEqual(['okr-initiatives', 'user', 'profile-123', null]);
     });
 
     it('should create initiativesByStatus key', () => {
@@ -226,7 +226,7 @@ describe('kpisKeys', () => {
 
   it('should create detail key', () => {
     const key = kpisKeys.detail('kpi-123');
-    expect(key).toEqual(['kpis', 'detail', 'kpi-123']);
+    expect(key).toEqual(['kpis', 'detail', 'kpi-123', null]);
   });
 
   it('should create values key', () => {
