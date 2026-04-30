@@ -103,12 +103,15 @@ const CONFIDENCE_CONFIG: Record<KpiConfidenceLevel, { label: string; emoji: stri
   low: { label: 'Baixa', emoji: '🔴' },
 };
 
+// v3.0.0: labels alinhados a KpiFrequencyValue (split consolidation × update).
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Diária',
   weekly: 'Semanal',
+  biweekly: 'Quinzenal',
   monthly: 'Mensal',
   quarterly: 'Trimestral',
-  manual: 'Manual',
+  semiannual: 'Semestral',
+  annual: 'Anual',
 };
 
 // ============================================================
@@ -244,7 +247,7 @@ export function CollaboratorKpiStep({
           
           <Badge variant="outline" className="gap-1">
             <Calendar className="h-3 w-3" />
-            {FREQUENCY_LABELS[kpi.frequency] || kpi.frequency}
+            {kpi.update_frequency ? (FREQUENCY_LABELS[kpi.update_frequency] ?? kpi.update_frequency) : '—'}
           </Badge>
         </div>
         
