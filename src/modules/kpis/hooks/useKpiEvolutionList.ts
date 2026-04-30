@@ -178,7 +178,7 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           description: kpi.description,
           unit: kpi.unit,
           direction: kpi.direction as KpiDirection,
-          frequency: kpi.frequency,
+          frequency: valueFrequencyToLegacy(kpi.consolidation_frequency ?? null),
           target_value: kpi.target_value,
           indicator_type: (kpi.indicator_type || 'kpi') as KpiIndicatorType,
           scope: (kpi.scope || 'team') as KpiScope,
