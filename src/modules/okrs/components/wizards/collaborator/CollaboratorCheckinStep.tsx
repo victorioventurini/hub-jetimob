@@ -181,8 +181,7 @@ export function CollaboratorCheckinStep({
 
       const result: CollaboratorCheckinResult = {
         krId: kr.id,
-        krTitle: kr.title,
-        objectiveTitle: kr.objective_title,
+        // Onda 4 Fase 3: krTitle/objectiveTitle não são mais gravados — readers resolvem via lookup por krId.
         previousValue: kr.current_value,
         newValue: numericValue,
         confidence,
@@ -201,8 +200,7 @@ export function CollaboratorCheckinStep({
   const handleSkip = useCallback(() => {
     const result: CollaboratorCheckinResult = {
       krId: kr.id,
-      krTitle: kr.title,
-      objectiveTitle: kr.objective_title,
+      // Onda 4 Fase 3: krTitle/objectiveTitle não são mais gravados — readers resolvem via lookup por krId.
       previousValue: kr.current_value,
       newValue: kr.current_value,
       confidence: 'medium',
