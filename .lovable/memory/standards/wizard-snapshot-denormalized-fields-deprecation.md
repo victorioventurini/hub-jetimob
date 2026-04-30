@@ -97,7 +97,18 @@ Estes não exigem migração de writer (não são gravados). Permanecem `@deprec
 
 - `kpisToCreate[].relatedKrTitle` (MBR Pre + QBR Pre): hoje é input livre/textual do líder, sem `krId`. Migração exige redesenhar input (adicionar autocomplete por KR), fora do escopo de "parar de gravar".
 
-## Próximas sub-ondas
+## Edge functions migradas (Onda 4 Fase 4 — concluída)
 
-- **Fase 4**: edge functions que lêem snapshot (`mbr-summary`, `qbr-clevel-learnings-summary`).
-- **Fase 5**: drop dos campos dos types e do schema (após período de observação).
+| Edge function | Lookup adicionado |
+|---|---|
+| `qbr-pre-summary` | `okr_team_key_results` por `krId` para resolver `krTitle` antes de montar prompt |
+| `collaborator-checkin-summary` | `okr_team_key_results` por `krId` + `kpi_metrics` por `kpiId` (Promise.all) com fallback ao snapshot legado |
+
+Edge functions inspecionadas e **fora de escopo** (não desestruturam campos denormalizados):
+- `mbr-summary`: passa `snapshot` inteiro como JSON ao LLM, sem ler `krTitle/objectiveTitle` direto.
+- `qbr-clevel-learnings-summary`: recebe `teamName` no payload do cliente (não lê de snapshot).
+- `qbr-executive-report`, `okr-org-health-review`, `weekly-curate-opening`, `okr-construction-review`: usam `teamName/objectiveTitle` em inputs/outputs derivados em runtime, não em leituras de snapshot.
+
+## Próxima sub-onda
+
+- **Fase 5**: drop dos campos dos types e do schema (após período de observação dos snapshots novos sem os campos).
