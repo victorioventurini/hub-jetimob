@@ -40,7 +40,7 @@ import { TeamOkrRetrospectiveStep } from '@/modules/okrs/components/wizards/team
 import { TeamOkrObjectiveStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrObjectiveStep';
 import { TeamOkrSharingStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrSharingStep';
 import { TeamOkrKrTypeStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrTypeStep';
-import { TeamOkrKrDetailStep, type TeamMember } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrDetailStep';
+import { TeamOkrKrDetailStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrDetailStep';
 import { TeamOkrKrMetricsStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrKrMetricsStep';
 import { TeamOkrDependenciesStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrDependenciesStep';
 import { TeamOkrInitiativesStep } from '@/modules/okrs/components/wizards/team-okr-creation/TeamOkrInitiativesStep';
