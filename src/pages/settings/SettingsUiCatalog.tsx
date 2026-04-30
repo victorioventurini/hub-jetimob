@@ -20,7 +20,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DiscardChangesDialog } from "@/components/ui/discard-changes-dialog";
 import { 
   TeamSelect, 
@@ -158,8 +158,8 @@ const componentUsageData: Record<string, { description: string; pages: string[] 
   },
   
   // Dialogs & Overlays
-  "DeleteConfirmDialog": {
-    description: "Diálogo de confirmação para exclusão",
+  "ConfirmDialog": {
+    description: "Diálogo genérico de confirmação (variantes: destructive, warning, info)",
     pages: ["/assets/*", "/teams/*", "/okrs/*", "/hub/*"]
   },
   "DiscardChangesDialog": {
@@ -252,7 +252,7 @@ function ComponentShowcase({ name, description, pages, children }: ComponentShow
   const [copied, setCopied] = useState(false);
 
   const copyImport = () => {
-    const importPath = name === "StatusBadge" || name === "EmptyState" || name === "LoadingState" || name === "ErrorState" || name === "PageHeader" || name === "HelpTooltip" || name === "DeleteConfirmDialog" || name === "DiscardChangesDialog"
+    const importPath = name === "StatusBadge" || name === "EmptyState" || name === "LoadingState" || name === "ErrorState" || name === "PageHeader" || name === "HelpTooltip" || name === "ConfirmDialog" || name === "DiscardChangesDialog"
       ? `import { ${name} } from "@/components/ui/${name.replace(/([A-Z])/g, '-$1').toLowerCase().slice(1)}";`
       : `import { ${name} } from "@/components/ui/${name.toLowerCase()}";`;
     
@@ -817,13 +817,14 @@ export default function SettingsUiCatalog() {
         {/* Dialogs & Overlays */}
         <TabsContent value="dialogs" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <ComponentShowcase {...componentUsageData["DeleteConfirmDialog"]} name="DeleteConfirmDialog">
+            <ComponentShowcase {...componentUsageData["ConfirmDialog"]} name="ConfirmDialog">
               <div className="space-y-2">
                 <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Abrir Delete Dialog
+                  Abrir Confirm Dialog
                 </Button>
-                <DeleteConfirmDialog
+                <ConfirmDialog
+                  variant="destructive"
                   open={showDeleteDialog}
                   onOpenChange={setShowDeleteDialog}
                   onConfirm={() => {
