@@ -32,10 +32,12 @@ export interface SummaryKrBalanceProps {
 const STATE_BUCKETS: Array<{ key: KrState; label: string; tone: string }> = [
   { key: 'exceeded', label: 'Superado', tone: 'text-status-green' },
   { key: 'achieved', label: 'Alcançado', tone: 'text-status-green' },
-  { key: 'on_track', label: 'No caminho', tone: 'text-status-blue' },
+  { key: 'healthy', label: 'No caminho', tone: 'text-status-blue' },
   { key: 'at_risk', label: 'Em risco', tone: 'text-status-amber' },
   { key: 'off_track', label: 'Atrasado', tone: 'text-status-red' },
+  { key: 'not_achieved', label: 'Não alcançado', tone: 'text-status-red' },
   { key: 'stagnant', label: 'Parado', tone: 'text-muted-foreground' },
+  { key: 'not_started', label: 'Não iniciado', tone: 'text-muted-foreground' },
 ];
 
 export const SummaryKrBalance = memo(function SummaryKrBalance({
