@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -29,7 +28,7 @@ import {
 } from "@/components/ui/form";
 import { format, startOfDay, isBefore } from "date-fns";
 import { validation } from "@/lib/validationMessages";
-import type { KpiValue, KpiFrequencyValue, KpiInputType, KpiConfidenceLevel } from "../types";
+import type { KpiValue, KpiFrequencyValue, KpiInputType } from "../types";
 import { FREQUENCY_VALUE_LABELS } from "../types";
 import { isUpdateFrequencyValid } from "../utils/frequency";
 
@@ -44,8 +43,6 @@ const formSchema = z.object({
     }, { message: validation.consolidatedDate("Data de referência") }),
   notes: z.string().max(500).optional(),
   input_type: z.enum(['consolidated', 'partial']),
-  override_confidence: z.boolean().optional(),
-  confidence: z.enum(['high', 'medium', 'low']).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,7 +62,6 @@ interface EditKpiValueDialogProps {
       reference_date: string;
       notes?: string;
       input_type?: KpiInputType;
-      confidence?: KpiConfidenceLevel;
     },
   ) => Promise<void>;
 }
@@ -91,12 +87,10 @@ export function EditKpiValueDialog({
       reference_date: maxDate,
       notes: "",
       input_type: 'consolidated',
-      override_confidence: false,
-      confidence: undefined,
     },
   });
 
-  // Reset form when kpiValue changes — hidrata input_type e confidence existentes.
+  // Reset form when kpiValue changes — hidrata input_type existente.
   useEffect(() => {
     if (kpiValue && open) {
       form.reset({
@@ -104,13 +98,10 @@ export function EditKpiValueDialog({
         reference_date: kpiValue.reference_date,
         notes: kpiValue.notes || "",
         input_type: (kpiValue.input_type ?? 'consolidated') as KpiInputType,
-        override_confidence: false,
-        confidence: kpiValue.confidence,
       });
     }
   }, [kpiValue, open, form]);
 
-  const overrideConfidence = form.watch('override_confidence');
   const isIntermediateAllowed = useMemo(
     () =>
       consolidationFrequency && updateFrequency
@@ -129,7 +120,6 @@ export function EditKpiValueDialog({
         reference_date: values.reference_date,
         notes: values.notes || undefined,
         input_type: values.input_type,
-        confidence: values.override_confidence ? values.confidence : undefined,
       });
       onOpenChange(false);
     } finally {
@@ -243,67 +233,6 @@ export function EditKpiValueDialog({
                 </FormItem>
               )}
             />
-
-            <details className="rounded-md border border-border p-3">
-              <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
-                Avançado
-              </summary>
-              <div className="mt-3 space-y-3">
-                <FormField
-                  control={form.control}
-                  name="override_confidence"
-                  render={({ field }) => (
-                    <FormItem className="flex items-start gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          id="eit-override-conf"
-                        />
-                      </FormControl>
-                      <Label htmlFor="eit-override-conf" className="font-normal cursor-pointer text-sm">
-                        Sobrescrever confidence
-                        <span className="block text-xs text-muted-foreground">
-                          Atual: <strong>
-                            {kpiValue?.confidence === 'high' ? 'Alta'
-                              : kpiValue?.confidence === 'low' ? 'Baixa'
-                              : 'Média'}
-                          </strong>. Padrão: alta para consolidado, média para projeção.
-                        </span>
-                      </Label>
-                    </FormItem>
-                  )}
-                />
-                {overrideConfidence && (
-                  <FormField
-                    control={form.control}
-                    name="confidence"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm">Confidence</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="flex gap-3"
-                          >
-                            {(['high', 'medium', 'low'] as const).map((c) => (
-                              <div key={c} className="flex items-center gap-1.5">
-                                <RadioGroupItem value={c} id={`eit-conf-${c}`} />
-                                <Label htmlFor={`eit-conf-${c}`} className="font-normal text-sm cursor-pointer">
-                                  {c === 'high' ? 'Alta' : c === 'medium' ? 'Média' : 'Baixa'}
-                                </Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-            </details>
 
             <DialogFooter>
               <Button

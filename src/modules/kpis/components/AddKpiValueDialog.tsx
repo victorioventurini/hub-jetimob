@@ -58,7 +58,6 @@ export function AddKpiValueDialog({
           unit={unit}
           consolidationFrequency={consolidationFrequency}
           updateFrequency={updateFrequency}
-          confidenceMode="advanced"
           formId={FORM_ID}
           onValidSubmit={async (values) => {
             setIsSubmitting(true);
@@ -71,7 +70,6 @@ export function AddKpiValueDialog({
                 created_by: profile?.id,
                 source: 'manual',
                 input_type: values.input_type,
-                confidence: values.confidence,
               });
               onOpenChange(false);
             } finally {
