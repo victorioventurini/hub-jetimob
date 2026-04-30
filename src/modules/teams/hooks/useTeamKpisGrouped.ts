@@ -42,7 +42,7 @@ const KPI_FIELDS = `
 
 const KPI_VALUE_FIELDS = `
   id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-  period_start, period_end, period_label, confidence, rag_status
+  period_start, period_end, period_label, rag_status
 ` as const;
 
 function mapSource(source: string): KpiValueSource {
@@ -75,7 +75,6 @@ function hydrateKpi(kpi: any, allValues: any[]): KpiWithValues {
   const mappedValues: KpiValue[] = values.map((v) => ({
     ...v,
     source: mapSource(v.source),
-    confidence: v.confidence || 'medium',
     rag_status: v.rag_status as KpiValue['rag_status'],
   }));
 
