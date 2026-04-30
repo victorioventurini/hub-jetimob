@@ -126,7 +126,7 @@ export function TicketMessageBubble({
       attachments: genericAttachments,
       replyTo,
     };
-  }, [message, attachments]);
+  }, [message, attachments, messagesById, attachmentsByMessage]);
 
   // Handle reply - convert back to TicketMessage
   const handleReply = (msg: GenericMessage) => {
