@@ -65,9 +65,6 @@ export function MbrPreNextStepsStep({
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
 }: MbrPreNextStepsStepProps) {
-  const [newPriority, setNewPriority] = useState('');
-  const [newDependency, setNewDependency] = useState('');
-
   // Load team projects for context
   const { data: allProjects, isLoading: loadingProjects } = useProjectsForWizard(teamId);
 
@@ -75,40 +72,6 @@ export function MbrPreNextStepsStep({
   const activeProjects = (allProjects || []).filter(
     p => p.status === 'in_progress' || p.health === 'at_risk'
   );
-
-  const addPriority = () => {
-    const trimmed = newPriority.trim();
-    if (!trimmed) return;
-    onNextStepsChange({
-      ...nextSteps,
-      prioritizedItems: [...nextSteps.prioritizedItems, trimmed],
-    });
-    setNewPriority('');
-  };
-
-  const removePriority = (index: number) => {
-    onNextStepsChange({
-      ...nextSteps,
-      prioritizedItems: nextSteps.prioritizedItems.filter((_, i) => i !== index),
-    });
-  };
-
-  const addDependency = () => {
-    const trimmed = newDependency.trim();
-    if (!trimmed) return;
-    onNextStepsChange({
-      ...nextSteps,
-      crossDependencies: [...nextSteps.crossDependencies, trimmed],
-    });
-    setNewDependency('');
-  };
-
-  const removeDependency = (index: number) => {
-    onNextStepsChange({
-      ...nextSteps,
-      crossDependencies: nextSteps.crossDependencies.filter((_, i) => i !== index),
-    });
-  };
 
   const hasContent = nextSteps.focus.trim() || nextSteps.prioritizedItems.length > 0;
 
@@ -207,87 +170,31 @@ export function MbrPreNextStepsStep({
         </div>
 
         {/* Prioritized items */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
-            Iniciativas / projetos priorizados
-          </Label>
-          
-          {nextSteps.prioritizedItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}.</span>
-              <span className="text-sm flex-1">{item}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                onClick={() => removePriority(i)}
-              >
-                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            </div>
-          ))}
-
-          <div className="flex items-center gap-2">
-            <Input
-              value={newPriority}
-              onChange={(e) => setNewPriority(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPriority())}
-              placeholder="Adicionar iniciativa ou projeto..."
-              className="text-sm"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              onClick={addPriority}
-              disabled={!newPriority.trim()}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <InlineStringListEditor
+          label="Iniciativas / projetos priorizados"
+          items={nextSteps.prioritizedItems}
+          onItemsChange={(prioritizedItems) =>
+            onNextStepsChange({ ...nextSteps, prioritizedItems })
+          }
+          placeholder="Adicionar iniciativa ou projeto..."
+          marker="numbered"
+        />
 
         {/* Cross-team dependencies */}
-        <div className="space-y-3">
-          <Label className="flex items-center gap-2 text-sm font-medium">
-            <Link2 className="h-4 w-4" />
-            Dependências de outros times
-          </Label>
-          
-          {nextSteps.crossDependencies.map((dep, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-5 shrink-0">•</span>
-              <span className="text-sm flex-1">{dep}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                onClick={() => removeDependency(i)}
-              >
-                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            </div>
-          ))}
-
-          <div className="flex items-center gap-2">
-            <Input
-              value={newDependency}
-              onChange={(e) => setNewDependency(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDependency())}
-              placeholder="Ex: Precisamos que o time de Engenharia entregue a API até dia 15..."
-              className="text-sm"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              onClick={addDependency}
-              disabled={!newDependency.trim()}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <InlineStringListEditor
+          label={
+            <span className="flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              Dependências de outros times
+            </span>
+          }
+          items={nextSteps.crossDependencies}
+          onItemsChange={(crossDependencies) =>
+            onNextStepsChange({ ...nextSteps, crossDependencies })
+          }
+          placeholder="Ex: Precisamos que o time de Engenharia entregue a API até dia 15..."
+          marker="bullet"
+        />
       </div>
     </WizardStepScaffold>
   );
