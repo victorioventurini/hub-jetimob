@@ -46,8 +46,10 @@ export function MbrPreSummary({
   isCompleting,
   onComplete,
   onBack,
+  onAgendaSuggestionsChange,
 }: MbrPreSummaryProps) {
   const { krFinalStates, kpiSnapshots, highlights, nextSteps } = draftData;
+  const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
   const hasHighlights = highlights.accelerated.trim() || highlights.blocked.trim() || highlights.needsDecision.trim();
