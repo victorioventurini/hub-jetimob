@@ -4,7 +4,7 @@
  * Inclui os snapshots imutáveis de KPIs e OKRs e os tipos de governança.
  */
 
-import type { TeamCheckinDecision, RitualImprovementFeedback } from './shared';
+import type { TeamCheckinDecision, RitualImprovementFeedback, RitualAgendaSuggestion } from './shared';
 
 // ============================================================
 // MBR STEPS
