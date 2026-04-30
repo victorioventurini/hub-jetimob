@@ -450,6 +450,9 @@ export function QbrOkrProposalStep({
   onProposedOkrsChange,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrOkrProposalStepProps) {
   // Track which objective card is open (auto-expand newly added)
   const [openIndex, setOpenIndex] = useState<number | null>(
@@ -506,6 +509,16 @@ export function QbrOkrProposalStep({
           backLabel="Voltar"
           primaryLabel={hasEntries ? 'Avançar para Resumo' : 'Pular proposta'}
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-okr-proposal"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-6 space-y-4">
