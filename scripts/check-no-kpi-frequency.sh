@@ -25,7 +25,7 @@ ALLOW=(
 )
 
 FOUND=$(rg -n "$PATTERN" src/ \
-  --type ts --type tsx \
+  -g '*.ts' -g '*.tsx' \
   -g '!**/__tests__/**' \
   -g '!**/*.test.ts' \
   -g '!**/*.test.tsx' \
