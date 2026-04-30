@@ -12,10 +12,11 @@ import { kpisKeys } from "@/lib/queryKeys/okrs";
 import type { 
   KpiRagStatus, 
   KpiConfidenceLevel, 
-  KpiFrequency,
+  KpiFrequencyValue,
   KpiLifecycleStatus,
   KpiDirection 
 } from "../types";
+import { FREQUENCY_DAYS } from "../utils/frequency";
 
 // ============================================================
 // Types
@@ -27,7 +28,8 @@ export interface KpiForWizard {
   unit: string;
   target_value: number | null;
   direction: KpiDirection;
-  frequency: KpiFrequency;
+  update_frequency: KpiFrequencyValue | null;
+  consolidation_frequency: KpiFrequencyValue | null;
   lifecycle_status: KpiLifecycleStatus;
   recovery_protocol: string | null;
   team_id: string | null;
@@ -86,7 +88,8 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
         let kpiQuery = supabase
           .from('kpi_metrics')
           .select(`
-            id, name, unit, target_value, direction, frequency,
+            id, name, unit, target_value, direction,
+            consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id
           `)
           .eq('lifecycle_status', 'active')
@@ -126,17 +129,20 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
         // 4. Enrich KPIs with latest value data
         const enrichedKpis: KpiForWizard[] = kpis.map(kpi => {
           const latest = latestByKpi.get(kpi.id);
+          const updateFreq = (kpi.update_frequency ?? null) as KpiFrequencyValue | null;
+          const consolidationFreq = (kpi.consolidation_frequency ?? null) as KpiFrequencyValue | null;
           return {
             ...kpi,
             direction: kpi.direction as KpiDirection,
-            frequency: kpi.frequency as KpiFrequency,
+            update_frequency: updateFreq,
+            consolidation_frequency: consolidationFreq,
             lifecycle_status: kpi.lifecycle_status as KpiLifecycleStatus,
             latest_value: latest?.value ?? null,
             latest_reference_date: latest?.reference_date ?? null,
             latest_rag_status: (latest?.rag_status as KpiRagStatus) ?? 'no_data',
             latest_confidence: (latest?.confidence as KpiConfidenceLevel) ?? null,
             latest_period_label: latest?.period_label ?? null,
-            needs_update: needsUpdate(kpi.frequency as KpiFrequency, latest?.reference_date),
+            needs_update: needsUpdate(updateFreq, latest?.reference_date),
           };
         });
         
@@ -168,21 +174,16 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
 // ============================================================
 
 /**
- * Check if KPI needs update based on frequency
+ * Check if KPI needs update based on update_frequency.
+ * v3.0.0: usa update_frequency (cadência de input) — semântica correta de gate.
  */
-function needsUpdate(frequency: KpiFrequency, lastDate: string | null | undefined): boolean {
+function needsUpdate(updateFrequency: KpiFrequencyValue | null, lastDate: string | null | undefined): boolean {
+  if (!updateFrequency) return false;
   if (!lastDate) return true;
-  
+
   const last = new Date(lastDate);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
-  
-  switch (frequency) {
-    case 'daily': return diffDays >= 1;
-    case 'weekly': return diffDays >= 7;
-    case 'monthly': return diffDays >= 30;
-    case 'quarterly': return diffDays >= 90;
-    case 'manual': return false; // manual frequency never auto-needs update
-    default: return false;
-  }
+
+  return diffDays >= FREQUENCY_DAYS[updateFrequency];
 }
