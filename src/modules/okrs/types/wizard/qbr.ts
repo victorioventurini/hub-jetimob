@@ -135,9 +135,11 @@ export interface QbrPreSnapshot {
     description: string;
     suggestedScope: string;
     /**
-     * @deprecated Onda 4 Fase 1 — Sugerir KR por `krId` e resolver título via lookup.
+     * @deprecated Onda 4 Fase 5 — Feature de sugestão de KPI descontinuada;
+     * campo mantido apenas para compatibilidade com snapshots legados.
+     * Será removido após a janela de observação (≥90 dias).
      */
-    relatedKrTitle: string;
+    relatedKrTitle?: string;
   }>;
   learnings: {
     whatWorked: string;
