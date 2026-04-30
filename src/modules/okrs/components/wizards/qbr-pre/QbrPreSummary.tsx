@@ -14,9 +14,10 @@ import {
   WizardStepHeader,
   WizardLastStepFooter,
   WizardStepScaffold,
+  AgendaSuggestionsPrioritizer,
 } from '../shared';
 import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks';
-import { normalizeProposedOkrs, type QbrPreDraftData, type TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import { normalizeProposedOkrs, type QbrPreDraftData, type TeamCheckinDecision, type RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
