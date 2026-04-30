@@ -1,70 +1,99 @@
-## Onda 4 — Frente independente: DIRECTIVE_TO_DECISION_MAP no QBR Meeting Step 3
+## Onda 4 Fase 3 — Writers param de gravar campos denormalizados
 
 ### Contexto
 
-O `QbrMeetingDecisionsStep` já recebe `cLevelDirectives` (do snapshot do `qbr-pre-clevel`), mas hoje não há UI consumindo. O líder precisa registrar manualmente decisões equivalentes, perdendo o vínculo com a diretiva original. O mapeamento canônico `DIRECTIVE_TO_DECISION_MAP` existe em `src/modules/okrs/types/wizard/vocabulary.ts` desde a Onda 2 Fase 4, mas nunca foi consumido.
+Onda 4 Fases 1-2 marcaram 16 campos `@deprecated` em snapshots de ritos e migraram 9 readers para `useEntityLookup` com fallback ao snapshot legado. **Todos os readers já têm fallback funcional**, então é seguro parar de gravar os campos novos sem quebrar exibição de snapshots já persistidos.
 
-### Objetivo
+A Fase 3 não remove os campos dos types (isso é Fase 5 — drop). Aqui apenas **paramos de popular** nos writers, deixando snapshots novos enxutos.
 
-Adicionar uma seção "Diretivas do C-Level" no Step 3 que lista cada diretiva pendente e oferece um botão "Promover a decisão". O clique cria uma `TeamCheckinDecision` com:
-- `text`: copiado da diretiva
-- `category`: derivada via `DIRECTIVE_TO_DECISION_MAP[directive.category]`
-- `sourceStep`: `'qbr-meeting-decisions'`
-- `metadata`: `{ source: 'clevel_directive', directiveCategory: directive.category, targetTeamId? }` (auditoria)
+### Princípios
 
-Diretiva já promovida (detectada via metadata) fica marcada como "Promovida ✓" e o botão desabilita.
+1. **Só removemos escrita de campos `@deprecated` Onda 4 Fase 1.** Não tocar `@deprecated` de outras ondas (vocabulary, weekly cleanup).
+2. **Snapshots persistidos continuam válidos** — readers têm fallback ao campo legado quando lookup miss.
+3. **Campos opcionais (`?: string`) podem simplesmente ser omitidos.** Campos obrigatórios (`: string`) precisam:
+   - virar opcionais no type primeiro (mudança aditiva, sem migração de dados), OU
+   - manter writer com string vazia transitória até Fase 5 dropar.
+4. **Edge functions e hooks de leitura/derivação fora de escopo** — pertencem à Fase 4.
 
-### Arquivos a editar
+### Escopo — campos a parar de gravar (16)
 
-1. **`src/modules/okrs/components/wizards/qbr-meeting/QbrMeetingDecisionsStep.tsx`**
-   - Importar `DIRECTIVE_TO_DECISION_MAP` de `@/modules/okrs/types/wizard/vocabulary`.
-   - Renderizar nova seção (acima de `CarryOverDecisionsSection`) só quando `cLevelDirectives.length > 0`.
-   - Para cada diretiva: mostrar texto, badge da categoria original, badge da categoria-alvo mapeada e botão "Promover a decisão" (ou status "Promovida").
-   - Detecção de já-promovida: `decisions.some(d => d.metadata?.source === 'clevel_directive' && d.metadata?.directiveText === directive.text)` (usar texto como chave estável já que diretivas não têm id).
-   - Handler `handlePromote(directive)` chama `onDecisionsChange([...decisions, newDecision])`.
+| Type | Campo | Owner do writer |
+|---|---|---|
+| `KrFinalStateSnapshot` | `krTitle`, `objectiveTitle` | MBR/QBR Pre KR closure step |
+| `MbrOrgOkrSnapshot.keyResults[].ownerName` | — | MBR Org OKRs step (data fetcher) |
+| `MbrTeamOkrObjectiveSnapshot.keyResults[].ownerName` | — | MBR Team OKRs step (data fetcher) |
+| `MbrTeamOkrSnapshot.teamName` | — | MBR Team OKRs step |
+| `MbrPreDraftData.krFinalStates[].{krTitle,objectiveTitle}` | — | MBR Pre wizard |
+| `MbrPreDraftData.kpisToCreate[].relatedKrTitle` | — | MBR Pre KPIs step |
+| `MbrPreTeamSubmission.submittedByName` | — | MBR Pre submission writer |
+| `QbrPreDraftData.kpisToCreate[].relatedKrTitle` | — | QBR Pre KPIs step |
+| `WeeklyPriorityItem.teamName` | — | Weekly opening curation |
+| `WeeklyPeopleSignalAggregated.teamName` | — | Weekly opening curation |
+| `CollaboratorCheckinResult.{krTitle,objectiveTitle}` | — | Collaborator checkin writer |
+| `KpiCheckinResult.kpiName` | — | Collaborator/Managers checkin writer |
+| `AreaOkrSummary.areaName` | — | Managers/C-Level checkin writer |
+| `CompanyOkrSummary.objectiveTitle` | — | Managers/C-Level checkin writer |
 
-2. **`src/modules/okrs/components/wizards/qbr-meeting/__tests__/QbrMeetingSteps.test.tsx`** (se já cobre o step)
-   - Adicionar caso: render com `cLevelDirectives` + click no botão → `onDecisionsChange` chamado com decisão com `category` mapeada e `metadata.source === 'clevel_directive'`.
-   - Adicionar caso: diretiva já promovida → botão desabilitado.
+### Estratégia por arquivo
 
-### Padrão visual
+Para cada writer:
+1. Verificar se o campo é obrigatório no type.
+2. Se opcional: remover atribuição (delete a propriedade do objeto literal).
+3. Se obrigatório: tornar opcional no type (aditivo, não quebra legado) + remover atribuição.
+4. Garantir que renderer correspondente já usa lookup com fallback (verificado na Fase 2).
 
-- Seção com header `<WizardStepHeader>`-style leve (ícone `Crown` + "Diretivas do C-Level (N)").
-- Cada diretiva em `<Card>` com border esquerda colorida pela categoria-alvo (reuso de `bg-status-*-muted`).
-- Botão `<Button size="sm" variant="outline">` com ícone `ArrowRight`.
+### Arquivos a editar (estimativa)
 
-### Fora de escopo
+**Writers (steps/hooks):**
+- `src/modules/okrs/components/wizards/mbr/MbrTeamOkrsStep.tsx` (ou data fetcher associado) — `teamName`, `ownerName`
+- `src/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep.tsx` — `ownerName`
+- `src/modules/okrs/components/wizards/mbr-pre/*KrClosureStep.tsx` — `krTitle`, `objectiveTitle`
+- `src/modules/okrs/components/wizards/mbr-pre/*KpisStep.tsx` — `relatedKrTitle`
+- `src/modules/okrs/components/wizards/mbr-pre/*SubmissionStep.tsx` — `submittedByName`
+- `src/modules/okrs/components/wizards/qbr-pre/*KrClosureStep.tsx` — `krTitle`, `objectiveTitle`
+- `src/modules/okrs/components/wizards/qbr-pre/*KpisStep.tsx` — `relatedKrTitle`
+- `src/modules/okrs/hooks/useWeeklyOpeningCuration.ts` — `teamName` (priorities + peopleSignals)
+- `src/modules/okrs/components/wizards/collaborator-checkin/*` — `krTitle`, `objectiveTitle`, `kpiName`
+- `src/modules/okrs/components/wizards/managers-checkin/*` — `kpiName`, `areaName`
+- `src/modules/okrs/components/wizards/clevel-checkin/*` — `objectiveTitle`, `areaName`
 
-- Mudar shape do snapshot C-Level (diretivas continuam sem id estável).
-- Promover automaticamente — sempre exige ação do líder.
-- Aplicar o mesmo padrão em outros ritos.
+**Types (tornar opcional onde necessário):**
+- `src/modules/okrs/types/wizard/mbr.ts`
+- `src/modules/okrs/types/wizard/shared.ts`
+- `src/modules/okrs/types/wizard/collaborator.ts`
+- `src/modules/okrs/types/wizard/managers-clevel.ts`
+- `src/modules/okrs/types/wizard/weekly.ts`
+- `src/modules/okrs/types/wizard/qbr.ts`
 
 ### Validação
 
-- `bunx vitest run src/modules/okrs/components/wizards/qbr-meeting` verde.
-- `bunx vitest run src/modules/okrs` mantendo baseline 1766/1766.
-- Inspeção manual: abrir QBR Meeting Step 3 com C-Level com diretivas → seção aparece, promoção cria decisão na lista principal com badge correta.
+- `bunx vitest run src/modules/okrs` mantendo baseline **1769/1769**.
+- Suítes de teste de wizards podem precisar ajuste se asseguram presença de campo deprecated em snapshot — atualizar para checar apenas IDs.
+- Inspeção visual: abrir um relatório histórico (snapshot antigo) → readers devem continuar mostrando nomes via fallback.
+
+### Documentação
+
+- Atualizar `mem://standards/wizard-snapshot-denormalized-fields-deprecation`: marcar Fase 3 concluída, listar writers migrados.
+- `.lovable/plan.md`: registrar entrega.
 
 ### Risco
 
-**Baixo.** Adição puramente aditiva: nenhum tipo, schema ou snapshot existente muda. Fallback natural: se `cLevelDirectives` vazio, seção não renderiza (comportamento idêntico ao atual).
+**Médio.** Risco principal: tests/fixtures que esperam o campo presente. Mitigação: rodar suíte completa após cada bloco e ajustar fixtures pontualmente. Snapshots em produção não são afetados (apenas novos snapshots ficam enxutos).
 
-### Memory
+### Sequência de execução
 
-Atualizar `mem://standards/wizard-vocabulary-canonical` adicionando: "DIRECTIVE_TO_DECISION_MAP é consumido em `QbrMeetingDecisionsStep` para promover diretivas C-Level a `TeamCheckinDecision` com `metadata.source = 'clevel_directive'`".
+1. Auditoria precisa: `rg` para localizar exatamente onde cada campo é gravado (não inferido).
+2. Bloco 1 — Weekly (`useWeeklyOpeningCuration`).
+3. Bloco 2 — Collaborator Checkin.
+4. Bloco 3 — Managers/C-Level Checkin.
+5. Bloco 4 — MBR (Org + Team OKRs).
+6. Bloco 5 — MBR Pre (krFinalStates, kpisToCreate, submission).
+7. Bloco 6 — QBR Pre (kpisToCreate).
+8. Após cada bloco: rodar suíte do wizard correspondente.
+9. Suíte completa final + atualizar memory + plan.
 
----
+### Fora de escopo
 
-## DIRECTIVE_TO_DECISION_MAP no QBR Meeting Step 3 ✅ CONCLUÍDA
-
-### Entregue
-- `QbrMeetingDecisionsStep` agora renderiza seção "Diretivas do C-Level" quando `cLevelDirectives.length > 0`.
-- Cada diretiva mostra texto + badge da categoria original + seta + badge da categoria-alvo (via `DIRECTIVE_TO_DECISION_MAP`) + botão "Promover".
-- Promoção cria `TeamCheckinDecision` com `metadata.source = 'clevel_directive'`, `directiveCategory`, `directiveText` (chave estável) e `targetTeamId?`.
-- Diretiva já promovida: badge "Promovida ✓" e botão escondido (idempotência).
-- 3 novos casos de teste em `QbrMeetingSteps.test.tsx` cobrindo: render condicional, promoção (categoria mapeada + metadata) e estado promovido.
-- Memory `wizard-vocabulary-canonical` criada (estava no índice mas faltava o arquivo).
-
-### Validação
-- `bunx vitest run src/modules/okrs/components/wizards/qbr-meeting`: **28/28 passing**.
-- `bunx vitest run src/modules/okrs`: **1769/1769 passing** (baseline 1766 + 3 novos).
+- Edge functions (Fase 4).
+- Drop dos campos dos types/schema (Fase 5).
+- Campos `@deprecated` por outras razões (vocabulary, UI cleanup).
