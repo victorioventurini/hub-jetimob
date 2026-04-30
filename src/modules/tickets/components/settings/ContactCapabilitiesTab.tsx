@@ -31,14 +31,36 @@ export function ContactCapabilitiesTab() {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Group capabilities by contact (a contact may have many capabilities — one row per category/subcategory).
+  // The previous UI rendered one row per capability, which looked like duplicated contacts.
+  const groupedByContact = useMemo(() => {
+    const map = new Map<string, { contact: NonNullable<ContactCapability["contact"]>; capabilities: ContactCapability[] }>();
+    for (const cap of capabilities) {
+      if (!cap.contact) continue;
+      const entry = map.get(cap.contact_id);
+      if (entry) {
+        entry.capabilities.push(cap);
+      } else {
+        map.set(cap.contact_id, { contact: cap.contact, capabilities: [cap] });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.contact.name.localeCompare(b.contact.name));
+  }, [capabilities]);
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteCapability.mutateAsync(deleteTarget.id);
-      toast.success("Capacidade removida");
+      await Promise.all(
+        deleteTarget.capabilities.map((c) => deleteCapability.mutateAsync(c.id))
+      );
+      toast.success(
+        deleteTarget.capabilities.length > 1
+          ? "Capacidades removidas"
+          : "Capacidade removida"
+      );
       setDeleteTarget(null);
     } catch (error) {
-      toast.error("Erro ao remover capacidade");
+      toast.error("Erro ao remover capacidades");
     }
   };
 
