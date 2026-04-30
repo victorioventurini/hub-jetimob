@@ -45,6 +45,11 @@ export interface QbrBalanceStepProps {
   topSlot?: ReactNode;
   /** Decisões pendentes do Pré-QBR anterior do mesmo time (carry-over). */
   carryOverDecisions?: TeamCheckinDecision[];
+  /** Sugestões de pauta acumuladas no wizard (todas as etapas). */
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  /** Texto do trigger do collapsible de sugestões. Ex: "Registrar sugestão de pauta para o MBR". */
+  agendaTriggerLabel?: string;
 }
 
 interface ObjectiveGroup {
