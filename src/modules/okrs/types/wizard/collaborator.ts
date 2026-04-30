@@ -43,6 +43,11 @@ export interface KpiCheckinResult {
   previousValue: number | null;
   newValue: number;
   referenceDate: string;
+  /**
+   * Tipo do input (v3.0.0). Default `consolidated` para retrocompat com
+   * snapshots gravados antes desta migração.
+   */
+  inputType?: 'consolidated' | 'partial';
   confidence: 'high' | 'medium' | 'low';
   notes?: string;
   skipped: boolean;
