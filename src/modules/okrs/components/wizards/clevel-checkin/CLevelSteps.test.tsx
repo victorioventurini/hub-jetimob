@@ -61,7 +61,6 @@ function createKpiForWizard(overrides: Record<string, unknown> = {}): import('@/
     latest_value: 72,
     latest_reference_date: null,
     latest_rag_status: 'on_track' as const,
-    latest_confidence: null,
     latest_period_label: null,
     needs_update: false,
     userRole: 'viewer' as const,

@@ -96,5 +96,6 @@ export const entitiesSection: TcrSection = {
 | value | numeric | Valor |
 | reference_date | date | Data de referência |
 | source | enum | \`manual\`, \`api\`, \`webhook\`, \`spreadsheet\`, \`database\` |
+| input_type | enum | \`consolidated\`, \`partial\` (v3.0.0 — substituiu \`confidence\`) |
 `,
 };

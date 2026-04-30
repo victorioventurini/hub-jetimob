@@ -4401,7 +4401,6 @@ export type Database = {
       }
       kpi_values: {
         Row: {
-          confidence: Database["public"]["Enums"]["kpi_confidence_level"]
           created_at: string
           created_by: string | null
           id: string
@@ -4417,7 +4416,6 @@ export type Database = {
           value: number
         }
         Insert: {
-          confidence?: Database["public"]["Enums"]["kpi_confidence_level"]
           created_at?: string
           created_by?: string | null
           id?: string
@@ -4433,7 +4431,6 @@ export type Database = {
           value: number
         }
         Update: {
-          confidence?: Database["public"]["Enums"]["kpi_confidence_level"]
           created_at?: string
           created_by?: string | null
           id?: string
@@ -11834,7 +11831,6 @@ export type Database = {
         | "produto"
         | "operacoes"
         | "pessoas"
-      kpi_confidence_level: "high" | "medium" | "low"
       kpi_contributor_role: "data_entry" | "reviewer"
       kpi_direction: "up" | "down"
       kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
@@ -12146,7 +12142,6 @@ export const Constants = {
         "operacoes",
         "pessoas",
       ],
-      kpi_confidence_level: ["high", "medium", "low"],
       kpi_contributor_role: ["data_entry", "reviewer"],
       kpi_direction: ["up", "down"],
       kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],

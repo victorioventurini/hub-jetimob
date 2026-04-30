@@ -32,7 +32,7 @@ import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
 // ============================================================================
 
 interface KpiRow { id: string; name: string; unit?: string | null; target_value?: number | null; direction?: string | null; scope?: string | null; created_at?: string }
-interface KpiValueRow { kpi_id: string; reference_date: string; value: number | null; rag_status?: string | null; confidence?: number | null }
+interface KpiValueRow { kpi_id: string; reference_date: string; value: number | null; rag_status?: string | null }
 interface KpisModule { kpis: KpiRow[]; values: KpiValueRow[] }
 
 interface OkrObjRow { id: string; title: string; description?: string | null; team_id?: string | null; cycle_id?: string | null; status?: string | null; progress?: number | null }
@@ -208,7 +208,7 @@ async function collectKpis(svc: EdgeSupabaseClient, buId: string, win: { from: s
   if (ids.length > 0) {
     const { data } = await svc
       .from("kpi_values")
-      .select("kpi_id, reference_date, value, rag_status, confidence")
+      .select("kpi_id, reference_date, value, rag_status")
       .in("kpi_id", ids)
       .gte("reference_date", win.from.slice(0, 10))
       .lte("reference_date", win.to.slice(0, 10))

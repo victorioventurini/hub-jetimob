@@ -1,8 +1,11 @@
 /**
  * Integration tests for CollaboratorCheckinPage KPI save mutation.
  * Tests the addKpiValueSilent mutation logic and cache invalidation.
+ *
+ * v3.30.0: Removed `confidence` from KPI value payload — confiabilidade do
+ * dado agora é inferida de `input_type` (consolidated/partial) + `source`.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { queryKeys } from '@/lib/queryKeys';
 
 describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
@@ -15,7 +18,6 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         source: 'manual' as const,
         notes: 'Test note',
         created_by: 'user-456',
-        confidence: 'high' as const,
         input_type: 'partial' as const,
       };
 
@@ -26,7 +28,6 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         source: data.source || 'manual',
         notes: data.notes || null,
         created_by: data.created_by || null,
-        confidence: data.confidence || 'medium',
         input_type: data.input_type ?? 'consolidated',
       };
 
@@ -34,8 +35,8 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
       expect(insertPayload.value).toBe(42);
       expect(insertPayload.reference_date).toBe('2026-03-01');
       expect(insertPayload.source).toBe('manual');
-      expect(insertPayload.confidence).toBe('high');
       expect(insertPayload.input_type).toBe('partial');
+      expect((insertPayload as Record<string, unknown>).confidence).toBeUndefined();
     });
 
     it('uses defaults when optional fields are omitted', () => {
@@ -52,14 +53,12 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         source: (data as any).source || 'manual',
         notes: (data as any).notes || null,
         created_by: (data as any).created_by || null,
-        confidence: (data as any).confidence || 'medium',
         input_type: (data as any).input_type ?? 'consolidated',
       };
 
       expect(insertPayload.source).toBe('manual');
       expect(insertPayload.notes).toBeNull();
       expect(insertPayload.created_by).toBeNull();
-      expect(insertPayload.confidence).toBe('medium');
       expect(insertPayload.input_type).toBe('consolidated');
     });
 
@@ -85,12 +84,10 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
         queryKeys.kpis.listPrefix(),
       ];
 
-      // Verify all keys are arrays (valid query keys)
       invalidatedKeys.forEach((key) => {
         expect(Array.isArray(key)).toBe(true);
       });
 
-      // Verify specific keys exist
       expect(invalidatedKeys).toContainEqual(queryKeys.kpis.valuesPrefix());
       expect(invalidatedKeys).toContainEqual(queryKeys.kpis.all(null));
       expect(invalidatedKeys).toContainEqual(queryKeys.kpis.listPrefix());
@@ -105,10 +102,7 @@ describe('CollaboratorCheckin KPI save (addKpiValueSilent)', () => {
 
   describe('fail-safe behavior', () => {
     it('mutation does not have onError toast (silent pattern)', () => {
-      // The addKpiValueSilent mutation in CollaboratorCheckinPage has:
-      // "// NO onError toast - completely silent"
-      // This test documents the expected behavior
-      const hasOnErrorToast = false; // By design
+      const hasOnErrorToast = false;
       expect(hasOnErrorToast).toBe(false);
     });
   });
