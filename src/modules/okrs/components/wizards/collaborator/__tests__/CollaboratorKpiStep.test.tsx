@@ -166,7 +166,7 @@ describe('CollaboratorKpiStep - Form Submission', () => {
       expect(onComplete).toHaveBeenCalledWith(
         expect.objectContaining({
           kpiId: 'kpi-test',
-          kpiName: 'Taxa de Conversão',
+          // Onda 4 Fase 3: kpiName não é mais gravado pelo writer.
           newValue: 18,
           skipped: false,
         })

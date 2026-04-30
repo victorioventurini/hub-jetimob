@@ -124,16 +124,16 @@ export interface KrFinalStateSnapshot {
   krId: string;
   /**
    * @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`.
-   * Mantido obrigatório para retrocompat de snapshots gravados; readers devem
-   * preferir o nome atual via join, com fallback para este campo.
+   * Onda 4 Fase 3: writers param de gravar; campo opcional para retrocompat de snapshots antigos.
+   * Readers devem preferir o nome atual via join, com fallback para este campo.
    */
-  krTitle: string;
+  krTitle?: string;
   objectiveId: string;
   /**
    * @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` por `objectiveId`.
-   * Mantido obrigatório para retrocompat de snapshots gravados.
+   * Onda 4 Fase 3: writers param de gravar; campo opcional para retrocompat.
    */
-  objectiveTitle: string;
+  objectiveTitle?: string;
   /** KrState from useKrStateInsights */
   state: string;
   finalProgress: number;

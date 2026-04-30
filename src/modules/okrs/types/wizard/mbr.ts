@@ -200,11 +200,17 @@ export interface MbrPreDraftData {
    */
   krFinalStates: Array<{
     krId: string;
-    /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`. */
-    krTitle: string;
+    /**
+     * @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`.
+     * Onda 4 Fase 3: writers param de gravar; opcional para retrocompat.
+     */
+    krTitle?: string;
     objectiveId: string;
-    /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` por `objectiveId`. */
-    objectiveTitle: string;
+    /**
+     * @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` por `objectiveId`.
+     * Onda 4 Fase 3: writers param de gravar; opcional para retrocompat.
+     */
+    objectiveTitle?: string;
     state: string;
     finalProgress: number;
     paceStatus: string;

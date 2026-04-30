@@ -185,7 +185,7 @@ export function CollaboratorKpiStep({
     try {
       onComplete({
         kpiId: kpi.id,
-        kpiName: kpi.name,
+        // Onda 4 Fase 3: kpiName não é mais gravado — readers resolvem via lookup por kpiId.
         previousValue: kpi.latest_value,
         newValue: values.value,
         referenceDate: values.reference_date,

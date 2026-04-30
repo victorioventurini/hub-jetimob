@@ -236,9 +236,8 @@ export default function QbrPrePage() {
 
         states.push({
           krId: kr.id,
-          krTitle: kr.title,
+          // Onda 4 Fase 3: krTitle/objectiveTitle não são mais gravados — readers resolvem via lookup.
           objectiveId: obj.id,
-          objectiveTitle: obj.title,
           state,
           finalProgress: Math.round(progress),
           paceStatus: progress >= 70 ? 'No ritmo' : progress >= 40 ? 'Atenção' : 'Atrasado',
