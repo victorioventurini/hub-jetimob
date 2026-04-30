@@ -22,10 +22,11 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
-import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { TeamCheckinDecision, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
