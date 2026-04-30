@@ -55,6 +55,7 @@ function createBaseDraftData(overrides: Partial<QbrPreDraftData> = {}): QbrPreDr
     proposedOkrs: [],
     dependencies: [],
     decisions: [],
+    agendaSuggestions: [],
     ...overrides,
   };
 }
