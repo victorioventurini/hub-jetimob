@@ -111,4 +111,9 @@ Edge functions inspecionadas e **fora de escopo** (não desestruturam campos den
 
 ## Próxima sub-onda
 
-- **Fase 5**: drop dos campos dos types e do schema (após período de observação dos snapshots novos sem os campos).
+- **Fase 5 (diferida ≥ 90 dias)**: drop dos campos `@deprecated` dos types e dos branches de fallback em readers/edge functions, após janela de observação confirmando que snapshots novos não os contêm. Critérios e escopo em `.lovable/plan.md`.
+- `kpisToCreate[].relatedKrTitle` (MBR/QBR Pre): tarefa independente exigindo redesign de UI (autocomplete por KR) antes do drop.
+
+## Status Onda 4
+
+Fases 1-4 concluídas. Fase 5 diferida. Baseline de testes: **1769/1769 passing**.
