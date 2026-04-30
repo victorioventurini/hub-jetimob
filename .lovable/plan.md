@@ -1,33 +1,24 @@
-# Remover visualização Gantt do modal de milestones (Projects)
+Plano para resolver os comentários retroativos:
 
-## Contexto
+1. Ajustar a hidratação de citações no thread
+- Em Tickets, além do JOIN `reply_to`, usar fallback pelo `reply_to_message_id` procurando a mensagem original já carregada na thread.
+- Em Projects, aplicar o mesmo padrão pelo `reply_to_comment_id`.
+- Isso cobre comentários antigos/retroativos mesmo quando o embed do backend não vier populado.
 
-Dentro do `MilestoneDialog` (modal de cadastro/edição de milestone) existe um painel de contexto com a lista de milestones do mesmo projeto. No desktop, esse painel oferece um toggle Lista/Gantt e por padrão abre em **Gantt**. O usuário quer que o modal pare de oferecer Gantt; deve mostrar **apenas a lista**.
+2. Incluir anexos da mensagem original na citação
+- Ao montar a citação, buscar anexos pelo mapa global de anexos já carregado (`attachmentsByMessage` / attachments do projeto), não depender só dos anexos aninhados no JOIN.
+- Exibir citação quando houver texto ou pelo menos um anexo.
 
-A visualização Gantt no nível da página (`/projects` e `/projects/:id`) permanece intacta.
+3. Manter o comportamento de scroll até a mensagem citada
+- Preservar o clique na citação para rolar até a mensagem original.
+- Manter highlight temporário e aviso quando a mensagem original não estiver visível.
 
-## Arquivos afetados
+4. Validar no ticket reportado
+- Conferir especificamente o ticket `21810f1f-ff6b-4a82-a310-7aae963b587f`.
+- O comentário `6c53e96c-e2bc-4aad-a451-564bcef4feca` já tem `reply_to_message_id` apontando para a mensagem original `e8be230e-e424-4a53-b8b0-f6153794baa3`, e o anexo PDF também existe. A correção será de renderização/hidratação, não de schema.
 
-- `src/modules/projects/components/MilestoneScheduleContext.tsx` — único arquivo a alterar. É consumido somente pelo `MilestoneDialog`.
-
-## Mudanças
-
-1. Remover o estado `viewMode`, o `ProjectViewToggle` e o bloco condicional `viewMode === 'gantt' ? <GanttTimeline …/> : <ScheduleList …/>`.
-2. Sempre renderizar `<ScheduleList />` (mesmo componente já usado no mobile), mantendo o cabeçalho "Milestones do projeto (N)" e o aviso de conflito de datas (`AlertTriangle`).
-3. Limpar imports não usados após a remoção: `useState`, `GanttTimeline`, `ProjectViewToggle` (incluindo o tipo `ProjectViewMode`), `useMemo` parcial (manter onde ainda é usado: `sorted`, `conflicts`, `conflictIds`).
-4. Remover o `useMemo` de `ganttItems` e a constante `PREVIEW_ID` (deixam de ser referenciados).
-5. Manter a lógica de detecção de conflitos (preview vs milestones existentes), pois é o que torna o painel útil sem o Gantt.
-6. Não tocar `MilestoneGanttChart`, `GanttTimeline`, `ProjectViewToggle`, nem a página `/projects/:id` — Gantt continua disponível fora do modal.
-
-## Validação
-
-- Abrir `/projects/:id`, criar/editar milestone: o painel "Milestones do projeto" deve mostrar **apenas a lista**, sem o seletor Lista/Gantt no canto superior direito.
-- A lista mantém: pontinho de status, nome, intervalo de datas, label de status, marcação "(este)" no milestone em edição, destaque amber em conflitos e o aviso de sobreposição de datas embaixo.
-- Página de detalhes do projeto continua exibindo o Gantt normalmente (fora do modal).
-- Build/typecheck passa (sem imports órfãos).
-
-## Fora de escopo
-
-- Mexer no Gantt da página de detalhes do projeto.
-- Remover o componente `MilestoneGanttChart` ou `GanttTimeline` — continuam em uso fora do modal.
-- Renomear ou recolocar o painel de contexto.
+Detalhes técnicos:
+- Não criar migração: os dados retroativos já estão no banco.
+- Não alterar RLS/permissões.
+- Manter BU isolation e queries explícitas.
+- Escopo de arquivos previsto: `TicketDetailPage.tsx`, `TicketMessageBubble.tsx` e `ProjectCommentsSection.tsx`, com possível pequeno helper compartilhado se reduzir duplicação.

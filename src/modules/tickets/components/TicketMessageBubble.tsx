@@ -26,6 +26,10 @@ interface TicketMessageBubbleProps {
   onReply?: (message: TicketMessage) => void;
   /** Callback para scroll até uma mensagem específica */
   onScrollToMessage?: (messageId: string) => void;
+  /** Lookup map: id da mensagem original → mensagem completa (fallback quando o JOIN reply_to vier vazio) */
+  messagesById?: Map<string, TicketMessage>;
+  /** Lookup map: id da mensagem → anexos não-deletados dessa mensagem */
+  attachmentsByMessage?: Map<string, TicketAttachment[]>;
 }
 
 /**
@@ -51,6 +55,8 @@ export function TicketMessageBubble({
   isPinning = false,
   onReply,
   onScrollToMessage,
+  messagesById,
+  attachmentsByMessage,
 }: TicketMessageBubbleProps) {
   // Convert TicketMessage to GenericMessage
   const genericMessage: GenericMessage = useMemo(() => {
@@ -58,29 +64,40 @@ export function TicketMessageBubble({
     const authorName = getAuthorName(message);
     const isExternalAuthor = message.author_type === "partner_contact";
 
-    // Build reply_to data if exists and has content OR attachments
+    // Build reply_to data: prefer the JOIN payload, but fall back to the
+    // already-loaded messages list (covers retroactive/older replies whose
+    // embed didn't materialize) and to the global attachments map.
     let replyTo = null;
-    if (message.reply_to) {
-      const replyContent = getMessageText(message.reply_to.body_richtext);
-      const replyAttachments = (message.reply_to.attachments ?? [])
-        .filter((a) => !a.deleted_at)
-        .map((a) => ({
-          id: a.id,
-          fileName: a.file_name,
-          mimeType: a.mime_type,
-        }));
+    const replyId = message.reply_to_message_id ?? message.reply_to?.id ?? null;
+    if (replyId) {
+      const joined = message.reply_to ?? null;
+      const fallback = messagesById?.get(replyId) ?? null;
+
+      const sourceBody = joined?.body_richtext ?? fallback?.body_richtext;
+      const replyContent = sourceBody ? getMessageText(sourceBody as RichTextContent) : "";
+
+      const joinedAttachments = (joined?.attachments ?? []).filter((a) => !a.deleted_at);
+      const mappedAttachments = attachmentsByMessage?.get(replyId) ?? [];
+      // Prefer JOIN attachments if present, otherwise the global map (always non-deleted there).
+      const sourceAttachments = joinedAttachments.length > 0
+        ? joinedAttachments.map((a) => ({ id: a.id, fileName: a.file_name, mimeType: a.mime_type }))
+        : mappedAttachments.map((a) => ({ id: a.id, fileName: a.file_name, mimeType: a.mime_type }));
+
       const hasContent = replyContent.trim().length > 0;
-      const hasAttachments = replyAttachments.length > 0;
+      const hasAttachments = sourceAttachments.length > 0;
+
       if (hasContent || hasAttachments) {
         const replyAuthorName =
-          message.reply_to.author_user?.display_name ??
-          message.reply_to.author_contact?.name ??
+          joined?.author_user?.display_name ??
+          joined?.author_contact?.name ??
+          fallback?.author_user?.display_name ??
+          fallback?.author_contact?.name ??
           "Alguém";
         replyTo = {
-          id: message.reply_to.id,
+          id: replyId,
           content: replyContent,
           authorName: replyAuthorName,
-          attachments: replyAttachments,
+          attachments: sourceAttachments,
         };
       }
     }
@@ -109,7 +126,7 @@ export function TicketMessageBubble({
       attachments: genericAttachments,
       replyTo,
     };
-  }, [message, attachments]);
+  }, [message, attachments, messagesById, attachmentsByMessage]);
 
   // Handle reply - convert back to TicketMessage
   const handleReply = (msg: GenericMessage) => {
