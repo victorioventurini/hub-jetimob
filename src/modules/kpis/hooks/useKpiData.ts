@@ -426,7 +426,7 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_metrics")
         .select(`
           id, name, description, category, bu_id, owner_user_id, team_id,
-          unit, direction, frequency,
+          unit, direction,
           consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed,
           target_value, status, is_global,
           created_at, updated_at, deleted_at,
