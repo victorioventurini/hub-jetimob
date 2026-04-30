@@ -132,7 +132,8 @@ interface KpiRow {
   category: string;
   unit: string;
   direction: string;
-  frequency: string;
+  consolidation_frequency: string | null;
+  update_frequency: string | null;
   status: string;
   target_value: number | null;
   team?: { name: string } | null;
@@ -408,7 +409,8 @@ export async function queryKpis(
       category,
       unit,
       direction,
-      frequency,
+      consolidation_frequency,
+      update_frequency,
       target_value,
       status,
       team:teams(id, name, bu_id),
@@ -473,7 +475,7 @@ export async function queryKpis(
     
     output += `📊 ${kpi.name}\n`;
     output += `   Categoria: ${kpi.category} | Time: ${teamName}\n`;
-    output += `   ${targetStr} | Direção: ${kpi.direction} | Frequência: ${kpi.frequency}\n`;
+    output += `   ${targetStr} | Direção: ${kpi.direction} | Consolidação: ${kpi.consolidation_frequency ?? "n/d"} | Atualização: ${kpi.update_frequency ?? "n/d"}\n`;
     output += `   Responsável: ${ownerName} | Status: ${kpi.status}\n`;
     
     if (kpi.description) {

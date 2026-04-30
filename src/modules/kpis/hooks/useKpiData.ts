@@ -221,7 +221,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       team_id: kpi.team_id,
       unit: kpi.unit,
       direction: kpi.direction,
-      frequency: kpi.frequency === 'quarterly' ? 'quarterly' : kpi.frequency,
+      frequency: valueFrequencyToLegacy(kpi.consolidation_frequency ?? null),
       target_value: kpi.target_value,
       status: kpi.status,
       source_type: 'manual' as const,
@@ -425,7 +425,7 @@ export function useKpiDetail(kpiId: string) {
         .from("kpi_metrics")
         .select(`
           id, name, description, category, bu_id, owner_user_id, team_id,
-          unit, direction, frequency,
+          unit, direction,
           consolidation_frequency, update_frequency, update_mode, frequency_migration_reviewed,
           target_value, status, is_global,
           created_at, updated_at, deleted_at,
@@ -509,7 +509,7 @@ export function useKpiDetail(kpiId: string) {
     kpi: kpi ? {
       ...kpi,
       bu_id: kpi.bu_id || '',
-      frequency: kpi.frequency === 'quarterly' ? 'quarterly' as const : kpi.frequency,
+      frequency: valueFrequencyToLegacy(kpi.consolidation_frequency ?? null),
       source_type: 'manual' as const,
       source_config: null,
       visibility: 'bu' as const,

@@ -89,7 +89,34 @@ export function legacyFrequencyToValue(
   }
 }
 
-// === Validação ===
+/**
+ * Inverso de `legacyFrequencyToValue`. Converte `KpiFrequencyValue` (v3) para
+ * o enum legado `KpiFrequency` (v2) reduzindo cadências adicionais ao bucket
+ * mais próximo, para manter retrocompatibilidade do shape público de KpiMetric.
+ *
+ * - `biweekly` → `weekly`
+ * - `semiannual`/`annual` → `quarterly`
+ * - demais valores são mantidos.
+ */
+export function valueFrequencyToLegacy(
+  value: KpiFrequencyValue | null | undefined,
+): KpiFrequency {
+  switch (value) {
+    case 'daily':
+      return 'daily';
+    case 'weekly':
+    case 'biweekly':
+      return 'weekly';
+    case 'monthly':
+      return 'monthly';
+    case 'quarterly':
+    case 'semiannual':
+    case 'annual':
+      return 'quarterly';
+    default:
+      return 'monthly';
+  }
+}
 
 /**
  * `update_frequency` não pode ser MENOS frequente que
