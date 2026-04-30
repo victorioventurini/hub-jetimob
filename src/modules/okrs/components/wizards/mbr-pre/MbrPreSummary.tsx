@@ -189,8 +189,9 @@ export function MbrPreSummary({
           </Card>
         )}
 
-        {/* Sugestões de pauta — priorização (até 3) */}
-        {agendaSuggestions.length > 0 && onAgendaSuggestionsChange && (
+        {/* Sugestões de pauta — adicionar/remover/priorizar (até 3).
+            Renderiza sempre, permitindo registrar pautas direto na summary. */}
+        {onAgendaSuggestionsChange && (
           <AgendaSuggestionsPrioritizer
             suggestions={agendaSuggestions}
             onSuggestionsChange={onAgendaSuggestionsChange}
