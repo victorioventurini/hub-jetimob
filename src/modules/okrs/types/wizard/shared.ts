@@ -124,6 +124,10 @@ export interface RitualAgendaSuggestion {
   createdAt: string;
 }
 
+// ============================================================
+// IMPROVEMENT FEEDBACK (rituais)
+// ============================================================
+
 /** Feedback anônimo sobre melhoria do rito */
 export interface RitualImprovementFeedback {
   id: string;
