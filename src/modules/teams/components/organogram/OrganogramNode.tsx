@@ -18,6 +18,17 @@ interface OrganogramNodeCardProps {
   expansionMode?: 'default' | 'all' | 'none';
 }
 
+const MAX_PERSONS_PER_ROW = 6;
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  if (size <= 0) return [arr];
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+}
+
 const TYPE_CONFIG = {
   ceo: {
     icon: Crown,
