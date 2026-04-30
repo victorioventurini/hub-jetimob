@@ -70,6 +70,9 @@ export function QbrBalanceStep({
   teamId,
   topSlot,
   carryOverDecisions,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrBalanceStepProps) {
   // Group KRs by objective
   const objectiveGroups = useMemo(() => {
