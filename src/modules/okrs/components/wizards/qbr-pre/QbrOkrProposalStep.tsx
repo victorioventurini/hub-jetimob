@@ -28,6 +28,7 @@ import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import { BuUserSelect, UnitSelect } from '@/components/selects';
 import { useProposalValidation } from '@/modules/okrs/hooks';
@@ -37,6 +38,7 @@ import type {
   DraftTeamKr,
   OkrDirection,
   ProposedObjectiveEntry,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -50,6 +52,9 @@ export interface QbrOkrProposalStepProps {
   onProposedOkrsChange: (okrs: ProposedObjectiveEntry[]) => void;
   onContinue: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
 
 // ============================================================
