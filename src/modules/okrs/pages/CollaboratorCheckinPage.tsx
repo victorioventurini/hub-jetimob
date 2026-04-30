@@ -193,6 +193,9 @@ export default function CollaboratorCheckinPage() {
       notes?: string;
       created_by?: string;
       confidence?: 'high' | 'medium' | 'low';
+      // v3.0.0: input_type é obrigatório para o trigger DB derive_confidence
+      // funcionar corretamente. Default `consolidated` para retrocompat.
+      input_type?: 'consolidated' | 'partial';
     }) => {
       const { data: result, error } = await supabase
         .from("kpi_values")
@@ -204,6 +207,7 @@ export default function CollaboratorCheckinPage() {
           notes: data.notes || null,
           created_by: data.created_by || null,
           confidence: data.confidence || 'medium',
+          input_type: data.input_type ?? 'consolidated',
         })
         .select()
         .single();
@@ -392,6 +396,7 @@ export default function CollaboratorCheckinPage() {
                   notes: result.notes,
                   source: 'manual',
                   created_by: profile?.id,
+                  input_type: result.inputType ?? 'consolidated',
                 });
               } catch (error) {
                 // Erro logado, mas wizard continua (fail-safe)
