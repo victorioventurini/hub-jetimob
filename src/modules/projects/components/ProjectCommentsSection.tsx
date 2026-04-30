@@ -144,9 +144,26 @@ export function ProjectCommentsSection({ projectId, readOnly = false }: ProjectC
     }
   }, [comments.length]);
 
+  const commentsById = useMemo(() => {
+    const map = new Map<string, ProjectComment>();
+    comments.forEach((c) => map.set(c.id, c));
+    return map;
+  }, [comments]);
+
+  const attachmentsByComment = useMemo(() => {
+    const map = new Map<string, ProjectCommentAttachment[]>();
+    attachments.forEach((a) => {
+      if (!a.comment_id) return;
+      const list = map.get(a.comment_id) ?? [];
+      list.push(a);
+      map.set(a.comment_id, list);
+    });
+    return map;
+  }, [attachments]);
+
   const genericMessages = useMemo(
-    () => comments.map((c) => commentToGeneric(c, attachments)),
-    [comments, attachments],
+    () => comments.map((c) => commentToGeneric(c, attachments, commentsById, attachmentsByComment)),
+    [comments, attachments, commentsById, attachmentsByComment],
   );
 
   const handleContentChange = useCallback((value: string, parsed: ParsedMention[]) => {
