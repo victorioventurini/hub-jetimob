@@ -127,7 +127,7 @@ export function InitiativeQuickUpdateDialog({
                 <AvatarImage src={initiative.owner?.photo_url || undefined} />
                 <AvatarFallback className="text-[8px]">{ownerInitials}</AvatarFallback>
               </Avatar>
-              <UserLink userId={initiative.owner_user_id} displayName={ownerName} />
+              <UserLink profileId={initiative.owner_user_id} displayName={ownerName} />
             </div>
 
             {(initiative.start_date || initiative.expected_end_date) && (

@@ -13,12 +13,8 @@ import type {
   RitualThemeActionType,
 } from './vocabulary';
 
-// Re-export para retrocompat de imports antigos.
+// Re-export para imports do barrel `wizard/index.ts`.
 export type { RitualBlock, RitualPeopleSignalType, RitualThemeActionType };
-/** @deprecated Use `RitualBlock` from `./vocabulary`. */
-export type WeeklyThemeBlock = RitualBlock;
-/** @deprecated Use `RitualThemeActionType` from `./vocabulary`. */
-export type WeeklyThemeType = RitualThemeActionType;
 
 // ============================================================
 // PRÉ-WEEKLY (DESTILAÇÃO INDIVIDUAL DA SEMANA)
@@ -83,14 +79,12 @@ export type WeeklyStep =
   | 'people'
   | 'closing';
 
-/** Bloco temático curado pelo agente curador-orquestrador.
- *  Aliases `WeeklyThemeBlock` e `WeeklyThemeType` declarados no topo do arquivo. */
-
+/** Bloco temático curado pelo agente curador-orquestrador. */
 export interface WeeklyTheme {
   id: string;
   title: string;
-  block: WeeklyThemeBlock;
-  type: WeeklyThemeType;
+  block: RitualBlock;
+  type: RitualThemeActionType;
   motivation: string;
   suggestedDecision?: string;
   affectedTeams: string[];

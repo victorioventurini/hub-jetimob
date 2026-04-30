@@ -189,13 +189,3 @@ export function initSessionContext(params: {
   logger.info('[GTM] Session context initialized:', params);
 }
 
-// ============================================
-// DEPRECATED - Mantido para retrocompatibilidade
-// ============================================
-
-/**
- * @deprecated Use initGTM() ao invés. GA4 agora é gerenciado dentro do GTM.
- */
-export function initGA4(): void {
-  logger.warn('[GTM] initGA4() está deprecated. Use initGTM() - o GA4 é configurado dentro do GTM.');
-}

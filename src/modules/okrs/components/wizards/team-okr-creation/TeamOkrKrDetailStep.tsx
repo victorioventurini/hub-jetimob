@@ -31,21 +31,10 @@ import type { KrPlan } from './TeamOkrKrTypeStep';
 // TYPES
 // ============================================================
 
-/**
- * @deprecated Use teamId prop instead. Mantido para compatibilidade.
- */
-export interface TeamMember {
-  id: string;
-  fullName: string;
-  avatarUrl?: string;
-}
-
 export interface TeamOkrKrDetailStepProps {
   objectiveTitle: string;
   krPlan: KrPlan;
   draftKrs: DraftTeamKr[];
-  /** @deprecated Use teamId instead */
-  teamMembers?: TeamMember[];
   /** ID do time para filtrar usuários no BuUserSelect */
   teamId?: string;
   onDraftKrsChange: (krs: DraftTeamKr[]) => void;
