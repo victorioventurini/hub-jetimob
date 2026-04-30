@@ -425,6 +425,9 @@ export default function MbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             teamId={teamIdParam || undefined}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
             topSlot={
               <RitualPreparationStatus
                 ritualType="mbr-pre"
@@ -443,6 +446,9 @@ export default function MbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
           />
         );
 
@@ -455,6 +461,9 @@ export default function MbrPrePage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
           />
         );
 
@@ -468,6 +477,9 @@ export default function MbrPrePage() {
             teamId={teamIdParam || undefined}
             onContinue={goNext}
             onBack={goBack}
+            agendaSuggestions={draft.data.agendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
           />
         );
 
@@ -479,6 +491,7 @@ export default function MbrPrePage() {
             isCompleting={false}
             onComplete={handleComplete}
             onBack={goBack}
+            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
           />
         );
 
