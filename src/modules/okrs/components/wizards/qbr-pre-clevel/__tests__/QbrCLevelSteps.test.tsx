@@ -84,7 +84,6 @@ function createSubmission(overrides: Partial<LeaderPreSubmission> = {}): LeaderP
         { krId: 'kr-2', krTitle: 'KR 2', state: 'at_risk', finalProgress: 40, paceStatus: 'behind_pace' },
       ],
       kpiSnapshot: [],
-      zombieCandidates: [],
       kpisToCreate: [{ description: 'Novo KPI', suggestedScope: 'team' }],
       learnings: { whatWorked: 'Rotinas', whatDidntWork: 'Deploys', debts: 'Testes' },
       proposedOkrs: [] as any,

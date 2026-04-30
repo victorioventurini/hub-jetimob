@@ -129,8 +129,6 @@ export interface QbrPreSnapshot {
   submittedAt: string;
   krFinalStates: KrFinalStateSnapshot[];
   kpiSnapshot: MbrKpiSnapshot[];
-  /** kpi_ids sinalizados pelo líder */
-  zombieCandidates: string[];
   kpisToCreate: Array<{
     description: string;
     suggestedScope: string;
@@ -156,7 +154,6 @@ export interface QbrPreDraftData {
   teamId: string;
   krFinalStates: QbrPreSnapshot['krFinalStates'];
   kpiSnapshots: MbrKpiSnapshot[];
-  zombieCandidates: string[];
   kpisToCreate: QbrPreSnapshot['kpisToCreate'];
   learnings: QbrPreSnapshot['learnings'];
   proposedOkrs: ProposedObjectiveEntry[];

@@ -77,7 +77,6 @@ const DEFAULT_DATA: MbrPreDraftData = {
   teamId: '',
   krFinalStates: [],
   kpiSnapshots: [],
-  zombieCandidates: [],
   kpisToCreate: [],
   highlights: { accelerated: '', blocked: '', needsDecision: '' },
   nextSteps: { focus: '', prioritizedItems: [], crossDependencies: [] },

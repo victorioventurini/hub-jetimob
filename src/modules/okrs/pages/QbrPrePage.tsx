@@ -75,7 +75,6 @@ const DEFAULT_DATA: QbrPreDraftData = {
   teamId: '',
   krFinalStates: [],
   kpiSnapshots: [],
-  zombieCandidates: [],
   kpisToCreate: [],
   learnings: { whatWorked: '', whatDidntWork: '', debts: '' },
   proposedOkrs: [],
