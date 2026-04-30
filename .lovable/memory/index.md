@@ -34,3 +34,4 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 
 
 - [KPIs Permissions Matrix](mem://features/kpis/kpis-permissions-matrix) — Matriz scope-oriented (org/area/team) com herança hierárquica; Métricas travadas em scope=team; helpers SQL user_can_manage_kpi/user_can_create_kpi
+- [KPI Value Entry SSOT](mem://features/kpis/kpi-value-entry-ssot) — `KpiValueEntryForm` é o único formulário de "Registrar valor de KPI"; consumido por modal /kpis e por todos os ritos; sempre enviar `input_type` no insert
