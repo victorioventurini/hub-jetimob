@@ -17,13 +17,18 @@ import {
   
   KrLinkedDetails,
   CarryOverDecisionsSection,
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import {
   KR_STATE_CONFIG,
   type KrState,
 } from '@/modules/okrs/hooks';
 import { UnlinkedProjectsList } from './UnlinkedProjectsList';
-import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type {
+  QbrPreDraftData,
+  TeamCheckinDecision,
+  RitualAgendaSuggestion,
+} from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -40,6 +45,11 @@ export interface QbrBalanceStepProps {
   topSlot?: ReactNode;
   /** Decisões pendentes do Pré-QBR anterior do mesmo time (carry-over). */
   carryOverDecisions?: TeamCheckinDecision[];
+  /** Sugestões de pauta acumuladas no wizard (todas as etapas). */
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  /** Texto do trigger do collapsible de sugestões. Ex: "Registrar sugestão de pauta para o MBR". */
+  agendaTriggerLabel?: string;
 }
 
 interface ObjectiveGroup {
@@ -60,6 +70,9 @@ export function QbrBalanceStep({
   teamId,
   topSlot,
   carryOverDecisions,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrBalanceStepProps) {
   // Group KRs by objective
   const objectiveGroups = useMemo(() => {
@@ -114,6 +127,16 @@ export function QbrBalanceStep({
           onPrimary={onContinue}
           primaryLabel="Continuar"
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-balance"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-6 space-y-6">

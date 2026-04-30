@@ -1,138 +1,146 @@
-# Plano — Remover "Confiança no Valor" dos KPIs
 
-## Contexto e justificativa
-O campo `confidence` em `kpi_values` (enum `kpi_confidence_level`: high/medium/low) é uma autoavaliação subjetiva sobre a veracidade do dado. Foi adicionado em v2.1 mas é redundante com sinais já existentes:
-- **`input_type`** (Consolidado/Parcial) já indica se o dado é fechado ou provisório.
-- **`source`** (manual/api/webhook/database) já indica origem/confiabilidade da fonte.
-- **`rag_status`** já mede performance vs. meta.
+# Plano — Sugestões de Pauta nos Wizards MBR-pré e QBR-pré
 
-**Decisão:** eliminar `confidence` do escopo **KPI**. O `confidence` de **OKR check-ins** (`okr_checkins.confidence`, enum `okr_confidence`) **permanece intacto** — é outra entidade.
+## Objetivo
+
+Permitir que o líder, ao longo do MBR-pré e do QBR-pré, registre **sugestões de pauta** para o rito-mãe (MBR / QBR Meeting), categorizadas em **Performance**, **Projetos**, **Pessoas**. No step final de "Resumo e Envio", listar todas as sugestões coletadas e exigir a priorização de até **3** delas, que serão consumidas pelo rito-mãe.
+
+A UX do registro inline reaproveita o mesmo padrão visual/funcional do `InlineDecisionInput` (collapsible, badges de categoria, lista compacta abaixo) — **sem duplicar o componente**.
 
 ---
 
-## 1. Banco de Dados (migration única)
+## Análise técnica (pré-checklist)
 
-```sql
--- 1. Drop trigger e function
-DROP TRIGGER IF EXISTS trg_kpi_value_derive_confidence ON public.kpi_values;
-DROP FUNCTION IF EXISTS public.derive_kpi_value_confidence();
+Documentos consultados:
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (§4.8 — wizards framework)
+- `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md`
+- `.lovable/memory/standards/wizard-vocabulary-canonical.md`
+- `.lovable/memory/architecture/wizards/wizards-master-standard.md` (via index)
+- `.lovable/memory/standards/wizard-snapshot-denormalized-fields-deprecation.md`
 
--- 2. Drop coluna
-ALTER TABLE public.kpi_values DROP COLUMN IF EXISTS confidence;
+Achados-chave que orientam a solução:
 
--- 3. Drop enum (CASCADE só após drop da coluna)
-DROP TYPE IF EXISTS public.kpi_confidence_level;
+1. **`RitualBlock` já existe** em `src/modules/okrs/types/wizard/vocabulary.ts` com exatamente os 3 valores pedidos: `'performance' | 'projetos' | 'pessoas'`. Não criar enum novo — reusar SSOT.
+2. `InlineDecisionInput` é o componente canônico para registro inline em qualquer step. Está em `src/modules/okrs/components/wizards/shared/InlineDecisionInput.tsx` e já cobre: collapsible, badges de categoria, textarea auto-submit, lista filtrada por `sourceStep`. **Mas é fortemente acoplado a `TeamCheckinDecision`** (categorias `decision | focus_adjustment | next_step | strategic_proposal`) — não dá para passar `RitualBlock` direto.
+3. MBR-pré e QBR-pré **não vivem dentro do framework genérico** (`framework/components/`) — usam steps próprios em `mbr-pre/` e `qbr-pre/` montados via `WizardStepScaffold` + footer manual. Logo, **não preciso** alterar `_InlineDecisionsSlot` nem `STEP_DEFINITIONS`.
+4. Drafts persistidos via `useWizardDraft` em `MbrPreDraftData` e `QbrPreDraftData` (campo `decisions` já existe). Vou adicionar o array de sugestões no mesmo nível.
+5. Snapshots gravados em `okr_wizard_sessions.reflection_data` (JSONB) — adicionar campos novos é compatível com snapshots antigos (leitura defensiva).
+
+---
+
+## Decisões de arquitetura
+
+### 1. Refator pequeno em `InlineDecisionInput` → componente genérico reutilizável
+
+`InlineDecisionInput` ganha capacidade de operar em **dois modos** sem duplicação, via composição:
+
+- **Modo `decision`** (atual, default): mantém comportamento e aparência atuais.
+- **Modo `agenda`**: troca categorias, label/ícone do trigger e placeholder, mas mantém toda a UX (collapsible, lista compacta, textarea auto-submit, contagem em badge).
+
+Para evitar inflar `InlineDecisionInput` com lógica de duas entidades distintas, extraio a casca visual em um componente novo **`InlineCollapsibleEntryInput`** (em `shared/`), e:
+- `InlineDecisionInput` passa a ser um wrapper fino que injeta as categorias de decisão.
+- Crio `InlineAgendaSuggestionInput` como segundo wrapper fino que injeta as categorias `RitualBlock`.
+
+Isso preserva o contrato existente de `InlineDecisionInput` (zero refactor nos 19 wizards consumidores) **e** evita duplicação visual.
+
+### 2. Tipo de dado canônico
+
+Em `src/modules/okrs/types/wizard/shared.ts`, adicionar:
+
+```ts
+export interface RitualAgendaSuggestion {
+  id: string;
+  text: string;
+  category: RitualBlock;             // 'performance' | 'projetos' | 'pessoas'
+  sourceStep: string;                 // step de origem dentro do wizard
+  prioritized?: boolean;              // marcado no Summary (até 3)
+  priorityRank?: 1 | 2 | 3;           // ordem da priorização
+  createdAt: string;                  // ISO
+}
 ```
 
-Auditar `calculate_objective_health` e `kpi_validate_value_insert` — se referenciarem `confidence`, ajustar (recriar sem o campo).
+Tipo é genérico (serve a qualquer rito preparatório futuro: weekly, qbr-clevel, etc.).
 
-> Tipos auto-gerados (`src/integrations/supabase/types.ts`) serão regenerados automaticamente após a migration.
+### 3. Persistência no draft
 
----
+- `MbrPreDraftData.agendaSuggestions: RitualAgendaSuggestion[]` (default `[]`)
+- `QbrPreDraftData.agendaSuggestions: RitualAgendaSuggestion[]` (default `[]`)
+- Gravar no snapshot final junto com o restante via os mesmos hooks de complete já existentes — sem nova migration nem coluna nova (JSONB).
 
-## 2. SSOT compartilhado (`src/modules/kpis/components/shared/`)
+### 4. Plug nos steps existentes
 
-- **`KpiValueEntryForm.tsx`**: remover seção "Confiança no Valor" (modo `always-visible` e bloco `<details>` "Avançado" com `override_confidence`); remover props `confidenceMode`, `defaultConfidence`, `CONFIDENCE_OPTIONS`, lógica de `overrideConfidence`.
-- **`kpiValueEntrySchema.ts`**: remover campos `confidence` e `override_confidence` do Zod schema e do tipo `KpiValueEntryFormValues`.
+Em **cada** step ativo dos dois wizards, inserir `<InlineAgendaSuggestionInput>` no rodapé do `WizardStepScaffold`, **acima** do `WizardStepFooter` (mesmo padrão do `_InlineDecisionsSlot`). Steps afetados:
 
-Schema final: `value`, `reference_date`, `input_type`, `notes`.
+- **MBR-pré**: `balance`, `kpi-analysis`, `highlights`, `next-steps` (4 steps; `summary` não recebe input).
+- **QBR-pré**: `balance`, `kpi-analysis`, `learnings`, `okr-proposal` (4 steps; `summary` não recebe input).
 
----
+Como esses steps **não** estão no framework genérico, o slot é renderizado diretamente no JSX do step (igual ao padrão dos demais inputs locais). Cada step recebe duas novas props: `agendaSuggestions` e `onAgendaSuggestionsChange`, no mesmo formato das props de `decisions`.
 
-## 3. Módulo `/kpis`
+### 5. Step de Resumo — priorização
 
-| Arquivo | Mudança |
-|---------|---------|
-| `AddKpiValueDialog.tsx` | Remover `confidenceMode="advanced"` e `confidence` no payload |
-| `EditKpiValueDialog.tsx` | Remover schema local de `override_confidence/confidence`, hidratação, UI "Avançado", envio na mutation |
-| `KpiValuesTable.tsx` | Remover coluna/badge de confidence (`confidenceConfig`) |
-| `KpiEvolutionChart.tsx` | Remover `confidence` do mapeamento |
-| `hooks/useKpiData.ts` | Remover `confidence` dos selects, tipos e payloads |
-| `hooks/useKpiWithHistory.ts` | Remover `confidence` do select e tipo |
-| `hooks/useKpisForWizard.ts` | Remover `latest_confidence` e select |
-| `hooks/useKpisForWizardV2.ts` | Idem |
-| `hooks/useKpiMutations.ts` | Remover `confidence` do payload de update |
-| `types.ts` | Remover `KpiConfidenceLevel`, `confidence`, `latest_confidence` |
+Em `MbrPreSummary` e `QbrPreSummary`:
 
----
+- Nova seção **"Sugestões de pauta para o {MBR|QBR}"**, agrupada visualmente por `RitualBlock` (Performance / Projetos / Pessoas) com contagem.
+- Cada sugestão exibe um checkbox de "Priorizar". Limite de **3 marcadas**: ao tentar marcar a 4ª, a opção fica `disabled` com tooltip "Limite de 3 sugestões prioritárias atingido". As 3 marcadas recebem `priorityRank` 1/2/3 conforme ordem de marcação.
+- O botão de envio fica habilitado normalmente (priorização é **opcional**, mas recomendada — banner informativo "Recomendamos priorizar até 3 sugestões para o rito" quando houver ≥1 sugestão e nenhuma priorizada).
 
-## 4. Ritos (`src/modules/okrs/components/wizards/...`)
+### 6. Consumo no rito-mãe (fora do escopo desta entrega)
 
-- **Collaborator**:
-  - `CollaboratorKpiStep.tsx`: remover `confidenceMode="always-visible"` e campo `confidence` do submit.
-  - `CollaboratorSummary.tsx`: remover badges 🟢🟡🔴 de confidence em **KPIs** (manter para KRs).
-  - `CollaboratorCheckinPage.tsx`: remover `confidence` do tipo do mutation `addKpiValueSilent` e do payload.
-- **MBR — `MbrKpiGateStep.tsx`**: remover `kpi_confidence` enviado para snapshot.
-- **Pre-Weekly — `PreWeeklySourcesStep.tsx`**: remover contagem de `lowConfidence` em resultados de KPI.
-- **Cycle Check-ins** (`CycleCheckinsFeed/Filters/Summary/Table.tsx`, `useCycleCheckins.ts`): manter confidence no caminho **KR**; remover quando aplicado a KPI.
-- **Ritual Report — `CollaboratorReport.tsx`**: remover `<ConfidenceBadge>` na linha de KPI (manter na linha de KR).
-- **Shared**:
-  - `LatestCheckinSummary.tsx`, `WizardTooltips.tsx`: revisar — manter para KR, remover quando exibido para KPI.
-  - `framework/config/stepContentAdapters.ts`: revisar adaptadores de KPI.
-- **Tipos**: `types/wizard/collaborator.ts`, `mbr.ts`, `shared.ts` — remover `confidence` dos tipos de **KPI** (KR não mexe).
+Os snapshots gravados estarão imediatamente disponíveis para o MBR (consumindo via `MbrPreTeamSubmission`) e para o QBR Meeting (via leitura agregada de pre-QBRs por time). A UI de leitura no rito-mãe **não** faz parte desta entrega — fica para a próxima iteração (anotar como follow-up).
 
 ---
 
-## 5. Outros consumidores
+## Arquivos afetados
 
-- **`src/modules/teams/hooks/useTeamContributionAnalytics.ts`**: substituir o score baseado em `confidence` por mapping de `rag_status` (`green`=100, `amber`=50, `red`=0, `no_data`=null/skip).
-- **`src/modules/teams/hooks/useTeamKpisGrouped.ts`**: remover `confidence` do select e tipo.
-- **`supabase/functions/analysis-generate/index.ts`**: remover `confidence` do select e do tipo `KpiValueRow` (manter no `CheckinRow` — KR).
-- **`supabase/functions/_shared/tcr/entities.ts`**: remover linha `confidence` da definição da entidade `kpi_values`.
-- **`src/modules/okrs/hooks/queries/okrFieldDefinitions.ts`** e quaisquer outras queries que listem colunas de `kpi_values`: remover `confidence`.
+**Novos**
+- `src/modules/okrs/components/wizards/shared/InlineCollapsibleEntryInput.tsx` (casca extraída)
+- `src/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput.tsx` (wrapper para `RitualBlock`)
+- `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx` (componente do Summary, reutilizável)
 
----
+**Editados**
+- `src/modules/okrs/components/wizards/shared/InlineDecisionInput.tsx` — refactor interno para usar a casca extraída (API pública intacta).
+- `src/modules/okrs/components/wizards/shared/index.ts` — exports dos novos componentes.
+- `src/modules/okrs/types/wizard/shared.ts` — `RitualAgendaSuggestion`.
+- `src/modules/okrs/types/wizard/mbr.ts` — `agendaSuggestions` em `MbrPreDraftData`.
+- `src/modules/okrs/types/wizard/qbr.ts` — `agendaSuggestions` em `QbrPreDraftData`.
+- `src/modules/okrs/pages/MbrPrePage.tsx` — default `agendaSuggestions: []` + propagar nos 4 steps + Summary.
+- `src/modules/okrs/pages/QbrPrePage.tsx` — idem.
+- 4 steps MBR-pré: `MbrPreBalanceStep`, `MbrPreKpiAnalysisStep`, `MbrPreHighlightsStep`, `MbrPreNextStepsStep` — receber props e renderizar `InlineAgendaSuggestionInput` no scaffold.
+- 4 steps QBR-pré: `QbrBalanceStep`, `QbrKpiAnalysisStep`, `QbrLearningsStep`, `QbrOkrProposalStep` — idem.
+- `MbrPreSummary` e `QbrPreSummary` — nova seção de priorização (via `AgendaSuggestionsPrioritizer`).
 
-## 6. Testes
-
-Atualizar/limpar asserts e fixtures de **confidence em KPI** (manter os de KR):
-- `CollaboratorKpiStep.test.tsx`, `CollaboratorContextStep.test.tsx`, `CollaboratorCheckinKpiSave.test.ts`
-- `useCreateCheckin.test.ts` / `useCreateCheckin.integration.test.ts` (apenas asserts ligados a KPI)
-- `CycleCheckinsFilters.test.tsx`, `queries.test.ts`, `types.test.ts`
-- `okr.factory.ts`, `fixtures.ts` — limpar campos de confidence em fixtures de KPI
-- `CLevelSteps.test.tsx` — remover `confidence` em payloads de KPI
-
----
-
-## 7. Documentação canônica & Memória
-
-- **`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`** (bump v3.30.0):
-  - Linha 837: remover `confidence` da tabela `kpi_values`.
-  - Linha 844: remover bullet "Default confidence".
-  - Linhas 2904, 2913, 2922: remover `kpi_confidence_level` da lista de enums e item "confidence" da seção KPIs v2.1.
-  - Linha 3267: remover "confidence" do filtro de listagem.
-  - Adicionar entrada de versão v3.30.0 documentando a remoção e a justificativa (redundância com `input_type` + `source`).
-- **`docs/canonical/DATA_MODEL_REGISTRY.md`**: remover entrada do enum `kpi_confidence_level` (linha 226).
-- **`docs/canonical/SCHEMA_QUICK_REFERENCE.md`**: linha 182 — remover `confidence` da lista de colunas; linha 184 — remover menção ao trigger `derive_kpi_value_confidence`.
-- **`docs/canonical/DB_FUNCTIONS_INDEX.md`**: remover entrada `derive_kpi_value_confidence()` (linhas 1064-1065).
-- **`docs/canonical/UI_COMPONENTS_REGISTRY.md`**: atualizar registro do `KpiValueEntryForm` — remover coluna `confidenceMode`, exemplos e nota sobre trigger.
-- **`.lovable/memory/features/kpis/kpi-value-entry-ssot.md`**: remover coluna `confidenceMode` da tabela; ajustar regra 2 (não citar mais `derive_kpi_value_confidence`).
-- **`.lovable/memory/features/kpis/kpis-master-standard`**: remover menção a "confidence" do índice (entrada do master); bump de versão.
-- **`.lovable/memory/features/teams/team-contribution-tab-standard.md`**: documentar nova fórmula (rag_status no lugar de confidence).
-- **`.lovable/memory/index.md`**: bump versão da entrada `KPIs Master`.
+**Sem mudanças de banco** (JSONB já comporta o campo novo; leitura defensiva nos consumidores).
 
 ---
 
-## 8. Ordem de execução
+## UX detalhada do registro inline
 
-1. **Frontend e edge functions primeiro** — parar de enviar/ler `confidence` (deploy não-bloqueante: coluna ainda existe, fica nullable de fato).
-2. **Migration DB** — drop trigger → drop column → drop type.
-3. **Regenerar tipos Supabase** — automático após migration.
-4. **Atualizar docs e memórias**.
+```text
+┌────────────────────────────────────────────────────────────┐
+│ 📋 Registrar sugestão de pauta para o MBR        [2] ⌄    │  ← trigger collapsible
+├────────────────────────────────────────────────────────────┤
+│ [Performance] [Projetos] [Pessoas]                          │  ← 3 badges (RitualBlock)
+│ ┌──────────────────────────────────────────────┐ ┌──┐      │
+│ │ Descreva o ponto a discutir no rito...        │ │+ │     │
+│ └──────────────────────────────────────────────┘ └──┘      │
+│ • [Pessoas] Discutir backfill do squad de Onboarding  ✕    │
+│ • [Performance] Revisar KR-3 abaixo da linha          ✕    │
+└────────────────────────────────────────────────────────────┘
+```
 
-> Inverter essa ordem (DB primeiro) quebraria inserts em produção até o deploy do frontend.
+Mesmo padrão visual do `InlineDecisionInput`, com label/ícone trocados (`ListTodo` em vez de `Lightbulb`) e placeholder customizado.
 
 ---
 
-## 9. Verificação final
+## Validação
 
-1. `rg "confidence" src/modules/kpis` → zero ocorrências.
-2. `rg "kpi_confidence|latest_confidence" src/` → zero ocorrências.
-3. `psql -c "\d kpi_values"` → coluna `confidence` ausente; trigger `trg_kpi_value_derive_confidence` ausente.
-4. `psql -c "\dT kpi_confidence_level"` → erro "does not exist".
-5. Smoke manual:
-   - Registrar valor pelo modal `/kpis` → form sem campo confidence, persiste sem erro.
-   - Registrar valor pelo step KPIs do **Collaborator Check-in** → idem.
-   - Abrir relatório de rito antigo (já completado) → renderiza sem quebrar.
-   - Página `/teams/:id/contribution` → score continua sendo calculado (agora via rag_status).
-6. Build limpo; suíte de testes verde.
+- Type-check: `RitualAgendaSuggestion` e os campos novos nos drafts devem compilar sem erros.
+- Smoke manual: abrir MBR-pré e QBR-pré, adicionar sugestão em cada step, navegar até o Summary, marcar 3 (a 4ª deve bloquear), enviar e conferir o snapshot em `okr_wizard_sessions.reflection_data`.
+- Sem CRUD em banco: nenhuma migration. Sem Edge Function nova.
+
+---
+
+## Follow-ups (fora do escopo)
+
+1. Renderizar as sugestões priorizadas no `MbrPage` / `QbrMeetingPage` (provavelmente em um novo step "Pauta sugerida" ou no opening).
+2. Documentar `RitualAgendaSuggestion` no TCR (§4.8 wizards / vocabulário) e atualizar `wizard-vocabulary-canonical` em memória.

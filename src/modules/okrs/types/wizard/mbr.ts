@@ -4,7 +4,7 @@
  * Inclui os snapshots imutáveis de KPIs e OKRs e os tipos de governança.
  */
 
-import type { TeamCheckinDecision, RitualImprovementFeedback } from './shared';
+import type { TeamCheckinDecision, RitualImprovementFeedback, RitualAgendaSuggestion } from './shared';
 
 // ============================================================
 // MBR STEPS
@@ -227,6 +227,8 @@ export interface MbrPreDraftData {
   highlights: { accelerated: string; blocked: string; needsDecision: string };
   nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
   decisions: TeamCheckinDecision[];
+  /** Sugestões de pauta para o MBR coletadas ao longo do wizard (até 3 prioritárias). */
+  agendaSuggestions: RitualAgendaSuggestion[];
 }
 
 // ============================================================

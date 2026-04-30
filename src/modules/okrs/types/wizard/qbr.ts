@@ -9,6 +9,7 @@ import type {
   TeamCheckinDecision,
   RitualImprovementFeedback,
   KrFinalStateSnapshot,
+  RitualAgendaSuggestion,
 } from './shared';
 import type { DirectiveCategory } from './vocabulary';
 import type { MbrKpiSnapshot } from './mbr';
@@ -159,6 +160,8 @@ export interface QbrPreDraftData {
   proposedOkrs: ProposedObjectiveEntry[];
   dependencies: DraftTeamDependency[];
   decisions: TeamCheckinDecision[];
+  /** Sugestões de pauta para o QBR coletadas ao longo do wizard (até 3 prioritárias). */
+  agendaSuggestions: RitualAgendaSuggestion[];
 }
 
 // ============================================================

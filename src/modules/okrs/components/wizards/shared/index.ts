@@ -58,6 +58,15 @@ export type { AdminContextSwitcherProps } from './AdminContextSwitcher';
 
 export { InlineDecisionInput } from './InlineDecisionInput';
 export type { InlineDecisionInputProps } from './InlineDecisionInput';
+export { InlineCollapsibleEntryInput } from './InlineCollapsibleEntryInput';
+export type {
+  CategoryConfig,
+  InlineCollapsibleEntryInputProps,
+} from './InlineCollapsibleEntryInput';
+export { InlineAgendaSuggestionInput, AGENDA_CATEGORY_CONFIG } from './InlineAgendaSuggestionInput';
+export type { InlineAgendaSuggestionInputProps } from './InlineAgendaSuggestionInput';
+export { AgendaSuggestionsPrioritizer } from './AgendaSuggestionsPrioritizer';
+export type { AgendaSuggestionsPrioritizerProps } from './AgendaSuggestionsPrioritizer';
 
 export { DecisionCard } from './DecisionCard';
 export type { DecisionCardProps } from './DecisionCard';

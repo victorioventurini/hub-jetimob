@@ -16,8 +16,13 @@ import {
   WizardStepScaffold,
   
   ReflectionQuestions,
+  InlineAgendaSuggestionInput,
 } from '../shared';
-import type { QbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type {
+  QbrPreDraftData,
+  TeamCheckinDecision,
+  RitualAgendaSuggestion,
+} from '@/modules/okrs/types/wizard';
 import type { ReflectionQuestion } from '../shared/ReflectionQuestions';
 
 // ============================================================
@@ -56,6 +61,9 @@ export interface QbrLearningsStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
 
 // ============================================================
@@ -69,6 +77,9 @@ export function QbrLearningsStep({
   onDecisionsChange,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrLearningsStepProps) {
   const updateField = (field: keyof QbrPreDraftData['learnings'], value: string) => {
     onLearningsChange({ ...learnings, [field]: value });
@@ -93,6 +104,16 @@ export function QbrLearningsStep({
           onPrimary={onContinue}
           primaryDisabled={!hasContent}
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-learnings"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-6 space-y-6">

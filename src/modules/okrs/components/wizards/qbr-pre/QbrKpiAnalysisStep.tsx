@@ -18,10 +18,12 @@ import {
   WizardStepScaffold,
 
   KpiStatusBlocks,
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -34,6 +36,9 @@ export interface QbrKpiAnalysisStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
 
 // ============================================================
@@ -55,6 +60,9 @@ export function QbrKpiAnalysisStep({
   kpiSnapshots,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrKpiAnalysisStepProps) {
   const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
   const healthyKpis = kpiSnapshots.filter(k => k.ragStatus === 'green');
@@ -77,6 +85,16 @@ export function QbrKpiAnalysisStep({
           onBack={onBack}
           onPrimary={onContinue}
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-kpi-analysis"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-6 space-y-6">
