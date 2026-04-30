@@ -387,21 +387,51 @@ serve(async (req) => {
       reflection?: Record<string, unknown>;
     } | null;
 
+    // Onda 4 Fase 4: resolve KR/KPI names via lookup quando snapshot novo (sem krTitle/kpiName).
+    // Fallback ao snapshot legado preservado.
+    const rawResults = snapshotData?.results || [];
+    const rawKpiResults = snapshotData?.kpiResults || [];
+    const krIds = rawResults.map((r) => r.krId as string | undefined).filter((v): v is string => Boolean(v));
+    const kpiIds = rawKpiResults.map((k) => k.kpiId as string | undefined).filter((v): v is string => Boolean(v));
+
+    const krTitleById = new Map<string, string>();
+    const kpiNameById = new Map<string, string>();
+    await Promise.all([
+      krIds.length > 0
+        ? serviceClient.from('okr_team_key_results').select('id, title').in('id', krIds).then(({ data }) => {
+            for (const row of data || []) if (row.id && row.title) krTitleById.set(row.id, row.title);
+          })
+        : Promise.resolve(),
+      kpiIds.length > 0
+        ? serviceClient.from('kpi_metrics').select('id, name').in('id', kpiIds).then(({ data }) => {
+            for (const row of data || []) if (row.id && row.name) kpiNameById.set(row.id, row.name);
+          })
+        : Promise.resolve(),
+    ]);
+
     // Build agent context
     const agentContext: CollaboratorAgentContext = {
       buName,
       userName,
       cycleName,
-      krResults: (snapshotData?.results || []).map((r) => ({
-        title: (r.krTitle as string) || (r.title as string) || '',
+      krResults: rawResults.map((r) => ({
+        title:
+          (r.krId && krTitleById.get(r.krId as string)) ||
+          (r.krTitle as string) ||
+          (r.title as string) ||
+          '(KR removido)',
         previousValue: (r.previousValue as number | null) ?? null,
         newValue: (r.newValue as number | null) ?? null,
         targetValue: (r.targetValue as number | null) ?? null,
         progress: (r.progress as number | null) ?? 0,
         comment: (r.comment as string) || '',
       })),
-      kpiResults: (snapshotData?.kpiResults || []).map((k) => ({
-        name: (k.name as string) || (k.kpiName as string) || '',
+      kpiResults: rawKpiResults.map((k) => ({
+        name:
+          (k.kpiId && kpiNameById.get(k.kpiId as string)) ||
+          (k.name as string) ||
+          (k.kpiName as string) ||
+          '(KPI removido)',
         value: (k.value as number | null) ?? null,
         target: (k.target as number | null) ?? null,
       })),
