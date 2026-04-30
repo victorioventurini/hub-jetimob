@@ -77,6 +77,9 @@ export function QbrLearningsStep({
   onDecisionsChange,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrLearningsStepProps) {
   const updateField = (field: keyof QbrPreDraftData['learnings'], value: string) => {
     onLearningsChange({ ...learnings, [field]: value });
