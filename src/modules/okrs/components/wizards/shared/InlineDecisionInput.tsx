@@ -102,8 +102,3 @@ export function InlineDecisionInput({
   );
 }
 
-// Mantém ícones importados originalmente referenciados (no-op runtime).
-// `Target` e `CheckCircle2` eram usados pelo objeto de configuração antes do refactor;
-// preservados como import morto controlado para evitar regressão silenciosa em futuras edições.
-void Target;
-void CheckCircle2;
