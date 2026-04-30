@@ -22,7 +22,7 @@ import {
 import { Plus, AlertTriangle, Trash2 } from "lucide-react";
 import { useCreateTeam, useUpdateTeam, useTeams, useDeleteTeam } from "../hooks";
 import { TeamWithRelations, TeamFormData } from "../types";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TeamSelect } from "@/components/selects/TeamSelect";
 import { BuUserSelect } from "@/components/selects/BuUserSelect";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
@@ -362,7 +362,7 @@ export function TeamFormDialog({
         {dialogContent}
       </Dialog>
 
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={async () => {

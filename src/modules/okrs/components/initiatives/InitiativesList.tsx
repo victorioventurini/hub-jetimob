@@ -6,7 +6,7 @@ import { useKrInitiatives, useDeleteInitiative, useCanManageTeamOkr } from "../.
 import { InitiativeCard } from "./InitiativeCard";
 import { InitiativeDialog } from "./InitiativeDialog";
 import { InitiativeQuickUpdateDialog } from "./InitiativeQuickUpdateDialog";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useProfileId } from "@/hooks/useIdentity";
 import type { Initiative } from "../../types/initiative";
 
@@ -184,7 +184,7 @@ export function InitiativesList({ krId, krTitle, krContext, krTeamId, canEdit = 
         krContext={krContext || (krTitle ? { id: krId, title: krTitle } : undefined)}
       />
 
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={!!deletingInitiative}
         onOpenChange={(open) => !open && setDeletingInitiative(null)}
         onConfirm={handleDelete}

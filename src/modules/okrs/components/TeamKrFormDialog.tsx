@@ -40,7 +40,7 @@ import { validateTeamKr, getRandomPlaceholder } from '../utils/krValidation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
-import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCancelTeamKeyResult, useCanManageTeamOkr, usePrimaryKpiForKr } from '../hooks';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
 import type { OkrRagStatus, OkrDirection, OkrKrType } from '../types';
@@ -592,7 +592,7 @@ export function TeamKrFormDialog({
       </Dialog>
 
       {isEditing && (
-        <DeleteConfirmDialog
+        <ConfirmDialog variant="destructive"
           open={showCancelConfirm}
           onOpenChange={setShowCancelConfirm}
           onConfirm={handleCancel}

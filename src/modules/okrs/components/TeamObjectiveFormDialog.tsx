@@ -9,7 +9,7 @@ import {
 import { DIALOG_SIZES } from '@/lib/dialog-sizes';
 import { Button } from '@/components/ui/button';
 import { Ban } from 'lucide-react';
-import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   TeamObjectiveFormFields,
   useTeamObjectiveForm,
@@ -113,7 +113,7 @@ export function TeamObjectiveFormDialog({
       </Dialog>
 
       {form.isEditing && (
-        <DeleteConfirmDialog
+        <ConfirmDialog variant="destructive"
           open={form.showCancelConfirm}
           onOpenChange={form.setShowCancelConfirm}
           onConfirm={form.handleCancelOkr}

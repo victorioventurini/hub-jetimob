@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Ban } from 'lucide-react';
 import { useDialogFormReset } from '@/hooks/useDialogFormReset';
-import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CharCountFeedback } from '@/components/shared/CharCountFeedback';
 import { ENTITY_NAME_LIMITS } from '@/shared/constants/entityLimits';
 import type { OkrStatus } from '../types';
@@ -290,7 +290,7 @@ export function OrgObjectiveFormDialog({
       </Dialog>
 
       {isEditing && (
-        <DeleteConfirmDialog
+        <ConfirmDialog variant="destructive"
           open={showCancelConfirm}
           onOpenChange={setShowCancelConfirm}
           onConfirm={handleCancelOkr}

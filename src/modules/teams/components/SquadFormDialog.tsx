@@ -27,7 +27,7 @@ import {
   SquadProduct, 
   SQUAD_PRODUCT_LABELS 
 } from "../types/squad";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface SquadFormDialogProps {
   /** Squad to edit. If null/undefined, dialog is in create mode */
@@ -244,7 +244,7 @@ export function SquadFormDialog({
       </Dialog>
 
       {isEditing && squad && (
-        <DeleteConfirmDialog
+        <ConfirmDialog variant="destructive"
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={async () => {

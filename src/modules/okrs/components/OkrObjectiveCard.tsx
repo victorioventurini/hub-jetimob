@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface KeyResult {
   id: string;
@@ -247,7 +247,7 @@ export const OkrObjectiveCard = React.memo(function OkrObjectiveCard({
       </CardContent>
 
       {onDelete && (
-        <DeleteConfirmDialog
+        <ConfirmDialog variant="destructive"
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={() => {

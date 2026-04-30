@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -573,7 +573,7 @@ export function CyclesTab() {
       />
 
       {/* Delete Confirmation */}
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={!!deleteDialogCycle}
         onOpenChange={(open) => !open && setDeleteDialogCycle(null)}
         title="Remover ciclo"

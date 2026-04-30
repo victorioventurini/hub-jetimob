@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useTicketCategories, useDeleteTicketCategory, useDeleteTicketSubcategory } from "../../hooks";
 import { CategoryDialog } from "./CategoryDialog";
 import { SubcategoryDialog } from "./SubcategoryDialog";
@@ -238,7 +238,7 @@ export function CategoriesTab() {
         categoryId={selectedCategoryId}
       />
 
-      <DeleteConfirmDialog
+      <ConfirmDialog variant="destructive"
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
