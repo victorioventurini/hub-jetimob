@@ -132,7 +132,8 @@ interface KpiRow {
   category: string;
   unit: string;
   direction: string;
-  frequency: string;
+  consolidation_frequency: string | null;
+  update_frequency: string | null;
   status: string;
   target_value: number | null;
   team?: { name: string } | null;
