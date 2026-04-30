@@ -10,7 +10,7 @@ Registro consolidado das varreduras `@deprecated` e do que foi limpo a cada onda
 
 ## Estado atual (atualizado 2026-04-30)
 
-- **Total de marcações `@deprecated`:** ~54 (após Onda 6 Frente B)
+- **Total de marcações `@deprecated`:** 52 (após Onda 6 Frente C)
 - **Próxima auditoria recomendada:** após 2026-07-30 (T0 da janela Onda 4 Fase 5).
 
 ## Onda 6 — Frente B: DeleteConfirmDialog → ConfirmDialog (2026-04-30)
