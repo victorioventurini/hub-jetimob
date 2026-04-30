@@ -60,6 +60,9 @@ export function QbrKpiAnalysisStep({
   kpiSnapshots,
   onContinue,
   onBack,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: QbrKpiAnalysisStepProps) {
   const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
   const healthyKpis = kpiSnapshots.filter(k => k.ragStatus === 'green');
