@@ -1,146 +1,76 @@
+## Plano — Sugestões de pauta nos ritos pré-MBR e pré-QBR (Fase 2/2)
 
-# Plano — Sugestões de Pauta nos Wizards MBR-pré e QBR-pré
+Conclusão da feature iniciada na fase anterior. Componentes já existem (`InlineAgendaSuggestionInput`, `AgendaSuggestionsPrioritizer`, tipos `RitualAgendaSuggestion`, `agendaSuggestions` nos drafts). Falta integrar nos steps restantes, fazer o wiring nas páginas e exibir o priorizador no resumo.
 
-## Objetivo
+### O que já está pronto (não tocar)
 
-Permitir que o líder, ao longo do MBR-pré e do QBR-pré, registre **sugestões de pauta** para o rito-mãe (MBR / QBR Meeting), categorizadas em **Performance**, **Projetos**, **Pessoas**. No step final de "Resumo e Envio", listar todas as sugestões coletadas e exigir a priorização de até **3** delas, que serão consumidas pelo rito-mãe.
+- Tipos: `RitualAgendaSuggestion`, `agendaSuggestions[]` em `MbrPreDraftData` e `QbrPreDraftData`.
+- Componentes shared: `InlineCollapsibleEntryInput`, `InlineAgendaSuggestionInput`, `AgendaSuggestionsPrioritizer`.
+- Steps QBR (Balance, KpiAnalysis, Learnings): já recebem props opcionais (`agendaSuggestions`, `onAgendaSuggestionsChange`, `agendaTriggerLabel`) e renderizam o input no `bottomFixed`.
+- Default data nos drafts já contém `agendaSuggestions: []`.
 
-A UX do registro inline reaproveita o mesmo padrão visual/funcional do `InlineDecisionInput` (collapsible, badges de categoria, lista compacta abaixo) — **sem duplicar o componente**.
+### O que falta (esta fase)
 
----
+#### 1. Steps MBR específicos (mesma extensão dos QBR)
+- `MbrPreHighlightsStep.tsx` — adicionar props opcionais de agenda + render no `bottomFixed`.
+- `MbrPreNextStepsStep.tsx` — idem.
 
-## Análise técnica (pré-checklist)
+(Os steps 1 e 2 do MBR-pré reusam `QbrBalanceStep` e `QbrKpiAnalysisStep`, que já aceitam as props.)
 
-Documentos consultados:
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (§4.8 — wizards framework)
-- `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md`
-- `.lovable/memory/standards/wizard-vocabulary-canonical.md`
-- `.lovable/memory/architecture/wizards/wizards-master-standard.md` (via index)
-- `.lovable/memory/standards/wizard-snapshot-denormalized-fields-deprecation.md`
+#### 2. Wiring nas páginas
 
-Achados-chave que orientam a solução:
-
-1. **`RitualBlock` já existe** em `src/modules/okrs/types/wizard/vocabulary.ts` com exatamente os 3 valores pedidos: `'performance' | 'projetos' | 'pessoas'`. Não criar enum novo — reusar SSOT.
-2. `InlineDecisionInput` é o componente canônico para registro inline em qualquer step. Está em `src/modules/okrs/components/wizards/shared/InlineDecisionInput.tsx` e já cobre: collapsible, badges de categoria, textarea auto-submit, lista filtrada por `sourceStep`. **Mas é fortemente acoplado a `TeamCheckinDecision`** (categorias `decision | focus_adjustment | next_step | strategic_proposal`) — não dá para passar `RitualBlock` direto.
-3. MBR-pré e QBR-pré **não vivem dentro do framework genérico** (`framework/components/`) — usam steps próprios em `mbr-pre/` e `qbr-pre/` montados via `WizardStepScaffold` + footer manual. Logo, **não preciso** alterar `_InlineDecisionsSlot` nem `STEP_DEFINITIONS`.
-4. Drafts persistidos via `useWizardDraft` em `MbrPreDraftData` e `QbrPreDraftData` (campo `decisions` já existe). Vou adicionar o array de sugestões no mesmo nível.
-5. Snapshots gravados em `okr_wizard_sessions.reflection_data` (JSONB) — adicionar campos novos é compatível com snapshots antigos (leitura defensiva).
-
----
-
-## Decisões de arquitetura
-
-### 1. Refator pequeno em `InlineDecisionInput` → componente genérico reutilizável
-
-`InlineDecisionInput` ganha capacidade de operar em **dois modos** sem duplicação, via composição:
-
-- **Modo `decision`** (atual, default): mantém comportamento e aparência atuais.
-- **Modo `agenda`**: troca categorias, label/ícone do trigger e placeholder, mas mantém toda a UX (collapsible, lista compacta, textarea auto-submit, contagem em badge).
-
-Para evitar inflar `InlineDecisionInput` com lógica de duas entidades distintas, extraio a casca visual em um componente novo **`InlineCollapsibleEntryInput`** (em `shared/`), e:
-- `InlineDecisionInput` passa a ser um wrapper fino que injeta as categorias de decisão.
-- Crio `InlineAgendaSuggestionInput` como segundo wrapper fino que injeta as categorias `RitualBlock`.
-
-Isso preserva o contrato existente de `InlineDecisionInput` (zero refactor nos 19 wizards consumidores) **e** evita duplicação visual.
-
-### 2. Tipo de dado canônico
-
-Em `src/modules/okrs/types/wizard/shared.ts`, adicionar:
-
+**`MbrPrePage.tsx`** — passar para os 4 steps de captura:
 ```ts
-export interface RitualAgendaSuggestion {
-  id: string;
-  text: string;
-  category: RitualBlock;             // 'performance' | 'projetos' | 'pessoas'
-  sourceStep: string;                 // step de origem dentro do wizard
-  prioritized?: boolean;              // marcado no Summary (até 3)
-  priorityRank?: 1 | 2 | 3;           // ordem da priorização
-  createdAt: string;                  // ISO
-}
+agendaSuggestions={draft.data.agendaSuggestions ?? []}
+onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
 ```
 
-Tipo é genérico (serve a qualquer rito preparatório futuro: weekly, qbr-clevel, etc.).
+**`QbrPrePage.tsx`** — idem nos 4 steps de captura (Balance, KpiAnalysis, Learnings, OkrProposal), com label `"Registrar sugestão de pauta para o QBR"`.
 
-### 3. Persistência no draft
+#### 3. Step OkrProposal (QBR) — adicionar suporte
+- `QbrOkrProposalStep.tsx` ainda não tem as props. Estender com o mesmo padrão dos demais steps QBR (props opcionais + `bottomFixed`). Sem mudar a lógica de proposta.
 
-- `MbrPreDraftData.agendaSuggestions: RitualAgendaSuggestion[]` (default `[]`)
-- `QbrPreDraftData.agendaSuggestions: RitualAgendaSuggestion[]` (default `[]`)
-- Gravar no snapshot final junto com o restante via os mesmos hooks de complete já existentes — sem nova migration nem coluna nova (JSONB).
+#### 4. Summaries — integrar `AgendaSuggestionsPrioritizer`
 
-### 4. Plug nos steps existentes
-
-Em **cada** step ativo dos dois wizards, inserir `<InlineAgendaSuggestionInput>` no rodapé do `WizardStepScaffold`, **acima** do `WizardStepFooter` (mesmo padrão do `_InlineDecisionsSlot`). Steps afetados:
-
-- **MBR-pré**: `balance`, `kpi-analysis`, `highlights`, `next-steps` (4 steps; `summary` não recebe input).
-- **QBR-pré**: `balance`, `kpi-analysis`, `learnings`, `okr-proposal` (4 steps; `summary` não recebe input).
-
-Como esses steps **não** estão no framework genérico, o slot é renderizado diretamente no JSX do step (igual ao padrão dos demais inputs locais). Cada step recebe duas novas props: `agendaSuggestions` e `onAgendaSuggestionsChange`, no mesmo formato das props de `decisions`.
-
-### 5. Step de Resumo — priorização
-
-Em `MbrPreSummary` e `QbrPreSummary`:
-
-- Nova seção **"Sugestões de pauta para o {MBR|QBR}"**, agrupada visualmente por `RitualBlock` (Performance / Projetos / Pessoas) com contagem.
-- Cada sugestão exibe um checkbox de "Priorizar". Limite de **3 marcadas**: ao tentar marcar a 4ª, a opção fica `disabled` com tooltip "Limite de 3 sugestões prioritárias atingido". As 3 marcadas recebem `priorityRank` 1/2/3 conforme ordem de marcação.
-- O botão de envio fica habilitado normalmente (priorização é **opcional**, mas recomendada — banner informativo "Recomendamos priorizar até 3 sugestões para o rito" quando houver ≥1 sugestão e nenhuma priorizada).
-
-### 6. Consumo no rito-mãe (fora do escopo desta entrega)
-
-Os snapshots gravados estarão imediatamente disponíveis para o MBR (consumindo via `MbrPreTeamSubmission`) e para o QBR Meeting (via leitura agregada de pre-QBRs por time). A UI de leitura no rito-mãe **não** faz parte desta entrega — fica para a próxima iteração (anotar como follow-up).
-
----
-
-## Arquivos afetados
-
-**Novos**
-- `src/modules/okrs/components/wizards/shared/InlineCollapsibleEntryInput.tsx` (casca extraída)
-- `src/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput.tsx` (wrapper para `RitualBlock`)
-- `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx` (componente do Summary, reutilizável)
-
-**Editados**
-- `src/modules/okrs/components/wizards/shared/InlineDecisionInput.tsx` — refactor interno para usar a casca extraída (API pública intacta).
-- `src/modules/okrs/components/wizards/shared/index.ts` — exports dos novos componentes.
-- `src/modules/okrs/types/wizard/shared.ts` — `RitualAgendaSuggestion`.
-- `src/modules/okrs/types/wizard/mbr.ts` — `agendaSuggestions` em `MbrPreDraftData`.
-- `src/modules/okrs/types/wizard/qbr.ts` — `agendaSuggestions` em `QbrPreDraftData`.
-- `src/modules/okrs/pages/MbrPrePage.tsx` — default `agendaSuggestions: []` + propagar nos 4 steps + Summary.
-- `src/modules/okrs/pages/QbrPrePage.tsx` — idem.
-- 4 steps MBR-pré: `MbrPreBalanceStep`, `MbrPreKpiAnalysisStep`, `MbrPreHighlightsStep`, `MbrPreNextStepsStep` — receber props e renderizar `InlineAgendaSuggestionInput` no scaffold.
-- 4 steps QBR-pré: `QbrBalanceStep`, `QbrKpiAnalysisStep`, `QbrLearningsStep`, `QbrOkrProposalStep` — idem.
-- `MbrPreSummary` e `QbrPreSummary` — nova seção de priorização (via `AgendaSuggestionsPrioritizer`).
-
-**Sem mudanças de banco** (JSONB já comporta o campo novo; leitura defensiva nos consumidores).
-
----
-
-## UX detalhada do registro inline
-
-```text
-┌────────────────────────────────────────────────────────────┐
-│ 📋 Registrar sugestão de pauta para o MBR        [2] ⌄    │  ← trigger collapsible
-├────────────────────────────────────────────────────────────┤
-│ [Performance] [Projetos] [Pessoas]                          │  ← 3 badges (RitualBlock)
-│ ┌──────────────────────────────────────────────┐ ┌──┐      │
-│ │ Descreva o ponto a discutir no rito...        │ │+ │     │
-│ └──────────────────────────────────────────────┘ └──┘      │
-│ • [Pessoas] Discutir backfill do squad de Onboarding  ✕    │
-│ • [Performance] Revisar KR-3 abaixo da linha          ✕    │
-└────────────────────────────────────────────────────────────┘
+**`MbrPreSummary.tsx`**:
+- Adicionar import do `AgendaSuggestionsPrioritizer`.
+- Renderizar antes da seção de decisões (ou perto do final, antes do footer):
+```tsx
+<AgendaSuggestionsPrioritizer
+  suggestions={draftData.agendaSuggestions ?? []}
+  onSuggestionsChange={...}
+  ritualLabel="MBR"
+/>
 ```
+- Adicionar prop `onAgendaSuggestionsChange` ao `MbrPreSummaryProps` e propagar em `MbrPrePage` (`updateDraft({ agendaSuggestions: next })`).
 
-Mesmo padrão visual do `InlineDecisionInput`, com label/ícone trocados (`ListTodo` em vez de `Lightbulb`) e placeholder customizado.
+**`QbrPreSummary.tsx`**: idêntico, com `ritualLabel="QBR"`. Mesma adição de prop e wiring na page.
 
----
+#### 5. Persistência no completar
+- Os `agendaSuggestions` já fazem parte do `draft.data` (JSONB), então o snapshot atual em `reflection_data` já vai gravá-los automaticamente — sem mudanças no `handleComplete` nem migrations.
+- Apenas um log/toast mais descritivo é opcional; manter o fluxo atual.
 
-## Validação
+### Arquivos editados
 
-- Type-check: `RitualAgendaSuggestion` e os campos novos nos drafts devem compilar sem erros.
-- Smoke manual: abrir MBR-pré e QBR-pré, adicionar sugestão em cada step, navegar até o Summary, marcar 3 (a 4ª deve bloquear), enviar e conferir o snapshot em `okr_wizard_sessions.reflection_data`.
-- Sem CRUD em banco: nenhuma migration. Sem Edge Function nova.
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep.tsx`
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep.tsx`
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx`
+- `src/modules/okrs/components/wizards/qbr-pre/QbrOkrProposalStep.tsx`
+- `src/modules/okrs/components/wizards/qbr-pre/QbrPreSummary.tsx`
+- `src/modules/okrs/pages/MbrPrePage.tsx`
+- `src/modules/okrs/pages/QbrPrePage.tsx`
 
----
+### Garantias de design / arquitetura
 
-## Follow-ups (fora do escopo)
+- **Não duplica componentes**: 100% reutiliza `InlineAgendaSuggestionInput` e `AgendaSuggestionsPrioritizer` já criados.
+- **Vocabulário canônico**: categorias `RitualBlock` (Performance/Projetos/Pessoas) — SSOT em `vocabulary.ts`.
+- **BU isolation**: dado é mantido no draft do wizard; persistência segue o mesmo path do `agendaSuggestions` no JSONB do `reflection_data` que já obedece RLS por `bu_id`.
+- **Sem migrations**: nenhuma tabela nova; sem CHECK constraints.
+- **Tokens semânticos**: prioritizer já usa `border-status-amber/30`, `bg-status-amber-muted/40`, `border-primary/40` etc.
+- **Limite de 3 priorizações**: enforced no `AgendaSuggestionsPrioritizer` (checkbox disabled na 4ª tentativa + banner informativo quando 0 marcadas).
+- **Compatibilidade retro**: drafts antigos sem `agendaSuggestions` resolvem com `?? []` em todos os pontos.
 
-1. Renderizar as sugestões priorizadas no `MbrPage` / `QbrMeetingPage` (provavelmente em um novo step "Pauta sugerida" ou no opening).
-2. Documentar `RitualAgendaSuggestion` no TCR (§4.8 wizards / vocabulário) e atualizar `wizard-vocabulary-canonical` em memória.
+### Fora de escopo
+
+- Nenhuma alteração em `MbrPage` (rito ao vivo) ou `QbrPage`. As pautas priorizadas serão consumidas por esses ritos numa fase futura — esta entrega cobre apenas captura + priorização nos PRÉ.
