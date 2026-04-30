@@ -18,10 +18,12 @@ import {
   WizardStepScaffold,
 
   KpiStatusBlocks,
+  InlineAgendaSuggestionInput,
 } from '../shared';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 
 // ============================================================
