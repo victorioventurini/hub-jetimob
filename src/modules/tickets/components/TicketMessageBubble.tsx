@@ -26,6 +26,10 @@ interface TicketMessageBubbleProps {
   onReply?: (message: TicketMessage) => void;
   /** Callback para scroll até uma mensagem específica */
   onScrollToMessage?: (messageId: string) => void;
+  /** Lookup map: id da mensagem original → mensagem completa (fallback quando o JOIN reply_to vier vazio) */
+  messagesById?: Map<string, TicketMessage>;
+  /** Lookup map: id da mensagem → anexos não-deletados dessa mensagem */
+  attachmentsByMessage?: Map<string, TicketAttachment[]>;
 }
 
 /**
