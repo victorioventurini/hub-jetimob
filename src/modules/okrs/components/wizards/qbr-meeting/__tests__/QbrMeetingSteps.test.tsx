@@ -51,7 +51,7 @@ import { QbrMeetingOkrReviewStep, type TeamForReview } from '../QbrMeetingOkrRev
 import { QbrMeetingDecisionsStep } from '../QbrMeetingDecisionsStep';
 import { QbrMeetingCommitmentsStep } from '../QbrMeetingCommitmentsStep';
 import { QbrMeetingClosingStep } from '../QbrMeetingClosingStep';
-import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
+import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ── factories ──
 
@@ -273,6 +273,74 @@ describe('QbrMeetingDecisionsStep', () => {
       />
     );
     expect(screen.getByTestId('inline-decision-input')).toBeInTheDocument();
+  });
+
+  it('does not render C-Level directives section when empty', () => {
+    render(
+      <QbrMeetingDecisionsStep
+        decisions={[]}
+        onDecisionsChange={vi.fn()}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId('clevel-directives-section')).not.toBeInTheDocument();
+  });
+
+  it('promotes C-Level directive to decision via DIRECTIVE_TO_DECISION_MAP', () => {
+    const onChange = vi.fn();
+    const directives = [
+      { text: 'Validar pricing premium', category: 'hypothesis' as const },
+    ];
+    render(
+      <QbrMeetingDecisionsStep
+        decisions={[]}
+        onDecisionsChange={onChange}
+        cLevelDirectives={directives}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByTestId('clevel-directive-promote-0'));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const created = onChange.mock.calls[0][0][0];
+    expect(created.text).toBe('Validar pricing premium');
+    // hypothesis → strategic_proposal (DIRECTIVE_TO_DECISION_MAP)
+    expect(created.category).toBe('strategic_proposal');
+    expect(created.sourceStep).toBe('qbr-meeting-decisions');
+    expect(created.metadata?.source).toBe('clevel_directive');
+    expect(created.metadata?.directiveCategory).toBe('hypothesis');
+    expect(created.metadata?.directiveText).toBe('Validar pricing premium');
+  });
+
+  it('marks already-promoted directive and hides promote button', () => {
+    const directives = [
+      { text: 'Reduzir churn em 20%', category: 'challenge' as const },
+    ];
+    const decisions: TeamCheckinDecision[] = [
+      {
+        id: 'd-existing',
+        text: 'Reduzir churn em 20%',
+        category: 'decision',
+        sourceStep: 'qbr-meeting-decisions',
+        metadata: {
+          source: 'clevel_directive',
+          directiveCategory: 'challenge',
+          directiveText: 'Reduzir churn em 20%',
+        },
+      },
+    ];
+    render(
+      <QbrMeetingDecisionsStep
+        decisions={decisions}
+        onDecisionsChange={vi.fn()}
+        cLevelDirectives={directives}
+        onContinue={vi.fn()}
+        onBack={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('clevel-directive-promoted-0')).toBeInTheDocument();
+    expect(screen.queryByTestId('clevel-directive-promote-0')).not.toBeInTheDocument();
   });
 });
 
