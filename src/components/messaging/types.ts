@@ -29,14 +29,31 @@ export interface MessageAttachment {
 }
 
 /**
+ * Lightweight attachment preview shown inside a quoted reply.
+ * Does not include URL/storagePath — just enough for the citation badge.
+ */
+export interface MessageReplyAttachmentPreview {
+  id: string;
+  fileName: string;
+  mimeType: string | null;
+}
+
+/**
  * Reply reference - the quoted message.
+ *
+ * Contract: a citation should render when EITHER `content` is non-empty
+ * OR `attachments` has at least one item. Modules MUST populate both fields
+ * (when applicable) so that messages composed only of attachments are still
+ * shown as a meaningful citation (filename + paperclip icon).
  */
 export interface MessageReplyTo {
   id: string;
-  /** Truncated content preview */
+  /** Truncated content preview (may be empty if original was attachment-only) */
   content: string;
   /** Author name for display */
   authorName: string;
+  /** Attachments of the original message (preview-only, no URL) */
+  attachments?: MessageReplyAttachmentPreview[];
 }
 
 /**

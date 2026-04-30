@@ -3,8 +3,13 @@
 // ============================================================
 // Renders the citation of an original message inside a reply bubble.
 // Style: WhatsApp-like with colored left border.
+//
+// Contract: renders when EITHER content is present OR attachments exist.
+// Messages composed only of attachments still render as a meaningful
+// citation (filename + paperclip icon).
 // ============================================================
 
+import { Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { QuotedMessageProps } from "./types";
 
@@ -18,14 +23,6 @@ function truncateContent(content: string, maxLength = 100): string {
 
 /**
  * QuotedMessage - inline citation of replied message.
- * 
- * @example
- * ```tsx
- * <QuotedMessage
- *   replyTo={{ id: "123", content: "Original text", authorName: "João" }}
- *   onScrollToMessage={(id) => scrollToElement(id)}
- * />
- * ```
  */
 export function QuotedMessage({
   replyTo,
@@ -38,11 +35,22 @@ export function QuotedMessage({
     }
   };
 
-  // Don't render if content is empty/invalid
-  const hasContent = replyTo.content && replyTo.content.trim().length > 0;
-  if (!hasContent) {
+  const trimmedContent = (replyTo.content ?? "").trim();
+  const hasContent = trimmedContent.length > 0;
+  const attachments = replyTo.attachments ?? [];
+  const hasAttachments = attachments.length > 0;
+
+  // Don't render if there is nothing to show
+  if (!hasContent && !hasAttachments) {
     return null;
   }
+
+  // Attachment preview text: filename if single, otherwise count
+  const attachmentLabel = hasAttachments
+    ? attachments.length === 1
+      ? attachments[0].fileName
+      : `${attachments.length} anexos`
+    : null;
 
   return (
     <button
@@ -59,9 +67,24 @@ export function QuotedMessage({
       <p className="text-xs font-medium text-primary mb-0.5">
         {replyTo.authorName}
       </p>
-      <p className="text-xs text-muted-foreground line-clamp-2">
-        {truncateContent(replyTo.content)}
-      </p>
+
+      {hasContent && (
+        <p className="text-xs text-muted-foreground line-clamp-2">
+          {truncateContent(trimmedContent)}
+        </p>
+      )}
+
+      {hasAttachments && (
+        <p
+          className={cn(
+            "flex items-center gap-1 text-xs text-muted-foreground",
+            hasContent && "mt-1"
+          )}
+        >
+          <Paperclip className="h-3 w-3 shrink-0" />
+          <span className="truncate">{attachmentLabel}</span>
+        </p>
+      )}
     </button>
   );
 }

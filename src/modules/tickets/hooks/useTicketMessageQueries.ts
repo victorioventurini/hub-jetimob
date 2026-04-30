@@ -43,7 +43,8 @@ export function useTicketMessages(ticketId: string | null) {
             id,
             body_richtext,
             author_user:profiles!author_user_id(id, display_name),
-            author_contact:partner_contacts(id, name)
+            author_contact:partner_contacts(id, name),
+            attachments:ticket_attachments!message_id(id, file_name, mime_type, deleted_at)
           )
         `)
         .eq("ticket_id", ticketId)

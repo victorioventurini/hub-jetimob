@@ -7,6 +7,7 @@
 
 import { useMemo } from "react";
 import { MessageBubble, type GenericMessage, type MessageAttachment, DEFAULT_EXTERNAL_CONFIG } from "@/components/messaging";
+import { richtextToPlain } from "@/components/messaging/richtextToPlain";
 import { parseMentionsForDisplay } from "@/lib/mentions";
 import { AttachmentLink } from "./AttachmentLink";
 import type { TicketMessage, TicketAttachment, RichTextContent } from "../types";
@@ -28,19 +29,10 @@ interface TicketMessageBubbleProps {
 }
 
 /**
- * Extract text content from body_richtext.
+ * Extract text content from body_richtext (delegates to canonical helper).
  */
 function getMessageText(bodyRichtext: RichTextContent): string {
-  if (typeof bodyRichtext === "string") {
-    return bodyRichtext;
-  }
-  if (bodyRichtext && typeof bodyRichtext === "object") {
-    const content = (bodyRichtext as any).content;
-    if (typeof content === "string") {
-      return content;
-    }
-  }
-  return "";
+  return richtextToPlain(bodyRichtext);
 }
 
 /**
@@ -66,20 +58,29 @@ export function TicketMessageBubble({
     const authorName = getAuthorName(message);
     const isExternalAuthor = message.author_type === "partner_contact";
 
-    // Build reply_to data if exists and has valid content
+    // Build reply_to data if exists and has content OR attachments
     let replyTo = null;
     if (message.reply_to) {
       const replyContent = getMessageText(message.reply_to.body_richtext);
-      // Only show reply citation if there's actual content
-      if (replyContent && replyContent.trim().length > 0) {
-        const replyAuthorName = 
-          message.reply_to.author_user?.display_name ?? 
-          message.reply_to.author_contact?.name ?? 
+      const replyAttachments = (message.reply_to.attachments ?? [])
+        .filter((a) => !a.deleted_at)
+        .map((a) => ({
+          id: a.id,
+          fileName: a.file_name,
+          mimeType: a.mime_type,
+        }));
+      const hasContent = replyContent.trim().length > 0;
+      const hasAttachments = replyAttachments.length > 0;
+      if (hasContent || hasAttachments) {
+        const replyAuthorName =
+          message.reply_to.author_user?.display_name ??
+          message.reply_to.author_contact?.name ??
           "Alguém";
         replyTo = {
           id: message.reply_to.id,
           content: replyContent,
           authorName: replyAuthorName,
+          attachments: replyAttachments,
         };
       }
     }

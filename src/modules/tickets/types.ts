@@ -239,6 +239,12 @@ export interface TicketMessage {
     body_richtext: RichTextContent;
     author_user?: { id: string; display_name: string } | null;
     author_contact?: { id: string; name: string } | null;
+    attachments?: Array<{
+      id: string;
+      file_name: string;
+      mime_type: string | null;
+      deleted_at: string | null;
+    }>;
   } | null;
 }
 
