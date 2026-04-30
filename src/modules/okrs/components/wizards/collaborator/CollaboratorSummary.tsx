@@ -264,15 +264,6 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
                               {kpi.inputType === 'consolidated' ? 'Consolidado' : 'Parcial'}
                             </Badge>
                           )}
-                          <Badge 
-                            variant="secondary"
-                            className={cn(
-                              "text-xs",
-                              kpi.confidence && CONFIDENCE_COLORS[kpi.confidence as keyof typeof CONFIDENCE_COLORS]?.badge
-                            )}
-                          >
-                            {kpi.confidence === 'high' ? '🟢' : kpi.confidence === 'medium' ? '🟡' : '🔴'}
-                          </Badge>
                         </div>
                       </div>
                       {kpi.notes && (
