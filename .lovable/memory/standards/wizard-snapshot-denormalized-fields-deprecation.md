@@ -121,6 +121,52 @@ Edge functions inspecionadas e **fora de escopo** (não desestruturam campos den
 
 - **Fase 5 (diferida ≥ 90 dias)**: drop dos campos `@deprecated` dos types e dos branches de fallback em readers/edge functions, após janela de observação confirmando que snapshots novos não os contêm. Inclui agora `relatedKrTitle` (sem dependência de redesign).
 
+## Auditoria de produção pós-Fase 3 (T0 da janela de observação)
+
+**Data do baseline**: 2026-04-30 (dia da entrega de Fase 3 do `QbrPrePage.tsx`).
+
+Query auditando `okr_wizard_sessions.reflection_data->'data'` dos últimos 30 dias para os campos `@deprecated` Fase 1 (`krTitle`, `objectiveTitle`, `kpiName`, `relatedKrTitle`) revelou:
+
+| Wizard | Total snapshots (30d) | Snapshots sujos | Snapshot sujo mais recente |
+|---|---|---|---|
+| `collaborator` | 24 | **0** | n/a |
+| `mbr` | 1 | **0** | n/a |
+| `mbr-pre` | 0 | **0** | n/a |
+| `qbr-pre` | 11 | 9 (krTitle), 2 (relatedKrTitle) | 2026-04-20 20:57 |
+
+**Conclusão**: todos os snapshots "sujos" são **anteriores** ao deploy da Fase 3 do `QbrPrePage.tsx` (2026-04-30 02:22). Nenhum snapshot criado após a Fase 3 contém campos `@deprecated`. Writers migrados estão funcionando como projetado.
+
+### Critério para Fase 5 (drop físico)
+
+Re-executar a auditoria em **2026-07-30** (≥ 90 dias). Se nenhum snapshot novo (`updated_at > 2026-04-30`) contiver os campos `@deprecated`, prosseguir com Fase 5:
+1. Remover campos `@deprecated` Fase 1 dos types em `src/modules/okrs/types/wizard/*`.
+2. Remover branches de fallback `?? legacyTitle` dos readers (`useEntityLookup`/`resolveName`).
+3. Remover queries de fallback nas edge functions migradas (`qbr-pre-summary`, `collaborator-checkin-summary`).
+
+### Query de auditoria (executar trimestralmente)
+
+```sql
+WITH audit AS (
+  SELECT
+    wizard_type, id, updated_at,
+    jsonb_path_exists(reflection_data, '$.data.krCheckins[*].krTitle') AS coll_has_krTitle,
+    jsonb_path_exists(reflection_data, '$.data.krCheckins[*].objectiveTitle') AS coll_has_objectiveTitle,
+    jsonb_path_exists(reflection_data, '$.data.kpiCheckins[*].kpiName') AS coll_has_kpiName,
+    jsonb_path_exists(reflection_data, '$.data.krFinalStates[*].krTitle') AS pre_has_krTitle,
+    jsonb_path_exists(reflection_data, '$.data.krFinalStates[*].objectiveTitle') AS pre_has_objectiveTitle,
+    jsonb_path_exists(reflection_data, '$.data.kpisToCreate[*].relatedKrTitle') AS pre_has_relatedKrTitle
+  FROM okr_wizard_sessions
+  WHERE updated_at > '2026-04-30'::timestamptz
+    AND wizard_type IN ('collaborator','mbr-pre','qbr-pre','mbr')
+)
+SELECT wizard_type, COUNT(*) AS total,
+  SUM((coll_has_krTitle OR pre_has_krTitle)::int) AS dirty_krTitle,
+  SUM((coll_has_objectiveTitle OR pre_has_objectiveTitle)::int) AS dirty_objectiveTitle,
+  SUM(coll_has_kpiName::int) AS dirty_kpiName,
+  SUM(pre_has_relatedKrTitle::int) AS dirty_relatedKrTitle
+FROM audit GROUP BY wizard_type ORDER BY wizard_type;
+```
+
 ## Status Onda 4
 
-Fases 1-4 concluídas. Fase 5 diferida (com pendência `relatedKrTitle` já resolvida via descontinuação). Baseline de testes: **1769/1769 passing**.
+Fases 1-4 concluídas. Fase 5 diferida; janela de observação iniciada em **2026-04-30**, próxima auditoria em **2026-07-30**. Pendência `relatedKrTitle` resolvida via descontinuação da feature. Baseline de testes: **1769/1769 passing**.
