@@ -120,13 +120,6 @@ export function ConfirmDialog({
 // CONVENIENCE EXPORTS
 // ============================================================
 
-/** Alias for destructive variant */
-export function DeleteConfirmDialogV2(
-  props: Omit<ConfirmDialogProps, "variant">
-) {
-  return <ConfirmDialog {...props} variant="destructive" />;
-}
-
 /** Alias for warning variant */
 export function WarningConfirmDialog(
   props: Omit<ConfirmDialogProps, "variant">
