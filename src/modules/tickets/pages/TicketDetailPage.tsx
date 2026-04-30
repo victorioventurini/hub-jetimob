@@ -403,6 +403,8 @@ export default function TicketDetailPage() {
                                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 el.classList.add('bg-accent/50');
                                 setTimeout(() => el.classList.remove('bg-accent/50'), 2000);
+                              } else {
+                                toast.info('Mensagem original não está visível nesta conversa.');
                               }
                             }}
                           />

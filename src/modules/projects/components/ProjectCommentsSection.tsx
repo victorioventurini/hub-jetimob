@@ -198,7 +198,13 @@ export function ProjectCommentsSection({ projectId, readOnly = false }: ProjectC
 
   const handleScrollToMessage = useCallback((messageId: string) => {
     const el = document.getElementById(`message-${messageId}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('bg-accent/50');
+      setTimeout(() => el.classList.remove('bg-accent/50'), 2000);
+    } else {
+      toast.info('Comentário original não está visível nesta conversa.');
+    }
   }, []);
 
   const renderContent = useCallback((text: string) => {
