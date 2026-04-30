@@ -221,7 +221,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       team_id: kpi.team_id,
       unit: kpi.unit,
       direction: kpi.direction,
-      frequency: kpi.frequency === 'quarterly' ? 'quarterly' : kpi.frequency,
+      frequency: valueFrequencyToLegacy(kpi.consolidation_frequency ?? null),
       target_value: kpi.target_value,
       status: kpi.status,
       source_type: 'manual' as const,
