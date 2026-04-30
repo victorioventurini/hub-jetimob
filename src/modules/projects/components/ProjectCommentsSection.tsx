@@ -48,24 +48,40 @@ function getMessageText(body: RichTextContent): string {
 function commentToGeneric(
   comment: ProjectComment,
   attachments: ProjectCommentAttachment[],
+  commentsById: Map<string, ProjectComment>,
+  attachmentsByComment: Map<string, ProjectCommentAttachment[]>,
 ): GenericMessage {
   const authorName = comment.author_user?.display_name ?? 'Alguém';
   const commentAttachments = attachments.filter((a) => a.comment_id === comment.id);
 
+  // Build reply citation: prefer the JOIN payload, but fall back to the
+  // already-loaded comments + attachments maps so retroactive replies render.
   let replyTo: GenericMessage['replyTo'] = null;
-  if (comment.reply_to) {
-    const replyContent = getMessageText(comment.reply_to.body_richtext as RichTextContent);
-    const replyAttachments = (comment.reply_to.attachments ?? [])
-      .filter((a) => !a.deleted_at)
-      .map((a) => ({ id: a.id, fileName: a.file_name, mimeType: a.mime_type }));
+  const replyId = comment.reply_to_comment_id ?? comment.reply_to?.id ?? null;
+  if (replyId) {
+    const joined = comment.reply_to ?? null;
+    const fallback = commentsById.get(replyId) ?? null;
+
+    const sourceBody = joined?.body_richtext ?? fallback?.body_richtext;
+    const replyContent = sourceBody ? getMessageText(sourceBody as RichTextContent) : '';
+
+    const joinedAttachments = (joined?.attachments ?? []).filter((a) => !a.deleted_at);
+    const mappedAttachments = attachmentsByComment.get(replyId) ?? [];
+    const sourceAttachments = joinedAttachments.length > 0
+      ? joinedAttachments.map((a) => ({ id: a.id, fileName: a.file_name, mimeType: a.mime_type }))
+      : mappedAttachments.map((a) => ({ id: a.id, fileName: a.file_name, mimeType: a.mime_type }));
+
     const hasContent = replyContent.trim().length > 0;
-    const hasAttachments = replyAttachments.length > 0;
+    const hasAttachments = sourceAttachments.length > 0;
     if (hasContent || hasAttachments) {
       replyTo = {
-        id: comment.reply_to.id,
+        id: replyId,
         content: replyContent,
-        authorName: comment.reply_to.author_user?.display_name ?? 'Alguém',
-        attachments: replyAttachments,
+        authorName:
+          joined?.author_user?.display_name ??
+          fallback?.author_user?.display_name ??
+          'Alguém',
+        attachments: sourceAttachments,
       };
     }
   }
