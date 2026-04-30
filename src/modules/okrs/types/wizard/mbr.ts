@@ -221,10 +221,11 @@ export interface MbrPreDraftData {
     description: string;
     suggestedScope: string;
     /**
-     * @deprecated Onda 4 Fase 1 — Sugerir KR por `krId` (a adicionar) e resolver
-     * título via lookup. Atualmente livre/textual no input do líder.
+     * @deprecated Onda 4 Fase 5 — Feature de sugestão de KPI descontinuada;
+     * campo mantido apenas para compatibilidade com snapshots legados.
+     * Será removido após a janela de observação (≥90 dias).
      */
-    relatedKrTitle: string;
+    relatedKrTitle?: string;
   }>;
   highlights: { accelerated: string; blocked: string; needsDecision: string };
   nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
