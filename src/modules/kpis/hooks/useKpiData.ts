@@ -90,7 +90,6 @@ interface DbKpiValue {
   period_start: string | null;
   period_end: string | null;
   period_label: string | null;
-  confidence: 'high' | 'medium' | 'low';
   rag_status: string | null;
   /** v3.0.0 — tipo do input. */
   input_type?: import('../types').KpiInputType;
