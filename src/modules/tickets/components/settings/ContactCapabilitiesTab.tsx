@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Plus, Search, Users, Trash2, FolderTree } from "lucide-react";
-import { usePartnerCompanies, usePartnerContacts, useContactCapabilities, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
+import { usePartnerCompanies, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
 import { ContactCapabilityDialog } from "./ContactCapabilityDialog";
 import { toast } from "sonner";
 import { useUrlSearch, useUrlState } from "@/shared/url";
@@ -20,7 +20,7 @@ export function ContactCapabilitiesTab() {
     defaultValue: null,
   });
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<ContactCapability | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ contactName: string; capabilities: ContactCapability[] } | null>(null);
 
   const { data: companies = [], isLoading: loadingCompanies, error: companiesError } = usePartnerCompanies();
   const { data: capabilities = [], isLoading: loadingCapabilities } = useCompanyContactCapabilities(selectedCompanyId || undefined);
@@ -31,14 +31,36 @@ export function ContactCapabilitiesTab() {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Group capabilities by contact (a contact may have many capabilities — one row per category/subcategory).
+  // The previous UI rendered one row per capability, which looked like duplicated contacts.
+  const groupedByContact = useMemo(() => {
+    const map = new Map<string, { contact: NonNullable<ContactCapability["contact"]>; capabilities: ContactCapability[] }>();
+    for (const cap of capabilities) {
+      if (!cap.contact) continue;
+      const entry = map.get(cap.contact_id);
+      if (entry) {
+        entry.capabilities.push(cap);
+      } else {
+        map.set(cap.contact_id, { contact: cap.contact, capabilities: [cap] });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.contact.name.localeCompare(b.contact.name));
+  }, [capabilities]);
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteCapability.mutateAsync(deleteTarget.id);
-      toast.success("Capacidade removida");
+      await Promise.all(
+        deleteTarget.capabilities.map((c) => deleteCapability.mutateAsync(c.id))
+      );
+      toast.success(
+        deleteTarget.capabilities.length > 1
+          ? "Capacidades removidas"
+          : "Capacidade removida"
+      );
       setDeleteTarget(null);
     } catch (error) {
-      toast.error("Erro ao remover capacidade");
+      toast.error("Erro ao remover capacidades");
     }
   };
 
@@ -140,7 +162,7 @@ export function ContactCapabilitiesTab() {
                 />
               ) : loadingCapabilities ? (
                 <LoadingState text="Carregando capacidades..." />
-              ) : capabilities.length === 0 ? (
+              ) : groupedByContact.length === 0 ? (
                 <EmptyState
                   icon={FolderTree}
                   title="Nenhuma capacidade configurada"
@@ -150,35 +172,57 @@ export function ContactCapabilitiesTab() {
                 />
               ) : (
                 <div className="space-y-3">
-                  {capabilities.map((cap) => (
-                    <div
-                      key={cap.id}
-                      className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card"
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <span className="font-medium truncate">{cap.contact?.name}</span>
-                          <span className="text-xs text-muted-foreground truncate">{cap.contact?.email}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline">{cap.category?.name}</Badge>
-                          {cap.subcategory ? (
-                            <Badge variant="secondary">{cap.subcategory.name}</Badge>
-                          ) : (
-                            <Badge variant="default" className="text-xs">Categoria inteira</Badge>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteTarget(cap)}
-                        className="shrink-0"
+                  {groupedByContact.map(({ contact, capabilities: contactCaps }) => {
+                    const byCategory = new Map<string, { categoryName: string; isGeneralist: boolean; subs: string[] }>();
+                    for (const c of contactCaps) {
+                      const catId = c.category_id;
+                      const catName = c.category?.name ?? "—";
+                      const entry = byCategory.get(catId) ?? { categoryName: catName, isGeneralist: false, subs: [] };
+                      if (!c.subcategory_id) {
+                        entry.isGeneralist = true;
+                      } else if (c.subcategory?.name) {
+                        entry.subs.push(c.subcategory.name);
+                      }
+                      byCategory.set(catId, entry);
+                    }
+
+                    return (
+                      <div
+                        key={contact.id}
+                        className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="space-y-2 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <span className="font-medium truncate">{contact.name}</span>
+                            <span className="text-xs text-muted-foreground truncate">{contact.email}</span>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            {Array.from(byCategory.values()).map((cat, idx) => (
+                              <div key={idx} className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant="outline">{cat.categoryName}</Badge>
+                                {cat.isGeneralist ? (
+                                  <Badge variant="default" className="text-xs">Categoria inteira</Badge>
+                                ) : (
+                                  cat.subs.map((sub, i) => (
+                                    <Badge key={i} variant="secondary">{sub}</Badge>
+                                  ))
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteTarget({ contactName: contact.name, capabilities: contactCaps })}
+                          className="shrink-0"
+                          aria-label={`Remover capacidades de ${contact.name}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -200,8 +244,18 @@ export function ContactCapabilitiesTab() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Remover capacidade"
-        description={`Remover a capacidade de "${deleteTarget?.contact?.name}" para a categoria "${deleteTarget?.category?.name}"?`}
+        title={
+          deleteTarget && deleteTarget.capabilities.length > 1
+            ? "Remover capacidades"
+            : "Remover capacidade"
+        }
+        description={
+          deleteTarget
+            ? deleteTarget.capabilities.length > 1
+              ? `Remover todas as ${deleteTarget.capabilities.length} capacidades de "${deleteTarget.contactName}" desta empresa?`
+              : `Remover a capacidade de "${deleteTarget.contactName}" desta empresa?`
+            : ""
+        }
         isLoading={deleteCapability.isPending}
       />
     </div>
