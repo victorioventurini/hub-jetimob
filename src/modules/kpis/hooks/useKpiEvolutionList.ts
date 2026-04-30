@@ -92,7 +92,7 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
       let query = supabase
         .from('kpi_metrics')
         .select(`
-          id, name, description, unit, direction, frequency, target_value,
+          id, name, description, unit, direction, consolidation_frequency, target_value,
           indicator_type, scope, created_at,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
