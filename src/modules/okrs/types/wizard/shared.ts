@@ -6,7 +6,7 @@
  * personas que os referenciam (collaborator, team-checkin, mbr, qbr, weekly).
  */
 
-import type { DecisionCategory } from './vocabulary';
+import type { DecisionCategory, RitualBlock } from './vocabulary';
 
 // ============================================================
 // TEAM CHECKIN DECISION SOURCE STEPS
