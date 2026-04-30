@@ -38,7 +38,6 @@ const createMockKpi = (overrides: Partial<KpiForWizard> = {}): KpiForWizard => (
   latest_value: 12,
   latest_reference_date: '2026-01-30',
   latest_rag_status: 'on_track',
-  latest_confidence: 'high',
   latest_period_label: 'Semana 5',
   needs_update: false,
   ...overrides,
