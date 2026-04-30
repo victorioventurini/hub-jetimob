@@ -13,7 +13,6 @@ import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type {
   KpiForWizardV2,
   KpiInputType,
-  KpiConfidenceLevel,
   KpiFrequencyValue,
 } from '@/modules/kpis/types';
 import { FREQUENCY_DAYS, legacyFrequencyToValue } from '@/modules/kpis/utils/frequency';
@@ -40,7 +39,6 @@ export interface KpiGateItem {
   resolved?: boolean;
   // v3.0.0 — metadados opcionais usados nas badges do KPI Gate
   lastInputType?: KpiInputType | null;
-  lastConfidence?: KpiConfidenceLevel | null;
   updateFrequency?: KpiFrequencyValue | null;
   deviationPct?: number | null;
 }
@@ -197,7 +195,6 @@ export function kpiForWizardV2ToGateItem(
     requiresDecision: opts.requiresDecision ?? (status === 'red' || status === 'amber'),
     resolved: opts.resolvedIds?.has(kpi.id) ?? false,
     lastInputType: kpi.latest_input_type,
-    lastConfidence: kpi.latest_confidence,
     updateFrequency: kpi.update_frequency,
     deviationPct: kpi.deviation_pct,
   };

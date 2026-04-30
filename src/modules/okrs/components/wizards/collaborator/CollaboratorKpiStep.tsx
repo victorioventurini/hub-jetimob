@@ -123,7 +123,7 @@ export function CollaboratorKpiStep({
   }, [currentValue, kpi.latest_value]);
 
   const handleValidSubmit = useCallback(
-    async (values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string; confidence?: 'high' | 'medium' | 'low' }) => {
+    async (values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string }) => {
       // Validação extra de rito: notes obrigatória quando RAG ≠ verde
       if (notesRequired && (!values.notes || values.notes.trim().length === 0)) {
         // Sinaliza visualmente — o KpiValueEntryForm já aplica border-warning + asterisco.
@@ -140,7 +140,6 @@ export function CollaboratorKpiStep({
           newValue: values.value,
           referenceDate: values.reference_date,
           inputType: values.input_type,
-          confidence: values.confidence ?? 'medium',
           notes: values.notes,
           skipped: false,
         });
@@ -263,8 +262,6 @@ export function CollaboratorKpiStep({
           consolidationFrequency={kpi.consolidation_frequency ?? null}
           updateFrequency={kpi.update_frequency ?? null}
           placeholderValue={kpi.target_value ?? 100}
-          confidenceMode="always-visible"
-          defaultConfidence="medium"
           formId={FORM_ID}
           notesRequired={notesRequired}
           notesPlaceholder={

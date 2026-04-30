@@ -155,32 +155,18 @@ export function MbrKpiGateStep({
                   </Badge>
                 </div>
 
-                {/* v3.0.0 — Badges Parcial/Consolidado + Confidence */}
-                {(kpi.latestInputType || kpi.latestConfidence) && (
+                {/* v3.0.0 — Badge Parcial/Consolidado */}
+                {kpi.latestInputType && (
                   <div className="flex flex-wrap gap-1.5">
-                    {kpi.latestInputType && (
-                      <Badge
-                        variant={kpi.latestInputType === 'partial' ? 'outline' : 'secondary'}
-                        className={cn(
-                          'text-[10px] h-5',
-                          kpi.latestInputType === 'partial' && 'border-dashed',
-                        )}
-                      >
-                        {kpi.latestInputType === 'partial' ? 'Parcial' : 'Consolidado'}
-                      </Badge>
-                    )}
-                    {kpi.latestConfidence && (
-                      <Badge
-                        variant={kpi.latestConfidence === 'low' ? 'destructive' : 'secondary'}
-                        className="text-[10px] h-5"
-                      >
-                        {kpi.latestConfidence === 'high'
-                          ? 'Conf: Alta'
-                          : kpi.latestConfidence === 'medium'
-                          ? 'Conf: Média'
-                          : 'Conf: Baixa'}
-                      </Badge>
-                    )}
+                    <Badge
+                      variant={kpi.latestInputType === 'partial' ? 'outline' : 'secondary'}
+                      className={cn(
+                        'text-[10px] h-5',
+                        kpi.latestInputType === 'partial' && 'border-dashed',
+                      )}
+                    >
+                      {kpi.latestInputType === 'partial' ? 'Parcial' : 'Consolidado'}
+                    </Badge>
                   </div>
                 )}
 
@@ -221,7 +207,6 @@ export function MbrKpiGateStep({
                         kpi_id: kpi.kpiId,
                         kpi_rag_status: kpi.ragStatus,
                         ...(kpi.latestInputType ? { kpi_input_type: kpi.latestInputType } : {}),
-                        ...(kpi.latestConfidence ? { kpi_confidence: kpi.latestConfidence } : {}),
                       })}
                     />
                   </div>

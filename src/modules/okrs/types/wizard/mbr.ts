@@ -57,8 +57,6 @@ export interface MbrKpiSnapshot {
   teamName?: string | null;
   /** v3.0.0 — tipo do último input registrado (consolidado/parcial). */
   latestInputType?: 'partial' | 'consolidated' | null;
-  /** v3.0.0 — confidence do último input registrado. */
-  latestConfidence?: 'high' | 'medium' | 'low' | null;
 }
 
 /** OKR organizacional snapshot */

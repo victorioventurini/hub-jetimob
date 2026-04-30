@@ -19,7 +19,6 @@ import type {
   UseKpisForWizardV2Options,
   UseKpisForWizardV2Result,
   KpiRagStatus,
-  KpiConfidenceLevel,
   KpiFrequencyValue,
   KpiInputType,
   KpiLifecycleStatus,
@@ -121,7 +120,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         
         const { data: latestValues } = await supabase
           .from('kpi_values')
-          .select('kpi_id, value, reference_date, rag_status, confidence, period_label, input_type')
+          .select('kpi_id, value, reference_date, rag_status, period_label, input_type')
           .in('kpi_id', kpiIds)
           .order('reference_date', { ascending: false });
         
@@ -225,7 +224,6 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             latest_value: latest?.value ?? null,
             latest_reference_date: latest?.reference_date ?? null,
             latest_rag_status: ragStatus,
-            latest_confidence: (latest?.confidence as KpiConfidenceLevel) ?? null,
             latest_period_label: latest?.period_label ?? null,
             latest_input_type: (latest?.input_type as KpiInputType | undefined) ?? null,
             needs_update: needsUpdate,

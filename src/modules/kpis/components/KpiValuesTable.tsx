@@ -78,18 +78,12 @@ export interface KpiValuesTableProps {
       reference_date: string;
       notes?: string;
       input_type?: import('../types').KpiInputType;
-      confidence?: import('../types').KpiConfidenceLevel;
     },
   ) => Promise<void>;
   /** Callback to delete a value */
   onDeleteValue?: (id: string) => Promise<void>;
 }
 
-const confidenceConfig = {
-  high: { label: "Alta", className: "text-status-green-muted-foreground bg-status-green-muted" },
-  medium: { label: "Média", className: "text-status-yellow-muted-foreground bg-status-yellow-muted" },
-  low: { label: "Baixa", className: "text-status-red-muted-foreground bg-status-red-muted" },
-};
 
 const sourceIcons: Record<KpiValueSource, React.ElementType> = {
   manual: Edit,
@@ -235,8 +229,6 @@ export function KpiValuesTable({
                 const hasNotes = !!value.notes?.trim();
                 const SourceIcon = sourceIcons[value.source] || Edit;
                 const isPartial = value.input_type === 'partial';
-                const confidence = value.confidence;
-                const confCfg = confidence ? confidenceConfig[confidence] : null;
 
                 return (
                   <TableRow
@@ -296,32 +288,17 @@ export function KpiValuesTable({
                       )}
                     </TableCell>
 
-                    {/* v3.0.0 — Tipo (Parcial/Consolidado) + Confidence */}
+                    {/* v3.0.0 — Tipo (Parcial/Consolidado) */}
                     <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1 flex-wrap">
-                        <Badge
-                          variant={isPartial ? 'outline' : 'secondary'}
-                          className={cn(
-                            'text-[10px] h-5 font-normal',
-                            isPartial && 'border-dashed text-muted-foreground',
-                          )}
-                        >
-                          {isPartial ? 'Parcial' : 'Consolidado'}
-                        </Badge>
-                        {confCfg && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge
-                                variant="outline"
-                                className={cn('text-[10px] h-5 font-normal', confCfg.className)}
-                              >
-                                {confCfg.label}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>Confiança: {confCfg.label}</TooltipContent>
-                          </Tooltip>
+                      <Badge
+                        variant={isPartial ? 'outline' : 'secondary'}
+                        className={cn(
+                          'text-[10px] h-5 font-normal',
+                          isPartial && 'border-dashed text-muted-foreground',
                         )}
-                      </div>
+                      >
+                        {isPartial ? 'Parcial' : 'Consolidado'}
+                      </Badge>
                     </TableCell>
 
                     <TableCell className="text-center">

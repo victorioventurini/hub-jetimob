@@ -5,9 +5,9 @@
  * (`CollaboratorKpiStep` etc.). Não duplicar este schema em outros formulários.
  *
  * Inclui o campo `input_type` (Consolidado | Parcial), obrigatório a partir
- * de v3.0.0 (vide TCR v3.29.1). O trigger DB `trg_kpi_value_derive_confidence`
- * usa `input_type` para derivar a `confidence` default — por isso o valor
- * SEMPRE deve ser enviado no insert em `kpi_values`.
+ * de v3.0.0 (vide TCR v3.30.0). Diferente de versões anteriores, NÃO existe
+ * mais o campo `confidence` em KPIs — a confiabilidade do dado é inferida de
+ * `input_type` (Consolidado/Parcial) + `source` (manual/api/...).
  */
 import { z } from 'zod';
 import { startOfDay, isBefore } from 'date-fns';
@@ -28,8 +28,6 @@ export const kpiValueEntrySchema = z.object({
     ),
   input_type: z.enum(['consolidated', 'partial']),
   notes: z.string().max(500).optional(),
-  override_confidence: z.boolean().optional(),
-  confidence: z.enum(['high', 'medium', 'low']).optional(),
 });
 
 export type KpiValueEntryFormValues = z.infer<typeof kpiValueEntrySchema>;

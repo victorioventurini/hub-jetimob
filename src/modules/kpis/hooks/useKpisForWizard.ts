@@ -11,7 +11,6 @@ import { useBu } from "@/contexts/BuContext";
 import { kpisKeys } from "@/lib/queryKeys/okrs";
 import type { 
   KpiRagStatus, 
-  KpiConfidenceLevel, 
   KpiFrequencyValue,
   KpiLifecycleStatus,
   KpiDirection 
@@ -38,7 +37,6 @@ export interface KpiForWizard {
   latest_value: number | null;
   latest_reference_date: string | null;
   latest_rag_status: KpiRagStatus;
-  latest_confidence: KpiConfidenceLevel | null;
   latest_period_label: string | null;
   needs_update: boolean;
 }
@@ -114,7 +112,7 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
         
         const { data: latestValues } = await supabase
           .from('kpi_values')
-          .select('kpi_id, value, reference_date, rag_status, confidence, period_label')
+          .select('kpi_id, value, reference_date, rag_status, period_label')
           .in('kpi_id', kpiIds)
           .order('reference_date', { ascending: false });
         
@@ -140,7 +138,6 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
             latest_value: latest?.value ?? null,
             latest_reference_date: latest?.reference_date ?? null,
             latest_rag_status: (latest?.rag_status as KpiRagStatus) ?? 'no_data',
-            latest_confidence: (latest?.confidence as KpiConfidenceLevel) ?? null,
             latest_period_label: latest?.period_label ?? null,
             needs_update: needsUpdate(updateFreq, latest?.reference_date),
           };

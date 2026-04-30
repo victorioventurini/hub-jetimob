@@ -42,7 +42,6 @@ export type KpiComparisonRule = 'higher_is_better' | 'lower_is_better' | 'equal_
 // === v2.1 New Types ===
 export type KpiIndicatorType = 'kpi' | 'metric';
 export type KpiLifecycleStatus = 'proposed' | 'active' | 'observing' | 'deprecated';
-export type KpiConfidenceLevel = 'high' | 'medium' | 'low';
 
 // === v2.2 Governance Types ===
 export type KpiScope = 'team' | 'area' | 'org';
@@ -135,7 +134,6 @@ export interface KpiValue {
   period_start: string | null;
   period_end: string | null;
   period_label: string | null;
-  confidence: KpiConfidenceLevel;
   rag_status: KpiRagStatus | null;
   // v3.0.0 input type (projeção vs consolidado) — opcional durante migração
   input_type?: KpiInputType;
@@ -261,12 +259,6 @@ export function getScopeLabels(buName?: string): Record<KpiScope, string> {
     org: orgLabel,
   };
 }
-
-export const CONFIDENCE_LABELS: Record<KpiConfidenceLevel, string> = {
-  high: 'Alta',
-  medium: 'Média',
-  low: 'Baixa',
-};
 
 export const SOURCE_TYPE_LABELS: Record<KpiValueSource, string> = {
   manual: 'Manual',
@@ -400,7 +392,6 @@ export interface KpiForWizardV2 {
   latest_value: number | null;
   latest_reference_date: string | null;
   latest_rag_status: KpiRagStatus;
-  latest_confidence: KpiConfidenceLevel | null;
   latest_period_label: string | null;
   /** v3.0.0 — tipo do último input registrado. */
   latest_input_type: KpiInputType | null;

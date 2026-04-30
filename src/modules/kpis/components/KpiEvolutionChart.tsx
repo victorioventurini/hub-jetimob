@@ -82,7 +82,6 @@ function useKpiChartData(
       fullDate: format(parseISO(v.reference_date), "dd MMM yyyy", { locale: ptBR }),
       value: v.value,
       source: v.source,
-      confidence: v.confidence,
       notes: v.notes,
       ragStatus: v.rag_status,
       inputType: v.input_type ?? 'consolidated',

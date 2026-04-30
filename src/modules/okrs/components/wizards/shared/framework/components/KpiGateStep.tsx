@@ -43,17 +43,10 @@ const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
   unknown: 'bg-muted text-muted-foreground border-border',
 };
 
-const CONFIDENCE_LABEL: Record<string, string> = {
-  high: 'Conf: Alta',
-  medium: 'Conf: Média',
-  low: 'Conf: Baixa',
-};
-
 const COLLAPSED_BY_DEFAULT: ReadonlySet<KpiGateBucketId> = new Set(['teamContext']);
 
 function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
   const isPartial = kpi.lastInputType === 'partial';
-  const isLowConfidence = kpi.lastConfidence === 'low';
   return (
     <Card className={cn('p-4 border', STATUS_STYLES[kpi.status])}>
       <div className="flex items-start justify-between gap-3">
@@ -62,24 +55,14 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
           <p className="text-xs text-muted-foreground mt-1">
             {kpi.currentValue ?? '—'} {kpi.target && <>/ meta: {kpi.target}</>}
           </p>
-          {(kpi.lastInputType || kpi.lastConfidence) && (
+          {kpi.lastInputType && (
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {kpi.lastInputType && (
-                <Badge
-                  variant={isPartial ? 'outline' : 'secondary'}
-                  className={cn('text-[10px] h-5', isPartial && 'border-dashed')}
-                >
-                  {isPartial ? 'Parcial' : 'Consolidado'}
-                </Badge>
-              )}
-              {kpi.lastConfidence && (
-                <Badge
-                  variant={isLowConfidence ? 'destructive' : 'secondary'}
-                  className="text-[10px] h-5"
-                >
-                  {CONFIDENCE_LABEL[kpi.lastConfidence] ?? kpi.lastConfidence}
-                </Badge>
-              )}
+              <Badge
+                variant={isPartial ? 'outline' : 'secondary'}
+                className={cn('text-[10px] h-5', isPartial && 'border-dashed')}
+              >
+                {isPartial ? 'Parcial' : 'Consolidado'}
+              </Badge>
             </div>
           )}
         </div>

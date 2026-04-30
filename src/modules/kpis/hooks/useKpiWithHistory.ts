@@ -80,7 +80,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         .from('kpi_values')
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, confidence, rag_status
+          period_start, period_end, period_label, rag_status
         `)
         .eq('kpi_id', kpiId)
         .order('reference_date', { ascending: false })
@@ -124,7 +124,6 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         period_start: v.period_start,
         period_end: v.period_end,
         period_label: v.period_label,
-        confidence: (v.confidence || 'medium') as 'high' | 'medium' | 'low',
         rag_status: v.rag_status as KpiRagStatus | null,
         created_by_user: v.created_by ? userMap[v.created_by] || null : null,
       }));
