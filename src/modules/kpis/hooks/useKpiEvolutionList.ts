@@ -12,6 +12,7 @@ import { useOptionalBuClient } from "@/integrations/supabase/getOptionalBuClient
 import { queryKeys } from "@/lib/queryKeys";
 import type { KpiIndicatorType, KpiScope, KpiRagStatus, KpiDirection } from "../types";
 import { calculateRagStatus } from "../types";
+import { valueFrequencyToLegacy } from "../utils/frequency";
 
 export interface KpiEvolutionItem {
   id: string;
