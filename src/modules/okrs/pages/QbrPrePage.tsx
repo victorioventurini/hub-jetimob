@@ -663,6 +663,9 @@ export default function QbrPrePage() {
             onComplete={handleComplete}
             onBack={goBack}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            onLearningsChange={(learnings) => updateDraft({ learnings })}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            onJumpToStep={goToStep}
           />
         );
 

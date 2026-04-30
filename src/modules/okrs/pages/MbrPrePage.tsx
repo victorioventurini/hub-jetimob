@@ -492,6 +492,9 @@ export default function MbrPrePage() {
             onComplete={handleComplete}
             onBack={goBack}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
+            onHighlightsChange={(highlights) => updateDraft({ highlights })}
+            onNextStepsChange={(nextSteps) => updateDraft({ nextSteps })}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
           />
         );
 
