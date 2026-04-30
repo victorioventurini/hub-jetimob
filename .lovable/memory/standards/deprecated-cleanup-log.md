@@ -8,10 +8,28 @@ type: reference
 
 Registro consolidado das varreduras `@deprecated` e do que foi limpo a cada onda.
 
-## Estado atual (atualizado 2026-04-30)
+## Estado atual (atualizado 2026-04-30 — pós Onda 7)
 
-- **Total de marcações `@deprecated`:** 52 (após Onda 6 Frente C)
+- **Total de marcações `@deprecated`:** 47 (-5 nesta onda: 5 campos legacy de `AnalysisSuggestedAction`)
 - **Próxima auditoria recomendada:** após 2026-07-30 (T0 da janela Onda 4 Fase 5).
+
+## Onda 7 — Frentes 1+2+3 (2026-04-30)
+
+### Frente 1 — Analysis legacy shapes (CONCLUÍDA)
+
+Auditoria de produção: **0 de 4** registros em `analysis_reports.suggested_actions` usam o shape legacy.
+Removidos 5 campos `@deprecated` de `AnalysisSuggestedAction` (`title`, `rationale`, `owner_hint`, `due_hint`, `impact`)
+e fallbacks correspondentes em `AnalysisResultPage.tsx`. Teste atualizado.
+
+### Frente 2 — Permissions V1 sunset prep (CONCLUÍDA — sem ação)
+
+Tabelas V1 (`permission_groups`, etc) **já não existem no DB**. Zero `@deprecated` em
+`src/modules/permissions/`. Memory desatualizada — corrigida.
+
+### Frente 3 — KPI frequency audit + plano (CONCLUÍDA — documental)
+
+Plano completo em `docs/audits/KPI_FREQUENCY_SUNSET_PLAN.md`. DB 100% migrado (31/31).
+8 consumidores frontend mapeados. 4 fases para execução em Onda 8.
 
 ## Onda 6 — Frente C: Auditoria pós-Wave 7 (2026-04-30)
 

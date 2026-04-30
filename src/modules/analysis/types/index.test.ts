@@ -50,9 +50,9 @@ describe("Tipos de Analysis — contratos canônicos", () => {
     expect(insights.map((i) => i.type)).toEqual(["info", "warning", "positive"]);
   });
 
-  it("AnalysisSuggestedAction aceita níveis de impacto opcionais", () => {
-    const a: AnalysisSuggestedAction = { title: "x", impact: "high" };
-    expect(a.impact).toBe("high");
+  it("AnalysisSuggestedAction aceita shape canônico", () => {
+    const a: AnalysisSuggestedAction = { type: "register_decision", label: "x", suggestedText: "y" };
+    expect(a.label).toBe("x");
   });
 
   it("AnalysisComposerState exige campos canônicos", () => {
