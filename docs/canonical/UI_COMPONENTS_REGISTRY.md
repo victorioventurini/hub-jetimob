@@ -540,6 +540,46 @@ Componente canônico **obrigatório** para seleção de unidades de medida em KR
 
 **Constantes compartilhadas:** `src/shared/constants/units.ts`
 
+---
+
+### 6.5 KpiValueEntryForm — Registro de valor de KPI
+
+**Arquivo:** `src/modules/kpis/components/shared/KpiValueEntryForm.tsx`
+
+Componente canônico **obrigatório** para qualquer fluxo que registre valor em `kpi_values`. Reúne os campos exigidos pela governança v3.0.0 (Valor, Data de Referência, **Tipo do input** [Consolidado | Parcial], Confiança, Observações) e aplica `suggestInputType` para sugerir o `input_type` automaticamente conforme `consolidation_frequency` × `update_frequency`.
+
+| Cenário | Consumidor canônico | `confidenceMode` |
+|---------|---------------------|------------------|
+| Modal "Registrar valor" do módulo `/kpis` | `AddKpiValueDialog` | `advanced` (override de confidence dentro de `<details>` "Avançado") |
+| Step de KPIs do rito Colaborador | `CollaboratorKpiStep` | `always-visible` (Select de confiança sempre visível) |
+| Novos ritos que precisem registrar valor | usar `KpiValueEntryForm` diretamente | a definir |
+
+**Regra:** ⚠️ Nunca duplicar o schema/UI deste formulário em outro wizard ou modal. Estender `KpiValueEntryForm` (nova prop / slot) é o caminho. O insert em `kpi_values` deve **sempre** enviar `input_type` (o trigger DB `trg_kpi_value_derive_confidence` depende dele para derivar a confidence padrão — vide TCR v3.29.1).
+
+```tsx
+import { KpiValueEntryForm } from "@/modules/kpis/components/shared";
+
+<KpiValueEntryForm
+  unit={kpi.unit}
+  consolidationFrequency={kpi.consolidation_frequency}
+  updateFrequency={kpi.update_frequency}
+  confidenceMode="always-visible"
+  formId="meu-rito-kpi-form"
+  onValidSubmit={async (values) => {
+    await addKpiValue.mutateAsync({
+      kpi_id: kpi.id,
+      value: values.value,
+      reference_date: values.reference_date,
+      input_type: values.input_type,
+      confidence: values.confidence,
+      notes: values.notes,
+    });
+  }}
+/>
+```
+
+
+
 ```typescript
 import { UNIT_CATEGORIES, ALL_UNITS, getUnitLabel } from "@/shared/constants/units";
 
