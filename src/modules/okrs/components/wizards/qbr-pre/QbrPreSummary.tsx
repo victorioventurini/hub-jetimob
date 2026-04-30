@@ -176,6 +176,15 @@ export function QbrPreSummary({
           </Card>
         )}
 
+        {/* Sugestões de pauta — priorização (até 3) */}
+        {agendaSuggestions.length > 0 && onAgendaSuggestionsChange && (
+          <AgendaSuggestionsPrioritizer
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            ritualLabel="QBR"
+          />
+        )}
+
         {/* Decisions summary */}
         {decisions.length > 0 && (
           <Card>
