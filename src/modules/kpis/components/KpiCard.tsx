@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { KpiWithValues, RAG_STATUS_CONFIG, SOURCE_TYPE_LABELS } from "../types";
-import { FREQUENCY_DAYS, getFrequencyLabel, legacyFrequencyToValue } from "../utils/frequency";
+import { FREQUENCY_DAYS, getFrequencyLabel } from "../utils/frequency";
 import { KpiActionsMenu } from "./KpiActionsMenu";
 import { KpiScopeBadge } from "./KpiScopeBadge";
 import { useBu } from "@/contexts/BuContext";
@@ -75,9 +75,8 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
     }
   };
 
-  // v3.0.0: usa update_frequency com fallback ao legacy `frequency` enquanto Fase 1 não removeu a coluna.
-  const effectiveUpdateFreq =
-    kpi.update_frequency ?? legacyFrequencyToValue(kpi.frequency);
+  // v3.0.0: cadência canônica de input. update_frequency é NOT NULL no DB (split concluído).
+  const effectiveUpdateFreq = kpi.update_frequency ?? null;
   const lastUpdate = kpi.last_updated_at ? parseISO(kpi.last_updated_at) : null;
   const staleThresholdDays = effectiveUpdateFreq
     ? Math.max(2, Math.round(FREQUENCY_DAYS[effectiveUpdateFreq] * 1.2))
