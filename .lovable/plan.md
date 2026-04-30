@@ -1,48 +1,28 @@
-## Contexto
+# Onda 4 — Sub-tarefa `relatedKrTitle` (encerrada 2026-04-30)
 
-A pendência registrada como "redesign de autocomplete para `relatedKrTitle`" estava baseada na hipótese de que o campo ainda era um input livre do líder no MBR Pre/QBR Pre. Auditoria do código atual mostra cenário diferente:
+## Resultado
 
-- `QbrKpiAnalysisStep` marcou as props `kpisToCreate` e `onKpisToCreateChange` como `@deprecated` ("KPI suggestions removed — kept for backward compat") e **não renderiza nenhum campo** que capture descrição, escopo ou KR relacionado.
-- `MbrPrePage` e `QbrPrePage` ainda passam essas props para o step, mas elas são ignoradas. O array `kpisToCreate` é inicializado como `[]` e nunca cresce no fluxo atual.
-- Drafts/snapshots **legados** (anteriores à remoção do feature) podem conter entradas; hoje são lidos apenas em `MbrPage` (`proposedKpis` → `MbrKpiGateStep`) para mostrar sugestões históricas.
+A pendência aberta na Fase 5 ("redesign de autocomplete por KR") foi resolvida via **descontinuação do campo**, não via redesign — auditoria mostrou que o input de sugestão de KPI já tinha sido removido da UI em commits anteriores; só restavam:
+- props `@deprecated` em `QbrKpiAnalysisStep` (não usadas);
+- `relatedKrTitle: string` (obrigatório) em dois types;
+- um fixture de teste populando o campo legado.
 
-Ou seja: não há input para redesenhar. O caminho correto é **descontinuar o campo** seguindo o mesmo padrão da Onda 4 Fase 5 (drop com fallback defensivo nos readers).
+## Alterações
 
-## Objetivo
+| Arquivo | Mudança |
+|---|---|
+| `src/modules/okrs/types/wizard/mbr.ts` | `relatedKrTitle?: string` + tag `@deprecated` Fase 5 |
+| `src/modules/okrs/types/wizard/qbr.ts` | idem |
+| `src/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep.tsx` | Removidas props `kpisToCreate`, `onKpisToCreateChange`, `zombieCandidates`, `onZombieCandidatesChange` (todas `@deprecated`) |
+| `src/modules/okrs/pages/MbrPrePage.tsx` | Stop de passagem de `kpisToCreate`/`onKpisToCreateChange` |
+| `src/modules/okrs/pages/QbrPrePage.tsx` | idem |
+| `src/modules/okrs/components/wizards/qbr-pre-clevel/__tests__/QbrCLevelSteps.test.tsx` | Fixture sem `relatedKrTitle` |
+| `mem://standards/wizard-snapshot-denormalized-fields-deprecation` | Pendência marcada como resolvida; campo agora entra no drop normal da Fase 5 |
 
-Encerrar a dívida do `relatedKrTitle` removendo:
-1. As props `@deprecated` `kpisToCreate`/`onKpisToCreateChange` de `QbrKpiAnalysisStep` e dos call-sites em `MbrPrePage`/`QbrPrePage`.
-2. O campo `relatedKrTitle` dos types `MbrPreDraftData.kpisToCreate[]` e `QbrPreSnapshot.kpisToCreate[]`, mantendo o array para preservar drafts legados.
-3. A leitura defensiva em `MbrPage`/`MbrKpiGateStep`: aceitar entradas sem `relatedKrTitle` (fallback `undefined`), exibir apenas `description` + `suggestedScope`.
+## Validação
 
-Manter o array `kpisToCreate` no schema (não dropar) porque snapshots legados têm dados; apenas tornar `relatedKrTitle` opcional (`?: string`) e parar de exibi-lo, marcando-o `@deprecated` para drop futuro junto com a janela de observação da Fase 5 da Onda 4.
+`bunx vitest run src/modules/okrs` → **1769/1769 passing** (1 flake de timeout 5s em teste de import isolado, confirmado verde em re-run).
 
-## Plano de execução
+## Estado da Onda 4
 
-### Bloco 1 — Types: tornar `relatedKrTitle` opcional
-- `src/modules/okrs/types/wizard/mbr.ts` (linha 220-228): `relatedKrTitle: string` → `relatedKrTitle?: string` mantendo a tag `@deprecated`.
-- `src/modules/okrs/types/wizard/qbr.ts` (linha 134-141): mesmo tratamento.
-
-### Bloco 2 — Remover props deprecated do step
-- `src/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep.tsx`: remover `kpisToCreate`, `onKpisToCreateChange`, `zombieCandidates`, `onZombieCandidatesChange` da interface (todas marcadas `@deprecated`).
-- `src/modules/okrs/pages/MbrPrePage.tsx` (linha 442-443): remover passagem de `kpisToCreate` e `onKpisToCreateChange`.
-- `src/modules/okrs/pages/QbrPrePage.tsx` (linha 615-616): mesmo.
-
-### Bloco 3 — Reader histórico aceita ausência
-- `MbrPage.tsx` (linha 172-180): manter `proposedKpis` mas remover dependência de `relatedKrTitle` no shape.
-- `MbrKpiGateStep.tsx` (linha 32-38): `relatedKrTitle?: string` continua opcional; verificar que JSX (não há renderização ativa hoje) está coerente.
-
-### Bloco 4 — Tests
-- Atualizar `QbrCLevelSteps.test.tsx` (linha 88) que ainda usa `relatedKrTitle: ''` no fixture: remover a chave para refletir o novo shape.
-- Validar que `QbrPreSummary.test.tsx` e `MbrKpiGateStep.test.tsx` não regridem.
-
-### Bloco 5 — Documentação
-- Atualizar `mem://standards/wizard-snapshot-denormalized-fields-deprecation`: marcar `relatedKrTitle` como "campo opcional, sem input ativo, drop junto com Fase 5 (≥90 dias)".
-- `.lovable/plan.md`: registrar entrega como sub-item da Fase 5 da Onda 4 (não nova onda).
-
-### Validação
-- `bunx vitest run src/modules/okrs` mantém **1769/1769**.
-
-## Fora de escopo
-- Drop do array `kpisToCreate` inteiro (depende da janela de observação da Fase 5).
-- Reintrodução do feature de sugestão de KPIs (decisão de produto, não técnica).
+Todas as fases (1-4) entregues + pendência de `relatedKrTitle` encerrada. Apenas o **drop físico** dos campos `@deprecated` segue diferido para após janela de observação ≥90 dias (Fase 5).
