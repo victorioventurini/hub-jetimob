@@ -80,6 +80,7 @@ const DEFAULT_DATA: QbrPreDraftData = {
   proposedOkrs: [],
   dependencies: [],
   decisions: [],
+  agendaSuggestions: [],
 };
 
 // ============================================================
