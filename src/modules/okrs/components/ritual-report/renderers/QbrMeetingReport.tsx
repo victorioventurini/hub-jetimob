@@ -1,6 +1,12 @@
+/**
+ * QbrMeetingReport — Onda 4 Fase 2: nomes (Time/Profile) via useEntityLookup.
+ * Substitui exibição de IDs truncados (`slice(0,8)…`) por nomes legíveis.
+ */
+
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Users, Link2, Calendar } from 'lucide-react';
 import { ReportSection, EmptyState } from './shared';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { cn } from '@/lib/utils';
 
 const APPROVAL_LABELS: Record<string, { label: string; color: string }> = {
@@ -15,6 +21,16 @@ export function QbrMeetingReport({ data }: { data: Record<string, any> }) {
   const crossCommitments = Array.isArray(data.crossCommitments) ? data.crossCommitments : [];
   const checklist = data.governanceChecklist || {};
   const nextThirtyDays = data.nextThirtyDays as { ceo?: string; coo?: string; cpto?: string } | undefined;
+
+  const teamIds: string[] = [
+    ...approvals.map((a: any) => a?.teamId),
+    ...crossCommitments.flatMap((c: any) => [c?.fromTeamId, c?.toTeamId]),
+  ].filter(Boolean);
+  const profileIds: string[] = crossCommitments
+    .map((c: any) => c?.responsibleUserId)
+    .filter(Boolean);
+
+  const lookups = useEntityLookup({ teamIds, profileIds });
 
   const hasNextThirtyDays = nextThirtyDays && (nextThirtyDays.ceo || nextThirtyDays.coo || nextThirtyDays.cpto);
   const hasContent = approvals.length > 0 || crossCommitments.length > 0 || Object.keys(checklist).length > 0 || hasNextThirtyDays;
@@ -33,7 +49,9 @@ export function QbrMeetingReport({ data }: { data: Record<string, any> }) {
                   <Badge variant="outline" className={cn('text-[10px] h-5 px-1.5', st.color)}>
                     {st.label}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">Time: {a.teamId?.slice(0, 8)}…</span>
+                  <span className="text-xs text-muted-foreground">
+                    Time: {resolveName(lookups.teams, a.teamId)}
+                  </span>
                   {a.discardReason && (
                     <span className="text-xs text-destructive ml-auto">{a.discardReason}</span>
                   )}
@@ -48,17 +66,22 @@ export function QbrMeetingReport({ data }: { data: Record<string, any> }) {
       {crossCommitments.length > 0 && (
         <ReportSection title={`Compromissos cross-team (${crossCommitments.length})`} icon={<Link2 className="h-4 w-4" />}>
           <div className="space-y-1.5">
-            {crossCommitments.map((c: any, i: number) => (
-              <div key={i} className="p-2 rounded border text-sm space-y-1">
-                <p>{c.description}</p>
-                <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
-                  <span>De: {c.fromTeamId?.slice(0, 8)}…</span>
-                  <span>Para: {c.toTeamId?.slice(0, 8)}…</span>
-                  {c.responsibleUserName && <span>Resp: {c.responsibleUserName}</span>}
-                  {c.deadline && <span>Prazo: {c.deadline}</span>}
+            {crossCommitments.map((c: any, i: number) => {
+              const respName = c.responsibleUserId
+                ? resolveName(lookups.profiles, c.responsibleUserId, c.responsibleUserName, '')
+                : (c.responsibleUserName ?? '');
+              return (
+                <div key={i} className="p-2 rounded border text-sm space-y-1">
+                  <p>{c.description}</p>
+                  <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
+                    <span>De: {resolveName(lookups.teams, c.fromTeamId)}</span>
+                    <span>Para: {resolveName(lookups.teams, c.toTeamId)}</span>
+                    {respName && <span>Resp: {respName}</span>}
+                    {c.deadline && <span>Prazo: {c.deadline}</span>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ReportSection>
       )}
