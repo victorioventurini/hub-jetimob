@@ -113,7 +113,7 @@ describe('okrsKeys', () => {
 
     it('should create initiativesByUser key', () => {
       const key = okrsKeys.initiativesByUser('profile-123');
-      expect(key).toEqual(['okr-initiatives', 'user', 'profile-123']);
+      expect(key).toEqual(['okr-initiatives', 'user', 'profile-123', null]);
     });
 
     it('should create initiativesByStatus key', () => {
