@@ -48,7 +48,6 @@ export interface KpiCheckinResult {
    * snapshots gravados antes desta migração.
    */
   inputType?: 'consolidated' | 'partial';
-  confidence: 'high' | 'medium' | 'low';
   notes?: string;
   skipped: boolean;
 }
