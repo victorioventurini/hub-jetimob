@@ -8,21 +8,18 @@
  * - Lista de dependências cross-team (add/remove)
  */
 
-import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Compass, Plus, Trash2, Link2, FolderKanban } from 'lucide-react';
+import { Compass, Link2, FolderKanban } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardStepFooter,
   WizardStepScaffold,
-  
   InlineAgendaSuggestionInput,
+  InlineStringListEditor,
 } from '../shared';
 import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
