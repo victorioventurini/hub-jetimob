@@ -18,8 +18,9 @@ import {
   WizardStepScaffold,
   
   ReflectionQuestions,
+  InlineAgendaSuggestionInput,
 } from '../shared';
-import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { TeamCheckinDecision, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 import type { ReflectionQuestion } from '../shared/ReflectionQuestions';
 
 // ============================================================
