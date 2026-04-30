@@ -1,13 +1,25 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Target, BarChart3, MessageSquare, AlertTriangle } from 'lucide-react';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { ReportSection, EmptyState, ConfidenceBadge } from './shared';
 
+/** Onda 4 Fase 2: nomes (KR/Objetivo/KPI) resolvidos via useEntityLookup. */
 export function CollaboratorReport({ data }: { data: Record<string, any> }) {
   const results = Array.isArray(data.results) ? data.results : [];
   const kpiResults = Array.isArray(data.kpiResults) ? data.kpiResults : [];
   const reflection = data.reflection || {};
   const atRisk = Array.isArray(data.initiativesMarkedAtRisk) ? data.initiativesMarkedAtRisk : [];
+
+  const krIds: string[] = results.map((r: any) => r?.krId).filter(Boolean);
+  const objectiveIds: string[] = results.map((r: any) => r?.objectiveId).filter(Boolean);
+  const kpiIds: string[] = kpiResults.map((k: any) => k?.kpiId).filter(Boolean);
+
+  const lookups = useEntityLookup({
+    teamKrIds: krIds,
+    teamObjectiveIds: objectiveIds,
+    kpiIds,
+  });
 
   return (
     <div className="space-y-4">
@@ -28,9 +40,11 @@ export function CollaboratorReport({ data }: { data: Record<string, any> }) {
               {results.map((r: any, i: number) => (
                 <TableRow key={r.krId || i}>
                   <TableCell className="text-sm">
-                    <div>{r.krTitle}</div>
-                    {r.objectiveTitle && (
-                      <span className="text-xs text-muted-foreground">{r.objectiveTitle}</span>
+                    <div>{resolveName(lookups.teamKrs, r.krId, r.krTitle)}</div>
+                    {(r.objectiveId || r.objectiveTitle) && (
+                      <span className="text-xs text-muted-foreground">
+                        {resolveName(lookups.teamObjectives, r.objectiveId, r.objectiveTitle, '')}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-right text-sm">{r.previousValue ?? '—'}</TableCell>
@@ -61,7 +75,7 @@ export function CollaboratorReport({ data }: { data: Record<string, any> }) {
             <TableBody>
               {kpiResults.map((k: any, i: number) => (
                 <TableRow key={k.kpiId || i}>
-                  <TableCell className="text-sm">{k.kpiName}</TableCell>
+                  <TableCell className="text-sm">{resolveName(lookups.kpis, k.kpiId, k.kpiName)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">{k.newValue ?? '—'}</TableCell>
                   <TableCell><ConfidenceBadge level={k.confidence} /></TableCell>
                   <TableCell className="text-sm text-muted-foreground">{k.notes || '—'}</TableCell>

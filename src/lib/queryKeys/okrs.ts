@@ -340,9 +340,17 @@ export const okrsKeys = {
   krWithHistory: (buId: string | null, krId: string | null) =>
     ['kr-with-history', buId, krId] as const,
 
-  // ── Ritual Report — KR titles batch ──
+  // ── Ritual Report — KR titles batch (legacy, prefer entityLookup) ──
   krTitlesForReport: (krIds: string[]) =>
     ['kr-titles-for-report', ...krIds] as const,
+
+  // ── Entity Lookup (Onda 4 Fase 2) — batch id→name resolution for ritual readers ──
+  entityLookupPrefix: () => ['entity-lookup'] as const,
+  entityLookup: (
+    kind: 'teams' | 'team_krs' | 'org_krs' | 'team_objectives' | 'org_objectives' | 'profiles' | 'kpis',
+    buId: string | null,
+    ids: string[],
+  ) => ['entity-lookup', kind, buId, ...ids] as const,
 
   // ── Calendar — user sessions filter ──
   calendarUserSessions: (userFilter: string | null, sessionIds: string[]) =>

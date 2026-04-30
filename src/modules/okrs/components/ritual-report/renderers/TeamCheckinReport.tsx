@@ -1,43 +1,23 @@
-import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Target } from 'lucide-react';
-import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
-import { okrsKeys } from '@/lib/queryKeys/okrs';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { ReportSection, EmptyState } from './shared';
 
 /**
- * Resolve KR IDs to titles. reviewedKrs is stored as plain UUID strings.
+ * Onda 4 Fase 2: usa `useEntityLookup` canônico para resolver KR titles em runtime.
+ * Mantém compatibilidade com snapshots antigos que gravavam `{ krId, title, status }`.
  */
-function useKrTitles(krIds: string[]) {
-  const { client: supabase, buId } = useOptionalBuClient();
-
-  return useQuery({
-    queryKey: okrsKeys.krTitlesForReport(krIds),
-    queryFn: async () => {
-      if (!supabase || !buId || krIds.length === 0) return {};
-      const { data, error } = await supabase
-        .from('okr_team_key_results')
-        .select('id, title')
-        .in('id', krIds);
-      if (error) throw error;
-      const map: Record<string, string> = {};
-      data?.forEach((kr) => { map[kr.id] = kr.title; });
-      return map;
-    },
-    enabled: !!supabase && !!buId && krIds.length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
 export function TeamCheckinReport({ data }: { data: Record<string, any> }) {
   const rawKrs = Array.isArray(data.reviewedKrs) ? data.reviewedKrs : [];
   const checklist = data.checklist || {};
 
-  // Normalize: may be plain UUID strings or objects with { krId, title }
+  // Normalize: pode ser UUID string ou objeto { krId, title, status }
   const isPlainIds = rawKrs.length > 0 && typeof rawKrs[0] === 'string';
-  const krIds = isPlainIds ? rawKrs as string[] : rawKrs.map((kr: any) => kr.krId).filter(Boolean);
+  const krIds: string[] = isPlainIds
+    ? (rawKrs as string[])
+    : rawKrs.map((kr: any) => kr.krId).filter(Boolean);
 
-  const { data: titleMap = {} } = useKrTitles(isPlainIds ? krIds : []);
+  const lookups = useEntityLookup({ teamKrIds: krIds });
 
   const checklistItems = [
     { key: 'knowWhatToFocus', label: 'O time sabe no que focar?' },
@@ -52,11 +32,12 @@ export function TeamCheckinReport({ data }: { data: Record<string, any> }) {
         <ReportSection title={`KRs revisados (${rawKrs.length})`} icon={<Target className="h-4 w-4" />}>
           <div className="space-y-1.5">
             {rawKrs.map((kr: any, i: number) => {
-              const id = isPlainIds ? kr : kr.krId;
-              const title = isPlainIds ? titleMap[kr] : kr.title;
+              const id: string | undefined = isPlainIds ? kr : kr.krId;
+              const legacyTitle: string | undefined = isPlainIds ? undefined : kr.title;
+              const title = resolveName(lookups.teamKrs, id, legacyTitle);
               return (
                 <div key={id || i} className="flex items-center gap-2 text-sm p-2 rounded border">
-                  <span className="flex-1 truncate">{title || id?.slice(0, 8) || '—'}</span>
+                  <span className="flex-1 truncate">{title}</span>
                   {!isPlainIds && kr.status && (
                     <Badge variant="outline" className="text-[10px]">{kr.status}</Badge>
                   )}
