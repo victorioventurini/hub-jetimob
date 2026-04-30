@@ -50,3 +50,23 @@ Resultado: 4 renderers efetivamente refatorados (MbrReport, MbrPreReport, QbrPre
 
 - `bunx vitest run src/modules/okrs` verde (mantendo baseline).
 - Inspeção visual: abrir 1 MBR, 1 QBR Pre, 1 QBR Meeting completados e confirmar nomes renderizados.
+
+---
+
+## Onda 4 — Fase 2 ✅ CONCLUÍDA
+
+### Entregue
+- Hook `useEntityLookup` + helper `resolveName` (já entregues na primeira parte).
+- 9 renderers migrados: `TeamCheckinReport`, `LeaderPrepReport`, `ManagersCheckinReport`, `QbrPostReport`, `CollaboratorReport`, `MbrReport`, `MbrPreReport`, `QbrPreReport`, `QbrMeetingReport`.
+- 2 renderers fora de escopo (intencional): `QbrCLevelReport` (sem IDs), `CLevelCheckinReport` (snapshot genérico sem ID confiável).
+- Memory `wizard-snapshot-denormalized-fields-deprecation` atualizada com pattern canônico, lista de migrados e regra do KR ambíguo.
+
+### Validação
+- `bunx vitest run src/modules/okrs`: **1766/1766 passing**.
+- Fallback `runtime → snapshot legado → '(removido)'` preserva snapshots antigos.
+- Bônus: `QbrMeetingReport` antes mostrava `teamId.slice(0,8)…`; agora mostra nome do time.
+
+### Próximas frentes possíveis
+- Aplicar `DIRECTIVE_TO_DECISION_MAP` no QBR Meeting Step 3 (vocabulário canônico).
+- Sub-onda futura: parar de gravar campos denormalizados nos writers e dropar dos types.
+- Edge functions (`mbr-summary`, `qbr-clevel-learnings-summary`) — escopo separado.
