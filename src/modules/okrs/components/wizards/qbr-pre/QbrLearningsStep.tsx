@@ -61,6 +61,9 @@ export interface QbrLearningsStepProps {
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
 
 // ============================================================
