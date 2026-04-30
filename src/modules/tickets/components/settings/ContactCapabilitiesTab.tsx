@@ -8,7 +8,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Plus, Search, Users, Trash2, FolderTree } from "lucide-react";
-import { usePartnerCompanies, usePartnerContacts, useContactCapabilities, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
+import { usePartnerCompanies, useCompanyContactCapabilities, useDeleteContactCapability, type ContactCapability } from "../../hooks";
 import { ContactCapabilityDialog } from "./ContactCapabilityDialog";
 import { toast } from "sonner";
 import { useUrlSearch, useUrlState } from "@/shared/url";
