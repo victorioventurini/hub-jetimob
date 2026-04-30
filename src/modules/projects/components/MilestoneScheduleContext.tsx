@@ -1,7 +1,8 @@
 /**
  * MilestoneScheduleContext — Painel exibido dentro do MilestoneDialog
- * mostrando os milestones já cadastrados do mesmo projeto, com toggle
- * Lista/Gantt e preview reativo do milestone em edição/criação.
+ * mostrando os milestones já cadastrados do mesmo projeto, em formato
+ * de lista, com destaque para conflitos de datas com o milestone em
+ * edição/criação.
  *
  * Apenas UI/leitura — não dispara queries nem mutations.
  *
@@ -9,16 +10,12 @@
  *       mem://features/projects/holistic-module-architecture-v2
  */
 
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import { format, isValid, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { GanttTimeline } from './GanttTimeline';
-import { ProjectViewToggle, type ProjectViewMode } from './ProjectViewToggle';
-import type { GanttItem, MilestoneStatus } from '../types';
-
-const PREVIEW_ID = '__preview__';
+import type { MilestoneStatus } from '../types';
 
 export interface ScheduleMilestone {
   id: string;
@@ -67,10 +64,7 @@ export const MilestoneScheduleContext = memo(function MilestoneScheduleContext({
   currentMilestoneId,
   previewStart,
   previewDue,
-  previewName,
 }: MilestoneScheduleContextProps) {
-  const [viewMode, setViewMode] = useState<ProjectViewMode>('gantt');
-
   const sorted = useMemo(() => {
     return [...milestones]
       .filter((m) => !m.deleted_at)
@@ -93,46 +87,6 @@ export const MilestoneScheduleContext = memo(function MilestoneScheduleContext({
 
   const conflictIds = useMemo(() => new Set(conflicts.map((m) => m.id)), [conflicts]);
 
-  const ganttItems = useMemo<GanttItem[]>(() => {
-    const items: GanttItem[] = [];
-    let excludedCount = 0;
-
-    for (const m of sorted) {
-      // O próprio milestone (em edição) é substituído pelo preview, se houver.
-      if (m.id === currentMilestoneId && previewValid) continue;
-      if (!isValidISO(m.start_date) || !isValidISO(m.due_date)) {
-        excludedCount++;
-        continue;
-      }
-      items.push({
-        id: m.id,
-        type: 'milestone',
-        name: m.id === currentMilestoneId ? `${m.name} (este)` : m.name,
-        start_date: m.start_date,
-        due_date: m.due_date,
-        status: m.status,
-        owner_id: m.owner_id ?? undefined,
-        notes: m.notes ?? null,
-      });
-    }
-
-    if (previewValid) {
-      items.push({
-        id: PREVIEW_ID,
-        type: 'milestone',
-        name: `${previewName?.trim() || 'Novo milestone'} (prévia)`,
-        start_date: previewStart!,
-        due_date: previewDue!,
-        status: 'todo' as MilestoneStatus,
-        owner_id: undefined,
-        notes: null,
-      });
-    }
-
-    return items;
-    // excludedCount intencionalmente ignorado no painel (UX enxuta).
-  }, [sorted, currentMilestoneId, previewValid, previewStart, previewDue, previewName]);
-
   if (sorted.length === 0) return null;
 
   return (
@@ -141,32 +95,13 @@ export const MilestoneScheduleContext = memo(function MilestoneScheduleContext({
         <h4 className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Milestones do projeto ({sorted.length})
         </h4>
-        <div className="hidden shrink-0 sm:block">
-          <ProjectViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-        </div>
       </div>
 
-      {/* Mobile: sempre lista. Desktop: respeita o toggle. */}
-      <div className="sm:hidden">
-        <ScheduleList
-          items={sorted}
-          currentMilestoneId={currentMilestoneId}
-          conflictIds={conflictIds}
-        />
-      </div>
-      <div className="hidden min-w-0 sm:block">
-        {viewMode === 'gantt' ? (
-          <div className="min-w-0 max-h-[220px] overflow-auto">
-            <GanttTimeline items={ganttItems} excludedCount={0} showLegend={false} />
-          </div>
-        ) : (
-          <ScheduleList
-            items={sorted}
-            currentMilestoneId={currentMilestoneId}
-            conflictIds={conflictIds}
-          />
-        )}
-      </div>
+      <ScheduleList
+        items={sorted}
+        currentMilestoneId={currentMilestoneId}
+        conflictIds={conflictIds}
+      />
 
       {conflicts.length > 0 && (
         <div
