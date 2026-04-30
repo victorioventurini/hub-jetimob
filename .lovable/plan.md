@@ -52,3 +52,19 @@ Diretiva já promovida (detectada via metadata) fica marcada como "Promovida ✓
 ### Memory
 
 Atualizar `mem://standards/wizard-vocabulary-canonical` adicionando: "DIRECTIVE_TO_DECISION_MAP é consumido em `QbrMeetingDecisionsStep` para promover diretivas C-Level a `TeamCheckinDecision` com `metadata.source = 'clevel_directive'`".
+
+---
+
+## DIRECTIVE_TO_DECISION_MAP no QBR Meeting Step 3 ✅ CONCLUÍDA
+
+### Entregue
+- `QbrMeetingDecisionsStep` agora renderiza seção "Diretivas do C-Level" quando `cLevelDirectives.length > 0`.
+- Cada diretiva mostra texto + badge da categoria original + seta + badge da categoria-alvo (via `DIRECTIVE_TO_DECISION_MAP`) + botão "Promover".
+- Promoção cria `TeamCheckinDecision` com `metadata.source = 'clevel_directive'`, `directiveCategory`, `directiveText` (chave estável) e `targetTeamId?`.
+- Diretiva já promovida: badge "Promovida ✓" e botão escondido (idempotência).
+- 3 novos casos de teste em `QbrMeetingSteps.test.tsx` cobrindo: render condicional, promoção (categoria mapeada + metadata) e estado promovido.
+- Memory `wizard-vocabulary-canonical` criada (estava no índice mas faltava o arquivo).
+
+### Validação
+- `bunx vitest run src/modules/okrs/components/wizards/qbr-meeting`: **28/28 passing**.
+- `bunx vitest run src/modules/okrs`: **1769/1769 passing** (baseline 1766 + 3 novos).
