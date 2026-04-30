@@ -14,9 +14,14 @@ import {
   WizardStepHeader,
   WizardLastStepFooter,
   WizardStepScaffold,
+  AgendaSuggestionsPrioritizer,
 } from '../shared';
 import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks';
-import type { MbrPreDraftData, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type {
+  MbrPreDraftData,
+  TeamCheckinDecision,
+  RitualAgendaSuggestion,
+} from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -28,6 +33,7 @@ export interface MbrPreSummaryProps {
   isCompleting: boolean;
   onComplete: () => void;
   onBack: () => void;
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
 }
 
 // ============================================================
