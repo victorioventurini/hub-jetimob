@@ -4154,7 +4154,6 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           direction: Database["public"]["Enums"]["kpi_direction"]
-          frequency: Database["public"]["Enums"]["kpi_frequency"]
           frequency_migration_reviewed: boolean
           id: string
           indicator_type: Database["public"]["Enums"]["kpi_indicator_type"]
@@ -4190,7 +4189,6 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           direction?: Database["public"]["Enums"]["kpi_direction"]
-          frequency?: Database["public"]["Enums"]["kpi_frequency"]
           frequency_migration_reviewed?: boolean
           id?: string
           indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
@@ -4226,7 +4224,6 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           direction?: Database["public"]["Enums"]["kpi_direction"]
-          frequency?: Database["public"]["Enums"]["kpi_frequency"]
           frequency_migration_reviewed?: boolean
           id?: string
           indicator_type?: Database["public"]["Enums"]["kpi_indicator_type"]
@@ -11387,7 +11384,7 @@ export type Database = {
       }
       kpi_calculate_period: {
         Args: {
-          p_frequency: Database["public"]["Enums"]["kpi_frequency"]
+          p_frequency: Database["public"]["Enums"]["kpi_frequency_value"]
           p_reference_date: string
         }
         Returns: Record<string, unknown>
@@ -11837,7 +11834,6 @@ export type Database = {
       kpi_confidence_level: "high" | "medium" | "low"
       kpi_contributor_role: "data_entry" | "reviewer"
       kpi_direction: "up" | "down"
-      kpi_frequency: "daily" | "weekly" | "monthly" | "quarterly"
       kpi_frequency_value:
         | "daily"
         | "weekly"
@@ -12149,7 +12145,6 @@ export const Constants = {
       kpi_confidence_level: ["high", "medium", "low"],
       kpi_contributor_role: ["data_entry", "reviewer"],
       kpi_direction: ["up", "down"],
-      kpi_frequency: ["daily", "weekly", "monthly", "quarterly"],
       kpi_frequency_value: [
         "daily",
         "weekly",
