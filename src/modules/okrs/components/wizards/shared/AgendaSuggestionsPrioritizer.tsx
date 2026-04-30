@@ -1,24 +1,28 @@
 /**
- * AgendaSuggestionsPrioritizer - Listagem agrupada de sugestões de pauta
- * coletadas ao longo de um wizard preparatório, com priorização de até 3.
+ * AgendaSuggestionsPrioritizer - Card unificado de sugestões de pauta para
+ * o rito-mãe, renderizado no step de Resumo (MbrPreSummary, QbrPreSummary).
  *
- * Renderizado no step de Resumo (MbrPreSummary, QbrPreSummary).
- *
- * Regras:
- * - Agrupa por `RitualBlock` (Performance / Projetos / Pessoas) com contagem.
- * - Cada item tem um checkbox "Priorizar" — máximo de 3 marcados por wizard.
- * - 4ª tentativa: checkbox fica disabled (visual de bloqueio).
- * - Marcação atribui `priorityRank` 1/2/3 na ordem em que o usuário marca.
- * - Banner amarelo informativo quando há sugestões e nenhuma priorizada.
+ * Responsabilidades:
+ * - Listar sugestões coletadas ao longo do wizard agrupadas por `RitualBlock`.
+ * - Permitir priorização de até 3 (banner amarelo se nenhuma priorizada).
+ * - Permitir adicionar novas sugestões direto na summary, reutilizando o
+ *   componente compartilhado `InlineAgendaSuggestionInput` (mesmo padrão do
+ *   `InlineDecisionInput` usado para notas/decisões).
+ * - Permitir remover qualquer sugestão (botão X), independentemente do
+ *   `sourceStep` em que foi criada.
+ * - Sempre renderiza — mesmo sem sugestões prévias — para que o usuário
+ *   possa propor pautas na etapa final.
  */
 
 import { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ListTodo, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ListTodo, AlertCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AGENDA_CATEGORY_CONFIG } from './InlineAgendaSuggestionInput';
+import { InlineAgendaSuggestionInput } from './InlineAgendaSuggestionInput';
 import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 import type { RitualBlock } from '@/modules/okrs/types/wizard/vocabulary';
 
@@ -29,6 +33,9 @@ import type { RitualBlock } from '@/modules/okrs/types/wizard/vocabulary';
 const MAX_PRIORITIZED = 3;
 
 const BLOCK_ORDER: RitualBlock[] = ['performance', 'projetos', 'pessoas'];
+
+/** sourceStep usado para sugestões adicionadas direto na summary. */
+const SUMMARY_SOURCE_STEP = 'summary';
 
 // ============================================================
 // TYPES
@@ -67,6 +74,7 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
   );
 
   const limitReached = prioritizedCount >= MAX_PRIORITIZED;
+  const hasSuggestions = suggestions.length > 0;
 
   const handleToggle = (id: string, nextChecked: boolean) => {
     if (nextChecked && limitReached) return; // safety net
@@ -97,22 +105,51 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
     onSuggestionsChange(next);
   };
 
-  if (suggestions.length === 0) return null;
+  const handleRemove = (id: string) => {
+    const removed = suggestions.find((s) => s.id === id);
+    const removedRank = removed?.priorityRank;
+    const next = suggestions
+      .filter((s) => s.id !== id)
+      .map((s) => {
+        if (removedRank && s.priorityRank && s.priorityRank > removedRank) {
+          return { ...s, priorityRank: (s.priorityRank - 1) as 1 | 2 | 3 };
+        }
+        return s;
+      });
+    onSuggestionsChange(next);
+  };
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <ListTodo className="h-4 w-4" />
-          Sugestões de pauta para o {ritualLabel} ({suggestions.length})
+          Sugestões de pauta para o {ritualLabel}
+          {hasSuggestions && ` (${suggestions.length})`}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Priorize até {MAX_PRIORITIZED} sugestões para o rito ({prioritizedCount}/{MAX_PRIORITIZED}{' '}
-          marcadas)
-        </p>
+        {hasSuggestions ? (
+          <p className="text-xs text-muted-foreground">
+            Priorize até {MAX_PRIORITIZED} sugestões para o rito ({prioritizedCount}/
+            {MAX_PRIORITIZED} marcadas)
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Nenhuma sugestão registrada nas etapas anteriores. Adicione abaixo se quiser propor
+            pontos para o {ritualLabel}.
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {prioritizedCount === 0 && (
+        {/* Input inline — sempre disponível, mesmo padrão do InlineDecisionInput */}
+        <InlineAgendaSuggestionInput
+          suggestions={suggestions}
+          onSuggestionsChange={onSuggestionsChange}
+          sourceStep={SUMMARY_SOURCE_STEP}
+          triggerLabel={`Adicionar sugestão de pauta para o ${ritualLabel}`}
+          placeholder={`Descreva o ponto a ser discutido no ${ritualLabel}...`}
+        />
+
+        {hasSuggestions && prioritizedCount === 0 && (
           <div className="flex items-start gap-2 rounded-md border border-status-amber/30 bg-status-amber-muted/40 px-3 py-2 text-xs text-status-amber-foreground">
             <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <p>
@@ -171,6 +208,15 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
                           #{item.priorityRank}
                         </Badge>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleRemove(item.id)}
+                        aria-label="Remover sugestão"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
                     </li>
                   );
                 })}

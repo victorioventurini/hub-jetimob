@@ -1,73 +1,61 @@
-# Plano — Empilhar colaboradores em linhas de até 6 no Organograma
+# Plano — Permitir adicionar/editar/remover sugestões de pauta na etapa final (MBR-pré e QBR-pré)
 
 ## Contexto
 
-No organograma (`/teams` → aba Organograma), quando um time tem muitos colaboradores (ex.: Tecnologia com 9+ pessoas), todos aparecem em uma única linha horizontal que estoura a largura da tela. Além disso, qualquer tentativa ingênua de "quebrar linha" gera uma cascata vertical que parece indicar que a pessoa de baixo se reporta à de cima — o que é incorreto: todos os colaboradores são pares (irmãos) sob o mesmo time pai.
+Hoje, na summary do MBR-pré e do QBR-pré, o card "Sugestões de pauta" usa o `AgendaSuggestionsPrioritizer`, que **só permite priorizar** sugestões já coletadas nas etapas anteriores. Se o usuário não registrou nenhuma pauta durante o rito, o card simplesmente não aparece (`if (suggestions.length === 0) return null`).
 
-## Objetivo
+O usuário quer:
 
-- Exibir no máximo **6 cards de colaboradores (`type: 'person'`) por linha**.
-- A partir do 7º, quebrar para uma nova linha.
-- Garantir que a apresentação visual deixe claro que **todos são irmãos** (pares) sob o mesmo nó pai — sem sugerir relação hierárquica vertical entre eles.
-
-## Escopo
-
-Mudança puramente de UI/layout em **um único componente já centralizado**:
-
-- `src/modules/teams/components/organogram/OrganogramNode.tsx`
-
-Não criar novos componentes — estender o existente conforme as instruções do projeto (não duplicar). Sem mudanças em tipos, hooks, queries, RLS ou dados.
+1. Que a summary tenha o **mesmo padrão de UX** do `InlineDecisionInput` (collapsible inline com categorias e remoção), permitindo **adicionar, editar e remover** sugestões de pauta direto na etapa final.
+2. Que o card apareça **mesmo quando não houve nenhuma sugestão** nas etapas anteriores.
+3. Continuar permitindo a **priorização de até 3** (comportamento já existente).
 
 ## Conformidade com TCR / docs canônicos
 
-- `WIZARDS_FRAMEWORK_BOUNDARY.md`: N/A (módulo Teams, não wizards).
-- `DEVELOPMENT_STANDARDS.md`: mudança UI-only, sem violar regras de BU/RLS/queries.
-- Componente único e centralizado (`OrganogramNode.tsx`) já é o SSOT da renderização — não há duplicação.
-- `BU_SCOPED_SUPABASE_RULES.md`: N/A (sem queries).
-- `QUERY_KEYS_STANDARD.md`: N/A.
+- `WIZARDS_FRAMEWORK_BOUNDARY.md`: mudança restrita ao módulo OKR (wizards MBR-pré e QBR-pré) — sem tocar no framework genérico.
+- **Centralização de componentes** (instrução do projeto): vamos **reaproveitar** `InlineAgendaSuggestionInput` e `InlineCollapsibleEntryInput` já existentes — nenhum componente novo será criado. O `AgendaSuggestionsPrioritizer` será **estendido** (uma prop opcional) para também aceitar adição/remoção quando renderizado na summary.
+- `Wizard Vocabulary Canonical` (mem): mantemos o enum `RitualBlock` (performance/projetos/pessoas) já usado por sugestões.
+- Sem mudanças em RLS, queries, snapshots ou tipos de dados — o `RitualAgendaSuggestion` já tem `sourceStep`, então sugestões adicionadas na summary serão marcadas com `sourceStep: 'summary'`.
 
 ## Comportamento detalhado
 
-1. Ao renderizar `node.children`, separar:
-   - **`personChildren`**: filhos com `type === 'person'`.
-   - **`nonPersonChildren`**: áreas, times, subtimes, squads (mantêm o comportamento atual em linha única horizontal).
+### A) Estender o componente `AgendaSuggestionsPrioritizer`
 
-2. Para `nonPersonChildren`: manter o layout atual (linha única horizontal com conector em "T" invertido).
+Hoje ele apenas lista e prioriza. Vamos transformá-lo em um card "completo" que:
 
-3. Para `personChildren`: agrupar em chunks de até **6 por linha** e renderizar como uma **grade de linhas empilhadas**, onde:
-   - Cada linha de pessoas é independente.
-   - Cada card de pessoa tem seu próprio conector vertical curto vindo de uma linha horizontal acima daquela linha.
-   - Não há conector vertical ligando uma pessoa à outra de outra linha — eliminando a falsa hierarquia.
-   - Entre linhas de pessoas há um espaçamento (`gap-y`) que reforça que são grupos paralelos sob o mesmo pai.
+1. **Sempre renderiza** (remover o `if (suggestions.length === 0) return null`).
+2. No topo do `CardContent`, renderizar o **`InlineAgendaSuggestionInput`** (mesmo componente já usado nos steps), com:
+   - `sourceStep="summary"`
+   - `triggerLabel="Adicionar sugestão de pauta para o {ritualLabel}"`
+   - O collapsible aparece fechado por padrão e expande ao clicar — exatamente como o `InlineDecisionInput`.
+3. Logo abaixo, manter a lista agrupada por categoria com checkbox de priorização **e adicionar um botão de remover (ícone X)** ao lado de cada item, espelhando a UX do `InlineAgendaSuggestionInput`. Edição segue o mesmo padrão do `InlineCollapsibleEntryInput` (clique no item abre edição inline) — **se** for trivial reutilizar; caso contrário, manter remoção + re-adicionar como UX mínima (a ser confirmada na implementação após inspecionar `DecisionCard`/edição inline atual).
+4. Quando há sugestões, manter o aviso amarelo de priorização e o contador `(N/3 marcadas)`.
+5. Quando **não há** nenhuma sugestão, exibir um estado vazio sutil: "Nenhuma sugestão de pauta registrada. Adicione abaixo se quiser propor pontos para o {ritualLabel}." — sem o aviso amarelo.
 
-4. Quando houver mistura de `nonPersonChildren` e `personChildren` sob o mesmo pai (raro, mas possível com squads + pessoas): renderizar primeiro a linha de não-pessoas, depois as linhas de pessoas empilhadas, ambas visualmente conectadas ao mesmo pai pelo conector vertical principal.
+### B) Atualizar `MbrPreSummary` e `QbrPreSummary`
 
-## Layout visual esperado (Tecnologia com 9 colaboradores)
+- Renderizar o `AgendaSuggestionsPrioritizer` **sempre** (remover o guard `agendaSuggestions.length > 0`).
+- Continuar passando `suggestions`, `onSuggestionsChange` e `ritualLabel`.
 
-```text
-                    [ Tecnologia ]
-                          │
-        ┌─────────────────┼─────────────────┐
-        │     │     │     │     │     │
-       [P1] [P2] [P3] [P4] [P5] [P6]
-        ┌─────┬─────┐
-        │     │     │
-       [P7] [P8] [P9]
-```
+### C) Garantir consistência entre os dois ritos
 
-Cada linha de pessoas tem sua própria barra horizontal acima, ancorada ao centro da linha — não há linha vertical entre P1 e P7 (que seria interpretada como "P7 se reporta a P1").
+A mudança vive **toda dentro do componente compartilhado** `AgendaSuggestionsPrioritizer` + `InlineAgendaSuggestionInput`, que já é consumido pelos dois ritos. Logo, qualquer ajuste se propaga automaticamente — atende à instrução de "ajustes impactam todos os rituais".
 
 ## Detalhes técnicos
 
-- Constante local `MAX_PERSONS_PER_ROW = 6` no topo do arquivo.
-- Helper `chunk<T>(arr: T[], size: number): T[][]` inline (não justifica utilitário compartilhado).
-- Reuso do mesmo padrão de conectores já presente no componente (linha vertical `w-px h-4 bg-border` + linha horizontal absoluta sobre os filhos).
-- Aplicar a lógica nos **dois locais** onde hoje renderizamos `node.children` em loop dentro de `OrganogramNodeCard` (apenas o branch normal — o `CeoCard` só tem áreas como filhos, não precisa de mudança).
-- Sem mudanças em props da API pública dos componentes.
-- Manter `memo`, manter acessibilidade e foco.
+- Arquivos editados:
+  - `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx` — adicionar input inline no topo, botão remover por item, estado vazio.
+  - `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx` — sempre renderizar o card.
+  - `src/modules/okrs/components/wizards/qbr-pre/QbrPreSummary.tsx` — sempre renderizar o card.
+- Reutilizar `InlineAgendaSuggestionInput` (zero duplicação).
+- Manter `memo` e API existente; adicionar apenas comportamento, sem novas props obrigatórias.
+- Sugestões criadas na summary recebem `sourceStep: 'summary'` — não interferem em filtros dos steps anteriores (que filtram por `sourceStep` específico).
 
 ## Verificação
 
 - Build automático.
-- Inspeção visual no preview em `/teams` na aba Organograma com o time Tecnologia (9+ pessoas) e em times menores (≤6 pessoas) para garantir que o comportamento antigo continua idêntico quando não há overflow.
-- Confirmar que a mudança não quebra o zoom (`OrganogramChart` continua intocado).
+- QA manual no preview em `/rituals/mbr-pre?...&step=summary` e `/rituals/qbr-pre?...&step=summary`:
+  - Card aparece mesmo sem sugestões prévias.
+  - Adicionar uma nova sugestão funciona e ela aparece na lista, podendo ser priorizada e removida.
+  - Sugestões trazidas dos steps anteriores continuam podendo ser priorizadas (até 3) e removidas.
+- Confirmar que ao salvar/enviar a summary, as sugestões adicionadas em `step=summary` persistem no draft/snapshot.
