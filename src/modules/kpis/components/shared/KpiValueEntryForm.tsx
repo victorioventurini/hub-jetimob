@@ -2,8 +2,8 @@
  * KpiValueEntryForm — SSOT compartilhado para registrar valor de KPI.
  *
  * Consumidores:
- *  - `AddKpiValueDialog` (modal do módulo /kpis) — `confidenceMode="advanced"`.
- *  - `CollaboratorKpiStep` (rito de check-in colaborador) — `confidenceMode="always-visible"`.
+ *  - `AddKpiValueDialog` (modal do módulo /kpis).
+ *  - `CollaboratorKpiStep` (rito de check-in colaborador).
  *  - Qualquer rito futuro que precise registrar valor de KPI.
  *
  * Princípios:
@@ -13,9 +13,9 @@
  *  - Submit é externo (footer do wizard). O componente expõe `formId` e
  *    chama `onValidSubmit` quando o form é válido.
  *
- * Conforme TCR v3.29.1, o campo `input_type` precisa SEMPRE ser enviado no
- * insert em `kpi_values` (o trigger `trg_kpi_value_derive_confidence` usa
- * esse valor para derivar a confidence default).
+ * Conforme TCR v3.30.0, o campo `input_type` precisa SEMPRE ser enviado no
+ * insert em `kpi_values`. O conceito de `confidence` foi removido de KPIs
+ * (era autoavaliação subjetiva, redundante com input_type + source).
  */
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -26,7 +26,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -35,18 +34,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 import {
   FREQUENCY_VALUE_LABELS,
-  type KpiConfidenceLevel,
   type KpiFrequencyValue,
   type KpiInputType,
 } from '../../types';
@@ -55,12 +46,6 @@ import {
   kpiValueEntrySchema,
   type KpiValueEntryFormValues,
 } from './kpiValueEntrySchema';
-
-const CONFIDENCE_OPTIONS: Array<{ value: KpiConfidenceLevel; label: string; emoji: string }> = [
-  { value: 'high', label: 'Alta', emoji: '🟢' },
-  { value: 'medium', label: 'Média', emoji: '🟡' },
-  { value: 'low', label: 'Baixa', emoji: '🔴' },
-];
 
 export interface KpiValueEntryFormProps {
   /** Unidade do KPI, exibida ao lado do label "Valor". */
@@ -77,16 +62,6 @@ export interface KpiValueEntryFormProps {
   updateFrequency?: KpiFrequencyValue | null;
   /** Valor sugerido como placeholder (ex.: target). */
   placeholderValue?: string | number;
-  /**
-   * Modo de exibição do confidence:
-   * - `advanced`: dentro de um `<details>` "Avançado" com checkbox de override.
-   *   Usado pelo modal /kpis para esconder complexidade.
-   * - `always-visible`: select sempre visível. Usado pelo rito Colaborador,
-   *   onde o colaborador é orientado a refletir explicitamente sobre confiança.
-   */
-  confidenceMode?: 'advanced' | 'always-visible';
-  /** Confidence inicial quando `confidenceMode='always-visible'`. Default: 'medium'. */
-  defaultConfidence?: KpiConfidenceLevel;
   /**
    * `formId` do `<form>` interno — permite que um botão fora do componente
    * (ex.: footer do wizard) submeta via `<button form={formId} type="submit">`.
@@ -115,8 +90,6 @@ export function KpiValueEntryForm({
   consolidationFrequency,
   updateFrequency,
   placeholderValue,
-  confidenceMode = 'advanced',
-  defaultConfidence = 'medium',
   formId,
   valueAdornmentSlot,
   notesHeaderSlot,
@@ -145,8 +118,6 @@ export function KpiValueEntryForm({
       reference_date: maxDate,
       input_type: defaultInputType,
       notes: '',
-      override_confidence: confidenceMode === 'always-visible',
-      confidence: confidenceMode === 'always-visible' ? defaultConfidence : undefined,
     },
   });
 
@@ -175,7 +146,6 @@ export function KpiValueEntryForm({
     if (onInputTypeChange && watchedInputType) onInputTypeChange(watchedInputType);
   }, [watchedInputType, onInputTypeChange]);
 
-  const overrideConfidence = form.watch('override_confidence');
   const isIntermediateAllowed =
     consolidationFrequency && updateFrequency
       ? isUpdateFrequencyValid(consolidationFrequency, updateFrequency) &&
@@ -187,13 +157,7 @@ export function KpiValueEntryForm({
     : `Ex: ${unit === '%' ? '75.5' : unit === 'R$' ? '150000' : '42'}`;
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    // Garante que confidence só vai para o consumidor quando override estiver ativo
-    // (modo always-visible mantém override=true por construção)
-    const payload: KpiValueEntryFormValues = {
-      ...values,
-      confidence: values.override_confidence ? values.confidence : undefined,
-    };
-    await onValidSubmit(payload);
+    await onValidSubmit(values);
   });
 
   return (
@@ -305,37 +269,6 @@ export function KpiValueEntryForm({
           )}
         />
 
-        {/* Confidence sempre visível (rituais) */}
-        {confidenceMode === 'always-visible' && (
-          <FormField
-            control={form.control}
-            name="confidence"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confiança no Valor</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value ?? defaultConfidence}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a confiança" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {CONFIDENCE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.emoji} {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
         {/* Observações */}
         <FormField
           control={form.control}
@@ -359,75 +292,6 @@ export function KpiValueEntryForm({
             </FormItem>
           )}
         />
-
-        {/* Avançado: override de confidence (modal /kpis) */}
-        {confidenceMode === 'advanced' && (
-          <details className="rounded-md border border-border p-3">
-            <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
-              Avançado
-            </summary>
-            <div className="mt-3 space-y-3">
-              <FormField
-                control={form.control}
-                name="override_confidence"
-                render={({ field }) => (
-                  <FormItem className="flex items-start gap-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        id={`${formId ?? 'kpi-value'}-override-conf`}
-                      />
-                    </FormControl>
-                    <Label
-                      htmlFor={`${formId ?? 'kpi-value'}-override-conf`}
-                      className="font-normal cursor-pointer text-sm"
-                    >
-                      Sobrescrever confidence
-                      <span className="block text-xs text-muted-foreground">
-                        Padrão: <strong>alta</strong> para consolidado, <strong>média</strong> para parcial.
-                      </span>
-                    </Label>
-                  </FormItem>
-                )}
-              />
-              {overrideConfidence && (
-                <FormField
-                  control={form.control}
-                  name="confidence"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm">Confidence</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex gap-3"
-                        >
-                          {CONFIDENCE_OPTIONS.map((opt) => (
-                            <div key={opt.value} className="flex items-center gap-1.5">
-                              <RadioGroupItem
-                                value={opt.value}
-                                id={`${formId ?? 'kpi-value'}-conf-${opt.value}`}
-                              />
-                              <Label
-                                htmlFor={`${formId ?? 'kpi-value'}-conf-${opt.value}`}
-                                className="font-normal text-sm cursor-pointer"
-                              >
-                                {opt.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-          </details>
-        )}
       </form>
     </Form>
   );
