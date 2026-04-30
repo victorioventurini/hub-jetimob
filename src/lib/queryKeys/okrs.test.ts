@@ -226,7 +226,7 @@ describe('kpisKeys', () => {
 
   it('should create detail key', () => {
     const key = kpisKeys.detail('kpi-123');
-    expect(key).toEqual(['kpis', 'detail', 'kpi-123']);
+    expect(key).toEqual(['kpis', 'detail', 'kpi-123', null]);
   });
 
   it('should create values key', () => {
