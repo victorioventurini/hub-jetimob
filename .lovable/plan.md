@@ -153,3 +153,68 @@ A maioria dos 16 campos `@deprecated` Fase 1 vive em tipos derivados em runtime 
 ### Memory
 
 - `mem://standards/wizard-snapshot-denormalized-fields-deprecation` atualizada com lista de edge functions migradas (Fase 4).
+
+---
+
+## Onda 4 Fase 5 — Drop dos campos denormalizados ⏸ DIFERIDA (período de observação)
+
+### Por que diferir
+
+Snapshots novos (pós-Fase 3) já não gravam os 4 campos persistentes (`krTitle`, `objectiveTitle` em `KrFinalStateSnapshot`, e `kpiName` em `KpiCheckinResult`). Snapshots legados ainda contêm esses campos e os readers + edge functions têm fallback funcional. O drop físico só é seguro depois de:
+
+1. **Janela de observação ≥ 90 dias** após Fase 3 (suficiente para fechar pelo menos 1 ciclo trimestral completo de QBR + 3 MBRs mensais).
+2. **Auditoria de produção** confirmando que nenhum snapshot novo no período contém os campos `@deprecated`.
+3. **Confirmação** de que nenhuma rota de leitura nova foi adicionada lendo os campos legados sem fallback.
+
+### Escopo do drop (quando executar)
+
+**Types — remover campos `@deprecated`:**
+- `src/modules/okrs/types/wizard/shared.ts` → `KrFinalStateSnapshot.{krTitle, objectiveTitle}`
+- `src/modules/okrs/types/wizard/collaborator.ts` → `CollaboratorCheckinResult.{krTitle, objectiveTitle}`, `KpiCheckinResult.kpiName`
+- `src/modules/okrs/types/wizard/mbr.ts` → `MbrPreDraftData.krFinalStates[].{krTitle, objectiveTitle}`
+- Demais 11 campos derivados em runtime (sem writer): podem ser dropados junto, sem migração.
+
+**Readers — remover branches de fallback legado:**
+- 9 renderers migrados na Fase 2 (`TeamCheckinReport`, `LeaderPrepReport`, `ManagersCheckinReport`, `QbrPostReport`, `CollaboratorReport`, `MbrReport`, `MbrPreReport`, `QbrPreReport`, `QbrMeetingReport`).
+- 2 edge functions migradas na Fase 4 (`qbr-pre-summary`, `collaborator-checkin-summary`).
+
+**Pendência separada (não bloqueia drop):**
+- `kpisToCreate[].relatedKrTitle` (MBR Pre + QBR Pre): exige redesign de UI (autocomplete por KR) antes de poder ser dropado. Track como tarefa independente.
+
+### Critérios de saída
+
+- Suíte `bunx vitest run src/modules/okrs` continua **1769/1769** após drop.
+- Inspeção visual de relatórios históricos confirma que readers exibem nomes via lookup (ou `(removido)` para entidades de fato deletadas).
+
+---
+
+## Onda 4 — Relatório de fechamento
+
+### Resumo executivo
+
+Refatoração concluiu a desnormalização de 16 campos de nome/título em snapshots de ritos. Snapshots agora dependem de **lookups em runtime** via `useEntityLookup` no frontend e queries diretas nas edge functions, com fallback defensivo ao snapshot legado.
+
+### Entregas por fase
+
+| Fase | Status | Escopo | Resultado |
+|---|---|---|---|
+| 1 — Marcar `@deprecated` | ✅ | 16 campos em 6 type files | Sinal arquitetural estabelecido |
+| 2 — Readers migram para lookup | ✅ | 9 renderers + helper `resolveName` | Fallback ao legado garantido |
+| 3 — Writers param de gravar | ✅ | 4 writers persistentes + 4 types opcionais | Snapshots novos enxutos |
+| 4 — Edge functions param de ler | ✅ | 2 edge functions com lookup paralelo | LLMs recebem nomes atualizados |
+| 5 — Drop físico | ⏸ | Diferida ≥ 90 dias | Aguardando observação |
+
+### Benefícios entregues
+
+- **Verdade única**: nome de KR/KPI/Time/Objetivo lido em runtime sempre reflete o estado atual da entidade (renames propagam imediatamente em relatórios históricos).
+- **Snapshots menores**: payloads de `okr_wizard_sessions.reflection_data` reduzidos para novos rituais.
+- **Fallback defensivo**: snapshots legados continuam renderizando corretamente sem migração de dados.
+
+### Validação final
+
+- **1769/1769 testes passing** mantidos em todas as 4 fases entregues.
+- Memory `mem://standards/wizard-snapshot-denormalized-fields-deprecation` documenta padrão canônico para futuros snapshots.
+
+### Próxima onda sugerida
+
+Avaliar se o padrão de lookup runtime + fallback legado deve ser aplicado a outros tipos de snapshot fora de OKR (ex.: tickets, decisions threads) — fora do escopo desta onda.
