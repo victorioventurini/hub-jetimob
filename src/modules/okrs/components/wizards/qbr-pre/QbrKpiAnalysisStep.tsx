@@ -86,6 +86,16 @@ export function QbrKpiAnalysisStep({
           onPrimary={onContinue}
         />
       }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-kpi-analysis"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
+      }
     >
       <div className="p-6 space-y-6">
         {/* KPIs in alert */}
