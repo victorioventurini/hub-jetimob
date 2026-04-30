@@ -21,7 +21,6 @@ import {
 } from '../shared';
 import type {
   MbrKpiSnapshot,
-  QbrPreDraftData,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 
@@ -31,14 +30,6 @@ import type {
 
 export interface QbrKpiAnalysisStepProps {
   kpiSnapshots: MbrKpiSnapshot[];
-  /** @deprecated "Zombie KPI" removido em 2026-04-28 — campo mantido p/ compat de drafts antigos */
-  zombieCandidates?: string[];
-  /** @deprecated "Zombie KPI" removido em 2026-04-28 — handler mantido p/ compat de drafts antigos */
-  onZombieCandidatesChange?: (ids: string[]) => void;
-  /** @deprecated KPI suggestions removed — kept for backward compat */
-  kpisToCreate?: QbrPreDraftData['kpisToCreate'];
-  /** @deprecated KPI suggestions removed — kept for backward compat */
-  onKpisToCreateChange?: (kpis: QbrPreDraftData['kpisToCreate']) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
   onContinue: () => void;
