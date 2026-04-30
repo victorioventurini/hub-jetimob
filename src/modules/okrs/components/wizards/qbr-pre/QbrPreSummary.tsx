@@ -29,6 +29,7 @@ export interface QbrPreSummaryProps {
   isCompleting: boolean;
   onComplete: () => void;
   onBack: () => void;
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
 }
 
 // ============================================================
@@ -41,9 +42,11 @@ export function QbrPreSummary({
   isCompleting,
   onComplete,
   onBack,
+  onAgendaSuggestionsChange,
 }: QbrPreSummaryProps) {
   const { krFinalStates, kpiSnapshots, learnings, proposedOkrs: rawProposedOkrs } = draftData;
   const proposedOkrs = normalizeProposedOkrs(rawProposedOkrs);
+  const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
   const achievedKrs = krFinalStates.filter(kr => kr.state === 'achieved' || kr.state === 'exceeded');
   const hasLearnings = learnings.whatWorked.trim() || learnings.whatDidntWork.trim() || learnings.debts.trim();
