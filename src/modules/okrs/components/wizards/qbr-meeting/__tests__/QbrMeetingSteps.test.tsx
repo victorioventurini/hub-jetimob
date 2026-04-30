@@ -51,7 +51,7 @@ import { QbrMeetingOkrReviewStep, type TeamForReview } from '../QbrMeetingOkrRev
 import { QbrMeetingDecisionsStep } from '../QbrMeetingDecisionsStep';
 import { QbrMeetingCommitmentsStep } from '../QbrMeetingCommitmentsStep';
 import { QbrMeetingClosingStep } from '../QbrMeetingClosingStep';
-import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
+import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 // ── factories ──
 
