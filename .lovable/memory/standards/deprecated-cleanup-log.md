@@ -71,7 +71,7 @@ Plano completo em `docs/audits/KPI_FREQUENCY_SUNSET_PLAN.md`. DB 100% migrado (3
 | KPI `frequency`/`category` | Bloqueado por DB (NOT NULL) e regressão visual de filtros. |
 | Onda 4 snapshots (16 campos) | Janela de observação até 2026-07-30. |
 | Analysis legacy shapes (5 campos) | Risco de dados históricos JSONB; precisa auditoria de produção. |
-| `qbr-pre-summary.zombieCandidates` | 11 lugares estruturais; remoção exige migração coordenada. |
+
 | `queryKeys.ts` barrel | 204 consumidores; comment é guidance para novos usos. |
 | `WIZARD_TYPE_LABELS` re-export | 7 consumidores ativos via `useRitualHistory`. |
 | `MilestoneList.onLinkKr` | Assinatura defensiva, doc-only. |
@@ -120,7 +120,7 @@ Drop da coluna `kpi_metrics.frequency` foi tentado mas teve dependências não a
 | KPIs v3.0.0 (`frequency` → split) | Bloqueado: coluna `frequency` ainda `NOT NULL` no DB. Pré-requisito = migration. |
 | Permissions V1 (4 tabelas DB) | READ-ONLY desde Wave 7; drop planejado para Wave 8/9. |
 | Analysis report shapes legados | Risco de dados históricos JSONB; precisa auditoria de produção. |
-| `qbr-pre-summary.zombieCandidates` | Campo estrutural usado em 11 lugares (initializers, tests, types). Remoção exige migração coordenada. |
+
 | `DeleteConfirmDialog` | 17+ consumidores; refactor fora de escopo desta onda. |
 | `MilestoneList.onLinkKr` | Assinatura defensiva, doc-only. |
 | `queryKeys` barrel | Comment é guidance para novos usos; barrel ainda usado amplamente. |

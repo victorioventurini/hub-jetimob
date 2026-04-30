@@ -99,7 +99,7 @@ Auditoria revelou que a "feature de sugestão de KPI pelo líder" foi **desconti
 
 Ações executadas:
 - `relatedKrTitle` agora é `?: string` (opcional) em `MbrPreDraftData.kpisToCreate[]` e `QbrPreSnapshot.kpisToCreate[]`, com `@deprecated` apontando para Fase 5.
-- Props `@deprecated` `kpisToCreate`/`onKpisToCreateChange` (e os zombie pares) removidas de `QbrKpiAnalysisStep` e dos call-sites em `MbrPrePage`/`QbrPrePage`.
+- Props `@deprecated` `kpisToCreate`/`onKpisToCreateChange` removidas de `QbrKpiAnalysisStep` e dos call-sites em `MbrPrePage`/`QbrPrePage`. (Os pares `zombieCandidates*` foram totalmente removidos em 2026-04-30.)
 - Reader histórico (`MbrPage` → `proposedKpis` → `MbrKpiGateStep`) já trata o campo como opcional; nenhuma mudança necessária.
 - Fixture `QbrCLevelSteps.test.tsx` atualizado para refletir o novo shape.
 

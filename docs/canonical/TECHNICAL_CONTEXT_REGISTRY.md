@@ -2088,7 +2088,7 @@ O QBR é um ritual trimestral de 4 fases que fecha o ciclo e prepara o próximo,
 
 **Etapas do Pré-QBR (Líderes):**
 1. **Balanço do Ciclo** — Estado final de cada KR com `calculateKrState`, progresso e pace
-2. **Análise de KPIs** — Sinalização de KPIs zombie e propostas de novos indicadores
+2. **Análise de KPIs** — Revisão dos KPIs do ciclo
 3. **Aprendizados** — Reflexão estruturada (continuar, parar, dívidas)
 4. **Proposta de OKRs** — Sub-flow inline com 3 mini-etapas: Objetivo → Plano de KRs → Detalhamento (draft-only, via `QbrOkrProposalStep`)
 5. **Resumo e Envio** — Revisão consolidada com snapshot imutável

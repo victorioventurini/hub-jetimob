@@ -904,7 +904,7 @@ O QBR é um ritual de 4 fases sequenciais que encerra o ciclo trimestral e prepa
 | # | Step | Componente | Descrição |
 |---|------|-----------|-----------|
 | 1 | balance | `QbrBalanceStep` | Estado final de KRs via `calculateKrState` + pace |
-| 2 | kpi-analysis | `QbrKpiAnalysisStep` | Sinalização de zombies + propostas de novos KPIs |
+| 2 | kpi-analysis | `QbrKpiAnalysisStep` | Análise de KPIs do trimestre |
 | 3 | learnings | `QbrLearningsStep` | Reflexão: continuar / parar / dívidas |
 | 4 | okr-proposal | `QbrOkrProposalStep` | Sub-flow inline (Objetivo → KR Plan → KR Detail) — draft-only |
 | 5 | summary | `QbrPreSummary` | Revisão consolidada + snapshot imutável |
