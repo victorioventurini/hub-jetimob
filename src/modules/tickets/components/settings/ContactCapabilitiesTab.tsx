@@ -20,7 +20,7 @@ export function ContactCapabilitiesTab() {
     defaultValue: null,
   });
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<ContactCapability | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ contactName: string; capabilities: ContactCapability[] } | null>(null);
 
   const { data: companies = [], isLoading: loadingCompanies, error: companiesError } = usePartnerCompanies();
   const { data: capabilities = [], isLoading: loadingCapabilities } = useCompanyContactCapabilities(selectedCompanyId || undefined);
