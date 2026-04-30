@@ -208,7 +208,7 @@ function SuggestedActionsSection({
   };
 
   const registerDecision = (action: AnalysisSuggestedAction) => {
-    const text = (action.suggestedText || action.rationale || action.label || action.title || "").trim();
+    const text = (action.suggestedText || action.label || "").trim();
     if (!text) return;
 
     add({
@@ -228,9 +228,9 @@ function SuggestedActionsSection({
 
       <div className="space-y-3">
         {items.map((action, index) => {
-          const title = action.label || action.title || "Ação sugerida";
+          const title = action.label || "Ação sugerida";
           const description =
-            action.suggestedText || action.rationale || "Sem detalhes adicionais para esta sugestão.";
+            action.suggestedText || "Sem detalhes adicionais para esta sugestão.";
           const isDecision = action.type === "register_decision";
 
           return (

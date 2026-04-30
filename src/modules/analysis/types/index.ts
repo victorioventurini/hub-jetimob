@@ -59,17 +59,6 @@ export interface AnalysisSuggestedAction {
   entity?: string;
   /** ID da entidade alvo (pode ser null) */
   entityId?: string | null;
-
-  /** @deprecated shape antigo — manter para compat retroativa de relatórios */
-  title?: string;
-  /** @deprecated shape antigo */
-  rationale?: string;
-  /** @deprecated shape antigo */
-  owner_hint?: string;
-  /** @deprecated shape antigo */
-  due_hint?: string;
-  /** @deprecated shape antigo */
-  impact?: "low" | "medium" | "high";
 }
 
 export interface AnalysisResultPayload {
