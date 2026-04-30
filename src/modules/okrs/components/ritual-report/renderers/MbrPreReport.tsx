@@ -1,14 +1,15 @@
 /**
  * MbrPreReport - Renderer para histórico do Pré-MBR
- * 
- * Segue padrão do QbrPreReport com seções adaptadas:
- * Balanço KRs, KPIs, Destaques e Riscos, Próximos Passos.
+ *
+ * Onda 4 Fase 2: nomes (KR/KPI) resolvidos via useEntityLookup com fallback
+ * ao snapshot legado.
  */
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Target, BarChart3, AlertTriangle, Compass } from 'lucide-react';
 import { ReportSection, RagBadge, formatValue } from './shared';
+import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { cn } from '@/lib/utils';
 
 const STATE_LABELS: Record<string, { label: string; color: string }> = {
@@ -31,6 +32,23 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
   const prioritizedItems = Array.isArray(nextSteps.prioritizedItems) ? nextSteps.prioritizedItems : [];
   const crossDependencies = Array.isArray(nextSteps.crossDependencies) ? nextSteps.crossDependencies : [];
 
+  const krIds: string[] = krFinalStates.map((kr: any) => kr?.krId).filter(Boolean);
+  const kpiIds: string[] = kpiSnapshots.map((kpi: any) => kpi?.kpiId).filter(Boolean);
+
+  const lookups = useEntityLookup({
+    teamKrIds: krIds,
+    orgKrIds: krIds,
+    kpiIds,
+  });
+
+  const resolveKr = (id?: string, legacy?: string) => {
+    const t = id ? lookups.teamKrs.get(id) : undefined;
+    if (t?.name) return t.name;
+    const o = id ? lookups.orgKrs.get(id) : undefined;
+    if (o?.name) return o.name;
+    return legacy ?? '(removido)';
+  };
+
   return (
     <div className="space-y-4">
       {/* KR Final States */}
@@ -50,7 +68,7 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
                 const st = STATE_LABELS[kr.state] || { label: kr.state, color: 'bg-muted text-muted-foreground' };
                 return (
                   <TableRow key={kr.krId || i}>
-                    <TableCell className="text-sm">{kr.krTitle}</TableCell>
+                    <TableCell className="text-sm">{resolveKr(kr.krId, kr.krTitle)}</TableCell>
                     <TableCell className="text-right text-sm font-medium">{kr.finalProgress ?? 0}%</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn('text-[10px] h-5 px-1.5', st.color)}>
@@ -81,7 +99,7 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
             <TableBody>
               {kpiSnapshots.map((kpi: any, i: number) => (
                 <TableRow key={kpi.kpiId || i}>
-                  <TableCell className="text-sm">{kpi.name}</TableCell>
+                  <TableCell className="text-sm">{resolveName(lookups.kpis, kpi.kpiId, kpi.name)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">{formatValue(kpi.currentValue, kpi.unit)}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">{formatValue(kpi.target, kpi.unit)}</TableCell>
                   <TableCell><RagBadge status={kpi.ragStatus} /></TableCell>
