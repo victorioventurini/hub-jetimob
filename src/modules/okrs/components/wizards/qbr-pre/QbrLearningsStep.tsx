@@ -105,6 +105,16 @@ export function QbrLearningsStep({
           primaryDisabled={!hasContent}
         />
       }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep="qbr-learnings"
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
+      }
     >
       <div className="p-6 space-y-6">
         <ReflectionQuestions questions={QBR_LEARNINGS_QUESTIONS} collapsed />
