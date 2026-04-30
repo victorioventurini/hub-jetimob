@@ -7,6 +7,7 @@
 
 import { useMemo } from "react";
 import { MessageBubble, type GenericMessage, type MessageAttachment, DEFAULT_EXTERNAL_CONFIG } from "@/components/messaging";
+import { richtextToPlain } from "@/components/messaging/richtextToPlain";
 import { parseMentionsForDisplay } from "@/lib/mentions";
 import { AttachmentLink } from "./AttachmentLink";
 import type { TicketMessage, TicketAttachment, RichTextContent } from "../types";
