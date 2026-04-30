@@ -6,10 +6,16 @@ import type { WizardKr } from '../../hooks/useTeamPendingKrs';
 
 export interface CollaboratorCheckinResult {
   krId: string;
-  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`. */
-  krTitle: string;
-  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` pelo objective_id do KR. */
-  objectiveTitle: string;
+  /**
+   * @deprecated Onda 4 Fase 1 — Resolver via lookup `useKeyResults` por `krId`.
+   * Onda 4 Fase 3: writers param de gravar; campo opcional para retrocompat de snapshots antigos.
+   */
+  krTitle?: string;
+  /**
+   * @deprecated Onda 4 Fase 1 — Resolver via lookup `useObjectives` pelo objective_id do KR.
+   * Onda 4 Fase 3: writers param de gravar; campo opcional para retrocompat.
+   */
+  objectiveTitle?: string;
   previousValue: number;
   newValue: number;
   confidence: 'high' | 'medium' | 'low';
@@ -29,8 +35,11 @@ export interface CollaboratorReflection {
  */
 export interface KpiCheckinResult {
   kpiId: string;
-  /** @deprecated Onda 4 Fase 1 — Resolver via lookup `useKpiMetrics` por `kpiId`. */
-  kpiName: string;
+  /**
+   * @deprecated Onda 4 Fase 1 — Resolver via lookup `useKpiMetrics` por `kpiId`.
+   * Onda 4 Fase 3: writers param de gravar; campo opcional para retrocompat.
+   */
+  kpiName?: string;
   previousValue: number | null;
   newValue: number;
   referenceDate: string;
