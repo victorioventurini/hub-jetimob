@@ -475,7 +475,7 @@ export async function queryKpis(
     
     output += `📊 ${kpi.name}\n`;
     output += `   Categoria: ${kpi.category} | Time: ${teamName}\n`;
-    output += `   ${targetStr} | Direção: ${kpi.direction} | Frequência: ${kpi.frequency}\n`;
+    output += `   ${targetStr} | Direção: ${kpi.direction} | Consolidação: ${kpi.consolidation_frequency ?? "n/d"} | Atualização: ${kpi.update_frequency ?? "n/d"}\n`;
     output += `   Responsável: ${ownerName} | Status: ${kpi.status}\n`;
     
     if (kpi.description) {
