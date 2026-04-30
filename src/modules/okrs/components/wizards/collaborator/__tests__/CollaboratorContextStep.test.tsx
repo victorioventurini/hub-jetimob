@@ -71,7 +71,6 @@ const createMockKpiV2 = (overrides: Partial<KpiForWizardV2> = {}): KpiForWizardV
   latest_value: 12,
   latest_reference_date: '2026-01-30',
   latest_rag_status: 'at_risk',
-  latest_confidence: 'high',
   latest_period_label: 'Semana 5',
   latest_input_type: 'consolidated',
   needs_update: true,

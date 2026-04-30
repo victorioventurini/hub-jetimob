@@ -392,7 +392,6 @@ export default function CollaboratorCheckinPage() {
                   kpi_id: result.kpiId,
                   value: result.newValue,
                   reference_date: result.referenceDate,
-                  confidence: result.confidence,
                   notes: result.notes,
                   source: 'manual',
                   created_by: profile?.id,
