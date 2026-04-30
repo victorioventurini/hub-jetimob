@@ -510,7 +510,7 @@ export function useKpiDetail(kpiId: string) {
     kpi: kpi ? {
       ...kpi,
       bu_id: kpi.bu_id || '',
-      frequency: kpi.frequency === 'quarterly' ? 'quarterly' as const : kpi.frequency,
+      frequency: valueFrequencyToLegacy(kpi.consolidation_frequency ?? null),
       source_type: 'manual' as const,
       source_config: null,
       visibility: 'bu' as const,
