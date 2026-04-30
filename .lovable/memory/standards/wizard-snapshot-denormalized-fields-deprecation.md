@@ -93,9 +93,17 @@ A maioria dos 16 campos `@deprecated` Fase 1 vive em tipos derivados em runtime 
 
 Estes não exigem migração de writer (não são gravados). Permanecem `@deprecated` apenas como sinal arquitetural para evitar dependência futura.
 
-## Diferido para Fase 5 (drop)
+## Pendência `relatedKrTitle` — resolvida (2026-04-30)
 
-- `kpisToCreate[].relatedKrTitle` (MBR Pre + QBR Pre): hoje é input livre/textual do líder, sem `krId`. Migração exige redesenhar input (adicionar autocomplete por KR), fora do escopo de "parar de gravar".
+Auditoria revelou que a "feature de sugestão de KPI pelo líder" foi **descontinuada na UI**: `QbrKpiAnalysisStep` não renderiza mais nenhum campo de captura, e os arrays `kpisToCreate` permanecem `[]` no fluxo atual. Entradas existentes vêm apenas de drafts/snapshots legados.
+
+Ações executadas:
+- `relatedKrTitle` agora é `?: string` (opcional) em `MbrPreDraftData.kpisToCreate[]` e `QbrPreSnapshot.kpisToCreate[]`, com `@deprecated` apontando para Fase 5.
+- Props `@deprecated` `kpisToCreate`/`onKpisToCreateChange` (e os zombie pares) removidas de `QbrKpiAnalysisStep` e dos call-sites em `MbrPrePage`/`QbrPrePage`.
+- Reader histórico (`MbrPage` → `proposedKpis` → `MbrKpiGateStep`) já trata o campo como opcional; nenhuma mudança necessária.
+- Fixture `QbrCLevelSteps.test.tsx` atualizado para refletir o novo shape.
+
+Não há mais "redesign de autocomplete" pendente — apenas o drop final junto da Fase 5.
 
 ## Edge functions migradas (Onda 4 Fase 4 — concluída)
 
@@ -111,9 +119,8 @@ Edge functions inspecionadas e **fora de escopo** (não desestruturam campos den
 
 ## Próxima sub-onda
 
-- **Fase 5 (diferida ≥ 90 dias)**: drop dos campos `@deprecated` dos types e dos branches de fallback em readers/edge functions, após janela de observação confirmando que snapshots novos não os contêm. Critérios e escopo em `.lovable/plan.md`.
-- `kpisToCreate[].relatedKrTitle` (MBR/QBR Pre): tarefa independente exigindo redesign de UI (autocomplete por KR) antes do drop.
+- **Fase 5 (diferida ≥ 90 dias)**: drop dos campos `@deprecated` dos types e dos branches de fallback em readers/edge functions, após janela de observação confirmando que snapshots novos não os contêm. Inclui agora `relatedKrTitle` (sem dependência de redesign).
 
 ## Status Onda 4
 
-Fases 1-4 concluídas. Fase 5 diferida. Baseline de testes: **1769/1769 passing**.
+Fases 1-4 concluídas. Fase 5 diferida (com pendência `relatedKrTitle` já resolvida via descontinuação). Baseline de testes: **1769/1769 passing**.
