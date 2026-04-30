@@ -81,10 +81,18 @@ describe('CollaboratorKpiStep - Rendering', () => {
     render(<CollaboratorKpiStep {...defaultProps} />);
 
     // Use getByText for labels since FormLabel wraps a div, not directly an input
-    expect(screen.getByText(/Novo Valor/i)).toBeInTheDocument();
+    expect(screen.getByText(/Valor \(/i)).toBeInTheDocument();
     expect(screen.getByText(/Data de Referência/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tipo do input/i)).toBeInTheDocument();
     expect(screen.getByText(/Confiança/i)).toBeInTheDocument();
     expect(screen.getByText(/Observações/i)).toBeInTheDocument();
+  });
+
+  it('should expose Consolidado e Parcial radio options (paridade com modal /kpis)', () => {
+    render(<CollaboratorKpiStep {...defaultProps} />);
+
+    expect(screen.getByText('Consolidado')).toBeInTheDocument();
+    expect(screen.getByText('Parcial')).toBeInTheDocument();
   });
 
   it('should show recovery protocol for off-track KPIs', () => {
