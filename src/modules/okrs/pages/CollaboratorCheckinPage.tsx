@@ -168,6 +168,31 @@ export default function CollaboratorCheckinPage() {
     userId: effectiveUserId || undefined,
     scope: 'collaborator',
   });
+
+  const hasKpiStep = !!(userKpis && userKpis.length > 0);
+
+  // Dynamic steps: omit steps without data (KRs, KPIs).
+  // Centralizar regra evita loops de back/forward causados por auto-skip
+  // dentro dos componentes de step.
+  const visibleSteps = useMemo(
+    () =>
+      WIZARD_STEPS.filter(s => {
+        if (s.id === 'checkin' && !hasKrStep) return false;
+        if (s.id === 'kpis' && !hasKpiStep) return false;
+        return true;
+      }),
+    [hasKrStep, hasKpiStep],
+  );
+
+  const visibleStepOrder = useMemo(
+    () =>
+      STEP_ORDER.filter(s => {
+        if (s === 'checkin' && !hasKrStep) return false;
+        if (s === 'kpis' && !hasKpiStep) return false;
+        return true;
+      }),
+    [hasKrStep, hasKpiStep],
+  );
   
   // v2.87: Mutation silenciosa para KPI (fail-safe, sem toast de erro)
   const supabase = buSupabase;
