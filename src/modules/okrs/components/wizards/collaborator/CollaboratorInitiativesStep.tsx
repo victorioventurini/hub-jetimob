@@ -400,9 +400,9 @@ export function CollaboratorInitiativesStep({
         initiative={editingInitiative}
         krContext={(() => {
           if (!editingInitiative) return undefined;
-          const kr = krs.find(k => k.id === editingInitiative.kr_id);
-          if (!kr) return undefined;
-          return { id: kr.id, title: kr.title };
+          const title = krTitleResolved.get(editingInitiative.kr_id);
+          if (!title) return undefined;
+          return { id: editingInitiative.kr_id, title };
         })()}
       />
     </div>
