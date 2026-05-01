@@ -225,8 +225,8 @@ export function useCollaboratorWeekActivity({
     const kpiRows = kpisActivityQuery.data ?? [];
     const uniqueKpis = new Map<string, string>();
     for (const r of kpiRows) {
-      if (r.kpi_id && r.kpis?.name && !uniqueKpis.has(r.kpi_id)) {
-        uniqueKpis.set(r.kpi_id, r.kpis.name);
+      if (r.kpi_id && r.kpi_metrics?.name && !uniqueKpis.has(r.kpi_id)) {
+        uniqueKpis.set(r.kpi_id, r.kpi_metrics.name);
       }
     }
     if (uniqueKpis.size > 0) {
