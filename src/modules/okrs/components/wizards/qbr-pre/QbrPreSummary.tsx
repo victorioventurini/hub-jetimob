@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Send, BookOpen, Target, CheckCircle2, XCircle, AlertCircle, Lightbulb, Pencil } from 'lucide-react';
+import { Send, BookOpen, Target, CheckCircle2, XCircle, AlertCircle, Pencil } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardLastStepFooter,
@@ -18,8 +18,6 @@ import {
   AgendaSuggestionsPrioritizer,
   SummaryKrBalance,
   SummaryKpiList,
-  InlineDecisionInput,
-  DecisionCard,
 } from '../shared';
 import {
   normalizeProposedOkrs,
@@ -66,13 +64,6 @@ export function QbrPreSummary({
 
   const updateLearning = (field: keyof QbrPreDraftData['learnings'], value: string) => {
     onLearningsChange?.({ ...learnings, [field]: value });
-  };
-
-  const handleDecisionUpdate = (id: string, updates: Partial<TeamCheckinDecision>) => {
-    onDecisionsChange?.(decisions.map((d) => (d.id === id ? { ...d, ...updates } : d)));
-  };
-  const handleDecisionRemove = (id: string) => {
-    onDecisionsChange?.(decisions.filter((d) => d.id !== id));
   };
 
   return (
@@ -242,55 +233,6 @@ export function QbrPreSummary({
           />
         )}
 
-        {/* 6) Notas e decisões — editáveis */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Lightbulb className="h-4 w-4" />
-              Notas e decisões ({decisions.length})
-            </CardTitle>
-            {onDecisionsChange && (
-              <p className="text-xs text-muted-foreground">
-                Adicione, edite ou remova registros antes de enviar.
-              </p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {decisions.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">
-                Nenhuma decisão registrada ainda.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {decisions.map((decision) =>
-                  onDecisionsChange ? (
-                    <DecisionCard
-                      key={decision.id}
-                      decision={decision}
-                      onUpdate={handleDecisionUpdate}
-                      onRemove={handleDecisionRemove}
-                      showReclassify
-                      showOwnerDeadline
-                    />
-                  ) : (
-                    <p key={decision.id} className="text-xs text-muted-foreground">
-                      • {decision.text}
-                    </p>
-                  )
-                )}
-              </div>
-            )}
-
-            {onDecisionsChange && (
-              <InlineDecisionInput
-                decisions={decisions}
-                onDecisionsChange={onDecisionsChange}
-                sourceStep="qbr-pre-summary"
-                placeholder="Registrar nova decisão, ajuste ou próximo passo..."
-              />
-            )}
-          </CardContent>
-        </Card>
       </div>
     </WizardStepScaffold>
   );

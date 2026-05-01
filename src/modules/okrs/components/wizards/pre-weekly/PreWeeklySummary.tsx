@@ -144,29 +144,6 @@ export function PreWeeklySummary({
           </CardContent>
         </Card>
 
-        {/* Decisões */}
-        {decisions.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">
-                Decisões registradas ({decisions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-1">
-                {decisions.map((d) => (
-                  <li
-                    key={d.id}
-                    className="text-sm text-muted-foreground flex items-start gap-2"
-                  >
-                    <span>•</span>
-                    <span>{d.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </WizardStepScaffold>
   );
