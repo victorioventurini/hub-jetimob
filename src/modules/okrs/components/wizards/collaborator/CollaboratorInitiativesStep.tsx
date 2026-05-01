@@ -178,16 +178,23 @@ export function CollaboratorInitiativesStep({
     return grouped;
   }, [projectsByKrData]);
 
-  // Group initiatives by KR
-  const initiativesByKr = useMemo(() => {
+  // Group initiatives by KR + capture KR titles from the join (fallback when
+  // the KR isn't present in the `krs` prop, e.g. when the user is only a
+  // contributor of the initiative).
+  const { initiativesByKr, krTitleResolved } = useMemo(() => {
     const grouped = new Map<string, Initiative[]>();
+    const titles = new Map<string, string>(krTitleById);
     for (const init of initiatives) {
       const existing = grouped.get(init.kr_id) || [];
       existing.push(init);
       grouped.set(init.kr_id, existing);
+      const joinedTitle = (init as any).kr?.title as string | undefined;
+      if (joinedTitle && !titles.has(init.kr_id)) {
+        titles.set(init.kr_id, joinedTitle);
+      }
     }
-    return grouped;
-  }, [initiatives]);
+    return { initiativesByKr: grouped, krTitleResolved: titles };
+  }, [initiatives, krTitleById]);
 
   // Stats
   const stats = useMemo(() => {
