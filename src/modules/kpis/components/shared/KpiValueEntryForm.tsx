@@ -103,35 +103,15 @@ export function KpiValueEntryForm({
   // Data máxima permitida: ontem (regra v3.0.0 — Primary KPIs / KPI inputs restricted to past dates)
   const maxDate = useMemo(() => format(subDays(new Date(), 1), 'yyyy-MM-dd'), []);
 
-  const defaultInputType: KpiInputType = useMemo(() => {
-    if (!consolidationFrequency) return 'consolidated';
-    return suggestInputType(
-      { consolidation_frequency: consolidationFrequency } as Parameters<typeof suggestInputType>[0],
-      new Date(maxDate),
-    );
-  }, [consolidationFrequency, maxDate]);
-
   const form = useForm<KpiValueEntryFormValues>({
     resolver: zodResolver(kpiValueEntrySchema),
     defaultValues: {
       value: '' as unknown as number,
       reference_date: maxDate,
-      input_type: defaultInputType,
+      input_type: undefined as unknown as KpiInputType,
       notes: '',
     },
   });
-
-  // Re-sugerir input_type quando o usuário muda a data de referência
-  const watchedDate = form.watch('reference_date');
-  useEffect(() => {
-    if (!consolidationFrequency || !watchedDate) return;
-    const suggestion = suggestInputType(
-      { consolidation_frequency: consolidationFrequency } as Parameters<typeof suggestInputType>[0],
-      new Date(watchedDate),
-    );
-    form.setValue('input_type', suggestion, { shouldDirty: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedDate, consolidationFrequency]);
 
   // Notify upstream
   const watchedValue = form.watch('value');
