@@ -35,6 +35,7 @@ export function CollaboratorReflectionStep({
   results,
   onComplete,
   onBack,
+  onSkip,
   isSubmitting = false,
 }: CollaboratorReflectionStepProps) {
   const [impactSummary, setImpactSummary] = useState('');
