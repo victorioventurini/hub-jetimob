@@ -163,27 +163,18 @@ export function CollaboratorReflectionStep({
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onBack} disabled={isSubmitting}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-
-          <Button 
-            onClick={handleSubmit} 
-            className="flex-1" 
-            size="lg"
-            disabled={isSubmitting}
-            isLoading={isSubmitting}
-            loadingText="Enviando..."
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Enviar atualização
-          </Button>
-        </div>
-      </div>
+      {/* Footer padronizado: Voltar / Pular / Continuar (não é a etapa final) */}
+      <WizardStepFooter
+        showBack
+        onBack={onBack}
+        backDisabled={isSubmitting}
+        showSkip={!!onSkip}
+        skipLabel="Pular"
+        onSkip={onSkip}
+        primaryLabel="Continuar"
+        onPrimary={handleSubmit}
+        primaryLoading={isSubmitting}
+      />
     </div>
   );
 }
