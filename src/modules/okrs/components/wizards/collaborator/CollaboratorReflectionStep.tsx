@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, MessageSquare, HelpCircle } from 'lucide-react';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
-import type { CollaboratorReflection, CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
+import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
+import type { CollaboratorReflection, CollaboratorCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -25,7 +26,12 @@ export interface CollaboratorReflectionStepProps {
   onBack: () => void;
   onSkip?: () => void;
   isSubmitting?: boolean;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-reflection';
 
 // ============================================================
 // COMPONENT
