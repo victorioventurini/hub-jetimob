@@ -59,7 +59,12 @@ export interface CollaboratorInitiativesStepProps {
   onContinue: (markedAtRisk: string[]) => void;
   onBack: () => void;
   onSkip: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-initiatives';
 
 // ============================================================
 // COMPONENT
@@ -72,6 +77,9 @@ export function CollaboratorInitiativesStep({
   onContinue,
   onBack,
   onSkip,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
