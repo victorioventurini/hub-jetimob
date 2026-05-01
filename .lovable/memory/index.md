@@ -31,6 +31,7 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [Contributor KR uses modal](mem://features/okrs/contributor-kr-uses-modal) — "Adicionar KR" no card de OKR compartilhada abre TeamKrFormDialog (não wizard); passa objectiveId, teamId=contributor, buId=objective.bu_id; invalida caches de contribuição
 - [Job title relation access](mem://standards/users/job-title-relation-access) — Wave 2.6: profiles não tem coluna `job_title`; sempre usar relação `job_title_rel:job_titles!job_title_id(name)` e achatar no consumo
 - [Optional Select Clearable](mem://standards/ui/optional-select-include-none) — TeamSelect/AreaSelect/BuUserSelect em campos opcionais exigem includeNone/allowNone para permitir limpar a seleção (Radix Select não limpa nativamente)
+- [Collaborator Initiatives Step Scope](mem://features/rituals/collaborator-initiatives-step-scope) — Step de Iniciativas: owner OR contributor no ciclo ativo; KRs derivados das iniciativas (não usa array `krs`)
 
 
 - [KPIs Permissions Matrix](mem://features/kpis/kpis-permissions-matrix) — Matriz scope-oriented (org/area/team) com herança hierárquica; Métricas travadas em scope=team; helpers SQL user_can_manage_kpi/user_can_create_kpi
