@@ -58,6 +58,7 @@ interface CollaboratorDraftData {
   results: CollaboratorCheckinResult[];
   kpiResults: KpiCheckinResult[];
   reflection: CollaboratorReflection;
+  /** @deprecated Step de iniciativas migrou para `InitiativeCard`; lista permanece por retrocompat de snapshots, mas é sempre `[]`. */
   initiativesMarkedAtRisk: string[];
 }
 
