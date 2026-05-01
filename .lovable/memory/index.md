@@ -32,6 +32,7 @@ Job titles: leitura de cargo de profile usa `job_title_rel:job_titles!job_title_
 - [Job title relation access](mem://standards/users/job-title-relation-access) — Wave 2.6: profiles não tem coluna `job_title`; sempre usar relação `job_title_rel:job_titles!job_title_id(name)` e achatar no consumo
 - [Optional Select Clearable](mem://standards/ui/optional-select-include-none) — TeamSelect/AreaSelect/BuUserSelect em campos opcionais exigem includeNone/allowNone para permitir limpar a seleção (Radix Select não limpa nativamente)
 - [Collaborator Initiatives Step Scope](mem://features/rituals/collaborator-initiatives-step-scope) — Step de Iniciativas: owner OR contributor no ciclo ativo; KRs derivados das iniciativas (não usa array `krs`)
+- [Collaborator Step 1 Order](mem://features/rituals/collaborator-step1-order-mirrors-steps) — Snapshot e trilha do Step 1 derivam ordem de `STEP_ORDER` (SSOT em `wizardSteps.ts`); ordem canônica: KPIs → Projetos → Iniciativas → KRs
 
 
 - [KPIs Permissions Matrix](mem://features/kpis/kpis-permissions-matrix) — Matriz scope-oriented (org/area/team) com herança hierárquica; Métricas travadas em scope=team; helpers SQL user_can_manage_kpi/user_can_create_kpi
