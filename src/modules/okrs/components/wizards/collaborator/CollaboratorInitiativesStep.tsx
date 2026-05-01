@@ -305,17 +305,23 @@ export function CollaboratorInitiativesStep({
             </div>
           </div>
 
-          {/* Initiatives by KR */}
-          {krs.map(kr => {
-            const krInitiatives = initiativesByKr.get(kr.id) || [];
-            const krProjects = projectsByKr.get(kr.id) || [];
+          {/* Initiatives by KR — itera sobre os KRs efetivamente presentes
+              nas iniciativas do colaborador (e não sobre `krs` da prop). */}
+          {Array.from(initiativesByKr.keys())
+            .sort((a, b) =>
+              (krTitleResolved.get(a) ?? '').localeCompare(krTitleResolved.get(b) ?? '')
+            )
+            .map(krId => {
+            const krInitiatives = initiativesByKr.get(krId) || [];
+            const krProjects = projectsByKr.get(krId) || [];
+            const krTitle = krTitleResolved.get(krId) ?? 'KR';
             if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
-              <div key={kr.id} className="space-y-3">
+              <div key={krId} className="space-y-3">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-medium text-muted-foreground">
-                    {kr.title}
+                    {krTitle}
                   </h4>
                   <Badge variant="outline" className="text-xs">
                     {krInitiatives.length}
