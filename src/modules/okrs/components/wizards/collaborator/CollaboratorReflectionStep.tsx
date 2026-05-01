@@ -7,20 +7,12 @@
  */
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  ArrowLeft,
-  Send,
-  Sparkles,
-  MessageSquare,
-  HelpCircle,
-  Loader2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Sparkles, MessageSquare, HelpCircle } from 'lucide-react';
+import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import type { CollaboratorReflection, CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================
