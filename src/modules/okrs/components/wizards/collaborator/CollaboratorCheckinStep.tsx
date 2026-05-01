@@ -31,7 +31,6 @@ import {
   Minus,
   ThumbsUp,
   ThumbsDown,
-  AlertTriangle,
   Loader2,
   Lock,
   ExternalLink,
