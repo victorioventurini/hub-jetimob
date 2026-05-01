@@ -122,7 +122,7 @@ export function useMyTeamObjectives(buId?: string | null, userId?: string) {
         .eq('bu_id', buId)
         .is('deleted_at', null)
         .is('cancelled_at', null)
-        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`);
+        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{"${userId}"}`);
 
       if (krError) throw krError;
       
