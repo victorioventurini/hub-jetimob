@@ -1,60 +1,35 @@
 ## Contexto
 
-Hoje o `OrganogramNode.tsx` separa os filhos de um time em dois clusters distintos:
+Pedido (`/teams/org-chart?fullscreen=true`):
 
-1. `nonPersonChildren` (subteams/squads) — renderizados primeiro, em uma linha própria
-2. `personRows` (colaboradores em chunks de 6) — renderizados abaixo, em uma ou mais linhas
+1. Squads devem aparecer **ao lado** do subtime "Quality Assurance" (mesmo nível de Tecnologia, peers).
+2. Squads devem **sempre aparecer** ao expandir o time de Tecnologia (sem precisar ligar toggle).
 
-Resultado visual em Tecnologia: o subteam **Quality Assurance** aparece sozinho numa linha acima, e os colaboradores aparecem empilhados abaixo. Isso sugere que QA "está acima" das pessoas, quando na verdade ambos são filhos diretos do mesmo time pai (Tecnologia).
+### Diagnóstico
 
-## Objetivo
+- **Render unificado já existe** (`OrganogramNode.tsx` linhas 274–332): subteams + squads + pessoas já são tratados como irmãos no mesmo `allChildren`, em linhas de até 6, sem implicar hierarquia entre as linhas. Order: `subteams → squads → others → persons`. ✅
+- **Causa real do bug "squads sumidos"**: `OrganogramPage.tsx` (linhas 36–39) tem o default do URL state `squads = "false"`. Com o toggle Squads OFF, o filtro em `OrganogramChart.filteredData` (`if (!filters.showSquads) filteredChildren = filteredChildren.filter(c => c.type !== 'squad')`) remove todos os squads antes de renderizar. Por isso QA aparece sozinho — squads existem nos dados mas são filtrados.
+- **Path do squad** está como `/teams/squads/${id}` em `useOrganogramData.ts` (linha 169) mas a rota canônica é `/squads/:id` (`teams.routes.tsx`). Bug separado: clicar no card de squad cai em 404.
 
-Renderizar **subteams/squads na mesma faixa horizontal dos colaboradores**, como irmãos do mesmo pai. Manter a regra de máximo 6 cards por linha já existente, agora aplicada ao conjunto unificado (subteams + squads + pessoas).
+## Mudanças (presentation/data wiring, sem lógica de negócio)
 
-## Mudanças (apenas presentation, arquivo único)
+### 1) `src/modules/teams/pages/OrganogramPage.tsx`
+Trocar default do URL param `squads` de `"false"` para `"true"`. Mantém o toggle (usuário pode desligar), mas o estado inicial passa a mostrar squads. Atende ao requisito "sempre exibir squads ao expandir Tecnologia" sem mudar a semântica do filtro.
 
-`src/modules/teams/components/organogram/OrganogramNode.tsx` — bloco de render de filhos (linhas ~274–320):
-
-1. **Unificar a lista de filhos** num único array ordenado: subteams primeiro (mais "pesados" visualmente, à esquerda), squads em seguida, depois pessoas. Todos compartilham o mesmo tronco vertical e barra horizontal vindos do card pai.
-2. **Aplicar `chunk(allChildren, 6)`** ao array unificado, mantendo o limite de 6 cards por linha pedido anteriormente.
-3. **Conectores**: a 1ª linha recebe stem vertical do pai + barra horizontal (se >1 filho). Linhas 2..N continuam sem conectores próprios (regra já implementada para evitar falsa hierarquia entre linhas empilhadas).
-4. Remover a divisão `nonPersonChildren` vs `personRows`; passar a tratar todos como irmãos.
-
-### Esboço visual
-
-Hoje:
 ```text
-              [ Tecnologia ]
-                    │
-              [ QA Subteam ]          ← subteam isolado acima
-                    │
-   ──────────────┬──┴──┬──────────────
-   [P][P][P][P][P][P]
-   [P][P][P][P][P][P]
-   [P]
+defaultValue: "false"  →  defaultValue: "true"
 ```
 
-Depois:
-```text
-              [ Tecnologia ]
-                    │
-   ────┬────┬────┬────┬────┬────
-   [QA][P][P][P][P][P]              ← QA + 5 pessoas na mesma linha
-   [P][P][P][P][P][P]
-   [P][P]
-```
+### 2) `src/modules/teams/hooks/useOrganogramData.ts`
+Corrigir o `path` do squad de `/teams/squads/${squad.id}` para `/squads/${squad.id}` (linha 169) para alinhar com `teams.routes.tsx`. Sem isso, abrir o card de squad vai pra rota inexistente.
 
-## Detalhes técnicos
-
-- Substituir o IIFE atual por: `const allChildren = [...subteams, ...squads, ...persons]; const rows = chunk(allChildren, MAX_PER_ROW);` e renderizar via `rows.map(renderRow)`.
-- `renderRow` mantém a lógica atual: 1ª linha com stems, demais sem.
-- Renomear `MAX_PERSONS_PER_ROW` → `MAX_CHILDREN_PER_ROW` (mais semântico) — valor permanece 6.
-- Subteams/squads continuam usando `OrganogramNodeWrapper` recursivo, então sua expansão interna (filhos próprios) segue funcionando normalmente embaixo do card.
-- Sem alteração em tipos, dados, hooks, query keys ou RLS.
+### 3) Garantia visual (já implementado, apenas confirmar)
+Nada a alterar em `OrganogramNode.tsx`: a ordem `[subteams, squads, persons]` já coloca QA e os squads lado a lado na primeira linha (peers do mesmo pai Tecnologia), respeitando o limite de 6 cards por linha.
 
 ## Validação
 
-- `/teams` → Tecnologia: confirmar que QA aparece como 1º card da 1ª linha, ao lado dos colaboradores.
-- Times só com pessoas: comportamento idêntico ao atual.
-- Times só com subteams: continuam exibidos corretamente (até 6 por linha).
-- Expansão dos subteams permanece funcional (clique no chevron do QA mostra membros do subteam abaixo).
+- `/teams/org-chart?fullscreen=true` → Tecnologia expandido por padrão: QA aparece como 1º card, squads logo ao lado, depois pessoas, tudo na mesma faixa horizontal.
+- Toggle "Squads" OFF → squads desaparecem (comportamento original do filtro preservado).
+- Clicar no card de um squad → abre `/squads/:id` (rota válida).
+- Outras BUs sem squads: comportamento idêntico.
+- Sem mudanças em RLS, queries, tipos ou query keys.
