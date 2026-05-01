@@ -13,7 +13,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Send, AlertTriangle, Compass, CheckCircle2, XCircle, AlertCircle, Lightbulb } from 'lucide-react';
+import { Send, AlertTriangle, Compass, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardLastStepFooter,
@@ -22,8 +22,6 @@ import {
   SummaryKrBalance,
   SummaryKpiList,
   InlineStringListEditor,
-  InlineDecisionInput,
-  DecisionCard,
 } from '../shared';
 import type {
   MbrPreDraftData,
@@ -67,13 +65,6 @@ export function MbrPreSummary({
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
     onHighlightsChange?.({ ...highlights, [field]: value });
-  };
-
-  const handleDecisionUpdate = (id: string, updates: Partial<TeamCheckinDecision>) => {
-    onDecisionsChange?.(decisions.map((d) => (d.id === id ? { ...d, ...updates } : d)));
-  };
-  const handleDecisionRemove = (id: string) => {
-    onDecisionsChange?.(decisions.filter((d) => d.id !== id));
   };
 
   return (
