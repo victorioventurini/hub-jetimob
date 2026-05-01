@@ -298,26 +298,38 @@ export function CollaboratorKpiStep({
           }
           valueAdornmentSlot={
             <div className="flex items-center justify-between gap-2 mt-1">
-              {valueChange !== null && (
-                <span
-                  className={cn(
-                    'flex items-center gap-1 text-sm font-medium',
-                    valueChange > 0
-                      ? 'text-success'
-                      : valueChange < 0
-                        ? 'text-destructive'
-                        : 'text-muted-foreground',
-                  )}
-                >
-                  {valueChange > 0 ? (
-                    <TrendingUp className="h-4 w-4" />
-                  ) : valueChange < 0 ? (
-                    <TrendingDown className="h-4 w-4" />
-                  ) : null}
-                  {valueChange > 0 ? '+' : ''}
-                  {valueChange.toFixed(2)}
-                </span>
-              )}
+              {valueChange !== null && kpi.latest_value !== null && (() => {
+                const isImprovement =
+                  kpi.direction === 'down' ? valueChange < 0 : valueChange > 0;
+                const isWorse =
+                  kpi.direction === 'down' ? valueChange > 0 : valueChange < 0;
+                const sign = valueChange > 0 ? '+' : '';
+                const deltaText =
+                  kpi.unit === '%'
+                    ? `${sign}${valueChange.toFixed(2)} p.p.`
+                    : `${sign}${formatValueWithUnit(valueChange, kpi.unit)}`;
+                return (
+                  <span
+                    className={cn(
+                      'flex items-center gap-1 text-sm font-medium',
+                      isImprovement
+                        ? 'text-success'
+                        : isWorse
+                          ? 'text-destructive'
+                          : 'text-muted-foreground',
+                    )}
+                    title={`Último valor: ${formatValueWithUnit(kpi.latest_value, kpi.unit)}`}
+                  >
+                    {isImprovement ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : isWorse ? (
+                      <TrendingDown className="h-4 w-4" />
+                    ) : null}
+                    <span className="text-muted-foreground font-normal">vs. último:</span>
+                    {deltaText}
+                  </span>
+                );
+              })()}
               {estimatedRag && (
                 <span
                   className={cn(
