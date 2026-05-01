@@ -477,6 +477,10 @@ export default function CollaboratorCheckinPage() {
               goNext();
             }}
             onBack={goBack}
+            onSkip={() => {
+              updateDraft({ reflection: {} });
+              goNext();
+            }}
           />
         );
         
