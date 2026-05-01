@@ -471,7 +471,7 @@ export default function CollaboratorCheckinPage() {
       case 'reflection':
         return (
           <CollaboratorReflectionStep
-            results={draft.data.results}
+            results={(draft.data.results ?? []).filter(Boolean)}
             onComplete={(reflection) => {
               updateDraft({ reflection });
               goNext();
