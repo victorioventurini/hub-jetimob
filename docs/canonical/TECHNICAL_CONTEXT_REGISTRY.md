@@ -2177,6 +2177,21 @@ const conditions = [
 ];
 ```
 
+#### Collaborator Check-in — Filtro de Iniciativas do Step
+
+O step `Iniciativas` (`CollaboratorInitiativesStep`) **não** depende transitivamente do filtro de KRs acima. A lista é centrada no colaborador e busca iniciativas no ciclo trimestral ativo onde o usuário é:
+
+1. ✅ **Owner** (`owner_user_id = effectiveUserId`), **OU**
+2. ✅ **Contributor** (`contributors` contém `effectiveUserId`).
+
+Os KRs exibidos como agrupadores são **derivados** das iniciativas retornadas (via join `okr_team_key_results!inner → okr_team_objectives!inner`, filtrando `cycle_id` e excluindo `cancelled_at` / `deleted_at`). Isso evita que iniciativas do colaborador sumam quando o KR não está no resultado de `useUserKrsForWizard` (ex.: usuário é apenas contribuidor da iniciativa, sem ownership no KR).
+
+**Edição inline:** restrita ao owner (`init.owner_user_id === effectiveUserId`). Contributors visualizam mas não editam — coerente com RLS (`okrs.initiative.read:team_tree` cobre leitura; mutações continuam exigindo ownership).
+
+**Query key canônica:** `queryKeys.okrs.initiativesForCollaborator(buId, cycleId, effectiveUserId)`.
+
+**Componente:** `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`.
+
 ### 4.8.1 Framework Unificado de Wizards (v3.26.0)
 
 **Status:** ATIVO — Ondas 1, 2 e 3 em produção.
