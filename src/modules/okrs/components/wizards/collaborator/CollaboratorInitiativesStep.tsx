@@ -355,16 +355,19 @@ export function CollaboratorInitiativesStep({
                   </Badge>
                 </div>
                 
-                <InitiativesSummary
-                  initiatives={krInitiatives}
-                  markedAtRisk={markedAtRisk}
-                  onMarkAtRisk={handleMarkAtRisk}
-                  editable
-                  onEdit={(init) => setEditingInitiative(init)}
-                  canEdit={(init) =>
-                    !!effectiveUserId && init.owner_user_id === effectiveUserId
-                  }
-                />
+                <div className="space-y-3">
+                  {krInitiatives.map((init) => {
+                    const canEditThis =
+                      !!effectiveUserId && init.owner_user_id === effectiveUserId;
+                    return (
+                      <InitiativeCard
+                        key={init.id}
+                        initiative={init}
+                        onQuickUpdate={canEditThis ? (i) => setEditingInitiative(i) : undefined}
+                      />
+                    );
+                  })}
+                </div>
 
                 {/* Projects linked to this KR */}
                 {krProjects.length > 0 && (
