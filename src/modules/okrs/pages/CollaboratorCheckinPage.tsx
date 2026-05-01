@@ -336,8 +336,10 @@ export default function CollaboratorCheckinPage() {
             kpisToUpdate={kpis}
             userName={effectiveUserName}
             effectiveUserId={effectiveUserId}
+            cycleId={quarterlyCycle?.id ?? null}
             cycleName={quarterlyCycle?.name || 'Sem ciclo ativo'}
             lastCompletedAt={lastCheckin.lastCompletedAt}
+            visibleStepOrder={visibleStepOrder}
             onContinue={goNext}
           />
         );
