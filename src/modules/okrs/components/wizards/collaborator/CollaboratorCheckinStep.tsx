@@ -127,8 +127,6 @@ export function CollaboratorCheckinStep({
     setCurrentValue(String(kr.current_value));
     setConfidence(null);
     setComment('');
-    setBlocker('');
-    setShowBlockerField(false);
   }, [kr.id, kr.current_value]);
 
   // Calculate change
