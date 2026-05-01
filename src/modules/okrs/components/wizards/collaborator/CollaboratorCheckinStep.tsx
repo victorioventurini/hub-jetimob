@@ -40,8 +40,6 @@ import { cn } from '@/lib/utils';
 import { KrContextCard } from '../shared/KrContextCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { AlertBanner } from '../shared/AlertBanner';
-import { VicInsightCard } from '../shared/VicInsightCard';
-import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks';
 import { useCreateCheckin } from '@/modules/okrs/hooks';
@@ -120,8 +118,8 @@ export function CollaboratorCheckinStep({
   const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
   const isValueLocked = hasPrimaryKpi;
 
-  // AI state
-  const { getMicrocopy, insights, generateInsights, dismissInsight } = useWizardAI();
+  // AI state (somente microcopy — insights do VIC removidos do step)
+  const { getMicrocopy } = useWizardAI();
   const microcopy = getMicrocopy(kr);
 
   // Mutation
@@ -135,17 +133,6 @@ export function CollaboratorCheckinStep({
     setBlocker('');
     setShowBlockerField(false);
   }, [kr.id, kr.current_value]);
-
-  // Generate insights for at-risk KRs
-  useEffect(() => {
-    if (kr.is_at_risk || kr.is_pending) {
-      generateInsights({
-        persona: 'collaborator',
-        step: 'checkin',
-        krContext: { kr },
-      });
-    }
-  }, [kr.id]);
 
   // Calculate change
   const numericValue = parseFloat(currentValue) || 0;
@@ -285,19 +272,8 @@ export function CollaboratorCheckinStep({
           />
         </div>
 
-        {/* Linked initiatives & projects */}
-        <KrLinkedDetails krId={kr.id} defaultExpanded />
-        {insights.length > 0 && (
-          <div className="space-y-2">
-            {insights.filter(i => !i.dismissed).slice(0, 1).map(insight => (
-              <VicInsightCard
-                key={insight.id}
-                insight={insight}
-                onDismiss={dismissInsight}
-              />
-            ))}
-          </div>
-        )}
+
+
 
         <Separator />
 
