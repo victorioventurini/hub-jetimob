@@ -31,11 +31,13 @@ import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { InlineAgendaSuggestionInput } from '../shared/InlineAgendaSuggestionInput';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { InitiativeQuickUpdateDialog } from '@/modules/okrs/components/initiatives/InitiativeQuickUpdateDialog';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { Initiative } from '@/modules/okrs/types/initiative';
 import type { ProjectHealth } from '@/modules/projects/types';
+import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
