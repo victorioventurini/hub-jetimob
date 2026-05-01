@@ -35,7 +35,7 @@ export default function OrganogramPage() {
   });
   const { value: showSquadsParam, set: setShowSquadsParam } = useUrlState<string>({ 
     key: "squads", 
-    defaultValue: "false" 
+    defaultValue: "true" 
   });
 
   // Convert URL params to boolean

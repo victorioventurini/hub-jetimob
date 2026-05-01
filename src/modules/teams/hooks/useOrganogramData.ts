@@ -166,7 +166,7 @@ export function useOrganogramData() {
             id: squad.id,
             type: 'squad',
             name: squad.name,
-            path: `/teams/squads/${squad.id}`,
+            path: `/squads/${squad.id}`,
             children: [],
           });
         });
