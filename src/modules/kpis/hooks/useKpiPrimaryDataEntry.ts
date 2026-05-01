@@ -141,6 +141,7 @@ export function useUpsertKpiPrimaryDataEntry() {
       return { changed: true };
     },
     onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: kpisKeys.primaryDataEntry(vars.kpiId) });
       queryClient.invalidateQueries({ queryKey: kpisKeys.contributors(vars.kpiId) });
       queryClient.invalidateQueries({ queryKey: kpisKeys.forWizard({}) });
     },
