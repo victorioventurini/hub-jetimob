@@ -387,6 +387,16 @@ export const okrsKeys = {
     teamId: string | null,
     profileId: string | null,
   ) => ['okr-carry-over-decisions', buId, wizardType, teamId ?? 'none', profileId ?? 'none'] as const,
+
+  // ── Collaborator "Sua semana até aqui" — Step 1 do Check-in Individual ──
+  weekActivityKpis: (buId: string | null, userId: string | null, weekStartIso: string | null) =>
+    ['okr-week-activity-kpis', buId, userId, weekStartIso] as const,
+  weekActivityCheckins: (buId: string | null, userId: string | null, weekStartIso: string | null) =>
+    ['okr-week-activity-checkins', buId, userId, weekStartIso] as const,
+  weekActivityMilestones: (buId: string | null, userId: string | null, weekStartIso: string | null) =>
+    ['okr-week-activity-milestones', buId, userId, weekStartIso] as const,
+  weekActivityInitiatives: (buId: string | null, cycleId: string | null, userId: string | null, weekStartIso: string | null) =>
+    ['okr-week-activity-initiatives', buId, cycleId, userId, weekStartIso] as const,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
