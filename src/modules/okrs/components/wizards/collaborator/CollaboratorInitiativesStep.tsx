@@ -233,18 +233,10 @@ export function CollaboratorInitiativesStep({
     return { total, blocked, overdue, needsAttention: blocked + overdue };
   }, [initiatives]);
 
-  // Handle mark at risk
-  const handleMarkAtRisk = (initiativeId: string, atRisk: boolean) => {
-    setMarkedAtRisk(prev => 
-      atRisk 
-        ? [...prev, initiativeId]
-        : prev.filter(id => id !== initiativeId)
-    );
-  };
-
-  // Handle continue
+  // Handle continue (markedAtRisk descontinuado — UI de iniciativas usa
+  // padrão canônico InitiativeCard sem marcação/comentário inline).
   const handleContinue = () => {
-    onContinue(markedAtRisk);
+    onContinue([]);
   };
 
   if (isLoading) {
