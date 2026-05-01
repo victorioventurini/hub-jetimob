@@ -266,6 +266,16 @@ export function CollaboratorInitiativesStep({
             onSkip={onSkip}
           />
         }
+        bottomFixed={
+          agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+            <InlineAgendaSuggestionInput
+              suggestions={agendaSuggestions}
+              onSuggestionsChange={onAgendaSuggestionsChange}
+              sourceStep={AGENDA_SOURCE_STEP}
+              triggerLabel={agendaTriggerLabel}
+            />
+          ) : undefined
+        }
       >
         <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
           <EmptyState
