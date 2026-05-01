@@ -82,6 +82,7 @@ export function CollaboratorDecisionsStep({
             primaryLabel="Continuar"
           />
         }
+        bottomFixed={agendaSlot}
       >
         <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
           <Inbox className="h-12 w-12 text-muted-foreground/40" />
