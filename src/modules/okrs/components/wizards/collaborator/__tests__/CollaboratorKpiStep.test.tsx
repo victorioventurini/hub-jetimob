@@ -294,6 +294,52 @@ describe('CollaboratorKpiStep - Notes Gate for Off-Track', () => {
       );
     });
   });
+
+  it('should NOT require notes when value meets/exceeds target (caso EBITDA: target=20, value=25, direction=up)', async () => {
+    // Regra: se o KPI está batendo/superando a meta, observações são opcionais.
+    // Ver `mem://features/kpis/kpi-value-entry-ssot` e `kpi_calculate_rag` (SQL).
+    const kpi = createMockKpi({ target_value: 20, direction: 'up' });
+    const onComplete = vi.fn();
+
+    render(<CollaboratorKpiStep {...defaultProps} kpi={kpi} onComplete={onComplete} />);
+
+    const valueInput = screen.getByRole('spinbutton');
+    await userEvent.clear(valueInput);
+    await userEvent.type(valueInput, '25');
+
+    // Submit SEM preencher notes — deve passar.
+    const submitButton = screen.getByRole('button', { name: /Próximo/i });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          newValue: 25,
+        }),
+      );
+    });
+  });
+
+  it('should NOT require notes when direction=down and value beats target (value < target)', async () => {
+    // direction=down, target=10, value=8 → on_track (10/8*100=125%). Notes opcional.
+    const kpi = createMockKpi({ target_value: 10, direction: 'down' });
+    const onComplete = vi.fn();
+
+    render(<CollaboratorKpiStep {...defaultProps} kpi={kpi} onComplete={onComplete} />);
+
+    const valueInput = screen.getByRole('spinbutton');
+    await userEvent.clear(valueInput);
+    await userEvent.type(valueInput, '8');
+
+    const submitButton = screen.getByRole('button', { name: /Próximo/i });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith(
+        expect.objectContaining({ newValue: 8 }),
+      );
+    });
+  });
 });
 
 // ============================================================
