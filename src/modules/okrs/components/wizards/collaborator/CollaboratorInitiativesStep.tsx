@@ -66,36 +66,67 @@ export interface CollaboratorInitiativesStepProps {
 export function CollaboratorInitiativesStep({
   krs,
   effectiveUserId,
+  cycleId,
   onContinue,
   onBack,
   onSkip,
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
   const [markedAtRisk, setMarkedAtRisk] = useState<string[]>([]);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
-  // Get KR IDs
-  const krIds = useMemo(() => krs.map(kr => kr.id), [krs]);
+  // KR titles vindos do array `krs` (enriquecimento de exibição).
+  // A lista de iniciativas é centrada no usuário (ver query abaixo).
+  const krTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const kr of krs) map.set(kr.id, kr.title);
+    return map;
+  }, [krs]);
 
-  // Fetch initiatives for all KRs
+  // Fetch initiatives centered on the collaborator (owner OR contributor)
+  // for the active cycle. KRs são derivados das iniciativas retornadas.
+  // Ver TCR §4.8 — Collaborator Check-in / Filtro de Iniciativas do Step.
   const { data: initiatives = [], isLoading } = useQuery({
-    queryKey: queryKeys.okrs.initiativesByKrs(krIds),
+    queryKey: queryKeys.okrs.initiativesForCollaborator(currentBuId, cycleId, effectiveUserId),
     queryFn: async () => {
-      if (krIds.length === 0) return [];
+      if (!effectiveUserId || !cycleId) return [];
 
       const { data, error } = await supabase
         .from('okr_initiatives')
-        .select('id, name, description, kr_id, owner_user_id, status, priority, start_date, expected_end_date, progress, notes, updated_at')
-        .in('kr_id', krIds)
+        .select(`
+          id, name, description, kr_id, owner_user_id, status, priority,
+          start_date, expected_end_date, progress, notes, contributors, updated_at,
+          kr:okr_team_key_results!inner (
+            id,
+            title,
+            team_objective:okr_team_objectives!inner (
+              id,
+              cycle_id,
+              cancelled_at,
+              deleted_at
+            )
+          )
+        `)
+        .or(`owner_user_id.eq.${effectiveUserId},contributors.cs.{${effectiveUserId}}`)
+        .eq('kr.team_objective.cycle_id', cycleId)
+        .is('kr.team_objective.cancelled_at', null)
+        .is('kr.team_objective.deleted_at', null)
         .is('deleted_at', null)
         .is('cancelled_at', null)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      return data as Initiative[];
+      return (data ?? []) as unknown as Array<Initiative & { kr?: { id: string; title: string } | null }>;
     },
-    enabled: krIds.length > 0,
+    enabled: !!effectiveUserId && !!cycleId,
   });
+
+  // KR IDs derivados das iniciativas efetivamente retornadas
+  const krIds = useMemo(
+    () => Array.from(new Set(initiatives.map(i => i.kr_id))),
+    [initiatives],
+  );
 
   // Fetch projects linked to KRs
   const { data: projectsByKrData = [] } = useQuery({
