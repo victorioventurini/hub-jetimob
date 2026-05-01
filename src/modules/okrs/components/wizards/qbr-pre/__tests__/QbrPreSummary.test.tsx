@@ -190,19 +190,11 @@ describe('QbrPreSummary', () => {
   });
 
   describe('decisions section', () => {
-    it('displays decisions when present', () => {
+    it('does not render the notes & decisions card', () => {
       const decisions = [
         { id: 'd-1', text: 'Priorizar feature X', category: 'decision' as const, createdAt: new Date().toISOString() },
-        { id: 'd-2', text: 'Cancelar projeto Y', category: 'next_step' as const, createdAt: new Date().toISOString() },
       ];
       renderSummary({ decisions });
-      expect(screen.getByText('Notas e decisões (2)')).toBeInTheDocument();
-      expect(screen.getByText('• Priorizar feature X')).toBeInTheDocument();
-      expect(screen.getByText('• Cancelar projeto Y')).toBeInTheDocument();
-    });
-
-    it('hides decisions when empty', () => {
-      renderSummary();
       expect(screen.queryByText(/Notas e decisões/)).not.toBeInTheDocument();
     });
   });
