@@ -5,21 +5,21 @@
  * Módulo 100% mockado, sem dependência de banco.
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
 import { EventsProvider } from '@/modules/events/context/EventsContext';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const EventsDashboardPage = lazy(() => import('@/modules/events/pages/EventsDashboardPage'));
+const EventsDashboardPage = lazyWithRetry(() => import('@/modules/events/pages/EventsDashboardPage'));
 // EventsParticipantsPage replaced by EventsParticipantsFullPage
-const EventsParticipantDetailPage = lazy(() => import('@/modules/events/pages/EventsParticipantDetailPage'));
-const EventsOpportunitiesPage = lazy(() => import('@/modules/events/pages/EventsOpportunitiesPage'));
-const EventsWebhookPage = lazy(() => import('@/modules/events/pages/EventsWebhookPage'));
-const EventsParticipantsFullPage = lazy(() => import('@/modules/events/pages/EventsParticipantsFullPage'));
-const EventsSettingsPage = lazy(() => import('@/modules/events/pages/EventsSettingsPage'));
-const EventSettingDetailPage = lazy(() => import('@/modules/events/pages/EventSettingDetailPage'));
+const EventsParticipantDetailPage = lazyWithRetry(() => import('@/modules/events/pages/EventsParticipantDetailPage'));
+const EventsOpportunitiesPage = lazyWithRetry(() => import('@/modules/events/pages/EventsOpportunitiesPage'));
+const EventsWebhookPage = lazyWithRetry(() => import('@/modules/events/pages/EventsWebhookPage'));
+const EventsParticipantsFullPage = lazyWithRetry(() => import('@/modules/events/pages/EventsParticipantsFullPage'));
+const EventsSettingsPage = lazyWithRetry(() => import('@/modules/events/pages/EventsSettingsPage'));
+const EventSettingDetailPage = lazyWithRetry(() => import('@/modules/events/pages/EventSettingDetailPage'));
 
 function EventRoute({ children }: { children: React.ReactNode }) {
   return (

@@ -5,22 +5,22 @@
  * @see TCR v2.73.0 - Módulo Assets
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const AssetsPage = lazy(() => import('@/modules/assets/pages/AssetsPage'));
-const InventoryPage = lazy(() => import('@/modules/assets/pages/InventoryPage'));
-const InventoryDetailPage = lazy(() => import('@/modules/assets/pages/InventoryDetailPage'));
-const KeysPage = lazy(() => import('@/modules/assets/pages/KeysPage'));
-const GiftsPage = lazy(() => import('@/modules/assets/pages/GiftsPage'));
-const AssetsReportsPage = lazy(() => import('@/modules/assets/pages/AssetsReportsPage'));
-const AssetsSettingsPage = lazy(() => import('@/modules/assets/pages/AssetsSettingsPage'));
-const PhoneLinesPage = lazy(() => import('@/modules/assets/pages/PhoneLinesPage'));
-const RecommendationsPage = lazy(() => import('@/modules/assets/pages/RecommendationsPage'));
-const PublicAssetRedirect = lazy(() => import('@/pages/PublicAssetRedirect'));
+const AssetsPage = lazyWithRetry(() => import('@/modules/assets/pages/AssetsPage'));
+const InventoryPage = lazyWithRetry(() => import('@/modules/assets/pages/InventoryPage'));
+const InventoryDetailPage = lazyWithRetry(() => import('@/modules/assets/pages/InventoryDetailPage'));
+const KeysPage = lazyWithRetry(() => import('@/modules/assets/pages/KeysPage'));
+const GiftsPage = lazyWithRetry(() => import('@/modules/assets/pages/GiftsPage'));
+const AssetsReportsPage = lazyWithRetry(() => import('@/modules/assets/pages/AssetsReportsPage'));
+const AssetsSettingsPage = lazyWithRetry(() => import('@/modules/assets/pages/AssetsSettingsPage'));
+const PhoneLinesPage = lazyWithRetry(() => import('@/modules/assets/pages/PhoneLinesPage'));
+const RecommendationsPage = lazyWithRetry(() => import('@/modules/assets/pages/RecommendationsPage'));
+const PublicAssetRedirect = lazyWithRetry(() => import('@/pages/PublicAssetRedirect'));
 
 /**
  * Helper para wrapping consistente de rotas Assets

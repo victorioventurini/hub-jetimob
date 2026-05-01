@@ -6,31 +6,31 @@
  * @see TCR v2.73.0 - Controle de Permissões
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminRoute } from '@/components/auth/AdminRoute';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const SettingsLayout = lazy(() => import('@/components/settings/SettingsLayout').then(m => ({ default: m.SettingsLayout })));
-const SettingsHome = lazy(() => import('@/pages/settings/SettingsHome'));
-const SettingsBusinessUnits = lazy(() => import('@/pages/settings/SettingsBusinessUnits'));
-const SettingsModules = lazy(() => import('@/pages/settings/SettingsModules'));
-const SettingsIntegrations = lazy(() => import('@/pages/settings/SettingsIntegrations'));
-const SettingsUiCatalog = lazy(() => import('@/pages/settings/SettingsUiCatalog'));
-const HubNotifications = lazy(() => import('@/pages/hub/HubNotifications'));
-const JobTitlesPage = lazy(() => import('@/modules/settings/pages/JobTitlesPage'));
-const OkrsSettingsPage = lazy(() => import('@/modules/okrs/pages/OkrsSettingsPage'));
-const AutomationsPage = lazy(() => import('@/modules/automations/pages/AutomationsPage'));
-const GlobalPermissionsPage = lazy(() => import('@/modules/permissions/pages/GlobalPermissionsPage'));
-const GlobalUsersPage = lazy(() => import('@/modules/users-global/pages/GlobalUsersPage'));
-const HubPartnersPage = lazy(() => import('@/pages/settings/HubPartnersPage'));
-const HubPartnerDetailPage = lazy(() => import('@/pages/settings/HubPartnerDetailPage'));
-const CronJobConfigPage = lazy(() => import('@/modules/integrations/pages/CronJobConfigPage'));
-const GlobalIntegrationDetailPage = lazy(() => import('@/modules/integrations/pages/GlobalIntegrationDetailPage'));
-const AgentsListPage = lazy(() => import('@/modules/integrations/pages/AgentsListPage'));
-const AgentFormPage = lazy(() => import('@/modules/integrations/pages/AgentFormPage'));
-const AgentLogsPage = lazy(() => import('@/modules/integrations/pages/AgentLogsPage'));
-const PerfDashboardPage = lazy(() => import('@/modules/integrations/pages/PerfDashboardPage'));
+const SettingsLayout = lazyWithRetry(() => import('@/components/settings/SettingsLayout').then(m => ({ default: m.SettingsLayout })));
+const SettingsHome = lazyWithRetry(() => import('@/pages/settings/SettingsHome'));
+const SettingsBusinessUnits = lazyWithRetry(() => import('@/pages/settings/SettingsBusinessUnits'));
+const SettingsModules = lazyWithRetry(() => import('@/pages/settings/SettingsModules'));
+const SettingsIntegrations = lazyWithRetry(() => import('@/pages/settings/SettingsIntegrations'));
+const SettingsUiCatalog = lazyWithRetry(() => import('@/pages/settings/SettingsUiCatalog'));
+const HubNotifications = lazyWithRetry(() => import('@/pages/hub/HubNotifications'));
+const JobTitlesPage = lazyWithRetry(() => import('@/modules/settings/pages/JobTitlesPage'));
+const OkrsSettingsPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrsSettingsPage'));
+const AutomationsPage = lazyWithRetry(() => import('@/modules/automations/pages/AutomationsPage'));
+const GlobalPermissionsPage = lazyWithRetry(() => import('@/modules/permissions/pages/GlobalPermissionsPage'));
+const GlobalUsersPage = lazyWithRetry(() => import('@/modules/users-global/pages/GlobalUsersPage'));
+const HubPartnersPage = lazyWithRetry(() => import('@/pages/settings/HubPartnersPage'));
+const HubPartnerDetailPage = lazyWithRetry(() => import('@/pages/settings/HubPartnerDetailPage'));
+const CronJobConfigPage = lazyWithRetry(() => import('@/modules/integrations/pages/CronJobConfigPage'));
+const GlobalIntegrationDetailPage = lazyWithRetry(() => import('@/modules/integrations/pages/GlobalIntegrationDetailPage'));
+const AgentsListPage = lazyWithRetry(() => import('@/modules/integrations/pages/AgentsListPage'));
+const AgentFormPage = lazyWithRetry(() => import('@/modules/integrations/pages/AgentFormPage'));
+const AgentLogsPage = lazyWithRetry(() => import('@/modules/integrations/pages/AgentLogsPage'));
+const PerfDashboardPage = lazyWithRetry(() => import('@/modules/integrations/pages/PerfDashboardPage'));
 
 /**
  * Helper para wrapping consistente de rotas Hub

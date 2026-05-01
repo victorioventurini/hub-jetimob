@@ -5,16 +5,16 @@
  * @see TCR v2.73.0 - Módulo Teams
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const TeamsPage = lazy(() => import('@/modules/teams/pages/TeamsPage'));
-const TeamDetailPage = lazy(() => import('@/modules/teams/pages/TeamDetailPage'));
-const SquadDetailPage = lazy(() => import('@/modules/teams/pages/SquadDetailPage'));
-const OrganogramPage = lazy(() => import('@/modules/teams/pages/OrganogramPage'));
+const TeamsPage = lazyWithRetry(() => import('@/modules/teams/pages/TeamsPage'));
+const TeamDetailPage = lazyWithRetry(() => import('@/modules/teams/pages/TeamDetailPage'));
+const SquadDetailPage = lazyWithRetry(() => import('@/modules/teams/pages/SquadDetailPage'));
+const OrganogramPage = lazyWithRetry(() => import('@/modules/teams/pages/OrganogramPage'));
 
 /**
  * Helper para wrapping consistente de rotas Teams

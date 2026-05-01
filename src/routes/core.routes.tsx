@@ -5,30 +5,30 @@
  * @see TCR v2.73.0
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const Index = lazy(() => import('@/pages/Index'));
-const ExternalDashboardPage = lazy(() => import('@/pages/ExternalDashboard'));
-const Users = lazy(() => import('@/pages/Users'));
-const UserProfile = lazy(() => import('@/pages/UserProfile'));
-const Profile = lazy(() => import('@/pages/Profile'));
-const Modules = lazy(() => import('@/pages/Modules'));
-const SelectBu = lazy(() => import('@/pages/SelectBu'));
-const Onboarding = lazy(() => import('@/pages/Onboarding'));
-const VicTestPage = lazy(() => import('@/pages/VicTestPage'));
-const DevDocsPage = lazy(() => import('@/pages/DevDocsPage'));
-const NotificationsPage = lazy(() => import('@/pages/me/NotificationsPage'));
-const ResolveContextPage = lazy(() => import('@/pages/ResolveContextPage'));
-const BuManagementPage = lazy(() => import('@/modules/bu/pages/BuManagementPage'));
-const KpiDashboardPage = lazy(() => import('@/modules/kpis/pages/KpiDashboardPage'));
-const KpiEvolutionPage = lazy(() => import('@/modules/kpis/pages/KpiEvolutionPage'));
-const KpiDetailPage = lazy(() => import('@/modules/kpis/pages/KpiDetailPage'));
-const PartnerContactProfilePage = lazy(() => import('@/modules/tickets/pages/PartnerContactProfilePage'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
+const Index = lazyWithRetry(() => import('@/pages/Index'));
+const ExternalDashboardPage = lazyWithRetry(() => import('@/pages/ExternalDashboard'));
+const Users = lazyWithRetry(() => import('@/pages/Users'));
+const UserProfile = lazyWithRetry(() => import('@/pages/UserProfile'));
+const Profile = lazyWithRetry(() => import('@/pages/Profile'));
+const Modules = lazyWithRetry(() => import('@/pages/Modules'));
+const SelectBu = lazyWithRetry(() => import('@/pages/SelectBu'));
+const Onboarding = lazyWithRetry(() => import('@/pages/Onboarding'));
+const VicTestPage = lazyWithRetry(() => import('@/pages/VicTestPage'));
+const DevDocsPage = lazyWithRetry(() => import('@/pages/DevDocsPage'));
+const NotificationsPage = lazyWithRetry(() => import('@/pages/me/NotificationsPage'));
+const ResolveContextPage = lazyWithRetry(() => import('@/pages/ResolveContextPage'));
+const BuManagementPage = lazyWithRetry(() => import('@/modules/bu/pages/BuManagementPage'));
+const KpiDashboardPage = lazyWithRetry(() => import('@/modules/kpis/pages/KpiDashboardPage'));
+const KpiEvolutionPage = lazyWithRetry(() => import('@/modules/kpis/pages/KpiEvolutionPage'));
+const KpiDetailPage = lazyWithRetry(() => import('@/modules/kpis/pages/KpiDetailPage'));
+const PartnerContactProfilePage = lazyWithRetry(() => import('@/modules/tickets/pages/PartnerContactProfilePage'));
+const NotFound = lazyWithRetry(() => import('@/pages/NotFound'));
 
 export const coreRoutes = (
   <>

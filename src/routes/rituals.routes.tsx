@@ -6,7 +6,6 @@
  * @see TCR v3.22.0
  */
 
-import { lazy } from 'react';
 import { Route, Navigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
@@ -14,23 +13,24 @@ import { BuAdminRoute } from '@/components/auth/BuAdminRoute';
 import { CLevelRitualRoute } from '@/components/auth/CLevelRitualRoute';
 import { WeeklyRitualRoute } from '@/components/auth/WeeklyRitualRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
 // Ritual pages
-const WizardsPage = lazy(() => import('@/pages/Wizards'));
-const CollaboratorCheckinPage = lazy(() => import('@/modules/okrs/pages/CollaboratorCheckinPage'));
-const LeaderPrepPage = lazy(() => import('@/modules/okrs/pages/LeaderPrepPage'));
-const TeamCheckinPage = lazy(() => import('@/modules/okrs/pages/TeamCheckinPage'));
+const WizardsPage = lazyWithRetry(() => import('@/pages/Wizards'));
+const CollaboratorCheckinPage = lazyWithRetry(() => import('@/modules/okrs/pages/CollaboratorCheckinPage'));
+const LeaderPrepPage = lazyWithRetry(() => import('@/modules/okrs/pages/LeaderPrepPage'));
+const TeamCheckinPage = lazyWithRetry(() => import('@/modules/okrs/pages/TeamCheckinPage'));
 // CLevelCheckinPage removido do roteamento — rito 'clevel-checkin' descontinuado.
-const MbrPage = lazy(() => import('@/modules/okrs/pages/MbrPage'));
-const MbrPrePage = lazy(() => import('@/modules/okrs/pages/MbrPrePage'));
-const QbrPrePage = lazy(() => import('@/modules/okrs/pages/QbrPrePage'));
-const QbrPreCLevelPage = lazy(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
-const QbrMeetingPage = lazy(() => import('@/modules/okrs/pages/QbrMeetingPage'));
-const QbrPostPage = lazy(() => import('@/modules/okrs/pages/QbrPostPage'));
-const RitualHistoryPage = lazy(() => import('@/modules/okrs/pages/RitualHistoryPage'));
-const PreWeeklyPage = lazy(() => import('@/modules/okrs/pages/PreWeeklyPage'));
-const WeeklyPage = lazy(() => import('@/modules/okrs/pages/WeeklyPage'));
-const DecisionsPage = lazy(() => import('@/modules/okrs/pages/DecisionsPage'));
+const MbrPage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrPage'));
+const MbrPrePage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrPrePage'));
+const QbrPrePage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPrePage'));
+const QbrPreCLevelPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
+const QbrMeetingPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrMeetingPage'));
+const QbrPostPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPostPage'));
+const RitualHistoryPage = lazyWithRetry(() => import('@/modules/okrs/pages/RitualHistoryPage'));
+const PreWeeklyPage = lazyWithRetry(() => import('@/modules/okrs/pages/PreWeeklyPage'));
+const WeeklyPage = lazyWithRetry(() => import('@/modules/okrs/pages/WeeklyPage'));
+const DecisionsPage = lazyWithRetry(() => import('@/modules/okrs/pages/DecisionsPage'));
 
 /**
  * Wrapper padrão para rotas de rituais

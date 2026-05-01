@@ -5,7 +5,6 @@
  * @see TCR v2.73.0 - Módulo OKRs
  */
 
-import { lazy } from 'react';
 import { Route, Navigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
@@ -14,16 +13,16 @@ import { ModuleRoute } from '@/components/auth/ModuleRoute';
 import { TeamOkrCreationRoute } from '@/components/auth/TeamOkrCreationRoute';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const OkrsPage = lazy(() => import('@/modules/okrs/pages/OkrsPage'));
-const OkrDashboardPage = lazy(() => import('@/modules/okrs/pages/OkrDashboardPage'));
-const ExecutiveDashboardPage = lazy(() => import('@/modules/okrs/pages/ExecutiveDashboardPage'));
-const ExecutiveQuarterReviewPage = lazy(() => import('@/modules/okrs/pages/ExecutiveQuarterReviewPage'));
-const OrgViewListPage = lazy(() => import('@/modules/okrs/pages/OrgViewListPage'));
-const OrgObjectiveViewPage = lazy(() => import('@/modules/okrs/pages/OrgObjectiveViewPage'));
-const TeamContributionPage = lazy(() => import('@/modules/okrs/pages/TeamContributionPage'));
-const CycleCheckinsPage = lazy(() => import('@/modules/okrs/pages/CycleCheckinsPage'));
-const OkrCreationPage = lazy(() => import('@/modules/okrs/pages/OkrCreationPage'));
-const TeamKrCreationPage = lazy(() => import('@/modules/okrs/pages/TeamKrCreationPage'));
+const OkrsPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrsPage'));
+const OkrDashboardPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrDashboardPage'));
+const ExecutiveDashboardPage = lazyWithRetry(() => import('@/modules/okrs/pages/ExecutiveDashboardPage'));
+const ExecutiveQuarterReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/ExecutiveQuarterReviewPage'));
+const OrgViewListPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgViewListPage'));
+const OrgObjectiveViewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgObjectiveViewPage'));
+const TeamContributionPage = lazyWithRetry(() => import('@/modules/okrs/pages/TeamContributionPage'));
+const CycleCheckinsPage = lazyWithRetry(() => import('@/modules/okrs/pages/CycleCheckinsPage'));
+const OkrCreationPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrCreationPage'));
+const TeamKrCreationPage = lazyWithRetry(() => import('@/modules/okrs/pages/TeamKrCreationPage'));
 const OkrQualityPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrQualityPage'));
 const OkrConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrConstructionReviewPage'));
 const OrgConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgConstructionReviewPage'));
