@@ -1,41 +1,80 @@
 ## Objetivo
-Tornar o campo **"Tipo do input"** (Consolidado / Parcial) do SSOT `KpiValueEntryForm` uma escolha **explícita e obrigatória** do usuário — sem pré-seleção e sem auto-sugestão silenciosa baseada em frequência/data.
+No `?step=initiatives` do Collaborator Check-in, quando não houver iniciativas vinculadas:
+1. Exibir o **EmptyState canônico** centralizado verticalmente no meio da área de conteúdo.
+2. Manter o **footer padrão** do wizard com **Voltar / Pular / Continuar** (mesmo padrão dos outros steps — print enviado pelo usuário).
 
 ## Análise (pré-checklist)
-- SSOT: `src/modules/kpis/components/shared/KpiValueEntryForm.tsx` (consumido por `AddKpiValueDialog`, `EditKpiValueDialog`, `CollaboratorKpiStep`).
-- Schema: `src/modules/kpis/components/shared/kpiValueEntrySchema.ts` — hoje `input_type: z.enum(['consolidated', 'partial'])` aceita undefined porque o form sempre injeta um default.
-- Hoje o form pré-popula `input_type` via `suggestInputType()` no mount e re-aplica a cada mudança de `reference_date` (linhas 106-134). Isso viola o requisito do usuário.
-- Memória `kpi-value-entry-ssot.md` exige `input_type` SEMPRE no insert — mantido (validação Zod garante).
+- **Arquivo**: `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx` (linhas 184-212 — branch de empty state).
+- **Hoje**: renderiza layout custom (`flex flex-col h-full` + ícone + título + descrição + botão "Continuar para reflexão") e um footer custom só com "Voltar". Quebra o padrão visual e duplica markup do EmptyState.
+- **SSOT existentes (não duplicar)**:
+  - `EmptyState` em `src/components/ui/empty-state.tsx` — já provê ícone redondo, título, descrição centralizados.
+  - `WizardStepScaffold` + `WizardStepHeader` + `WizardStepFooter` (já usados em `CollaboratorProjectsStep` linhas 286-309) — provê o footer canônico Voltar/Pular/Continuar do print.
+- **Observação adicional**: o branch principal (com iniciativas) deste step **também** monta layout próprio (`flex flex-col h-full` + header/footer manuais nas linhas 214-331). Está fora do escopo deste pedido (usuário pediu só o empty state). Não vou refatorar o branch com dados — apenas alinhar o empty state ao padrão.
 
 ## Mudanças (apenas frontend / presentation)
 
-### 1. `kpiValueEntrySchema.ts`
-Tornar a validação explicitamente obrigatória com mensagem amigável:
+### Arquivo único: `CollaboratorInitiativesStep.tsx`
+
+**1. Imports** — adicionar:
 ```ts
-input_type: z.enum(['consolidated', 'partial'], {
-  required_error: 'Selecione o tipo do input',
-  invalid_type_error: 'Selecione o tipo do input',
-}),
+import { EmptyState } from '@/components/ui/empty-state';
+import { WizardStepScaffold } from '../shared/WizardStepScaffold'; // mesmo path usado em CollaboratorProjectsStep
+import { WizardStepHeader } from '../shared/WizardStepHeader';
+import { WizardStepFooter } from '../shared/WizardStepFooter';
+```
+(Confirmar paths exatos durante implementação consultando os imports de `CollaboratorProjectsStep.tsx`.)
+
+**2. Substituir o bloco do empty state (linhas 184-212)** por:
+```tsx
+if (initiatives.length === 0) {
+  return (
+    <WizardStepScaffold
+      header={
+        <WizardStepHeader
+          icon={ClipboardList}
+          title="Iniciativas vinculadas"
+          tooltip="collaborator-initiatives"
+          description="Revise as iniciativas e marque as que precisam de atenção"
+          variant="purple"  /* alinhar ao tom usado no step quando houver dados; ajustar para o variant atualmente usado */
+        />
+      }
+      footer={
+        <WizardStepFooter
+          showBack
+          onBack={onBack}
+          primaryLabel="Continuar"
+          onPrimary={() => onContinue([])}
+          showSkip
+          skipLabel="Pular"
+          onSkip={onSkip}
+        />
+      }
+    >
+      <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+        <EmptyState
+          icon={ClipboardList}
+          title="Nenhuma iniciativa vinculada"
+          description="Você não possui iniciativas vinculadas aos seus KRs. Iniciativas são opcionais — você pode pular ou avançar."
+        />
+      </div>
+    </WizardStepScaffold>
+  );
+}
 ```
 
-### 2. `KpiValueEntryForm.tsx`
-- **Default vazio**: `input_type: undefined` no `defaultValues` (cast `as unknown as KpiInputType` para satisfazer o TS sem alterar o tipo público).
-- **Remover auto-sugestão no mount**: deletar `defaultInputType`/`suggestInputType` no `useMemo` inicial.
-- **Remover re-sugestão no change de data**: deletar o `useEffect` que faz `form.setValue('input_type', suggestion)` (linhas 124-134). A data continua livre; o usuário escolhe o tipo.
-- **Manter** o banner explicativo "consolida X mas atualiza Y" (apenas informativo).
-- **Asterisco obrigatório** no label: `<FormLabel>Tipo do input <span className="text-destructive">*</span></FormLabel>`.
-- `onInputTypeChange` continua sendo disparado, mas só quando o usuário efetivamente escolher (consumidores já tratam `undefined`/valor).
+**Notas de implementação:**
+- `EmptyState` já centraliza horizontalmente; o wrapper `flex-1 flex items-center justify-center` garante o centro vertical do conteúdo, conforme pedido.
+- O footer canônico é **idêntico** ao usado em `CollaboratorProjectsStep` — Voltar à esquerda, Pular + Continuar à direita (matches o print).
+- **Sem CTA dentro do EmptyState**: as 3 ações (Voltar/Pular/Continuar) já estão no footer; evita botão duplicado.
+- `onContinue([])` preserva o contrato (`markedAtRisk` vazio quando não há iniciativas).
+- Ícone, título e descrição mantêm a mensagem original ("opcional"), apenas re-roteada ao componente canônico.
 
-### 3. Consumidores — verificação
-- `AddKpiValueDialog`, `EditKpiValueDialog`, `CollaboratorKpiStep`: nenhum altera default de `input_type`; todos confiam no schema. **Nenhuma mudança necessária**.
-- `EditKpiValueDialog`: edição de valor existente continua hidratando com o `input_type` salvo (já é o comportamento via `defaultValues` do consumidor) — confirmar leitura no arquivo durante a implementação para garantir que a hidratação não quebre.
-
-## Impacto
-- Aplica-se uniformemente a: modal `/kpis` (Add/Edit) e rito Colaborador (`?step=kpis`).
-- Sem mudanças de schema DB, RLS ou edge functions.
-- Sem alteração no payload final (`input_type` continua obrigatório no insert via Zod).
+## Fora de escopo
+- Não vou refatorar o branch com iniciativas (linhas 214-345) para usar o `WizardStepScaffold`. Pode ser um follow-up de hygiene em outra task — o usuário pediu especificamente o empty state.
+- Sem mudanças em schema, RLS, edge functions ou lógica de dados.
 
 ## Validação
-- Submit sem escolher → erro "Selecione o tipo do input" abaixo do RadioGroup.
-- Mudar data não altera mais a seleção do usuário.
-- Edição de valor existente preserva o `input_type` original.
+- Rota `/rituals/collaborator-checkin?step=initiatives` quando o usuário não tem iniciativas vinculadas:
+  - EmptyState centralizado vertical+horizontal no meio da tela.
+  - Footer com Voltar (esquerda) + Pular + Continuar (direita), igual aos outros steps.
+- Quando houver iniciativas, comportamento permanece idêntico ao atual.
