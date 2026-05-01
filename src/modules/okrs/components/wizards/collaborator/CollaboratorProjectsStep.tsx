@@ -316,6 +316,16 @@ export function CollaboratorProjectsStep({
           onSkip={onSkip}
         />
       }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep={AGENDA_SOURCE_STEP}
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
+      }
     >
       <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
         {isLoading ? (
