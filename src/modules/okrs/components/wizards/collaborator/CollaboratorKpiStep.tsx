@@ -212,7 +212,10 @@ export function CollaboratorKpiStep({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <KpiNameLink kpiId={kpi.id} name={kpi.name} className="font-medium text-base" />
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <Badge variant="outline" className="text-xs font-medium">
+                {INDICATOR_TYPE_LABELS[kpi.indicator_type]}
+              </Badge>
               <Badge variant="secondary" className={cn('text-xs', ragConfig.className)}>
                 <RagIcon className="h-3 w-3 mr-1" />
                 {ragConfig.label}
