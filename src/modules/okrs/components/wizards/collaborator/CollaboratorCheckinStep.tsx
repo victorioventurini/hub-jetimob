@@ -285,19 +285,8 @@ export function CollaboratorCheckinStep({
           />
         </div>
 
-        {/* Linked initiatives & projects */}
-        <KrLinkedDetails krId={kr.id} defaultExpanded />
-        {insights.length > 0 && (
-          <div className="space-y-2">
-            {insights.filter(i => !i.dismissed).slice(0, 1).map(insight => (
-              <VicInsightCard
-                key={insight.id}
-                insight={insight}
-                onDismiss={dismissInsight}
-              />
-            ))}
-          </div>
-        )}
+
+
 
         <Separator />
 
