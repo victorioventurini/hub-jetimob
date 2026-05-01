@@ -6,7 +6,7 @@
  * v2.87: Migrado para useKpisForWizardV2 (inclui contribuidores de dados)
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -160,17 +160,6 @@ export default function CollaboratorCheckinPage() {
   
   const hasKrStep = !!(userKrs && userKrs.length > 0);
   
-  // Dynamic steps: omit 'checkin' when no KRs available
-  const visibleSteps = useMemo(() => {
-    if (hasKrStep) return WIZARD_STEPS;
-    return WIZARD_STEPS.filter(s => s.id !== 'checkin');
-  }, [hasKrStep]);
-  
-  const visibleStepOrder = useMemo(() => {
-    if (hasKrStep) return STEP_ORDER;
-    return STEP_ORDER.filter(s => s !== 'checkin');
-  }, [hasKrStep]);
-  
   // Fetch user KPIs (fail-safe) - v2.87: usando V2 para incluir contribuidores
   const { 
     kpisToUpdate: userKpis, 
@@ -179,6 +168,31 @@ export default function CollaboratorCheckinPage() {
     userId: effectiveUserId || undefined,
     scope: 'collaborator',
   });
+
+  const hasKpiStep = !!(userKpis && userKpis.length > 0);
+
+  // Dynamic steps: omit steps without data (KRs, KPIs).
+  // Centralizar regra evita loops de back/forward causados por auto-skip
+  // dentro dos componentes de step.
+  const visibleSteps = useMemo(
+    () =>
+      WIZARD_STEPS.filter(s => {
+        if (s.id === 'checkin' && !hasKrStep) return false;
+        if (s.id === 'kpis' && !hasKpiStep) return false;
+        return true;
+      }),
+    [hasKrStep, hasKpiStep],
+  );
+
+  const visibleStepOrder = useMemo(
+    () =>
+      STEP_ORDER.filter(s => {
+        if (s === 'checkin' && !hasKrStep) return false;
+        if (s === 'kpis' && !hasKpiStep) return false;
+        return true;
+      }),
+    [hasKrStep, hasKpiStep],
+  );
   
   // v2.87: Mutation silenciosa para KPI (fail-safe, sem toast de erro)
   const supabase = buSupabase;
@@ -255,7 +269,17 @@ export default function CollaboratorCheckinPage() {
       setStep(visibleStepOrder[currentIdx - 1]);
     }
   }, [draft.currentStep, setStep, visibleStepOrder]);
-  
+
+  // Auto-correct: se o step atual saiu do visibleStepOrder (dados chegaram
+  // depois e removeram 'kpis'/'checkin', ou URL ?step= aponta para step
+  // indisponível), reposiciona via efeito — nunca durante render.
+  useEffect(() => {
+    if (visibleStepOrder.length === 0) return;
+    if (!visibleStepOrder.includes(draft.currentStep)) {
+      setStep(visibleStepOrder[0]);
+    }
+  }, [visibleStepOrder, draft.currentStep, setStep]);
+
   // Handlers
   // handleClose is a no-op: FullPageWizardShell handles navigation.
   // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
@@ -321,10 +345,12 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
-      case 'checkin':
+      case 'checkin': {
         const currentKr = krs[draft.data.currentKrIndex];
         if (!currentKr) {
-          goNext();
+          // Sem KR no índice atual: nada a renderizar.
+          // O auto-correct effect cuidará de mover o usuário para um step
+          // válido caso 'checkin' não esteja em visibleStepOrder.
           return null;
         }
         return (
@@ -363,15 +389,17 @@ export default function CollaboratorCheckinPage() {
             }}
           />
         );
-        
-      case 'kpis':
+      }
+
+      case 'kpis': {
         // v2.87: KPIs agora são do tipo KpiForWizardV2
         const currentKpi = kpis[draft.data.currentKpiIndex] as KpiForWizardV2 | undefined;
         if (!currentKpi || kpis.length === 0) {
-          goNext();
+          // Sem KPI: nada a renderizar. visibleStepOrder remove 'kpis'
+          // quando vazio; o auto-correct effect reposiciona o usuário.
           return null;
         }
-        
+
         // Adapter para manter compatibilidade com CollaboratorKpiStep
         const kpiForStep = {
           ...currentKpi,
@@ -433,7 +461,8 @@ export default function CollaboratorCheckinPage() {
             }}
           />
         );
-        
+      }
+
       case 'projects':
         return (
           <CollaboratorProjectsStep
