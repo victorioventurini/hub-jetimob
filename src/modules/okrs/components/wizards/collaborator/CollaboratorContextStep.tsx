@@ -22,7 +22,7 @@ import { RitualGreeting } from '../shared/RitualGreeting';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
-import { CollaboratorSnapshot } from './CollaboratorSnapshot';
+import { CollaboratorWeekActivity } from './CollaboratorWeekActivity';
 import { CollaboratorCheckinTrail, computeTrailEta } from './CollaboratorCheckinTrail';
 import { STEP_ORDER, type WizardStep } from './wizardSteps';
 import {
@@ -244,17 +244,11 @@ export function CollaboratorContextStep({
           </div>
         ) : (
           <>
-            <CollaboratorSnapshot
-              krsTotal={stats.krsTotal}
-              krsOnTrack={stats.krsOnTrack}
-              kpisTotal={stats.kpisTotal}
-              kpisUpdated={stats.kpisUpdated}
-              projectsTotal={signals.projectsTotal}
-              projectsHealthy={signals.projectsHealthy}
-              initiativesTotal={initiativesSignal.initiativesTotal}
-              initiativesOnTrack={initiativesSignal.initiativesOnTrack}
-              openBlocksCount={signals.openBlocksCount}
-              avgConfidence={null}
+            <CollaboratorWeekActivity
+              effectiveUserId={effectiveUserId}
+              cycleId={cycleId}
+              krs={krs}
+              kpisToUpdate={kpisToUpdate}
             />
 
             <CollaboratorCheckinTrail steps={trailSteps} />
