@@ -26,7 +26,7 @@ import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { EmptyState } from '@/components/ui/empty-state';
-import { InitiativesSummary } from '../shared/InitiativesSummary';
+import { InitiativeCard } from '@/modules/okrs/components/initiatives/InitiativeCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
@@ -83,7 +83,6 @@ export function CollaboratorInitiativesStep({
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
-  const [markedAtRisk, setMarkedAtRisk] = useState<string[]>([]);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
   // KR titles vindos do array `krs` (enriquecimento de exibição).
@@ -234,18 +233,10 @@ export function CollaboratorInitiativesStep({
     return { total, blocked, overdue, needsAttention: blocked + overdue };
   }, [initiatives]);
 
-  // Handle mark at risk
-  const handleMarkAtRisk = (initiativeId: string, atRisk: boolean) => {
-    setMarkedAtRisk(prev => 
-      atRisk 
-        ? [...prev, initiativeId]
-        : prev.filter(id => id !== initiativeId)
-    );
-  };
-
-  // Handle continue
+  // Handle continue (markedAtRisk descontinuado — UI de iniciativas usa
+  // padrão canônico InitiativeCard sem marcação/comentário inline).
   const handleContinue = () => {
-    onContinue(markedAtRisk);
+    onContinue([]);
   };
 
   if (isLoading) {
@@ -364,16 +355,19 @@ export function CollaboratorInitiativesStep({
                   </Badge>
                 </div>
                 
-                <InitiativesSummary
-                  initiatives={krInitiatives}
-                  markedAtRisk={markedAtRisk}
-                  onMarkAtRisk={handleMarkAtRisk}
-                  editable
-                  onEdit={(init) => setEditingInitiative(init)}
-                  canEdit={(init) =>
-                    !!effectiveUserId && init.owner_user_id === effectiveUserId
-                  }
-                />
+                <div className="space-y-3">
+                  {krInitiatives.map((init) => {
+                    const canEditThis =
+                      !!effectiveUserId && init.owner_user_id === effectiveUserId;
+                    return (
+                      <InitiativeCard
+                        key={init.id}
+                        initiative={init}
+                        onQuickUpdate={canEditThis ? (i) => setEditingInitiative(i) : undefined}
+                      />
+                    );
+                  })}
+                </div>
 
                 {/* Projects linked to this KR */}
                 {krProjects.length > 0 && (
@@ -431,11 +425,6 @@ export function CollaboratorInitiativesStep({
 
           <Button onClick={handleContinue} className="flex-1">
             Continuar
-            {markedAtRisk.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {markedAtRisk.length} sinalizadas
-              </Badge>
-            )}
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
