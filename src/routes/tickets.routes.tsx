@@ -5,17 +5,17 @@
  * @see TCR v2.73.0 - Módulo Tickets
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const TicketsPage = lazy(() => import('@/modules/tickets/pages/TicketsPage'));
-const TicketsListPage = lazy(() => import('@/modules/tickets/pages/TicketsListPage'));
-const CreateTicketPage = lazy(() => import('@/modules/tickets/pages/CreateTicketPage'));
-const TicketDetailPage = lazy(() => import('@/modules/tickets/pages/TicketDetailPage'));
-const TicketsSettingsPage = lazy(() => import('@/modules/tickets/pages/TicketsSettingsPage'));
+const TicketsPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketsPage'));
+const TicketsListPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketsListPage'));
+const CreateTicketPage = lazyWithRetry(() => import('@/modules/tickets/pages/CreateTicketPage'));
+const TicketDetailPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketDetailPage'));
+const TicketsSettingsPage = lazyWithRetry(() => import('@/modules/tickets/pages/TicketsSettingsPage'));
 
 /**
  * Helper para wrapping consistente de rotas Tickets

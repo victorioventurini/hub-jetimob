@@ -3,19 +3,20 @@
  *
  * Rotas do módulo Análise Estratégica - requerem BU e módulo 'analysis' ativo.
  */
-import { lazy } from "react";
+
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { BuRequiredRoute } from "@/components/auth/BuRequiredRoute";
 import { ModuleRoute } from "@/components/auth/ModuleRoute";
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const AnalysisHomePage = lazy(
+const AnalysisHomePage = lazyWithRetry(
   () => import("@/modules/analysis/pages/AnalysisHomePage")
 );
-const AnalysisResultPage = lazy(
+const AnalysisResultPage = lazyWithRetry(
   () => import("@/modules/analysis/pages/AnalysisResultPage")
 );
-const AnalysisTemplatesPage = lazy(
+const AnalysisTemplatesPage = lazyWithRetry(
   () => import("@/modules/analysis/pages/AnalysisTemplatesPage")
 );
 

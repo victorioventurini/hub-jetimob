@@ -5,14 +5,14 @@
  * @see TCR v2.73.0 - Seção A.1 PRE-BU vs POST-BU
  */
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import Auth from '@/pages/Auth';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const AuthCallback = lazy(() => import('@/pages/AuthCallback'));
-const AuthConfirm = lazy(() => import('@/pages/AuthConfirm'));
-const PublicAsset = lazy(() => import('@/pages/PublicAsset'));
-const EventsCapturePage = lazy(() => import('@/modules/events/pages/EventsCapturePage'));
+const AuthCallback = lazyWithRetry(() => import('@/pages/AuthCallback'));
+const AuthConfirm = lazyWithRetry(() => import('@/pages/AuthConfirm'));
+const PublicAsset = lazyWithRetry(() => import('@/pages/PublicAsset'));
+const EventsCapturePage = lazyWithRetry(() => import('@/modules/events/pages/EventsCapturePage'));
 
 export const publicRoutes = (
   <>
