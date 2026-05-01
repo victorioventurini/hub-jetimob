@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -41,9 +42,18 @@ import type { ProjectHealth } from '@/modules/projects/types';
 // ============================================================
 
 export interface CollaboratorInitiativesStepProps {
+  /**
+   * KRs do colaborador (vindos de useUserKrsForWizard) — usados apenas para
+   * enriquecer a exibição (ex.: badges/projetos vinculados). A lista de
+   * iniciativas exibida é independente e centrada no usuário (owner OR
+   * contributor) no ciclo ativo. Ver TCR §4.8 — Collaborator Check-in /
+   * Filtro de Iniciativas do Step.
+   */
   krs: WizardKr[];
   /** Profile id efetivo do colaborador — usado para gating row-aware. */
   effectiveUserId: string | null;
+  /** Ciclo trimestral ativo — limita a busca de iniciativas. */
+  cycleId: string | null;
   onContinue: (markedAtRisk: string[]) => void;
   onBack: () => void;
   onSkip: () => void;
@@ -56,36 +66,67 @@ export interface CollaboratorInitiativesStepProps {
 export function CollaboratorInitiativesStep({
   krs,
   effectiveUserId,
+  cycleId,
   onContinue,
   onBack,
   onSkip,
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
   const [markedAtRisk, setMarkedAtRisk] = useState<string[]>([]);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
-  // Get KR IDs
-  const krIds = useMemo(() => krs.map(kr => kr.id), [krs]);
+  // KR titles vindos do array `krs` (enriquecimento de exibição).
+  // A lista de iniciativas é centrada no usuário (ver query abaixo).
+  const krTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const kr of krs) map.set(kr.id, kr.title);
+    return map;
+  }, [krs]);
 
-  // Fetch initiatives for all KRs
+  // Fetch initiatives centered on the collaborator (owner OR contributor)
+  // for the active cycle. KRs são derivados das iniciativas retornadas.
+  // Ver TCR §4.8 — Collaborator Check-in / Filtro de Iniciativas do Step.
   const { data: initiatives = [], isLoading } = useQuery({
-    queryKey: queryKeys.okrs.initiativesByKrs(krIds),
+    queryKey: queryKeys.okrs.initiativesForCollaborator(currentBuId, cycleId, effectiveUserId),
     queryFn: async () => {
-      if (krIds.length === 0) return [];
+      if (!effectiveUserId || !cycleId) return [];
 
       const { data, error } = await supabase
         .from('okr_initiatives')
-        .select('id, name, description, kr_id, owner_user_id, status, priority, start_date, expected_end_date, progress, notes, updated_at')
-        .in('kr_id', krIds)
+        .select(`
+          id, name, description, kr_id, owner_user_id, status, priority,
+          start_date, expected_end_date, progress, notes, contributors, updated_at,
+          kr:okr_team_key_results!inner (
+            id,
+            title,
+            team_objective:okr_team_objectives!inner (
+              id,
+              cycle_id,
+              cancelled_at,
+              deleted_at
+            )
+          )
+        `)
+        .or(`owner_user_id.eq.${effectiveUserId},contributors.cs.{${effectiveUserId}}`)
+        .eq('kr.team_objective.cycle_id', cycleId)
+        .is('kr.team_objective.cancelled_at', null)
+        .is('kr.team_objective.deleted_at', null)
         .is('deleted_at', null)
         .is('cancelled_at', null)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      return data as Initiative[];
+      return (data ?? []) as unknown as Array<Initiative & { kr?: { id: string; title: string } | null }>;
     },
-    enabled: krIds.length > 0,
+    enabled: !!effectiveUserId && !!cycleId,
   });
+
+  // KR IDs derivados das iniciativas efetivamente retornadas
+  const krIds = useMemo(
+    () => Array.from(new Set(initiatives.map(i => i.kr_id))),
+    [initiatives],
+  );
 
   // Fetch projects linked to KRs
   const { data: projectsByKrData = [] } = useQuery({
@@ -137,16 +178,23 @@ export function CollaboratorInitiativesStep({
     return grouped;
   }, [projectsByKrData]);
 
-  // Group initiatives by KR
-  const initiativesByKr = useMemo(() => {
+  // Group initiatives by KR + capture KR titles from the join (fallback when
+  // the KR isn't present in the `krs` prop, e.g. when the user is only a
+  // contributor of the initiative).
+  const { initiativesByKr, krTitleResolved } = useMemo(() => {
     const grouped = new Map<string, Initiative[]>();
+    const titles = new Map<string, string>(krTitleById);
     for (const init of initiatives) {
       const existing = grouped.get(init.kr_id) || [];
       existing.push(init);
       grouped.set(init.kr_id, existing);
+      const joinedTitle = (init as any).kr?.title as string | undefined;
+      if (joinedTitle && !titles.has(init.kr_id)) {
+        titles.set(init.kr_id, joinedTitle);
+      }
     }
-    return grouped;
-  }, [initiatives]);
+    return { initiativesByKr: grouped, krTitleResolved: titles };
+  }, [initiatives, krTitleById]);
 
   // Stats
   const stats = useMemo(() => {
@@ -257,17 +305,23 @@ export function CollaboratorInitiativesStep({
             </div>
           </div>
 
-          {/* Initiatives by KR */}
-          {krs.map(kr => {
-            const krInitiatives = initiativesByKr.get(kr.id) || [];
-            const krProjects = projectsByKr.get(kr.id) || [];
+          {/* Initiatives by KR — itera sobre os KRs efetivamente presentes
+              nas iniciativas do colaborador (e não sobre `krs` da prop). */}
+          {Array.from(initiativesByKr.keys())
+            .sort((a, b) =>
+              (krTitleResolved.get(a) ?? '').localeCompare(krTitleResolved.get(b) ?? '')
+            )
+            .map(krId => {
+            const krInitiatives = initiativesByKr.get(krId) || [];
+            const krProjects = projectsByKr.get(krId) || [];
+            const krTitle = krTitleResolved.get(krId) ?? 'KR';
             if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
-              <div key={kr.id} className="space-y-3">
+              <div key={krId} className="space-y-3">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-medium text-muted-foreground">
-                    {kr.title}
+                    {krTitle}
                   </h4>
                   <Badge variant="outline" className="text-xs">
                     {krInitiatives.length}
@@ -346,9 +400,9 @@ export function CollaboratorInitiativesStep({
         initiative={editingInitiative}
         krContext={(() => {
           if (!editingInitiative) return undefined;
-          const kr = krs.find(k => k.id === editingInitiative.kr_id);
-          if (!kr) return undefined;
-          return { id: kr.id, title: kr.title };
+          const title = krTitleResolved.get(editingInitiative.kr_id);
+          if (!title) return undefined;
+          return { id: editingInitiative.kr_id, title };
         })()}
       />
     </div>

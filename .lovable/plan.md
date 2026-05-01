@@ -1,88 +1,102 @@
-# Bug: Botão "Voltar" em Projects não funciona
+## Problema
 
-## Pré-checklist (TCR + docs canônicos)
+No step **Iniciativas** do `/rituals/collaborator-checkin`, o usuário `4e5985d2…` vê o empty state, mesmo possuindo **9 iniciativas no ciclo ativo (Q2 2026)**.
 
-- Lido: `CollaboratorCheckinPage.tsx`, `CollaboratorProjectsStep.tsx`, `CollaboratorKpiStep.tsx`.
-- Memórias relevantes: `mem://standards/no-render-side-effects`, `mem://features/rituals/collaborator-checkin-pending-items-step`.
-- Sem duplicação: a correção é na orquestração (`visibleStepOrder`) e na remoção de side-effects de render. Reaproveita os componentes existentes.
+### Causa raiz
 
-## Diagnóstico
+`CollaboratorInitiativesStep` busca iniciativas via `kr_id IN krIds`, com `krIds` derivados do array `krs` (vindo de `useUserKrsForWizard`). Hoje:
 
-`STEP_ORDER = ['context','kpis','projects','initiatives','checkin','decisions','reflection','summary']`.
+- `useUserKrsForWizard` traz KRs onde o usuário é **owner / co-resp / owner-de-iniciativa** (TCR §4.8 — Collaborator Check-in).
+- O step então depende transitivamente dessa lista. Se algum KR não entrar nela (por filtro de status, ciclo, RLS), todas as iniciativas daquele KR somem.
+- O step **nunca considera `contributors[]`** de `okr_initiatives`, então iniciativas em que o colaborador é apenas contribuidor jamais aparecem.
 
-Quando o usuário **não tem KPIs** (`kpis.length === 0`), o `CollaboratorKpiStep` faz `goNext()` **em render** (linhas 370-372 do orquestrador, no `case 'kpis'`):
+A correção é centrar a query na **iniciativa do colaborador** (owner OR contributor) no ciclo ativo, e derivar agrupamento por KR a partir desse conjunto.
 
-```ts
-if (!currentKpi || kpis.length === 0) {
-  goNext();
-  return null;
-}
-```
+### Pré-checklist consultado
 
-Resultado: ao clicar **Voltar** em `projects`, `goBack()` move para `kpis`; o render imediato chama `goNext()` e volta para `projects`. UI parece "travada".
+- TCR §4.8 (Collaborator Check-in — Filtro de KRs) e §**okr_initiatives** (cols `owner_user_id`, `contributors uuid[]`).
+- `IDENTITY_CONVENTION.md`: `okr_initiatives.owner_user_id → profiles.id` (usar `effectiveUserId` profile-id, não `auth.uid`).
+- `DEVELOPMENT_STANDARDS.md`: query keys via helpers, soft-delete obrigatório, sem `select('*')`, BU-scoped client.
+- Memórias core: BU isolation, soft deletes, query optimization, query keys, no-render-side-effects (mantido).
+- Memórias relevantes: `wizards-master-standard`, `kr-linked-entities-visualization`, `collaborator-checkin-pending-items-step`, `off-cycle-accessibility-standard`.
 
-O mesmo padrão existe no `case 'checkin'` (linhas 325-329) — mitigado para o caso "sem KRs" porque `visibleStepOrder` já remove `checkin` quando `!hasKrStep`. Mas há fragilidade: se `currentKrIndex >= krs.length` por qualquer motivo, mesmo loop.
+### Divergência canônica criada
 
-Violações dos canônicos:
-- `mem://standards/no-render-side-effects` — `goNext()` chamado durante render.
-- O `visibleStepOrder` deve refletir **todos** os steps efetivamente disponíveis, não só `checkin`.
+Hoje o filtro de KRs **não** considera `contributors[]`. Após esta mudança, iniciativas mostradas no step incluem aquelas em que o colaborador é só `contributors[]` — KR pode não estar em `useUserKrsForWizard`. Esta expansão será **canonizada** (TCR §4.8 + nova memória).
 
-## Solução
+## Mudanças
 
-Centralizar a regra "step disponível" no `visibleStepOrder`/`visibleSteps` e remover os side-effects de render dos `case`s do orquestrador.
+### 1. `CollaboratorInitiativesStep.tsx` — fonte de dados centrada no colaborador
 
-### Mudanças em `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
+Substituir a query atual (`kr_id IN krIds`) por:
 
-1. **Detectar emptiness de KPIs** após a query carregar:
-   ```ts
-   const hasKpiStep = !!(userKpis && userKpis.length > 0);
-   ```
+- `from('okr_initiatives')` selecionando colunas explícitas (sem `*`) **+ join inner** em `okr_team_key_results!inner(id, title, team_objective:okr_team_objectives!inner(id, title, cycle_id, cancelled_at, deleted_at))`.
+- Filtros:
+  - `or('owner_user_id.eq.<id>,contributors.cs.{<id>}')` — owner OU contributor.
+  - `eq('okr_team_key_results.team_objective.cycle_id', cycleId)`.
+  - `is('okr_team_key_results.team_objective.cancelled_at', null)` + `deleted_at` null.
+  - `is('deleted_at', null)` + `is('cancelled_at', null)` na própria iniciativa.
+- `enabled: !!effectiveUserId && !!cycleId`.
+- `select` retorna o `kr.title` embutido para permitir agrupamento mesmo quando o KR não está no array `krs`.
 
-2. **Filtrar `visibleSteps` e `visibleStepOrder`** considerando `hasKrStep` **e** `hasKpiStep`:
-   ```ts
-   const visibleSteps = useMemo(() => WIZARD_STEPS.filter(s => {
-     if (s.id === 'checkin' && !hasKrStep) return false;
-     if (s.id === 'kpis' && !hasKpiStep) return false;
-     return true;
-   }), [hasKrStep, hasKpiStep]);
+### 2. Props e wiring
 
-   const visibleStepOrder = useMemo(() => STEP_ORDER.filter(s => {
-     if (s === 'checkin' && !hasKrStep) return false;
-     if (s === 'kpis' && !hasKpiStep) return false;
-     return true;
-   }), [hasKrStep, hasKpiStep]);
-   ```
+- Adicionar prop `cycleId: string | null` em `CollaboratorInitiativesStepProps`.
+- Em `CollaboratorCheckinPage.tsx`, passar `cycleId={quarterlyCycle?.id ?? null}`.
+- Manter `krs` como prop apenas para enriquecimento de exibição (badges, projetos vinculados via `project_krs`); a lista de iniciativas passa a ser independente.
 
-3. **Remover os `goNext()` em render** dos `case 'kpis'` e `case 'checkin'`. Como o step não estará mais no `visibleStepOrder` quando vazio, o usuário nunca cai nele. Defesa final: se ainda assim o `draft.currentStep` apontar para um step removido, usar `useEffect` para redirecionar — não chamada direta no render.
+### 3. Agrupamento e empty state
 
-   ```ts
-   // Auto-correct: se o step atual saiu do visibleStepOrder (ex.: dados chegaram
-   // depois e removeram 'kpis'), reposiciona via efeito — nunca em render.
-   useEffect(() => {
-     if (!visibleStepOrder.includes(draft.currentStep)) {
-       setStep(visibleStepOrder[0] ?? 'context');
-     }
-   }, [visibleStepOrder, draft.currentStep, setStep]);
-   ```
+- `initiativesByKr` é montado a partir das iniciativas retornadas (Map<krId, Initiative[]>).
+- Loop de renderização passa a iterar sobre as chaves do `Map` (KRs efetivamente com iniciativas), ordenando por título do KR.
+- Empty state canônico (já implementado) permanece — exibido somente quando a query retorna 0.
+- Footer canônico (`Voltar / Pular / Continuar`) sem alterações.
 
-4. **Aguardar carregamento** antes de renderizar steps que dependem das listas. O loading guard já existe para `isLoadingKrs`; estender para `isLoadingKpis` se ainda não cobre o cálculo de `hasKpiStep` (verificar e ajustar se necessário).
+### 4. Query keys (helper centralizado)
 
-### Não muda
+- Adicionar em `src/lib/queryKeys/okrs.ts`:
+  ```ts
+  initiativesForCollaborator: (buId, cycleId, profileId) =>
+    [...prefix, 'initiatives', 'collaborator', buId, cycleId, profileId] as const
+  ```
+- O step passa a usar este helper. A chave atual `initiativesByKrs` continua válida em outros consumidores.
 
-- `CollaboratorProjectsStep.tsx`, `CollaboratorKpiStep.tsx` e demais steps permanecem intactos.
-- Reaproveita `WizardStepFooter` e shells existentes (sem novos componentes).
+### 5. Projetos vinculados
 
-## Impacto
+- `project_krs` continua, mas `krIds` passa a ser `Array.from(initiativesByKr.keys())` (KRs realmente presentes nas iniciativas do colaborador), evitando fetch de projetos para KRs que não vão ser exibidos.
 
-- "Voltar" em `projects` (e qualquer outro step) passa a navegar diretamente para o step anterior **realmente disponível**, sem loop.
-- Stepper visual no `FullPageWizardShell` deixa de mostrar "Indicadores operacionais" para usuários sem KPIs (consistente com o que já acontece para "KRs" sem KRs).
-- Elimina side-effect de render (compliance com `no-render-side-effects`).
+### 6. Edição inline
 
-## Verificação
+- Em `InitiativesSummary` o `canEdit` segue `init.owner_user_id === effectiveUserId`. Contributors visualizam mas não editam — coerente com RLS.
 
-1. Acessar `/rituals/collaborator-checkin?user=4e5985d2-d729-4529-ad6c-4ee15b0d927f&step=projects` e clicar **Voltar** → deve ir para `context` (sem passar por `kpis`).
-2. Usuário com KPIs: stepper mostra `kpis` e back/next funcionam normalmente.
-3. Usuário sem KRs e sem KPIs: stepper sem `checkin` nem `kpis`; navegação completa funciona.
-4. Conferir console: sem warnings de "setState during render".
+### 7. Atualização canônica (obrigatório por divergência)
 
-Aprovação para implementar?
+- Atualizar `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` §4.8 — Collaborator Check-in, adicionando subseção **"Filtro de Iniciativas do Step"**:
+  - Owner OR contributor no ciclo ativo, independentemente do filtro de KRs.
+  - Edição restrita ao owner.
+- Criar memória `mem://features/rituals/collaborator-initiatives-step-scope` com a regra acima e referência ao TCR.
+- Atualizar `mem://index.md` (seção "Memories — Rituais específicos").
+
+## Não fazer
+
+- Não duplicar componentes: reutilizar `InitiativesSummary`, `InitiativeQuickUpdateDialog`, `WizardStepScaffold/Header/Footer`, `EmptyState`.
+- Não alterar `useUserKrsForWizard` (escopo de KR continua o mesmo — TCR §4.8 mantido).
+- Não tocar em RLS de `okr_initiatives` (`okrs.initiative.read:team_tree` ou `okrs.view:bu` já cobre o usuário logado lendo iniciativas onde é owner/contributor).
+- Não mexer em business logic dos demais steps.
+- Não introduzir `select('*')` nem queries fora do `useBuScopedSupabase`.
+
+## Validação
+
+1. `?user=4e5985d2…&step=initiatives`: deve listar as 9 iniciativas do Q2 2026 agrupadas por KR (incluindo KRs em que ele só é owner-de-iniciativa).
+2. Usuário sem owner/contributor no ciclo ativo: empty state canônico + footer Voltar/Pular/Continuar.
+3. Marcar/desmarcar "em risco" continua funcionando.
+4. `InitiativeQuickUpdateDialog` abre apenas para iniciativas onde `owner_user_id === effectiveUserId`.
+5. Colaborador que é apenas `contributors[]` em uma iniciativa: vê o card, **não** edita.
+
+## Arquivos afetados
+
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx` (fetch + agrupamento + nova prop `cycleId`).
+- `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` (passar `cycleId`).
+- `src/lib/queryKeys/okrs.ts` (helper `initiativesForCollaborator`).
+- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (§4.8 — nova subseção).
+- `mem://features/rituals/collaborator-initiatives-step-scope` (nova) + `mem://index.md`.

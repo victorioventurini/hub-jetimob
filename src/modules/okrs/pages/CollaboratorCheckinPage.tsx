@@ -478,6 +478,7 @@ export default function CollaboratorCheckinPage() {
           <CollaboratorInitiativesStep
             krs={krs}
             effectiveUserId={effectiveUserId}
+            cycleId={quarterlyCycle?.id ?? null}
             onContinue={(markedAtRisk) => {
               updateDraft({ initiativesMarkedAtRisk: markedAtRisk });
               goNext();
