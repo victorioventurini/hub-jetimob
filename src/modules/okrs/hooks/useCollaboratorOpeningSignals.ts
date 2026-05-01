@@ -13,7 +13,7 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useBu } from '@/contexts/BuContext';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { computeHealth } from '@/modules/projects/utils/projectHealth';
-import type { ProjectHealth, ProjectStatus } from '@/modules/projects/types';
+import type { MilestoneStatus } from '@/modules/projects/types';
 
 export interface CollaboratorOpeningSignals {
   projectsTotal: number;
@@ -37,7 +37,7 @@ export function useCollaboratorOpeningSignals(
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, status, due_date, project_milestones!left(id, status, deleted_at)')
+        .select('id, project_milestones!left(id, status, due_date, deleted_at)')
         .eq('owner_id', effectiveUserId!)
         .is('deleted_at', null);
       if (error) throw error;
@@ -47,12 +47,12 @@ export function useCollaboratorOpeningSignals(
 
   const projectsTotal = projectsQuery.data?.length ?? 0;
   const projectsHealthy = (projectsQuery.data ?? []).filter((p) => {
-    const milestones = (p.project_milestones ?? []).filter((m: { deleted_at: string | null }) => !m.deleted_at);
-    const total = milestones.length;
-    const completed = milestones.filter((m: { status: string }) => m.status === 'completed').length;
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const health: ProjectHealth = computeHealth(p.status as ProjectStatus, p.due_date, pct);
-    return health === 'on_track';
+    const milestones = (p.project_milestones ?? []).map((m: { status: string; due_date: string | null; deleted_at: string | null }) => ({
+      status: m.status as MilestoneStatus,
+      due_date: m.due_date,
+      deleted_at: m.deleted_at,
+    }));
+    return computeHealth(milestones) === 'on_track';
   }).length;
 
   // Bloqueios abertos do usuário — derivados de check-ins (campo blockers != null).
