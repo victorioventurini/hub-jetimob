@@ -79,7 +79,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         let kpiQuery = supabase
           .from('kpi_metrics')
           .select(`
-            id, name, unit, target_value, direction,
+            id, name, unit, target_value, direction, indicator_type,
             consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id,
             area_id, scope,
