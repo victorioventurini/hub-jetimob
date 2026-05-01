@@ -319,19 +319,6 @@ export function CollaboratorInitiativesStep({
       {/* Content */}
       <ScrollArea className="flex-1 min-w-0">
         <div className="p-6 space-y-6 min-w-0">
-          {/* Prompt */}
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <Lightbulb className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">
-                O sistema não força atualização de iniciativas
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Apenas revise e sinalize se alguma merece atenção do time ou líder.
-              </p>
-            </div>
-          </div>
-
           {/* Initiatives by KR — itera sobre os KRs efetivamente presentes
               nas iniciativas do colaborador (e não sobre `krs` da prop). */}
           {Array.from(initiativesByKr.keys())
