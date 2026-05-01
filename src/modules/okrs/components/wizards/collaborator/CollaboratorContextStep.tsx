@@ -22,9 +22,11 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { RitualGreeting } from '../shared/RitualGreeting';
 import { CollaboratorSnapshot } from './CollaboratorSnapshot';
 import { CollaboratorCheckinTrail, computeTrailEta } from './CollaboratorCheckinTrail';
+import { STEP_ORDER, type WizardStep } from './wizardSteps';
 import {
   useRitualGreetingContext,
   useCollaboratorOpeningSignals,
+  useCollaboratorInitiativesSignal,
 } from '@/modules/okrs/hooks';
 
 // ============================================================
