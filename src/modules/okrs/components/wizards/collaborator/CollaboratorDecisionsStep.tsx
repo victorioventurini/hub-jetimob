@@ -114,6 +114,7 @@ export function CollaboratorDecisionsStep({
           skipLabel="Pular"
         />
       }
+      bottomFixed={agendaSlot}
     >
       <div className="space-y-3 pb-4">
         {pendingItems.map((item) => (
