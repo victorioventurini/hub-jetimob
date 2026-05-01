@@ -14,12 +14,14 @@
 
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Sparkles } from 'lucide-react';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { RitualGreeting } from '../shared/RitualGreeting';
+import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { WizardStepHeader } from '../shared/WizardStepHeader';
+import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
 import { CollaboratorSnapshot } from './CollaboratorSnapshot';
 import { CollaboratorCheckinTrail, computeTrailEta } from './CollaboratorCheckinTrail';
 import { STEP_ORDER, type WizardStep } from './wizardSteps';
@@ -193,16 +195,6 @@ export function CollaboratorContextStep({
     eta.kpis, eta.projects, eta.initiatives, eta.krs, eta.reflection,
   ]);
 
-  if (isLoading) {
-    return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </div>
-    );
-  }
-
   const hasNothing =
     stats.krsTotal === 0 &&
     stats.kpisTotal === 0 &&
@@ -210,45 +202,65 @@ export function CollaboratorContextStep({
     initiativesSignal.initiativesTotal === 0;
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      <RitualGreeting
-        ritualSlug="collaborator"
-        userName={userName}
-        cycleName={greeting.cycleName}
-        weekNumber={greeting.weekNumber}
-        checkInOrdinal={greeting.checkInOrdinal}
-      />
+    <WizardStepScaffold
+      header={
+        <WizardStepHeader
+          icon={Sparkles}
+          title="Visão geral"
+          tooltip="collaborator-context"
+          description="Confira o que vamos revisar e comece pela sua trilha"
+          variant="purple"
+        />
+      }
+      footer={
+        <WizardFirstStepFooter
+          primaryLabel="Começar"
+          onPrimary={onContinue}
+        />
+      }
+    >
+      <div className="p-4 md:p-6 space-y-6 min-w-0 max-w-full">
+        <RitualGreeting
+          ritualSlug="collaborator"
+          userName={userName}
+          cycleName={greeting.cycleName}
+          weekNumber={greeting.weekNumber}
+          checkInOrdinal={greeting.checkInOrdinal}
+        />
 
-      <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6 max-w-3xl mx-auto">
-          {hasNothing ? (
-            <div className="text-center py-12">
-              <TrendingUp className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h4 className="font-medium">Nada para atualizar</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Você não possui KRs, KPIs, iniciativas ou projetos para revisar neste ciclo.
-              </p>
-            </div>
-          ) : (
-            <>
-              <CollaboratorSnapshot
-                krsTotal={stats.krsTotal}
-                krsOnTrack={stats.krsOnTrack}
-                kpisTotal={stats.kpisTotal}
-                kpisUpdated={stats.kpisUpdated}
-                projectsTotal={signals.projectsTotal}
-                projectsHealthy={signals.projectsHealthy}
-                initiativesTotal={initiativesSignal.initiativesTotal}
-                initiativesOnTrack={initiativesSignal.initiativesOnTrack}
-                openBlocksCount={signals.openBlocksCount}
-                avgConfidence={null}
-              />
+        {isLoading ? (
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        ) : hasNothing ? (
+          <div className="text-center py-12">
+            <TrendingUp className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <h4 className="font-medium">Nada para atualizar</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              Você não possui KRs, KPIs, iniciativas ou projetos para revisar neste ciclo.
+            </p>
+          </div>
+        ) : (
+          <>
+            <CollaboratorSnapshot
+              krsTotal={stats.krsTotal}
+              krsOnTrack={stats.krsOnTrack}
+              kpisTotal={stats.kpisTotal}
+              kpisUpdated={stats.kpisUpdated}
+              projectsTotal={signals.projectsTotal}
+              projectsHealthy={signals.projectsHealthy}
+              initiativesTotal={initiativesSignal.initiativesTotal}
+              initiativesOnTrack={initiativesSignal.initiativesOnTrack}
+              openBlocksCount={signals.openBlocksCount}
+              avgConfidence={null}
+            />
 
-              <CollaboratorCheckinTrail onStart={onContinue} steps={trailSteps} />
-            </>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
+            <CollaboratorCheckinTrail steps={trailSteps} />
+          </>
+        )}
+      </div>
+    </WizardStepScaffold>
   );
 }
