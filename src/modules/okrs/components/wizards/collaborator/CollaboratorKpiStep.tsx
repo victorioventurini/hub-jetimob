@@ -25,9 +25,13 @@ import {
   TrendingDown,
   AlertTriangle,
   CheckCircle2,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBu } from '@/contexts/BuContext';
+import { AreaBadge } from '@/components/ui/area-badge';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
 import { calculateKpiRag } from '@/modules/kpis/utils/rag';
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
@@ -85,6 +89,7 @@ export function CollaboratorKpiStep({
   onSkip,
   onBack,
 }: CollaboratorKpiStepProps) {
+  const { currentBu } = useBu();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentValue, setCurrentValue] = useState<number | undefined>(undefined);
   const [currentInputType, setCurrentInputType] = useState<KpiInputType>('consolidated');
@@ -212,6 +217,14 @@ export function CollaboratorKpiStep({
                   Precisa atualização
                 </Badge>
               )}
+              {kpi.area && <AreaBadge area={kpi.area} />}
+              {kpi.team && (
+                <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                  <Users className="h-3 w-3" />
+                  {kpi.team.name}
+                </Badge>
+              )}
+              <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
             </div>
           </div>
 
