@@ -28,7 +28,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
-import { KpiValueEntryForm } from '@/modules/kpis/components/shared';
+import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
+import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
