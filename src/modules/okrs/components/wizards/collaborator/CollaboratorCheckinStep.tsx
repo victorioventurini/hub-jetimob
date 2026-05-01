@@ -158,7 +158,7 @@ export function CollaboratorCheckinStep({
         previousValue: kr.current_value,
         confidence,
         comments: comment || undefined,
-        blockers: blocker || undefined,
+        blockers: undefined,
       });
 
       const result: CollaboratorCheckinResult = {
@@ -169,14 +169,14 @@ export function CollaboratorCheckinStep({
         confidence,
         comment: comment || undefined,
         skipped: false,
-        blocker: blocker || undefined,
+        blocker: undefined,
       };
 
       onComplete(result);
     } catch (error) {
       // Error is handled by the mutation
     }
-  }, [kr, numericValue, confidence, comment, blocker, createCheckin, onComplete]);
+  }, [kr, numericValue, confidence, comment, createCheckin, onComplete]);
 
   // Handle skip
   const handleSkip = useCallback(() => {
