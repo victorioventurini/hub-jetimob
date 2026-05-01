@@ -95,7 +95,7 @@ export function useCanEditKpi(kpi: KpiForPermission | null | undefined) {
   }, [kpi, profileId, isWildcard, hasPermission, canManageAreaScope, canManageTeamHierarchical, teamAreaId]);
 
   const isOwner = !!kpi && !!profileId && kpi.owner_user_id === profileId;
-  const isContributor = !!profileId && contributors.includes(profileId);
+  const isContributor = !!profileId && Array.isArray(contributors) && contributors.includes(profileId);
 
   const canEdit = useMemo(() => {
     if (!kpi || !profileId) return false;

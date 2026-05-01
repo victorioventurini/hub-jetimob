@@ -549,6 +549,9 @@ export const kpisKeys = {
   // v2.83.0: Contributors management
   contributors: (kpiId: string | null) => 
     ['kpis', 'contributors', kpiId] as const,
+  /** Contribuidor primário (data_entry) — shape diferente de `contributors` (array de IDs). */
+  primaryDataEntry: (kpiId: string | null) =>
+    ['kpis', 'primary-data-entry', kpiId] as const,
   userContributions: (userId: string, teamId?: string) =>
     ['kpis', 'user-contributions', userId, teamId] as const,
   // v2.83.0: Wizard V2 with role classification
