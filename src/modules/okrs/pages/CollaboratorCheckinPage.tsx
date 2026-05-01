@@ -471,7 +471,7 @@ export default function CollaboratorCheckinPage() {
       case 'reflection':
         return (
           <CollaboratorReflectionStep
-            results={draft.data.results}
+            results={(draft.data.results ?? []).filter(Boolean)}
             onComplete={(reflection) => {
               updateDraft({ reflection });
               goNext();
@@ -485,10 +485,12 @@ export default function CollaboratorCheckinPage() {
         );
         
       case 'summary':
+        // Compactar arrays: usuários podem pular KRs/KPIs sem preencher slots
+        // intermediários, gerando entradas null/undefined no array esparso.
         return (
           <CollaboratorSummary
-            results={draft.data.results}
-            kpiResults={draft.data.kpiResults}
+            results={(draft.data.results ?? []).filter(Boolean)}
+            kpiResults={(draft.data.kpiResults ?? []).filter(Boolean)}
             reflection={draft.data.reflection}
             initiativesMarkedAtRisk={draft.data.initiativesMarkedAtRisk}
             onViewOkrs={() => navigate('/okrs')}
