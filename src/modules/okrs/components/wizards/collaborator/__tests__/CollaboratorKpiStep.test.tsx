@@ -94,7 +94,8 @@ describe('CollaboratorKpiStep - Rendering', () => {
     expect(screen.getByText(/Valor \(/i)).toBeInTheDocument();
     expect(screen.getByText(/Data de Referência/i)).toBeInTheDocument();
     expect(screen.getByText(/Tipo do input/i)).toBeInTheDocument();
-    expect(screen.getByText(/Confiança/i)).toBeInTheDocument();
+    // v3.30.0: campo `confidence` foi removido (autoavaliação subjetiva eliminada).
+    expect(screen.queryByText(/Confiança/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Observações/i)).toBeInTheDocument();
   });
 
