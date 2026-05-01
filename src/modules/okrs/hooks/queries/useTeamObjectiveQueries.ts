@@ -126,14 +126,13 @@ export function useMyTeamObjectives(buId?: string | null, userId?: string) {
 
       if (krError) throw krError;
       
-      // Also get KRs that have initiatives where user is owner (exclude cancelled/deleted)
+      // Also get KRs that have initiatives where user is owner (initiatives only have soft-delete via deleted_at)
       const { data: initiativeKrIds, error: initError } = await supabase
         .from('okr_initiatives')
         .select('kr_id')
         .eq('bu_id', buId)
         .eq('owner_user_id', userId)
-        .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('deleted_at', null);
       
       if (initError) throw initError;
       

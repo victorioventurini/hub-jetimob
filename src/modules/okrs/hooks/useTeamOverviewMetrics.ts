@@ -142,7 +142,7 @@ export function useTeamOverviewMetrics(
         });
       });
 
-      // Fetch blocked initiatives (exclude cancelled/deleted)
+      // Fetch blocked initiatives (initiatives only have soft-delete via deleted_at)
       const { data: blockedInitiatives, error: initError } = await supabase
         .from('okr_initiatives')
         .select(`
@@ -152,8 +152,7 @@ export function useTeamOverviewMetrics(
           kr_id
         `)
         .eq('status', 'blocked')
-        .is('deleted_at', null)
-        .is('cancelled_at', null);
+        .is('deleted_at', null);
 
       // Filter initiatives by team (simplified - just count for now)
       const initiativesCritical = blockedInitiatives?.length || 0;
