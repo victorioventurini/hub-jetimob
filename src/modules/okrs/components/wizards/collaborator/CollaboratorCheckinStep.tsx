@@ -110,8 +110,6 @@ export function CollaboratorCheckinStep({
   const [currentValue, setCurrentValue] = useState<string>(String(kr.current_value));
   const [confidence, setConfidence] = useState<Confidence | null>(null);
   const [comment, setComment] = useState('');
-  const [blocker, setBlocker] = useState('');
-  const [showBlockerField, setShowBlockerField] = useState(false);
 
   // Check for primary KPI (fonte única de verdade)
   const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
