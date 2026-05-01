@@ -1,114 +1,70 @@
-# Sugestão de pauta no Check-in Individual (rodapé, padrão MBR-pré)
-
 ## Objetivo
 
-Permitir que o colaborador, durante o Check-in Individual, registre **sugestões de pauta para o Team Check-in** (rito do líder com o time) usando o mesmo componente já consolidado no MBR-pré e QBR-pré: `InlineAgendaSuggestionInput` no rodapé de cada step + `AgendaSuggestionsPrioritizer` no Summary (até 3 prioritárias).
+Padronizar o **Step 1 (Contexto / Abertura ritual)** do Check-in Individual (`/rituals/collaborator-checkin`) com os demais steps do rito:
 
-Zero duplicação: reutiliza componentes compartilhados de `wizards/shared/`.
+1. **Largura total da tela** (hoje há `max-w-3xl mx-auto` que estreita o conteúdo).
+2. **Botão primário no rodapé fixo** via `WizardStepFooter`, dentro de `WizardStepScaffold` — em vez do botão "Começar" embutido no fim da Trail.
 
-## Contexto
+Sem duplicar componentes: reaproveitar exatamente os mesmos `WizardStepScaffold`, `WizardStepHeader` e `WizardStepFooter` que `CollaboratorProjectsStep`, `CollaboratorInitiativesStep` e `CollaboratorDecisionsStep` já usam.
 
-Já existe na base, totalmente reutilizável:
+## Estado atual (diagnóstico)
 
-- `src/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput.tsx` — input collapsible com 3 categorias canônicas (Performance / Projetos / Pessoas), filtra por `sourceStep`.
-- `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx` — prioriza até 3 sugestões antes de fechar.
-- Tipo SSOT: `RitualAgendaSuggestion` em `types/wizard/shared.ts`.
-- Padrão MBR-pré: input vai no slot `bottomFixed` do `WizardStepScaffold`; cada step injeta seu próprio `sourceStep`; `triggerLabel` parametrizável (ex.: "Registrar sugestão de pauta para o MBR").
+- `CollaboratorContextStep.tsx` renderiza estrutura própria:
+  - `<div className="flex flex-col h-full ...">` + `<RitualGreeting>` + `<ScrollArea>` + `<div className="p-6 space-y-6 max-w-3xl mx-auto">` com `<CollaboratorSnapshot>` e `<CollaboratorCheckinTrail onStart={onContinue}>`.
+  - O CTA "Começar" vive **dentro** de `CollaboratorCheckinTrail` (linhas 129-137), fora do padrão de footer dos outros steps.
+- Demais steps operacionais (Projects/Initiatives/Decisions) usam o trio `WizardStepScaffold` + `WizardStepHeader` + `WizardStepFooter` com conteúdo em `p-4 md:p-6 ... min-w-0 max-w-full` (largura total).
 
 ## Mudanças
 
-### 1. Estender `CollaboratorDraftData` com `agendaSuggestions`
+### 1. `CollaboratorContextStep.tsx` — adotar scaffold
 
-Em `CollaboratorCheckinPage.tsx` (interface local) — adicionar:
+- Remover o wrapper manual (`flex flex-col h-full`, `ScrollArea`, `max-w-3xl mx-auto`).
+- Envolver em `WizardStepScaffold`:
+  - `header`: `<WizardStepHeader icon={Sparkles} title="Visão geral" tooltip="collaborator-context" description="Confira o que vamos revisar e comece pela sua trilha" variant="purple" />` (variant alinhada à abertura; ajustar token se já houver convenção para Step 1).
+  - **A `<RitualGreeting>` continua acima do conteúdo do step** — passa para dentro do `header` slot ou imediatamente como primeiro filho do conteúdo, decidir conforme o que `WizardStepScaffold` aceita (ver `CollaboratorProjectsStep` como referência). Preferência: manter `RitualGreeting` como primeiro nó do `children` para preservar a hierarquia visual atual da abertura, com o `WizardStepHeader` como cabeçalho do scaffold.
+  - `footer`: `<WizardStepFooter primaryLabel="Começar" onPrimary={onContinue} />` (sem `showBack` — é o primeiro step; sem `showSkip`). Quando `hasNothing` for `true`, podemos manter o `onPrimary` ainda como "Começar" levando ao próximo (ou desabilitar — escolha: **manter habilitado** seguindo o comportamento atual do `onStart`).
+- `children`: substituir por
+  ```tsx
+  <div className="p-4 md:p-6 space-y-6 min-w-0 max-w-full">
+    <RitualGreeting ... />
+    {hasNothing ? <EmptyState/> : (
+      <>
+        <CollaboratorSnapshot ... />
+        <CollaboratorCheckinTrail steps={trailSteps} />
+      </>
+    )}
+  </div>
+  ```
+  Sem `max-w-3xl` → ocupa toda a largura disponível, idêntico aos demais steps.
 
-```ts
-agendaSuggestions: RitualAgendaSuggestion[];
-```
+### 2. `CollaboratorCheckinTrail.tsx` — desacoplar CTA
 
-Default `[]` no `DEFAULT_DATA`. Hidratação via `useGenericWizardDraft` continua funcionando sem mudanças.
+- Tornar `onStart` opcional (`onStart?: () => void`).
+- Quando `onStart` **não** for passado, **não renderizar** o `<Button>` "Começar" nem o flex container do rodapé interno; exibir somente a linha de "Tempo estimado".
+- Manter retrocompatibilidade: outros consumidores que ainda passem `onStart` continuam funcionando (segundo `rg`, hoje só `CollaboratorContextStep` usa, então o impacto é zero, mas a API fica preservada).
 
-### 2. Adicionar `bottomFixed` com `InlineAgendaSuggestionInput` em todos os steps operacionais
+Em `CollaboratorContextStep` deixamos de passar `onStart` — o CTA passa a viver no `WizardStepFooter`.
 
-Trigger label canônico: **"Registrar sugestão de pauta para o Team Check-in"**.
+### 3. Sem novos componentes
 
-| Step | sourceStep | Estratégia |
-|---|---|---|
-| `kpis` (CollaboratorKpiStep) | `'collaborator-kpis'` | **Refatorar** para usar `WizardStepScaffold` (hoje monta layout próprio) e mover footer atual para o slot `footer`. |
-| `projects` (CollaboratorProjectsStep) | `'collaborator-projects'` | Já usa Scaffold — apenas adicionar `bottomFixed`. |
-| `initiatives` (CollaboratorInitiativesStep) | `'collaborator-initiatives'` | Já usa Scaffold — apenas adicionar `bottomFixed`. |
-| `checkin` (CollaboratorCheckinStep — KRs) | `'collaborator-krs'` | **Refatorar** para Scaffold + `bottomFixed`. |
-| `decisions` (CollaboratorDecisionsStep) | `'collaborator-decisions'` | Já usa Scaffold — adicionar `bottomFixed`. |
-| `reflection` (CollaboratorReflectionStep) | `'collaborator-reflection'` | **Refatorar** para Scaffold + `bottomFixed`. |
+- Reusa `WizardStepScaffold`, `WizardStepHeader`, `WizardStepFooter` já centralizados em `src/modules/okrs/components/wizards/shared/`.
+- Sem alterar `CollaboratorSnapshot`, `RitualGreeting`, `CollaboratorCheckinPage` (a prop `onContinue` já é repassada como antes).
 
-Steps fora do escopo: `context` (abertura ritual — sem inputs operacionais), `summary` (recebe Prioritizer, ver §3).
+### 4. Conformidade com o pré-checklist (TCR / docs canônicos)
 
-Cada step recebe três props novas opcionais (mesma assinatura do MBR-pré):
+- **Identidade/RBAC**: nenhuma alteração — apenas UI do step.
+- **BU isolation / RLS**: não tocadas.
+- **Query keys / Supabase**: não tocadas.
+- **Memoization**: `CollaboratorCheckinTrail` continua exportada via `memo`; nenhum componente novo de lista é criado.
+- **SSOT de wizards** (`mem://architecture/wizards/wizards-master-standard` + `mem://ui/wizards/wizard-shell-mobile-standard`): a mudança **aproxima** o Step 1 do padrão (Scaffold + Header + Footer), o que é exatamente o que o standard pede.
 
-```ts
-agendaSuggestions?: RitualAgendaSuggestion[];
-onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
-agendaTriggerLabel?: string;
-```
+## Arquivos editados
 
-A página injeta as três em todos os steps relevantes via:
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorContextStep.tsx` (envolver em scaffold + footer, remover `max-w-3xl`).
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinTrail.tsx` (tornar `onStart` opcional; só renderiza CTA quando recebido).
 
-```ts
-agendaSuggestions={draft.data.agendaSuggestions ?? []}
-onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
-agendaTriggerLabel="Registrar sugestão de pauta para o Team Check-in"
-```
+## Validação
 
-### 3. `CollaboratorSummary` — incluir Prioritizer
-
-Adicionar prop `agendaSuggestions` + `onAgendaSuggestionsChange` e renderizar uma seção **acima das ações de fechamento** com `<AgendaSuggestionsPrioritizer />` (mesmo padrão do `QbrPreSummary`/`MbrPreSummary`).
-
-Quando não houver nenhuma sugestão, esconder a seção (não exibir cabeçalho vazio).
-
-### 4. Refator pequeno do Scaffold nos 3 steps que não o usam
-
-Para `CollaboratorKpiStep`, `CollaboratorCheckinStep` e `CollaboratorReflectionStep`:
-
-- Envolver o conteúdo atual em `<WizardStepScaffold header={...} footer={<WizardStepFooter ... />} bottomFixed={...} />`.
-- Mover o `<WizardStepFooter>` interno para o slot `footer`.
-- Manter conteúdo, comportamento e props do componente.
-
-Isso normaliza o padrão arquitetural (mesmo Wizard Master SSOT) e habilita o `bottomFixed` sem código novo de layout.
-
-### 5. SSOT do trigger label
-
-Criar uma constante exportada em `src/modules/okrs/constants/ritualLabels.ts`:
-
-```ts
-export const COLLABORATOR_AGENDA_TRIGGER_LABEL =
-  'Registrar sugestão de pauta para o Team Check-in';
-```
-
-Página importa e passa aos steps. Um único ponto de mudança caso o texto evolua.
-
-## Persistência e consumo pelo Team Check-in
-
-**Estado atual da base (importante)**: tanto MBR-pré quanto QBR-pré já capturam `agendaSuggestions` no draft, mas o **rito-mãe ainda não as consome** (verificado em `MbrPage.tsx`/`TeamCheckinPage.tsx` — nenhuma referência). Esta entrega segue o **mesmo nível de maturidade**: captura limpa no draft + Summary, sem mexer no Team Check-in.
-
-A integração "Team Check-in lê as sugestões dos check-ins individuais do time da semana" é uma **segunda fase**, fora deste escopo, e deve receber plano próprio (envolve query agregada por team_id + ciclo + janela de tempo, posicionamento na UI do team-checkin e governança de quem vê o quê).
-
-## Arquivos afetados
-
-- **edit** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` (draft data, props nos steps, Summary)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx` (Scaffold + bottomFixed)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep.tsx` (Scaffold + bottomFixed)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep.tsx` (Scaffold + bottomFixed)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx` (bottomFixed)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx` (bottomFixed)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx` (bottomFixed)
-- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx` (Prioritizer)
-- **edit** `src/modules/okrs/constants/ritualLabels.ts` (constante)
-- **edit** `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (§4.8 — registrar que Collaborator também emite agenda suggestions)
-- **new** `.lovable/memory/features/rituals/collaborator-agenda-suggestions.md` + entrada no `index.md`
-
-## Critérios de aceite
-
-- Em todos os 6 steps operacionais (KPIs, Projetos, Iniciativas, KRs, Decisões, Reflexão) aparece a faixa "Registrar sugestão de pauta para o Team Check-in" ancorada acima do footer.
-- Cada item adicionado é categorizável (Performance / Projetos / Pessoas) e armazena o `sourceStep` correto.
-- Sugestões persistem entre navegação back/forward (via draft) e sobrevivem a "Salvar rascunho".
-- No Summary aparece o `AgendaSuggestionsPrioritizer` quando há ao menos 1 sugestão; permite marcar até 3 prioritárias.
-- Zero duplicação de componentes — reuso integral de `InlineAgendaSuggestionInput`, `AgendaSuggestionsPrioritizer`, `WizardStepScaffold`, `WizardStepFooter`.
+- Visual no preview em `/rituals/collaborator-checkin?user=…`: Step 1 deve ocupar toda a largura, com cabeçalho fixo no topo e botão "Começar" no `WizardStepFooter` no rodapé, idêntico ao layout dos Steps de Projetos / Iniciativas / Decisões.
+- Clique em "Começar" deve continuar avançando para o Step 2 (`onContinue`).
+- Estado `hasNothing` continua exibindo o `EmptyState` central, agora também em largura total, com o footer "Começar" disponível.
