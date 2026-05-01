@@ -83,7 +83,6 @@ export function CollaboratorInitiativesStep({
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
-  const [markedAtRisk, setMarkedAtRisk] = useState<string[]>([]);
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
   // KR titles vindos do array `krs` (enriquecimento de exibição).
