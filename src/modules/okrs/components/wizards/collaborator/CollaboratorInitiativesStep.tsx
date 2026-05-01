@@ -369,32 +369,9 @@ export function CollaboratorInitiativesStep({
                   })}
                 </div>
 
-                {/* Projects linked to this KR */}
-                {krProjects.length > 0 && (
-                  <div className="space-y-1 pl-1">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                      <FolderKanban className="h-3 w-3" /> Projetos ({krProjects.length})
-                    </p>
-                    <ul className="space-y-1">
-                      {krProjects.map(proj => (
-                        <li key={proj.id} className="flex items-center gap-2 text-xs">
-                          <ProjectHealthBadge health={proj.health} dotOnly />
-                          <span className="truncate">{proj.name}</span>
-                          <span className="text-muted-foreground shrink-0">{proj.completion_pct}%</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             );
           })}
-
-          {/* Question */}
-          <MicrocopyQuestion 
-            question="Alguma iniciativa merece atenção do time ou do líder na próxima reunião?"
-            variant="highlight"
-          />
         </div>
       </ScrollArea>
 
