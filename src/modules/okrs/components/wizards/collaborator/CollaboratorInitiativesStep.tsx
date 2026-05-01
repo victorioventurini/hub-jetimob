@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
+import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { EmptyState } from '@/components/ui/empty-state';
