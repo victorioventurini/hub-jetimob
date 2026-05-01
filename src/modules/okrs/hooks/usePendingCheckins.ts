@@ -82,7 +82,7 @@ export function usePendingCheckins() {
       const { data, error } = await supabase
         .from('v_pending_checkins')
         .select('kr_id, kr_title, owner_user_id, co_responsibles, team_id, current_value, target, baseline, direction, unit, status, last_checkin_at, team_name, checkin_frequency, checkin_day, checkin_deadline_hour, objective_title, objective_id, is_overdue, days_since_checkin')
-        .or(`owner_user_id.eq.${profileId},co_responsibles.cs.{${profileId}}`);
+        .or(`owner_user_id.eq.${profileId},co_responsibles.cs.{"${profileId}"}`);
 
       if (error) {
         console.error('Error fetching pending checkins:', error);

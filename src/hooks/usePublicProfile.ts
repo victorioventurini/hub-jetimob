@@ -208,7 +208,7 @@ export function useUserOkrs(userId?: string, cycleId?: string | null) {
         .select(krSelect)
         .eq("bu_id", currentBu.id)
         .is("deleted_at", null)
-        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{${userId}}`);
+        .or(`owner_user_id.eq.${userId},co_responsibles.cs.{"${userId}"}`);
 
       if (cycleId) {
         krQuery = krQuery.eq("objective.cycle_id", cycleId);
