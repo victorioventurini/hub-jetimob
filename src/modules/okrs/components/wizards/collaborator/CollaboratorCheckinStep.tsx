@@ -31,7 +31,6 @@ import {
   Minus,
   ThumbsUp,
   ThumbsDown,
-  AlertTriangle,
   Loader2,
   Lock,
   ExternalLink,
@@ -111,8 +110,6 @@ export function CollaboratorCheckinStep({
   const [currentValue, setCurrentValue] = useState<string>(String(kr.current_value));
   const [confidence, setConfidence] = useState<Confidence | null>(null);
   const [comment, setComment] = useState('');
-  const [blocker, setBlocker] = useState('');
-  const [showBlockerField, setShowBlockerField] = useState(false);
 
   // Check for primary KPI (fonte única de verdade)
   const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
@@ -130,8 +127,6 @@ export function CollaboratorCheckinStep({
     setCurrentValue(String(kr.current_value));
     setConfidence(null);
     setComment('');
-    setBlocker('');
-    setShowBlockerField(false);
   }, [kr.id, kr.current_value]);
 
   // Calculate change
@@ -163,7 +158,7 @@ export function CollaboratorCheckinStep({
         previousValue: kr.current_value,
         confidence,
         comments: comment || undefined,
-        blockers: blocker || undefined,
+        blockers: undefined,
       });
 
       const result: CollaboratorCheckinResult = {
@@ -174,14 +169,14 @@ export function CollaboratorCheckinStep({
         confidence,
         comment: comment || undefined,
         skipped: false,
-        blocker: blocker || undefined,
+        blocker: undefined,
       };
 
       onComplete(result);
     } catch (error) {
       // Error is handled by the mutation
     }
-  }, [kr, numericValue, confidence, comment, blocker, createCheckin, onComplete]);
+  }, [kr, numericValue, confidence, comment, createCheckin, onComplete]);
 
   // Handle skip
   const handleSkip = useCallback(() => {
@@ -415,43 +410,6 @@ export function CollaboratorCheckinStep({
           </p>
         </div>
 
-        {/* Blocker toggle */}
-        {!showBlockerField ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBlockerField(true)}
-            className="w-full"
-          >
-            <AlertTriangle className="h-4 w-4 mr-2 text-status-orange" />
-            Registrar bloqueador
-          </Button>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="blocker" className="text-status-orange">
-                Bloqueador
-              </Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setBlocker('');
-                  setShowBlockerField(false);
-                }}
-              >
-                Remover
-              </Button>
-            </div>
-            <Textarea
-              id="blocker"
-              value={blocker}
-              onChange={(e) => setBlocker(e.target.value)}
-              placeholder="Descreva o que está impedindo o progresso..."
-              className="min-h-[80px] resize-none border-warning/50 focus:border-warning"
-            />
-          </div>
-        )}
       </div>
 
       {/* Footer actions */}
