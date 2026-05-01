@@ -1,47 +1,50 @@
-# Ajuste de UI — Step "Iniciativas vinculadas" (Check-in Individual)
+# Padronizar UI de Iniciativas no Check-in do Colaborador
 
-## Problema observado
-No print enviado, o conteúdo do step `?step=initiatives` extrapola horizontalmente: os botões "Atualizar" e "Comentar" são empurrados para fora da área visível, gerando scroll lateral. Isso viola o `mem://ui/wizards/wizard-shell-mobile-standard` (steps devem caber na largura disponível, sem overflow horizontal).
+## Objetivo
 
-## Causa raiz
-1. **`InitiativesSummary.tsx` (linha 225)** — cada item renderiza `nome + badges + botões "Atualizar"/"Comentar"` numa única flex-row sem permitir quebra. Em telas estreitas (mobile e até no preview de 889px com sidebar), a soma das larguras estoura o container.
-2. **`CollaboratorInitiativesStep.tsx` (linha 291)** — container raiz `flex flex-col h-full` sem `min-w-0` nem `overflow-x-hidden`; não impede overflow vindo dos filhos.
-3. Linha 237 (header do item) também combina título truncável com badges `flex-shrink-0` na mesma row, podendo derrubar o `truncate`.
+Na rota `/rituals/collaborator-checkin?step=initiatives`:
 
-## O que será feito
+1. **Remover** o botão/área "Comentar" por iniciativa.
+2. **Reutilizar a mesma UI canônica usada dentro do módulo OKRs** (`InitiativeCard` agrupado por KR), em vez do componente `InitiativesSummary` específico do wizard.
 
-### 1. `src/modules/okrs/components/wizards/shared/InitiativesSummary.tsx`
-Reorganizar o item de iniciativa em **duas regiões responsivas**:
+Resultado: o colaborador vê suas iniciativas com a mesma aparência (status badge, prioridade, owner com avatar, datas, progresso) e o mesmo menu de ações (Atualizar / Editar / Excluir) que existe na tela de detalhes de KR.
 
-- **Coluna de conteúdo** (título, badges de status, descrição, progresso) — sempre ocupa a largura disponível, com `min-w-0` e `flex-wrap` no header de badges para permitir quebra natural.
-- **Linha de ações** (botões "Atualizar" e "Comentar"):
-  - Em **mobile (<640px)**: empilhada **abaixo** do conteúdo, alinhada à direita, com `flex-wrap`.
-  - Em **desktop (≥640px)**: à direita do conteúdo, na mesma linha.
-- Usar classes utilitárias Tailwind (`flex-col sm:flex-row`, `sm:items-start`, `sm:gap-2`, `w-full sm:w-auto justify-end`) — sem novos tokens de design.
-- Garantir `min-w-0` e `break-words` no nome para evitar push horizontal de strings longas.
-- Remover `truncate` do título (substituir por `break-words` + `line-clamp-2` opcional) — agora que cabe quebra de linha, truncar deixa de fazer sentido.
+## Escopo
 
-### 2. `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
-Blindar o container do step contra overflow proveniente de filhos:
-- Linha 291: adicionar `min-w-0 overflow-x-hidden` ao wrapper raiz.
-- Linha 312–313 (`ScrollArea` + `div p-6`): garantir `min-w-0` no container interno.
-- Linha 340 (cada bloco por KR): adicionar `min-w-0` para isolar cada agrupamento.
-- Sem mudanças funcionais, sem mudanças de query — apenas defesa em profundidade do layout.
+- **Apenas** o step de iniciativas do Check-in Individual (`CollaboratorInitiativesStep.tsx`).
+- **Não alterar** `InitiativesSummary` (segue sendo usado no Pré-Weekly e demais wizards do time/líder, onde o "marcar em risco" e o agrupamento de atenção fazem sentido).
+- **Não alterar** a query de iniciativas, o filtro por owner/contributor, nem a hidratação de owner.
+- **Não tocar** em business logic / RLS / permissões.
 
-### 3. Verificação manual
-Após aplicar:
-- Conferir step `/rituals/collaborator-checkin?step=initiatives` em viewports 375, 768 e 1280.
-- Confirmar que **nenhuma rolagem horizontal** aparece.
-- Confirmar que os botões "Atualizar"/"Comentar" continuam clicáveis e visíveis em todos os tamanhos.
-- Confirmar que o restante dos steps (KPIs, Projetos, KRs) não foi afetado (o `InitiativesSummary` é compartilhado, mas a mudança é puramente CSS responsivo).
+## Mudanças (frontend only)
+
+### `CollaboratorInitiativesStep.tsx`
+
+1. Remover import de `InitiativesSummary`.
+2. Importar `InitiativeCard` de `@/modules/okrs/components/initiatives/InitiativeCard`.
+3. Para cada KR (loop existente `initiativesByKr`), renderizar a lista com `InitiativeCard`:
+   - `onQuickUpdate={(init) => setEditingInitiative(init)}` apenas quando o usuário pode editar (mesma regra atual: `init.owner_user_id === effectiveUserId`).
+   - `onEdit` e `onDelete`: **não** passar (o step é de check-in, não de gestão; mantém consistência com o que já era exposto antes — só "Atualizar").
+   - Não passar `onComment` / nada relacionado a comentário (não existe mais).
+4. Remover o estado `markedAtRisk` e a lógica `handleMarkAtRisk`:
+   - O `InitiativesSummary` era o único consumidor desse estado.
+   - `onContinue` passa a ser chamado com `[]` sempre (mantém assinatura para não quebrar o caller). Se preferir, simplificamos a assinatura — confirmar antes de implementar.
+5. Remover o badge "X sinalizadas" no botão Continuar (decorre do item 4).
+6. Manter intactos: header com contagem/atenção, prompt do Lightbulb, ScrollArea, listagem de Projetos por KR, `MicrocopyQuestion` final, `InlineAgendaSuggestionInput`, `InitiativeQuickUpdateDialog`, footer Voltar/Pular/Continuar e empty state.
+
+### Caller do step
+
+- `CollaboratorCheckinPage.tsx` (e `CollaboratorDraftData.initiativesMarkedAtRisk`): hoje recebe a lista de IDs em risco. Como não há mais marcação, o array fica sempre vazio. **Não removemos o campo do draft** nesta entrega para evitar migração de snapshots — apenas paramos de populá-lo. Marcar como `@deprecated` no tipo.
+
+## Detalhes técnicos
+
+- `InitiativeCard` já consome `Initiative` com `owner` populado — compatível com a hidratação que o step já faz.
+- `InitiativeCard` já mostra: status badge (com ícone), badge de prioridade (≠ medium), título, owner com avatar + `UserLink`, range de datas, progress bar e dropdown de ações.
+- O agrupamento por KR (header com título do KR + contador) permanece como está hoje no step.
+- Sem mudanças de query keys, RLS, BU isolation ou tipos do banco.
 
 ## Fora de escopo
-- Lógica de negócios, queries Supabase, RLS, identity, BU isolation — **nada** será alterado.
-- Outros steps do wizard (KPIs/Projetos/KRs/Reflexão).
-- Wording, copy, ícones ou paleta de cores.
 
-## Aderência a canônicos
-- ✅ `mem://ui/wizards/wizard-shell-mobile-standard` — layout responsivo do step.
-- ✅ Design tokens semânticos preservados (sem cores hardcoded).
-- ✅ Sem `select('*')`, sem alteração de query keys, sem alteração de RLS.
-- ✅ `React.memo` mantido onde já existe.
+- Persistir comentários de iniciativa em algum outro lugar.
+- Repensar o "marcar em risco" no Pré-Weekly do time.
+- Alterar `InitiativesSummary` ou outros wizards.
