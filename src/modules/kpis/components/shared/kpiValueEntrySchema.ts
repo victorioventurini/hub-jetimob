@@ -26,7 +26,10 @@ export const kpiValueEntrySchema = z.object({
       },
       { message: validation.consolidatedDate('Data de referência') },
     ),
-  input_type: z.enum(['consolidated', 'partial']),
+  input_type: z.enum(['consolidated', 'partial'], {
+    required_error: 'Selecione o tipo do input',
+    invalid_type_error: 'Selecione o tipo do input',
+  }),
   notes: z.string().max(500).optional(),
 });
 
