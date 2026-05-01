@@ -23,6 +23,7 @@ export interface CollaboratorReflectionStepProps {
   results: CollaboratorCheckinResult[];
   onComplete: (reflection: CollaboratorReflection) => void;
   onBack: () => void;
+  onSkip?: () => void;
   isSubmitting?: boolean;
 }
 
