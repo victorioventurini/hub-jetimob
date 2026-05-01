@@ -123,7 +123,6 @@ export function CollaboratorInitiativesStep({
         .is('kr.team_objective.cancelled_at', null)
         .is('kr.team_objective.deleted_at', null)
         .is('deleted_at', null)
-        .is('cancelled_at', null)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
