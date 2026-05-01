@@ -345,10 +345,12 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
-      case 'checkin':
+      case 'checkin': {
         const currentKr = krs[draft.data.currentKrIndex];
         if (!currentKr) {
-          goNext();
+          // Sem KR no índice atual: nada a renderizar.
+          // O auto-correct effect cuidará de mover o usuário para um step
+          // válido caso 'checkin' não esteja em visibleStepOrder.
           return null;
         }
         return (
@@ -388,14 +390,15 @@ export default function CollaboratorCheckinPage() {
           />
         );
         
-      case 'kpis':
+      case 'kpis': {
         // v2.87: KPIs agora são do tipo KpiForWizardV2
         const currentKpi = kpis[draft.data.currentKpiIndex] as KpiForWizardV2 | undefined;
         if (!currentKpi || kpis.length === 0) {
-          goNext();
+          // Sem KPI: nada a renderizar. visibleStepOrder remove 'kpis'
+          // quando vazio; o auto-correct effect reposiciona o usuário.
           return null;
         }
-        
+
         // Adapter para manter compatibilidade com CollaboratorKpiStep
         const kpiForStep = {
           ...currentKpi,
