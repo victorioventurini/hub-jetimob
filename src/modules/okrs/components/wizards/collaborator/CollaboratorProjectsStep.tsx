@@ -26,10 +26,12 @@ import { Button } from '@/components/ui/button';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { InlineAgendaSuggestionInput } from '../shared/InlineAgendaSuggestionInput';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { MilestoneStatus, ProjectHealth, ProjectStatus } from '@/modules/projects/types';
+import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -40,7 +42,12 @@ export interface CollaboratorProjectsStepProps {
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-projects';
 
 interface ProjectWithMilestones {
   id: string;
@@ -99,6 +106,9 @@ export function CollaboratorProjectsStep({
   onContinue,
   onBack,
   onSkip,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorProjectsStepProps) {
   const supabase = useBuScopedSupabase();
   const { currentBu } = useBu();
@@ -305,6 +315,16 @@ export function CollaboratorProjectsStep({
           skipLabel="Pular"
           onSkip={onSkip}
         />
+      }
+      bottomFixed={
+        agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep={AGENDA_SOURCE_STEP}
+            triggerLabel={agendaTriggerLabel}
+          />
+        ) : undefined
       }
     >
       <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">

@@ -31,11 +31,13 @@ import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { InlineAgendaSuggestionInput } from '../shared/InlineAgendaSuggestionInput';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { InitiativeQuickUpdateDialog } from '@/modules/okrs/components/initiatives/InitiativeQuickUpdateDialog';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { Initiative } from '@/modules/okrs/types/initiative';
 import type { ProjectHealth } from '@/modules/projects/types';
+import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -57,7 +59,12 @@ export interface CollaboratorInitiativesStepProps {
   onContinue: (markedAtRisk: string[]) => void;
   onBack: () => void;
   onSkip: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-initiatives';
 
 // ============================================================
 // COMPONENT
@@ -70,6 +77,9 @@ export function CollaboratorInitiativesStep({
   onContinue,
   onBack,
   onSkip,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorInitiativesStepProps) {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
@@ -256,6 +266,16 @@ export function CollaboratorInitiativesStep({
             onSkip={onSkip}
           />
         }
+        bottomFixed={
+          agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+            <InlineAgendaSuggestionInput
+              suggestions={agendaSuggestions}
+              onSuggestionsChange={onAgendaSuggestionsChange}
+              sourceStep={AGENDA_SOURCE_STEP}
+              triggerLabel={agendaTriggerLabel}
+            />
+          ) : undefined
+        }
       >
         <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
           <EmptyState
@@ -367,6 +387,18 @@ export function CollaboratorInitiativesStep({
           />
         </div>
       </ScrollArea>
+
+      {/* Sugestão de pauta para o rito-mãe (Check-in do Time) */}
+      {agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel && (
+        <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep={AGENDA_SOURCE_STEP}
+            triggerLabel={agendaTriggerLabel}
+          />
+        </div>
+      )}
 
       {/* Footer */}
       <div className="px-6 py-4 border-t bg-background">

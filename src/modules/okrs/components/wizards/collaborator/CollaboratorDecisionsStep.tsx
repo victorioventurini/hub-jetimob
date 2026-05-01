@@ -9,24 +9,35 @@ import { ClipboardCheck, Inbox } from 'lucide-react';
 import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/WizardStepHeader';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
+import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
 import { useMyPendingDecisions } from '@/modules/okrs/hooks';
 import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks';
 import { useDecisionThread } from '@/modules/okrs/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 export interface CollaboratorDecisionsStepProps {
   effectiveUserId: string | null;
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  /** Sugestões de pauta (draft do rito); se ausente, o input não é renderizado. */
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-decisions';
 
 export function CollaboratorDecisionsStep({
   effectiveUserId,
   onContinue,
   onBack,
   onSkip,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorDecisionsStepProps) {
   const { data: pendingItems = [], isLoading } = useMyPendingDecisions(effectiveUserId);
   const { mutate: updateFollowUp, isPending: isUpdating } = useUpdateDecisionFollowUp();
@@ -41,6 +52,16 @@ export function CollaboratorDecisionsStep({
       </div>
     );
   }
+
+  const agendaSlot =
+    agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+      <InlineAgendaSuggestionInput
+        suggestions={agendaSuggestions}
+        onSuggestionsChange={onAgendaSuggestionsChange}
+        sourceStep={AGENDA_SOURCE_STEP}
+        triggerLabel={agendaTriggerLabel}
+      />
+    ) : undefined;
 
   // Empty state
   if (pendingItems.length === 0) {
@@ -61,6 +82,7 @@ export function CollaboratorDecisionsStep({
             primaryLabel="Continuar"
           />
         }
+        bottomFixed={agendaSlot}
       >
         <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
           <Inbox className="h-12 w-12 text-muted-foreground/40" />
@@ -92,6 +114,7 @@ export function CollaboratorDecisionsStep({
           skipLabel="Pular"
         />
       }
+      bottomFixed={agendaSlot}
     >
       <div className="space-y-3 pb-4">
         {pendingItems.map((item) => (

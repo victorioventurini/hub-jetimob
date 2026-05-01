@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, MessageSquare, HelpCircle } from 'lucide-react';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
-import type { CollaboratorReflection, CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
+import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
+import type { CollaboratorReflection, CollaboratorCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -25,7 +26,12 @@ export interface CollaboratorReflectionStepProps {
   onBack: () => void;
   onSkip?: () => void;
   isSubmitting?: boolean;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-reflection';
 
 // ============================================================
 // COMPONENT
@@ -37,6 +43,9 @@ export function CollaboratorReflectionStep({
   onBack,
   onSkip,
   isSubmitting = false,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorReflectionStepProps) {
   const [impactSummary, setImpactSummary] = useState('');
   const [helpNeeded, setHelpNeeded] = useState('');
@@ -162,6 +171,18 @@ export function CollaboratorReflectionStep({
           </p>
         </div>
       </div>
+
+      {/* Sugestão de pauta para o rito-mãe (Check-in do Time) */}
+      {agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel && (
+        <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep={AGENDA_SOURCE_STEP}
+            triggerLabel={agendaTriggerLabel}
+          />
+        </div>
+      )}
 
       {/* Footer padronizado: Voltar / Pular / Continuar (não é a etapa final) */}
       <WizardStepFooter

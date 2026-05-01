@@ -244,3 +244,16 @@ export const RITUAL_GREETING_PHRASES: Partial<
 export function getRitualGreetingConfig(persona: WizardPersona | string) {
   return (RITUAL_GREETING_PHRASES as Record<string, { phrase: string; cadence: RitualCadence } | undefined>)[persona];
 }
+
+// ============================================================
+// AGENDA SUGGESTION TRIGGER LABELS (rodapé dos steps preparatórios)
+// ============================================================
+
+/**
+ * Texto do trigger collapsible exibido no `bottomFixed` dos steps que
+ * permitem o usuário registrar sugestões de pauta para o rito-mãe.
+ *
+ * SSOT — qualquer mudança aqui se propaga para todos os steps do rito.
+ */
+export const COLLABORATOR_AGENDA_TRIGGER_LABEL =
+  'Registrar sugestão de pauta para o Check-in do Time';
