@@ -217,84 +217,91 @@ export function InitiativesSummary({
                   <div 
                     key={init.id}
                     className={cn(
-                      "rounded-md border p-3 transition-colors",
+                      "rounded-md border p-3 transition-colors min-w-0",
                       config.highlight && "border-destructive/30 bg-destructive/5",
                       isAtRisk && "border-destructive/50 bg-destructive/5"
                     )}
                   >
-                    <div className="flex items-start gap-2">
-                      {editable && (
-                        <Checkbox
-                          checked={isAtRisk}
-                          onCheckedChange={(checked) => 
-                            onMarkAtRisk?.(init.id, checked === true)
-                          }
-                          className="mt-0.5"
-                        />
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate">
-                            {init.name}
-                          </span>
-                          <Badge 
-                            variant="secondary" 
-                            className={cn("text-xs flex-shrink-0", config.className)}
-                          >
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {config.label}
-                          </Badge>
-                          {isOverdue(init) && (
-                            <Badge variant="destructive" className="text-xs">
-                              Atrasada
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 min-w-0">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        {editable && (
+                          <Checkbox
+                            checked={isAtRisk}
+                            onCheckedChange={(checked) => 
+                              onMarkAtRisk?.(init.id, checked === true)
+                            }
+                            className="mt-0.5 shrink-0"
+                          />
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                            <span className="text-sm font-medium break-words min-w-0">
+                              {init.name}
+                            </span>
+                            <Badge 
+                              variant="secondary" 
+                              className={cn("text-xs shrink-0", config.className)}
+                            >
+                              <StatusIcon className="h-3 w-3 mr-1" />
+                              {config.label}
                             </Badge>
+                            {isOverdue(init) && (
+                              <Badge variant="destructive" className="text-xs shrink-0">
+                                Atrasada
+                              </Badge>
+                            )}
+                          </div>
+
+                          {init.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 break-words">
+                              {init.description}
+                            </p>
+                          )}
+
+                          {/* Progress */}
+                          {init.progress !== undefined && init.progress !== null && init.progress > 0 && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-primary rounded-full"
+                                  style={{ width: `${init.progress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {init.progress}%
+                              </span>
+                            </div>
                           )}
                         </div>
-                        
-                        {init.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {init.description}
-                          </p>
-                        )}
-
-                        {/* Progress */}
-                        {init.progress !== undefined && init.progress !== null && init.progress > 0 && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-primary rounded-full"
-                                style={{ width: `${init.progress}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              {init.progress}%
-                            </span>
-                          </div>
-                        )}
                       </div>
 
-                      {onEdit && (!canEdit || canEdit(init)) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => onEdit(init)}
-                        >
-                          <Pencil className="h-3 w-3 mr-1" />
-                          Atualizar
-                        </Button>
-                      )}
+                      {/* Ações: abaixo no mobile, à direita no desktop */}
+                      {(onEdit || editable) && (
+                        <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto sm:shrink-0">
+                          {onEdit && (!canEdit || canEdit(init)) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => onEdit(init)}
+                            >
+                              <Pencil className="h-3 w-3 mr-1" />
+                              Atualizar
+                            </Button>
+                          )}
 
-                      {editable && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => setExpandedInitiative(isItemExpanded ? null : init.id)}
-                        >
-                          {isItemExpanded ? 'Menos' : 'Comentar'}
-                        </Button>
+                          {editable && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setExpandedInitiative(isItemExpanded ? null : init.id)}
+                            >
+                              {isItemExpanded ? 'Menos' : 'Comentar'}
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
 

@@ -288,15 +288,15 @@ export function CollaboratorInitiativesStep({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0 overflow-x-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-muted/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Iniciativas vinculadas</h3>
+      <div className="px-6 py-4 border-b bg-muted/20 min-w-0">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <ClipboardList className="h-5 w-5 text-primary shrink-0" />
+            <h3 className="font-semibold truncate">Iniciativas vinculadas</h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Badge variant="secondary">{stats.total} iniciativas</Badge>
             {stats.needsAttention > 0 && (
               <Badge variant="destructive">{stats.needsAttention} atenção</Badge>
@@ -309,8 +309,8 @@ export function CollaboratorInitiativesStep({
       </div>
 
       {/* Content */}
-      <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6">
+      <ScrollArea className="flex-1 min-w-0">
+        <div className="p-6 space-y-6 min-w-0">
           {/* Prompt */}
           <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
             <Lightbulb className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
@@ -337,7 +337,7 @@ export function CollaboratorInitiativesStep({
             if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
-              <div key={krId} className="space-y-3">
+              <div key={krId} className="space-y-3 min-w-0">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-medium text-muted-foreground">
                     {krTitle}
