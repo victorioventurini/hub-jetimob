@@ -388,6 +388,18 @@ export function CollaboratorInitiativesStep({
         </div>
       </ScrollArea>
 
+      {/* Sugestão de pauta para o rito-mãe (Check-in do Time) */}
+      {agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel && (
+        <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep={AGENDA_SOURCE_STEP}
+            triggerLabel={agendaTriggerLabel}
+          />
+        </div>
+      )}
+
       {/* Footer */}
       <div className="px-6 py-4 border-t bg-background">
         <div className="flex items-center gap-3">
