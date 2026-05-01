@@ -118,8 +118,8 @@ export function CollaboratorCheckinStep({
   const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
   const isValueLocked = hasPrimaryKpi;
 
-  // AI state
-  const { getMicrocopy, insights, generateInsights, dismissInsight } = useWizardAI();
+  // AI state (somente microcopy — insights do VIC removidos do step)
+  const { getMicrocopy } = useWizardAI();
   const microcopy = getMicrocopy(kr);
 
   // Mutation
@@ -133,17 +133,6 @@ export function CollaboratorCheckinStep({
     setBlocker('');
     setShowBlockerField(false);
   }, [kr.id, kr.current_value]);
-
-  // Generate insights for at-risk KRs
-  useEffect(() => {
-    if (kr.is_at_risk || kr.is_pending) {
-      generateInsights({
-        persona: 'collaborator',
-        step: 'checkin',
-        krContext: { kr },
-      });
-    }
-  }, [kr.id]);
 
   // Calculate change
   const numericValue = parseFloat(currentValue) || 0;
