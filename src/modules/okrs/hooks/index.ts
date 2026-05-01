@@ -336,3 +336,15 @@ export {
 // SHARED TYPES re-exported for convenience
 // =========================
 export type { WizardKr, LatestCheckinData } from './useTeamPendingKrs';
+
+// =========================
+// RITUAL GREETING (Step 1 — saudação contextual)
+// =========================
+export {
+  useRitualGreetingContext,
+  type RitualGreetingContext,
+} from './useRitualGreetingContext';
+export {
+  useCollaboratorOpeningSignals,
+  type CollaboratorOpeningSignals,
+} from './useCollaboratorOpeningSignals';
