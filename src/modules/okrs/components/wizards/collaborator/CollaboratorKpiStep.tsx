@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
+import { calculateKpiRag } from '@/modules/kpis/utils/rag';
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
@@ -88,34 +89,20 @@ export function CollaboratorKpiStep({
   const [currentValue, setCurrentValue] = useState<number | undefined>(undefined);
   const [currentInputType, setCurrentInputType] = useState<KpiInputType>('consolidated');
 
-  // Estimar RAG status baseado no valor inserido
-  const estimatedRag = useMemo((): KpiRagStatus | null => {
-    if (currentValue === undefined || currentValue === null || kpi.target_value === null) {
-      return null;
-    }
-
-    const target = kpi.target_value;
-    const value = currentValue;
-    const direction = kpi.direction;
-
-    let percentOfTarget: number;
-    if (direction === 'up') {
-      percentOfTarget = target > 0 ? (value / target) * 100 : 0;
-    } else if (direction === 'down') {
-      percentOfTarget = target > 0 ? ((target - value + target) / target) * 100 : 0;
-    } else {
-      // maintain
-      const diff = Math.abs(value - target);
-      percentOfTarget = target > 0 ? ((target - diff) / target) * 100 : 100;
-    }
-
-    if (percentOfTarget >= 70) return 'on_track';
-    if (percentOfTarget >= 40) return 'at_risk';
-    return 'off_track';
+  // Estimar RAG status baseado no valor inserido — usa o helper canônico que
+  // espelha exatamente a função SQL `kpi_calculate_rag` (thresholds 90/70 e
+  // fórmula correta para `direction='down'`). NÃO duplicar a lógica aqui.
+  const estimatedRag = useMemo<KpiRagStatus | null>(() => {
+    if (currentValue === undefined) return null;
+    const rag = calculateKpiRag(currentValue, kpi.target_value, kpi.direction);
+    return rag;
   }, [currentValue, kpi.target_value, kpi.direction]);
 
-  // Notes obrigatórias para RAG amarelo/vermelho
-  const notesRequired = !!estimatedRag && estimatedRag !== 'on_track';
+  // Notes obrigatórias APENAS quando o valor não atinge a meta (at_risk/off_track).
+  // - on_track (igualou ou superou a meta) → notes opcional.
+  // - no_data (sem base para avaliar: target=0, value=0, target null) → notes opcional.
+  // Regra canônica: TCR §KPI Values — "Gate de comentário: Obrigatório se RAG = at_risk ou off_track".
+  const notesRequired = estimatedRag === 'at_risk' || estimatedRag === 'off_track';
 
   // Calcular variação se houver valor anterior
   const valueChange = useMemo(() => {

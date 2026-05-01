@@ -94,7 +94,8 @@ describe('CollaboratorKpiStep - Rendering', () => {
     expect(screen.getByText(/Valor \(/i)).toBeInTheDocument();
     expect(screen.getByText(/Data de Referência/i)).toBeInTheDocument();
     expect(screen.getByText(/Tipo do input/i)).toBeInTheDocument();
-    expect(screen.getByText(/Confiança/i)).toBeInTheDocument();
+    // v3.30.0: campo `confidence` foi removido (autoavaliação subjetiva eliminada).
+    expect(screen.queryByText(/Confiança/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Observações/i)).toBeInTheDocument();
   });
 
@@ -290,6 +291,52 @@ describe('CollaboratorKpiStep - Notes Gate for Off-Track', () => {
         expect.objectContaining({
           notes: 'Queda devido a sazonalidade',
         })
+      );
+    });
+  });
+
+  it('should NOT require notes when value meets/exceeds target (caso EBITDA: target=20, value=25, direction=up)', async () => {
+    // Regra: se o KPI está batendo/superando a meta, observações são opcionais.
+    // Ver `mem://features/kpis/kpi-value-entry-ssot` e `kpi_calculate_rag` (SQL).
+    const kpi = createMockKpi({ target_value: 20, direction: 'up' });
+    const onComplete = vi.fn();
+
+    render(<CollaboratorKpiStep {...defaultProps} kpi={kpi} onComplete={onComplete} />);
+
+    const valueInput = screen.getByRole('spinbutton');
+    await userEvent.clear(valueInput);
+    await userEvent.type(valueInput, '25');
+
+    // Submit SEM preencher notes — deve passar.
+    const submitButton = screen.getByRole('button', { name: /Próximo/i });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          newValue: 25,
+        }),
+      );
+    });
+  });
+
+  it('should NOT require notes when direction=down and value beats target (value < target)', async () => {
+    // direction=down, target=10, value=8 → on_track (10/8*100=125%). Notes opcional.
+    const kpi = createMockKpi({ target_value: 10, direction: 'down' });
+    const onComplete = vi.fn();
+
+    render(<CollaboratorKpiStep {...defaultProps} kpi={kpi} onComplete={onComplete} />);
+
+    const valueInput = screen.getByRole('spinbutton');
+    await userEvent.clear(valueInput);
+    await userEvent.type(valueInput, '8');
+
+    const submitButton = screen.getByRole('button', { name: /Próximo/i });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith(
+        expect.objectContaining({ newValue: 8 }),
       );
     });
   });
