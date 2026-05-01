@@ -1,51 +1,83 @@
 ## Contexto
 
-Em `/kpis?view=table`, a coluna **"Área"** mostra um trio canônico de badges para cada KPI (`KpiDashboardTable.tsx` linhas 154-167):
+No step "Atualizar Indicador" do rito Colaborador (`CollaboratorKpiStep.tsx`, linhas 298-319), o adorno do campo de valor mostra um delta solto como `−27,00`. É o **delta absoluto vs. o último valor registrado** (`currentValue − kpi.latest_value`).
 
-```tsx
-{kpi.area && <AreaBadge area={kpi.area} />}
-{kpi.team && <Badge variant="outline"><Users />{kpi.team.name}</Badge>}
-<KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />  // só renderiza se scope === 'org'
-```
-
-No step de KPIs do rito Colaborador (`CollaboratorKpiStep.tsx`, linhas 196-216), o "KPI Info Card" só mostra os badges **Tipo** (`INDICATOR_TYPE_LABELS`), **RAG** e (opcional) "Precisa atualização" — **não há sinalização do escopo** (área / time / global).
-
-O tipo `KpiForWizardV2` (`src/modules/kpis/types.ts` linhas 376-424) já expõe `area`, `team` e `scope` — não é preciso buscar dados extras.
+Estado atual:
+- `currentValue` é `undefined` enquanto o usuário não digita (ver linhas 94 e 113-116). Logo, o delta hoje **não aparece antes da digitação** — bom. Mas se o usuário digitar e apagar, `currentValue` volta a `undefined` e o delta some, o que é o comportamento desejado.
+- Problema visual real: o número aparece **sem rótulo, sem unidade e com cor que ignora `direction`**. Para EBITDA (47% → 20%) vê-se só `↓ −27,00`.
 
 ## Mudança proposta (UI/apresentação, arquivo único)
 
 Arquivo: `src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx`
 
-1. **Importar** os componentes canônicos já existentes:
-   - `AreaBadge` (de onde já está sendo usado em `KpiDashboardTable`).
-   - `KpiScopeBadge` de `@/modules/kpis/components/KpiScopeBadge`.
-   - `Users` (lucide-react) para o badge de time.
-   - `useBu()` (`@/contexts/BuContext`) para obter `currentBu?.name` (mesmo padrão do `KpiDashboardTable`).
+Reescrever apenas o bloco do `valueChange` dentro do `valueAdornmentSlot` (linhas 300-319). Sem mexer em schema, mutation, RAG, gating de notes, sparkline ou outros consumidores do `KpiValueEntryForm`.
 
-2. **Inserir os badges de escopo** dentro da `<div className="flex items-center gap-2 mt-2 flex-wrap">` (linhas 202-215), na sequência canônica usada na tabela (Área → Time → Global), logo após os badges existentes:
+### 1. Garantir o gate "só após o usuário digitar"
+Manter a guarda atual `valueChange !== null` (que já depende de `currentValue !== undefined`) e adicionar explicitamente `kpi.latest_value !== null` para clareza.
 
-   ```tsx
-   {kpi.area && <AreaBadge area={kpi.area} />}
-   {kpi.team && (
-     <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
-       <Users className="h-3 w-3" />
-       {kpi.team.name}
-     </Badge>
-   )}
-   <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
-   ```
+### 2. Rótulo + unidade canônica
+Trocar `+/− N.NN` por:
 
-3. **Não duplicar**: usar exatamente os mesmos componentes/markup da tabela — nada de variantes novas. `KpiScopeBadge` já tem early return quando `scope !== 'org'`, então não polui o card para KPIs de área/time.
+```
+↑/↓  vs. último: +X,XX <unidade>
+```
 
-## Resultado visual esperado
+- Importar `formatValueWithUnit` de `@/shared/constants/units` (mesmo helper já usado pelo `KpiSparkline`).
+- Para `kpi.unit === '%'`, exibir o sufixo **`p.p.`** (pontos percentuais), pois diferença entre percentuais não é percentual. Helper local pequeno:
+  ```ts
+  const formatDelta = (delta: number, unit: string) => {
+    const sign = delta > 0 ? '+' : '';
+    if (unit === '%') return `${sign}${delta.toFixed(2)} p.p.`;
+    return `${sign}${formatValueWithUnit(delta, unit)}`;
+  };
+  ```
+- Adicionar tooltip nativo `title={\`Último valor: ${formatValueWithUnit(kpi.latest_value, kpi.unit)}\`}` para dar contexto sem poluir.
 
-- KPI de **área** (ex.: EBITDA com `area`): aparece o `AreaBadge` colorido com o nome da área.
-- KPI de **time**: badge outline com ícone de pessoas + nome do time.
-- KPI **global** (`scope='org'`): badge azul claro "🌐 Global" com tooltip "Indicador global da BU {nome}".
-- KPIs com mais de um vínculo (raro, mas possível): badges aparecem juntos, igual à tabela.
+### 3. Cor sensível a `kpi.direction`
+- `direction === 'up'`: subida = `text-success`, queda = `text-destructive`.
+- `direction === 'down'`: queda = `text-success`, subida = `text-destructive`.
+- Sem mudança = `text-muted-foreground`.
+
+```tsx
+const isImprovement = kpi.direction === 'down' ? valueChange < 0 : valueChange > 0;
+const isWorse       = kpi.direction === 'down' ? valueChange > 0 : valueChange < 0;
+```
+
+### JSX final (substitui linhas 300-319)
+
+```tsx
+{valueChange !== null && kpi.latest_value !== null && (
+  <span
+    className={cn(
+      'flex items-center gap-1 text-sm font-medium',
+      isImprovement ? 'text-success' : isWorse ? 'text-destructive' : 'text-muted-foreground',
+    )}
+    title={`Último valor: ${formatValueWithUnit(kpi.latest_value, kpi.unit)}`}
+  >
+    {isImprovement ? <TrendingUp className="h-4 w-4" />
+      : isWorse ? <TrendingDown className="h-4 w-4" /> : null}
+    <span className="text-muted-foreground font-normal">vs. último:</span>
+    {formatDelta(valueChange, kpi.unit)}
+  </span>
+)}
+```
+
+## Resultado esperado
+
+Cenário EBITDA (`direction='up'`, último=47%, meta=20%):
+
+| Estado | O que aparece |
+|---|---|
+| Campo vazio (mount) | (nada) |
+| Usuário digita `2` | `↓ vs. último: −45,00 p.p.` em vermelho, tooltip "Último valor: 47,00%" |
+| Usuário digita `20` | `↓ vs. último: −27,00 p.p.` em vermelho |
+| Usuário digita `50` | `↑ vs. último: +3,00 p.p.` em verde |
+| Usuário apaga tudo | (nada) |
+
+Cenário Turnover (`direction='down'`, último=12%, novo=8%):
+- `↓ vs. último: −4,00 p.p.` em **verde** (queda é boa).
 
 ## Fora de escopo
 
-- Qualquer outra mudança no step (delta, RAG, notes, sparkline, footer).
-- Outros wizards/ritos (Team, Manager, MBR, QBR) — esta task é específica do step do Colaborador conforme URL informada.
-- Criação de novo componente — proibido por princípio de SSOT; reaproveitamos o trio já existente.
+- Cálculo de RAG, gating de notes, persistência, sparkline, badges de escopo (já feitos), validações.
+- Outros wizards/ritos. Mudança contida ao `valueAdornmentSlot` deste step.
