@@ -112,6 +112,11 @@ export function KpiSparkline({
                   <p className="text-muted-foreground">
                     {formatValueWithUnit(item.value, unit)}
                   </p>
+                  {target != null && (
+                    <p className="text-muted-foreground">
+                      Meta: <span className="text-foreground font-medium">{formatValueWithUnit(target, unit)}</span>
+                    </p>
+                  )}
                 </div>
               );
             }}
@@ -121,7 +126,13 @@ export function KpiSparkline({
               y={target}
               stroke="hsl(var(--primary))"
               strokeDasharray="3 3"
-              strokeOpacity={0.6}
+              strokeOpacity={0.7}
+              label={{
+                value: `Meta: ${formatValueWithUnit(target, unit)}`,
+                position: 'right',
+                fill: 'hsl(var(--muted-foreground))',
+                fontSize: 9,
+              }}
             />
           )}
           <Area
