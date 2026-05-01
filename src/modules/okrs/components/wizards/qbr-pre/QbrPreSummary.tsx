@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Send, BookOpen, Target, CheckCircle2, XCircle, AlertCircle, Lightbulb, Pencil } from 'lucide-react';
+import { Send, BookOpen, Target, CheckCircle2, XCircle, AlertCircle, Pencil } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardLastStepFooter,
@@ -18,8 +18,6 @@ import {
   AgendaSuggestionsPrioritizer,
   SummaryKrBalance,
   SummaryKpiList,
-  InlineDecisionInput,
-  DecisionCard,
 } from '../shared';
 import {
   normalizeProposedOkrs,
@@ -66,13 +64,6 @@ export function QbrPreSummary({
 
   const updateLearning = (field: keyof QbrPreDraftData['learnings'], value: string) => {
     onLearningsChange?.({ ...learnings, [field]: value });
-  };
-
-  const handleDecisionUpdate = (id: string, updates: Partial<TeamCheckinDecision>) => {
-    onDecisionsChange?.(decisions.map((d) => (d.id === id ? { ...d, ...updates } : d)));
-  };
-  const handleDecisionRemove = (id: string) => {
-    onDecisionsChange?.(decisions.filter((d) => d.id !== id));
   };
 
   return (
