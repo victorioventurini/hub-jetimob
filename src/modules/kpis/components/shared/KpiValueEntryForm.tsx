@@ -167,46 +167,47 @@ export function KpiValueEntryForm({
         onSubmit={handleSubmit}
         className={cn('space-y-4', className)}
       >
-        {/* Valor */}
-        <FormField
-          control={form.control}
-          name="value"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valor ({unit})</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder={placeholder}
-                    {...field}
-                  />
-                </div>
-              </FormControl>
-              {valueAdornmentSlot}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Valor + Data — lado a lado em ≥sm, empilhados no mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="value"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valor ({unit})</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder={placeholder}
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                {valueAdornmentSlot}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Data de Referência */}
-        <FormField
-          control={form.control}
-          name="reference_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Data de Referência</FormLabel>
-              <FormControl>
-                <Input type="date" max={maxDate} {...field} />
-              </FormControl>
-              <p className="text-xs text-muted-foreground">
-                Informe o último dia do período consolidado (até ontem)
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="reference_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Data de Referência</FormLabel>
+                <FormControl>
+                  <Input type="date" max={maxDate} {...field} />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Informe o último dia do período consolidado (até ontem)
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Tipo do input — Consolidado / Parcial */}
         <FormField
