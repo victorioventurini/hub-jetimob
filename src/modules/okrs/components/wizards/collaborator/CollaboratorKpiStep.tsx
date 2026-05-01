@@ -32,7 +32,7 @@ import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/share
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import type { KpiForWizard } from '@/modules/kpis/hooks';
+import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import type { KpiInputType, KpiRagStatus } from '@/modules/kpis/types';
 import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
