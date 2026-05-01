@@ -339,6 +339,8 @@ export default function CollaboratorCheckinPage() {
           <CollaboratorContextStep
             krs={krs}
             kpisToUpdate={kpis}
+            userName={effectiveUserName}
+            effectiveUserId={effectiveUserId}
             cycleName={quarterlyCycle?.name || 'Sem ciclo ativo'}
             lastCompletedAt={lastCheckin.lastCompletedAt}
             onContinue={goNext}
