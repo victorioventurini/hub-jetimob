@@ -661,7 +661,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Meta ou Benchmark
+                      Meta ou Benchmark <span className="text-destructive">*</span>
                       <HelpTooltip 
                         content={
                           <div className="space-y-1">
