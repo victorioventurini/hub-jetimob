@@ -25,9 +25,13 @@ import {
   TrendingDown,
   AlertTriangle,
   CheckCircle2,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBu } from '@/contexts/BuContext';
+import { AreaBadge } from '@/components/ui/area-badge';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
 import { calculateKpiRag } from '@/modules/kpis/utils/rag';
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
