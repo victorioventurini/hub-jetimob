@@ -1,83 +1,89 @@
 ## Contexto
 
-No step "Atualizar Indicador" do rito Colaborador (`CollaboratorKpiStep.tsx`, linhas 298-319), o adorno do campo de valor mostra um delta solto como `−27,00`. É o **delta absoluto vs. o último valor registrado** (`currentValue − kpi.latest_value`).
+O formulário canônico `KpiValueEntryForm` (`src/modules/kpis/components/shared/KpiValueEntryForm.tsx`) é o **SSOT** de "Registrar valor de KPI", consumido por:
+- `AddKpiValueDialog` (modal de `/kpis`)
+- `EditKpiValueDialog`
+- `CollaboratorKpiStep` (rito Colaborador) — pedido atual
 
-Estado atual:
-- `currentValue` é `undefined` enquanto o usuário não digita (ver linhas 94 e 113-116). Logo, o delta hoje **não aparece antes da digitação** — bom. Mas se o usuário digitar e apagar, `currentValue` volta a `undefined` e o delta some, o que é o comportamento desejado.
-- Problema visual real: o número aparece **sem rótulo, sem unidade e com cor que ignora `direction`**. Para EBITDA (47% → 20%) vê-se só `↓ −27,00`.
+Hoje todos os campos ficam empilhados em coluna (`space-y-4`):
+1. Valor (linha inteira) + `valueAdornmentSlot` logo abaixo
+2. Data de Referência (linha inteira)
+3. Tipo do input (radios)
+4. Observações
 
-## Mudança proposta (UI/apresentação, arquivo único)
+A regra do projeto é **estender e compor o SSOT, não duplicar**. Vou mexer no próprio `KpiValueEntryForm` de forma responsiva, sem quebrar consumidores.
 
-Arquivo: `src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx`
+## Mudança proposta
 
-Reescrever apenas o bloco do `valueChange` dentro do `valueAdornmentSlot` (linhas 300-319). Sem mexer em schema, mutation, RAG, gating de notes, sparkline ou outros consumidores do `KpiValueEntryForm`.
+### Arquivo único: `src/modules/kpis/components/shared/KpiValueEntryForm.tsx`
 
-### 1. Garantir o gate "só após o usuário digitar"
-Manter a guarda atual `valueChange !== null` (que já depende de `currentValue !== undefined`) e adicionar explicitamente `kpi.latest_value !== null` para clareza.
+1. **Empacotar Valor + Data num grid responsivo de 2 colunas:**
+   ```tsx
+   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+     <FormField name="value" ... />
+     <FormField name="reference_date" ... />
+   </div>
+   ```
+   - Em telas pequenas (<640px), continuam empilhados (não força quebra de UX no mobile do rito).
+   - Em ≥sm, aparecem lado a lado, ocupando metade cada — atende `AddKpiValueDialog` (que tem largura suficiente) e o `CollaboratorKpiStep` (área central do wizard tem >640px no viewport informado de 1119px).
 
-### 2. Rótulo + unidade canônica
-Trocar `+/− N.NN` por:
+2. **Manter ordem visual semântica:** Valor à esquerda, Data à direita. O `valueAdornmentSlot` continua imediatamente abaixo do campo Valor (dentro da coluna esquerda do grid), assim o delta/RAG estimado fica logo abaixo do valor digitado, sem cruzar com a Data.
 
-```
-↑/↓  vs. último: +X,XX <unidade>
-```
+3. **Não criar prop nova / não duplicar componente.** A mudança é puramente de layout do JSX raiz do form. Outros consumidores ganham automaticamente o mesmo benefício de UX (campos curtos lado a lado).
 
-- Importar `formatValueWithUnit` de `@/shared/constants/units` (mesmo helper já usado pelo `KpiSparkline`).
-- Para `kpi.unit === '%'`, exibir o sufixo **`p.p.`** (pontos percentuais), pois diferença entre percentuais não é percentual. Helper local pequeno:
-  ```ts
-  const formatDelta = (delta: number, unit: string) => {
-    const sign = delta > 0 ? '+' : '';
-    if (unit === '%') return `${sign}${delta.toFixed(2)} p.p.`;
-    return `${sign}${formatValueWithUnit(delta, unit)}`;
-  };
-  ```
-- Adicionar tooltip nativo `title={\`Último valor: ${formatValueWithUnit(kpi.latest_value, kpi.unit)}\`}` para dar contexto sem poluir.
+4. **Sem tocar em** schema, validação, sugestão de `input_type`, dica "consolida X mas atualiza Y", regra de notes obrigatórias, callbacks (`onValueChange`, `onInputTypeChange`, `onValidSubmit`).
 
-### 3. Cor sensível a `kpi.direction`
-- `direction === 'up'`: subida = `text-success`, queda = `text-destructive`.
-- `direction === 'down'`: queda = `text-success`, subida = `text-destructive`.
-- Sem mudança = `text-muted-foreground`.
+### Snippet alvo (substitui os blocos atuais dos `FormField` Valor e Data, linhas 170-209)
 
 ```tsx
-const isImprovement = kpi.direction === 'down' ? valueChange < 0 : valueChange > 0;
-const isWorse       = kpi.direction === 'down' ? valueChange > 0 : valueChange < 0;
-```
-
-### JSX final (substitui linhas 300-319)
-
-```tsx
-{valueChange !== null && kpi.latest_value !== null && (
-  <span
-    className={cn(
-      'flex items-center gap-1 text-sm font-medium',
-      isImprovement ? 'text-success' : isWorse ? 'text-destructive' : 'text-muted-foreground',
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <FormField
+    control={form.control}
+    name="value"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Valor ({unit})</FormLabel>
+        <FormControl>
+          <div className="relative">
+            <Input type="number" step="0.01" placeholder={placeholder} {...field} />
+          </div>
+        </FormControl>
+        {valueAdornmentSlot}
+        <FormMessage />
+      </FormItem>
     )}
-    title={`Último valor: ${formatValueWithUnit(kpi.latest_value, kpi.unit)}`}
-  >
-    {isImprovement ? <TrendingUp className="h-4 w-4" />
-      : isWorse ? <TrendingDown className="h-4 w-4" /> : null}
-    <span className="text-muted-foreground font-normal">vs. último:</span>
-    {formatDelta(valueChange, kpi.unit)}
-  </span>
-)}
+  />
+
+  <FormField
+    control={form.control}
+    name="reference_date"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Data de Referência</FormLabel>
+        <FormControl>
+          <Input type="date" max={maxDate} {...field} />
+        </FormControl>
+        <p className="text-xs text-muted-foreground">
+          Informe o último dia do período consolidado (até ontem)
+        </p>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+</div>
 ```
 
-## Resultado esperado
+## Impactos nos consumidores
 
-Cenário EBITDA (`direction='up'`, último=47%, meta=20%):
-
-| Estado | O que aparece |
+| Consumidor | Impacto |
 |---|---|
-| Campo vazio (mount) | (nada) |
-| Usuário digita `2` | `↓ vs. último: −45,00 p.p.` em vermelho, tooltip "Último valor: 47,00%" |
-| Usuário digita `20` | `↓ vs. último: −27,00 p.p.` em vermelho |
-| Usuário digita `50` | `↑ vs. último: +3,00 p.p.` em verde |
-| Usuário apaga tudo | (nada) |
-
-Cenário Turnover (`direction='down'`, último=12%, novo=8%):
-- `↓ vs. último: −4,00 p.p.` em **verde** (queda é boa).
+| `CollaboratorKpiStep` (pedido) | Valor + Data lado a lado em ≥640px, empilhados no mobile. ✅ |
+| `AddKpiValueDialog` (`/kpis`) | Mesmo ganho — modal padrão tem ≥600px. Sem regressão. ✅ |
+| `EditKpiValueDialog` | Idem. ✅ |
+| Mobile (<640px) | Sem mudança visível — segue empilhado. ✅ |
 
 ## Fora de escopo
 
-- Cálculo de RAG, gating de notes, persistência, sparkline, badges de escopo (já feitos), validações.
-- Outros wizards/ritos. Mudança contida ao `valueAdornmentSlot` deste step.
+- Mudar layout do `Tipo do input` ou `Observações` (continuam linha inteira).
+- Criar variantes/props novas (`layout="row"` etc.) — desnecessário: o grid responsivo cobre todos os casos.
+- Outros formulários do módulo KPIs.
