@@ -184,34 +184,39 @@ export function CollaboratorInitiativesStep({
     );
   }
 
-  // If no initiatives, show skip option
+  // If no initiatives, show empty state with canonical footer (Voltar/Pular/Continuar)
   if (initiatives.length === 0) {
     return (
-      <div className="flex flex-col h-full min-h-0 overflow-hidden">
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center max-w-md">
-            <div className="p-4 rounded-full bg-muted/50 inline-block mb-4">
-              <ClipboardList className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhuma iniciativa vinculada</h3>
-            <p className="text-muted-foreground mb-6">
-              Você não possui iniciativas vinculadas aos seus KRs. 
-              Isso é normal — iniciativas são opcionais.
-            </p>
-            <Button onClick={onSkip} size="lg">
-              Continuar para reflexão
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+      <WizardStepScaffold
+        header={
+          <WizardStepHeader
+            icon={ClipboardList}
+            title="Iniciativas vinculadas"
+            tooltip="collaborator-initiatives"
+            description="Revise as iniciativas e marque as que precisam de atenção"
+            variant="purple"
+          />
+        }
+        footer={
+          <WizardStepFooter
+            showBack
+            onBack={onBack}
+            primaryLabel="Continuar"
+            onPrimary={() => onContinue([])}
+            showSkip
+            skipLabel="Pular"
+            onSkip={onSkip}
+          />
+        }
+      >
+        <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+          <EmptyState
+            icon={ClipboardList}
+            title="Nenhuma iniciativa vinculada"
+            description="Você não possui iniciativas vinculadas aos seus KRs. Iniciativas são opcionais — você pode pular ou avançar."
+          />
         </div>
-
-        <div className="px-6 py-4 border-t bg-background">
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-        </div>
-      </div>
+      </WizardStepScaffold>
     );
   }
 
