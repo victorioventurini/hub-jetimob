@@ -89,6 +89,7 @@ export function CollaboratorKpiStep({
   onSkip,
   onBack,
 }: CollaboratorKpiStepProps) {
+  const { currentBu } = useBu();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentValue, setCurrentValue] = useState<number | undefined>(undefined);
   const [currentInputType, setCurrentInputType] = useState<KpiInputType>('consolidated');
