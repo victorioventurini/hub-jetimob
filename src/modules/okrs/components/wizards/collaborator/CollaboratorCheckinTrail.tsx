@@ -27,7 +27,11 @@ export interface TrailStepInput {
 
 export interface CollaboratorCheckinTrailProps {
   steps: TrailStepInput[];
-  onStart: () => void;
+  /**
+   * Quando informado, renderiza o CTA "Começar" no rodapé interno da trilha.
+   * Se omitido, o consumidor assume o CTA via WizardStepFooter (padrão atual).
+   */
+  onStart?: () => void;
   startLabel?: string;
   className?: string;
 }
