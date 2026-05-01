@@ -28,10 +28,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
-import { KpiValueEntryForm } from '@/modules/kpis/components/shared';
+import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
+import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import type { KpiForWizard } from '@/modules/kpis/hooks';
+import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import type { KpiInputType, KpiRagStatus } from '@/modules/kpis/types';
 import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
@@ -39,7 +40,7 @@ import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
 export type { KpiCheckinResult };
 
 export interface CollaboratorKpiStepProps {
-  kpi: KpiForWizard;
+  kpi: KpiForWizardV2;
   currentIndex: number;
   totalCount: number;
   onComplete: (result: KpiCheckinResult) => void;
@@ -211,7 +212,10 @@ export function CollaboratorKpiStep({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <KpiNameLink kpiId={kpi.id} name={kpi.name} className="font-medium text-base" />
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <Badge variant="outline" className="text-xs font-medium">
+                {INDICATOR_TYPE_LABELS[kpi.indicator_type]}
+              </Badge>
               <Badge variant="secondary" className={cn('text-xs', ragConfig.className)}>
                 <RagIcon className="h-3 w-3 mr-1" />
                 {ragConfig.label}
@@ -253,6 +257,21 @@ export function CollaboratorKpiStep({
             </p>
           </div>
         )}
+      </div>
+
+      {/* Sparkline — últimas atualizações */}
+      <div className="px-6 py-3 border-b bg-background">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-muted-foreground">Evolução recente</span>
+          <span className="text-[10px] text-muted-foreground">últimos 12 registros</span>
+        </div>
+        <KpiSparkline
+          kpiId={kpi.id}
+          unit={kpi.unit}
+          target={kpi.target_value}
+          height={72}
+          pointsLimit={12}
+        />
       </div>
 
       {/* Form (SSOT compartilhado com /kpis) */}

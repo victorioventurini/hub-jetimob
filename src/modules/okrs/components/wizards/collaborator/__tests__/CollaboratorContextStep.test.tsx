@@ -60,6 +60,7 @@ const createMockKpiV2 = (overrides: Partial<KpiForWizardV2> = {}): KpiForWizardV
   unit: '%',
   target_value: 15,
   direction: 'up',
+  indicator_type: 'kpi',
   consolidation_frequency: 'weekly',
   update_frequency: 'weekly',
   lifecycle_status: 'active',

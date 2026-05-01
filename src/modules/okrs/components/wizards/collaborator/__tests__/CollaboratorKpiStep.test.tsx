@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { CollaboratorKpiStep } from '../CollaboratorKpiStep';
-import type { KpiForWizard } from '@/modules/kpis/hooks';
+import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { format, subDays } from 'date-fns';
 
 // Mock dependencies
@@ -23,23 +23,34 @@ vi.mock('@/modules/vic/components/AskToVic', () => ({
 // Test Data Factory
 // ============================================================
 
-const createMockKpi = (overrides: Partial<KpiForWizard> = {}): KpiForWizard => ({
+const createMockKpi = (overrides: Partial<KpiForWizardV2> = {}): KpiForWizardV2 => ({
   id: 'kpi-test',
   name: 'Taxa de Conversão',
   unit: '%',
   target_value: 15,
   direction: 'up',
+  indicator_type: 'kpi',
   update_frequency: 'weekly',
   consolidation_frequency: 'weekly',
   lifecycle_status: 'active',
   recovery_protocol: null,
   team_id: 'team-1',
+  area_id: null,
   owner_user_id: 'user-1',
+  scope: 'team',
   latest_value: 12,
   latest_reference_date: '2026-01-30',
   latest_rag_status: 'on_track',
   latest_period_label: 'Semana 5',
+  latest_input_type: 'consolidated',
   needs_update: false,
+  deviation_pct: null,
+  userRole: 'owner',
+  isStrategic: false,
+  isGuardrailAtRisk: false,
+  linkedKrIds: [],
+  displayMode: 'editable',
+  alertReason: null,
   ...overrides,
 });
 
