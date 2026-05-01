@@ -337,7 +337,7 @@ export function CollaboratorInitiativesStep({
             if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
-              <div key={krId} className="space-y-3">
+              <div key={krId} className="space-y-3 min-w-0">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-medium text-muted-foreground">
                     {krTitle}
