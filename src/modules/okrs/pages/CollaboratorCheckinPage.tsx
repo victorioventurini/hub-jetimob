@@ -389,7 +389,8 @@ export default function CollaboratorCheckinPage() {
             }}
           />
         );
-        
+      }
+
       case 'kpis': {
         // v2.87: KPIs agora são do tipo KpiForWizardV2
         const currentKpi = kpis[draft.data.currentKpiIndex] as KpiForWizardV2 | undefined;
@@ -460,7 +461,8 @@ export default function CollaboratorCheckinPage() {
             }}
           />
         );
-        
+      }
+
       case 'projects':
         return (
           <CollaboratorProjectsStep
