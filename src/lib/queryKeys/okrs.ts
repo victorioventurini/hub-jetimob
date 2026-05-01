@@ -108,6 +108,16 @@ export const okrsKeys = {
   initiativesByStatus: (buId: string | null, status?: string) => ['okr-initiatives', 'status', buId, status] as const,
   initiativesAll: () => ['okr-initiatives'] as const,
   initiativesByKrs: (krIds: string[]) => ['wizard-initiatives', krIds] as const,
+  /**
+   * Iniciativas do step do colaborador (collaborator check-in).
+   * Centrada no usuário (owner OR contributor) no ciclo ativo.
+   * Ver TCR §4.8 — Collaborator Check-in / Filtro de Iniciativas do Step.
+   */
+  initiativesForCollaborator: (
+    buId: string | null,
+    cycleId: string | null,
+    profileId: string | null,
+  ) => ['okr-initiatives', 'collaborator', buId, cycleId, profileId] as const,
   
   // Cycles & Settings
   settingsCycles: (buId: string | null) => ['okr-settings-cycles', buId] as const,
