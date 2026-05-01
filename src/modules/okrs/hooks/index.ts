@@ -348,3 +348,7 @@ export {
   useCollaboratorOpeningSignals,
   type CollaboratorOpeningSignals,
 } from './useCollaboratorOpeningSignals';
+export {
+  useCollaboratorInitiativesSignal,
+  type CollaboratorInitiativesSignal,
+} from './useCollaboratorInitiativesSignal';

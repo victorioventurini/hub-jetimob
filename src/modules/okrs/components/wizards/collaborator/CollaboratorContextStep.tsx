@@ -22,9 +22,11 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { RitualGreeting } from '../shared/RitualGreeting';
 import { CollaboratorSnapshot } from './CollaboratorSnapshot';
 import { CollaboratorCheckinTrail, computeTrailEta } from './CollaboratorCheckinTrail';
+import { STEP_ORDER, type WizardStep } from './wizardSteps';
 import {
   useRitualGreetingContext,
   useCollaboratorOpeningSignals,
+  useCollaboratorInitiativesSignal,
 } from '@/modules/okrs/hooks';
 
 // ============================================================
@@ -42,12 +44,20 @@ export interface CollaboratorContextStepProps {
   isLoading?: boolean;
   /** Nome do usuário efetivo (admin pode estar revisando outro). */
   userName?: string | null;
-  /** ID do usuário efetivo — usado para sinais de projetos/bloqueios. */
+  /** ID do usuário efetivo — usado para sinais de projetos/bloqueios/iniciativas. */
   effectiveUserId?: string | null;
+  /** Ciclo ativo — necessário para o sinal de iniciativas do colaborador. */
+  cycleId?: string | null;
   /** Mantido por compat com chamadas anteriores. */
   cycleName?: string;
   lastCompletedAt?: string | null;
   onContinue: () => void;
+  /**
+   * Sub-conjunto de `STEP_ORDER` que está visível no rito (após filtros
+   * dinâmicos como `hasKrStep`/`hasKpiStep`). Default = todos.
+   * A trilha respeita esse filtro para não anunciar etapas que não existem.
+   */
+  visibleStepOrder?: readonly WizardStep[];
 }
 
 // ============================================================
@@ -60,6 +70,8 @@ export function CollaboratorContextStep({
   isLoading,
   userName,
   effectiveUserId = null,
+  cycleId = null,
+  visibleStepOrder = STEP_ORDER,
   onContinue,
 }: CollaboratorContextStepProps) {
   // Saudação contextual
@@ -70,6 +82,9 @@ export function CollaboratorContextStep({
 
   // Sinais agregados (projetos saudáveis + bloqueios abertos)
   const signals = useCollaboratorOpeningSignals(effectiveUserId);
+
+  // Sinal de iniciativas (owner OR contributor) no ciclo
+  const initiativesSignal = useCollaboratorInitiativesSignal(effectiveUserId, cycleId);
 
   // Estatísticas para snapshot e trilha
   const stats = useMemo(() => {
@@ -89,15 +104,94 @@ export function CollaboratorContextStep({
     };
   }, [krs, kpisToUpdate]);
 
+  const projectsAttention = Math.max(0, signals.projectsTotal - signals.projectsHealthy);
+  const initiativesAttention = Math.max(
+    0,
+    initiativesSignal.initiativesTotal - initiativesSignal.initiativesOnTrack,
+  );
+
   const eta = useMemo(
     () =>
       computeTrailEta({
         pendingKpis: stats.kpisPending,
         attentionKrs: stats.krsAttention,
-        pendingProjectMilestones: Math.max(0, signals.projectsTotal - signals.projectsHealthy),
+        pendingProjectMilestones: projectsAttention,
+        attentionInitiatives: initiativesAttention,
       }),
-    [stats.kpisPending, stats.krsAttention, signals.projectsTotal, signals.projectsHealthy],
+    [stats.kpisPending, stats.krsAttention, projectsAttention, initiativesAttention],
   );
+
+  // Trilha derivada de STEP_ORDER — espelha a ordem real dos steps do rito.
+  // Steps `context`, `decisions`, `summary` não fazem parte da trilha (não são
+  // "trabalho do usuário" anunciado na abertura). `reflection` aparece sempre
+  // como último item.
+  const trailSteps = useMemo(() => {
+    type StepRow = {
+      label: string;
+      pendingCount: number;
+      total?: number;
+      summaryOverride?: string;
+      etaMinutes: number;
+    };
+
+    const builders: Partial<Record<WizardStep, () => StepRow>> = {
+      kpis: () => ({
+        label: 'Indicadores',
+        pendingCount: stats.kpisPending,
+        summaryOverride:
+          stats.kpisTotal === 0
+            ? 'Sem KPIs neste ciclo'
+            : stats.kpisPending === 0
+              ? 'Tudo em dia'
+              : `${stats.kpisPending} KPI${stats.kpisPending > 1 ? 's' : ''} para atualizar`,
+        etaMinutes: eta.kpis,
+      }),
+      projects: () => ({
+        label: 'Projetos',
+        pendingCount: projectsAttention,
+        total: signals.projectsTotal,
+        summaryOverride: signals.projectsTotal === 0 ? 'Sem projetos' : undefined,
+        etaMinutes: eta.projects,
+      }),
+      initiatives: () => ({
+        label: 'Iniciativas',
+        pendingCount: initiativesAttention,
+        total: initiativesSignal.initiativesTotal,
+        summaryOverride:
+          initiativesSignal.initiativesTotal === 0
+            ? 'Sem iniciativas'
+            : `${initiativesSignal.initiativesOnTrack} de ${initiativesSignal.initiativesTotal} em dia`,
+        etaMinutes: eta.initiatives,
+      }),
+      checkin: () => ({
+        label: 'KRs',
+        pendingCount: stats.krsAttention,
+        summaryOverride:
+          stats.krsTotal === 0
+            ? 'Sem KRs atribuídos'
+            : stats.krsAttention === 0
+              ? 'Tudo em dia'
+              : `${stats.krsAttention} KR${stats.krsAttention > 1 ? 's' : ''} precisa${stats.krsAttention > 1 ? 'm' : ''} atenção`,
+        etaMinutes: eta.krs,
+      }),
+      reflection: () => ({
+        label: 'Reflexão e envio',
+        pendingCount: 0,
+        summaryOverride: ' ',
+        etaMinutes: eta.reflection,
+      }),
+    };
+
+    return visibleStepOrder
+      .map((id) => builders[id]?.())
+      .filter((row): row is StepRow => !!row);
+  }, [
+    visibleStepOrder,
+    stats.kpisPending, stats.kpisTotal, stats.krsAttention, stats.krsTotal,
+    projectsAttention, signals.projectsTotal,
+    initiativesAttention, initiativesSignal.initiativesTotal, initiativesSignal.initiativesOnTrack,
+    eta.kpis, eta.projects, eta.initiatives, eta.krs, eta.reflection,
+  ]);
 
   if (isLoading) {
     return (
@@ -112,7 +206,8 @@ export function CollaboratorContextStep({
   const hasNothing =
     stats.krsTotal === 0 &&
     stats.kpisTotal === 0 &&
-    signals.projectsTotal === 0;
+    signals.projectsTotal === 0 &&
+    initiativesSignal.initiativesTotal === 0;
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -131,7 +226,7 @@ export function CollaboratorContextStep({
               <TrendingUp className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
               <h4 className="font-medium">Nada para atualizar</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                Você não possui KRs, KPIs ou projetos para revisar neste ciclo.
+                Você não possui KRs, KPIs, iniciativas ou projetos para revisar neste ciclo.
               </p>
             </div>
           ) : (
@@ -143,51 +238,13 @@ export function CollaboratorContextStep({
                 kpisUpdated={stats.kpisUpdated}
                 projectsTotal={signals.projectsTotal}
                 projectsHealthy={signals.projectsHealthy}
+                initiativesTotal={initiativesSignal.initiativesTotal}
+                initiativesOnTrack={initiativesSignal.initiativesOnTrack}
                 openBlocksCount={signals.openBlocksCount}
                 avgConfidence={null}
               />
 
-              <CollaboratorCheckinTrail
-                onStart={onContinue}
-                steps={[
-                  {
-                    label: 'Indicadores',
-                    pendingCount: stats.kpisPending,
-                    summaryOverride:
-                      stats.kpisTotal === 0
-                        ? 'Sem KPIs neste ciclo'
-                        : stats.kpisPending === 0
-                          ? 'Tudo em dia'
-                          : `${stats.kpisPending} KPI${stats.kpisPending > 1 ? 's' : ''} para atualizar`,
-                    etaMinutes: eta.kpis,
-                  },
-                  {
-                    label: 'KRs',
-                    pendingCount: stats.krsAttention,
-                    summaryOverride:
-                      stats.krsTotal === 0
-                        ? 'Sem KRs atribuídos'
-                        : stats.krsAttention === 0
-                          ? 'Tudo em dia'
-                          : `${stats.krsAttention} KR${stats.krsAttention > 1 ? 's' : ''} precisa${stats.krsAttention > 1 ? 'm' : ''} atenção`,
-                    etaMinutes: eta.krs,
-                  },
-                  {
-                    label: 'Projetos',
-                    pendingCount: Math.max(0, signals.projectsTotal - signals.projectsHealthy),
-                    total: signals.projectsTotal,
-                    summaryOverride:
-                      signals.projectsTotal === 0 ? 'Sem projetos' : undefined,
-                    etaMinutes: eta.projects,
-                  },
-                  {
-                    label: 'Reflexão e envio',
-                    pendingCount: 0,
-                    summaryOverride: ' ',
-                    etaMinutes: eta.reflection,
-                  },
-                ]}
-              />
+              <CollaboratorCheckinTrail onStart={onContinue} steps={trailSteps} />
             </>
           )}
         </div>

@@ -22,6 +22,9 @@ export interface SnapshotInputs {
   kpisUpdated: number;
   projectsTotal: number;
   projectsHealthy: number;
+  /** Iniciativas onde o usuário é owner OU contributor no ciclo. */
+  initiativesTotal?: number;
+  initiativesOnTrack?: number;
   /** Bloqueios abertos vindos de check-ins anteriores (não resolvidos). */
   openBlocksCount?: number;
   /** Confiança média nos KRs (alta=3, média=2, baixa=1). */
@@ -72,7 +75,7 @@ const DotMeterRow = memo(function DotMeterRow({ label, filled, total, summary }:
   const dots = dotCount(total);
   const f = filledCount(filled, total, dots);
   return (
-    <div className="grid grid-cols-[88px_1fr_auto] items-center gap-3">
+    <div className="grid grid-cols-[104px_1fr_auto] items-center gap-3">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <div className="flex items-center gap-1.5" aria-label={`${filled} de ${total}`}>
         {Array.from({ length: dots }).map((_, i) => (
@@ -98,6 +101,8 @@ function CollaboratorSnapshotImpl({
   krsTotal, krsOnTrack,
   kpisTotal, kpisUpdated,
   projectsTotal, projectsHealthy,
+  initiativesTotal = 0,
+  initiativesOnTrack = 0,
   openBlocksCount = 0,
   avgConfidence = null,
   className,
@@ -119,12 +124,7 @@ function CollaboratorSnapshotImpl({
     <section className={cn('rounded-lg border bg-card p-5', className)} aria-label="Seu retrato da semana">
       <h3 className="text-sm font-semibold text-foreground mb-4">Seu retrato da semana</h3>
       <div className="space-y-3">
-        <DotMeterRow
-          label="KRs"
-          filled={krsOnTrack}
-          total={krsTotal}
-          summary={krsTotal > 0 ? `${krsOnTrack} de ${krsTotal} em dia` : 'Sem KRs'}
-        />
+        {/* Ordem espelha STEP_ORDER do rito: KPIs → Projetos → Iniciativas → KRs */}
         <DotMeterRow
           label="KPIs"
           filled={kpisUpdated}
@@ -136,6 +136,18 @@ function CollaboratorSnapshotImpl({
           filled={projectsHealthy}
           total={projectsTotal}
           summary={projectsTotal > 0 ? `${projectsHealthy} de ${projectsTotal} saudáveis` : 'Sem projetos'}
+        />
+        <DotMeterRow
+          label="Iniciativas"
+          filled={initiativesOnTrack}
+          total={initiativesTotal}
+          summary={initiativesTotal > 0 ? `${initiativesOnTrack} de ${initiativesTotal} em dia` : 'Sem iniciativas'}
+        />
+        <DotMeterRow
+          label="KRs"
+          filled={krsOnTrack}
+          total={krsTotal}
+          summary={krsTotal > 0 ? `${krsOnTrack} de ${krsTotal} em dia` : 'Sem KRs'}
         />
       </div>
 

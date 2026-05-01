@@ -1,153 +1,101 @@
+# Reorder Step 1 — Check-in Individual
+
 ## Objetivo
 
-1. Criar **saudação contextual** compartilhada no Step 1 de todos os ritos (exceto Criação de OKRs).
-2. Redesenhar o Step 1 do **Check-in Individual**, transformando-o de "dashboard de tarefas" em "abertura ritual": **snapshot visual** + **trilha de etapas** + único CTA "Começar".
-3. Mover a lista operacional de KPIs do Step 1 para o Step 2 (Indicadores).
+Garantir que o snapshot ("Seu retrato da semana") e a trilha ("Seu check-in hoje") do Step 1 do Check-in Individual sigam **exatamente** a mesma ordem dos steps do rito:
 
-## Pré-checklist consultado
+1. Indicadores (KPIs)
+2. Projetos
+3. Iniciativas
+4. KRs
+5. Reflexão e envio (apenas na trilha)
 
-- TCR §4.8 (Collaborator Check-in) e §4.8.1 (Wizards Framework)
-- `WIZARDS_FRAMEWORK_BOUNDARY.md` (SSOT de labels via `RITUAL_LABELS` em `ritualLabels.ts`)
-- `IDENTITY_CONVENTION.md` (uso de `useIdentity` para nome do usuário)
-- `QUERY_KEYS_STANDARD.md` (helpers em `src/lib/queryKeys/*`)
-- `UI_COMPONENTS_REGISTRY.md` (não duplicar `WizardStepHeader`, `WizardStepScaffold`, `LastCheckinBadge`, `KpiContextSection`)
+A ordem deve ser **derivada** do `STEP_ORDER` (SSOT da página), não hardcoded. Se a sequência mudar no futuro, snapshot e trilha acompanham automaticamente.
 
-Nada do que será criado já existe; o plano **estende** componentes shared existentes em vez de reescrevê-los.
+## Mudanças
 
----
+### 1. `CollaboratorSnapshot.tsx` — adicionar linha de Iniciativas e tornar a ordem configurável
 
-## Parte 1 — Saudação contextual (todos os ritos, exceto criação)
+- Adicionar campos `initiativesTotal` e `initiativesOnTrack` em `SnapshotInputs`.
+- Renderizar **4 linhas** na ordem: KPIs → Projetos → Iniciativas → KRs.
+- Linhas com `total === 0` continuam mostrando "Sem ..." (mantém comportamento atual de fallback).
+- Largura da coluna do label aumentada de `88px` para `~104px` para acomodar "Iniciativas".
 
-### Componente novo (compartilhado)
-`src/modules/okrs/components/wizards/shared/RitualGreeting.tsx`
+### 2. `CollaboratorCheckinTrail.tsx` — sem mudanças estruturais
 
-Props:
-- `userName: string`
-- `ritualSlug: WizardPersona` (tipo já existente)
-- `cycleId?: string` / `cycleName?: string`
-- `cadence: 'weekly' | 'monthly' | 'quarterly'` (driver dos badges)
-- `weekNumber?: number`, `checkInOrdinal?: number` (semanais)
-- `monthName?: string`, `monthInQuarter?: number` (mensais)
-- `closingCycleName?: string`, `openingCycleName?: string` (trimestrais)
+A trilha já é genérica: recebe `steps[]` na ordem que o caller passar. Apenas o caller (Step 1) muda.
 
-Comportamento:
-- Saudação por hora local (`< 12 / < 18 / else`).
-- Frase contextual via lookup em **uma constante SSOT** nova: `RITUAL_GREETING_PHRASES` em `src/modules/okrs/constants/ritualLabels.ts` (mesmo SSOT já normativo dos labels). Sem `if/else` por slug dentro do componente.
-- Badges renderizados conforme `cadence`.
-- Sem CTAs, sem lógica de dados — componente puramente apresentacional.
+### 3. `CollaboratorContextStep.tsx` — derivar ordem do `STEP_ORDER` e injetar contagem de iniciativas
 
-### Hook auxiliar (cálculos contextuais)
-`src/modules/okrs/hooks/useRitualGreetingContext.ts`
+- Importar `STEP_ORDER` da página (ou extrair para constante compartilhada — ver "Detalhes técnicos").
+- Buscar contagem de iniciativas do colaborador no ciclo (owner OR contributor) — reutilizando o mesmo contrato de query do `CollaboratorInitiativesStep` (memória `collaborator-initiatives-step-scope`). Adicionar um hook leve `useCollaboratorInitiativesSignal(effectiveUserId, cycleId)` em `src/modules/okrs/hooks/` que retorna `{ initiativesTotal, initiativesOnTrack, isLoading }` — projeção mínima (id, status, owner_user_id, contributors), sem invalidar caches pesados. Segue o mesmo padrão do `useCollaboratorOpeningSignals`.
+- Passar `initiativesTotal/OnTrack` ao `<CollaboratorSnapshot>`.
+- Construir o array `steps` da trilha **mapeando** sobre `STEP_ORDER` filtrado, em vez de literal hardcoded:
+  - `kpis` → "Indicadores"
+  - `projects` → "Projetos"
+  - `initiatives` → "Iniciativas"
+  - `checkin` → "KRs"
+  - `reflection` → "Reflexão e envio" (sempre último, fixo)
+  - Steps `context`, `decisions`, `summary` são pulados na trilha (não fazem parte da contagem de "trabalho do usuário" exibida ao abrir o rito).
+- Atualizar `computeTrailEta` para incluir `initiatives` (regra: 1 min base + 0.5 min por iniciativa em atenção). Manter regras existentes para os demais.
 
-Centraliza:
-- `weekNumber` e `monthInQuarter` a partir do ciclo ativo (helpers já existem em `src/lib/cycles/*` — checar antes de criar).
-- `checkInOrdinal` por usuário via query (`okr_checkins` ou tabela equivalente já usada em outros badges); aproveita query keys já existentes (`queryKeys.okrs.userCheckins…`) — adiciona helper se faltar.
-- Retorna o objeto pronto para alimentar `<RitualGreeting>`.
+### 4. Resumo dos textos finais
 
-Cada Step 1 chama o hook e passa o resultado, sem lógica condicional na UI.
+**Snapshot:**
+```
+Seu retrato da semana
+KPIs         ●●○○○○○○     2 de 8 atualizados
+Projetos     ●●●●○        4 de 5 saudáveis
+Iniciativas  ●●●○         3 de 4 em dia
+KRs          ●●●○○        3 de 5 em dia
+```
 
-### Integração em cada rito (Step 1)
-
-Substituir o cabeçalho atual do **primeiro step** de:
-
-| Rito | Step 1 atual | Cadência |
-|---|---|---|
-| Check-in Individual | `CollaboratorContextStep` | weekly |
-| Pré-Check-in do Time | `LeaderOverviewStep` | weekly |
-| Check-in do Time | `TeamOpeningStep` | weekly |
-| Pré-Weekly | `PreWeeklySourcesStep` | weekly |
-| Weekly | `WeeklyExecutiveOpeningStep` | weekly |
-| Pré-MBR | `MbrPreHighlightsStep` | monthly |
-| MBR | `MbrPanoramaStep` | monthly |
-| Pré-QBR | `QbrBalanceStep` | quarterly |
-| Pré-QBR Executivo | `QbrCLevelSystemReadStep` | quarterly |
-| QBR | `QbrMeetingOpeningStep` | quarterly |
-| Pós-QBR | `QbrPostMinutesStep` | quarterly |
-
-Excluído: wizards de Criação (`team-okr-creation`, `team-kr-creation`, `clevel-checkin` do C-Level Directives — confirmar com base em escopo).
-
-Em cada Step 1: remover títulos institucionais antigos e renderizar `<RitualGreeting>` no topo. Manter o resto do conteúdo do step intacto.
-
----
-
-## Parte 2 — Redesenho do Step 1 do Check-in Individual
-
-Arquivo principal: `CollaboratorContextStep.tsx` é refatorado para conter apenas:
-1. `<RitualGreeting cadence="weekly" />`
-2. `<CollaboratorSnapshot>` (novo)
-3. `<CollaboratorCheckinTrail>` (novo)
-4. Botão único "Começar →" (já existe; reusa `Button`)
-
-Toda a lista de KPIs/KRs visual atual sai daqui.
-
-### Componentes novos (específicos do Check-in Individual)
-
-**`src/modules/okrs/components/wizards/collaborator/CollaboratorSnapshot.tsx`**
-- Props: `krs`, `kpisToUpdate`, `projects`, `openBlocksCount`, `avgConfidence`.
-- Renderiza 3 linhas com label + bolinhas (componente `<DotMeter>` interno reusável) + texto resumo.
-- Cores: preenchida = `bg-primary`, vazia = `bg-muted`. Sem RAG.
-- Linha de sinais condicional: só renderiza bloqueios > 0 ou confiança ≠ alta.
-- Sem CTAs, sem lista de itens nominais.
-
-**`src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinTrail.tsx`**
-- Props: `steps: TrailStep[]` onde cada item tem `index`, `label`, `summary`, `etaMinutes`, `onStart` no rodapé (único CTA).
-- Cálculo de tempo (regra do prompt) feito por helper puro `computeTrailEta()` exportado para testes.
-- Quando uma etapa não tem pendência: mostra "Tudo em dia".
-
-### Origem dos dados
-- `krs`, `kpisToUpdate`, `projects` já vêm de `CollaboratorCheckinPage.tsx` (props existentes do step).
-- `openBlocksCount` e `avgConfidence`: derivar dos check-ins anteriores do usuário; usar hook existente (`useCollaboratorPendingItems` ou equivalente) — se não bastar, adicionar `useCollaboratorOpeningSignals` em `src/modules/okrs/hooks/`.
-
-### Migração da lista de KPIs para o Step 2
-- Step 2 atual = `CollaboratorKpiStep`. Hoje recebe `kpisToUpdate` mas a UI rica (gradient, badges de status, agrupamento) vive no Step 1.
-- Mover o bloco visual `KpiContextSection` (variant `update`) e demais seções de "Indicadores do Time" / "Indicadores Estratégicos" para `CollaboratorKpiStep`.
-- Step 1 não mais importa `KpiContextSection`.
-
-### Critérios de preservação
-- Steps 2–7 inalterados em lógica, apenas Step 2 ganha conteúdo movido.
-- Sem mudanças em RLS, salvamento de rascunho, navegação do `WizardStepper` ou permissões.
-- Testes existentes de `CollaboratorContextStep` precisam ser atualizados (snapshot, ausência de lista) — manter cobertura, atualizar expectativas.
-
----
-
-## Parte 3 — Memória / docs
-
-- Atualizar `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` §4.8 com nota: "Step 1 do Collaborator Check-in segue padrão de abertura ritual (snapshot + trilha) e usa `RitualGreeting`".
-- Criar memória `mem://standards/ui/ritual-greeting-standard` (SSOT do componente, frases e badges por cadência).
-- Atualizar `mem://index.md` apontando para a nova memória.
-
----
+**Trilha:**
+```
+Seu check-in hoje
+① Indicadores       6 KPIs para atualizar         ~3 min
+② Projetos          4 de 5 saudáveis              ~2 min
+③ Iniciativas       3 de 4 em dia                 ~2 min
+④ KRs               1 KR precisa atenção          ~5 min
+⑤ Reflexão e envio                                ~2 min
+```
 
 ## Detalhes técnicos
 
-### Estrutura de arquivos
-```text
-src/modules/okrs/components/wizards/shared/
-  └── RitualGreeting.tsx              [novo - compartilhado]
+### SSOT da ordem
 
-src/modules/okrs/components/wizards/collaborator/
-  ├── CollaboratorContextStep.tsx     [refatorado - enxuto]
-  ├── CollaboratorSnapshot.tsx        [novo]
-  ├── CollaboratorCheckinTrail.tsx    [novo]
-  └── CollaboratorKpiStep.tsx         [recebe seções migradas]
+Hoje `WIZARD_STEPS` e `STEP_ORDER` vivem inline em `CollaboratorCheckinPage.tsx`. Para o Step 1 derivar a ordem **sem importar a página**, vou extrair ambos para:
 
-src/modules/okrs/constants/
-  └── ritualLabels.ts                 [+ RITUAL_GREETING_PHRASES]
-
-src/modules/okrs/hooks/
-  └── useRitualGreetingContext.ts     [novo]
-
-src/lib/queryKeys/okrs.ts             [+ helper de ordinal de check-in se faltar]
+```
+src/modules/okrs/components/wizards/collaborator/wizardSteps.ts
 ```
 
-### Atualizações em ritos (apenas substituição de header)
-- 11 arquivos de Step 1 listados acima passam a renderizar `<RitualGreeting>` no topo, sem alterar lógica de negócio.
+Exporta `WIZARD_STEPS`, `STEP_ORDER` e o tipo `WizardStep`. A página passa a importar dali; o Step 1 idem. Zero duplicação, ordem única.
 
-### Não-objetivos
-- Não tocar nos wizards de criação de OKRs.
-- Não alterar lógica de cálculo de status/health/efetividade — apenas leitura.
-- Não criar novos endpoints ou edge functions.
+### Hook novo
 
-## Perguntas residuais (responder durante implementação se ambíguo)
-- Caso `useIdentity` não retorne `first_name`, usar `display_name` truncado no primeiro espaço.
-- Se o usuário nunca teve check-in no ciclo, ordinal vira "Primeiro check-in do ciclo" (texto fixo).
+`src/modules/okrs/hooks/useCollaboratorInitiativesSignal.ts` — projeção mínima de `okr_initiatives` filtrada por `bu_id` (cliente BU-scoped), `cycle_id` (via inner join em `okr_team_key_results.team_objective`), `owner_user_id.eq OR contributors.cs.{userId}`, `deleted_at IS NULL`, `cancelled_at IS NULL`. Retorna totais derivados de `status`. Reutiliza chave de cache `queryKeys.okrs.initiativesForCollaborator` já existente, sufixada com `'opening-signal'`.
+
+### Compatibilidade
+
+- Sem mudança de tipos públicos do `<CollaboratorCheckinTrail>` (já aceita N steps).
+- `<CollaboratorSnapshot>` ganha 2 props novas (`initiativesTotal/OnTrack`) — opcionais com default `0`, então qualquer outro consumidor (não há) seguiria funcionando.
+- `STEP_ORDER` só muda de localização (extração), não de conteúdo. A página continua filtrando dinamicamente (`hasKrStep`/`hasKpiStep`).
+
+## Arquivos afetados
+
+- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorSnapshot.tsx`
+- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinTrail.tsx` (apenas `computeTrailEta` ganha campo `initiatives`)
+- **edit** `src/modules/okrs/components/wizards/collaborator/CollaboratorContextStep.tsx`
+- **edit** `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` (importar `WIZARD_STEPS`/`STEP_ORDER` do novo arquivo)
+- **new** `src/modules/okrs/components/wizards/collaborator/wizardSteps.ts`
+- **new** `src/modules/okrs/hooks/useCollaboratorInitiativesSignal.ts` + export em `hooks/index.ts`
+- **edit** `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (§4.8 — nota sobre ordem espelhada)
+- **new** `.lovable/memory/features/rituals/collaborator-step1-order-mirrors-steps.md` + entrada no `index.md`
+
+## Critérios de aceite
+
+- Snapshot exibe 4 linhas na ordem KPIs → Projetos → Iniciativas → KRs.
+- Trilha exibe 5 linhas na ordem Indicadores → Projetos → Iniciativas → KRs → Reflexão e envio.
+- Renomear/reordenar entradas em `STEP_ORDER` reflete automaticamente no Step 1 (validado lendo o array, sem literais duplicados).
+- Sem regressão em rituais que dependem de KPIs/KRs ausentes (steps continuam sendo filtrados via `hasKrStep`/`hasKpiStep`).
