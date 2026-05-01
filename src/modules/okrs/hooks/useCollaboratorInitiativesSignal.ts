@@ -54,7 +54,6 @@ export function useCollaboratorInitiativesSignal(
         .or(`owner_user_id.eq.${effectiveUserId!},contributors.cs.{${effectiveUserId!}}`)
         .eq('kr.team_objective.cycle_id', cycleId!)
         .is('deleted_at', null)
-        .is('cancelled_at', null)
         .is('kr.deleted_at', null)
         .is('kr.cancelled_at', null)
         .is('kr.team_objective.deleted_at', null)

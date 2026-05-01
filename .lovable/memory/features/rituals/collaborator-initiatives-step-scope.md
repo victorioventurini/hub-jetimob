@@ -14,8 +14,10 @@ busca iniciativas **centradas no colaborador**, no ciclo trimestral ativo:
 - `owner_user_id = effectiveUserId` **OR** `contributors @> [effectiveUserId]`.
 - Join `okr_team_key_results!inner → okr_team_objectives!inner` filtrando
   `cycle_id` ativo e excluindo `cancelled_at` / `deleted_at`.
-- Soft-delete obrigatório na própria iniciativa
-  (`is('deleted_at', null).is('cancelled_at', null)`).
+- Soft-delete obrigatório na própria iniciativa: **apenas
+  `is('deleted_at', null)`**. ⚠️ `okr_initiatives` **não tem** coluna
+  `cancelled_at` — aplicar esse filtro causa erro silencioso (resultado vazio).
+  Ver `mem://standards/soft-delete-policy-v1`.
 
 Os KRs exibidos como agrupadores são **derivados** do conjunto de iniciativas
 retornadas — não vêm do array `krs` (`useUserKrsForWizard`). O array `krs`

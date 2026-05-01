@@ -1,69 +1,50 @@
-## Objetivo
+## Diagnóstico
 
-Fechar a aderência do card "Sua semana até aqui" aos docs canônicos, sem alterar comportamento. **Apenas atualizações de memória/documentação** — zero mudança de código de produção.
+`/rituals/collaborator-checkin?user=4e5985d2...&step=initiatives` exibe "Nenhuma iniciativa" para Eduarda Branchi, mas o banco confirma **20 iniciativas como owner + 2 como contributor**.
 
-## Contexto
+**Causa raiz:** A query do step filtra `okr_initiatives` por `.is('cancelled_at', null)`, mas a coluna **não existe** nessa tabela. PostgREST devolve erro → React Query entrega `[]` silenciosamente → empty state.
 
-Pré-checklist (TCR + IDENTITY_CONVENTION + PERMISSIONS_AND_RBAC_MODEL + DATA_MODEL_REGISTRY + DEVELOPMENT_STANDARDS + BU_SCOPED_SUPABASE_RULES + QUERY_KEYS_STANDARD + HOOKS_BARREL_STANDARD + WIZARDS_FRAMEWORK_BOUNDARY + memórias de Step 1) executado e o código entregue está em conformidade. Restam 2 ajustes de documentação para a memória do projeto refletir o estado atual.
+Schema confirmado por introspecção:
+- `okr_team_key_results.cancelled_at` ✅
+- `okr_team_objectives.cancelled_at` ✅
+- `okr_initiatives.cancelled_at` ❌ — soft-delete é apenas `deleted_at`
+
+A Core memory "Soft Deletes" é regra **geral**, não regra **universal**: só vale onde a coluna existe. Faltava registro dessa exceção para `okr_initiatives`.
 
 ## Mudanças
 
-### 1) Atualizar `mem://features/rituals/collaborator-step1-order-mirrors-steps`
+### 1) `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
 
-A memória atual descreve `<CollaboratorSnapshot>` como item do Step 1. Foi **substituído** por `<CollaboratorWeekActivity>` (com hook SSOT compartilhado com a trilha). Atualizar:
+Linha 126: remover `.is('cancelled_at', null)` aplicado à própria iniciativa. Manter os filtros `cancelled_at` no `kr` e em `kr.team_objective` (essas tabelas têm a coluna).
 
-- Trocar referências de `CollaboratorSnapshot` por `CollaboratorWeekActivity`.
-- Manter a regra inalterada: ordem espelha `STEP_ORDER` em `wizardSteps.ts` (kpis → projects → initiatives → krs → reflection).
-- Acrescentar nota: "Card e trilha consomem o mesmo hook (`useCollaboratorWeekActivity`) → consistência numérica garantida por construção."
+### 2) `src/modules/okrs/components/wizards/collaborator/hooks/useCollaboratorWeekActivity.ts`
 
-### 2) Criar `mem://features/rituals/collaborator-week-activity-card`
+Mesma correção na query de iniciativas atualizadas na semana (criada por mim no card "Sua semana até aqui"). Manter `cancelled_at` apenas em KR e team_objective.
 
-Nova memória `feature` com as decisões fechadas:
+### 3) Auditoria varredura
 
-- **Tipo:** `feature`
-- **Nome:** "Collaborator Week Activity Card"
-- **Descrição:** "Card 'Sua semana até aqui' do Step 1 do Check-in Individual: read-only, 5 categorias na Seção 1, fonte SSOT compartilhada com a trilha"
-- **Conteúdo:**
-  - Read-only: sem CTA, sem links, sem handlers de click.
-  - **Categorias entregues (5)**: KPIs atualizados, milestones concluídos, iniciativas atualizadas, KRs com check-in (+ confiança média), bloqueios registrados.
-  - **Categorias omitidas (2)** com justificativa de schema:
-    - `blockers_resolved` — não há coluna `resolved_at`/`resolved_by` em `okr_checkins`.
-    - `help_requested` — `helpNeeded` é estado local em `CollaboratorReflectionStep`, não persiste.
-    - **Como liberar**: migration que adicione `okr_checkins.help_needed text` + `okr_checkins.resolved_blockers_at timestamptz` (ou tabela `okr_checkin_resolutions`) e que o form de Reflexão passe a gravar.
-  - **Janela temporal**: segunda-feira 00:00 da semana corrente até agora, na timezone local (não há `useBuTimezone` no projeto).
-  - **Ordem fixa** das categorias = ordem de preenchimento do rito (`STEP_ORDER`).
-  - **SSOT da Seção 2** ("ainda falta"): mesmas fontes que a trilha hoje usa (`kpisToUpdate.needs_update`, `useCollaboratorOpeningSignals`, `useCollaboratorInitiativesSignal`, `stats.krsAttention`).
-  - **Query keys**: `okrsKeys.weekActivityKpis|Checkins|Milestones|Initiatives` em `src/lib/queryKeys/okrs.ts`.
-  - **BU isolation**: `useBuScopedSupabase` + `enabled` síncrono em `buId`.
-  - **Identidade**: `effectiveUserId` (suporta admin revisando outro); sem mutations → sem `realProfileId`.
-  - **Soft-delete**: `is('deleted_at', null)` (+ `cancelled_at` em KR/team_objective) em todos os joins.
-  - **Memoization**: `React.memo` no componente; `useMemo` no hook.
+`rg "okr_initiatives" -B 2 -A 12` em `src/` para confirmar que nenhum outro consumer esteja aplicando `.is('cancelled_at', null)` ou `cancelled_at` no select de `okr_initiatives`. Corrigir se houver.
 
-### 3) Atualizar `mem://index.md`
+### 4) Atualizar memórias
 
-Adicionar nova entrada na seção "Memories — Rituais específicos":
-```
-- [Collaborator Week Activity Card](mem://features/rituals/collaborator-week-activity-card) — Card SSOT da Seção 1 do Check-in Individual; 5 categorias entregues, 2 omitidas por schema
-```
+- `mem://features/rituals/collaborator-initiatives-step-scope`: remover menção a `is('cancelled_at', null)` na initiative; deixar apenas `is('deleted_at', null)`.
+- `mem://standards/soft-delete-policy-v1`: adicionar nota de exceção — **`okr_initiatives` usa apenas `deleted_at`**; `cancelled_at` aplica-se a `okr_team_key_results` / `okr_team_objectives` / `okr_org_objectives`.
 
-E **revisar** a entrada existente para `collaborator-step1-order-mirrors-steps`, que continua válida (a regra de ordem não mudou) — não precisa renomear.
+### 5) Validação
 
-## Arquivos editados
-
-- `.lovable/memory/features/rituals/collaborator-step1-order-mirrors-steps.md`
-- `mem://index.md` (adicionar 1 linha na seção "Rituais específicos")
-
-## Arquivos novos
-
-- `.lovable/memory/features/rituals/collaborator-week-activity-card.md`
+- Build TS sem erro.
+- Abrir o step da Eduarda no preview e confirmar que as 20+2 iniciativas aparecem agrupadas pelos KRs.
+- Confirmar que o card "Sua semana até aqui" no Step 1 não regride (categoria "Iniciativas atualizadas" continua funcionando).
 
 ## Não-objetivos
 
-- **Zero alteração de código de produção** (componente, hook, query keys, integração no Step 1 já estão conformes).
-- Não criar migrations agora (campos `help_needed` / `resolved_blockers_at` ficam documentados como "como liberar no futuro").
-- Não tocar em `CollaboratorSnapshot.tsx` (arquivo permanece, fora de uso).
+- Não criar `cancelled_at` em `okr_initiatives` (não está no design — iniciativas só têm soft-delete).
+- Sem mudança de query keys, RLS ou layout.
 
-## Validação
+## Arquivos editados
 
-- Releitura das duas memórias deve descrever o estado atual do código sem contradição.
-- Índice de memória deve permitir descobrir o card em buscas futuras por "collaborator", "week", "card", "step 1".
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
+- `src/modules/okrs/components/wizards/collaborator/hooks/useCollaboratorWeekActivity.ts`
+- `mem://features/rituals/collaborator-initiatives-step-scope`
+- `mem://standards/soft-delete-policy-v1` (nota de exceção)
+- (Quaisquer outros arquivos identificados na varredura, se houver)
