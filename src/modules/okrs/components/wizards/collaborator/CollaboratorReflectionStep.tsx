@@ -172,6 +172,18 @@ export function CollaboratorReflectionStep({
         </div>
       </div>
 
+      {/* Sugestão de pauta para o rito-mãe (Check-in do Time) */}
+      {agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel && (
+        <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">
+          <InlineAgendaSuggestionInput
+            suggestions={agendaSuggestions}
+            onSuggestionsChange={onAgendaSuggestionsChange}
+            sourceStep={AGENDA_SOURCE_STEP}
+            triggerLabel={agendaTriggerLabel}
+          />
+        </div>
+      )}
+
       {/* Footer padronizado: Voltar / Pular / Continuar (não é a etapa final) */}
       <WizardStepFooter
         showBack
