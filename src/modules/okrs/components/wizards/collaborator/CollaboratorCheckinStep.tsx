@@ -40,8 +40,6 @@ import { cn } from '@/lib/utils';
 import { KrContextCard } from '../shared/KrContextCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { AlertBanner } from '../shared/AlertBanner';
-import { VicInsightCard } from '../shared/VicInsightCard';
-import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { useWizardAI } from '@/modules/okrs/hooks';
 import { useCreateCheckin } from '@/modules/okrs/hooks';
