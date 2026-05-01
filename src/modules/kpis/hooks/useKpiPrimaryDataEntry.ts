@@ -34,7 +34,7 @@ export function useKpiPrimaryDataEntry(kpiId: string | null | undefined, enabled
   const { client, buId, isReady } = useOptionalBuClient();
 
   return useQuery({
-    queryKey: kpisKeys.contributors(kpiId ?? 'none'),
+    queryKey: kpisKeys.primaryDataEntry(kpiId ?? 'none'),
     enabled: isReady && !!kpiId && !!buId && enabled,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<PrimaryDataEntry | null> => {
