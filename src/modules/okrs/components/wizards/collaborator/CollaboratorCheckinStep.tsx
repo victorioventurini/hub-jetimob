@@ -415,43 +415,6 @@ export function CollaboratorCheckinStep({
           </p>
         </div>
 
-        {/* Blocker toggle */}
-        {!showBlockerField ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBlockerField(true)}
-            className="w-full"
-          >
-            <AlertTriangle className="h-4 w-4 mr-2 text-status-orange" />
-            Registrar bloqueador
-          </Button>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="blocker" className="text-status-orange">
-                Bloqueador
-              </Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setBlocker('');
-                  setShowBlockerField(false);
-                }}
-              >
-                Remover
-              </Button>
-            </div>
-            <Textarea
-              id="blocker"
-              value={blocker}
-              onChange={(e) => setBlocker(e.target.value)}
-              placeholder="Descreva o que está impedindo o progresso..."
-              className="min-h-[80px] resize-none border-warning/50 focus:border-warning"
-            />
-          </div>
-        )}
       </div>
 
       {/* Footer actions */}
