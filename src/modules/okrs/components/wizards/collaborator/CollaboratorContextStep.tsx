@@ -44,12 +44,20 @@ export interface CollaboratorContextStepProps {
   isLoading?: boolean;
   /** Nome do usuário efetivo (admin pode estar revisando outro). */
   userName?: string | null;
-  /** ID do usuário efetivo — usado para sinais de projetos/bloqueios. */
+  /** ID do usuário efetivo — usado para sinais de projetos/bloqueios/iniciativas. */
   effectiveUserId?: string | null;
+  /** Ciclo ativo — necessário para o sinal de iniciativas do colaborador. */
+  cycleId?: string | null;
   /** Mantido por compat com chamadas anteriores. */
   cycleName?: string;
   lastCompletedAt?: string | null;
   onContinue: () => void;
+  /**
+   * Sub-conjunto de `STEP_ORDER` que está visível no rito (após filtros
+   * dinâmicos como `hasKrStep`/`hasKpiStep`). Default = todos.
+   * A trilha respeita esse filtro para não anunciar etapas que não existem.
+   */
+  visibleStepOrder?: readonly WizardStep[];
 }
 
 // ============================================================
@@ -62,6 +70,8 @@ export function CollaboratorContextStep({
   isLoading,
   userName,
   effectiveUserId = null,
+  cycleId = null,
+  visibleStepOrder = STEP_ORDER,
   onContinue,
 }: CollaboratorContextStepProps) {
   // Saudação contextual
