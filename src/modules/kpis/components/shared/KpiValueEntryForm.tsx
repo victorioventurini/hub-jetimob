@@ -195,10 +195,12 @@ export function KpiValueEntryForm({
           name="input_type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tipo do input</FormLabel>
+              <FormLabel>
+                Tipo do input <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <RadioGroup
-                  value={field.value}
+                  value={field.value ?? ''}
                   onValueChange={field.onChange}
                   className="flex flex-col gap-2"
                 >
