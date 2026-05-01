@@ -14,12 +14,14 @@
 
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Sparkles } from 'lucide-react';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { KpiForWizard } from '@/modules/kpis/hooks';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { RitualGreeting } from '../shared/RitualGreeting';
+import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { WizardStepHeader } from '../shared/WizardStepHeader';
+import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
 import { CollaboratorSnapshot } from './CollaboratorSnapshot';
 import { CollaboratorCheckinTrail, computeTrailEta } from './CollaboratorCheckinTrail';
 import { STEP_ORDER, type WizardStep } from './wizardSteps';
