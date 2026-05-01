@@ -425,11 +425,6 @@ export function CollaboratorInitiativesStep({
 
           <Button onClick={handleContinue} className="flex-1">
             Continuar
-            {markedAtRisk.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {markedAtRisk.length} sinalizadas
-              </Badge>
-            )}
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
