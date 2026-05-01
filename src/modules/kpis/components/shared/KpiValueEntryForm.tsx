@@ -41,7 +41,7 @@ import {
   type KpiFrequencyValue,
   type KpiInputType,
 } from '../../types';
-import { suggestInputType, isUpdateFrequencyValid } from '../../utils/frequency';
+import { isUpdateFrequencyValid } from '../../utils/frequency';
 import {
   kpiValueEntrySchema,
   type KpiValueEntryFormValues,
