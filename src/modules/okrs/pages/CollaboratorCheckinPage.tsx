@@ -6,7 +6,7 @@
  * v2.87: Migrado para useKpisForWizardV2 (inclui contribuidores de dados)
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -159,17 +159,6 @@ export default function CollaboratorCheckinPage() {
   );
   
   const hasKrStep = !!(userKrs && userKrs.length > 0);
-  
-  // Dynamic steps: omit 'checkin' when no KRs available
-  const visibleSteps = useMemo(() => {
-    if (hasKrStep) return WIZARD_STEPS;
-    return WIZARD_STEPS.filter(s => s.id !== 'checkin');
-  }, [hasKrStep]);
-  
-  const visibleStepOrder = useMemo(() => {
-    if (hasKrStep) return STEP_ORDER;
-    return STEP_ORDER.filter(s => s !== 'checkin');
-  }, [hasKrStep]);
   
   // Fetch user KPIs (fail-safe) - v2.87: usando V2 para incluir contribuidores
   const { 
