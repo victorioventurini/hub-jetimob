@@ -42,9 +42,18 @@ import type { ProjectHealth } from '@/modules/projects/types';
 // ============================================================
 
 export interface CollaboratorInitiativesStepProps {
+  /**
+   * KRs do colaborador (vindos de useUserKrsForWizard) — usados apenas para
+   * enriquecer a exibição (ex.: badges/projetos vinculados). A lista de
+   * iniciativas exibida é independente e centrada no usuário (owner OR
+   * contributor) no ciclo ativo. Ver TCR §4.8 — Collaborator Check-in /
+   * Filtro de Iniciativas do Step.
+   */
   krs: WizardKr[];
   /** Profile id efetivo do colaborador — usado para gating row-aware. */
   effectiveUserId: string | null;
+  /** Ciclo trimestral ativo — limita a busca de iniciativas. */
+  cycleId: string | null;
   onContinue: (markedAtRisk: string[]) => void;
   onBack: () => void;
   onSkip: () => void;
