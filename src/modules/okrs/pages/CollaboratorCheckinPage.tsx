@@ -41,12 +41,16 @@ import { CollaboratorDecisionsStep } from '@/modules/okrs/components/wizards/col
 
 import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
+import {
+  WIZARD_STEPS,
+  STEP_ORDER,
+  type WizardStep,
+} from '@/modules/okrs/components/wizards/collaborator/wizardSteps';
 
 // ============================================================
 // TYPES
 // ============================================================
 
-type WizardStep = 'context' | 'checkin' | 'kpis' | 'projects' | 'initiatives' | 'decisions' | 'reflection' | 'summary';
 
 interface CollaboratorDraftData {
   currentKrIndex: number;
