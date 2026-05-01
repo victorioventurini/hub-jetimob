@@ -213,6 +213,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             unit: kpi.unit,
             target_value: kpi.target_value,
             direction: kpi.direction as KpiDirection,
+            indicator_type: ((kpi as { indicator_type?: string | null }).indicator_type ?? 'kpi') as KpiForWizardV2['indicator_type'],
             consolidation_frequency: consolidationFreq,
             update_frequency: updateFreq,
             lifecycle_status: kpi.lifecycle_status as KpiLifecycleStatus,
