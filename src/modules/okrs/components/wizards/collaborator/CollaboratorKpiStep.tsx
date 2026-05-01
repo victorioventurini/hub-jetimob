@@ -38,9 +38,10 @@ import { calculateKpiRag } from '@/modules/kpis/utils/rag';
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
+import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import type { KpiInputType, KpiRagStatus } from '@/modules/kpis/types';
-import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
+import type { KpiCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // Re-export for convenience
 export type { KpiCheckinResult };
@@ -52,7 +53,12 @@ export interface CollaboratorKpiStepProps {
   onComplete: (result: KpiCheckinResult) => void;
   onSkip: () => void;
   onBack: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-kpis';
 
 // ============================================================
 // HELPERS
