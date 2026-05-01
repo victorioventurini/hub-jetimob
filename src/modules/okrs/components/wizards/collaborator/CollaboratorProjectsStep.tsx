@@ -26,10 +26,12 @@ import { Button } from '@/components/ui/button';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { InlineAgendaSuggestionInput } from '../shared/InlineAgendaSuggestionInput';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { MilestoneStatus, ProjectHealth, ProjectStatus } from '@/modules/projects/types';
+import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // TYPES
@@ -40,7 +42,12 @@ export interface CollaboratorProjectsStepProps {
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-projects';
 
 interface ProjectWithMilestones {
   id: string;
