@@ -134,10 +134,12 @@ function CollaboratorCheckinTrailImpl({
         <p className="text-sm text-muted-foreground">
           Tempo estimado: <span className="font-medium text-foreground">~{total} minutos</span>
         </p>
-        <Button onClick={onStart} size="lg">
-          {startLabel}
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        {onStart ? (
+          <Button onClick={onStart} size="lg">
+            {startLabel}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        ) : null}
       </div>
     </section>
   );
