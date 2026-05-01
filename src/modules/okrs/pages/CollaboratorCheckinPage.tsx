@@ -61,18 +61,9 @@ interface CollaboratorDraftData {
   initiativesMarkedAtRisk: string[];
 }
 
-const WIZARD_STEPS = [
-  { id: 'context' as const, label: 'Visão geral', description: 'Contexto dos KRs e KPIs' },
-  { id: 'kpis' as const, label: 'Indicadores operacionais', description: 'Atualização de métricas e KPIs (1 por sub-passo)' },
-  { id: 'projects' as const, label: 'Projetos', description: 'Atualização de marcos' },
-  { id: 'initiatives' as const, label: 'Iniciativas', description: 'Iniciativas vinculadas aos KRs' },
-  { id: 'checkin' as const, label: 'KRs', description: 'Atualização das KRs' },
-  { id: 'decisions' as const, label: 'Pendências', description: 'Decisões e registros pendentes' },
-  { id: 'reflection' as const, label: 'Reflexão final', description: 'O que mais impactou seus resultados' },
-  { id: 'summary' as const, label: 'Resumo', description: 'Visão consolidada' },
-];
+// WIZARD_STEPS / STEP_ORDER vivem em ./components/wizards/collaborator/wizardSteps
+// (SSOT compartilhado com o Step 1, que deriva snapshot e trilha dessa ordem).
 
-const STEP_ORDER: WizardStep[] = ['context', 'kpis', 'projects', 'initiatives', 'checkin', 'decisions', 'reflection', 'summary'];
 
 const DEFAULT_DATA: CollaboratorDraftData = {
   currentKrIndex: 0,
