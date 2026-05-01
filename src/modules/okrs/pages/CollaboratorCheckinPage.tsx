@@ -269,7 +269,17 @@ export default function CollaboratorCheckinPage() {
       setStep(visibleStepOrder[currentIdx - 1]);
     }
   }, [draft.currentStep, setStep, visibleStepOrder]);
-  
+
+  // Auto-correct: se o step atual saiu do visibleStepOrder (dados chegaram
+  // depois e removeram 'kpis'/'checkin', ou URL ?step= aponta para step
+  // indisponível), reposiciona via efeito — nunca durante render.
+  useEffect(() => {
+    if (visibleStepOrder.length === 0) return;
+    if (!visibleStepOrder.includes(draft.currentStep)) {
+      setStep(visibleStepOrder[0]);
+    }
+  }, [visibleStepOrder, draft.currentStep, setStep]);
+
   // Handlers
   // handleClose is a no-op: FullPageWizardShell handles navigation.
   // Draft stays as in_progress for later resumption — only handleComplete marks as completed.
