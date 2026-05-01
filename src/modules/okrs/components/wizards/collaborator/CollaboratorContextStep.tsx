@@ -244,17 +244,11 @@ export function CollaboratorContextStep({
           </div>
         ) : (
           <>
-            <CollaboratorSnapshot
-              krsTotal={stats.krsTotal}
-              krsOnTrack={stats.krsOnTrack}
-              kpisTotal={stats.kpisTotal}
-              kpisUpdated={stats.kpisUpdated}
-              projectsTotal={signals.projectsTotal}
-              projectsHealthy={signals.projectsHealthy}
-              initiativesTotal={initiativesSignal.initiativesTotal}
-              initiativesOnTrack={initiativesSignal.initiativesOnTrack}
-              openBlocksCount={signals.openBlocksCount}
-              avgConfidence={null}
+            <CollaboratorWeekActivity
+              effectiveUserId={effectiveUserId}
+              cycleId={cycleId}
+              krs={krs}
+              kpisToUpdate={kpisToUpdate}
             />
 
             <CollaboratorCheckinTrail steps={trailSteps} />
