@@ -9,24 +9,35 @@ import { ClipboardCheck, Inbox } from 'lucide-react';
 import { WizardStepHeader } from '@/modules/okrs/components/wizards/shared/WizardStepHeader';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
+import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
 import { useMyPendingDecisions } from '@/modules/okrs/hooks';
 import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks';
 import { useDecisionThread } from '@/modules/okrs/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 export interface CollaboratorDecisionsStepProps {
   effectiveUserId: string | null;
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  /** Sugestões de pauta (draft do rito); se ausente, o input não é renderizado. */
+  agendaSuggestions?: RitualAgendaSuggestion[];
+  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
+  agendaTriggerLabel?: string;
 }
+
+const AGENDA_SOURCE_STEP = 'collaborator-decisions';
 
 export function CollaboratorDecisionsStep({
   effectiveUserId,
   onContinue,
   onBack,
   onSkip,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorDecisionsStepProps) {
   const { data: pendingItems = [], isLoading } = useMyPendingDecisions(effectiveUserId);
   const { mutate: updateFollowUp, isPending: isUpdating } = useUpdateDecisionFollowUp();
