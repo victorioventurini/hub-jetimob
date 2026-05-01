@@ -1,50 +1,47 @@
-## Diagnóstico
+# Ajuste de UI — Step "Iniciativas vinculadas" (Check-in Individual)
 
-`/rituals/collaborator-checkin?user=4e5985d2...&step=initiatives` exibe "Nenhuma iniciativa" para Eduarda Branchi, mas o banco confirma **20 iniciativas como owner + 2 como contributor**.
+## Problema observado
+No print enviado, o conteúdo do step `?step=initiatives` extrapola horizontalmente: os botões "Atualizar" e "Comentar" são empurrados para fora da área visível, gerando scroll lateral. Isso viola o `mem://ui/wizards/wizard-shell-mobile-standard` (steps devem caber na largura disponível, sem overflow horizontal).
 
-**Causa raiz:** A query do step filtra `okr_initiatives` por `.is('cancelled_at', null)`, mas a coluna **não existe** nessa tabela. PostgREST devolve erro → React Query entrega `[]` silenciosamente → empty state.
+## Causa raiz
+1. **`InitiativesSummary.tsx` (linha 225)** — cada item renderiza `nome + badges + botões "Atualizar"/"Comentar"` numa única flex-row sem permitir quebra. Em telas estreitas (mobile e até no preview de 889px com sidebar), a soma das larguras estoura o container.
+2. **`CollaboratorInitiativesStep.tsx` (linha 291)** — container raiz `flex flex-col h-full` sem `min-w-0` nem `overflow-x-hidden`; não impede overflow vindo dos filhos.
+3. Linha 237 (header do item) também combina título truncável com badges `flex-shrink-0` na mesma row, podendo derrubar o `truncate`.
 
-Schema confirmado por introspecção:
-- `okr_team_key_results.cancelled_at` ✅
-- `okr_team_objectives.cancelled_at` ✅
-- `okr_initiatives.cancelled_at` ❌ — soft-delete é apenas `deleted_at`
+## O que será feito
 
-A Core memory "Soft Deletes" é regra **geral**, não regra **universal**: só vale onde a coluna existe. Faltava registro dessa exceção para `okr_initiatives`.
+### 1. `src/modules/okrs/components/wizards/shared/InitiativesSummary.tsx`
+Reorganizar o item de iniciativa em **duas regiões responsivas**:
 
-## Mudanças
+- **Coluna de conteúdo** (título, badges de status, descrição, progresso) — sempre ocupa a largura disponível, com `min-w-0` e `flex-wrap` no header de badges para permitir quebra natural.
+- **Linha de ações** (botões "Atualizar" e "Comentar"):
+  - Em **mobile (<640px)**: empilhada **abaixo** do conteúdo, alinhada à direita, com `flex-wrap`.
+  - Em **desktop (≥640px)**: à direita do conteúdo, na mesma linha.
+- Usar classes utilitárias Tailwind (`flex-col sm:flex-row`, `sm:items-start`, `sm:gap-2`, `w-full sm:w-auto justify-end`) — sem novos tokens de design.
+- Garantir `min-w-0` e `break-words` no nome para evitar push horizontal de strings longas.
+- Remover `truncate` do título (substituir por `break-words` + `line-clamp-2` opcional) — agora que cabe quebra de linha, truncar deixa de fazer sentido.
 
-### 1) `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
+### 2. `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
+Blindar o container do step contra overflow proveniente de filhos:
+- Linha 291: adicionar `min-w-0 overflow-x-hidden` ao wrapper raiz.
+- Linha 312–313 (`ScrollArea` + `div p-6`): garantir `min-w-0` no container interno.
+- Linha 340 (cada bloco por KR): adicionar `min-w-0` para isolar cada agrupamento.
+- Sem mudanças funcionais, sem mudanças de query — apenas defesa em profundidade do layout.
 
-Linha 126: remover `.is('cancelled_at', null)` aplicado à própria iniciativa. Manter os filtros `cancelled_at` no `kr` e em `kr.team_objective` (essas tabelas têm a coluna).
+### 3. Verificação manual
+Após aplicar:
+- Conferir step `/rituals/collaborator-checkin?step=initiatives` em viewports 375, 768 e 1280.
+- Confirmar que **nenhuma rolagem horizontal** aparece.
+- Confirmar que os botões "Atualizar"/"Comentar" continuam clicáveis e visíveis em todos os tamanhos.
+- Confirmar que o restante dos steps (KPIs, Projetos, KRs) não foi afetado (o `InitiativesSummary` é compartilhado, mas a mudança é puramente CSS responsivo).
 
-### 2) `src/modules/okrs/components/wizards/collaborator/hooks/useCollaboratorWeekActivity.ts`
+## Fora de escopo
+- Lógica de negócios, queries Supabase, RLS, identity, BU isolation — **nada** será alterado.
+- Outros steps do wizard (KPIs/Projetos/KRs/Reflexão).
+- Wording, copy, ícones ou paleta de cores.
 
-Mesma correção na query de iniciativas atualizadas na semana (criada por mim no card "Sua semana até aqui"). Manter `cancelled_at` apenas em KR e team_objective.
-
-### 3) Auditoria varredura
-
-`rg "okr_initiatives" -B 2 -A 12` em `src/` para confirmar que nenhum outro consumer esteja aplicando `.is('cancelled_at', null)` ou `cancelled_at` no select de `okr_initiatives`. Corrigir se houver.
-
-### 4) Atualizar memórias
-
-- `mem://features/rituals/collaborator-initiatives-step-scope`: remover menção a `is('cancelled_at', null)` na initiative; deixar apenas `is('deleted_at', null)`.
-- `mem://standards/soft-delete-policy-v1`: adicionar nota de exceção — **`okr_initiatives` usa apenas `deleted_at`**; `cancelled_at` aplica-se a `okr_team_key_results` / `okr_team_objectives` / `okr_org_objectives`.
-
-### 5) Validação
-
-- Build TS sem erro.
-- Abrir o step da Eduarda no preview e confirmar que as 20+2 iniciativas aparecem agrupadas pelos KRs.
-- Confirmar que o card "Sua semana até aqui" no Step 1 não regride (categoria "Iniciativas atualizadas" continua funcionando).
-
-## Não-objetivos
-
-- Não criar `cancelled_at` em `okr_initiatives` (não está no design — iniciativas só têm soft-delete).
-- Sem mudança de query keys, RLS ou layout.
-
-## Arquivos editados
-
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
-- `src/modules/okrs/components/wizards/collaborator/hooks/useCollaboratorWeekActivity.ts`
-- `mem://features/rituals/collaborator-initiatives-step-scope`
-- `mem://standards/soft-delete-policy-v1` (nota de exceção)
-- (Quaisquer outros arquivos identificados na varredura, se houver)
+## Aderência a canônicos
+- ✅ `mem://ui/wizards/wizard-shell-mobile-standard` — layout responsivo do step.
+- ✅ Design tokens semânticos preservados (sem cores hardcoded).
+- ✅ Sem `select('*')`, sem alteração de query keys, sem alteração de RLS.
+- ✅ `React.memo` mantido onde já existe.
