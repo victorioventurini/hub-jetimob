@@ -33,6 +33,7 @@ import { AreaBadge } from '@/components/ui/area-badge';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import { calculateKpiRag } from '@/modules/kpis/utils/rag';
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
