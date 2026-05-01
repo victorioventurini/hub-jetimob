@@ -206,3 +206,41 @@ export function getStepLabel(
   if (label) return label;
   return { title: stepId, shortLabel: stepId };
 }
+
+// ============================================================
+// RITUAL GREETING — Saudação contextual no Step 1
+// ============================================================
+
+/**
+ * Cadência do rito — define quais badges contextuais aparecem na saudação.
+ * - weekly: Semana N · Ciclo · Nº ordinal de check-in
+ * - monthly: Mês/Ano · Ciclo · Mês X do quarter
+ * - quarterly: Ciclo que encerra → Ciclo que abre
+ */
+export type RitualCadence = 'weekly' | 'monthly' | 'quarterly';
+
+/**
+ * SSOT: frase contextual + cadência por persona, usada por <RitualGreeting>.
+ *
+ * Wizards de criação (`team-okr-creation`, `team-kr-creation`) e personas
+ * descontinuadas não têm entrada — a saudação não é renderizada nesses casos.
+ */
+export const RITUAL_GREETING_PHRASES: Partial<
+  Record<WizardPersona, { phrase: string; cadence: RitualCadence }>
+> = {
+  'collaborator':     { phrase: 'Vamos revisar sua semana?',                       cadence: 'weekly' },
+  'leader-prep':      { phrase: 'Hora de preparar o check-in do seu time.',        cadence: 'weekly' },
+  'team-checkin':     { phrase: 'Vamos alinhar o time esta semana.',               cadence: 'weekly' },
+  'pre-weekly':       { phrase: 'O que do seu time precisa da atenção da BU?',     cadence: 'weekly' },
+  'weekly':           { phrase: 'Vamos alinhar a BU esta semana.',                 cadence: 'weekly' },
+  'mbr-pre':          { phrase: 'Como seu time chega neste mês?',                  cadence: 'monthly' },
+  'mbr':              { phrase: 'Vamos revisar o mês da BU.',                      cadence: 'monthly' },
+  'qbr-pre':          { phrase: 'Hora de fechar o ciclo do seu time.',             cadence: 'quarterly' },
+  'qbr-pre-clevel':   { phrase: 'Hora da leitura estratégica do ciclo.',           cadence: 'quarterly' },
+  'qbr-meeting':      { phrase: 'Vamos revisar e planejar o próximo ciclo.',       cadence: 'quarterly' },
+  'qbr-post':         { phrase: 'Hora de formalizar o que foi decidido.',          cadence: 'quarterly' },
+};
+
+export function getRitualGreetingConfig(persona: WizardPersona | string) {
+  return (RITUAL_GREETING_PHRASES as Record<string, { phrase: string; cadence: RitualCadence } | undefined>)[persona];
+}
