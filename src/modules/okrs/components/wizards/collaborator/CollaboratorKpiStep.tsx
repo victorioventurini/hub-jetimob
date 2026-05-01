@@ -217,6 +217,14 @@ export function CollaboratorKpiStep({
                   Precisa atualização
                 </Badge>
               )}
+              {kpi.area && <AreaBadge area={kpi.area} />}
+              {kpi.team && (
+                <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                  <Users className="h-3 w-3" />
+                  {kpi.team.name}
+                </Badge>
+              )}
+              <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
             </div>
           </div>
 
