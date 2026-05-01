@@ -127,7 +127,7 @@ export function CollaboratorInitiativesStep({
 
       if (error) throw error;
 
-      const rows = (data ?? []) as Array<Initiative & { kr?: { id: string; title: string } | null }>;
+      const rows = (data ?? []) as unknown as Array<Initiative & { kr?: { id: string; title: string } | null }>;
 
       // Hidratar `owner` (profiles cross-BU) — necessário para o
       // InitiativeQuickUpdateDialog exibir nome + avatar do responsável.
