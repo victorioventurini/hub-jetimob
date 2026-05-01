@@ -119,3 +119,11 @@ export type { SummaryKrBalanceProps, SummaryKrBalanceItem } from './SummaryKrBal
 
 export { SummaryKpiList } from './SummaryKpiList';
 export type { SummaryKpiListProps } from './SummaryKpiList';
+
+// =========================
+// RITUAL GREETING (Step 1 — saudação contextual)
+// =========================
+export { RitualGreeting } from './RitualGreeting';
+export type { RitualGreetingProps } from './RitualGreeting';
+export { RitualGreetingForStep } from './RitualGreetingForStep';
+export type { RitualGreetingForStepProps } from './RitualGreetingForStep';
