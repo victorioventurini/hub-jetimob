@@ -43,6 +43,9 @@ export function CollaboratorReflectionStep({
   onBack,
   onSkip,
   isSubmitting = false,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorReflectionStepProps) {
   const [impactSummary, setImpactSummary] = useState('');
   const [helpNeeded, setHelpNeeded] = useState('');
