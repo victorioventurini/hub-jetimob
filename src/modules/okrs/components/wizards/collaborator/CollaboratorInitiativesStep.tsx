@@ -118,7 +118,7 @@ export function CollaboratorInitiativesStep({
             )
           )
         `)
-        .or(`owner_user_id.eq.${effectiveUserId},contributors.cs.{${effectiveUserId}}`)
+        .or(`owner_user_id.eq.${effectiveUserId},contributors.cs.{"${effectiveUserId}"}`)
         .eq('kr.team_objective.cycle_id', cycleId)
         .is('kr.team_objective.cancelled_at', null)
         .is('kr.team_objective.deleted_at', null)
@@ -126,7 +126,24 @@ export function CollaboratorInitiativesStep({
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      return (data ?? []) as unknown as Array<Initiative & { kr?: { id: string; title: string } | null }>;
+
+      const rows = (data ?? []) as unknown as Array<Initiative & { kr?: { id: string; title: string } | null }>;
+
+      // Hidratar `owner` (profiles cross-BU) — necessário para o
+      // InitiativeQuickUpdateDialog exibir nome + avatar do responsável.
+      const ownerIds = Array.from(new Set(rows.map((r) => r.owner_user_id).filter(Boolean)));
+      let ownerMap = new Map<string, { id: string; display_name: string | null; first_name: string | null; last_name: string | null; photo_url: string | null }>();
+      if (ownerIds.length > 0) {
+        const { data: owners } = await supabase
+          .from('profiles')
+          .select('id, display_name, first_name, last_name, photo_url')
+          .in('id', ownerIds);
+        ownerMap = new Map((owners ?? []).map((o) => [o.id, o]));
+      }
+
+      return rows.map((r) => ({ ...r, owner: ownerMap.get(r.owner_user_id) })) as Array<
+        Initiative & { kr?: { id: string; title: string } | null }
+      >;
     },
     enabled: !!effectiveUserId && !!cycleId,
   });
