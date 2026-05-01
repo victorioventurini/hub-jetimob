@@ -53,6 +53,16 @@ export function CollaboratorDecisionsStep({
     );
   }
 
+  const agendaSlot =
+    agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+      <InlineAgendaSuggestionInput
+        suggestions={agendaSuggestions}
+        onSuggestionsChange={onAgendaSuggestionsChange}
+        sourceStep={AGENDA_SOURCE_STEP}
+        triggerLabel={agendaTriggerLabel}
+      />
+    ) : undefined;
+
   // Empty state
   if (pendingItems.length === 0) {
     return (
