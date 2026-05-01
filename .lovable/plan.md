@@ -1,102 +1,153 @@
-## Problema
+## Objetivo
 
-No step **Iniciativas** do `/rituals/collaborator-checkin`, o usuário `4e5985d2…` vê o empty state, mesmo possuindo **9 iniciativas no ciclo ativo (Q2 2026)**.
+1. Criar **saudação contextual** compartilhada no Step 1 de todos os ritos (exceto Criação de OKRs).
+2. Redesenhar o Step 1 do **Check-in Individual**, transformando-o de "dashboard de tarefas" em "abertura ritual": **snapshot visual** + **trilha de etapas** + único CTA "Começar".
+3. Mover a lista operacional de KPIs do Step 1 para o Step 2 (Indicadores).
 
-### Causa raiz
+## Pré-checklist consultado
 
-`CollaboratorInitiativesStep` busca iniciativas via `kr_id IN krIds`, com `krIds` derivados do array `krs` (vindo de `useUserKrsForWizard`). Hoje:
+- TCR §4.8 (Collaborator Check-in) e §4.8.1 (Wizards Framework)
+- `WIZARDS_FRAMEWORK_BOUNDARY.md` (SSOT de labels via `RITUAL_LABELS` em `ritualLabels.ts`)
+- `IDENTITY_CONVENTION.md` (uso de `useIdentity` para nome do usuário)
+- `QUERY_KEYS_STANDARD.md` (helpers em `src/lib/queryKeys/*`)
+- `UI_COMPONENTS_REGISTRY.md` (não duplicar `WizardStepHeader`, `WizardStepScaffold`, `LastCheckinBadge`, `KpiContextSection`)
 
-- `useUserKrsForWizard` traz KRs onde o usuário é **owner / co-resp / owner-de-iniciativa** (TCR §4.8 — Collaborator Check-in).
-- O step então depende transitivamente dessa lista. Se algum KR não entrar nela (por filtro de status, ciclo, RLS), todas as iniciativas daquele KR somem.
-- O step **nunca considera `contributors[]`** de `okr_initiatives`, então iniciativas em que o colaborador é apenas contribuidor jamais aparecem.
+Nada do que será criado já existe; o plano **estende** componentes shared existentes em vez de reescrevê-los.
 
-A correção é centrar a query na **iniciativa do colaborador** (owner OR contributor) no ciclo ativo, e derivar agrupamento por KR a partir desse conjunto.
+---
 
-### Pré-checklist consultado
+## Parte 1 — Saudação contextual (todos os ritos, exceto criação)
 
-- TCR §4.8 (Collaborator Check-in — Filtro de KRs) e §**okr_initiatives** (cols `owner_user_id`, `contributors uuid[]`).
-- `IDENTITY_CONVENTION.md`: `okr_initiatives.owner_user_id → profiles.id` (usar `effectiveUserId` profile-id, não `auth.uid`).
-- `DEVELOPMENT_STANDARDS.md`: query keys via helpers, soft-delete obrigatório, sem `select('*')`, BU-scoped client.
-- Memórias core: BU isolation, soft deletes, query optimization, query keys, no-render-side-effects (mantido).
-- Memórias relevantes: `wizards-master-standard`, `kr-linked-entities-visualization`, `collaborator-checkin-pending-items-step`, `off-cycle-accessibility-standard`.
+### Componente novo (compartilhado)
+`src/modules/okrs/components/wizards/shared/RitualGreeting.tsx`
 
-### Divergência canônica criada
+Props:
+- `userName: string`
+- `ritualSlug: WizardPersona` (tipo já existente)
+- `cycleId?: string` / `cycleName?: string`
+- `cadence: 'weekly' | 'monthly' | 'quarterly'` (driver dos badges)
+- `weekNumber?: number`, `checkInOrdinal?: number` (semanais)
+- `monthName?: string`, `monthInQuarter?: number` (mensais)
+- `closingCycleName?: string`, `openingCycleName?: string` (trimestrais)
 
-Hoje o filtro de KRs **não** considera `contributors[]`. Após esta mudança, iniciativas mostradas no step incluem aquelas em que o colaborador é só `contributors[]` — KR pode não estar em `useUserKrsForWizard`. Esta expansão será **canonizada** (TCR §4.8 + nova memória).
+Comportamento:
+- Saudação por hora local (`< 12 / < 18 / else`).
+- Frase contextual via lookup em **uma constante SSOT** nova: `RITUAL_GREETING_PHRASES` em `src/modules/okrs/constants/ritualLabels.ts` (mesmo SSOT já normativo dos labels). Sem `if/else` por slug dentro do componente.
+- Badges renderizados conforme `cadence`.
+- Sem CTAs, sem lógica de dados — componente puramente apresentacional.
 
-## Mudanças
+### Hook auxiliar (cálculos contextuais)
+`src/modules/okrs/hooks/useRitualGreetingContext.ts`
 
-### 1. `CollaboratorInitiativesStep.tsx` — fonte de dados centrada no colaborador
+Centraliza:
+- `weekNumber` e `monthInQuarter` a partir do ciclo ativo (helpers já existem em `src/lib/cycles/*` — checar antes de criar).
+- `checkInOrdinal` por usuário via query (`okr_checkins` ou tabela equivalente já usada em outros badges); aproveita query keys já existentes (`queryKeys.okrs.userCheckins…`) — adiciona helper se faltar.
+- Retorna o objeto pronto para alimentar `<RitualGreeting>`.
 
-Substituir a query atual (`kr_id IN krIds`) por:
+Cada Step 1 chama o hook e passa o resultado, sem lógica condicional na UI.
 
-- `from('okr_initiatives')` selecionando colunas explícitas (sem `*`) **+ join inner** em `okr_team_key_results!inner(id, title, team_objective:okr_team_objectives!inner(id, title, cycle_id, cancelled_at, deleted_at))`.
-- Filtros:
-  - `or('owner_user_id.eq.<id>,contributors.cs.{<id>}')` — owner OU contributor.
-  - `eq('okr_team_key_results.team_objective.cycle_id', cycleId)`.
-  - `is('okr_team_key_results.team_objective.cancelled_at', null)` + `deleted_at` null.
-  - `is('deleted_at', null)` + `is('cancelled_at', null)` na própria iniciativa.
-- `enabled: !!effectiveUserId && !!cycleId`.
-- `select` retorna o `kr.title` embutido para permitir agrupamento mesmo quando o KR não está no array `krs`.
+### Integração em cada rito (Step 1)
 
-### 2. Props e wiring
+Substituir o cabeçalho atual do **primeiro step** de:
 
-- Adicionar prop `cycleId: string | null` em `CollaboratorInitiativesStepProps`.
-- Em `CollaboratorCheckinPage.tsx`, passar `cycleId={quarterlyCycle?.id ?? null}`.
-- Manter `krs` como prop apenas para enriquecimento de exibição (badges, projetos vinculados via `project_krs`); a lista de iniciativas passa a ser independente.
+| Rito | Step 1 atual | Cadência |
+|---|---|---|
+| Check-in Individual | `CollaboratorContextStep` | weekly |
+| Pré-Check-in do Time | `LeaderOverviewStep` | weekly |
+| Check-in do Time | `TeamOpeningStep` | weekly |
+| Pré-Weekly | `PreWeeklySourcesStep` | weekly |
+| Weekly | `WeeklyExecutiveOpeningStep` | weekly |
+| Pré-MBR | `MbrPreHighlightsStep` | monthly |
+| MBR | `MbrPanoramaStep` | monthly |
+| Pré-QBR | `QbrBalanceStep` | quarterly |
+| Pré-QBR Executivo | `QbrCLevelSystemReadStep` | quarterly |
+| QBR | `QbrMeetingOpeningStep` | quarterly |
+| Pós-QBR | `QbrPostMinutesStep` | quarterly |
 
-### 3. Agrupamento e empty state
+Excluído: wizards de Criação (`team-okr-creation`, `team-kr-creation`, `clevel-checkin` do C-Level Directives — confirmar com base em escopo).
 
-- `initiativesByKr` é montado a partir das iniciativas retornadas (Map<krId, Initiative[]>).
-- Loop de renderização passa a iterar sobre as chaves do `Map` (KRs efetivamente com iniciativas), ordenando por título do KR.
-- Empty state canônico (já implementado) permanece — exibido somente quando a query retorna 0.
-- Footer canônico (`Voltar / Pular / Continuar`) sem alterações.
+Em cada Step 1: remover títulos institucionais antigos e renderizar `<RitualGreeting>` no topo. Manter o resto do conteúdo do step intacto.
 
-### 4. Query keys (helper centralizado)
+---
 
-- Adicionar em `src/lib/queryKeys/okrs.ts`:
-  ```ts
-  initiativesForCollaborator: (buId, cycleId, profileId) =>
-    [...prefix, 'initiatives', 'collaborator', buId, cycleId, profileId] as const
-  ```
-- O step passa a usar este helper. A chave atual `initiativesByKrs` continua válida em outros consumidores.
+## Parte 2 — Redesenho do Step 1 do Check-in Individual
 
-### 5. Projetos vinculados
+Arquivo principal: `CollaboratorContextStep.tsx` é refatorado para conter apenas:
+1. `<RitualGreeting cadence="weekly" />`
+2. `<CollaboratorSnapshot>` (novo)
+3. `<CollaboratorCheckinTrail>` (novo)
+4. Botão único "Começar →" (já existe; reusa `Button`)
 
-- `project_krs` continua, mas `krIds` passa a ser `Array.from(initiativesByKr.keys())` (KRs realmente presentes nas iniciativas do colaborador), evitando fetch de projetos para KRs que não vão ser exibidos.
+Toda a lista de KPIs/KRs visual atual sai daqui.
 
-### 6. Edição inline
+### Componentes novos (específicos do Check-in Individual)
 
-- Em `InitiativesSummary` o `canEdit` segue `init.owner_user_id === effectiveUserId`. Contributors visualizam mas não editam — coerente com RLS.
+**`src/modules/okrs/components/wizards/collaborator/CollaboratorSnapshot.tsx`**
+- Props: `krs`, `kpisToUpdate`, `projects`, `openBlocksCount`, `avgConfidence`.
+- Renderiza 3 linhas com label + bolinhas (componente `<DotMeter>` interno reusável) + texto resumo.
+- Cores: preenchida = `bg-primary`, vazia = `bg-muted`. Sem RAG.
+- Linha de sinais condicional: só renderiza bloqueios > 0 ou confiança ≠ alta.
+- Sem CTAs, sem lista de itens nominais.
 
-### 7. Atualização canônica (obrigatório por divergência)
+**`src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinTrail.tsx`**
+- Props: `steps: TrailStep[]` onde cada item tem `index`, `label`, `summary`, `etaMinutes`, `onStart` no rodapé (único CTA).
+- Cálculo de tempo (regra do prompt) feito por helper puro `computeTrailEta()` exportado para testes.
+- Quando uma etapa não tem pendência: mostra "Tudo em dia".
 
-- Atualizar `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` §4.8 — Collaborator Check-in, adicionando subseção **"Filtro de Iniciativas do Step"**:
-  - Owner OR contributor no ciclo ativo, independentemente do filtro de KRs.
-  - Edição restrita ao owner.
-- Criar memória `mem://features/rituals/collaborator-initiatives-step-scope` com a regra acima e referência ao TCR.
-- Atualizar `mem://index.md` (seção "Memories — Rituais específicos").
+### Origem dos dados
+- `krs`, `kpisToUpdate`, `projects` já vêm de `CollaboratorCheckinPage.tsx` (props existentes do step).
+- `openBlocksCount` e `avgConfidence`: derivar dos check-ins anteriores do usuário; usar hook existente (`useCollaboratorPendingItems` ou equivalente) — se não bastar, adicionar `useCollaboratorOpeningSignals` em `src/modules/okrs/hooks/`.
 
-## Não fazer
+### Migração da lista de KPIs para o Step 2
+- Step 2 atual = `CollaboratorKpiStep`. Hoje recebe `kpisToUpdate` mas a UI rica (gradient, badges de status, agrupamento) vive no Step 1.
+- Mover o bloco visual `KpiContextSection` (variant `update`) e demais seções de "Indicadores do Time" / "Indicadores Estratégicos" para `CollaboratorKpiStep`.
+- Step 1 não mais importa `KpiContextSection`.
 
-- Não duplicar componentes: reutilizar `InitiativesSummary`, `InitiativeQuickUpdateDialog`, `WizardStepScaffold/Header/Footer`, `EmptyState`.
-- Não alterar `useUserKrsForWizard` (escopo de KR continua o mesmo — TCR §4.8 mantido).
-- Não tocar em RLS de `okr_initiatives` (`okrs.initiative.read:team_tree` ou `okrs.view:bu` já cobre o usuário logado lendo iniciativas onde é owner/contributor).
-- Não mexer em business logic dos demais steps.
-- Não introduzir `select('*')` nem queries fora do `useBuScopedSupabase`.
+### Critérios de preservação
+- Steps 2–7 inalterados em lógica, apenas Step 2 ganha conteúdo movido.
+- Sem mudanças em RLS, salvamento de rascunho, navegação do `WizardStepper` ou permissões.
+- Testes existentes de `CollaboratorContextStep` precisam ser atualizados (snapshot, ausência de lista) — manter cobertura, atualizar expectativas.
 
-## Validação
+---
 
-1. `?user=4e5985d2…&step=initiatives`: deve listar as 9 iniciativas do Q2 2026 agrupadas por KR (incluindo KRs em que ele só é owner-de-iniciativa).
-2. Usuário sem owner/contributor no ciclo ativo: empty state canônico + footer Voltar/Pular/Continuar.
-3. Marcar/desmarcar "em risco" continua funcionando.
-4. `InitiativeQuickUpdateDialog` abre apenas para iniciativas onde `owner_user_id === effectiveUserId`.
-5. Colaborador que é apenas `contributors[]` em uma iniciativa: vê o card, **não** edita.
+## Parte 3 — Memória / docs
 
-## Arquivos afetados
+- Atualizar `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` §4.8 com nota: "Step 1 do Collaborator Check-in segue padrão de abertura ritual (snapshot + trilha) e usa `RitualGreeting`".
+- Criar memória `mem://standards/ui/ritual-greeting-standard` (SSOT do componente, frases e badges por cadência).
+- Atualizar `mem://index.md` apontando para a nova memória.
 
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx` (fetch + agrupamento + nova prop `cycleId`).
-- `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` (passar `cycleId`).
-- `src/lib/queryKeys/okrs.ts` (helper `initiativesForCollaborator`).
-- `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` (§4.8 — nova subseção).
-- `mem://features/rituals/collaborator-initiatives-step-scope` (nova) + `mem://index.md`.
+---
+
+## Detalhes técnicos
+
+### Estrutura de arquivos
+```text
+src/modules/okrs/components/wizards/shared/
+  └── RitualGreeting.tsx              [novo - compartilhado]
+
+src/modules/okrs/components/wizards/collaborator/
+  ├── CollaboratorContextStep.tsx     [refatorado - enxuto]
+  ├── CollaboratorSnapshot.tsx        [novo]
+  ├── CollaboratorCheckinTrail.tsx    [novo]
+  └── CollaboratorKpiStep.tsx         [recebe seções migradas]
+
+src/modules/okrs/constants/
+  └── ritualLabels.ts                 [+ RITUAL_GREETING_PHRASES]
+
+src/modules/okrs/hooks/
+  └── useRitualGreetingContext.ts     [novo]
+
+src/lib/queryKeys/okrs.ts             [+ helper de ordinal de check-in se faltar]
+```
+
+### Atualizações em ritos (apenas substituição de header)
+- 11 arquivos de Step 1 listados acima passam a renderizar `<RitualGreeting>` no topo, sem alterar lógica de negócio.
+
+### Não-objetivos
+- Não tocar nos wizards de criação de OKRs.
+- Não alterar lógica de cálculo de status/health/efetividade — apenas leitura.
+- Não criar novos endpoints ou edge functions.
+
+## Perguntas residuais (responder durante implementação se ambíguo)
+- Caso `useIdentity` não retorne `first_name`, usar `display_name` truncado no primeiro espaço.
+- Se o usuário nunca teve check-in no ciclo, ordinal vira "Primeiro check-in do ciclo" (texto fixo).
