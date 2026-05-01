@@ -92,7 +92,8 @@ const formSchema = z.object({
   updated_by_user_id: z.string().optional(),
   target_value: z.preprocess(
     (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
-    z.number().optional()
+    z.number({ required_error: "Meta é obrigatória", invalid_type_error: "Meta é obrigatória" })
+      .refine((v) => !Number.isNaN(v), { message: "Meta é obrigatória" })
   ),
   // Governance fields
   indicator_type: z.enum(["kpi", "metric"]),
