@@ -106,6 +106,9 @@ export function CollaboratorProjectsStep({
   onContinue,
   onBack,
   onSkip,
+  agendaSuggestions,
+  onAgendaSuggestionsChange,
+  agendaTriggerLabel,
 }: CollaboratorProjectsStepProps) {
   const supabase = useBuScopedSupabase();
   const { currentBu } = useBu();
