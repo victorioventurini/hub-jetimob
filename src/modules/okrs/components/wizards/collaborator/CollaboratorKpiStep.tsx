@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
+import { calculateKpiRag } from '@/modules/kpis/utils/rag';
 import { INDICATOR_TYPE_LABELS } from '@/modules/kpis/types';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
