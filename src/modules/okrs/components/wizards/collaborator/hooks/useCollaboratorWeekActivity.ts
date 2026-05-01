@@ -137,11 +137,14 @@ export function useCollaboratorWeekActivity({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('kpi_values')
-        .select('id, kpi_id, kpis!inner(id, name)')
+        .select('id, kpi_id, kpi_metrics!inner(id, name)')
         .eq('created_by', effectiveUserId!)
         .gte('created_at', weekStartIso);
       if (error) throw error;
-      return (data ?? []) as Array<{ kpi_id: string; kpis: { id: string; name: string } | null }>;
+      return (data ?? []) as unknown as Array<{
+        kpi_id: string;
+        kpi_metrics: { id: string; name: string } | null;
+      }>;
     },
   });
 
