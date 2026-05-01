@@ -40,7 +40,7 @@ import type { KpiCheckinResult } from '@/modules/okrs/types/wizard';
 export type { KpiCheckinResult };
 
 export interface CollaboratorKpiStepProps {
-  kpi: KpiForWizard;
+  kpi: KpiForWizardV2;
   currentIndex: number;
   totalCount: number;
   onComplete: (result: KpiCheckinResult) => void;
