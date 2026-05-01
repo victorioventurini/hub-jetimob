@@ -4,3 +4,5 @@ export {
   kpiValueEntrySchema,
   type KpiValueEntryFormValues,
 } from './kpiValueEntrySchema';
+export { KpiSparkline } from './KpiSparkline';
+export type { KpiSparklineProps } from './KpiSparkline';
