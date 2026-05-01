@@ -26,7 +26,7 @@ import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { EmptyState } from '@/components/ui/empty-state';
-import { InitiativesSummary } from '../shared/InitiativesSummary';
+import { InitiativeCard } from '@/modules/okrs/components/initiatives/InitiativeCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
