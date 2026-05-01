@@ -85,9 +85,12 @@ export function useUserKrsForWizard(
         .is('deleted_at', null);
 
       // Build OR condition: owner OR co-responsible OR has initiatives
+      // IMPORTANT: dentro de .or(), valores de array (cs.{uuid}) DEVEM usar aspas
+      // duplas no UUID, senão PostgREST interpreta as chaves como delimitador do or
+      // e quebra a query inteira com erro 22P02 (malformed array literal).
       const conditions = [
         `owner_user_id.eq.${effectiveUserId}`,
-        `co_responsibles.cs.{${effectiveUserId}}`
+        `co_responsibles.cs.{"${effectiveUserId}"}`
       ];
       
       if (krIdsFromInitiatives.length > 0) {
