@@ -259,6 +259,21 @@ export function CollaboratorKpiStep({
         )}
       </div>
 
+      {/* Sparkline — últimas atualizações */}
+      <div className="px-6 py-3 border-b bg-background">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-muted-foreground">Evolução recente</span>
+          <span className="text-[10px] text-muted-foreground">últimos 12 registros</span>
+        </div>
+        <KpiSparkline
+          kpiId={kpi.id}
+          unit={kpi.unit}
+          target={kpi.target_value}
+          height={72}
+          pointsLimit={12}
+        />
+      </div>
+
       {/* Form (SSOT compartilhado com /kpis) */}
       <div className="flex-1 overflow-auto px-6 py-4">
         <KpiValueEntryForm
