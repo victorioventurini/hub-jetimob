@@ -30,6 +30,12 @@ vi.mock('@/modules/okrs/hooks', async (importOriginal) => {
       openBlocksCount: 1,
       isLoading: false,
     }),
+    useCollaboratorInitiativesSignal: () => ({
+      initiativesTotal: 0,
+      initiativesOnTrack: 0,
+      isLoading: false,
+    }),
+    useMyPendingDecisions: () => ({ data: [], isLoading: false }),
   };
 });
 
