@@ -63,6 +63,7 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
   suggestions,
   onSuggestionsChange,
   ritualLabel,
+  categoryless = false,
 }: AgendaSuggestionsPrioritizerProps) {
   const grouped = useMemo(() => {
     const map: {
