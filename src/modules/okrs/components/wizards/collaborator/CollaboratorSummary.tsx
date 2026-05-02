@@ -24,6 +24,7 @@ import {
   FolderKanban,
   Lightbulb,
   Target,
+  Rocket,
   ClipboardCheck,
   MessageSquare,
   Inbox,
