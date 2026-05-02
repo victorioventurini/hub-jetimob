@@ -590,7 +590,6 @@ export function CollaboratorSummary({
       case 'checkin': {
         const completedKrs = results.filter((r) => !r.skipped);
         const skippedKrs = results.filter((r) => r.skipped);
-        const blockers = results.filter((r) => r.blocker);
         return (
           <div key="checkin" className="space-y-6">
             <SectionShell
@@ -617,26 +616,6 @@ export function CollaboratorSummary({
                 </details>
               )}
             </SectionShell>
-
-            {blockers.length > 0 && (
-              <SectionShell
-                id="section-blockers"
-                icon={AlertTriangle}
-                title="Bloqueadores"
-                count={blockers.length}
-                emptyText=""
-              >
-                {blockers.map((r) => (
-                  <div
-                    key={r.krId}
-                    className="rounded-lg border border-status-orange/30 bg-status-orange-muted p-3"
-                  >
-                    <p className="font-medium text-sm">{r.krTitle ?? r.krId}</p>
-                    <p className="text-sm mt-1">{r.blocker}</p>
-                  </div>
-                ))}
-              </SectionShell>
-            )}
           </div>
         );
       }
