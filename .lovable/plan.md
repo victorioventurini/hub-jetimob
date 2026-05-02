@@ -1,39 +1,57 @@
-# Reordenar nav do Summary + adicionar contador de Iniciativas
+# Adicionar "Pendências" à trilha "Seu check-in hoje" + ajustar tempo total
 
-## Objetivo
+## Contexto
 
-No Summary do Check-in Individual, o nav inferior de stats hoje tem 5 items numa ordem arbitrária (KRs, Pulados, KPIs, Marcos, Pendências). Falta **Iniciativas** (apesar de já existir a `section-initiatives` no scaffold com `initiativesAtRisk`). Deixar a sequência espelhar a ordem real do rito.
+A trilha do Step 1 (`<CollaboratorCheckinTrail>`) lista 5 itens hoje: Indicadores → Projetos → Iniciativas → KRs → Reflexão e envio. Falta o item **Pendências** (step `decisions`), que existe no rito (entre KRs e Reflexão) e tem step próprio (`CollaboratorDecisionsStep`). Como consequência, o "Tempo estimado" também subdimensiona o rito.
 
-## Ordem do rito (SSOT em `wizardSteps.ts`)
+Política canônica registrada: a trilha do Step 1 deve espelhar `STEP_ORDER` (`mem://features/rituals/collaborator-step1-order-mirrors-steps`). A omissão de `decisions` viola essa regra.
 
-`context → kpis → projects → initiatives → checkin (KRs) → decisions (pendências) → reflection → summary`
+## Mudanças
 
-## Nova ordem do nav (filtrando "context", "reflection" e "summary" — não geram contador)
+### 1) `CollaboratorCheckinTrail.tsx` — função `computeTrailEta`
 
-1. **KPIs** → `#section-kpis` — `Activity` — `stats.kpisCompleted`
-2. **Marcos** → `#section-projects` — `FolderKanban` — `stats.milestoneChanges`
-3. **Iniciativas** → `#section-initiatives` — `Rocket` — `stats.initiativesAtRisk` *(novo item)*
-4. **KRs** → `#section-krs` — `CheckCircle2` — `stats.krsCompleted`
-5. **Pulados** → `#section-krs` — `SkipForward` — `stats.krsSkipped` *(fica logo após KRs porque é pulados de KR)*
-6. **Pendências** → `#section-pendencies` — `ClipboardCheck` — `stats.pendencies`
+Acrescentar contribuição de pendências ao cálculo de ETA:
 
-## Mudanças (arquivo único)
+- Nova entrada em `ComputeEtaArgs`: `pendingDecisions?: number` (default 0).
+- Nova linha no retorno: `decisions = Math.ceil(1 + 0.5 * Math.max(0, pendingDecisions))`.
+  - Base 1 min + 0,5 min por item pendente — mesma régua já usada para KPIs/Projetos.
+- `total` passa a somar `decisions`.
 
-`src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+### 2) `CollaboratorContextStep.tsx`
 
-- **Imports**: adicionar `Rocket` em `lucide-react`.
-- **Bloco `topFixed` (linhas ~754–790)**: reordenar os 5 `<a>` existentes na sequência acima e inserir o novo item "Iniciativas" entre "Marcos" e "KRs". Manter o grid `grid-cols-2 md:grid-cols-3 lg:grid-cols-6` (já cabe 6).
-- Tom de cor do ícone "Iniciativas": `text-warning` quando `stats.initiativesAtRisk > 0`, senão `text-muted-foreground` (mesmo padrão dos demais sinalizadores).
+- Importar `useMyPendingDecisions` (já existe e é usado no `CollaboratorDecisionsStep` e `CollaboratorSummary`).
+- Buscar a contagem: `const { data: pendingDecisions = [] } = useMyPendingDecisions(effectiveUserId);` e derivar `pendingDecisionsCount = pendingDecisions.length`.
+- Passar `pendingDecisions: pendingDecisionsCount` para `computeTrailEta`.
+- Adicionar builder no map `builders`:
+  ```ts
+  decisions: () => ({
+    label: 'Pendências',
+    pendingCount: pendingDecisionsCount,
+    summaryOverride:
+      pendingDecisionsCount === 0
+        ? 'Nada para resolver'
+        : `${pendingDecisionsCount} item${pendingDecisionsCount > 1 ? 'ns' : ''} para resolver`,
+    etaMinutes: eta.decisions,
+  }),
+  ```
+- Atualizar deps do `useMemo` de `trailSteps` (incluir `pendingDecisionsCount` e `eta.decisions`).
+
+A ordem na UI já vem certa porque `trailSteps` é gerado por `visibleStepOrder.map(...)` — o slot `decisions` cai naturalmente entre `checkin` e `reflection` conforme `STEP_ORDER`.
+
+### 3) Teste
+
+`src/modules/okrs/components/wizards/collaborator/__tests__/CollaboratorContextStep.test.tsx` (já mockando dependências) — adicionar mock leve de `useMyPendingDecisions` retornando `{ data: [] }` para não quebrar; assert que o item "Pendências" aparece quando há contagem >0.
 
 ## O que NÃO muda
 
-- `wizardSteps.ts` — ordem canônica intacta.
-- Cálculo de `stats` — `initiativesAtRisk` já existe; nada novo no `useMemo`.
-- Scaffold (`renderSection` case `initiatives`) — `section-initiatives` já renderiza, só ganha link no nav.
-- Markdown copy — linha de iniciativas sinalizadas já existe.
+- `STEP_ORDER` / `wizardSteps.ts` — ordem canônica intacta.
+- `CollaboratorWeekActivity` (card "Sua semana até aqui") — Pendências não é "atividade entregue/pendente da semana", continua fora.
+- `CollaboratorSummary` — já tem nav e seção de Pendências.
+- ETA dos demais steps — fórmulas e bases inalteradas.
 
 ## Validação
 
-- `/rituals/collaborator-checkin?step=summary`: nav inferior mostra 6 items na nova ordem; clique em "Iniciativas" rola para `#section-initiatives`.
-- Sem regressão em mobile (grid colapsa para 2/3 colunas).
-- TypeScript build limpo.
+- Abrir `/rituals/collaborator-checkin` e confirmar que a trilha mostra 6 itens na ordem: Indicadores → Projetos → Iniciativas → KRs → Pendências → Reflexão e envio.
+- "Tempo estimado: ~X minutos" reflete a soma incluindo Pendências.
+- Quando o usuário não tem pendências: linha aparece com "Nada para resolver" e ETA mínima de 1 min.
+- TypeScript build limpo + suite existente do Context Step verde.
