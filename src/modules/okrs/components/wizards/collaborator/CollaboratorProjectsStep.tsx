@@ -112,11 +112,9 @@ export function CollaboratorProjectsStep({
   const { currentBu } = useBu();
   const buId = currentBu?.id ?? null;
   const updateMilestone = useUpdateMilestone();
-  const updateProject = useUpdateProject();
   const { canEditMilestoneRecord } = useProjectPermissionsV2();
 
   const [editingMilestone, setEditingMilestone] = useState<EditingMilestoneCtx | null>(null);
-  const [editingProject, setEditingProject] = useState<ProjectWithMilestones | null>(null);
 
   // Colunas explícitas (sem select '*'); inclui campos necessários para abrir
   // os dialogs canônicos de edição.
