@@ -181,11 +181,14 @@ export interface MbrDraftData {
 // ============================================================
 
 export type MbrPreStep =
-  | 'balance'
+  | 'opening'
   | 'kpi-analysis'
+  | 'projects'
   | 'highlights'
   | 'next-steps'
-  | 'summary';
+  | 'summary'
+  /** @deprecated Substituído por 'opening' a partir de 2026-05-02. Mantido para hidratação de drafts antigos. */
+  | 'balance';
 
 /** Draft data do pré-MBR (líderes de time) */
 export interface MbrPreDraftData {
