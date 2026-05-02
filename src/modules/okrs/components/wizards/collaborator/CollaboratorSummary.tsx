@@ -329,25 +329,29 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={handleCopy}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copiar resumo
-          </Button>
-          
-          <Button variant="outline" onClick={onViewOkrs}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ver OKRs
-          </Button>
-
-          <Button onClick={onClose} className="flex-1">
-            Fechar
-            <X className="h-4 w-4 ml-2" />
-          </Button>
+          {/* Secondary actions */}
+          <Separator />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copiar resumo
+            </Button>
+            <Button variant="outline" size="sm" onClick={onViewOkrs}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Ver OKRs
+            </Button>
+          </div>
         </div>
-      </div>
+      </ScrollArea>
+
+      {/* Footer padronizado: Voltar + Concluir (com pop-up de confirmação) */}
+      <WizardLastStepFooter
+        showBack={!!onBack}
+        onBack={onBack}
+        backDisabled={isSubmitting}
+        onPrimary={onClose}
+        primaryLoading={isSubmitting}
+      />
     </div>
   );
 }
