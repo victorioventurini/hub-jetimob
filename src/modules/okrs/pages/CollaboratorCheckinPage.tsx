@@ -39,7 +39,14 @@ import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/co
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
 import { CollaboratorDecisionsStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep';
 
-import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
+import type {
+  CollaboratorCheckinResult,
+  CollaboratorReflection,
+  KpiCheckinResult,
+  PendingMilestoneStatusChange,
+  PendingDecisionFollowUpUpdate,
+  PendingDecisionThreadMessage,
+} from '@/modules/okrs/types/wizard';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import {
   WIZARD_STEPS,
@@ -60,6 +67,19 @@ interface CollaboratorDraftData {
   reflection: CollaboratorReflection;
   /** @deprecated Step de iniciativas migrou para `InitiativeCard`; lista permanece por retrocompat de snapshots, mas é sempre `[]`. */
   initiativesMarkedAtRisk: string[];
+  /**
+   * Mudanças bufferizadas de status de milestones (toggle inline no step de Projetos).
+   * Persistidas em batch ao Concluir.
+   */
+  pendingMilestoneStatusChanges: PendingMilestoneStatusChange[];
+  /**
+   * Atualizações bufferizadas de follow-up de decisões (step de Pendências).
+   */
+  pendingFollowUpUpdates: PendingDecisionFollowUpUpdate[];
+  /**
+   * Mensagens bufferizadas de thread de decisões (step de Pendências).
+   */
+  pendingThreadMessages: PendingDecisionThreadMessage[];
 }
 
 // WIZARD_STEPS / STEP_ORDER vivem em ./components/wizards/collaborator/wizardSteps
@@ -73,6 +93,9 @@ const DEFAULT_DATA: CollaboratorDraftData = {
   kpiResults: [],
   reflection: {},
   initiativesMarkedAtRisk: [],
+  pendingMilestoneStatusChanges: [],
+  pendingFollowUpUpdates: [],
+  pendingThreadMessages: [],
 };
 
 // ============================================================
