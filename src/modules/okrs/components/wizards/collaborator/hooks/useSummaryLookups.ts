@@ -28,7 +28,7 @@ export interface MilestoneLookup {
 
 export interface InitiativeLookup {
   id: string;
-  title: string;
+  name: string;
   krId: string | null;
 }
 
@@ -98,15 +98,15 @@ export function useInitiativeLookupByIds(initiativeIds: string[]) {
       if (!buSupabase || !currentBu?.id) return {};
       const { data, error } = await buSupabase
         .from('okr_initiatives')
-        .select('id, title, kr_id')
+        .select('id, name, kr_id')
         .eq('bu_id', currentBu.id)
         .in('id', sortedIds)
         .is('deleted_at', null);
       if (error) throw error;
 
       const map: Record<string, InitiativeLookup> = {};
-      for (const i of (data ?? []) as Array<{ id: string; title: string; kr_id: string | null }>) {
-        map[i.id] = { id: i.id, title: i.title, krId: i.kr_id };
+      for (const i of (data ?? []) as Array<{ id: string; name: string; kr_id: string | null }>) {
+        map[i.id] = { id: i.id, name: i.name, krId: i.kr_id };
       }
       return map;
     },
