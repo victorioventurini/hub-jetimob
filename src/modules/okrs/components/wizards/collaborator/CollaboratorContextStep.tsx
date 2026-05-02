@@ -29,6 +29,7 @@ import {
   useRitualGreetingContext,
   useCollaboratorOpeningSignals,
   useCollaboratorInitiativesSignal,
+  useMyPendingDecisions,
 } from '@/modules/okrs/hooks';
 
 // ============================================================
@@ -112,6 +113,10 @@ export function CollaboratorContextStep({
     initiativesSignal.initiativesTotal - initiativesSignal.initiativesOnTrack,
   );
 
+  // Pendências do usuário (mesma fonte do step `decisions`).
+  const { data: pendingDecisions = [] } = useMyPendingDecisions(effectiveUserId);
+  const pendingDecisionsCount = pendingDecisions.length;
+
   const eta = useMemo(
     () =>
       computeTrailEta({
@@ -119,8 +124,9 @@ export function CollaboratorContextStep({
         attentionKrs: stats.krsAttention,
         pendingProjectMilestones: projectsAttention,
         attentionInitiatives: initiativesAttention,
+        pendingDecisions: pendingDecisionsCount,
       }),
-    [stats.kpisPending, stats.krsAttention, projectsAttention, initiativesAttention],
+    [stats.kpisPending, stats.krsAttention, projectsAttention, initiativesAttention, pendingDecisionsCount],
   );
 
   // Trilha derivada de STEP_ORDER — espelha a ordem real dos steps do rito.
@@ -176,6 +182,15 @@ export function CollaboratorContextStep({
               : `${stats.krsAttention} KR${stats.krsAttention > 1 ? 's' : ''} precisa${stats.krsAttention > 1 ? 'm' : ''} atenção`,
         etaMinutes: eta.krs,
       }),
+      decisions: () => ({
+        label: 'Pendências',
+        pendingCount: pendingDecisionsCount,
+        summaryOverride:
+          pendingDecisionsCount === 0
+            ? 'Nada para resolver'
+            : `${pendingDecisionsCount} ${pendingDecisionsCount > 1 ? 'itens' : 'item'} para resolver`,
+        etaMinutes: eta.decisions,
+      }),
       reflection: () => ({
         label: 'Reflexão e envio',
         pendingCount: 0,
@@ -192,7 +207,8 @@ export function CollaboratorContextStep({
     stats.kpisPending, stats.kpisTotal, stats.krsAttention, stats.krsTotal,
     projectsAttention, signals.projectsTotal,
     initiativesAttention, initiativesSignal.initiativesTotal, initiativesSignal.initiativesOnTrack,
-    eta.kpis, eta.projects, eta.initiatives, eta.krs, eta.reflection,
+    pendingDecisionsCount,
+    eta.kpis, eta.projects, eta.initiatives, eta.krs, eta.decisions, eta.reflection,
   ]);
 
   const hasNothing =

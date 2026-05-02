@@ -45,6 +45,7 @@ export interface ComputeEtaArgs {
   attentionKrs: number;
   pendingProjectMilestones: number;
   attentionInitiatives?: number;
+  pendingDecisions?: number;
 }
 
 /**
@@ -53,6 +54,7 @@ export interface ComputeEtaArgs {
  * - Projetos: 1 min base + 0.5 min por projeto com milestone pendente
  * - Iniciativas: 1 min base + 0.5 min por iniciativa em atenção
  * - KRs: 2 min base + 1 min por KR em atenção
+ * - Pendências: 1 min base + 0.5 min por item pendente
  * - Reflexão: 2 min fixo
  */
 export function computeTrailEta({
@@ -60,11 +62,13 @@ export function computeTrailEta({
   attentionKrs,
   pendingProjectMilestones,
   attentionInitiatives = 0,
+  pendingDecisions = 0,
 }: ComputeEtaArgs): {
   kpis: number;
   krs: number;
   projects: number;
   initiatives: number;
+  decisions: number;
   reflection: number;
   total: number;
 } {
@@ -72,14 +76,16 @@ export function computeTrailEta({
   const krs = Math.ceil(2 + 1 * Math.max(0, attentionKrs));
   const projects = Math.ceil(1 + 0.5 * Math.max(0, pendingProjectMilestones));
   const initiatives = Math.ceil(1 + 0.5 * Math.max(0, attentionInitiatives));
+  const decisions = Math.ceil(1 + 0.5 * Math.max(0, pendingDecisions));
   const reflection = 2;
   return {
     kpis,
     krs,
     projects,
     initiatives,
+    decisions,
     reflection,
-    total: kpis + krs + projects + initiatives + reflection,
+    total: kpis + krs + projects + initiatives + decisions + reflection,
   };
 }
 
