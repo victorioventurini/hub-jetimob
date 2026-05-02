@@ -113,6 +113,10 @@ export function CollaboratorContextStep({
     initiativesSignal.initiativesTotal - initiativesSignal.initiativesOnTrack,
   );
 
+  // Pendências do usuário (mesma fonte do step `decisions`).
+  const { data: pendingDecisions = [] } = useMyPendingDecisions(effectiveUserId);
+  const pendingDecisionsCount = pendingDecisions.length;
+
   const eta = useMemo(
     () =>
       computeTrailEta({
@@ -120,8 +124,9 @@ export function CollaboratorContextStep({
         attentionKrs: stats.krsAttention,
         pendingProjectMilestones: projectsAttention,
         attentionInitiatives: initiativesAttention,
+        pendingDecisions: pendingDecisionsCount,
       }),
-    [stats.kpisPending, stats.krsAttention, projectsAttention, initiativesAttention],
+    [stats.kpisPending, stats.krsAttention, projectsAttention, initiativesAttention, pendingDecisionsCount],
   );
 
   // Trilha derivada de STEP_ORDER — espelha a ordem real dos steps do rito.
