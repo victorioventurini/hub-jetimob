@@ -400,25 +400,44 @@ export function CollaboratorInitiativesStep({
               nas iniciativas do colaborador (e não sobre `krs` da prop). */}
           {Array.from(initiativesByKr.keys())
             .sort((a, b) =>
-              (krTitleResolved.get(a) ?? '').localeCompare(krTitleResolved.get(b) ?? '')
+              (krDataById.get(a)?.title ?? '').localeCompare(krDataById.get(b)?.title ?? '')
             )
             .map(krId => {
             const krInitiatives = initiativesByKr.get(krId) || [];
             const krProjects = projectsByKr.get(krId) || [];
-            const krTitle = krTitleResolved.get(krId) ?? 'KR';
+            const krData = krDataById.get(krId);
             if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
               <div key={krId} className="space-y-3 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">
-                    {krTitle}
-                  </h4>
+                {krData ? (
+                  <KrContextCard
+                    title={krData.title}
+                    objectiveTitle={krData.objectiveTitle}
+                    teamName={krData.teamName}
+                    baseline={krData.baseline}
+                    currentValue={krData.currentValue}
+                    target={krData.target}
+                    unit={krData.unit}
+                    direction={krData.direction}
+                    status={krData.status}
+                    progress={krData.progress}
+                    lastCheckinAt={krData.lastCheckinAt}
+                    ownerName={krData.ownerName}
+                    ownerPhoto={krData.ownerPhoto}
+                    compact
+                  />
+                ) : (
+                  <h4 className="text-sm font-medium text-muted-foreground">KR</h4>
+                )}
+
+                <div className="flex items-center gap-2 pl-1">
+                  <span className="text-xs text-muted-foreground">Iniciativas</span>
                   <Badge variant="outline" className="text-xs">
                     {krInitiatives.length}
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-3">
                   {krInitiatives.map((init) => {
                     const canEditThis =
