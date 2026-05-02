@@ -259,33 +259,7 @@ export function CollaboratorProjectsStep({
     );
   };
 
-  const handleProjectEditSubmit = (values: {
-    name: string;
-    description?: string;
-    owner_id: string;
-    team_ids?: string[];
-    status: ProjectStatus;
-    start_date: string;
-    due_date: string;
-    external_url?: string;
-  }) => {
-    if (!editingProject) return;
-    updateProject.mutate(
-      {
-        id: editingProject.id,
-        bu_id: editingProject.bu_id,
-        name: values.name,
-        description: values.description ?? null,
-        owner_id: values.owner_id,
-        status: values.status,
-        start_date: values.start_date,
-        due_date: values.due_date,
-        external_url: values.external_url || null,
-        team_ids: values.team_ids ?? [],
-      },
-      { onSuccess: () => setEditingProject(null) },
-    );
-  };
+
 
   const pendingMilestonesCount = projects.reduce((acc, p) => acc + p.milestones.length, 0);
 
