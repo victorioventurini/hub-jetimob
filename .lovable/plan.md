@@ -1,33 +1,39 @@
-# Remover "Bloqueadores" do Summary do Check-in Individual
+# Reordenar nav do Summary + adicionar contador de Iniciativas
 
-## Contexto
+## Objetivo
 
-A coluna `okr_checkins.blockers` existe, mas **nenhum step do rito coleta esse campo**. O Summary mostra o item "BLOQUEADORES" no nav inferior e renderiza uma seção condicional — só que como nada é capturado, o contador é sempre 0 e a seção nunca aparece. Ruído visual sem função.
+No Summary do Check-in Individual, o nav inferior de stats hoje tem 5 items numa ordem arbitrária (KRs, Pulados, KPIs, Marcos, Pendências). Falta **Iniciativas** (apesar de já existir a `section-initiatives` no scaffold com `initiativesAtRisk`). Deixar a sequência espelhar a ordem real do rito.
 
-Escopo cirúrgico: remover apenas a UI de bloqueadores **dentro do `CollaboratorSummary.tsx`**. Sem migração de banco, sem mexer em outros leitores legítimos.
+## Ordem do rito (SSOT em `wizardSteps.ts`)
 
-## O que muda
+`context → kpis → projects → initiatives → checkin (KRs) → decisions (pendências) → reflection → summary`
 
-Arquivo único: `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+## Nova ordem do nav (filtrando "context", "reflection" e "summary" — não geram contador)
 
-1. **Stats (linhas 410, 417)** — remover `withBlockers` do cálculo e do objeto `stats`.
-2. **Markdown copy (linhas 437, 451, 488–491)** — remover `const blockers = ...`, a linha `🚧 ${stats.withBlockers} bloqueadores` no resumo e o bloco `## Bloqueadores`.
-3. **Scaffold case `'checkin'` (linhas 602, 630–648)** — remover `const blockers = ...` e o `<SectionShell id="section-blockers">` inteiro. KRs continuam sendo renderizados normalmente.
-4. **Nav inferior (linhas 820–831)** — remover o link `#section-blockers` ("BLOQUEADORES") e ajustar o grid se necessário (o restante já se adapta porque é `flex`/`grid` baseado em filhos).
-5. **Imports** — se `AlertTriangle` ficar sem outros usos no arquivo, remover do import do `lucide-react`.
+1. **KPIs** → `#section-kpis` — `Activity` — `stats.kpisCompleted`
+2. **Marcos** → `#section-projects` — `FolderKanban` — `stats.milestoneChanges`
+3. **Iniciativas** → `#section-initiatives` — `Rocket` — `stats.initiativesAtRisk` *(novo item)*
+4. **KRs** → `#section-krs` — `CheckCircle2` — `stats.krsCompleted`
+5. **Pulados** → `#section-krs` — `SkipForward` — `stats.krsSkipped` *(fica logo após KRs porque é pulados de KR)*
+6. **Pendências** → `#section-pendencies` — `ClipboardCheck` — `stats.pendencies`
+
+## Mudanças (arquivo único)
+
+`src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+
+- **Imports**: adicionar `Rocket` em `lucide-react`.
+- **Bloco `topFixed` (linhas ~754–790)**: reordenar os 5 `<a>` existentes na sequência acima e inserir o novo item "Iniciativas" entre "Marcos" e "KRs". Manter o grid `grid-cols-2 md:grid-cols-3 lg:grid-cols-6` (já cabe 6).
+- Tom de cor do ícone "Iniciativas": `text-warning` quando `stats.initiativesAtRisk > 0`, senão `text-muted-foreground` (mesmo padrão dos demais sinalizadores).
 
 ## O que NÃO muda
 
-- `okr_checkins.blockers` no banco (histórico preservado).
-- `useCollaboratorWeekActivity` — continua mostrando "Registrou X bloqueios" no card "Sua semana até aqui" para check-ins legados.
-- `CollaboratorReflectionStep` — badge "X com bloqueador" continua intacto (é leitura informativa do draft).
-- `PreWeeklySourcesStep` — métricas de bloqueios em fontes do Pré-Weekly continuam intactas.
-- `LatestCheckinSummary`, `CheckinDialog`, tooltips, status "bloqueada" de iniciativas, AlertBanner, LeaderInsightsStep — nada disso é afetado.
-- Tipo `CollaboratorCheckinResult.blocker` permanece (já é opcional; não vale tocar agora).
+- `wizardSteps.ts` — ordem canônica intacta.
+- Cálculo de `stats` — `initiativesAtRisk` já existe; nada novo no `useMemo`.
+- Scaffold (`renderSection` case `initiatives`) — `section-initiatives` já renderiza, só ganha link no nav.
+- Markdown copy — linha de iniciativas sinalizadas já existe.
 
 ## Validação
 
-- Abrir `/rituals/collaborator-checkin?step=summary` e confirmar que o nav inferior tem 5 itens (KRs, Pulados, KPIs, Marcos, Pendências) — sem "BLOQUEADORES".
-- Confirmar que nenhum card "Bloqueadores" aparece no scaffold.
-- Clicar "Copiar resumo" e validar que o markdown não contém mais a linha `🚧` nem a seção `## Bloqueadores`.
+- `/rituals/collaborator-checkin?step=summary`: nav inferior mostra 6 items na nova ordem; clique em "Iniciativas" rola para `#section-initiatives`.
+- Sem regressão em mobile (grid colapsa para 2/3 colunas).
 - TypeScript build limpo.
