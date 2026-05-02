@@ -1,64 +1,42 @@
 ## Objetivo
 
-Padronizar a sugestão de pauta no **Check-in Individual** usando o mesmo card visual do Pré-MBR (`AgendaSuggestionsPrioritizer`), aplicado nas etapas **Reflexão** e **Resumo**, **sem categorias** (Performance/Projetos/Pessoas), permitindo priorizar até 3 sugestões.
+No step **Resumo e envio** do Check-in Individual (`/rituals/collaborator-checkin?step=summary`), exibir as **sugestões de pauta** como um **card próprio destacado no fim da página**, idêntico ao padrão do Pré-MBR — em vez de ficar embutido dentro da seção "Reflexão", como está hoje.
 
-Hoje:
-- Na **Reflexão** o input renderiza “solto” via `InlineAgendaSuggestionInput categoryless`.
-- O `AgendaSuggestionsPrioritizer` existe e é usado no Pré-MBR/Pré-QBR, mas só em modo **com categorias**.
+## Estado atual
 
-Nada de duplicar componentes — vamos **estender o `AgendaSuggestionsPrioritizer` existente** para suportar o modo `categoryless` e reutilizá-lo nos dois pontos do Check-in Individual.
+- `CollaboratorSummary.tsx` já recebe `teamCheckinAgendaSuggestions` e `onTeamCheckinAgendaSuggestionsChange` corretamente da `CollaboratorCheckinPage`.
+- O `AgendaSuggestionsPrioritizer` (modo `categoryless`) já é renderizado, **porém dentro do `SectionShell` "Reflexão"** (linhas 739–746). Isso o esconde visualmente: ele aparece misturado à reflexão, sem o destaque de card top-level que o print do MBR-Pre tem.
+- No `MbrPreSummary.tsx`, o `AgendaSuggestionsPrioritizer` é renderizado como **bloco top-level no fim do scaffold**, fora de qualquer seção — esse é o padrão canônico que vamos replicar.
 
-## Mudanças
+## Mudança proposta
 
-### 1. Estender `AgendaSuggestionsPrioritizer` (componente compartilhado)
-Arquivo: `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx`
+### Arquivo único: `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
 
-- Adicionar prop opcional `categoryless?: boolean` (default `false`).
-- Quando `categoryless = true`:
-  - Esconder o agrupamento por bloco (Performance/Projetos/Pessoas) e os badges de categoria.
-  - Renderizar todas as sugestões em uma lista única, com checkbox de priorização + badge `#1/#2/#3` + botão remover (mesmo layout do print).
-  - Repassar `categoryless` para o `InlineAgendaSuggestionInput` interno (que já suporta esse modo) — assim o seletor de categoria some no “Adicionar sugestão”.
-- Manter 100% do comportamento atual quando `categoryless = false` (Pré-MBR / Pré-QBR não mudam).
-- Manter `React.memo` e a regra de até 3 priorizadas.
+1. **Remover** a renderização do `AgendaSuggestionsPrioritizer` de dentro do `case 'reflection'` (linhas 739–746).
+2. **Manter** o fallback read-only de listagem das sugestões dentro da Reflexão (linhas 718–738) **somente quando** `onTeamCheckinAgendaSuggestionsChange` não for passado — preserva compatibilidade quando o Summary é usado em modo somente-leitura (ex.: rituals já completados).
+3. **Adicionar** o `AgendaSuggestionsPrioritizer` como **bloco top-level no fim** do conteúdo do scaffold (após `orderedSections`, antes do bloco final de submit/footer), espelhando o padrão do `MbrPreSummary`:
+   ```tsx
+   {onTeamCheckinAgendaSuggestionsChange && (
+     <AgendaSuggestionsPrioritizer
+       suggestions={teamCheckinAgendaSuggestions}
+       onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
+       ritualLabel="Check-in do Time"
+       categoryless
+     />
+   )}
+   ```
+4. Ajustar o cálculo `total` da seção Reflexão para **não somar** mais `teamCheckinAgendaSuggestions.length` (já que o card sai dessa seção). A contagem da Reflexão volta a refletir só impacto + ajuda.
 
-### 2. Reflexão do Check-in Individual
-Arquivo: `src/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep.tsx`
+### Nada mais muda
 
-- Substituir o `InlineAgendaSuggestionInput categoryless` solto pelo `AgendaSuggestionsPrioritizer` com:
-  - `ritualLabel="Check-in do Time"`
-  - `categoryless`
-- Remover a prop `agendaTriggerLabel` desse ponto (o card já cuida do título e do CTA inline).
+- Sem mexer em `CollaboratorReflectionStep` (ali o card continua igual, é o ponto de entrada das sugestões).
+- Sem mexer em `CollaboratorCheckinPage` (props já fluem corretamente).
+- Sem mexer em `AgendaSuggestionsPrioritizer` (já suporta `categoryless`).
+- Sem alterações em snapshot, payload, schema, RLS ou Edge Functions.
+- MBR-Pre, QBR-Pre e demais ritos: regressão zero (não tocados).
 
-### 3. Resumo do Check-in Individual
-Arquivo: `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+## Validação visual
 
-- Adicionar (se ainda não houver) o mesmo card no fim da Summary, replicando o padrão do `MbrPreSummary`:
-  ```tsx
-  {onAgendaSuggestionsChange && (
-    <AgendaSuggestionsPrioritizer
-      suggestions={agendaSuggestions}
-      onSuggestionsChange={onAgendaSuggestionsChange}
-      ritualLabel="Check-in do Time"
-      categoryless
-    />
-  )}
-  ```
-- Garantir que as props `agendaSuggestions` e `onAgendaSuggestionsChange` chegam até a Summary a partir de `CollaboratorCheckinPage` (já existem; só precisa propagar se faltar).
-
-### 4. Pendências (sem mudança de UI)
-A etapa **Pendências** (`CollaboratorDecisionsStep`) continua com o `InlineAgendaSuggestionInput` inline atual — o usuário não pediu o card cheio lá, e a priorização fica concentrada na Reflexão + Resumo, igual ao padrão do Pré-MBR.
-
-## Detalhes técnicos
-
-- O tipo `RitualAgendaSuggestion` já aceita `category: RitualBlock | null`, então o modo categoryless não exige migração de dados nem mudança de schema.
-- O `InlineAgendaSuggestionInput` já tem o flag `categoryless` — só vamos repassar.
-- Manter os campos `prioritized` / `priorityRank` (1|2|3) já existentes; nada novo no payload.
-- Sem mudanças em Edge Functions, RLS, query keys ou Supabase.
-- Sem alterar os ritos Pré-MBR e Pré-QBR (regressão zero garantida pelo default `categoryless = false`).
-
-## Validação
-
-- Visual no Reflection: card com header `Sugestões de pauta para o Check-in do Time`, hint vazio idêntico ao print, input collapsible sem chips de categoria, lista única com checkbox + badge `#1/2/3` + remover.
-- Visual no Summary: mesmo card no fim, com prioridades persistidas vindas da Reflexão.
-- Pré-MBR/Pré-QBR continuam idênticos (categorias visíveis, agrupamento por bloco).
-- Limite de 3 priorizações funcionando, banner amarelo aparecendo quando há sugestões sem priorização.
+- Acessar `/rituals/collaborator-checkin?step=summary` com sugestões cadastradas na Reflexão.
+- Esperado: card **"Sugestões de pauta para o Check-in do Time"** aparece como bloco próprio no fim do Resumo, com checkbox de priorização (#1/#2/#3), botão remover e CTA "Adicionar sugestão" — idêntico ao print do Pré-MBR.
+- Seção "Reflexão" deixa de exibir o sub-bloco "Sugestões para o Check-in do Time" quando o usuário pode editar (modo padrão); preserva a listagem read-only só em snapshots/históricos sem handler.

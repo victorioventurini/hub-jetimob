@@ -692,7 +692,7 @@ export function CollaboratorSummary({
         const total =
           (reflection?.impactSummary ? 1 : 0) +
           (reflection?.helpNeeded ? 1 : 0) +
-          teamCheckinAgendaSuggestions.length;
+          (onTeamCheckinAgendaSuggestionsChange ? 0 : teamCheckinAgendaSuggestions.length);
         return (
           <SectionShell
             key="reflection"
@@ -735,14 +735,6 @@ export function CollaboratorSummary({
                   Seu líder verá essas sugestões na preparação do Check-in do Time.
                 </p>
               </div>
-            )}
-            {onTeamCheckinAgendaSuggestionsChange && (
-              <AgendaSuggestionsPrioritizer
-                suggestions={teamCheckinAgendaSuggestions}
-                onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
-                ritualLabel="Check-in do Time"
-                categoryless
-              />
             )}
           </SectionShell>
         );
@@ -862,6 +854,15 @@ export function CollaboratorSummary({
               {idx < orderedSections.length - 1 && <Separator className="mt-8" />}
             </div>
           ))
+        )}
+
+        {onTeamCheckinAgendaSuggestionsChange && (
+          <AgendaSuggestionsPrioritizer
+            suggestions={teamCheckinAgendaSuggestions}
+            onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
+            ritualLabel="Check-in do Time"
+            categoryless
+          />
         )}
 
         <Separator />
