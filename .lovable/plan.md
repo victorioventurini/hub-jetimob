@@ -1,42 +1,33 @@
-## Objetivo
+# Remover "Bloqueadores" do Summary do Check-in Individual
 
-No step **Resumo e envio** do Check-in Individual (`/rituals/collaborator-checkin?step=summary`), exibir as **sugestões de pauta** como um **card próprio destacado no fim da página**, idêntico ao padrão do Pré-MBR — em vez de ficar embutido dentro da seção "Reflexão", como está hoje.
+## Contexto
 
-## Estado atual
+A coluna `okr_checkins.blockers` existe, mas **nenhum step do rito coleta esse campo**. O Summary mostra o item "BLOQUEADORES" no nav inferior e renderiza uma seção condicional — só que como nada é capturado, o contador é sempre 0 e a seção nunca aparece. Ruído visual sem função.
 
-- `CollaboratorSummary.tsx` já recebe `teamCheckinAgendaSuggestions` e `onTeamCheckinAgendaSuggestionsChange` corretamente da `CollaboratorCheckinPage`.
-- O `AgendaSuggestionsPrioritizer` (modo `categoryless`) já é renderizado, **porém dentro do `SectionShell` "Reflexão"** (linhas 739–746). Isso o esconde visualmente: ele aparece misturado à reflexão, sem o destaque de card top-level que o print do MBR-Pre tem.
-- No `MbrPreSummary.tsx`, o `AgendaSuggestionsPrioritizer` é renderizado como **bloco top-level no fim do scaffold**, fora de qualquer seção — esse é o padrão canônico que vamos replicar.
+Escopo cirúrgico: remover apenas a UI de bloqueadores **dentro do `CollaboratorSummary.tsx`**. Sem migração de banco, sem mexer em outros leitores legítimos.
 
-## Mudança proposta
+## O que muda
 
-### Arquivo único: `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+Arquivo único: `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
 
-1. **Remover** a renderização do `AgendaSuggestionsPrioritizer` de dentro do `case 'reflection'` (linhas 739–746).
-2. **Manter** o fallback read-only de listagem das sugestões dentro da Reflexão (linhas 718–738) **somente quando** `onTeamCheckinAgendaSuggestionsChange` não for passado — preserva compatibilidade quando o Summary é usado em modo somente-leitura (ex.: rituals já completados).
-3. **Adicionar** o `AgendaSuggestionsPrioritizer` como **bloco top-level no fim** do conteúdo do scaffold (após `orderedSections`, antes do bloco final de submit/footer), espelhando o padrão do `MbrPreSummary`:
-   ```tsx
-   {onTeamCheckinAgendaSuggestionsChange && (
-     <AgendaSuggestionsPrioritizer
-       suggestions={teamCheckinAgendaSuggestions}
-       onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
-       ritualLabel="Check-in do Time"
-       categoryless
-     />
-   )}
-   ```
-4. Ajustar o cálculo `total` da seção Reflexão para **não somar** mais `teamCheckinAgendaSuggestions.length` (já que o card sai dessa seção). A contagem da Reflexão volta a refletir só impacto + ajuda.
+1. **Stats (linhas 410, 417)** — remover `withBlockers` do cálculo e do objeto `stats`.
+2. **Markdown copy (linhas 437, 451, 488–491)** — remover `const blockers = ...`, a linha `🚧 ${stats.withBlockers} bloqueadores` no resumo e o bloco `## Bloqueadores`.
+3. **Scaffold case `'checkin'` (linhas 602, 630–648)** — remover `const blockers = ...` e o `<SectionShell id="section-blockers">` inteiro. KRs continuam sendo renderizados normalmente.
+4. **Nav inferior (linhas 820–831)** — remover o link `#section-blockers` ("BLOQUEADORES") e ajustar o grid se necessário (o restante já se adapta porque é `flex`/`grid` baseado em filhos).
+5. **Imports** — se `AlertTriangle` ficar sem outros usos no arquivo, remover do import do `lucide-react`.
 
-### Nada mais muda
+## O que NÃO muda
 
-- Sem mexer em `CollaboratorReflectionStep` (ali o card continua igual, é o ponto de entrada das sugestões).
-- Sem mexer em `CollaboratorCheckinPage` (props já fluem corretamente).
-- Sem mexer em `AgendaSuggestionsPrioritizer` (já suporta `categoryless`).
-- Sem alterações em snapshot, payload, schema, RLS ou Edge Functions.
-- MBR-Pre, QBR-Pre e demais ritos: regressão zero (não tocados).
+- `okr_checkins.blockers` no banco (histórico preservado).
+- `useCollaboratorWeekActivity` — continua mostrando "Registrou X bloqueios" no card "Sua semana até aqui" para check-ins legados.
+- `CollaboratorReflectionStep` — badge "X com bloqueador" continua intacto (é leitura informativa do draft).
+- `PreWeeklySourcesStep` — métricas de bloqueios em fontes do Pré-Weekly continuam intactas.
+- `LatestCheckinSummary`, `CheckinDialog`, tooltips, status "bloqueada" de iniciativas, AlertBanner, LeaderInsightsStep — nada disso é afetado.
+- Tipo `CollaboratorCheckinResult.blocker` permanece (já é opcional; não vale tocar agora).
 
-## Validação visual
+## Validação
 
-- Acessar `/rituals/collaborator-checkin?step=summary` com sugestões cadastradas na Reflexão.
-- Esperado: card **"Sugestões de pauta para o Check-in do Time"** aparece como bloco próprio no fim do Resumo, com checkbox de priorização (#1/#2/#3), botão remover e CTA "Adicionar sugestão" — idêntico ao print do Pré-MBR.
-- Seção "Reflexão" deixa de exibir o sub-bloco "Sugestões para o Check-in do Time" quando o usuário pode editar (modo padrão); preserva a listagem read-only só em snapshots/históricos sem handler.
+- Abrir `/rituals/collaborator-checkin?step=summary` e confirmar que o nav inferior tem 5 itens (KRs, Pulados, KPIs, Marcos, Pendências) — sem "BLOQUEADORES".
+- Confirmar que nenhum card "Bloqueadores" aparece no scaffold.
+- Clicar "Copiar resumo" e validar que o markdown não contém mais a linha `🚧` nem a seção `## Bloqueadores`.
+- TypeScript build limpo.
