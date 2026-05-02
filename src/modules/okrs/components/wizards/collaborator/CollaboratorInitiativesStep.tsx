@@ -497,7 +497,7 @@ export function CollaboratorInitiativesStep({
         initiative={editingInitiative}
         krContext={(() => {
           if (!editingInitiative) return undefined;
-          const title = krTitleResolved.get(editingInitiative.kr_id);
+          const title = krDataById.get(editingInitiative.kr_id)?.title;
           if (!title) return undefined;
           return { id: editingInitiative.kr_id, title };
         })()}
