@@ -11,12 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Target, AlertTriangle } from 'lucide-react';
+import { Users, Target, AlertTriangle, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput } from '../shared';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { AggregatedAgendaSuggestion } from '@/modules/okrs/hooks/useTeamCollaboratorAgendaSuggestions';
 
 // ============================================================
 // TYPES
@@ -31,6 +32,10 @@ export interface TeamOpeningStepProps {
   lastCompletedAt?: string | null;
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
+  /** Sugestões de pauta priorizadas pelo líder (vindas dos check-ins individuais) */
+  prioritizedAgendaSuggestions?: AggregatedAgendaSuggestion[];
+  /** Demais sugestões dos colaboradores (não selecionadas pelo líder) — mostradas em "ver mais" */
+  otherAgendaSuggestions?: AggregatedAgendaSuggestion[];
   onContinue: () => void;
   /** Slot opcional renderizado no topo do conteúdo (ex: PreparationStatusCard) */
   topSlot?: ReactNode;
@@ -49,6 +54,8 @@ export function TeamOpeningStep({
   lastCompletedAt,
   decisions = [],
   onDecisionsChange,
+  prioritizedAgendaSuggestions = [],
+  otherAgendaSuggestions = [],
   onContinue,
   topSlot,
 }: TeamOpeningStepProps) {
