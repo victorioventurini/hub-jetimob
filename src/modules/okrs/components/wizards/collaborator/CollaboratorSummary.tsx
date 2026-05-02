@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Copy,
   ExternalLink,
-  X,
   TrendingUp,
   TrendingDown,
   PartyPopper,
@@ -27,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CONFIDENCE_COLORS } from '@/lib/colors';
+import { WizardLastStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================
