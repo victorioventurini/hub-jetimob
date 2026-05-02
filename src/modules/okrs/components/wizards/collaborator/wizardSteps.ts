@@ -26,14 +26,14 @@ export interface WizardStepDefinition {
 }
 
 export const WIZARD_STEPS: readonly WizardStepDefinition[] = [
-  { id: 'context', label: 'Visão geral', description: 'Contexto dos KRs e KPIs' },
-  { id: 'kpis', label: 'Indicadores operacionais', description: 'Atualização de métricas e KPIs (1 por sub-passo)' },
-  { id: 'projects', label: 'Projetos', description: 'Atualização de marcos' },
-  { id: 'initiatives', label: 'Iniciativas', description: 'Iniciativas vinculadas aos KRs' },
-  { id: 'checkin', label: 'KRs', description: 'Atualização das KRs' },
-  { id: 'decisions', label: 'Pendências', description: 'Decisões e registros pendentes' },
-  { id: 'reflection', label: 'Reflexão final', description: 'O que mais impactou seus resultados' },
-  { id: 'summary', label: 'Resumo', description: 'Visão consolidada' },
+  { id: 'context', label: 'Abertura', description: 'Sua semana até aqui' },
+  { id: 'kpis', label: 'Indicadores', description: 'Atualize seus KPIs e métricas' },
+  { id: 'projects', label: 'Projetos', description: 'Revise marcos e prazos' },
+  { id: 'initiatives', label: 'Iniciativas', description: 'Atualize ações dos seus KRs' },
+  { id: 'checkin', label: 'KRs', description: 'Registre progresso e confiança' },
+  { id: 'decisions', label: 'Pendências', description: 'Resolva ou encaminhe itens abertos' },
+  { id: 'reflection', label: 'Reflexão', description: 'Bloqueios e pedidos de ajuda' },
+  { id: 'summary', label: 'Resumo e envio', description: 'Revise e envie seu check-in' },
 ] as const;
 
 export const STEP_ORDER: readonly WizardStep[] = WIZARD_STEPS.map((s) => s.id);
