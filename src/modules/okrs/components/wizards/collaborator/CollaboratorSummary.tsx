@@ -16,7 +16,7 @@ import {
   SkipForward,
   AlertTriangle,
   Copy,
-  ExternalLink,
+  
   TrendingUp,
   TrendingDown,
   PartyPopper,
@@ -818,10 +818,6 @@ export function CollaboratorSummary({
           <Button variant="outline" size="sm" onClick={handleCopy}>
             <Copy className="h-4 w-4 mr-2" />
             Copiar resumo
-          </Button>
-          <Button variant="outline" size="sm" onClick={onViewOkrs}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ver OKRs
           </Button>
         </div>
       </div>
