@@ -503,6 +503,13 @@ export function CollaboratorSummary({
       lines.push(reflection.helpNeeded);
     }
 
+    if (teamCheckinAgendaSuggestions.length > 0) {
+      lines.push('\n## Sugestões de pauta para o Check-in do Time');
+      for (const s of teamCheckinAgendaSuggestions) {
+        lines.push(`- ${s.text}`);
+      }
+    }
+
     navigator.clipboard.writeText(lines.join('\n').trim());
     toast.success('Resumo copiado!');
   };
