@@ -329,18 +329,8 @@ export function CollaboratorProjectsStep({
                     {project.name}
                   </h3>
                   <ProjectHealthBadge health={project.health} />
-                  {project.isProjectOwner && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs shrink-0"
-                      onClick={() => setEditingProject(project)}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Editar projeto
-                    </Button>
-                  )}
                 </div>
+
 
                 {/* Progress */}
                 <ProjectProgressBar
