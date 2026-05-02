@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import {
   ArrowRight,
@@ -24,12 +25,14 @@ import {
   TrendingDown,
   Zap,
   Users,
+  ListTodo,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { LeaderOverviewMetrics } from '@/modules/okrs/types/wizard';
 import { METRIC_CARD_STYLES, getHealthScoreColor } from '@/lib/colors';
+import type { AggregatedAgendaSuggestion } from '@/modules/okrs/hooks/useTeamCollaboratorAgendaSuggestions';
 
 // ============================================================
 // TYPES
@@ -41,6 +44,11 @@ export interface LeaderOverviewStepProps {
   cycleName?: string;
   isLoading?: boolean;
   lastCompletedAt?: string | null;
+  /** Sugestões de pauta agregadas dos check-ins individuais do time */
+  collaboratorAgendaSuggestions?: AggregatedAgendaSuggestion[];
+  /** IDs selecionados pelo líder para o Check-in do Time */
+  selectedAgendaSuggestionIds?: string[];
+  onToggleAgendaSuggestion?: (id: string, selected: boolean) => void;
   onContinue: () => void;
 }
 
