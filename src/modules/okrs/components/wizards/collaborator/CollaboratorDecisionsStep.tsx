@@ -1,8 +1,14 @@
 /**
  * CollaboratorDecisionsStep - Step de pendências (decisões/registros) no check-in do colaborador.
- * 
+ *
  * Exibe decisões pendentes atribuídas ao usuário efetivo com thread de mensagens
  * e possibilidade de resolução.
+ *
+ * IMPORTANTE: as interações inline (atualizar follow-up, adicionar mensagem)
+ * APENAS bufferizam no draft via callbacks `onPendingFollowUpUpdate` /
+ * `onPendingThreadMessage`. A persistência acontece SOMENTE no Concluir do
+ * Summary (handleComplete em CollaboratorCheckinPage). Sem callbacks
+ * fornecidos, mantém comportamento ao vivo (compat retro com outros consumidores).
  */
 
 import { ClipboardCheck, Inbox } from 'lucide-react';
@@ -15,13 +21,22 @@ import { useMyPendingDecisions } from '@/modules/okrs/hooks';
 import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks';
 import { useDecisionThread } from '@/modules/okrs/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
+import type { RitualAgendaSuggestion, PendingDecisionFollowUpUpdate, PendingDecisionThreadMessage } from '@/modules/okrs/types/wizard';
+import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
 export interface CollaboratorDecisionsStepProps {
   effectiveUserId: string | null;
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  /** Atualizações de follow-up bufferizadas (para preview/badge "alterado"). */
+  pendingFollowUpUpdates?: PendingDecisionFollowUpUpdate[];
+  /** Bufferiza atualização ao invés de persistir ao vivo. */
+  onPendingFollowUpUpdate?: (update: PendingDecisionFollowUpUpdate) => void;
+  /** Mensagens de thread bufferizadas. */
+  pendingThreadMessages?: PendingDecisionThreadMessage[];
+  /** Bufferiza mensagem ao invés de persistir ao vivo. */
+  onPendingThreadMessage?: (message: PendingDecisionThreadMessage) => void;
   /** Sugestões de pauta (draft do rito); se ausente, o input não é renderizado. */
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
@@ -35,13 +50,20 @@ export function CollaboratorDecisionsStep({
   onContinue,
   onBack,
   onSkip,
+  pendingFollowUpUpdates,
+  onPendingFollowUpUpdate,
+  pendingThreadMessages,
+  onPendingThreadMessage,
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
 }: CollaboratorDecisionsStepProps) {
   const { data: pendingItems = [], isLoading } = useMyPendingDecisions(effectiveUserId);
+  // Mantidos para fallback (consumidores que não passam callbacks).
   const { mutate: updateFollowUp, isPending: isUpdating } = useUpdateDecisionFollowUp();
   const { mutate: addThreadMessage, isPending: isAddingMessage } = useDecisionThread();
+
+  const useBuffer = !!onPendingFollowUpUpdate;
 
   if (isLoading) {
     return (
@@ -94,6 +116,12 @@ export function CollaboratorDecisionsStep({
     );
   }
 
+  // Mescla updates bufferizados sobre as decisões fetched (preview de status pendente)
+  const pendingByDecision = new Map<string, PendingDecisionFollowUpUpdate>();
+  (pendingFollowUpUpdates ?? []).forEach((u) => {
+    pendingByDecision.set(`${u.sessionId}:${u.decisionId}`, u);
+  });
+
   return (
     <WizardStepScaffold
       header={
@@ -117,21 +145,37 @@ export function CollaboratorDecisionsStep({
       bottomFixed={agendaSlot}
     >
       <div className="space-y-3 pb-4">
-        {pendingItems.map((item) => (
-          <DecisionFollowUpRow
-            key={`${item.sessionId}-${item.decision.id}`}
-            decision={item.decision}
-            sessionId={item.sessionId}
-            onUpdate={({ sessionId, decisionId, updates }) => {
-              updateFollowUp({ sessionId, decisionId, updates });
-            }}
-            isPending={isUpdating}
-            onAddMessage={({ sessionId, decisionId, content }) => {
-              addThreadMessage({ sessionId, decisionId, content });
-            }}
-            isAddingMessage={isAddingMessage}
-          />
-        ))}
+        {pendingItems.map((item) => {
+          const buffered = pendingByDecision.get(`${item.sessionId}:${item.decision.id}`);
+          const decisionWithOverlay: TeamCheckinDecision & { followUpStatus?: string } =
+            buffered
+              ? { ...item.decision, ...(buffered.updates as Partial<TeamCheckinDecision>) }
+              : item.decision;
+
+          return (
+            <DecisionFollowUpRow
+              key={`${item.sessionId}-${item.decision.id}`}
+              decision={decisionWithOverlay}
+              sessionId={item.sessionId}
+              onUpdate={({ sessionId, decisionId, updates }) => {
+                if (useBuffer && onPendingFollowUpUpdate) {
+                  onPendingFollowUpUpdate({ sessionId, decisionId, updates });
+                } else {
+                  updateFollowUp({ sessionId, decisionId, updates });
+                }
+              }}
+              isPending={useBuffer ? false : isUpdating}
+              onAddMessage={({ sessionId, decisionId, content }) => {
+                if (useBuffer && onPendingThreadMessage) {
+                  onPendingThreadMessage({ sessionId, decisionId, content });
+                } else {
+                  addThreadMessage({ sessionId, decisionId, content });
+                }
+              }}
+              isAddingMessage={useBuffer ? false : isAddingMessage}
+            />
+          );
+        })}
       </div>
     </WizardStepScaffold>
   );
