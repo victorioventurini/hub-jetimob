@@ -431,7 +431,6 @@ export function CollaboratorSummary({
   const handleCopy = () => {
     const completedKrs = results.filter((r) => !r.skipped);
     const skippedKrs = results.filter((r) => r.skipped);
-    const blockers = results.filter((r) => r.blocker);
     const kpisCompletedList = kpiResults.filter((k) => !k.skipped);
 
     const lines: string[] = [];
