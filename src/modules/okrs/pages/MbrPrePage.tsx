@@ -10,7 +10,7 @@
  * - Steps 3 e 4 são específicos do Pré-MBR
  */
 
-import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -344,13 +344,17 @@ export default function MbrPrePage() {
     }
   }, [discardDraft]);
 
+  const [isCompleting, setIsCompleting] = useState(false);
   const handleComplete = useCallback(async () => {
+    setIsCompleting(true);
     try {
       await clearDraft();
       toast.success('Pré-MBR concluído! O facilitador será notificado.');
       navigate('/rituals');
     } catch (error) {
       handleError(error, { context: 'MBR Pre Complete' });
+    } finally {
+      setIsCompleting(false);
     }
   }, [clearDraft, navigate]);
 
@@ -488,7 +492,7 @@ export default function MbrPrePage() {
           <MbrPreSummary
             draftData={draft.data}
             decisions={draft.data.decisions}
-            isCompleting={false}
+            isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
