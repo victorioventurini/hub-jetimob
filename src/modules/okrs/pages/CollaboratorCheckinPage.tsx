@@ -692,6 +692,12 @@ export default function CollaboratorCheckinPage() {
               updateDraft({ reflection: {} });
               goNext();
             }}
+            agendaSuggestions={draft.data.teamCheckinAgendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) =>
+              updateDraft({ teamCheckinAgendaSuggestions: next })
+            }
+            agendaTriggerLabel="Sugerir pauta para o Check-in do Time"
+            agendaCategoryless
           />
         );
         
