@@ -186,6 +186,7 @@ export function CollaboratorReflectionStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep={AGENDA_SOURCE_STEP}
             triggerLabel={agendaTriggerLabel}
+            categoryless={agendaCategoryless}
           />
         </div>
       )}
