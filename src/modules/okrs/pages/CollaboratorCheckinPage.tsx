@@ -6,7 +6,7 @@
  * v2.87: Migrado para useKpisForWizardV2 (inclui contribuidores de dados)
  */
 
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -300,21 +300,28 @@ export default function CollaboratorCheckinPage() {
     }
   }, [discardDraft]);
   
+  const [isCompleting, setIsCompleting] = useState(false);
+
   const handleComplete = useCallback(async () => {
-    const completedSessionId = await clearDraft();
-    toast.success('Check-in concluído!');
+    setIsCompleting(true);
+    try {
+      const completedSessionId = await clearDraft();
+      toast.success('Check-in concluído!');
 
-    // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)
-    if (completedSessionId && currentBu?.id) {
-      buSupabase.functions.invoke('collaborator-checkin-summary', {
-        body: {
-          sessionId: completedSessionId,
-          bu_id: currentBu.id,
-        },
-      }).catch((e: unknown) => console.warn('Collaborator summary email failed (non-blocking):', e));
+      // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)
+      if (completedSessionId && currentBu?.id) {
+        buSupabase.functions.invoke('collaborator-checkin-summary', {
+          body: {
+            sessionId: completedSessionId,
+            bu_id: currentBu.id,
+          },
+        }).catch((e: unknown) => console.warn('Collaborator summary email failed (non-blocking):', e));
+      }
+
+      navigate('/wizards');
+    } finally {
+      setIsCompleting(false);
     }
-
-    navigate('/wizards');
   }, [clearDraft, navigate, buSupabase, currentBu]);
   
   // Loading - include auth loading to ensure profile is available
@@ -533,6 +540,8 @@ export default function CollaboratorCheckinPage() {
             initiativesMarkedAtRisk={draft.data.initiativesMarkedAtRisk}
             onViewOkrs={() => navigate('/okrs')}
             onClose={handleComplete}
+            onBack={goBack}
+            isSubmitting={isCompleting}
           />
         );
         

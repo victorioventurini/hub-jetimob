@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Copy,
   ExternalLink,
-  X,
   TrendingUp,
   TrendingDown,
   PartyPopper,
@@ -27,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CONFIDENCE_COLORS } from '@/lib/colors';
+import { WizardLastStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -41,6 +41,8 @@ export interface CollaboratorSummaryProps {
   cycleName?: string;
   onViewOkrs: () => void;
   onClose: () => void;
+  onBack?: () => void;
+  isSubmitting?: boolean;
 }
 
 // ============================================================
@@ -55,6 +57,8 @@ export function CollaboratorSummary({
   cycleName,
   onViewOkrs,
   onClose,
+  onBack,
+  isSubmitting = false,
 }: CollaboratorSummaryProps) {
   // Stats
   const stats = useMemo(() => {
@@ -322,28 +326,30 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
               </div>
             </>
           )}
+
+          {/* Secondary actions */}
+          <Separator />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copiar resumo
+            </Button>
+            <Button variant="outline" size="sm" onClick={onViewOkrs}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Ver OKRs
+            </Button>
+          </div>
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={handleCopy}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copiar resumo
-          </Button>
-          
-          <Button variant="outline" onClick={onViewOkrs}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ver OKRs
-          </Button>
-
-          <Button onClick={onClose} className="flex-1">
-            Fechar
-            <X className="h-4 w-4 ml-2" />
-          </Button>
-        </div>
-      </div>
+      {/* Footer padronizado: Voltar + Concluir (com pop-up de confirmação) */}
+      <WizardLastStepFooter
+        showBack={!!onBack}
+        onBack={onBack}
+        backDisabled={isSubmitting}
+        onPrimary={onClose}
+        primaryLoading={isSubmitting}
+      />
     </div>
   );
 }
