@@ -27,6 +27,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { EmptyState } from '@/components/ui/empty-state';
 import { InitiativeCard } from '@/modules/okrs/components/initiatives/InitiativeCard';
+import { KrContextCard } from '@/modules/okrs/components/wizards/shared/KrContextCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
