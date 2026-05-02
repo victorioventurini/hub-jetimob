@@ -736,14 +736,6 @@ export function CollaboratorSummary({
                 </p>
               </div>
             )}
-            {onTeamCheckinAgendaSuggestionsChange && (
-              <AgendaSuggestionsPrioritizer
-                suggestions={teamCheckinAgendaSuggestions}
-                onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
-                ritualLabel="Check-in do Time"
-                categoryless
-              />
-            )}
           </SectionShell>
         );
       }
