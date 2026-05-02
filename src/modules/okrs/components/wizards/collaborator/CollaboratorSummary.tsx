@@ -406,14 +406,12 @@ export function CollaboratorSummary({
   const stats = useMemo(() => {
     const completed = results.filter((r) => !r.skipped);
     const skipped = results.filter((r) => r.skipped);
-    const withBlockers = results.filter((r) => r.blocker);
     const kpisCompleted = kpiResults.filter((k) => !k.skipped);
     const kpisSkipped = kpiResults.filter((k) => k.skipped);
     return {
       krsTotal: results.length,
       krsCompleted: completed.length,
       krsSkipped: skipped.length,
-      withBlockers: withBlockers.length,
       kpisTotal: kpiResults.length,
       kpisCompleted: kpisCompleted.length,
       kpisSkipped: kpisSkipped.length,
