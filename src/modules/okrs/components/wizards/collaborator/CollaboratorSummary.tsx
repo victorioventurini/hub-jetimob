@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   CheckCircle2,
   SkipForward,
-  AlertTriangle,
   Copy,
   
   TrendingUp,
@@ -407,14 +406,12 @@ export function CollaboratorSummary({
   const stats = useMemo(() => {
     const completed = results.filter((r) => !r.skipped);
     const skipped = results.filter((r) => r.skipped);
-    const withBlockers = results.filter((r) => r.blocker);
     const kpisCompleted = kpiResults.filter((k) => !k.skipped);
     const kpisSkipped = kpiResults.filter((k) => k.skipped);
     return {
       krsTotal: results.length,
       krsCompleted: completed.length,
       krsSkipped: skipped.length,
-      withBlockers: withBlockers.length,
       kpisTotal: kpiResults.length,
       kpisCompleted: kpisCompleted.length,
       kpisSkipped: kpisSkipped.length,
@@ -434,7 +431,6 @@ export function CollaboratorSummary({
   const handleCopy = () => {
     const completedKrs = results.filter((r) => !r.skipped);
     const skippedKrs = results.filter((r) => r.skipped);
-    const blockers = results.filter((r) => r.blocker);
     const kpisCompletedList = kpiResults.filter((k) => !k.skipped);
 
     const lines: string[] = [];
@@ -448,7 +444,7 @@ export function CollaboratorSummary({
     lines.push(`- 🎯 ${stats.milestoneChanges} marcos alterados`);
     lines.push(`- ⚠️ ${stats.initiativesAtRisk} iniciativas sinalizadas`);
     lines.push(`- 💬 ${stats.pendencies} pendências respondidas`);
-    lines.push(`- 🚧 ${stats.withBlockers} bloqueadores`);
+    
 
     if (kpisCompletedList.length > 0) {
       lines.push('\n## KPIs Atualizados');
@@ -483,11 +479,6 @@ export function CollaboratorSummary({
     if (skippedKrs.length > 0) {
       lines.push('\n## KRs Pulados');
       for (const r of skippedKrs) lines.push(`- ${r.krTitle ?? r.krId}`);
-    }
-
-    if (blockers.length > 0) {
-      lines.push('\n## Bloqueadores');
-      for (const r of blockers) lines.push(`- **${r.krTitle ?? r.krId}**: ${r.blocker}`);
     }
 
     if (pendencyGroups.length > 0) {
@@ -599,7 +590,6 @@ export function CollaboratorSummary({
       case 'checkin': {
         const completedKrs = results.filter((r) => !r.skipped);
         const skippedKrs = results.filter((r) => r.skipped);
-        const blockers = results.filter((r) => r.blocker);
         return (
           <div key="checkin" className="space-y-6">
             <SectionShell
@@ -626,26 +616,6 @@ export function CollaboratorSummary({
                 </details>
               )}
             </SectionShell>
-
-            {blockers.length > 0 && (
-              <SectionShell
-                id="section-blockers"
-                icon={AlertTriangle}
-                title="Bloqueadores"
-                count={blockers.length}
-                emptyText=""
-              >
-                {blockers.map((r) => (
-                  <div
-                    key={r.krId}
-                    className="rounded-lg border border-status-orange/30 bg-status-orange-muted p-3"
-                  >
-                    <p className="font-medium text-sm">{r.krTitle ?? r.krId}</p>
-                    <p className="text-sm mt-1">{r.blocker}</p>
-                  </div>
-                ))}
-              </SectionShell>
-            )}
           </div>
         );
       }
@@ -816,18 +786,6 @@ export function CollaboratorSummary({
               <span className="text-xl font-bold">{stats.pendencies}</span>
             </div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pendências</p>
-          </a>
-          <a href="#section-blockers" className="text-center hover:opacity-70 transition-opacity">
-            <div
-              className={cn(
-                'flex items-center justify-center gap-1',
-                stats.withBlockers > 0 ? 'text-warning' : 'text-muted-foreground',
-              )}
-            >
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-xl font-bold">{stats.withBlockers}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Bloqueadores</p>
           </a>
         </div>
       }
