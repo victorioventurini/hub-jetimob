@@ -19,6 +19,9 @@ import {
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
+import { useCreateCheckin } from '@/modules/okrs/hooks/useCreateCheckin';
+import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
+import { useUpdateDecisionFollowUp, useDecisionThread } from '@/modules/okrs/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
