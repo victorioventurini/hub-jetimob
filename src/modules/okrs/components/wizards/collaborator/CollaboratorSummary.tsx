@@ -16,7 +16,7 @@ import {
   SkipForward,
   AlertTriangle,
   Copy,
-  ExternalLink,
+  
   TrendingUp,
   TrendingDown,
   PartyPopper,
