@@ -48,6 +48,12 @@ export interface InlineCollapsibleEntryInputProps<TItem, TCategory extends strin
   triggerLabel: string;
   /** Placeholder do textarea. */
   placeholder?: string;
+  /**
+   * Quando `true`, o seletor de categoria não é renderizado. A `defaultCategory`
+   * ainda é passada ao `onAdd` (o consumidor decide o que fazer com ela —
+   * tipicamente um sentinela convertido para `null`).
+   */
+  hideCategorySelector?: boolean;
 }
 
 // ============================================================
