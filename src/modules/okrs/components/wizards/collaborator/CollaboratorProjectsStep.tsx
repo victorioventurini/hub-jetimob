@@ -15,13 +15,11 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useBu } from '@/contexts/BuContext';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
-import { useUpdateProject } from '@/modules/projects/hooks/useProjectMutations';
 import { useProjectPermissionsV2 } from '@/modules/projects/hooks/useProjectPermissionsV2';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
 import { MilestoneStatusSelect } from '@/modules/projects/components/MilestoneStatusSelect';
 import { MilestoneDialog, type MilestoneDialogSubmitValues } from '@/modules/projects/components/MilestoneDialog';
-import { ProjectDialog } from '@/modules/projects/components/ProjectDialog';
 import { Button } from '@/components/ui/button';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
@@ -114,11 +112,9 @@ export function CollaboratorProjectsStep({
   const { currentBu } = useBu();
   const buId = currentBu?.id ?? null;
   const updateMilestone = useUpdateMilestone();
-  const updateProject = useUpdateProject();
   const { canEditMilestoneRecord } = useProjectPermissionsV2();
 
   const [editingMilestone, setEditingMilestone] = useState<EditingMilestoneCtx | null>(null);
-  const [editingProject, setEditingProject] = useState<ProjectWithMilestones | null>(null);
 
   // Colunas explícitas (sem select '*'); inclui campos necessários para abrir
   // os dialogs canônicos de edição.
@@ -197,7 +193,7 @@ export function CollaboratorProjectsStep({
         completion_pct: pct,
         isProjectOwner: !!effectiveUserId && p.owner_id === effectiveUserId,
         milestones: rawMilestones
-          .filter((m: any) => m.status !== 'done')
+          .filter((m: any) => m.status !== 'done' && m.owner_id === effectiveUserId)
           .map((m: any) => ({
             id: m.id,
             name: m.name,
@@ -263,33 +259,7 @@ export function CollaboratorProjectsStep({
     );
   };
 
-  const handleProjectEditSubmit = (values: {
-    name: string;
-    description?: string;
-    owner_id: string;
-    team_ids?: string[];
-    status: ProjectStatus;
-    start_date: string;
-    due_date: string;
-    external_url?: string;
-  }) => {
-    if (!editingProject) return;
-    updateProject.mutate(
-      {
-        id: editingProject.id,
-        bu_id: editingProject.bu_id,
-        name: values.name,
-        description: values.description ?? null,
-        owner_id: values.owner_id,
-        status: values.status,
-        start_date: values.start_date,
-        due_date: values.due_date,
-        external_url: values.external_url || null,
-        team_ids: values.team_ids ?? [],
-      },
-      { onSuccess: () => setEditingProject(null) },
-    );
-  };
+
 
   const pendingMilestonesCount = projects.reduce((acc, p) => acc + p.milestones.length, 0);
 
@@ -359,18 +329,8 @@ export function CollaboratorProjectsStep({
                     {project.name}
                   </h3>
                   <ProjectHealthBadge health={project.health} />
-                  {project.isProjectOwner && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs shrink-0"
-                      onClick={() => setEditingProject(project)}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Editar projeto
-                    </Button>
-                  )}
                 </div>
+
 
                 {/* Progress */}
                 <ProjectProgressBar
@@ -463,27 +423,7 @@ export function CollaboratorProjectsStep({
         />
       )}
 
-      {/* Project Edit Dialog (canonical) — montado por demanda */}
-      {editingProject && (
-        <ProjectDialog
-          open={!!editingProject}
-          onOpenChange={(open) => { if (!open) setEditingProject(null); }}
-          onSubmit={handleProjectEditSubmit}
-          isSubmitting={updateProject.isPending}
-          title="Editar projeto"
-          currentOwnerId={editingProject.owner_id ?? undefined}
-          defaultValues={{
-            name: editingProject.name,
-            description: editingProject.description ?? '',
-            owner_id: editingProject.owner_id ?? '',
-            team_ids: editingProject.team_ids,
-            status: editingProject.status,
-            start_date: editingProject.start_date ?? '',
-            due_date: editingProject.due_date ?? '',
-            external_url: editingProject.external_url ?? '',
-          }}
-        />
-      )}
+
     </WizardStepScaffold>
   );
 }
