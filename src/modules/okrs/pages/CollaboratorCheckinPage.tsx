@@ -713,6 +713,7 @@ export default function CollaboratorCheckinPage() {
             pendingMilestoneStatusChanges={draft.data.pendingMilestoneStatusChanges}
             pendingFollowUpUpdates={draft.data.pendingFollowUpUpdates}
             pendingThreadMessages={draft.data.pendingThreadMessages}
+            teamCheckinAgendaSuggestions={draft.data.teamCheckinAgendaSuggestions ?? []}
             visibleStepOrder={visibleStepOrder}
             effectiveUserId={effectiveUserId}
             cycleName={quarterlyCycle?.name}
