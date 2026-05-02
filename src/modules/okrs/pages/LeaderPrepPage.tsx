@@ -278,6 +278,23 @@ export default function LeaderPrepPage() {
     [draft.data.kpisForFollowup, updateDraft],
   );
 
+  // Sugestões de pauta agregadas dos check-ins individuais do time
+  const { data: collaboratorAgendaSuggestions = [] } = useTeamCollaboratorAgendaSuggestions({
+    teamId: teamIdParam,
+    cycleId: quarterlyCycle?.id ?? null,
+  });
+
+  const handleToggleAgendaSuggestion = useCallback(
+    (id: string, selected: boolean) => {
+      const current = draft.data.selectedTeamCheckinAgendaSuggestionIds ?? [];
+      const updated = selected
+        ? Array.from(new Set([...current, id]))
+        : current.filter((x) => x !== id);
+      updateDraft({ selectedTeamCheckinAgendaSuggestionIds: updated });
+    },
+    [draft.data.selectedTeamCheckinAgendaSuggestionIds, updateDraft],
+  );
+
   // Dynamic steps: omit KR-dependent steps when no KRs
   const hasKrs = !!(pendingKrs && pendingKrs.length > 0);
 
