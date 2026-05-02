@@ -27,6 +27,7 @@ import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { InlineAgendaSuggestionInput } from '../shared/InlineAgendaSuggestionInput';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { MilestoneStatus, ProjectHealth, ProjectStatus } from '@/modules/projects/types';
