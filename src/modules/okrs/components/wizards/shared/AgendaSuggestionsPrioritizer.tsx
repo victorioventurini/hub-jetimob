@@ -233,6 +233,13 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
             </ul>
           );
 
+          if (categoryless) {
+            // Lista única, sem badges nem agrupamento
+            const all = [...grouped.performance, ...grouped.projetos, ...grouped.pessoas, ...grouped.none];
+            if (all.length === 0) return null;
+            return renderItems(all);
+          }
+
           return (
             <>
               {BLOCK_ORDER.map((block) => {
