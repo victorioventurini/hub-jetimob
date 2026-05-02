@@ -193,7 +193,7 @@ export function CollaboratorProjectsStep({
         completion_pct: pct,
         isProjectOwner: !!effectiveUserId && p.owner_id === effectiveUserId,
         milestones: rawMilestones
-          .filter((m: any) => m.status !== 'done')
+          .filter((m: any) => m.status !== 'done' && m.owner_id === effectiveUserId)
           .map((m: any) => ({
             id: m.id,
             name: m.name,
