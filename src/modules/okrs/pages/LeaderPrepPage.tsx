@@ -25,6 +25,7 @@ import {
   useTeamOverviewMetrics,
   useTeamPendingKrs,
   useLastCompletedSession,
+  useTeamCollaboratorAgendaSuggestions,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
@@ -69,6 +70,11 @@ interface LeaderPrepDraftData {
   kpisForFollowup: string[];
   /** Decisões inline registradas durante o rito */
   decisions: TeamCheckinDecision[];
+  /**
+   * IDs das sugestões de pauta (vindas dos check-ins individuais do time)
+   * que o líder selecionou para levar ao Check-in do Time.
+   */
+  selectedTeamCheckinAgendaSuggestionIds: string[];
 }
 
 const WIZARD_STEPS = [
@@ -96,6 +102,7 @@ const DEFAULT_DATA: LeaderPrepDraftData = {
   kpisForDiscussion: [],
   kpisForFollowup: [],
   decisions: [],
+  selectedTeamCheckinAgendaSuggestionIds: [],
 };
 
 // ============================================================
