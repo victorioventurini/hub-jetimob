@@ -230,6 +230,19 @@ export interface MbrPreDraftData {
   highlights: { accelerated: string; blocked: string; needsDecision: string };
   nextSteps: { focus: string; prioritizedItems: string[]; crossDependencies: string[] };
   decisions: TeamCheckinDecision[];
+  /**
+   * Justificativas de KPIs fora da meta (RAG ≠ verde) — chave: kpiId.
+   * Reflexivo: o líder explica o desvio sem alterar o valor do KPI.
+   */
+  kpiJustifications: Record<string, string>;
+  /**
+   * Justificativas de projetos/milestones atrasados.
+   * Reflexivo: o líder explica o atraso sem mexer no status do milestone.
+   */
+  projectJustifications: {
+    projects: Record<string, string>;
+    milestones: Record<string, string>;
+  };
   /** Sugestões de pauta para o MBR coletadas ao longo do wizard (até 3 prioritárias). */
   agendaSuggestions: RitualAgendaSuggestion[];
 }
