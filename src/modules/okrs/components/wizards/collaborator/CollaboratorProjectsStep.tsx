@@ -40,6 +40,13 @@ export interface CollaboratorProjectsStepProps {
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  /**
+   * Mapa de mudanças de status de milestones bufferizadas no draft.
+   * Chave: milestoneId. Valor: novo status pendente.
+   * Persistência acontece somente no Concluir do Summary.
+   */
+  pendingMilestoneStatusChanges?: Record<string, MilestoneStatus>;
+  onMilestoneStatusChange?: (milestoneId: string, projectId: string, newStatus: MilestoneStatus) => void;
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
@@ -104,6 +111,8 @@ export function CollaboratorProjectsStep({
   onContinue,
   onBack,
   onSkip,
+  pendingMilestoneStatusChanges = {},
+  onMilestoneStatusChange,
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
@@ -212,17 +221,19 @@ export function CollaboratorProjectsStep({
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [milestoneProjects, ownedProjects, effectiveUserId]);
 
-  // Handle milestone status change (fire-and-forget, fail-safe)
+  // Toggle de status inline: APENAS bufferiza no draft.
+  // Persistência acontece no Concluir do Summary (handleComplete).
   const handleMilestoneStatusChange = (milestoneId: string, projectId: string, newStatus: MilestoneStatus) => {
-    try {
-      updateMilestone.mutate({
-        id: milestoneId,
-        project_id: projectId,
-        status: newStatus,
-      });
-    } catch (error) {
-      console.warn('[CollaboratorProjectsStep] Milestone update failed:', error);
-      toast.warning('Não foi possível atualizar o milestone. Tente novamente pelo módulo de Projetos.');
+    if (onMilestoneStatusChange) {
+      onMilestoneStatusChange(milestoneId, projectId, newStatus);
+    } else {
+      // Fallback (uso fora do wizard colaborador) — mantém comportamento ao vivo
+      try {
+        updateMilestone.mutate({ id: milestoneId, project_id: projectId, status: newStatus });
+      } catch (error) {
+        console.warn('[CollaboratorProjectsStep] Milestone update failed:', error);
+        toast.warning('Não foi possível atualizar o milestone. Tente novamente pelo módulo de Projetos.');
+      }
     }
   };
 
