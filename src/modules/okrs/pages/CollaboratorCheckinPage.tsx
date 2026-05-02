@@ -574,25 +574,9 @@ export default function CollaboratorCheckinPage() {
             kpi={kpiForStep}
             currentIndex={draft.data.currentKpiIndex}
             totalCount={kpis.length}
-            onComplete={async (result) => {
-              // FAIL-SAFE: Salvar KPI sem bloquear wizard
-              // Erros são logados mas não impedem avanço
-              try {
-                await addKpiValueSilent.mutateAsync({
-                  kpi_id: result.kpiId,
-                  value: result.newValue,
-                  reference_date: result.referenceDate,
-                  notes: result.notes,
-                  source: 'manual',
-                  created_by: profile?.id,
-                  input_type: result.inputType ?? 'consolidated',
-                });
-              } catch (error) {
-                // Erro logado, mas wizard continua (fail-safe)
-                console.warn('[CollaboratorCheckin] KPI save failed (continuing):', error);
-                toast.warning('Não foi possível salvar o valor do KPI. Tente novamente pelo módulo de KPIs.');
-              }
-              
+            onComplete={(result) => {
+              // Bufferizar APENAS no draft. Persistência (`kpi_values.insert`)
+              // acontece no Concluir do Summary (handleComplete em batch).
               const newKpiResults = [...draft.data.kpiResults];
               newKpiResults[draft.data.currentKpiIndex] = result;
               const nextIndex = draft.data.currentKpiIndex + 1;
@@ -600,9 +584,9 @@ export default function CollaboratorCheckinPage() {
                 updateDraft({ kpiResults: newKpiResults });
                 goNext();
               } else {
-                updateDraft({ 
+                updateDraft({
                   kpiResults: newKpiResults,
-                  currentKpiIndex: nextIndex 
+                  currentKpiIndex: nextIndex
                 });
               }
             }}
