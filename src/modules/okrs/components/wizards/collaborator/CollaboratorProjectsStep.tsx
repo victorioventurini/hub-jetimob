@@ -323,11 +323,12 @@ export function CollaboratorProjectsStep({
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-12 space-y-3">
-            <FolderKanban className="h-12 w-12 mx-auto text-muted-foreground/40" />
-            <p className="text-muted-foreground text-sm">
-              Nenhum projeto sob sua responsabilidade neste momento.
-            </p>
+          <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+            <EmptyState
+              icon={FolderKanban}
+              title="Nenhum projeto vinculado"
+              description="Você não possui projetos sob sua responsabilidade neste momento. Projetos são opcionais — você pode pular ou avançar."
+            />
           </div>
         ) : (
           <div className="space-y-4">
