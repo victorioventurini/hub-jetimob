@@ -444,7 +444,7 @@ export function CollaboratorSummary({
     lines.push(`- 🎯 ${stats.milestoneChanges} marcos alterados`);
     lines.push(`- ⚠️ ${stats.initiativesAtRisk} iniciativas sinalizadas`);
     lines.push(`- 💬 ${stats.pendencies} pendências respondidas`);
-    lines.push(`- 🚧 ${stats.withBlockers} bloqueadores`);
+    
 
     if (kpisCompletedList.length > 0) {
       lines.push('\n## KPIs Atualizados');
