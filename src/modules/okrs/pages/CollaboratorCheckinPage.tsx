@@ -49,6 +49,7 @@ import type {
   PendingMilestoneStatusChange,
   PendingDecisionFollowUpUpdate,
   PendingDecisionThreadMessage,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import {
