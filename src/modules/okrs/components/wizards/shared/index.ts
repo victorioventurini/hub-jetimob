@@ -120,6 +120,9 @@ export type { SummaryKrBalanceProps, SummaryKrBalanceItem } from './SummaryKrBal
 export { SummaryKpiList } from './SummaryKpiList';
 export type { SummaryKpiListProps } from './SummaryKpiList';
 
+export { JustificationField } from './JustificationField';
+export type { JustificationFieldProps } from './JustificationField';
+
 // =========================
 // RITUAL GREETING (Step 1 — saudação contextual)
 // =========================
