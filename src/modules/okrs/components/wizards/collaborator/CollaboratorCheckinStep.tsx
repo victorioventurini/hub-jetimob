@@ -1,50 +1,31 @@
 /**
- * CollaboratorCheckinStep - Etapa 2 do Wizard Colaborador
- * 
- * Atualização sequencial de cada KR:
- * - Valor atual (bloqueado se KR tem KPI primária)
- * - Confiança
- * - Comentário (opcional)
- * - Bloqueadores (opcional)
- * 
- * Com perguntas orientadoras e microcopy dinâmico.
- * 
- * REGRA: Quando KR tem KPI primária vinculada, o valor é read-only
- * e o colaborador deve atualizar a KPI correspondente.
+ * CollaboratorCheckinStep — Etapa de check-in de KRs do Wizard Colaborador
+ *
+ * Alinhado visualmente ao modal `CheckinDialog` (drawer /okrs):
+ * reaproveita os blocos centralizados em `src/modules/okrs/components/checkin/`.
+ *
+ * Decisão TCR: este fluxo grava `okr_checkins.comments` como TEXTO PURO.
+ * Menções (@) NÃO são processadas aqui — apenas no `CheckinDialog`.
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import {
-  ArrowRight,
-  ArrowLeft,
-  SkipForward,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  ThumbsUp,
-  ThumbsDown,
-  Loader2,
-  Lock,
-  ExternalLink,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { KrContextCard } from '../shared/KrContextCard';
-import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
+import { ArrowRight, ArrowLeft, SkipForward, Sparkles } from 'lucide-react';
 import { AlertBanner } from '../shared/AlertBanner';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import { useWizardAI } from '@/modules/okrs/hooks';
-import { useCreateCheckin } from '@/modules/okrs/hooks';
+import { useCreateCheckin, statusToConfidence } from '@/modules/okrs/hooks/useCreateCheckin';
 import { usePrimaryKpiForKr } from '@/modules/okrs/hooks';
-import { RAG_STATUS_COLORS } from '@/lib/colors';
-import type { WizardKr } from '@/modules/okrs/hooks';
+import {
+  CheckinContextBlock,
+  CheckinProgressBlock,
+  CheckinStatusSelector,
+  CheckinReflectionBlock,
+  type CheckinKrData,
+  type CheckinStatus,
+} from '@/modules/okrs/components/checkin';
+import type { WizardKr } from '@/modules/okrs/hooks/useTeamPendingKrs';
 import type { CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -60,39 +41,32 @@ export interface CollaboratorCheckinStepProps {
   onBack: () => void;
 }
 
-type Confidence = 'high' | 'medium' | 'low';
+// ============================================================
+// HELPERS
+// ============================================================
 
-interface ConfidenceOption {
-  value: Confidence;
-  label: string;
-  description: string;
-  icon: typeof ThumbsUp;
-  colorClass: string;
+/** Adapta `WizardKr` para o formato `CheckinKrData` esperado pelos blocos. */
+function toCheckinKrData(kr: WizardKr): CheckinKrData {
+  return {
+    id: kr.id,
+    title: kr.title,
+    baseline: kr.baseline,
+    current_value: kr.current_value,
+    target: kr.target,
+    direction: kr.direction,
+    unit: kr.unit,
+    status: kr.status,
+    team_id: kr.team_id,
+    team_name: kr.team_name,
+    last_checkin_at: kr.last_checkin_at,
+    owner: kr.owner_name
+      ? { display_name: kr.owner_name, photo_url: kr.owner_photo }
+      : undefined,
+    team_objective: kr.objective_title
+      ? { title: kr.objective_title }
+      : undefined,
+  };
 }
-
-const CONFIDENCE_OPTIONS: ConfidenceOption[] = [
-  {
-    value: 'high',
-    label: 'Alta',
-    description: 'Confiante que vamos atingir',
-    icon: ThumbsUp,
-    colorClass: 'border-status-green bg-status-green-muted text-status-green-muted-foreground',
-  },
-  {
-    value: 'medium',
-    label: 'Média',
-    description: 'Precisamos de atenção',
-    icon: Minus,
-    colorClass: 'border-status-yellow bg-status-yellow-muted text-status-yellow-muted-foreground',
-  },
-  {
-    value: 'low',
-    label: 'Baixa',
-    description: 'Em risco de não atingir',
-    icon: ThumbsDown,
-    colorClass: 'border-status-red bg-status-red-muted text-status-red-muted-foreground',
-  },
-];
 
 // ============================================================
 // COMPONENT
@@ -106,50 +80,43 @@ export function CollaboratorCheckinStep({
   onSkip,
   onBack,
 }: CollaboratorCheckinStepProps) {
-  // Form state
-  const [currentValue, setCurrentValue] = useState<string>(String(kr.current_value));
-  const [confidence, setConfidence] = useState<Confidence | null>(null);
-  const [comment, setComment] = useState('');
-
-  // Check for primary KPI (fonte única de verdade)
+  // KPI primária — bloqueia input de valor
   const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
-  const isValueLocked = hasPrimaryKpi;
+  const isAutomatic = hasPrimaryKpi;
 
-  // AI state (somente microcopy — insights do VIC removidos do step)
-  const { getMicrocopy } = useWizardAI();
-  const microcopy = getMicrocopy(kr);
+  // Form state — alinhado ao CheckinDialog
+  const [currentValue, setCurrentValue] = useState<string>(String(kr.current_value));
+  const [status, setStatus] = useState<CheckinStatus>(
+    kr.status === 'not_started' ? 'green' : (kr.status as CheckinStatus),
+  );
+  const [reflection, setReflection] = useState('');
+  const [nextStep, setNextStep] = useState('');
 
-  // Mutation
   const createCheckin = useCreateCheckin({ skipToast: true });
 
-  // Reset form when KR changes
+  // Reset ao trocar de KR
   useEffect(() => {
     setCurrentValue(String(kr.current_value));
-    setConfidence(null);
-    setComment('');
-  }, [kr.id, kr.current_value]);
+    setStatus(kr.status === 'not_started' ? 'green' : (kr.status as CheckinStatus));
+    setReflection('');
+    setNextStep('');
+  }, [kr.id, kr.current_value, kr.status]);
 
-  // Calculate change
-  const numericValue = parseFloat(currentValue) || 0;
-  const change = numericValue - kr.current_value;
-  const changePercent = kr.current_value !== 0 
-    ? ((change / kr.current_value) * 100).toFixed(1)
-    : '0';
+  const krData = useMemo(() => toCheckinKrData(kr), [kr]);
 
-  // New progress calculation
-  const newProgress = useMemo(() => {
-    const range = kr.target - kr.baseline;
-    if (range === 0) return 0;
-    return Math.max(0, ((numericValue - kr.baseline) / range) * 100);
-  }, [numericValue, kr.baseline, kr.target]);
-
-  // Can submit
-  const canSubmit = confidence !== null;
+  const trimmedReflection = reflection.trim();
+  const canSubmit = trimmedReflection.length >= 10;
   const isLast = currentIndex === totalCount - 1;
 
-  // Handle save
+  // Salvar — composição de `comments` igual ao CheckinDialog
   const handleSave = useCallback(async () => {
-    if (!confidence) return;
+    if (!canSubmit) return;
+
+    const numericValue = isAutomatic ? kr.current_value : parseFloat(currentValue) || 0;
+    const composedComments = nextStep.trim()
+      ? `${trimmedReflection}\n\n📌 Próximo passo: ${nextStep.trim()}`
+      : trimmedReflection;
+    const confidence = statusToConfidence(status);
 
     try {
       await createCheckin.mutateAsync({
@@ -157,41 +124,45 @@ export function CollaboratorCheckinStep({
         currentValue: numericValue,
         previousValue: kr.current_value,
         confidence,
-        comments: comment || undefined,
-        blockers: undefined,
+        comments: composedComments,
+        teamId: kr.team_id ?? null,
       });
 
       const result: CollaboratorCheckinResult = {
         krId: kr.id,
-        // Onda 4 Fase 3: krTitle/objectiveTitle não são mais gravados — readers resolvem via lookup por krId.
         previousValue: kr.current_value,
         newValue: numericValue,
         confidence,
-        comment: comment || undefined,
+        comment: composedComments,
         skipped: false,
-        blocker: undefined,
       };
-
       onComplete(result);
-    } catch (error) {
-      // Error is handled by the mutation
+    } catch {
+      // erro já tratado pelo hook
     }
-  }, [kr, numericValue, confidence, comment, createCheckin, onComplete]);
+  }, [
+    canSubmit,
+    isAutomatic,
+    kr,
+    currentValue,
+    nextStep,
+    trimmedReflection,
+    status,
+    createCheckin,
+    onComplete,
+  ]);
 
-  // Handle skip
   const handleSkip = useCallback(() => {
-    const result: CollaboratorCheckinResult = {
+    onComplete({
       krId: kr.id,
-      // Onda 4 Fase 3: krTitle/objectiveTitle não são mais gravados — readers resolvem via lookup por krId.
       previousValue: kr.current_value,
       newValue: kr.current_value,
       confidence: 'medium',
       skipped: true,
-    };
-    onComplete(result);
+    });
   }, [kr, onComplete]);
 
-  // Keyboard shortcut
+  // Atalho Ctrl/Cmd+Enter
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && canSubmit) {
@@ -207,8 +178,9 @@ export function CollaboratorCheckinStep({
       {/* Progress indicator */}
       <div className="px-6 py-3 border-b bg-muted/20">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">
-            KR {currentIndex + 1} de {totalCount}
+          <span className="text-sm font-medium flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            Check-in de Progresso — KR {currentIndex + 1} de {totalCount}
           </span>
           <Badge variant="outline">
             {Math.round((currentIndex / totalCount) * 100)}% concluído
@@ -217,7 +189,7 @@ export function CollaboratorCheckinStep({
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {/* Alerts */}
         {kr.is_pending && kr.days_since_checkin > 14 && (
           <AlertBanner
@@ -232,25 +204,8 @@ export function CollaboratorCheckinStep({
           />
         )}
 
-        {/* KR Context */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <KrContextCard
-              title={kr.title}
-              objectiveTitle={kr.objective_title}
-              baseline={kr.baseline}
-              currentValue={kr.current_value}
-              target={kr.target}
-              unit={kr.unit}
-              direction={kr.direction}
-              status={kr.status}
-              progress={kr.progress}
-              lastCheckinAt={kr.last_checkin_at}
-              ownerName={kr.owner_name}
-              ownerPhoto={kr.owner_photo}
-              teamName={kr.team_name}
-            />
-          </div>
+        {/* AskToVic helper (mantido) */}
+        <div className="flex justify-end">
           <AskToVicStepHelper
             context={{
               module: 'okrs',
@@ -267,155 +222,42 @@ export function CollaboratorCheckinStep({
           />
         </div>
 
-
-
+        {/* BLOCO 1 — Contexto */}
+        <CheckinContextBlock kr={krData} />
 
         <Separator />
 
-        {/* Microcopy question */}
-        <MicrocopyQuestion question={microcopy} variant="highlight" />
+        {/* BLOCO 2 — Progresso */}
+        <CheckinProgressBlock
+          kr={krData}
+          currentValue={currentValue}
+          status={status}
+          isAutomatic={isAutomatic}
+          onValueChange={setCurrentValue}
+          primaryKpi={primaryKpi}
+        />
 
-        {/* Value input - locked if KR has primary KPI */}
-        {isValueLocked && primaryKpi ? (
-          <div className="rounded-lg border bg-info-muted/50 border-info/30 p-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-info/10">
-                <Lock className="h-4 w-4 text-info" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm">
-                  Esta KR é medida pela KPI "<a href={`/kpis/${primaryKpi.kpiId}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="hover:underline">{primaryKpi.kpiName}</a>"
-                </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  O valor é atualizado automaticamente. Para alterar, atualize a KPI.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-4 p-3 rounded-md bg-background/50">
-              <div>
-                <p className="text-xs text-muted-foreground">Valor atual / Meta</p>
-                <p className="font-semibold">{primaryKpi.currentValue ?? '—'}{primaryKpi.targetValue != null ? ` / ${primaryKpi.targetValue}` : ''} {primaryKpi.kpiUnit}</p>
-              </div>
-              <Badge className={cn("shrink-0", 
-                primaryKpi.ragStatus === 'green' ? RAG_STATUS_COLORS.green.badge :
-                primaryKpi.ragStatus === 'yellow' ? RAG_STATUS_COLORS.yellow.badge :
-                primaryKpi.ragStatus === 'red' ? RAG_STATUS_COLORS.red.badge : 'bg-muted'
-              )}>
-                {primaryKpi.ragStatus === 'green' ? 'Na meta' :
-                 primaryKpi.ragStatus === 'yellow' ? 'Em atenção' :
-                 primaryKpi.ragStatus === 'red' ? 'Fora da meta' : 'Sem dados'}
-              </Badge>
-            </div>
-            <Button variant="outline" size="sm" asChild className="w-full">
-              <Link to={`/kpis?kpi=${primaryKpi.kpiId}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Atualizar KPI
-              </Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <Label htmlFor="current-value">Valor atual</Label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 relative">
-                <Input
-                  id="current-value"
-                  type="number"
-                  value={currentValue}
-                  onChange={(e) => setCurrentValue(e.target.value)}
-                  className="text-lg font-semibold pr-16"
-                  step="any"
-                />
-                {kr.unit && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    {kr.unit}
-                  </span>
-                )}
-              </div>
-              
-              {/* Change indicator */}
-              {change !== 0 && (
-                <div className={cn(
-                  "flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium",
-                  change > 0 && kr.direction === 'up' && "bg-success-muted text-success-muted-foreground",
-                  change < 0 && kr.direction === 'down' && "bg-success-muted text-success-muted-foreground",
-                  change > 0 && kr.direction === 'down' && "bg-danger-muted text-danger-muted-foreground",
-                  change < 0 && kr.direction === 'up' && "bg-danger-muted text-danger-muted-foreground",
-                )}>
-                  {change > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  <span>{change > 0 ? '+' : ''}{change}</span>
-                  <span className="text-xs">({changePercent}%)</span>
-                </div>
-              )}
-            </div>
-            
-            {/* New progress preview */}
-            {change !== 0 && (
-              <p className="text-xs text-muted-foreground">
-                Novo progresso: <span className={cn("font-medium", newProgress > 100 && "text-status-green")}>{Math.round(newProgress)}%</span>{newProgress > 100 && ' 🚀'} (atual: {Math.round(kr.progress)}%)
-              </p>
-            )}
-          </div>
-        )}
+        <Separator />
 
-        {/* Confidence selection */}
-        <div className="space-y-3">
-          <Label>Confiança de atingir a meta</Label>
-          <RadioGroup
-            value={confidence || ''}
-            onValueChange={(v) => setConfidence(v as Confidence)}
-            className="grid grid-cols-3 gap-3"
-          >
-            {CONFIDENCE_OPTIONS.map((option) => {
-              const Icon = option.icon;
-              return (
-                <Label
-                  key={option.value}
-                  htmlFor={option.value}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all",
-                    confidence === option.value 
-                      ? option.colorClass
-                      : "border-muted hover:border-muted-foreground/30"
-                  )}
-                >
-                  <RadioGroupItem
-                    value={option.value}
-                    id={option.value}
-                    className="sr-only"
-                  />
-                  <Icon className="h-5 w-5" />
-                  <span className="font-medium">{option.label}</span>
-                  <span className="text-xs text-center opacity-80">
-                    {option.description}
-                  </span>
-                </Label>
-              );
-            })}
-          </RadioGroup>
-        </div>
+        {/* BLOCO 3 — Status */}
+        <CheckinStatusSelector status={status} onStatusChange={setStatus} />
 
-        {/* Comment */}
-        <div className="space-y-2">
-          <Label htmlFor="comment">Comentário (opcional)</Label>
-          <Textarea
-            id="comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="O que contribuiu para este resultado? Alguma observação?"
-            className="min-h-[80px] resize-none"
-          />
-        </div>
+        <Separator />
 
+        {/* BLOCO 4 + 5 — Reflexão + Próximo passo (sem mentions, conforme TCR) */}
+        <CheckinReflectionBlock
+          reflection={reflection}
+          nextStep={nextStep}
+          onReflectionChange={(v) => setReflection(v)}
+          onNextStepChange={setNextStep}
+          enableMentions={false}
+        />
       </div>
 
       {/* Footer actions */}
       <div className="px-6 py-4 border-t bg-background">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-          >
+          <Button variant="ghost" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>
@@ -434,18 +276,23 @@ export function CollaboratorCheckinStep({
             disabled={!canSubmit || createCheckin.isPending}
             className="flex-1"
             isLoading={createCheckin.isPending}
-            loadingText={isLast ? 'Salvando...' : 'Salvando...'}
+            loadingText="Salvando..."
           >
             {isLast ? 'Salvar e concluir' : 'Salvar e próximo'}
             {!isLast && !createCheckin.isPending && <ArrowRight className="h-4 w-4 ml-2" />}
           </Button>
         </div>
 
-        {canSubmit && (
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Atalho: <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> para salvar
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          {canSubmit ? (
+            <>
+              Atalho: <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl</kbd> +{' '}
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> para salvar
+            </>
+          ) : (
+            <>Reflexão obrigatória (mín. 10 caracteres) para concluir.</>
+          )}
+        </p>
       </div>
     </div>
   );
