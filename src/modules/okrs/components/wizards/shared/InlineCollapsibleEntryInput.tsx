@@ -69,6 +69,7 @@ export function InlineCollapsibleEntryInput<TItem, TCategory extends string>({
   triggerIcon: TriggerIcon,
   triggerLabel,
   placeholder,
+  hideCategorySelector = false,
 }: InlineCollapsibleEntryInputProps<TItem, TCategory>) {
   const isMobile = useIsMobile();
   // Mobile: collapsed por padrão para liberar viewport.
