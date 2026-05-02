@@ -346,12 +346,20 @@ export default function CollaboratorCheckinPage() {
         );
         
       case 'checkin': {
-        const currentKr = krs[draft.data.currentKrIndex];
+        // Normaliza índice: drafts antigos podem ter currentKrIndex fora do range
+        // (ex.: lista de KRs encolheu desde a última sessão).
+        const safeIndex = krs.length > 0
+          ? Math.min(Math.max(0, draft.data.currentKrIndex || 0), krs.length - 1)
+          : 0;
+        const currentKr = krs[safeIndex];
         if (!currentKr) {
-          // Sem KR no índice atual: nada a renderizar.
-          // O auto-correct effect cuidará de mover o usuário para um step
-          // válido caso 'checkin' não esteja em visibleStepOrder.
+          // Sem KR: nada a renderizar. O auto-correct effect (visibleStepOrder)
+          // moverá o usuário para um step válido quando hasKrStep=false.
           return null;
+        }
+        if (safeIndex !== draft.data.currentKrIndex) {
+          // Reposiciona via efeito no próximo tick (fora do render).
+          queueMicrotask(() => updateDraft({ currentKrIndex: safeIndex }));
         }
         return (
           <CollaboratorCheckinStep
