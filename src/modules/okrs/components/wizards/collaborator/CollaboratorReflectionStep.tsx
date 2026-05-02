@@ -29,6 +29,11 @@ export interface CollaboratorReflectionStepProps {
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
+  /**
+   * Quando `true`, o card de sugestão de pauta não pede categoria
+   * (Reflection do Check-in Individual → Pré-Check-in do Time).
+   */
+  agendaCategoryless?: boolean;
 }
 
 const AGENDA_SOURCE_STEP = 'collaborator-reflection';
@@ -46,6 +51,7 @@ export function CollaboratorReflectionStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  agendaCategoryless = false,
 }: CollaboratorReflectionStepProps) {
   const [impactSummary, setImpactSummary] = useState('');
   const [helpNeeded, setHelpNeeded] = useState('');
