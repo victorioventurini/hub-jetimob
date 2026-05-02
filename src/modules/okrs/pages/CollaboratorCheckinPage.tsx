@@ -328,11 +328,116 @@ export default function CollaboratorCheckinPage() {
   
   const [isCompleting, setIsCompleting] = useState(false);
 
+  // Mutations centralizadas — invocadas APENAS no Concluir do Summary.
+  // Steps individuais não persistem mais; apenas escrevem no draft.
+  const createCheckin = useCreateCheckin({ skipToast: true });
+  const updateMilestoneMutation = useUpdateMilestone();
+  const { mutateAsync: updateFollowUpAsync } = useUpdateDecisionFollowUp();
+  const { mutateAsync: addThreadMessageAsync } = useDecisionThread();
+
+  /**
+   * Persistência em batch — único ponto onde o Check-in Individual grava
+   * dados. Política de erro:
+   *   - Falhas em okr_checkins (críticas) impedem `clearDraft` para o
+   *     usuário poder reabrir e tentar novamente.
+   *   - Falhas em KPIs/milestones/decisões viram toast de aviso, mas não
+   *     bloqueiam a conclusão (compatível com o fail-safe original do KPI).
+   */
   const handleComplete = useCallback(async () => {
     setIsCompleting(true);
     try {
+      const krResults = (draft.data.results ?? []).filter(Boolean);
+      const kpiResultsList = (draft.data.kpiResults ?? []).filter(Boolean);
+      const milestoneChanges = draft.data.pendingMilestoneStatusChanges ?? [];
+      const followUpUpdates = draft.data.pendingFollowUpUpdates ?? [];
+      const threadMessages = draft.data.pendingThreadMessages ?? [];
+
+      // 1) okr_checkins — críticos. Sequencial p/ trigger DB respeitar ordem por KR.
+      let krFailures = 0;
+      for (const r of krResults) {
+        if (r.skipped) continue;
+        try {
+          await createCheckin.mutateAsync({
+            krId: r.krId,
+            currentValue: r.newValue,
+            previousValue: r.previousValue,
+            confidence: r.confidence,
+            comments: r.comment ?? '',
+            teamId: null,
+          });
+        } catch (e) {
+          krFailures += 1;
+          console.error('[CollaboratorCheckin] KR check-in failed:', r.krId, e);
+        }
+      }
+
+      // 2) kpi_values — fail-safe (warning toast, sem bloquear).
+      const kpiSettled = await Promise.allSettled(
+        kpiResultsList
+          .filter((k) => !k.skipped)
+          .map((k) =>
+            addKpiValueSilent.mutateAsync({
+              kpi_id: k.kpiId,
+              value: k.newValue,
+              reference_date: k.referenceDate,
+              notes: k.notes,
+              source: 'manual',
+              created_by: profile?.id,
+              input_type: k.inputType ?? 'consolidated',
+            }),
+          ),
+      );
+      const kpiFailures = kpiSettled.filter((s) => s.status === 'rejected').length;
+
+      // 3) project_milestones — fail-safe.
+      const msSettled = await Promise.allSettled(
+        milestoneChanges.map((m) =>
+          updateMilestoneMutation.mutateAsync({
+            id: m.milestoneId,
+            project_id: m.projectId,
+            status: m.status,
+          }),
+        ),
+      );
+      const msFailures = msSettled.filter((s) => s.status === 'rejected').length;
+
+      // 4) decision follow-ups + thread messages — fail-safe.
+      const decSettled = await Promise.allSettled([
+        ...followUpUpdates.map((u) =>
+          updateFollowUpAsync({
+            sessionId: u.sessionId,
+            decisionId: u.decisionId,
+            updates: u.updates,
+          }),
+        ),
+        ...threadMessages.map((m) =>
+          addThreadMessageAsync({
+            sessionId: m.sessionId,
+            decisionId: m.decisionId,
+            content: m.content,
+          }),
+        ),
+      ]);
+      const decFailures = decSettled.filter((s) => s.status === 'rejected').length;
+
+      const sideFailures = kpiFailures + msFailures + decFailures;
+
+      if (krFailures > 0) {
+        // Erros críticos — preserva draft.
+        toast.error(
+          `${krFailures} check-in(s) de KR não foram salvos. Seu rascunho foi preservado — tente concluir novamente.`,
+        );
+        return;
+      }
+
+      if (sideFailures > 0) {
+        toast.warning(
+          `Check-in registrado, mas ${sideFailures} item(ns) auxiliar(es) falhou(aram). Verifique nos respectivos módulos.`,
+        );
+      }
+
       const completedSessionId = await clearDraft();
-      toast.success('Check-in concluído!');
+      if (krFailures === 0 && sideFailures === 0) toast.success('Check-in concluído!');
 
       // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)
       if (completedSessionId && currentBu?.id) {
@@ -348,7 +453,23 @@ export default function CollaboratorCheckinPage() {
     } finally {
       setIsCompleting(false);
     }
-  }, [clearDraft, navigate, buSupabase, currentBu]);
+  }, [
+    clearDraft,
+    navigate,
+    buSupabase,
+    currentBu,
+    draft.data.results,
+    draft.data.kpiResults,
+    draft.data.pendingMilestoneStatusChanges,
+    draft.data.pendingFollowUpUpdates,
+    draft.data.pendingThreadMessages,
+    createCheckin,
+    addKpiValueSilent,
+    updateMilestoneMutation,
+    updateFollowUpAsync,
+    addThreadMessageAsync,
+    profile?.id,
+  ]);
   
   // Loading - include auth loading to ensure profile is available
   if (isAuthLoading || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
