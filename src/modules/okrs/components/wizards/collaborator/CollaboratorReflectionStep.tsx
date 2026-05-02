@@ -36,7 +36,7 @@ export interface CollaboratorReflectionStepProps {
   agendaCategoryless?: boolean;
 }
 
-const AGENDA_SOURCE_STEP = 'collaborator-reflection';
+// AGENDA_SOURCE_STEP removido — AgendaSuggestionsPrioritizer usa SUMMARY_SOURCE_STEP internamente
 
 // ============================================================
 // COMPONENT
