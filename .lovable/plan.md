@@ -1,68 +1,56 @@
-# Padronizar empty states do Check-in Individual
-
-## Problema
-
-Os steps do wizard de Check-in Individual (`/rituals/collaborator-checkin`) usam **markup divergente** quando não há dados:
-
-| Step | Empty state atual |
-|------|-------------------|
-| **Projects** | Markup inline com `<FolderKanban>` + `<p>` custom |
-| **Initiatives** | Já usa `<EmptyState>` canônico ✅ |
-| **Decisions (Pendências)** | Markup inline com `<Inbox>` + `<p>` + emoji 🎉 |
-| **KPIs / KRs (Checkin)** | Sem empty state (steps são pulados quando vazios) |
-
-Resultado: visual inconsistente entre passos do mesmo rito.
-
 ## Objetivo
 
-Unificar todos os empty states do wizard para usar o componente canônico `<EmptyState>` (`src/components/ui/empty-state.tsx`), espelhando o padrão já adotado em `CollaboratorInitiativesStep`.
+No wizard `/rituals/collaborator-checkin`, ocultar itens já concluídos (não há o que atualizar):
+
+1. **Iniciativas concluídas** (`status = 'completed'`) não aparecem no Step "Iniciativas".
+2. **Milestones concluídos** (`status = 'done'`) não aparecem no Step "Projetos" (já filtrado na renderização — reforçar na origem da query).
+
+Conformidade verificada: TCR §4.8 (Filtro de Iniciativas do Step), memória `collaborator-initiatives-step-scope`, `soft-delete-policy-v1`, `query-optimization-standard`, `milestone-permissions-row-aware`.
+
+---
 
 ## Mudanças
 
-### 1. `CollaboratorProjectsStep.tsx` (linhas 324-330)
-Substituir o markup inline por:
-```tsx
-<div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
-  <EmptyState
-    icon={FolderKanban}
-    title="Nenhum projeto vinculado"
-    description="Você não possui projetos sob sua responsabilidade neste momento. Projetos são opcionais — você pode pular ou avançar."
-  />
-</div>
+### 1. `CollaboratorInitiativesStep.tsx` — filtrar completed server-side
+
+Na query de `okr_initiatives` (linhas ~94-129), adicionar:
+```ts
+.neq('status', 'completed')
 ```
 
-### 2. `CollaboratorDecisionsStep.tsx` (linhas 109-114)
-Substituir o markup inline por:
-```tsx
-<div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
-  <EmptyState
-    icon={Inbox}
-    title="Nenhuma pendência encontrada"
-    description="Você está em dia com decisões e follow-ups atribuídos a você."
-  />
-</div>
+### 2. `useCollaboratorInitiativesSignal.ts` — consistência com Step 1
+
+Mesmo `.neq('status', 'completed')` para que o card "Atividade da Semana" (Step 1) reflita o que aparece no Step "Iniciativas".
+
+### 3. `CollaboratorProjectsStep.tsx` — endurecer query `myMilestones`
+
+Na query `myMilestones` (linhas 138-153), adicionar:
+```ts
+.neq('project_milestones.status', 'done')
 ```
+Evita puxar projetos onde o colaborador só tem marcos `done` (e não é owner do projeto). O filtro de renderização (linha 207, `m.status !== 'done'`) permanece como segunda barreira.
 
-### 3. Tom dos textos (alinhamento editorial)
+### 4. Atualizar memória `collaborator-initiatives-step-scope`
 
-Padrão consistente entre os três:
-- **Title**: curto, sem emoji, formato "Nenhum(a) [entidade] [estado]"
-- **Description**: explica por que está vazio + (quando aplicável) que o passo é opcional
+Adicionar nota: "iniciativas com `status='completed'` são excluídas server-side — não há ação possível em itens concluídos."
 
-| Step | Title | Description |
-|------|-------|-------------|
-| Projects | Nenhum projeto vinculado | Você não possui projetos sob sua responsabilidade neste momento. Projetos são opcionais — você pode pular ou avançar. |
-| Initiatives (já existe) | Nenhuma iniciativa vinculada | Você não possui iniciativas vinculadas aos seus KRs. Iniciativas são opcionais — você pode pular ou avançar. |
-| Decisions | Nenhuma pendência encontrada | Você está em dia com decisões e follow-ups atribuídos a você. |
+---
 
 ## Fora de escopo
 
-- **KPIs e KRs**: não têm empty state porque são pulados automaticamente pela máquina de estado quando não há dados (regra centralizada em `CollaboratorCheckinPage.tsx`). Não vamos introduzir tela vazia onde hoje há skip — isso mudaria fluxo, não só estética.
-- **Reflection / Context / Summary**: não têm empty state aplicável (sempre exibem conteúdo).
+- Não alterar `useUserKrsForWizard` (escopo de KRs permanece).
+- Não mexer em RLS, permissões, tipos ou componentes compartilhados.
+- Não alterar a query `projectsByKr` do Step "Iniciativas" (badges informativas).
 
 ## Arquivos afetados
 
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
+- `src/modules/okrs/hooks/useCollaboratorInitiativesSignal.ts`
 - `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx`
+- `.lovable/memory/features/rituals/collaborator-initiatives-step-scope.md`
 
-Sem mudanças de schema, hooks, queries ou lógica de navegação — apenas presentation.
+## Validação
+
+- `?step=initiatives` com usuário que tenha iniciativa `completed` → não deve listar.
+- `?step=projects` com usuário cujos milestones são todos `done` (sem ser owner do projeto) → projeto não aparece.
+- Card "Atividade da Semana" (Step 1): contador de iniciativas bate com a lista do Step "Iniciativas".
