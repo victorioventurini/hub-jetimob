@@ -107,11 +107,12 @@ export function CollaboratorDecisionsStep({
         }
         bottomFixed={agendaSlot}
       >
-        <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-          <Inbox className="h-12 w-12 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">
-            Nenhuma pendência encontrada. Tudo em dia! 🎉
-          </p>
+        <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+          <EmptyState
+            icon={Inbox}
+            title="Nenhuma pendência encontrada"
+            description="Você está em dia com decisões e follow-ups atribuídos a você."
+          />
         </div>
       </WizardStepScaffold>
     );
