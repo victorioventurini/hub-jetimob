@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { CONFIDENCE_COLORS } from '@/lib/colors';
 import { WizardLastStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
+import { AgendaSuggestionsPrioritizer } from '@/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer';
 import type {
   CollaboratorCheckinResult,
   CollaboratorReflection,
