@@ -197,6 +197,7 @@ export {
   useTeamCollaboratorAgendaSuggestions,
   type AggregatedAgendaSuggestion,
 } from './useTeamCollaboratorAgendaSuggestions';
+export { useSelectedTeamCheckinAgenda } from './useSelectedTeamCheckinAgenda';
 export {
   useTeamPreviousCycleAnalysis,
   type PreviousCycleObjective,
