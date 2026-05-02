@@ -101,10 +101,10 @@ export function useTeamCollaboratorAgendaSuggestions({
       if (authorIds.size > 0) {
         const { data: profiles } = await buSupabase
           .from('profiles')
-          .select('id, full_name')
+          .select('id, display_name')
           .in('id', Array.from(authorIds));
         nameMap = Object.fromEntries(
-          (profiles ?? []).map((p) => [p.id as string, (p.full_name as string) || 'Colaborador']),
+          (profiles ?? []).map((p) => [p.id as string, (p.display_name as string) || 'Colaborador']),
         );
       }
 
