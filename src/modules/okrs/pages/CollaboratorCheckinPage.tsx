@@ -609,15 +609,28 @@ export default function CollaboratorCheckinPage() {
         );
       }
 
-      case 'projects':
+      case 'projects': {
+        const pendingMap: Record<string, import('@/modules/projects/types').MilestoneStatus> = {};
+        for (const c of draft.data.pendingMilestoneStatusChanges ?? []) {
+          pendingMap[c.milestoneId] = c.status;
+        }
         return (
           <CollaboratorProjectsStep
             effectiveUserId={effectiveUserId}
             onContinue={goNext}
             onBack={goBack}
             onSkip={goNext}
+            pendingMilestoneStatusChanges={pendingMap}
+            onMilestoneStatusChange={(milestoneId, projectId, status) => {
+              const list = (draft.data.pendingMilestoneStatusChanges ?? []).filter(
+                (c) => c.milestoneId !== milestoneId,
+              );
+              list.push({ milestoneId, projectId, status });
+              updateDraft({ pendingMilestoneStatusChanges: list });
+            }}
           />
         );
+      }
 
       case 'initiatives':
         return (
@@ -641,6 +654,20 @@ export default function CollaboratorCheckinPage() {
             onContinue={goNext}
             onBack={goBack}
             onSkip={goNext}
+            pendingFollowUpUpdates={draft.data.pendingFollowUpUpdates ?? []}
+            onPendingFollowUpUpdate={(update) => {
+              const list = (draft.data.pendingFollowUpUpdates ?? []).filter(
+                (u) => !(u.sessionId === update.sessionId && u.decisionId === update.decisionId),
+              );
+              list.push(update);
+              updateDraft({ pendingFollowUpUpdates: list });
+            }}
+            pendingThreadMessages={draft.data.pendingThreadMessages ?? []}
+            onPendingThreadMessage={(msg) => {
+              updateDraft({
+                pendingThreadMessages: [...(draft.data.pendingThreadMessages ?? []), msg],
+              });
+            }}
           />
         );
 
