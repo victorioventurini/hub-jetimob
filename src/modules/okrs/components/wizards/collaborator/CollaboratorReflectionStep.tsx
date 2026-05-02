@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, MessageSquare, HelpCircle } from 'lucide-react';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
-import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
+import { AgendaSuggestionsPrioritizer } from '@/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer';
 import type { CollaboratorReflection, CollaboratorCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
