@@ -83,14 +83,14 @@ describe('WizardFirstStepFooter', () => {
 });
 
 describe('WizardLastStepFooter', () => {
-  it('shows "Concluir" label', () => {
+  it('shows "Finalizar e enviar" label', () => {
     render(<WizardLastStepFooter onBack={vi.fn()} onPrimary={vi.fn()} />);
-    expect(screen.getByText('Concluir')).toBeInTheDocument();
+    expect(screen.getByText('Finalizar e enviar')).toBeInTheDocument();
   });
 
   it('shows loading label when primaryLoading', () => {
     render(<WizardLastStepFooter onBack={vi.fn()} onPrimary={vi.fn()} primaryLoading />);
-    expect(screen.getByText('Concluindo...')).toBeInTheDocument();
+    expect(screen.getByText('Enviando…')).toBeInTheDocument();
   });
 });
 

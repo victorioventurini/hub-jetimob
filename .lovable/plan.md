@@ -1,56 +1,65 @@
 ## Objetivo
 
-No wizard `/rituals/collaborator-checkin`, ocultar itens já concluídos (não há o que atualizar):
+Padronizar o rodapé canônico dos wizards de ritual (`WizardStepFooter`) conforme o mockup: `Voltar` (ghost) · `Pular` (outlined, opcional) · `Continuar` (primário, ocupando a largura restante). Diferenciar copy do primeiro e do último step.
 
-1. **Iniciativas concluídas** (`status = 'completed'`) não aparecem no Step "Iniciativas".
-2. **Milestones concluídos** (`status = 'done'`) não aparecem no Step "Projetos" (já filtrado na renderização — reforçar na origem da query).
+## Escopo da mudança
 
-Conformidade verificada: TCR §4.8 (Filtro de Iniciativas do Step), memória `collaborator-initiatives-step-scope`, `soft-delete-policy-v1`, `query-optimization-standard`, `milestone-permissions-row-aware`.
+Único arquivo alterado: `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx`. Como TODOS os ritos (Collaborator, Weekly, Pre-Weekly, MBR, MBR-Pre, QBR Meeting, Leader-Prep, Team-OKR-Creation) já consomem este componente e seus presets, a mudança propaga automaticamente — zero edição nos steps.
 
----
+## Comportamento
 
-## Mudanças
+### Rodapé canônico (steps intermediários — `WizardStepFooter` / `WizardOptionalStepFooter`)
+- **Voltar** — ghost à esquerda, ícone `←`, largura natural (atual).
+- **Pular** — outlined (variant `outline`, não mais `ghost`), ícone `SkipForward`, largura natural. Mantém regra atual de visibilidade (`showSkip` controlado por step — não passa a aparecer onde hoje não aparece).
+- **Continuar** — primário à direita, ocupa a **largura restante** (`flex-1` no desktop), copy `Continuar →`.
 
-### 1. `CollaboratorInitiativesStep.tsx` — filtrar completed server-side
+### Primeiro step (`WizardFirstStepFooter`)
+- Sem botão Voltar (mantido).
+- Primário com copy padrão **`Começar →`** (parâmetro `primaryLabel` continua opcional para sobrescrever em casos especiais).
+- Continua ocupando largura restante.
 
-Na query de `okr_initiatives` (linhas ~94-129), adicionar:
-```ts
-.neq('status', 'completed')
-```
+### Último step (`WizardLastStepFooter`)
+- Primário com copy **`Finalizar e enviar`** + ícone `CheckCircle2`, variant `success`.
+- Estado de loading: `Enviando…`.
+- Mantém o `AlertDialog` de confirmação atual (texto do dialog inalterado).
 
-### 2. `useCollaboratorInitiativesSignal.ts` — consistência com Step 1
+### Layout responsivo
+- **Desktop (sm+):** linha única com Voltar à esquerda, Pular ao centro (quando presente) e Continuar largo à direita. Continuar usa `flex-1` no container direito; Pular fica antes dele com `shrink-0`.
+- **Mobile:** mantém `flex-col-reverse` empilhado, com Continuar full-width no topo, Pular abaixo e Voltar por último — preserva safe-area atual.
 
-Mesmo `.neq('status', 'completed')` para que o card "Atividade da Semana" (Step 1) reflita o que aparece no Step "Iniciativas".
+## Detalhes técnicos
 
-### 3. `CollaboratorProjectsStep.tsx` — endurecer query `myMilestones`
+Mudanças pontuais em `WizardStepFooter.tsx`:
 
-Na query `myMilestones` (linhas 138-153), adicionar:
-```ts
-.neq('project_milestones.status', 'done')
-```
-Evita puxar projetos onde o colaborador só tem marcos `done` (e não é owner do projeto). O filtro de renderização (linha 207, `m.status !== 'done'`) permanece como segunda barreira.
+1. **Novo default de `primaryLabel`** dentro de `WizardFirstStepFooter`:
+   ```tsx
+   export function WizardFirstStepFooter(props) {
+     return <WizardStepFooter primaryLabel="Começar" {...props} showBack={false} />;
+   }
+   ```
+   (spread depois do default para permitir override.)
 
-### 4. Atualizar memória `collaborator-initiatives-step-scope`
+2. **Atualizar `WizardLastStepFooter`:**
+   - `primaryLabel` default: `"Finalizar e enviar"` (era `"Concluir"`).
+   - Loading label: `"Enviando…"` (era `"Concluindo…"`).
 
-Adicionar nota: "iniciativas com `status='completed'` são excluídas server-side — não há ação possível em itens concluídos."
+3. **Trocar variante do botão Pular:** `variant="ghost"` → `variant="outline"`; remover `text-muted-foreground`.
 
----
+4. **Continuar com largura restante (desktop):**
+   - No container right (`<div className="flex items-center gap-2 ...">`), o botão primário ganha `sm:flex-1` quando NÃO há `rightContent` customizado.
+   - O container right ganha `sm:flex-1` para ocupar o espaço restante após Voltar/Pular.
+   - O container left mantém `shrink-0`.
 
-## Fora de escopo
-
-- Não alterar `useUserKrsForWizard` (escopo de KRs permanece).
-- Não mexer em RLS, permissões, tipos ou componentes compartilhados.
-- Não alterar a query `projectsByKr` do Step "Iniciativas" (badges informativas).
-
-## Arquivos afetados
-
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
-- `src/modules/okrs/hooks/useCollaboratorInitiativesSignal.ts`
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
-- `.lovable/memory/features/rituals/collaborator-initiatives-step-scope.md`
+5. **Não mexer em:** props públicas, `WizardOptionalStepFooter`, `AlertDialog`, comportamento de `leftContent`/`rightContent` customizados, testes existentes (vão ser ajustados se quebrarem por copy).
 
 ## Validação
 
-- `?step=initiatives` com usuário que tenha iniciativa `completed` → não deve listar.
-- `?step=projects` com usuário cujos milestones são todos `done` (sem ser owner do projeto) → projeto não aparece.
-- Card "Atividade da Semana" (Step 1): contador de iniciativas bate com a lista do Step "Iniciativas".
+- Rodar `WizardStepFooter.test.tsx`; ajustar assertions de texto se baterem em `"Concluir"` literal.
+- Smoke visual em 3 ritos para confirmar layout: Collaborator Check-in (intermediário com Pular), Weekly Opening (primeiro step), Collaborator Summary (último step).
+- Conferir mobile (`flex-col-reverse`) — Continuar deve ficar full-width no topo da pilha.
+
+## Fora de escopo
+
+- Copy dos labels de step do Collaborator (já ajustada na resposta anterior).
+- Mudar `showSkip` em qualquer step (mantido o que já está hoje).
+- Alterar o dialog de confirmação do último step.
