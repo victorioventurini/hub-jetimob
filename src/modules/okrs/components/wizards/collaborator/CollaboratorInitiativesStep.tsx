@@ -258,7 +258,7 @@ export function CollaboratorInitiativesStep({
             icon={ClipboardList}
             title="Iniciativas vinculadas"
             tooltip="collaborator-initiatives"
-            description="Revise as iniciativas e marque as que precisam de atenção"
+            description="Revise o andamento das suas iniciativas no ciclo"
             variant="purple"
           />
         }
@@ -312,7 +312,7 @@ export function CollaboratorInitiativesStep({
           </div>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Revise as iniciativas e marque as que precisam de atenção.
+          Revise o andamento das suas iniciativas. Bloqueadas e atrasadas já vêm sinalizadas.
         </p>
       </div>
 

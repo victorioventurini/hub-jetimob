@@ -1,50 +1,19 @@
-# Padronizar UI de Iniciativas no Check-in do Colaborador
+## Contexto
 
-## Objetivo
+No step `Iniciativas` do Check-in Individual, o copy ainda diz "Revise as iniciativas e marque as que precisam de atenção". A funcionalidade de "marcar como atenção" foi removida — o usuário hoje só revisa e (se for owner) faz quick update. O badge vermelho "X atenção" no header continua existindo, mas é derivado automaticamente do status (`blocked` + `overdue`), não de uma ação manual.
 
-Na rota `/rituals/collaborator-checkin?step=initiatives`:
+## Mudança
 
-1. **Remover** o botão/área "Comentar" por iniciativa.
-2. **Reutilizar a mesma UI canônica usada dentro do módulo OKRs** (`InitiativeCard` agrupado por KR), em vez do componente `InitiativesSummary` específico do wizard.
+Atualizar o copy nos dois pontos do `CollaboratorInitiativesStep.tsx` para refletir que a revisão é passiva (sem marcação manual), mantendo o badge automático.
 
-Resultado: o colaborador vê suas iniciativas com a mesma aparência (status badge, prioridade, owner com avatar, datas, progresso) e o mesmo menu de ações (Atualizar / Editar / Excluir) que existe na tela de detalhes de KR.
+**Arquivo:** `src/modules/okrs/components/wizards/collaborator/CollaboratorInitiativesStep.tsx`
 
-## Escopo
+- **Linha 261** (header do estado vazio / scaffold):
+  - **De:** `Revise as iniciativas e marque as que precisam de atenção`
+  - **Para:** `Revise o andamento das suas iniciativas no ciclo`
 
-- **Apenas** o step de iniciativas do Check-in Individual (`CollaboratorInitiativesStep.tsx`).
-- **Não alterar** `InitiativesSummary` (segue sendo usado no Pré-Weekly e demais wizards do time/líder, onde o "marcar em risco" e o agrupamento de atenção fazem sentido).
-- **Não alterar** a query de iniciativas, o filtro por owner/contributor, nem a hidratação de owner.
-- **Não tocar** em business logic / RLS / permissões.
+- **Linha 315** (subtítulo do header com lista):
+  - **De:** `Revise as iniciativas e marque as que precisam de atenção.`
+  - **Para:** `Revise o andamento das suas iniciativas. Bloqueadas e atrasadas já vêm sinalizadas.`
 
-## Mudanças (frontend only)
-
-### `CollaboratorInitiativesStep.tsx`
-
-1. Remover import de `InitiativesSummary`.
-2. Importar `InitiativeCard` de `@/modules/okrs/components/initiatives/InitiativeCard`.
-3. Para cada KR (loop existente `initiativesByKr`), renderizar a lista com `InitiativeCard`:
-   - `onQuickUpdate={(init) => setEditingInitiative(init)}` apenas quando o usuário pode editar (mesma regra atual: `init.owner_user_id === effectiveUserId`).
-   - `onEdit` e `onDelete`: **não** passar (o step é de check-in, não de gestão; mantém consistência com o que já era exposto antes — só "Atualizar").
-   - Não passar `onComment` / nada relacionado a comentário (não existe mais).
-4. Remover o estado `markedAtRisk` e a lógica `handleMarkAtRisk`:
-   - O `InitiativesSummary` era o único consumidor desse estado.
-   - `onContinue` passa a ser chamado com `[]` sempre (mantém assinatura para não quebrar o caller). Se preferir, simplificamos a assinatura — confirmar antes de implementar.
-5. Remover o badge "X sinalizadas" no botão Continuar (decorre do item 4).
-6. Manter intactos: header com contagem/atenção, prompt do Lightbulb, ScrollArea, listagem de Projetos por KR, `MicrocopyQuestion` final, `InlineAgendaSuggestionInput`, `InitiativeQuickUpdateDialog`, footer Voltar/Pular/Continuar e empty state.
-
-### Caller do step
-
-- `CollaboratorCheckinPage.tsx` (e `CollaboratorDraftData.initiativesMarkedAtRisk`): hoje recebe a lista de IDs em risco. Como não há mais marcação, o array fica sempre vazio. **Não removemos o campo do draft** nesta entrega para evitar migração de snapshots — apenas paramos de populá-lo. Marcar como `@deprecated` no tipo.
-
-## Detalhes técnicos
-
-- `InitiativeCard` já consome `Initiative` com `owner` populado — compatível com a hidratação que o step já faz.
-- `InitiativeCard` já mostra: status badge (com ícone), badge de prioridade (≠ medium), título, owner com avatar + `UserLink`, range de datas, progress bar e dropdown de ações.
-- O agrupamento por KR (header com título do KR + contador) permanece como está hoje no step.
-- Sem mudanças de query keys, RLS, BU isolation ou tipos do banco.
-
-## Fora de escopo
-
-- Persistir comentários de iniciativa em algum outro lugar.
-- Repensar o "marcar em risco" no Pré-Weekly do time.
-- Alterar `InitiativesSummary` ou outros wizards.
+Sem outras mudanças — botões, badges automáticos e quick update permanecem como estão.
