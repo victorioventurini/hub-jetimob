@@ -481,11 +481,6 @@ export function CollaboratorSummary({
       for (const r of skippedKrs) lines.push(`- ${r.krTitle ?? r.krId}`);
     }
 
-    if (blockers.length > 0) {
-      lines.push('\n## Bloqueadores');
-      for (const r of blockers) lines.push(`- **${r.krTitle ?? r.krId}**: ${r.blocker}`);
-    }
-
     if (pendencyGroups.length > 0) {
       lines.push('\n## Pendências');
       for (const g of pendencyGroups) {
