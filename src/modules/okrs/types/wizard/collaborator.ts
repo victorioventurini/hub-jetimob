@@ -51,3 +51,32 @@ export interface KpiCheckinResult {
   notes?: string;
   skipped: boolean;
 }
+
+// ============================================================
+// PENDING MUTATIONS — bufferizadas no draft do Check-in Individual
+// e persistidas em batch no Concluir do Summary.
+// ============================================================
+
+import type { TeamCheckinDecision } from './shared';
+import type { MilestoneStatus } from '@/modules/projects/types';
+
+/** Mudança bufferizada de status de milestone (toggle inline). */
+export interface PendingMilestoneStatusChange {
+  milestoneId: string;
+  projectId: string;
+  status: MilestoneStatus;
+}
+
+/** Atualização bufferizada de follow-up de decisão. */
+export interface PendingDecisionFollowUpUpdate {
+  sessionId: string;
+  decisionId: string;
+  updates: Partial<TeamCheckinDecision> & { followUpStatus?: 'pending' | 'done' };
+}
+
+/** Mensagem bufferizada de thread de decisão. */
+export interface PendingDecisionThreadMessage {
+  sessionId: string;
+  decisionId: string;
+  content: string;
+}
