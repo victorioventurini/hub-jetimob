@@ -106,6 +106,7 @@ const DEFAULT_DATA: CollaboratorDraftData = {
   pendingMilestoneStatusChanges: [],
   pendingFollowUpUpdates: [],
   pendingThreadMessages: [],
+  teamCheckinAgendaSuggestions: [],
 };
 
 // ============================================================
