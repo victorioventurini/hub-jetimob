@@ -753,20 +753,6 @@ export function CollaboratorSummary({
       }
       topFixed={
         <div className="px-6 py-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 border-b bg-muted/20">
-          <a href="#section-krs" className="text-center hover:opacity-70 transition-opacity">
-            <div className="flex items-center justify-center gap-1 text-success">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-xl font-bold">{stats.krsCompleted}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">KRs</p>
-          </a>
-          <a href="#section-krs" className="text-center hover:opacity-70 transition-opacity">
-            <div className="flex items-center justify-center gap-1 text-muted-foreground">
-              <SkipForward className="h-4 w-4" />
-              <span className="text-xl font-bold">{stats.krsSkipped}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pulados</p>
-          </a>
           <a href="#section-kpis" className="text-center hover:opacity-70 transition-opacity">
             <div className="flex items-center justify-center gap-1 text-primary">
               <Activity className="h-4 w-4" />
@@ -780,6 +766,32 @@ export function CollaboratorSummary({
               <span className="text-xl font-bold">{stats.milestoneChanges}</span>
             </div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Marcos</p>
+          </a>
+          <a href="#section-initiatives" className="text-center hover:opacity-70 transition-opacity">
+            <div
+              className={cn(
+                'flex items-center justify-center gap-1',
+                stats.initiativesAtRisk > 0 ? 'text-warning' : 'text-muted-foreground',
+              )}
+            >
+              <Rocket className="h-4 w-4" />
+              <span className="text-xl font-bold">{stats.initiativesAtRisk}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Iniciativas</p>
+          </a>
+          <a href="#section-krs" className="text-center hover:opacity-70 transition-opacity">
+            <div className="flex items-center justify-center gap-1 text-success">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-xl font-bold">{stats.krsCompleted}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">KRs</p>
+          </a>
+          <a href="#section-krs" className="text-center hover:opacity-70 transition-opacity">
+            <div className="flex items-center justify-center gap-1 text-muted-foreground">
+              <SkipForward className="h-4 w-4" />
+              <span className="text-xl font-bold">{stats.krsSkipped}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pulados</p>
           </a>
           <a href="#section-pendencies" className="text-center hover:opacity-70 transition-opacity">
             <div className="flex items-center justify-center gap-1 text-status-blue">
