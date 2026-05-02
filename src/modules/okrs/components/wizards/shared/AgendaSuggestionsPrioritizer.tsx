@@ -166,6 +166,7 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
           sourceStep={SUMMARY_SOURCE_STEP}
           triggerLabel={`Adicionar sugestão de pauta para o ${ritualLabel}`}
           placeholder={`Descreva o ponto a ser discutido no ${ritualLabel}...`}
+          categoryless={categoryless}
         />
 
         {hasSuggestions && prioritizedCount === 0 && (
