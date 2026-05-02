@@ -86,13 +86,7 @@ export function CollaboratorInitiativesStep({
   const { currentBuId } = useBu();
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
-  // KR titles vindos do array `krs` (enriquecimento de exibição).
-  // A lista de iniciativas é centrada no usuário (ver query abaixo).
-  const krTitleById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const kr of krs) map.set(kr.id, kr.title);
-    return map;
-  }, [krs]);
+
 
   // Fetch initiatives centered on the collaborator (owner OR contributor)
   // for the active cycle. KRs são derivados das iniciativas retornadas.
