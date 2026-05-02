@@ -692,7 +692,7 @@ export function CollaboratorSummary({
         const total =
           (reflection?.impactSummary ? 1 : 0) +
           (reflection?.helpNeeded ? 1 : 0) +
-          teamCheckinAgendaSuggestions.length;
+          (onTeamCheckinAgendaSuggestionsChange ? 0 : teamCheckinAgendaSuggestions.length);
         return (
           <SectionShell
             key="reflection"
