@@ -82,6 +82,8 @@ export interface CollaboratorSummaryProps {
   pendingThreadMessages?: PendingDecisionThreadMessage[];
   /** Sugestões de pauta para o Check-in do Time (categoryless) */
   teamCheckinAgendaSuggestions?: RitualAgendaSuggestion[];
+  /** Quando fornecido, habilita edição/priorização das sugestões direto na Summary. */
+  onTeamCheckinAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   visibleStepOrder: readonly WizardStep[];
   effectiveUserId: string | null;
   cycleName?: string;
