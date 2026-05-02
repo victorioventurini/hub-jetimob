@@ -1,39 +1,66 @@
-# Step "Projetos" do Check-in Individual — Ajustes de escopo e UI
+## Pré-checklist (executado)
 
-## Mudanças solicitadas
+- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — **achado decisivo**: `okr_checkins.comments` no Check-in Individual (wizard colaborador) deve ser **texto puro**. Menções (@) são processadas **apenas** no `CheckinDialog` do drawer `/okrs`. → Não trazer `InternalMentionInput` para o wizard.
+- ✅ `docs/canonical/IDENTITY_CONVENTION.md` — `okr_checkins.user_id` é `profile_id`. `useCreateCheckin` já usa `profileId` corretamente.
+- ✅ `docs/canonical/DATA_MODEL_REGISTRY.md` — schema de `okr_checkins` confirmado; sem mudanças de DB.
+- ✅ `mem://standards/progress-visualization-unification` — `OkrProgressBar` é canônico (já dentro do `CheckinProgressBlock`).
+- ✅ `mem://features/rituals/collaborator-step1-order-mirrors-steps` — `STEP_ORDER` é SSOT; este plano não altera ordem nem lista de steps.
 
-1. **Exibir somente milestones em que o próprio usuário é o responsável** (owner do milestone), mesmo nos projetos em que ele é dono do projeto.
-2. **Remover o botão "Editar projeto"** que aparece no cabeçalho do card quando o usuário é dono do projeto.
+## Objetivo
 
-## Comportamento atual (que muda)
+Alinhar visualmente e estruturalmente o step `checkin` do Wizard Colaborador (`CollaboratorCheckinStep.tsx`) ao **modal de atualização de KR** (`CheckinDialog`), reutilizando os blocos centralizados em `src/modules/okrs/components/checkin/` — **sem duplicar componentes e respeitando o TCR (sem menções no wizard)**.
 
-- Hoje, quando o usuário é dono de um projeto, o card lista **todos os marcos pendentes** do projeto (sejam dele ou de outras pessoas).
-- Hoje, quando o usuário é dono do projeto, aparece um botão "Editar projeto" no canto superior direito do card que abre o `ProjectDialog`.
+## Diagnóstico
 
-## Comportamento novo
+| Bloco visual | `CheckinDialog` (modal) | `CollaboratorCheckinStep` (wizard, hoje) |
+|---|---|---|
+| Contexto do KR (Objetivo/KR/status) | `CheckinContextBlock` | `KrContextCard` (layout próprio) |
+| Progresso: barra + Anterior → Meta + Valor atual | `CheckinProgressBlock` (com `OkrProgressBar`) | Input puro + delta textual (sem barra, sem grid Anterior/Meta) |
+| Status atual (On/At/Off Track) | `CheckinStatusSelector` (3 cards) | `RadioGroup` "Confiança" (Alta/Média/Baixa) |
+| KR com KPI primária bloqueada | bloco Lock + link KPI | bloco Lock + link KPI ✅ já igual |
+| Reflexão | `CheckinReflectionBlock` (com mentions + próximo passo) | `Textarea` "Comentário" simples |
+| Próximo passo concreto | Sim, dentro de `CheckinReflectionBlock` | Não existe |
 
-- Lista de "Marcos pendentes" do card mostra **apenas milestones em que `milestone.owner_id === effectiveUserId`** (independente do usuário ser dono do projeto ou não).
-- Projetos sem nenhum milestone pendente do usuário continuam aparecendo (preserva visibilidade do projeto que ele lidera), exibindo a mensagem padrão de "Todos os marcos concluídos ✓" ou similar.
-- Cabeçalho do card não mostra mais "Editar projeto". Edição segue disponível pelo módulo de Projetos.
-- Edição inline de milestone (botão lápis ao lado de cada linha) **permanece**, pois agora todos os milestones listados são do próprio usuário.
+## Mudanças propostas — somente frontend, 1 arquivo
 
-## Detalhes técnicos
+Editar **apenas** `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep.tsx`:
 
-Arquivo único: `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
+1. **Reaproveitar 3 blocos centralizados do modal** (sem duplicação):
+   - `CheckinContextBlock` no topo, substituindo o uso local de `KrContextCard` neste step (o `KrContextCard` continua usado em outros steps do wizard).
+   - `CheckinProgressBlock` para entrada de valor + barra + grid Anterior/Meta + preview (já trata internamente o caso `isAutomatic` com `primaryKpi`).
+   - `CheckinStatusSelector` no lugar do `RadioGroup` "Confiança". Mapear status RAG → confidence usando o helper `statusToConfidence` já existente em `useCreateCheckin.ts` (`green→high`, `yellow→medium`, `red→low`).
 
-- No `processProject`, ao montar `milestones`, adicionar filtro `m.owner_id === effectiveUserId` junto ao filtro `status !== 'done'` existente.
-- Recalcular `pendingMilestonesCount` continua válido (deriva de `projects.map(p => p.milestones)` já filtrado).
-- Remover:
-  - `useUpdateProject`, `ProjectDialog` e import de `Pencil` (verificar se ainda é usado pelo botão de editar milestone — sim, é, manter o import).
-  - State `editingProject` e setter.
-  - Handler `handleProjectEditSubmit`.
-  - Bloco JSX do botão "Editar projeto" (linhas ~362-372).
-  - Bloco JSX `<ProjectDialog ... />` no final do componente.
-- Os totais `milestones_total`/`milestones_done`/`completion_pct` exibidos na barra de progresso continuam refletindo o **projeto inteiro** (não filtrar — a barra é do projeto, não do usuário). Manter como está.
-- Não mexer em queries/RLS/permissões — apenas presentation layer.
+2. **Reflexão sem mentions (decisão TCR)**: 
+   - Não usar `CheckinReflectionBlock` direto (ele acopla `InternalMentionInput`). 
+   - **Opção A (preferida)**: criar variante leve `CheckinReflectionBlockPlain` em `src/modules/okrs/components/checkin/` que reaproveita os mesmos labels/microcopies mas usa `Textarea` puro — e usar essa variante tanto no wizard quanto, no futuro, em qualquer fluxo "sem menções". Mantém SSOT visual sem violar TCR.
+   - **Opção B**: estender `CheckinReflectionBlock` com prop `enableMentions?: boolean` (default `true`) e passar `false` no wizard. Menos arquivos, mesmo SSOT.
+   - Ambas trazem o campo "Próximo passo concreto (recomendado)" para o wizard, alinhando com o modal.
 
-## Fora de escopo
+3. **Adaptador de dados**: construir um objeto `CheckinKrData` a partir do `WizardKr` (mapear `objective_title → team_objective.title`, `owner_name/photo → owner.display_name/photo_url`, manter `team_id`, `unit`, `direction`, etc.) — função pura local ao componente.
 
-- Lógica de quais projetos aparecem (continua: dono do projeto OU dono de algum milestone pendente).
-- Edição de milestone inline (mantida).
-- Outras etapas do wizard.
+4. **Persistência alinhada ao modal** (sem alterar schema):
+   - `comments` = `reflection.trim()` + (se houver) `"\n\n📌 Próximo passo: " + nextStep.trim()` — mesmo formato que o `CheckinDialog` grava hoje em `okr_checkins.comments`.
+   - Continuar via `useCreateCheckin` (não duplicar mutation).
+   - Validação: reflexão obrigatória ≥ 10 caracteres (igual ao modal). Hoje o wizard não exige reflexão — alinhar.
+
+5. **Footer do wizard preservado**: `Voltar / Pular / Salvar e próximo / Salvar e concluir` + atalho Ctrl+Enter. Apenas o miolo (blocos) é trocado.
+
+6. **Manter no topo**: `AlertBanner` (overdue/no_update) e `AskToVicStepHelper`. Remover `MicrocopyQuestion` redundante (a label da reflexão já carrega o prompt).
+
+## Arquivos tocados
+
+- **Editar**: `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep.tsx`
+- **Criar (Opção A) ou Editar (Opção B)**: `src/modules/okrs/components/checkin/CheckinReflectionBlock.tsx` (ou variante `*Plain`).
+- **Não criar**: nenhum bloco visual novo além do ponto acima. Zero duplicação de `CheckinContextBlock`, `CheckinProgressBlock`, `CheckinStatusSelector`.
+
+## Não-objetivos
+
+- Não alterar schema `okr_checkins`.
+- Não trazer @menções para o wizard (proibido pelo TCR).
+- Não alterar `STEP_ORDER` nem snapshot do Step 1.
+- Não mexer no modal `CheckinDialog`.
+
+## Decisão pendente (única)
+
+**Opção A (novo `CheckinReflectionBlockPlain`)** ou **Opção B (prop `enableMentions` no bloco existente)**?
+Recomendação: **Opção B** — menos arquivos, mesmo componente como SSOT visual da reflexão, controlado por uma flag clara.
