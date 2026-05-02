@@ -336,6 +336,7 @@ export function CollaboratorSummary({
   pendingFollowUpUpdates = [],
   pendingThreadMessages = [],
   teamCheckinAgendaSuggestions = [],
+  onTeamCheckinAgendaSuggestionsChange,
   visibleStepOrder,
   effectiveUserId,
   cycleName,
