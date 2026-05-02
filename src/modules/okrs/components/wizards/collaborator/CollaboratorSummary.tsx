@@ -41,6 +41,8 @@ export interface CollaboratorSummaryProps {
   cycleName?: string;
   onViewOkrs: () => void;
   onClose: () => void;
+  onBack?: () => void;
+  isSubmitting?: boolean;
 }
 
 // ============================================================
@@ -55,6 +57,8 @@ export function CollaboratorSummary({
   cycleName,
   onViewOkrs,
   onClose,
+  onBack,
+  isSubmitting = false,
 }: CollaboratorSummaryProps) {
   // Stats
   const stats = useMemo(() => {
