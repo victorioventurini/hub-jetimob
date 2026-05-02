@@ -19,6 +19,9 @@ import {
   useLastCompletedSession,
 } from '@/modules/okrs/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks';
+import { useCreateCheckin } from '@/modules/okrs/hooks/useCreateCheckin';
+import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
+import { useUpdateDecisionFollowUp, useDecisionThread } from '@/modules/okrs/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useOptionalImpersonation } from '@/contexts/ImpersonationContext';
 import { useBuUsersDirectory } from '@/hooks/useBuUsersDirectory';
@@ -39,7 +42,14 @@ import { CollaboratorReflectionStep } from '@/modules/okrs/components/wizards/co
 import { CollaboratorSummary } from '@/modules/okrs/components/wizards/collaborator/CollaboratorSummary';
 import { CollaboratorDecisionsStep } from '@/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep';
 
-import type { CollaboratorCheckinResult, CollaboratorReflection, KpiCheckinResult } from '@/modules/okrs/types/wizard';
+import type {
+  CollaboratorCheckinResult,
+  CollaboratorReflection,
+  KpiCheckinResult,
+  PendingMilestoneStatusChange,
+  PendingDecisionFollowUpUpdate,
+  PendingDecisionThreadMessage,
+} from '@/modules/okrs/types/wizard';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import {
   WIZARD_STEPS,
@@ -60,6 +70,19 @@ interface CollaboratorDraftData {
   reflection: CollaboratorReflection;
   /** @deprecated Step de iniciativas migrou para `InitiativeCard`; lista permanece por retrocompat de snapshots, mas é sempre `[]`. */
   initiativesMarkedAtRisk: string[];
+  /**
+   * Mudanças bufferizadas de status de milestones (toggle inline no step de Projetos).
+   * Persistidas em batch ao Concluir.
+   */
+  pendingMilestoneStatusChanges: PendingMilestoneStatusChange[];
+  /**
+   * Atualizações bufferizadas de follow-up de decisões (step de Pendências).
+   */
+  pendingFollowUpUpdates: PendingDecisionFollowUpUpdate[];
+  /**
+   * Mensagens bufferizadas de thread de decisões (step de Pendências).
+   */
+  pendingThreadMessages: PendingDecisionThreadMessage[];
 }
 
 // WIZARD_STEPS / STEP_ORDER vivem em ./components/wizards/collaborator/wizardSteps
@@ -73,6 +96,9 @@ const DEFAULT_DATA: CollaboratorDraftData = {
   kpiResults: [],
   reflection: {},
   initiativesMarkedAtRisk: [],
+  pendingMilestoneStatusChanges: [],
+  pendingFollowUpUpdates: [],
+  pendingThreadMessages: [],
 };
 
 // ============================================================
@@ -302,11 +328,116 @@ export default function CollaboratorCheckinPage() {
   
   const [isCompleting, setIsCompleting] = useState(false);
 
+  // Mutations centralizadas — invocadas APENAS no Concluir do Summary.
+  // Steps individuais não persistem mais; apenas escrevem no draft.
+  const createCheckin = useCreateCheckin({ skipToast: true });
+  const updateMilestoneMutation = useUpdateMilestone();
+  const { mutateAsync: updateFollowUpAsync } = useUpdateDecisionFollowUp();
+  const { mutateAsync: addThreadMessageAsync } = useDecisionThread();
+
+  /**
+   * Persistência em batch — único ponto onde o Check-in Individual grava
+   * dados. Política de erro:
+   *   - Falhas em okr_checkins (críticas) impedem `clearDraft` para o
+   *     usuário poder reabrir e tentar novamente.
+   *   - Falhas em KPIs/milestones/decisões viram toast de aviso, mas não
+   *     bloqueiam a conclusão (compatível com o fail-safe original do KPI).
+   */
   const handleComplete = useCallback(async () => {
     setIsCompleting(true);
     try {
+      const krResults = (draft.data.results ?? []).filter(Boolean);
+      const kpiResultsList = (draft.data.kpiResults ?? []).filter(Boolean);
+      const milestoneChanges = draft.data.pendingMilestoneStatusChanges ?? [];
+      const followUpUpdates = draft.data.pendingFollowUpUpdates ?? [];
+      const threadMessages = draft.data.pendingThreadMessages ?? [];
+
+      // 1) okr_checkins — críticos. Sequencial p/ trigger DB respeitar ordem por KR.
+      let krFailures = 0;
+      for (const r of krResults) {
+        if (r.skipped) continue;
+        try {
+          await createCheckin.mutateAsync({
+            krId: r.krId,
+            currentValue: r.newValue,
+            previousValue: r.previousValue,
+            confidence: r.confidence,
+            comments: r.comment ?? '',
+            teamId: null,
+          });
+        } catch (e) {
+          krFailures += 1;
+          console.error('[CollaboratorCheckin] KR check-in failed:', r.krId, e);
+        }
+      }
+
+      // 2) kpi_values — fail-safe (warning toast, sem bloquear).
+      const kpiSettled = await Promise.allSettled(
+        kpiResultsList
+          .filter((k) => !k.skipped)
+          .map((k) =>
+            addKpiValueSilent.mutateAsync({
+              kpi_id: k.kpiId,
+              value: k.newValue,
+              reference_date: k.referenceDate,
+              notes: k.notes,
+              source: 'manual',
+              created_by: profile?.id,
+              input_type: k.inputType ?? 'consolidated',
+            }),
+          ),
+      );
+      const kpiFailures = kpiSettled.filter((s) => s.status === 'rejected').length;
+
+      // 3) project_milestones — fail-safe.
+      const msSettled = await Promise.allSettled(
+        milestoneChanges.map((m) =>
+          updateMilestoneMutation.mutateAsync({
+            id: m.milestoneId,
+            project_id: m.projectId,
+            status: m.status,
+          }),
+        ),
+      );
+      const msFailures = msSettled.filter((s) => s.status === 'rejected').length;
+
+      // 4) decision follow-ups + thread messages — fail-safe.
+      const decSettled = await Promise.allSettled([
+        ...followUpUpdates.map((u) =>
+          updateFollowUpAsync({
+            sessionId: u.sessionId,
+            decisionId: u.decisionId,
+            updates: u.updates,
+          }),
+        ),
+        ...threadMessages.map((m) =>
+          addThreadMessageAsync({
+            sessionId: m.sessionId,
+            decisionId: m.decisionId,
+            content: m.content,
+          }),
+        ),
+      ]);
+      const decFailures = decSettled.filter((s) => s.status === 'rejected').length;
+
+      const sideFailures = kpiFailures + msFailures + decFailures;
+
+      if (krFailures > 0) {
+        // Erros críticos — preserva draft.
+        toast.error(
+          `${krFailures} check-in(s) de KR não foram salvos. Seu rascunho foi preservado — tente concluir novamente.`,
+        );
+        return;
+      }
+
+      if (sideFailures > 0) {
+        toast.warning(
+          `Check-in registrado, mas ${sideFailures} item(ns) auxiliar(es) falhou(aram). Verifique nos respectivos módulos.`,
+        );
+      }
+
       const completedSessionId = await clearDraft();
-      toast.success('Check-in concluído!');
+      if (krFailures === 0 && sideFailures === 0) toast.success('Check-in concluído!');
 
       // Fire-and-forget summary email BEFORE navigating (avoids fetch cancellation)
       if (completedSessionId && currentBu?.id) {
@@ -322,7 +453,23 @@ export default function CollaboratorCheckinPage() {
     } finally {
       setIsCompleting(false);
     }
-  }, [clearDraft, navigate, buSupabase, currentBu]);
+  }, [
+    clearDraft,
+    navigate,
+    buSupabase,
+    currentBu,
+    draft.data.results,
+    draft.data.kpiResults,
+    draft.data.pendingMilestoneStatusChanges,
+    draft.data.pendingFollowUpUpdates,
+    draft.data.pendingThreadMessages,
+    createCheckin,
+    addKpiValueSilent,
+    updateMilestoneMutation,
+    updateFollowUpAsync,
+    addThreadMessageAsync,
+    profile?.id,
+  ]);
   
   // Loading - include auth loading to ensure profile is available
   if (isAuthLoading || isLoadingCycles || isLoadingKrs || isLoadingKpis) {
@@ -427,25 +574,9 @@ export default function CollaboratorCheckinPage() {
             kpi={kpiForStep}
             currentIndex={draft.data.currentKpiIndex}
             totalCount={kpis.length}
-            onComplete={async (result) => {
-              // FAIL-SAFE: Salvar KPI sem bloquear wizard
-              // Erros são logados mas não impedem avanço
-              try {
-                await addKpiValueSilent.mutateAsync({
-                  kpi_id: result.kpiId,
-                  value: result.newValue,
-                  reference_date: result.referenceDate,
-                  notes: result.notes,
-                  source: 'manual',
-                  created_by: profile?.id,
-                  input_type: result.inputType ?? 'consolidated',
-                });
-              } catch (error) {
-                // Erro logado, mas wizard continua (fail-safe)
-                console.warn('[CollaboratorCheckin] KPI save failed (continuing):', error);
-                toast.warning('Não foi possível salvar o valor do KPI. Tente novamente pelo módulo de KPIs.');
-              }
-              
+            onComplete={(result) => {
+              // Bufferizar APENAS no draft. Persistência (`kpi_values.insert`)
+              // acontece no Concluir do Summary (handleComplete em batch).
               const newKpiResults = [...draft.data.kpiResults];
               newKpiResults[draft.data.currentKpiIndex] = result;
               const nextIndex = draft.data.currentKpiIndex + 1;
@@ -453,9 +584,9 @@ export default function CollaboratorCheckinPage() {
                 updateDraft({ kpiResults: newKpiResults });
                 goNext();
               } else {
-                updateDraft({ 
+                updateDraft({
                   kpiResults: newKpiResults,
-                  currentKpiIndex: nextIndex 
+                  currentKpiIndex: nextIndex
                 });
               }
             }}
@@ -478,15 +609,28 @@ export default function CollaboratorCheckinPage() {
         );
       }
 
-      case 'projects':
+      case 'projects': {
+        const pendingMap: Record<string, import('@/modules/projects/types').MilestoneStatus> = {};
+        for (const c of draft.data.pendingMilestoneStatusChanges ?? []) {
+          pendingMap[c.milestoneId] = c.status;
+        }
         return (
           <CollaboratorProjectsStep
             effectiveUserId={effectiveUserId}
             onContinue={goNext}
             onBack={goBack}
             onSkip={goNext}
+            pendingMilestoneStatusChanges={pendingMap}
+            onMilestoneStatusChange={(milestoneId, projectId, status) => {
+              const list = (draft.data.pendingMilestoneStatusChanges ?? []).filter(
+                (c) => c.milestoneId !== milestoneId,
+              );
+              list.push({ milestoneId, projectId, status });
+              updateDraft({ pendingMilestoneStatusChanges: list });
+            }}
           />
         );
+      }
 
       case 'initiatives':
         return (
@@ -510,6 +654,20 @@ export default function CollaboratorCheckinPage() {
             onContinue={goNext}
             onBack={goBack}
             onSkip={goNext}
+            pendingFollowUpUpdates={draft.data.pendingFollowUpUpdates ?? []}
+            onPendingFollowUpUpdate={(update) => {
+              const list = (draft.data.pendingFollowUpUpdates ?? []).filter(
+                (u) => !(u.sessionId === update.sessionId && u.decisionId === update.decisionId),
+              );
+              list.push(update);
+              updateDraft({ pendingFollowUpUpdates: list });
+            }}
+            pendingThreadMessages={draft.data.pendingThreadMessages ?? []}
+            onPendingThreadMessage={(msg) => {
+              updateDraft({
+                pendingThreadMessages: [...(draft.data.pendingThreadMessages ?? []), msg],
+              });
+            }}
           />
         );
 

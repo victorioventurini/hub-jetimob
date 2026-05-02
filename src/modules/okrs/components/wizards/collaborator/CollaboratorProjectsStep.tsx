@@ -21,6 +21,7 @@ import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgres
 import { MilestoneStatusSelect } from '@/modules/projects/components/MilestoneStatusSelect';
 import { MilestoneDialog, type MilestoneDialogSubmitValues } from '@/modules/projects/components/MilestoneDialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
@@ -40,6 +41,13 @@ export interface CollaboratorProjectsStepProps {
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
+  /**
+   * Mapa de mudanças de status de milestones bufferizadas no draft.
+   * Chave: milestoneId. Valor: novo status pendente.
+   * Persistência acontece somente no Concluir do Summary.
+   */
+  pendingMilestoneStatusChanges?: Record<string, MilestoneStatus>;
+  onMilestoneStatusChange?: (milestoneId: string, projectId: string, newStatus: MilestoneStatus) => void;
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
@@ -104,6 +112,8 @@ export function CollaboratorProjectsStep({
   onContinue,
   onBack,
   onSkip,
+  pendingMilestoneStatusChanges = {},
+  onMilestoneStatusChange,
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
@@ -212,17 +222,19 @@ export function CollaboratorProjectsStep({
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [milestoneProjects, ownedProjects, effectiveUserId]);
 
-  // Handle milestone status change (fire-and-forget, fail-safe)
+  // Toggle de status inline: APENAS bufferiza no draft.
+  // Persistência acontece no Concluir do Summary (handleComplete).
   const handleMilestoneStatusChange = (milestoneId: string, projectId: string, newStatus: MilestoneStatus) => {
-    try {
-      updateMilestone.mutate({
-        id: milestoneId,
-        project_id: projectId,
-        status: newStatus,
-      });
-    } catch (error) {
-      console.warn('[CollaboratorProjectsStep] Milestone update failed:', error);
-      toast.warning('Não foi possível atualizar o milestone. Tente novamente pelo módulo de Projetos.');
+    if (onMilestoneStatusChange) {
+      onMilestoneStatusChange(milestoneId, projectId, newStatus);
+    } else {
+      // Fallback (uso fora do wizard colaborador) — mantém comportamento ao vivo
+      try {
+        updateMilestone.mutate({ id: milestoneId, project_id: projectId, status: newStatus });
+      } catch (error) {
+        console.warn('[CollaboratorProjectsStep] Milestone update failed:', error);
+        toast.warning('Não foi possível atualizar o milestone. Tente novamente pelo módulo de Projetos.');
+      }
     }
   };
 
@@ -348,13 +360,16 @@ export function CollaboratorProjectsStep({
                     </p>
                     {project.milestones.map(milestone => {
                       const canEdit = canEditMilestoneRow(project, milestone.owner_id);
+                      const pendingStatus = pendingMilestoneStatusChanges[milestone.id];
+                      const effectiveStatus = pendingStatus ?? milestone.status;
+                      const hasPendingChange = pendingStatus !== undefined && pendingStatus !== milestone.status;
                       return (
                         <div
                           key={milestone.id}
                           className="flex items-center gap-2 py-1 min-w-0"
                         >
                           <MilestoneStatusSelect
-                            value={milestone.status}
+                            value={effectiveStatus}
                             onValueChange={(newStatus) =>
                               handleMilestoneStatusChange(milestone.id, project.id, newStatus)
                             }
@@ -362,6 +377,11 @@ export function CollaboratorProjectsStep({
                           <span className="text-sm text-foreground truncate flex-1 min-w-0">
                             {milestone.name}
                           </span>
+                          {hasPendingChange && (
+                            <Badge variant="outline" className="text-[10px] shrink-0 border-warning/40 text-warning">
+                              alterado
+                            </Badge>
+                          )}
                           {milestone.due_date && (
                             <span className={cn(
                               'text-xs whitespace-nowrap shrink-0',

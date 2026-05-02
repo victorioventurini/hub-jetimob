@@ -115,20 +115,23 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-6 bg-gradient-to-r from-success-muted to-transparent border-b">
+      <div className="px-6 py-6 bg-gradient-to-r from-primary/10 to-transparent border-b">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-full bg-success-muted">
-            <PartyPopper className="h-6 w-6 text-success" />
+          <div className="p-3 rounded-full bg-primary/10">
+            <PartyPopper className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold">Check-in concluído!</h3>
+            <h3 className="text-xl font-semibold">Revisão final</h3>
             <p className="text-muted-foreground">
               {cycleName && <span>{cycleName} • </span>}
-              {new Date().toLocaleDateString('pt-BR', { 
-                weekday: 'long', 
-                day: 'numeric', 
-                month: 'long' 
+              {new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
               })}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Nada foi gravado ainda. Revise abaixo e clique em <strong>Concluir</strong> para registrar tudo de uma vez.
             </p>
           </div>
         </div>

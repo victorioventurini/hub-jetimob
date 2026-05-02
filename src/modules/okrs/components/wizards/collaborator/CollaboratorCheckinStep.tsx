@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowRight, ArrowLeft, SkipForward, Sparkles } from 'lucide-react';
 import { AlertBanner } from '../shared/AlertBanner';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
-import { useCreateCheckin, statusToConfidence } from '@/modules/okrs/hooks/useCreateCheckin';
+import { statusToConfidence } from '@/modules/okrs/hooks/useCreateCheckin';
 import { usePrimaryKpiForKr } from '@/modules/okrs/hooks';
 import {
   CheckinContextBlock,
@@ -92,8 +92,6 @@ export function CollaboratorCheckinStep({
   const [reflection, setReflection] = useState('');
   const [nextStep, setNextStep] = useState('');
 
-  const createCheckin = useCreateCheckin({ skipToast: true });
-
   // Reset ao trocar de KR
   useEffect(() => {
     setCurrentValue(String(kr.current_value));
@@ -108,8 +106,10 @@ export function CollaboratorCheckinStep({
   const canSubmit = trimmedReflection.length >= 10;
   const isLast = currentIndex === totalCount - 1;
 
-  // Salvar — composição de `comments` igual ao CheckinDialog
-  const handleSave = useCallback(async () => {
+  // Salvar — apenas bufferiza no draft. Persistência (`okr_checkins.insert`)
+  // acontece SOMENTE no Concluir do Summary (handleComplete em CollaboratorCheckinPage).
+  // `comments` segue o formato do CheckinDialog para preservar o histórico.
+  const handleSave = useCallback(() => {
     if (!canSubmit) return;
 
     const numericValue = isAutomatic ? kr.current_value : parseFloat(currentValue) || 0;
@@ -118,28 +118,15 @@ export function CollaboratorCheckinStep({
       : trimmedReflection;
     const confidence = statusToConfidence(status);
 
-    try {
-      await createCheckin.mutateAsync({
-        krId: kr.id,
-        currentValue: numericValue,
-        previousValue: kr.current_value,
-        confidence,
-        comments: composedComments,
-        teamId: kr.team_id ?? null,
-      });
-
-      const result: CollaboratorCheckinResult = {
-        krId: kr.id,
-        previousValue: kr.current_value,
-        newValue: numericValue,
-        confidence,
-        comment: composedComments,
-        skipped: false,
-      };
-      onComplete(result);
-    } catch {
-      // erro já tratado pelo hook
-    }
+    const result: CollaboratorCheckinResult = {
+      krId: kr.id,
+      previousValue: kr.current_value,
+      newValue: numericValue,
+      confidence,
+      comment: composedComments,
+      skipped: false,
+    };
+    onComplete(result);
   }, [
     canSubmit,
     isAutomatic,
@@ -148,7 +135,6 @@ export function CollaboratorCheckinStep({
     nextStep,
     trimmedReflection,
     status,
-    createCheckin,
     onComplete,
   ]);
 
@@ -273,13 +259,11 @@ export function CollaboratorCheckinStep({
 
           <Button
             onClick={handleSave}
-            disabled={!canSubmit || createCheckin.isPending}
+            disabled={!canSubmit}
             className="flex-1"
-            isLoading={createCheckin.isPending}
-            loadingText="Salvando..."
           >
-            {isLast ? 'Salvar e concluir' : 'Salvar e próximo'}
-            {!isLast && !createCheckin.isPending && <ArrowRight className="h-4 w-4 ml-2" />}
+            {isLast ? 'Revisar' : 'Próximo'}
+            {!isLast && <ArrowRight className="h-4 w-4 ml-2" />}
           </Button>
         </div>
 
