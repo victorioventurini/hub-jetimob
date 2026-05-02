@@ -27,6 +27,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { EmptyState } from '@/components/ui/empty-state';
 import { InitiativeCard } from '@/modules/okrs/components/initiatives/InitiativeCard';
+import { KrContextCard } from '@/modules/okrs/components/wizards/shared/KrContextCard';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
@@ -85,13 +86,7 @@ export function CollaboratorInitiativesStep({
   const { currentBuId } = useBu();
   const [editingInitiative, setEditingInitiative] = useState<Initiative | null>(null);
 
-  // KR titles vindos do array `krs` (enriquecimento de exibição).
-  // A lista de iniciativas é centrada no usuário (ver query abaixo).
-  const krTitleById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const kr of krs) map.set(kr.id, kr.title);
-    return map;
-  }, [krs]);
+
 
   // Fetch initiatives centered on the collaborator (owner OR contributor)
   // for the active cycle. KRs são derivados das iniciativas retornadas.
@@ -109,11 +104,20 @@ export function CollaboratorInitiativesStep({
           kr:okr_team_key_results!inner (
             id,
             title,
+            baseline,
+            current_value,
+            target,
+            unit,
+            direction,
+            status,
+            last_checkin_at,
             team_objective:okr_team_objectives!inner (
               id,
+              title,
               cycle_id,
               cancelled_at,
-              deleted_at
+              deleted_at,
+              team:teams ( id, name )
             )
           )
         `)
@@ -203,23 +207,90 @@ export function CollaboratorInitiativesStep({
     return grouped;
   }, [projectsByKrData]);
 
-  // Group initiatives by KR + capture KR titles from the join (fallback when
-  // the KR isn't present in the `krs` prop, e.g. when the user is only a
-  // contributor of the initiative).
-  const { initiativesByKr, krTitleResolved } = useMemo(() => {
+  // KRs do prop (lookup por id) — fonte de verdade preferencial.
+  const krByIdProp = useMemo(() => {
+    const map = new Map<string, WizardKr>();
+    for (const kr of krs) map.set(kr.id, kr);
+    return map;
+  }, [krs]);
+
+  // Group initiatives by KR + monta um KR-data unificado (prop > join).
+  // Usado para renderizar o KrContextCard canônico em cada grupo.
+  const { initiativesByKr, krDataById } = useMemo(() => {
     const grouped = new Map<string, Initiative[]>();
-    const titles = new Map<string, string>(krTitleById);
+    const krMap = new Map<string, {
+      title: string;
+      objectiveTitle: string;
+      teamName?: string;
+      baseline: number;
+      currentValue: number;
+      target: number;
+      unit?: string;
+      direction: 'up' | 'down' | 'maintain';
+      status: 'green' | 'yellow' | 'red' | 'not_started';
+      progress: number;
+      lastCheckinAt?: string | null;
+      ownerName?: string | null;
+      ownerPhoto?: string | null;
+    }>();
+
     for (const init of initiatives) {
       const existing = grouped.get(init.kr_id) || [];
       existing.push(init);
       grouped.set(init.kr_id, existing);
-      const joinedTitle = (init as any).kr?.title as string | undefined;
-      if (joinedTitle && !titles.has(init.kr_id)) {
-        titles.set(init.kr_id, joinedTitle);
+
+      if (krMap.has(init.kr_id)) continue;
+
+      // Prefer prop (já tem progress calculado, owner etc.)
+      const fromProp = krByIdProp.get(init.kr_id);
+      if (fromProp) {
+        krMap.set(init.kr_id, {
+          title: fromProp.title,
+          objectiveTitle: fromProp.objective_title || '',
+          teamName: fromProp.team_name || undefined,
+          baseline: fromProp.baseline,
+          currentValue: fromProp.current_value,
+          target: fromProp.target,
+          unit: fromProp.unit || undefined,
+          direction: fromProp.direction as 'up' | 'down' | 'maintain',
+          status: (fromProp.status as any) ?? 'not_started',
+          progress: fromProp.progress,
+          lastCheckinAt: fromProp.last_checkin_at,
+          ownerName: fromProp.owner_name,
+          ownerPhoto: fromProp.owner_photo,
+        });
+        continue;
       }
+
+      // Fallback: dados do join (quando user é só contributor da iniciativa)
+      const krJoin = (init as any).kr;
+      if (!krJoin) continue;
+      const obj = krJoin.team_objective;
+      const baseline = Number(krJoin.baseline ?? 0);
+      const currentValue = Number(krJoin.current_value ?? 0);
+      const target = Number(krJoin.target ?? 0);
+      const range = target - baseline;
+      const progress = range !== 0
+        ? Math.min(100, Math.max(0, ((currentValue - baseline) / range) * 100))
+        : 0;
+      krMap.set(init.kr_id, {
+        title: krJoin.title ?? 'KR',
+        objectiveTitle: obj?.title ?? '',
+        teamName: obj?.team?.name ?? undefined,
+        baseline,
+        currentValue,
+        target,
+        unit: krJoin.unit ?? undefined,
+        direction: (krJoin.direction === 'maintain' ? 'maintain' : krJoin.direction) ?? 'up',
+        status: (krJoin.status as any) ?? 'not_started',
+        progress,
+        lastCheckinAt: krJoin.last_checkin_at ?? null,
+        ownerName: null,
+        ownerPhoto: null,
+      });
     }
-    return { initiativesByKr: grouped, krTitleResolved: titles };
-  }, [initiatives, krTitleById]);
+    return { initiativesByKr: grouped, krDataById: krMap };
+  }, [initiatives, krByIdProp]);
 
   // Stats
   const stats = useMemo(() => {
@@ -323,25 +394,44 @@ export function CollaboratorInitiativesStep({
               nas iniciativas do colaborador (e não sobre `krs` da prop). */}
           {Array.from(initiativesByKr.keys())
             .sort((a, b) =>
-              (krTitleResolved.get(a) ?? '').localeCompare(krTitleResolved.get(b) ?? '')
+              (krDataById.get(a)?.title ?? '').localeCompare(krDataById.get(b)?.title ?? '')
             )
             .map(krId => {
             const krInitiatives = initiativesByKr.get(krId) || [];
             const krProjects = projectsByKr.get(krId) || [];
-            const krTitle = krTitleResolved.get(krId) ?? 'KR';
+            const krData = krDataById.get(krId);
             if (krInitiatives.length === 0 && krProjects.length === 0) return null;
 
             return (
               <div key={krId} className="space-y-3 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">
-                    {krTitle}
-                  </h4>
+                {krData ? (
+                  <KrContextCard
+                    title={krData.title}
+                    objectiveTitle={krData.objectiveTitle}
+                    teamName={krData.teamName}
+                    baseline={krData.baseline}
+                    currentValue={krData.currentValue}
+                    target={krData.target}
+                    unit={krData.unit}
+                    direction={krData.direction}
+                    status={krData.status}
+                    progress={krData.progress}
+                    lastCheckinAt={krData.lastCheckinAt}
+                    ownerName={krData.ownerName}
+                    ownerPhoto={krData.ownerPhoto}
+                    compact
+                  />
+                ) : (
+                  <h4 className="text-sm font-medium text-muted-foreground">KR</h4>
+                )}
+
+                <div className="flex items-center gap-2 pl-1">
+                  <span className="text-xs text-muted-foreground">Iniciativas</span>
                   <Badge variant="outline" className="text-xs">
                     {krInitiatives.length}
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-3">
                   {krInitiatives.map((init) => {
                     const canEditThis =
@@ -401,7 +491,7 @@ export function CollaboratorInitiativesStep({
         initiative={editingInitiative}
         krContext={(() => {
           if (!editingInitiative) return undefined;
-          const title = krTitleResolved.get(editingInitiative.kr_id);
+          const title = krDataById.get(editingInitiative.kr_id)?.title;
           if (!title) return undefined;
           return { id: editingInitiative.kr_id, title };
         })()}
