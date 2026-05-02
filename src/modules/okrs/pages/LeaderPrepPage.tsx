@@ -452,6 +452,11 @@ export default function LeaderPrepPage() {
             metrics={metrics?.metrics || null}
             isLoading={isLoadingMetrics}
             lastCompletedAt={lastCheckin.lastCompletedAt}
+            collaboratorAgendaSuggestions={collaboratorAgendaSuggestions}
+            selectedAgendaSuggestionIds={
+              draft.data.selectedTeamCheckinAgendaSuggestionIds ?? []
+            }
+            onToggleAgendaSuggestion={handleToggleAgendaSuggestion}
             onContinue={goNext}
           />
         );
