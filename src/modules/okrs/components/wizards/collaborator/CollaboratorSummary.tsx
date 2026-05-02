@@ -787,18 +787,6 @@ export function CollaboratorSummary({
             </div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pendências</p>
           </a>
-          <a href="#section-blockers" className="text-center hover:opacity-70 transition-opacity">
-            <div
-              className={cn(
-                'flex items-center justify-center gap-1',
-                stats.withBlockers > 0 ? 'text-warning' : 'text-muted-foreground',
-              )}
-            >
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-xl font-bold">{stats.withBlockers}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Bloqueadores</p>
-          </a>
         </div>
       }
       footer={
