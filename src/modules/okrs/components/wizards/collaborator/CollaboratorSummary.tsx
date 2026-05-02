@@ -351,7 +351,7 @@ export function CollaboratorSummary({
   const decisionTitleMap = useMemo(() => {
     const m: Record<string, string> = {};
     for (const item of pendingDecisions) {
-      m[`${item.sessionId}::${item.decision.id}`] = item.decision.text || item.decision.title || 'Decisão';
+      m[`${item.sessionId}::${item.decision.id}`] = item.decision.text || 'Decisão';
     }
     return m;
   }, [pendingDecisions]);
