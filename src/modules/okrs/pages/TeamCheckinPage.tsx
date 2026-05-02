@@ -14,6 +14,7 @@ import {
   useTeamPendingKrs,
   useLastCompletedSession,
   useCarryOverDecisions,
+  useSelectedTeamCheckinAgenda,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useBu } from '@/contexts/BuContext';
@@ -121,6 +122,15 @@ export default function TeamCheckinPage() {
     wizardType: 'team-checkin',
     teamId: teamIdParam,
     enabled: !!teamIdParam,
+  });
+
+  // Pauta sugerida (selecionada pelo líder na preparação)
+  const {
+    prioritized: prioritizedAgendaSuggestions,
+    others: otherAgendaSuggestions,
+  } = useSelectedTeamCheckinAgenda({
+    teamId: teamIdParam,
+    cycleId: quarterlyCycle?.id ?? null,
   });
   
   // Dynamic steps: omit kr-review when no KRs
@@ -248,6 +258,8 @@ export default function TeamCheckinPage() {
             lastCompletedAt={lastCheckin.lastCompletedAt}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions) => updateDraft({ decisions })}
+            prioritizedAgendaSuggestions={prioritizedAgendaSuggestions}
+            otherAgendaSuggestions={otherAgendaSuggestions}
             onContinue={goNext}
             topSlot={
               <>
