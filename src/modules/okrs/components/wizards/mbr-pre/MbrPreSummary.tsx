@@ -81,6 +81,7 @@ export function MbrPreSummary({
       footer={
         <WizardLastStepFooter
           onBack={onBack}
+          backDisabled={isCompleting}
           onPrimary={onComplete}
           primaryLoading={isCompleting}
         />

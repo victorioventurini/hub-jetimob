@@ -123,10 +123,7 @@ export function QbrBalanceStep({
         />
       }
       footer={
-        <WizardFirstStepFooter
-          onPrimary={onContinue}
-          primaryLabel="Continuar"
-        />
+        <WizardFirstStepFooter onPrimary={onContinue} />
       }
       bottomFixed={
         agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
