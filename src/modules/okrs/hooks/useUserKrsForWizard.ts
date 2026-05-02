@@ -1,11 +1,13 @@
 /**
  * useUserKrsForWizard - Hook para buscar KRs atribuídos ao usuário atual para o Wizard Colaborador
- * 
+ *
  * Busca KRs onde o usuário é:
  * - Owner da KR
  * - Co-responsável da KR
- * - Owner de pelo menos uma iniciativa vinculada à KR
- * 
+ *
+ * KRs onde o usuário é apenas owner de iniciativas vinculadas NÃO entram aqui —
+ * essas iniciativas aparecem no step de Iniciativas do wizard.
+ *
  * Filtra por ciclo ativo, calcula progresso e identifica pendências.
  */
 
@@ -38,17 +40,8 @@ export function useUserKrsForWizard(
     queryFn: async (): Promise<WizardKr[]> => {
       if (!cycleId || !effectiveUserId) return [];
 
-      // First, fetch KR IDs where user owns initiatives (initiatives only have soft-delete via deleted_at)
-      const { data: initiativeKrIds } = await supabase
-        .from('okr_initiatives')
-        .select('kr_id')
-        .eq('owner_user_id', effectiveUserId)
-        .is('deleted_at', null);
-
-      const krIdsFromInitiatives = [...new Set((initiativeKrIds || []).map(i => i.kr_id).filter(Boolean))];
-
-      // Fetch KRs where user is owner, co-responsible, or has initiatives
-      // Filter out cancelled/deleted objectives and KRs
+      // Fetch KRs where user is owner OR co-responsible.
+      // (Iniciativas vinculadas NÃO ampliam a lista — vivem no step de Iniciativas.)
       let query = supabase
         .from('okr_team_key_results')
         .select(`
@@ -84,20 +77,12 @@ export function useUserKrsForWizard(
         .is('cancelled_at', null)
         .is('deleted_at', null);
 
-      // Build OR condition: owner OR co-responsible OR has initiatives
-      // IMPORTANT: dentro de .or(), valores de array (cs.{uuid}) DEVEM usar aspas
-      // duplas no UUID, senão PostgREST interpreta as chaves como delimitador do or
-      // e quebra a query inteira com erro 22P02 (malformed array literal).
-      const conditions = [
-        `owner_user_id.eq.${effectiveUserId}`,
-        `co_responsibles.cs.{"${effectiveUserId}"}`
-      ];
-      
-      if (krIdsFromInitiatives.length > 0) {
-        conditions.push(`id.in.(${krIdsFromInitiatives.join(',')})`);
-      }
-      
-      query = query.or(conditions.join(','));
+      // OR: owner OR co-responsável
+      // IMPORTANTE: dentro de .or(), valores cs.{uuid} DEVEM usar aspas duplas no UUID
+      // (ver mem://standards/postgrest-or-array-contains-quoting).
+      query = query.or(
+        `owner_user_id.eq.${effectiveUserId},co_responsibles.cs.{"${effectiveUserId}"}`
+      );
       query = query.order('status', { ascending: false });
       query = query.order('last_checkin_at', { ascending: true, nullsFirst: true });
 
