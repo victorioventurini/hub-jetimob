@@ -1,65 +1,64 @@
 ## Objetivo
 
-Padronizar o rodapé canônico dos wizards de ritual (`WizardStepFooter`) conforme o mockup: `Voltar` (ghost) · `Pular` (outlined, opcional) · `Continuar` (primário, ocupando a largura restante). Diferenciar copy do primeiro e do último step.
+Padronizar a sugestão de pauta no **Check-in Individual** usando o mesmo card visual do Pré-MBR (`AgendaSuggestionsPrioritizer`), aplicado nas etapas **Reflexão** e **Resumo**, **sem categorias** (Performance/Projetos/Pessoas), permitindo priorizar até 3 sugestões.
 
-## Escopo da mudança
+Hoje:
+- Na **Reflexão** o input renderiza “solto” via `InlineAgendaSuggestionInput categoryless`.
+- O `AgendaSuggestionsPrioritizer` existe e é usado no Pré-MBR/Pré-QBR, mas só em modo **com categorias**.
 
-Único arquivo alterado: `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx`. Como TODOS os ritos (Collaborator, Weekly, Pre-Weekly, MBR, MBR-Pre, QBR Meeting, Leader-Prep, Team-OKR-Creation) já consomem este componente e seus presets, a mudança propaga automaticamente — zero edição nos steps.
+Nada de duplicar componentes — vamos **estender o `AgendaSuggestionsPrioritizer` existente** para suportar o modo `categoryless` e reutilizá-lo nos dois pontos do Check-in Individual.
 
-## Comportamento
+## Mudanças
 
-### Rodapé canônico (steps intermediários — `WizardStepFooter` / `WizardOptionalStepFooter`)
-- **Voltar** — ghost à esquerda, ícone `←`, largura natural (atual).
-- **Pular** — outlined (variant `outline`, não mais `ghost`), ícone `SkipForward`, largura natural. Mantém regra atual de visibilidade (`showSkip` controlado por step — não passa a aparecer onde hoje não aparece).
-- **Continuar** — primário à direita, ocupa a **largura restante** (`flex-1` no desktop), copy `Continuar →`.
+### 1. Estender `AgendaSuggestionsPrioritizer` (componente compartilhado)
+Arquivo: `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx`
 
-### Primeiro step (`WizardFirstStepFooter`)
-- Sem botão Voltar (mantido).
-- Primário com copy padrão **`Começar →`** (parâmetro `primaryLabel` continua opcional para sobrescrever em casos especiais).
-- Continua ocupando largura restante.
+- Adicionar prop opcional `categoryless?: boolean` (default `false`).
+- Quando `categoryless = true`:
+  - Esconder o agrupamento por bloco (Performance/Projetos/Pessoas) e os badges de categoria.
+  - Renderizar todas as sugestões em uma lista única, com checkbox de priorização + badge `#1/#2/#3` + botão remover (mesmo layout do print).
+  - Repassar `categoryless` para o `InlineAgendaSuggestionInput` interno (que já suporta esse modo) — assim o seletor de categoria some no “Adicionar sugestão”.
+- Manter 100% do comportamento atual quando `categoryless = false` (Pré-MBR / Pré-QBR não mudam).
+- Manter `React.memo` e a regra de até 3 priorizadas.
 
-### Último step (`WizardLastStepFooter`)
-- Primário com copy **`Finalizar e enviar`** + ícone `CheckCircle2`, variant `success`.
-- Estado de loading: `Enviando…`.
-- Mantém o `AlertDialog` de confirmação atual (texto do dialog inalterado).
+### 2. Reflexão do Check-in Individual
+Arquivo: `src/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep.tsx`
 
-### Layout responsivo
-- **Desktop (sm+):** linha única com Voltar à esquerda, Pular ao centro (quando presente) e Continuar largo à direita. Continuar usa `flex-1` no container direito; Pular fica antes dele com `shrink-0`.
-- **Mobile:** mantém `flex-col-reverse` empilhado, com Continuar full-width no topo, Pular abaixo e Voltar por último — preserva safe-area atual.
+- Substituir o `InlineAgendaSuggestionInput categoryless` solto pelo `AgendaSuggestionsPrioritizer` com:
+  - `ritualLabel="Check-in do Time"`
+  - `categoryless`
+- Remover a prop `agendaTriggerLabel` desse ponto (o card já cuida do título e do CTA inline).
+
+### 3. Resumo do Check-in Individual
+Arquivo: `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+
+- Adicionar (se ainda não houver) o mesmo card no fim da Summary, replicando o padrão do `MbrPreSummary`:
+  ```tsx
+  {onAgendaSuggestionsChange && (
+    <AgendaSuggestionsPrioritizer
+      suggestions={agendaSuggestions}
+      onSuggestionsChange={onAgendaSuggestionsChange}
+      ritualLabel="Check-in do Time"
+      categoryless
+    />
+  )}
+  ```
+- Garantir que as props `agendaSuggestions` e `onAgendaSuggestionsChange` chegam até a Summary a partir de `CollaboratorCheckinPage` (já existem; só precisa propagar se faltar).
+
+### 4. Pendências (sem mudança de UI)
+A etapa **Pendências** (`CollaboratorDecisionsStep`) continua com o `InlineAgendaSuggestionInput` inline atual — o usuário não pediu o card cheio lá, e a priorização fica concentrada na Reflexão + Resumo, igual ao padrão do Pré-MBR.
 
 ## Detalhes técnicos
 
-Mudanças pontuais em `WizardStepFooter.tsx`:
-
-1. **Novo default de `primaryLabel`** dentro de `WizardFirstStepFooter`:
-   ```tsx
-   export function WizardFirstStepFooter(props) {
-     return <WizardStepFooter primaryLabel="Começar" {...props} showBack={false} />;
-   }
-   ```
-   (spread depois do default para permitir override.)
-
-2. **Atualizar `WizardLastStepFooter`:**
-   - `primaryLabel` default: `"Finalizar e enviar"` (era `"Concluir"`).
-   - Loading label: `"Enviando…"` (era `"Concluindo…"`).
-
-3. **Trocar variante do botão Pular:** `variant="ghost"` → `variant="outline"`; remover `text-muted-foreground`.
-
-4. **Continuar com largura restante (desktop):**
-   - No container right (`<div className="flex items-center gap-2 ...">`), o botão primário ganha `sm:flex-1` quando NÃO há `rightContent` customizado.
-   - O container right ganha `sm:flex-1` para ocupar o espaço restante após Voltar/Pular.
-   - O container left mantém `shrink-0`.
-
-5. **Não mexer em:** props públicas, `WizardOptionalStepFooter`, `AlertDialog`, comportamento de `leftContent`/`rightContent` customizados, testes existentes (vão ser ajustados se quebrarem por copy).
+- O tipo `RitualAgendaSuggestion` já aceita `category: RitualBlock | null`, então o modo categoryless não exige migração de dados nem mudança de schema.
+- O `InlineAgendaSuggestionInput` já tem o flag `categoryless` — só vamos repassar.
+- Manter os campos `prioritized` / `priorityRank` (1|2|3) já existentes; nada novo no payload.
+- Sem mudanças em Edge Functions, RLS, query keys ou Supabase.
+- Sem alterar os ritos Pré-MBR e Pré-QBR (regressão zero garantida pelo default `categoryless = false`).
 
 ## Validação
 
-- Rodar `WizardStepFooter.test.tsx`; ajustar assertions de texto se baterem em `"Concluir"` literal.
-- Smoke visual em 3 ritos para confirmar layout: Collaborator Check-in (intermediário com Pular), Weekly Opening (primeiro step), Collaborator Summary (último step).
-- Conferir mobile (`flex-col-reverse`) — Continuar deve ficar full-width no topo da pilha.
-
-## Fora de escopo
-
-- Copy dos labels de step do Collaborator (já ajustada na resposta anterior).
-- Mudar `showSkip` em qualquer step (mantido o que já está hoje).
-- Alterar o dialog de confirmação do último step.
+- Visual no Reflection: card com header `Sugestões de pauta para o Check-in do Time`, hint vazio idêntico ao print, input collapsible sem chips de categoria, lista única com checkbox + badge `#1/2/3` + remover.
+- Visual no Summary: mesmo card no fim, com prioridades persistidas vindas da Reflexão.
+- Pré-MBR/Pré-QBR continuam idênticos (categorias visíveis, agrupamento por bloco).
+- Limite de 3 priorizações funcionando, banner amarelo aparecendo quando há sugestões sem priorização.
