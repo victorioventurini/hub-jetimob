@@ -51,9 +51,10 @@ export function useCollaboratorInitiativesSignal(
         .select(
           'id, status, owner_user_id, contributors, kr:okr_team_key_results!inner(id, deleted_at, cancelled_at, team_objective:okr_team_objectives!inner(id, cycle_id, deleted_at, cancelled_at))',
         )
-        .or(`owner_user_id.eq.${effectiveUserId!},contributors.cs.{${effectiveUserId!}}`)
+        .or(`owner_user_id.eq.${effectiveUserId!},contributors.cs.{"${effectiveUserId!}"}`)
         .eq('kr.team_objective.cycle_id', cycleId!)
         .is('deleted_at', null)
+        .neq('status', 'completed')
         .is('kr.deleted_at', null)
         .is('kr.cancelled_at', null)
         .is('kr.team_objective.deleted_at', null)

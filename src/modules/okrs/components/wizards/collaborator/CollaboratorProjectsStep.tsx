@@ -143,6 +143,7 @@ export function CollaboratorProjectsStep({
         .select(PROJECT_COLUMNS.replace('project_milestones(', 'project_milestones!inner('))
         .eq('bu_id', buId!)
         .eq('project_milestones.owner_id', effectiveUserId!)
+        .neq('project_milestones.status', 'done')
         .in('status', ['planned', 'in_progress', 'paused'])
         .is('deleted_at', null);
 
