@@ -676,7 +676,7 @@ export function CollaboratorSummary({
       case 'reflection': {
         const hasReflection = !!(reflection?.impactSummary || reflection?.helpNeeded);
         const hasSuggestions = teamCheckinAgendaSuggestions.length > 0;
-        if (!hasReflection && !hasSuggestions) {
+        if (!hasReflection && !hasSuggestions && !onTeamCheckinAgendaSuggestionsChange) {
           return (
             <SectionShell
               key="reflection"
