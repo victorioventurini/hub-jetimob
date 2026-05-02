@@ -18,6 +18,10 @@ busca iniciativas **centradas no colaborador**, no ciclo trimestral ativo:
   `is('deleted_at', null)`**. ⚠️ `okr_initiatives` **não tem** coluna
   `cancelled_at` — aplicar esse filtro causa erro silencioso (resultado vazio).
   Ver `mem://standards/soft-delete-policy-v1`.
+- **Iniciativas com `status = 'completed'` são excluídas server-side**
+  (`.neq('status', 'completed')`). Itens concluídos não exigem ação no
+  check-in. O mesmo filtro vale para `useCollaboratorInitiativesSignal`
+  (Step 1 — Atividade da Semana) para manter consistência de contadores.
 
 Os KRs exibidos como agrupadores são **derivados** do conjunto de iniciativas
 retornadas — não vêm do array `krs` (`useUserKrsForWizard`). O array `krs`
