@@ -1,88 +1,68 @@
-## Card de sugestão de pauta no Reflection (Check-in Individual) → Pré Check-in do Time
+# Padronizar empty states do Check-in Individual
 
-Hoje, o Reflection step do `collaborator-checkin` já tem props (`agendaSuggestions`, `onAgendaSuggestionsChange`, `agendaTriggerLabel`) integradas com `InlineAgendaSuggestionInput`, mas o `CollaboratorCheckinPage` **não passa nenhuma delas** — o card simplesmente não renderiza. O componente compartilhado também exige uma das 3 categorias canônicas (`performance | projetos | pessoas`), enquanto o pedido é **sem categoria**. E o fluxo precisa chegar no `leader-prep` (Pré-Check-in do Time) para o líder decidir o que entra no `team-checkin` (Check-in do Time).
+## Problema
 
-A entrega, em 4 camadas, **estende** o que já existe — sem duplicar componentes.
+Os steps do wizard de Check-in Individual (`/rituals/collaborator-checkin`) usam **markup divergente** quando não há dados:
 
-### 1. Estender `InlineAgendaSuggestionInput` (modo categoryless)
+| Step | Empty state atual |
+|------|-------------------|
+| **Projects** | Markup inline com `<FolderKanban>` + `<p>` custom |
+| **Initiatives** | Já usa `<EmptyState>` canônico ✅ |
+| **Decisions (Pendências)** | Markup inline com `<Inbox>` + `<p>` + emoji 🎉 |
+| **KPIs / KRs (Checkin)** | Sem empty state (steps são pulados quando vazios) |
 
-- Adicionar prop opcional `categoryless?: boolean` (default `false`).
-- Quando `true`:
-  - Esconde o seletor de categoria (chips Performance/Projetos/Pessoas).
-  - Esconde o badge de categoria no `renderItem`.
-  - Grava `category: null` (ver mudança de tipo abaixo).
-- Sem regressão para MBR-pré, QBR-pré e demais consumidores: comportamento atual permanece padrão.
+Resultado: visual inconsistente entre passos do mesmo rito.
 
-### 2. Tipo `RitualAgendaSuggestion`
+## Objetivo
 
-- Tornar `category` **opcional/nullável**: `category?: RitualBlock | null`.
-- Manter `prioritized`/`priorityRank` intactos (líder ainda prioriza).
-- Atualizar leitores que assumem `category` definido para tratar `null` ("Sem categoria"/badge neutro): `AgendaSuggestionsPrioritizer`, `MbrPreSummary`, `QbrPreSummary`. Sem regressão visual nos consumidores antigos (sempre passam categoria).
+Unificar todos os empty states do wizard para usar o componente canônico `<EmptyState>` (`src/components/ui/empty-state.tsx`), espelhando o padrão já adotado em `CollaboratorInitiativesStep`.
 
-### 3. Wiring no Reflection do `collaborator-checkin`
+## Mudanças
 
-- Em `CollaboratorCheckinPage.tsx`:
-  - Adicionar campo `teamCheckinAgendaSuggestions: RitualAgendaSuggestion[]` em `CollaboratorDraftData` (default `[]`).
-  - No `case 'reflection'`, passar `agendaSuggestions`, `onAgendaSuggestionsChange` e `agendaTriggerLabel="Sugerir pauta para o Check-in do Time"`.
-- Em `CollaboratorReflectionStep.tsx`:
-  - Repassar `categoryless` ao `InlineAgendaSuggestionInput`.
-- Em `CollaboratorSummary.tsx`:
-  - Renderizar nova micro-seção "Sugestões para o Check-in do Time" (depois de Reflexão).
-  - Incluir as sugestões no Markdown do "Copiar resumo".
+### 1. `CollaboratorProjectsStep.tsx` (linhas 324-330)
+Substituir o markup inline por:
+```tsx
+<div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+  <EmptyState
+    icon={FolderKanban}
+    title="Nenhum projeto vinculado"
+    description="Você não possui projetos sob sua responsabilidade neste momento. Projetos são opcionais — você pode pular ou avançar."
+  />
+</div>
+```
 
-### 4. Consumo no `leader-prep` (Pré-Check-in do Time)
+### 2. `CollaboratorDecisionsStep.tsx` (linhas 109-114)
+Substituir o markup inline por:
+```tsx
+<div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+  <EmptyState
+    icon={Inbox}
+    title="Nenhuma pendência encontrada"
+    description="Você está em dia com decisões e follow-ups atribuídos a você."
+  />
+</div>
+```
 
-- Novo hook `useTeamCollaboratorAgendaSuggestions(teamId, weekRef)` em `src/modules/okrs/hooks/`:
-  - Lê `okr_wizard_sessions` com `wizard_type='collaborator-checkin'`, `status='completed'`, semana corrente.
-  - Filtra por `currentBuId` síncrono (BU isolation).
-  - Filtra colaboradores do `teamId` (expandindo subteams via `parent_team_id` — `mem://standards/users/team-filter-includes-subteams`).
-  - `select` explícito: `id, started_by, completed_at, data` (nunca `select('*')`).
-  - Extrai `data.teamCheckinAgendaSuggestions` e agrega.
-  - Resolve nome do autor por ID via lookup separado (não denormalizar — `mem://standards/wizard-snapshot-denormalized-fields-deprecation`).
-  - Retorna `{ id, text, suggestedBy, suggestedByName, createdAt }[]`.
-  - Query key via `src/lib/queryKeys/okrs.ts` (novo prefixo `agendaSuggestionsByTeamWeek`).
-- Em `LeaderPrepPage` (step `prep` ou bloco em `LeaderOverviewStep`):
-  - Renderizar bloco "Sugestões dos colaboradores" com **autor + texto**, sem categoria.
-  - Permitir o líder marcar quais entram na pauta do Check-in do Time (reaproveitar lógica de priorização do `AgendaSuggestionsPrioritizer` em modo `categoryless`).
-  - Persistir seleção em `LeaderPrepDraftData.selectedTeamCheckinAgendaSuggestionIds: string[]`.
-- Em `team-checkin` (`TeamOpeningStep`):
-  - Ler do snapshot do `leader-prep` mais recente as sugestões selecionadas e mostrá-las como pauta inicial (leitura derivada — sem mutação).
+### 3. Tom dos textos (alinhamento editorial)
 
-### Princípios e conformidade
+Padrão consistente entre os três:
+- **Title**: curto, sem emoji, formato "Nenhum(a) [entidade] [estado]"
+- **Description**: explica por que está vazio + (quando aplicável) que o passo é opcional
 
-- **Reuso primeiro**: `InlineAgendaSuggestionInput`, `AgendaSuggestionsPrioritizer`, `useGenericWizardDraft`, `WizardStepFooter`. Zero componente novo.
-- **BU Isolation**: hook do líder filtra por `currentBuId` síncrono.
-- **Soft delete**: `okr_wizard_sessions` não tem `deleted_at` — filtrar por `status='completed'` + janela temporal.
-- **Sem `select('*')`** e **`React.memo`** nos cards de sugestão.
-- **Snapshot**: campo novo só dentro do JSONB do draft — sem migração de schema.
-- **TCR/Wizards Framework**: alterações em renderers específicos e shared utils, não em `framework/components/`.
+| Step | Title | Description |
+|------|-------|-------------|
+| Projects | Nenhum projeto vinculado | Você não possui projetos sob sua responsabilidade neste momento. Projetos são opcionais — você pode pular ou avançar. |
+| Initiatives (já existe) | Nenhuma iniciativa vinculada | Você não possui iniciativas vinculadas aos seus KRs. Iniciativas são opcionais — você pode pular ou avançar. |
+| Decisions | Nenhuma pendência encontrada | Você está em dia com decisões e follow-ups atribuídos a você. |
 
-### Critérios de aceitação
+## Fora de escopo
 
-- No `?step=reflection`, aparece o card collapsible "Sugerir pauta para o Check-in do Time" sem chips de categoria.
-- Sugestões persistem no draft e aparecem no `summary` antes de Concluir.
-- Após Concluir, o líder no `leader-prep` da mesma semana vê as sugestões agregadas dos colaboradores do time (com autor).
-- O líder seleciona quais entram no Check-in do Time; seleção fica no draft do `leader-prep`.
-- No `team-checkin` da mesma semana, as sugestões selecionadas aparecem como pauta inicial.
-- Nenhum consumidor existente (MBR-pré, QBR-pré) regrediu visualmente — categoria continua presente lá.
+- **KPIs e KRs**: não têm empty state porque são pulados automaticamente pela máquina de estado quando não há dados (regra centralizada em `CollaboratorCheckinPage.tsx`). Não vamos introduzir tela vazia onde hoje há skip — isso mudaria fluxo, não só estética.
+- **Reflection / Context / Summary**: não têm empty state aplicável (sempre exibem conteúdo).
 
-### Fora de escopo
+## Arquivos afetados
 
-- Nenhuma migração/RLS/schema novo.
-- Nenhum componente visual novo (apenas extensão dos existentes).
-- Sem mexer em `kpi_values`, `okr_checkins`, decisões, milestones.
-- Sem tocar shell, footer, draft hydration ou outros steps.
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorDecisionsStep.tsx`
 
-### Arquivos afetados
-
-- `src/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput.tsx`
-- `src/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer.tsx`
-- `src/modules/okrs/types/wizard/shared.ts`
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorReflectionStep.tsx`
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
-- `src/modules/okrs/pages/CollaboratorCheckinPage.tsx`
-- `src/modules/okrs/hooks/useTeamCollaboratorAgendaSuggestions.ts` (novo)
-- `src/lib/queryKeys/okrs.ts`
-- `src/modules/okrs/components/wizards/leader-prep/LeaderOverviewStep.tsx`
-- `src/modules/okrs/pages/LeaderPrepPage.tsx`
-- `src/modules/okrs/components/wizards/team-checkin/TeamOpeningStep.tsx`
+Sem mudanças de schema, hooks, queries ou lógica de navegação — apenas presentation.
