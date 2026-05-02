@@ -258,7 +258,7 @@ export function CollaboratorInitiativesStep({
           currentValue: fromProp.current_value,
           target: fromProp.target,
           unit: fromProp.unit || undefined,
-          direction: (fromProp.direction === 'maintain' ? 'maintain' : fromProp.direction) as 'up' | 'down' | 'maintain',
+          direction: fromProp.direction as 'up' | 'down' | 'maintain',
           status: (fromProp.status as any) ?? 'not_started',
           progress: fromProp.progress,
           lastCheckinAt: fromProp.last_checkin_at,
