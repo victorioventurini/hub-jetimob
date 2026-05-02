@@ -21,6 +21,7 @@ import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgres
 import { MilestoneStatusSelect } from '@/modules/projects/components/MilestoneStatusSelect';
 import { MilestoneDialog, type MilestoneDialogSubmitValues } from '@/modules/projects/components/MilestoneDialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
