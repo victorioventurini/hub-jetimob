@@ -21,6 +21,7 @@ import { useMyPendingDecisions } from '@/modules/okrs/hooks';
 import { useUpdateDecisionFollowUp } from '@/modules/okrs/hooks';
 import { useDecisionThread } from '@/modules/okrs/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import type { RitualAgendaSuggestion, PendingDecisionFollowUpUpdate, PendingDecisionThreadMessage } from '@/modules/okrs/types/wizard';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 
