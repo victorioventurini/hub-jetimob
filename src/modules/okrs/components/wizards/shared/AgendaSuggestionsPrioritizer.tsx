@@ -45,8 +45,14 @@ export interface AgendaSuggestionsPrioritizerProps {
   /** Sugestões coletadas no wizard (todas as etapas). */
   suggestions: RitualAgendaSuggestion[];
   onSuggestionsChange: (next: RitualAgendaSuggestion[]) => void;
-  /** Nome do rito-mãe para exibição (ex: "MBR", "QBR"). */
+  /** Nome do rito-mãe para exibição (ex: "MBR", "QBR", "Check-in do Time"). */
   ritualLabel: string;
+  /**
+   * Quando `true`, oculta agrupamento por bloco e badges de categoria.
+   * Sugestões são gravadas com `category: null` e listadas em uma lista única.
+   * Usado pelo Check-in Individual → Pré-Check-in do Time.
+   */
+  categoryless?: boolean;
 }
 
 // ============================================================
