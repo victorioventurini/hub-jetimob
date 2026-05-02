@@ -415,7 +415,6 @@ export function CollaboratorCheckinStep({
           <Button
             variant="ghost"
             onClick={onBack}
-            disabled={currentIndex === 0}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar

@@ -1,52 +1,34 @@
-## Objetivo
+## Diagnóstico
 
-No step `checkin` do Check-in Individual, manter o campo "Comentário" como **texto puro** (sem autocomplete `@`, sem disparo de menções) e confirmar que o conteúdo segue sendo lido nos demais lugares que já consomem `okr_checkins.comments`.
+URL: `/rituals/collaborator-checkin?step=checkin` → renderiza `CollaboratorCheckinStep` (atualização de KRs).
 
-## Conformidade com docs canônicos (pré-checklist)
+O botão **Voltar** está desabilitado quando o usuário está no primeiro KR da lista (`currentIndex === 0`). Como esse é o estado inicial ao chegar no step `checkin` vindo do step anterior (`initiatives`), o botão fica permanentemente desabilitado e o usuário não consegue voltar para o step anterior.
 
-- **TCR §okr_checkins (linha 753)**: campo `comments` hoje descrito como "Comentários/menções". Vamos atualizar para "Comentário em texto livre (sem processamento de menções neste fluxo)".
-- **TCR §mentions (1345)**: tabela global `mentions` com `context_type='checkin'` permanece intacta — `CheckinDialog` (drawer `/okrs`) continua gravando menções normalmente.
-- **IDENTITY / RBAC / BU isolation / RLS**: nenhuma alteração. O insert em `okr_checkins` (RLS v3, permissão `okrs.checkin.create:self_or_owner`) continua igual.
-- **DEVELOPMENT_STANDARDS**: mudança limitada a UI + remoção de side-effect cliente. Sem novos query keys, sem novas tabelas.
-- **AI_AGENTS / WIZARDS_FRAMEWORK**: não tocados.
+**Arquivo:** `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep.tsx`, linha 418:
 
-## Mudanças
+```tsx
+<Button variant="ghost" onClick={onBack} disabled={currentIndex === 0}>
+  <ArrowLeft … /> Voltar
+</Button>
+```
 
-**1. `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep.tsx`**
-- Remover a linha de microcopy "💡 Use @ para mencionar pessoas".
-- Manter `<Textarea>` como está (label "Comentário (opcional)", placeholder neutro).
+A página pai (`CollaboratorCheckinPage.tsx`, linhas 391–397) já trata corretamente ambos os casos no handler `onBack`:
+- Se `safeIndex > 0` → decrementa `currentKrIndex` (volta um KR)
+- Se `safeIndex === 0` → chama `goBack()` (volta ao step anterior do wizard)
 
-**2. `src/modules/okrs/hooks/useCreateCheckin.ts`**
-- Remover a chamada `processMentions(...)` (linhas ~152–156) e a definição local da função `processMentions` (linhas ~67–...) — usada **apenas** dentro deste hook (auditado).
-- Manter o `INSERT` em `okr_checkins.comments` igual: o texto livre continua sendo persistido.
-- **Não tocar** em `CheckinDialog.tsx` (drawer do KR em `/okrs`) — segue gravando menções via sua própria cópia de `processMentions`.
+O `disabled` no botão impede que esse handler seja chamado no segundo caso.
 
-**3. `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`**
-- Linha 753: trocar `Comentários/menções` por `Comentário em texto livre (menções processadas apenas no drawer /okrs)`.
-- Adicionar entrada no changelog na seção apropriada do TCR.
+Os outros steps do wizard (`CollaboratorKpiStep`, `CollaboratorProjectsStep`, `CollaboratorInitiativesStep`) não têm esse problema — apenas o `CollaboratorCheckinStep`.
 
-## Reaproveitamento de `okr_checkins.comments` (sem mudança necessária)
+## Mudança
 
-| Onde | Arquivo |
-|---|---|
-| Histórico do KR (drawer/timeline) | `src/modules/okrs/components/KrCheckinsTable.tsx` |
-| Feed de check-ins do ciclo | `src/modules/okrs/components/cycle-checkins/CycleCheckinsFeed.tsx` |
-| Tabela de check-ins do ciclo | `src/modules/okrs/components/cycle-checkins/CycleCheckinsTable.tsx` |
-| Último check-in nos cards do wizard | `useUserKrsForWizard.ts`, `useTeamPendingKrs.ts` (campo `latest_checkin.comments`) |
-| E-mail resumo do Check-in Individual | `supabase/functions/collaborator-checkin-summary/index.ts` (lê `comment` do snapshot do wizard) |
-| Análise/IA | `supabase/functions/analysis-generate/index.ts` (`CheckinRow.comments`) |
+**`CollaboratorCheckinStep.tsx`** (linha 418): remover `disabled={currentIndex === 0}` do botão Voltar. O handler em `CollaboratorCheckinPage` já lida com a lógica correta (voltar de KR ou voltar de step).
 
-## Validação
+## Verificação
 
-- `/rituals/collaborator-checkin?step=checkin`: microcopy de `@` ausente; campo aceita texto puro.
-- Salvar check-in com texto contendo `@nome` → **não** dispara notificação de menção; nenhum registro novo em `mentions` para esse insert.
-- Drawer do KR em `/okrs` (`CheckinDialog`): @menção continua funcionando (não é tocada).
-- Drawer do KR mostra o comentário no histórico; feed e tabela do ciclo idem.
-- E-mail `collaborator-checkin-summary` continua incluindo o `comment` no bloco de KRs.
+- Navegar `/rituals/collaborator-checkin?step=checkin` → clicar em "Voltar" deve retornar ao step anterior (`initiatives` ou primeiro step visível).
+- No segundo KR em diante, "Voltar" deve continuar voltando KR a KR, como hoje.
+- Sem mudança em handlers, dados, ou outros steps.
 
-## Não-objetivos
-
-- Não alterar schema de `okr_checkins`.
-- Não alterar RLS / permissions.
-- Não remover o sistema de menções em outros fluxos (CheckinDialog, projects, tickets).
-- Não mexer em `blockers`.
+## Arquivos alterados
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorCheckinStep.tsx` (1 linha)
