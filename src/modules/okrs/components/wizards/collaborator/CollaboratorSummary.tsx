@@ -715,7 +715,7 @@ export function CollaboratorSummary({
                 <p className="text-sm">{reflection.helpNeeded}</p>
               </div>
             )}
-            {hasSuggestions && (
+            {hasSuggestions && !onTeamCheckinAgendaSuggestionsChange && (
               <div className="rounded-lg border bg-card p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <ClipboardCheck className="h-3.5 w-3.5" />
@@ -735,6 +735,14 @@ export function CollaboratorSummary({
                   Seu líder verá essas sugestões na preparação do Check-in do Time.
                 </p>
               </div>
+            )}
+            {onTeamCheckinAgendaSuggestionsChange && (
+              <AgendaSuggestionsPrioritizer
+                suggestions={teamCheckinAgendaSuggestions}
+                onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
+                ritualLabel="Check-in do Time"
+                categoryless
+              />
             )}
           </SectionShell>
         );
