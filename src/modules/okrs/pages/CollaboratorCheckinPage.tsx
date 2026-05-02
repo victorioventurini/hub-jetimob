@@ -714,6 +714,9 @@ export default function CollaboratorCheckinPage() {
             pendingFollowUpUpdates={draft.data.pendingFollowUpUpdates}
             pendingThreadMessages={draft.data.pendingThreadMessages}
             teamCheckinAgendaSuggestions={draft.data.teamCheckinAgendaSuggestions ?? []}
+            onTeamCheckinAgendaSuggestionsChange={(next) =>
+              updateDraft({ teamCheckinAgendaSuggestions: next })
+            }
             visibleStepOrder={visibleStepOrder}
             effectiveUserId={effectiveUserId}
             cycleName={quarterlyCycle?.name}

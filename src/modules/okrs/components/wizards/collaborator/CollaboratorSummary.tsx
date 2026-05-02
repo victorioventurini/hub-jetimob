@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { CONFIDENCE_COLORS } from '@/lib/colors';
 import { WizardLastStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
 import { WizardStepScaffold } from '@/modules/okrs/components/wizards/shared/WizardStepScaffold';
+import { AgendaSuggestionsPrioritizer } from '@/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer';
 import type {
   CollaboratorCheckinResult,
   CollaboratorReflection,
@@ -81,6 +82,8 @@ export interface CollaboratorSummaryProps {
   pendingThreadMessages?: PendingDecisionThreadMessage[];
   /** Sugestões de pauta para o Check-in do Time (categoryless) */
   teamCheckinAgendaSuggestions?: RitualAgendaSuggestion[];
+  /** Quando fornecido, habilita edição/priorização das sugestões direto na Summary. */
+  onTeamCheckinAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   visibleStepOrder: readonly WizardStep[];
   effectiveUserId: string | null;
   cycleName?: string;
@@ -333,6 +336,7 @@ export function CollaboratorSummary({
   pendingFollowUpUpdates = [],
   pendingThreadMessages = [],
   teamCheckinAgendaSuggestions = [],
+  onTeamCheckinAgendaSuggestionsChange,
   visibleStepOrder,
   effectiveUserId,
   cycleName,
@@ -672,7 +676,7 @@ export function CollaboratorSummary({
       case 'reflection': {
         const hasReflection = !!(reflection?.impactSummary || reflection?.helpNeeded);
         const hasSuggestions = teamCheckinAgendaSuggestions.length > 0;
-        if (!hasReflection && !hasSuggestions) {
+        if (!hasReflection && !hasSuggestions && !onTeamCheckinAgendaSuggestionsChange) {
           return (
             <SectionShell
               key="reflection"
@@ -711,7 +715,7 @@ export function CollaboratorSummary({
                 <p className="text-sm">{reflection.helpNeeded}</p>
               </div>
             )}
-            {hasSuggestions && (
+            {hasSuggestions && !onTeamCheckinAgendaSuggestionsChange && (
               <div className="rounded-lg border bg-card p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <ClipboardCheck className="h-3.5 w-3.5" />
@@ -731,6 +735,14 @@ export function CollaboratorSummary({
                   Seu líder verá essas sugestões na preparação do Check-in do Time.
                 </p>
               </div>
+            )}
+            {onTeamCheckinAgendaSuggestionsChange && (
+              <AgendaSuggestionsPrioritizer
+                suggestions={teamCheckinAgendaSuggestions}
+                onSuggestionsChange={onTeamCheckinAgendaSuggestionsChange}
+                ritualLabel="Check-in do Time"
+                categoryless
+              />
             )}
           </SectionShell>
         );

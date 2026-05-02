@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, MessageSquare, HelpCircle } from 'lucide-react';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared/WizardStepFooter';
-import { InlineAgendaSuggestionInput } from '@/modules/okrs/components/wizards/shared/InlineAgendaSuggestionInput';
+import { AgendaSuggestionsPrioritizer } from '@/modules/okrs/components/wizards/shared/AgendaSuggestionsPrioritizer';
 import type { CollaboratorReflection, CollaboratorCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -36,7 +36,7 @@ export interface CollaboratorReflectionStepProps {
   agendaCategoryless?: boolean;
 }
 
-const AGENDA_SOURCE_STEP = 'collaborator-reflection';
+// AGENDA_SOURCE_STEP removido — AgendaSuggestionsPrioritizer usa SUMMARY_SOURCE_STEP internamente
 
 // ============================================================
 // COMPONENT
@@ -179,13 +179,12 @@ export function CollaboratorReflectionStep({
       </div>
 
       {/* Sugestão de pauta para o rito-mãe (Check-in do Time) */}
-      {agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel && (
+      {agendaSuggestions && onAgendaSuggestionsChange && (
         <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">
-          <InlineAgendaSuggestionInput
+          <AgendaSuggestionsPrioritizer
             suggestions={agendaSuggestions}
             onSuggestionsChange={onAgendaSuggestionsChange}
-            sourceStep={AGENDA_SOURCE_STEP}
-            triggerLabel={agendaTriggerLabel}
+            ritualLabel="Check-in do Time"
             categoryless={agendaCategoryless}
           />
         </div>

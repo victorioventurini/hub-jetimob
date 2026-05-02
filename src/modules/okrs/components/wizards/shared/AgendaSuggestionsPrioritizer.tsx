@@ -45,8 +45,14 @@ export interface AgendaSuggestionsPrioritizerProps {
   /** Sugestões coletadas no wizard (todas as etapas). */
   suggestions: RitualAgendaSuggestion[];
   onSuggestionsChange: (next: RitualAgendaSuggestion[]) => void;
-  /** Nome do rito-mãe para exibição (ex: "MBR", "QBR"). */
+  /** Nome do rito-mãe para exibição (ex: "MBR", "QBR", "Check-in do Time"). */
   ritualLabel: string;
+  /**
+   * Quando `true`, oculta agrupamento por bloco e badges de categoria.
+   * Sugestões são gravadas com `category: null` e listadas em uma lista única.
+   * Usado pelo Check-in Individual → Pré-Check-in do Time.
+   */
+  categoryless?: boolean;
 }
 
 // ============================================================
@@ -57,6 +63,7 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
   suggestions,
   onSuggestionsChange,
   ritualLabel,
+  categoryless = false,
 }: AgendaSuggestionsPrioritizerProps) {
   const grouped = useMemo(() => {
     const map: {
@@ -159,6 +166,7 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
           sourceStep={SUMMARY_SOURCE_STEP}
           triggerLabel={`Adicionar sugestão de pauta para o ${ritualLabel}`}
           placeholder={`Descreva o ponto a ser discutido no ${ritualLabel}...`}
+          categoryless={categoryless}
         />
 
         {hasSuggestions && prioritizedCount === 0 && (
@@ -224,6 +232,13 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
               })}
             </ul>
           );
+
+          if (categoryless) {
+            // Lista única, sem badges nem agrupamento
+            const all = [...grouped.performance, ...grouped.projetos, ...grouped.pessoas, ...grouped.none];
+            if (all.length === 0) return null;
+            return renderItems(all);
+          }
 
           return (
             <>
