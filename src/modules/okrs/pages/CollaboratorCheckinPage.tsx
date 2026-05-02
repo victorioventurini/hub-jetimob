@@ -696,9 +696,16 @@ export default function CollaboratorCheckinPage() {
             kpiResults={(draft.data.kpiResults ?? []).filter(Boolean)}
             reflection={draft.data.reflection}
             initiativesMarkedAtRisk={draft.data.initiativesMarkedAtRisk}
+            pendingMilestoneStatusChanges={draft.data.pendingMilestoneStatusChanges}
+            pendingFollowUpUpdates={draft.data.pendingFollowUpUpdates}
+            pendingThreadMessages={draft.data.pendingThreadMessages}
+            visibleStepOrder={visibleStepOrder}
+            effectiveUserId={effectiveUserId}
+            cycleName={quarterlyCycle?.name}
             onViewOkrs={() => navigate('/okrs')}
             onClose={handleComplete}
             onBack={goBack}
+            onEditStep={goToStep}
             isSubmitting={isCompleting}
           />
         );
