@@ -179,13 +179,12 @@ export function CollaboratorReflectionStep({
       </div>
 
       {/* Sugestão de pauta para o rito-mãe (Check-in do Time) */}
-      {agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel && (
+      {agendaSuggestions && onAgendaSuggestionsChange && (
         <div className="shrink-0 min-w-0 max-w-full overflow-x-hidden">
-          <InlineAgendaSuggestionInput
+          <AgendaSuggestionsPrioritizer
             suggestions={agendaSuggestions}
             onSuggestionsChange={onAgendaSuggestionsChange}
-            sourceStep={AGENDA_SOURCE_STEP}
-            triggerLabel={agendaTriggerLabel}
+            ritualLabel="Check-in do Time"
             categoryless={agendaCategoryless}
           />
         </div>
