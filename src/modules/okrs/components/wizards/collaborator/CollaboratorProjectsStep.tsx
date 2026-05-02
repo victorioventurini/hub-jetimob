@@ -359,13 +359,16 @@ export function CollaboratorProjectsStep({
                     </p>
                     {project.milestones.map(milestone => {
                       const canEdit = canEditMilestoneRow(project, milestone.owner_id);
+                      const pendingStatus = pendingMilestoneStatusChanges[milestone.id];
+                      const effectiveStatus = pendingStatus ?? milestone.status;
+                      const hasPendingChange = pendingStatus !== undefined && pendingStatus !== milestone.status;
                       return (
                         <div
                           key={milestone.id}
                           className="flex items-center gap-2 py-1 min-w-0"
                         >
                           <MilestoneStatusSelect
-                            value={milestone.status}
+                            value={effectiveStatus}
                             onValueChange={(newStatus) =>
                               handleMilestoneStatusChange(milestone.id, project.id, newStatus)
                             }
@@ -373,6 +376,11 @@ export function CollaboratorProjectsStep({
                           <span className="text-sm text-foreground truncate flex-1 min-w-0">
                             {milestone.name}
                           </span>
+                          {hasPendingChange && (
+                            <Badge variant="outline" className="text-[10px] shrink-0 border-warning/40 text-warning">
+                              alterado
+                            </Badge>
+                          )}
                           {milestone.due_date && (
                             <span className={cn(
                               'text-xs whitespace-nowrap shrink-0',
