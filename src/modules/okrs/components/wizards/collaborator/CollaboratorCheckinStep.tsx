@@ -405,9 +405,6 @@ export function CollaboratorCheckinStep({
             placeholder="O que contribuiu para este resultado? Alguma observação?"
             className="min-h-[80px] resize-none"
           />
-          <p className="text-xs text-muted-foreground">
-            💡 Use @ para mencionar pessoas
-          </p>
         </div>
 
       </div>
