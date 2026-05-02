@@ -423,27 +423,7 @@ export function CollaboratorProjectsStep({
         />
       )}
 
-      {/* Project Edit Dialog (canonical) — montado por demanda */}
-      {editingProject && (
-        <ProjectDialog
-          open={!!editingProject}
-          onOpenChange={(open) => { if (!open) setEditingProject(null); }}
-          onSubmit={handleProjectEditSubmit}
-          isSubmitting={updateProject.isPending}
-          title="Editar projeto"
-          currentOwnerId={editingProject.owner_id ?? undefined}
-          defaultValues={{
-            name: editingProject.name,
-            description: editingProject.description ?? '',
-            owner_id: editingProject.owner_id ?? '',
-            team_ids: editingProject.team_ids,
-            status: editingProject.status,
-            start_date: editingProject.start_date ?? '',
-            due_date: editingProject.due_date ?? '',
-            external_url: editingProject.external_url ?? '',
-          }}
-        />
-      )}
+
     </WizardStepScaffold>
   );
 }
