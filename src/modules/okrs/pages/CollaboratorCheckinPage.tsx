@@ -364,12 +364,12 @@ export default function CollaboratorCheckinPage() {
         return (
           <CollaboratorCheckinStep
             kr={currentKr}
-            currentIndex={draft.data.currentKrIndex}
+            currentIndex={safeIndex}
             totalCount={krs.length}
             onComplete={(result) => {
               const newResults = [...draft.data.results];
-              newResults[draft.data.currentKrIndex] = result;
-              const nextIndex = draft.data.currentKrIndex + 1;
+              newResults[safeIndex] = result;
+              const nextIndex = safeIndex + 1;
               if (nextIndex >= krs.length) {
                 updateDraft({ results: newResults });
                 goNext();
@@ -381,7 +381,7 @@ export default function CollaboratorCheckinPage() {
               }
             }}
             onSkip={() => {
-              const nextIndex = draft.data.currentKrIndex + 1;
+              const nextIndex = safeIndex + 1;
               if (nextIndex >= krs.length) {
                 goNext();
               } else {
@@ -389,8 +389,8 @@ export default function CollaboratorCheckinPage() {
               }
             }}
             onBack={() => {
-              if (draft.data.currentKrIndex > 0) {
-                updateDraft({ currentKrIndex: draft.data.currentKrIndex - 1 });
+              if (safeIndex > 0) {
+                updateDraft({ currentKrIndex: safeIndex - 1 });
               } else {
                 goBack();
               }
