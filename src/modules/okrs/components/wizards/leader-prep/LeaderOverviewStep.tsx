@@ -318,6 +318,60 @@ export function LeaderOverviewStep({
             </Card>
         </div>
         )}
+
+        {/* Sugestões de pauta agregadas dos colaboradores */}
+        {collaboratorAgendaSuggestions.length > 0 && (
+          <Card className="mt-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <ListTodo className="h-4 w-4" />
+                Sugestões de pauta dos colaboradores
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {collaboratorAgendaSuggestions.length}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Marque as que você quer levar para o Check-in do Time
+                {selectedAgendaSuggestionIds.length > 0 &&
+                  ` (${selectedAgendaSuggestionIds.length} selecionada${
+                    selectedAgendaSuggestionIds.length > 1 ? 's' : ''
+                  })`}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {collaboratorAgendaSuggestions.map((s) => {
+                  const checked = selectedAgendaSuggestionIds.includes(s.id);
+                  return (
+                    <li
+                      key={s.id}
+                      className={cn(
+                        'flex items-start gap-2 rounded-md border bg-card px-3 py-2 text-sm',
+                        checked && 'border-primary/40 bg-primary/5',
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(next) =>
+                          onToggleAgendaSuggestion?.(s.id, next === true)
+                        }
+                        aria-label={checked ? 'Desmarcar sugestão' : 'Marcar sugestão'}
+                        className="mt-0.5"
+                        disabled={!onToggleAgendaSuggestion}
+                      />
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <p className="text-foreground/90 leading-snug break-words">{s.text}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          por {s.authorName}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Footer */}
