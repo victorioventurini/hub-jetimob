@@ -59,12 +59,24 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
   ritualLabel,
 }: AgendaSuggestionsPrioritizerProps) {
   const grouped = useMemo(() => {
-    const map: Record<RitualBlock, RitualAgendaSuggestion[]> = {
+    const map: {
+      performance: RitualAgendaSuggestion[];
+      projetos: RitualAgendaSuggestion[];
+      pessoas: RitualAgendaSuggestion[];
+      none: RitualAgendaSuggestion[];
+    } = {
       performance: [],
       projetos: [],
       pessoas: [],
+      none: [],
     };
-    for (const s of suggestions) map[s.category].push(s);
+    for (const s of suggestions) {
+      if (s.category === 'performance' || s.category === 'projetos' || s.category === 'pessoas') {
+        map[s.category].push(s);
+      } else {
+        map.none.push(s);
+      }
+    }
     return map;
   }, [suggestions]);
 
@@ -159,71 +171,93 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
           </div>
         )}
 
-        {BLOCK_ORDER.map((block) => {
-          const items = grouped[block];
-          if (items.length === 0) return null;
-          const cfg = AGENDA_CATEGORY_CONFIG[block];
-          return (
-            <div key={block} className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={cn('text-[10px] px-1.5', cfg.badgeClassName)}>
-                  {cfg.label}
-                </Badge>
-                <span className="text-[11px] text-muted-foreground">{items.length}</span>
-              </div>
-              <ul className="space-y-1.5">
-                {items.map((item) => {
-                  const checked = !!item.prioritized;
-                  const disabled = !checked && limitReached;
-                  return (
-                    <li
-                      key={item.id}
-                      className={cn(
-                        'flex items-start gap-2 rounded-md border bg-card px-2.5 py-2 text-xs',
-                        checked && 'border-primary/40 bg-primary/5',
-                      )}
-                    >
-                      <Checkbox
-                        checked={checked}
-                        disabled={disabled}
-                        onCheckedChange={(next) => handleToggle(item.id, next === true)}
-                        aria-label={
-                          disabled
-                            ? `Limite de ${MAX_PRIORITIZED} sugestões prioritárias atingido`
-                            : checked
-                              ? 'Remover priorização'
-                              : 'Priorizar'
-                        }
-                        className="mt-0.5"
-                      />
-                      <p className="flex-1 text-foreground/90 break-words leading-snug">
-                        {item.text}
-                      </p>
-                      {checked && item.priorityRank && (
-                        <Badge
-                          variant="secondary"
-                          className="shrink-0 text-[10px] px-1.5"
-                          title="Ordem de priorização"
-                        >
-                          #{item.priorityRank}
-                        </Badge>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemove(item.id)}
-                        aria-label="Remover sugestão"
+        {(() => {
+          const renderItems = (items: RitualAgendaSuggestion[]) => (
+            <ul className="space-y-1.5">
+              {items.map((item) => {
+                const checked = !!item.prioritized;
+                const disabled = !checked && limitReached;
+                return (
+                  <li
+                    key={item.id}
+                    className={cn(
+                      'flex items-start gap-2 rounded-md border bg-card px-2.5 py-2 text-xs',
+                      checked && 'border-primary/40 bg-primary/5',
+                    )}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={disabled}
+                      onCheckedChange={(next) => handleToggle(item.id, next === true)}
+                      aria-label={
+                        disabled
+                          ? `Limite de ${MAX_PRIORITIZED} sugestões prioritárias atingido`
+                          : checked
+                            ? 'Remover priorização'
+                            : 'Priorizar'
+                      }
+                      className="mt-0.5"
+                    />
+                    <p className="flex-1 text-foreground/90 break-words leading-snug">
+                      {item.text}
+                    </p>
+                    {checked && item.priorityRank && (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 text-[10px] px-1.5"
+                        title="Ordem de priorização"
                       >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+                        #{item.priorityRank}
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemove(item.id)}
+                      aria-label="Remover sugestão"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
           );
-        })}
+
+          return (
+            <>
+              {BLOCK_ORDER.map((block) => {
+                const items = grouped[block];
+                if (items.length === 0) return null;
+                const cfg = AGENDA_CATEGORY_CONFIG[block];
+                return (
+                  <div key={block} className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={cn('text-[10px] px-1.5', cfg.badgeClassName)}>
+                        {cfg.label}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground">{items.length}</span>
+                    </div>
+                    {renderItems(items)}
+                  </div>
+                );
+              })}
+
+              {grouped.none.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[10px] px-1.5 text-muted-foreground">
+                      Sem categoria
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground">{grouped.none.length}</span>
+                  </div>
+                  {renderItems(grouped.none)}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </CardContent>
     </Card>
   );

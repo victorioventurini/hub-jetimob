@@ -115,7 +115,12 @@ export interface TeamCheckinDecision {
 export interface RitualAgendaSuggestion {
   id: string;
   text: string;
-  category: RitualBlock;
+  /**
+   * Categoria temática (`RitualBlock`). Opcional/nullável: ritos que coletam
+   * sugestões "soltas" (ex.: Reflection do Check-in Individual → Pré-Check-in
+   * do Time) gravam `null`. Consumidores devem tratar `null` como "Sem categoria".
+   */
+  category?: RitualBlock | null;
   /** Step do wizard onde foi registrada (livre — string opaca) */
   sourceStep: string;
   /** Marcada como prioritária no Step de Resumo (até 3 por rito) */

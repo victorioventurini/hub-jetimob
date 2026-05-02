@@ -49,6 +49,7 @@ import type {
   PendingMilestoneStatusChange,
   PendingDecisionFollowUpUpdate,
   PendingDecisionThreadMessage,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import {
@@ -83,6 +84,12 @@ interface CollaboratorDraftData {
    * Mensagens bufferizadas de thread de decisões (step de Pendências).
    */
   pendingThreadMessages: PendingDecisionThreadMessage[];
+  /**
+   * Sugestões de pauta para o Check-in do Time, registradas no step de
+   * Reflection (sem categoria). Persistidas no snapshot do colaborador para
+   * agregação no Pré-Check-in do Time (`leader-prep`).
+   */
+  teamCheckinAgendaSuggestions: RitualAgendaSuggestion[];
 }
 
 // WIZARD_STEPS / STEP_ORDER vivem em ./components/wizards/collaborator/wizardSteps
@@ -99,6 +106,7 @@ const DEFAULT_DATA: CollaboratorDraftData = {
   pendingMilestoneStatusChanges: [],
   pendingFollowUpUpdates: [],
   pendingThreadMessages: [],
+  teamCheckinAgendaSuggestions: [],
 };
 
 // ============================================================
@@ -684,6 +692,12 @@ export default function CollaboratorCheckinPage() {
               updateDraft({ reflection: {} });
               goNext();
             }}
+            agendaSuggestions={draft.data.teamCheckinAgendaSuggestions ?? []}
+            onAgendaSuggestionsChange={(next) =>
+              updateDraft({ teamCheckinAgendaSuggestions: next })
+            }
+            agendaTriggerLabel="Sugerir pauta para o Check-in do Time"
+            agendaCategoryless
           />
         );
         
