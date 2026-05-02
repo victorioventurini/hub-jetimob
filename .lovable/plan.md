@@ -1,60 +1,39 @@
-## Diagnóstico
+# Step "Projetos" do Check-in Individual — Ajustes de escopo e UI
 
-URL: `/rituals/collaborator-checkin?step=reflection` → `reflection` é o penúltimo step. O **último step real** é `summary` (`CollaboratorSummary.tsx`), que mostra o resumo consolidado e tem um rodapé customizado com botões "Copiar resumo", "Ver OKRs" e "Fechar".
+## Mudanças solicitadas
 
-Problemas atuais no `CollaboratorSummary`:
-1. **Não usa o footer padronizado** (`WizardStepFooter`/`WizardLastStepFooter`) que já é o SSOT em `shared/WizardStepFooter.tsx`.
-2. **Não tem botão "Voltar"** — usuário não consegue voltar para `reflection` para corrigir o que escreveu.
-3. **Botão "Fechar" não deixa claro que é a conclusão** do ritual (texto neutro, ícone X).
-4. **Não há pop-up de confirmação** antes de finalizar — clicar em "Fechar" dispara `handleComplete` (que limpa o draft, marca como concluído, dispara o e-mail de resumo e navega), sem chance de desistir.
+1. **Exibir somente milestones em que o próprio usuário é o responsável** (owner do milestone), mesmo nos projetos em que ele é dono do projeto.
+2. **Remover o botão "Editar projeto"** que aparece no cabeçalho do card quando o usuário é dono do projeto.
 
-A confirmação já existe pronta no `WizardLastStepFooter`: AlertDialog "Concluir ritual" com texto "Ao confirmar, os dados serão salvos e o ritual será marcado como concluído. Tem certeza de que deseja prosseguir?".
+## Comportamento atual (que muda)
 
-## Mudanças
+- Hoje, quando o usuário é dono de um projeto, o card lista **todos os marcos pendentes** do projeto (sejam dele ou de outras pessoas).
+- Hoje, quando o usuário é dono do projeto, aparece um botão "Editar projeto" no canto superior direito do card que abre o `ProjectDialog`.
 
-### 1. `CollaboratorSummary.tsx` — adotar footer padronizado
+## Comportamento novo
 
-- Adicionar prop `onBack: () => void` na interface `CollaboratorSummaryProps`.
-- Substituir o bloco `{/* Footer */}` (linhas ~328-346) por `<WizardLastStepFooter>`:
-  - `showBack`, `onBack={onBack}` → volta para o step `reflection`.
-  - `leftContent` opcional só se quisermos manter "Copiar resumo" e "Ver OKRs" no rodapé; **proposta**: mover esses dois botões para dentro do conteúdo (acima do `</ScrollArea>`, em uma barra de ações secundárias), mantendo o rodapé limpo com apenas Voltar/Concluir — alinhado ao padrão dos outros wizards.
-  - `primaryLabel` herda "Concluir" + ícone `CheckCircle2` verde (success) do preset.
-  - `onPrimary={onClose}` (continua disparando `handleComplete` no pai).
-  - `primaryLoading={isSubmitting}` (nova prop opcional, ver item 3).
-- Remover imports não usados (`Button`, `X`) se a refatoração eliminá-los.
+- Lista de "Marcos pendentes" do card mostra **apenas milestones em que `milestone.owner_id === effectiveUserId`** (independente do usuário ser dono do projeto ou não).
+- Projetos sem nenhum milestone pendente do usuário continuam aparecendo (preserva visibilidade do projeto que ele lidera), exibindo a mensagem padrão de "Todos os marcos concluídos ✓" ou similar.
+- Cabeçalho do card não mostra mais "Editar projeto". Edição segue disponível pelo módulo de Projetos.
+- Edição inline de milestone (botão lápis ao lado de cada linha) **permanece**, pois agora todos os milestones listados são do próprio usuário.
 
-### 2. `CollaboratorCheckinPage.tsx` — passar `onBack` e estado de submitting
+## Detalhes técnicos
 
-No `case 'summary'` (linha ~525):
-- Passar `onBack={goBack}` (volta para `reflection`).
-- Opcional: passar `isSubmitting` se transformarmos `handleComplete` em assíncrono observável.
+Arquivo único: `src/modules/okrs/components/wizards/collaborator/CollaboratorProjectsStep.tsx`
 
-### 3. (Opcional) Loading durante conclusão
+- No `processProject`, ao montar `milestones`, adicionar filtro `m.owner_id === effectiveUserId` junto ao filtro `status !== 'done'` existente.
+- Recalcular `pendingMilestonesCount` continua válido (deriva de `projects.map(p => p.milestones)` já filtrado).
+- Remover:
+  - `useUpdateProject`, `ProjectDialog` e import de `Pencil` (verificar se ainda é usado pelo botão de editar milestone — sim, é, manter o import).
+  - State `editingProject` e setter.
+  - Handler `handleProjectEditSubmit`.
+  - Bloco JSX do botão "Editar projeto" (linhas ~362-372).
+  - Bloco JSX `<ProjectDialog ... />` no final do componente.
+- Os totais `milestones_total`/`milestones_done`/`completion_pct` exibidos na barra de progresso continuam refletindo o **projeto inteiro** (não filtrar — a barra é do projeto, não do usuário). Manter como está.
+- Não mexer em queries/RLS/permissões — apenas presentation layer.
 
-`handleComplete` já é `async` mas não há indicador visual. Adicionar um `useState<boolean>` `isCompleting` na página, setar `true` antes do `clearDraft()` e propagar como `isSubmitting` para o `CollaboratorSummary` → `WizardLastStepFooter` mostra spinner no botão "Concluindo...".
+## Fora de escopo
 
-### 4. Confirmação pop-up
-
-Já vem de graça com `WizardLastStepFooter` (AlertDialog interno). Sem código novo necessário.
-
-## Verificação
-
-1. Navegar até `/rituals/collaborator-checkin?step=summary`:
-   - Rodapé mostra **Voltar** (ghost) à esquerda e **Concluir** (verde, com check) à direita.
-   - Clicar em **Voltar** → retorna para `step=reflection` preservando dados.
-   - Clicar em **Concluir** → abre AlertDialog "Concluir ritual".
-   - Confirmar no dialog → executa `handleComplete` (toast "Check-in concluído!", e-mail disparado, navega para `/wizards`).
-   - Cancelar no dialog → fecha o pop-up sem mudanças.
-2. Botões "Copiar resumo" e "Ver OKRs" continuam acessíveis (movidos para barra de ações no conteúdo).
-3. Outros steps do wizard não são afetados.
-
-## Arquivos alterados
-
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx` (refatora rodapé, adiciona `onBack`)
-- `src/modules/okrs/pages/CollaboratorCheckinPage.tsx` (passa `onBack={goBack}` e opcionalmente `isSubmitting`)
-
-## Não-objetivos
-
-- Não mudar a ordem dos steps nem remover `summary`.
-- Não mudar a lógica de `handleComplete` (clear draft, e-mail, navegação).
-- Não tocar em nenhum outro wizard — esta é uma correção pontual do collaborator check-in que alinha ao padrão SSOT já existente.
+- Lógica de quais projetos aparecem (continua: dono do projeto OU dono de algum milestone pendente).
+- Edição de milestone inline (mantida).
+- Outras etapas do wizard.
