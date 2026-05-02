@@ -540,6 +540,8 @@ export default function CollaboratorCheckinPage() {
             initiativesMarkedAtRisk={draft.data.initiativesMarkedAtRisk}
             onViewOkrs={() => navigate('/okrs')}
             onClose={handleComplete}
+            onBack={goBack}
+            isSubmitting={isCompleting}
           />
         );
         
