@@ -59,12 +59,24 @@ export const AgendaSuggestionsPrioritizer = memo(function AgendaSuggestionsPrior
   ritualLabel,
 }: AgendaSuggestionsPrioritizerProps) {
   const grouped = useMemo(() => {
-    const map: Record<RitualBlock, RitualAgendaSuggestion[]> = {
+    const map: {
+      performance: RitualAgendaSuggestion[];
+      projetos: RitualAgendaSuggestion[];
+      pessoas: RitualAgendaSuggestion[];
+      none: RitualAgendaSuggestion[];
+    } = {
       performance: [],
       projetos: [],
       pessoas: [],
+      none: [],
     };
-    for (const s of suggestions) map[s.category].push(s);
+    for (const s of suggestions) {
+      if (s.category === 'performance' || s.category === 'projetos' || s.category === 'pessoas') {
+        map[s.category].push(s);
+      } else {
+        map.none.push(s);
+      }
+    }
     return map;
   }, [suggestions]);
 
