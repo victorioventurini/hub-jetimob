@@ -113,21 +113,23 @@ export function InlineCollapsibleEntryInput<TItem, TCategory extends string>({
       <CollapsibleContent>
         <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3">
           {/* Category selector */}
-          <div className="flex flex-wrap gap-1.5 min-w-0">
-            {categories.map((cat) => (
-              <Badge
-                key={cat.value}
-                variant="outline"
-                className={cn(
-                  'cursor-pointer transition-colors text-xs shrink-0',
-                  category === cat.value && cat.activeClassName,
-                )}
-                onClick={() => setCategory(cat.value)}
-              >
-                {cat.label}
-              </Badge>
-            ))}
-          </div>
+          {!hideCategorySelector && (
+            <div className="flex flex-wrap gap-1.5 min-w-0">
+              {categories.map((cat) => (
+                <Badge
+                  key={cat.value}
+                  variant="outline"
+                  className={cn(
+                    'cursor-pointer transition-colors text-xs shrink-0',
+                    category === cat.value && cat.activeClassName,
+                  )}
+                  onClick={() => setCategory(cat.value)}
+                >
+                  {cat.label}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           <div className="flex gap-2">
             <TextareaAutoSubmit
