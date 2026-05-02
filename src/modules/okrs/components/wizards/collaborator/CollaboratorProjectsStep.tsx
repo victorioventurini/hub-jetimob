@@ -15,13 +15,11 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { useBu } from '@/contexts/BuContext';
 import { projectsKeys } from '@/lib/queryKeys/projects';
 import { useUpdateMilestone } from '@/modules/projects/hooks/useMilestoneMutations';
-import { useUpdateProject } from '@/modules/projects/hooks/useProjectMutations';
 import { useProjectPermissionsV2 } from '@/modules/projects/hooks/useProjectPermissionsV2';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
 import { MilestoneStatusSelect } from '@/modules/projects/components/MilestoneStatusSelect';
 import { MilestoneDialog, type MilestoneDialogSubmitValues } from '@/modules/projects/components/MilestoneDialog';
-import { ProjectDialog } from '@/modules/projects/components/ProjectDialog';
 import { Button } from '@/components/ui/button';
 import { WizardStepHeader } from '../shared/WizardStepHeader';
 import { WizardStepFooter } from '../shared/WizardStepFooter';
