@@ -326,8 +326,6 @@ ${reflection?.helpNeeded ? `## Preciso de ajuda\n${reflection.helpNeeded}` : ''}
               </div>
             </>
           )}
-        </div>
-      </ScrollArea>
 
           {/* Secondary actions */}
           <Separator />
