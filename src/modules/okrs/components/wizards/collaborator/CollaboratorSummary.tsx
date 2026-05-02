@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   CheckCircle2,
   SkipForward,
-  AlertTriangle,
   Copy,
   
   TrendingUp,
