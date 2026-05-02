@@ -750,7 +750,7 @@ Atualizações de progresso dos KRs.
 | current_value | numeric | Valor novo |
 | confidence | enum | `high`, `medium`, `low` |
 | blockers | text | Bloqueadores |
-| comments | text | Comentários/menções |
+| comments | text | Comentário em texto livre. Menções (@) são processadas apenas no `CheckinDialog` do drawer `/okrs`; o Check-in Individual (wizard colaborador) grava texto puro. |
 | user_id | uuid | Quem fez o check-in (profile_id) |
 
 **Escopo:** Por BU (via KR)
