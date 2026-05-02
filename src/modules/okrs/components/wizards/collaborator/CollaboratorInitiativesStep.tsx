@@ -213,23 +213,90 @@ export function CollaboratorInitiativesStep({
     return grouped;
   }, [projectsByKrData]);
 
-  // Group initiatives by KR + capture KR titles from the join (fallback when
-  // the KR isn't present in the `krs` prop, e.g. when the user is only a
-  // contributor of the initiative).
-  const { initiativesByKr, krTitleResolved } = useMemo(() => {
+  // KRs do prop (lookup por id) — fonte de verdade preferencial.
+  const krByIdProp = useMemo(() => {
+    const map = new Map<string, WizardKr>();
+    for (const kr of krs) map.set(kr.id, kr);
+    return map;
+  }, [krs]);
+
+  // Group initiatives by KR + monta um KR-data unificado (prop > join).
+  // Usado para renderizar o KrContextCard canônico em cada grupo.
+  const { initiativesByKr, krDataById } = useMemo(() => {
     const grouped = new Map<string, Initiative[]>();
-    const titles = new Map<string, string>(krTitleById);
+    const krMap = new Map<string, {
+      title: string;
+      objectiveTitle: string;
+      teamName?: string;
+      baseline: number;
+      currentValue: number;
+      target: number;
+      unit?: string;
+      direction: 'up' | 'down' | 'maintain';
+      status: 'green' | 'yellow' | 'red' | 'not_started';
+      progress: number;
+      lastCheckinAt?: string | null;
+      ownerName?: string | null;
+      ownerPhoto?: string | null;
+    }>();
+
     for (const init of initiatives) {
       const existing = grouped.get(init.kr_id) || [];
       existing.push(init);
       grouped.set(init.kr_id, existing);
-      const joinedTitle = (init as any).kr?.title as string | undefined;
-      if (joinedTitle && !titles.has(init.kr_id)) {
-        titles.set(init.kr_id, joinedTitle);
+
+      if (krMap.has(init.kr_id)) continue;
+
+      // Prefer prop (já tem progress calculado, owner etc.)
+      const fromProp = krByIdProp.get(init.kr_id);
+      if (fromProp) {
+        krMap.set(init.kr_id, {
+          title: fromProp.title,
+          objectiveTitle: fromProp.objective_title || '',
+          teamName: fromProp.team_name || undefined,
+          baseline: fromProp.baseline,
+          currentValue: fromProp.current_value,
+          target: fromProp.target,
+          unit: fromProp.unit || undefined,
+          direction: (fromProp.direction === 'maintain' ? 'maintain' : fromProp.direction) as 'up' | 'down' | 'maintain',
+          status: (fromProp.status as any) ?? 'not_started',
+          progress: fromProp.progress,
+          lastCheckinAt: fromProp.last_checkin_at,
+          ownerName: fromProp.owner_name,
+          ownerPhoto: fromProp.owner_photo,
+        });
+        continue;
       }
+
+      // Fallback: dados do join (quando user é só contributor da iniciativa)
+      const krJoin = (init as any).kr;
+      if (!krJoin) continue;
+      const obj = krJoin.team_objective;
+      const baseline = Number(krJoin.baseline ?? 0);
+      const currentValue = Number(krJoin.current_value ?? 0);
+      const target = Number(krJoin.target ?? 0);
+      const range = target - baseline;
+      const progress = range !== 0
+        ? Math.min(100, Math.max(0, ((currentValue - baseline) / range) * 100))
+        : 0;
+      krMap.set(init.kr_id, {
+        title: krJoin.title ?? 'KR',
+        objectiveTitle: obj?.title ?? '',
+        teamName: obj?.team?.name ?? undefined,
+        baseline,
+        currentValue,
+        target,
+        unit: krJoin.unit ?? undefined,
+        direction: (krJoin.direction === 'maintain' ? 'maintain' : krJoin.direction) ?? 'up',
+        status: (krJoin.status as any) ?? 'not_started',
+        progress,
+        lastCheckinAt: krJoin.last_checkin_at ?? null,
+        ownerName: null,
+        ownerPhoto: null,
+      });
     }
-    return { initiativesByKr: grouped, krTitleResolved: titles };
-  }, [initiatives, krTitleById]);
+    return { initiativesByKr: grouped, krDataById: krMap };
+  }, [initiatives, krByIdProp]);
 
   // Stats
   const stats = useMemo(() => {
