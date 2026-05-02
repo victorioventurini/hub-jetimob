@@ -41,6 +41,7 @@ import type {
   PendingMilestoneStatusChange,
   PendingDecisionFollowUpUpdate,
   PendingDecisionThreadMessage,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 import type { WizardStep } from './wizardSteps';
 import type { MilestoneStatus } from '@/modules/projects/types';
@@ -78,6 +79,8 @@ export interface CollaboratorSummaryProps {
   pendingMilestoneStatusChanges?: PendingMilestoneStatusChange[];
   pendingFollowUpUpdates?: PendingDecisionFollowUpUpdate[];
   pendingThreadMessages?: PendingDecisionThreadMessage[];
+  /** Sugestões de pauta para o Check-in do Time (categoryless) */
+  teamCheckinAgendaSuggestions?: RitualAgendaSuggestion[];
   visibleStepOrder: readonly WizardStep[];
   effectiveUserId: string | null;
   cycleName?: string;
