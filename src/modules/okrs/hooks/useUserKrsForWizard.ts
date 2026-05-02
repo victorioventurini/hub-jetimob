@@ -1,11 +1,13 @@
 /**
  * useUserKrsForWizard - Hook para buscar KRs atribuídos ao usuário atual para o Wizard Colaborador
- * 
+ *
  * Busca KRs onde o usuário é:
  * - Owner da KR
  * - Co-responsável da KR
- * - Owner de pelo menos uma iniciativa vinculada à KR
- * 
+ *
+ * KRs onde o usuário é apenas owner de iniciativas vinculadas NÃO entram aqui —
+ * essas iniciativas aparecem no step de Iniciativas do wizard.
+ *
  * Filtra por ciclo ativo, calcula progresso e identifica pendências.
  */
 
