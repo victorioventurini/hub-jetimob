@@ -320,6 +320,16 @@ export const okrsKeys = {
   weeklyExpectedLeaders: (buId: string | null) =>
     ['weekly', 'expected-leaders', buId] as const,
 
+  // Team Collaborator Agenda Suggestions (leader-prep aggregation)
+  // Lê snapshots de okr_wizard_sessions (wizard_type='collaborator', status='completed')
+  // do time `teamId`, dentro da janela do `cycleId`, e extrai
+  // `data.teamCheckinAgendaSuggestions[]` para o líder priorizar.
+  teamCollaboratorAgendaSuggestions: (
+    buId: string | null,
+    teamId: string | null,
+    cycleId: string | null,
+  ) => ['team-collaborator-agenda-suggestions', buId, teamId, cycleId] as const,
+
   // ── Auto cycle transition (settings) ──
   autoCycleTransition: (buId: string | null) =>
     ['okr-auto-cycle-transition', buId] as const,

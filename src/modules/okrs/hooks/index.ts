@@ -194,6 +194,11 @@ export { useCanEditTeamObjective } from './useCanEditTeamObjective';
 export { useTeamOverviewMetrics } from './useTeamOverviewMetrics';
 export { useTeamPendingKrs } from './useTeamPendingKrs';
 export {
+  useTeamCollaboratorAgendaSuggestions,
+  type AggregatedAgendaSuggestion,
+} from './useTeamCollaboratorAgendaSuggestions';
+export { useSelectedTeamCheckinAgenda } from './useSelectedTeamCheckinAgenda';
+export {
   useTeamPreviousCycleAnalysis,
   type PreviousCycleObjective,
   type AbandonedKr,

@@ -25,6 +25,7 @@ import {
   useTeamOverviewMetrics,
   useTeamPendingKrs,
   useLastCompletedSession,
+  useTeamCollaboratorAgendaSuggestions,
 } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
@@ -69,6 +70,11 @@ interface LeaderPrepDraftData {
   kpisForFollowup: string[];
   /** Decisões inline registradas durante o rito */
   decisions: TeamCheckinDecision[];
+  /**
+   * IDs das sugestões de pauta (vindas dos check-ins individuais do time)
+   * que o líder selecionou para levar ao Check-in do Time.
+   */
+  selectedTeamCheckinAgendaSuggestionIds: string[];
 }
 
 const WIZARD_STEPS = [
@@ -96,6 +102,7 @@ const DEFAULT_DATA: LeaderPrepDraftData = {
   kpisForDiscussion: [],
   kpisForFollowup: [],
   decisions: [],
+  selectedTeamCheckinAgendaSuggestionIds: [],
 };
 
 // ============================================================
@@ -271,6 +278,23 @@ export default function LeaderPrepPage() {
     [draft.data.kpisForFollowup, updateDraft],
   );
 
+  // Sugestões de pauta agregadas dos check-ins individuais do time
+  const { data: collaboratorAgendaSuggestions = [] } = useTeamCollaboratorAgendaSuggestions({
+    teamId: teamIdParam,
+    cycleId: quarterlyCycle?.id ?? null,
+  });
+
+  const handleToggleAgendaSuggestion = useCallback(
+    (id: string, selected: boolean) => {
+      const current = draft.data.selectedTeamCheckinAgendaSuggestionIds ?? [];
+      const updated = selected
+        ? Array.from(new Set([...current, id]))
+        : current.filter((x) => x !== id);
+      updateDraft({ selectedTeamCheckinAgendaSuggestionIds: updated });
+    },
+    [draft.data.selectedTeamCheckinAgendaSuggestionIds, updateDraft],
+  );
+
   // Dynamic steps: omit KR-dependent steps when no KRs
   const hasKrs = !!(pendingKrs && pendingKrs.length > 0);
 
@@ -428,6 +452,11 @@ export default function LeaderPrepPage() {
             metrics={metrics?.metrics || null}
             isLoading={isLoadingMetrics}
             lastCompletedAt={lastCheckin.lastCompletedAt}
+            collaboratorAgendaSuggestions={collaboratorAgendaSuggestions}
+            selectedAgendaSuggestionIds={
+              draft.data.selectedTeamCheckinAgendaSuggestionIds ?? []
+            }
+            onToggleAgendaSuggestion={handleToggleAgendaSuggestion}
             onContinue={goNext}
           />
         );

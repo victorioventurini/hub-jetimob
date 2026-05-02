@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import {
   ArrowRight,
@@ -24,12 +25,14 @@ import {
   TrendingDown,
   Zap,
   Users,
+  ListTodo,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import type { LeaderOverviewMetrics } from '@/modules/okrs/types/wizard';
 import { METRIC_CARD_STYLES, getHealthScoreColor } from '@/lib/colors';
+import type { AggregatedAgendaSuggestion } from '@/modules/okrs/hooks/useTeamCollaboratorAgendaSuggestions';
 
 // ============================================================
 // TYPES
@@ -41,6 +44,11 @@ export interface LeaderOverviewStepProps {
   cycleName?: string;
   isLoading?: boolean;
   lastCompletedAt?: string | null;
+  /** Sugestões de pauta agregadas dos check-ins individuais do time */
+  collaboratorAgendaSuggestions?: AggregatedAgendaSuggestion[];
+  /** IDs selecionados pelo líder para o Check-in do Time */
+  selectedAgendaSuggestionIds?: string[];
+  onToggleAgendaSuggestion?: (id: string, selected: boolean) => void;
   onContinue: () => void;
 }
 
@@ -54,6 +62,9 @@ export function LeaderOverviewStep({
   cycleName,
   isLoading,
   lastCompletedAt,
+  collaboratorAgendaSuggestions = [],
+  selectedAgendaSuggestionIds = [],
+  onToggleAgendaSuggestion,
   onContinue,
 }: LeaderOverviewStepProps) {
   // Calculate percentages
@@ -306,6 +317,60 @@ export function LeaderOverviewStep({
               </CardContent>
             </Card>
         </div>
+        )}
+
+        {/* Sugestões de pauta agregadas dos colaboradores */}
+        {collaboratorAgendaSuggestions.length > 0 && (
+          <Card className="mt-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <ListTodo className="h-4 w-4" />
+                Sugestões de pauta dos colaboradores
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {collaboratorAgendaSuggestions.length}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Marque as que você quer levar para o Check-in do Time
+                {selectedAgendaSuggestionIds.length > 0 &&
+                  ` (${selectedAgendaSuggestionIds.length} selecionada${
+                    selectedAgendaSuggestionIds.length > 1 ? 's' : ''
+                  })`}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {collaboratorAgendaSuggestions.map((s) => {
+                  const checked = selectedAgendaSuggestionIds.includes(s.id);
+                  return (
+                    <li
+                      key={s.id}
+                      className={cn(
+                        'flex items-start gap-2 rounded-md border bg-card px-3 py-2 text-sm',
+                        checked && 'border-primary/40 bg-primary/5',
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(next) =>
+                          onToggleAgendaSuggestion?.(s.id, next === true)
+                        }
+                        aria-label={checked ? 'Desmarcar sugestão' : 'Marcar sugestão'}
+                        className="mt-0.5"
+                        disabled={!onToggleAgendaSuggestion}
+                      />
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <p className="text-foreground/90 leading-snug break-words">{s.text}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          por {s.authorName}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
         )}
       </div>
 

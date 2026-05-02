@@ -11,12 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Target, AlertTriangle } from 'lucide-react';
+import { Users, Target, AlertTriangle, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput } from '../shared';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import type { TeamCheckinDecision } from '@/modules/okrs/types/wizard';
+import type { AggregatedAgendaSuggestion } from '@/modules/okrs/hooks/useTeamCollaboratorAgendaSuggestions';
 
 // ============================================================
 // TYPES
@@ -31,6 +32,10 @@ export interface TeamOpeningStepProps {
   lastCompletedAt?: string | null;
   decisions?: TeamCheckinDecision[];
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
+  /** Sugestões de pauta priorizadas pelo líder (vindas dos check-ins individuais) */
+  prioritizedAgendaSuggestions?: AggregatedAgendaSuggestion[];
+  /** Demais sugestões dos colaboradores (não selecionadas pelo líder) — mostradas em "ver mais" */
+  otherAgendaSuggestions?: AggregatedAgendaSuggestion[];
   onContinue: () => void;
   /** Slot opcional renderizado no topo do conteúdo (ex: PreparationStatusCard) */
   topSlot?: ReactNode;
@@ -49,6 +54,8 @@ export function TeamOpeningStep({
   lastCompletedAt,
   decisions = [],
   onDecisionsChange,
+  prioritizedAgendaSuggestions = [],
+  otherAgendaSuggestions = [],
   onContinue,
   topSlot,
 }: TeamOpeningStepProps) {
@@ -120,6 +127,52 @@ export function TeamOpeningStep({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {topSlot}
+
+        {/* Pauta sugerida pelos colaboradores (priorizada pelo líder) */}
+        {(prioritizedAgendaSuggestions.length > 0 || otherAgendaSuggestions.length > 0) && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <ListTodo className="h-4 w-4 text-primary" />
+              Pauta sugerida pelo time
+              {prioritizedAgendaSuggestions.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {prioritizedAgendaSuggestions.length} priorizada
+                  {prioritizedAgendaSuggestions.length > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </h4>
+            {prioritizedAgendaSuggestions.length > 0 && (
+              <ul className="space-y-2">
+                {prioritizedAgendaSuggestions.map((s) => (
+                  <li
+                    key={s.id}
+                    className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm"
+                  >
+                    <p className="text-foreground/90 leading-snug break-words">{s.text}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">por {s.authorName}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {otherAgendaSuggestions.length > 0 && (
+              <details className="rounded-md border border-dashed bg-muted/30 px-3 py-2">
+                <summary className="text-xs text-muted-foreground cursor-pointer">
+                  +{otherAgendaSuggestions.length} sugestão
+                  {otherAgendaSuggestions.length > 1 ? 'ões' : ''} não priorizada
+                  {otherAgendaSuggestions.length > 1 ? 's' : ''}
+                </summary>
+                <ul className="mt-2 space-y-1.5">
+                  {otherAgendaSuggestions.map((s) => (
+                    <li key={s.id} className="text-xs text-foreground/80">
+                      <span className="leading-snug">{s.text}</span>
+                      <span className="text-muted-foreground"> — {s.authorName}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
         {/* Marked for discussion */}
         {discussionKrs.length > 0 && (
           <div className="space-y-3">

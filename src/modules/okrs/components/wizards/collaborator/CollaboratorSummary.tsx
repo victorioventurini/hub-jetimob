@@ -41,6 +41,7 @@ import type {
   PendingMilestoneStatusChange,
   PendingDecisionFollowUpUpdate,
   PendingDecisionThreadMessage,
+  RitualAgendaSuggestion,
 } from '@/modules/okrs/types/wizard';
 import type { WizardStep } from './wizardSteps';
 import type { MilestoneStatus } from '@/modules/projects/types';
@@ -78,6 +79,8 @@ export interface CollaboratorSummaryProps {
   pendingMilestoneStatusChanges?: PendingMilestoneStatusChange[];
   pendingFollowUpUpdates?: PendingDecisionFollowUpUpdate[];
   pendingThreadMessages?: PendingDecisionThreadMessage[];
+  /** Sugestões de pauta para o Check-in do Time (categoryless) */
+  teamCheckinAgendaSuggestions?: RitualAgendaSuggestion[];
   visibleStepOrder: readonly WizardStep[];
   effectiveUserId: string | null;
   cycleName?: string;
@@ -329,6 +332,7 @@ export function CollaboratorSummary({
   pendingMilestoneStatusChanges = [],
   pendingFollowUpUpdates = [],
   pendingThreadMessages = [],
+  teamCheckinAgendaSuggestions = [],
   visibleStepOrder,
   effectiveUserId,
   cycleName,
@@ -499,6 +503,13 @@ export function CollaboratorSummary({
       lines.push(reflection.helpNeeded);
     }
 
+    if (teamCheckinAgendaSuggestions.length > 0) {
+      lines.push('\n## Sugestões de pauta para o Check-in do Time');
+      for (const s of teamCheckinAgendaSuggestions) {
+        lines.push(`- ${s.text}`);
+      }
+    }
+
     navigator.clipboard.writeText(lines.join('\n').trim());
     toast.success('Resumo copiado!');
   };
@@ -658,8 +669,10 @@ export function CollaboratorSummary({
           </SectionShell>
         );
 
-      case 'reflection':
-        if (!reflection?.impactSummary && !reflection?.helpNeeded) {
+      case 'reflection': {
+        const hasReflection = !!(reflection?.impactSummary || reflection?.helpNeeded);
+        const hasSuggestions = teamCheckinAgendaSuggestions.length > 0;
+        if (!hasReflection && !hasSuggestions) {
           return (
             <SectionShell
               key="reflection"
@@ -672,30 +685,56 @@ export function CollaboratorSummary({
             />
           );
         }
+        const total =
+          (reflection?.impactSummary ? 1 : 0) +
+          (reflection?.helpNeeded ? 1 : 0) +
+          teamCheckinAgendaSuggestions.length;
         return (
           <SectionShell
             key="reflection"
             id="section-reflection"
             icon={MessageSquare}
             title="Reflexão"
-            count={(reflection.impactSummary ? 1 : 0) + (reflection.helpNeeded ? 1 : 0)}
+            count={total}
             emptyText=""
             onEdit={onEditStep ? () => onEditStep('reflection') : undefined}
           >
-            {reflection.impactSummary && (
+            {reflection?.impactSummary && (
               <div className="rounded-lg bg-muted/50 p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-1">O que mais impactou</p>
                 <p className="text-sm">{reflection.impactSummary}</p>
               </div>
             )}
-            {reflection.helpNeeded && (
+            {reflection?.helpNeeded && (
               <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
                 <p className="text-xs font-medium text-primary mb-1">Pedido de ajuda</p>
                 <p className="text-sm">{reflection.helpNeeded}</p>
               </div>
             )}
+            {hasSuggestions && (
+              <div className="rounded-lg border bg-card p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  Sugestões para o Check-in do Time ({teamCheckinAgendaSuggestions.length})
+                </p>
+                <ul className="space-y-1">
+                  {teamCheckinAgendaSuggestions.map((s) => (
+                    <li
+                      key={s.id}
+                      className="text-sm text-foreground/90 leading-snug rounded-md bg-muted/40 px-2.5 py-1.5"
+                    >
+                      {s.text}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[11px] text-muted-foreground italic">
+                  Seu líder verá essas sugestões na preparação do Check-in do Time.
+                </p>
+              </div>
+            )}
           </SectionShell>
         );
+      }
 
       // 'context' e 'summary' não geram seções no resumo
       default:
