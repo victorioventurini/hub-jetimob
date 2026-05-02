@@ -110,11 +110,20 @@ export function CollaboratorInitiativesStep({
           kr:okr_team_key_results!inner (
             id,
             title,
+            baseline,
+            current_value,
+            target,
+            unit,
+            direction,
+            status,
+            last_checkin_at,
             team_objective:okr_team_objectives!inner (
               id,
+              title,
               cycle_id,
               cancelled_at,
-              deleted_at
+              deleted_at,
+              team:teams ( id, name )
             )
           )
         `)
