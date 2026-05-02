@@ -62,6 +62,9 @@ export function LeaderOverviewStep({
   cycleName,
   isLoading,
   lastCompletedAt,
+  collaboratorAgendaSuggestions = [],
+  selectedAgendaSuggestionIds = [],
+  onToggleAgendaSuggestion,
   onContinue,
 }: LeaderOverviewStepProps) {
   // Calculate percentages
