@@ -97,12 +97,12 @@ export function WizardStepFooter({
   return (
     <div className={cn(
       'shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t bg-background/95 backdrop-blur',
-      'flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-between gap-2 sm:gap-3 min-w-0 overflow-x-hidden',
+      'flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 min-w-0 overflow-x-hidden',
       'pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-4',
       className
     )}>
       {/* Left side */}
-      <div className="flex items-center gap-2 min-w-0 max-w-full flex-wrap">
+      <div className="flex items-center gap-2 min-w-0 sm:shrink-0 flex-wrap">
         {leftContent ?? (
           showBack && onBack && (
             <Button
@@ -118,13 +118,13 @@ export function WizardStepFooter({
         )}
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-2 min-w-0 max-w-full flex-wrap sm:justify-end sm:ml-auto">
+      {/* Right side — ocupa largura restante para o Continuar dominar o rodapé */}
+      <div className="flex items-center gap-2 min-w-0 max-w-full flex-wrap sm:flex-nowrap sm:flex-1 sm:justify-end">
         {showSkip && onSkip && (
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={onSkip}
-            className="text-muted-foreground min-w-0 max-w-full w-full sm:w-auto h-11 sm:h-10"
+            className="min-w-0 max-w-full w-full sm:w-auto sm:shrink-0 h-11 sm:h-10"
           >
             <SkipForward className="h-4 w-4 mr-1" />
             <span className="truncate">{skipLabel}</span>
@@ -138,7 +138,7 @@ export function WizardStepFooter({
               disabled={primaryDisabled || primaryLoading}
               isLoading={primaryLoading}
               className={cn(
-                'min-w-0 max-w-full w-full sm:w-auto h-11 sm:h-10',
+                'min-w-0 max-w-full w-full sm:flex-1 h-11 sm:h-10',
                 primaryVariant === 'success' && 'bg-success text-success-foreground hover:bg-success/90'
               )}
             >
@@ -156,9 +156,9 @@ export function WizardStepFooter({
 // PRESET FOOTERS
 // ============================================================
 
-/** Footer for first step (no back button) */
+/** Footer for first step (no back button) — copy default "Começar" */
 export function WizardFirstStepFooter(props: Omit<WizardStepFooterProps, 'showBack'>) {
-  return <WizardStepFooter {...props} showBack={false} />;
+  return <WizardStepFooter primaryLabel="Começar" {...props} showBack={false} />;
 }
 
 /** Footer for last step (complete button) with confirmation dialog */
@@ -178,7 +178,7 @@ export function WizardLastStepFooter(props: Omit<WizardStepFooterProps, 'primary
     <>
       <WizardStepFooter 
         {...props} 
-        primaryLabel={props.primaryLoading ? 'Concluindo...' : 'Concluir'} 
+        primaryLabel={props.primaryLoading ? 'Enviando…' : 'Finalizar e enviar'} 
         primaryVariant="success"
         onPrimary={handlePrimaryClick}
       />
