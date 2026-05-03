@@ -20,6 +20,8 @@ export interface SummaryKrBalanceItem {
   krTitle?: string;
   state: string;
   finalProgress: number;
+  /** KR de objetivo de outro time onde este time é contribuidor. */
+  isContributed?: boolean;
 }
 
 export interface SummaryKrBalanceProps {
