@@ -30,6 +30,12 @@ import {
 import { cn } from '@/lib/utils';
 import { useBu } from '@/contexts/BuContext';
 import { AreaBadge } from '@/components/ui/area-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  WizardStepScaffold,
+  WizardStepHeader,
+  WizardStepFooter,
+} from '@/modules/okrs/components/wizards/shared';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
@@ -47,12 +53,14 @@ import type { KpiCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/ty
 export type { KpiCheckinResult };
 
 export interface CollaboratorKpiStepProps {
-  kpi: KpiForWizardV2;
-  currentIndex: number;
-  totalCount: number;
+  kpi?: KpiForWizardV2;
+  currentIndex?: number;
+  totalCount?: number;
   onComplete: (result: KpiCheckinResult) => void;
   onSkip: () => void;
   onBack: () => void;
+  /** Avança para o próximo step quando o usuário não tem KPIs (modo empty state). */
+  onContinue?: () => void;
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
@@ -88,14 +96,78 @@ const FORM_ID = 'collaborator-kpi-form';
 // COMPONENT
 // ============================================================
 
-export function CollaboratorKpiStep({
+export function CollaboratorKpiStep(props: CollaboratorKpiStepProps) {
+  const {
+    kpi,
+    onSkip,
+    onBack,
+    onContinue,
+    agendaSuggestions,
+    onAgendaSuggestionsChange,
+    agendaTriggerLabel,
+  } = props;
+
+  // Empty state — usuário não tem KPIs sob sua responsabilidade neste ciclo.
+  // Reaproveita scaffolds canônicos (mesmo padrão de CollaboratorInitiativesStep).
+  if (!kpi || (props.totalCount ?? 0) === 0) {
+    return (
+      <WizardStepScaffold
+        header={
+          <WizardStepHeader
+            icon={BarChart3}
+            title="Indicadores"
+            description="Atualize seus KPIs e métricas"
+            variant="purple"
+          />
+        }
+        footer={
+          <WizardStepFooter
+            showBack
+            onBack={onBack}
+            primaryLabel="Continuar"
+            onPrimary={() => (onContinue ?? onSkip)()}
+            showSkip
+            skipLabel="Pular"
+            onSkip={onSkip}
+          />
+        }
+        bottomFixed={
+          agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+            <InlineAgendaSuggestionInput
+              suggestions={agendaSuggestions}
+              onSuggestionsChange={onAgendaSuggestionsChange}
+              sourceStep={AGENDA_SOURCE_STEP}
+              triggerLabel={agendaTriggerLabel}
+            />
+          ) : undefined
+        }
+      >
+        <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+          <EmptyState
+            icon={BarChart3}
+            title="Nenhum indicador sob sua responsabilidade"
+            description="Você não é responsável por indicadores neste ciclo. Pode pular ou continuar para o próximo passo."
+          />
+        </div>
+      </WizardStepScaffold>
+    );
+  }
+
+  return <CollaboratorKpiStepWithKpi {...props} kpi={kpi} />;
+}
+
+interface CollaboratorKpiStepWithKpiProps extends CollaboratorKpiStepProps {
+  kpi: KpiForWizardV2;
+}
+
+function CollaboratorKpiStepWithKpi({
   kpi,
-  currentIndex,
-  totalCount,
+  currentIndex = 0,
+  totalCount = 1,
   onComplete,
   onSkip,
   onBack,
-}: CollaboratorKpiStepProps) {
+}: CollaboratorKpiStepWithKpiProps) {
   const { currentBu } = useBu();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentValue, setCurrentValue] = useState<number | undefined>(undefined);

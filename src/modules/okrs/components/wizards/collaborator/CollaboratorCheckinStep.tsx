@@ -12,7 +12,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRight, ArrowLeft, SkipForward, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, SkipForward, Sparkles, Target } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  WizardStepScaffold,
+  WizardStepHeader,
+  WizardStepFooter,
+} from '@/modules/okrs/components/wizards/shared';
 import { AlertBanner } from '../shared/AlertBanner';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { statusToConfidence } from '@/modules/okrs/hooks/useCreateCheckin';
@@ -33,12 +39,18 @@ import type { CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
 // ============================================================
 
 export interface CollaboratorCheckinStepProps {
-  kr: WizardKr;
-  currentIndex: number;
-  totalCount: number;
+  kr?: WizardKr;
+  currentIndex?: number;
+  totalCount?: number;
   onComplete: (result: CollaboratorCheckinResult) => void;
   onSkip: () => void;
   onBack: () => void;
+  /**
+   * Avança para o próximo step quando o usuário não tem KRs sob sua
+   * responsabilidade (modo empty state). Quando há KRs, este callback é
+   * ignorado — a navegação acontece via `onComplete`/`onSkip`.
+   */
+  onContinue?: () => void;
 }
 
 // ============================================================
@@ -72,14 +84,60 @@ function toCheckinKrData(kr: WizardKr): CheckinKrData {
 // COMPONENT
 // ============================================================
 
-export function CollaboratorCheckinStep({
+export function CollaboratorCheckinStep(props: CollaboratorCheckinStepProps) {
+  const { kr, onSkip, onBack, onContinue } = props;
+
+  // Empty state — usuário não é responsável por nenhum KR neste ciclo.
+  // Reaproveita scaffolds canônicos (mesmo padrão de CollaboratorInitiativesStep).
+  if (!kr || (props.totalCount ?? 0) === 0) {
+    return (
+      <WizardStepScaffold
+        header={
+          <WizardStepHeader
+            icon={Target}
+            title="Check-in de KRs"
+            description="Registre progresso e confiança nos seus KRs"
+            variant="purple"
+          />
+        }
+        footer={
+          <WizardStepFooter
+            showBack
+            onBack={onBack}
+            primaryLabel="Continuar"
+            onPrimary={() => (onContinue ?? onSkip)()}
+            showSkip
+            skipLabel="Pular"
+            onSkip={onSkip}
+          />
+        }
+      >
+        <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+          <EmptyState
+            icon={Target}
+            title="Nenhum KR sob sua responsabilidade"
+            description="Você não é responsável por nenhum KR neste ciclo. Pode pular ou continuar para o próximo passo."
+          />
+        </div>
+      </WizardStepScaffold>
+    );
+  }
+
+  return <CollaboratorCheckinStepWithKr {...props} kr={kr} />;
+}
+
+interface CollaboratorCheckinStepWithKrProps extends CollaboratorCheckinStepProps {
+  kr: WizardKr;
+}
+
+function CollaboratorCheckinStepWithKr({
   kr,
-  currentIndex,
-  totalCount,
+  currentIndex = 0,
+  totalCount = 1,
   onComplete,
   onSkip,
   onBack,
-}: CollaboratorCheckinStepProps) {
+}: CollaboratorCheckinStepWithKrProps) {
   // KPI primária — bloqueia input de valor
   const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
   const isAutomatic = hasPrimaryKpi;

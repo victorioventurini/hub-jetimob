@@ -201,28 +201,13 @@ export default function CollaboratorCheckinPage() {
 
   const hasKpiStep = !!(userKpis && userKpis.length > 0);
 
-  // Dynamic steps: omit steps without data (KRs, KPIs).
-  // Centralizar regra evita loops de back/forward causados por auto-skip
-  // dentro dos componentes de step.
-  const visibleSteps = useMemo(
-    () =>
-      WIZARD_STEPS.filter(s => {
-        if (s.id === 'checkin' && !hasKrStep) return false;
-        if (s.id === 'kpis' && !hasKpiStep) return false;
-        return true;
-      }),
-    [hasKrStep, hasKpiStep],
-  );
-
-  const visibleStepOrder = useMemo(
-    () =>
-      STEP_ORDER.filter(s => {
-        if (s === 'checkin' && !hasKrStep) return false;
-        if (s === 'kpis' && !hasKpiStep) return false;
-        return true;
-      }),
-    [hasKrStep, hasKpiStep],
-  );
+  // Trilha do wizard: TODOS os steps são sempre visíveis. Quando o usuário
+  // não tem KRs/KPIs sob sua responsabilidade, o próprio step renderiza um
+  // empty state (consistência com projects/initiatives/decisions). Isso evita
+  // que a trilha "encolha" e mantém o snapshot do Step 1 estável.
+  // hasKrStep/hasKpiStep continuam disponíveis para badges/contagens.
+  const visibleSteps = useMemo(() => WIZARD_STEPS.slice(), []);
+  const visibleStepOrder = useMemo(() => STEP_ORDER.slice(), []);
   
   // v2.87: Mutation silenciosa para KPI (fail-safe, sem toast de erro)
   const supabase = buSupabase;
@@ -515,9 +500,17 @@ export default function CollaboratorCheckinPage() {
           : 0;
         const currentKr = krs[safeIndex];
         if (!currentKr) {
-          // Sem KR: nada a renderizar. O auto-correct effect (visibleStepOrder)
-          // moverá o usuário para um step válido quando hasKrStep=false.
-          return null;
+          // Sem KRs sob responsabilidade: o próprio step renderiza empty state
+          // (consistência com projects/initiatives/decisions). Mantemos o step
+          // visível na trilha em vez de pular silenciosamente.
+          return (
+            <CollaboratorCheckinStep
+              onComplete={() => goNext()}
+              onSkip={goNext}
+              onBack={goBack}
+              onContinue={goNext}
+            />
+          );
         }
         if (safeIndex !== draft.data.currentKrIndex) {
           // Reposiciona via efeito no próximo tick (fora do render).
@@ -565,9 +558,16 @@ export default function CollaboratorCheckinPage() {
         // v2.87: KPIs agora são do tipo KpiForWizardV2
         const currentKpi = kpis[draft.data.currentKpiIndex] as KpiForWizardV2 | undefined;
         if (!currentKpi || kpis.length === 0) {
-          // Sem KPI: nada a renderizar. visibleStepOrder remove 'kpis'
-          // quando vazio; o auto-correct effect reposiciona o usuário.
-          return null;
+          // Sem KPIs sob responsabilidade: o próprio step renderiza empty state.
+          // Mantemos o step visível na trilha em vez de pular silenciosamente.
+          return (
+            <CollaboratorKpiStep
+              onComplete={() => goNext()}
+              onSkip={goNext}
+              onBack={goBack}
+              onContinue={goNext}
+            />
+          );
         }
 
         // Adapter para manter compatibilidade com CollaboratorKpiStep
