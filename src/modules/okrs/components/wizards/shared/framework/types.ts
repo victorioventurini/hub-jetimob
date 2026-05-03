@@ -158,6 +158,7 @@ export type CompletionRuleId =
   | 'allMarkedKrsReviewed'
   | 'allActiveTeamsAnalyzed'
   | 'allAtRiskKpisAddressed'
+  | 'allMandatoryKpisAddressed'
   | 'carryOverHandledIfPresent'
   | 'atLeastOneLeaderAction'
   | 'hasAnyDecisionOrSkip';
