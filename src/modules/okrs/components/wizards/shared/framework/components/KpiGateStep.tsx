@@ -112,7 +112,15 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
 /** Modo de ação do líder por bucket (decide o bloco "Ação do líder"). */
 type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
 
-function actionModeForBucket(bucketId: KpiGateBucketId): ActionMode {
+/**
+ * Decide o modo de ação considerando bucket + status do KPI.
+ *
+ * `teamContext` agrupa KPIs sob responsabilidade operacional do time
+ * (via `responsible_team_id`), incluindo KPIs de área (`scope=area`).
+ * Quando esses KPIs estão em alerta, o líder do time deve apresentar plano
+ * de ação — equiparando-os aos KPIs estratégicos em `critical`/`attention`.
+ */
+function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
   switch (bucketId) {
     case 'overdue':
       return 'explain-no-data';
@@ -121,8 +129,11 @@ function actionModeForBucket(bucketId: KpiGateBucketId): ActionMode {
       return 'justify-required';
     case 'attention':
       return 'justify-optional';
-    case 'healthy':
     case 'teamContext':
+      if (kpi.status === 'red') return 'justify-required';
+      if (kpi.status === 'amber') return 'justify-optional';
+      return 'view';
+    case 'healthy':
     default:
       return 'view';
   }
