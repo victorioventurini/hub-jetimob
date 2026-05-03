@@ -386,6 +386,7 @@ export function MbrPreSummary({
             suggestions={agendaSuggestions}
             onSuggestionsChange={onAgendaSuggestionsChange}
             ritualLabel="MBR"
+            categoryless
           />
         )}
 
