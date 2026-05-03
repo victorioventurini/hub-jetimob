@@ -108,7 +108,7 @@ const teamCheckinV3: StepDefinition[] = [
 
 const mbrPreV3: StepDefinition[] = [
   { id: 'balance', component: 'BalanceStep', config: { period: 'monthly' } },
-  { id: 'kpis', component: 'KpiGateStep', config: { requireResolution: false } },
+  { id: 'kpis', component: 'KpiGateStep', config: { requireResolution: true, cardVariant: 'rich' } },
   { id: 'krs', component: 'KrsStep', config: { mode: 'all' } },
   {
     id: 'projects',

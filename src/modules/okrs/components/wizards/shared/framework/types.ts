@@ -39,6 +39,14 @@ export interface BalanceStepConfig {
 export interface KpiGateStepConfig {
   /** Se obrigatório, bloqueia avanço até resolver KPIs em alerta */
   requireResolution?: boolean;
+  /**
+   * Variante visual do card de KPI:
+   * - `compact` (default): card minimalista (lista de buckets) — usado por
+   *   personas sem necessidade de plano detalhado por KPI.
+   * - `rich`: card completo com sparkline canônica + bloco de "Ação do líder"
+   *   por bucket (justify / explain-no-data / opcional / read-only).
+   */
+  cardVariant?: 'compact' | 'rich';
 }
 
 export interface KrsStepConfig {
@@ -150,6 +158,7 @@ export type CompletionRuleId =
   | 'allMarkedKrsReviewed'
   | 'allActiveTeamsAnalyzed'
   | 'allAtRiskKpisAddressed'
+  | 'allMandatoryKpisAddressed'
   | 'carryOverHandledIfPresent'
   | 'atLeastOneLeaderAction'
   | 'hasAnyDecisionOrSkip';

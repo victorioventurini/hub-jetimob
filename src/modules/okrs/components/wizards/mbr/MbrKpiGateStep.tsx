@@ -1,8 +1,14 @@
 /**
- * MbrKpiGateStep - Etapa 2: KPI Gate Estratégico
- * 
+ * MbrKpiGateStep - Etapa 2: KPI Gate Estratégico (MBR Executivo)
+ *
  * Exibe apenas KPIs amarelos/vermelhos.
  * Gate: não permite avançar se algum KPI marcado como "exige decisão" não tem decisão registrada.
+ *
+ * @deprecated Para uso APENAS no MBR Executivo. Demais ritos (mbr-pre, qbr-pre)
+ * devem consumir o `KpiGateStep` canônico do framework
+ * (`@/wizards-framework`) com `config.cardVariant: 'rich'`.
+ * Ver TCR §4.8.1 (Princípio #4 — variação por config) e
+ * `mem://architecture/wizards/wizards-master-standard`.
  */
 
 import { useMemo } from 'react';

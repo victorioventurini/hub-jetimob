@@ -1,28 +1,36 @@
 /**
  * MbrPreKpiGateStep — Etapa "Indicadores do Time" do Pré-MBR.
  *
- * Implementa o KPI Gate canônico v3.0.0 (6 buckets) consumindo:
- *   - `useKpisForWizardV2` (filtrando por `responsibleTeamId` do time do rito)
- *   - `classifyKpiGateBuckets` (overdue > critical > guardrail > attention > healthy > teamContext)
+ * v3.30.0: passa a consumir o `KpiGateStep` canônico do framework
+ * (`@/wizards-framework`) em modo `cardVariant: 'rich'`. Toda variação
+ * visual vive na config; o componente do framework permanece agnóstico
+ * de `wizardType` (TCR §4.8.1, Princípio #4).
  *
- * UX delegada a `MbrKpiGateStep` (cards com "Plano de ação do líder" inline,
- * decisões com `metadata.source='kpi_gate'` e `kpi_id`).
- *
- * Substitui a etapa anterior baseada em `QbrKpiAnalysisStep paginated`
- * + classificador paralelo de 4 buckets (`getKpiActionBucket`).
+ * Fluxo:
+ *   1. `useKpisForWizardV2` (filtrando por `responsibleTeamId`) →
+ *      `classifyKpiGateBuckets` (6 buckets canônicos v3.0.0).
+ *   2. Buckets passados ao `KpiGateStep`; justificativas hidratadas a
+ *      partir de `kpiSnapshots[].impactAssessment` (SSOT do draft).
+ *   3. Gate local: KPIs em buckets obrigatórios (overdue/critical/
+ *      guardrailViolated) precisam de plano não vazio para "Próximo".
  */
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
-import { classifyKpiGateBuckets } from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
+import {
+  classifyKpiGateBuckets,
+  type KpiGateBucket,
+  type KpiGateBucketId,
+  type KpiGateItem,
+} from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
+import { KpiGateStep } from '@/wizards-framework';
+import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import { LoadingState } from '@/components/ui/loading-state';
-import { MbrKpiGateStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiGateStep';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
-import type { KpiGateItem } from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
 
 export interface MbrPreKpiGateStepProps {
   teamId: string;
@@ -34,6 +42,12 @@ export interface MbrPreKpiGateStepProps {
   onContinue: () => void;
   onBack: () => void;
 }
+
+const MANDATORY_BUCKETS: ReadonlySet<KpiGateBucketId> = new Set([
+  'overdue',
+  'critical',
+  'guardrailViolated',
+]);
 
 function gateItemToSnapshot(item: KpiGateItem): MbrKpiSnapshot {
   const ragStatus: MbrKpiSnapshot['ragStatus'] =
@@ -75,39 +89,23 @@ export function MbrPreKpiGateStep({
     userId: profile?.id ?? '',
     teamId,
     scope: 'leader',
-    // Pré-MBR: lista SOMENTE KPIs cujo time responsável é o time do rito.
     responsibleTeamId: teamId,
-    // Inclui KPIs `proposed` (ainda não 'active') — caso do "MRR commit".
     lifecycleStatuses: ['active', 'proposed'],
     includeGuardrailsAtRisk: true,
   });
 
-  // Decisões já registradas no gate → marcam KPIs como "endereçados".
-  const resolvedIds = useMemo(() => {
-    const set = new Set<string>();
-    for (const d of decisions) {
-      if (d.sourceStep !== 'kpi-gate') continue;
-      const kpiId = (d.metadata as { kpi_id?: string } | undefined)?.kpi_id;
-      if (kpiId && d.text.trim().length > 0) set.add(kpiId);
-    }
-    return set;
-  }, [decisions]);
-
-  const buckets = useMemo(
+  const buckets: KpiGateBucket[] = useMemo(
     () => classifyKpiGateBuckets({
       kpisToUpdate,
       kpisInAlert,
       kpisStrategic,
       kpisTeamContext,
       guardrailsViolated,
-      resolvedIds,
     }),
-    [kpisToUpdate, kpisInAlert, kpisStrategic, kpisTeamContext, guardrailsViolated, resolvedIds],
+    [kpisToUpdate, kpisInAlert, kpisStrategic, kpisTeamContext, guardrailsViolated],
   );
 
-  // Snapshots canônicos derivados dos buckets. `requiresStrategicDecision`
-  // vem SEMPRE do bucket canônico (red/amber → true) — sem preservar toggle
-  // manual do líder, pois o MBR-Pré não expõe esse toggle.
+  // Reconcilia snapshots canônicos com o draft (preserva impactAssessment).
   const reconciledSnapshots = useMemo(() => {
     const snapshots: MbrKpiSnapshot[] = [];
     const persistedByKpi = new Map(kpiSnapshots.map((s) => [s.kpiId, s]));
@@ -124,7 +122,7 @@ export function MbrPreKpiGateStep({
     return snapshots;
   }, [buckets, kpiSnapshots]);
 
-  // Sincroniza draft com snapshots canônicos quando muda algo materialmente.
+  // Sincroniza draft com snapshots quando muda algo materialmente.
   useMemo(() => {
     const prevById = new Map(kpiSnapshots.map((s) => [s.kpiId, s]));
     const changed =
@@ -143,20 +141,66 @@ export function MbrPreKpiGateStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reconciledSnapshots]);
 
+  // Justificativas: kpiId → impactAssessment do snapshot.
+  const justifications = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const s of reconciledSnapshots) {
+      if (s.impactAssessment) map[s.kpiId] = s.impactAssessment;
+    }
+    return map;
+  }, [reconciledSnapshots]);
+
+  const handleJustificationChange = useCallback(
+    (kpiId: string, value: string) => {
+      const exists = reconciledSnapshots.some((s) => s.kpiId === kpiId);
+      if (!exists) return;
+      onKpiSnapshotsChange(
+        reconciledSnapshots.map((s) =>
+          s.kpiId === kpiId ? { ...s, impactAssessment: value } : s,
+        ),
+      );
+    },
+    [reconciledSnapshots, onKpiSnapshotsChange],
+  );
+
+  // Gate local: KPIs em buckets obrigatórios sem plano de ação.
+  const mandatoryMissing = useMemo(() => {
+    let missing = 0;
+    for (const bucket of buckets) {
+      if (!MANDATORY_BUCKETS.has(bucket.id)) continue;
+      for (const item of bucket.items) {
+        if (!(justifications[item.id] ?? '').trim()) missing++;
+      }
+    }
+    return missing;
+  }, [buckets, justifications]);
+
   if (isLoading) {
     return <LoadingState text="Carregando indicadores do time..." />;
   }
 
   return (
-    <MbrKpiGateStep
-      kpiSnapshots={reconciledSnapshots}
-      onKpiSnapshotsChange={onKpiSnapshotsChange}
+    <KpiGateStep
+      persona="mbr-pre"
+      version="v3"
+      stepId="kpis"
+      config={{ requireResolution: true, cardVariant: 'rich' }}
+      data={[]}
+      onDataChange={() => { /* noop — buckets é a fonte */ }}
+      buckets={buckets}
+      justifications={justifications}
+      onJustificationChange={handleJustificationChange}
       decisions={decisions}
       onDecisionsChange={onDecisionsChange}
-      onContinue={onContinue}
-      onBack={onBack}
-      showStrategicDecisionToggle={false}
-      showInlineDecisionInput={false}
+      suppressInlineDecisions
+      footer={
+        <WizardStepFooter
+          onBack={onBack}
+          onPrimary={onContinue}
+          primaryLabel="Avançar para Projetos"
+          primaryDisabled={mandatoryMissing > 0}
+        />
+      }
     />
   );
 }
