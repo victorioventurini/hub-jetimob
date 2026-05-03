@@ -354,7 +354,12 @@ function BucketSection({
   justifications: Record<string, string>;
   onJustificationChange?: (kpiId: string, value: string) => void;
 }) {
-  const [open, setOpen] = useState(!COLLAPSED_BY_DEFAULT.has(bucket.id));
+  // teamContext é colapsado por default, MAS abrimos automaticamente se
+  // houver KPI em alerta (red/amber) — esses pedem plano de ação obrigatório/
+  // opcional do líder e devem ser visíveis sem clique extra.
+  const hasAlert = bucket.items.some((k) => k.status === 'red' || k.status === 'amber');
+  const initiallyOpen = !COLLAPSED_BY_DEFAULT.has(bucket.id) || hasAlert;
+  const [open, setOpen] = useState(initiallyOpen);
   if (bucket.items.length === 0) return null;
   return (
     <section className="space-y-2">
@@ -396,6 +401,41 @@ function BucketSection({
       )}
     </section>
   );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// PAGINATED FLATTENING — para `rich-paginated`
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * Achata os buckets em uma lista única preservando a precedência canônica
+ * (overdue → critical → guardrailViolated → attention → teamContext em
+ * alerta → healthy → teamContext restante). Cada item carrega o `bucketId`
+ * de origem para o `RichKpiCard` decidir o modo de ação.
+ */
+function flattenBucketsForPagination(buckets: KpiGateBucket[]): Array<{
+  kpi: KpiGateItem;
+  bucketId: KpiGateBucketId;
+  bucketLabel: string;
+}> {
+  const ordered: Array<{ kpi: KpiGateItem; bucketId: KpiGateBucketId; bucketLabel: string }> = [];
+  // Primeiro: todos os buckets exceto teamContext (já vêm em ordem canônica).
+  for (const b of buckets) {
+    if (b.id === 'teamContext') continue;
+    for (const kpi of b.items) {
+      ordered.push({ kpi, bucketId: b.id, bucketLabel: b.label });
+    }
+  }
+  // Depois: teamContext em alerta (red → amber) antes do verde/sem dados.
+  const teamContext = buckets.find((b) => b.id === 'teamContext');
+  if (teamContext) {
+    const alerts = teamContext.items.filter((k) => k.status === 'red' || k.status === 'amber');
+    const rest = teamContext.items.filter((k) => k.status !== 'red' && k.status !== 'amber');
+    for (const kpi of [...alerts, ...rest]) {
+      ordered.push({ kpi, bucketId: 'teamContext', bucketLabel: teamContext.label });
+    }
+  }
+  return ordered;
 }
 
 // ────────────────────────────────────────────────────────────────────
