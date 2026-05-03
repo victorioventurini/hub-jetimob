@@ -100,6 +100,7 @@ export function MbrPreNextStepsStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="mbr-pre-next-steps"
             triggerLabel={agendaTriggerLabel}
+            categoryless
           />
         ) : undefined
       }
