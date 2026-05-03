@@ -865,7 +865,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Time Responsável
+                          Time Responsável <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <TeamSelect
