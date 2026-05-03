@@ -1,90 +1,41 @@
-## Pré-checklist (executado)
+## Contexto
 
-- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — confirmado que KPI Gate v3.29.x usa 6 buckets canônicos (`overdue`, `critical`, `guardrailViolated`, `attention`, `healthy`, `teamContext`).
-- ✅ `mem://features/kpis/kpis-master-standard` (seção 4 — Ritual Gates) — confirma que `MbrKpiGateStep` e o `KpiGateStep` genérico consomem `KpiForWizardV2` + `classifyKpiGateBuckets`. Não há regra publicada hoje sobre "sem meta" / "sem dados em teamContext".
-- ✅ `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md` — `KpiGateStep` é módulo de plataforma, agnóstico de OKR. Mudanças vão no framework, não no consumidor.
-- ✅ Inventário de consumidores: apenas `MbrPreKpiGateStep` e `MbrKpiGateStep` usam o `KpiGateStep` rich/rich-paginated. Weekly v2 e QBR usam outras superfícies — fora do escopo. "Aplicar a todos" cobre exatamente esses dois ritos via mudança canônica no framework.
+No step final `summary` do Pré-MBR (`MbrPreSummary.tsx`), os títulos dos cards de revisão não refletem fielmente os nomes dos steps anteriores definidos em `ritualLabels.ts → mbr-pre.v3`. Exemplo citado: o card **"Balanço do Mês"** mostra apenas KRs, mas o usuário não consegue inferir isso pelo título — diferente do step homônimo que abre o rito com a visão consolidada.
 
-Conclusão do checklist: a mudança é coerente com a SSOT (não cria 6º bucket nem novo enum; apenas estende `actionModeForKpi` que é função interna do componente), e o lugar correto é o framework (`KpiGateStep.tsx`).
+Os cards do summary devem espelhar 1:1 os títulos canônicos dos steps que originaram cada bloco, garantindo simetria visual e cognitiva.
 
-## Diagnóstico
+## Mudanças propostas (apenas UI / títulos de cards)
 
-Na URL do Pré-MBR (`?step=kpi-analysis`), o KPI **"Crescimento de MRR"** aparece com:
-- bucket `teamContext` (KPI de área sob responsabilidade operacional do time Comercial)
-- status `unknown` ("Sem dados")
-- `target = null`
+Arquivo: `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx`
 
-`actionModeForKpi(bucket, kpi)` em `KpiGateStep.tsx` (linhas 130-147) retorna `'view'` para `teamContext` quando o status não é `red`/`amber` — então o textarea "Plano de ação do líder" não é renderizado. O ajuste anterior em `MbrPreKpiGateStep` cobriu apenas o **gate** do botão Próximo, não a **renderização** do campo (e ainda assim deixava o usuário travado sem ter onde digitar).
+| Bloco | Título atual | Título proposto | Step de origem |
+|---|---|---|---|
+| 1. KRs (`SummaryKrBalance`) | "Balanço do Mês" | **"KRs do Mês"** | `krs` ("KRs") |
+| 2. KPIs (`SummaryKpiList`) | "KPIs do Time" (já vem do componente) | **"KPIs do Time"** (manter — já alinhado) | `kpis` ("KPIs do Time") |
+| 2.1. Justificativas projetos/marcos | "Justificativas de execução" | **"Projetos"** (com subtítulo "Justificativas de projetos e marcos atrasados") | `projects` ("Projetos") |
+| 3. Destaques e Riscos | "Destaques e Riscos" | "Destaques e Riscos" (manter — já alinhado) | `highlights-risks` |
+| 4. Próximos Passos | "Próximos Passos" | "Próximos Passos" (manter — já alinhado) | `next-steps` |
+| 5. Sugestões de pauta (`AgendaSuggestionsPrioritizer`) | (sem card wrapper explícito) | Verificar se o componente já renderiza título "Sugestões de pauta para o MBR" — manter |
 
-## Regra canônica a publicar
+### Pontos específicos
 
-Plano de ação do líder é **obrigatório** quando o KPI:
-1. Está em bucket MANDATORY (`overdue`, `critical`, `guardrailViolated`) — já implementado
-2. Está em `teamContext` com status `red` — já implementado
-3. **(novo)** Está em `teamContext` com status `unknown` (sem dados) → modo `explain-no-data`
-4. **(novo)** Tem `target == null` (sem meta cadastrada), em qualquer bucket que não seja `view`-puro → modo `justify-required`
+1. **Card 1 (KRs):** a prop `title` passada para `SummaryKrBalance` muda de `"Balanço do Mês"` para `"KRs do Mês"`. O nome "Balanço" hoje é ambíguo — o step `balance` do Pré-MBR não existe na v3 (foi renomeado para entrar nos vários blocos). Trocar para **"KRs do Mês"** torna explícito o conteúdo (KRs com estado final + justificativas) e alinha ao step `krs` ("KRs", subtitle "Resultados-Chave do mês").
 
-KPIs saudáveis com meta e dados continuam **opcionais** (sem textarea, comportamento atual).
+2. **Card 2.1 (Projetos):** renomear de "Justificativas de execução" para **"Projetos"** com subtítulo descritivo, espelhando o step `projects`. Hoje o título é genérico e o usuário não conecta ao step "Projetos" do rito.
 
-## Mudanças (canônicas, no framework)
+3. **SummaryKpiList:** verificar se o título interno do componente já é "KPIs do Time"; se não, alinhar via prop ou ajustar o componente compartilhado (impacto em QbrPreSummary — checar antes de alterar).
 
-### 1. `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx`
+## Verificação cruzada (QBR Pre)
 
-**a)** Estender `actionModeForKpi` (linhas 130-147):
+`QbrPreSummary` usa o mesmo `SummaryKrBalance` com `title="Balanço do Ciclo"`. No QBR, o step canônico é `balance` ("Balanço do Ciclo") — então **lá** o nome faz sentido. No Pré-MBR não há step `balance`, por isso a renomeação só vale para o MBR.
 
-```ts
-function actionModeForKpi(bucketId, kpi): ActionMode {
-  const noTarget = kpi.target == null || kpi.target === '';
-  switch (bucketId) {
-    case 'overdue': return 'explain-no-data';
-    case 'critical':
-    case 'guardrailViolated': return 'justify-required';
-    case 'attention': return noTarget ? 'justify-required' : 'justify-optional';
-    case 'teamContext':
-      if (kpi.status === 'unknown') return 'explain-no-data';
-      if (noTarget) return 'justify-required';
-      if (kpi.status === 'red') return 'justify-required';
-      if (kpi.status === 'amber') return 'justify-optional';
-      return 'view';
-    case 'healthy':
-    default:
-      return noTarget ? 'justify-required' : 'view';
-  }
-}
-```
+## Fora de escopo
 
-**b)** Atualizar `mandatoryUnaddressed` (linhas 496-510) para a mesma regra, mantendo coerência entre badge "X pendente(s)", aviso fixo "Registre o plano de ação" e gate global do framework:
+- Não alterar lógica de negócio, payload do draft ou snapshot.
+- Não tocar em `SummaryKpiList`/`SummaryKrBalance` se o ajuste puder ser feito apenas via props no consumidor.
+- Não mexer no QBR Pre (títulos lá já estão alinhados aos steps canônicos do QBR).
 
-```ts
-const requiresPlan =
-  MANDATORY_BUCKET_IDS.has(bucket.id) ||
-  (bucket.id === 'teamContext' && (item.status === 'red' || item.status === 'unknown')) ||
-  (bucket.id !== 'view' && (item.target == null || item.target === ''));
-```
+## Verificação pós-implementação
 
-### 2. `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx`
-
-Sincronizar `currentRequiresPlan` (linhas 186-190) com a mesma fórmula — adicionar `status === 'unknown'` no `teamContext`. `kpiHasNoTarget` já existe.
-
-### 3. `src/modules/okrs/components/wizards/mbr/MbrKpiGateStep.tsx`
-
-Verificar e alinhar (não tem regra duplicada hoje — herda do framework). Apenas confirmar e adicionar comentário.
-
-### 4. Testes
-
-`MbrKpiGateStep.test.tsx` — adicionar 4 casos:
-- `teamContext` + `status='unknown'` → textarea visível + obrigatório
-- `teamContext` + `target=null` → textarea visível + obrigatório
-- `healthy` + `target=null` → textarea visível + obrigatório
-- `healthy` + tudo OK → sem textarea (regressão)
-
-### 5. SSOT
-
-Atualizar `mem://features/kpis/kpis-master-standard` seção 4 com as duas novas regras (`unknown` em teamContext, `target=null` em qualquer bucket não-view) — manter o canon vivo.
-
-## Não muda
-
-- `classifyKpiGateBuckets` (6 buckets continuam intactos — SSOT respeitada)
-- Enums DB, RLS, edge functions, schema
-- Demais ritos (Weekly v2, QBR Pre, etc.) — não consomem `KpiGateStep` rich
-- UX de KPIs saudáveis com meta — continuam sem textarea
+- Abrir `/rituals/mbr-pre?team=...&step=summary` e conferir que cada card carrega o mesmo título do step que originou o conteúdo.
+- Conferir que `QbrPreSummary` continua intacto.

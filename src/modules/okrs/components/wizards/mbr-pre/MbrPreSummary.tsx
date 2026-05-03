@@ -22,7 +22,6 @@ import {
   XCircle,
   AlertCircle,
   FolderKanban,
-  MessageSquareQuote,
 } from 'lucide-react';
 import {
   WizardStepHeader,
@@ -118,29 +117,29 @@ export function MbrPreSummary({
       }
     >
       <div className="p-6 space-y-6">
-        {/* 1) Balanço KRs — com justificativas inline */}
+        {/* 1) KRs do Mês — espelha step "krs" */}
         <SummaryKrBalance
-          title="Balanço do Mês"
+          title="KRs do Mês"
           items={krFinalStates}
           justifications={krJustifications}
         />
 
-        {/* 2) KPIs — com justificativas inline */}
-        <SummaryKpiList kpis={kpiSnapshots} justifications={kpiJustifications} />
+        {/* 2) KPIs do Time — espelha step "kpis" */}
+        <SummaryKpiList title="KPIs do Time" kpis={kpiSnapshots} justifications={kpiJustifications} />
 
-        {/* 2.1) Justificativas de execução (projetos e marcos atrasados) */}
+        {/* 2.1) Projetos — justificativas de projetos e marcos atrasados (espelha step "projects") */}
         {(projectJustList.length > 0 || milestoneJustList.length > 0) && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquareQuote className="h-4 w-4" />
-                Justificativas de execução
+                <FolderKanban className="h-4 w-4" />
+                Projetos
                 <Badge variant="secondary" className="ml-1 text-[10px]">
                   {projectJustList.length + milestoneJustList.length}
                 </Badge>
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Reflexões capturadas para projetos e marcos atrasados.
+                Justificativas de projetos e marcos atrasados.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
