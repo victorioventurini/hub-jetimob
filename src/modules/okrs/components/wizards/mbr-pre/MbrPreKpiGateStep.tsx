@@ -164,16 +164,34 @@ export function MbrPreKpiGateStep({
   );
 
   // Gate local: KPIs em buckets obrigatórios sem plano de ação.
+  // Inclui também KPIs de teamContext em RED (KPIs de área sob responsabilidade
+  // do time fora da meta) — equiparados aos críticos para o gate.
   const mandatoryMissing = useMemo(() => {
     let missing = 0;
     for (const bucket of buckets) {
-      if (!MANDATORY_BUCKETS.has(bucket.id)) continue;
+      const bucketIsMandatory = MANDATORY_BUCKETS.has(bucket.id);
       for (const item of bucket.items) {
+        const requiresPlan =
+          bucketIsMandatory || (bucket.id === 'teamContext' && item.status === 'red');
+        if (!requiresPlan) continue;
         if (!(justifications[item.id] ?? '').trim()) missing++;
       }
     }
     return missing;
   }, [buckets, justifications]);
+
+  // ── Pagination state (1 KPI por página, paridade com MbrPreKrAnalysisStep) ──
+  const totalKpiCount = useMemo(
+    () => buckets.reduce((acc, b) => acc + b.items.length, 0),
+    [buckets],
+  );
+  const [currentKpiIndex, setCurrentKpiIndex] = useState(0);
+  // Clamp se a lista mudar (re-seed).
+  useEffect(() => {
+    if (currentKpiIndex > Math.max(0, totalKpiCount - 1)) {
+      setCurrentKpiIndex(Math.max(0, totalKpiCount - 1));
+    }
+  }, [totalKpiCount, currentKpiIndex]);
 
   if (isLoading) {
     return <LoadingState text="Carregando indicadores do time..." />;
@@ -184,12 +202,14 @@ export function MbrPreKpiGateStep({
       persona="mbr-pre"
       version="v3"
       stepId="kpis"
-      config={{ requireResolution: true, cardVariant: 'rich' }}
+      config={{ requireResolution: true, cardVariant: 'rich-paginated' }}
       data={[]}
       onDataChange={() => { /* noop — buckets é a fonte */ }}
       buckets={buckets}
       justifications={justifications}
       onJustificationChange={handleJustificationChange}
+      currentKpiIndex={currentKpiIndex}
+      onKpiIndexChange={setCurrentKpiIndex}
       decisions={decisions}
       onDecisionsChange={onDecisionsChange}
       suppressInlineDecisions
