@@ -538,26 +538,6 @@ export const KpiGateStep = memo(function KpiGateStep({
           {Math.round(((safeIndex + 1) / totalCount) * 100)}% concluído
         </Badge>
       </div>
-      {totalCount > 1 && (
-        <div className="flex items-center justify-between gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onKpiIndexChange?.(Math.max(0, safeIndex - 1))}
-            disabled={safeIndex === 0}
-          >
-            ← Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onKpiIndexChange?.(Math.min(totalCount - 1, safeIndex + 1))}
-            disabled={safeIndex === totalCount - 1}
-          >
-            Próximo →
-          </Button>
-        </div>
-      )}
     </div>
   ) : null;
 
