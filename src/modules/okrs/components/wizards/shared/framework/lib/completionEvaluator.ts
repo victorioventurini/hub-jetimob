@@ -64,6 +64,13 @@ export function evaluateRule(
         : { passed: false, errorMessage };
     }
 
+    case 'allMandatoryKpisAddressed': {
+      const pending = ctx.unaddressedMandatoryKpiIds ?? [];
+      return pending.length === 0
+        ? { passed: true }
+        : { passed: false, errorMessage };
+    }
+
     case 'carryOverHandledIfPresent': {
       const co = ctx.carryOverDecisions ?? [];
       if (co.length === 0) return { passed: true };
