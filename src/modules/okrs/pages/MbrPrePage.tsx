@@ -20,7 +20,7 @@ import {
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
-import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
+
 import {
   useGenericWizardDraft,
   useActiveCycle,
