@@ -141,6 +141,12 @@ interface KpiAnalysisCardProps {
   ) => Promise<void> | void;
   /** Marca quando o KPI já foi atualizado nesta sessão (libera "Próximo"). */
   alreadyUpdated?: boolean;
+  /**
+   * Quando true, renderiza o detalhe canônico completo do KPI
+   * (`KpiDetailContent`) e destaca a ação obrigatória do líder em um bloco
+   * separado de "Plano de ação". Usado pelo Pré-MBR (modo paginado).
+   */
+  detailed?: boolean;
 }
 
 const FORM_ID_PREFIX = 'mbr-pre-kpi-update';
