@@ -248,7 +248,7 @@ export function MbrPreKrAnalysisStep({
       <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
         <p className="text-xs text-muted-foreground">
           Este momento é <strong>reflexivo</strong>. Não atualize check-ins aqui —
-          apenas explique o que aconteceu com cada KR fora da meta.
+          apenas explique o que aconteceu com cada KR fora da meta ou ainda não iniciado.
         </p>
 
         {missingJustifications > 0 && (
@@ -261,8 +261,8 @@ export function MbrPreKrAnalysisStep({
             <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
             <p>
               <strong>{missingJustifications}</strong> KR
-              {missingJustifications > 1 ? 's' : ''} fora da meta sem justificativa.
-              Preencha para avançar.
+              {missingJustifications > 1 ? 's' : ''} sem justificativa
+              (fora da meta ou não iniciado). Preencha para avançar.
             </p>
           </div>
         )}
@@ -275,7 +275,7 @@ export function MbrPreKrAnalysisStep({
               description="Este time não possui KRs ativos no ciclo atual."
             />
           </div>
-        ) : offTrackCount === 0 ? (
+        ) : needsJustifyCount === 0 ? (
           <div className="space-y-4">
             <div
               className={cn(
@@ -284,7 +284,7 @@ export function MbrPreKrAnalysisStep({
               )}
             >
               <CheckCircle2 className="h-4 w-4 text-status-green shrink-0 mt-0.5" />
-              Nenhum KR fora da meta. Você pode avançar.
+              Todos os KRs estão dentro do esperado. Você pode avançar.
             </div>
             <div className="space-y-4">
               {groupedByObjective.map(([objectiveId, krs]) => (
