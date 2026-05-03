@@ -29,6 +29,8 @@ import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { mbrKeys } from '@/lib/queryKeys/okrs';
+import { useKpiData } from '@/modules/kpis/hooks';
+import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -93,6 +95,8 @@ const DEFAULT_DATA: MbrPreDraftData = {
   nextSteps: { focus: '', prioritizedItems: [], crossDependencies: [] },
   decisions: [],
   kpiJustifications: {},
+  kpiNoDataReasons: {},
+  kpiOutdatedUpdates: {},
   projectJustifications: { projects: {}, milestones: {} },
   krJustifications: {},
   agendaSuggestions: [],
