@@ -51,6 +51,8 @@ export interface MbrPreSummaryProps {
   isCompleting: boolean;
   onComplete: () => void;
   onBack: () => void;
+  /** TeamId para resolver nomes de projetos/milestones nas justificativas. */
+  teamId?: string | null;
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   onHighlightsChange?: (next: MbrPreDraftData['highlights']) => void;
   onNextStepsChange?: (next: MbrPreDraftData['nextSteps']) => void;
@@ -67,13 +69,38 @@ export function MbrPreSummary({
   isCompleting,
   onComplete,
   onBack,
+  teamId,
   onAgendaSuggestionsChange,
   onHighlightsChange,
   onNextStepsChange,
   onDecisionsChange,
 }: MbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, highlights, nextSteps } = draftData;
+  const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications } = draftData;
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
+
+  // Resolve nomes de projetos/milestones (BU-scoped, cache compartilhado com Step 3)
+  const { projects: teamProjects } = useMbrPreTeamProjects(teamId ?? null);
+
+  const projectNameById = new Map<string, string>();
+  const milestoneNameById = new Map<string, string>();
+  for (const p of teamProjects) {
+    projectNameById.set(p.id, p.name);
+    for (const m of p.milestones) milestoneNameById.set(m.id, m.name);
+  }
+
+  const kpiNameById = new Map<string, string>();
+  for (const k of kpiSnapshots) kpiNameById.set(k.kpiId, k.name);
+
+  const kpiJustList = Object.entries(kpiJustifications ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+  const projectJustList = Object.entries(projectJustifications?.projects ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+  const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+
+  const hasJustifications =
+    kpiJustList.length > 0 || projectJustList.length > 0 || milestoneJustList.length > 0;
+
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
     onHighlightsChange?.({ ...highlights, [field]: value });
