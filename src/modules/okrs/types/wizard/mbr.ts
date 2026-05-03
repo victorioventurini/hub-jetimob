@@ -57,6 +57,12 @@ export interface MbrKpiSnapshot {
   teamName?: string | null;
   /** v3.0.0 — tipo do último input registrado (consolidado/parcial). */
   latestInputType?: 'partial' | 'consolidated' | null;
+  /** Direção da meta (necessária pelo `KpiValueEntryForm` em ritos reflexivos). */
+  direction?: 'up' | 'down' | null;
+  /** Cadência de consolidação (v3.0.0). Necessária para `KpiValueEntryForm`. */
+  consolidationFrequency?: import('../../../kpis/types').KpiFrequencyValue | null;
+  /** Cadência de update (v3.0.0). Usada para classificar bucket `overdue`. */
+  updateFrequency?: import('../../../kpis/types').KpiFrequencyValue | null;
 }
 
 /** OKR organizacional snapshot */
