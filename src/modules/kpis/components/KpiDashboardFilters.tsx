@@ -142,7 +142,19 @@ export function KpiDashboardFilters({
         />
       )}
 
-      {/* Escopo */}
+      {/* Responsável */}
+      {onOwnerChange && (
+        <BuUserSelect
+          value={ownerId === "all" ? undefined : ownerId}
+          onValueChange={(value) => onOwnerChange(value ?? "all")}
+          placeholder="Responsável"
+          allowNone
+          noneLabel="Todos os responsáveis"
+          className="w-full sm:w-[200px]"
+        />
+      )}
+
+
       {onScopeChange && (
         <Select
           value={scope}
