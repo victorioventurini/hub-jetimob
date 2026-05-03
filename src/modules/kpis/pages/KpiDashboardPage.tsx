@@ -84,7 +84,7 @@ export default function KpiDashboardPage() {
   // v2.86.0: View mode state synced to URL
   const viewModeState = useUrlState<KpiViewMode>({
     key: 'view',
-    defaultValue: 'cards',
+    defaultValue: 'table',
     parse: (v) => v as KpiViewMode,
   });
 
