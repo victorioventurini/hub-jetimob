@@ -244,9 +244,11 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
         });
 
         // 6. Classify into categories
-        const kpisToUpdate = allEnriched.filter(k => 
-          (k.userRole === 'owner' || k.userRole === 'contributor') && k.needs_update
+        const kpisOwnedOrContributed = allEnriched.filter(k =>
+          k.userRole === 'owner' || k.userRole === 'contributor'
         );
+
+        const kpisToUpdate = kpisOwnedOrContributed.filter(k => k.needs_update);
         
         const kpisTeamContext = allEnriched.filter(k => 
           k.team_id === teamId && 
@@ -264,6 +266,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
 
         return {
           kpisToUpdate,
+          kpisOwnedOrContributed,
           kpisTeamContext,
           kpisStrategic,
           kpisInAlert,
