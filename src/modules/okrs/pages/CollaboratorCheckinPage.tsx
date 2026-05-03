@@ -500,9 +500,17 @@ export default function CollaboratorCheckinPage() {
           : 0;
         const currentKr = krs[safeIndex];
         if (!currentKr) {
-          // Sem KR: nada a renderizar. O auto-correct effect (visibleStepOrder)
-          // moverá o usuário para um step válido quando hasKrStep=false.
-          return null;
+          // Sem KRs sob responsabilidade: o próprio step renderiza empty state
+          // (consistência com projects/initiatives/decisions). Mantemos o step
+          // visível na trilha em vez de pular silenciosamente.
+          return (
+            <CollaboratorCheckinStep
+              onComplete={() => goNext()}
+              onSkip={goNext}
+              onBack={goBack}
+              onContinue={goNext}
+            />
+          );
         }
         if (safeIndex !== draft.data.currentKrIndex) {
           // Reposiciona via efeito no próximo tick (fora do render).
