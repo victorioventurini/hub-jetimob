@@ -413,7 +413,7 @@ function BucketSection({
  * alerta → healthy → teamContext restante). Cada item carrega o `bucketId`
  * de origem para o `RichKpiCard` decidir o modo de ação.
  */
-function flattenBucketsForPagination(buckets: KpiGateBucket[]): Array<{
+export function flattenBucketsForPagination(buckets: KpiGateBucket[]): Array<{
   kpi: KpiGateItem;
   bucketId: KpiGateBucketId;
   bucketLabel: string;
@@ -538,26 +538,6 @@ export const KpiGateStep = memo(function KpiGateStep({
           {Math.round(((safeIndex + 1) / totalCount) * 100)}% concluído
         </Badge>
       </div>
-      {totalCount > 1 && (
-        <div className="flex items-center justify-between gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onKpiIndexChange?.(Math.max(0, safeIndex - 1))}
-            disabled={safeIndex === 0}
-          >
-            ← Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onKpiIndexChange?.(Math.min(totalCount - 1, safeIndex + 1))}
-            disabled={safeIndex === totalCount - 1}
-          >
-            Próximo →
-          </Button>
-        </div>
-      )}
     </div>
   ) : null;
 
@@ -576,9 +556,14 @@ export const KpiGateStep = memo(function KpiGateStep({
       topFixed={paginatedTopBar ?? undefined}
       bottomFixed={
         <>
-          {hasGateBlock && (
+          {hasGateBlock && !isPaginated && (
             <p className="text-xs text-status-amber text-center pb-2 px-4">
               Registre o plano de ação para: {mandatoryUnaddressed.map((k) => k.name).join(', ')}
+            </p>
+          )}
+          {isPaginated && currentEntry && mandatoryUnaddressed.some((k) => k.id === currentEntry.kpi.id) && (
+            <p className="text-xs text-status-amber text-center pb-2 px-4">
+              Registre o plano de ação deste KPI para avançar.
             </p>
           )}
           {!suppressInlineDecisions && (

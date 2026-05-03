@@ -24,7 +24,7 @@ import {
   type KpiGateBucketId,
   type KpiGateItem,
 } from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
-import { KpiGateStep } from '@/wizards-framework';
+import { KpiGateStep, flattenBucketsForPagination } from '@/wizards-framework';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import { LoadingState } from '@/components/ui/loading-state';
 import type {
@@ -163,28 +163,9 @@ export function MbrPreKpiGateStep({
     [reconciledSnapshots, onKpiSnapshotsChange],
   );
 
-  // Gate local: KPIs em buckets obrigatórios sem plano de ação.
-  // Inclui também KPIs de teamContext em RED (KPIs de área sob responsabilidade
-  // do time fora da meta) — equiparados aos críticos para o gate.
-  const mandatoryMissing = useMemo(() => {
-    let missing = 0;
-    for (const bucket of buckets) {
-      const bucketIsMandatory = MANDATORY_BUCKETS.has(bucket.id);
-      for (const item of bucket.items) {
-        const requiresPlan =
-          bucketIsMandatory || (bucket.id === 'teamContext' && item.status === 'red');
-        if (!requiresPlan) continue;
-        if (!(justifications[item.id] ?? '').trim()) missing++;
-      }
-    }
-    return missing;
-  }, [buckets, justifications]);
-
   // ── Pagination state (1 KPI por página, paridade com MbrPreKrAnalysisStep) ──
-  const totalKpiCount = useMemo(
-    () => buckets.reduce((acc, b) => acc + b.items.length, 0),
-    [buckets],
-  );
+  const flat = useMemo(() => flattenBucketsForPagination(buckets), [buckets]);
+  const totalKpiCount = flat.length;
   const [currentKpiIndex, setCurrentKpiIndex] = useState(0);
   // Clamp se a lista mudar (re-seed).
   useEffect(() => {
@@ -192,6 +173,40 @@ export function MbrPreKpiGateStep({
       setCurrentKpiIndex(Math.max(0, totalKpiCount - 1));
     }
   }, [totalKpiCount, currentKpiIndex]);
+
+  // ── Gate por página: KPI atual obrigatório precisa de plano ──
+  const currentEntry = totalKpiCount > 0 ? flat[Math.min(currentKpiIndex, totalKpiCount - 1)] : null;
+  const currentRequiresPlan = !!currentEntry && (
+    MANDATORY_BUCKETS.has(currentEntry.bucketId) ||
+    (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red')
+  );
+  const currentJustOk = !currentRequiresPlan
+    || (justifications[currentEntry!.kpi.id] ?? '').trim().length > 0;
+
+  const isFirst = currentKpiIndex === 0;
+  const isLast = totalKpiCount === 0 || currentKpiIndex >= totalKpiCount - 1;
+
+  const handlePrimary = useCallback(() => {
+    if (!currentJustOk) return;
+    if (isLast) onContinue();
+    else setCurrentKpiIndex((i) => Math.min(totalKpiCount - 1, i + 1));
+  }, [currentJustOk, isLast, onContinue, totalKpiCount]);
+
+  const handleBack = useCallback(() => {
+    if (isFirst) onBack();
+    else setCurrentKpiIndex((i) => Math.max(0, i - 1));
+  }, [isFirst, onBack]);
+
+  // Atalho Ctrl/Cmd+Enter — paridade com MbrPreKrAnalysisStep
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && currentJustOk) {
+        handlePrimary();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handlePrimary, currentJustOk]);
 
   if (isLoading) {
     return <LoadingState text="Carregando indicadores do time..." />;
@@ -215,10 +230,12 @@ export function MbrPreKpiGateStep({
       suppressInlineDecisions
       footer={
         <WizardStepFooter
-          onBack={onBack}
-          onPrimary={onContinue}
-          primaryLabel="Avançar para Projetos"
-          primaryDisabled={mandatoryMissing > 0}
+          showBack
+          onBack={handleBack}
+          backLabel={isFirst ? 'Voltar' : 'Anterior'}
+          primaryLabel={isLast ? 'Avançar para Projetos' : 'Próximo'}
+          onPrimary={handlePrimary}
+          primaryDisabled={!currentJustOk}
         />
       }
     />
