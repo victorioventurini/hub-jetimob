@@ -222,8 +222,8 @@ export function EditKpiScopeSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Time Responsável
-                    <HelpTooltip content="Opcionalmente, especifique um time dentro da área responsável." />
+                    Time Responsável <span className="text-destructive">*</span>
+                    <HelpTooltip content="Time accountable por acompanhar e agir em desvios deste indicador global." />
                   </FormLabel>
                   <FormControl>
                     <TeamSelect
@@ -231,8 +231,6 @@ export function EditKpiScopeSection({
                       onValueChange={(val) => field.onChange(val ?? undefined)}
                       placeholder="Selecione..."
                       triggerClassName="w-full"
-                      includeNone
-                      noneLabel="Nenhum time"
                     />
                   </FormControl>
                   <FormMessage />
