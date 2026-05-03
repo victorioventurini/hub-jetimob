@@ -440,6 +440,12 @@ export interface UseKpisForWizardV2Options {
 export interface UseKpisForWizardV2Result {
   // Separated by role
   kpisToUpdate: KpiForWizardV2[];      // Contributor needs to update
+  /**
+   * Todos os KPIs sob responsabilidade do usuário (owner OU contributor),
+   * independente de `needs_update`. Usado por ritos que precisam exibir
+   * 100% dos indicadores do usuário (ex.: Check-in Individual — step KPIs).
+   */
+  kpisOwnedOrContributed: KpiForWizardV2[];
   kpisTeamContext: KpiForWizardV2[];   // Team context (read-only)
   kpisStrategic: KpiForWizardV2[];     // Strategic globals (read-only)
   kpisInAlert: KpiForWizardV2[];       // In alert (yellow/red)

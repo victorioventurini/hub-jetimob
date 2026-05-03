@@ -190,10 +190,13 @@ export default function CollaboratorCheckinPage() {
   
   const hasKrStep = !!(userKrs && userKrs.length > 0);
   
-  // Fetch user KPIs (fail-safe) - v2.87: usando V2 para incluir contribuidores
-  const { 
-    kpisToUpdate: userKpis, 
-    isLoading: isLoadingKpis 
+  // Fetch user KPIs (fail-safe) - v2.87: usando V2 para incluir contribuidores.
+  // Exibimos TODOS os KPIs sob responsabilidade do usuário (owner OU contributor),
+  // independentemente de `needs_update` — o colaborador deve poder revisar/atualizar
+  // qualquer indicador seu durante o check-in.
+  const {
+    kpisOwnedOrContributed: userKpis,
+    isLoading: isLoadingKpis
   } = useKpisForWizardV2({
     userId: effectiveUserId || undefined,
     scope: 'collaborator',
