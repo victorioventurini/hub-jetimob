@@ -19,6 +19,7 @@ import {
 
   KpiStatusBlocks,
   InlineAgendaSuggestionInput,
+  JustificationField,
 } from '../shared';
 import type {
   MbrKpiSnapshot,
@@ -39,6 +40,15 @@ export interface QbrKpiAnalysisStepProps {
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
+  /**
+   * Quando passado, exibe um campo de justificativa obrigatório por KPI em
+   * alerta (yellow/red). Usado pelo Pré-MBR (rito reflexivo) — bloqueia o
+   * avanço enquanto houver justificativa pendente.
+   */
+  kpiJustifications?: Record<string, string>;
+  onKpiJustificationChange?: (kpiId: string, value: string) => void;
+  /** Quando true, bloqueia o "Continuar" se faltar justificativa em algum alerta. */
+  requireJustifications?: boolean;
 }
 
 // ============================================================
