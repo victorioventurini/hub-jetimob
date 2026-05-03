@@ -192,6 +192,132 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
     [kpi.kpiId, onValueSubmit],
   );
 
+  // Bloco de ação obrigatória — reusado em ambos os modos (compact / detailed).
+  // Em modo `detailed`, ganha label "Plano de ação" e copy reforçada (Pré-MBR).
+  const actionBlock = (
+    <>
+      {effectiveMode === 'justify' && onJustificationChange && (
+        <JustificationField
+          id={`kpi-just-${kpi.kpiId}`}
+          label={detailed ? 'Justificativa e plano de ação' : 'Justifique o desvio do KPI'}
+          hint={
+            detailed
+              ? 'Obrigatório — explique o motivo do desvio e descreva as próximas ações para corrigir a rota.'
+              : 'Obrigatório — explique por que está fora da meta e o plano de ação.'
+          }
+          required
+          value={justificationValue ?? ''}
+          onChange={handleJustificationChange}
+        />
+      )}
+
+      {effectiveMode === 'explain-no-data' && onNoDataReasonChange && (
+        <JustificationField
+          id={`kpi-nodata-${kpi.kpiId}`}
+          label={detailed ? 'Por que está sem dados? Plano para destravar' : 'Por que este KPI está sem dados?'}
+          hint={
+            detailed
+              ? 'Obrigatório — explique a ausência de registros e descreva o plano para coletar e disponibilizar.'
+              : 'Obrigatório — explique a ausência de registros e o plano para sanar.'
+          }
+          required
+          value={noDataReasonValue ?? ''}
+          onChange={handleNoDataReasonChange}
+        />
+      )}
+
+      {effectiveMode === 'update-value' && onValueSubmit && !alreadyUpdated && (
+        <div className="rounded-md border bg-warning-muted/30 p-3 space-y-2">
+          <p className="text-xs font-medium text-warning-foreground">
+            Registre o valor atualizado deste KPI antes de continuar.
+          </p>
+          <KpiValueEntryForm
+            unit={kpi.unit ?? ''}
+            consolidationFrequency={kpi.consolidationFrequency ?? null}
+            updateFrequency={kpi.updateFrequency ?? null}
+            placeholderValue={kpi.target ?? undefined}
+            formId={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
+            onValidSubmit={handleValueSubmit}
+          />
+          <Button
+            type="submit"
+            form={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
+            size="sm"
+            className="w-full"
+          >
+            Registrar valor
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
+  // Badges de bucket (Desatualizado / Sem dados / Atualizado nesta sessão).
+  // Exibidos em ambos os modos no topo do card.
+  const bucketBadges = (
+    <div className="flex items-center gap-2 flex-wrap">
+      {effectiveMode === 'update-value' && (
+        <Badge variant="outline" className="text-xs gap-1 text-status-amber border-status-amber/40">
+          <Clock className="h-3 w-3" />
+          Desatualizado
+        </Badge>
+      )}
+      {effectiveMode === 'explain-no-data' && (
+        <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+          <BarChart3 className="h-3 w-3" />
+          Sem dados
+        </Badge>
+      )}
+      {alreadyUpdated && (
+        <Badge variant="outline" className="text-xs gap-1 text-status-green border-status-green/40">
+          <CheckCircle2 className="h-3 w-3" />
+          Atualizado nesta sessão
+        </Badge>
+      )}
+    </div>
+  );
+
+  // ──────────────────────────────────────────────────────────────────
+  // MODO DETAILED — usado pelo Pré-MBR (paginado).
+  // Renderiza o KpiDetailContent canônico (todas as informações do KPI)
+  // e destaca a ação do líder em um bloco separado de "Plano de ação".
+  // ──────────────────────────────────────────────────────────────────
+  if (detailed) {
+    const requiresAction = effectiveMode !== 'view';
+    return (
+      <div className="space-y-4">
+        {(requiresAction || alreadyUpdated) && (
+          <Card className={cardBorder}>
+            <CardContent className="p-3">{bucketBadges}</CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardContent className="p-0">
+            <KpiDetailContent kpiId={kpi.kpiId} />
+          </CardContent>
+        </Card>
+
+        {requiresAction && (
+          <Card className="border-warning/40 bg-warning-muted/10">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <h4 className="text-sm font-semibold text-foreground">
+                  Plano de ação do líder
+                </h4>
+              </div>
+              {actionBlock}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────
+  // MODO COMPACT (default) — usado pelo QBR-Pré em modo lista.
+  // ──────────────────────────────────────────────────────────────────
   return (
     <Card className={cardBorder}>
       <CardContent className="p-4 space-y-3">
@@ -284,51 +410,7 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
         )}
 
         {/* Ação obrigatória — varia por bucket */}
-        {effectiveMode === 'justify' && onJustificationChange && (
-          <JustificationField
-            id={`kpi-just-${kpi.kpiId}`}
-            label="Justifique o desvio do KPI"
-            hint="Obrigatório — explique por que está fora da meta e o plano de ação."
-            required
-            value={justificationValue ?? ''}
-            onChange={handleJustificationChange}
-          />
-        )}
-
-        {effectiveMode === 'explain-no-data' && onNoDataReasonChange && (
-          <JustificationField
-            id={`kpi-nodata-${kpi.kpiId}`}
-            label="Por que este KPI está sem dados?"
-            hint="Obrigatório — explique a ausência de registros e o plano para sanar."
-            required
-            value={noDataReasonValue ?? ''}
-            onChange={handleNoDataReasonChange}
-          />
-        )}
-
-        {effectiveMode === 'update-value' && onValueSubmit && !alreadyUpdated && (
-          <div className="rounded-md border bg-warning-muted/30 p-3 space-y-2">
-            <p className="text-xs font-medium text-warning-foreground">
-              Registre o valor atualizado deste KPI antes de continuar.
-            </p>
-            <KpiValueEntryForm
-              unit={kpi.unit ?? ''}
-              consolidationFrequency={kpi.consolidationFrequency ?? null}
-              updateFrequency={kpi.updateFrequency ?? null}
-              placeholderValue={kpi.target ?? undefined}
-              formId={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
-              onValidSubmit={handleValueSubmit}
-            />
-            <Button
-              type="submit"
-              form={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
-              size="sm"
-              className="w-full"
-            >
-              Registrar valor
-            </Button>
-          </div>
-        )}
+        {actionBlock}
       </CardContent>
     </Card>
   );
