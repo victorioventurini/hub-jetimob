@@ -160,13 +160,23 @@ export default function MbrPrePage() {
     enabled: !!activeCycle && sessionState !== 'completed',
   });
 
+  // ── Mês de referência (mês fechado anterior por default) ──
+  // Definido aqui porque é usado tanto pela query de KRs (cut-off de check-ins)
+  // quanto pela query de KPIs adiante.
+  const refMonth = draft.data.referenceMonth || defaultReferenceMonth();
+  const refBounds = useMemo(() => monthBoundsDate(refMonth), [refMonth]);
+
   // ── Load team KRs for balance step ──
+  // Snapshot ancorado no fim do mês de referência: o último check-in até
+  // `refBounds.end` é a fonte da verdade para `current_value`/`last_checkin_at`,
+  // não o estado atual da KR. Isso garante que um Pré-MBR de abril executado
+  // em maio reflita o que aconteceu *até 30/04*, não o que mudou em maio.
   const { data: teamObjectives, isLoading: isLoadingKrs } = useQuery({
-    queryKey: mbrKeys.preTeamKrs(currentBuId, teamIdParam, activeCycle?.id),
-    enabled: !!buSupabase && !!currentBuId && !!teamIdParam && !!activeCycle?.id,
+    queryKey: mbrKeys.preTeamKrs(currentBuId, teamIdParam, activeCycle?.id, refMonth),
+    enabled: !!buSupabase && !!currentBuId && !!teamIdParam && !!activeCycle?.id && !!refBounds,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      if (!currentBuId) return [];
+      if (!currentBuId || !refBounds) return [];
 
       const { data, error } = await buSupabase
         .from('okr_team_objectives')
@@ -188,44 +198,90 @@ export default function MbrPrePage() {
         throw error;
       }
 
-      return (data || []).map(obj => ({
+      const rawObjs = (data || []).map(obj => ({
         ...obj,
         key_results: (obj.key_results || []).filter(
           (kr: any) => !kr.deleted_at && !kr.cancelled_at
         ),
       }));
+
+      // Coleta todos os KR ids para um único fetch de check-ins até o cut-off.
+      const krIds = rawObjs.flatMap((o) => (o.key_results || []).map((kr: any) => kr.id as string));
+      if (krIds.length === 0) return rawObjs.map((o) => ({ ...o, _checkinByKr: new Map() }));
+
+      const { data: checkins, error: ciErr } = await buSupabase
+        .from('okr_checkins')
+        .select('kr_id, date, current_value')
+        .in('kr_id', krIds)
+        .lte('date', refBounds.end)
+        .order('date', { ascending: false });
+      if (ciErr) throw ciErr;
+
+      // Por KR: primeiro check-in encontrado já é o mais recente até o cut-off.
+      const lastByKr = new Map<string, { value: number; date: string }>();
+      for (const c of (checkins || [])) {
+        if (!lastByKr.has(c.kr_id)) {
+          lastByKr.set(c.kr_id, { value: Number(c.current_value), date: c.date });
+        }
+      }
+
+      return rawObjs.map((o) => ({ ...o, _checkinByKr: lastByKr }));
     },
   });
 
-  // Seed KR final states
+  // Seed KR final states — re-seedar quando time OU referenceMonth mudam.
   const seededKrsRef = useRef(false);
+  const lastKrSeedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const seedKey = `${teamIdParam ?? ''}::${refMonth}`;
+    if (seedKey !== lastKrSeedKeyRef.current) {
+      seededKrsRef.current = false;
+      lastKrSeedKeyRef.current = seedKey;
+    }
     if (seededKrsRef.current) return;
     if (!teamObjectives || teamObjectives.length === 0) return;
-    if (draft.data.krFinalStates.length > 0) {
-      seededKrsRef.current = true;
-      return;
-    }
+    if (!refBounds) return;
+
+    // Cut-off em ms para `daysSinceCheckin` ancorado no fim do mês.
+    const cutoffMs = new Date(`${refBounds.end}T23:59:59`).getTime();
 
     const states: MbrPreDraftData['krFinalStates'] = [];
     for (const obj of teamObjectives) {
+      const lastByKr: Map<string, { value: number; date: string }> =
+        (obj as any)._checkinByKr ?? new Map();
+
       for (const kr of (obj.key_results || [])) {
         const baseline = Number(kr.baseline ?? 0);
-        const current = Number(kr.current_value ?? baseline);
         const target = Number(kr.target ?? baseline);
         const direction = (kr.direction ?? 'up') as 'up' | 'down' | 'maintain';
-        const progress = calculateProgress(baseline, current, target, direction);
 
-        const daysSinceCheckin = kr.last_checkin_at
-          ? Math.floor((Date.now() - new Date(kr.last_checkin_at).getTime()) / (1000 * 60 * 60 * 24))
+        // Snapshot autoritativo: usa o último check-in até o fim do mês de
+        // referência. Se não houver, considera baseline (KR sem movimento).
+        const snapshot = lastByKr.get(kr.id);
+        const currentAtCutoff = snapshot ? snapshot.value : baseline;
+        const lastCheckinDateAtCutoff = snapshot?.date ?? null;
+
+        const progress = calculateProgress(baseline, currentAtCutoff, target, direction);
+
+        const daysSinceCheckin = lastCheckinDateAtCutoff
+          ? Math.max(
+              0,
+              Math.floor(
+                (cutoffMs - new Date(`${lastCheckinDateAtCutoff}T00:00:00`).getTime()) /
+                  (1000 * 60 * 60 * 24),
+              ),
+            )
           : 999;
 
-        const krStatus = kr.status as string;
-        const ragStatus = krStatus === 'on_track' ? 'green'
-          : krStatus === 'at_risk' ? 'yellow'
-          : krStatus === 'off_track' ? 'red'
-          : 'not_started';
+        // RAG é derivado do progresso no cut-off (okr_checkins não persiste RAG).
+        // Heurística alinhada ao Progress Canon (mem://standards/interpretation/progress-canon):
+        //   ≥ 70%  → green; ≥ 40% → yellow; demais → red; sem dado → not_started.
+        const ragStatus =
+          !snapshot ? 'not_started'
+            : progress >= 70 ? 'green'
+            : progress >= 40 ? 'yellow'
+            : 'red';
 
         const state = calculateKrState({
           progress,
@@ -249,14 +305,13 @@ export default function MbrPrePage() {
       updateDraft({ krFinalStates: states, cycleId: activeCycle?.id || '', teamId: teamIdParam || '' });
     }
     seededKrsRef.current = true;
-  }, [teamObjectives, draft.data.krFinalStates.length, updateDraft, activeCycle, teamIdParam]);
+  }, [teamObjectives, refBounds, refMonth, teamIdParam, updateDraft, activeCycle]);
 
   // ── Load KPIs (ancorado no mês alvo) ──
   // currentValue = último valor com reference_date dentro do mês alvo.
   // previousValue = último valor com reference_date < início do mês alvo.
   // Se o mês alvo não tiver registro, currentValue = null (UI exibe "sem dado").
-  const refMonth = draft.data.referenceMonth || defaultReferenceMonth();
-  const refBounds = useMemo(() => monthBoundsDate(refMonth), [refMonth]);
+
 
   const { data: teamKpis, isLoading: isLoadingKpis } = useQuery({
     queryKey: [...mbrKeys.preTeamKpis(teamIdParam, currentBuId), refMonth],
@@ -551,6 +606,7 @@ export default function MbrPrePage() {
         return (
           <MbrPreProjectsStep
             teamId={teamIdParam}
+            referenceMonth={refMonth}
             projectJustifications={draft.data.projectJustifications}
             onProjectJustificationChange={(projectId, value) =>
               updateDraft({

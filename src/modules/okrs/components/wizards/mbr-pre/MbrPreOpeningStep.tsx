@@ -247,7 +247,7 @@ export function MbrPreOpeningStep({
     overdueProjectIds,
     overdueMilestoneIds,
     isLoading: loadingProjects,
-  } = useMbrPreTeamProjects(teamId);
+  } = useMbrPreTeamProjects(teamId, referenceMonth);
 
   const { isGenerating, error: genError, generate } = useMbrPreMonthAnalysis();
 

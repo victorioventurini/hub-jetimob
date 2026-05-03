@@ -2,9 +2,12 @@
  * useMbrPreTeamProjects — Projetos do time consumidos pelo Step "Projetos"
  * do Pré-MBR. Rito reflexivo: somente leitura, sem mutations.
  *
- * Retorna projetos ativos do time + milestones, e classifica:
- * - projeto atrasado: `due_date < hoje` e `status != 'done'`
- * - milestone atrasado: `due_date < hoje` e `status != 'done'`
+ * Ancoragem temporal (v2):
+ *   O cut-off de "atrasado" é o **fim do mês de referência** (não `Date.now()`).
+ *   - Sem `referenceMonth`: usa `defaultReferenceMonth()` (mês fechado anterior).
+ *   - Com `referenceMonth`: cut-off = último dia desse mês (`monthBoundsDate`).
+ *   - Milestones marcados como `done`/`cancelled` mas com `due_date` posterior
+ *     ao cut-off também não são "atrasados" pela perspectiva do mês.
  *
  * Snapshot enxuto (Onda 4 F3): apenas IDs + nomes que serão exibidos no UI.
  * O draft persiste apenas o ID + texto da justificativa.
@@ -15,6 +18,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { mbrKeys } from '@/lib/queryKeys/okrs';
+import {
+  defaultReferenceMonth,
+  monthBoundsDate,
+} from '@/modules/okrs/utils/mbr/referenceMonth';
 import type {
   MilestoneStatus,
   ProjectHealth,
@@ -55,32 +62,44 @@ export interface UseMbrPreTeamProjectsResult {
   overdueProjectIds: string[];
   /** IDs de milestones atrasados — usados pelo Opening + Summary. */
   overdueMilestoneIds: string[];
+  /** Cut-off ISO (YYYY-MM-DD) usado para classificar atrasos. Útil para UI. */
+  cutoffDate: string;
 }
 
 // ============================================================
 // HELPERS
 // ============================================================
 
+/** Health relativo ao cut-off do mês de referência. */
 function computeHealth(
   status: string,
   dueDate: string | null,
   completionPct: number,
+  cutoffDate: string,
 ): ProjectHealth {
   if (status === 'done' || status === 'cancelled') return 'on_track';
   if (!dueDate) return 'on_track';
-  const now = new Date();
+  const cutoff = new Date(`${cutoffDate}T23:59:59`);
   const due = new Date(dueDate);
-  const totalDays =
-    (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-  if (totalDays < 0) return 'late';
-  if (completionPct < 50 && totalDays < 14) return 'at_risk';
+  const daysToDue = (due.getTime() - cutoff.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysToDue < 0) return 'late';
+  if (completionPct < 50 && daysToDue < 14) return 'at_risk';
   return 'on_track';
 }
 
-function isPastDue(dueDate: string | null, status: string): boolean {
+/**
+ * "Atrasado" do ponto de vista do mês de referência:
+ *   - status ainda em aberto no fim do mês (não `done`/`cancelled`)
+ *   - `due_date` <= cut-off do mês (vencia dentro ou antes do mês analisado)
+ */
+function isPastDueAtCutoff(
+  dueDate: string | null,
+  status: string,
+  cutoffDate: string,
+): boolean {
   if (!dueDate) return false;
   if (status === 'done' || status === 'cancelled') return false;
-  return new Date(dueDate).getTime() < Date.now();
+  return dueDate <= cutoffDate;
 }
 
 // ============================================================
@@ -93,12 +112,19 @@ const PROJECT_COLUMNS =
 
 export function useMbrPreTeamProjects(
   teamId: string | null | undefined,
+  referenceMonth?: string | null,
 ): UseMbrPreTeamProjectsResult {
   const { currentBuId } = useBu();
   const supabase = useBuScopedSupabase();
 
+  const refMonth = referenceMonth || defaultReferenceMonth();
+  const cutoffDate = useMemo(() => {
+    const bounds = monthBoundsDate(refMonth);
+    return bounds?.end ?? refMonth;
+  }, [refMonth]);
+
   const { data, isLoading } = useQuery({
-    queryKey: mbrKeys.preTeamProjects(currentBuId, teamId),
+    queryKey: mbrKeys.preTeamProjects(currentBuId, teamId, refMonth),
     enabled: !!supabase && !!currentBuId && !!teamId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -133,6 +159,7 @@ export function useMbrPreTeamProjects(
         isLoading,
         overdueProjectIds: [],
         overdueMilestoneIds: [],
+        cutoffDate,
       };
     }
 
@@ -153,7 +180,7 @@ export function useMbrPreTeamProjects(
 
         const milestones: MbrPreMilestoneRow[] = rawMilestones.map(
           (m: any) => {
-            const overdue = isPastDue(m.due_date, m.status);
+            const overdue = isPastDueAtCutoff(m.due_date, m.status, cutoffDate);
             if (overdue) overdueMilestoneIds.push(m.id);
             return {
               id: m.id,
@@ -165,7 +192,7 @@ export function useMbrPreTeamProjects(
           },
         );
 
-        const projectOverdue = isPastDue(p.due_date, p.status);
+        const projectOverdue = isPastDueAtCutoff(p.due_date, p.status, cutoffDate);
         if (projectOverdue) overdueProjectIds.push(p.id);
 
         const hasAnyOverdue =
@@ -176,7 +203,7 @@ export function useMbrPreTeamProjects(
           name: p.name,
           status: p.status as ProjectStatus,
           due_date: p.due_date,
-          health: computeHealth(p.status, p.due_date, pct),
+          health: computeHealth(p.status, p.due_date, pct, cutoffDate),
           milestonesTotal: total,
           milestonesDone: done,
           completionPct: pct,
@@ -198,8 +225,9 @@ export function useMbrPreTeamProjects(
       isLoading,
       overdueProjectIds,
       overdueMilestoneIds,
+      cutoffDate,
     };
-  }, [data, isLoading]);
+  }, [data, isLoading, cutoffDate]);
 
   return result;
 }

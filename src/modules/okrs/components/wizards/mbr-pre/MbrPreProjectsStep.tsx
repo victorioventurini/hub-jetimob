@@ -36,6 +36,8 @@ const AGENDA_SOURCE_STEP = 'mbr-pre-highlights';
 
 export interface MbrPreProjectsStepProps {
   teamId: string | null | undefined;
+  /** Mês alvo do rito (`YYYY-MM`). Ancora o cut-off de "atrasado". */
+  referenceMonth?: string | null;
   projectJustifications: {
     projects: Record<string, string>;
     milestones: Record<string, string>;
@@ -160,14 +162,15 @@ const ProjectCard = memo(ProjectCardImpl);
 
 export function MbrPreProjectsStep({
   teamId,
+  referenceMonth,
   projectJustifications,
   onProjectJustificationChange,
   onMilestoneJustificationChange,
   onContinue,
   onBack,
 }: MbrPreProjectsStepProps) {
-  const { projects, isLoading, overdueProjectIds, overdueMilestoneIds } =
-    useMbrPreTeamProjects(teamId);
+  const { projects, isLoading, overdueProjectIds, overdueMilestoneIds, cutoffDate } =
+    useMbrPreTeamProjects(teamId, referenceMonth);
 
   // Bloqueia avanço se houver atrasado sem justificativa preenchida.
   const blockingItems = useMemo(() => {
@@ -207,6 +210,12 @@ export function MbrPreProjectsStep({
       }
     >
       <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
+        {cutoffDate && (
+          <p className="text-xs text-muted-foreground">
+            Considerando atrasos até <strong>{new Date(`${cutoffDate}T00:00:00`).toLocaleDateString('pt-BR')}</strong> (fim do mês analisado).
+          </p>
+        )}
+
         {blockingItems > 0 && (
           <div
             className={cn(
