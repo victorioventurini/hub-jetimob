@@ -122,15 +122,16 @@ const formSchema = z.object({
       path: ["responsible_team_id"],
     });
   }
-  // Validação: se lifecycle_status='active', exigir owner
+  // Responsável é sempre obrigatório (independente do lifecycle_status)
+  if (!data.owner_user_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Responsável é obrigatório",
+      path: ["owner_user_id"],
+    });
+  }
+  // Validação: se lifecycle_status='active', exigir "Atualizado por"
   if (data.lifecycle_status === 'active') {
-    if (!data.owner_user_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Responsável é obrigatório para indicadores ativos",
-        path: ["owner_user_id"],
-      });
-    }
     if (!data.updated_by_user_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -944,7 +945,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
-                      Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      Responsável <span className="text-destructive">*</span>
                       <HelpTooltip content="Pessoa accountable pelo resultado deste indicador. Monitora desvios e age para 'mover o ponteiro'." />
                     </FormLabel>
                     <FormControl>
