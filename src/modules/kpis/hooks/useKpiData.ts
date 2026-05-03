@@ -132,8 +132,10 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         .order("name");
 
       // v2.82.0: category filter removed - use areaId instead
+      // v2.90.0: filtro de time inclui responsible_team_id (KPIs Globais/Área cuja
+      // operação está delegada ao time) — alinhado a useCanEditKpi.
       if (teamId) {
-        query = query.eq("team_id", teamId);
+        query = query.or(`team_id.eq.${teamId},responsible_team_id.eq.${teamId}`);
       }
       if (ownerId) {
         query = query.eq("owner_user_id", ownerId);

@@ -1,60 +1,39 @@
-# Plano
+## Problema
 
-Pré-checklist canônico realizado: TCR (`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`), `DATA_MODEL_REGISTRY.md`, `PERMISSIONS_AND_RBAC_MODEL.md`, `IDENTITY_CONVENTION.md`, `BU_SCOPED_SUPABASE_RULES.md`, `WIZARDS_FRAMEWORK_BOUNDARY.md`, `QUERY_KEYS_STANDARD.md` e memórias de KPIs/Wizards revisadas. Nenhum dos dois itens exige alteração de schema, RLS, edge function ou nova permission key.
+No dashboard `/kpis`, ao filtrar por Time = "Comercial", o KPI **MRR Commit** não aparece, mesmo o time Comercial sendo o **Time Responsável** por ele.
 
----
+**Causa raiz:** o filtro só compara `team_id` (dono direto). KPIs Globais (`scope=org`) ou de Área (`scope=area`) têm `team_id = NULL`, mas podem ter `responsible_team_id = <Comercial>` (campo "Time Responsável" da Responsabilidade Operacional, conforme a tela anexada). Esses KPIs ficam invisíveis no filtro.
 
-## Item 1 — MBR-Pre Summary: justificativa e plano de ação inline em cada KPI/KR
+Hoje em `useKpiData.ts` (linha 135-137) e `useKpiEvolutionList.ts` (linha 116-118):
+```ts
+if (teamId) {
+  query = query.eq("team_id", teamId);   // ignora responsible_team_id
+}
+```
 
-**Estado atual** (`MbrPreSummary.tsx`):
-- `SummaryKpiList` mostra KPIs como linha compacta (dot RAG + nome + valor) sem justificativa.
-- `SummaryKrBalance` mostra KRs com ícone + nome + % sem justificativa.
-- As justificativas existem só no card "Justificativas registradas" abaixo, separadas dos itens — o líder precisa rolar e cruzar manualmente.
+## Solução
 
-**O que muda**
-- Os componentes shared `SummaryKpiList` e `SummaryKrBalance` ganham um prop opcional `justifications?: Record<string, string>`. Quando presente, o item passa a renderizar em duas linhas:
-  - Linha 1 (atual): dot/ícone, nome, badge, valor/%.
-  - Linha 2 (nova, condicional): bloco de justificativa com o texto completo (whitespace-pre-wrap, fundo `bg-muted/30`, ícone `MessageSquareQuote`, label "Plano de ação do líder"). Só renderiza se houver texto não vazio para aquele `kpiId`/`krId`.
-- `MbrPreSummary` passa `kpiJustifications` e `krJustifications` (que já tem em `draftData`) para os respectivos componentes.
-- O card consolidado "Justificativas registradas" (KPIs + KRs) é removido para evitar duplicação visual. As seções de **Projetos** e **Marcos atrasados** desse mesmo card são preservadas (eles não têm renderização própria no summary), apenas saem agrupadas em um card menor "Justificativas de execução (projetos e marcos)".
-- Hierarquia visual: a justificativa fica recuada (pl-4) e com tipografia menor para deixar claro que é metadata da linha acima.
+Quando o filtro de time estiver ativo, retornar KPIs onde **`team_id = X` OU `responsible_team_id = X`**. Isso é consistente com `useCanEditKpi`, que já trata `responsible_team_id` como ownership operacional para fins de permissão de update.
 
-**Reuso e simetria**
-- `QbrPreSummary` consome os mesmos `SummaryKpiList`/`SummaryKrBalance`. Como o prop é opcional, o QBR continua funcionando inalterado; em iteração futura pode passar suas próprias justificativas (sem obrigação agora).
-- Resolução de nomes continua via `useEntityLookup` no `SummaryKrBalance` (já existe) — não introduzimos lookup novo.
+### Mudanças
 
-**Arquivos**
-- `src/modules/okrs/components/wizards/shared/SummaryKpiList.tsx` — adicionar prop `justifications` e renderização inline.
-- `src/modules/okrs/components/wizards/shared/SummaryKrBalance.tsx` — idem.
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx` — passar justifications, remover seções duplicadas de KPI/KR do card "Justificativas registradas", manter apenas projetos/marcos.
+1. **`src/modules/kpis/hooks/useKpiData.ts`** — substituir o `.eq("team_id", teamId)` por:
+   ```ts
+   query = query.or(`team_id.eq.${teamId},responsible_team_id.eq.${teamId}`);
+   ```
 
----
+2. **`src/modules/kpis/hooks/useKpiEvolutionList.ts`** — mesma substituição no bloco equivalente.
 
-## Item 2 — `/kpis`: filtro por responsável
+3. **Sem mudança de UX/label** necessária: o rótulo "Todos os times" / TeamSelect já comunica "time" de forma genérica, e o comportamento esperado pelo usuário é justamente esse (ver KPIs pelos quais o time responde).
 
-**Estado atual**
-- `useKpiData` já aceita `ownerId` e aplica `.eq("owner_user_id", ownerId)` no servidor; `queryKey` já inclui `ownerId` (cache correto).
-- `KpiDashboardFilters` expõe Tipo, Status, Vínculo KR, Área, Escopo e Time — falta Responsável.
-- `BuUserSelect` é o componente canônico de seleção de usuário único, BU-scoped, com `includeAll`.
+### Fora do escopo
 
-**O que muda**
-- `KpiDashboardFilters`: novo prop opcional `ownerId` + `onOwnerChange`. Renderiza um `BuUserSelect` com `includeAll`, `allLabel="Todos os responsáveis"`, `triggerClassName="w-full sm:w-[200px]"`. Posicionado entre "Área" e "Escopo".
-- `KpiDashboardPage`:
-  - Novo `useUrlState` para `owner_id` (chave URL `owner_id`, default `"all"`), seguindo o padrão dos outros filtros.
-  - Passa `ownerId` para `useKpiData` (já suportado).
-  - Passa `ownerId`/`onOwnerChange` para `KpiDashboardFilters`.
-- Filtro composta com os demais (e com `SavedLinksPopover`) automaticamente, pois é URL state.
+- Filtro de Área já cobre `area_id` direto; não vamos expandir para `responsible_area_id` neste plano (não foi pedido e merece avaliação separada para evitar mudanças não solicitadas).
+- Permissões e RLS não mudam (apenas predicado de leitura).
+- `useKpisForWizardV2` não é afetado (usa `responsible_team_id` como filtro principal em outro fluxo).
 
-**Arquivos**
-- `src/modules/kpis/components/KpiDashboardFilters.tsx` — adicionar prop e `BuUserSelect`.
-- `src/modules/kpis/pages/KpiDashboardPage.tsx` — URL state + wiring.
+### Validação
 
----
-
-## Garantias canônicas
-
-- **BU isolation:** mantida (filtro server-side em `useKpiData` já passa por `bu_id`; `BuUserSelect` é BU-scoped).
-- **Query keys:** já segue `queryKeys.kpis.list(currentBuId, { ownerId, ... })`.
-- **Sem `select("*")`, sem CHECK constraint, sem mudanças de RLS/edge.**
-- **Wizards Framework Boundary:** alterações ficam dentro de `src/modules/okrs/components/wizards/shared`, consumidas só por OKR — não cruza o boundary.
-- **Memoização:** `SummaryKpiList`/`SummaryKrBalance` continuam `memo()`.
+- Acessar `/kpis?team_id=<comercial>` e confirmar que MRR Commit aparece.
+- Confirmar que filtrar por outro time não traz KPIs alheios.
+- Verificar que time sem KPI direto nem responsável continua retornando vazio.
