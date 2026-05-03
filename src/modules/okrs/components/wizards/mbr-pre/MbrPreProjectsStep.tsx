@@ -29,7 +29,7 @@ import {
 import { useMbrPreTeamProjects, type MbrPreProjectRow } from '@/modules/okrs/hooks';
 import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
 
-const AGENDA_SOURCE_STEP = 'mbr-pre-projects';
+const AGENDA_SOURCE_STEP = 'mbr-pre-highlights';
 
 // ============================================================
 // TYPES
