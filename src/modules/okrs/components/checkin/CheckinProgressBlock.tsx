@@ -68,7 +68,14 @@ export function CheckinProgressBlock({
   isAutomatic,
   onValueChange,
   primaryKpi,
+  readOnly = false,
 }: CheckinProgressBlockProps) {
+  const previewValue = isAutomatic ? kr.current_value : (parseFloat(currentValue) || kr.current_value);
+  const valueDiff = previewValue - kr.current_value;
+  const isPositiveChange = kr.direction === 'up' ? valueDiff >= 0 : valueDiff <= 0;
+  const newProgress = calculateProgress(kr.baseline, previewValue, kr.target, kr.direction);
+
+  return (
   const previewValue = isAutomatic ? kr.current_value : (parseFloat(currentValue) || kr.current_value);
   const valueDiff = previewValue - kr.current_value;
   const isPositiveChange = kr.direction === 'up' ? valueDiff >= 0 : valueDiff <= 0;
