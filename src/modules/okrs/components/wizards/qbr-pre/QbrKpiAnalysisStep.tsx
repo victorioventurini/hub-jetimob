@@ -127,7 +127,7 @@ export function QbrKpiAnalysisStep({
               const rag = RAG_STYLES[kpi.ragStatus] || RAG_STYLES.no_data;
               return (
                 <Card key={kpi.kpiId}>
-                  <CardContent className="p-3">
+                  <CardContent className="p-3 space-y-3">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm font-medium" />
@@ -146,6 +146,16 @@ export function QbrKpiAnalysisStep({
                         </div>
                       </div>
                     </div>
+                    {requireJustifications && onKpiJustificationChange && (
+                      <JustificationField
+                        id={`kpi-just-${kpi.kpiId}`}
+                        label="Justifique o desvio do KPI"
+                        hint="Obrigatório — explique por que está fora da meta e o plano de ação."
+                        required
+                        value={kpiJustifications?.[kpi.kpiId] ?? ''}
+                        onChange={(v) => onKpiJustificationChange(kpi.kpiId, v)}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               );
