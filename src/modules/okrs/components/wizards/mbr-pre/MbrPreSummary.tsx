@@ -127,7 +127,7 @@ export function MbrPreSummary({
     >
       <div className="p-6 space-y-6">
         {/* 1) KPIs do Time — espelha step "kpis" */}
-        <SummaryKpiList title="KPIs do Time" kpis={kpiSnapshots} justifications={kpiJustifications} />
+        <SummaryKpiList title="KPIs do Time" kpis={kpiSnapshots} justifications={mergedKpiJustifications} />
 
         {/* 2) KRs do Mês — espelha step "krs" */}
         <SummaryKrBalance
