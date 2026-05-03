@@ -9,6 +9,7 @@ import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { defaultReferenceMonth } from '@/modules/okrs/utils/mbr/referenceMonth';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
 import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
@@ -73,7 +74,9 @@ const WIZARD_STEPS = [
 const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'closing'];
 
 const DEFAULT_DATA: MbrDraftData = {
-  referenceMonth: format(new Date(), 'yyyy-MM'),
+  // Mês alvo padrão = mês imediatamente anterior (mês fechado).
+  // MBR é executado no início do mês seguinte ao analisado.
+  referenceMonth: defaultReferenceMonth(),
   kpiSnapshots: [],
   teamOkrSnapshots: [],
   currentTeamIndex: 0,
