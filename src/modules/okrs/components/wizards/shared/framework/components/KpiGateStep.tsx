@@ -128,6 +128,13 @@ type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 
  * de ação — equiparando-os aos KPIs estratégicos em `critical`/`attention`.
  */
 function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
+  // Regras canônicas (SSOT mem://features/kpis/kpis-master-standard §4):
+  // - bucket MANDATORY → sempre obrigatório
+  // - teamContext red → obrigatório; amber → opcional
+  // - teamContext unknown (sem dados) → obrigatório (explain-no-data)
+  // - target ausente (sem meta cadastrada) → obrigatório em qualquer bucket
+  //   (exceto buckets cujo modo já é mais restritivo)
+  const noTarget = kpi.target == null || (kpi.target as unknown as string) === '';
   switch (bucketId) {
     case 'overdue':
       return 'explain-no-data';
@@ -135,14 +142,16 @@ function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMo
     case 'guardrailViolated':
       return 'justify-required';
     case 'attention':
-      return 'justify-optional';
+      return noTarget ? 'justify-required' : 'justify-optional';
     case 'teamContext':
+      if (kpi.status === 'unknown') return 'explain-no-data';
+      if (noTarget) return 'justify-required';
       if (kpi.status === 'red') return 'justify-required';
       if (kpi.status === 'amber') return 'justify-optional';
       return 'view';
     case 'healthy':
     default:
-      return 'view';
+      return noTarget ? 'justify-required' : 'view';
   }
 }
 

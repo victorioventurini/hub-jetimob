@@ -1,53 +1,90 @@
-## Objetivo
+## Pré-checklist (executado)
 
-No step **Indicadores do Time** (`/rituals/mbr-pre?step=kpi-analysis`), tornar o **Plano de ação do líder obrigatório** para KPIs que estão:
+- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` — confirmado que KPI Gate v3.29.x usa 6 buckets canônicos (`overdue`, `critical`, `guardrailViolated`, `attention`, `healthy`, `teamContext`).
+- ✅ `mem://features/kpis/kpis-master-standard` (seção 4 — Ritual Gates) — confirma que `MbrKpiGateStep` e o `KpiGateStep` genérico consomem `KpiForWizardV2` + `classifyKpiGateBuckets`. Não há regra publicada hoje sobre "sem meta" / "sem dados em teamContext".
+- ✅ `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md` — `KpiGateStep` é módulo de plataforma, agnóstico de OKR. Mudanças vão no framework, não no consumidor.
+- ✅ Inventário de consumidores: apenas `MbrPreKpiGateStep` e `MbrKpiGateStep` usam o `KpiGateStep` rich/rich-paginated. Weekly v2 e QBR usam outras superfícies — fora do escopo. "Aplicar a todos" cobre exatamente esses dois ritos via mudança canônica no framework.
 
-1. **Sem atualização** (overdue) — já é obrigatório hoje ✅
-2. **Sem meta** (`target_value = null`) — **falta implementar** ❌
-3. KPIs em alerta (critical / guardrail / red) — já obrigatório ✅
+Conclusão do checklist: a mudança é coerente com a SSOT (não cria 6º bucket nem novo enum; apenas estende `actionModeForKpi` que é função interna do componente), e o lugar correto é o framework (`KpiGateStep.tsx`).
 
-KPIs **dentro do esperado** (atualizados, com meta, status verde/amarelo on-track) **continuam opcionais**.
+## Diagnóstico
 
-## Mudança proposta
+Na URL do Pré-MBR (`?step=kpi-analysis`), o KPI **"Crescimento de MRR"** aparece com:
+- bucket `teamContext` (KPI de área sob responsabilidade operacional do time Comercial)
+- status `unknown` ("Sem dados")
+- `target = null`
 
-Em `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx`, ampliar a regra de obrigatoriedade da página atual (`currentRequiresPlan`) para incluir o caso "sem meta", independente do bucket onde o KPI tenha caído.
+`actionModeForKpi(bucket, kpi)` em `KpiGateStep.tsx` (linhas 130-147) retorna `'view'` para `teamContext` quando o status não é `red`/`amber` — então o textarea "Plano de ação do líder" não é renderizado. O ajuste anterior em `MbrPreKpiGateStep` cobriu apenas o **gate** do botão Próximo, não a **renderização** do campo (e ainda assim deixava o usuário travado sem ter onde digitar).
 
-### Regra atual (linhas 177–184)
+## Regra canônica a publicar
+
+Plano de ação do líder é **obrigatório** quando o KPI:
+1. Está em bucket MANDATORY (`overdue`, `critical`, `guardrailViolated`) — já implementado
+2. Está em `teamContext` com status `red` — já implementado
+3. **(novo)** Está em `teamContext` com status `unknown` (sem dados) → modo `explain-no-data`
+4. **(novo)** Tem `target == null` (sem meta cadastrada), em qualquer bucket que não seja `view`-puro → modo `justify-required`
+
+KPIs saudáveis com meta e dados continuam **opcionais** (sem textarea, comportamento atual).
+
+## Mudanças (canônicas, no framework)
+
+### 1. `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx`
+
+**a)** Estender `actionModeForKpi` (linhas 130-147):
+
 ```ts
-const currentRequiresPlan = !!currentEntry && (
-  MANDATORY_BUCKETS.has(currentEntry.bucketId) ||      // overdue, critical, guardrailViolated
-  (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red')
-);
+function actionModeForKpi(bucketId, kpi): ActionMode {
+  const noTarget = kpi.target == null || kpi.target === '';
+  switch (bucketId) {
+    case 'overdue': return 'explain-no-data';
+    case 'critical':
+    case 'guardrailViolated': return 'justify-required';
+    case 'attention': return noTarget ? 'justify-required' : 'justify-optional';
+    case 'teamContext':
+      if (kpi.status === 'unknown') return 'explain-no-data';
+      if (noTarget) return 'justify-required';
+      if (kpi.status === 'red') return 'justify-required';
+      if (kpi.status === 'amber') return 'justify-optional';
+      return 'view';
+    case 'healthy':
+    default:
+      return noTarget ? 'justify-required' : 'view';
+  }
+}
 ```
 
-### Regra nova
-```ts
-const kpiHasNoTarget = !!currentEntry && (
-  currentEntry.kpi.target == null || currentEntry.kpi.target === ''
-);
+**b)** Atualizar `mandatoryUnaddressed` (linhas 496-510) para a mesma regra, mantendo coerência entre badge "X pendente(s)", aviso fixo "Registre o plano de ação" e gate global do framework:
 
-const currentRequiresPlan = !!currentEntry && (
-  MANDATORY_BUCKETS.has(currentEntry.bucketId) ||
-  (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red') ||
-  kpiHasNoTarget   // ← NOVO: sem meta sempre exige plano
-);
+```ts
+const requiresPlan =
+  MANDATORY_BUCKET_IDS.has(bucket.id) ||
+  (bucket.id === 'teamContext' && (item.status === 'red' || item.status === 'unknown')) ||
+  (bucket.id !== 'view' && (item.target == null || item.target === ''));
 ```
 
-## UX complementar (mesmo arquivo)
+### 2. `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx`
 
-Para o usuário entender por que o plano ficou obrigatório num KPI aparentemente "saudável" (ex.: bucket `healthy` mas sem meta), passar uma prop / hint visual ao `KpiGateStep` indicando o motivo. Opções:
+Sincronizar `currentRequiresPlan` (linhas 186-190) com a mesma fórmula — adicionar `status === 'unknown'` no `teamContext`. `kpiHasNoTarget` já existe.
 
-- **(A)** Apenas exibir o subtítulo do textarea como "Plano obrigatório — KPI sem meta cadastrada" quando `kpiHasNoTarget && !MANDATORY_BUCKETS.has(...)`. Implementação mínima, sem alterar o framework.
-- **(B)** Adicionar um badge "Sem meta" no header do card (requer pequeno ajuste no `KpiGateStep` do framework para aceitar um label adicional).
+### 3. `src/modules/okrs/components/wizards/mbr/MbrKpiGateStep.tsx`
 
-Recomendado: **(A)** — fica 100% no consumidor MBR Pré, sem mexer no `wizards-framework`.
+Verificar e alinhar (não tem regra duplicada hoje — herda do framework). Apenas confirmar e adicionar comentário.
 
-## Arquivos afetados
+### 4. Testes
 
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx` (única alteração)
+`MbrKpiGateStep.test.tsx` — adicionar 4 casos:
+- `teamContext` + `status='unknown'` → textarea visível + obrigatório
+- `teamContext` + `target=null` → textarea visível + obrigatório
+- `healthy` + `target=null` → textarea visível + obrigatório
+- `healthy` + tudo OK → sem textarea (regressão)
 
-## Não-objetivos
+### 5. SSOT
 
-- Não muda a classificação de buckets (`classifyKpiGateBuckets`) — KPI sem meta continua caindo no bucket natural pelo seu status.
-- Não muda outras telas (KPI dashboard, QBR Pré, etc.).
-- Não cria migration nem altera schema.
+Atualizar `mem://features/kpis/kpis-master-standard` seção 4 com as duas novas regras (`unknown` em teamContext, `target=null` em qualquer bucket não-view) — manter o canon vivo.
+
+## Não muda
+
+- `classifyKpiGateBuckets` (6 buckets continuam intactos — SSOT respeitada)
+- Enums DB, RLS, edge functions, schema
+- Demais ritos (Weekly v2, QBR Pre, etc.) — não consomem `KpiGateStep` rich
+- UX de KPIs saudáveis com meta — continuam sem textarea
