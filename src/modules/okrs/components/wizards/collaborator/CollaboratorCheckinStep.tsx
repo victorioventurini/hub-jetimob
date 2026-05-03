@@ -12,7 +12,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRight, ArrowLeft, SkipForward, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, SkipForward, Sparkles, Target } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  WizardStepScaffold,
+  WizardStepHeader,
+  WizardStepFooter,
+} from '@/modules/okrs/components/wizards/shared';
 import { AlertBanner } from '../shared/AlertBanner';
 import { AskToVicStepHelper } from '@/modules/vic/components/AskToVic';
 import { statusToConfidence } from '@/modules/okrs/hooks/useCreateCheckin';
