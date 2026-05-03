@@ -162,14 +162,15 @@ const ProjectCard = memo(ProjectCardImpl);
 
 export function MbrPreProjectsStep({
   teamId,
+  referenceMonth,
   projectJustifications,
   onProjectJustificationChange,
   onMilestoneJustificationChange,
   onContinue,
   onBack,
 }: MbrPreProjectsStepProps) {
-  const { projects, isLoading, overdueProjectIds, overdueMilestoneIds } =
-    useMbrPreTeamProjects(teamId);
+  const { projects, isLoading, overdueProjectIds, overdueMilestoneIds, cutoffDate } =
+    useMbrPreTeamProjects(teamId, referenceMonth);
 
   // Bloqueia avanço se houver atrasado sem justificativa preenchida.
   const blockingItems = useMemo(() => {
