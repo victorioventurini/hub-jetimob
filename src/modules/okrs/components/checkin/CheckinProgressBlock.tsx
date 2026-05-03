@@ -76,12 +76,6 @@ export function CheckinProgressBlock({
   const newProgress = calculateProgress(kr.baseline, previewValue, kr.target, kr.direction);
 
   return (
-  const previewValue = isAutomatic ? kr.current_value : (parseFloat(currentValue) || kr.current_value);
-  const valueDiff = previewValue - kr.current_value;
-  const isPositiveChange = kr.direction === 'up' ? valueDiff >= 0 : valueDiff <= 0;
-  const newProgress = calculateProgress(kr.baseline, previewValue, kr.target, kr.direction);
-
-  return (
     <div className="space-y-3">
       <Label className="text-sm font-semibold flex items-center gap-2">
         <TrendingUp className="w-4 h-4" />
