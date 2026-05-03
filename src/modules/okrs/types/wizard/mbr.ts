@@ -195,6 +195,12 @@ export interface MbrPreDraftData {
   cycleId: string;
   teamId: string;
   /**
+   * Mês analisado pelo rito (`YYYY-MM`). Sempre um mês fechado — por padrão,
+   * o mês imediatamente anterior à data de execução. Pode ser sobreposto pelo
+   * usuário via `ReferenceMonthPicker` para refazer/auditar análises passadas.
+   */
+  referenceMonth: string;
+  /**
    * Estado final dos KRs ao fim do mês — mesmo formato de QbrPreSnapshot.
    * Tipado como `unknown[]` aqui para evitar import cíclico com qbr.ts;
    * o consumidor canônico (`MbrPrePage`) refina via `QbrPreSnapshot['krFinalStates']`.
