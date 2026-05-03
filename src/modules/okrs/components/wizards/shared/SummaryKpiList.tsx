@@ -32,6 +32,13 @@ const RAG_TONE: Record<string, string> = {
   unknown: 'bg-muted',
 };
 
+const RAG_BUCKETS: Array<{ key: string; label: string; tone: string; matches: (s: string) => boolean }> = [
+  { key: 'green', label: 'No alvo', tone: 'text-status-green', matches: (s) => s === 'green' },
+  { key: 'amber', label: 'Atenção', tone: 'text-status-amber', matches: (s) => s === 'amber' || s === 'yellow' },
+  { key: 'red', label: 'Crítico', tone: 'text-status-red', matches: (s) => s === 'red' },
+  { key: 'unknown', label: 'Sem dados', tone: 'text-muted-foreground', matches: (s) => s !== 'green' && s !== 'amber' && s !== 'yellow' && s !== 'red' },
+];
+
 function formatValue(value: number | null | undefined, unit?: string): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
   const formatted = Number.isInteger(value)
@@ -54,6 +61,11 @@ export const SummaryKpiList = memo(function SummaryKpiList({
   const visible = expanded ? kpis : kpis.slice(0, initialVisible);
   const hidden = kpis.length - visible.length;
 
+  const counts = RAG_BUCKETS.map((b) => ({
+    ...b,
+    count: kpis.filter((k) => b.matches(k.ragStatus ?? 'unknown')).length,
+  })).filter((b) => b.count > 0);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -69,7 +81,15 @@ export const SummaryKpiList = memo(function SummaryKpiList({
           </p>
         ) : (
           <>
-            <div className="space-y-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {counts.map((b) => (
+                <Badge key={b.key} variant="outline" className={cn('text-xs', b.tone)}>
+                  {b.count} {b.label.toLowerCase()}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="space-y-2 pt-1">
               {visible.map((kpi) => {
                 const dotTone = RAG_TONE[kpi.ragStatus] ?? RAG_TONE.unknown;
                 const justification = justifications?.[kpi.kpiId]?.trim();
