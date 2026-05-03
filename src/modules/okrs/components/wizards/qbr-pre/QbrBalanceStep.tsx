@@ -50,6 +50,8 @@ export interface QbrBalanceStepProps {
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   /** Texto do trigger do collapsible de sugestões. Ex: "Registrar sugestão de pauta para o MBR". */
   agendaTriggerLabel?: string;
+  /** Quando true, oculta seletor de categorias do input de sugestão de pauta. */
+  agendaCategoryless?: boolean;
 }
 
 interface ObjectiveGroup {
