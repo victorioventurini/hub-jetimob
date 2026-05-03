@@ -725,6 +725,7 @@ export default function MbrPrePage() {
         return (
           <MbrPreKrAnalysisStep
             krFinalStates={draft.data.krFinalStates}
+            sourceObjectives={(teamObjectives ?? []) as any}
             krJustifications={draft.data.krJustifications ?? {}}
             onKrJustificationChange={(krId, value) =>
               updateDraft({

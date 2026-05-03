@@ -19,6 +19,12 @@ interface CheckinProgressBlockProps {
   onValueChange: (value: string) => void;
   /** Dados da KPI primária vinculada (se existir) */
   primaryKpi?: PrimaryKpiData | null;
+  /**
+   * Modo somente-leitura: oculta o input manual / banner de KPI primária e
+   * exibe apenas Contexto (Anterior → Meta) + barra de progresso + RAG.
+   * Usado por ritos reflexivos (ex.: Pré-MBR) que NÃO atualizam `okr_checkins`.
+   */
+  readOnly?: boolean;
 }
 
 // Helpers
@@ -62,6 +68,7 @@ export function CheckinProgressBlock({
   isAutomatic,
   onValueChange,
   primaryKpi,
+  readOnly = false,
 }: CheckinProgressBlockProps) {
   const previewValue = isAutomatic ? kr.current_value : (parseFloat(currentValue) || kr.current_value);
   const valueDiff = previewValue - kr.current_value;
@@ -103,8 +110,8 @@ export function CheckinProgressBlock({
         </div>
       </div>
 
-      {/* Value input or locked banner */}
-      {isAutomatic ? (
+      {/* Value input or locked banner — escondido em modo somente-leitura (ritos reflexivos) */}
+      {readOnly ? null : isAutomatic ? (
         <div className="rounded-lg border bg-info-muted/50 border-info/30 p-4 space-y-3">
           {/* Header with lock icon */}
           <div className="flex items-start gap-3">
