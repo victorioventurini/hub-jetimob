@@ -46,7 +46,14 @@ function getSeverity(state: string): KrStateSeverity {
   return KR_STATE_CONFIG[state as KrState]?.severity ?? 'info';
 }
 
+/**
+ * Estados que exigem justificativa no Pré-MBR:
+ * - severity `critical` / `warning` (canônico)
+ * - `not_started` — KR sem progresso também precisa ser explicado
+ *   (por que não começou + plano de ação)
+ */
 function requiresJustification(state: string): boolean {
+  if (state === 'not_started') return true;
   const sev = getSeverity(state);
   return sev === 'critical' || sev === 'warning';
 }
@@ -118,8 +125,16 @@ const KrCardImpl = ({ kr, krName, justification, onJustificationChange }: KrCard
       {needsJustification && (
         <JustificationField
           id={`mbr-pre-kr-just-${kr.krId}`}
-          label="Justifique o desvio do KR"
-          hint="Obrigatório — explique por que está fora da meta e o plano de ação."
+          label={
+            kr.state === 'not_started'
+              ? 'Justifique por que este KR ainda não foi iniciado'
+              : 'Justifique o desvio do KR'
+          }
+          hint={
+            kr.state === 'not_started'
+              ? 'Obrigatório — explique por que não começou e o plano de ação para destravar.'
+              : 'Obrigatório — explique por que está fora da meta e o plano de ação.'
+          }
           required
           value={justification}
           onChange={(v) => onJustificationChange(kr.krId, v)}
@@ -190,8 +205,8 @@ export function MbrPreKrAnalysisStep({
     return Array.from(map.entries());
   }, [krFinalStates]);
 
-  // Counters
-  const offTrackCount = useMemo(
+  // Counters — KRs que exigem justificativa (fora da meta + não iniciados)
+  const needsJustifyCount = useMemo(
     () => krFinalStates.filter((kr) => requiresJustification(kr.state)).length,
     [krFinalStates],
   );
@@ -213,11 +228,11 @@ export function MbrPreKrAnalysisStep({
           icon={Target}
           title="KRs do Time"
           tooltip="mbr-pre-krs"
-          description="Reflita sobre KRs fora da meta — justifique o desvio e o plano de ação"
+          description="Reflita sobre KRs fora da meta ou não iniciados — justifique e descreva o plano de ação"
           variant="amber"
           badge={
             krFinalStates.length > 0
-              ? `${offTrackCount} fora da meta`
+              ? `${needsJustifyCount} a justificar`
               : undefined
           }
         />
@@ -233,7 +248,7 @@ export function MbrPreKrAnalysisStep({
       <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
         <p className="text-xs text-muted-foreground">
           Este momento é <strong>reflexivo</strong>. Não atualize check-ins aqui —
-          apenas explique o que aconteceu com cada KR fora da meta.
+          apenas explique o que aconteceu com cada KR fora da meta ou ainda não iniciado.
         </p>
 
         {missingJustifications > 0 && (
@@ -246,8 +261,8 @@ export function MbrPreKrAnalysisStep({
             <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
             <p>
               <strong>{missingJustifications}</strong> KR
-              {missingJustifications > 1 ? 's' : ''} fora da meta sem justificativa.
-              Preencha para avançar.
+              {missingJustifications > 1 ? 's' : ''} sem justificativa
+              (fora da meta ou não iniciado). Preencha para avançar.
             </p>
           </div>
         )}
@@ -260,7 +275,7 @@ export function MbrPreKrAnalysisStep({
               description="Este time não possui KRs ativos no ciclo atual."
             />
           </div>
-        ) : offTrackCount === 0 ? (
+        ) : needsJustifyCount === 0 ? (
           <div className="space-y-4">
             <div
               className={cn(
@@ -269,7 +284,7 @@ export function MbrPreKrAnalysisStep({
               )}
             >
               <CheckCircle2 className="h-4 w-4 text-status-green shrink-0 mt-0.5" />
-              Nenhum KR fora da meta. Você pode avançar.
+              Todos os KRs estão dentro do esperado. Você pode avançar.
             </div>
             <div className="space-y-4">
               {groupedByObjective.map(([objectiveId, krs]) => (
