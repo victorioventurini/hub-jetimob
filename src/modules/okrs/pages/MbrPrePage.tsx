@@ -88,6 +88,19 @@ const DEFAULT_DATA: MbrPreDraftData = {
   agendaSuggestions: [],
 };
 
+function dedupeKpiSnapshots(kpis: MbrKpiSnapshot[]): MbrKpiSnapshot[] {
+  const seen = new Set<string>();
+  const result: MbrKpiSnapshot[] = [];
+
+  for (const kpi of kpis) {
+    if (seen.has(kpi.kpiId)) continue;
+    seen.add(kpi.kpiId);
+    result.push(kpi);
+  }
+
+  return result;
+}
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -285,7 +298,7 @@ export default function MbrPrePage() {
         }
       }
 
-      return kpis.map(kpi => {
+      return dedupeKpiSnapshots(kpis.map(kpi => {
         const latest = latestByKpi.get(kpi.id);
         return {
           kpiId: kpi.id,
@@ -302,7 +315,7 @@ export default function MbrPrePage() {
           lastValueAt: latest?.reference_date ?? null,
           scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'team',
         } as MbrKpiSnapshot;
-      });
+      }));
     },
   });
 
@@ -318,8 +331,9 @@ export default function MbrPrePage() {
     if (seededKpisRef.current) return;
     if (!teamKpis) return; // aguarda query carregar (mesmo se vazia)
 
-    const authoritativeIds = new Set(teamKpis.map((k) => k.kpiId));
-    const existing = draft.data.kpiSnapshots ?? [];
+    const authoritativeKpis = dedupeKpiSnapshots(teamKpis);
+    const authoritativeIds = new Set(authoritativeKpis.map((k) => k.kpiId));
+    const existing = dedupeKpiSnapshots(draft.data.kpiSnapshots ?? []);
 
     // Reconciliação: remove KPIs do rascunho que não pertencem mais ao escopo
     // autoritativo do time (ex.: após mudança de regra de filtro). Preserva
@@ -329,7 +343,7 @@ export default function MbrPrePage() {
         .filter((s) => authoritativeIds.has(s.kpiId))
         .map((s) => [s.kpiId, s] as const),
     );
-    const reconciled = teamKpis.map((k) => preservedById.get(k.kpiId) ?? k);
+    const reconciled = authoritativeKpis.map((k) => preservedById.get(k.kpiId) ?? k);
 
     const changed =
       reconciled.length !== existing.length ||
