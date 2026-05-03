@@ -163,6 +163,7 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
   onNoDataReasonChange,
   onValueSubmit,
   alreadyUpdated,
+  detailed,
 }: KpiAnalysisCardProps) {
   // Retro-compat: showJustification (forma antiga em QBR-Pré) → mode='justify'
   const effectiveMode: KpiActionBucket =
