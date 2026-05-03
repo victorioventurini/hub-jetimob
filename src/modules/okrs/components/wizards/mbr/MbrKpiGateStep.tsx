@@ -38,6 +38,19 @@ export interface MbrKpiGateStepProps {
   }>;
   onContinue: () => void;
   onBack: () => void;
+  /**
+   * Quando `false`, oculta o toggle "Exige decisão estratégica?" e trata
+   * `requiresStrategicDecision` como derivado do bucket canônico (read-only).
+   * Default: `true` (preserva comportamento do MBR executivo).
+   */
+  showStrategicDecisionToggle?: boolean;
+  /**
+   * Quando `true`, o gate exige ≥1 decisão por KPI obrigatório (matching por
+   * `metadata.kpi_id`), em vez de uma contagem agregada de decisões em
+   * `sourceStep='kpi-gate'`. Mensagem de pendência lista os KPIs faltantes.
+   * Default: `false` (preserva comportamento agregado original).
+   */
+  requirePlanForCriticalKpis?: boolean;
 }
 
 // ============================================================
@@ -51,25 +64,49 @@ export function MbrKpiGateStep({
   onDecisionsChange,
   onContinue,
   onBack,
+  showStrategicDecisionToggle = true,
+  requirePlanForCriticalKpis = false,
 }: MbrKpiGateStepProps) {
   const criticalKpis = useMemo(
     () => kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow'),
     [kpiSnapshots]
   );
 
-  // Gate: precisa ter pelo menos 1 decisão por KPI marcado como "exige decisão"
-  const requiredDecisionCount = useMemo(
-    () => criticalKpis.filter(k => k.requiresStrategicDecision).length,
+  const mandatoryKpis = useMemo(
+    () => criticalKpis.filter(k => k.requiresStrategicDecision),
     [criticalKpis]
   );
 
+  // Mapa kpi_id → tem decisão registrada (texto não vazio)
+  const decisionByKpiId = useMemo(() => {
+    const set = new Set<string>();
+    for (const d of decisions) {
+      if (d.sourceStep !== 'kpi-gate') continue;
+      if (!d.text || d.text.trim().length === 0) continue;
+      const kpiId = (d.metadata as { kpi_id?: string } | undefined)?.kpi_id;
+      if (kpiId) set.add(kpiId);
+    }
+    return set;
+  }, [decisions]);
+
+  // Gate por-KPI (novo): cada KPI obrigatório precisa de plano com kpi_id matching.
+  const missingKpis = useMemo(
+    () => (requirePlanForCriticalKpis
+      ? mandatoryKpis.filter(k => !decisionByKpiId.has(k.kpiId))
+      : []),
+    [requirePlanForCriticalKpis, mandatoryKpis, decisionByKpiId]
+  );
+
+  // Gate agregado (legado): conta decisões totais com sourceStep='kpi-gate'.
   const kpiGateDecisionsCount = useMemo(
     () => decisions.filter(d => d.sourceStep === 'kpi-gate' && d.text.trim().length > 0).length,
     [decisions]
   );
+  const aggregateMissing = Math.max(0, mandatoryKpis.length - kpiGateDecisionsCount);
 
-  const missingDecisionCount = Math.max(0, requiredDecisionCount - kpiGateDecisionsCount);
-  const canProceed = missingDecisionCount === 0;
+  const canProceed = requirePlanForCriticalKpis
+    ? missingKpis.length === 0
+    : aggregateMissing === 0;
 
   const handleToggleRequiresDecision = (kpiId: string, value: boolean) => {
     onKpiSnapshotsChange(
@@ -97,7 +134,9 @@ export function MbrKpiGateStep({
       bottomFixed={
         !canProceed ? (
           <p className="text-xs text-status-amber text-center pb-2 px-4">
-            Registre decisões (faltam {missingDecisionCount}) para continuar
+            {requirePlanForCriticalKpis
+              ? `Registre um plano para: ${missingKpis.map(k => k.name).join(', ')}`
+              : `Registre decisões (faltam ${aggregateMissing}) para continuar`}
           </p>
         ) : undefined
       }
@@ -183,16 +222,18 @@ export function MbrKpiGateStep({
                   />
                 </div>
 
-                {/* Requires strategic decision toggle */}
-                <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50 min-w-0">
-                  <Label className="text-sm cursor-pointer truncate">
-                    Exige decisão estratégica?
-                  </Label>
-                  <Switch
-                    checked={kpi.requiresStrategicDecision}
-                    onCheckedChange={(val) => handleToggleRequiresDecision(kpi.kpiId, val)}
-                  />
-                </div>
+                {/* Requires strategic decision toggle (oculto quando o gate canônico já decide) */}
+                {showStrategicDecisionToggle && (
+                  <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50 min-w-0">
+                    <Label className="text-sm cursor-pointer truncate">
+                      Exige decisão estratégica?
+                    </Label>
+                    <Switch
+                      checked={kpi.requiresStrategicDecision}
+                      onCheckedChange={(val) => handleToggleRequiresDecision(kpi.kpiId, val)}
+                    />
+                  </div>
+                )}
 
                 {/* Inline decision when required */}
                 {kpi.requiresStrategicDecision && (

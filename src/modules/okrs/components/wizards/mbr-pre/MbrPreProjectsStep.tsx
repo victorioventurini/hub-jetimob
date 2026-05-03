@@ -26,9 +26,6 @@ import {
   JustificationField,
 } from '../shared';
 import { useMbrPreTeamProjects, type MbrPreProjectRow } from '@/modules/okrs/hooks';
-import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
-
-const AGENDA_SOURCE_STEP = 'mbr-pre-highlights';
 
 // ============================================================
 // TYPES
@@ -46,9 +43,6 @@ export interface MbrPreProjectsStepProps {
   onMilestoneJustificationChange: (milestoneId: string, value: string) => void;
   onContinue: () => void;
   onBack: () => void;
-  agendaSuggestions?: RitualAgendaSuggestion[];
-  onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
-  agendaTriggerLabel?: string;
 }
 
 // ============================================================
