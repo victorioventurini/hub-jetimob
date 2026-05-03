@@ -186,6 +186,9 @@ export function MbrPreDataValidationStep({
             primaryLabel={primaryLabel}
             onPrimary={onContinue}
             primaryDisabled={totalPending > 0 || isLoading}
+            showSkip={isSuperAdmin && totalPending > 0}
+            skipLabel="Pular validação (super admin)"
+            onSkip={onContinue}
           />
         }
       >
