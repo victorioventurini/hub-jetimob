@@ -115,6 +115,13 @@ const formSchema = z.object({
       path: ["team_id"],
     });
   }
+  if ((data.scope === 'area' || data.scope === 'org') && !data.responsible_team_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Time Responsável é obrigatório para KPIs de Área e Globais",
+      path: ["responsible_team_id"],
+    });
+  }
   // Validação: se lifecycle_status='active', exigir owner
   if (data.lifecycle_status === 'active') {
     if (!data.owner_user_id) {
