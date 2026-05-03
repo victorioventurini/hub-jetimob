@@ -75,6 +75,7 @@ export function QbrBalanceStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  agendaCategoryless = false,
 }: QbrBalanceStepProps) {
   // Group KRs by objective
   const objectiveGroups = useMemo(() => {
