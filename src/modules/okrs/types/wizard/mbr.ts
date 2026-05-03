@@ -221,6 +221,12 @@ export interface MbrPreDraftData {
     state: string;
     finalProgress: number;
     paceStatus: string;
+    /**
+     * `true` quando o KR pertence a um objetivo de OUTRO time, mas o time
+     * analisado consta como contribuidor (via `v_team_contributed_okrs`).
+     * Default/ausente = KR de objetivo do próprio time.
+     */
+    isContributed?: boolean;
   }>;
   kpiSnapshots: MbrKpiSnapshot[];
   kpisToCreate: Array<{
