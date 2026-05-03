@@ -53,12 +53,14 @@ import type { KpiCheckinResult, RitualAgendaSuggestion } from '@/modules/okrs/ty
 export type { KpiCheckinResult };
 
 export interface CollaboratorKpiStepProps {
-  kpi: KpiForWizardV2;
-  currentIndex: number;
-  totalCount: number;
+  kpi?: KpiForWizardV2;
+  currentIndex?: number;
+  totalCount?: number;
   onComplete: (result: KpiCheckinResult) => void;
   onSkip: () => void;
   onBack: () => void;
+  /** Avança para o próximo step quando o usuário não tem KPIs (modo empty state). */
+  onContinue?: () => void;
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
