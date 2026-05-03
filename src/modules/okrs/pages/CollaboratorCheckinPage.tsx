@@ -558,9 +558,16 @@ export default function CollaboratorCheckinPage() {
         // v2.87: KPIs agora são do tipo KpiForWizardV2
         const currentKpi = kpis[draft.data.currentKpiIndex] as KpiForWizardV2 | undefined;
         if (!currentKpi || kpis.length === 0) {
-          // Sem KPI: nada a renderizar. visibleStepOrder remove 'kpis'
-          // quando vazio; o auto-correct effect reposiciona o usuário.
-          return null;
+          // Sem KPIs sob responsabilidade: o próprio step renderiza empty state.
+          // Mantemos o step visível na trilha em vez de pular silenciosamente.
+          return (
+            <CollaboratorKpiStep
+              onComplete={() => goNext()}
+              onSkip={goNext}
+              onBack={goBack}
+              onContinue={goNext}
+            />
+          );
         }
 
         // Adapter para manter compatibilidade com CollaboratorKpiStep
