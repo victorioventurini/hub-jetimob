@@ -17,6 +17,15 @@ const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('pt-BR', {
   year: 'numeric',
 });
 
+/**
+ * SSOT dos nomes de mês em PT-BR (capitalizados). Use `formatMonthShort` para
+ * obter o nome do mês a partir de um `YYYY-MM` (ex.: "2026-04" → "Abril").
+ */
+const MONTH_NAMES_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
 /** Retorna o mês corrente (`YYYY-MM`) no fuso local. */
 export function currentMonth(): string {
   const d = new Date();
@@ -45,6 +54,18 @@ export function formatMonthLabel(yyyymm: string): string {
   if (!m) return yyyymm;
   const d = new Date(Number(m[1]), Number(m[2]) - 1, 1);
   return MONTH_LABEL_FORMATTER.format(d);
+}
+
+/**
+ * Retorna o nome curto do mês em PT-BR (capitalizado, sem ano), a partir
+ * de um `YYYY-MM`. Ex.: "2026-04" → "Abril". Útil para frases inline em
+ * saudações de ritos mensais.
+ */
+export function formatMonthShort(yyyymm: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(yyyymm);
+  if (!m) return yyyymm;
+  const idx = Number(m[2]) - 1;
+  return MONTH_NAMES_PT[idx] ?? yyyymm;
 }
 
 /** Bounds ISO (UTC) do mês — útil para filtros `gte/lte` em colunas DATE. */
