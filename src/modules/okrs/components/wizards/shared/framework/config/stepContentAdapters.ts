@@ -204,6 +204,9 @@ export function kpiForWizardV2ToGateItem(
     lastInputType: kpi.latest_input_type,
     updateFrequency: kpi.update_frequency,
     deviationPct: kpi.deviation_pct,
+    unit: kpi.unit,
+    latestReferenceDate: kpi.latest_reference_date,
+    scope: kpi.scope,
   };
 }
 
