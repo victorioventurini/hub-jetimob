@@ -432,6 +432,21 @@ export interface UseKpisForWizardV2Options {
   areaId?: string;
   scope?: KpiWizardScope;
   includeGuardrailsAtRisk?: boolean;
+  /**
+   * Lifecycle statuses aceitos. Default: `['active']`. Ritos como o Pré-MBR
+   * (que cobram justificativa de KPIs `proposed` em validação) podem
+   * sobrescrever para `['active', 'proposed']`.
+   */
+  lifecycleStatuses?: KpiLifecycleStatus[];
+  /**
+   * Filtra KPIs cujo time responsável (`kpi_metrics.responsible_team_id`)
+   * é o informado. Usado em ritos que assinam responsabilidade de KPIs
+   * organizacionais a um único time (Pré-MBR / MBR / QBR de time).
+   *
+   * Quando informado, sobrescreve o filtro de `scope` por `team_id` e
+   * passa a usar `responsible_team_id.eq.X`.
+   */
+  responsibleTeamId?: string | null;
 }
 
 /**
