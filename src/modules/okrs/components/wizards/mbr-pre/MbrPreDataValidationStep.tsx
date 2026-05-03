@@ -42,6 +42,7 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { getFrequencyLabel } from '@/modules/kpis/utils/frequency';
 import { kpisKeys, mbrKeys } from '@/lib/queryKeys/okrs';
 import { useBu } from '@/contexts/BuContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // ============================================================
 // Types
