@@ -237,25 +237,36 @@ export default function MbrPrePage() {
     enabled: !!buSupabase && !!currentBuId && !!teamIdParam,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      // MBR-Pre é rito reflexivo focado em KPIs (globais, de área ou de time).
+      // MBR-Pre lista APENAS KPIs sob responsabilidade do time:
+      // owner_user_id é o líder do time OU um membro do time (independente do scope).
       // Métricas (indicator_type='metric') são intencionalmente excluídas.
       const { data: teamRow } = await buSupabase
         .from('teams')
-        .select('area_id')
+        .select('leader_user_id')
         .eq('id', teamIdParam)
         .maybeSingle();
-      const areaId = teamRow?.area_id ?? null;
+      const leaderId = teamRow?.leader_user_id ?? null;
 
-      const orFilters = [`team_id.eq.${teamIdParam}`, `scope.eq.org`];
-      if (areaId) orFilters.push(`and(scope.eq.area,area_id.eq.${areaId})`);
+      const { data: memberships } = await buSupabase
+        .from('user_team_memberships')
+        .select('user_id')
+        .eq('team_id', teamIdParam);
+      const memberIds = (memberships ?? []).map((m: any) => m.user_id as string);
+
+      const ownerIds = Array.from(new Set([
+        ...(leaderId ? [leaderId] : []),
+        ...memberIds,
+      ]));
+
+      if (ownerIds.length === 0) return [];
 
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
-        .select('id, name, unit, target_value, direction, scope, area_id, team_id, lifecycle_status, indicator_type')
+        .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
         .eq('lifecycle_status', 'active')
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
-        .or(orFilters.join(','));
+        .in('owner_user_id', ownerIds);
 
       if (error) throw error;
       if (!kpis || kpis.length === 0) return [];
