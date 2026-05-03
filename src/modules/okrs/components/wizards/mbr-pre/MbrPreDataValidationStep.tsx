@@ -42,6 +42,7 @@ import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { getFrequencyLabel } from '@/modules/kpis/utils/frequency';
 import { kpisKeys, mbrKeys } from '@/lib/queryKeys/okrs';
 import { useBu } from '@/contexts/BuContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // ============================================================
 // Types
@@ -116,6 +117,8 @@ export function MbrPreDataValidationStep({
 }: MbrPreDataValidationStepProps) {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const { role } = useAuth();
+  const isSuperAdmin = role === 'super_admin';
 
   const {
     kpisPending,
@@ -183,6 +186,9 @@ export function MbrPreDataValidationStep({
             primaryLabel={primaryLabel}
             onPrimary={onContinue}
             primaryDisabled={totalPending > 0 || isLoading}
+            showSkip={isSuperAdmin && totalPending > 0}
+            skipLabel="Pular validação (super admin)"
+            onSkip={onContinue}
           />
         }
       >
