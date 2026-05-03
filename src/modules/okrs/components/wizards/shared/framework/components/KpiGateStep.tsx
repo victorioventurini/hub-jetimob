@@ -5,16 +5,31 @@
  * `classifyKpiGateBuckets`). Quando `buckets` é fornecido, a UI renderiza
  * os blocos colapsáveis com badges (`Parcial`/`Consolidado` + Confidence).
  * Quando ausente, mantém o comportamento legacy de listar `data` chapado.
+ *
+ * v3.30.0 (Onda KPI Rich Card):
+ * - Suporte a `config.cardVariant: 'rich' | 'compact'` (default `compact`).
+ *   Em `rich`, cada KPI ganha sparkline canônica (`KpiSparkline`) + bloco
+ *   de "Ação do líder" condicionado pelo bucket (justify / explain-no-data /
+ *   opcional / read-only). Persistência via props `justifications` +
+ *   `onJustificationChange`.
+ * - Mantém o componente AGNÓSTICO de `wizardType` (Princípio canônico #4
+ *   do Framework Unificado, TCR §4.8.1) — toda variação vive em `config`
+ *   ou em props injetadas pelo container (consumidor).
  */
 
-import { memo, useState } from 'react';
-import { Activity, ChevronDown, ChevronRight } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
+import { Activity, ChevronDown, ChevronRight, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { WizardStepScaffold } from '../../WizardStepScaffold';
 import { WizardStepHeader } from '../../WizardStepHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { getStepLabel, type StructureVersion } from '@/modules/okrs/constants/ritualLabels';
+import { KpiSparkline } from '@/modules/kpis/components/shared/KpiSparkline';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { formatValueWithUnit } from '@/shared/constants/units';
 import type { WizardPersona, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { KpiGateStepConfig } from '../types';
 import type { KpiGateBucket, KpiGateBucketId, KpiGateItem } from '../config/stepContentAdapters';
@@ -34,6 +49,16 @@ export interface KpiGateStepProps {
   suppressInlineDecisions?: boolean;
   /** v3.0.0 — quando fornecido, renderiza 6 blocos ordenados ao invés de `data` chapado. */
   buckets?: KpiGateBucket[];
+  /**
+   * v3.30.0 (rich) — mapa kpiId → texto da justificativa/plano do líder.
+   * Apenas usado quando `config.cardVariant === 'rich'`.
+   */
+  justifications?: Record<string, string>;
+  /**
+   * v3.30.0 (rich) — callback de mudança da justificativa de um KPI.
+   * Apenas usado quando `config.cardVariant === 'rich'`.
+   */
+  onJustificationChange?: (kpiId: string, value: string) => void;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
@@ -44,6 +69,10 @@ const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
 };
 
 const COLLAPSED_BY_DEFAULT: ReadonlySet<KpiGateBucketId> = new Set(['teamContext']);
+
+// ────────────────────────────────────────────────────────────────────
+// COMPACT CARD (legado v3.0.0)
+// ────────────────────────────────────────────────────────────────────
 
 function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
   const isPartial = kpi.lastInputType === 'partial';
@@ -76,7 +105,237 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
   );
 }
 
-function BucketSection({ bucket }: { bucket: KpiGateBucket }) {
+// ────────────────────────────────────────────────────────────────────
+// RICH CARD (v3.30.0)
+// ────────────────────────────────────────────────────────────────────
+
+/** Modo de ação do líder por bucket (decide o bloco "Ação do líder"). */
+type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
+
+function actionModeForBucket(bucketId: KpiGateBucketId): ActionMode {
+  switch (bucketId) {
+    case 'overdue':
+      return 'explain-no-data';
+    case 'critical':
+    case 'guardrailViolated':
+      return 'justify-required';
+    case 'attention':
+      return 'justify-optional';
+    case 'healthy':
+    case 'teamContext':
+    default:
+      return 'view';
+  }
+}
+
+const SCOPE_LABEL: Record<string, string> = {
+  global: 'Global',
+  area: 'Área',
+  team: 'Time',
+  individual: 'Individual',
+};
+
+function statusBadgeFor(kpi: KpiGateItem) {
+  switch (kpi.status) {
+    case 'red':
+      return { label: 'Crítico', className: 'bg-status-red-muted text-status-red border-status-red/30' };
+    case 'amber':
+      return { label: 'Em alerta', className: 'bg-status-amber-muted text-status-amber border-status-amber/30' };
+    case 'green':
+      return { label: 'Saudável', className: 'bg-status-green-muted text-status-green border-status-green/30' };
+    case 'unknown':
+    default:
+      return { label: 'Sem dados', className: 'bg-muted text-muted-foreground border-border' };
+  }
+}
+
+function formatRefDate(iso?: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+interface RichKpiCardProps {
+  kpi: KpiGateItem;
+  bucketId: KpiGateBucketId;
+  justification: string;
+  onJustificationChange?: (kpiId: string, value: string) => void;
+}
+
+const RichKpiCard = memo(function RichKpiCard({
+  kpi,
+  bucketId,
+  justification,
+  onJustificationChange,
+}: RichKpiCardProps) {
+  const mode = actionModeForBucket(bucketId);
+  const statusBadge = statusBadgeFor(kpi);
+  const isPartial = kpi.lastInputType === 'partial';
+  const refDate = formatRefDate(kpi.latestReferenceDate);
+  const numericTarget = kpi.target != null ? Number(kpi.target) : null;
+  const numericValue = kpi.currentValue != null ? Number(kpi.currentValue) : null;
+  const unit = kpi.unit ?? '';
+  const scopeLabel = kpi.scope ? SCOPE_LABEL[kpi.scope] ?? kpi.scope : null;
+
+  const showAction = mode !== 'view';
+  const isRequired = mode === 'justify-required' || mode === 'explain-no-data';
+
+  const actionLabel =
+    mode === 'explain-no-data'
+      ? 'Por que está sem dados? Plano para destravar'
+      : mode === 'justify-required'
+        ? 'Justificativa e plano de ação'
+        : mode === 'justify-optional'
+          ? 'Justificativa (opcional)'
+          : null;
+
+  const actionHint =
+    mode === 'explain-no-data'
+      ? 'Obrigatório — explique a ausência de registros e descreva o plano para coletar e disponibilizar.'
+      : mode === 'justify-required'
+        ? 'Obrigatório — explique o motivo do desvio e descreva as próximas ações para corrigir a rota.'
+        : mode === 'justify-optional'
+          ? 'Opcional — registre observações relevantes para a discussão do rito.'
+          : null;
+
+  return (
+    <Card
+      className={cn(
+        'transition-colors min-w-0 max-w-full',
+        kpi.status === 'red' && 'border-status-red/40',
+        kpi.status === 'amber' && 'border-status-amber/40',
+      )}
+    >
+      <CardContent className="p-4 space-y-4 min-w-0">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 min-w-0">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-center gap-2 min-w-0">
+              {kpi.status === 'red' && (
+                <AlertTriangle className="h-4 w-4 shrink-0 text-status-red" />
+              )}
+              {kpi.status === 'amber' && (
+                <AlertTriangle className="h-4 w-4 shrink-0 text-status-amber" />
+              )}
+              {bucketId === 'guardrailViolated' && (
+                <ShieldAlert className="h-4 w-4 shrink-0 text-status-red" />
+              )}
+              <KpiNameLink kpiId={kpi.id} name={kpi.name} className="font-medium text-sm" />
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="outline" className="text-[10px] h-5">
+                KPI
+              </Badge>
+              <Badge variant="secondary" className={cn('text-[10px] h-5 border', statusBadge.className)}>
+                {statusBadge.label}
+              </Badge>
+              {scopeLabel && (
+                <Badge variant="outline" className="text-[10px] h-5">
+                  {scopeLabel}
+                </Badge>
+              )}
+              {kpi.lastInputType && (
+                <Badge
+                  variant={isPartial ? 'outline' : 'secondary'}
+                  className={cn('text-[10px] h-5', isPartial && 'border-dashed')}
+                >
+                  {isPartial ? 'Parcial' : 'Consolidado'}
+                </Badge>
+              )}
+              {kpi.resolved && (
+                <Badge variant="secondary" className="text-[10px] h-5">
+                  Endereçado
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            {numericTarget != null && (
+              <p className="text-[11px] text-muted-foreground">
+                Meta: <span className="font-medium">{formatValueWithUnit(numericTarget, unit)}</span>
+              </p>
+            )}
+            <p className="text-base font-semibold text-foreground">
+              {numericValue != null ? formatValueWithUnit(numericValue, unit) : '—'}
+            </p>
+            {refDate && (
+              <p className="text-[11px] text-muted-foreground">Último: {refDate}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Sparkline */}
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-foreground">Evolução recente</span>
+            <span className="text-[10px] text-muted-foreground">últimos 12 registros</span>
+          </div>
+          <KpiSparkline kpiId={kpi.id} unit={unit} target={numericTarget} height={80} />
+        </div>
+
+        {/* Bloco de ação do líder */}
+        {showAction && actionLabel && (
+          <div
+            className={cn(
+              'rounded-lg border p-3 space-y-2',
+              mode === 'explain-no-data' && 'bg-muted/40 border-border',
+              mode === 'justify-required' && 'bg-status-amber-muted/30 border-status-amber/30',
+              mode === 'justify-optional' && 'bg-muted/20 border-border',
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle
+                className={cn(
+                  'h-4 w-4 shrink-0',
+                  mode === 'justify-required' && 'text-status-amber',
+                  mode === 'explain-no-data' && 'text-muted-foreground',
+                  mode === 'justify-optional' && 'text-muted-foreground',
+                )}
+              />
+              <Label className="text-sm font-medium">
+                Plano de ação do líder
+              </Label>
+            </div>
+            <Label className="text-xs text-muted-foreground block">
+              {actionLabel}{isRequired && <span className="text-status-amber"> *</span>}
+            </Label>
+            {actionHint && (
+              <p className="text-[11px] text-muted-foreground">{actionHint}</p>
+            )}
+            <Textarea
+              value={justification}
+              onChange={(e) => onJustificationChange?.(kpi.id, e.target.value)}
+              placeholder={
+                mode === 'explain-no-data'
+                  ? 'Descreva a causa da ausência de dados e o plano para sanar...'
+                  : 'Descreva o motivo do desvio e as próximas ações...'
+              }
+              className="text-sm min-h-[80px] max-w-full"
+              aria-required={isRequired}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
+// ────────────────────────────────────────────────────────────────────
+// BUCKET SECTION
+// ────────────────────────────────────────────────────────────────────
+
+function BucketSection({
+  bucket,
+  variant,
+  justifications,
+  onJustificationChange,
+}: {
+  bucket: KpiGateBucket;
+  variant: 'compact' | 'rich';
+  justifications: Record<string, string>;
+  onJustificationChange?: (kpiId: string, value: string) => void;
+}) {
   const [open, setOpen] = useState(!COLLAPSED_BY_DEFAULT.has(bucket.id));
   if (bucket.items.length === 0) return null;
   return (
@@ -101,15 +360,36 @@ function BucketSection({ bucket }: { bucket: KpiGateBucket }) {
         )}
       </Button>
       {open && (
-        <div className="space-y-2 pl-2">
-          {bucket.items.map((kpi) => (
-            <KpiCardItem key={kpi.id} kpi={kpi} />
-          ))}
+        <div className={cn('space-y-2', variant === 'compact' && 'pl-2')}>
+          {bucket.items.map((kpi) =>
+            variant === 'rich' ? (
+              <RichKpiCard
+                key={kpi.id}
+                kpi={kpi}
+                bucketId={bucket.id}
+                justification={justifications[kpi.id] ?? ''}
+                onJustificationChange={onJustificationChange}
+              />
+            ) : (
+              <KpiCardItem key={kpi.id} kpi={kpi} />
+            ),
+          )}
         </div>
       )}
     </section>
   );
 }
+
+// ────────────────────────────────────────────────────────────────────
+// MAIN
+// ────────────────────────────────────────────────────────────────────
+
+/** Buckets cujos KPIs precisam de plano de ação obrigatório quando `requireResolution`. */
+const MANDATORY_BUCKET_IDS: ReadonlySet<KpiGateBucketId> = new Set([
+  'overdue',
+  'critical',
+  'guardrailViolated',
+]);
 
 export const KpiGateStep = memo(function KpiGateStep({
   persona,
@@ -122,11 +402,47 @@ export const KpiGateStep = memo(function KpiGateStep({
   footer,
   suppressInlineDecisions,
   buckets,
+  justifications,
+  onJustificationChange,
 }: KpiGateStepProps) {
   const label = getStepLabel(persona, stepId, version);
-  const allItems = buckets ? buckets.flatMap((b) => b.items) : data;
-  const atRisk = allItems.filter((k) => k.requiresDecision && !k.resolved);
+  const variant: 'compact' | 'rich' = config.cardVariant ?? 'compact';
+  const allItems = useMemo(
+    () => (buckets ? buckets.flatMap((b) => b.items) : data),
+    [buckets, data],
+  );
   const isEmpty = allItems.length === 0;
+
+  // KPIs em alerta (legado) — usado para badge do header.
+  const atRisk = useMemo(
+    () => allItems.filter((k) => k.requiresDecision && !k.resolved),
+    [allItems],
+  );
+
+  // KPIs obrigatórios sem plano (variant rich + buckets) — usado para gate
+  // local quando `config.requireResolution`.
+  const mandatoryUnaddressed = useMemo(() => {
+    if (variant !== 'rich' || !buckets) return [] as KpiGateItem[];
+    const list: KpiGateItem[] = [];
+    for (const bucket of buckets) {
+      if (!MANDATORY_BUCKET_IDS.has(bucket.id)) continue;
+      for (const item of bucket.items) {
+        const text = (justifications?.[item.id] ?? '').trim();
+        if (text.length === 0) list.push(item);
+      }
+    }
+    return list;
+  }, [variant, buckets, justifications]);
+
+  const showGate = !!config.requireResolution && variant === 'rich';
+  const hasGateBlock = showGate && mandatoryUnaddressed.length > 0;
+
+  const headerBadge =
+    showGate && mandatoryUnaddressed.length > 0
+      ? `${mandatoryUnaddressed.length} pendente${mandatoryUnaddressed.length !== 1 ? 's' : ''}`
+      : config.requireResolution && atRisk.length > 0
+        ? `${atRisk.length} em alerta`
+        : undefined;
 
   return (
     <WizardStepScaffold
@@ -135,27 +451,44 @@ export const KpiGateStep = memo(function KpiGateStep({
           icon={Activity}
           title={label.title}
           description={label.subtitle}
-          variant={config.requireResolution && atRisk.length > 0 ? 'amber' : 'primary'}
-          badge={config.requireResolution && atRisk.length > 0 ? `${atRisk.length} em alerta` : undefined}
+          variant={hasGateBlock || (config.requireResolution && atRisk.length > 0) ? 'amber' : 'primary'}
+          badge={headerBadge}
           badgeVariant="destructive"
         />
       }
       bottomFixed={
-        suppressInlineDecisions ? undefined : (
-          <InlineDecisionsSlot
-            stepId={stepId}
-            decisions={decisions}
-            onDecisionsChange={onDecisionsChange}
-          />
-        )
+        <>
+          {hasGateBlock && (
+            <p className="text-xs text-status-amber text-center pb-2 px-4">
+              Registre o plano de ação para: {mandatoryUnaddressed.map((k) => k.name).join(', ')}
+            </p>
+          )}
+          {!suppressInlineDecisions && (
+            <InlineDecisionsSlot
+              stepId={stepId}
+              decisions={decisions}
+              onDecisionsChange={onDecisionsChange}
+            />
+          )}
+        </>
       }
       footer={footer}
     >
       <div className="p-4 md:p-6 space-y-4">
         {isEmpty ? (
-          <p className="text-sm text-muted-foreground italic">Nenhum KPI registrado para este escopo.</p>
+          <p className="text-sm text-muted-foreground italic">
+            Nenhum KPI registrado para este escopo.
+          </p>
         ) : buckets ? (
-          buckets.map((bucket) => <BucketSection key={bucket.id} bucket={bucket} />)
+          buckets.map((bucket) => (
+            <BucketSection
+              key={bucket.id}
+              bucket={bucket}
+              variant={variant}
+              justifications={justifications ?? {}}
+              onJustificationChange={onJustificationChange}
+            />
+          ))
         ) : (
           <div className="space-y-3">
             {data.map((kpi) => (
