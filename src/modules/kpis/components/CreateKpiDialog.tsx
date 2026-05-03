@@ -945,7 +945,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
-                      Responsável {watchLifecycleStatus === 'active' && <span className="text-destructive">*</span>}
+                      Responsável <span className="text-destructive">*</span>
                       <HelpTooltip content="Pessoa accountable pelo resultado deste indicador. Monitora desvios e age para 'mover o ponteiro'." />
                     </FormLabel>
                     <FormControl>
