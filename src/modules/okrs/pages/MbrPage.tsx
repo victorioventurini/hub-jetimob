@@ -8,10 +8,10 @@
 import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { defaultReferenceMonth } from '@/modules/okrs/utils/mbr/referenceMonth';
 import { useQuery } from '@tanstack/react-query';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
+import { RitualPreparationStatus, RitualAttendance, ReferenceMonthPicker } from '@/modules/okrs/components/wizards/shared';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import {
   useGenericWizardDraft,
@@ -73,7 +73,9 @@ const WIZARD_STEPS = [
 const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'closing'];
 
 const DEFAULT_DATA: MbrDraftData = {
-  referenceMonth: format(new Date(), 'yyyy-MM'),
+  // Mês alvo padrão = mês imediatamente anterior (mês fechado).
+  // MBR é executado no início do mês seguinte ao analisado.
+  referenceMonth: defaultReferenceMonth(),
   kpiSnapshots: [],
   teamOkrSnapshots: [],
   currentTeamIndex: 0,
@@ -689,6 +691,28 @@ export default function MbrPage() {
             mbrPreCrossDepCount={mbrPreSurfacedItems.filter(i => i.kind === 'cross_dependency').length}
             topSlot={
               <>
+                <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">
+                  <label className="text-sm font-medium text-foreground">
+                    Analisando o mês de
+                  </label>
+                  <ReferenceMonthPicker
+                    value={draft.data.referenceMonth}
+                    onChange={(next) => {
+                      // Trocar o mês alvo invalida snapshots derivados; eles
+                      // serão re-seedados pelos efeitos quando aplicável.
+                      updateDraft({
+                        referenceMonth: next,
+                        kpiSnapshots: [],
+                        teamOkrSnapshots: [],
+                        orgOkrSnapshots: [],
+                      });
+                    }}
+                    className="w-[220px]"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Default: mês fechado anterior. As submissões pré-MBR exibidas correspondem a este mês.
+                  </span>
+                </div>
                 <RitualPreparationStatus
                   ritualType="mbr"
                   cycleId={quarterlyCycle?.id ?? null}

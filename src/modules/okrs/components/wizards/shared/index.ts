@@ -130,3 +130,6 @@ export { RitualGreeting } from './RitualGreeting';
 export type { RitualGreetingProps } from './RitualGreeting';
 export { RitualGreetingForStep } from './RitualGreetingForStep';
 export type { RitualGreetingForStepProps } from './RitualGreetingForStep';
+
+export { ReferenceMonthPicker } from './ReferenceMonthPicker';
+export type { ReferenceMonthPickerProps } from './ReferenceMonthPicker';
