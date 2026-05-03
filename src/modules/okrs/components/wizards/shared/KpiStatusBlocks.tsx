@@ -85,9 +85,9 @@ export function useKpiStatusClassification(kpiSnapshots: MbrKpiSnapshot[]) {
         continue;
       }
 
-      // Outdated: has value but last update is stale
+      // Outdated: has value but last update is stale (canon: bucket `overdue` por update_frequency)
       // Don't double-count KPIs already in alert (red/yellow)
-      if (kpi.lastValueAt && isOutdated(kpi.lastValueAt) && kpi.ragStatus !== 'red' && kpi.ragStatus !== 'yellow') {
+      if (kpi.lastValueAt && isOutdated(kpi) && kpi.ragStatus !== 'red' && kpi.ragStatus !== 'yellow') {
         outdated.push(kpi);
       }
     }
