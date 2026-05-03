@@ -292,19 +292,23 @@ export default function MbrPrePage() {
         .order('reference_date', { ascending: false });
 
       const latestByKpi = new Map<string, { value: number; rag_status: string; reference_date: string }>();
+      const previousByKpi = new Map<string, { value: number; reference_date: string }>();
       for (const v of (latestValues || [])) {
         if (!latestByKpi.has(v.kpi_id)) {
           latestByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status, reference_date: v.reference_date });
+        } else if (!previousByKpi.has(v.kpi_id)) {
+          previousByKpi.set(v.kpi_id, { value: v.value, reference_date: v.reference_date });
         }
       }
 
       return dedupeKpiSnapshots(kpis.map(kpi => {
         const latest = latestByKpi.get(kpi.id);
+        const previous = previousByKpi.get(kpi.id);
         return {
           kpiId: kpi.id,
           name: kpi.name,
           currentValue: latest?.value ?? null,
-          previousValue: null,
+          previousValue: previous?.value ?? null,
           target: kpi.target_value,
           ragStatus: latest?.rag_status === 'on_track' ? 'green'
             : latest?.rag_status === 'at_risk' ? 'yellow'
@@ -489,6 +493,8 @@ export default function MbrPrePage() {
             isLoading={isLoadingKrs || isLoadingKpis}
             krFinalStates={draft.data.krFinalStates}
             kpiSnapshots={draft.data.kpiSnapshots}
+            monthAnalysis={draft.data.monthAnalysis ?? null}
+            onMonthAnalysisChange={(monthAnalysis) => updateDraft({ monthAnalysis })}
             onContinue={() => setStep('kpi-analysis')}
           />
         );

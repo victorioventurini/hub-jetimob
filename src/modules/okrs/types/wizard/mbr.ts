@@ -245,6 +245,20 @@ export interface MbrPreDraftData {
   };
   /** Sugestões de pauta para o MBR coletadas ao longo do wizard (até 3 prioritárias). */
   agendaSuggestions: RitualAgendaSuggestion[];
+  /** Análise mensal IA gerada na abertura (cache no draft, regerável sob demanda). */
+  monthAnalysis?: MbrPreMonthAnalysis | null;
+}
+
+/** Análise mensal IA do Pré-MBR (output do agente analista-estrategico). */
+export interface MbrPreMonthAnalysis {
+  generatedAt: string;
+  origin: 'ai-generated' | 'manual';
+  referenceMonth: string; // YYYY-MM
+  summary: string;
+  highlights: Array<{ title: string; detail: string }>;
+  offenders: Array<{ title: string; detail: string }>;
+  risks: Array<{ title: string; detail: string }>;
+  recommendations: string[];
 }
 
 // ============================================================
