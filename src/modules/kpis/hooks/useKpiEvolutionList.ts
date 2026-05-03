@@ -114,7 +114,8 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
         query = query.eq('scope', scope);
       }
       if (teamId) {
-        query = query.eq('team_id', teamId);
+        // v2.90.0: inclui KPIs cujo time responsável (operacional) é o filtrado.
+        query = query.or(`team_id.eq.${teamId},responsible_team_id.eq.${teamId}`);
       }
       if (search) {
         query = query.ilike('name', `%${search}%`);
