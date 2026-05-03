@@ -1,39 +1,72 @@
+## Pré-checklist (executado)
+
+- TCR §3933, §3979-3983: `useKpisForWizardV2` é o hook canônico do KPI Gate; `kpisTeamContext` definido como "KPIs do time (read-only)", `kpisStrategic` = "KPIs organizacionais". Nenhuma regra explícita sobre `responsible_team_id` nos buckets.
+- `kpis-permissions-matrix.md`: matriz de RBAC (CRUD) — não governa visibilidade em ritos.
+- `responsavel-vs-atualizado-por.md`: distingue **Responsável** (pessoa) vs **Atualizado por** (data_entry) — ortogonal a `responsible_team_id` ("Time Responsável", responsabilidade operacional do time).
+- Precedente recente no próprio codebase: o fix anterior em `useKpiData.ts` e `useKpiEvolutionList.ts` (`/kpis`) já estabeleceu o padrão "filtro por time considera `team_id OU responsible_team_id`". Estender ao Pré-MBR é consistente.
+
 ## Problema
 
-No dashboard `/kpis`, ao filtrar por Time = "Comercial", o KPI **MRR Commit** não aparece, mesmo o time Comercial sendo o **Time Responsável** por ele.
+No Pré-MBR do Comercial, KPIs como **Ticket Médio** (scope=area, responsible_team_id=Comercial) e **MRR commit** (scope=org, responsible_team_id=Comercial) **não aparecem** na etapa "Análise de KPIs" (`?step=kpi-analysis`), embora apareçam corretamente em `/kpis?team_id=Comercial`.
 
-**Causa raiz:** o filtro só compara `team_id` (dono direto). KPIs Globais (`scope=org`) ou de Área (`scope=area`) têm `team_id = NULL`, mas podem ter `responsible_team_id = <Comercial>` (campo "Time Responsável" da Responsabilidade Operacional, conforme a tela anexada). Esses KPIs ficam invisíveis no filtro.
+## Causa raiz
 
-Hoje em `useKpiData.ts` (linha 135-137) e `useKpiEvolutionList.ts` (linha 116-118):
-```ts
-if (teamId) {
-  query = query.eq("team_id", teamId);   // ignora responsible_team_id
-}
-```
+Em `src/modules/kpis/hooks/useKpisForWizardV2.ts`, a query SQL **traz** esses KPIs (linha 112: `responsible_team_id = teamId`). O bug está na **classificação em buckets** (linhas 264-283):
+
+| Bucket | Critério atual | Por que exclui |
+|---|---|---|
+| `kpisToUpdate` | `userRole=owner|contributor` E `needs_update` | Líder do time normalmente não é owner pessoal de KPI de área/org |
+| `kpisTeamContext` | **`k.team_id === teamId`** E `!isStrategic` | Ticket Médio tem `team_id=NULL` → excluído |
+| `kpisStrategic` | `k.scope === 'org'` | Ticket Médio é `scope=area` → excluído (MRR Commit entra aqui ✓) |
+| `kpisInAlert` | `alertReason ≠ 'outdated'` | Sem valor lançado → `no_data`, sem alerta |
+| `guardrailsViolated` | guardrail de KR violado | Não se aplica |
+
+Resultado: KPIs de área cujo time responde caem em zero buckets → invisíveis no step.
+
+Confirmado via DB:
+- **Ticket medio**: `scope=area`, `team_id=NULL`, `responsible_team_id=Comercial`, `lifecycle=proposed`
+- **MRR commit**: `scope=org`, `team_id=NULL`, `responsible_team_id=Comercial`, `lifecycle=proposed`
 
 ## Solução
 
-Quando o filtro de time estiver ativo, retornar KPIs onde **`team_id = X` OU `responsible_team_id = X`**. Isso é consistente com `useCanEditKpi`, que já trata `responsible_team_id` como ownership operacional para fins de permissão de update.
+Ajustar `useKpisForWizardV2.ts` para que `kpisTeamContext` reconheça responsabilidade operacional via `responsible_team_id`, sem alterar `kpisStrategic` (KPI org continua estratégico).
 
-### Mudanças
+### Mudança
 
-1. **`src/modules/kpis/hooks/useKpiData.ts`** — substituir o `.eq("team_id", teamId)` por:
+**Arquivo:** `src/modules/kpis/hooks/useKpisForWizardV2.ts`
+
+1. **Tipo `KpiForWizardV2`** — expor `responsible_team_id` (já vem na query SQL, falta no enrich).
+   - Linha ~239 (no `.map`): adicionar `responsible_team_id: kpi.responsible_team_id`.
+   - No tipo (em `src/modules/kpis/types.ts` ou onde está declarado): adicionar campo `responsible_team_id: string | null`.
+
+2. **Bucket `kpisTeamContext`** (linhas 271-275):
    ```ts
-   query = query.or(`team_id.eq.${teamId},responsible_team_id.eq.${teamId}`);
+   const kpisTeamContext = allEnriched.filter(k =>
+     (k.team_id === teamId || k.responsible_team_id === teamId) &&
+     !kpisToUpdate.some(u => u.id === k.id) &&
+     !k.isStrategic                          // mantém: scope=org continua só em strategic
+   );
    ```
 
-2. **`src/modules/kpis/hooks/useKpiEvolutionList.ts`** — mesma substituição no bloco equivalente.
+### Efeitos esperados
 
-3. **Sem mudança de UX/label** necessária: o rótulo "Todos os times" / TeamSelect já comunica "time" de forma genérica, e o comportamento esperado pelo usuário é justamente esse (ver KPIs pelos quais o time responde).
+| KPI | Antes | Depois |
+|---|---|---|
+| Ticket Médio (scope=area, resp=Comercial) | invisível | aparece em `kpisTeamContext` |
+| MRR commit (scope=org, resp=Comercial) | aparece em `kpisStrategic` ✓ | sem mudança (cláusula `!isStrategic` impede duplicação) |
+| KPI scope=team com `team_id=Comercial` | aparece em `kpisTeamContext` ✓ | sem mudança |
+| KPI de outro time (responsible_team_id=outro) | invisível ✓ | invisível ✓ (filtro continua exato) |
 
 ### Fora do escopo
 
-- Filtro de Área já cobre `area_id` direto; não vamos expandir para `responsible_area_id` neste plano (não foi pedido e merece avaliação separada para evitar mudanças não solicitadas).
-- Permissões e RLS não mudam (apenas predicado de leitura).
-- `useKpisForWizardV2` não é afetado (usa `responsible_team_id` como filtro principal em outro fluxo).
+- Não vamos forçar Ticket Médio em `kpisStrategic` — é area, não org.
+- Não vamos alterar regras de `kpisToUpdate` (quem atualiza), `kpisInAlert`, ou `guardrailsViolated`.
+- Sem mudanças em RLS, query SQL, `classifyKpiGateBuckets` ou outros wizards (Weekly, Collaborator, Leader Prep continuam idênticos — eles consomem o mesmo hook e se beneficiam automaticamente quando o `teamId` é o time responsável).
 
 ### Validação
 
-- Acessar `/kpis?team_id=<comercial>` e confirmar que MRR Commit aparece.
-- Confirmar que filtrar por outro time não traz KPIs alheios.
-- Verificar que time sem KPI direto nem responsável continua retornando vazio.
+Após o fix, em `/rituals/mbr-pre?team=d3247da9-…&step=kpi-analysis`:
+1. Card "KPIs do time" deve listar **Ticket Médio**.
+2. Card "KPIs Estratégicos" deve continuar listando **MRR commit**.
+3. KPIs cujo `responsible_team_id` é outro time **não** devem vazar.
+4. Snapshots existentes (`kpiSnapshots` no draft) continuam reconciliados — `MbrPreKpiGateStep` já trata novos itens via `gateItemToSnapshot`.
