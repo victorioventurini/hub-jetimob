@@ -606,6 +606,7 @@ export default function MbrPrePage() {
         return (
           <MbrPreProjectsStep
             teamId={teamIdParam}
+            referenceMonth={refMonth}
             projectJustifications={draft.data.projectJustifications}
             onProjectJustificationChange={(projectId, value) =>
               updateDraft({
