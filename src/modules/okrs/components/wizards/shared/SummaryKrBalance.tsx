@@ -89,6 +89,11 @@ export const SummaryKrBalance = memo(function SummaryKrBalance({
                   <div key={kr.krId} className="flex items-center gap-2 text-xs">
                     <config.icon className={cn('h-3 w-3 shrink-0', config.colorClass)} />
                     <span className="truncate flex-1" title={name}>{name}</span>
+                    {kr.isContributed && (
+                      <Badge variant="outline" className="h-4 px-1 text-[10px] shrink-0">
+                        Contribuído
+                      </Badge>
+                    )}
                     <span className="text-muted-foreground shrink-0">
                       {Math.round(kr.finalProgress)}%
                     </span>
