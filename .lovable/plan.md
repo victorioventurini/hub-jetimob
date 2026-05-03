@@ -1,147 +1,79 @@
-## Pré-checklist (executado)
-
-Consultei: TCR, `mem://standards/wizard-snapshot-denormalized-fields-deprecation` (Onda 4 — proibido gravar `krTitle`/`objectiveTitle`), framework SSOT em `src/modules/okrs/components/wizards/shared/framework/config/{stepDefinitions,stepCompletionRules,structureVersions}.ts`, `mem://features/okrs/cycles-and-rituals-master`, e os componentes shared em `src/modules/okrs/components/wizards/shared/`.
-
-### Achado relevante
-
-**O framework v3 do `mbr-pre` já declara um step `'krs'`** (`stepDefinitions.ts:112` e `stepCompletionRules.ts:63` em `requiredSteps`), mas a `MbrPrePage` atual **não o renderiza**. Existe um drift entre o SSOT estrutural e a página. A entrega do step de KRs **fecha esse gap** em vez de inflar a estrutura, então **não há bump de versão** (continua `v3`). O ID canônico já existente é `'krs'`.
-
 ## Objetivo
+Refatorar o step **KRs** do Pré-MBR (`/rituals/mbr-pre?step=krs`) para usar a mesma UI do Check-in Individual e exibir **um KR por página**, mantendo o caráter reflexivo (apenas justificativa — sem persistir check-in).
 
-Inserir, no Pré-MBR, **logo após o step `projects`**, o step `'krs'` (ID já canônico no framework). Padrão reflexivo idêntico ao de KPIs/Projetos: **não atualiza** check-in nem `current_value`. Apenas **justifica o desvio** + plano de ação para KRs fora da meta. Justificativa **obrigatória** para severidades `critical` e `warning`.
+---
 
-## Princípios (sem duplicação)
+## Análise prévia (TCR + canônicos)
 
-| Necessidade | Reuso canônico |
-|---|---|
-| Layout do step | `WizardStepScaffold` + `WizardStepHeader` + `WizardStepFooter` |
-| Campo de justificativa | `JustificationField` (shared, com `required` + hint) |
-| Banner de bloqueio amarelo | mesmo padrão visual de `MbrPreProjectsStep` |
-| Estados de KR + cores + ícones + severidade | `KR_STATE_CONFIG` (`useKrStateInsights`) |
-| Progresso visual | `OkrProgressBar` |
-| Status badge | `OkrStatusBadge` |
-| Resolução de nomes (KR/Objetivo) | `useEntityLookup` + `resolveName` (Onda 4 — **nunca** gravar `krTitle`) |
-| Agrupamento por objetivo | mesma lógica de `QbrBalanceStep` |
-| Contagem por bucket de severidade | `KR_STATE_CONFIG[state].severity` |
+- **TCR §MBR Pre-Ritual**: o Pré-MBR é reflexivo — **não grava `okr_checkins`** nem altera `current_value`/`status`. Apenas captura `krJustifications` no draft, persistido no snapshot final.
+- **TCR §Wizards Master + UI Components Registry**: blocos de check-in já são canônicos em `src/modules/okrs/components/checkin/` (`CheckinContextBlock`, `CheckinProgressBlock`, `CheckinStatusSelector`, `CheckinReflectionBlock`). Já são consumidos por `CheckinDialog` (drawer /okrs) e `CollaboratorCheckinStep`.
+- **Decisão de reúso**: usaremos os mesmos blocos do Check-in Individual em **modo read-only** (sem editar `current_value`/status), trocando o bloco de Reflexão pelo `JustificationField` canônico (já compartilhado em `wizards/shared`).
+- **Paginação**: replicar o mesmo padrão do `CollaboratorCheckinStep` (header com "KR X de N + % concluído", footer com Voltar/Próximo, atalho Ctrl+Enter) e do `QbrKpiAnalysisStep` paginado já implementado no Pré-MBR.
+- **Lookup canônico (Onda 4)**: continuar usando `useEntityLookup` + `resolveName` para resolver nomes (não ler `krTitle` legado de snapshots).
 
-Snapshot de KRs **já vem hidratado** em `draft.data.krFinalStates` no `MbrPrePage`; o novo step apenas consome — sem nova query.
+---
 
-## Critério "fora da meta" (obriga justificativa)
+## O que muda
 
-Baseado em `KR_STATE_CONFIG[state].severity`:
+### 1. `MbrPreKrAnalysisStep.tsx` — refatoração
+- Remover renderização em "lista agrupada por objetivo".
+- Implementar **paginação 1-KR-por-página**, na seguinte ordem:
+  1. KRs que exigem justificativa (`critical` / `warning` / `not_started`) — primeiro.
+  2. KRs OK — depois (apenas leitura, sem campo).
+- Estado interno: `currentIndex` + navegação Próximo/Anterior.
+- Header: faixa "Análise de KR — KR X de N · Y% concluído" (igual ao Check-in Individual).
+- Bloqueio de avanço: não permite ir adiante se KR atual exige justificativa e está vazia (espelha a regra atual de `primaryDisabled`).
+- Botão "Concluir" apenas no último KR; chama `onContinue`.
 
-| state | severity | obriga? |
-|---|---|---|
-| `off_track` | critical | ✅ obrigatório |
-| `not_achieved` | critical | ✅ obrigatório |
-| `at_risk` | warning | ✅ obrigatório |
-| `stagnant` | warning | ✅ obrigatório |
-| `not_started` | info | ⚪ campo opcional (sem bloqueio) |
-| `healthy` / `achieved` / `exceeded` | info | ⚫ campo oculto |
+### 2. Composição de blocos canônicos (sem duplicação)
+Por página de KR:
+- `CheckinContextBlock` (Objetivo + KR + owner + último check-in + RAG) — **read-only**, já é o padrão.
+- `CheckinProgressBlock` em **modo read-only** (sem `onValueChange`). Já aceita `isAutomatic` para travar input — vamos estender com prop opcional `readOnly` que esconde o campo de valor e mostra apenas a barra de progresso + previous/target. Isso evita criar novo componente e mantém o bloco canônico para reuso.
+- **Não** usar `CheckinStatusSelector` nem `CheckinReflectionBlock` (esses são para o ato de check-in, que aqui é proibido).
+- `JustificationField` (já compartilhado) com label/hint contextuais:
+  - `not_started`: "Justifique por que este KR ainda não foi iniciado".
+  - `critical`/`warning`: "Justifique o desvio do KR".
 
-## Mudanças
+### 3. Pequena extensão em `CheckinProgressBlock`
+Adicionar prop opcional `readOnly?: boolean`:
+- Quando `true`: oculta o input/manual entry e o botão "atualizar valor", mantendo Contexto (Anterior → Meta) + barra de progresso + RAG.
+- Sem `readOnly` (default): comportamento atual preservado para `CheckinDialog` e `CollaboratorCheckinStep`.
+- Justificativa: extender ao invés de criar `MbrPreProgressBlock`, conforme regra do projeto ("preferir estender e compor").
 
-### 1. Tipo (`src/modules/okrs/types/wizard/mbr.ts`)
+### 4. Sem mudanças em
+- `MbrPrePage.tsx` (props do step continuam idênticas: `krFinalStates`, `krJustifications`, `onKrJustificationChange`, `onContinue`, `onBack`).
+- Tipos em `types/wizard/mbr.ts` (`krFinalStates`, `krJustifications` permanecem).
+- `MbrPreSummary.tsx` / `MbrPreReport.tsx` (já leem `krJustifications`).
+- `KR_STATE_CONFIG` (continua sendo SSOT para severidade e cores).
+- Lógica de seed dos `krFinalStates` na page (cut-off, RAG, daysSinceCheckin).
 
-Adicionar em `MbrPreDraftData`:
+---
+
+## Detalhes técnicos
+
+**Lista de KRs paginados** (memoizada):
 ```ts
-/**
- * Justificativas de KRs fora da meta (severidade warning/critical) — chave: krId.
- * Reflexivo: o líder explica o desvio sem registrar check-in nem alterar current_value.
- */
-krJustifications: Record<string, string>;
+// 1. Os que exigem justificativa (na ordem original, agrupados por objetivo)
+// 2. Os demais (somente leitura)
+const paginatedKrs = useMemo(() => {
+  const needs = krFinalStates.filter(k => requiresJustification(k.state));
+  const rest  = krFinalStates.filter(k => !requiresJustification(k.state));
+  return [...needs, ...rest];
+}, [krFinalStates]);
 ```
 
-### 2. `MbrPrePage.tsx`
+**Adapter local** `toCheckinKrData(krFinalState, lookups)` — converte `KrFinalState` (snapshot) + dados resolvidos pelo `useEntityLookup` para o tipo `CheckinKrData` esperado pelos blocos. Não duplica `toCheckinKrData` do `CollaboratorCheckinStep` (lá a entrada é `WizardKr`, schema diferente). Adapter fica local ao step.
 
-- Adicionar `'krs'` em `MbrPreStep` (em `mbr.ts`) e nas constantes locais:
-  - `WIZARD_STEPS`: novo item entre `projects` e `highlights` — label **"KRs do Time"**, descrição **"Resultados-chave e justificativas"**.
-  - `STEP_ORDER`: `['opening','kpi-analysis','projects','krs','highlights','next-steps','summary']`.
-- `DEFAULT_DATA.krJustifications = {}`.
-- Novo `case 'krs':` em `renderStepContent`, renderizando `MbrPreKrAnalysisStep` com `krFinalStates`, `krJustifications`, handlers `onKrJustificationChange` (merge no `updateDraft`) e `onContinue/onBack`.
-- Não há nova query — `draft.data.krFinalStates` já é populado pela seed existente (linhas 280-353).
+**Validação de avanço**:
+- KR atual exige justificativa → `Próximo` desabilitado se `(krJustifications[id] ?? '').trim() === ''`.
+- Banner de aviso no topo (mesmo componente atual `AlertBanner` ou estilo já usado).
 
-### 3. Novo componente `MbrPreKrAnalysisStep.tsx`
+**Atalho Ctrl/Cmd+Enter** para avançar (paridade com Check-in Individual).
 
-Local: `src/modules/okrs/components/wizards/mbr-pre/MbrPreKrAnalysisStep.tsx`. Estrutura espelhada de `MbrPreProjectsStep` + `QbrKpiAnalysisStep`:
+---
 
-- `WizardStepScaffold` com `WizardStepHeader` (`icon: Target`, `variant: 'amber'`, `tooltip: 'mbr-pre-krs'`, badge "N fora da meta").
-- Banner amarelo idêntico ao de Projetos quando `missingJustifications > 0`.
-- Lista agrupada por objetivo (igual `QbrBalanceStep`):
-  - Cabeçalho com título do objetivo via `useEntityLookup`.
-  - `KrCard` memoizado para cada KR:
-    - Nome via `useEntityLookup` (fallback `'(KR removido)'`).
-    - `KR_STATE_CONFIG[state]` para `icon`, `label`, `colorClass`, `borderClass`, `bgClass`.
-    - `OkrProgressBar finalProgress`.
-    - Pill `paceStatus` (Atrasado/Atenção/No ritmo).
-    - Pill "Contribuído" quando `isContributed`.
-    - `JustificationField` apenas quando `severity ∈ {warning, critical}`, com `required`, label "Justifique o desvio do KR" e hint "Obrigatório — explique por que está fora da meta e o plano de ação."
-- Estado vazio: `EmptyState` (icon `Target`, "Nenhum KR vinculado a este time").
-- Estado "tudo verde": card success "Nenhum KR fora da meta. Você pode avançar." + lista compacta.
-- `WizardStepFooter` com `primaryDisabled = missingJustifications > 0`.
+## Arquivos afetados
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreKrAnalysisStep.tsx` — refatoração (paginação + composição dos blocos canônicos).
+- `src/modules/okrs/components/checkin/CheckinProgressBlock.tsx` — adicionar prop opcional `readOnly`.
 
-### 4. Framework SSOT (sincronizar)
-
-Atualmente `mbr-pre` v3 já tem o id `'krs'` em `stepDefinitions` e `stepCompletionRules.requiredSteps` — **nenhuma mudança aqui**. Dois ajustes finos:
-
-- `stepCompletionRules.ts` linha 63: `requiredSteps` lista `['balance', 'kpis', 'krs', 'next-steps', 'summary']`. A `MbrPrePage` usa IDs diferentes (`opening` em vez de `balance`, `kpi-analysis` em vez de `kpis`). Isso é gap pré-existente e **fora do escopo**; manter como está. O page calcula `completedSteps` localmente via `STEP_ORDER`, sem consultar o framework.
-- Não bump de versão. `v3` continua adequado pois os ids do framework já contemplam `krs`.
-
-### 5. `MbrPreSummary.tsx`
-
-Acrescentar mini-bloco "Justificativas de KRs (N)" análogo aos blocos de KPIs/Projetos. Listar `krId → texto truncado`, resolvendo nome via `useEntityLookup` (consistente com Onda 4).
-
-### 6. `MbrPreReport.tsx` (renderer histórico)
-
-Adicionar seção opcional **"Justificativas de KRs"** quando `data.krJustifications` existir (snapshots novos). Sem schema migration — `reflection_data` é JSONB. Resolver nomes via `useEntityLookup` já presente no renderer.
-
-### 7. Edge `mbr-summary`
-
-Inspecionar payload de fechamento. Hoje já passa `snapshot` JSON inteiro ao LLM (sem desestruturar). `krJustifications` simplesmente acompanha o blob — sem alteração do edge necessária. Se vier a ser usado em prompt no futuro, há lookup de KR por id já presente em `qbr-pre-summary` (referência).
-
-### 8. Tooltip
-
-Registrar `'mbr-pre-krs'` em `WizardTooltips` com cópia: "Reflita sobre cada KR fora da meta. Não atualize check-ins aqui — apenas explique o desvio e o plano de ação."
-
-### 9. Hidratação de drafts antigos
-
-Drafts pré-mudança não terão `krJustifications`. Solução: `DEFAULT_DATA.krJustifications = {}` + merge raso já feito por `useGenericWizardDraft`. Nenhum draft antigo quebra. Drafts persistidos no step `'highlights'` continuam válidos (id de string), ao voltar `goBack` cairão no novo `'krs'` — comportamento desejado.
-
-### 10. Testes (Vitest)
-
-Criar `src/modules/okrs/components/wizards/mbr-pre/__tests__/MbrPreKrAnalysisStep.test.tsx` espelhando `QbrKpiAnalysisStep.test.tsx`:
-- Renderiza badge correto (count por severity warning+critical).
-- Bloqueia "Continuar" quando há critical/warning sem justificativa.
-- Libera quando todas justificadas.
-- Não exibe `JustificationField` para `healthy`/`achieved`/`exceeded`.
-- Agrupa KRs por objetivo.
-- Resolve nome via mock `useEntityLookup` (não usa `krTitle` legado).
-
-## Não-objetivos
-
-- **Não** registrar check-in nem alterar `current_value`.
-- **Não** exibir KPIs vinculados ao KR (já há step dedicado).
-- **Não** alterar Pré-QBR.
-- **Não** alterar regras de elegibilidade de KRs (mesmo conjunto já carregado em `MbrPrePage`).
-- **Não** sincronizar IDs divergentes entre framework v3 e page (gap pré-existente, fora de escopo).
-- **Não** criar novo agente IA.
-
-## Riscos & mitigação
-
-| Risco | Mitigação |
-|---|---|
-| Drafts antigos sem `krJustifications` | Default `{}` + merge raso do hook |
-| Drafts persistidos em `'highlights'` | `currentStep` é string livre — seguem válidos |
-| Gravação acidental de `krTitle` no snapshot | Usar exclusivamente `useEntityLookup`; não inserir `krTitle` em payloads novos |
-| Snapshot histórico (sessões já fechadas) | Renderer trata `krJustifications` como opcional — exibe seção só se existir |
-
-## Entregáveis
-
-1. `src/modules/okrs/types/wizard/mbr.ts` — campo `krJustifications` + step id `'krs'`.
-2. `src/modules/okrs/components/wizards/mbr-pre/MbrPreKrAnalysisStep.tsx` (novo).
-3. `src/modules/okrs/components/wizards/mbr-pre/index.ts` — export.
-4. `src/modules/okrs/pages/MbrPrePage.tsx` — `WIZARD_STEPS`, `STEP_ORDER`, `DEFAULT_DATA`, `renderStepContent`.
-5. `src/modules/okrs/components/wizards/mbr-pre/MbrPreSummary.tsx` — bloco "Justificativas de KRs".
-6. `src/modules/okrs/components/wizards/shared/WizardTooltips.tsx` — entrada `mbr-pre-krs`.
-7. `src/modules/okrs/components/ritual-report/renderers/MbrPreReport.tsx` — seção de justificativas (snapshots novos).
-8. `src/modules/okrs/components/wizards/mbr-pre/__tests__/MbrPreKrAnalysisStep.test.tsx`.
+Sem novas tabelas, migrations ou rotas. Comportamento de persistência inalterado.
