@@ -132,6 +132,7 @@ export function QbrBalanceStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="qbr-balance"
             triggerLabel={agendaTriggerLabel}
+            categoryless
           />
         ) : undefined
       }
