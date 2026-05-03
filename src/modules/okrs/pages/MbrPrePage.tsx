@@ -356,19 +356,13 @@ export default function MbrPrePage() {
     if (seededKpisRef.current) return;
     if (!teamKpis) return; // aguarda query carregar (mesmo se vazia)
 
-    const authoritativeKpis = dedupeKpiSnapshots(teamKpis);
-    const authoritativeIds = new Set(authoritativeKpis.map((k) => k.kpiId));
+    const reconciled = dedupeKpiSnapshots(teamKpis);
     const rawExisting = draft.data.kpiSnapshots ?? [];
-    const existing = dedupeKpiSnapshots(rawExisting);
 
-    // Reconciliação: remove KPIs do rascunho que não pertencem mais ao escopo
-    // autoritativo do time (ex.: após mudança de regra de filtro). Para KPIs
-    // ainda válidos, sobrescreve com o snapshot autoritativo do mês alvo
-    // (currentValue/previousValue/RAG são derivados do mês selecionado).
+    // Snapshot autoritativo do mês alvo: sobrescreve currentValue/previousValue/RAG
+    // sempre que mudar (mês, escopo de owners, etc.).
     // Justificativas vivem em `draft.data.kpiJustifications` (chaveado por kpiId)
-    // e portanto são preservadas independentemente.
-    const reconciled = authoritativeKpis;
-
+    // e são preservadas independentemente.
     const changed =
       reconciled.length !== rawExisting.length ||
       reconciled.some((s, i) => {
@@ -383,8 +377,6 @@ export default function MbrPrePage() {
       });
 
     if (changed) {
-      // Remove KPIs do rascunho que sumiram do escopo (usa authoritativeIds para clareza).
-      void authoritativeIds;
       updateDraft({ kpiSnapshots: reconciled });
     }
     seededKpisRef.current = true;
