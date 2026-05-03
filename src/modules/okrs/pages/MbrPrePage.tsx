@@ -341,6 +341,7 @@ export default function MbrPrePage() {
           state,
           finalProgress: Math.round(progress),
           paceStatus: progress >= 70 ? 'No ritmo' : progress >= 40 ? 'Atenção' : 'Atrasado',
+          ...(((obj as any)._isContributed) ? { isContributed: true } : {}),
         });
       }
     }
