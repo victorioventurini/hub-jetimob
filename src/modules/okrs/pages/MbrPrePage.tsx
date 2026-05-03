@@ -333,7 +333,8 @@ export default function MbrPrePage() {
 
     const authoritativeKpis = dedupeKpiSnapshots(teamKpis);
     const authoritativeIds = new Set(authoritativeKpis.map((k) => k.kpiId));
-    const existing = dedupeKpiSnapshots(draft.data.kpiSnapshots ?? []);
+    const rawExisting = draft.data.kpiSnapshots ?? [];
+    const existing = dedupeKpiSnapshots(rawExisting);
 
     // Reconciliação: remove KPIs do rascunho que não pertencem mais ao escopo
     // autoritativo do time (ex.: após mudança de regra de filtro). Preserva
@@ -346,8 +347,8 @@ export default function MbrPrePage() {
     const reconciled = authoritativeKpis.map((k) => preservedById.get(k.kpiId) ?? k);
 
     const changed =
-      reconciled.length !== existing.length ||
-      reconciled.some((s, i) => s.kpiId !== existing[i]?.kpiId);
+      reconciled.length !== rawExisting.length ||
+      reconciled.some((s, i) => s.kpiId !== rawExisting[i]?.kpiId);
 
     if (changed) {
       updateDraft({ kpiSnapshots: reconciled });
