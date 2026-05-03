@@ -215,6 +215,8 @@ export function MbrPreProjectsStep({
             Considerando atrasos até <strong>{new Date(`${cutoffDate}T00:00:00`).toLocaleDateString('pt-BR')}</strong> (fim do mês analisado).
           </p>
         )}
+
+        {blockingItems > 0 && (
           <div
             className={cn(
               'rounded-md border border-warning/40 bg-warning/10 p-3',
