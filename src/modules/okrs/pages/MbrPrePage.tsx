@@ -37,6 +37,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { handleError } from '@/lib/errorMessages';
 import { AlertCircle } from 'lucide-react';
 import { calculateProgress } from '@/modules/okrs/types';
+import {
+  defaultReferenceMonth,
+  monthBoundsDate,
+} from '@/modules/okrs/utils/mbr/referenceMonth';
 
 // Reuse QBR step 2 (com props opcionais para justificativas)
 import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep';
@@ -77,6 +81,9 @@ const STEP_ORDER: MbrPreStep[] = ['opening', 'kpi-analysis', 'projects', 'highli
 const DEFAULT_DATA: MbrPreDraftData = {
   cycleId: '',
   teamId: '',
+  // Mês alvo padrão = mês imediatamente anterior (mês fechado).
+  // Pré-MBR é sempre executado no início do mês seguinte ao analisado.
+  referenceMonth: defaultReferenceMonth(),
   krFinalStates: [],
   kpiSnapshots: [],
   kpisToCreate: [],
