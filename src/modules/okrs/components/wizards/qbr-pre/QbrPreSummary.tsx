@@ -230,6 +230,7 @@ export function QbrPreSummary({
             suggestions={agendaSuggestions}
             onSuggestionsChange={onAgendaSuggestionsChange}
             ritualLabel="QBR"
+            categoryless
           />
         )}
 
