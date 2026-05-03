@@ -5,6 +5,7 @@
  * (Funcionalidade "Zombie?" removida em 2026-04-28.)
  */
 
+import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,6 +19,7 @@ import {
   WizardStepScaffold,
 
   KpiStatusBlocks,
+  useKpiStatusClassification,
   InlineAgendaSuggestionInput,
   JustificationField,
 } from '../shared';
@@ -77,9 +79,28 @@ export function QbrKpiAnalysisStep({
   onKpiJustificationChange,
   requireJustifications,
 }: QbrKpiAnalysisStepProps) {
-  const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
-  const healthyKpis = kpiSnapshots.filter(k => k.ragStatus === 'green');
-  const noDataKpis = kpiSnapshots.filter(k => k.ragStatus === 'no_data');
+  const uniqueKpiSnapshots = useMemo(() => {
+    const seen = new Set<string>();
+    return kpiSnapshots.filter((kpi) => {
+      if (seen.has(kpi.kpiId)) return false;
+      seen.add(kpi.kpiId);
+      return true;
+    });
+  }, [kpiSnapshots]);
+
+  const { outdated, pending } = useKpiStatusClassification(uniqueKpiSnapshots);
+  const statusBlockKpiIds = useMemo(
+    () => new Set([...outdated, ...pending].map((kpi) => kpi.kpiId)),
+    [outdated, pending],
+  );
+
+  const alertKpis = uniqueKpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
+  const healthyKpis = uniqueKpiSnapshots.filter(
+    k => k.ragStatus === 'green' && !statusBlockKpiIds.has(k.kpiId),
+  );
+  const noDataKpis = uniqueKpiSnapshots.filter(
+    k => k.ragStatus === 'no_data' && !statusBlockKpiIds.has(k.kpiId),
+  );
 
   const missingJustifications = requireJustifications
     ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
@@ -94,7 +115,7 @@ export function QbrKpiAnalysisStep({
           tooltip="qbr-kpi-analysis"
           description="Revise a saúde dos indicadores"
           variant="amber"
-          badge={`${kpiSnapshots.length} KPIs`}
+          badge={`${uniqueKpiSnapshots.length} KPIs`}
         />
       }
       footer={
@@ -164,7 +185,7 @@ export function QbrKpiAnalysisStep({
         )}
 
         {/* KPIs desatualizados e pendentes */}
-        <KpiStatusBlocks kpiSnapshots={kpiSnapshots} />
+        <KpiStatusBlocks kpiSnapshots={uniqueKpiSnapshots} />
 
         {/* Healthy KPIs */}
         {healthyKpis.length > 0 && (
