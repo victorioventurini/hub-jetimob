@@ -64,6 +64,7 @@ export interface QbrLearningsStepProps {
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
+  agendaCategoryless?: boolean;
 }
 
 // ============================================================
