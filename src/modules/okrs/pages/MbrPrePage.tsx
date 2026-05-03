@@ -493,6 +493,8 @@ export default function MbrPrePage() {
             isLoading={isLoadingKrs || isLoadingKpis}
             krFinalStates={draft.data.krFinalStates}
             kpiSnapshots={draft.data.kpiSnapshots}
+            monthAnalysis={draft.data.monthAnalysis ?? null}
+            onMonthAnalysisChange={(monthAnalysis) => updateDraft({ monthAnalysis })}
             onContinue={() => setStep('kpi-analysis')}
           />
         );
