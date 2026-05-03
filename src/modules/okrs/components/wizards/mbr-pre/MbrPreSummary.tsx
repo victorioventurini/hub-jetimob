@@ -238,6 +238,30 @@ export function MbrPreSummary({
                   </ul>
                 </div>
               )}
+
+              {krJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <Target className="h-3.5 w-3.5 text-status-red" />
+                    KRs fora da meta ({krJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {krJustList.map(([krId, text]) => (
+                      <li
+                        key={krId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {resolveKrName(krId)}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
