@@ -100,7 +100,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             id, name, unit, target_value, direction, indicator_type,
             consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id,
-            area_id, scope, responsible_team_id,
+            area_id, scope, responsible_team_id, created_at,
             owner:profiles!owner_user_id(id, display_name, photo_url),
             team:teams!team_id(id, name),
             area:areas!area_id(id, name, color)
