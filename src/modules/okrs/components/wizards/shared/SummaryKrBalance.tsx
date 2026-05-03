@@ -10,7 +10,7 @@ import { memo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
+import { BarChart3, ChevronDown, ChevronUp, MessageSquareQuote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KR_STATE_CONFIG, type KrState } from '@/modules/okrs/hooks';
 import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
@@ -29,6 +29,8 @@ export interface SummaryKrBalanceProps {
   items: SummaryKrBalanceItem[];
   /** Quantos KRs mostrar antes de exigir expansão. Default 5. */
   initialVisible?: number;
+  /** Justificativas/plano de ação por krId — renderizadas inline abaixo de cada item. */
+  justifications?: Record<string, string>;
 }
 
 const STATE_BUCKETS: Array<{ key: KrState; label: string; tone: string }> = [
@@ -46,6 +48,7 @@ export const SummaryKrBalance = memo(function SummaryKrBalance({
   title,
   items,
   initialVisible = 5,
+  justifications,
 }: SummaryKrBalanceProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -81,22 +84,36 @@ export const SummaryKrBalance = memo(function SummaryKrBalance({
               ))}
             </div>
 
-            <div className="space-y-1 pt-1">
+            <div className="space-y-2 pt-1">
               {visible.map((kr) => {
                 const config = KR_STATE_CONFIG[(kr.state as KrState) || 'not_started'];
                 const name = resolveName(lookup.teamKrs, kr.krId, kr.krTitle, '(KR removido)');
+                const justification = justifications?.[kr.krId]?.trim();
                 return (
-                  <div key={kr.krId} className="flex items-center gap-2 text-xs">
-                    <config.icon className={cn('h-3 w-3 shrink-0', config.colorClass)} />
-                    <span className="truncate flex-1" title={name}>{name}</span>
-                    {kr.isContributed && (
-                      <Badge variant="outline" className="h-4 px-1 text-[10px] shrink-0">
-                        Contribuído
-                      </Badge>
+                  <div key={kr.krId} className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <config.icon className={cn('h-3 w-3 shrink-0', config.colorClass)} />
+                      <span className="truncate flex-1" title={name}>{name}</span>
+                      {kr.isContributed && (
+                        <Badge variant="outline" className="h-4 px-1 text-[10px] shrink-0">
+                          Contribuído
+                        </Badge>
+                      )}
+                      <span className="text-muted-foreground shrink-0">
+                        {Math.round(kr.finalProgress)}%
+                      </span>
+                    </div>
+                    {justification && (
+                      <div className="ml-5 rounded-md border bg-muted/30 px-2.5 py-1.5 space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                          <MessageSquareQuote className="h-3 w-3" />
+                          Plano de ação do líder
+                        </div>
+                        <p className="text-xs text-foreground whitespace-pre-wrap">
+                          {justification}
+                        </p>
+                      </div>
                     )}
-                    <span className="text-muted-foreground shrink-0">
-                      {Math.round(kr.finalProgress)}%
-                    </span>
                   </div>
                 );
               })}

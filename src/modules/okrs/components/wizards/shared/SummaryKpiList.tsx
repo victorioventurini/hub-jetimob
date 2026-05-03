@@ -11,13 +11,15 @@ import { memo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, ChevronDown, ChevronUp } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp, MessageSquareQuote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
 
 export interface SummaryKpiListProps {
   kpis: MbrKpiSnapshot[];
   initialVisible?: number;
+  /** Justificativas/plano de ação por kpiId — renderizadas inline abaixo de cada item. */
+  justifications?: Record<string, string>;
 }
 
 const RAG_TONE: Record<string, string> = {
@@ -42,6 +44,7 @@ function formatValue(value: number | null | undefined, unit?: string): string {
 export const SummaryKpiList = memo(function SummaryKpiList({
   kpis,
   initialVisible = 5,
+  justifications,
 }: SummaryKpiListProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -63,26 +66,40 @@ export const SummaryKpiList = memo(function SummaryKpiList({
           </p>
         ) : (
           <>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {visible.map((kpi) => {
                 const dotTone = RAG_TONE[kpi.ragStatus] ?? RAG_TONE.unknown;
+                const justification = justifications?.[kpi.kpiId]?.trim();
                 return (
-                  <div key={kpi.kpiId} className="flex items-center gap-2 text-xs">
-                    <span
-                      className={cn('h-2 w-2 rounded-full shrink-0', dotTone)}
-                      aria-hidden
-                    />
-                    <span className="truncate flex-1" title={kpi.name}>
-                      {kpi.name}
-                    </span>
-                    {kpi.latestInputType === 'partial' && (
-                      <Badge variant="outline" className="text-[10px] py-0 h-4 shrink-0">
-                        parcial
-                      </Badge>
+                  <div key={kpi.kpiId} className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span
+                        className={cn('h-2 w-2 rounded-full shrink-0', dotTone)}
+                        aria-hidden
+                      />
+                      <span className="truncate flex-1" title={kpi.name}>
+                        {kpi.name}
+                      </span>
+                      {kpi.latestInputType === 'partial' && (
+                        <Badge variant="outline" className="text-[10px] py-0 h-4 shrink-0">
+                          parcial
+                        </Badge>
+                      )}
+                      <span className="text-muted-foreground shrink-0 tabular-nums">
+                        {formatValue(kpi.currentValue, kpi.unit)}
+                      </span>
+                    </div>
+                    {justification && (
+                      <div className="ml-4 rounded-md border bg-muted/30 px-2.5 py-1.5 space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                          <MessageSquareQuote className="h-3 w-3" />
+                          Plano de ação do líder
+                        </div>
+                        <p className="text-xs text-foreground whitespace-pre-wrap">
+                          {justification}
+                        </p>
+                      </div>
                     )}
-                    <span className="text-muted-foreground shrink-0 tabular-nums">
-                      {formatValue(kpi.currentValue, kpi.unit)}
-                    </span>
                   </div>
                 );
               })}
