@@ -2,20 +2,28 @@
  * QbrKpiAnalysisStep - Step 2: Análise de KPIs e Métricas
  *
  * Carrega KPIs do escopo do líder com valor atual, RAG status e variação.
- * (Funcionalidade "Zombie?" removida em 2026-04-28.)
+ *
+ * Modos:
+ *  - Lista (default): renderiza alert / outdated / no_data / healthy em blocos.
+ *    Usado por QBR-Pré.
+ *  - Paginado (`paginated=true`): renderiza UM KPI por página, exigindo a ação
+ *    obrigatória de cada bucket (justify / update-value / explain-no-data).
+ *    Usado por Pré-MBR.
  */
 
 import { memo, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import {
-  Activity, AlertTriangle, Target, Users,
+  Activity, AlertTriangle, Target, Users, Clock, BarChart3, CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
-import { KpiSparkline } from '@/modules/kpis/components/shared';
+import { KpiSparkline, KpiValueEntryForm } from '@/modules/kpis/components/shared';
 import { AreaBadge } from '@/components/ui/area-badge';
 import { useBu } from '@/contexts/BuContext';
 import {
@@ -25,9 +33,12 @@ import {
 
   KpiStatusBlocks,
   useKpiStatusClassification,
+  getKpiActionBucket,
   InlineAgendaSuggestionInput,
   JustificationField,
 } from '../shared';
+import type { KpiActionBucket } from '../shared';
+import type { KpiInputType } from '@/modules/kpis/types';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
