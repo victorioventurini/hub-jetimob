@@ -215,12 +215,26 @@ export default function KpiDashboardPage() {
       result = result.filter((kpi) => kpi.frequency_migration_reviewed === false);
     }
 
+    // Governança: KPIs Área/Global sem Time Responsável
+    if (missingResponsibleOnly) {
+      result = result.filter(
+        (kpi) => (kpi.scope === 'area' || kpi.scope === 'org') && !kpi.responsible_team_id,
+      );
+    }
+
     return result;
-  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly, missingResponsibleOnly]);
 
   // v3.0.0: Count of KPIs pending migration review (uses unfiltered base)
   const pendingReviewCount = useMemo(
     () => allKpis.filter((k) => k.frequency_migration_reviewed === false).length,
+    [allKpis],
+  );
+  const missingResponsibleCount = useMemo(
+    () =>
+      allKpis.filter(
+        (k) => (k.scope === 'area' || k.scope === 'org') && !k.responsible_team_id,
+      ).length,
     [allKpis],
   );
   const canManageKpis = hasPermission("kpis.settings.manage:bu");
