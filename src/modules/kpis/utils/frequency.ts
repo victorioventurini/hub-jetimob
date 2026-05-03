@@ -281,6 +281,113 @@ export function suggestInputType(
   return period.end > now ? 'partial' : 'consolidated';
 }
 
+// === Gate de "precisa de atualização" (SSOT) ===
+
+/**
+ * Regra A — KPI está com input atrasado em relação à `update_frequency`.
+ *
+ * Substitui as cópias locais que existiam em `useKpisForWizard.ts` e
+ * `useKpisForWizardV2.ts`. Semântica:
+ *   - `update_frequency` ausente (KPI manual não revisado) → `false`
+ *     (não entra no fluxo de cobrança)
+ *   - sem `lastReferenceDate` → `true` (nunca atualizado)
+ *   - diff(now, lastReferenceDate) ≥ UPDATE_OVERDUE_THRESHOLDS[freq] → `true`
+ */
+export function isKpiUpdateOverdue(
+  updateFrequency: KpiFrequencyValue | null | undefined,
+  lastReferenceDate: string | Date | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!updateFrequency) return false;
+  if (!lastReferenceDate) return true;
+
+  const last =
+    lastReferenceDate instanceof Date
+      ? lastReferenceDate
+      : new Date(lastReferenceDate);
+  if (Number.isNaN(last.getTime())) return true;
+
+  const diffDays = Math.floor(
+    (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  return diffDays >= UPDATE_OVERDUE_THRESHOLDS[updateFrequency];
+}
+
+/**
+ * Regra B — Lista todos os períodos de `consolidation_frequency` já
+ * fechados (`period.end < now`) que NÃO possuem valor com
+ * `input_type='consolidated'` correspondente.
+ *
+ * Implementação iterativa para trás a partir do último período fechado:
+ *  1. Se o `period_label` corrente está no Set de consolidados → adiciona
+ *     ao Set de "vistos consolidados" e tenta o anterior MESMO assim
+ *     (precisamos detectar lacunas mais antigas).
+ *  2. Para a cada `maxLookback` períodos OU quando o período corrente
+ *     começar antes de `kpiCreatedAt` (KPI nem existia naquela época).
+ *
+ * Retorna labels em ordem cronológica decrescente (mais recente primeiro).
+ */
+export function getMissingConsolidationPeriods(
+  consolidationFrequency: KpiFrequencyValue | null | undefined,
+  consolidatedPeriodLabels: Iterable<string>,
+  bounds: {
+    kpiCreatedAt: Date;
+    now?: Date;
+    /** Limite de períodos para trás. Default: 24 (2 anos mensais, 6 anos trim.). */
+    maxLookback?: number;
+  },
+): string[] {
+  if (!consolidationFrequency) return [];
+
+  const now = bounds.now ?? new Date();
+  const maxLookback = bounds.maxLookback ?? 24;
+  const consolidatedSet = new Set(consolidatedPeriodLabels);
+
+  const missing: string[] = [];
+  // Janela de salto em milissegundos — uma cadência completa.
+  const stepMs = FREQUENCY_DAYS[consolidationFrequency] * 24 * 60 * 60 * 1000;
+
+  // Começa no período corrente; se ainda não fechou (period.end >= now),
+  // anda 1 cadência para trás antes de iniciar.
+  let cursor = new Date(now.getTime());
+  let firstPeriod = getConsolidationPeriod(consolidationFrequency, cursor);
+  if (firstPeriod.end > now) {
+    cursor = new Date(cursor.getTime() - stepMs);
+  }
+
+  for (let i = 0; i < maxLookback; i++) {
+    const period = getConsolidationPeriod(consolidationFrequency, cursor);
+    // Para se o período começa antes do KPI existir.
+    if (period.end < bounds.kpiCreatedAt) break;
+
+    if (!consolidatedSet.has(period.label)) {
+      missing.push(period.label);
+    }
+
+    // Salta para um instante seguramente dentro do período anterior.
+    cursor = new Date(period.start.getTime() - stepMs);
+  }
+
+  return missing;
+}
+
+/**
+ * Wrapper booleano de `getMissingConsolidationPeriods`.
+ */
+export function isKpiConsolidationPending(
+  consolidationFrequency: KpiFrequencyValue | null | undefined,
+  consolidatedPeriodLabels: Iterable<string>,
+  bounds: { kpiCreatedAt: Date; now?: Date; maxLookback?: number },
+): boolean {
+  return (
+    getMissingConsolidationPeriods(
+      consolidationFrequency,
+      consolidatedPeriodLabels,
+      bounds,
+    ).length > 0
+  );
+}
+
 // === Helpers de UI ===
 
 import { FREQUENCY_VALUE_LABELS } from '../types';
