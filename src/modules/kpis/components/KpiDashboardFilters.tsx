@@ -1,4 +1,4 @@
-import { TeamSelect, AreaSelect } from "@/components/selects";
+import { TeamSelect, AreaSelect, BuUserSelect } from "@/components/selects";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KpiCategory, KpiScope, KpiIndicatorType, KpiRagStatus, KpiKrLinkStatus, getScopeLabels, INDICATOR_TYPE_LABELS, RAG_STATUS_CONFIG, KR_LINK_STATUS_LABELS } from "../types";
 import { useBu } from "@/contexts/BuContext";
@@ -24,6 +24,7 @@ interface KpiDashboardFiltersProps {
   indicatorType?: KpiIndicatorType | "all";
   ragStatus?: KpiRagStatus | "all";
   krLinkStatus?: KpiKrLinkStatus | "all";
+  ownerId?: string | "all";
   /** @deprecated v2.82.0 - Category filter is no longer used */
   onCategoryChange: (category: KpiCategory | "all") => void;
   onTeamChange: (teamId: string | "all") => void;
@@ -32,6 +33,7 @@ interface KpiDashboardFiltersProps {
   onIndicatorTypeChange?: (type: KpiIndicatorType | "all") => void;
   onRagStatusChange?: (status: KpiRagStatus | "all") => void;
   onKrLinkStatusChange?: (status: KpiKrLinkStatus | "all") => void;
+  onOwnerChange?: (ownerId: string | "all") => void;
 }
 
 export function KpiDashboardFilters({
@@ -41,12 +43,14 @@ export function KpiDashboardFilters({
   indicatorType = "all",
   ragStatus = "all",
   krLinkStatus = "all",
+  ownerId = "all",
   onTeamChange,
   onAreaChange,
   onScopeChange,
   onIndicatorTypeChange,
   onRagStatusChange,
   onKrLinkStatusChange,
+  onOwnerChange,
 }: KpiDashboardFiltersProps) {
   const { currentBu } = useBu();
   const scopeLabels = getScopeLabels(currentBu?.name);
@@ -138,7 +142,19 @@ export function KpiDashboardFilters({
         />
       )}
 
-      {/* Escopo */}
+      {/* Responsável */}
+      {onOwnerChange && (
+        <BuUserSelect
+          value={ownerId === "all" ? undefined : ownerId}
+          onValueChange={(value) => onOwnerChange(value ?? "all")}
+          placeholder="Responsável"
+          allowNone
+          noneLabel="Todos os responsáveis"
+          className="w-full sm:w-[200px]"
+        />
+      )}
+
+
       {onScopeChange && (
         <Select
           value={scope}

@@ -21,10 +21,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Activity,
   FolderKanban,
   MessageSquareQuote,
-  Target,
 } from 'lucide-react';
 import {
   WizardStepHeader,
@@ -36,7 +34,6 @@ import {
   InlineStringListEditor,
 } from '../shared';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
-import { useEntityLookup } from '@/modules/okrs/hooks/useEntityLookup';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
@@ -90,34 +87,10 @@ export function MbrPreSummary({
     for (const m of p.milestones) milestoneNameById.set(m.id, m.name);
   }
 
-  const kpiNameById = new Map<string, string>();
-  for (const k of kpiSnapshots) kpiNameById.set(k.kpiId, k.name);
-
-  const kpiJustList = Object.entries(kpiJustifications ?? {})
-    .filter(([, v]) => v && v.trim().length > 0);
   const projectJustList = Object.entries(projectJustifications?.projects ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
   const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
-  const krJustList = Object.entries(krJustifications ?? {})
-    .filter(([, v]) => v && v.trim().length > 0);
-
-  // Resolução de nomes de KR via lookup canônico (Onda 4)
-  const krIdsForLookup = krJustList.map(([id]) => id);
-  const krLookups = useEntityLookup({
-    teamKrIds: krIdsForLookup,
-    orgKrIds: krIdsForLookup,
-  });
-  const resolveKrName = (id: string) =>
-    krLookups.teamKrs.get(id)?.name ??
-    krLookups.orgKrs.get(id)?.name ??
-    '(KR removido)';
-
-  const hasJustifications =
-    kpiJustList.length > 0 ||
-    projectJustList.length > 0 ||
-    milestoneJustList.length > 0 ||
-    krJustList.length > 0;
 
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
@@ -145,52 +118,32 @@ export function MbrPreSummary({
       }
     >
       <div className="p-6 space-y-6">
-        {/* 1) Balanço KRs */}
-        <SummaryKrBalance title="Balanço do Mês" items={krFinalStates} />
+        {/* 1) Balanço KRs — com justificativas inline */}
+        <SummaryKrBalance
+          title="Balanço do Mês"
+          items={krFinalStates}
+          justifications={krJustifications}
+        />
 
-        {/* 2) KPIs */}
-        <SummaryKpiList kpis={kpiSnapshots} />
+        {/* 2) KPIs — com justificativas inline */}
+        <SummaryKpiList kpis={kpiSnapshots} justifications={kpiJustifications} />
 
-        {/* 2.1) Justificativas registradas (KPIs e Projetos) */}
-        {hasJustifications && (
+        {/* 2.1) Justificativas de execução (projetos e marcos atrasados) */}
+        {(projectJustList.length > 0 || milestoneJustList.length > 0) && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <MessageSquareQuote className="h-4 w-4" />
-                Justificativas registradas
+                Justificativas de execução
                 <Badge variant="secondary" className="ml-1 text-[10px]">
-                  {kpiJustList.length + projectJustList.length + milestoneJustList.length + krJustList.length}
+                  {projectJustList.length + milestoneJustList.length}
                 </Badge>
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Reflexões capturadas para itens fora da meta ou atrasados.
+                Reflexões capturadas para projetos e marcos atrasados.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {kpiJustList.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-xs font-medium">
-                    <Activity className="h-3.5 w-3.5 text-status-amber" />
-                    Indicadores fora da meta ({kpiJustList.length})
-                  </Label>
-                  <ul className="space-y-2">
-                    {kpiJustList.map(([kpiId, text]) => (
-                      <li
-                        key={kpiId}
-                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
-                      >
-                        <p className="text-xs font-medium">
-                          {kpiNameById.get(kpiId) ?? '(KPI removido)'}
-                        </p>
-                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                          {text}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
               {projectJustList.length > 0 && (
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-xs font-medium">
@@ -229,30 +182,6 @@ export function MbrPreSummary({
                       >
                         <p className="text-xs font-medium">
                           {milestoneNameById.get(milestoneId) ?? '(marco removido)'}
-                        </p>
-                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                          {text}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {krJustList.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-xs font-medium">
-                    <Target className="h-3.5 w-3.5 text-status-red" />
-                    KRs fora da meta ({krJustList.length})
-                  </Label>
-                  <ul className="space-y-2">
-                    {krJustList.map(([krId, text]) => (
-                      <li
-                        key={krId}
-                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
-                      >
-                        <p className="text-xs font-medium">
-                          {resolveKrName(krId)}
                         </p>
                         <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                           {text}
