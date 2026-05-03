@@ -45,8 +45,10 @@ export interface KpiGateStepConfig {
    *   personas sem necessidade de plano detalhado por KPI.
    * - `rich`: card completo com sparkline canônica + bloco de "Ação do líder"
    *   por bucket (justify / explain-no-data / opcional / read-only).
+   * - `rich-paginated`: igual ao `rich`, mas exibe **um KPI por página** com
+   *   navegação Anterior/Próximo (mesmo padrão do `MbrPreKrAnalysisStep`).
    */
-  cardVariant?: 'compact' | 'rich';
+  cardVariant?: 'compact' | 'rich' | 'rich-paginated';
 }
 
 export interface KrsStepConfig {
