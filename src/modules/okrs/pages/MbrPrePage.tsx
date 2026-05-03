@@ -530,6 +530,7 @@ export default function MbrPrePage() {
             isCompleting={isCompleting}
             onComplete={handleComplete}
             onBack={goBack}
+            teamId={teamIdParam}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             onHighlightsChange={(highlights) => updateDraft({ highlights })}
             onNextStepsChange={(nextSteps) => updateDraft({ nextSteps })}

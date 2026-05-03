@@ -13,7 +13,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Send, AlertTriangle, Compass, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Send,
+  AlertTriangle,
+  Compass,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Activity,
+  FolderKanban,
+  MessageSquareQuote,
+} from 'lucide-react';
 import {
   WizardStepHeader,
   WizardLastStepFooter,
@@ -23,6 +34,7 @@ import {
   SummaryKpiList,
   InlineStringListEditor,
 } from '../shared';
+import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
@@ -39,6 +51,8 @@ export interface MbrPreSummaryProps {
   isCompleting: boolean;
   onComplete: () => void;
   onBack: () => void;
+  /** TeamId para resolver nomes de projetos/milestones nas justificativas. */
+  teamId?: string | null;
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   onHighlightsChange?: (next: MbrPreDraftData['highlights']) => void;
   onNextStepsChange?: (next: MbrPreDraftData['nextSteps']) => void;
@@ -55,13 +69,38 @@ export function MbrPreSummary({
   isCompleting,
   onComplete,
   onBack,
+  teamId,
   onAgendaSuggestionsChange,
   onHighlightsChange,
   onNextStepsChange,
   onDecisionsChange,
 }: MbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, highlights, nextSteps } = draftData;
+  const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications } = draftData;
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
+
+  // Resolve nomes de projetos/milestones (BU-scoped, cache compartilhado com Step 3)
+  const { projects: teamProjects } = useMbrPreTeamProjects(teamId ?? null);
+
+  const projectNameById = new Map<string, string>();
+  const milestoneNameById = new Map<string, string>();
+  for (const p of teamProjects) {
+    projectNameById.set(p.id, p.name);
+    for (const m of p.milestones) milestoneNameById.set(m.id, m.name);
+  }
+
+  const kpiNameById = new Map<string, string>();
+  for (const k of kpiSnapshots) kpiNameById.set(k.kpiId, k.name);
+
+  const kpiJustList = Object.entries(kpiJustifications ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+  const projectJustList = Object.entries(projectJustifications?.projects ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+  const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+
+  const hasJustifications =
+    kpiJustList.length > 0 || projectJustList.length > 0 || milestoneJustList.length > 0;
+
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
     onHighlightsChange?.({ ...highlights, [field]: value });
@@ -93,6 +132,98 @@ export function MbrPreSummary({
 
         {/* 2) KPIs */}
         <SummaryKpiList kpis={kpiSnapshots} />
+
+        {/* 2.1) Justificativas registradas (KPIs e Projetos) */}
+        {hasJustifications && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageSquareQuote className="h-4 w-4" />
+                Justificativas registradas
+                <Badge variant="secondary" className="ml-1 text-[10px]">
+                  {kpiJustList.length + projectJustList.length + milestoneJustList.length}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Reflexões capturadas para itens fora da meta ou atrasados.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {kpiJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <Activity className="h-3.5 w-3.5 text-status-amber" />
+                    Indicadores fora da meta ({kpiJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {kpiJustList.map(([kpiId, text]) => (
+                      <li
+                        key={kpiId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {kpiNameById.get(kpiId) ?? '(KPI removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {projectJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <FolderKanban className="h-3.5 w-3.5 text-status-red" />
+                    Projetos atrasados ({projectJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {projectJustList.map(([projectId, text]) => (
+                      <li
+                        key={projectId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {projectNameById.get(projectId) ?? '(projeto removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {milestoneJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <FolderKanban className="h-3.5 w-3.5 text-status-amber" />
+                    Marcos atrasados ({milestoneJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {milestoneJustList.map(([milestoneId, text]) => (
+                      <li
+                        key={milestoneId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {milestoneNameById.get(milestoneId) ?? '(marco removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
 
         {/* 3) Destaques e Riscos — editável */}
         <Card>
