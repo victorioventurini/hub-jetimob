@@ -17,9 +17,8 @@
  */
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Target, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { Target, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
