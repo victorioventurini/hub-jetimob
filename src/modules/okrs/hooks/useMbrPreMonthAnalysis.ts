@@ -99,6 +99,7 @@ export function useMbrPreMonthAnalysis() {
           'mbr-pre-month-analysis',
           {
             body: {
+              bu_id: currentBu.id,
               teamName: params.teamName,
               referenceMonth: params.referenceMonth,
               previousMonth: previousMonth(params.referenceMonth),
