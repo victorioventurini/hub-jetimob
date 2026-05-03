@@ -284,6 +284,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
 
   return {
     kpisToUpdate: data?.kpisToUpdate ?? [],
+    kpisOwnedOrContributed: data?.kpisOwnedOrContributed ?? [],
     kpisTeamContext: data?.kpisTeamContext ?? [],
     kpisStrategic: data?.kpisStrategic ?? [],
     kpisInAlert: data?.kpisInAlert ?? [],
@@ -303,6 +304,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
 function emptyResult() {
   return {
     kpisToUpdate: [],
+    kpisOwnedOrContributed: [],
     kpisTeamContext: [],
     kpisStrategic: [],
     kpisInAlert: [],
