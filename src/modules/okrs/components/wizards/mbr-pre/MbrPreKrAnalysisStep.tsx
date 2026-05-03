@@ -354,9 +354,7 @@ const MbrPreKrPage = memo(function MbrPreKrPage({
           badge={`${needsJustifyCount} a justificar`}
         />
       }
-    >
-      <div className="flex flex-col h-full min-h-0 overflow-hidden">
-        {/* Progress indicator (igual ao Check-in Individual) */}
+      topFixed={
         <div className="px-6 py-3 border-b bg-muted/20">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium flex items-center gap-2">
@@ -368,119 +366,102 @@ const MbrPreKrPage = memo(function MbrPreKrPage({
             </Badge>
           </div>
         </div>
+      }
+      footer={
+        <WizardStepFooter
+          showBack
+          onBack={isFirst ? onBack : onPrev}
+          backLabel={isFirst ? 'Voltar' : 'Anterior'}
+          primaryLabel={isLast ? 'Concluir' : 'Próximo'}
+          onPrimary={handlePrimary}
+          primaryDisabled={!justOk}
+        />
+      }
+    >
+      <div className="p-6 space-y-4 min-w-0 max-w-full">
+        <p className="text-xs text-muted-foreground">
+          Este momento é <strong>reflexivo</strong>. Não atualize check-ins aqui —
+          apenas explique o que aconteceu com cada KR fora da meta ou ainda não iniciado.
+        </p>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Este momento é <strong>reflexivo</strong>. Não atualize check-ins aqui —
-            apenas explique o que aconteceu com cada KR fora da meta ou ainda não iniciado.
-          </p>
+        {missingJustifications > 0 && needsJustification && !justification.trim() && (
+          <div
+            className={cn(
+              'rounded-md border border-warning/40 bg-warning/10 p-3',
+              'text-xs text-warning-foreground flex items-start gap-2',
+            )}
+          >
+            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+            <p>
+              <strong>{missingJustifications}</strong> KR{missingJustifications > 1 ? 's' : ''} sem
+              justificativa (fora da meta ou não iniciado). Preencha para avançar.
+            </p>
+          </div>
+        )}
 
-          {missingJustifications > 0 && needsJustification && !justification.trim() && (
-            <div
-              className={cn(
-                'rounded-md border border-warning/40 bg-warning/10 p-3',
-                'text-xs text-warning-foreground flex items-start gap-2',
-              )}
-            >
-              <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-              <p>
-                <strong>{missingJustifications}</strong> KR{missingJustifications > 1 ? 's' : ''} sem
-                justificativa (fora da meta ou não iniciado). Preencha para avançar.
-              </p>
-            </div>
-          )}
+        {!needsJustification && (
+          <div
+            className={cn(
+              'rounded-md border border-status-green/30 bg-status-green/5 p-3',
+              'text-sm text-foreground flex items-start gap-2',
+            )}
+          >
+            <CheckCircle2 className="h-4 w-4 text-status-green shrink-0 mt-0.5" />
+            KR dentro do esperado — apenas leitura.
+          </div>
+        )}
 
-          {!needsJustification && (
-            <div
-              className={cn(
-                'rounded-md border border-status-green/30 bg-status-green/5 p-3',
-                'text-sm text-foreground flex items-start gap-2',
-              )}
-            >
-              <CheckCircle2 className="h-4 w-4 text-status-green shrink-0 mt-0.5" />
-              KR dentro do esperado — apenas leitura.
-            </div>
-          )}
-
-          {/* Badge de estado canônico + contribuído */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge
-              variant="outline"
-              className={cn('text-[11px]', config?.borderClass, config?.colorClass)}
-            >
-              {config?.label ?? kr.state}
+        {/* Badge de estado canônico + contribuído */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge
+            variant="outline"
+            className={cn('text-[11px]', config?.borderClass, config?.colorClass)}
+          >
+            {config?.label ?? kr.state}
+          </Badge>
+          {kr.isContributed && (
+            <Badge variant="outline" className="text-[11px] border-primary/40 text-primary">
+              Contribuído
             </Badge>
-            {kr.isContributed && (
-              <Badge variant="outline" className="text-[11px] border-primary/40 text-primary">
-                Contribuído
-              </Badge>
-            )}
-          </div>
-
-          {/* BLOCO 1 — Contexto (reuso canônico) */}
-          <CheckinContextBlock kr={krData} />
-
-          <Separator />
-
-          {/* BLOCO 2 — Progresso (read-only — sem input nem banner de KPI primária) */}
-          <CheckinProgressBlock
-            kr={krData}
-            currentValue={String(krData.current_value)}
-            status={ragStatus}
-            isAutomatic={false}
-            onValueChange={() => { /* noop — readOnly */ }}
-            readOnly
-          />
-
-          {needsJustification && (
-            <>
-              <Separator />
-              <JustificationField
-                id={`mbr-pre-kr-just-${kr.krId}`}
-                label={
-                  kr.state === 'not_started'
-                    ? 'Justifique por que este KR ainda não foi iniciado'
-                    : 'Justifique o desvio do KR'
-                }
-                hint={
-                  kr.state === 'not_started'
-                    ? 'Obrigatório — explique por que não começou e o plano de ação para destravar.'
-                    : 'Obrigatório — explique por que está fora da meta e o plano de ação.'
-                }
-                required
-                value={justification}
-                onChange={onJustificationChange}
-              />
-            </>
           )}
         </div>
 
-        {/* Footer actions (igual ao CollaboratorCheckinStep) */}
-        <div className="px-6 py-4 border-t bg-background">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={isFirst ? onBack : onPrev}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              {isFirst ? 'Voltar' : 'Anterior'}
-            </Button>
+        {/* BLOCO 1 — Contexto (reuso canônico) */}
+        <CheckinContextBlock kr={krData} />
 
-            <Button onClick={handlePrimary} disabled={!justOk} className="flex-1">
-              {isLast ? 'Concluir' : 'Próximo'}
-              {!isLast && <ArrowRight className="h-4 w-4 ml-2" />}
-            </Button>
-          </div>
+        <Separator />
 
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            {justOk ? (
-              <>
-                Atalho: <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl</kbd> +{' '}
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> para avançar
-              </>
-            ) : (
-              <>Justificativa obrigatória para avançar.</>
-            )}
-          </p>
-        </div>
+        {/* BLOCO 2 — Progresso (read-only — sem input nem banner de KPI primária) */}
+        <CheckinProgressBlock
+          kr={krData}
+          currentValue={String(krData.current_value)}
+          status={ragStatus}
+          isAutomatic={false}
+          onValueChange={() => { /* noop — readOnly */ }}
+          readOnly
+        />
+
+        {needsJustification && (
+          <>
+            <Separator />
+            <JustificationField
+              id={`mbr-pre-kr-just-${kr.krId}`}
+              label={
+                kr.state === 'not_started'
+                  ? 'Justifique por que este KR ainda não foi iniciado'
+                  : 'Justifique o desvio do KR'
+              }
+              hint={
+                kr.state === 'not_started'
+                  ? 'Obrigatório — explique por que não começou e o plano de ação para destravar.'
+                  : 'Obrigatório — explique por que está fora da meta e o plano de ação.'
+              }
+              required
+              value={justification}
+              onChange={onJustificationChange}
+            />
+          </>
+        )}
       </div>
     </WizardStepScaffold>
   );
