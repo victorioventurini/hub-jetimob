@@ -237,6 +237,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             lifecycle_status: kpi.lifecycle_status as KpiLifecycleStatus,
             recovery_protocol: kpi.recovery_protocol,
             team_id: kpi.team_id,
+            responsible_team_id: kpi.responsible_team_id ?? null,
             area_id: kpi.area_id,
             owner_user_id: kpi.owner_user_id,
             scope: kpi.scope as KpiScope,
@@ -268,8 +269,10 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
 
         const kpisToUpdate = kpisOwnedOrContributed.filter(k => k.needs_update);
         
-        const kpisTeamContext = allEnriched.filter(k => 
-          k.team_id === teamId && 
+        const kpisTeamContext = allEnriched.filter(k =>
+          // v3.31.0: inclui KPIs de área/org cujo time responde operacionalmente
+          // (responsible_team_id), além dos próprios KPIs do time (team_id).
+          (k.team_id === teamId || k.responsible_team_id === teamId) &&
           !kpisToUpdate.some(u => u.id === k.id) &&
           !k.isStrategic
         );
