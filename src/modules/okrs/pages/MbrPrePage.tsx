@@ -124,13 +124,8 @@ export default function MbrPrePage() {
   const teamIdParam = searchParams.get('team');
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
-  const queryClient = useQueryClient();
-  const { profile } = useAuth();
-  const { addKpiValue } = useKpiData();
 
-  // ── Estado local do modo paginado de KPIs (Pré-MBR) ──
-  const [kpiPageIndex, setKpiPageIndex] = useState(0);
-  const [kpiUpdatedInSession, setKpiUpdatedInSession] = useState<Record<string, boolean>>({});
+
 
   // Teams for admin context switching
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
