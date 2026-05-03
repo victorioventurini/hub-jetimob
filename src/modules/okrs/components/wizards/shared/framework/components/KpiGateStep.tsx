@@ -127,7 +127,7 @@ export type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optio
  * Quando esses KPIs estão em alerta, o líder do time deve apresentar plano
  * de ação — equiparando-os aos KPIs estratégicos em `critical`/`attention`.
  */
-function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
+export function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
   // Regras canônicas (SSOT mem://features/kpis/kpis-master-standard §4):
   // - bucket MANDATORY → sempre obrigatório
   // - teamContext red → obrigatório; amber → opcional
