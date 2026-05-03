@@ -364,32 +364,11 @@ export default function MbrPrePage() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!refBounds) return [];
-      // MBR-Pre lista APENAS KPIs sob responsabilidade do time:
-      // owner_user_id é o líder do time OU um membro do time (independente do scope).
-      // Métricas (indicator_type='metric') são intencionalmente excluídas.
-      const { data: teamRow } = await buSupabase
-        .from('teams')
-        .select('leader_user_id')
-        .eq('id', teamIdParam)
-        .maybeSingle();
-      const leaderId = teamRow?.leader_user_id ?? null;
-
-      const { data: memberships } = await buSupabase
-        .from('user_team_memberships')
-        .select('user_id')
-        .eq('team_id', teamIdParam);
-      const memberIds = (memberships ?? []).map((m: any) => m.user_id as string);
-
-      const ownerIds = Array.from(new Set([
-        ...(leaderId ? [leaderId] : []),
-        ...memberIds,
-      ]));
-
-      if (ownerIds.length === 0) return [];
-
       // MBR-Pré (decisão de produto): listar APENAS KPIs scope='org' (Global) e
-      // scope='area' que estejam sob responsabilidade do time (owner = líder ou
-      // membro). KPIs scope='team' são intencionalmente excluídos deste rito.
+      // scope='area' cujo TIME RESPONSÁVEL (responsible_team_id) seja o time do rito.
+      // Critério canônico: "Time Responsável" do cadastro do KPI — independe de
+      // owner_user_id (responsável individual) ou de membership. KPIs scope='team'
+      // são intencionalmente excluídos deste rito. Métricas também.
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
         .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
@@ -397,7 +376,7 @@ export default function MbrPrePage() {
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
         .in('scope', ['org', 'area'])
-        .in('owner_user_id', ownerIds);
+        .eq('responsible_team_id', teamIdParam);
 
       if (error) throw error;
       if (!kpis || kpis.length === 0) return [];
