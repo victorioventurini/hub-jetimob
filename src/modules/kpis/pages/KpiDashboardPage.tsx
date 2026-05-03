@@ -11,7 +11,7 @@ import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKpiData, useKpiKrLinks } from "@/modules/kpis/hooks";
 import { useAreas } from "@/modules/areas/hooks";
-import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
+import { KpiDashboardFilters, type KpiNeedsUpdateFilter } from "../components/KpiDashboardFilters";
 import { KpiAreaSection } from "../components/KpiAreaSection";
 import { KpiDashboardTable } from "../components/KpiDashboardTable";
 import { KpiViewToggle, type KpiViewMode } from "../components/KpiViewToggle";
@@ -104,6 +104,14 @@ export default function KpiDashboardPage() {
     parse: (v) => (v === '1' ? '1' : '0'),
   });
   const missingResponsibleOnly = missingResponsibleState.value === '1';
+
+  // v3.x — Filtro "Atualização" (Regra A overdue + Regra B consolidação pendente)
+  const needsUpdateState = useUrlState<KpiNeedsUpdateFilter>({
+    key: 'needs_update',
+    defaultValue: 'all',
+    parse: (v) => (['any', 'overdue', 'pending'].includes(v) ? (v as KpiNeedsUpdateFilter) : 'all'),
+  });
+  const needsUpdateFilter = needsUpdateState.value;
   
   // v2.87.0: Text search with URL sync
   const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
@@ -226,8 +234,17 @@ export default function KpiDashboardPage() {
       );
     }
 
+    // v3.x — Filtro "Atualização" (Regra A overdue + Regra B consolidação pendente)
+    if (needsUpdateFilter !== 'all') {
+      result = result.filter((kpi) => {
+        if (needsUpdateFilter === 'overdue') return !!kpi.update_overdue;
+        if (needsUpdateFilter === 'pending') return !!kpi.consolidation_pending;
+        return !!kpi.needs_update; // 'any'
+      });
+    }
+
     return result;
-  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly, missingResponsibleOnly]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly, missingResponsibleOnly, needsUpdateFilter]);
 
   // v3.0.0: Count of KPIs pending migration review (uses unfiltered base)
   const pendingReviewCount = useMemo(
@@ -383,6 +400,7 @@ export default function KpiDashboardPage() {
             ragStatus={ragStatusFilter}
             krLinkStatus={krLinkStatusFilter}
             ownerId={ownerFilter}
+            needsUpdate={needsUpdateFilter}
             onCategoryChange={() => {}} // No-op, category deprecated
             onTeamChange={setTeamFilter}
             onAreaChange={setAreaFilter}
@@ -391,6 +409,7 @@ export default function KpiDashboardPage() {
             onRagStatusChange={setRagStatusFilter}
             onKrLinkStatusChange={setKrLinkStatusFilter}
             onOwnerChange={setOwnerFilter}
+            onNeedsUpdateChange={needsUpdateState.set}
           />
         </ListPageFilters>
 

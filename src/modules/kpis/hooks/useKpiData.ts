@@ -5,7 +5,11 @@ import { KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, Kp
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
-import { valueFrequencyToLegacy } from "../utils/frequency";
+import {
+  valueFrequencyToLegacy,
+  isKpiUpdateOverdue,
+  getMissingConsolidationPeriods,
+} from "../utils/frequency";
 
 // Helper to normalize source types
 function mapSource(source: string): KpiValueSource {
@@ -167,7 +171,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         .from("kpi_values")
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, rag_status
+          period_start, period_end, period_label, rag_status, input_type
         `)
         .in(
           "kpi_id",
@@ -211,6 +215,21 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       rag_status: v.rag_status as KpiValue['rag_status'],
     }));
 
+    // v3.x — flags derivadas de "precisa de atualização" (SSOT em utils/frequency)
+    const updateOverdue = isKpiUpdateOverdue(
+      kpi.update_frequency ?? null,
+      lastValue?.reference_date ?? null,
+    );
+    const consolidatedLabels = mappedValues
+      .filter((v) => v.input_type === 'consolidated' && !!v.period_label)
+      .map((v) => v.period_label as string);
+    const missingPeriods = getMissingConsolidationPeriods(
+      kpi.consolidation_frequency ?? null,
+      consolidatedLabels,
+      { kpiCreatedAt: new Date(kpi.created_at) },
+    );
+    const consolidationPending = missingPeriods.length > 0;
+
     return {
       id: kpi.id,
       name: kpi.name,
@@ -244,6 +263,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       // v2.90.0: operational responsibility
       responsible_area_id: kpi.responsible_area_id ?? null,
       responsible_team_id: kpi.responsible_team_id ?? null,
+      // v3.0.0 frequency split (necessário para flags derivadas no consumidor)
+      consolidation_frequency: kpi.consolidation_frequency ?? null,
+      update_frequency: kpi.update_frequency ?? null,
       owner: kpi.owner,
       team: kpi.team,
       area: kpi.area,
@@ -258,6 +280,11 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       last_update_source: lastValue ? mapSource(lastValue.source) : null,
       last_updated_by: lastValue?.created_by ?? null,
       last_updated_by_user: null,
+      // v3.x — flags de "precisa de atualização"
+      needs_update: updateOverdue || consolidationPending,
+      update_overdue: updateOverdue,
+      consolidation_pending: consolidationPending,
+      missing_consolidation_count: missingPeriods.length,
     };
   });
 

@@ -15,6 +15,16 @@ import { Link2 } from "lucide-react";
  * - v2.89.0: Adicionado filtro de Vínculo com KRs
  */
 
+/** v3.x — Modos do filtro "Atualização" */
+export type KpiNeedsUpdateFilter = 'all' | 'any' | 'overdue' | 'pending';
+
+export const NEEDS_UPDATE_LABELS: Record<KpiNeedsUpdateFilter, string> = {
+  all: 'Todos',
+  any: 'Precisa de atualização',
+  overdue: 'Atualização atrasada',
+  pending: 'Consolidação pendente',
+};
+
 interface KpiDashboardFiltersProps {
   /** @deprecated v2.82.0 - Use areaId */
   category: KpiCategory | "all";
@@ -25,6 +35,8 @@ interface KpiDashboardFiltersProps {
   ragStatus?: KpiRagStatus | "all";
   krLinkStatus?: KpiKrLinkStatus | "all";
   ownerId?: string | "all";
+  /** v3.x — filtro "Atualização" */
+  needsUpdate?: KpiNeedsUpdateFilter;
   /** @deprecated v2.82.0 - Category filter is no longer used */
   onCategoryChange: (category: KpiCategory | "all") => void;
   onTeamChange: (teamId: string | "all") => void;
@@ -34,6 +46,7 @@ interface KpiDashboardFiltersProps {
   onRagStatusChange?: (status: KpiRagStatus | "all") => void;
   onKrLinkStatusChange?: (status: KpiKrLinkStatus | "all") => void;
   onOwnerChange?: (ownerId: string | "all") => void;
+  onNeedsUpdateChange?: (value: KpiNeedsUpdateFilter) => void;
 }
 
 export function KpiDashboardFilters({
@@ -44,6 +57,7 @@ export function KpiDashboardFilters({
   ragStatus = "all",
   krLinkStatus = "all",
   ownerId = "all",
+  needsUpdate = "all",
   onTeamChange,
   onAreaChange,
   onScopeChange,
@@ -51,6 +65,7 @@ export function KpiDashboardFilters({
   onRagStatusChange,
   onKrLinkStatusChange,
   onOwnerChange,
+  onNeedsUpdateChange,
 }: KpiDashboardFiltersProps) {
   const { currentBu } = useBu();
   const scopeLabels = getScopeLabels(currentBu?.name);
@@ -152,6 +167,25 @@ export function KpiDashboardFilters({
           noneLabel="Todos os responsáveis"
           className="w-full sm:w-[200px]"
         />
+      )}
+
+      {/* v3.x — Atualização (Regra A overdue + Regra B consolidação pendente) */}
+      {onNeedsUpdateChange && (
+        <Select
+          value={needsUpdate}
+          onValueChange={(value) => onNeedsUpdateChange(value as KpiNeedsUpdateFilter)}
+        >
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Atualização" />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(NEEDS_UPDATE_LABELS) as KpiNeedsUpdateFilter[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                {NEEDS_UPDATE_LABELS[key]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
 
 

@@ -28,7 +28,7 @@ import type {
   KpiDisplayMode,
   KpiAlertReason,
 } from "../types";
-import { FREQUENCY_DAYS } from "../utils/frequency";
+import { isKpiUpdateOverdue } from "../utils/frequency";
 
 // ============================================================
 // Hook
@@ -183,7 +183,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             (kpi.consolidation_frequency as KpiFrequencyValue | null | undefined) ?? null;
           const updateFreq =
             (kpi.update_frequency as KpiFrequencyValue | null | undefined) ?? null;
-          const needsUpdate = checkNeedsUpdate(updateFreq, latest?.reference_date);
+          const needsUpdate = isKpiUpdateOverdue(updateFreq, latest?.reference_date);
           const ragStatus = (latest?.rag_status as KpiRagStatus) ?? 'no_data';
 
           // Pré-calculo de desvio percentual (latest vs target).
@@ -336,24 +336,6 @@ function emptyResult() {
   };
 }
 
-/**
- * Check if KPI needs update based on update_frequency.
- *
- * v3.0.0: usa `update_frequency` (cadência de atualização) em vez de
- * `frequency` legado. KPIs sem `update_frequency` (ex-`manual` não revisados)
- * ficam fora do bucket `kpisToUpdate` retornando `false`.
- */
-function checkNeedsUpdate(
-  updateFrequency: KpiFrequencyValue | null,
-  lastDate: string | null | undefined,
-): boolean {
-  // Sem update_frequency definida → KPI não entra no fluxo de cobrança.
-  if (!updateFrequency) return false;
-  // Sem valor lançado → precisa update.
-  if (!lastDate) return true;
-
-  const last = new Date(lastDate);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
-  return diffDays >= FREQUENCY_DAYS[updateFrequency];
-}
+// Cadência de "precisa atualizar" agora consome o SSOT
+// `isKpiUpdateOverdue` em `../utils/frequency`. Mantemos este arquivo enxuto
+// para evitar duplicação de regras (ver KPI_FREQUENCY_SUNSET_PLAN.md).

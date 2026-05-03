@@ -15,7 +15,7 @@ import type {
   KpiLifecycleStatus,
   KpiDirection 
 } from "../types";
-import { FREQUENCY_DAYS } from "../utils/frequency";
+import { isKpiUpdateOverdue } from "../utils/frequency";
 
 // ============================================================
 // Types
@@ -139,7 +139,7 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
             latest_reference_date: latest?.reference_date ?? null,
             latest_rag_status: (latest?.rag_status as KpiRagStatus) ?? 'no_data',
             latest_period_label: latest?.period_label ?? null,
-            needs_update: needsUpdate(updateFreq, latest?.reference_date),
+            needs_update: isKpiUpdateOverdue(updateFreq, latest?.reference_date),
           };
         });
         
@@ -169,18 +169,6 @@ export function useKpisForWizard(options: UseKpisForWizardOptions = {}): UseKpis
 // ============================================================
 // Helpers
 // ============================================================
-
-/**
- * Check if KPI needs update based on update_frequency.
- * v3.0.0: usa update_frequency (cadência de input) — semântica correta de gate.
- */
-function needsUpdate(updateFrequency: KpiFrequencyValue | null, lastDate: string | null | undefined): boolean {
-  if (!updateFrequency) return false;
-  if (!lastDate) return true;
-
-  const last = new Date(lastDate);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
-
-  return diffDays >= FREQUENCY_DAYS[updateFrequency];
-}
+//
+// Regra "precisa atualizar" agora vive no SSOT
+// `isKpiUpdateOverdue` em `../utils/frequency`. Não duplique aqui.

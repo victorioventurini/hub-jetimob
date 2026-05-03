@@ -162,6 +162,15 @@ export interface KpiWithValues extends KpiMetric {
     photo_url: string | null;
   } | null;
   last_update_failed?: boolean;
+  // v3.x — flags derivadas de "precisa de atualização" (calculadas em useKpiData)
+  /** Combinação: update_overdue || consolidation_pending. */
+  needs_update?: boolean;
+  /** Regra A — input atrasado em relação a `update_frequency`. */
+  update_overdue?: boolean;
+  /** Regra B — algum período de `consolidation_frequency` fechado sem valor `consolidated`. */
+  consolidation_pending?: boolean;
+  /** Quantidade de períodos de consolidação fechados sem valor `consolidated`. */
+  missing_consolidation_count?: number;
 }
 
 export const CATEGORY_LABELS: Record<KpiCategory, string> = {
