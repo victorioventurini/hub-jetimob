@@ -7,7 +7,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Target, BarChart3, AlertTriangle, Compass } from 'lucide-react';
+import { Target, BarChart3, AlertTriangle, Compass, MessageSquareQuote } from 'lucide-react';
 import { ReportSection, RagBadge, formatValue } from './shared';
 import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { cn } from '@/lib/utils';
@@ -31,13 +31,18 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
   const nextSteps = data.nextSteps || {};
   const prioritizedItems = Array.isArray(nextSteps.prioritizedItems) ? nextSteps.prioritizedItems : [];
   const crossDependencies = Array.isArray(nextSteps.crossDependencies) ? nextSteps.crossDependencies : [];
+  const krJustifications: Record<string, string> = (data.krJustifications && typeof data.krJustifications === 'object')
+    ? data.krJustifications
+    : {};
+  const krJustEntries = Object.entries(krJustifications).filter(([, v]) => typeof v === 'string' && v.trim().length > 0);
 
   const krIds: string[] = krFinalStates.map((kr: any) => kr?.krId).filter(Boolean);
   const kpiIds: string[] = kpiSnapshots.map((kpi: any) => kpi?.kpiId).filter(Boolean);
+  const allKrIds = Array.from(new Set([...krIds, ...krJustEntries.map(([id]) => id)]));
 
   const lookups = useEntityLookup({
-    teamKrIds: krIds,
-    orgKrIds: krIds,
+    teamKrIds: allKrIds,
+    orgKrIds: allKrIds,
     kpiIds,
   });
 
@@ -107,6 +112,29 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
               ))}
             </TableBody>
           </Table>
+        </ReportSection>
+      )}
+
+      {/* KR Justifications (Onda 4 — snapshots novos) */}
+      {krJustEntries.length > 0 && (
+        <ReportSection
+          title={`Justificativas de KRs (${krJustEntries.length})`}
+          icon={<MessageSquareQuote className="h-4 w-4" />}
+        >
+          <div className="space-y-2">
+            {krJustEntries.map(([krId, text]) => {
+              const name =
+                lookups.teamKrs.get(krId)?.name ??
+                lookups.orgKrs.get(krId)?.name ??
+                '(KR removido)';
+              return (
+                <div key={krId} className="rounded-md border bg-muted/30 px-3 py-2 space-y-1">
+                  <p className="text-xs font-medium">{name}</p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{text}</p>
+                </div>
+              );
+            })}
+          </div>
         </ReportSection>
       )}
 

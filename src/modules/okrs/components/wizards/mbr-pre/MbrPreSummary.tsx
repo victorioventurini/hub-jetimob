@@ -24,6 +24,7 @@ import {
   Activity,
   FolderKanban,
   MessageSquareQuote,
+  Target,
 } from 'lucide-react';
 import {
   WizardStepHeader,
@@ -35,6 +36,7 @@ import {
   InlineStringListEditor,
 } from '../shared';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
+import { useEntityLookup } from '@/modules/okrs/hooks/useEntityLookup';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
@@ -75,7 +77,7 @@ export function MbrPreSummary({
   onNextStepsChange,
   onDecisionsChange,
 }: MbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications } = draftData;
+  const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications, krJustifications } = draftData;
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
   // Resolve nomes de projetos/milestones (BU-scoped, cache compartilhado com Step 3)
@@ -97,9 +99,25 @@ export function MbrPreSummary({
     .filter(([, v]) => v && v.trim().length > 0);
   const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
+  const krJustList = Object.entries(krJustifications ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+
+  // Resolução de nomes de KR via lookup canônico (Onda 4)
+  const krIdsForLookup = krJustList.map(([id]) => id);
+  const krLookups = useEntityLookup({
+    teamKrIds: krIdsForLookup,
+    orgKrIds: krIdsForLookup,
+  });
+  const resolveKrName = (id: string) =>
+    krLookups.teamKrs.get(id)?.name ??
+    krLookups.orgKrs.get(id)?.name ??
+    '(KR removido)';
 
   const hasJustifications =
-    kpiJustList.length > 0 || projectJustList.length > 0 || milestoneJustList.length > 0;
+    kpiJustList.length > 0 ||
+    projectJustList.length > 0 ||
+    milestoneJustList.length > 0 ||
+    krJustList.length > 0;
 
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
@@ -141,7 +159,7 @@ export function MbrPreSummary({
                 <MessageSquareQuote className="h-4 w-4" />
                 Justificativas registradas
                 <Badge variant="secondary" className="ml-1 text-[10px]">
-                  {kpiJustList.length + projectJustList.length + milestoneJustList.length}
+                  {kpiJustList.length + projectJustList.length + milestoneJustList.length + krJustList.length}
                 </Badge>
               </CardTitle>
               <p className="text-xs text-muted-foreground">
@@ -211,6 +229,30 @@ export function MbrPreSummary({
                       >
                         <p className="text-xs font-medium">
                           {milestoneNameById.get(milestoneId) ?? '(marco removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {krJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <Target className="h-3.5 w-3.5 text-status-red" />
+                    KRs fora da meta ({krJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {krJustList.map(([krId, text]) => (
+                      <li
+                        key={krId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {resolveKrName(krId)}
                         </p>
                         <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                           {text}

@@ -48,6 +48,7 @@ import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/Qb
 // MBR-Pre specific steps
 import { MbrPreOpeningStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep';
 import { MbrPreProjectsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreProjectsStep';
+import { MbrPreKrAnalysisStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreKrAnalysisStep';
 import { MbrPreHighlightsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep';
 import { MbrPreNextStepsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep';
 import { MbrPreSummary } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreSummary';
@@ -71,12 +72,13 @@ const WIZARD_STEPS = [
   { id: 'opening' as const, label: 'Abertura', description: 'Resumo do mês do time' },
   { id: 'kpi-analysis' as const, label: 'Indicadores do Time', description: 'KPIs e justificativas' },
   { id: 'projects' as const, label: 'Projetos', description: 'Reflexão sobre atrasos' },
+  { id: 'krs' as const, label: 'KRs do Time', description: 'Resultados-chave e justificativas' },
   { id: 'highlights' as const, label: 'Destaques e Riscos', description: 'O que acelerou e o que travou' },
   { id: 'next-steps' as const, label: 'Próximos Passos', description: 'Foco e prioridades' },
   { id: 'summary' as const, label: 'Resumo e Envio', description: 'Revisão final' },
 ];
 
-const STEP_ORDER: MbrPreStep[] = ['opening', 'kpi-analysis', 'projects', 'highlights', 'next-steps', 'summary'];
+const STEP_ORDER: MbrPreStep[] = ['opening', 'kpi-analysis', 'projects', 'krs', 'highlights', 'next-steps', 'summary'];
 
 const DEFAULT_DATA: MbrPreDraftData = {
   cycleId: '',
@@ -92,6 +94,7 @@ const DEFAULT_DATA: MbrPreDraftData = {
   decisions: [],
   kpiJustifications: {},
   projectJustifications: { projects: {}, milestones: {} },
+  krJustifications: {},
   agendaSuggestions: [],
 };
 
@@ -658,6 +661,24 @@ export default function MbrPrePage() {
                     ...draft.data.projectJustifications.milestones,
                     [milestoneId]: value,
                   },
+                },
+              })
+            }
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
+      case 'krs':
+        return (
+          <MbrPreKrAnalysisStep
+            krFinalStates={draft.data.krFinalStates}
+            krJustifications={draft.data.krJustifications ?? {}}
+            onKrJustificationChange={(krId, value) =>
+              updateDraft({
+                krJustifications: {
+                  ...(draft.data.krJustifications ?? {}),
+                  [krId]: value,
                 },
               })
             }
