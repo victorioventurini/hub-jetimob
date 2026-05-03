@@ -364,19 +364,26 @@ export default function MbrPrePage() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!refBounds) return [];
-      // MBR-Pré (decisão de produto): listar APENAS KPIs scope='org' (Global) e
-      // scope='area' cujo TIME RESPONSÁVEL (responsible_team_id) seja o time do rito.
-      // Critério canônico: "Time Responsável" do cadastro do KPI — independe de
-      // owner_user_id (responsável individual) ou de membership. KPIs scope='team'
-      // são intencionalmente excluídos deste rito. Métricas também.
-      const { data: kpis, error } = await buSupabase
+      // MBR-Pré (decisão de produto): KPIs sob responsabilidade do time =
+      //   - TODOS scope='org' (Global) — o time da área é corresponsável
+      //   - scope='area' onde area_id = área do time OU responsible_team_id = time
+      // Lifecycle: inclui 'active' e 'proposed' (KPIs propostos ainda são
+      // responsabilidade do time e devem aparecer no rito de revisão).
+      // KPIs scope='team' e métricas (indicator_type<>'kpi') são excluídos.
+      const teamAreaId = selectedTeam?.area_id ?? null;
+      let query = buSupabase
         .from('kpi_metrics')
         .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
-        .eq('lifecycle_status', 'active')
+        .in('lifecycle_status', ['active', 'proposed'])
         .eq('indicator_type', 'kpi')
-        .is('deleted_at', null)
-        .in('scope', ['org', 'area'])
-        .eq('responsible_team_id', teamIdParam);
+        .is('deleted_at', null);
+
+      // org: todos / area: por area_id do time OU responsible_team_id = time
+      const orParts = [`scope.eq.org`, `and(scope.eq.area,responsible_team_id.eq.${teamIdParam})`];
+      if (teamAreaId) orParts.push(`and(scope.eq.area,area_id.eq.${teamAreaId})`);
+      query = query.or(orParts.join(','));
+
+      const { data: kpis, error } = await query;
 
       if (error) throw error;
       if (!kpis || kpis.length === 0) return [];
