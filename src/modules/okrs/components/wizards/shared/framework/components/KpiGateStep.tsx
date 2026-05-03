@@ -51,14 +51,21 @@ export interface KpiGateStepProps {
   buckets?: KpiGateBucket[];
   /**
    * v3.30.0 (rich) — mapa kpiId → texto da justificativa/plano do líder.
-   * Apenas usado quando `config.cardVariant === 'rich'`.
+   * Apenas usado quando `config.cardVariant === 'rich' | 'rich-paginated'`.
    */
   justifications?: Record<string, string>;
   /**
    * v3.30.0 (rich) — callback de mudança da justificativa de um KPI.
-   * Apenas usado quando `config.cardVariant === 'rich'`.
+   * Apenas usado quando `config.cardVariant === 'rich' | 'rich-paginated'`.
    */
   onJustificationChange?: (kpiId: string, value: string) => void;
+  /**
+   * v3.31.0 (rich-paginated) — índice do KPI atualmente visível
+   * (controlado pelo container, mesmo padrão do `MbrPreKrAnalysisStep`).
+   */
+  currentKpiIndex?: number;
+  /** v3.31.0 (rich-paginated) — callback ao mudar de KPI via Anterior/Próximo. */
+  onKpiIndexChange?: (next: number) => void;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
