@@ -15,7 +15,7 @@
  *      guardrailViolated) precisam de plano não vazio para "Próximo".
  */
 
-import { useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
 import {
