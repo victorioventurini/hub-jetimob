@@ -301,7 +301,9 @@ export function QbrKpiAnalysisStep({
             <h4 className="text-sm font-medium text-status-green">
               KPIs na meta ({healthyKpis.length})
             </h4>
-            {healthyKpis.map((kpi) => renderKpiCard(kpi, { tone: 'healthy' }))}
+            {healthyKpis.map((kpi) => (
+              <KpiAnalysisCard key={kpi.kpiId} kpi={kpi} buName={currentBu?.name} tone="healthy" />
+            ))}
           </div>
         )}
 
