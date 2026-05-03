@@ -228,12 +228,15 @@ export function MbrPreOpeningStep({
   teamName,
   effectiveUserId = null,
   isLoading,
+  referenceMonth: referenceMonthProp,
+  onReferenceMonthChange,
   krFinalStates,
   kpiSnapshots,
   monthAnalysis,
   onMonthAnalysisChange,
   onContinue,
 }: MbrPreOpeningStepProps) {
+  const referenceMonth = referenceMonthProp || defaultReferenceMonth();
   const greeting = useRitualGreetingContext({
     ritualSlug: 'mbr-pre',
     effectiveUserId,
@@ -289,7 +292,7 @@ export function MbrPreOpeningStep({
     return items;
   }, [projects, overdueProjectIds, overdueMilestoneIds]);
 
-  const referenceMonth = currentReferenceMonth();
+  // referenceMonth agora vem da prop (default = mês imediatamente anterior).
 
   const handleGenerate = useCallback(async () => {
     if (!teamName) {
