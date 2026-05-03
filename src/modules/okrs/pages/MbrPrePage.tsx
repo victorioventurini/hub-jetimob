@@ -644,61 +644,14 @@ export default function MbrPrePage() {
 
       case 'kpi-analysis':
         return (
-          <QbrKpiAnalysisStep
+          <MbrPreKpiGateStep
+            teamId={teamIdParam}
             kpiSnapshots={draft.data.kpiSnapshots}
+            onKpiSnapshotsChange={(kpiSnapshots) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
-            agendaSuggestions={draft.data.agendaSuggestions ?? []}
-            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
-            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
-            agendaCategoryless
-            requireJustifications
-            paginated
-            currentKpiIndex={kpiPageIndex}
-            onKpiIndexChange={setKpiPageIndex}
-            kpiJustifications={draft.data.kpiJustifications}
-            onKpiJustificationChange={(kpiId, value) =>
-              updateDraft({
-                kpiJustifications: { ...draft.data.kpiJustifications, [kpiId]: value },
-              })
-            }
-            kpiNoDataReasons={draft.data.kpiNoDataReasons ?? {}}
-            onKpiNoDataReasonChange={(kpiId, value) =>
-              updateDraft({
-                kpiNoDataReasons: { ...(draft.data.kpiNoDataReasons ?? {}), [kpiId]: value },
-              })
-            }
-            kpiUpdatedInSession={kpiUpdatedInSession}
-            onKpiValueSubmit={async (kpiId, values) => {
-              await addKpiValue.mutateAsync({
-                kpi_id: kpiId,
-                value: values.value,
-                reference_date: values.reference_date,
-                notes: values.notes || undefined,
-                created_by: profile?.id,
-                source: 'manual',
-                input_type: values.input_type,
-              });
-              setKpiUpdatedInSession((prev) => ({ ...prev, [kpiId]: true }));
-              updateDraft({
-                kpiOutdatedUpdates: {
-                  ...(draft.data.kpiOutdatedUpdates ?? {}),
-                  [kpiId]: {
-                    newValue: values.value,
-                    referenceDate: values.reference_date,
-                    inputType: values.input_type,
-                    notes: values.notes,
-                    submittedAt: new Date().toISOString(),
-                  },
-                },
-              });
-              // Refetch snapshots para refletir o novo valor.
-              queryClient.invalidateQueries({
-                queryKey: mbrKeys.preTeamKpis(teamIdParam, currentBuId),
-              });
-            }}
           />
         );
 
