@@ -669,6 +669,24 @@ export default function MbrPrePage() {
           />
         );
 
+      case 'krs':
+        return (
+          <MbrPreKrAnalysisStep
+            krFinalStates={draft.data.krFinalStates}
+            krJustifications={draft.data.krJustifications ?? {}}
+            onKrJustificationChange={(krId, value) =>
+              updateDraft({
+                krJustifications: {
+                  ...(draft.data.krJustifications ?? {}),
+                  [krId]: value,
+                },
+              })
+            }
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
       case 'highlights':
         return (
           <MbrPreHighlightsStep
