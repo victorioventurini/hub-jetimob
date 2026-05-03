@@ -234,8 +234,17 @@ export default function KpiDashboardPage() {
       );
     }
 
+    // v3.x — Filtro "Atualização" (Regra A overdue + Regra B consolidação pendente)
+    if (needsUpdateFilter !== 'all') {
+      result = result.filter((kpi) => {
+        if (needsUpdateFilter === 'overdue') return !!kpi.update_overdue;
+        if (needsUpdateFilter === 'pending') return !!kpi.consolidation_pending;
+        return !!kpi.needs_update; // 'any'
+      });
+    }
+
     return result;
-  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly, missingResponsibleOnly]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly, missingResponsibleOnly, needsUpdateFilter]);
 
   // v3.0.0: Count of KPIs pending migration review (uses unfiltered base)
   const pendingReviewCount = useMemo(
