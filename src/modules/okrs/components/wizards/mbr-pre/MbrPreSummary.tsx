@@ -79,7 +79,7 @@ export function MbrPreSummary({
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
   // Resolve nomes de projetos/milestones (BU-scoped, cache compartilhado com Step 3)
-  const { projects: teamProjects } = useMbrPreTeamProjects(teamId ?? null);
+  const { projects: teamProjects } = useMbrPreTeamProjects(teamId ?? null, draftData.referenceMonth);
 
   const projectNameById = new Map<string, string>();
   const milestoneNameById = new Map<string, string>();
