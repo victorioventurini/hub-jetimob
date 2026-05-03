@@ -95,6 +95,14 @@ export default function KpiDashboardPage() {
     parse: (v) => (v === '1' ? '1' : '0'),
   });
   const needsReviewOnly = needsReviewState.value === '1';
+
+  // Governança: KPIs de Área/Global sem Time Responsável
+  const missingResponsibleState = useUrlState<"0" | "1">({
+    key: 'missing_responsible',
+    defaultValue: '0',
+    parse: (v) => (v === '1' ? '1' : '0'),
+  });
+  const missingResponsibleOnly = missingResponsibleState.value === '1';
   
   // v2.87.0: Text search with URL sync
   const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
@@ -207,12 +215,26 @@ export default function KpiDashboardPage() {
       result = result.filter((kpi) => kpi.frequency_migration_reviewed === false);
     }
 
+    // Governança: KPIs Área/Global sem Time Responsável
+    if (missingResponsibleOnly) {
+      result = result.filter(
+        (kpi) => (kpi.scope === 'area' || kpi.scope === 'org') && !kpi.responsible_team_id,
+      );
+    }
+
     return result;
-  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly]);
+  }, [allKpis, searchValue, ragStatusFilter, krLinkStatusFilter, krLinks, needsReviewOnly, missingResponsibleOnly]);
 
   // v3.0.0: Count of KPIs pending migration review (uses unfiltered base)
   const pendingReviewCount = useMemo(
     () => allKpis.filter((k) => k.frequency_migration_reviewed === false).length,
+    [allKpis],
+  );
+  const missingResponsibleCount = useMemo(
+    () =>
+      allKpis.filter(
+        (k) => (k.scope === 'area' || k.scope === 'org') && !k.responsible_team_id,
+      ).length,
     [allKpis],
   );
   const canManageKpis = hasPermission("kpis.settings.manage:bu");
@@ -303,6 +325,31 @@ export default function KpiDashboardPage() {
               Mostrando apenas indicadores pendentes de revisão de frequência.
             </span>
             <Button size="sm" variant="ghost" onClick={() => needsReviewState.set('0')}>
+              Limpar filtro
+            </Button>
+          </div>
+        )}
+
+        {/* Governança: KPIs de Área/Global sem Time Responsável */}
+        {canManageKpis && missingResponsibleCount > 0 && !missingResponsibleOnly && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+            <span className="text-foreground">
+              <strong>{missingResponsibleCount}</strong>{' '}
+              {missingResponsibleCount === 1
+                ? 'indicador de Área/Global sem Time Responsável.'
+                : 'indicadores de Área/Globais sem Time Responsável.'}
+            </span>
+            <Button size="sm" variant="outline" onClick={() => missingResponsibleState.set('1')}>
+              Revisar
+            </Button>
+          </div>
+        )}
+        {missingResponsibleOnly && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              Mostrando apenas indicadores de Área/Globais sem Time Responsável.
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => missingResponsibleState.set('0')}>
               Limpar filtro
             </Button>
           </div>

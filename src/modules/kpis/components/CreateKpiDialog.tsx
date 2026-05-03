@@ -115,6 +115,13 @@ const formSchema = z.object({
       path: ["team_id"],
     });
   }
+  if ((data.scope === 'area' || data.scope === 'org') && !data.responsible_team_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Time Responsável é obrigatório para KPIs de Área e Globais",
+      path: ["responsible_team_id"],
+    });
+  }
   // Validação: se lifecycle_status='active', exigir owner
   if (data.lifecycle_status === 'active') {
     if (!data.owner_user_id) {
@@ -858,7 +865,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Time Responsável
+                          Time Responsável <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <TeamSelect
@@ -889,8 +896,8 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Time Responsável
-                      <HelpTooltip content="Qual time é o principal responsável por acompanhar este indicador?" />
+                      Time Responsável <span className="text-destructive">*</span>
+                      <HelpTooltip content="Time principal responsável por acompanhar este indicador da área." />
                     </FormLabel>
                     <FormControl>
                       <TeamSelect
@@ -901,7 +908,7 @@ export function CreateKpiDialog({ open, onOpenChange }: CreateKpiDialogProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      Recomendado para delegar o acompanhamento operacional a um time específico.
+                      Time accountable por acompanhar e agir nos desvios deste indicador.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
