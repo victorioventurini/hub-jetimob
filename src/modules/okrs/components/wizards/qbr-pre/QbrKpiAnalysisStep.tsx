@@ -5,7 +5,7 @@
  * (Funcionalidade "Zombie?" removida em 2026-04-28.)
  */
 
-import { useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
