@@ -139,7 +139,7 @@ export function MbrPreDataValidationStep({
       if (!open) {
         setActiveKpi(null);
         // Invalida wizardV2 para reclassificar pendências.
-        queryClient.invalidateQueries({ queryKey: kpisKeys.allForWizardV2() });
+        queryClient.invalidateQueries({ queryKey: ['kpis', 'wizard-v2'] });
       }
     },
     [queryClient],
@@ -173,7 +173,7 @@ export function MbrPreDataValidationStep({
             icon={ShieldCheck}
             title="Validação de Dados"
             description={`Atualize KPIs e check-ins do time${teamName ? ` ${teamName}` : ''} antes de iniciar o Pré-MBR de ${referenceMonth}.`}
-            variant="blue"
+            variant="primary"
           />
         }
         footer={
