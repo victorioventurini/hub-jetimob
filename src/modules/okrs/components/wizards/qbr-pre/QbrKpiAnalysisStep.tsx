@@ -235,6 +235,11 @@ export function QbrKpiAnalysisStep({
     ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
     : 0;
 
+  const handleJustificationChange = useCallback(
+    (kpiId: string, value: string) => onKpiJustificationChange?.(kpiId, value),
+    [onKpiJustificationChange],
+  );
+
   return (
     <WizardStepScaffold
       header={
