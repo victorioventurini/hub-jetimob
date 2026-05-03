@@ -135,7 +135,7 @@ export default function MbrPrePage() {
     wizardType: 'mbr-pre',
     teamId: teamIdParam,
     cycleId: activeCycle?.id || null,
-    defaultStep: 'balance',
+    defaultStep: 'opening',
     defaultData: DEFAULT_DATA,
     enabled: !!activeCycle && sessionState !== 'completed',
   });
