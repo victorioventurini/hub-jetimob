@@ -39,7 +39,9 @@ import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
 import {
   defaultReferenceMonth,
   formatMonthLabel,
+  formatMonthShort,
 } from '@/modules/okrs/utils/mbr/referenceMonth';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   useRitualGreetingContext,
   useMbrPreTeamProjects,
@@ -58,6 +60,8 @@ import type {
 export interface MbrPreOpeningStepProps {
   teamId: string | null | undefined;
   teamName?: string | null;
+  /** Display name do líder do time (sobrepõe `teamName` na saudação). */
+  leaderName?: string | null;
   effectiveUserId?: string | null;
   cycleId?: string | null;
   isLoading?: boolean;
@@ -226,6 +230,7 @@ function AnalysisList({ title, icon: Icon, items, toneClass }: AnalysisListProps
 export function MbrPreOpeningStep({
   teamId,
   teamName,
+  leaderName,
   effectiveUserId = null,
   isLoading,
   referenceMonth: referenceMonthProp,
@@ -237,6 +242,7 @@ export function MbrPreOpeningStep({
   onContinue,
 }: MbrPreOpeningStepProps) {
   const referenceMonth = referenceMonthProp || defaultReferenceMonth();
+  const { isWildcard: canChangeReferenceMonth } = usePermissions();
   const greeting = useRitualGreetingContext({
     ritualSlug: 'mbr-pre',
     effectiveUserId,
@@ -342,13 +348,20 @@ export function MbrPreOpeningStep({
         <RitualGreeting
           ritualSlug="mbr-pre"
           userName={teamName ?? null}
+          displayName={leaderName ?? teamName ?? null}
+          phraseVars={{
+            teamName: teamName ?? '',
+            monthShort: formatMonthShort(referenceMonth),
+          }}
           cycleName={greeting.cycleName}
           weekNumber={greeting.weekNumber}
           checkInOrdinal={greeting.checkInOrdinal}
+          monthLabel={greeting.monthLabel}
+          monthInQuarter={greeting.monthInQuarter}
         />
 
         {/* ─── Seletor do mês alvo ─── */}
-        {onReferenceMonthChange && (
+        {onReferenceMonthChange && canChangeReferenceMonth ? (
           <div className="flex items-center gap-3 flex-wrap">
             <label className="text-sm font-medium text-foreground">
               Analisando o mês de
@@ -362,6 +375,13 @@ export function MbrPreOpeningStep({
               Default: mês fechado anterior. Trocar regenera os dados.
             </span>
           </div>
+        ) : (
+          <p className="text-sm font-medium text-foreground">
+            Analisando o mês de{' '}
+            <span className="font-semibold capitalize">
+              {formatMonthLabel(referenceMonth)}
+            </span>
+          </p>
         )}
 
         {/* ─── 1. Resumo do mês (tiles) ─── */}
