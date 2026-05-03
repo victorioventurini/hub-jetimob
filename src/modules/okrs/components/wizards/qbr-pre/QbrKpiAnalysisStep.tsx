@@ -145,7 +145,7 @@ export function QbrKpiAnalysisStep({
                   {rag.label}
                 </Badge>
                 {kpi.areaName && (
-                  <AreaBadge area={{ id: kpi.areaId ?? '', name: kpi.areaName, color: kpi.areaColor ?? null }} />
+                  <AreaBadge area={{ name: kpi.areaName, color: kpi.areaColor ?? null }} />
                 )}
                 {kpi.teamName && (
                   <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
