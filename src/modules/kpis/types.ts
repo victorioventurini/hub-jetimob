@@ -407,7 +407,19 @@ export interface KpiForWizardV2 {
   latest_period_label: string | null;
   /** v3.0.0 — tipo do último input registrado. */
   latest_input_type: KpiInputType | null;
+  /**
+   * v3.32.0 — combinação canônica: `update_overdue || consolidation_pending`.
+   * Mantém compatibilidade com consumidores antigos que filtram por `needs_update`.
+   */
   needs_update: boolean;
+  /** Regra A — input atrasado em relação a `update_frequency`. */
+  update_overdue: boolean;
+  /** Regra B — existe ao menos um período de consolidação fechado sem valor `consolidated`. */
+  consolidation_pending: boolean;
+  /** Quantidade de períodos de consolidação fechados sem valor `consolidated`. */
+  missing_consolidation_count: number;
+  /** Data de criação do KPI (usada como lower-bound para Regra B). */
+  created_at?: string | null;
   /** v3.0.0 — desvio percentual já pré-calculado (latest vs target). */
   deviation_pct: number | null;
   // v2.83.0: Role-based classification

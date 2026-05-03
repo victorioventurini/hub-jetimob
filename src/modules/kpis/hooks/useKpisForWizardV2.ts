@@ -28,7 +28,10 @@ import type {
   KpiDisplayMode,
   KpiAlertReason,
 } from "../types";
-import { isKpiUpdateOverdue } from "../utils/frequency";
+import {
+  isKpiUpdateOverdue,
+  getMissingConsolidationPeriods,
+} from "../utils/frequency";
 
 // ============================================================
 // Hook
@@ -97,7 +100,7 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             id, name, unit, target_value, direction, indicator_type,
             consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id,
-            area_id, scope, responsible_team_id,
+            area_id, scope, responsible_team_id, created_at,
             owner:profiles!owner_user_id(id, display_name, photo_url),
             team:teams!team_id(id, name),
             area:areas!area_id(id, name, color)
@@ -142,11 +145,20 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
           .in('kpi_id', kpiIds)
           .order('reference_date', { ascending: false });
         
-        // Map latest value per KPI
+        // Map latest value per KPI + acumula labels consolidados (Regra B)
         const latestByKpi = new Map<string, (typeof latestValues)[number]>();
+        const consolidatedLabelsByKpi = new Map<string, Set<string>>();
         for (const v of (latestValues || [])) {
           if (!latestByKpi.has(v.kpi_id)) {
             latestByKpi.set(v.kpi_id, v);
+          }
+          if (v.input_type === 'consolidated' && v.period_label) {
+            let set = consolidatedLabelsByKpi.get(v.kpi_id);
+            if (!set) {
+              set = new Set();
+              consolidatedLabelsByKpi.set(v.kpi_id, set);
+            }
+            set.add(v.period_label);
           }
         }
 
@@ -183,7 +195,17 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             (kpi.consolidation_frequency as KpiFrequencyValue | null | undefined) ?? null;
           const updateFreq =
             (kpi.update_frequency as KpiFrequencyValue | null | undefined) ?? null;
-          const needsUpdate = isKpiUpdateOverdue(updateFreq, latest?.reference_date);
+          const updateOverdue = isKpiUpdateOverdue(updateFreq, latest?.reference_date);
+          // Regra B — períodos fechados sem `consolidated`.
+          const consolidatedLabels = consolidatedLabelsByKpi.get(kpi.id) ?? new Set<string>();
+          const kpiCreatedAt = kpi.created_at ? new Date(kpi.created_at as string) : new Date(0);
+          const missingPeriods = getMissingConsolidationPeriods(
+            consolidationFreq,
+            consolidatedLabels,
+            { kpiCreatedAt },
+          );
+          const consolidationPending = missingPeriods.length > 0;
+          const needsUpdate = updateOverdue || consolidationPending;
           const ragStatus = (latest?.rag_status as KpiRagStatus) ?? 'no_data';
 
           // Pré-calculo de desvio percentual (latest vs target).
@@ -247,6 +269,10 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             latest_period_label: latest?.period_label ?? null,
             latest_input_type: (latest?.input_type as KpiInputType | undefined) ?? null,
             needs_update: needsUpdate,
+            update_overdue: updateOverdue,
+            consolidation_pending: consolidationPending,
+            missing_consolidation_count: missingPeriods.length,
+            created_at: (kpi.created_at as string | null | undefined) ?? null,
             deviation_pct: deviationPct,
             // Role-based fields
             userRole,
