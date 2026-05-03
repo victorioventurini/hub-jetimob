@@ -30,6 +30,12 @@ import {
 import { cn } from '@/lib/utils';
 import { useBu } from '@/contexts/BuContext';
 import { AreaBadge } from '@/components/ui/area-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  WizardStepScaffold,
+  WizardStepHeader,
+  WizardStepFooter,
+} from '@/modules/okrs/components/wizards/shared';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiValueEntryForm, KpiSparkline } from '@/modules/kpis/components/shared';
