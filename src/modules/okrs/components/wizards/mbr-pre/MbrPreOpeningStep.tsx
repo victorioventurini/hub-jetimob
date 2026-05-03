@@ -31,10 +31,15 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   RitualGreeting,
+  ReferenceMonthPicker,
   WizardStepHeader,
   WizardStepScaffold,
 } from '../shared';
 import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
+import {
+  defaultReferenceMonth,
+  formatMonthLabel,
+} from '@/modules/okrs/utils/mbr/referenceMonth';
 import {
   useRitualGreetingContext,
   useMbrPreTeamProjects,
@@ -56,6 +61,10 @@ export interface MbrPreOpeningStepProps {
   effectiveUserId?: string | null;
   cycleId?: string | null;
   isLoading?: boolean;
+  /** Mês alvo da análise (`YYYY-MM`). Default: mês imediatamente anterior. */
+  referenceMonth?: string;
+  /** Handler ao trocar o mês alvo (deve invalidar análise IA cacheada). */
+  onReferenceMonthChange?: (next: string) => void;
   krFinalStates: MbrPreDraftData['krFinalStates'];
   kpiSnapshots: MbrKpiSnapshot[];
   monthAnalysis?: MbrPreMonthAnalysis | null;
@@ -66,18 +75,6 @@ export interface MbrPreOpeningStepProps {
 // ============================================================
 // HELPERS
 // ============================================================
-
-function currentReferenceMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function formatMonthLabel(yyyymm: string): string {
-  const [y, m] = yyyymm.split('-').map(Number);
-  if (!y || !m) return yyyymm;
-  const d = new Date(y, m - 1, 1);
-  return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-}
 
 function formatKpiValue(value: number | null | undefined, unit?: string): string {
   if (value == null) return '—';
