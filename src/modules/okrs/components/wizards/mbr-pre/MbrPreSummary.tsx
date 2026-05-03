@@ -133,6 +133,98 @@ export function MbrPreSummary({
         {/* 2) KPIs */}
         <SummaryKpiList kpis={kpiSnapshots} />
 
+        {/* 2.1) Justificativas registradas (KPIs e Projetos) */}
+        {hasJustifications && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageSquareQuote className="h-4 w-4" />
+                Justificativas registradas
+                <Badge variant="secondary" className="ml-1 text-[10px]">
+                  {kpiJustList.length + projectJustList.length + milestoneJustList.length}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Reflexões capturadas para itens fora da meta ou atrasados.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {kpiJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <Activity className="h-3.5 w-3.5 text-status-amber" />
+                    Indicadores fora da meta ({kpiJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {kpiJustList.map(([kpiId, text]) => (
+                      <li
+                        key={kpiId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {kpiNameById.get(kpiId) ?? '(KPI removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {projectJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <FolderKanban className="h-3.5 w-3.5 text-status-red" />
+                    Projetos atrasados ({projectJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {projectJustList.map(([projectId, text]) => (
+                      <li
+                        key={projectId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {projectNameById.get(projectId) ?? '(projeto removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {milestoneJustList.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-xs font-medium">
+                    <FolderKanban className="h-3.5 w-3.5 text-status-amber" />
+                    Marcos atrasados ({milestoneJustList.length})
+                  </Label>
+                  <ul className="space-y-2">
+                    {milestoneJustList.map(([milestoneId, text]) => (
+                      <li
+                        key={milestoneId}
+                        className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                      >
+                        <p className="text-xs font-medium">
+                          {milestoneNameById.get(milestoneId) ?? '(marco removido)'}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+
         {/* 3) Destaques e Riscos — editável */}
         <Card>
           <CardHeader className="pb-2">
