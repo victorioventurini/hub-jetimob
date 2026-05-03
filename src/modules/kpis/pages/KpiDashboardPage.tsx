@@ -376,6 +376,22 @@ export default function KpiDashboardPage() {
           </div>
         )}
 
+        {needsUpdateFilter !== 'all' && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+            <span className="text-foreground">
+              {needsUpdateFilter === 'any' &&
+                'Mostrando apenas indicadores que precisam de atualização (input atrasado ou consolidação pendente).'}
+              {needsUpdateFilter === 'overdue' &&
+                'Mostrando apenas indicadores com atualização atrasada (baseado na frequência de atualização).'}
+              {needsUpdateFilter === 'pending' &&
+                'Mostrando apenas indicadores com consolidação pendente (períodos fechados sem consolidação).'}
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => needsUpdateState.set('all')}>
+              Limpar filtro
+            </Button>
+          </div>
+        )}
+
         {/* Status Summary */}
         <KpiStatusSummary
           total={summary.total}
