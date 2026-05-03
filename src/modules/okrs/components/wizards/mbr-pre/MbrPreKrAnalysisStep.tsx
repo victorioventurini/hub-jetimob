@@ -387,13 +387,14 @@ const MbrPreKrPage = memo(function MbrPreKrPage({
           <div
             className={cn(
               'rounded-md border border-warning/40 bg-warning/10 p-3',
-              'text-xs text-warning-foreground flex items-start gap-2',
+              'text-xs text-foreground flex items-start gap-2',
             )}
           >
             <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
             <p>
-              <strong>{missingJustifications}</strong> KR{missingJustifications > 1 ? 's' : ''} sem
-              justificativa (fora da meta ou não iniciado). Preencha para avançar.
+              <strong className="text-warning">{missingJustifications}</strong> KR
+              {missingJustifications > 1 ? 's' : ''} sem justificativa (fora da meta ou não
+              iniciado). Preencha para avançar.
             </p>
           </div>
         )}
