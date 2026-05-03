@@ -58,7 +58,12 @@ export const COMPLETION_RULES: Partial<Record<WizardPersona, RulesByVersion>> = 
   },
   'mbr-pre': {
     v3: {
-      steps: {},
+      steps: {
+        'kpis': {
+          required: 'allMandatoryKpisAddressed',
+          errorMessage: 'KPIs obrigatórios precisam de plano de ação antes de avançar.',
+        },
+      },
       submission: {
         requiredSteps: ['balance', 'kpis', 'krs', 'next-steps', 'summary'],
         optionalSteps: ['projects', 'highlights-risks'],
