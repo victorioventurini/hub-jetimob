@@ -35,6 +35,22 @@ interface EdgeResponse {
   output: MbrPreMonthAnalysis | null;
 }
 
+interface WrappedEdgeResponse {
+  success: boolean;
+  data?: EdgeResponse;
+  error?: {
+    message?: string;
+    code?: string;
+  };
+}
+
+function unwrapEdgeResponse(response: EdgeResponse | WrappedEdgeResponse | null): EdgeResponse | null {
+  if (!response) return null;
+  if ('data' in response && response.data) return response.data;
+  if ('origin' in response) return response;
+  return null;
+}
+
 function previousMonth(yyyymm: string): string {
   const [y, m] = yyyymm.split('-').map(Number);
   if (!y || !m) return yyyymm;
@@ -95,7 +111,7 @@ export function useMbrPreMonthAnalysis() {
           projectsAttention: params.overdueProjects.length,
         };
 
-        const { data, error: invokeError } = await supabase.functions.invoke<EdgeResponse>(
+        const { data, error: invokeError } = await supabase.functions.invoke<EdgeResponse | WrappedEdgeResponse>(
           'mbr-pre-month-analysis',
           {
             body: {
@@ -116,20 +132,22 @@ export function useMbrPreMonthAnalysis() {
           return null;
         }
 
-        if (!data || data.origin === 'manual' || !data.output) {
-          setError(data?.reason || 'Não foi possível gerar a análise no momento.');
+        const response = unwrapEdgeResponse(data ?? null);
+
+        if (!response || response.origin === 'manual' || !response.output) {
+          setError(response?.reason || 'Não foi possível gerar a análise no momento.');
           return null;
         }
 
         return {
-          generatedAt: data.generatedAt || new Date().toISOString(),
+          generatedAt: response.generatedAt || new Date().toISOString(),
           origin: 'ai-generated',
           referenceMonth: params.referenceMonth,
-          summary: data.output.summary || '',
-          highlights: data.output.highlights || [],
-          offenders: data.output.offenders || [],
-          risks: data.output.risks || [],
-          recommendations: data.output.recommendations || [],
+          summary: response.output.summary || '',
+          highlights: response.output.highlights || [],
+          offenders: response.output.offenders || [],
+          risks: response.output.risks || [],
+          recommendations: response.output.recommendations || [],
         };
       } catch (err: any) {
         setError(err?.message || 'Falha ao gerar análise');
