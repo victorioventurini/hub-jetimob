@@ -454,6 +454,7 @@ export function QbrOkrProposalStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  agendaCategoryless = false,
 }: QbrOkrProposalStepProps) {
   // Track which objective card is open (auto-expand newly added)
   const [openIndex, setOpenIndex] = useState<number | null>(
