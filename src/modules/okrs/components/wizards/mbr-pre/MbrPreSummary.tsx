@@ -117,15 +117,15 @@ export function MbrPreSummary({
       }
     >
       <div className="p-6 space-y-6">
-        {/* 1) KRs do Mês — espelha step "krs" */}
+        {/* 1) KPIs do Time — espelha step "kpis" */}
+        <SummaryKpiList title="KPIs do Time" kpis={kpiSnapshots} justifications={kpiJustifications} />
+
+        {/* 2) KRs do Mês — espelha step "krs" */}
         <SummaryKrBalance
           title="KRs do Mês"
           items={krFinalStates}
           justifications={krJustifications}
         />
-
-        {/* 2) KPIs do Time — espelha step "kpis" */}
-        <SummaryKpiList title="KPIs do Time" kpis={kpiSnapshots} justifications={kpiJustifications} />
 
         {/* 2.1) Projetos — justificativas de projetos e marcos atrasados (espelha step "projects") */}
         {(projectJustList.length > 0 || milestoneJustList.length > 0) && (
