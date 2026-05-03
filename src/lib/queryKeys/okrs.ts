@@ -506,6 +506,9 @@ export const mbrKeys = {
   ) => ['mbr-pre', 'team-krs', buId, teamId, cycleId] as const,
   preTeamKpis: (teamId: string | null | undefined, buId: string | null) =>
     ['mbr-pre', 'team-kpis', teamId, buId] as const,
+  /** Projetos do time consumidos pelo Step 3 (Projetos) do Pré-MBR. */
+  preTeamProjects: (buId: string | null, teamId: string | null | undefined) =>
+    ['mbr-pre', 'team-projects', buId, teamId] as const,
   /**
    * Submissões `mbr-pre` agregadas no mês de referência (BU-scoped).
    * Consumido pelo MBR para alimentar Panorama / KPI Gate / Detail / Decisions.
