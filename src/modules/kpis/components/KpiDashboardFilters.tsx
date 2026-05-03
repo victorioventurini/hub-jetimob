@@ -169,6 +169,25 @@ export function KpiDashboardFilters({
         />
       )}
 
+      {/* v3.x — Atualização (Regra A overdue + Regra B consolidação pendente) */}
+      {onNeedsUpdateChange && (
+        <Select
+          value={needsUpdate}
+          onValueChange={(value) => onNeedsUpdateChange(value as KpiNeedsUpdateFilter)}
+        >
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Atualização" />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(NEEDS_UPDATE_LABELS) as KpiNeedsUpdateFilter[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                {NEEDS_UPDATE_LABELS[key]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
 
       {onScopeChange && (
         <Select
