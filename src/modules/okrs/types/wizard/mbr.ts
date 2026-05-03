@@ -184,6 +184,7 @@ export type MbrPreStep =
   | 'opening'
   | 'kpi-analysis'
   | 'projects'
+  | 'krs'
   | 'highlights'
   | 'next-steps'
   | 'summary'
@@ -255,6 +256,11 @@ export interface MbrPreDraftData {
     projects: Record<string, string>;
     milestones: Record<string, string>;
   };
+  /**
+   * Justificativas de KRs fora da meta (severidade `warning`/`critical`) — chave: krId.
+   * Reflexivo: o líder explica o desvio sem registrar check-in nem alterar `current_value`.
+   */
+  krJustifications: Record<string, string>;
   /** Sugestões de pauta para o MBR coletadas ao longo do wizard (até 3 prioritárias). */
   agendaSuggestions: RitualAgendaSuggestion[];
   /** Análise mensal IA gerada na abertura (cache no draft, regerável sob demanda). */
