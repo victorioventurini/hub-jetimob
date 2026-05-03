@@ -28,7 +28,10 @@ import type {
   KpiDisplayMode,
   KpiAlertReason,
 } from "../types";
-import { isKpiUpdateOverdue } from "../utils/frequency";
+import {
+  isKpiUpdateOverdue,
+  getMissingConsolidationPeriods,
+} from "../utils/frequency";
 
 // ============================================================
 // Hook
