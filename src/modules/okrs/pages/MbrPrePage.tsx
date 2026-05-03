@@ -375,7 +375,7 @@ export default function MbrPrePage() {
       // scope='team' continuam excluídos. Lifecycle: 'active' e 'proposed'.
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
-        .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
+        .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type, consolidation_frequency, update_frequency')
         .in('lifecycle_status', ['active', 'proposed'])
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
@@ -425,6 +425,9 @@ export default function MbrPrePage() {
           unit: kpi.unit ?? '%',
           lastValueAt: current?.reference_date ?? null,
           scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'team',
+          direction: (kpi.direction as 'up' | 'down' | null) ?? null,
+          consolidationFrequency: (kpi as { consolidation_frequency?: MbrKpiSnapshot['consolidationFrequency'] }).consolidation_frequency ?? null,
+          updateFrequency: (kpi as { update_frequency?: MbrKpiSnapshot['updateFrequency'] }).update_frequency ?? null,
         } as MbrKpiSnapshot;
       }));
     },
