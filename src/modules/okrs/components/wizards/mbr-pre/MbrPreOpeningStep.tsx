@@ -376,8 +376,8 @@ export function MbrPreOpeningStep({
           cycleName={greeting.cycleName}
           weekNumber={greeting.weekNumber}
           checkInOrdinal={greeting.checkInOrdinal}
-          monthLabel={greeting.monthLabel}
-          monthInQuarter={greeting.monthInQuarter}
+          monthLabel={monthLabelForGreeting}
+          monthInQuarter={monthInQuarterForGreeting}
         />
 
         {/* ─── Seletor do mês alvo ─── */}
