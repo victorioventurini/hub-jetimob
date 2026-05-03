@@ -11,7 +11,7 @@ import { ViewOptionsBar } from "@/components/ui/view-options-bar";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKpiData, useKpiKrLinks } from "@/modules/kpis/hooks";
 import { useAreas } from "@/modules/areas/hooks";
-import { KpiDashboardFilters } from "../components/KpiDashboardFilters";
+import { KpiDashboardFilters, type KpiNeedsUpdateFilter } from "../components/KpiDashboardFilters";
 import { KpiAreaSection } from "../components/KpiAreaSection";
 import { KpiDashboardTable } from "../components/KpiDashboardTable";
 import { KpiViewToggle, type KpiViewMode } from "../components/KpiViewToggle";
@@ -104,6 +104,14 @@ export default function KpiDashboardPage() {
     parse: (v) => (v === '1' ? '1' : '0'),
   });
   const missingResponsibleOnly = missingResponsibleState.value === '1';
+
+  // v3.x — Filtro "Atualização" (Regra A overdue + Regra B consolidação pendente)
+  const needsUpdateState = useUrlState<KpiNeedsUpdateFilter>({
+    key: 'needs_update',
+    defaultValue: 'all',
+    parse: (v) => (['any', 'overdue', 'pending'].includes(v) ? (v as KpiNeedsUpdateFilter) : 'all'),
+  });
+  const needsUpdateFilter = needsUpdateState.value;
   
   // v2.87.0: Text search with URL sync
   const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
