@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiSparkline, KpiValueEntryForm } from '@/modules/kpis/components/shared';
-import { KpiDetailContent } from '@/modules/kpis/components/KpiDetailContent';
+
 import { AreaBadge } from '@/components/ui/area-badge';
 import { useBu } from '@/contexts/BuContext';
 import {
@@ -252,49 +252,107 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
     </>
   );
 
-  // Badges de bucket (Desatualizado / Sem dados / Atualizado nesta sessão).
-  // Exibidos em ambos os modos no topo do card.
-  const bucketBadges = (
-    <div className="flex items-center gap-2 flex-wrap">
-      {effectiveMode === 'update-value' && (
-        <Badge variant="outline" className="text-xs gap-1 text-status-amber border-status-amber/40">
-          <Clock className="h-3 w-3" />
-          Desatualizado
-        </Badge>
-      )}
-      {effectiveMode === 'explain-no-data' && (
-        <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
-          <BarChart3 className="h-3 w-3" />
-          Sem dados
-        </Badge>
-      )}
-      {alreadyUpdated && (
-        <Badge variant="outline" className="text-xs gap-1 text-status-green border-status-green/40">
-          <CheckCircle2 className="h-3 w-3" />
-          Atualizado nesta sessão
-        </Badge>
-      )}
-    </div>
-  );
 
   // ──────────────────────────────────────────────────────────────────
   // MODO DETAILED — usado pelo Pré-MBR (paginado).
-  // Renderiza o KpiDetailContent canônico (todas as informações do KPI)
-  // e destaca a ação do líder em um bloco separado de "Plano de ação".
+  // Reusa o MESMO header compacto do modo lista (nome + badges + meta +
+  // valor + sparkline) — alinhado ao print de referência (KPI step do
+  // Check-in Individual). A ação obrigatória do líder fica destacada
+  // num bloco separado de "Plano de ação".
   // ──────────────────────────────────────────────────────────────────
   if (detailed) {
     const requiresAction = effectiveMode !== 'view';
     return (
       <div className="space-y-4">
-        {(requiresAction || alreadyUpdated) && (
-          <Card className={cardBorder}>
-            <CardContent className="p-3">{bucketBadges}</CardContent>
-          </Card>
-        )}
+        <Card className={cardBorder}>
+          <CardContent className="p-4 space-y-3">
+            {/* Header row: name + badges (left) | meta + value + last date (right) */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <KpiNameLink
+                  kpiId={kpi.kpiId}
+                  name={kpi.name}
+                  className="text-sm font-medium"
+                />
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs">KPI</Badge>
+                  <Badge variant="secondary" className={cn('text-xs gap-1', rag.bg, rag.color)}>
+                    {kpi.ragStatus === 'red' || kpi.ragStatus === 'yellow' ? (
+                      <AlertTriangle className="h-3 w-3" />
+                    ) : null}
+                    {rag.label}
+                  </Badge>
+                  {effectiveMode === 'update-value' && (
+                    <Badge variant="outline" className="text-xs gap-1 text-status-amber border-status-amber/40">
+                      <Clock className="h-3 w-3" />
+                      Desatualizado
+                    </Badge>
+                  )}
+                  {effectiveMode === 'explain-no-data' && (
+                    <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                      <BarChart3 className="h-3 w-3" />
+                      Sem dados
+                    </Badge>
+                  )}
+                  {alreadyUpdated && (
+                    <Badge variant="outline" className="text-xs gap-1 text-status-green border-status-green/40">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Atualizado nesta sessão
+                    </Badge>
+                  )}
+                  {kpi.areaName && (
+                    <AreaBadge area={{ name: kpi.areaName, color: kpi.areaColor ?? null }} />
+                  )}
+                  {kpi.teamName && (
+                    <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                      <Users className="h-3 w-3" />
+                      {kpi.teamName}
+                    </Badge>
+                  )}
+                  {kpi.scope && (
+                    <KpiScopeBadge scope={kpi.scope} buName={buName ?? undefined} />
+                  )}
+                </div>
+              </div>
 
-        <Card>
-          <CardContent className="p-0">
-            <KpiDetailContent kpiId={kpi.kpiId} />
+              <div className="text-right flex-shrink-0">
+                {kpi.target != null && (
+                  <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                    <Target className="h-3.5 w-3.5" />
+                    Meta: {kpi.target} {kpi.unit ?? ''}
+                  </div>
+                )}
+                {kpi.currentValue != null ? (
+                  <p className="text-lg font-bold mt-1 leading-tight">
+                    {kpi.currentValue} {kpi.unit ?? ''}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">Sem dados</p>
+                )}
+                {kpi.lastValueAt && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Último: {format(new Date(kpi.lastValueAt), 'dd/MM/yyyy')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Sparkline */}
+            {kpi.ragStatus !== 'no_data' && (
+              <div className="rounded-md border bg-background/40 px-3 py-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-muted-foreground">Evolução recente</span>
+                  <span className="text-[10px] text-muted-foreground">últimos 12 registros</span>
+                </div>
+                <KpiSparkline
+                  kpiId={kpi.kpiId}
+                  unit={kpi.unit ?? ''}
+                  target={kpi.target}
+                  height={64}
+                  pointsLimit={12}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
