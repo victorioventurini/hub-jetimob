@@ -347,6 +347,23 @@ export function MbrPreOpeningStep({
           checkInOrdinal={greeting.checkInOrdinal}
         />
 
+        {/* ─── Seletor do mês alvo ─── */}
+        {onReferenceMonthChange && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-sm font-medium text-foreground">
+              Analisando o mês de
+            </label>
+            <ReferenceMonthPicker
+              value={referenceMonth}
+              onChange={onReferenceMonthChange}
+              className="w-[220px]"
+            />
+            <span className="text-xs text-muted-foreground">
+              Default: mês fechado anterior. Trocar regenera os dados.
+            </span>
+          </div>
+        )}
+
         {/* ─── 1. Resumo do mês (tiles) ─── */}
         {showLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
