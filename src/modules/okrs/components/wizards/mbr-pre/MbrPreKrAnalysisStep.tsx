@@ -125,8 +125,16 @@ const KrCardImpl = ({ kr, krName, justification, onJustificationChange }: KrCard
       {needsJustification && (
         <JustificationField
           id={`mbr-pre-kr-just-${kr.krId}`}
-          label="Justifique o desvio do KR"
-          hint="Obrigatório — explique por que está fora da meta e o plano de ação."
+          label={
+            kr.state === 'not_started'
+              ? 'Justifique por que este KR ainda não foi iniciado'
+              : 'Justifique o desvio do KR'
+          }
+          hint={
+            kr.state === 'not_started'
+              ? 'Obrigatório — explique por que não começou e o plano de ação para destravar.'
+              : 'Obrigatório — explique por que está fora da meta e o plano de ação.'
+          }
           required
           value={justification}
           onChange={(v) => onJustificationChange(kr.krId, v)}
