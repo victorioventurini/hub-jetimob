@@ -117,6 +117,8 @@ export function MbrPreDataValidationStep({
 }: MbrPreDataValidationStepProps) {
   const queryClient = useQueryClient();
   const { currentBuId } = useBu();
+  const { role } = useAuth();
+  const isSuperAdmin = role === 'super_admin';
 
   const {
     kpisPending,
