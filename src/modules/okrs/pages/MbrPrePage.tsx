@@ -178,7 +178,8 @@ export default function MbrPrePage() {
     queryFn: async () => {
       if (!currentBuId || !refBounds) return [];
 
-      const { data, error } = await buSupabase
+      // 1) Objetivos do próprio time (dono primário).
+      const ownedReq = buSupabase
         .from('okr_team_objectives')
         .select(`
           id, title, status,
@@ -193,15 +194,58 @@ export default function MbrPrePage() {
         .is('deleted_at', null)
         .is('cancelled_at', null);
 
-      if (error) {
-        console.error('[MbrPre] Error fetching team objectives:', error);
-        throw error;
+      // 2) Objetivos onde o time é contribuidor (via view canônica).
+      const contributedReq = buSupabase
+        .from('v_team_contributed_okrs')
+        .select('objective_id')
+        .eq('contributor_team_id', teamIdParam!);
+
+      const [{ data: ownedData, error: ownedErr }, { data: contribIds, error: contribErr }] =
+        await Promise.all([ownedReq, contributedReq]);
+
+      if (ownedErr) {
+        console.error('[MbrPre] Error fetching team objectives:', ownedErr);
+        throw ownedErr;
+      }
+      if (contribErr) {
+        console.error('[MbrPre] Error fetching contributed objectives:', contribErr);
+        throw contribErr;
       }
 
-      const rawObjs = (data || []).map(obj => ({
+      const ownedIds = new Set((ownedData || []).map((o: any) => o.id));
+      const extraIds = (contribIds || [])
+        .map((r: any) => r.objective_id as string)
+        .filter((id) => id && !ownedIds.has(id));
+
+      let contributedObjs: any[] = [];
+      if (extraIds.length > 0) {
+        const { data: extraData, error: extraErr } = await buSupabase
+          .from('okr_team_objectives')
+          .select(`
+            id, title, status,
+            key_results:okr_team_key_results!okr_team_key_results_team_objective_id_fkey(
+              id, title, status, current_value, baseline, target, direction, unit,
+              last_checkin_at, deleted_at, cancelled_at
+            )
+          `)
+          .in('id', extraIds)
+          .eq('cycle_id', activeCycle!.id)
+          .is('deleted_at', null)
+          .is('cancelled_at', null);
+        if (extraErr) {
+          console.error('[MbrPre] Error fetching contributed objective details:', extraErr);
+          throw extraErr;
+        }
+        contributedObjs = (extraData || []).map((o: any) => ({ ...o, _isContributed: true }));
+      }
+
+      const rawObjs = [
+        ...((ownedData || []) as any[]),
+        ...contributedObjs,
+      ].map((obj: any) => ({
         ...obj,
         key_results: (obj.key_results || []).filter(
-          (kr: any) => !kr.deleted_at && !kr.cancelled_at
+          (kr: any) => !kr.deleted_at && !kr.cancelled_at,
         ),
       }));
 
