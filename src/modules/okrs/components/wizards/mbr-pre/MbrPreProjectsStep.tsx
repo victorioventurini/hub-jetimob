@@ -210,7 +210,11 @@ export function MbrPreProjectsStep({
       }
     >
       <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
-        {blockingItems > 0 && (
+        {cutoffDate && (
+          <p className="text-xs text-muted-foreground">
+            Considerando atrasos até <strong>{new Date(`${cutoffDate}T00:00:00`).toLocaleDateString('pt-BR')}</strong> (fim do mês analisado).
+          </p>
+        )}
           <div
             className={cn(
               'rounded-md border border-warning/40 bg-warning/10 p-3',
