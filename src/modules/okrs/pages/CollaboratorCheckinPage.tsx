@@ -201,28 +201,13 @@ export default function CollaboratorCheckinPage() {
 
   const hasKpiStep = !!(userKpis && userKpis.length > 0);
 
-  // Dynamic steps: omit steps without data (KRs, KPIs).
-  // Centralizar regra evita loops de back/forward causados por auto-skip
-  // dentro dos componentes de step.
-  const visibleSteps = useMemo(
-    () =>
-      WIZARD_STEPS.filter(s => {
-        if (s.id === 'checkin' && !hasKrStep) return false;
-        if (s.id === 'kpis' && !hasKpiStep) return false;
-        return true;
-      }),
-    [hasKrStep, hasKpiStep],
-  );
-
-  const visibleStepOrder = useMemo(
-    () =>
-      STEP_ORDER.filter(s => {
-        if (s === 'checkin' && !hasKrStep) return false;
-        if (s === 'kpis' && !hasKpiStep) return false;
-        return true;
-      }),
-    [hasKrStep, hasKpiStep],
-  );
+  // Trilha do wizard: TODOS os steps são sempre visíveis. Quando o usuário
+  // não tem KRs/KPIs sob sua responsabilidade, o próprio step renderiza um
+  // empty state (consistência com projects/initiatives/decisions). Isso evita
+  // que a trilha "encolha" e mantém o snapshot do Step 1 estável.
+  // hasKrStep/hasKpiStep continuam disponíveis para badges/contagens.
+  const visibleSteps = useMemo(() => WIZARD_STEPS.slice(), []);
+  const visibleStepOrder = useMemo(() => STEP_ORDER.slice(), []);
   
   // v2.87: Mutation silenciosa para KPI (fail-safe, sem toast de erro)
   const supabase = buSupabase;
