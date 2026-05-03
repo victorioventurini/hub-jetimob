@@ -239,13 +239,23 @@ export default function MbrPrePage() {
     queryFn: async () => {
       // MBR-Pre é rito reflexivo focado em KPIs (globais, de área ou de time).
       // Métricas (indicator_type='metric') são intencionalmente excluídas.
+      const { data: teamRow } = await buSupabase
+        .from('teams')
+        .select('area_id')
+        .eq('id', teamIdParam)
+        .maybeSingle();
+      const areaId = teamRow?.area_id ?? null;
+
+      const orFilters = [`team_id.eq.${teamIdParam}`, `scope.eq.org`];
+      if (areaId) orFilters.push(`and(scope.eq.area,area_id.eq.${areaId})`);
+
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
         .select('id, name, unit, target_value, direction, scope, area_id, team_id, lifecycle_status, indicator_type')
         .eq('lifecycle_status', 'active')
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
-        .or(`team_id.eq.${teamIdParam},scope.eq.org`);
+        .or(orFilters.join(','));
 
       if (error) throw error;
       if (!kpis || kpis.length === 0) return [];
