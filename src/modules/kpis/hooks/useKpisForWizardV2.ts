@@ -54,10 +54,25 @@ import { FREQUENCY_DAYS } from "../utils/frequency";
 export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisForWizardV2Result {
   const supabase = useOptionalBuScopedSupabase();
   const { currentBuId } = useBu();
-  const { userId, teamId, areaId, scope = 'collaborator', includeGuardrailsAtRisk = false } = options;
+  const {
+    userId,
+    teamId,
+    areaId,
+    scope = 'collaborator',
+    includeGuardrailsAtRisk = false,
+    lifecycleStatuses = ['active'],
+    responsibleTeamId,
+  } = options;
 
   const { data, error, isLoading } = useQuery({
-    queryKey: kpisKeys.forWizardV2({ userId, teamId, areaId, scope }),
+    queryKey: kpisKeys.forWizardV2({
+      userId,
+      teamId,
+      areaId,
+      scope,
+      lifecycleStatuses,
+      responsibleTeamId: responsibleTeamId ?? null,
+    }),
     enabled: !!supabase && !!userId && !!currentBuId,
     staleTime: 5 * 60 * 1000, // 5 min cache
     queryFn: async () => {
@@ -82,17 +97,20 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             id, name, unit, target_value, direction, indicator_type,
             consolidation_frequency, update_frequency,
             lifecycle_status, recovery_protocol, team_id, owner_user_id,
-            area_id, scope,
+            area_id, scope, responsible_team_id,
             owner:profiles!owner_user_id(id, display_name, photo_url),
             team:teams!team_id(id, name),
             area:areas!area_id(id, name, color)
           `)
-          .eq('lifecycle_status', 'active')
+          .in('lifecycle_status', lifecycleStatuses)
           .eq('bu_id', currentBuId)
           .is('deleted_at', null);
 
-        // Apply scope-based filtering
-        if (scope === 'collaborator' || scope === 'leader') {
+        // Apply filtering precedence:
+        //   responsibleTeamId (explicit) > scope-based heuristics
+        if (responsibleTeamId) {
+          kpiQuery = kpiQuery.eq('responsible_team_id', responsibleTeamId);
+        } else if (scope === 'collaborator' || scope === 'leader') {
           // Team-scoped: get team KPIs + org KPIs
           if (teamId) {
             kpiQuery = kpiQuery.or(`team_id.eq.${teamId},scope.eq.org`);

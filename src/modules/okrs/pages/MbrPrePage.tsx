@@ -408,9 +408,17 @@ export default function MbrPrePage() {
       // Para cada KPI:
       //   currentByKpi  → primeiro registro com reference_date BETWEEN start..end
       //   previousByKpi → primeiro registro com reference_date < start (mês fechado anterior)
+      //   latestByKpi   → último registro até o fim do mês (fallback quando o
+      //                   período do registro não cai no mês exato — ex.: KPI
+      //                   gravado com period_label trimestral/Q2 mas
+      //                   reference_date dentro do mês alvo).
       const currentByKpi = new Map<string, { value: number; rag_status: string; reference_date: string }>();
       const previousByKpi = new Map<string, { value: number; reference_date: string }>();
+      const latestByKpi = new Map<string, { value: number; rag_status: string; reference_date: string }>();
       for (const v of (valuesUpToTarget || [])) {
+        if (!latestByKpi.has(v.kpi_id)) {
+          latestByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status, reference_date: v.reference_date });
+        }
         const inMonth = v.reference_date >= refBounds.start && v.reference_date <= refBounds.end;
         if (inMonth && !currentByKpi.has(v.kpi_id)) {
           currentByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status, reference_date: v.reference_date });
@@ -420,19 +428,26 @@ export default function MbrPrePage() {
       }
 
       return dedupeKpiSnapshots(kpis.map(kpi => {
-        const current = currentByKpi.get(kpi.id);
+        // Preferimos o valor in-month; se não houver, caímos no último valor
+        // disponível até o fim do mês alvo. Isso garante que KPIs com
+        // registros gravados em um período divergente (ex.: trimestral) ainda
+        // tragam RAG e sigam disparando o gate de justificativa do líder.
+        const current = currentByKpi.get(kpi.id) ?? latestByKpi.get(kpi.id);
         const previous = previousByKpi.get(kpi.id);
+        const ragStatus = current?.rag_status === 'on_track' ? 'green'
+          : current?.rag_status === 'at_risk' ? 'yellow'
+          : current?.rag_status === 'off_track' ? 'red'
+          : 'no_data';
         return {
           kpiId: kpi.id,
           name: kpi.name,
           currentValue: current?.value ?? null,
           previousValue: previous?.value ?? null,
           target: kpi.target_value,
-          ragStatus: current?.rag_status === 'on_track' ? 'green'
-            : current?.rag_status === 'at_risk' ? 'yellow'
-            : current?.rag_status === 'off_track' ? 'red'
-            : 'no_data',
-          requiresStrategicDecision: current?.rag_status === 'off_track',
+          ragStatus,
+          // SSOT 6-bucket: tanto `critical` (off_track) quanto `attention`
+          // (at_risk) exigem decisão do líder no Pré-MBR.
+          requiresStrategicDecision: ragStatus === 'red' || ragStatus === 'yellow',
           unit: kpi.unit ?? '%',
           lastValueAt: current?.reference_date ?? null,
           scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'team',
