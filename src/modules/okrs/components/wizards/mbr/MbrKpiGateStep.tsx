@@ -134,7 +134,9 @@ export function MbrKpiGateStep({
       bottomFixed={
         !canProceed ? (
           <p className="text-xs text-status-amber text-center pb-2 px-4">
-            Registre decisões (faltam {missingDecisionCount}) para continuar
+            {requirePlanForCriticalKpis
+              ? `Registre um plano para: ${missingKpis.map(k => k.name).join(', ')}`
+              : `Registre decisões (faltam ${aggregateMissing}) para continuar`}
           </p>
         ) : undefined
       }
@@ -220,16 +222,18 @@ export function MbrKpiGateStep({
                   />
                 </div>
 
-                {/* Requires strategic decision toggle */}
-                <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50 min-w-0">
-                  <Label className="text-sm cursor-pointer truncate">
-                    Exige decisão estratégica?
-                  </Label>
-                  <Switch
-                    checked={kpi.requiresStrategicDecision}
-                    onCheckedChange={(val) => handleToggleRequiresDecision(kpi.kpiId, val)}
-                  />
-                </div>
+                {/* Requires strategic decision toggle (oculto quando o gate canônico já decide) */}
+                {showStrategicDecisionToggle && (
+                  <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50 min-w-0">
+                    <Label className="text-sm cursor-pointer truncate">
+                      Exige decisão estratégica?
+                    </Label>
+                    <Switch
+                      checked={kpi.requiresStrategicDecision}
+                      onCheckedChange={(val) => handleToggleRequiresDecision(kpi.kpiId, val)}
+                    />
+                  </div>
+                )}
 
                 {/* Inline decision when required */}
                 {kpi.requiresStrategicDecision && (
