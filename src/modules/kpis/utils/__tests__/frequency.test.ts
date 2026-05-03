@@ -6,6 +6,9 @@ import {
   legacyFrequencyToValue,
   getConsolidationPeriod,
   suggestInputType,
+  isKpiUpdateOverdue,
+  getMissingConsolidationPeriods,
+  isKpiConsolidationPending,
 } from '../frequency';
 
 describe('frequency.ts — KPI Frequency utilities', () => {
