@@ -252,30 +252,6 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
     </>
   );
 
-  // Badges de bucket (Desatualizado / Sem dados / Atualizado nesta sessão).
-  // Exibidos em ambos os modos no topo do card.
-  const bucketBadges = (
-    <div className="flex items-center gap-2 flex-wrap">
-      {effectiveMode === 'update-value' && (
-        <Badge variant="outline" className="text-xs gap-1 text-status-amber border-status-amber/40">
-          <Clock className="h-3 w-3" />
-          Desatualizado
-        </Badge>
-      )}
-      {effectiveMode === 'explain-no-data' && (
-        <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
-          <BarChart3 className="h-3 w-3" />
-          Sem dados
-        </Badge>
-      )}
-      {alreadyUpdated && (
-        <Badge variant="outline" className="text-xs gap-1 text-status-green border-status-green/40">
-          <CheckCircle2 className="h-3 w-3" />
-          Atualizado nesta sessão
-        </Badge>
-      )}
-    </div>
-  );
 
   // ──────────────────────────────────────────────────────────────────
   // MODO DETAILED — usado pelo Pré-MBR (paginado).
