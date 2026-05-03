@@ -424,25 +424,17 @@ export default function MbrPrePage() {
   // Step render
   const renderStepContent = () => {
     switch (draft.currentStep) {
-      case 'balance':
+      case 'opening':
+      case 'balance': // legacy: drafts antigos abrem na nova abertura
         return (
-          <QbrBalanceStep
+          <MbrPreOpeningStep
+            teamId={teamIdParam}
+            teamName={selectedTeam?.name ?? null}
+            cycleId={activeCycle?.id ?? null}
+            isLoading={isLoadingKrs || isLoadingKpis}
             krFinalStates={draft.data.krFinalStates}
-            onKrFinalStatesChange={(krFinalStates) => updateDraft({ krFinalStates })}
-            decisions={draft.data.decisions}
-            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
-            onContinue={goNext}
-            teamId={teamIdParam || undefined}
-            agendaSuggestions={draft.data.agendaSuggestions ?? []}
-            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
-            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
-            topSlot={
-              <RitualPreparationStatus
-                ritualType="mbr-pre"
-                teamId={teamIdParam}
-                cycleId={activeCycle?.id ?? null}
-              />
-            }
+            kpiSnapshots={draft.data.kpiSnapshots}
+            onContinue={() => setStep('kpi-analysis')}
           />
         );
 
@@ -457,6 +449,45 @@ export default function MbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
+            requireJustifications
+            kpiJustifications={draft.data.kpiJustifications}
+            onKpiJustificationChange={(kpiId, value) =>
+              updateDraft({
+                kpiJustifications: { ...draft.data.kpiJustifications, [kpiId]: value },
+              })
+            }
+          />
+        );
+
+      case 'projects':
+        return (
+          <MbrPreProjectsStep
+            teamId={teamIdParam}
+            projectJustifications={draft.data.projectJustifications}
+            onProjectJustificationChange={(projectId, value) =>
+              updateDraft({
+                projectJustifications: {
+                  ...draft.data.projectJustifications,
+                  projects: {
+                    ...draft.data.projectJustifications.projects,
+                    [projectId]: value,
+                  },
+                },
+              })
+            }
+            onMilestoneJustificationChange={(milestoneId, value) =>
+              updateDraft({
+                projectJustifications: {
+                  ...draft.data.projectJustifications,
+                  milestones: {
+                    ...draft.data.projectJustifications.milestones,
+                    [milestoneId]: value,
+                  },
+                },
+              })
+            }
+            onContinue={goNext}
+            onBack={goBack}
           />
         );
 
