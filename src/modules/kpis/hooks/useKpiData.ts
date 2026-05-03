@@ -5,7 +5,11 @@ import { KpiWithValues, KpiValue, KpiValueSource, KpiScope, KpiIndicatorType, Kp
 import { useToast } from "@/hooks/use-toast";
 import { queryKeys } from "@/lib/queryKeys";
 import { assertSupabaseClient } from "@/lib/supabaseGuard";
-import { valueFrequencyToLegacy } from "../utils/frequency";
+import {
+  valueFrequencyToLegacy,
+  isKpiUpdateOverdue,
+  getMissingConsolidationPeriods,
+} from "../utils/frequency";
 
 // Helper to normalize source types
 function mapSource(source: string): KpiValueSource {
@@ -167,7 +171,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         .from("kpi_values")
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, rag_status
+          period_start, period_end, period_label, rag_status, input_type
         `)
         .in(
           "kpi_id",
