@@ -145,11 +145,20 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
           .in('kpi_id', kpiIds)
           .order('reference_date', { ascending: false });
         
-        // Map latest value per KPI
+        // Map latest value per KPI + acumula labels consolidados (Regra B)
         const latestByKpi = new Map<string, (typeof latestValues)[number]>();
+        const consolidatedLabelsByKpi = new Map<string, Set<string>>();
         for (const v of (latestValues || [])) {
           if (!latestByKpi.has(v.kpi_id)) {
             latestByKpi.set(v.kpi_id, v);
+          }
+          if (v.input_type === 'consolidated' && v.period_label) {
+            let set = consolidatedLabelsByKpi.get(v.kpi_id);
+            if (!set) {
+              set = new Set();
+              consolidatedLabelsByKpi.set(v.kpi_id, set);
+            }
+            set.add(v.period_label);
           }
         }
 
