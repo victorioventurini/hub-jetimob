@@ -400,6 +400,7 @@ export default function KpiDashboardPage() {
             ragStatus={ragStatusFilter}
             krLinkStatus={krLinkStatusFilter}
             ownerId={ownerFilter}
+            needsUpdate={needsUpdateFilter}
             onCategoryChange={() => {}} // No-op, category deprecated
             onTeamChange={setTeamFilter}
             onAreaChange={setAreaFilter}
@@ -408,6 +409,7 @@ export default function KpiDashboardPage() {
             onRagStatusChange={setRagStatusFilter}
             onKrLinkStatusChange={setKrLinkStatusFilter}
             onOwnerChange={setOwnerFilter}
+            onNeedsUpdateChange={needsUpdateState.set}
           />
         </ListPageFilters>
 
