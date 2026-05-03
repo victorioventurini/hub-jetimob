@@ -32,6 +32,13 @@ const RAG_TONE: Record<string, string> = {
   unknown: 'bg-muted',
 };
 
+const RAG_BUCKETS: Array<{ key: string; label: string; tone: string; matches: (s: string) => boolean }> = [
+  { key: 'green', label: 'No alvo', tone: 'text-status-green', matches: (s) => s === 'green' },
+  { key: 'amber', label: 'Atenção', tone: 'text-status-amber', matches: (s) => s === 'amber' || s === 'yellow' },
+  { key: 'red', label: 'Crítico', tone: 'text-status-red', matches: (s) => s === 'red' },
+  { key: 'unknown', label: 'Sem dados', tone: 'text-muted-foreground', matches: (s) => s !== 'green' && s !== 'amber' && s !== 'yellow' && s !== 'red' },
+];
+
 function formatValue(value: number | null | undefined, unit?: string): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
   const formatted = Number.isInteger(value)
