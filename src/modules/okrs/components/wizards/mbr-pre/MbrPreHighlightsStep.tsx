@@ -121,7 +121,7 @@ export function MbrPreHighlightsStep({
       }
     >
       <div className="p-6 space-y-6">
-        <ReflectionQuestions questions={MBR_PRE_HIGHLIGHTS_QUESTIONS} collapsed />
+        <ReflectionQuestions questions={MBR_PRE_HIGHLIGHTS_QUESTIONS} collapsed={false} />
 
         {/* What accelerated */}
         <div className="space-y-2">
