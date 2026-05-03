@@ -320,6 +320,10 @@ export const WIZARD_TOOLTIPS = {
     content: 'Destaque o que acelerou, o que travou e o que precisa de decisão coletiva.',
     icon: 'help',
   },
+  'mbr-pre-krs': {
+    content: 'Reflita sobre cada KR fora da meta. Não atualize check-ins aqui — apenas explique o desvio e o plano de ação.',
+    icon: 'help',
+  },
   'mbr-pre-next-steps': {
     content: 'Defina as ações prioritárias do time para as próximas semanas.',
     icon: 'lightbulb',
