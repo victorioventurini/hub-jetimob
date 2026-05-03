@@ -413,7 +413,7 @@ function BucketSection({
  * alerta → healthy → teamContext restante). Cada item carrega o `bucketId`
  * de origem para o `RichKpiCard` decidir o modo de ação.
  */
-function flattenBucketsForPagination(buckets: KpiGateBucket[]): Array<{
+export function flattenBucketsForPagination(buckets: KpiGateBucket[]): Array<{
   kpi: KpiGateItem;
   bucketId: KpiGateBucketId;
   bucketLabel: string;
