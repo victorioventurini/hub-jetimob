@@ -221,24 +221,20 @@ function MbrPreKrAnalysisStepImpl({
             variant="amber"
           />
         }
+        footer={
+          <WizardStepFooter
+            onBack={onBack}
+            primaryLabel="Continuar"
+            onPrimary={onContinue}
+          />
+        }
       >
-        <div className="flex flex-col h-full min-h-0">
-          <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
-            <EmptyState
-              icon={Target}
-              title="Nenhum KR vinculado"
-              description="Este time não possui KRs ativos no ciclo atual."
-            />
-          </div>
-          <div className="px-6 py-4 border-t bg-background flex items-center gap-3">
-            <Button variant="ghost" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Voltar
-            </Button>
-            <Button onClick={onContinue} className="flex-1">
-              Continuar <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
+        <div className="flex-1 flex items-center justify-center p-6 min-h-[320px]">
+          <EmptyState
+            icon={Target}
+            title="Nenhum KR vinculado"
+            description="Este time não possui KRs ativos no ciclo atual."
+          />
         </div>
       </WizardStepScaffold>
     );
