@@ -500,16 +500,22 @@ export const KpiGateStep = memo(function KpiGateStep({
   const currentEntry = isPaginated ? flat[safeIndex] : null;
 
   // KPIs obrigatórios sem plano (variant rich + buckets) — usado para gate
-  // local quando `config.requireResolution`. KPIs do `teamContext` em RED
-  // também passam a contar (mode `justify-required` via `actionModeForKpi`).
+  // local quando `config.requireResolution`. Espelha `actionModeForKpi`:
+  //   - buckets MANDATORY (overdue/critical/guardrailViolated)
+  //   - teamContext em RED ou UNKNOWN (sem dados)
+  //   - qualquer KPI sem meta cadastrada (target nulo) — exceto buckets
+  //     puramente "view" (none hoje, mas mantém safety com !== 'healthy' check
+  //     desnecessário pois healthy+noTarget também é justify-required).
   const mandatoryUnaddressed = useMemo(() => {
     if (!isRichLike || !buckets) return [] as KpiGateItem[];
     const list: KpiGateItem[] = [];
     for (const bucket of buckets) {
       for (const item of bucket.items) {
+        const noTarget = item.target == null || (item.target as unknown as string) === '';
         const requiresPlan =
           MANDATORY_BUCKET_IDS.has(bucket.id) ||
-          (bucket.id === 'teamContext' && item.status === 'red');
+          (bucket.id === 'teamContext' && (item.status === 'red' || item.status === 'unknown')) ||
+          noTarget;
         if (!requiresPlan) continue;
         const text = (justifications?.[item.id] ?? '').trim();
         if (text.length === 0) list.push(item);
