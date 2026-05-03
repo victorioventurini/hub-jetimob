@@ -117,7 +117,7 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
 // ────────────────────────────────────────────────────────────────────
 
 /** Modo de ação do líder por bucket (decide o bloco "Ação do líder"). */
-type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
+export type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
 
 /**
  * Decide o modo de ação considerando bucket + status do KPI.
@@ -127,7 +127,14 @@ type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 
  * Quando esses KPIs estão em alerta, o líder do time deve apresentar plano
  * de ação — equiparando-os aos KPIs estratégicos em `critical`/`attention`.
  */
-function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
+export function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
+  // Regras canônicas (SSOT mem://features/kpis/kpis-master-standard §4):
+  // - bucket MANDATORY → sempre obrigatório
+  // - teamContext red → obrigatório; amber → opcional
+  // - teamContext unknown (sem dados) → obrigatório (explain-no-data)
+  // - target ausente (sem meta cadastrada) → obrigatório em qualquer bucket
+  //   (exceto buckets cujo modo já é mais restritivo)
+  const noTarget = kpi.target == null || (kpi.target as unknown as string) === '';
   switch (bucketId) {
     case 'overdue':
       return 'explain-no-data';
@@ -135,14 +142,16 @@ function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMo
     case 'guardrailViolated':
       return 'justify-required';
     case 'attention':
-      return 'justify-optional';
+      return noTarget ? 'justify-required' : 'justify-optional';
     case 'teamContext':
+      if (kpi.status === 'unknown') return 'explain-no-data';
+      if (noTarget) return 'justify-required';
       if (kpi.status === 'red') return 'justify-required';
       if (kpi.status === 'amber') return 'justify-optional';
       return 'view';
     case 'healthy':
     default:
-      return 'view';
+      return noTarget ? 'justify-required' : 'view';
   }
 }
 
@@ -491,16 +500,22 @@ export const KpiGateStep = memo(function KpiGateStep({
   const currentEntry = isPaginated ? flat[safeIndex] : null;
 
   // KPIs obrigatórios sem plano (variant rich + buckets) — usado para gate
-  // local quando `config.requireResolution`. KPIs do `teamContext` em RED
-  // também passam a contar (mode `justify-required` via `actionModeForKpi`).
+  // local quando `config.requireResolution`. Espelha `actionModeForKpi`:
+  //   - buckets MANDATORY (overdue/critical/guardrailViolated)
+  //   - teamContext em RED ou UNKNOWN (sem dados)
+  //   - qualquer KPI sem meta cadastrada (target nulo) — exceto buckets
+  //     puramente "view" (none hoje, mas mantém safety com !== 'healthy' check
+  //     desnecessário pois healthy+noTarget também é justify-required).
   const mandatoryUnaddressed = useMemo(() => {
     if (!isRichLike || !buckets) return [] as KpiGateItem[];
     const list: KpiGateItem[] = [];
     for (const bucket of buckets) {
       for (const item of bucket.items) {
+        const noTarget = item.target == null || (item.target as unknown as string) === '';
         const requiresPlan =
           MANDATORY_BUCKET_IDS.has(bucket.id) ||
-          (bucket.id === 'teamContext' && item.status === 'red');
+          (bucket.id === 'teamContext' && (item.status === 'red' || item.status === 'unknown')) ||
+          noTarget;
         if (!requiresPlan) continue;
         const text = (justifications?.[item.id] ?? '').trim();
         if (text.length === 0) list.push(item);
