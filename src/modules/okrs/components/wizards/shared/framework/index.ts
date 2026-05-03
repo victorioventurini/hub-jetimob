@@ -20,7 +20,7 @@
 export { BalanceStep } from './components/BalanceStep';
 export type { BalanceStepProps } from './components/BalanceStep';
 
-export { KpiGateStep } from './components/KpiGateStep';
+export { KpiGateStep, flattenBucketsForPagination } from './components/KpiGateStep';
 export type { KpiGateStepProps } from './components/KpiGateStep';
 
 export { KrsStep } from './components/KrsStep';
