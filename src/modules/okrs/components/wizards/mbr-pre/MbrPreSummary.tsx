@@ -159,7 +159,7 @@ export function MbrPreSummary({
                 <MessageSquareQuote className="h-4 w-4" />
                 Justificativas registradas
                 <Badge variant="secondary" className="ml-1 text-[10px]">
-                  {kpiJustList.length + projectJustList.length + milestoneJustList.length}
+                  {kpiJustList.length + projectJustList.length + milestoneJustList.length + krJustList.length}
                 </Badge>
               </CardTitle>
               <p className="text-xs text-muted-foreground">
