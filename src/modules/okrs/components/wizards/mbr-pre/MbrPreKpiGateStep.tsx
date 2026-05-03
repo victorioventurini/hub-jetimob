@@ -105,11 +105,9 @@ export function MbrPreKpiGateStep({
     [kpisToUpdate, kpisInAlert, kpisStrategic, kpisTeamContext, guardrailsViolated, resolvedIds],
   );
 
-  // Snapshots canônicos derivados dos buckets que exigem ação do líder
-  // (overdue, critical, guardrailViolated, attention) + healthy/teamContext
-  // como contexto. `MbrKpiGateStep` filtra internamente para exibir só
-  // red/yellow no card de decisão; healthy/teamContext entram apenas como
-  // contexto silencioso.
+  // Snapshots canônicos derivados dos buckets. `requiresStrategicDecision`
+  // vem SEMPRE do bucket canônico (red/amber → true) — sem preservar toggle
+  // manual do líder, pois o MBR-Pré não expõe esse toggle.
   const reconciledSnapshots = useMemo(() => {
     const snapshots: MbrKpiSnapshot[] = [];
     const persistedByKpi = new Map(kpiSnapshots.map((s) => [s.kpiId, s]));
@@ -117,16 +115,9 @@ export function MbrPreKpiGateStep({
       for (const item of bucket.items) {
         const next = gateItemToSnapshot(item);
         const prev = persistedByKpi.get(next.kpiId);
-        // Preserva impactAssessment / requiresStrategicDecision (toggle do líder)
-        // — gate canônico já marca requiresDecision=true em buckets críticos,
-        // mas o líder pode ter optado por desativar manualmente.
         snapshots.push({
           ...next,
           impactAssessment: prev?.impactAssessment ?? next.impactAssessment,
-          requiresStrategicDecision:
-            prev?.requiresStrategicDecision !== undefined
-              ? prev.requiresStrategicDecision || next.requiresStrategicDecision
-              : next.requiresStrategicDecision,
         });
       }
     }
@@ -134,7 +125,6 @@ export function MbrPreKpiGateStep({
   }, [buckets, kpiSnapshots]);
 
   // Sincroniza draft com snapshots canônicos quando muda algo materialmente.
-  // Reconciliação por kpiId (não posicional).
   useMemo(() => {
     const prevById = new Map(kpiSnapshots.map((s) => [s.kpiId, s]));
     const changed =
@@ -165,6 +155,8 @@ export function MbrPreKpiGateStep({
       onDecisionsChange={onDecisionsChange}
       onContinue={onContinue}
       onBack={onBack}
+      showStrategicDecisionToggle={false}
+      requirePlanForCriticalKpis
     />
   );
 }
