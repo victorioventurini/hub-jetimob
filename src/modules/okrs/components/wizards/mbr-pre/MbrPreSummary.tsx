@@ -21,10 +21,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Activity,
   FolderKanban,
   MessageSquareQuote,
-  Target,
 } from 'lucide-react';
 import {
   WizardStepHeader,
@@ -36,7 +34,6 @@ import {
   InlineStringListEditor,
 } from '../shared';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
-import { useEntityLookup } from '@/modules/okrs/hooks/useEntityLookup';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
@@ -90,34 +87,10 @@ export function MbrPreSummary({
     for (const m of p.milestones) milestoneNameById.set(m.id, m.name);
   }
 
-  const kpiNameById = new Map<string, string>();
-  for (const k of kpiSnapshots) kpiNameById.set(k.kpiId, k.name);
-
-  const kpiJustList = Object.entries(kpiJustifications ?? {})
-    .filter(([, v]) => v && v.trim().length > 0);
   const projectJustList = Object.entries(projectJustifications?.projects ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
   const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
-  const krJustList = Object.entries(krJustifications ?? {})
-    .filter(([, v]) => v && v.trim().length > 0);
-
-  // Resolução de nomes de KR via lookup canônico (Onda 4)
-  const krIdsForLookup = krJustList.map(([id]) => id);
-  const krLookups = useEntityLookup({
-    teamKrIds: krIdsForLookup,
-    orgKrIds: krIdsForLookup,
-  });
-  const resolveKrName = (id: string) =>
-    krLookups.teamKrs.get(id)?.name ??
-    krLookups.orgKrs.get(id)?.name ??
-    '(KR removido)';
-
-  const hasJustifications =
-    kpiJustList.length > 0 ||
-    projectJustList.length > 0 ||
-    milestoneJustList.length > 0 ||
-    krJustList.length > 0;
 
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
