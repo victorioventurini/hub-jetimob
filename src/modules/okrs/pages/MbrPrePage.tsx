@@ -237,10 +237,13 @@ export default function MbrPrePage() {
     enabled: !!buSupabase && !!currentBuId && !!teamIdParam,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      // MBR-Pre é rito reflexivo focado em KPIs (globais, de área ou de time).
+      // Métricas (indicator_type='metric') são intencionalmente excluídas.
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
-        .select('id, name, unit, target_value, direction, scope, area_id, team_id, lifecycle_status')
+        .select('id, name, unit, target_value, direction, scope, area_id, team_id, lifecycle_status, indicator_type')
         .eq('lifecycle_status', 'active')
+        .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
         .or(`team_id.eq.${teamIdParam},scope.eq.org`);
 
