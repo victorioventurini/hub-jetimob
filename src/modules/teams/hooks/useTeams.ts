@@ -206,6 +206,10 @@ export interface FlatTeamItem {
   name: string;
   level: number;
   parentId: string | null;
+  /** ID do líder do time (já presente em `TeamTreeNode.leader`). Opcional. */
+  leaderUserId?: string | null;
+  /** Display name do líder do time. Opcional. */
+  leaderName?: string | null;
 }
 
 export function useTeamTree(includeInactive = false) {
@@ -274,6 +278,8 @@ export function useHierarchicalTeamList() {
         name: node.name,
         level,
         parentId: null, // Not needed for display
+        leaderUserId: node.leader?.id ?? null,
+        leaderName: node.leader?.display_name ?? null,
       });
       
       if (node.children.length > 0) {

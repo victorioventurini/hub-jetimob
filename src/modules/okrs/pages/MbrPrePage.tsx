@@ -566,6 +566,7 @@ export default function MbrPrePage() {
           <MbrPreOpeningStep
             teamId={teamIdParam}
             teamName={selectedTeam?.name ?? null}
+            leaderName={selectedTeam?.leaderName ?? null}
             cycleId={activeCycle?.id ?? null}
             isLoading={isLoadingKrs || isLoadingKpis}
             referenceMonth={refMonth}
