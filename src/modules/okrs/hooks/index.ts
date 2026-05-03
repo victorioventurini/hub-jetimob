@@ -342,6 +342,7 @@ export {
   type WeeklyAggregationCoverage,
   type UseWeeklyPreWeeklyAggregationReturn,
 } from './useWeeklyPreWeeklyAggregation';
+export { useMbrPreMonthAnalysis } from './useMbrPreMonthAnalysis';
 
 // =========================
 // SHARED TYPES re-exported for convenience
