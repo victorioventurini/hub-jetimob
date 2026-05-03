@@ -180,7 +180,7 @@ const RichKpiCard = memo(function RichKpiCard({
   justification,
   onJustificationChange,
 }: RichKpiCardProps) {
-  const mode = actionModeForBucket(bucketId);
+  const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
   const isPartial = kpi.lastInputType === 'partial';
   const refDate = formatRefDate(kpi.latestReferenceDate);
