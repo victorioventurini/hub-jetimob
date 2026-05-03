@@ -36,6 +36,8 @@ const AGENDA_SOURCE_STEP = 'mbr-pre-highlights';
 
 export interface MbrPreProjectsStepProps {
   teamId: string | null | undefined;
+  /** Mês alvo do rito (`YYYY-MM`). Ancora o cut-off de "atrasado". */
+  referenceMonth?: string | null;
   projectJustifications: {
     projects: Record<string, string>;
     milestones: Record<string, string>;
