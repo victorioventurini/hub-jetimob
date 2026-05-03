@@ -308,6 +308,12 @@ export {
   type UseRitualPreparationStatusArgs,
   type UseRitualPreparationStatusReturn,
 } from './useRitualPreparationStatus';
+export {
+  useMbrPreTeamProjects,
+  type MbrPreProjectRow,
+  type MbrPreMilestoneRow,
+  type UseMbrPreTeamProjectsResult,
+} from './useMbrPreTeamProjects';
 
 // =========================
 // PROPOSAL / SESSION / COMPANY OKRs
