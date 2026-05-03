@@ -593,11 +593,14 @@ export const kpisKeys = {
   userContributions: (userId: string, teamId?: string) =>
     ['kpis', 'user-contributions', userId, teamId] as const,
   // v2.83.0: Wizard V2 with role classification
-  forWizardV2: (options: { 
-    userId: string; 
-    teamId?: string; 
-    areaId?: string; 
-    scope?: string 
+  // v3.30.0: aceita lifecycleStatuses + responsibleTeamId (Pré-MBR canônico).
+  forWizardV2: (options: {
+    userId: string;
+    teamId?: string;
+    areaId?: string;
+    scope?: string;
+    lifecycleStatuses?: readonly string[];
+    responsibleTeamId?: string | null;
   }) => ['kpis', 'wizard-v2', options] as const,
   // v2.86.0: Target/Benchmark history
   targetHistory: (kpiId: string | null) => ['kpis', 'target-history', kpiId] as const,
