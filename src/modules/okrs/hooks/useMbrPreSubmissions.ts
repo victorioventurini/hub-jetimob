@@ -1,11 +1,16 @@
 /**
- * useMbrPreSubmissions — agrega submissões `mbr-pre` completadas no mês corrente
- * da BU ativa e devolve, por `teamId`, o subset relevante para alimentar o MBR.
+ * useMbrPreSubmissions — agrega submissões `mbr-pre` cujo **mês alvo da
+ * análise** (`reflection_data.data.referenceMonth`) é igual ao `referenceMonth`
+ * solicitado pelo MBR.
  *
- * Inclui addendums (de `okr_wizard_session_addendums`) por sessão.
+ * Antes (bug): filtrava por `completed_at` no mês civil, o que falhava quando
+ * pré-MBRs eram feitos com atraso (ex.: pré-MBR de abril completado em 06/maio
+ * sumia do MBR de abril). Agora pareamos pelo mês analisado, que é o conceito
+ * canônico e estável.
  *
- * Retorno indexado por `teamId` para consumo direto pelos steps do MBR
- * (Panorama, KPI Gate, Detail, Decisions).
+ * Para retrocompat com submissões antigas que **não** gravavam `referenceMonth`,
+ * caímos no fallback: usar o mês civil de `completed_at` como mês alvo
+ * implícito (era exatamente o comportamento histórico).
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,26 +22,16 @@ import type {
   MbrPreTeamSubmission,
   MbrPreSubmissionAddendum,
 } from '../types/wizard/mbr';
+import {
+  defaultReferenceMonth,
+  monthBoundsISO,
+  previousMonthOf,
+} from '@/modules/okrs/utils/mbr/referenceMonth';
 
 export interface UseMbrPreSubmissionsParams {
-  /** YYYY-MM (mês de referência do MBR). Default = mês corrente. */
+  /** YYYY-MM (mês analisado pelo MBR). Default = mês imediatamente anterior. */
   referenceMonth?: string;
   enabled?: boolean;
-}
-
-function monthBoundsISO(referenceMonth: string): { start: string; end: string } | null {
-  const m = /^(\d{4})-(\d{2})$/.exec(referenceMonth);
-  if (!m) return null;
-  const year = Number(m[1]);
-  const month = Number(m[2]) - 1;
-  const start = new Date(Date.UTC(year, month, 1, 0, 0, 0)).toISOString();
-  const end = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0) - 1).toISOString();
-  return { start, end };
-}
-
-function currentReferenceMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export interface UseMbrPreSubmissionsResult {
@@ -54,6 +49,28 @@ const EMPTY_RESULT: UseMbrPreSubmissionsResult = {
   submittedCount: 0,
 };
 
+/** Extrai o referenceMonth gravado no draft, ou retorna null se ausente. */
+function extractRefMonth(reflection: unknown): string | null {
+  if (!reflection || typeof reflection !== 'object') return null;
+  const root = reflection as { data?: unknown; referenceMonth?: unknown };
+  // Formato canônico do useGenericWizardDraft: { data: MbrPreDraftData }
+  if (root.data && typeof root.data === 'object') {
+    const d = root.data as { referenceMonth?: unknown };
+    if (typeof d.referenceMonth === 'string') return d.referenceMonth;
+  }
+  // Fallback raro: gravado direto na raiz
+  if (typeof root.referenceMonth === 'string') return root.referenceMonth;
+  return null;
+}
+
+/** Converte ISO `completed_at` em YYYY-MM (fuso local), para fallback de drafts antigos. */
+function completedAtToYearMonth(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 export function useMbrPreSubmissions({
   referenceMonth,
   enabled = true,
@@ -61,7 +78,7 @@ export function useMbrPreSubmissions({
   const buSupabase = useOptionalBuScopedSupabase();
   const { currentBu } = useBu();
 
-  const refMonth = referenceMonth ?? currentReferenceMonth();
+  const refMonth = referenceMonth ?? defaultReferenceMonth();
   const buId = currentBu?.id ?? null;
 
   return useQuery<UseMbrPreSubmissionsResult>({
@@ -70,34 +87,62 @@ export function useMbrPreSubmissions({
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<UseMbrPreSubmissionsResult> => {
       if (!buSupabase || !buId) return EMPTY_RESULT;
-      const bounds = monthBoundsISO(refMonth);
-      if (!bounds) return EMPTY_RESULT;
 
-      // 1) Sessions completadas no mês
+      // Janela de busca generosa: do início do mês alvo até o fim do mês
+      // imediatamente seguinte. Cobre pré-MBRs feitos no início do mês
+      // seguinte (caso comum) e ainda permite atrasos pequenos. O filtro
+      // efetivo é por `referenceMonth` no payload (abaixo).
+      const targetBounds = monthBoundsISO(refMonth);
+      if (!targetBounds) return EMPTY_RESULT;
+      const nextMonthYm = (() => {
+        const m = /^(\d{4})-(\d{2})$/.exec(refMonth);
+        if (!m) return refMonth;
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = new Date(y, mo, 1); // mês seguinte
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      })();
+      const nextBounds = monthBoundsISO(nextMonthYm);
+      const windowStart = targetBounds.start;
+      const windowEnd = nextBounds?.end ?? targetBounds.end;
+      // Cobre também retrocompat (drafts antigos feitos no mês alvo).
+      const fallbackPreviousBounds = monthBoundsISO(previousMonthOf(refMonth));
+
+      // 1) Sessions completadas dentro da janela ampla
       const { data: sessions, error } = await buSupabase
         .from('okr_wizard_sessions')
         .select('id, team_id, started_by, completed_at, reflection_data')
         .eq('bu_id', buId)
         .eq('wizard_type', 'mbr-pre')
         .eq('status', 'completed')
-        .gte('completed_at', bounds.start)
-        .lte('completed_at', bounds.end)
+        .gte('completed_at', fallbackPreviousBounds?.start ?? windowStart)
+        .lte('completed_at', windowEnd)
         .order('completed_at', { ascending: false });
 
       if (error) throw error;
       if (!sessions || sessions.length === 0) return EMPTY_RESULT;
 
-      // Mantém apenas a sessão mais recente por time (já ordenado desc).
+      // 2) Filtrar por referenceMonth do payload (com fallback p/ drafts antigos).
+      const matching = sessions.filter((s) => {
+        const explicit = extractRefMonth(s.reflection_data);
+        if (explicit) return explicit === refMonth;
+        // Retrocompat: pré-MBRs antigos sem campo gravado — usa heurística
+        // histórica (mês civil de completed_at == referenceMonth solicitado).
+        return completedAtToYearMonth(s.completed_at as string) === refMonth;
+      });
+      if (matching.length === 0) return EMPTY_RESULT;
+
+      // 3) Mantém apenas a sessão mais recente por time (já ordenado desc).
       const latestByTeam = new Map<string, typeof sessions[number]>();
-      for (const s of sessions) {
+      for (const s of matching) {
         if (!s.team_id) continue;
         if (!latestByTeam.has(s.team_id)) latestByTeam.set(s.team_id, s);
       }
 
-      const sessionIds = Array.from(latestByTeam.values()).map(s => s.id);
+      const sessionIds = Array.from(latestByTeam.values()).map((s) => s.id);
 
-      // 2) Addendums dessas sessões
-      let addendumsBySession = new Map<string, MbrPreSubmissionAddendum[]>();
+      // 4) Addendums dessas sessões
+      const addendumsBySession = new Map<string, MbrPreSubmissionAddendum[]>();
       if (sessionIds.length > 0) {
         const { data: addRows } = await (buSupabase as any)
           .from('okr_wizard_addendums')
@@ -116,9 +161,9 @@ export function useMbrPreSubmissions({
         }
       }
 
-      // 3) Resolver display_name dos started_by
+      // 5) Resolver display_name dos started_by
       const profileIds = Array.from(latestByTeam.values())
-        .map(s => s.started_by)
+        .map((s) => s.started_by)
         .filter((id): id is string => !!id);
       const namesById = new Map<string, string>();
       if (profileIds.length > 0) {
@@ -131,7 +176,7 @@ export function useMbrPreSubmissions({
         }
       }
 
-      // 4) Construir map por team
+      // 6) Construir map por team
       const byTeam: Record<string, MbrPreTeamSubmission> = {};
       const addendumsByTeam: Record<string, MbrPreSubmissionAddendum[]> = {};
 
