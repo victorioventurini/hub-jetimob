@@ -24,7 +24,7 @@ import {
   type KpiGateBucketId,
   type KpiGateItem,
 } from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
-import { KpiGateStep } from '@/wizards-framework';
+import { KpiGateStep, flattenBucketsForPagination } from '@/wizards-framework';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import { LoadingState } from '@/components/ui/loading-state';
 import type {
