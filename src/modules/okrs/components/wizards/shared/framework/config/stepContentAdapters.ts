@@ -41,6 +41,13 @@ export interface KpiGateItem {
   lastInputType?: KpiInputType | null;
   updateFrequency?: KpiFrequencyValue | null;
   deviationPct?: number | null;
+  // Metadados extras consumidos pelo `cardVariant: 'rich'` do KpiGateStep
+  /** Unidade canônica para `formatValueWithUnit` e sparkline */
+  unit?: string;
+  /** Data ISO do último valor (para badge "Último: dd/MM/yyyy") */
+  latestReferenceDate?: string | null;
+  /** Escopo do KPI ('global'/'area'/'team'/'individual') */
+  scope?: string | null;
 }
 
 /**
