@@ -19,6 +19,12 @@ interface CheckinProgressBlockProps {
   onValueChange: (value: string) => void;
   /** Dados da KPI primária vinculada (se existir) */
   primaryKpi?: PrimaryKpiData | null;
+  /**
+   * Modo somente-leitura: oculta o input manual / banner de KPI primária e
+   * exibe apenas Contexto (Anterior → Meta) + barra de progresso + RAG.
+   * Usado por ritos reflexivos (ex.: Pré-MBR) que NÃO atualizam `okr_checkins`.
+   */
+  readOnly?: boolean;
 }
 
 // Helpers
