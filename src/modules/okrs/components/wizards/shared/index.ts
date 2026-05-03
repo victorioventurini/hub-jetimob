@@ -80,8 +80,8 @@ export type { KrLinkedDetailsProps } from './KrLinkedDetails';
 export { TeamKrsToggle } from './TeamKrsToggle';
 export type { TeamKrsToggleProps } from './TeamKrsToggle';
 
-export { KpiStatusBlocks, OutdatedKpisBlock, PendingKpisBlock, useKpiStatusClassification } from './KpiStatusBlocks';
-export type { KpiStatusBlocksProps } from './KpiStatusBlocks';
+export { KpiStatusBlocks, OutdatedKpisBlock, PendingKpisBlock, useKpiStatusClassification, getKpiActionBucket } from './KpiStatusBlocks';
+export type { KpiStatusBlocksProps, KpiActionBucket } from './KpiStatusBlocks';
 
 export { TeamDeliveryScorecard, buildTeamScorecardFromOrgObjectives, computeTeamHealth } from './TeamDeliveryScorecard';
 export type { TeamDeliveryScorecardData, TeamDeliveryScorecardProps } from './TeamDeliveryScorecard';
