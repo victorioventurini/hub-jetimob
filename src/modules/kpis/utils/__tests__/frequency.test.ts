@@ -141,3 +141,136 @@ describe('frequency.ts — KPI Frequency utilities', () => {
     });
   });
 });
+
+describe('isKpiUpdateOverdue (Regra A)', () => {
+  const NOW = new Date('2026-05-03T12:00:00Z');
+
+  it('retorna false para KPI sem update_frequency (manual não revisado)', () => {
+    expect(isKpiUpdateOverdue(null, '2020-01-01', NOW)).toBe(false);
+    expect(isKpiUpdateOverdue(undefined, null, NOW)).toBe(false);
+  });
+
+  it('retorna true quando nunca houve valor lançado', () => {
+    expect(isKpiUpdateOverdue('weekly', null, NOW)).toBe(true);
+    expect(isKpiUpdateOverdue('monthly', undefined, NOW)).toBe(true);
+  });
+
+  it('retorna true para weekly com >7 dias e false para 2 dias', () => {
+    const eightDaysAgo = new Date(NOW.getTime() - 8 * 86400000).toISOString();
+    const twoDaysAgo = new Date(NOW.getTime() - 2 * 86400000).toISOString();
+    expect(isKpiUpdateOverdue('weekly', eightDaysAgo, NOW)).toBe(true);
+    expect(isKpiUpdateOverdue('weekly', twoDaysAgo, NOW)).toBe(false);
+  });
+
+  it('retorna true para monthly com 31 dias e false para 20 dias', () => {
+    const d31 = new Date(NOW.getTime() - 31 * 86400000).toISOString();
+    const d20 = new Date(NOW.getTime() - 20 * 86400000).toISOString();
+    expect(isKpiUpdateOverdue('monthly', d31, NOW)).toBe(true);
+    expect(isKpiUpdateOverdue('monthly', d20, NOW)).toBe(false);
+  });
+
+  it('é resiliente a data inválida (trata como null)', () => {
+    expect(isKpiUpdateOverdue('weekly', 'not-a-date', NOW)).toBe(true);
+  });
+});
+
+describe('getMissingConsolidationPeriods (Regra B)', () => {
+  const NOW = new Date('2026-05-03T12:00:00Z'); // dentro de 2026-05 (mês corrente)
+  const KPI_CREATED = new Date('2025-01-01T00:00:00Z');
+
+  it('retorna [] quando consolidation_frequency é null', () => {
+    expect(
+      getMissingConsolidationPeriods(null, [], { kpiCreatedAt: KPI_CREATED, now: NOW }),
+    ).toEqual([]);
+  });
+
+  it('considera o mês corrente em aberto (não cobra)', () => {
+    // Mensal, com 2026-04 e 2026-03 consolidados → nenhum período fechado faltando.
+    // Lookback alcança meses de 2025; precisamos preencher tudo até KPI_CREATED.
+    const labels: string[] = [];
+    // Preenche 2025-01 .. 2026-04 (todos fechados)
+    for (let y = 2025; y <= 2026; y++) {
+      const maxMonth = y === 2026 ? 4 : 12;
+      for (let m = 1; m <= maxMonth; m++) {
+        labels.push(`${y}-${String(m).padStart(2, '0')}`);
+      }
+    }
+    expect(
+      getMissingConsolidationPeriods('monthly', labels, {
+        kpiCreatedAt: KPI_CREATED,
+        now: NOW,
+      }),
+    ).toEqual([]);
+  });
+
+  it('detecta um período fechado faltante', () => {
+    // Tudo consolidado exceto 2026-03
+    const labels: string[] = [];
+    for (let y = 2025; y <= 2026; y++) {
+      const maxMonth = y === 2026 ? 4 : 12;
+      for (let m = 1; m <= maxMonth; m++) {
+        const lbl = `${y}-${String(m).padStart(2, '0')}`;
+        if (lbl === '2026-03') continue;
+        labels.push(lbl);
+      }
+    }
+    const missing = getMissingConsolidationPeriods('monthly', labels, {
+      kpiCreatedAt: KPI_CREATED,
+      now: NOW,
+    });
+    expect(missing).toContain('2026-03');
+    expect(missing.length).toBe(1);
+  });
+
+  it('detecta múltiplos períodos faltantes (KPI nunca consolidado)', () => {
+    const missing = getMissingConsolidationPeriods('monthly', [], {
+      kpiCreatedAt: new Date('2026-01-01T00:00:00Z'),
+      now: NOW,
+    });
+    // 2026-04, 2026-03, 2026-02, 2026-01 (mês corrente 2026-05 está em aberto)
+    expect(missing).toEqual(
+      expect.arrayContaining(['2026-04', '2026-03', '2026-02', '2026-01']),
+    );
+  });
+
+  it('respeita maxLookback como guardrail', () => {
+    const missing = getMissingConsolidationPeriods('monthly', [], {
+      kpiCreatedAt: new Date('2010-01-01T00:00:00Z'),
+      now: NOW,
+      maxLookback: 3,
+    });
+    expect(missing.length).toBeLessThanOrEqual(3);
+  });
+
+  it('não cobra períodos antes da criação do KPI', () => {
+    const missing = getMissingConsolidationPeriods('monthly', [], {
+      kpiCreatedAt: new Date('2026-04-15T00:00:00Z'),
+      now: NOW,
+    });
+    // Só 2026-04 está fechado e depois da criação
+    expect(missing).toEqual(['2026-04']);
+  });
+});
+
+describe('isKpiConsolidationPending', () => {
+  const NOW = new Date('2026-05-03T12:00:00Z');
+  const KPI_CREATED = new Date('2026-01-01T00:00:00Z');
+
+  it('true quando há ao menos um período fechado faltando', () => {
+    expect(
+      isKpiConsolidationPending('monthly', [], {
+        kpiCreatedAt: KPI_CREATED,
+        now: NOW,
+      }),
+    ).toBe(true);
+  });
+
+  it('false quando frequência é null', () => {
+    expect(
+      isKpiConsolidationPending(null, [], {
+        kpiCreatedAt: KPI_CREATED,
+        now: NOW,
+      }),
+    ).toBe(false);
+  });
+});
