@@ -218,40 +218,40 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
       <Separator />
 
       {/* Metadata */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
         {kpi.area && (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" style={{ color: kpi.area.color || undefined }} />
-            <span className="text-sm text-muted-foreground">Área:</span>
-            <span className="text-sm font-medium">{kpi.area.name}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" style={{ color: kpi.area.color || undefined }} />
+            <span className="text-sm text-muted-foreground shrink-0">Área:</span>
+            <span className="text-sm font-medium truncate">{kpi.area.name}</span>
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <Globe className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Escopo:</span>
-          <span className="text-sm">{scopeLabels[(kpi.scope as KpiScope) || 'team']}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-sm text-muted-foreground shrink-0">Escopo:</span>
+          <span className="text-sm truncate">{scopeLabels[(kpi.scope as KpiScope) || 'team']}</span>
         </div>
         {kpi.owner && (
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Responsável:</span>
-            <div className="flex items-center gap-2">
-              <Avatar className="h-5 w-5">
+          <div className="flex items-center gap-2 min-w-0">
+            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-sm text-muted-foreground shrink-0">Responsável:</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar className="h-5 w-5 shrink-0">
                 <AvatarImage src={kpi.owner.photo_url || undefined} />
                 <AvatarFallback className="text-[10px]">
                   {kpi.owner.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm">{kpi.owner.display_name}</span>
+              <span className="text-sm truncate">{kpi.owner.display_name}</span>
             </div>
           </div>
         )}
         {primaryDataEntry && (
-          <div className="flex items-center gap-2">
-            <Edit3 className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Atualizado por:</span>
-            <div className="flex items-center gap-2">
-              <Avatar className="h-5 w-5">
+          <div className="flex items-center gap-2 min-w-0">
+            <Edit3 className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-sm text-muted-foreground shrink-0">Atualizado por:</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar className="h-5 w-5 shrink-0">
                 <AvatarImage src={primaryDataEntry.photo_url || undefined} />
                 <AvatarFallback className="text-[10px]">
                   {(primaryDataEntry.display_name ?? "?")
@@ -261,39 +261,39 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
                     .slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm">{primaryDataEntry.display_name ?? "—"}</span>
+              <span className="text-sm truncate">{primaryDataEntry.display_name ?? "—"}</span>
             </div>
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Frequência:</span>
-          <span className="text-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-sm text-muted-foreground shrink-0">Frequência:</span>
+          <span className="text-sm truncate">
             {kpi.update_frequency ? FREQUENCY_VALUE_LABELS[kpi.update_frequency] : "—"}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Direção:</span>
-          <span className="text-sm">{DIRECTION_LABELS[kpi.direction]}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Activity className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-sm text-muted-foreground shrink-0">Direção:</span>
+          <span className="text-sm truncate">{DIRECTION_LABELS[kpi.direction]}</span>
         </div>
         {kpi.target_value !== null && (
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <Target className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-sm text-muted-foreground flex items-center gap-1 shrink-0">
               Meta ou Benchmark:
               <HelpTooltip
                 content="Valor de referência (meta interna, benchmark de mercado, recorde histórico ou outra referência estratégica)."
                 size="sm"
               />
             </span>
-            <span className="text-sm font-medium">{formatValue(kpi.target_value)}</span>
+            <span className="text-sm font-medium truncate">{formatValue(kpi.target_value)}</span>
           </div>
         )}
         {kpi.target_source && (
-          <div className="col-span-2">
+          <div className="sm:col-span-2 min-w-0">
             <span className="text-sm text-muted-foreground">Fonte:</span>
-            <span className="text-sm ml-2">{kpi.target_source}</span>
+            <span className="text-sm ml-2 break-words">{kpi.target_source}</span>
           </div>
         )}
       </div>
