@@ -48,9 +48,16 @@ export interface MbrKpiGateStepProps {
    * Quando `true`, o gate exige ≥1 decisão por KPI obrigatório (matching por
    * `metadata.kpi_id`), em vez de uma contagem agregada de decisões em
    * `sourceStep='kpi-gate'`. Mensagem de pendência lista os KPIs faltantes.
-   * Default: `false` (preserva comportamento agregado original).
+   * Default: `false`.
    */
   requirePlanForCriticalKpis?: boolean;
+  /**
+   * Quando `false`, oculta o `InlineDecisionInput` dentro de cada KPI.
+   * Útil para fluxos (ex: MBR-Pré) que delegam o registro de plano a outro
+   * step e querem manter o card apenas como leitura/justificativa.
+   * Default: `true` (preserva MBR executivo).
+   */
+  showInlineDecisionInput?: boolean;
 }
 
 // ============================================================
@@ -66,6 +73,7 @@ export function MbrKpiGateStep({
   onBack,
   showStrategicDecisionToggle = true,
   requirePlanForCriticalKpis = false,
+  showInlineDecisionInput = true,
 }: MbrKpiGateStepProps) {
   const criticalKpis = useMemo(
     () => kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow'),
@@ -236,7 +244,7 @@ export function MbrKpiGateStep({
                 )}
 
                 {/* Inline decision when required */}
-                {kpi.requiresStrategicDecision && (
+                {showInlineDecisionInput && kpi.requiresStrategicDecision && (
                   <div className="border rounded-lg min-w-0 max-w-full">
                     <InlineDecisionInput
                       decisions={decisions}

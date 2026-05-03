@@ -156,7 +156,7 @@ export function MbrPreKpiGateStep({
       onContinue={onContinue}
       onBack={onBack}
       showStrategicDecisionToggle={false}
-      requirePlanForCriticalKpis
+      showInlineDecisionInput={false}
     />
   );
 }
