@@ -248,6 +248,26 @@ export function MbrPreOpeningStep({
     effectiveUserId,
   });
 
+  // ── Badges ancorados no mês de referência (não em "hoje") ──
+  // O Pré-MBR analisa um mês fechado, então `monthLabel` e `monthInQuarter`
+  // devem refletir esse mês — não o mês corrente em que o rito é executado.
+  const { monthLabelForGreeting, monthInQuarterForGreeting } = useMemo(() => {
+    const m = /^(\d{4})-(\d{2})$/.exec(referenceMonth);
+    if (!m) {
+      return {
+        monthLabelForGreeting: greeting.monthLabel ?? null,
+        monthInQuarterForGreeting: greeting.monthInQuarter ?? null,
+      };
+    }
+    const year = Number(m[1]);
+    const monthNum = Number(m[2]); // 1..12
+    const monthInQuarter = (((monthNum - 1) % 3) + 1) as 1 | 2 | 3;
+    return {
+      monthLabelForGreeting: `${formatMonthShort(referenceMonth)} ${year}`,
+      monthInQuarterForGreeting: monthInQuarter,
+    };
+  }, [referenceMonth, greeting.monthLabel, greeting.monthInQuarter]);
+
   const {
     projects,
     overdueProjectIds,
