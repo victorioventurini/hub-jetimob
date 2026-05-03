@@ -117,7 +117,7 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
 // ────────────────────────────────────────────────────────────────────
 
 /** Modo de ação do líder por bucket (decide o bloco "Ação do líder"). */
-type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
+export type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
 
 /**
  * Decide o modo de ação considerando bucket + status do KPI.
