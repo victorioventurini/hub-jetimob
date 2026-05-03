@@ -68,6 +68,7 @@ export default function KpiDashboardPage() {
     parse: (v) => v as KpiScope | "all",
   });
   const teamState = useUrlState<string>({ key: 'team_id', defaultValue: 'all' });
+  const ownerState = useUrlState<string>({ key: 'owner_id', defaultValue: 'all' });
   const ragStatusState = useUrlState<KpiRagStatus | "all">({
     key: 'status',
     defaultValue: 'all',
@@ -115,6 +116,8 @@ export default function KpiDashboardPage() {
   const setScopeFilter = scopeState.set;
   const teamFilter = teamState.value;
   const setTeamFilter = teamState.set;
+  const ownerFilter = ownerState.value;
+  const setOwnerFilter = ownerState.set;
   const ragStatusFilter = ragStatusState.value;
   const setRagStatusFilter = ragStatusState.set;
   const krLinkStatusFilter = krLinkStatusState.value;
@@ -166,6 +169,7 @@ export default function KpiDashboardPage() {
     areaId: areaFilter === 'all' ? undefined : areaFilter,
     scope: scopeFilter === 'all' ? undefined : scopeFilter,
     teamId: teamFilter === 'all' ? undefined : teamFilter,
+    ownerId: ownerFilter === 'all' ? undefined : ownerFilter,
     indicatorType: indicatorTypeFilter === 'all' ? undefined : indicatorTypeFilter,
   });
 
@@ -378,6 +382,7 @@ export default function KpiDashboardPage() {
             indicatorType={indicatorTypeFilter}
             ragStatus={ragStatusFilter}
             krLinkStatus={krLinkStatusFilter}
+            ownerId={ownerFilter}
             onCategoryChange={() => {}} // No-op, category deprecated
             onTeamChange={setTeamFilter}
             onAreaChange={setAreaFilter}
@@ -385,6 +390,7 @@ export default function KpiDashboardPage() {
             onIndicatorTypeChange={setIndicatorTypeFilter}
             onRagStatusChange={setRagStatusFilter}
             onKrLinkStatusChange={setKrLinkStatusFilter}
+            onOwnerChange={setOwnerFilter}
           />
         </ListPageFilters>
 
