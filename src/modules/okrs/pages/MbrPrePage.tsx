@@ -366,11 +366,22 @@ export default function MbrPrePage() {
       if (!refBounds) return [];
       // MBR-Pré (decisão de produto): KPIs sob responsabilidade do time =
       //   - TODOS scope='org' (Global) — o time da área é corresponsável
-      //   - scope='area' onde area_id = área do time OU responsible_team_id = time
+      //   - scope='area' onde:
+      //       * area_id (área dona estratégica) = área do time, OU
+      //       * responsible_area_id (override operacional) = área do time, OU
+      //       * responsible_team_id = time
       // Lifecycle: inclui 'active' e 'proposed' (KPIs propostos ainda são
       // responsabilidade do time e devem aparecer no rito de revisão).
       // KPIs scope='team' e métricas (indicator_type<>'kpi') são excluídos.
-      const teamAreaId = selectedTeam?.area_id ?? null;
+
+      // Buscar area_id do time (FlatTeamItem do hierarchical list não expõe).
+      const { data: teamRow } = await buSupabase
+        .from('teams')
+        .select('area_id')
+        .eq('id', teamIdParam!)
+        .maybeSingle();
+      const teamAreaId = (teamRow as { area_id: string | null } | null)?.area_id ?? null;
+
       let query = buSupabase
         .from('kpi_metrics')
         .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
@@ -378,9 +389,14 @@ export default function MbrPrePage() {
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null);
 
-      // org: todos / area: por area_id do time OU responsible_team_id = time
-      const orParts = [`scope.eq.org`, `and(scope.eq.area,responsible_team_id.eq.${teamIdParam})`];
-      if (teamAreaId) orParts.push(`and(scope.eq.area,area_id.eq.${teamAreaId})`);
+      const orParts: string[] = [
+        `scope.eq.org`,
+        `and(scope.eq.area,responsible_team_id.eq.${teamIdParam})`,
+      ];
+      if (teamAreaId) {
+        orParts.push(`and(scope.eq.area,area_id.eq.${teamAreaId})`);
+        orParts.push(`and(scope.eq.area,responsible_area_id.eq.${teamAreaId})`);
+      }
       query = query.or(orParts.join(','));
 
       const { data: kpis, error } = await query;
