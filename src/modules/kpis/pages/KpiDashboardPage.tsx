@@ -330,6 +330,31 @@ export default function KpiDashboardPage() {
           </div>
         )}
 
+        {/* Governança: KPIs de Área/Global sem Time Responsável */}
+        {canManageKpis && missingResponsibleCount > 0 && !missingResponsibleOnly && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+            <span className="text-foreground">
+              <strong>{missingResponsibleCount}</strong>{' '}
+              {missingResponsibleCount === 1
+                ? 'indicador de Área/Global sem Time Responsável.'
+                : 'indicadores de Área/Globais sem Time Responsável.'}
+            </span>
+            <Button size="sm" variant="outline" onClick={() => missingResponsibleState.set('1')}>
+              Revisar
+            </Button>
+          </div>
+        )}
+        {missingResponsibleOnly && (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              Mostrando apenas indicadores de Área/Globais sem Time Responsável.
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => missingResponsibleState.set('0')}>
+              Limpar filtro
+            </Button>
+          </div>
+        )}
+
         {/* Status Summary */}
         <KpiStatusSummary
           total={summary.total}
