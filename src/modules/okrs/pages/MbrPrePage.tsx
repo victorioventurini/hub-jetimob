@@ -44,9 +44,6 @@ import {
   monthBoundsDate,
 } from '@/modules/okrs/utils/mbr/referenceMonth';
 
-// Reuse QBR step 2 (com props opcionais para justificativas)
-import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep';
-
 // MBR-Pre specific steps
 import { MbrPreOpeningStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep';
 import { MbrPreProjectsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreProjectsStep';
@@ -54,6 +51,8 @@ import { MbrPreKrAnalysisStep } from '@/modules/okrs/components/wizards/mbr-pre/
 import { MbrPreHighlightsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep';
 import { MbrPreNextStepsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep';
 import { MbrPreSummary } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreSummary';
+// KPI Gate canônico v3 (substitui QbrKpiAnalysisStep + classificador 4-bucket)
+import { MbrPreKpiGateStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep';
 
 import {
   calculateKrState,
