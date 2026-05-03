@@ -634,4 +634,3 @@ export function QbrKpiAnalysisStep({
     </WizardStepScaffold>
   );
 }
-}
