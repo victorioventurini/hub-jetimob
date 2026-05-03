@@ -214,9 +214,23 @@ export function useWizardSessionStorage<TStep extends string, TData>({
 
       if (sessionId) {
         try {
+          // CRÍTICO: gravar `reflection_data` no momento de concluir.
+          // Sem isso, qualquer edit feito após o último auto-save (debounced)
+          // — tipicamente no step Resumo — fica perdido. O draft passado é
+          // sempre o estado React mais recente do wizard.
+          const reflectionData = JSON.parse(
+            JSON.stringify({ ...draft, updatedAt: completionDateIso }),
+          );
           await buSupabase
             .from('okr_wizard_sessions')
-            .update({ status: 'completed', completed_at: completionDateIso })
+            .update({
+              status: 'completed',
+              completed_at: completionDateIso,
+              reflection_data: reflectionData,
+              team_id: draft.teamId,
+              cycle_id: draft.cycleId,
+              updated_at: completionDateIso,
+            })
             .eq('id', sessionId);
 
           if (currentBu?.id) {
