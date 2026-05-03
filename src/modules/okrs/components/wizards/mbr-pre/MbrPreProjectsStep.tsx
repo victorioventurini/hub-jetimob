@@ -165,9 +165,6 @@ export function MbrPreProjectsStep({
   onMilestoneJustificationChange,
   onContinue,
   onBack,
-  agendaSuggestions,
-  onAgendaSuggestionsChange,
-  agendaTriggerLabel,
 }: MbrPreProjectsStepProps) {
   const { projects, isLoading, overdueProjectIds, overdueMilestoneIds } =
     useMbrPreTeamProjects(teamId);
@@ -191,7 +188,7 @@ export function MbrPreProjectsStep({
         <WizardStepHeader
           icon={FolderKanban}
           title="Projetos do Time"
-          tooltip="mbr-pre-projects"
+          tooltip="mbr-pre-highlights"
           description="Reflita sobre projetos e marcos atrasados — justifique cada desvio"
           variant="purple"
           badge={
