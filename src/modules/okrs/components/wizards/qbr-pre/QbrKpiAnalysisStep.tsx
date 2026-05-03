@@ -122,19 +122,45 @@ interface KpiAnalysisCardProps {
   kpi: MbrKpiSnapshot;
   buName?: string | null;
   tone?: 'alert' | 'healthy' | 'muted';
+  /**
+   * Modo de ação obrigatória do líder. Default `view` (sem campo).
+   * Mantemos `showJustification` por retro-compat: equivale a `mode='justify'`.
+   */
+  mode?: KpiActionBucket;
   showJustification?: boolean;
   justificationValue?: string;
   onJustificationChange?: (kpiId: string, value: string) => void;
+  // Modo `explain-no-data`
+  noDataReasonValue?: string;
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
+  // Modo `update-value`
+  onValueSubmit?: (
+    kpiId: string,
+    values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string },
+  ) => Promise<void> | void;
+  /** Marca quando o KPI já foi atualizado nesta sessão (libera "Próximo"). */
+  alreadyUpdated?: boolean;
 }
+
+const FORM_ID_PREFIX = 'mbr-pre-kpi-update';
 
 const KpiAnalysisCard = memo(function KpiAnalysisCard({
   kpi,
   buName,
   tone,
+  mode,
   showJustification,
   justificationValue,
   onJustificationChange,
+  noDataReasonValue,
+  onNoDataReasonChange,
+  onValueSubmit,
+  alreadyUpdated,
 }: KpiAnalysisCardProps) {
+  // Retro-compat: showJustification (forma antiga em QBR-Pré) → mode='justify'
+  const effectiveMode: KpiActionBucket =
+    mode ?? (showJustification ? 'justify' : 'view');
+
   const rag = RAG_STYLES[kpi.ragStatus] || RAG_STYLES.no_data;
   const cardBorder =
     tone === 'healthy'
@@ -146,6 +172,16 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
   const handleJustificationChange = useCallback(
     (v: string) => onJustificationChange?.(kpi.kpiId, v),
     [kpi.kpiId, onJustificationChange],
+  );
+  const handleNoDataReasonChange = useCallback(
+    (v: string) => onNoDataReasonChange?.(kpi.kpiId, v),
+    [kpi.kpiId, onNoDataReasonChange],
+  );
+  const handleValueSubmit = useCallback(
+    async (values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string }) => {
+      await onValueSubmit?.(kpi.kpiId, values);
+    },
+    [kpi.kpiId, onValueSubmit],
   );
 
   return (
@@ -167,6 +203,24 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
                 ) : null}
                 {rag.label}
               </Badge>
+              {effectiveMode === 'update-value' && (
+                <Badge variant="outline" className="text-xs gap-1 text-status-amber border-status-amber/40">
+                  <Clock className="h-3 w-3" />
+                  Desatualizado
+                </Badge>
+              )}
+              {effectiveMode === 'explain-no-data' && (
+                <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                  <BarChart3 className="h-3 w-3" />
+                  Sem dados
+                </Badge>
+              )}
+              {alreadyUpdated && (
+                <Badge variant="outline" className="text-xs gap-1 text-status-green border-status-green/40">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Atualizado nesta sessão
+                </Badge>
+              )}
               {kpi.areaName && (
                 <AreaBadge area={{ name: kpi.areaName, color: kpi.areaColor ?? null }} />
               )}
@@ -221,7 +275,8 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
           </div>
         )}
 
-        {showJustification && onJustificationChange && (
+        {/* Ação obrigatória — varia por bucket */}
+        {effectiveMode === 'justify' && onJustificationChange && (
           <JustificationField
             id={`kpi-just-${kpi.kpiId}`}
             label="Justifique o desvio do KPI"
@@ -230,6 +285,41 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
             value={justificationValue ?? ''}
             onChange={handleJustificationChange}
           />
+        )}
+
+        {effectiveMode === 'explain-no-data' && onNoDataReasonChange && (
+          <JustificationField
+            id={`kpi-nodata-${kpi.kpiId}`}
+            label="Por que este KPI está sem dados?"
+            hint="Obrigatório — explique a ausência de registros e o plano para sanar."
+            required
+            value={noDataReasonValue ?? ''}
+            onChange={handleNoDataReasonChange}
+          />
+        )}
+
+        {effectiveMode === 'update-value' && onValueSubmit && !alreadyUpdated && (
+          <div className="rounded-md border bg-warning-muted/30 p-3 space-y-2">
+            <p className="text-xs font-medium text-warning-foreground">
+              Registre o valor atualizado deste KPI antes de continuar.
+            </p>
+            <KpiValueEntryForm
+              unit={kpi.unit ?? ''}
+              consolidationFrequency={kpi.consolidationFrequency ?? null}
+              updateFrequency={kpi.updateFrequency ?? null}
+              placeholderValue={kpi.target ?? undefined}
+              formId={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
+              onValidSubmit={handleValueSubmit}
+            />
+            <Button
+              type="submit"
+              form={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
+              size="sm"
+              className="w-full"
+            >
+              Registrar valor
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
