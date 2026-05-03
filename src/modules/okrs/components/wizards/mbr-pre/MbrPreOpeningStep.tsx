@@ -142,7 +142,7 @@ export function MbrPreOpeningStep({
         <WizardStepHeader
           icon={Sparkles}
           title="Abertura"
-          tooltip="mbr-pre-opening"
+          tooltip="team-opening"
           description="Resumo do mês do time — confira o panorama antes de começar"
           variant="purple"
         />
