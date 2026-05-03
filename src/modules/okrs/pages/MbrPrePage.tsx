@@ -478,6 +478,19 @@ export default function MbrPrePage() {
   // Step render
   const renderStepContent = () => {
     switch (draft.currentStep) {
+      case 'data-validation':
+        return (
+          <MbrPreDataValidationStep
+            teamId={teamIdParam!}
+            teamName={selectedTeam?.name ?? null}
+            referenceMonth={refMonth}
+            cycleId={activeCycle?.id ?? null}
+            teamObjectives={(teamObjectives ?? []) as any}
+            isLoadingObjectives={isLoadingKrs}
+            onContinue={() => setStep('opening')}
+          />
+        );
+
       case 'opening':
       case 'balance': // legacy: drafts antigos abrem na nova abertura
         return (
