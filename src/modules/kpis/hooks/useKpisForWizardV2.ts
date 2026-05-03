@@ -195,7 +195,17 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             (kpi.consolidation_frequency as KpiFrequencyValue | null | undefined) ?? null;
           const updateFreq =
             (kpi.update_frequency as KpiFrequencyValue | null | undefined) ?? null;
-          const needsUpdate = isKpiUpdateOverdue(updateFreq, latest?.reference_date);
+          const updateOverdue = isKpiUpdateOverdue(updateFreq, latest?.reference_date);
+          // Regra B — períodos fechados sem `consolidated`.
+          const consolidatedLabels = consolidatedLabelsByKpi.get(kpi.id) ?? new Set<string>();
+          const kpiCreatedAt = kpi.created_at ? new Date(kpi.created_at as string) : new Date(0);
+          const missingPeriods = getMissingConsolidationPeriods(
+            consolidationFreq,
+            consolidatedLabels,
+            { kpiCreatedAt },
+          );
+          const consolidationPending = missingPeriods.length > 0;
+          const needsUpdate = updateOverdue || consolidationPending;
           const ragStatus = (latest?.rag_status as KpiRagStatus) ?? 'no_data';
 
           // Pré-calculo de desvio percentual (latest vs target).
@@ -259,6 +269,10 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             latest_period_label: latest?.period_label ?? null,
             latest_input_type: (latest?.input_type as KpiInputType | undefined) ?? null,
             needs_update: needsUpdate,
+            update_overdue: updateOverdue,
+            consolidation_pending: consolidationPending,
+            missing_consolidation_count: missingPeriods.length,
+            created_at: (kpi.created_at as string | null | undefined) ?? null,
             deviation_pct: deviationPct,
             // Role-based fields
             userRole,
