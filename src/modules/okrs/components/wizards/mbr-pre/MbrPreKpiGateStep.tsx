@@ -175,10 +175,18 @@ export function MbrPreKpiGateStep({
   }, [totalKpiCount, currentKpiIndex]);
 
   // ── Gate por página: KPI atual obrigatório precisa de plano ──
+  // Regras de obrigatoriedade do Plano de Ação do Líder:
+  //   1. Buckets MANDATORY (overdue / critical / guardrailViolated)
+  //   2. teamContext em status red
+  //   3. KPI sem meta cadastrada (target == null) — independente do bucket
   const currentEntry = totalKpiCount > 0 ? flat[Math.min(currentKpiIndex, totalKpiCount - 1)] : null;
+  const kpiHasNoTarget = !!currentEntry && (
+    currentEntry.kpi.target == null || currentEntry.kpi.target === ''
+  );
   const currentRequiresPlan = !!currentEntry && (
     MANDATORY_BUCKETS.has(currentEntry.bucketId) ||
-    (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red')
+    (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red') ||
+    kpiHasNoTarget
   );
   const currentJustOk = !currentRequiresPlan
     || (justifications[currentEntry!.kpi.id] ?? '').trim().length > 0;

@@ -1,146 +1,53 @@
-
-# Plano — Step de Validação de Dados (Pré-MBR)
-
 ## Objetivo
 
-Adicionar um **novo primeiro step** ao wizard Pré-MBR (`/rituals/mbr-pre`) que **exige** que o líder do time atualize/consolide KPIs e registre check-ins de KRs **antes** de iniciar a abertura do rito. O líder pode resolver tudo direto na própria tela, sem sair do wizard.
+No step **Indicadores do Time** (`/rituals/mbr-pre?step=kpi-analysis`), tornar o **Plano de ação do líder obrigatório** para KPIs que estão:
 
-Princípios:
-- **Não duplicar** dialogs/forms — reutilizar `AddKpiValueDialog` (KPI) e `CheckinDialog` (KR).
-- **Não criar** classificadores paralelos — reutilizar `useKpisForWizardV2` (estendido para Regra B) + `useKpiData`/`isKpiUpdateOverdue`/`getMissingConsolidationPeriods` já SSOT.
-- **Step canônico do framework** quando possível; se a UX pedir layout próprio (lista mista KPI+KR), criar `MbrPreDataValidationStep` no `mbr-pre/` consumindo blocos shared (`WizardStepScaffold`, `WizardStepHeader`, `WizardStepFooter`, `LatestCheckinSummary`, `KpiStatusBlocks`, `JustificationField`).
-- Gate de avanço: **botão "Próximo" desabilitado enquanto pendências obrigatórias existirem**, com contador visível.
+1. **Sem atualização** (overdue) — já é obrigatório hoje ✅
+2. **Sem meta** (`target_value = null`) — **falta implementar** ❌
+3. KPIs em alerta (critical / guardrail / red) — já obrigatório ✅
 
----
+KPIs **dentro do esperado** (atualizados, com meta, status verde/amarelo on-track) **continuam opcionais**.
 
-## UX da tela
+## Mudança proposta
 
-Layout em duas seções colapsáveis:
+Em `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx`, ampliar a regra de obrigatoriedade da página atual (`currentRequiresPlan`) para incluir o caso "sem meta", independente do bucket onde o KPI tenha caído.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ Validação de Dados — antes de iniciar o Pré-MBR          │
-│ Atualize KPIs e check-ins do time para o mês de Abril   │
-│ [3 KPIs pendentes] [2 KRs sem check-in no mês]           │
-├─────────────────────────────────────────────────────────┤
-│ ▼ Indicadores (KPIs) — 3 pendentes                       │
-│   [KPI A] Atualização atrasada (mensal)  [Registrar]     │
-│   [KPI B] Consolidação pendente (Abr)    [Registrar]     │
-│   [KPI C] OK ✓                                           │
-├─────────────────────────────────────────────────────────┤
-│ ▼ Resultados-Chave (KRs) — 2 pendentes                   │
-│   [KR X] Sem check-in há 38 dias        [Fazer check-in] │
-│   [KR Y] Último check-in fora do mês     [Fazer check-in]│
-│   [KR Z] OK ✓                                            │
-├─────────────────────────────────────────────────────────┤
-│ [ Voltar ]              [ Próximo (5 pendências) ]       │
-└─────────────────────────────────────────────────────────┘
-```
-
-Cada linha pendente tem botão que abre o `AddKpiValueDialog` ou `CheckinDialog` correspondente. Ao salvar, a query é invalidada e o item desaparece da lista.
-
-Regra de gate (mesma do filtro do dashboard de KPIs):
-- **KPI pendente** = `update_overdue` OU `consolidation_pending` (mês de referência incluído nos períodos faltantes).
-- **KR pendente** = `last_checkin_at` é null OU está fora do `referenceMonth` do Pré-MBR (mês fechado anterior).
-
-Opção de **"pular" pendências** (override): apenas para admin/superadmin via permission `okr.manage_all`, com confirmação e log em decisão. Para líder comum, não há bypass.
-
----
-
-## Plano técnico
-
-### 1. Estender `useKpisForWizardV2` com Regra B
-
-Hoje só considera Regra A (`isKpiUpdateOverdue`). Adicionar `consolidation_pending` por KPI usando `getMissingConsolidationPeriods` (já SSOT em `kpis/utils/frequency.ts`), seguindo o mesmo padrão do `useKpiData`. Resultado:
-
-- Adicionar campos `consolidation_pending: boolean` e `missing_consolidation_count: number` em `KpiForWizardV2`.
-- `needs_update` passa a ser `update_overdue || consolidation_pending`.
-- `kpisToUpdate` continua sendo `filter(k => k.needs_update)` — sem mudança no consumo atual.
-
-### 2. Hook novo: `useMbrPreValidationData(teamId, referenceMonth)`
-
-Em `src/modules/okrs/hooks/useMbrPreValidationData.ts`. Combina:
-- `useKpisForWizardV2({ scope:'leader', responsibleTeamId: teamId, lifecycleStatuses:['active','proposed'] })` → lista de pendências de KPI.
-- Reaproveita a query existente de `teamObjectives` (já carregada em `MbrPrePage`) — passada via prop, não refeita. Filtra KRs cujo último check-in seja anterior ao início do mês de referência ou ausente.
-
-Retorna:
+### Regra atual (linhas 177–184)
 ```ts
-{
-  kpisPending: Array<{ kpi, reason: 'overdue' | 'pending_consolidation' | 'both' }>;
-  kpisOk: KpiForWizardV2[];
-  krsPending: Array<{ kr, objective, reason: 'never' | 'before_ref_month' }>;
-  krsOk: Array<{ kr, objective }>;
-  totalPending: number;
-  isLoading: boolean;
-}
+const currentRequiresPlan = !!currentEntry && (
+  MANDATORY_BUCKETS.has(currentEntry.bucketId) ||      // overdue, critical, guardrailViolated
+  (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red')
+);
 ```
 
-### 3. Novo step component: `MbrPreDataValidationStep`
+### Regra nova
+```ts
+const kpiHasNoTarget = !!currentEntry && (
+  currentEntry.kpi.target == null || currentEntry.kpi.target === ''
+);
 
-`src/modules/okrs/components/wizards/mbr-pre/MbrPreDataValidationStep.tsx`.
+const currentRequiresPlan = !!currentEntry && (
+  MANDATORY_BUCKETS.has(currentEntry.bucketId) ||
+  (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'red') ||
+  kpiHasNoTarget   // ← NOVO: sem meta sempre exige plano
+);
+```
 
-Reutiliza:
-- `WizardStepScaffold` + `WizardStepHeader` + `WizardStepFooter` (shared).
-- `Card`/`Collapsible`/`Badge` do shadcn.
-- `KpiStatusBlocks` ou `LatestCheckinSummary` para chip de status (avaliar — usar o existente que melhor encaixa, sem novo).
-- Botões abrem `AddKpiValueDialog` (KPI) e `CheckinDialog` (KR) — ambos canônicos. Após `onOpenChange(false)` em sucesso, invalidar `kpisKeys.forWizardV2(...)` e `mbrKeys.preTeamKrs(...)`.
+## UX complementar (mesmo arquivo)
 
-Gate: `primaryDisabled={totalPending > 0}` e label dinâmico `Próximo (N pendências)` / `Próximo`.
+Para o usuário entender por que o plano ficou obrigatório num KPI aparentemente "saudável" (ex.: bucket `healthy` mas sem meta), passar uma prop / hint visual ao `KpiGateStep` indicando o motivo. Opções:
 
-### 4. Registrar o step no `MbrPrePage`
+- **(A)** Apenas exibir o subtítulo do textarea como "Plano obrigatório — KPI sem meta cadastrada" quando `kpiHasNoTarget && !MANDATORY_BUCKETS.has(...)`. Implementação mínima, sem alterar o framework.
+- **(B)** Adicionar um badge "Sem meta" no header do card (requer pequeno ajuste no `KpiGateStep` do framework para aceitar um label adicional).
 
-- Adicionar `'data-validation'` em `MbrPreStep` (`types/wizard/mbr.ts`) **antes** de `'opening'`.
-- Inserir como primeiro item em `WIZARD_STEPS` e `STEP_ORDER`.
-- Mapear no `renderStepContent()` antes de `'opening'`.
-- Drafts antigos (sem o step) hidratam normalmente: o `defaultStep` muda para `'data-validation'`; rascunhos com `currentStep === 'opening'` continuam abrindo lá (já existe a tolerância `'balance'` legada — replicar comentário `@deprecated` se necessário).
+Recomendado: **(A)** — fica 100% no consumidor MBR Pré, sem mexer no `wizards-framework`.
 
-### 5. Testes
+## Arquivos afetados
 
-- `useMbrPreValidationData.test.ts`: cobre matriz Regra A × Regra B × KR sem check-in / fora do mês.
-- Estende `frequency.test.ts` se houver lacuna em `getMissingConsolidationPeriods` para o mês de referência atual.
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx` (única alteração)
 
-### 6. Documentação
+## Não-objetivos
 
-- Atualizar `mem://features/rituals/mbr-pre-data-validation-gate` (novo) com a regra de gate e referência cruzada para `kpis-master-standard` e `cycles-and-rituals-master`.
-- Nota no `mem://features/kpis/kpis-master-standard` que `useKpisForWizardV2` agora propaga `consolidation_pending` (sem mudança de contrato externo).
-
----
-
-## Arquivos a criar/editar
-
-**Criar:**
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreDataValidationStep.tsx`
-- `src/modules/okrs/hooks/useMbrPreValidationData.ts`
-- `src/modules/okrs/hooks/__tests__/useMbrPreValidationData.test.ts`
-- `mem://features/rituals/mbr-pre-data-validation-gate`
-
-**Editar:**
-- `src/modules/kpis/hooks/useKpisForWizardV2.ts` (adicionar `consolidation_pending` + `missing_consolidation_count`)
-- `src/modules/kpis/types.ts` (campos no `KpiForWizardV2`)
-- `src/modules/okrs/types/wizard/mbr.ts` (`'data-validation'` em `MbrPreStep`)
-- `src/modules/okrs/pages/MbrPrePage.tsx` (steps, order, render, defaultStep)
-- `src/modules/okrs/components/wizards/mbr-pre/index.ts` (barrel)
-- `mem://index.md` (referência ao novo memory)
-
-**Não tocar:**
-- `AddKpiValueDialog`, `KpiValueEntryForm`, `CheckinDialog` — consumidos como estão.
-- Demais steps do Pré-MBR.
-
----
-
-## Riscos e mitigações
-
-1. **Drafts em andamento** que não têm o novo step → tratamos no `renderStepContent` com fallback (qualquer step desconhecido cai em `'data-validation'` se as pendências não foram resolvidas; senão, abre `'opening'`).
-2. **KR com `last_checkin_at` null mas com check-ins reais** (caso histórico) → o seed de `krFinalStates` já lê `okr_checkins`; reutilizamos a mesma `lastByKr` map em vez de confiar em `last_checkin_at`.
-3. **Líder sem permissão de check-in em KR contribuído** → exibimos a pendência mas o botão fica desabilitado com tooltip "Solicite ao time dono atualizar este KR" e não conta no gate (apenas avisa).
-4. **Performance** → tudo deriva de queries já carregadas pela página; nenhuma query adicional além das existentes.
-
----
-
-## Pontos para decisão (opcional)
-
-Se preferir, podemos no momento da implementação:
-- (a) Tornar **KRs contribuídos opcionais** no gate (default proposto) ou exigi-los também.
-- (b) Permitir **bypass com justificativa** para qualquer líder (registrando decisão), em vez de restrito a admins.
-
-Sigo com os defaults se você aprovar como está.
+- Não muda a classificação de buckets (`classifyKpiGateBuckets`) — KPI sem meta continua caindo no bucket natural pelo seu status.
+- Não muda outras telas (KPI dashboard, QBR Pré, etc.).
+- Não cria migration nem altera schema.
