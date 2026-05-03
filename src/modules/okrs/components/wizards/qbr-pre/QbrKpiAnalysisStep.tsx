@@ -604,6 +604,7 @@ export function QbrKpiAnalysisStep({
               onNoDataReasonChange={handleNoDataReasonChange}
               onValueSubmit={onKpiValueSubmit}
               alreadyUpdated={Boolean(kpiUpdatedInSession?.[currentKpi.kpiId])}
+              detailed
             />
           )}
 
