@@ -341,6 +341,13 @@ export function QbrKpiAnalysisStep({
   onKpiJustificationChange,
   requireJustifications,
   agendaCategoryless = false,
+  paginated = false,
+  currentKpiIndex = 0,
+  onKpiIndexChange,
+  kpiNoDataReasons,
+  onKpiNoDataReasonChange,
+  kpiUpdatedInSession,
+  onKpiValueSubmit,
 }: QbrKpiAnalysisStepProps) {
   const { currentBu } = useBu();
 
@@ -367,15 +374,183 @@ export function QbrKpiAnalysisStep({
     k => k.ragStatus === 'no_data' && !statusBlockKpiIds.has(k.kpiId),
   );
 
-  const missingJustifications = requireJustifications
-    ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
-    : 0;
-
   const handleJustificationChange = useCallback(
     (kpiId: string, value: string) => onKpiJustificationChange?.(kpiId, value),
     [onKpiJustificationChange],
   );
+  const handleNoDataReasonChange = useCallback(
+    (kpiId: string, value: string) => onKpiNoDataReasonChange?.(kpiId, value),
+    [onKpiNoDataReasonChange],
+  );
 
+  // ─── Lista ordenada de KPIs que exigem ação (modo paginado) ────────
+  // Ordem: alert → outdated → no_data. KPIs verdes em dia ficam num
+  // bloco-resumo após o último KPI acionável.
+  const actionableKpis = useMemo(
+    () => paginated ? [...alertKpis, ...outdated, ...noDataKpis] : [],
+    [paginated, alertKpis, outdated, noDataKpis],
+  );
+
+  const safeIndex = Math.min(Math.max(currentKpiIndex, 0), Math.max(actionableKpis.length, 1) - 1);
+  const currentKpi = paginated ? actionableKpis[safeIndex] : null;
+  const currentBucket: KpiActionBucket | null = currentKpi ? getKpiActionBucket(currentKpi) : null;
+
+  const isCurrentSatisfied = useMemo(() => {
+    if (!currentKpi || !currentBucket) return true;
+    if (currentBucket === 'justify') {
+      return ((kpiJustifications?.[currentKpi.kpiId] ?? '').trim().length > 0);
+    }
+    if (currentBucket === 'explain-no-data') {
+      return ((kpiNoDataReasons?.[currentKpi.kpiId] ?? '').trim().length > 0);
+    }
+    if (currentBucket === 'update-value') {
+      return Boolean(kpiUpdatedInSession?.[currentKpi.kpiId]);
+    }
+    return true;
+  }, [currentKpi, currentBucket, kpiJustifications, kpiNoDataReasons, kpiUpdatedInSession]);
+
+  const missingJustifications = requireJustifications
+    ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
+    : 0;
+
+  // Soma global do "missing" para liberar avanço final no modo paginado.
+  const totalMissing = useMemo(() => {
+    if (!paginated) return missingJustifications;
+    let n = 0;
+    for (const k of alertKpis) {
+      if (!((kpiJustifications?.[k.kpiId] ?? '').trim())) n++;
+    }
+    for (const k of outdated) {
+      if (!kpiUpdatedInSession?.[k.kpiId]) n++;
+    }
+    for (const k of noDataKpis) {
+      if (!((kpiNoDataReasons?.[k.kpiId] ?? '').trim())) n++;
+    }
+    return n;
+  }, [paginated, missingJustifications, alertKpis, outdated, noDataKpis, kpiJustifications, kpiNoDataReasons, kpiUpdatedInSession]);
+
+  // ────────────────────────────────────────────────────────────────────
+  // MODO PAGINADO (Pré-MBR)
+  // ────────────────────────────────────────────────────────────────────
+  if (paginated) {
+    const isLast = safeIndex >= actionableKpis.length - 1;
+    const goPrev = () => {
+      if (safeIndex === 0) {
+        onBack();
+      } else {
+        onKpiIndexChange?.(safeIndex - 1);
+      }
+    };
+    const goNext = () => {
+      if (isLast) {
+        onContinue();
+      } else {
+        onKpiIndexChange?.(safeIndex + 1);
+      }
+    };
+
+    return (
+      <WizardStepScaffold
+        header={
+          <WizardStepHeader
+            icon={Activity}
+            title="Análise de KPIs"
+            tooltip="qbr-kpi-analysis"
+            description={
+              actionableKpis.length > 0
+                ? `KPI ${safeIndex + 1} de ${actionableKpis.length} — ação obrigatória`
+                : 'Todos os indicadores estão na meta'
+            }
+            variant="amber"
+            badge={`${uniqueKpiSnapshots.length} KPIs`}
+          />
+        }
+        footer={
+          <WizardStepFooter
+            onBack={goPrev}
+            onPrimary={goNext}
+            primaryLabel={isLast ? 'Concluir KPIs' : 'Próximo'}
+            primaryDisabled={!isCurrentSatisfied || (isLast && totalMissing > 0)}
+          />
+        }
+        bottomFixed={
+          agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+            <InlineAgendaSuggestionInput
+              suggestions={agendaSuggestions}
+              onSuggestionsChange={onAgendaSuggestionsChange}
+              sourceStep="qbr-kpi-analysis"
+              triggerLabel={agendaTriggerLabel}
+              categoryless={agendaCategoryless}
+            />
+          ) : undefined
+        }
+      >
+        <div className="p-6 space-y-4">
+          {actionableKpis.length > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Progresso</span>
+                <span>{safeIndex + 1} de {actionableKpis.length}</span>
+              </div>
+              <Progress value={((safeIndex + 1) / actionableKpis.length) * 100} className="h-1.5" />
+            </div>
+          )}
+
+          {currentKpi && currentBucket && (
+            <KpiAnalysisCard
+              key={currentKpi.kpiId}
+              kpi={currentKpi}
+              buName={currentBu?.name}
+              tone={
+                currentBucket === 'justify' ? 'alert'
+                : currentBucket === 'update-value' ? undefined
+                : currentBucket === 'explain-no-data' ? 'muted'
+                : 'healthy'
+              }
+              mode={currentBucket}
+              justificationValue={kpiJustifications?.[currentKpi.kpiId]}
+              onJustificationChange={handleJustificationChange}
+              noDataReasonValue={kpiNoDataReasons?.[currentKpi.kpiId]}
+              onNoDataReasonChange={handleNoDataReasonChange}
+              onValueSubmit={onKpiValueSubmit}
+              alreadyUpdated={Boolean(kpiUpdatedInSession?.[currentKpi.kpiId])}
+            />
+          )}
+
+          {/* Bloco-resumo de KPIs verdes em dia (não exigem ação) */}
+          {isLast && healthyKpis.length > 0 && (
+            <div className="space-y-2 pt-4 border-t">
+              <h4 className="text-sm font-medium text-status-green flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                KPIs na meta ({healthyKpis.length})
+              </h4>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {healthyKpis.map((k) => (
+                  <li key={k.kpiId} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{k.name}</span>
+                    <span className="shrink-0">
+                      {k.currentValue ?? '—'} {k.unit ?? ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {actionableKpis.length === 0 && (
+            <div className="rounded-md border border-status-green/30 bg-status-green-muted/20 p-4 text-sm text-status-green flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Todos os indicadores do time estão na meta e em dia.
+            </div>
+          )}
+        </div>
+      </WizardStepScaffold>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // MODO LISTA (QBR-Pré e fallback)
+  // ────────────────────────────────────────────────────────────────────
   return (
     <WizardStepScaffold
       header={
@@ -458,4 +633,5 @@ export function QbrKpiAnalysisStep({
       </div>
     </WizardStepScaffold>
   );
+}
 }
