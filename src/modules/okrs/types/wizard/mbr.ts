@@ -188,6 +188,7 @@ export interface MbrDraftData {
 // ============================================================
 
 export type MbrPreStep =
+  | 'data-validation'
   | 'opening'
   | 'kpi-analysis'
   | 'projects'
