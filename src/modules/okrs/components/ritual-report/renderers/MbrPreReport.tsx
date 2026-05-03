@@ -7,7 +7,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Target, BarChart3, AlertTriangle, Compass } from 'lucide-react';
+import { Target, BarChart3, AlertTriangle, Compass, MessageSquareQuote } from 'lucide-react';
 import { ReportSection, RagBadge, formatValue } from './shared';
 import { useEntityLookup, resolveName } from '@/modules/okrs/hooks/useEntityLookup';
 import { cn } from '@/lib/utils';
@@ -31,13 +31,18 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
   const nextSteps = data.nextSteps || {};
   const prioritizedItems = Array.isArray(nextSteps.prioritizedItems) ? nextSteps.prioritizedItems : [];
   const crossDependencies = Array.isArray(nextSteps.crossDependencies) ? nextSteps.crossDependencies : [];
+  const krJustifications: Record<string, string> = (data.krJustifications && typeof data.krJustifications === 'object')
+    ? data.krJustifications
+    : {};
+  const krJustEntries = Object.entries(krJustifications).filter(([, v]) => typeof v === 'string' && v.trim().length > 0);
 
   const krIds: string[] = krFinalStates.map((kr: any) => kr?.krId).filter(Boolean);
   const kpiIds: string[] = kpiSnapshots.map((kpi: any) => kpi?.kpiId).filter(Boolean);
+  const allKrIds = Array.from(new Set([...krIds, ...krJustEntries.map(([id]) => id)]));
 
   const lookups = useEntityLookup({
-    teamKrIds: krIds,
-    orgKrIds: krIds,
+    teamKrIds: allKrIds,
+    orgKrIds: allKrIds,
     kpiIds,
   });
 
