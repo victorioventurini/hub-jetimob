@@ -442,7 +442,7 @@ export default function MbrPrePage() {
   }, [discardDraft, setSearchParams]);
 
   // Loading
-  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingCompletedCheck) {
     return <LoadingState text="Carregando dados do pré-MBR..." fullPage />;
   }
 
