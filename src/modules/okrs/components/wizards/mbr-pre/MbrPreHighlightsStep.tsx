@@ -116,6 +116,7 @@ export function MbrPreHighlightsStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="mbr-pre-highlights"
             triggerLabel={agendaTriggerLabel}
+            categoryless
           />
         ) : undefined
       }
