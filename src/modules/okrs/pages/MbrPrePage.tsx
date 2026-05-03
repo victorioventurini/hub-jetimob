@@ -13,7 +13,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
@@ -29,6 +29,8 @@ import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { mbrKeys } from '@/lib/queryKeys/okrs';
+import { useKpiData } from '@/modules/kpis/hooks';
+import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -93,6 +95,8 @@ const DEFAULT_DATA: MbrPreDraftData = {
   nextSteps: { focus: '', prioritizedItems: [], crossDependencies: [] },
   decisions: [],
   kpiJustifications: {},
+  kpiNoDataReasons: {},
+  kpiOutdatedUpdates: {},
   projectJustifications: { projects: {}, milestones: {} },
   krJustifications: {},
   agendaSuggestions: [],
@@ -121,6 +125,13 @@ export default function MbrPrePage() {
   const teamIdParam = searchParams.get('team');
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const { addKpiValue } = useKpiData();
+
+  // ── Estado local do modo paginado de KPIs (Pré-MBR) ──
+  const [kpiPageIndex, setKpiPageIndex] = useState(0);
+  const [kpiUpdatedInSession, setKpiUpdatedInSession] = useState<Record<string, boolean>>({});
 
   // Teams for admin context switching
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
@@ -375,7 +386,7 @@ export default function MbrPrePage() {
       // scope='team' continuam excluídos. Lifecycle: 'active' e 'proposed'.
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
-        .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
+        .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type, consolidation_frequency, update_frequency')
         .in('lifecycle_status', ['active', 'proposed'])
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
@@ -425,6 +436,9 @@ export default function MbrPrePage() {
           unit: kpi.unit ?? '%',
           lastValueAt: current?.reference_date ?? null,
           scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'team',
+          direction: (kpi.direction as 'up' | 'down' | null) ?? null,
+          consolidationFrequency: (kpi as { consolidation_frequency?: MbrKpiSnapshot['consolidationFrequency'] }).consolidation_frequency ?? null,
+          updateFrequency: (kpi as { update_frequency?: MbrKpiSnapshot['updateFrequency'] }).update_frequency ?? null,
         } as MbrKpiSnapshot;
       }));
     },
@@ -627,12 +641,50 @@ export default function MbrPrePage() {
             agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
             agendaCategoryless
             requireJustifications
+            paginated
+            currentKpiIndex={kpiPageIndex}
+            onKpiIndexChange={setKpiPageIndex}
             kpiJustifications={draft.data.kpiJustifications}
             onKpiJustificationChange={(kpiId, value) =>
               updateDraft({
                 kpiJustifications: { ...draft.data.kpiJustifications, [kpiId]: value },
               })
             }
+            kpiNoDataReasons={draft.data.kpiNoDataReasons ?? {}}
+            onKpiNoDataReasonChange={(kpiId, value) =>
+              updateDraft({
+                kpiNoDataReasons: { ...(draft.data.kpiNoDataReasons ?? {}), [kpiId]: value },
+              })
+            }
+            kpiUpdatedInSession={kpiUpdatedInSession}
+            onKpiValueSubmit={async (kpiId, values) => {
+              await addKpiValue.mutateAsync({
+                kpi_id: kpiId,
+                value: values.value,
+                reference_date: values.reference_date,
+                notes: values.notes || undefined,
+                created_by: profile?.id,
+                source: 'manual',
+                input_type: values.input_type,
+              });
+              setKpiUpdatedInSession((prev) => ({ ...prev, [kpiId]: true }));
+              updateDraft({
+                kpiOutdatedUpdates: {
+                  ...(draft.data.kpiOutdatedUpdates ?? {}),
+                  [kpiId]: {
+                    newValue: values.value,
+                    referenceDate: values.reference_date,
+                    inputType: values.input_type,
+                    notes: values.notes,
+                    submittedAt: new Date().toISOString(),
+                  },
+                },
+              });
+              // Refetch snapshots para refletir o novo valor.
+              queryClient.invalidateQueries({
+                queryKey: mbrKeys.preTeamKpis(teamIdParam, currentBuId),
+              });
+            }}
           />
         );
 

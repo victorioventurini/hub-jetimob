@@ -2,20 +2,28 @@
  * QbrKpiAnalysisStep - Step 2: Análise de KPIs e Métricas
  *
  * Carrega KPIs do escopo do líder com valor atual, RAG status e variação.
- * (Funcionalidade "Zombie?" removida em 2026-04-28.)
+ *
+ * Modos:
+ *  - Lista (default): renderiza alert / outdated / no_data / healthy em blocos.
+ *    Usado por QBR-Pré.
+ *  - Paginado (`paginated=true`): renderiza UM KPI por página, exigindo a ação
+ *    obrigatória de cada bucket (justify / update-value / explain-no-data).
+ *    Usado por Pré-MBR.
  */
 
 import { memo, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import {
-  Activity, AlertTriangle, Target, Users,
+  Activity, AlertTriangle, Target, Users, Clock, BarChart3, CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
-import { KpiSparkline } from '@/modules/kpis/components/shared';
+import { KpiSparkline, KpiValueEntryForm } from '@/modules/kpis/components/shared';
 import { AreaBadge } from '@/components/ui/area-badge';
 import { useBu } from '@/contexts/BuContext';
 import {
@@ -25,9 +33,12 @@ import {
 
   KpiStatusBlocks,
   useKpiStatusClassification,
+  getKpiActionBucket,
   InlineAgendaSuggestionInput,
   JustificationField,
 } from '../shared';
+import type { KpiActionBucket } from '../shared';
+import type { KpiInputType } from '@/modules/kpis/types';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
@@ -62,6 +73,34 @@ export interface QbrKpiAnalysisStepProps {
    * padrão do Check-in Individual.
    */
   agendaCategoryless?: boolean;
+
+  // ─── Modo paginado (rito reflexivo Pré-MBR) ──────────────────────
+  /**
+   * Quando true, renderiza UM KPI por página exigindo a ação obrigatória
+   * de cada bucket (justify / update-value / explain-no-data).
+   * KPIs verdes em dia (`view`) ficam num bloco-resumo após o último.
+   */
+  paginated?: boolean;
+  /** Índice atual da paginação (controlado pelo consumidor). */
+  currentKpiIndex?: number;
+  onKpiIndexChange?: (next: number) => void;
+  /** Razões de "sem dados" (chave: kpiId). */
+  kpiNoDataReasons?: Record<string, string>;
+  onKpiNoDataReasonChange?: (kpiId: string, value: string) => void;
+  /**
+   * Marca, na sessão, KPIs que já tiveram valor atualizado durante o rito
+   * (chave: kpiId). Usado para liberar o avanço sem refetch imediato.
+   */
+  kpiUpdatedInSession?: Record<string, boolean>;
+  /**
+   * Submit do valor para um KPI desatualizado. Consumidor deve persistir
+   * em `kpi_values` (canon: `useKpiData().addKpiValue`) e marcar
+   * `kpiUpdatedInSession[kpiId] = true` em sucesso.
+   */
+  onKpiValueSubmit?: (
+    kpiId: string,
+    values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string },
+  ) => Promise<void> | void;
 }
 
 // ============================================================
@@ -83,19 +122,45 @@ interface KpiAnalysisCardProps {
   kpi: MbrKpiSnapshot;
   buName?: string | null;
   tone?: 'alert' | 'healthy' | 'muted';
+  /**
+   * Modo de ação obrigatória do líder. Default `view` (sem campo).
+   * Mantemos `showJustification` por retro-compat: equivale a `mode='justify'`.
+   */
+  mode?: KpiActionBucket;
   showJustification?: boolean;
   justificationValue?: string;
   onJustificationChange?: (kpiId: string, value: string) => void;
+  // Modo `explain-no-data`
+  noDataReasonValue?: string;
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
+  // Modo `update-value`
+  onValueSubmit?: (
+    kpiId: string,
+    values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string },
+  ) => Promise<void> | void;
+  /** Marca quando o KPI já foi atualizado nesta sessão (libera "Próximo"). */
+  alreadyUpdated?: boolean;
 }
+
+const FORM_ID_PREFIX = 'mbr-pre-kpi-update';
 
 const KpiAnalysisCard = memo(function KpiAnalysisCard({
   kpi,
   buName,
   tone,
+  mode,
   showJustification,
   justificationValue,
   onJustificationChange,
+  noDataReasonValue,
+  onNoDataReasonChange,
+  onValueSubmit,
+  alreadyUpdated,
 }: KpiAnalysisCardProps) {
+  // Retro-compat: showJustification (forma antiga em QBR-Pré) → mode='justify'
+  const effectiveMode: KpiActionBucket =
+    mode ?? (showJustification ? 'justify' : 'view');
+
   const rag = RAG_STYLES[kpi.ragStatus] || RAG_STYLES.no_data;
   const cardBorder =
     tone === 'healthy'
@@ -107,6 +172,16 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
   const handleJustificationChange = useCallback(
     (v: string) => onJustificationChange?.(kpi.kpiId, v),
     [kpi.kpiId, onJustificationChange],
+  );
+  const handleNoDataReasonChange = useCallback(
+    (v: string) => onNoDataReasonChange?.(kpi.kpiId, v),
+    [kpi.kpiId, onNoDataReasonChange],
+  );
+  const handleValueSubmit = useCallback(
+    async (values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string }) => {
+      await onValueSubmit?.(kpi.kpiId, values);
+    },
+    [kpi.kpiId, onValueSubmit],
   );
 
   return (
@@ -128,6 +203,24 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
                 ) : null}
                 {rag.label}
               </Badge>
+              {effectiveMode === 'update-value' && (
+                <Badge variant="outline" className="text-xs gap-1 text-status-amber border-status-amber/40">
+                  <Clock className="h-3 w-3" />
+                  Desatualizado
+                </Badge>
+              )}
+              {effectiveMode === 'explain-no-data' && (
+                <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                  <BarChart3 className="h-3 w-3" />
+                  Sem dados
+                </Badge>
+              )}
+              {alreadyUpdated && (
+                <Badge variant="outline" className="text-xs gap-1 text-status-green border-status-green/40">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Atualizado nesta sessão
+                </Badge>
+              )}
               {kpi.areaName && (
                 <AreaBadge area={{ name: kpi.areaName, color: kpi.areaColor ?? null }} />
               )}
@@ -182,7 +275,8 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
           </div>
         )}
 
-        {showJustification && onJustificationChange && (
+        {/* Ação obrigatória — varia por bucket */}
+        {effectiveMode === 'justify' && onJustificationChange && (
           <JustificationField
             id={`kpi-just-${kpi.kpiId}`}
             label="Justifique o desvio do KPI"
@@ -191,6 +285,41 @@ const KpiAnalysisCard = memo(function KpiAnalysisCard({
             value={justificationValue ?? ''}
             onChange={handleJustificationChange}
           />
+        )}
+
+        {effectiveMode === 'explain-no-data' && onNoDataReasonChange && (
+          <JustificationField
+            id={`kpi-nodata-${kpi.kpiId}`}
+            label="Por que este KPI está sem dados?"
+            hint="Obrigatório — explique a ausência de registros e o plano para sanar."
+            required
+            value={noDataReasonValue ?? ''}
+            onChange={handleNoDataReasonChange}
+          />
+        )}
+
+        {effectiveMode === 'update-value' && onValueSubmit && !alreadyUpdated && (
+          <div className="rounded-md border bg-warning-muted/30 p-3 space-y-2">
+            <p className="text-xs font-medium text-warning-foreground">
+              Registre o valor atualizado deste KPI antes de continuar.
+            </p>
+            <KpiValueEntryForm
+              unit={kpi.unit ?? ''}
+              consolidationFrequency={kpi.consolidationFrequency ?? null}
+              updateFrequency={kpi.updateFrequency ?? null}
+              placeholderValue={kpi.target ?? undefined}
+              formId={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
+              onValidSubmit={handleValueSubmit}
+            />
+            <Button
+              type="submit"
+              form={`${FORM_ID_PREFIX}-${kpi.kpiId}`}
+              size="sm"
+              className="w-full"
+            >
+              Registrar valor
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -212,6 +341,13 @@ export function QbrKpiAnalysisStep({
   onKpiJustificationChange,
   requireJustifications,
   agendaCategoryless = false,
+  paginated = false,
+  currentKpiIndex = 0,
+  onKpiIndexChange,
+  kpiNoDataReasons,
+  onKpiNoDataReasonChange,
+  kpiUpdatedInSession,
+  onKpiValueSubmit,
 }: QbrKpiAnalysisStepProps) {
   const { currentBu } = useBu();
 
@@ -238,15 +374,183 @@ export function QbrKpiAnalysisStep({
     k => k.ragStatus === 'no_data' && !statusBlockKpiIds.has(k.kpiId),
   );
 
-  const missingJustifications = requireJustifications
-    ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
-    : 0;
-
   const handleJustificationChange = useCallback(
     (kpiId: string, value: string) => onKpiJustificationChange?.(kpiId, value),
     [onKpiJustificationChange],
   );
+  const handleNoDataReasonChange = useCallback(
+    (kpiId: string, value: string) => onKpiNoDataReasonChange?.(kpiId, value),
+    [onKpiNoDataReasonChange],
+  );
 
+  // ─── Lista ordenada de KPIs que exigem ação (modo paginado) ────────
+  // Ordem: alert → outdated → no_data. KPIs verdes em dia ficam num
+  // bloco-resumo após o último KPI acionável.
+  const actionableKpis = useMemo(
+    () => paginated ? [...alertKpis, ...outdated, ...noDataKpis] : [],
+    [paginated, alertKpis, outdated, noDataKpis],
+  );
+
+  const safeIndex = Math.min(Math.max(currentKpiIndex, 0), Math.max(actionableKpis.length, 1) - 1);
+  const currentKpi = paginated ? actionableKpis[safeIndex] : null;
+  const currentBucket: KpiActionBucket | null = currentKpi ? getKpiActionBucket(currentKpi) : null;
+
+  const isCurrentSatisfied = useMemo(() => {
+    if (!currentKpi || !currentBucket) return true;
+    if (currentBucket === 'justify') {
+      return ((kpiJustifications?.[currentKpi.kpiId] ?? '').trim().length > 0);
+    }
+    if (currentBucket === 'explain-no-data') {
+      return ((kpiNoDataReasons?.[currentKpi.kpiId] ?? '').trim().length > 0);
+    }
+    if (currentBucket === 'update-value') {
+      return Boolean(kpiUpdatedInSession?.[currentKpi.kpiId]);
+    }
+    return true;
+  }, [currentKpi, currentBucket, kpiJustifications, kpiNoDataReasons, kpiUpdatedInSession]);
+
+  const missingJustifications = requireJustifications
+    ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
+    : 0;
+
+  // Soma global do "missing" para liberar avanço final no modo paginado.
+  const totalMissing = useMemo(() => {
+    if (!paginated) return missingJustifications;
+    let n = 0;
+    for (const k of alertKpis) {
+      if (!((kpiJustifications?.[k.kpiId] ?? '').trim())) n++;
+    }
+    for (const k of outdated) {
+      if (!kpiUpdatedInSession?.[k.kpiId]) n++;
+    }
+    for (const k of noDataKpis) {
+      if (!((kpiNoDataReasons?.[k.kpiId] ?? '').trim())) n++;
+    }
+    return n;
+  }, [paginated, missingJustifications, alertKpis, outdated, noDataKpis, kpiJustifications, kpiNoDataReasons, kpiUpdatedInSession]);
+
+  // ────────────────────────────────────────────────────────────────────
+  // MODO PAGINADO (Pré-MBR)
+  // ────────────────────────────────────────────────────────────────────
+  if (paginated) {
+    const isLast = safeIndex >= actionableKpis.length - 1;
+    const goPrev = () => {
+      if (safeIndex === 0) {
+        onBack();
+      } else {
+        onKpiIndexChange?.(safeIndex - 1);
+      }
+    };
+    const goNext = () => {
+      if (isLast) {
+        onContinue();
+      } else {
+        onKpiIndexChange?.(safeIndex + 1);
+      }
+    };
+
+    return (
+      <WizardStepScaffold
+        header={
+          <WizardStepHeader
+            icon={Activity}
+            title="Análise de KPIs"
+            tooltip="qbr-kpi-analysis"
+            description={
+              actionableKpis.length > 0
+                ? `KPI ${safeIndex + 1} de ${actionableKpis.length} — ação obrigatória`
+                : 'Todos os indicadores estão na meta'
+            }
+            variant="amber"
+            badge={`${uniqueKpiSnapshots.length} KPIs`}
+          />
+        }
+        footer={
+          <WizardStepFooter
+            onBack={goPrev}
+            onPrimary={goNext}
+            primaryLabel={isLast ? 'Concluir KPIs' : 'Próximo'}
+            primaryDisabled={!isCurrentSatisfied || (isLast && totalMissing > 0)}
+          />
+        }
+        bottomFixed={
+          agendaSuggestions && onAgendaSuggestionsChange && agendaTriggerLabel ? (
+            <InlineAgendaSuggestionInput
+              suggestions={agendaSuggestions}
+              onSuggestionsChange={onAgendaSuggestionsChange}
+              sourceStep="qbr-kpi-analysis"
+              triggerLabel={agendaTriggerLabel}
+              categoryless={agendaCategoryless}
+            />
+          ) : undefined
+        }
+      >
+        <div className="p-6 space-y-4">
+          {actionableKpis.length > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Progresso</span>
+                <span>{safeIndex + 1} de {actionableKpis.length}</span>
+              </div>
+              <Progress value={((safeIndex + 1) / actionableKpis.length) * 100} className="h-1.5" />
+            </div>
+          )}
+
+          {currentKpi && currentBucket && (
+            <KpiAnalysisCard
+              key={currentKpi.kpiId}
+              kpi={currentKpi}
+              buName={currentBu?.name}
+              tone={
+                currentBucket === 'justify' ? 'alert'
+                : currentBucket === 'update-value' ? undefined
+                : currentBucket === 'explain-no-data' ? 'muted'
+                : 'healthy'
+              }
+              mode={currentBucket}
+              justificationValue={kpiJustifications?.[currentKpi.kpiId]}
+              onJustificationChange={handleJustificationChange}
+              noDataReasonValue={kpiNoDataReasons?.[currentKpi.kpiId]}
+              onNoDataReasonChange={handleNoDataReasonChange}
+              onValueSubmit={onKpiValueSubmit}
+              alreadyUpdated={Boolean(kpiUpdatedInSession?.[currentKpi.kpiId])}
+            />
+          )}
+
+          {/* Bloco-resumo de KPIs verdes em dia (não exigem ação) */}
+          {isLast && healthyKpis.length > 0 && (
+            <div className="space-y-2 pt-4 border-t">
+              <h4 className="text-sm font-medium text-status-green flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                KPIs na meta ({healthyKpis.length})
+              </h4>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {healthyKpis.map((k) => (
+                  <li key={k.kpiId} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{k.name}</span>
+                    <span className="shrink-0">
+                      {k.currentValue ?? '—'} {k.unit ?? ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {actionableKpis.length === 0 && (
+            <div className="rounded-md border border-status-green/30 bg-status-green-muted/20 p-4 text-sm text-status-green flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Todos os indicadores do time estão na meta e em dia.
+            </div>
+          )}
+        </div>
+      </WizardStepScaffold>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // MODO LISTA (QBR-Pré e fallback)
+  // ────────────────────────────────────────────────────────────────────
   return (
     <WizardStepScaffold
       header={

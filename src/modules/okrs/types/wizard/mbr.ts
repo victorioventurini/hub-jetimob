@@ -5,6 +5,7 @@
  */
 
 import type { TeamCheckinDecision, RitualImprovementFeedback, RitualAgendaSuggestion } from './shared';
+import type { KpiFrequencyValue, KpiInputType } from '@/modules/kpis/types';
 
 // ============================================================
 // MBR STEPS
@@ -57,6 +58,12 @@ export interface MbrKpiSnapshot {
   teamName?: string | null;
   /** v3.0.0 — tipo do último input registrado (consolidado/parcial). */
   latestInputType?: 'partial' | 'consolidated' | null;
+  /** Direção da meta (necessária pelo `KpiValueEntryForm` em ritos reflexivos). */
+  direction?: 'up' | 'down' | null;
+  /** Cadência de consolidação (v3.0.0). Necessária para `KpiValueEntryForm`. */
+  consolidationFrequency?: KpiFrequencyValue | null;
+  /** Cadência de update (v3.0.0). Usada para classificar bucket `overdue`. */
+  updateFrequency?: KpiFrequencyValue | null;
 }
 
 /** OKR organizacional snapshot */
@@ -248,6 +255,23 @@ export interface MbrPreDraftData {
    * Reflexivo: o líder explica o desvio sem alterar o valor do KPI.
    */
   kpiJustifications: Record<string, string>;
+  /**
+   * Razões pelas quais um KPI está sem dados — chave: kpiId.
+   * Obrigatório no rito reflexivo quando o KPI está em bucket `no_data`.
+   */
+  kpiNoDataReasons?: Record<string, string>;
+  /**
+   * Registro auditável de KPIs cujo valor foi efetivamente atualizado durante
+   * o rito (bucket `overdue`). O insert real vai para `kpi_values`; este map
+   * é só para a Summary e o Report mostrarem o que aconteceu na sessão.
+   */
+  kpiOutdatedUpdates?: Record<string, {
+    newValue: number;
+    referenceDate: string;
+    inputType: KpiInputType;
+    notes?: string;
+    submittedAt: string;
+  }>;
   /**
    * Justificativas de projetos/milestones atrasados.
    * Reflexivo: o líder explica o atraso sem mexer no status do milestone.
