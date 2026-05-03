@@ -313,7 +313,9 @@ export function QbrKpiAnalysisStep({
             <h4 className="text-sm font-medium text-muted-foreground">
               Sem dados ({noDataKpis.length})
             </h4>
-            {noDataKpis.map((kpi) => renderKpiCard(kpi, { tone: 'muted' }))}
+            {noDataKpis.map((kpi) => (
+              <KpiAnalysisCard key={kpi.kpiId} kpi={kpi} buName={currentBu?.name} tone="muted" />
+            ))}
           </div>
         )}
       </div>
