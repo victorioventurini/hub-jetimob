@@ -462,9 +462,13 @@ export const KpiGateStep = memo(function KpiGateStep({
   buckets,
   justifications,
   onJustificationChange,
+  currentKpiIndex,
+  onKpiIndexChange,
 }: KpiGateStepProps) {
   const label = getStepLabel(persona, stepId, version);
-  const variant: 'compact' | 'rich' = config.cardVariant ?? 'compact';
+  const variant: 'compact' | 'rich' | 'rich-paginated' = config.cardVariant ?? 'compact';
+  const isRichLike = variant === 'rich' || variant === 'rich-paginated';
+  const isPaginated = variant === 'rich-paginated';
   const allItems = useMemo(
     () => (buckets ? buckets.flatMap((b) => b.items) : data),
     [buckets, data],
@@ -477,22 +481,35 @@ export const KpiGateStep = memo(function KpiGateStep({
     [allItems],
   );
 
+  // Achata buckets para modo paginado (ordem canônica).
+  const flat = useMemo(
+    () => (isPaginated && buckets ? flattenBucketsForPagination(buckets) : []),
+    [isPaginated, buckets],
+  );
+  const totalCount = flat.length;
+  const safeIndex = totalCount > 0 ? Math.min(Math.max(currentKpiIndex ?? 0, 0), totalCount - 1) : 0;
+  const currentEntry = isPaginated ? flat[safeIndex] : null;
+
   // KPIs obrigatórios sem plano (variant rich + buckets) — usado para gate
-  // local quando `config.requireResolution`.
+  // local quando `config.requireResolution`. KPIs do `teamContext` em RED
+  // também passam a contar (mode `justify-required` via `actionModeForKpi`).
   const mandatoryUnaddressed = useMemo(() => {
-    if (variant !== 'rich' || !buckets) return [] as KpiGateItem[];
+    if (!isRichLike || !buckets) return [] as KpiGateItem[];
     const list: KpiGateItem[] = [];
     for (const bucket of buckets) {
-      if (!MANDATORY_BUCKET_IDS.has(bucket.id)) continue;
       for (const item of bucket.items) {
+        const requiresPlan =
+          MANDATORY_BUCKET_IDS.has(bucket.id) ||
+          (bucket.id === 'teamContext' && item.status === 'red');
+        if (!requiresPlan) continue;
         const text = (justifications?.[item.id] ?? '').trim();
         if (text.length === 0) list.push(item);
       }
     }
     return list;
-  }, [variant, buckets, justifications]);
+  }, [isRichLike, buckets, justifications]);
 
-  const showGate = !!config.requireResolution && variant === 'rich';
+  const showGate = !!config.requireResolution && isRichLike;
   const hasGateBlock = showGate && mandatoryUnaddressed.length > 0;
 
   const headerBadge =
@@ -501,6 +518,48 @@ export const KpiGateStep = memo(function KpiGateStep({
       : config.requireResolution && atRisk.length > 0
         ? `${atRisk.length} em alerta`
         : undefined;
+
+  // ── Top-fixed bar para modo paginado (paridade com MbrPreKrAnalysisStep) ──
+  const paginatedTopBar = isPaginated && totalCount > 0 ? (
+    <div className="px-6 py-3 border-b bg-muted/20">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium flex items-center gap-2 min-w-0">
+          <Activity className="w-4 h-4 text-primary shrink-0" />
+          <span className="truncate">
+            Análise de KPI — {safeIndex + 1} de {totalCount}
+          </span>
+          {currentEntry && (
+            <Badge variant="outline" className="text-[10px] h-5 shrink-0">
+              {currentEntry.bucketLabel}
+            </Badge>
+          )}
+        </span>
+        <Badge variant="outline" className="shrink-0">
+          {Math.round(((safeIndex + 1) / totalCount) * 100)}% concluído
+        </Badge>
+      </div>
+      {totalCount > 1 && (
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onKpiIndexChange?.(Math.max(0, safeIndex - 1))}
+            disabled={safeIndex === 0}
+          >
+            ← Anterior
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onKpiIndexChange?.(Math.min(totalCount - 1, safeIndex + 1))}
+            disabled={safeIndex === totalCount - 1}
+          >
+            Próximo →
+          </Button>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   return (
     <WizardStepScaffold
@@ -514,6 +573,7 @@ export const KpiGateStep = memo(function KpiGateStep({
           badgeVariant="destructive"
         />
       }
+      topFixed={paginatedTopBar ?? undefined}
       bottomFixed={
         <>
           {hasGateBlock && (
@@ -537,12 +597,20 @@ export const KpiGateStep = memo(function KpiGateStep({
           <p className="text-sm text-muted-foreground italic">
             Nenhum KPI registrado para este escopo.
           </p>
+        ) : isPaginated && currentEntry ? (
+          <RichKpiCard
+            key={currentEntry.kpi.id}
+            kpi={currentEntry.kpi}
+            bucketId={currentEntry.bucketId}
+            justification={justifications?.[currentEntry.kpi.id] ?? ''}
+            onJustificationChange={onJustificationChange}
+          />
         ) : buckets ? (
           buckets.map((bucket) => (
             <BucketSection
               key={bucket.id}
               bucket={bucket}
-              variant={variant}
+              variant={variant === 'rich-paginated' ? 'rich' : variant}
               justifications={justifications ?? {}}
               onJustificationChange={onJustificationChange}
             />
