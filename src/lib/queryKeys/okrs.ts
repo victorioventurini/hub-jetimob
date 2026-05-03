@@ -502,13 +502,18 @@ export const mbrKeys = {
   preTeamKrs: (
     buId: string | null,
     teamId: string | null | undefined,
-    cycleId: string | null | undefined
-  ) => ['mbr-pre', 'team-krs', buId, teamId, cycleId] as const,
+    cycleId: string | null | undefined,
+    referenceMonth?: string | null,
+  ) => ['mbr-pre', 'team-krs', buId, teamId, cycleId, referenceMonth ?? null] as const,
   preTeamKpis: (teamId: string | null | undefined, buId: string | null) =>
     ['mbr-pre', 'team-kpis', teamId, buId] as const,
-  /** Projetos do time consumidos pelo Step 3 (Projetos) do Pré-MBR. */
-  preTeamProjects: (buId: string | null, teamId: string | null | undefined) =>
-    ['mbr-pre', 'team-projects', buId, teamId] as const,
+  /** Projetos do time consumidos pelo Step 3 (Projetos) do Pré-MBR.
+   *  `referenceMonth` (YYYY-MM) ancora o cut-off de atrasos. */
+  preTeamProjects: (
+    buId: string | null,
+    teamId: string | null | undefined,
+    referenceMonth?: string | null,
+  ) => ['mbr-pre', 'team-projects', buId, teamId, referenceMonth ?? null] as const,
   /**
    * Submissões `mbr-pre` agregadas no mês de referência (BU-scoped).
    * Consumido pelo MBR para alimentar Panorama / KPI Gate / Detail / Decisions.
