@@ -185,23 +185,23 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
             Última Atualização
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <div>
+            <div className="min-w-0">
               <span className="text-muted-foreground">Data:</span>
-              <p className="font-medium">{formatDateTime(lastValue.created_at)}</p>
+              <p className="font-medium break-words">{formatDateTime(lastValue.created_at)}</p>
             </div>
-            <div>
+            <div className="min-w-0">
               <span className="text-muted-foreground">Origem:</span>
-              <p className="font-medium flex items-center gap-1.5">
+              <p className="font-medium flex items-center gap-1.5 break-words">
                 <SourceIcon type={lastValue.source} />
-                {SOURCE_TYPE_LABELS[lastValue.source as KpiValueSource] || lastValue.source}
+                <span className="break-words">{SOURCE_TYPE_LABELS[lastValue.source as KpiValueSource] || lastValue.source}</span>
               </p>
             </div>
             {lastValue.source === 'manual' && lastValue.created_by_user && (
-              <div>
+              <div className="min-w-0">
                 <span className="text-muted-foreground">Por:</span>
-                <p className="font-medium flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                  {lastValue.created_by_user.display_name}
+                <p className="font-medium flex items-center gap-1.5 min-w-0">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span className="break-words min-w-0">{lastValue.created_by_user.display_name}</span>
                 </p>
               </div>
             )}
