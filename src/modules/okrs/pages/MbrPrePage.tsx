@@ -592,6 +592,7 @@ export default function MbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
+            agendaCategoryless
             requireJustifications
             kpiJustifications={draft.data.kpiJustifications}
             onKpiJustificationChange={(kpiId, value) =>

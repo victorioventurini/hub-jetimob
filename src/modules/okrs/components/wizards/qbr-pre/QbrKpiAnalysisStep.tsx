@@ -56,6 +56,12 @@ export interface QbrKpiAnalysisStepProps {
   onKpiJustificationChange?: (kpiId: string, value: string) => void;
   /** Quando true, bloqueia o "Continuar" se faltar justificativa em algum alerta. */
   requireJustifications?: boolean;
+  /**
+   * Quando true, oculta o seletor de categorias (Performance/Projetos/Pessoas)
+   * no input de sugestão de pauta. Usado pelo MBR-Pré para alinhar com o
+   * padrão do Check-in Individual.
+   */
+  agendaCategoryless?: boolean;
 }
 
 // ============================================================
@@ -205,6 +211,7 @@ export function QbrKpiAnalysisStep({
   kpiJustifications,
   onKpiJustificationChange,
   requireJustifications,
+  agendaCategoryless = false,
 }: QbrKpiAnalysisStepProps) {
   const { currentBu } = useBu();
 
@@ -266,6 +273,7 @@ export function QbrKpiAnalysisStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="qbr-kpi-analysis"
             triggerLabel={agendaTriggerLabel}
+            categoryless={agendaCategoryless}
           />
         ) : undefined
       }
