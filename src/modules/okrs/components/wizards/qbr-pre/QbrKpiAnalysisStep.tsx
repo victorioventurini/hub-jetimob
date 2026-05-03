@@ -70,6 +70,128 @@ const RAG_STYLES: Record<string, { label: string; color: string; bg: string }> =
 };
 
 // ============================================================
+// MEMOIZED CARD (Mandatory React.memo for list cards)
+// ============================================================
+
+interface KpiAnalysisCardProps {
+  kpi: MbrKpiSnapshot;
+  buName?: string | null;
+  tone?: 'alert' | 'healthy' | 'muted';
+  showJustification?: boolean;
+  justificationValue?: string;
+  onJustificationChange?: (kpiId: string, value: string) => void;
+}
+
+const KpiAnalysisCard = memo(function KpiAnalysisCard({
+  kpi,
+  buName,
+  tone,
+  showJustification,
+  justificationValue,
+  onJustificationChange,
+}: KpiAnalysisCardProps) {
+  const rag = RAG_STYLES[kpi.ragStatus] || RAG_STYLES.no_data;
+  const cardBorder =
+    tone === 'healthy'
+      ? 'border-status-green/20'
+      : tone === 'muted'
+        ? 'border-muted'
+        : '';
+
+  const handleJustificationChange = useCallback(
+    (v: string) => onJustificationChange?.(kpi.kpiId, v),
+    [kpi.kpiId, onJustificationChange],
+  );
+
+  return (
+    <Card className={cardBorder}>
+      <CardContent className="p-4 space-y-3">
+        {/* Header row: name + badges (left) | meta + value + last date (right) */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <KpiNameLink
+              kpiId={kpi.kpiId}
+              name={kpi.name}
+              className="text-sm font-medium"
+            />
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <Badge variant="outline" className="text-xs">KPI</Badge>
+              <Badge variant="secondary" className={cn('text-xs gap-1', rag.bg, rag.color)}>
+                {kpi.ragStatus === 'red' || kpi.ragStatus === 'yellow' ? (
+                  <AlertTriangle className="h-3 w-3" />
+                ) : null}
+                {rag.label}
+              </Badge>
+              {kpi.areaName && (
+                <AreaBadge area={{ name: kpi.areaName, color: kpi.areaColor ?? null }} />
+              )}
+              {kpi.teamName && (
+                <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                  <Users className="h-3 w-3" />
+                  {kpi.teamName}
+                </Badge>
+              )}
+              {kpi.scope && (
+                <KpiScopeBadge scope={kpi.scope} buName={buName ?? undefined} />
+              )}
+            </div>
+          </div>
+
+          <div className="text-right flex-shrink-0">
+            {kpi.target != null && (
+              <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                <Target className="h-3.5 w-3.5" />
+                Meta: {kpi.target} {kpi.unit ?? ''}
+              </div>
+            )}
+            {kpi.currentValue != null ? (
+              <p className="text-lg font-bold mt-1 leading-tight">
+                {kpi.currentValue} {kpi.unit ?? ''}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-1">Sem dados</p>
+            )}
+            {kpi.lastValueAt && (
+              <p className="text-[11px] text-muted-foreground">
+                Último: {format(new Date(kpi.lastValueAt), 'dd/MM/yyyy')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Sparkline */}
+        {kpi.ragStatus !== 'no_data' && (
+          <div className="rounded-md border bg-background/40 px-3 py-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-medium text-muted-foreground">Evolução recente</span>
+              <span className="text-[10px] text-muted-foreground">últimos 12 registros</span>
+            </div>
+            <KpiSparkline
+              kpiId={kpi.kpiId}
+              unit={kpi.unit ?? ''}
+              target={kpi.target}
+              height={64}
+              pointsLimit={12}
+            />
+          </div>
+        )}
+
+        {showJustification && onJustificationChange && (
+          <JustificationField
+            id={`kpi-just-${kpi.kpiId}`}
+            label="Justifique o desvio do KPI"
+            hint="Obrigatório — explique por que está fora da meta e o plano de ação."
+            required
+            value={justificationValue ?? ''}
+            onChange={handleJustificationChange}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
