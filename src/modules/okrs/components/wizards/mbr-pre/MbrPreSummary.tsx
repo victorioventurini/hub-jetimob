@@ -22,7 +22,7 @@ import {
   XCircle,
   AlertCircle,
   FolderKanban,
-  MessageSquareQuote,
+  FolderKanban,
 } from 'lucide-react';
 import {
   WizardStepHeader,
