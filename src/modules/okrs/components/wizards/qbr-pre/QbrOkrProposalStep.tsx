@@ -517,6 +517,7 @@ export function QbrOkrProposalStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="qbr-okr-proposal"
             triggerLabel={agendaTriggerLabel}
+            categoryless
           />
         ) : undefined
       }
