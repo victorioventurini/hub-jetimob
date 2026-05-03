@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { KpiSparkline, KpiValueEntryForm } from '@/modules/kpis/components/shared';
+import { KpiDetailContent } from '@/modules/kpis/components/KpiDetailContent';
 import { AreaBadge } from '@/components/ui/area-badge';
 import { useBu } from '@/contexts/BuContext';
 import {
