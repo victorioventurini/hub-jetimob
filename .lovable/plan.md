@@ -1,79 +1,87 @@
 ## Objetivo
-Refatorar o step **KRs** do Pré-MBR (`/rituals/mbr-pre?step=krs`) para usar a mesma UI do Check-in Individual e exibir **um KR por página**, mantendo o caráter reflexivo (apenas justificativa — sem persistir check-in).
+Revisar a UI do step `kpi-analysis` do Pré-MBR (`/rituals/mbr-pre?step=kpi-analysis`) para que **toda a informação relevante do KPI** apareça por página E o **campo de justificativa + plano de ação** sempre fique visível para os KPIs que exigem ação.
 
 ---
 
-## Análise prévia (TCR + canônicos)
+## Análise (TCR + canônicos)
 
-- **TCR §MBR Pre-Ritual**: o Pré-MBR é reflexivo — **não grava `okr_checkins`** nem altera `current_value`/`status`. Apenas captura `krJustifications` no draft, persistido no snapshot final.
-- **TCR §Wizards Master + UI Components Registry**: blocos de check-in já são canônicos em `src/modules/okrs/components/checkin/` (`CheckinContextBlock`, `CheckinProgressBlock`, `CheckinStatusSelector`, `CheckinReflectionBlock`). Já são consumidos por `CheckinDialog` (drawer /okrs) e `CollaboratorCheckinStep`.
-- **Decisão de reúso**: usaremos os mesmos blocos do Check-in Individual em **modo read-only** (sem editar `current_value`/status), trocando o bloco de Reflexão pelo `JustificationField` canônico (já compartilhado em `wizards/shared`).
-- **Paginação**: replicar o mesmo padrão do `CollaboratorCheckinStep` (header com "KR X de N + % concluído", footer com Voltar/Próximo, atalho Ctrl+Enter) e do `QbrKpiAnalysisStep` paginado já implementado no Pré-MBR.
-- **Lookup canônico (Onda 4)**: continuar usando `useEntityLookup` + `resolveName` para resolver nomes (não ler `krTitle` legado de snapshots).
+- **Componente atual**: `QbrKpiAnalysisStep` em modo `paginated` (consumido pelo `MbrPrePage` no `case 'kpi-analysis'`). Por página, renderiza apenas o `KpiAnalysisCard`, que é uma versão **enxuta** (nome + RAG + meta + valor + sparkline pequena de 64px). Faltam: **descrição**, **valor anterior**, **variação vs anterior**, **owner**, **frequência de update/consolidação**, **fonte**, **gráfico completo**, **histórico** e **KRs vinculados**.
+- **Componente canônico já existente** (sem precisar criar nada novo): **`KpiDetailContent`** (`src/modules/kpis/components/KpiDetailContent.tsx`). É o **mesmo** componente usado no `KpiSidePanel` e na página dedicada de KPI. Mostra: descrição, sparkline grande, evolução com `recharts`, valores históricos, KRs vinculados, frequência, owner, fonte, escopo, badges. Carrega tudo internamente via `useKpiDetail(kpiId)`.
+- **Campo de justificativa**: o `JustificationField` já existe e é renderizado pelo `KpiAnalysisCard` quando `mode === 'justify' | 'explain-no-data'` ou ainda `update-value` (form de valor). Hoje esse campo está visível apenas em RAG `red`/`yellow` ou `no_data`/`overdue`. Para um KPI verde + em dia o bucket é `view` e nada aparece — comportamento correto, mas **a página atual mostra um único bloco compacto**, dando a sensação visual de que “falta o campo”.
+- **TCR §KPI Frequency Split v3.0.0** + `KPIs Master`: input via `KpiValueEntryForm` quando `update-value`. Snapshot canônico em `MbrKpiSnapshot` já tem `consolidationFrequency`, `updateFrequency`, `latestInputType`. Não precisa estender o snapshot.
+- **Wizard Master**: Pré-MBR é reflexivo — não muda persistência além de `kpiOutdatedUpdates`/`kpiNoDataReasons`/`kpiJustifications` que já existem. Não há mudança de modelo.
 
 ---
 
 ## O que muda
 
-### 1. `MbrPreKrAnalysisStep.tsx` — refatoração
-- Remover renderização em "lista agrupada por objetivo".
-- Implementar **paginação 1-KR-por-página**, na seguinte ordem:
-  1. KRs que exigem justificativa (`critical` / `warning` / `not_started`) — primeiro.
-  2. KRs OK — depois (apenas leitura, sem campo).
-- Estado interno: `currentIndex` + navegação Próximo/Anterior.
-- Header: faixa "Análise de KR — KR X de N · Y% concluído" (igual ao Check-in Individual).
-- Bloqueio de avanço: não permite ir adiante se KR atual exige justificativa e está vazia (espelha a regra atual de `primaryDisabled`).
-- Botão "Concluir" apenas no último KR; chama `onContinue`.
+### 1. `KpiAnalysisCard` (em `QbrKpiAnalysisStep.tsx`) — extensão, sem duplicação
 
-### 2. Composição de blocos canônicos (sem duplicação)
-Por página de KR:
-- `CheckinContextBlock` (Objetivo + KR + owner + último check-in + RAG) — **read-only**, já é o padrão.
-- `CheckinProgressBlock` em **modo read-only** (sem `onValueChange`). Já aceita `isAutomatic` para travar input — vamos estender com prop opcional `readOnly` que esconde o campo de valor e mostra apenas a barra de progresso + previous/target. Isso evita criar novo componente e mantém o bloco canônico para reuso.
-- **Não** usar `CheckinStatusSelector` nem `CheckinReflectionBlock` (esses são para o ato de check-in, que aqui é proibido).
-- `JustificationField` (já compartilhado) com label/hint contextuais:
-  - `not_started`: "Justifique por que este KR ainda não foi iniciado".
-  - `critical`/`warning`: "Justifique o desvio do KR".
+Adicionar prop opcional `detailed?: boolean`. Quando `true`:
 
-### 3. Pequena extensão em `CheckinProgressBlock`
-Adicionar prop opcional `readOnly?: boolean`:
-- Quando `true`: oculta o input/manual entry e o botão "atualizar valor", mantendo Contexto (Anterior → Meta) + barra de progresso + RAG.
-- Sem `readOnly` (default): comportamento atual preservado para `CheckinDialog` e `CollaboratorCheckinStep`.
-- Justificativa: extender ao invés de criar `MbrPreProgressBlock`, conforme regra do projeto ("preferir estender e compor").
+- **Substituir** o bloco compacto (header + sparkline 64px) por **`<KpiDetailContent kpiId={kpi.kpiId} />`**, que já entrega todas as informações canônicas do KPI.
+- **Manter** os badges de bucket (`Desatualizado`, `Sem dados`, `Atualizado nesta sessão`) acima do `KpiDetailContent`.
+- **Manter** o bloco de ação obrigatória (`JustificationField` / `KpiValueEntryForm`) **abaixo** do detalhe — separado por divisor, com destaque visual de "Ação obrigatória do líder".
 
-### 4. Sem mudanças em
-- `MbrPrePage.tsx` (props do step continuam idênticas: `krFinalStates`, `krJustifications`, `onKrJustificationChange`, `onContinue`, `onBack`).
-- Tipos em `types/wizard/mbr.ts` (`krFinalStates`, `krJustifications` permanecem).
-- `MbrPreSummary.tsx` / `MbrPreReport.tsx` (já leem `krJustifications`).
-- `KR_STATE_CONFIG` (continua sendo SSOT para severidade e cores).
-- Lógica de seed dos `krFinalStates` na page (cut-off, RAG, daysSinceCheckin).
+Quando `detailed` é falso (default), comportamento atual permanece — preserva uso pelo QBR-Pré em modo lista.
+
+### 2. `QbrKpiAnalysisStep` — passar `detailed` apenas no modo paginado
+
+Na renderização do `KpiAnalysisCard` dentro do bloco `if (paginated) { ... }` (linha 500): adicionar `detailed`. Modo lista (QBR-Pré) fica intocado.
+
+### 3. Sempre exibir bloco de ação no modo paginado
+
+Para KPIs cujo bucket caiu em `'view'` (verde + em dia) **e ainda assim a página exige interação** — o usuário deveria poder registrar uma observação opcional. Entretanto: pelo plano original, KPIs `view` **não entram** em `actionableKpis` (são listados apenas no bloco-resumo final). Confirmar esse comportamento na implementação atual e:
+
+- Se o usuário caiu em uma página sem campo, **provavelmente é um KPI no bucket `update-value` ou `explain-no-data`** que está mostrando o form de valor / explicação corretamente — mas hoje **o form fica embaixo do mini-card de 64px**, e o usuário pode não ter percebido.
+- A ativação do `detailed` resolve a percepção: o KPI aparece em sua dimensão completa, e a ação obrigatória ganha destaque visual com header "Plano de ação" em vez de só "Justifique o desvio do KPI".
+
+### 4. Microajustes visuais no `JustificationField` exibido pelo card
+
+- Renomear o `label` no contexto do Pré-MBR de "Justifique o desvio do KPI" para **"Justificativa e plano de ação"**, com `hint` mais explícito ("Explique o motivo + descreva as próximas ações").
+- Aplicar somente quando `detailed=true` (não afeta QBR-Pré).
+- Mesmo tratamento para `'explain-no-data'`: label "Por que está sem dados? Plano para destravar".
+
+---
+
+## Arquivos afetados
+
+- `src/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep.tsx`
+  - Adicionar prop `detailed?: boolean` em `KpiAnalysisCardProps`.
+  - Renderizar `KpiDetailContent` quando `detailed=true`, mantendo a área de ação (`JustificationField` / `KpiValueEntryForm`) abaixo, com label/hint reforçados.
+  - Passar `detailed` no consumo dentro do bloco paginado.
+
+Sem mudanças em `MbrPrePage.tsx`, no schema do snapshot, ou nas hooks de KPI. Sem novo componente — extensão do canônico já existente.
 
 ---
 
 ## Detalhes técnicos
 
-**Lista de KRs paginados** (memoizada):
-```ts
-// 1. Os que exigem justificativa (na ordem original, agrupados por objetivo)
-// 2. Os demais (somente leitura)
-const paginatedKrs = useMemo(() => {
-  const needs = krFinalStates.filter(k => requiresJustification(k.state));
-  const rest  = krFinalStates.filter(k => !requiresJustification(k.state));
-  return [...needs, ...rest];
-}, [krFinalStates]);
+```tsx
+// KpiAnalysisCardProps
+interface KpiAnalysisCardProps {
+  // ... existentes
+  /** Renderiza o detalhe canônico completo do KPI (KpiDetailContent) e
+   *  destaca a ação do líder em um bloco separado. Usado pelo Pré-MBR. */
+  detailed?: boolean;
+}
+
+// Render condicional
+{detailed ? (
+  <>
+    <KpiDetailContent kpiId={kpi.kpiId} />
+    {effectiveMode !== 'view' && (
+      <div className="mt-4 rounded-md border border-warning/40 bg-warning/5 p-4 space-y-2">
+        <h4 className="text-sm font-semibold text-warning-foreground">
+          Plano de ação do líder
+        </h4>
+        {/* JustificationField / KpiValueEntryForm — labels reforçados */}
+      </div>
+    )}
+  </>
+) : (
+  // mini-card atual (preserva uso pelo QBR-Pré)
+)}
 ```
 
-**Adapter local** `toCheckinKrData(krFinalState, lookups)` — converte `KrFinalState` (snapshot) + dados resolvidos pelo `useEntityLookup` para o tipo `CheckinKrData` esperado pelos blocos. Não duplica `toCheckinKrData` do `CollaboratorCheckinStep` (lá a entrada é `WizardKr`, schema diferente). Adapter fica local ao step.
-
-**Validação de avanço**:
-- KR atual exige justificativa → `Próximo` desabilitado se `(krJustifications[id] ?? '').trim() === ''`.
-- Banner de aviso no topo (mesmo componente atual `AlertBanner` ou estilo já usado).
-
-**Atalho Ctrl/Cmd+Enter** para avançar (paridade com Check-in Individual).
-
----
-
-## Arquivos afetados
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreKrAnalysisStep.tsx` — refatoração (paginação + composição dos blocos canônicos).
-- `src/modules/okrs/components/checkin/CheckinProgressBlock.tsx` — adicionar prop opcional `readOnly`.
-
-Sem novas tabelas, migrations ou rotas. Comportamento de persistência inalterado.
+Não há regressão para QBR-Pré: `detailed` permanece `undefined` lá.
