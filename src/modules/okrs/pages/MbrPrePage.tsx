@@ -20,7 +20,7 @@ import {
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { HierarchyContextSwitcher } from '@/modules/okrs/components/wizards/shared/HierarchyContextSwitcher';
 import { CompletedRitualView } from '@/modules/okrs/components/wizards/shared/CompletedRitualView';
-import { RitualPreparationStatus } from '@/modules/okrs/components/wizards/shared';
+
 import {
   useGenericWizardDraft,
   useActiveCycle,
@@ -38,11 +38,12 @@ import { handleError } from '@/lib/errorMessages';
 import { AlertCircle } from 'lucide-react';
 import { calculateProgress } from '@/modules/okrs/types';
 
-// Reuse QBR steps 1 & 2
-import { QbrBalanceStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrBalanceStep';
+// Reuse QBR step 2 (com props opcionais para justificativas)
 import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep';
 
 // MBR-Pre specific steps
+import { MbrPreOpeningStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep';
+import { MbrPreProjectsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreProjectsStep';
 import { MbrPreHighlightsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep';
 import { MbrPreNextStepsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep';
 import { MbrPreSummary } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreSummary';
@@ -63,14 +64,15 @@ import type {
 // ============================================================
 
 const WIZARD_STEPS = [
-  { id: 'balance' as const, label: 'Balanço do Mês', description: 'KRs e resultados' },
-  { id: 'kpi-analysis' as const, label: 'KPIs do Time', description: 'Indicadores e sinalizações' },
+  { id: 'opening' as const, label: 'Abertura', description: 'Resumo do mês do time' },
+  { id: 'kpi-analysis' as const, label: 'Indicadores do Time', description: 'KPIs e justificativas' },
+  { id: 'projects' as const, label: 'Projetos', description: 'Reflexão sobre atrasos' },
   { id: 'highlights' as const, label: 'Destaques e Riscos', description: 'O que acelerou e o que travou' },
   { id: 'next-steps' as const, label: 'Próximos Passos', description: 'Foco e prioridades' },
   { id: 'summary' as const, label: 'Resumo e Envio', description: 'Revisão final' },
 ];
 
-const STEP_ORDER: MbrPreStep[] = ['balance', 'kpi-analysis', 'highlights', 'next-steps', 'summary'];
+const STEP_ORDER: MbrPreStep[] = ['opening', 'kpi-analysis', 'projects', 'highlights', 'next-steps', 'summary'];
 
 const DEFAULT_DATA: MbrPreDraftData = {
   cycleId: '',
@@ -81,6 +83,8 @@ const DEFAULT_DATA: MbrPreDraftData = {
   highlights: { accelerated: '', blocked: '', needsDecision: '' },
   nextSteps: { focus: '', prioritizedItems: [], crossDependencies: [] },
   decisions: [],
+  kpiJustifications: {},
+  projectJustifications: { projects: {}, milestones: {} },
   agendaSuggestions: [],
 };
 
@@ -131,7 +135,7 @@ export default function MbrPrePage() {
     wizardType: 'mbr-pre',
     teamId: teamIdParam,
     cycleId: activeCycle?.id || null,
-    defaultStep: 'balance',
+    defaultStep: 'opening',
     defaultData: DEFAULT_DATA,
     enabled: !!activeCycle && sessionState !== 'completed',
   });
@@ -420,25 +424,17 @@ export default function MbrPrePage() {
   // Step render
   const renderStepContent = () => {
     switch (draft.currentStep) {
-      case 'balance':
+      case 'opening':
+      case 'balance': // legacy: drafts antigos abrem na nova abertura
         return (
-          <QbrBalanceStep
+          <MbrPreOpeningStep
+            teamId={teamIdParam}
+            teamName={selectedTeam?.name ?? null}
+            cycleId={activeCycle?.id ?? null}
+            isLoading={isLoadingKrs || isLoadingKpis}
             krFinalStates={draft.data.krFinalStates}
-            onKrFinalStatesChange={(krFinalStates) => updateDraft({ krFinalStates })}
-            decisions={draft.data.decisions}
-            onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
-            onContinue={goNext}
-            teamId={teamIdParam || undefined}
-            agendaSuggestions={draft.data.agendaSuggestions ?? []}
-            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
-            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
-            topSlot={
-              <RitualPreparationStatus
-                ritualType="mbr-pre"
-                teamId={teamIdParam}
-                cycleId={activeCycle?.id ?? null}
-              />
-            }
+            kpiSnapshots={draft.data.kpiSnapshots}
+            onContinue={() => setStep('kpi-analysis')}
           />
         );
 
@@ -453,6 +449,45 @@ export default function MbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
+            requireJustifications
+            kpiJustifications={draft.data.kpiJustifications}
+            onKpiJustificationChange={(kpiId, value) =>
+              updateDraft({
+                kpiJustifications: { ...draft.data.kpiJustifications, [kpiId]: value },
+              })
+            }
+          />
+        );
+
+      case 'projects':
+        return (
+          <MbrPreProjectsStep
+            teamId={teamIdParam}
+            projectJustifications={draft.data.projectJustifications}
+            onProjectJustificationChange={(projectId, value) =>
+              updateDraft({
+                projectJustifications: {
+                  ...draft.data.projectJustifications,
+                  projects: {
+                    ...draft.data.projectJustifications.projects,
+                    [projectId]: value,
+                  },
+                },
+              })
+            }
+            onMilestoneJustificationChange={(milestoneId, value) =>
+              updateDraft({
+                projectJustifications: {
+                  ...draft.data.projectJustifications,
+                  milestones: {
+                    ...draft.data.projectJustifications.milestones,
+                    [milestoneId]: value,
+                  },
+                },
+              })
+            }
+            onContinue={goNext}
+            onBack={goBack}
           />
         );
 

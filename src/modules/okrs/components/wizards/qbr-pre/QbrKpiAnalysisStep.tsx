@@ -19,6 +19,7 @@ import {
 
   KpiStatusBlocks,
   InlineAgendaSuggestionInput,
+  JustificationField,
 } from '../shared';
 import type {
   MbrKpiSnapshot,
@@ -39,6 +40,15 @@ export interface QbrKpiAnalysisStepProps {
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
+  /**
+   * Quando passado, exibe um campo de justificativa obrigatório por KPI em
+   * alerta (yellow/red). Usado pelo Pré-MBR (rito reflexivo) — bloqueia o
+   * avanço enquanto houver justificativa pendente.
+   */
+  kpiJustifications?: Record<string, string>;
+  onKpiJustificationChange?: (kpiId: string, value: string) => void;
+  /** Quando true, bloqueia o "Continuar" se faltar justificativa em algum alerta. */
+  requireJustifications?: boolean;
 }
 
 // ============================================================
@@ -63,10 +73,17 @@ export function QbrKpiAnalysisStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  kpiJustifications,
+  onKpiJustificationChange,
+  requireJustifications,
 }: QbrKpiAnalysisStepProps) {
   const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
   const healthyKpis = kpiSnapshots.filter(k => k.ragStatus === 'green');
   const noDataKpis = kpiSnapshots.filter(k => k.ragStatus === 'no_data');
+
+  const missingJustifications = requireJustifications
+    ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
+    : 0;
 
   return (
     <WizardStepScaffold
@@ -84,6 +101,7 @@ export function QbrKpiAnalysisStep({
         <WizardStepFooter
           onBack={onBack}
           onPrimary={onContinue}
+          primaryDisabled={missingJustifications > 0}
         />
       }
       bottomFixed={
@@ -109,7 +127,7 @@ export function QbrKpiAnalysisStep({
               const rag = RAG_STYLES[kpi.ragStatus] || RAG_STYLES.no_data;
               return (
                 <Card key={kpi.kpiId}>
-                  <CardContent className="p-3">
+                  <CardContent className="p-3 space-y-3">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <KpiNameLink kpiId={kpi.kpiId} name={kpi.name} className="text-sm font-medium" />
@@ -128,6 +146,16 @@ export function QbrKpiAnalysisStep({
                         </div>
                       </div>
                     </div>
+                    {requireJustifications && onKpiJustificationChange && (
+                      <JustificationField
+                        id={`kpi-just-${kpi.kpiId}`}
+                        label="Justifique o desvio do KPI"
+                        hint="Obrigatório — explique por que está fora da meta e o plano de ação."
+                        required
+                        value={kpiJustifications?.[kpi.kpiId] ?? ''}
+                        onChange={(v) => onKpiJustificationChange(kpi.kpiId, v)}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               );
