@@ -14,19 +14,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { UPDATE_OVERDUE_THRESHOLDS } from '@/modules/kpis/utils/frequency';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // HELPERS
 // ============================================================
 
-/** Threshold in days to consider a KPI outdated */
-const OUTDATED_THRESHOLD_DAYS = 14;
+/** Threshold em dias usado quando o KPI não tem `update_frequency` definido. */
+const FALLBACK_OUTDATED_THRESHOLD_DAYS = 14;
 
-function isOutdated(lastValueAt: string | null | undefined): boolean {
-  if (!lastValueAt) return false;
-  const diff = Date.now() - new Date(lastValueAt).getTime();
-  return diff > OUTDATED_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+/**
+ * Decide se um KPI está "atrasado" comparado à sua `update_frequency`
+ * (canônico — bucket `overdue` do KPI Gate v3.0.0). Fallback: 14 dias.
+ */
+function isOutdated(kpi: Pick<MbrKpiSnapshot, 'lastValueAt' | 'updateFrequency'>): boolean {
+  if (!kpi.lastValueAt) return false;
+  const diffDays = (Date.now() - new Date(kpi.lastValueAt).getTime()) / (24 * 60 * 60 * 1000);
+  const threshold = kpi.updateFrequency
+    ? UPDATE_OVERDUE_THRESHOLDS[kpi.updateFrequency]
+    : FALLBACK_OUTDATED_THRESHOLD_DAYS;
+  return diffDays > threshold;
 }
 
 function formatDaysAgo(dateStr: string): string {
