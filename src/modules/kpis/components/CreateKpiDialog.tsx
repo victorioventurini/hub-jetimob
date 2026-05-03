@@ -122,15 +122,16 @@ const formSchema = z.object({
       path: ["responsible_team_id"],
     });
   }
-  // Validação: se lifecycle_status='active', exigir owner
+  // Responsável é sempre obrigatório (independente do lifecycle_status)
+  if (!data.owner_user_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Responsável é obrigatório",
+      path: ["owner_user_id"],
+    });
+  }
+  // Validação: se lifecycle_status='active', exigir "Atualizado por"
   if (data.lifecycle_status === 'active') {
-    if (!data.owner_user_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Responsável é obrigatório para indicadores ativos",
-        path: ["owner_user_id"],
-      });
-    }
     if (!data.updated_by_user_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
