@@ -13,7 +13,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Send, AlertTriangle, Compass, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Send,
+  AlertTriangle,
+  Compass,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Activity,
+  FolderKanban,
+  MessageSquareQuote,
+} from 'lucide-react';
 import {
   WizardStepHeader,
   WizardLastStepFooter,
@@ -23,6 +34,7 @@ import {
   SummaryKpiList,
   InlineStringListEditor,
 } from '../shared';
+import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
