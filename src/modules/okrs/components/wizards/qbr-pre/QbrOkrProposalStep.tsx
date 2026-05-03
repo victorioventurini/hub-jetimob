@@ -55,6 +55,7 @@ export interface QbrOkrProposalStepProps {
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
+  agendaCategoryless?: boolean;
 }
 
 // ============================================================
@@ -453,6 +454,7 @@ export function QbrOkrProposalStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  agendaCategoryless = false,
 }: QbrOkrProposalStepProps) {
   // Track which objective card is open (auto-expand newly added)
   const [openIndex, setOpenIndex] = useState<number | null>(
@@ -517,6 +519,7 @@ export function QbrOkrProposalStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="qbr-okr-proposal"
             triggerLabel={agendaTriggerLabel}
+            categoryless={agendaCategoryless}
           />
         ) : undefined
       }

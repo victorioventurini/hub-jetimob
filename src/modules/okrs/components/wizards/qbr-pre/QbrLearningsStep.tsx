@@ -64,6 +64,7 @@ export interface QbrLearningsStepProps {
   agendaSuggestions?: RitualAgendaSuggestion[];
   onAgendaSuggestionsChange?: (next: RitualAgendaSuggestion[]) => void;
   agendaTriggerLabel?: string;
+  agendaCategoryless?: boolean;
 }
 
 // ============================================================
@@ -80,6 +81,7 @@ export function QbrLearningsStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  agendaCategoryless = false,
 }: QbrLearningsStepProps) {
   const updateField = (field: keyof QbrPreDraftData['learnings'], value: string) => {
     onLearningsChange({ ...learnings, [field]: value });
@@ -112,6 +114,7 @@ export function QbrLearningsStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="qbr-learnings"
             triggerLabel={agendaTriggerLabel}
+            categoryless={agendaCategoryless}
           />
         ) : undefined
       }

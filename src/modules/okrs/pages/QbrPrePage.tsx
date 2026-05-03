@@ -601,6 +601,7 @@ export default function QbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
+            agendaCategoryless
             topSlot={
               <RitualPreparationStatus
                 ritualType="qbr-pre"
@@ -622,6 +623,7 @@ export default function QbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
+            agendaCategoryless
           />
         );
 
@@ -637,6 +639,7 @@ export default function QbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
+            agendaCategoryless
           />
         );
 
@@ -651,6 +654,7 @@ export default function QbrPrePage() {
             agendaSuggestions={draft.data.agendaSuggestions ?? []}
             onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
             agendaTriggerLabel="Registrar sugestão de pauta para o QBR"
+            agendaCategoryless
           />
         );
 
