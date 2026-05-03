@@ -91,6 +91,15 @@ export function MbrPreSummary({
   const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
 
+  // KPI: o plano de ação do líder é gravado em `kpiSnapshots[i].impactAssessment`
+  // pelo MbrPreKpiGateStep. O campo `kpiJustifications` do draft existe para
+  // simetria com QBR, mas no Pré-MBR está vazio. Mesclamos as duas fontes
+  // (snapshot tem prioridade) para o summary exibir o que foi digitado.
+  const mergedKpiJustifications: Record<string, string> = { ...(kpiJustifications ?? {}) };
+  for (const s of kpiSnapshots) {
+    const text = (s.impactAssessment ?? '').trim();
+    if (text) mergedKpiJustifications[s.kpiId] = s.impactAssessment ?? '';
+  }
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
     onHighlightsChange?.({ ...highlights, [field]: value });
