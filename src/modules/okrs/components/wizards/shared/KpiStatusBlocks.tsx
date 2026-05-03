@@ -186,3 +186,31 @@ export function KpiStatusBlocks({ kpiSnapshots, maxItems, hideEmpty = true }: Kp
     </>
   );
 }
+
+// ============================================================
+// ACTION BUCKET (rito reflexivo paginado — Pré-MBR)
+// ============================================================
+
+/**
+ * Bucket de ação obrigatória do líder para um KPI em ritos reflexivos.
+ *
+ * - `view`             → KPI saudável e em dia, nada a fazer.
+ * - `justify`          → KPI em alerta (yellow/red): justificar o desvio.
+ * - `update-value`     → KPI desatualizado (canon: bucket `overdue` por
+ *                        `update_frequency`): registrar valor atualizado.
+ * - `explain-no-data`  → KPI sem dados (`no_data`): explicar o porquê.
+ *
+ * Precedência: justify > update-value > explain-no-data > view.
+ */
+export type KpiActionBucket =
+  | 'view'
+  | 'justify'
+  | 'update-value'
+  | 'explain-no-data';
+
+export function getKpiActionBucket(kpi: MbrKpiSnapshot): KpiActionBucket {
+  if (kpi.ragStatus === 'red' || kpi.ragStatus === 'yellow') return 'justify';
+  if (kpi.currentValue == null && kpi.ragStatus === 'no_data') return 'explain-no-data';
+  if (kpi.lastValueAt && isOutdated(kpi)) return 'update-value';
+  return 'view';
+}
