@@ -20,6 +20,8 @@ export interface SummaryKpiListProps {
   initialVisible?: number;
   /** Justificativas/plano de ação por kpiId — renderizadas inline abaixo de cada item. */
   justifications?: Record<string, string>;
+  /** Título do card. Default: "KPIs". Use para espelhar o nome do step de origem. */
+  title?: string;
 }
 
 const RAG_TONE: Record<string, string> = {
