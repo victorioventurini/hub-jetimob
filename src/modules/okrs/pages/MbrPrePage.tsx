@@ -316,14 +316,30 @@ export default function MbrPrePage() {
       lastSeededTeamRef.current = teamIdParam;
     }
     if (seededKpisRef.current) return;
-    if (!teamKpis || teamKpis.length === 0) return;
-    if (draft.data.kpiSnapshots.length > 0) {
-      seededKpisRef.current = true;
-      return;
+    if (!teamKpis) return; // aguarda query carregar (mesmo se vazia)
+
+    const authoritativeIds = new Set(teamKpis.map((k) => k.kpiId));
+    const existing = draft.data.kpiSnapshots ?? [];
+
+    // Reconciliação: remove KPIs do rascunho que não pertencem mais ao escopo
+    // autoritativo do time (ex.: após mudança de regra de filtro). Preserva
+    // justificativas de KPIs ainda válidos e adiciona novos KPIs autoritativos.
+    const preservedById = new Map(
+      existing
+        .filter((s) => authoritativeIds.has(s.kpiId))
+        .map((s) => [s.kpiId, s] as const),
+    );
+    const reconciled = teamKpis.map((k) => preservedById.get(k.kpiId) ?? k);
+
+    const changed =
+      reconciled.length !== existing.length ||
+      reconciled.some((s, i) => s.kpiId !== existing[i]?.kpiId);
+
+    if (changed) {
+      updateDraft({ kpiSnapshots: reconciled });
     }
-    updateDraft({ kpiSnapshots: teamKpis });
     seededKpisRef.current = true;
-  }, [teamKpis, draft.data.kpiSnapshots.length, updateDraft, teamIdParam]);
+  }, [teamKpis, draft.data.kpiSnapshots, updateDraft, teamIdParam]);
 
   // Navigation
   const completedSteps = useMemo(() => {
