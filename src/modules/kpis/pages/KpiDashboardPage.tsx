@@ -95,6 +95,14 @@ export default function KpiDashboardPage() {
     parse: (v) => (v === '1' ? '1' : '0'),
   });
   const needsReviewOnly = needsReviewState.value === '1';
+
+  // Governança: KPIs de Área/Global sem Time Responsável
+  const missingResponsibleState = useUrlState<"0" | "1">({
+    key: 'missing_responsible',
+    defaultValue: '0',
+    parse: (v) => (v === '1' ? '1' : '0'),
+  });
+  const missingResponsibleOnly = missingResponsibleState.value === '1';
   
   // v2.87.0: Text search with URL sync
   const { value: searchValue, setValue: setSearchValue } = useLocalSearch("q", 300);
