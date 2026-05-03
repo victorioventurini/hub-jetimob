@@ -256,6 +256,23 @@ export interface MbrPreDraftData {
    */
   kpiJustifications: Record<string, string>;
   /**
+   * Razões pelas quais um KPI está sem dados — chave: kpiId.
+   * Obrigatório no rito reflexivo quando o KPI está em bucket `no_data`.
+   */
+  kpiNoDataReasons?: Record<string, string>;
+  /**
+   * Registro auditável de KPIs cujo valor foi efetivamente atualizado durante
+   * o rito (bucket `overdue`). O insert real vai para `kpi_values`; este map
+   * é só para a Summary e o Report mostrarem o que aconteceu na sessão.
+   */
+  kpiOutdatedUpdates?: Record<string, {
+    newValue: number;
+    referenceDate: string;
+    inputType: KpiInputType;
+    notes?: string;
+    submittedAt: string;
+  }>;
+  /**
    * Justificativas de projetos/milestones atrasados.
    * Reflexivo: o líder explica o atraso sem mexer no status do milestone.
    */
