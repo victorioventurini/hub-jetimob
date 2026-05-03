@@ -47,6 +47,20 @@ export interface RitualGreetingProps {
   ritualSlug: WizardPersona;
   /** Nome do usuário (será reduzido ao primeiro nome). */
   userName: string | null | undefined;
+  /**
+   * Quando informado, sobrepõe `userName` apenas para a saudação (continua
+   * aplicando `firstName()`). Útil quando o nome do destinatário da saudação
+   * é diferente do contexto do rito (ex.: pré-MBR usa o nome do **líder do
+   * time**, não o nome do usuário corrente).
+   */
+  displayName?: string | null;
+  /**
+   * Variáveis para interpolação na frase. Cada `{key}` em
+   * `RITUAL_GREETING_PHRASES[ritualSlug].phrase` é substituído pelo valor
+   * correspondente. Chaves ausentes viram string vazia (espaços duplos
+   * resultantes são colapsados).
+   */
+  phraseVars?: Record<string, string | null | undefined>;
   /** Nome do ciclo ativo (ex.: "Q2 2026"). Usado em weekly/monthly. */
   cycleName?: string | null;
   /** Override de cadência (caso a página queira forçar diferente do SSOT). */
@@ -107,13 +121,28 @@ function buildBadges(props: RitualGreetingProps, cadence: RitualCadence): string
   return badges;
 }
 
+function interpolatePhrase(
+  template: string,
+  vars: Record<string, string | null | undefined> | undefined,
+): string {
+  if (!vars) return template;
+  const replaced = template.replace(/\{(\w+)\}/g, (_, key: string) => {
+    const v = vars[key];
+    return v == null ? '' : String(v);
+  });
+  // Colapsa espaços duplos resultantes de placeholders vazios
+  return replaced.replace(/\s{2,}/g, ' ').trim();
+}
+
 function RitualGreetingImpl(props: RitualGreetingProps) {
   const config = getRitualGreetingConfig(props.ritualSlug);
   if (!config) return null;
 
   const cadence = props.cadence ?? config.cadence;
   const period = getPeriodGreeting();
-  const name = firstName(props.userName);
+  const nameSource = props.displayName ?? props.userName;
+  const name = firstName(nameSource);
+  const phrase = interpolatePhrase(config.phrase, props.phraseVars);
   const badges = buildBadges(props, cadence);
 
   return (
@@ -124,7 +153,7 @@ function RitualGreetingImpl(props: RitualGreetingProps) {
       )}
     >
       <h2 className="text-xl font-semibold tracking-tight">
-        {period}, {name}. <span className="text-muted-foreground font-normal">{config.phrase}</span>
+        {period}, {name}. <span className="text-muted-foreground font-normal">{phrase}</span>
       </h2>
       {badges.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mt-2">
