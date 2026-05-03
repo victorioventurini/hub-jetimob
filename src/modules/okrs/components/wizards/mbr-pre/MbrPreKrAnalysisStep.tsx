@@ -228,11 +228,11 @@ export function MbrPreKrAnalysisStep({
           icon={Target}
           title="KRs do Time"
           tooltip="mbr-pre-krs"
-          description="Reflita sobre KRs fora da meta — justifique o desvio e o plano de ação"
+          description="Reflita sobre KRs fora da meta ou não iniciados — justifique e descreva o plano de ação"
           variant="amber"
           badge={
             krFinalStates.length > 0
-              ? `${offTrackCount} fora da meta`
+              ? `${needsJustifyCount} a justificar`
               : undefined
           }
         />
