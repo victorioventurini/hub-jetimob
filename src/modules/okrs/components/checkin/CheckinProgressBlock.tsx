@@ -110,8 +110,8 @@ export function CheckinProgressBlock({
         </div>
       </div>
 
-      {/* Value input or locked banner */}
-      {isAutomatic ? (
+      {/* Value input or locked banner — escondido em modo somente-leitura (ritos reflexivos) */}
+      {readOnly ? null : isAutomatic ? (
         <div className="rounded-lg border bg-info-muted/50 border-info/30 p-4 space-y-3">
           {/* Header with lock icon */}
           <div className="flex items-start gap-3">
