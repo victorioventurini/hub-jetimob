@@ -46,7 +46,14 @@ function getSeverity(state: string): KrStateSeverity {
   return KR_STATE_CONFIG[state as KrState]?.severity ?? 'info';
 }
 
+/**
+ * Estados que exigem justificativa no Pré-MBR:
+ * - severity `critical` / `warning` (canônico)
+ * - `not_started` — KR sem progresso também precisa ser explicado
+ *   (por que não começou + plano de ação)
+ */
 function requiresJustification(state: string): boolean {
+  if (state === 'not_started') return true;
   const sev = getSeverity(state);
   return sev === 'critical' || sev === 'warning';
 }
