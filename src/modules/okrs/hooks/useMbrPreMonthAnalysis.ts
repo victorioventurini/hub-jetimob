@@ -149,8 +149,8 @@ export function useMbrPreMonthAnalysis() {
           risks: response.output.risks || [],
           recommendations: response.output.recommendations || [],
         };
-      } catch (err: any) {
-        setError(err?.message || 'Falha ao gerar análise');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Falha ao gerar análise');
         return null;
       } finally {
         setIsGenerating(false);
