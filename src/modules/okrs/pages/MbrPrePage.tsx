@@ -521,6 +521,11 @@ export default function MbrPrePage() {
             teamName={selectedTeam?.name ?? null}
             cycleId={activeCycle?.id ?? null}
             isLoading={isLoadingKrs || isLoadingKpis}
+            referenceMonth={refMonth}
+            onReferenceMonthChange={(next) => {
+              // Trocar o mês alvo invalida a análise IA cacheada (era de outro mês).
+              updateDraft({ referenceMonth: next, monthAnalysis: null });
+            }}
             krFinalStates={draft.data.krFinalStates}
             kpiSnapshots={draft.data.kpiSnapshots}
             monthAnalysis={draft.data.monthAnalysis ?? null}
