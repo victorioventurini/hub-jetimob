@@ -205,8 +205,8 @@ export function MbrPreKrAnalysisStep({
     return Array.from(map.entries());
   }, [krFinalStates]);
 
-  // Counters
-  const offTrackCount = useMemo(
+  // Counters — KRs que exigem justificativa (fora da meta + não iniciados)
+  const needsJustifyCount = useMemo(
     () => krFinalStates.filter((kr) => requiresJustification(kr.state)).length,
     [krFinalStates],
   );
