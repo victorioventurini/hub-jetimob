@@ -73,6 +73,34 @@ export interface QbrKpiAnalysisStepProps {
    * padrão do Check-in Individual.
    */
   agendaCategoryless?: boolean;
+
+  // ─── Modo paginado (rito reflexivo Pré-MBR) ──────────────────────
+  /**
+   * Quando true, renderiza UM KPI por página exigindo a ação obrigatória
+   * de cada bucket (justify / update-value / explain-no-data).
+   * KPIs verdes em dia (`view`) ficam num bloco-resumo após o último.
+   */
+  paginated?: boolean;
+  /** Índice atual da paginação (controlado pelo consumidor). */
+  currentKpiIndex?: number;
+  onKpiIndexChange?: (next: number) => void;
+  /** Razões de "sem dados" (chave: kpiId). */
+  kpiNoDataReasons?: Record<string, string>;
+  onKpiNoDataReasonChange?: (kpiId: string, value: string) => void;
+  /**
+   * Marca, na sessão, KPIs que já tiveram valor atualizado durante o rito
+   * (chave: kpiId). Usado para liberar o avanço sem refetch imediato.
+   */
+  kpiUpdatedInSession?: Record<string, boolean>;
+  /**
+   * Submit do valor para um KPI desatualizado. Consumidor deve persistir
+   * em `kpi_values` (canon: `useKpiData().addKpiValue`) e marcar
+   * `kpiUpdatedInSession[kpiId] = true` em sucesso.
+   */
+  onKpiValueSubmit?: (
+    kpiId: string,
+    values: { value: number; reference_date: string; input_type: KpiInputType; notes?: string },
+  ) => Promise<void> | void;
 }
 
 // ============================================================
