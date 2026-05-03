@@ -51,6 +51,7 @@ import { MbrPreNextStepsStep } from '@/modules/okrs/components/wizards/mbr-pre/M
 import { MbrPreSummary } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreSummary';
 // KPI Gate canônico v3 (substitui QbrKpiAnalysisStep + classificador 4-bucket)
 import { MbrPreKpiGateStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep';
+import { MbrPreDataValidationStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreDataValidationStep';
 
 import {
   calculateKrState,
@@ -67,6 +68,7 @@ import type {
 // ============================================================
 
 const WIZARD_STEPS = [
+  { id: 'data-validation' as const, label: 'Validação', description: 'KPIs e KRs em dia antes do rito' },
   { id: 'opening' as const, label: 'Abertura', description: 'Resumo do mês do time' },
   { id: 'kpi-analysis' as const, label: 'Indicadores do Time', description: 'KPIs e justificativas' },
   { id: 'projects' as const, label: 'Projetos', description: 'Reflexão sobre atrasos' },
@@ -76,7 +78,7 @@ const WIZARD_STEPS = [
   { id: 'summary' as const, label: 'Resumo e Envio', description: 'Revisão final' },
 ];
 
-const STEP_ORDER: MbrPreStep[] = ['opening', 'kpi-analysis', 'projects', 'krs', 'highlights', 'next-steps', 'summary'];
+const STEP_ORDER: MbrPreStep[] = ['data-validation', 'opening', 'kpi-analysis', 'projects', 'krs', 'highlights', 'next-steps', 'summary'];
 
 const DEFAULT_DATA: MbrPreDraftData = {
   cycleId: '',
@@ -150,7 +152,7 @@ export default function MbrPrePage() {
     wizardType: 'mbr-pre',
     teamId: teamIdParam,
     cycleId: activeCycle?.id || null,
-    defaultStep: 'opening',
+    defaultStep: 'data-validation',
     defaultData: DEFAULT_DATA,
     enabled: !!activeCycle && sessionState !== 'completed',
   });
