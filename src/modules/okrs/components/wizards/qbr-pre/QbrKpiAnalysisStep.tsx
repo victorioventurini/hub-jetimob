@@ -278,7 +278,17 @@ export function QbrKpiAnalysisStep({
               <AlertTriangle className="h-4 w-4 text-status-amber" />
               KPIs em alerta ({alertKpis.length})
             </h4>
-            {alertKpis.map((kpi) => renderKpiCard(kpi, { showJustification: true, tone: 'alert' }))}
+            {alertKpis.map((kpi) => (
+              <KpiAnalysisCard
+                key={kpi.kpiId}
+                kpi={kpi}
+                buName={currentBu?.name}
+                tone="alert"
+                showJustification={requireJustifications}
+                justificationValue={kpiJustifications?.[kpi.kpiId]}
+                onJustificationChange={handleJustificationChange}
+              />
+            ))}
           </div>
         )}
 
