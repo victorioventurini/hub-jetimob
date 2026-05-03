@@ -115,6 +115,29 @@ export function MbrPreReport({ data }: { data: Record<string, any> }) {
         </ReportSection>
       )}
 
+      {/* KR Justifications (Onda 4 — snapshots novos) */}
+      {krJustEntries.length > 0 && (
+        <ReportSection
+          title={`Justificativas de KRs (${krJustEntries.length})`}
+          icon={<MessageSquareQuote className="h-4 w-4" />}
+        >
+          <div className="space-y-2">
+            {krJustEntries.map(([krId, text]) => {
+              const name =
+                lookups.teamKrs.get(krId)?.name ??
+                lookups.orgKrs.get(krId)?.name ??
+                '(KR removido)';
+              return (
+                <div key={krId} className="rounded-md border bg-muted/30 px-3 py-2 space-y-1">
+                  <p className="text-xs font-medium">{name}</p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{text}</p>
+                </div>
+              );
+            })}
+          </div>
+        </ReportSection>
+      )}
+
       {/* Highlights */}
       {(highlights.accelerated || highlights.blocked || highlights.needsDecision) && (
         <ReportSection title="Destaques e Riscos" icon={<AlertTriangle className="h-4 w-4" />}>
