@@ -57,14 +57,14 @@ export const editKpiSchema = z
         path: ['responsible_team_id'],
       });
     }
+    if (!data.owner_user_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Responsável é obrigatório',
+        path: ['owner_user_id'],
+      });
+    }
     if (data.lifecycle_status === 'active') {
-      if (!data.owner_user_id) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Responsável é obrigatório para indicadores ativos',
-          path: ['owner_user_id'],
-        });
-      }
       if (!data.updated_by_user_id) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
