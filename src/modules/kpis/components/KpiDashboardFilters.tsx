@@ -57,6 +57,7 @@ export function KpiDashboardFilters({
   ragStatus = "all",
   krLinkStatus = "all",
   ownerId = "all",
+  needsUpdate = "all",
   onTeamChange,
   onAreaChange,
   onScopeChange,
@@ -64,6 +65,7 @@ export function KpiDashboardFilters({
   onRagStatusChange,
   onKrLinkStatusChange,
   onOwnerChange,
+  onNeedsUpdateChange,
 }: KpiDashboardFiltersProps) {
   const { currentBu } = useBu();
   const scopeLabels = getScopeLabels(currentBu?.name);
