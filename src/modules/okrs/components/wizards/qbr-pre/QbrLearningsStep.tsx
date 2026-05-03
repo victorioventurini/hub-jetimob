@@ -114,7 +114,7 @@ export function QbrLearningsStep({
             onSuggestionsChange={onAgendaSuggestionsChange}
             sourceStep="qbr-learnings"
             triggerLabel={agendaTriggerLabel}
-            categoryless
+            categoryless={agendaCategoryless}
           />
         ) : undefined
       }
