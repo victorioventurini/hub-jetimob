@@ -59,7 +59,6 @@ import {
 import type {
   MbrPreStep,
   MbrPreDraftData,
-  MbrKpiSnapshot,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 
