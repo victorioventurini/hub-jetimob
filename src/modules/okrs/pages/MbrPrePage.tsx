@@ -98,18 +98,8 @@ const DEFAULT_DATA: MbrPreDraftData = {
   agendaSuggestions: [],
 };
 
-function dedupeKpiSnapshots(kpis: MbrKpiSnapshot[]): MbrKpiSnapshot[] {
-  const seen = new Set<string>();
-  const result: MbrKpiSnapshot[] = [];
 
-  for (const kpi of kpis) {
-    if (seen.has(kpi.kpiId)) continue;
-    seen.add(kpi.kpiId);
-    result.push(kpi);
-  }
 
-  return result;
-}
 
 // ============================================================
 // COMPONENT
