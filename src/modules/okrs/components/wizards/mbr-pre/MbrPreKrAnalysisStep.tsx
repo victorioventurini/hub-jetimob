@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import {
   WizardStepHeader,
   WizardStepScaffold,
+  WizardStepFooter,
   JustificationField,
 } from '../shared';
 import {
