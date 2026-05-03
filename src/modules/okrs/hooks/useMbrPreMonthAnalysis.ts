@@ -79,6 +79,7 @@ export function useMbrPreMonthAnalysis() {
           state: kr.state,
           finalProgress: kr.finalProgress,
           paceStatus: kr.paceStatus,
+          isContributed: kr.isContributed === true,
         }));
 
         const kpis = params.kpis.map((k) => {
