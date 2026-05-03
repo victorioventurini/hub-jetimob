@@ -39,12 +39,18 @@ import type { CollaboratorCheckinResult } from '@/modules/okrs/types/wizard';
 // ============================================================
 
 export interface CollaboratorCheckinStepProps {
-  kr: WizardKr;
-  currentIndex: number;
-  totalCount: number;
+  kr?: WizardKr;
+  currentIndex?: number;
+  totalCount?: number;
   onComplete: (result: CollaboratorCheckinResult) => void;
   onSkip: () => void;
   onBack: () => void;
+  /**
+   * Avança para o próximo step quando o usuário não tem KRs sob sua
+   * responsabilidade (modo empty state). Quando há KRs, este callback é
+   * ignorado — a navegação acontece via `onComplete`/`onSkip`.
+   */
+  onContinue?: () => void;
 }
 
 // ============================================================
