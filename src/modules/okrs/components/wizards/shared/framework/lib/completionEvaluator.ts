@@ -17,6 +17,8 @@ export interface EvaluatorContext {
   unanalyzedActiveTeamIds?: string[];
   /** KPIs em alerta sem decisão associada */
   unaddressedAtRiskKpiIds?: string[];
+  /** KPIs obrigatórios (overdue/critical/guardrail) sem plano de ação */
+  unaddressedMandatoryKpiIds?: string[];
   /** Decisões carry-over que precisam ser endereçadas */
   carryOverDecisions?: TeamCheckinDecision[];
   /** Quaisquer decisões registradas no rito */
