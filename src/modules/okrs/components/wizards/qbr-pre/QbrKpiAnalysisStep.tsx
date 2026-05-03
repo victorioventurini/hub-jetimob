@@ -6,13 +6,18 @@
  */
 
 import { useMemo } from 'react';
+import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Activity, AlertTriangle,
+  Activity, AlertTriangle, Target, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
+import { KpiSparkline } from '@/modules/kpis/components/shared';
+import { AreaBadge } from '@/components/ui/area-badge';
+import { useBu } from '@/contexts/BuContext';
 import {
   WizardStepHeader,
   WizardStepFooter,
