@@ -342,12 +342,16 @@ export default function MbrPrePage() {
 
       if (ownerIds.length === 0) return [];
 
+      // MBR-Pré (decisão de produto): listar APENAS KPIs scope='org' (Global) e
+      // scope='area' que estejam sob responsabilidade do time (owner = líder ou
+      // membro). KPIs scope='team' são intencionalmente excluídos deste rito.
       const { data: kpis, error } = await buSupabase
         .from('kpi_metrics')
         .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type')
         .eq('lifecycle_status', 'active')
         .eq('indicator_type', 'kpi')
         .is('deleted_at', null)
+        .in('scope', ['org', 'area'])
         .in('owner_user_id', ownerIds);
 
       if (error) throw error;
