@@ -24,6 +24,7 @@ import {
   Activity,
   FolderKanban,
   MessageSquareQuote,
+  Target,
 } from 'lucide-react';
 import {
   WizardStepHeader,
@@ -35,6 +36,7 @@ import {
   InlineStringListEditor,
 } from '../shared';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
+import { useEntityLookup } from '@/modules/okrs/hooks/useEntityLookup';
 import type {
   MbrPreDraftData,
   TeamCheckinDecision,
@@ -75,7 +77,7 @@ export function MbrPreSummary({
   onNextStepsChange,
   onDecisionsChange,
 }: MbrPreSummaryProps) {
-  const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications } = draftData;
+  const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications, krJustifications } = draftData;
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
 
   // Resolve nomes de projetos/milestones (BU-scoped, cache compartilhado com Step 3)
@@ -97,9 +99,25 @@ export function MbrPreSummary({
     .filter(([, v]) => v && v.trim().length > 0);
   const milestoneJustList = Object.entries(projectJustifications?.milestones ?? {})
     .filter(([, v]) => v && v.trim().length > 0);
+  const krJustList = Object.entries(krJustifications ?? {})
+    .filter(([, v]) => v && v.trim().length > 0);
+
+  // Resolução de nomes de KR via lookup canônico (Onda 4)
+  const krIdsForLookup = krJustList.map(([id]) => id);
+  const krLookups = useEntityLookup({
+    teamKrIds: krIdsForLookup,
+    orgKrIds: krIdsForLookup,
+  });
+  const resolveKrName = (id: string) =>
+    krLookups.teamKrs.get(id)?.name ??
+    krLookups.orgKrs.get(id)?.name ??
+    '(KR removido)';
 
   const hasJustifications =
-    kpiJustList.length > 0 || projectJustList.length > 0 || milestoneJustList.length > 0;
+    kpiJustList.length > 0 ||
+    projectJustList.length > 0 ||
+    milestoneJustList.length > 0 ||
+    krJustList.length > 0;
 
 
   const updateHighlight = (field: keyof MbrPreDraftData['highlights'], value: string) => {
