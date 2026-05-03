@@ -502,7 +502,7 @@ export default function MbrPrePage() {
             teamName={selectedTeam?.name ?? null}
             leaderName={selectedTeam?.leaderName ?? null}
             cycleId={activeCycle?.id ?? null}
-            isLoading={isLoadingKrs || isLoadingKpis}
+            isLoading={isLoadingKrs}
             referenceMonth={refMonth}
             onReferenceMonthChange={(next) => {
               // Trocar o mês alvo invalida a análise IA cacheada (era de outro mês).
