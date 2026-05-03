@@ -51,14 +51,21 @@ export interface KpiGateStepProps {
   buckets?: KpiGateBucket[];
   /**
    * v3.30.0 (rich) — mapa kpiId → texto da justificativa/plano do líder.
-   * Apenas usado quando `config.cardVariant === 'rich'`.
+   * Apenas usado quando `config.cardVariant === 'rich' | 'rich-paginated'`.
    */
   justifications?: Record<string, string>;
   /**
    * v3.30.0 (rich) — callback de mudança da justificativa de um KPI.
-   * Apenas usado quando `config.cardVariant === 'rich'`.
+   * Apenas usado quando `config.cardVariant === 'rich' | 'rich-paginated'`.
    */
   onJustificationChange?: (kpiId: string, value: string) => void;
+  /**
+   * v3.31.0 (rich-paginated) — índice do KPI atualmente visível
+   * (controlado pelo container, mesmo padrão do `MbrPreKrAnalysisStep`).
+   */
+  currentKpiIndex?: number;
+  /** v3.31.0 (rich-paginated) — callback ao mudar de KPI via Anterior/Próximo. */
+  onKpiIndexChange?: (next: number) => void;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
@@ -112,7 +119,15 @@ function KpiCardItem({ kpi }: { kpi: KpiGateItem }) {
 /** Modo de ação do líder por bucket (decide o bloco "Ação do líder"). */
 type ActionMode = 'explain-no-data' | 'justify-required' | 'justify-optional' | 'view';
 
-function actionModeForBucket(bucketId: KpiGateBucketId): ActionMode {
+/**
+ * Decide o modo de ação considerando bucket + status do KPI.
+ *
+ * `teamContext` agrupa KPIs sob responsabilidade operacional do time
+ * (via `responsible_team_id`), incluindo KPIs de área (`scope=area`).
+ * Quando esses KPIs estão em alerta, o líder do time deve apresentar plano
+ * de ação — equiparando-os aos KPIs estratégicos em `critical`/`attention`.
+ */
+function actionModeForKpi(bucketId: KpiGateBucketId, kpi: KpiGateItem): ActionMode {
   switch (bucketId) {
     case 'overdue':
       return 'explain-no-data';
@@ -121,8 +136,11 @@ function actionModeForBucket(bucketId: KpiGateBucketId): ActionMode {
       return 'justify-required';
     case 'attention':
       return 'justify-optional';
-    case 'healthy':
     case 'teamContext':
+      if (kpi.status === 'red') return 'justify-required';
+      if (kpi.status === 'amber') return 'justify-optional';
+      return 'view';
+    case 'healthy':
     default:
       return 'view';
   }
@@ -169,7 +187,7 @@ const RichKpiCard = memo(function RichKpiCard({
   justification,
   onJustificationChange,
 }: RichKpiCardProps) {
-  const mode = actionModeForBucket(bucketId);
+  const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
   const isPartial = kpi.lastInputType === 'partial';
   const refDate = formatRefDate(kpi.latestReferenceDate);
@@ -336,7 +354,12 @@ function BucketSection({
   justifications: Record<string, string>;
   onJustificationChange?: (kpiId: string, value: string) => void;
 }) {
-  const [open, setOpen] = useState(!COLLAPSED_BY_DEFAULT.has(bucket.id));
+  // teamContext é colapsado por default, MAS abrimos automaticamente se
+  // houver KPI em alerta (red/amber) — esses pedem plano de ação obrigatório/
+  // opcional do líder e devem ser visíveis sem clique extra.
+  const hasAlert = bucket.items.some((k) => k.status === 'red' || k.status === 'amber');
+  const initiallyOpen = !COLLAPSED_BY_DEFAULT.has(bucket.id) || hasAlert;
+  const [open, setOpen] = useState(initiallyOpen);
   if (bucket.items.length === 0) return null;
   return (
     <section className="space-y-2">
@@ -381,6 +404,41 @@ function BucketSection({
 }
 
 // ────────────────────────────────────────────────────────────────────
+// PAGINATED FLATTENING — para `rich-paginated`
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * Achata os buckets em uma lista única preservando a precedência canônica
+ * (overdue → critical → guardrailViolated → attention → teamContext em
+ * alerta → healthy → teamContext restante). Cada item carrega o `bucketId`
+ * de origem para o `RichKpiCard` decidir o modo de ação.
+ */
+function flattenBucketsForPagination(buckets: KpiGateBucket[]): Array<{
+  kpi: KpiGateItem;
+  bucketId: KpiGateBucketId;
+  bucketLabel: string;
+}> {
+  const ordered: Array<{ kpi: KpiGateItem; bucketId: KpiGateBucketId; bucketLabel: string }> = [];
+  // Primeiro: todos os buckets exceto teamContext (já vêm em ordem canônica).
+  for (const b of buckets) {
+    if (b.id === 'teamContext') continue;
+    for (const kpi of b.items) {
+      ordered.push({ kpi, bucketId: b.id, bucketLabel: b.label });
+    }
+  }
+  // Depois: teamContext em alerta (red → amber) antes do verde/sem dados.
+  const teamContext = buckets.find((b) => b.id === 'teamContext');
+  if (teamContext) {
+    const alerts = teamContext.items.filter((k) => k.status === 'red' || k.status === 'amber');
+    const rest = teamContext.items.filter((k) => k.status !== 'red' && k.status !== 'amber');
+    for (const kpi of [...alerts, ...rest]) {
+      ordered.push({ kpi, bucketId: 'teamContext', bucketLabel: teamContext.label });
+    }
+  }
+  return ordered;
+}
+
+// ────────────────────────────────────────────────────────────────────
 // MAIN
 // ────────────────────────────────────────────────────────────────────
 
@@ -404,9 +462,13 @@ export const KpiGateStep = memo(function KpiGateStep({
   buckets,
   justifications,
   onJustificationChange,
+  currentKpiIndex,
+  onKpiIndexChange,
 }: KpiGateStepProps) {
   const label = getStepLabel(persona, stepId, version);
-  const variant: 'compact' | 'rich' = config.cardVariant ?? 'compact';
+  const variant: 'compact' | 'rich' | 'rich-paginated' = config.cardVariant ?? 'compact';
+  const isRichLike = variant === 'rich' || variant === 'rich-paginated';
+  const isPaginated = variant === 'rich-paginated';
   const allItems = useMemo(
     () => (buckets ? buckets.flatMap((b) => b.items) : data),
     [buckets, data],
@@ -419,22 +481,35 @@ export const KpiGateStep = memo(function KpiGateStep({
     [allItems],
   );
 
+  // Achata buckets para modo paginado (ordem canônica).
+  const flat = useMemo(
+    () => (isPaginated && buckets ? flattenBucketsForPagination(buckets) : []),
+    [isPaginated, buckets],
+  );
+  const totalCount = flat.length;
+  const safeIndex = totalCount > 0 ? Math.min(Math.max(currentKpiIndex ?? 0, 0), totalCount - 1) : 0;
+  const currentEntry = isPaginated ? flat[safeIndex] : null;
+
   // KPIs obrigatórios sem plano (variant rich + buckets) — usado para gate
-  // local quando `config.requireResolution`.
+  // local quando `config.requireResolution`. KPIs do `teamContext` em RED
+  // também passam a contar (mode `justify-required` via `actionModeForKpi`).
   const mandatoryUnaddressed = useMemo(() => {
-    if (variant !== 'rich' || !buckets) return [] as KpiGateItem[];
+    if (!isRichLike || !buckets) return [] as KpiGateItem[];
     const list: KpiGateItem[] = [];
     for (const bucket of buckets) {
-      if (!MANDATORY_BUCKET_IDS.has(bucket.id)) continue;
       for (const item of bucket.items) {
+        const requiresPlan =
+          MANDATORY_BUCKET_IDS.has(bucket.id) ||
+          (bucket.id === 'teamContext' && item.status === 'red');
+        if (!requiresPlan) continue;
         const text = (justifications?.[item.id] ?? '').trim();
         if (text.length === 0) list.push(item);
       }
     }
     return list;
-  }, [variant, buckets, justifications]);
+  }, [isRichLike, buckets, justifications]);
 
-  const showGate = !!config.requireResolution && variant === 'rich';
+  const showGate = !!config.requireResolution && isRichLike;
   const hasGateBlock = showGate && mandatoryUnaddressed.length > 0;
 
   const headerBadge =
@@ -443,6 +518,48 @@ export const KpiGateStep = memo(function KpiGateStep({
       : config.requireResolution && atRisk.length > 0
         ? `${atRisk.length} em alerta`
         : undefined;
+
+  // ── Top-fixed bar para modo paginado (paridade com MbrPreKrAnalysisStep) ──
+  const paginatedTopBar = isPaginated && totalCount > 0 ? (
+    <div className="px-6 py-3 border-b bg-muted/20">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium flex items-center gap-2 min-w-0">
+          <Activity className="w-4 h-4 text-primary shrink-0" />
+          <span className="truncate">
+            Análise de KPI — {safeIndex + 1} de {totalCount}
+          </span>
+          {currentEntry && (
+            <Badge variant="outline" className="text-[10px] h-5 shrink-0">
+              {currentEntry.bucketLabel}
+            </Badge>
+          )}
+        </span>
+        <Badge variant="outline" className="shrink-0">
+          {Math.round(((safeIndex + 1) / totalCount) * 100)}% concluído
+        </Badge>
+      </div>
+      {totalCount > 1 && (
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onKpiIndexChange?.(Math.max(0, safeIndex - 1))}
+            disabled={safeIndex === 0}
+          >
+            ← Anterior
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onKpiIndexChange?.(Math.min(totalCount - 1, safeIndex + 1))}
+            disabled={safeIndex === totalCount - 1}
+          >
+            Próximo →
+          </Button>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   return (
     <WizardStepScaffold
@@ -456,6 +573,7 @@ export const KpiGateStep = memo(function KpiGateStep({
           badgeVariant="destructive"
         />
       }
+      topFixed={paginatedTopBar ?? undefined}
       bottomFixed={
         <>
           {hasGateBlock && (
@@ -479,12 +597,20 @@ export const KpiGateStep = memo(function KpiGateStep({
           <p className="text-sm text-muted-foreground italic">
             Nenhum KPI registrado para este escopo.
           </p>
+        ) : isPaginated && currentEntry ? (
+          <RichKpiCard
+            key={currentEntry.kpi.id}
+            kpi={currentEntry.kpi}
+            bucketId={currentEntry.bucketId}
+            justification={justifications?.[currentEntry.kpi.id] ?? ''}
+            onJustificationChange={onJustificationChange}
+          />
         ) : buckets ? (
           buckets.map((bucket) => (
             <BucketSection
               key={bucket.id}
               bucket={bucket}
-              variant={variant}
+              variant={variant === 'rich-paginated' ? 'rich' : variant}
               justifications={justifications ?? {}}
               onJustificationChange={onJustificationChange}
             />
