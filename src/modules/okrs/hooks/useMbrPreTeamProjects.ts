@@ -139,25 +139,20 @@ export function useMbrPreTeamProjects(
     const overdueProjectIds: string[] = [];
     const overdueMilestoneIds: string[] = [];
 
-    const projects: MbrPreProjectRow[] = data
+    const projects: MbrPreProjectRow[] = (data as any[])
       .map((p): MbrPreProjectRow => {
         const rawMilestones = (p.project_milestones ?? []).filter(
           // project_milestones tem APENAS deleted_at (mem://standards/soft-delete-policy-v1)
-          (m: { deleted_at: string | null }) => !m.deleted_at,
+          (m: any) => !m.deleted_at,
         );
         const total = rawMilestones.length;
         const done = rawMilestones.filter(
-          (m: { status: string }) => m.status === 'done',
+          (m: any) => m.status === 'done',
         ).length;
         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
         const milestones: MbrPreMilestoneRow[] = rawMilestones.map(
-          (m: {
-            id: string;
-            name: string;
-            status: string;
-            due_date: string | null;
-          }) => {
+          (m: any) => {
             const overdue = isPastDue(m.due_date, m.status);
             if (overdue) overdueMilestoneIds.push(m.id);
             return {
