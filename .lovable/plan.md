@@ -1,87 +1,74 @@
-## Objetivo
-Revisar a UI do step `kpi-analysis` do Pré-MBR (`/rituals/mbr-pre?step=kpi-analysis`) para que **toda a informação relevante do KPI** apareça por página E o **campo de justificativa + plano de ação** sempre fique visível para os KPIs que exigem ação.
+## Pré-checklist (executado)
 
----
+- TCR: `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` v3.29.1 — KPI Frequency Split v3.0.0 ativo, KPI Gate canônico de **6 buckets**.
+- SSOT KPIs: `mem://features/kpis/kpis-master-standard` — gate consome `KpiForWizardV2` via `useKpisForWizardV2`, classificação via `classifyKpiGateBuckets`, ordenação `byUpdateFrequencyThenDeviation`, decisões com `metadata.source='kpi_gate'`.
+- Componente canônico: `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx` (já usado por `MbrKpiGateStep`).
+- IDENTITY/RBAC/BU isolation/Soft-delete/Query keys conferidos — nada novo a criar nesses eixos; apenas reusar o que já existe.
 
-## Análise (TCR + canônicos)
+## Diagnóstico do bug reportado
 
-- **Componente atual**: `QbrKpiAnalysisStep` em modo `paginated` (consumido pelo `MbrPrePage` no `case 'kpi-analysis'`). Por página, renderiza apenas o `KpiAnalysisCard`, que é uma versão **enxuta** (nome + RAG + meta + valor + sparkline pequena de 64px). Faltam: **descrição**, **valor anterior**, **variação vs anterior**, **owner**, **frequência de update/consolidação**, **fonte**, **gráfico completo**, **histórico** e **KRs vinculados**.
-- **Componente canônico já existente** (sem precisar criar nada novo): **`KpiDetailContent`** (`src/modules/kpis/components/KpiDetailContent.tsx`). É o **mesmo** componente usado no `KpiSidePanel` e na página dedicada de KPI. Mostra: descrição, sparkline grande, evolução com `recharts`, valores históricos, KRs vinculados, frequência, owner, fonte, escopo, badges. Carrega tudo internamente via `useKpiDetail(kpiId)`.
-- **Campo de justificativa**: o `JustificationField` já existe e é renderizado pelo `KpiAnalysisCard` quando `mode === 'justify' | 'explain-no-data'` ou ainda `update-value` (form de valor). Hoje esse campo está visível apenas em RAG `red`/`yellow` ou `no_data`/`overdue`. Para um KPI verde + em dia o bucket é `view` e nada aparece — comportamento correto, mas **a página atual mostra um único bloco compacto**, dando a sensação visual de que “falta o campo”.
-- **TCR §KPI Frequency Split v3.0.0** + `KPIs Master`: input via `KpiValueEntryForm` quando `update-value`. Snapshot canônico em `MbrKpiSnapshot` já tem `consolidationFrequency`, `updateFrequency`, `latestInputType`. Não precisa estender o snapshot.
-- **Wizard Master**: Pré-MBR é reflexivo — não muda persistência além de `kpiOutdatedUpdates`/`kpiNoDataReasons`/`kpiJustifications` que já existem. Não há mudança de modelo.
+KPI **MRR commit** (`6b8c68f8…`, `scope=org`, `responsible_team_id=d3247da9…`, `consolidation/update_frequency=monthly`) tem em abril/2026 valor `15.450` com `rag_status='off_track'`. Pelo canon v3, deveria cair no bucket **`critical`** do KPI Gate e exigir decisão (justificativa + plano de ação).
 
----
+Por que não está pedindo no Pré-MBR atual: a página **`MbrPrePage.tsx` não usa o KPI Gate canônico**. Em vez disso:
+1. Faz uma **query própria** em `kpi_metrics`/`kpi_values`, monta `MbrKpiSnapshot` via `dedupeKpiSnapshots` e armazena em draft.
+2. Renderiza `QbrKpiAnalysisStep` (do QBR-Pré) em modo `paginated`, que aplica um classificador paralelo de **4 buckets** (`getKpiActionBucket` em `KpiStatusBlocks.tsx`) baseado em `ragStatus` derivado on-the-fly.
+3. Esse classificador paralelo: (a) ignora `update_frequency` v3 corretamente apenas no fallback, (b) depende de um snapshot stale-em-memória cuja reconciliação é posicional (`reconciled.some((s, i) => …)`), e (c) não dispara o gate `critical` quando o snapshot do mês de referência não casa com o registro real do `kpi_values` por causa do `period_label=2026-Q2` herdado (registro abril foi gravado como Q2, não como abril/mensal).
 
-## O que muda
+Resultado prático: o snapshot de MRR commit cai em estado intermediário que não bate `'red'` no `getKpiActionBucket` do MBR-Pré, e o card **"Plano de ação do líder"** não é renderizado.
 
-### 1. `KpiAnalysisCard` (em `QbrKpiAnalysisStep.tsx`) — extensão, sem duplicação
+## Decisão arquitetural
 
-Adicionar prop opcional `detailed?: boolean`. Quando `true`:
+Substituir, no Pré-MBR, a etapa atual `kpi-analysis` (que reusa `QbrKpiAnalysisStep + getKpiActionBucket`) por uma etapa que consome o **KPI Gate canônico v3**:
+- Hook: `useKpisForWizardV2` (já existente — usado por `MbrKpiGateStep` e Check-in Individual).
+- Classificador: `classifyKpiGateBuckets` (já existente).
+- UI: `KpiGateStep` (`shared/framework/components/KpiGateStep.tsx`) ou `MbrKpiGateStep` parametrizado para o contexto Pré-MBR.
 
-- **Substituir** o bloco compacto (header + sparkline 64px) por **`<KpiDetailContent kpiId={kpi.kpiId} />`**, que já entrega todas as informações canônicas do KPI.
-- **Manter** os badges de bucket (`Desatualizado`, `Sem dados`, `Atualizado nesta sessão`) acima do `KpiDetailContent`.
-- **Manter** o bloco de ação obrigatória (`JustificationField` / `KpiValueEntryForm`) **abaixo** do detalhe — separado por divisor, com destaque visual de "Ação obrigatória do líder".
+Sem novos componentes. Sem nova query duplicada. Sem novo classificador paralelo. Reuso integral do canon v3.
 
-Quando `detailed` é falso (default), comportamento atual permanece — preserva uso pelo QBR-Pré em modo lista.
+## Plano
 
-### 2. `QbrKpiAnalysisStep` — passar `detailed` apenas no modo paginado
+### 1. Adoção do KPI Gate canônico no Pré-MBR
+- Em `src/modules/okrs/pages/MbrPrePage.tsx`:
+  - Remover a query inline `useQuery(... mbrKeys.preTeamKpis ...)` que monta `MbrKpiSnapshot`.
+  - Remover o effect de "seed/reconcile" posicional do snapshot.
+  - Carregar KPIs via `useKpisForWizardV2({ teamId, referenceMonth, ...escopo do Pré-MBR })`, alinhado ao modo já usado pelo `MbrKpiGateStep` e validado pelo SSOT.
+  - Filtrar/agrupar com `classifyKpiGateBuckets`.
+- Substituir o render de `QbrKpiAnalysisStep paginated` por `KpiGateStep` (ou `MbrKpiGateStep` reaproveitado) configurado com:
+  - Variantes de copy/tooltip do Pré-MBR (já há slot p/ `tooltip='qbr-kpi-analysis'` análogo).
+  - Persistência das decisões/justificativas em `kpiJustifications`/`kpiNoDataReasons` do draft (chaveado por `kpi_id`).
+  - Decisões inline com `metadata.source='kpi_gate', kpi_id, kpi_rag_status, kpi_input_type, kpi_confidence` conforme SSOT §4.
 
-Na renderização do `KpiAnalysisCard` dentro do bloco `if (paginated) { ... }` (linha 500): adicionar `detailed`. Modo lista (QBR-Pré) fica intocado.
+### 2. Garantias de UX (sem regressão)
+- Manter os blocos de saúde: **Atrasados → Críticos → Guardrails → Atenção → Saudáveis → Contexto do time**, ordenação intra-bloco `byUpdateFrequencyThenDeviation`.
+- Bloqueio de avanço enquanto houver KPI no gate sem decisão registrada (já é comportamento do `KpiGateStep`).
+- Header da etapa continua indicando "Análise de KPIs / Indicadores do Time" — apenas o conteúdo passa a ser o gate canônico.
 
-### 3. Sempre exibir bloco de ação no modo paginado
+### 3. Limpeza pós-migração
+- Manter `getKpiActionBucket` e o modo `paginated` de `QbrKpiAnalysisStep` apenas se ainda houver consumidor; auditar e marcar `@deprecated` se restar somente o QBR-Pré (o QBR também deveria migrar para o canon, mas isso fica como follow-up fora deste escopo).
+- Atualizar `mem://features/rituals/qbr-master-standard` (ou criar nota leve em memory) caso o Pré-MBR passe a divergir do Pré-QBR temporariamente.
 
-Para KPIs cujo bucket caiu em `'view'` (verde + em dia) **e ainda assim a página exige interação** — o usuário deveria poder registrar uma observação opcional. Entretanto: pelo plano original, KPIs `view` **não entram** em `actionableKpis` (são listados apenas no bloco-resumo final). Confirmar esse comportamento na implementação atual e:
-
-- Se o usuário caiu em uma página sem campo, **provavelmente é um KPI no bucket `update-value` ou `explain-no-data`** que está mostrando o form de valor / explicação corretamente — mas hoje **o form fica embaixo do mini-card de 64px**, e o usuário pode não ter percebido.
-- A ativação do `detailed` resolve a percepção: o KPI aparece em sua dimensão completa, e a ação obrigatória ganha destaque visual com header "Plano de ação" em vez de só "Justifique o desvio do KPI".
-
-### 4. Microajustes visuais no `JustificationField` exibido pelo card
-
-- Renomear o `label` no contexto do Pré-MBR de "Justifique o desvio do KPI" para **"Justificativa e plano de ação"**, com `hint` mais explícito ("Explique o motivo + descreva as próximas ações").
-- Aplicar somente quando `detailed=true` (não afeta QBR-Pré).
-- Mesmo tratamento para `'explain-no-data'`: label "Por que está sem dados? Plano para destravar".
-
----
-
-## Arquivos afetados
-
-- `src/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep.tsx`
-  - Adicionar prop `detailed?: boolean` em `KpiAnalysisCardProps`.
-  - Renderizar `KpiDetailContent` quando `detailed=true`, mantendo a área de ação (`JustificationField` / `KpiValueEntryForm`) abaixo, com label/hint reforçados.
-  - Passar `detailed` no consumo dentro do bloco paginado.
-
-Sem mudanças em `MbrPrePage.tsx`, no schema do snapshot, ou nas hooks de KPI. Sem novo componente — extensão do canônico já existente.
-
----
+### 4. Verificação manual
+- `/rituals/mbr-pre?team=d3247da9-3e07-4fa8-9d0a-2527fdf6548f&step=kpi-analysis` (default abril/2026):
+  - MRR commit deve aparecer no bucket **Críticos** com badge vermelho.
+  - Card de decisão obrigatória deve renderizar com `Justificativa` + `Plano de ação` (campos canônicos do KPI Gate).
+  - Botão de avançar fica `disabled` até preencher a decisão.
+- Trocar para março/2026 → MRR commit cai em **Saudáveis** (on_track), sem cobrança.
+- Conferir que decisões salvas aparecem em `okr_decisions` com `metadata.source='kpi_gate'` e `kpi_id` correto.
 
 ## Detalhes técnicos
 
-```tsx
-// KpiAnalysisCardProps
-interface KpiAnalysisCardProps {
-  // ... existentes
-  /** Renderiza o detalhe canônico completo do KPI (KpiDetailContent) e
-   *  destaca a ação do líder em um bloco separado. Usado pelo Pré-MBR. */
-  detailed?: boolean;
-}
+- Arquivos tocados:
+  - `src/modules/okrs/pages/MbrPrePage.tsx` — remoção da query/seed inline e troca de step para o gate canônico.
+  - Nenhum componente novo. Reuso de `useKpisForWizardV2`, `classifyKpiGateBuckets`, `KpiGateStep`/`MbrKpiGateStep`.
+- Sem mudanças de schema/RLS/edge.
+- Query keys: usar `kpisKeys.*` já padronizado (sem inventar novas chaves).
+- BU isolation: `useKpisForWizardV2` já consome `currentBuId` corretamente.
+- Soft-delete e RAG: já encapsulados pelo hook canônico (sem replicar lógica).
 
-// Render condicional
-{detailed ? (
-  <>
-    <KpiDetailContent kpiId={kpi.kpiId} />
-    {effectiveMode !== 'view' && (
-      <div className="mt-4 rounded-md border border-warning/40 bg-warning/5 p-4 space-y-2">
-        <h4 className="text-sm font-semibold text-warning-foreground">
-          Plano de ação do líder
-        </h4>
-        {/* JustificationField / KpiValueEntryForm — labels reforçados */}
-      </div>
-    )}
-  </>
-) : (
-  // mini-card atual (preserva uso pelo QBR-Pré)
-)}
-```
+## Critérios de aceite
 
-Não há regressão para QBR-Pré: `detailed` permanece `undefined` lá.
+- KPIs `off_track` no mês de referência aparecem em **Críticos** e exigem decisão antes de avançar — caso do MRR commit.
+- KPIs `at_risk` aparecem em **Atenção** e exigem decisão.
+- KPIs `overdue` (sem update na cadência) aparecem em **Atrasados** e exigem update/decisão.
+- Decisões registradas carregam `metadata.source='kpi_gate'` e `kpi_id`.
+- Nenhum classificador paralelo de KPI sobrevive no caminho do Pré-MBR; canon v3 é a única fonte de verdade.
