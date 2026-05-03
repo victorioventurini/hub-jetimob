@@ -13,7 +13,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   FullPageWizardShell,
 } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
@@ -29,8 +29,6 @@ import { useRitualAvailability } from '@/modules/okrs/hooks';
 import { useCompletedSessionForCycle } from '@/modules/okrs/hooks';
 import { useHierarchicalTeamList } from '@/modules/teams/hooks';
 import { mbrKeys } from '@/lib/queryKeys/okrs';
-import { useKpiData } from '@/modules/kpis/hooks';
-import { useAuth } from '@/hooks/useAuth';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -44,9 +42,6 @@ import {
   monthBoundsDate,
 } from '@/modules/okrs/utils/mbr/referenceMonth';
 
-// Reuse QBR step 2 (com props opcionais para justificativas)
-import { QbrKpiAnalysisStep } from '@/modules/okrs/components/wizards/qbr-pre/QbrKpiAnalysisStep';
-
 // MBR-Pre specific steps
 import { MbrPreOpeningStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep';
 import { MbrPreProjectsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreProjectsStep';
@@ -54,6 +49,8 @@ import { MbrPreKrAnalysisStep } from '@/modules/okrs/components/wizards/mbr-pre/
 import { MbrPreHighlightsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreHighlightsStep';
 import { MbrPreNextStepsStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreNextStepsStep';
 import { MbrPreSummary } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreSummary';
+// KPI Gate canônico v3 (substitui QbrKpiAnalysisStep + classificador 4-bucket)
+import { MbrPreKpiGateStep } from '@/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep';
 
 import {
   calculateKrState,
@@ -62,7 +59,6 @@ import {
 import type {
   MbrPreStep,
   MbrPreDraftData,
-  MbrKpiSnapshot,
   TeamCheckinDecision,
 } from '@/modules/okrs/types/wizard';
 
@@ -102,18 +98,8 @@ const DEFAULT_DATA: MbrPreDraftData = {
   agendaSuggestions: [],
 };
 
-function dedupeKpiSnapshots(kpis: MbrKpiSnapshot[]): MbrKpiSnapshot[] {
-  const seen = new Set<string>();
-  const result: MbrKpiSnapshot[] = [];
 
-  for (const kpi of kpis) {
-    if (seen.has(kpi.kpiId)) continue;
-    seen.add(kpi.kpiId);
-    result.push(kpi);
-  }
 
-  return result;
-}
 
 // ============================================================
 // COMPONENT
@@ -125,13 +111,8 @@ export default function MbrPrePage() {
   const teamIdParam = searchParams.get('team');
   const { currentBuId } = useBu();
   const buSupabase = useBuScopedSupabase();
-  const queryClient = useQueryClient();
-  const { profile } = useAuth();
-  const { addKpiValue } = useKpiData();
 
-  // ── Estado local do modo paginado de KPIs (Pré-MBR) ──
-  const [kpiPageIndex, setKpiPageIndex] = useState(0);
-  const [kpiUpdatedInSession, setKpiUpdatedInSession] = useState<Record<string, boolean>>({});
+
 
   // Teams for admin context switching
   const { teams, isLoading: isLoadingTeams } = useHierarchicalTeamList();
@@ -366,137 +347,11 @@ export default function MbrPrePage() {
     seededKrsRef.current = true;
   }, [teamObjectives, refBounds, refMonth, teamIdParam, updateDraft, activeCycle]);
 
-  // ── Load KPIs (ancorado no mês alvo) ──
-  // currentValue = último valor com reference_date dentro do mês alvo.
-  // previousValue = último valor com reference_date < início do mês alvo.
-  // Se o mês alvo não tiver registro, currentValue = null (UI exibe "sem dado").
-
-
-  const { data: teamKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: [...mbrKeys.preTeamKpis(teamIdParam, currentBuId), refMonth],
-    enabled: !!buSupabase && !!currentBuId && !!teamIdParam && !!refBounds,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      if (!refBounds) return [];
-      // MBR-Pré (decisão de produto): listar SOMENTE KPIs cujo "Time Responsável"
-      // (responsible_team_id) é o time do rito — independente do scope (org/area).
-      // Critério canônico: responsabilidade explícita no cadastro do KPI.
-      // Não inclui KPIs por área nem todos os globais — evita ruído (ex.: eNPS
-      // global no MBR do Comercial). Métricas (indicator_type<>'kpi') e KPIs
-      // scope='team' continuam excluídos. Lifecycle: 'active' e 'proposed'.
-      const { data: kpis, error } = await buSupabase
-        .from('kpi_metrics')
-        .select('id, name, unit, target_value, direction, scope, area_id, team_id, owner_user_id, lifecycle_status, indicator_type, consolidation_frequency, update_frequency')
-        .in('lifecycle_status', ['active', 'proposed'])
-        .eq('indicator_type', 'kpi')
-        .is('deleted_at', null)
-        .in('scope', ['org', 'area'])
-        .eq('responsible_team_id', teamIdParam);
-
-      if (error) throw error;
-      if (!kpis || kpis.length === 0) return [];
-
-      const kpiIds = kpis.map(k => k.id);
-      // Buscamos só até o fim do mês alvo (descarta valores futuros).
-      const { data: valuesUpToTarget } = await buSupabase
-        .from('kpi_values')
-        .select('kpi_id, value, reference_date, rag_status')
-        .in('kpi_id', kpiIds)
-        .lte('reference_date', refBounds.end)
-        .order('reference_date', { ascending: false });
-
-      // Para cada KPI:
-      //   currentByKpi  → primeiro registro com reference_date BETWEEN start..end
-      //   previousByKpi → primeiro registro com reference_date < start (mês fechado anterior)
-      //   latestByKpi   → último registro até o fim do mês (fallback quando o
-      //                   período do registro não cai no mês exato — ex.: KPI
-      //                   gravado com period_label trimestral/Q2 mas
-      //                   reference_date dentro do mês alvo).
-      const currentByKpi = new Map<string, { value: number; rag_status: string; reference_date: string }>();
-      const previousByKpi = new Map<string, { value: number; reference_date: string }>();
-      const latestByKpi = new Map<string, { value: number; rag_status: string; reference_date: string }>();
-      for (const v of (valuesUpToTarget || [])) {
-        if (!latestByKpi.has(v.kpi_id)) {
-          latestByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status, reference_date: v.reference_date });
-        }
-        const inMonth = v.reference_date >= refBounds.start && v.reference_date <= refBounds.end;
-        if (inMonth && !currentByKpi.has(v.kpi_id)) {
-          currentByKpi.set(v.kpi_id, { value: v.value, rag_status: v.rag_status, reference_date: v.reference_date });
-        } else if (!inMonth && v.reference_date < refBounds.start && !previousByKpi.has(v.kpi_id)) {
-          previousByKpi.set(v.kpi_id, { value: v.value, reference_date: v.reference_date });
-        }
-      }
-
-      return dedupeKpiSnapshots(kpis.map(kpi => {
-        // Preferimos o valor in-month; se não houver, caímos no último valor
-        // disponível até o fim do mês alvo. Isso garante que KPIs com
-        // registros gravados em um período divergente (ex.: trimestral) ainda
-        // tragam RAG e sigam disparando o gate de justificativa do líder.
-        const current = currentByKpi.get(kpi.id) ?? latestByKpi.get(kpi.id);
-        const previous = previousByKpi.get(kpi.id);
-        const ragStatus = current?.rag_status === 'on_track' ? 'green'
-          : current?.rag_status === 'at_risk' ? 'yellow'
-          : current?.rag_status === 'off_track' ? 'red'
-          : 'no_data';
-        return {
-          kpiId: kpi.id,
-          name: kpi.name,
-          currentValue: current?.value ?? null,
-          previousValue: previous?.value ?? null,
-          target: kpi.target_value,
-          ragStatus,
-          // SSOT 6-bucket: tanto `critical` (off_track) quanto `attention`
-          // (at_risk) exigem decisão do líder no Pré-MBR.
-          requiresStrategicDecision: ragStatus === 'red' || ragStatus === 'yellow',
-          unit: kpi.unit ?? '%',
-          lastValueAt: current?.reference_date ?? null,
-          scope: (kpi.scope as 'org' | 'area' | 'team') ?? 'team',
-          direction: (kpi.direction as 'up' | 'down' | null) ?? null,
-          consolidationFrequency: (kpi as { consolidation_frequency?: MbrKpiSnapshot['consolidationFrequency'] }).consolidation_frequency ?? null,
-          updateFrequency: (kpi as { update_frequency?: MbrKpiSnapshot['updateFrequency'] }).update_frequency ?? null,
-        } as MbrKpiSnapshot;
-      }));
-    },
-  });
-
-  // Seed KPI snapshots — re-seed quando team OU referenceMonth mudam.
-  const seededKpisRef = useRef(false);
-  const lastSeedKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const seedKey = `${teamIdParam ?? ''}::${refMonth}`;
-    if (seedKey !== lastSeedKeyRef.current) {
-      seededKpisRef.current = false;
-      lastSeedKeyRef.current = seedKey;
-    }
-    if (seededKpisRef.current) return;
-    if (!teamKpis) return; // aguarda query carregar (mesmo se vazia)
-
-    const reconciled = dedupeKpiSnapshots(teamKpis);
-    const rawExisting = draft.data.kpiSnapshots ?? [];
-
-    // Snapshot autoritativo do mês alvo: sobrescreve currentValue/previousValue/RAG
-    // sempre que mudar (mês, escopo de owners, etc.).
-    // Justificativas vivem em `draft.data.kpiJustifications` (chaveado por kpiId)
-    // e são preservadas independentemente.
-    const changed =
-      reconciled.length !== rawExisting.length ||
-      reconciled.some((s, i) => {
-        const prev = rawExisting[i];
-        return (
-          !prev ||
-          prev.kpiId !== s.kpiId ||
-          prev.currentValue !== s.currentValue ||
-          prev.previousValue !== s.previousValue ||
-          prev.ragStatus !== s.ragStatus
-        );
-      });
-
-    if (changed) {
-      updateDraft({ kpiSnapshots: reconciled });
-    }
-    seededKpisRef.current = true;
-  }, [teamKpis, draft.data.kpiSnapshots, updateDraft, teamIdParam, refMonth]);
+  // ── KPIs do Pré-MBR ──
+  // A reconciliação canônica (KPI Gate v3 — 6 buckets) é feita dentro de
+  // `MbrPreKpiGateStep` via `useKpisForWizardV2 + classifyKpiGateBuckets`.
+  // O snapshot persistido em `draft.data.kpiSnapshots` é mantido como SSOT
+  // para steps subsequentes (Abertura, Resumo) e atualizado pelo gate.
 
   // Navigation
   const completedSteps = useMemo(() => {
@@ -569,7 +424,7 @@ export default function MbrPrePage() {
   }, [discardDraft, setSearchParams]);
 
   // Loading
-  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingKpis || isLoadingCompletedCheck) {
+  if (isLoadingTeams || isLoadingCycles || isLoadingKrs || isLoadingCompletedCheck) {
     return <LoadingState text="Carregando dados do pré-MBR..." fullPage />;
   }
 
@@ -629,7 +484,7 @@ export default function MbrPrePage() {
             teamName={selectedTeam?.name ?? null}
             leaderName={selectedTeam?.leaderName ?? null}
             cycleId={activeCycle?.id ?? null}
-            isLoading={isLoadingKrs || isLoadingKpis}
+            isLoading={isLoadingKrs}
             referenceMonth={refMonth}
             onReferenceMonthChange={(next) => {
               // Trocar o mês alvo invalida a análise IA cacheada (era de outro mês).
@@ -645,61 +500,14 @@ export default function MbrPrePage() {
 
       case 'kpi-analysis':
         return (
-          <QbrKpiAnalysisStep
+          <MbrPreKpiGateStep
+            teamId={teamIdParam}
             kpiSnapshots={draft.data.kpiSnapshots}
+            onKpiSnapshotsChange={(kpiSnapshots) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
-            agendaSuggestions={draft.data.agendaSuggestions ?? []}
-            onAgendaSuggestionsChange={(next) => updateDraft({ agendaSuggestions: next })}
-            agendaTriggerLabel="Registrar sugestão de pauta para o MBR"
-            agendaCategoryless
-            requireJustifications
-            paginated
-            currentKpiIndex={kpiPageIndex}
-            onKpiIndexChange={setKpiPageIndex}
-            kpiJustifications={draft.data.kpiJustifications}
-            onKpiJustificationChange={(kpiId, value) =>
-              updateDraft({
-                kpiJustifications: { ...draft.data.kpiJustifications, [kpiId]: value },
-              })
-            }
-            kpiNoDataReasons={draft.data.kpiNoDataReasons ?? {}}
-            onKpiNoDataReasonChange={(kpiId, value) =>
-              updateDraft({
-                kpiNoDataReasons: { ...(draft.data.kpiNoDataReasons ?? {}), [kpiId]: value },
-              })
-            }
-            kpiUpdatedInSession={kpiUpdatedInSession}
-            onKpiValueSubmit={async (kpiId, values) => {
-              await addKpiValue.mutateAsync({
-                kpi_id: kpiId,
-                value: values.value,
-                reference_date: values.reference_date,
-                notes: values.notes || undefined,
-                created_by: profile?.id,
-                source: 'manual',
-                input_type: values.input_type,
-              });
-              setKpiUpdatedInSession((prev) => ({ ...prev, [kpiId]: true }));
-              updateDraft({
-                kpiOutdatedUpdates: {
-                  ...(draft.data.kpiOutdatedUpdates ?? {}),
-                  [kpiId]: {
-                    newValue: values.value,
-                    referenceDate: values.reference_date,
-                    inputType: values.input_type,
-                    notes: values.notes,
-                    submittedAt: new Date().toISOString(),
-                  },
-                },
-              });
-              // Refetch snapshots para refletir o novo valor.
-              queryClient.invalidateQueries({
-                queryKey: mbrKeys.preTeamKpis(teamIdParam, currentBuId),
-              });
-            }}
           />
         );
 
