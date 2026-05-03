@@ -15,9 +15,11 @@ interface KpiDetailDialogProps {
 export function KpiDetailDialog({ kpiId, open, onOpenChange }: KpiDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-auto sm:max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         {kpiId ? (
-          <KpiDetailContent kpiId={kpiId} />
+          <div className="min-w-0">
+            <KpiDetailContent kpiId={kpiId} />
+          </div>
         ) : (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
