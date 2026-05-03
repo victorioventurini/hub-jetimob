@@ -73,10 +73,17 @@ export function QbrKpiAnalysisStep({
   agendaSuggestions,
   onAgendaSuggestionsChange,
   agendaTriggerLabel,
+  kpiJustifications,
+  onKpiJustificationChange,
+  requireJustifications,
 }: QbrKpiAnalysisStepProps) {
   const alertKpis = kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow');
   const healthyKpis = kpiSnapshots.filter(k => k.ragStatus === 'green');
   const noDataKpis = kpiSnapshots.filter(k => k.ragStatus === 'no_data');
+
+  const missingJustifications = requireJustifications
+    ? alertKpis.filter((k) => !((kpiJustifications?.[k.kpiId] ?? '').trim())).length
+    : 0;
 
   return (
     <WizardStepScaffold
@@ -94,6 +101,7 @@ export function QbrKpiAnalysisStep({
         <WizardStepFooter
           onBack={onBack}
           onPrimary={onContinue}
+          primaryDisabled={missingJustifications > 0}
         />
       }
       bottomFixed={
