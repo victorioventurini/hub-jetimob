@@ -24,7 +24,6 @@ import {
   WizardStepFooter,
   WizardStepScaffold,
   JustificationField,
-  InlineAgendaSuggestionInput,
 } from '../shared';
 import { useMbrPreTeamProjects, type MbrPreProjectRow } from '@/modules/okrs/hooks';
 import type { RitualAgendaSuggestion } from '@/modules/okrs/types/wizard';
