@@ -386,6 +386,8 @@ export interface KpiForWizardV2 {
   lifecycle_status: KpiLifecycleStatus;
   recovery_protocol: string | null;
   team_id: string | null;
+  /** Time responsável operacional (KPIs de área/org delegados a um time). */
+  responsible_team_id: string | null;
   area_id: string | null;
   owner_user_id: string | null;
   scope: KpiScope;
