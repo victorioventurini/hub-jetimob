@@ -33,7 +33,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 - ✅ **`esbuild.pure` em build de produção** remove `console.log/info/debug/warn`
   do bundle final (mantém `console.error` para diagnóstico). Ataca os 352 `console.*`
   em `src/` sem refactor manual. `debugger` também removido em prod.
-- 🟡 Quebrar `MbrV2Page` (1060) e `CreateKpiDialog` (1059) em sub-componentes — W2.F.
+- ✅ Quebrar `CreateKpiDialog` (1059 → 263 LoC) — concluído em W2.F. (MBR v2 descontinuado; `MbrV2Page` removido do código.)
 - 🟡 Adicionar `React.memo` em mais cards/listas (baseline 63 arquivos hoje) — W2.F.
 - 🟡 Auditar `JSON.parse` (34 ocorrências) → migrar para `tryParseAiJson` onde
   o input vier de LLM ou storage não-confiável — W2.F.
