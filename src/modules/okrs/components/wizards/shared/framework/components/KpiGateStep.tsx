@@ -66,6 +66,13 @@ export interface KpiGateStepProps {
   currentKpiIndex?: number;
   /** v3.31.0 (rich-paginated) — callback ao mudar de KPI via Anterior/Próximo. */
   onKpiIndexChange?: (next: number) => void;
+  /**
+   * v3.31.1 — mapa kpiId → "Por que está sem dados" (causa).
+   * Apenas usado quando `config.splitNoDataReason === true`.
+   */
+  noDataReasons?: Record<string, string>;
+  /** v3.31.1 — callback de mudança da razão de ausência de dados. */
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
