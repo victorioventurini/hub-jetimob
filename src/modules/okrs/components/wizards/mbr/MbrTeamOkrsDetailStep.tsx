@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass } from 'lucide-react';
+import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
