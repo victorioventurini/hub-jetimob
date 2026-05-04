@@ -13,6 +13,7 @@ import type { WizardPersona } from '../types/wizard';
 import type { CycleWithStatus } from './useActiveCycle';
 import { addBusinessDaysToDate } from '../utils/generateCycles';
 import { RITUAL_LABELS as SSOT_RITUAL_LABELS } from '../constants/ritualLabels';
+import { useAuth } from '@/hooks/useAuth';
 
 // ⚠️ TEMPORARY DEV FLAG — remove after QBR flow testing
 const DEV_FORCE_QBR_AVAILABLE = new Date() < new Date('2026-04-15');
@@ -205,7 +206,21 @@ export function useRitualAvailability(
   wizardType: WizardPersona,
   cycle: CycleWithStatus | null | undefined,
 ): RitualAvailability {
+  const { isAdmin } = useAuth();
+
   return useMemo((): RitualAvailability => {
+    // 🛡️ Admin/super_admin bypass — acesso irrestrito a qualquer rito,
+    // independente de janela ou ciclo. Necessário para preparação e suporte.
+    if (isAdmin) {
+      return {
+        isAvailable: true,
+        opensAt: null,
+        closesAt: null,
+        reason: 'available',
+        message: '',
+      };
+    }
+
     // ⚠️ TEMPORARY: Force all QBR rituals available for testing
     if (DEV_FORCE_QBR_AVAILABLE && DEV_QBR_TYPES.includes(wizardType)) {
       return {
@@ -313,5 +328,5 @@ export function useRitualAvailability(
       reason: 'available',
       message: '',
     };
-  }, [wizardType, cycle]);
+  }, [wizardType, cycle, isAdmin]);
 }
