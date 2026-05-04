@@ -43,6 +43,12 @@ export default function TicketDetailPage() {
   }, [isExternal, currentBu?.id, externalContacts]);
 
   const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
+  const { switchBu, userBus } = useBu();
+  const { data: resolvedTicketBuId } = useResolveTicketBu(!ticket && !isLoadingTicket ? id : null);
+  const resolvedBuMembership = useMemo(
+    () => (resolvedTicketBuId ? userBus.find((m) => m.bu_id === resolvedTicketBuId) : null),
+    [resolvedTicketBuId, userBus]
+  );
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
   const { data: attachments = [] } = useTicketAttachments(id!);
   const { data: viewersData } = useTicketViewersAndMentions(ticket);
