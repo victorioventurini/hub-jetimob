@@ -350,12 +350,28 @@ const RichKpiCard = memo(function RichKpiCard({
             {actionHint && (
               <p className="text-[11px] text-muted-foreground">{actionHint}</p>
             )}
+            {isSplitNoData && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-foreground block">
+                  Por que está sem dados?<span className="text-status-amber"> *</span>
+                </Label>
+                <Textarea
+                  value={noDataReason ?? ''}
+                  onChange={(e) => onNoDataReasonChange?.(kpi.id, e.target.value)}
+                  placeholder="Ex.: integração indisponível, fonte ainda não definida, responsável de fora..."
+                  className="text-sm min-h-[64px] max-w-full"
+                  aria-required
+                />
+              </div>
+            )}
             <Textarea
               value={justification}
               onChange={(e) => onJustificationChange?.(kpi.id, e.target.value)}
               placeholder={
                 mode === 'explain-no-data'
-                  ? 'Descreva a causa da ausência de dados e o plano para sanar...'
+                  ? isSplitNoData
+                    ? 'Plano e prazo para destravar a coleta...'
+                    : 'Descreva a causa da ausência de dados e o plano para sanar...'
                   : 'Descreva o motivo do desvio e as próximas ações...'
               }
               className="text-sm min-h-[80px] max-w-full"
