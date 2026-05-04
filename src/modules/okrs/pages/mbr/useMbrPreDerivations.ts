@@ -8,7 +8,12 @@ export interface MbrPreSubmissionLike {
   submittedByName?: string;
   highlights?: { needsDecision?: string };
   nextSteps?: { crossDependencies?: string[] };
-  kpisToCreate?: Array<Record<string, unknown>>;
+  kpisToCreate?: Array<{
+    description: string;
+    suggestedScope?: string;
+    relatedKrTitle?: string;
+    [k: string]: unknown;
+  }>;
   kpiJustifications?: Record<string, string | undefined>;
   kpiOutdatedUpdates?: Record<string, unknown>;
   projectJustifications?: {
