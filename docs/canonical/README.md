@@ -1,6 +1,6 @@
 # 📐 Documentos Canônicos — Hub da Jet
 
-**Última atualização:** 2026-04-22 (incidente bundling)
+**Última atualização:** 2026-05-04 (TCR v3.30.0 — MBR v2 + Pré-MBR Hardening)
 **Categoria:** NORMATIVO
 
 ---
