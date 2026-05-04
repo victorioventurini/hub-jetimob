@@ -2757,6 +2757,24 @@ export type { SomeType } from './types';
 
 ## Changelog
 
+### v3.30.0 (2026-05-04) — MBR v2 + Pré-MBR Hardening
+
+- **MBR v2 (`/rituals/mbr-v2`)** — rito paralelo agrupado por **Org Objective + severidade**.
+  - Consome o **Pré-MBR v1 sem alteração** (mesmo draft, mesmas fontes); v1 permanece intacto.
+  - SSOT: `mem://features/rituals/mbr-v2-standard`. Doc canônico: [`MBR_RITUAL.md`](./MBR_RITUAL.md).
+- **Pré-MBR — KPI Gate ancorado ao mês de referência**:
+  - Novo classificador `classifyKpiGateBucketsFromMonthlySnapshots()` em `stepContentAdapters.ts` recebe `MonthlyKpiSnapshotForGate[]` e classifica buckets (overdue / critical / attention / healthy) usando `currentValue` / `previousValue` / `ragStatus` ancorados ao **fim do mês de referência**.
+  - `MbrPreKpiGateStep` migrado de `useKpisForWizardV2` para `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`; `reconciledSnapshots` mescla snapshots mensais com persistidos no draft.
+  - Resultado: análise de KR/KPI deixa de ser contaminada por valores de meses futuros.
+- **Pré-MBR — drafts resilientes**:
+  - `MbrPreProjectsStep` adiciona memo `safeProjectJustifications = { projects: ... ?? {}, milestones: ... ?? {} }` consumido tanto na validação de itens bloqueantes quanto na renderização.
+  - `MbrPrePage` aplica fallback `?? { projects: {}, milestones: {} }` ao prop e aos handlers `onProjectJustificationChange` / `onMilestoneJustificationChange`.
+  - Elimina `TypeError: Cannot read properties of undefined (reading 'projects')` em drafts antigos.
+- **Documentação**:
+  - Novo doc canônico [`MBR_RITUAL.md`](./MBR_RITUAL.md) — SSOT humano para Pré-MBR + MBR v2.
+  - Novo doc canônico [`PRE_CHECKLIST.md`](./PRE_CHECKLIST.md) — espelho legível do pré-checklist obrigatório.
+  - `DEVELOPMENT_STANDARDS.md` v1.31.0 (Resilient Draft Hydration; PostgREST `or()` array-contains quoting; Lazy with retry; Entity name length limits; anti-pattern de leitura de campos denormalizados em snapshots; nova Seção P).
+
 ### v3.13.0 (2026-03-20) — Asset Audit History v1.0
 - **Trilha de auditoria field-level para Assets**:
   - Triggers automáticos em `asset_inventory`, `asset_keyrings` e `asset_phone_lines` → grava diffs na tabela `audit_logs`
