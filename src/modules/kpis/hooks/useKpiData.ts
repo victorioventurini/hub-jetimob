@@ -386,7 +386,7 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       };
       const { data: result, error } = await client
         .from("kpi_values")
-        .insert(insertPayload)
+        .upsert(insertPayload, { onConflict: "kpi_id,reference_date" })
         .select()
         .single();
 
@@ -413,8 +413,8 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.krEffectiveValuesPrefix(), refetchType: 'active' });
       
       toast({
-        title: "Valor registrado",
-        description: "O valor do KPI foi registrado com sucesso.",
+        title: "Valor salvo",
+        description: "O valor do KPI foi salvo com sucesso.",
       });
     },
     onError: (error) => {
