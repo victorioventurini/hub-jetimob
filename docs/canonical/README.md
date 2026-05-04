@@ -1,6 +1,6 @@
 # 📐 Documentos Canônicos — Hub da Jet
 
-**Última atualização:** 2026-05-04 (TCR v3.30.0 — MBR v2 + Pré-MBR Hardening)
+**Última atualização:** 2026-05-04 (TCR v3.30.1 — Pré-MBR Hardening; MBR v2 removido)
 **Categoria:** NORMATIVO
 
 ---
@@ -15,7 +15,7 @@ Esta pasta contém os **documentos normativos** do projeto — as fontes únicas
 |-----------|-----------|--------|
 | `TECHNICAL_CONTEXT_REGISTRY.md` | **Fonte única de verdade** — arquitetura, entidades, regras de negócio | v3.30.0 |
 | `PRE_CHECKLIST.md` | **Pré-checklist obrigatório** antes de qualquer implementação | v1.0.0 |
-| `MBR_RITUAL.md` | SSOT humano do Pré-MBR + MBR v2 (mês de referência, drafts resilientes) | v1.0.0 |
+
 | `AI_AGENTS_PHILOSOPHY.md` | Governança de criação/reutilização de agentes IA | v1.0.0 |
 | `DEVELOPMENT_STANDARDS.md` | Padrões obrigatórios de desenvolvimento | v1.31.0 |
 | `DATA_MODEL_REGISTRY.md` | Schema canônico (tabelas, views, funções) | v1.3.0 |

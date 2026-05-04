@@ -11,7 +11,7 @@
 |-----------|-----------|--------|
 | [TECHNICAL_CONTEXT_REGISTRY.md](../canonical/TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v3.30.0 |
 | [PRE_CHECKLIST.md](../canonical/PRE_CHECKLIST.md) | **Pré-checklist obrigatório** antes de qualquer implementação | ✅ v1.0.0 |
-| [MBR_RITUAL.md](../canonical/MBR_RITUAL.md) | SSOT humano do Pré-MBR + MBR v2 (mês de referência, drafts resilientes) | ✅ v1.0.0 |
+
 
 ---
 
