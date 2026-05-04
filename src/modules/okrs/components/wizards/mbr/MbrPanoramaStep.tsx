@@ -68,6 +68,14 @@ export interface MbrPanoramaStepProps {
   mbrPreNeedsDecisionCount?: number;
   /** Dependências cross-team trazidas pelos times */
   mbrPreCrossDepCount?: number;
+  /** Justificativas de KPI registradas no Pré-MBR */
+  mbrPreKpiJustifCount?: number;
+  /** KPIs cujo valor foi atualizado durante o Pré-MBR */
+  mbrPreKpiUpdatedCount?: number;
+  /** Justificativas de projeto/milestone atrasados no Pré-MBR */
+  mbrPreProjectJustifCount?: number;
+  /** Sugestões de pauta agregadas dos pré-MBRs dos times */
+  mbrPreAgendaSuggestionCount?: number;
 }
 
 interface KpiGroup {
