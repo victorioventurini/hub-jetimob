@@ -20,6 +20,7 @@ export interface RitualEvaluationSummary {
   avgTime: number | null;
   evaluationOpenAt: string | null;
   evaluationClosedAt: string | null;
+  evaluationShortCode: string | null;
 }
 
 export function useRitualEvaluationSummary(sessionId: string | null) {
@@ -32,7 +33,7 @@ export function useRitualEvaluationSummary(sessionId: string | null) {
       const { data, error } = await supabase
         .from('v_ritual_evaluation_summary')
         .select(
-          'session_id, response_count, expected_count, avg_value, avg_quality, avg_decisions, avg_time, evaluation_open_at, evaluation_closed_at',
+          'session_id, response_count, expected_count, avg_value, avg_quality, avg_decisions, avg_time, evaluation_open_at, evaluation_closed_at, evaluation_short_code',
         )
         .eq('session_id', sessionId)
         .maybeSingle();
@@ -48,9 +49,11 @@ export function useRitualEvaluationSummary(sessionId: string | null) {
         avgTime: data.avg_time === null ? null : Number(data.avg_time),
         evaluationOpenAt: (data.evaluation_open_at as string | null) ?? null,
         evaluationClosedAt: (data.evaluation_closed_at as string | null) ?? null,
+        evaluationShortCode: (data.evaluation_short_code as string | null) ?? null,
       };
     },
     enabled: !!sessionId,
     staleTime: 30 * 1000,
   });
 }
+
