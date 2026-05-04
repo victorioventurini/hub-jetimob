@@ -27,7 +27,7 @@ import { useDecisionThread } from '../../hooks/useDecisionThread';
 import { DecisionFollowUpRow } from '../../components/wizards/shared/DecisionFollowUpRow';
 import { hasParticipantEvaluations } from './constants';
 import { ParticipantEvaluationsSection } from './ParticipantEvaluationsSection';
-import { RitualFeedbackSection } from './RitualFeedbackSection';
+import { RitualEvaluationSection } from './RitualEvaluationSection';
 import { SnapshotSummary } from './SnapshotSummary';
 
 interface RitualHistoryCardProps {
@@ -179,7 +179,11 @@ export function RitualHistoryCard({ ritual, autoExpand = false }: RitualHistoryC
 
             <ParticipantEvaluationsSection addendums={ritual.addendums} />
 
-            <RitualFeedbackSection reflectionData={ritual.reflectionData} />
+            <RitualEvaluationSection
+              sessionId={ritual.id}
+              persona={ritual.wizardType}
+              reflectionData={ritual.reflectionData}
+            />
 
             <SnapshotSummary ritual={ritual} />
           </CardContent>
