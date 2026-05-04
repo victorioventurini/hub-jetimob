@@ -169,6 +169,9 @@ export {
 // Viewers and mentions (for ticket detail page)
 export { useTicketViewersAndMentions } from './useTicketViewersAndMentions';
 
+// Resolve ticket BU (cross-BU access detection)
+export { useResolveTicketBu } from './useResolveTicketBu';
+
 // Internal routing matching (for ticket creation)
 export {
   useInternalRoutingMatch,
