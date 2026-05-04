@@ -43,6 +43,8 @@ import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrs
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
 import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
+import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
+import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 
 import { calculateProgress } from '@/modules/okrs/types';
 import type {
