@@ -98,6 +98,7 @@ const DEFAULT_DATA: MbrDraftData = {
   },
   ritualFeedback: [],
   qbrFollowUpItems: [],
+  panoramaCuration: EMPTY_MBR_PANORAMA_CURATION,
 };
 
 // ============================================================
