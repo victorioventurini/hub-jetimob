@@ -21,6 +21,7 @@ import {
   useAllOrgObjectivesView,
   useCarryOverDecisions,
   useMbrPreSubmissions,
+  useMbrOpeningCuration,
 } from '@/modules/okrs/hooks';
 import { usePreviousMbrPendingItems } from '@/modules/okrs/hooks/usePreviousMbrPendingItems';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
