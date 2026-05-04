@@ -195,6 +195,10 @@ interface RichKpiCardProps {
   bucketId: KpiGateBucketId;
   justification: string;
   onJustificationChange?: (kpiId: string, value: string) => void;
+  /** v3.31.1 — quando true, separa "razão de ausência" do "plano de ação". */
+  splitNoDataReason?: boolean;
+  noDataReason?: string;
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
 }
 
 const RichKpiCard = memo(function RichKpiCard({
@@ -202,6 +206,9 @@ const RichKpiCard = memo(function RichKpiCard({
   bucketId,
   justification,
   onJustificationChange,
+  splitNoDataReason,
+  noDataReason,
+  onNoDataReasonChange,
 }: RichKpiCardProps) {
   const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
