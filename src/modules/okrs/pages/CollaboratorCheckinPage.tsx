@@ -224,9 +224,10 @@ export default function CollaboratorCheckinPage() {
       source?: 'manual' | 'integration' | 'calculation';
       notes?: string;
       created_by?: string;
-      confidence?: 'high' | 'medium' | 'low';
-      // v3.0.0: input_type é obrigatório para o trigger DB derive_confidence
-      // funcionar corretamente. Default `consolidated` para retrocompat.
+      // v3.0.0 (KPIs Master SSOT): coluna `confidence` foi removida de
+      // `kpi_values`. A confiabilidade do dado é derivada por trigger DB
+      // a partir de `input_type` + `source`. Default `consolidated` para
+      // retrocompat com snapshots gravados antes da migração.
       input_type?: 'consolidated' | 'partial';
     }) => {
       const { data: result, error } = await supabase
@@ -238,7 +239,6 @@ export default function CollaboratorCheckinPage() {
           source: data.source || "manual",
           notes: data.notes || null,
           created_by: data.created_by || null,
-          confidence: data.confidence || 'medium',
           input_type: data.input_type ?? 'consolidated',
         })
         .select()
