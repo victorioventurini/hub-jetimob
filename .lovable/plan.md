@@ -1,99 +1,99 @@
-# Plano — Propagação completa Pré-MBR → MBR
+# Plano — Modal de confirmação canônico ao finalizar ritos
 
 ## Pré-checklist (executado)
 - TCR `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` v3.29.1 — consultado
-- `docs/canonical/IDENTITY_CONVENTION.md`, `PERMISSIONS_AND_RBAC_MODEL.md`, `DATA_MODEL_REGISTRY.md` — disponíveis e respeitados
-- Mem rules: BU isolation, soft deletes, no `select("*")`, `mbrKeys`, ritual labels SSOT, snapshot denorm deprecation
-- Código fonte de verdade do pareamento: `useMbrPreSubmissions.ts` + tipo `MbrPreTeamSubmission`
+- `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md` — fronteira `@/wizards-framework` respeitada
+- Memórias: Wizards Master SSOT + Ritual Labels SSOT
+- Componentes existentes auditados:
+  - `src/components/ui/confirm-dialog.tsx` — **canônico** (`ConfirmDialog`, variants `destructive/warning/info/default`, `isLoading`)
+  - `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx` — `WizardLastStepFooter` **já existe** com confirmação (mas reimplementa `AlertDialog` em vez de usar `ConfirmDialog`)
+  - 10 ritos já usam `WizardLastStepFooter`; 4 wizards finalizam sem ele
 
-## Diagnóstico (gap atual)
+## Diagnóstico
 
-`MbrPreDraftData` coleta **13 áreas de dado** no Pré-MBR. Hoje só **4** chegam ao MBR via `MbrPreTeamSubmission`:
-
-| Campo do Pré-MBR | Está em `MbrPreTeamSubmission`? | Está sendo exibido no MBR? |
-|---|---|---|
-| `highlights` (acelerou/travou/precisa decisão) | sim | sim — Detail step (card "Preparação do líder") |
-| `nextSteps` (foco, prioridades, cross-deps) | sim | sim — Detail step |
-| `kpisToCreate` | sim | parcial — só agrega contagem em `mbrPreSurfacedItems` (Panorama), nunca lista |
-| `krFinalStates` | sim | **não exibido** |
-| `kpiJustifications` (RAG ≠ verde) | **NÃO** | não |
-| `kpiNoDataReasons` (bucket no_data) | **NÃO** | não |
-| `kpiOutdatedUpdates` (KPIs atualizados durante o rito) | **NÃO** | não |
-| `projectJustifications.projects` / `.milestones` | **NÃO** | não |
-| `krJustifications` | **NÃO** | não |
-| `agendaSuggestions` (sugestões de pauta) | **NÃO** | não |
-| `monthAnalysis` (análise IA mensal) | **NÃO** | não |
-| `decisions` (registradas durante o pré) | **NÃO** | não — mas `useCarryOverDecisions` já cobre via outro caminho (verificar) |
-| Addendums da sessão | sim | sim — `AddendumBadge` no Detail step |
-
-Resultado: o MBR está cego para a maior parte do trabalho reflexivo do líder.
+### Inconsistências atuais
+1. `WizardLastStepFooter` reimplementa o AlertDialog manualmente. Deveria delegar ao `ConfirmDialog` canônico (DRY + variantes coerentes).
+2. Cobertura incompleta — finalizam **sem modal**:
+   - `clevel-checkin/CLevelDirectivesStep.tsx` (Button manual `onClick={onComplete}`)
+   - `team-okr-creation/TeamOkrShareStep.tsx` (último step do OKR creation)
+   - `team-kr-creation/KrReviewStep.tsx` (último step do KR creation)
+   - `leader-prep/LeaderProjectsStep.tsx` (último step da leader-prep)
+3. O **framework genérico** `shared/framework/components/SummaryAndSubmitStep.tsx` e `ClosingStep.tsx` precisam usar o mesmo padrão para que QUALQUER wizard novo herde a confirmação.
+4. Texto da confirmação atual é genérico ("Concluir ritual"). Deve permitir customização leve por rito (título/descrição/label do botão), mantendo defaults canônicos.
 
 ## Mudanças propostas
 
-### 1. Expandir `MbrPreTeamSubmission` (types)
-Arquivo: `src/modules/okrs/types/wizard/mbr.ts`
+### 1. Refatorar `WizardLastStepFooter` para usar `ConfirmDialog`
+Arquivo: `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx`
 
-Adicionar todos os campos faltantes da `MbrPreDraftData` ao tipo `MbrPreTeamSubmission`:
-`kpiJustifications`, `kpiNoDataReasons`, `kpiOutdatedUpdates`, `projectJustifications`, `krJustifications`, `agendaSuggestions`, `monthAnalysis`, `decisions`.
+- Remover o bloco `<AlertDialog>...</AlertDialog>` manual.
+- Renderizar `<ConfirmDialog variant="info" />` (importado de `@/components/ui/confirm-dialog`).
+- Adicionar props opcionais ao `WizardLastStepFooter`:
+  - `confirmTitle?: string` (default: `"Concluir ritual"`)
+  - `confirmDescription?: ReactNode` (default: texto atual)
+  - `confirmLabel?: string` (default: `"Confirmar conclusão"`)
+  - `confirmVariant?: ConfirmDialogVariant` (default: `"info"`)
+- Propagar `isLoading` ao `ConfirmDialog` quando `primaryLoading` for true (evita duplo-clique).
+- Remover imports não usados de `AlertDialog*` no arquivo.
 
-### 2. Hidratar tudo no hook `useMbrPreSubmissions`
-Arquivo: `src/modules/okrs/hooks/useMbrPreSubmissions.ts`
+### 2. Aplicar `WizardLastStepFooter` nos 4 wizards faltantes
 
-No bloco que monta `byTeam[teamId] = { ... }` (linhas 194–205), copiar os novos campos do `draftData` com defaults seguros (`{}`, `[]`, `null`). Sem nova query — tudo já está no `reflection_data`.
+| Arquivo | Texto sugerido (confirmTitle / confirmDescription) |
+|---|---|
+| `clevel-checkin/CLevelDirectivesStep.tsx` | "Concluir Check-in C-Level" / "As diretrizes serão registradas e enviadas." |
+| `team-okr-creation/TeamOkrShareStep.tsx` | "Publicar OKR do time" / "O OKR será publicado e ficará visível para o time." |
+| `team-kr-creation/KrReviewStep.tsx` | "Publicar KR" / "O Key Result será publicado e ficará visível para o time." |
+| `leader-prep/LeaderProjectsStep.tsx` | "Concluir preparação do líder" / texto curto análogo |
 
-### 3. Exibir no MBR Detail step (por time)
-Arquivo: `src/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep.tsx`
+Em cada um:
+- Trocar `WizardStepFooter` (com `primaryLabel="Continuar"` ou Button manual) por `WizardLastStepFooter`.
+- Manter `onPrimary` / `primaryLoading` existentes.
 
-Estender o card "Preparação do líder" (já existente, linhas 244–319) com seções colapsáveis adicionais quando houver dado:
-- Justificativas de KPI fora da meta (lista kpiId → texto, resolvendo nome via lookup ou `kpiSnapshots` do MBR)
-- Justificativas de KPI sem dados
-- KPIs atualizados durante o pré-MBR (valor + data + tipo input)
-- Justificativas de KR fora da meta (anexar ao card do KR correspondente, não no header)
-- Justificativas de projetos/milestones atrasados (anexar ao `ProjectsSummary` ou abaixo)
-- KPIs sugeridos para criação (lista descrição + escopo)
-- Estados finais de KR registrados pelo líder (badge no card do KR)
+### 3. Aplicar nos componentes do framework genérico
+Arquivos:
+- `src/modules/okrs/components/wizards/shared/framework/components/SummaryAndSubmitStep.tsx`
+- `src/modules/okrs/components/wizards/shared/framework/components/ClosingStep.tsx`
 
-### 4. Exibir consolidado no Panorama
-Arquivo: `src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx`
+Garantir que ambos rendam `WizardLastStepFooter` em vez de `WizardStepFooter`. Mantém wizards futuros gerados pelo framework com modal por default.
 
-Adicionar contagens agregadas ao card "Preparação dos times" já existente:
-- nº de KPIs com justificativa
-- nº de KPIs atualizados na sessão
-- nº de projetos/milestones com justificativa
-- nº de sugestões de pauta consolidadas (top 3 por relevância)
+### 4. SSOT de cópia (texto da confirmação)
+Adicionar constantes em `src/modules/okrs/constants/ritualLabels.ts` (já é SSOT):
+```ts
+export const RITUAL_FINALIZATION_COPY: Record<RitualType, {
+  title: string;
+  description: string;
+  confirmLabel: string;
+}> = { /* mbr-pre, mbr, qbr-pre, qbr-meeting, qbr-post, weekly, pre-weekly,
+       team-checkin, collaborator, clevel-checkin, leader-prep,
+       team-okr-creation, team-kr-creation, qbr-pre-clevel */ };
+```
+Cada wizard passa `RITUAL_FINALIZATION_COPY[ritualType]` ao `WizardLastStepFooter`. Defaults do componente cobrem ausência da chave.
 
-### 5. Sugestões de pauta no Decisions step
-Arquivo: `src/modules/okrs/components/wizards/mbr/MbrDecisionsStep.tsx`
-
-Já recebe `mbrPreSurfacedItems`. Estender com `agendaSuggestions` agregadas dos times (mostrar como sugestões clicáveis que podem virar decisão).
-
-### 6. Análise mensal IA no Detail step
-Quando `mbrPreByTeam[teamId].monthAnalysis` existir, exibir bloco compacto (summary + top 2 highlights + top 2 risks) acima do card "Preparação do líder".
-
-### 7. MbrPage — propagar agregados
-Arquivo: `src/modules/okrs/pages/MbrPage.tsx`
-
-Os memos `mbrPreSurfacedItems` e props passadas aos steps já existem (linhas 175–209, 689–795). Apenas estender com os novos contadores agregados (sem nova query — tudo deriva de `mbrPreByTeam`).
+### 5. Testes
+Atualizar/adicionar:
+- `shared/__tests__/WizardStepFooter.test.tsx` — confirmar que clique em "Finalizar e enviar" abre o `ConfirmDialog` (não `AlertDialog` direto), respeita `confirmTitle/Description/Label`, e respeita `isLoading`.
+- Os testes existentes de Closing/Summary que mockam o footer continuam válidos (interface preservada).
 
 ## Detalhes técnicos
+- **Sem breaking change** na API de `WizardLastStepFooter` (props novas são todas opcionais).
+- **Sem nova dependência**.
+- **Sem migração de banco**.
+- O componente canônico `ConfirmDialog` já trata a11y (Radix `AlertDialog` por baixo), `Loader2`, `disableCancelOnLoading`.
+- Mantido o ponto de entrada `@/wizards-framework` para SummaryAndSubmit/Closing — mudança é interna ao framework.
 
-- **Sem migração de banco.** Todos os dados já vivem em `okr_wizard_sessions.reflection_data` (tipo JSONB). Mudança é 100% leitura/UI.
-- **Sem nova query.** Reaproveita `useMbrPreSubmissions` (já gated por BU + `mbrKeys.preSubmissions`).
-- **Retrocompat.** Drafts antigos sem os novos campos cairão nos defaults; UI esconde seções vazias (`hasAny` guard como já existe).
-- **Snapshot denorm policy** (`mem://standards/wizard-snapshot-denormalized-fields-deprecation`): para resolver nomes de KPI/KR/Projeto/Milestone, preferir lookup por ID via hooks existentes (`useKpis`, `useKeyResults`, `useProjects`) em vez de denormalizar nos types.
-- **Performance.** Card "Preparação do líder" cresce; envolver seções pesadas em `<Collapsible>` para manter o step leve. Memoizar derivações com `useMemo` por `currentTeamIndex`.
-- **Sem alteração no fluxo de auto-save / completeSession** (já corrigido na iteração anterior — `reflection_data` é gravado em `completeSession`).
-
-## Arquivos afetados
-1. `src/modules/okrs/types/wizard/mbr.ts` — expandir `MbrPreTeamSubmission`
-2. `src/modules/okrs/hooks/useMbrPreSubmissions.ts` — hidratar novos campos
-3. `src/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep.tsx` — exibir tudo
-4. `src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx` — agregados
-5. `src/modules/okrs/components/wizards/mbr/MbrDecisionsStep.tsx` — sugestões de pauta
-6. `src/modules/okrs/pages/MbrPage.tsx` — agregar contadores e passar props
+## Arquivos afetados (~10)
+1. `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx` (refator)
+2. `src/modules/okrs/constants/ritualLabels.ts` (novo SSOT de cópia)
+3. `src/modules/okrs/components/wizards/clevel-checkin/CLevelDirectivesStep.tsx`
+4. `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrShareStep.tsx`
+5. `src/modules/okrs/components/wizards/team-kr-creation/KrReviewStep.tsx`
+6. `src/modules/okrs/components/wizards/leader-prep/LeaderProjectsStep.tsx`
+7. `src/modules/okrs/components/wizards/shared/framework/components/SummaryAndSubmitStep.tsx`
+8. `src/modules/okrs/components/wizards/shared/framework/components/ClosingStep.tsx`
+9. `src/modules/okrs/components/wizards/shared/__tests__/WizardStepFooter.test.tsx` (atualizar)
 
 ## Validação pós-implementação
-- Abrir um MBR cujo time tenha pré-MBR completo com todos os campos preenchidos → confirmar que cada seção aparece.
-- Time sem pré-MBR → segue mostrando "Sem pré-MBR submetido neste mês."
-- Time com pré-MBR vazio em campos opcionais → seção respectiva oculta (sem cards vazios).
-- Build limpo, sem `select("*")`, query keys via `mbrKeys`.
+- Em cada um dos 14 ritos, ao clicar no botão final aparece o modal canônico `ConfirmDialog`.
+- "Cancelar" fecha sem efeito; "Confirmar" dispara o submit e desabilita botões durante `isLoading`.
+- Texto do modal varia por rito conforme `RITUAL_FINALIZATION_COPY`.
+- Build limpo, sem regressão visual no footer.
