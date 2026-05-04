@@ -360,6 +360,11 @@ export function MbrPanoramaStep({
   mbrPreKpiUpdatedCount = 0,
   mbrPreProjectJustifCount = 0,
   mbrPreAgendaSuggestionCount = 0,
+  curation,
+  onCurationChange,
+  onGenerateCurationDraft,
+  isGeneratingCuration = false,
+  onAddSuggestedDecision,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
