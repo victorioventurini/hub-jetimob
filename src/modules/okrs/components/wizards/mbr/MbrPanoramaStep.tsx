@@ -440,6 +440,16 @@ export function MbrPanoramaStep({
         <div className="p-6 space-y-6">
           {topSlot}
 
+          {curation && onCurationChange && (
+            <MbrPanoramaCurationCard
+              curation={curation}
+              onCurationChange={onCurationChange}
+              onGenerateDraft={onGenerateCurationDraft}
+              isGenerating={isGeneratingCuration}
+              onAddSuggestedDecision={onAddSuggestedDecision}
+            />
+          )}
+
           {/* ── Preparação dos Times (Pré-MBR) ── */}
           {mbrPreSubmittedCount > 0 && (
             <div className="space-y-2">
