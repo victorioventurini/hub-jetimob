@@ -425,14 +425,26 @@ export function llmStream(
   return new Promise<Response>((resolve, reject) => {
     (async () => {
     try {
-      const response = await fetch(config.apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${config.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      // W1.B.1 — Timeout até o primeiro byte (TTFB) para streaming.
+      // Após o stream começar, deixamos correr — quem consome decide
+      // quando cancelar.
+      const ttfbController = new AbortController();
+      const ttfbTimeout = setTimeout(() => ttfbController.abort(), 30_000);
+
+      let response: Response;
+      try {
+        response = await fetch(config.apiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+          signal: ttfbController.signal,
+        });
+      } finally {
+        clearTimeout(ttfbTimeout);
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
