@@ -329,6 +329,8 @@ export default function TicketDetailPage() {
   // BU SCOPE GUARD (defense-in-depth): even if cache somehow held a ticket
   // from another BU, refuse to render its contents while the active BU differs.
   if (currentBu?.id && ticket.bu_id && ticket.bu_id !== currentBu.id) {
+    const targetMembership = userBus.find((m) => m.bu_id === ticket.bu_id);
+    const targetName = targetMembership?.bu_unit?.name;
     return (
       <HubLayout>
         <div className="space-y-6">
@@ -341,10 +343,21 @@ export default function TicketDetailPage() {
           />
           <VicErrorState
             title="Esse ticket pertence a outra BU 🔒"
-            description="Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+            description={
+              targetName
+                ? `Você tem acesso a esse ticket na BU "${targetName}". Troque para essa BU para visualizá-lo.`
+                : "Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+            }
             onBack={goBack}
             backLabel="Voltar para tickets"
           />
+          {targetMembership && (
+            <div className="flex justify-center">
+              <Button onClick={() => switchBu(ticket.bu_id)}>
+                Trocar para BU {targetName}
+              </Button>
+            </div>
+          )}
         </div>
       </HubLayout>
     );
