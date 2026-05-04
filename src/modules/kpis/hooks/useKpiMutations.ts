@@ -226,8 +226,16 @@ export function useKpiMutations() {
         .update(updatePayload)
         .eq("id", id)
         .select()
-        .single();
+        .maybeSingle();
       if (error) throw error;
+      if (!result) {
+        // 0 linhas atualizadas → tipicamente RLS (não é o autor do registro
+        // ou perdeu permissão). Mensagem clara em vez do críptico
+        // "Cannot coerce the result to a single JSON object" do PostgREST.
+        throw new Error(
+          "Você não tem permissão para editar este valor. Apenas quem registrou o valor (ou um administrador da BU) pode alterá-lo.",
+        );
+      }
       return { ...result, kpi_id };
     },
     onSuccess: (_, variables) => {
