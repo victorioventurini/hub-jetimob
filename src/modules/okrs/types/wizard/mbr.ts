@@ -166,6 +166,68 @@ export interface QbrFollowUpItem {
 }
 
 // ============================================================
+// PANORAMA CURATION (Abertura Executiva curada por IA)
+// ============================================================
+
+/**
+ * Estados do rascunho da Abertura Executiva do MBR (curadoria IA + revisão humana).
+ * Espelha `WeeklyOpeningState` para manter vocabulário consistente entre ritos.
+ */
+export type MbrPanoramaCurationState = 'draft' | 'reviewed' | 'approved';
+export type MbrPanoramaCurationOrigin = 'ai-curated' | 'manual';
+
+export interface MbrPanoramaCurationTransition {
+  state: MbrPanoramaCurationState;
+  at: string;
+  by: string | null;
+}
+
+export interface MbrPanoramaCriticalKpiHighlight {
+  kpiId: string;
+  headline: string;
+  impact: string;
+}
+
+export interface MbrPanoramaSuggestedDecision {
+  id: string;
+  title: string;
+  category?: string;
+  /** Marca quando o usuário já transferiu para `decisions` (evita duplicar). */
+  added?: boolean;
+}
+
+/**
+ * Curadoria executiva do Step 1 do MBR — produzida pelo agente
+ * `curador-orquestrador` (mesmo do Weekly), com insumos mensais.
+ * Persistida em `MbrDraftData.panoramaCuration`.
+ */
+export interface MbrPanoramaCuration {
+  state: MbrPanoramaCurationState;
+  origin: MbrPanoramaCurationOrigin;
+  generatedAt: string | null;
+  summary: string;
+  criticalKpiHighlights: MbrPanoramaCriticalKpiHighlight[];
+  alertsByBlock: {
+    performance: string[];
+    projetos: string[];
+    pessoas: string[];
+  };
+  suggestedDecisions: MbrPanoramaSuggestedDecision[];
+  transitions: MbrPanoramaCurationTransition[];
+}
+
+export const EMPTY_MBR_PANORAMA_CURATION: MbrPanoramaCuration = {
+  state: 'draft',
+  origin: 'manual',
+  generatedAt: null,
+  summary: '',
+  criticalKpiHighlights: [],
+  alertsByBlock: { performance: [], projetos: [], pessoas: [] },
+  suggestedDecisions: [],
+  transitions: [],
+};
+
+// ============================================================
 // MBR DRAFT DATA
 // ============================================================
 
@@ -181,6 +243,12 @@ export interface MbrDraftData {
   checklist: MbrGovernanceChecklist;
   ritualFeedback: RitualImprovementFeedback[];
   qbrFollowUpItems: QbrFollowUpItem[];
+  /**
+   * Curadoria executiva do Step 1 (Abertura Executiva).
+   * Opcional para retrocompat com drafts antigos — `MbrPage` hidrata com
+   * `EMPTY_MBR_PANORAMA_CURATION` quando ausente.
+   */
+  panoramaCuration?: MbrPanoramaCuration;
 }
 
 // ============================================================
