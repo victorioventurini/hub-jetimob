@@ -22,7 +22,6 @@ export * from './team-checkin';
 export * from './managers-clevel';
 export * from './team-okr-creation';
 export * from './mbr';
-export * from './mbr-v2';
 export * from './qbr';
 export * from './weekly';
 
