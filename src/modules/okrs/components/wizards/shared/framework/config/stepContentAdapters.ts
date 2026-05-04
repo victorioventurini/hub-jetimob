@@ -309,6 +309,103 @@ export function classifyKpiGateBuckets(input: ClassifyKpiGateInput): KpiGateBuck
   ];
 }
 
+// ============================================================
+// KPI GATE — classificação a partir de snapshots MENSAIS (Pré-MBR)
+// ============================================================
+
+/**
+ * Snapshot mensal de KPI (subset estrutural de `MbrKpiSnapshot`) usado pela
+ * variante mensal do classificador. Mantemos o tipo aqui em formato anêmico
+ * para evitar acoplamento com `@/modules/okrs/types/wizard`.
+ */
+export interface MonthlyKpiSnapshotForGate {
+  kpiId: string;
+  name: string;
+  currentValue: number | null;
+  previousValue?: number | null;
+  target: number | null;
+  ragStatus: string; // 'green' | 'yellow' | 'red' | 'no_data'
+  unit?: string | null;
+  lastValueAt?: string | null;
+  scope?: string | null;
+  latestInputType?: 'partial' | 'consolidated' | null;
+}
+
+function snapshotStatus(s: MonthlyKpiSnapshotForGate): KpiGateItem['status'] {
+  switch (s.ragStatus) {
+    case 'green': return 'green';
+    case 'yellow': return 'amber';
+    case 'red': return 'red';
+    default: return 'unknown';
+  }
+}
+
+function snapshotToGateItem(
+  s: MonthlyKpiSnapshotForGate,
+  requiresDecision: boolean,
+): KpiGateItem {
+  return {
+    id: s.kpiId,
+    name: s.name,
+    status: snapshotStatus(s),
+    currentValue: s.currentValue != null ? String(s.currentValue) : undefined,
+    target: s.target != null ? String(s.target) : undefined,
+    requiresDecision,
+    resolved: false,
+    lastInputType: s.latestInputType ?? null,
+    updateFrequency: null,
+    deviationPct: null,
+    unit: s.unit ?? undefined,
+    latestReferenceDate: s.lastValueAt ?? null,
+    scope: s.scope ?? null,
+  };
+}
+
+/**
+ * Classifica KPIs em buckets canônicos usando snapshots **ancorados no mês
+ * de referência** do Pré-MBR. Diferente de `classifyKpiGateBuckets`, esta
+ * variante:
+ *   - Não usa `kpisToUpdate`/`kpisInAlert` do estado atual.
+ *   - Bucket `overdue` = sem valor consolidado dentro do mês de referência
+ *     (`currentValue == null` OU `latestInputType === 'partial'`).
+ *   - Sem `guardrailViolated` (não há sinal mensal canônico).
+ *   - Sem `teamContext` (escopo já filtrado pelo hook do time).
+ */
+export function classifyKpiGateBucketsFromMonthlySnapshots(
+  snapshots: MonthlyKpiSnapshotForGate[],
+): KpiGateBucket[] {
+  const overdue: KpiGateItem[] = [];
+  const critical: KpiGateItem[] = [];
+  const attention: KpiGateItem[] = [];
+  const healthy: KpiGateItem[] = [];
+
+  for (const s of snapshots) {
+    const noConsolidated = s.currentValue == null || s.latestInputType === 'partial' || s.ragStatus === 'no_data';
+    if (noConsolidated) {
+      overdue.push(snapshotToGateItem(s, true));
+      continue;
+    }
+    if (s.ragStatus === 'red') {
+      critical.push(snapshotToGateItem(s, true));
+      continue;
+    }
+    if (s.ragStatus === 'yellow') {
+      attention.push(snapshotToGateItem(s, true));
+      continue;
+    }
+    healthy.push(snapshotToGateItem(s, false));
+  }
+
+  return [
+    { id: 'overdue', items: overdue, ...BUCKET_LABELS.overdue },
+    { id: 'critical', items: critical, ...BUCKET_LABELS.critical },
+    { id: 'guardrailViolated', items: [], ...BUCKET_LABELS.guardrailViolated },
+    { id: 'attention', items: attention, ...BUCKET_LABELS.attention },
+    { id: 'healthy', items: healthy, ...BUCKET_LABELS.healthy },
+    { id: 'teamContext', items: [], ...BUCKET_LABELS.teamContext },
+  ];
+}
+
 // Garantir referência ao helper legacy (utilitário disponível para callers
 // que ainda precisem mapear a frequência antiga para `KpiFrequencyValue`).
 export { legacyFrequencyToValue };

@@ -517,6 +517,7 @@ export default function MbrPrePage() {
         return (
           <MbrPreKpiGateStep
             teamId={teamIdParam}
+            referenceMonth={refMonth}
             kpiSnapshots={draft.data.kpiSnapshots}
             onKpiSnapshotsChange={(kpiSnapshots) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
