@@ -54,7 +54,9 @@ import type {
   MbrKpiSnapshot,
   MbrOrgOkrSnapshot,
   MbrTeamOkrSnapshot,
+  MbrPanoramaCuration,
 } from '@/modules/okrs/types/wizard';
+import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // CONSTANTS
