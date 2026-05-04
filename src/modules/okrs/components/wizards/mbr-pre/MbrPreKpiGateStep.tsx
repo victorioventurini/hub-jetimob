@@ -55,13 +55,6 @@ const MANDATORY_BUCKETS: ReadonlySet<KpiGateBucketId> = new Set([
   'guardrailViolated',
 ]);
 
-function formatRefMonthLabel(refMonth: string): string {
-  const [y, m] = refMonth.split('-').map(Number);
-  if (!y || !m) return refMonth;
-  const d = new Date(y, m - 1, 1);
-  return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-}
-
 export function MbrPreKpiGateStep({
   teamId,
   referenceMonth,
