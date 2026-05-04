@@ -45,8 +45,10 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 - **B.1** Split das Edge Functions > 500 linhas (template: `okr-construction-review` 388 LoC).
   - ✅ `team-checkin-summary` (962 → 152 LoC index + 4 módulos: `types`, `pace`, `data-loader`, `agents`) — 2026-05-04
   - ✅ `analysis-generate` (671 → 253 LoC index + 3 módulos: `types`, `data-collectors`, `prompts`) — 2026-05-04
-  - ✅ Helpers `_shared/ai-json.ts` (`tryParseAiJson` / `sanitizeJsonResponse` / `extractSettled`) e `_shared/invoke-agent.ts` (`invokeAgentDirect`) extraídos para reutilização — 2026-05-04
-  - 🟡 Restantes: `invoke-vic` (552), `qbr-executive-report` (520), `mbr-summary` (513), `collaborator-checkin-summary` (508)
+  - ✅ `mbr-summary` (513 → 195 LoC index + 3 módulos: `types`, `data-loader`, `agents`) — 2026-05-04
+  - ✅ `collaborator-checkin-summary` (508 → 180 LoC index + 3 módulos: `types`, `data-loader`, `agents`) — 2026-05-04
+  - ✅ Helpers `_shared/ai-json.ts` e `_shared/invoke-agent.ts` extraídos e adotados por todas as funções acima — 2026-05-04
+  - 🟡 Restantes: `invoke-vic` (552), `qbr-executive-report` (520)
 - **B.2** `Promise.all` em agregações restantes (`invoke-vic` não usa hoje).
 - **B.3** Enforce `correlation-id` em todas as Edge Functions (validar via middleware).
 - **F.1** `React.memo` em 100% de cards/listas — meta: lint-enforced.
@@ -73,7 +75,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 | Métrica | Atual | Alvo |
 |---|---|---|
 | Seq scans/dia | < 200 (após W1) | < 200 |
-| Edge functions > 500 LoC | 5 → 4 (2 splitadas) | 2 |
+| Edge functions > 500 LoC | 5 → 2 (4 splitadas) | 2 ✅ |
 | `.select("*")` em src | 0 | 0 ✅ |
 | Arquivos src > 600 LoC | 19 | 10 |
 | `console.*` em src | 352 | < 80 |
