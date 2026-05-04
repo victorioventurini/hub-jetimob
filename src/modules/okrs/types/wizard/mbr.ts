@@ -334,4 +334,22 @@ export interface MbrPreTeamSubmission {
   kpisToCreate: MbrPreDraftData['kpisToCreate'];
   krFinalStates: MbrPreDraftData['krFinalStates'];
   addendums: MbrPreSubmissionAddendum[];
+  /** KPI snapshots congelados pelo líder no Pré-MBR (com impactAssessment etc). */
+  kpiSnapshots: MbrPreDraftData['kpiSnapshots'];
+  /** Justificativas de KPI fora da meta (kpiId → texto). */
+  kpiJustifications: MbrPreDraftData['kpiJustifications'];
+  /** Razões para KPI sem dados (kpiId → texto). */
+  kpiNoDataReasons: NonNullable<MbrPreDraftData['kpiNoDataReasons']>;
+  /** KPIs atualizados durante o Pré-MBR (kpiId → update). */
+  kpiOutdatedUpdates: NonNullable<MbrPreDraftData['kpiOutdatedUpdates']>;
+  /** Justificativas de projetos/milestones atrasados. */
+  projectJustifications: MbrPreDraftData['projectJustifications'];
+  /** Justificativas de KRs fora da meta (krId → texto). */
+  krJustifications: MbrPreDraftData['krJustifications'];
+  /** Sugestões de pauta para o MBR. */
+  agendaSuggestions: MbrPreDraftData['agendaSuggestions'];
+  /** Análise mensal IA gerada na abertura. */
+  monthAnalysis: MbrPreMonthAnalysis | null;
+  /** Decisões registradas durante o Pré-MBR. */
+  decisions: MbrPreDraftData['decisions'];
 }
