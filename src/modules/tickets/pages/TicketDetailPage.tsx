@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { toast } from "sonner";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { VicErrorState } from "@/modules/vic/components/VicErrorState";
-import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket, usePinMessage, canUserPinMessages, useTicketViewersAndMentions, type TicketContext } from "@/modules/tickets/hooks";
+import { useTicket, useUpdateTicketStatus, useTicketMessages, useTicketAttachments, useCreateMessage, useTransferTicket, usePinMessage, canUserPinMessages, useTicketViewersAndMentions, useResolveTicketBu, type TicketContext } from "@/modules/tickets/hooks";
+import { Button } from "@/components/ui/button";
 import { useIdentity } from "@/hooks/useIdentity";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeBack } from "@/hooks/useSafeBack";
@@ -29,7 +30,7 @@ export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { profileId, realProfileId, userId } = useIdentity();
   const { isExternal, externalContacts } = useExternalUser();
-  const { currentBu } = useBu();
+  const { currentBu, switchBu, userBus } = useBu();
   const { isWildcard, has } = usePermissions();
   const isTicketAdmin = isWildcard || has("tickets.settings.manage:bu");
   const goBack = useSafeBack({ moduleRoot: "/tickets" });
@@ -42,6 +43,11 @@ export default function TicketDetailPage() {
   }, [isExternal, currentBu?.id, externalContacts]);
 
   const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
+  const { data: resolvedTicketBuId } = useResolveTicketBu(!ticket && !isLoadingTicket ? id : null);
+  const resolvedBuMembership = useMemo(
+    () => (resolvedTicketBuId ? userBus.find((m) => m.bu_id === resolvedTicketBuId) : null),
+    [resolvedTicketBuId, userBus]
+  );
   const { data: messages = [], isLoading: isLoadingMessages } = useTicketMessages(id!);
   const { data: attachments = [] } = useTicketAttachments(id!);
   const { data: viewersData } = useTicketViewersAndMentions(ticket);
@@ -287,22 +293,34 @@ export default function TicketDetailPage() {
   }
 
   if (!ticket) {
+    const otherBuName = resolvedBuMembership?.bu_unit?.name;
     return (
       <HubLayout>
         <div className="space-y-6">
           <PageHeader
-            title="Ticket não encontrado"
+            title={otherBuName ? "Ticket em outra BU" : "Ticket não encontrado"}
             breadcrumbs={[
               { label: "Tickets", href: "/tickets" },
-              { label: "Não encontrado" },
+              { label: otherBuName ? "Outra BU" : "Não encontrado" },
             ]}
           />
           <VicErrorState
-            title="Esse ticket sumiu! 👀"
-            description="O ticket que você está procurando não existe ou foi removido."
+            title={otherBuName ? "Esse ticket está em outra BU 🔄" : "Esse ticket sumiu! 👀"}
+            description={
+              otherBuName
+                ? `Você tem acesso a esse ticket na BU "${otherBuName}". Troque para essa BU para visualizá-lo.`
+                : "O ticket que você está procurando não existe ou foi removido."
+            }
             onBack={goBack}
             backLabel="Voltar para lista"
           />
+          {otherBuName && resolvedTicketBuId && (
+            <div className="flex justify-center">
+              <Button onClick={() => switchBu(resolvedTicketBuId)}>
+                Trocar para BU {otherBuName}
+              </Button>
+            </div>
+          )}
         </div>
       </HubLayout>
     );
@@ -311,6 +329,8 @@ export default function TicketDetailPage() {
   // BU SCOPE GUARD (defense-in-depth): even if cache somehow held a ticket
   // from another BU, refuse to render its contents while the active BU differs.
   if (currentBu?.id && ticket.bu_id && ticket.bu_id !== currentBu.id) {
+    const targetMembership = userBus.find((m) => m.bu_id === ticket.bu_id);
+    const targetName = targetMembership?.bu_unit?.name;
     return (
       <HubLayout>
         <div className="space-y-6">
@@ -323,10 +343,21 @@ export default function TicketDetailPage() {
           />
           <VicErrorState
             title="Esse ticket pertence a outra BU 🔒"
-            description="Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+            description={
+              targetName
+                ? `Você tem acesso a esse ticket na BU "${targetName}". Troque para essa BU para visualizá-lo.`
+                : "Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+            }
             onBack={goBack}
             backLabel="Voltar para tickets"
           />
+          {targetMembership && (
+            <div className="flex justify-center">
+              <Button onClick={() => switchBu(ticket.bu_id)}>
+                Trocar para BU {targetName}
+              </Button>
+            </div>
+          )}
         </div>
       </HubLayout>
     );
