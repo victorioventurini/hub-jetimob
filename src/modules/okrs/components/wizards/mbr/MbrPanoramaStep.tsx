@@ -349,6 +349,10 @@ export function MbrPanoramaStep({
   mbrPreSubmittedCount = 0,
   mbrPreNeedsDecisionCount = 0,
   mbrPreCrossDepCount = 0,
+  mbrPreKpiJustifCount = 0,
+  mbrPreKpiUpdatedCount = 0,
+  mbrPreProjectJustifCount = 0,
+  mbrPreAgendaSuggestionCount = 0,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
