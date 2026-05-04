@@ -2,11 +2,13 @@
 // invoke-vic — culture_message normalization & length enforcement
 // ============================================================================
 
-import {
-  llmComplete,
-  type LLMConfig,
-  type LLMUsage,
-} from "../_shared/llm-client.ts";
+import { llmComplete, type LLMConfig } from "../_shared/llm-client.ts";
+
+export interface LLMUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
 
 export const MAX_CULTURE_MESSAGE_CHARS = 60;
 
