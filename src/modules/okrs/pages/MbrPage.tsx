@@ -208,6 +208,34 @@ export default function MbrPage() {
     return items;
   }, [mbrPreByTeam]);
 
+  // Agregados extras vindos do Pré-MBR (para o Panorama)
+  const mbrPreAggregates = useMemo(() => {
+    let kpiJustifCount = 0;
+    let kpiUpdatedCount = 0;
+    let projectJustifCount = 0;
+    let agendaSuggestionCount = 0;
+    for (const sub of Object.values(mbrPreByTeam)) {
+      kpiJustifCount += Object.values(sub.kpiJustifications ?? {}).filter((v) => (v ?? '').trim()).length;
+      kpiUpdatedCount += Object.keys(sub.kpiOutdatedUpdates ?? {}).length;
+      projectJustifCount +=
+        Object.values(sub.projectJustifications?.projects ?? {}).filter((v) => (v ?? '').trim()).length +
+        Object.values(sub.projectJustifications?.milestones ?? {}).filter((v) => (v ?? '').trim()).length;
+      agendaSuggestionCount += (sub.agendaSuggestions ?? []).length;
+    }
+    return { kpiJustifCount, kpiUpdatedCount, projectJustifCount, agendaSuggestionCount };
+  }, [mbrPreByTeam]);
+
+  // Sugestões de pauta agregadas (para o Decisions step)
+  const mbrPreAgendaSuggestions = useMemo(() => {
+    return Object.values(mbrPreByTeam).flatMap((sub: any) =>
+      (sub.agendaSuggestions ?? []).map((s: any, i: number) => ({
+        key: `${sub.teamId}-${i}`,
+        teamId: sub.teamId,
+        title: s.title ?? s.text ?? '',
+        detail: s.detail ?? '',
+      }))
+    ).filter((s: any) => s.title.trim());
+  }, [mbrPreByTeam]);
 
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
   const { currentBuId } = useBu();
