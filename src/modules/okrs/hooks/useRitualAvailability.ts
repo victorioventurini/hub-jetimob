@@ -206,7 +206,21 @@ export function useRitualAvailability(
   wizardType: WizardPersona,
   cycle: CycleWithStatus | null | undefined,
 ): RitualAvailability {
+  const { isAdmin } = useAuth();
+
   return useMemo((): RitualAvailability => {
+    // 🛡️ Admin/super_admin bypass — acesso irrestrito a qualquer rito,
+    // independente de janela ou ciclo. Necessário para preparação e suporte.
+    if (isAdmin) {
+      return {
+        isAvailable: true,
+        opensAt: null,
+        closesAt: null,
+        reason: 'available',
+        message: '',
+      };
+    }
+
     // ⚠️ TEMPORARY: Force all QBR rituals available for testing
     if (DEV_FORCE_QBR_AVAILABLE && DEV_QBR_TYPES.includes(wizardType)) {
       return {
