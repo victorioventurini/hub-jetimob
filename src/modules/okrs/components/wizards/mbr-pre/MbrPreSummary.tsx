@@ -138,6 +138,66 @@ export function MbrPreSummary({
         {/* 1) KPIs do Time — espelha step "kpis" */}
         <SummaryKpiList title="KPIs do Time" kpis={kpiSnapshots} justifications={mergedKpiJustifications} />
 
+        {/* 1.1) KPIs sem dados — razão (capturado quando splitNoDataReason=true) */}
+        {noDataReasonList.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <HelpCircle className="h-4 w-4" />
+                KPIs sem dados — razão
+                <Badge variant="secondary" className="ml-1 text-[10px]">
+                  {noDataReasonList.length}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Causas registradas para KPIs sem registro no período. O plano para destravar a coleta aparece junto ao KPI acima.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {noDataReasonList.map(([kpiId, text]) => (
+                  <li key={kpiId} className="rounded-md border bg-muted/30 px-3 py-2 space-y-1">
+                    <p className="text-xs font-medium">
+                      {kpiNameById.get(kpiId) ?? '(KPI removido)'}
+                    </p>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap">{text}</p>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 1.2) Análise do mês (Vic / manual) */}
+        {monthAnalysis && (monthAnalysis.summary?.trim() || monthAnalysis.recommendations?.length) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Análise do mês
+                <Badge variant="outline" className="ml-1 text-[10px]">
+                  {monthAnalysis.origin === 'ai-generated' ? 'IA' : 'Manual'}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {monthAnalysis.summary?.trim() && (
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  {monthAnalysis.summary}
+                </p>
+              )}
+              {monthAnalysis.recommendations?.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium">Recomendações</p>
+                  {monthAnalysis.recommendations.map((rec, i) => (
+                    <p key={i} className="text-xs text-muted-foreground">• {rec}</p>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* 2) KRs do Mês — espelha step "krs" */}
         <SummaryKrBalance
           title="KRs do Mês"
