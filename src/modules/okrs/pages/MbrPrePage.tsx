@@ -538,29 +538,25 @@ export default function MbrPrePage() {
           <MbrPreProjectsStep
             teamId={teamIdParam}
             referenceMonth={refMonth}
-            projectJustifications={draft.data.projectJustifications}
-            onProjectJustificationChange={(projectId, value) =>
-              updateDraft({
-                projectJustifications: {
-                  ...draft.data.projectJustifications,
-                  projects: {
-                    ...draft.data.projectJustifications.projects,
-                    [projectId]: value,
-                  },
-                },
-              })
-            }
-            onMilestoneJustificationChange={(milestoneId, value) =>
-              updateDraft({
-                projectJustifications: {
-                  ...draft.data.projectJustifications,
-                  milestones: {
-                    ...draft.data.projectJustifications.milestones,
-                    [milestoneId]: value,
-                  },
-                },
-              })
-            }
+             projectJustifications={draft.data.projectJustifications ?? { projects: {}, milestones: {} }}
+             onProjectJustificationChange={(projectId, value) => {
+               const pj = draft.data.projectJustifications ?? { projects: {}, milestones: {} };
+               updateDraft({
+                 projectJustifications: {
+                   ...pj,
+                   projects: { ...(pj.projects ?? {}), [projectId]: value },
+                 },
+               });
+             }}
+             onMilestoneJustificationChange={(milestoneId, value) => {
+               const pj = draft.data.projectJustifications ?? { projects: {}, milestones: {} };
+               updateDraft({
+                 projectJustifications: {
+                   ...pj,
+                   milestones: { ...(pj.milestones ?? {}), [milestoneId]: value },
+                 },
+               });
+             }}
             onContinue={goNext}
             onBack={goBack}
           />
