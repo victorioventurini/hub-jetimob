@@ -299,7 +299,14 @@ export default function MbrPage() {
   useEffect(() => {
     if (seededKpisRef.current) return;
     if (isLoadingKpis || !allBuKpis || allBuKpis.length === 0) return;
+
+    // Saneamento: se houver snapshots persistidos com escopo 'team', remove
+    // (regra v2: MBR Executivo só exibe KPIs org/area).
     if (draft.data.kpiSnapshots.length > 0) {
+      const cleaned = draft.data.kpiSnapshots.filter(s => s.scope === 'org' || s.scope === 'area');
+      if (cleaned.length !== draft.data.kpiSnapshots.length) {
+        updateDraft({ kpiSnapshots: cleaned });
+      }
       seededKpisRef.current = true;
       return;
     }
@@ -329,7 +336,7 @@ export default function MbrPage() {
 
     updateDraft({ kpiSnapshots: snapshots });
     seededKpisRef.current = true;
-  }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots.length, updateDraft]);
+  }, [allBuKpis, isLoadingKpis, draft.data.kpiSnapshots, updateDraft]);
 
   // ── v1.2: Org objectives view + scorecard metrics ──
   const cycleYear = quarterlyCycle ? parseInt(quarterlyCycle.start_date.substring(0, 4), 10) : undefined;
