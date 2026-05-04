@@ -36,7 +36,7 @@ export interface EvaluationConfig {
 export const EVALUATION_CONFIG: Record<WizardPersona, EvaluationConfig> = {
   // ── Coletivos com avaliação ──
   mbr:           { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'mbr-v2':      { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
+  
   'mbr-first':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
   'qbr-meeting': { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
   'qbr-post':    { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
