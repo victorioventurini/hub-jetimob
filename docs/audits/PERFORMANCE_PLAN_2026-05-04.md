@@ -42,7 +42,10 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 
 ## Wave 2 — Refatoração (2-3 semanas)
 
-- **B.1** Split das 5 Edge Functions > 500 linhas (template: `okr-construction-review` 388 LoC).
+- **B.1** Split das Edge Functions > 500 linhas (template: `okr-construction-review` 388 LoC).
+  - ✅ `team-checkin-summary` (962 → 152 LoC index + 4 módulos: `types`, `pace`, `data-loader`, `agents`) — 2026-05-04
+  - ✅ Helper `_shared/ai-json.ts` (`tryParseAiJson` / `sanitizeJsonResponse` / `extractSettled`) extraído para reutilização — 2026-05-04
+  - 🟡 Restantes: `analysis-generate` (671), `invoke-vic` (552), `qbr-executive-report` (520), `mbr-summary` (513), `collaborator-checkin-summary` (508)
 - **B.2** `Promise.all` em agregações restantes (`invoke-vic` não usa hoje).
 - **B.3** Enforce `correlation-id` em todas as Edge Functions (validar via middleware).
 - **F.1** `React.memo` em 100% de cards/listas — meta: lint-enforced.
