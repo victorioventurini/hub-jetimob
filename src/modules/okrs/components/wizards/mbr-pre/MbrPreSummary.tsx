@@ -438,6 +438,50 @@ export function MbrPreSummary({
           />
         )}
 
+        {/* 6) Decisões registradas — read-only (editáveis nos steps anteriores) */}
+        {decisionsList.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Gavel className="h-4 w-4" />
+                Decisões registradas
+                <Badge variant="secondary" className="ml-1 text-[10px]">
+                  {decisionsList.length}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Decisões capturadas inline ao longo dos steps deste Pré-MBR.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {decisionsList.map((d, i) => (
+                  <li
+                    key={d.id ?? i}
+                    className="rounded-md border bg-muted/30 px-3 py-2 space-y-1"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-medium whitespace-pre-wrap flex-1 min-w-0">
+                        {d.title || d.description || '(sem descrição)'}
+                      </p>
+                      {d.sourceStep && (
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {d.sourceStep}
+                        </Badge>
+                      )}
+                    </div>
+                    {d.title && d.description && (
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {d.description}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </WizardStepScaffold>
   );
