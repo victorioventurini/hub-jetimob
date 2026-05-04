@@ -76,6 +76,12 @@ export interface MbrPanoramaStepProps {
   mbrPreProjectJustifCount?: number;
   /** Sugestões de pauta agregadas dos pré-MBRs dos times */
   mbrPreAgendaSuggestionCount?: number;
+  /** Curadoria executiva opcional (Abertura Executiva curada por IA). */
+  curation?: import('@/modules/okrs/types/wizard').MbrPanoramaCuration;
+  onCurationChange?: (next: import('@/modules/okrs/types/wizard').MbrPanoramaCuration) => void;
+  onGenerateCurationDraft?: () => void | Promise<void>;
+  isGeneratingCuration?: boolean;
+  onAddSuggestedDecision?: (title: string, category?: string) => void;
 }
 
 interface KpiGroup {
