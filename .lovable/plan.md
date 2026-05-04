@@ -1,37 +1,78 @@
-## Problema
+## Causa raiz
 
-Na Abertura do Pré-MBR, a Análise IA do mês cita **UUIDs de KRs** (`a0761f3a...`) em vez do título. Causa raiz: na Onda 4 Fase 3, `krFinalStates` parou de gravar `krTitle` no draft (campo `@deprecated`). O hook `useMbrPreMonthAnalysis` faz fallback `krTitle ?? krId` — quando não há `krTitle`, manda o UUID como `title` para a LLM, que então cita o UUID.
+`andressaf@ferrigoloadvogados.com.br` tem:
+- **1** `bu_user_memberships` (Jetimob) — perfil interno legado
+- **3** `partner_contact_bu_associations` ativas (Jetimob, Victorio Venturini, Jet Experience)
 
-KPIs já vão com `name` correto (via `useMbrPreTeamKpisMonthly`).
+Em `src/contexts/BuContext.tsx` (linhas 56–64), `userBus` é **mutuamente exclusivo**:
 
-## Plano
+```ts
+const userBus = useMemo(() => {
+  if (internalBus.length > 0) return internalBus;   // ← descarta 3 externas
+  return externalBus as ...;
+}, [internalBus, externalBus]);
+```
 
-### 1. Resolver títulos de KRs em runtime no Step
-Em `MbrPreOpeningStep`:
-- Coletar `krIds = krFinalStates.map(k => k.krId)`.
-- Chamar `useEntityLookup({ teamKrIds: krIds, orgKrIds: krIds })` (mesmo padrão dos renderers de relatório, que já fazem isso).
-- Construir `krTitleById = new Map<string, string>()` priorizando `teamKrs` e caindo em `orgKrs`.
-- Passar `krTitleById` para `generate(...)` (parâmetro já existente em `UseMbrPreMonthAnalysisParams`).
+Resultado: `userBus.length = 1` → `hasMultipleBus = false` → `<BuSelector>` retorna `null` (linha 26 do componente).
 
-### 2. Garantir resolução também na edge function (defesa em profundidade)
-Reforçar no `userPrompt` de `mbr-pre-month-analysis/index.ts`:
-- Frase explícita: **"Use SEMPRE o campo `title` dos KRs e `name` dos KPIs nas narrativas. NUNCA cite IDs/UUIDs."**
+Isso **viola o padrão canônico** documentado em `docs/guides/EXTERNAL_USER_IDENTITY_PATTERN.md` (referenciado no TCR §22), que prescreve:
 
-### 3. Sanitizar saída da LLM (cinto + suspensórios)
-Em `useMbrPreMonthAnalysis.generate`, depois de receber a resposta:
-- Construir `idSet = new Set([...krIds, ...kpiIds])`.
-- Em `summary`, `highlights[].title/detail`, `offenders[].title/detail`, `risks[].title/detail`, `recommendations[]`: substituir qualquer ocorrência de UUID conhecido pelo título correspondente. Padrão UUID via regex `/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi` mapeado por `krTitleById`/`kpiNameById`. UUIDs desconhecidos viram `'(item)'`.
+> ```ts
+> // Merge com prioridade para interno
+> const userBus = mergeBuMemberships(internalBus, externalBus);
+> ```
 
-### 4. Memória
-Adicionar nota em `mem://features/rituals/...` ou no SSOT de wizards-snapshot-deprecation: **"Steps que enviam dados a LLMs devem resolver IDs → nomes via `useEntityLookup` antes de invocar a edge; nunca enviar IDs como `title`/`name`."**
+`BuSelector`, `Header`, `useExternalUserBus` e `applyBuSwitch` já estão corretos — não é problema de UI.
 
-## Arquivos afetados
+## Solução (cirúrgica, sem novos componentes)
 
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep.tsx` — `useEntityLookup` + `krTitleById` no `generate`.
-- `src/modules/okrs/hooks/useMbrPreMonthAnalysis.ts` — sanitização final do output (substituir UUIDs sobreviventes).
-- `supabase/functions/mbr-pre-month-analysis/index.ts` — instrução explícita no prompt.
-- `mem://standards/wizard-snapshot-denormalized-fields-deprecation` — nota sobre IA.
+Alinhar `BuContext` ao padrão canônico: **mesclar** internas + externas deduplicando por `bu_id`, com prioridade para a interna em colisão (carrega `role_in_bu` real).
 
-## Fora de escopo
-- Outros ritos (Weekly, QBR) — auditar em loop separado se houver mesma incidência.
-- Re-introduzir `krTitle` denormalizado (vai contra o canon de Onda 4).
+### Mudança única — `src/contexts/BuContext.tsx`
+
+```ts
+const userBus = useMemo(() => {
+  const seen = new Set<string>();
+  const merged: UserBuMembership[] = [];
+  for (const m of internalBus) {
+    if (seen.has(m.bu_id)) continue;
+    seen.add(m.bu_id);
+    merged.push(m);
+  }
+  for (const m of externalBus as unknown as UserBuMembership[]) {
+    if (seen.has(m.bu_id)) continue;
+    seen.add(m.bu_id);
+    merged.push(m);
+  }
+  return merged;
+}, [internalBus, externalBus]);
+
+// Mantém semântica: "puramente externo" só quando não há interna
+const isExternalUser = internalBus.length === 0 && externalBus.length > 0;
+```
+
+`userRole` permanece inalterado: derivado de `currentMembership?.role_in_bu`, que será `"external"` quando a BU ativa vier de `externalBus` ou role interno real quando vier de `internalBus`.
+
+## Por que não duplicar componentes
+
+| Peça | Estado | Ação |
+|---|---|---|
+| `BuSelector` | já mostra dropdown quando `hasMultipleBus` | reaproveitado |
+| `Header` | já consome `BuSelector` + `hasMultipleBus` | inalterado |
+| `useExternalUserBus` | já entrega externas no formato `UserBuMembership` | inalterado |
+| `applyBuSwitch` | atomic swap + cache clear | reaproveitado para troca entre interna ↔ externa |
+| `useExternalUser` | PRE-BU, `globalClient` correto | inalterado |
+
+## Validação
+
+1. **Andressa** (1 interna + 3 externas) → header mostra dropdown com 3 BUs (Jetimob aparece uma vez, vinda da interna).
+2. **Trocar de BU** entre Jetimob ↔ Victorio Venturini → `selectBu` → `applyBuSwitch` → queries refazem com novo `x-bu-id`.
+3. **Usuário 100% interno** → `externalBus = []` → comportamento idêntico ao atual.
+4. **Usuário 100% externo** → `internalBus = []` → comportamento idêntico ao atual; `isExternalUser = true` mantido.
+5. **Usuário híbrido com mesma BU em ambos** (ex.: Jetimob nos dois) → BU listada uma vez, com role interno (prioridade correta para RBAC).
+
+## Arquivos
+
+- `src/contexts/BuContext.tsx` — apenas o `useMemo` de `userBus` (≈12 linhas).
+
+Sem migrações, sem RLS, sem novos componentes, sem novas rotas, sem novos hooks.
