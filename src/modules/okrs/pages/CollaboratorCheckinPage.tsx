@@ -230,22 +230,45 @@ export default function CollaboratorCheckinPage() {
       // retrocompat com snapshots gravados antes da migração.
       input_type?: 'consolidated' | 'partial';
     }) => {
+      const insertPayload = {
+        kpi_id: data.kpi_id,
+        value: data.value,
+        reference_date: data.reference_date,
+        source: data.source || "manual",
+        notes: data.notes || null,
+        created_by: data.created_by || null,
+        input_type: data.input_type ?? 'consolidated',
+      };
       const { data: result, error } = await supabase
         .from("kpi_values")
-        .insert({
-          kpi_id: data.kpi_id,
-          value: data.value,
-          reference_date: data.reference_date,
-          source: data.source || "manual",
-          notes: data.notes || null,
-          created_by: data.created_by || null,
-          input_type: data.input_type ?? 'consolidated',
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
-      if (error) throw error;
-      return result;
+      if (!error) return result;
+
+      // Conflito de "1 consolidado por período" → sobrescrever o existente.
+      // Wizard de check-in é fluxo intencional: o usuário está fechando o período.
+      const hint = (error as { hint?: string } | null)?.hint ?? '';
+      if (typeof hint === 'string' && hint.startsWith('kpi_consolidated_period_conflict:')) {
+        const existingId = hint.split(':')[1];
+        const { data: updated, error: updateError } = await supabase
+          .from('kpi_values')
+          .update({
+            value: insertPayload.value,
+            reference_date: insertPayload.reference_date,
+            notes: insertPayload.notes,
+            input_type: 'consolidated',
+          })
+          .eq('id', existingId)
+          .select()
+          .maybeSingle();
+        if (updateError) throw updateError;
+        if (!updated) throw new Error('Não foi possível sobrescrever o valor consolidado existente.');
+        return updated;
+      }
+
+      throw error;
     },
     onSuccess: (_result, variables) => {
       // Invalidate silently
