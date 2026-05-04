@@ -293,22 +293,34 @@ export default function TicketDetailPage() {
   }
 
   if (!ticket) {
+    const otherBuName = resolvedBuMembership?.bu_unit?.name;
     return (
       <HubLayout>
         <div className="space-y-6">
           <PageHeader
-            title="Ticket não encontrado"
+            title={otherBuName ? "Ticket em outra BU" : "Ticket não encontrado"}
             breadcrumbs={[
               { label: "Tickets", href: "/tickets" },
-              { label: "Não encontrado" },
+              { label: otherBuName ? "Outra BU" : "Não encontrado" },
             ]}
           />
           <VicErrorState
-            title="Esse ticket sumiu! 👀"
-            description="O ticket que você está procurando não existe ou foi removido."
+            title={otherBuName ? "Esse ticket está em outra BU 🔄" : "Esse ticket sumiu! 👀"}
+            description={
+              otherBuName
+                ? `Você tem acesso a esse ticket na BU "${otherBuName}". Troque para essa BU para visualizá-lo.`
+                : "O ticket que você está procurando não existe ou foi removido."
+            }
             onBack={goBack}
             backLabel="Voltar para lista"
           />
+          {otherBuName && resolvedTicketBuId && (
+            <div className="flex justify-center">
+              <Button onClick={() => switchBu(resolvedTicketBuId)}>
+                Trocar para BU {otherBuName}
+              </Button>
+            </div>
+          )}
         </div>
       </HubLayout>
     );
