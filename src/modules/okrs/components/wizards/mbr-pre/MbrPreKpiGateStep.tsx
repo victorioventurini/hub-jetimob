@@ -39,6 +39,9 @@ export interface MbrPreKpiGateStepProps {
   onKpiSnapshotsChange: (snapshots: MbrKpiSnapshot[]) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** v3.31.1 — kpiId → "Por que está sem dados" (causa). */
+  noDataReasons: Record<string, string>;
+  onNoDataReasonChange: (kpiId: string, value: string) => void;
   onContinue: () => void;
   onBack: () => void;
 }
