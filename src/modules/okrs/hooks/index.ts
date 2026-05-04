@@ -344,6 +344,10 @@ export {
 } from './useWeeklyPreWeeklyAggregation';
 export { useMbrPreMonthAnalysis } from './useMbrPreMonthAnalysis';
 export {
+  useMbrPreTeamKpisMonthly,
+  type UseMbrPreTeamKpisMonthlyResult,
+} from './useMbrPreTeamKpisMonthly';
+export {
   useMbrOpeningCuration,
   type UseMbrOpeningCurationParams,
   type UseMbrOpeningCurationReturn,
