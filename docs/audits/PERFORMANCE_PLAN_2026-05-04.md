@@ -95,13 +95,36 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 | Métrica | Atual | Alvo |
 |---|---|---|
 | Seq scans/dia | < 200 (após W1) | < 200 |
-| Edge functions > 500 LoC | 5 → 2 (4 splitadas) | 2 ✅ |
+| Edge functions > 500 LoC | 0 | 0 ✅ |
 | `.select("*")` em src | 0 | 0 ✅ |
-| Arquivos src > 600 LoC | 19 | 10 |
-| `console.*` em src | 352 | < 80 |
+| Arquivos src > 700 LoC | 10 (era 14) | 0 |
+| `console.*` em src | 352 (removidos em build prod via esbuild.pure) | < 80 no source |
 | `console.*` em functions | 405 | < 100 |
 | `React.memo` em arquivos | 63 | 100+ |
 | `JSON.parse` raw em src | 34 | < 5 |
+
+---
+
+## Pendências consolidadas (próxima janela)
+
+**Frontend (W2.F):**
+- 10 arquivos > 700 LoC pendentes (lista detalhada em F.2 acima).
+- F.3 virtualização de listas longas (não iniciado).
+- F.4 limpeza manual de `console.*` no source + Edge Functions.
+- F.1 regra ESLint para forçar `React.memo` em cards/listas.
+- Auditar 34 `JSON.parse` raw e migrar para `tryParseAiJson` onde aplicável.
+
+**Backend (W2.B):**
+- B.2 `Promise.all` em agregações restantes (auditoria pendente).
+- B.3 middleware enforcing `correlation-id` em todas as Edge Functions.
+
+**Wave 3 (contínuo, não iniciado):**
+- Particionamento de `audit_logs` / `perf_metrics_snapshots`.
+- Snapshots semanais de `pg_stat_statements`.
+- CI gate com `EXPLAIN` em PRs.
+- Critical CSS + service worker.
+- ESLint rules: `console.*`, `JSON.parse` raw, `.select("*")`, arquivos > 600 LoC.
+- Storybook coverage de componentes compartilhados.
 
 ---
 
