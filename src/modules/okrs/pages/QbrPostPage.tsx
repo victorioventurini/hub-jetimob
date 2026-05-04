@@ -358,6 +358,20 @@ export default function QbrPostPage() {
             onBack={goBack}
           />
         );
+      case 'evaluation':
+        return (
+          <EvaluationCollectionStep
+            sessionId={sessionId ?? null}
+            persona="qbr-post"
+            footer={
+              <WizardStepFooter
+                onPrimary={goNext}
+                onBack={goBack}
+                primaryLabel="Continuar para ata"
+              />
+            }
+          />
+        );
       case 'minutes':
         return (
           <QbrPostMinutesStep
