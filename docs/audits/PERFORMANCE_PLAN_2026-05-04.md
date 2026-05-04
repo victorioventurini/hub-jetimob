@@ -1,64 +1,84 @@
-# Plano — Atualização do TCR e Docs Canônicos
+# Plano de Performance — 2026-05-04
 
-## Diagnóstico
+Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vivo
+— atualizar conforme cada item é concluído.
 
-Vários padrões e features recentes estão registrados apenas em memórias (`mem://...`) ou em código, mas **não** no TCR nem nos docs canônicos:
+---
 
-- **MBR v2** (`/rituals/mbr-v2`) — rito paralelo por Org Objective + severidade.
-- **Pré-MBR — KPI Gate ancorado ao mês de referência** (não contamina com valores de meses futuros).
-- **Pré-MBR — `safeProjectJustifications`** (fallback obrigatório para drafts antigos sem `projectJustifications`).
-- **Anonymous Ritual Evaluation** expandido (já em memória, ausente do TCR).
-- **PostgREST `or() / cs.{}` quoting** (memória recente, ausente dos standards).
-- **Lazy with retry** obrigatório em `src/routes/*` (idem).
-- **Entity name length limits** (idem).
-- **Wizard snapshot denorm deprecation** (idem).
-- **Pré-checklist obrigatório** (já está em `<project-knowledge>` mas não tem espelho em doc canônico legível pelos engenheiros).
+## Wave 1 — Quick wins (1 semana)
 
-## Entregas
+### W1.DB — Banco ✅ Concluído (2026-05-04)
+- ✅ Drop de 12 índices secundários sem uso (`idx_outbox_sent_at`, `idx_tickets_status`,
+  `idx_kpi_metrics_responsible_area`, `idx_okr_checkins_bu_id`, …).
+- ✅ Retenção de `perf_metrics_snapshots` reduzida de 30 → 14 dias
+  (`cleanup_old_logs()` recriada com `SET search_path = public`).
+- ✅ Cleanup imediato: ~22.700 linhas removidas (-53%).
+- ✅ Auditoria confirmou **0 ocorrências reais** de `.select("*")` em código de produção.
+- 🟡 Seq scans em tabelas pequenas (`profiles`, `bu_units`, < 100 rows) são falsos
+  positivos — Postgres ignora índice intencionalmente; nenhuma ação necessária.
 
-### 1. `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
-- Bumpar para **v3.30.0** com `Última atualização: 2026-05-04`.
-- Ajustar a linha de **Status** adicionando: `MBR v2 ✅`, `Pré-MBR Reference-Month KPI Gate ✅`, `Pré-MBR Resilient Drafts ✅`.
-- Inserir nova entrada **`### v3.30.0 (2026-05-04) — MBR v2 + Pré-MBR Hardening`** no topo do Changelog cobrindo:
-  - MBR v2: rota, agrupamento por Org Objective, severidade, consumo do Pré-MBR v1 sem alteração.
-  - KPI Gate ancorado ao mês de referência (`classifyKpiGateBucketsFromMonthlySnapshots`, `useMbrPreTeamKpisMonthly`).
-  - `safeProjectJustifications` em `MbrPreProjectsStep` + fallbacks em `MbrPrePage`.
-- Atualizar §3 (Módulos do Hub) para referenciar o sub-rito MBR v2.
-- Atualizar §4 (Regras de Negócio) com a regra "análise de KR/KPI no Pré-MBR usa apenas dados do mês de referência".
+### W1.B — Backend ✅ Concluído (2026-05-04)
+- ✅ **`AbortController` + timeout em `llmComplete`** (default 60s, override via
+  `options.timeoutMs`, encadeado com `signal` externo). Antes: chamada pendurada
+  podia segurar uma instância Edge até o teto de 150s do gateway. Agora: 504 controlado.
+- ✅ **TTFB timeout em `llmStream`** (30s até primeiro byte). Após o stream começar,
+  o consumer controla o cancelamento.
+- ✅ **`Cache-Control: public, max-age=30`** em `health-check` quando `healthy`
+  (`no-store` quando degraded/unhealthy). Reduz custo de monitoramento externo.
+- 🟡 Split das 5 Edge Functions > 500 linhas — **adiado para W2.B**
+  (`team-checkin-summary` 962, `analysis-generate` 671, `invoke-vic` 552,
+  `qbr-executive-report` 520, `mbr-summary` 513).
 
-### 2. `docs/canonical/DEVELOPMENT_STANDARDS.md`
-- Bumpar versão para **1.31.0**, referência **TCR v3.30.0**.
-- Em **D. Queries, Performance e DX**: adicionar subseção **D.x — Resilient Draft Hydration** (drafts antigos podem ter shape parcial; sempre usar fallbacks defensivos `?? {...}` e memos `safeXxx`).
-- Em **D**: adicionar regra **PostgREST `or()` array-contains quoting** (`cs.{"uuid"}` com aspas).
-- Em **L (Layout)**: registrar **Lazy with retry** obrigatório em rotas.
-- Em **G (Banco)**: registrar **Entity name length limits** (Org/Team Obj 120, KR 160, Initiative 120, Project 100, Milestone 80) e triggers correspondentes.
-- Em **I (Anti-patterns)**: incluir "ler campos de nome/título denormalizados em snapshots de wizard — preferir lookup por ID".
-- Adicionar nova **Seção P — Pré-Checklist Obrigatório** (espelho legível do bloco em `<project-knowledge>`).
+### W1.F — Frontend (próximo)
+- 🟡 Quebrar `MbrV2Page` (1060) e `CreateKpiDialog` (1059) em sub-componentes.
+- 🟡 Adicionar `React.memo` em mais cards/listas (baseline 63 arquivos hoje).
+- 🟡 Auditar `JSON.parse` (34 ocorrências) → migrar para `tryParseAiJson` onde
+  o input vier de LLM ou storage não-confiável.
 
-### 3. `docs/canonical/README.md`
-- Adicionar entradas para `MBR v2` e atualizar a referência de versão do TCR.
+---
 
-### 4. `docs/engineering/DOCUMENTATION_INDEX.md` e `docs/DOCUMENTATION_INDEX.md`
-- Linkar novos itens (MBR v2, Pré-MBR Reference-Month, Pré-Checklist).
+## Wave 2 — Refatoração (2-3 semanas)
 
-### 5. Novo doc: `docs/canonical/MBR_RITUAL.md`
-- Single source-of-truth do **Pré-MBR + MBR v2** (rotas, steps, regras de KPI Gate por mês de referência, justificativas de projetos resilientes, persistência via `useMbrPreDraft`, agrupamento por Org Objective no v2).
-- Linkar para as memórias correspondentes (`mem://features/rituals/mbr-v2-standard`, `mem://features/rituals/anonymous-evaluation-standard`).
+- **B.1** Split das 5 Edge Functions > 500 linhas (template: `okr-construction-review` 388 LoC).
+- **B.2** `Promise.all` em agregações restantes (`invoke-vic` não usa hoje).
+- **B.3** Enforce `correlation-id` em todas as Edge Functions (validar via middleware).
+- **F.1** `React.memo` em 100% de cards/listas — meta: lint-enforced.
+- **F.2** Quebrar páginas > 700 LoC em sub-componentes (~14 arquivos).
+- **F.3** `@tanstack/react-virtual` para listas > 50 itens.
+- **F.4** Reduzir `console.*` em produção (352 em src, 405 em functions).
 
-### 6. Novo doc: `docs/canonical/PRE_CHECKLIST.md`
-- Versão renderizada do pré-checklist obrigatório listado em `<project-knowledge>` (consultar TCR, IDENTITY_CONVENTION, PERMISSIONS_AND_RBAC_MODEL, DATA_MODEL_REGISTRY, busca por implementação similar).
-- Servirá como link único a citar em PR templates e onboarding.
+---
 
-## Detalhes técnicos
+## Wave 3 — Contínuo
 
-- Mantém todas as memórias (`mem://...`) intactas — docs apenas espelham/referenciam.
-- Não toca código de produção (`src/`, `supabase/`).
-- Sem migrações de banco.
-- Não regenera `DATA_MODEL_REGISTRY.{md,json}` — schema não mudou nesta janela.
-- Edição em arquivos `.md` de docs apenas; nenhum impacto em build, runtime ou tipos.
+- Particionar `audit_logs` e `perf_metrics_snapshots` por mês.
+- Snapshots de `pg_stat_statements` semanais.
+- CI gate: `EXPLAIN` para queries novas em PRs.
+- Critical CSS + service worker.
+- ESLint rules bloqueando: `console.*` em prod, `JSON.parse` raw, `.select("*")`,
+  arquivos > 600 LoC.
+- Storybook coverage de componentes compartilhados.
+
+---
+
+## Métricas-baseline (2026-05-04)
+
+| Métrica | Atual | Alvo |
+|---|---|---|
+| Seq scans/dia | < 200 (após W1) | < 200 |
+| Edge functions > 500 LoC | 5 | 2 |
+| `.select("*")` em src | 0 | 0 ✅ |
+| Arquivos src > 600 LoC | 19 | 10 |
+| `console.*` em src | 352 | < 80 |
+| `console.*` em functions | 405 | < 100 |
+| `React.memo` em arquivos | 63 | 100+ |
+| `JSON.parse` raw em src | 34 | < 5 |
+
+---
 
 ## Fora de escopo
 
-- Refatorar código do MBR v2 ou Pré-MBR.
-- Atualizar `DATA_MODEL_REGISTRY` (não houve mudança de schema).
-- Tocar em memórias (já estão atualizadas).
+- UX/redesign visual.
+- Upgrades React 18→19 / Vite 5→6.
+- Migração para outro provedor de banco.
+- `src/integrations/supabase/types.ts` (12k linhas, auto-gerado).
