@@ -27,6 +27,8 @@
 - [M. Limites de Código e Sustentabilidade](#m-limites-de-código-e-sustentabilidade)
 - [N. Testes Automatizados](#n-testes-automatizados)
 - [O. Responsabilidades e Migração](#o-responsabilidades-e-migração)
+- [P. Pré-Checklist Obrigatório](#p-pré-checklist-obrigatório)
+- [Q. Padrões Recentes (v1.31.0)](#q-padrões-recentes-v1310)
 
 ---
 
