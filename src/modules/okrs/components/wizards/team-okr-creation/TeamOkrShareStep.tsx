@@ -353,23 +353,10 @@ export function TeamOkrShareStep({
             primaryLoading={isSubmitting}
             onPrimary={onSubmit}
             primaryDisabled={isGenerating || isSubmitting}
-            primaryLabel="Compartilhar e iniciar o ciclo"
+            primaryLabel={isSubmitting ? 'Criando OKRs...' : 'Compartilhar e iniciar o ciclo'}
             confirmTitle={copy?.title ?? 'Publicar OKR do time'}
             confirmDescription={copy?.description}
             confirmLabel={copy?.confirmLabel ?? 'Publicar OKR'}
-            rightContent={
-              <Button
-                onClick={() => {/* tratado pelo WizardLastStepFooter via onPrimary */}}
-                disabled={isGenerating || isSubmitting}
-                isLoading={isSubmitting}
-                loadingText="Criando OKRs..."
-                className="bg-success text-success-foreground hover:bg-success/90"
-                type="button"
-              >
-                <Send className="h-4 w-4" />
-                Compartilhar e iniciar o ciclo
-              </Button>
-            }
           />
         );
       })()}
