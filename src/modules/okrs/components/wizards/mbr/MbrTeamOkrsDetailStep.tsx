@@ -256,65 +256,228 @@ export function MbrTeamOkrsDetailStep({
                 </Card>
               );
             }
-            const { highlights, nextSteps, submittedByName, submittedAt } = sub;
+            const {
+              highlights,
+              nextSteps,
+              submittedByName,
+              submittedAt,
+              kpiJustifications = {},
+              kpiNoDataReasons = {},
+              kpiOutdatedUpdates = {},
+              projectJustifications = { projects: {}, milestones: {} },
+              kpisToCreate = [],
+              agendaSuggestions = [],
+              monthAnalysis = null,
+              kpiSnapshots = [],
+            } = sub;
+
+            const kpiNameById = new Map<string, string>();
+            for (const k of kpiSnapshots) if (k?.kpiId) kpiNameById.set(k.kpiId, k.name ?? k.kpiId);
+            const kpiName = (id: string) => kpiNameById.get(id) ?? id;
+
+            const justifEntries = Object.entries(kpiJustifications).filter(([, v]) => (v ?? '').trim());
+            const noDataEntries = Object.entries(kpiNoDataReasons).filter(([, v]) => (v ?? '').trim());
+            const outdatedEntries = Object.entries(kpiOutdatedUpdates);
+            const projJustifEntries = Object.entries(projectJustifications.projects ?? {}).filter(([, v]) => (v ?? '').trim());
+            const milestoneJustifEntries = Object.entries(projectJustifications.milestones ?? {}).filter(([, v]) => (v ?? '').trim());
+
             const hasAny =
               highlights.accelerated.trim() ||
               highlights.blocked.trim() ||
               highlights.needsDecision.trim() ||
               nextSteps.focus.trim() ||
               nextSteps.prioritizedItems.length > 0 ||
-              nextSteps.crossDependencies.length > 0;
+              nextSteps.crossDependencies.length > 0 ||
+              justifEntries.length > 0 ||
+              noDataEntries.length > 0 ||
+              outdatedEntries.length > 0 ||
+              projJustifEntries.length > 0 ||
+              milestoneJustifEntries.length > 0 ||
+              kpisToCreate.length > 0 ||
+              agendaSuggestions.length > 0 ||
+              !!monthAnalysis;
             if (!hasAny) return null;
+
             return (
-              <Card className="border-primary/30 bg-primary/5">
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary shrink-0" />
-                    <p className="text-xs font-semibold">Preparação do líder</p>
-                    <Badge variant="outline" className="text-[10px] ml-auto">
-                      {submittedByName ?? 'Líder'} · {new Date(submittedAt).toLocaleDateString('pt-BR')}
-                    </Badge>
-                  </div>
-                  {highlights.accelerated.trim() && (
-                    <div className="flex gap-2 text-xs">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-status-green shrink-0 mt-0.5" />
-                      <p className="text-muted-foreground"><span className="font-medium text-status-green">Acelerou:</span> {highlights.accelerated}</p>
-                    </div>
-                  )}
-                  {highlights.blocked.trim() && (
-                    <div className="flex gap-2 text-xs">
-                      <XCircle className="h-3.5 w-3.5 text-status-red shrink-0 mt-0.5" />
-                      <p className="text-muted-foreground"><span className="font-medium text-status-red">Travou:</span> {highlights.blocked}</p>
-                    </div>
-                  )}
-                  {highlights.needsDecision.trim() && (
-                    <div className="flex gap-2 text-xs">
-                      <AlertTriangle className="h-3.5 w-3.5 text-status-amber shrink-0 mt-0.5" />
-                      <p className="text-muted-foreground"><span className="font-medium text-status-amber">Precisa de decisão:</span> {highlights.needsDecision}</p>
-                    </div>
-                  )}
-                  {nextSteps.focus.trim() && (
-                    <div className="flex gap-2 text-xs">
-                      <Compass className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                      <p className="text-muted-foreground"><span className="font-medium">Foco do mês:</span> {nextSteps.focus}</p>
-                    </div>
-                  )}
-                  {nextSteps.prioritizedItems.length > 0 && (
-                    <div className="text-xs text-muted-foreground space-y-0.5 pl-5">
-                      {nextSteps.prioritizedItems.slice(0, 5).map((item, i) => (
-                        <p key={i}>{i + 1}. {item}</p>
+              <>
+                {/* Análise mensal IA */}
+                {monthAnalysis && (
+                  <Card className="border-primary/30 bg-primary/5">
+                    <CardContent className="p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                        <p className="text-xs font-semibold">Análise mensal (IA)</p>
+                        <Badge variant="outline" className="text-[10px] ml-auto">
+                          {monthAnalysis.origin === 'ai-generated' ? 'IA' : 'Manual'}
+                        </Badge>
+                      </div>
+                      {monthAnalysis.summary?.trim() && (
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">{monthAnalysis.summary}</p>
+                      )}
+                      {monthAnalysis.highlights?.slice(0, 2).map((h, i) => (
+                        <div key={`h-${i}`} className="flex gap-2 text-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-status-green shrink-0 mt-0.5" />
+                          <p className="text-muted-foreground"><span className="font-medium">{h.title}:</span> {h.detail}</p>
+                        </div>
                       ))}
-                    </div>
-                  )}
-                  {nextSteps.crossDependencies.length > 0 && (
-                    <div className="pl-5">
-                      <Badge variant="outline" className="text-[10px]">
-                        {nextSteps.crossDependencies.length} dependência{nextSteps.crossDependencies.length > 1 ? 's' : ''} cross-team
+                      {monthAnalysis.risks?.slice(0, 2).map((r, i) => (
+                        <div key={`r-${i}`} className="flex gap-2 text-xs">
+                          <AlertTriangle className="h-3.5 w-3.5 text-status-amber shrink-0 mt-0.5" />
+                          <p className="text-muted-foreground"><span className="font-medium">{r.title}:</span> {r.detail}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <p className="text-xs font-semibold">Preparação do líder</p>
+                      <Badge variant="outline" className="text-[10px] ml-auto">
+                        {submittedByName ?? 'Líder'} · {new Date(submittedAt).toLocaleDateString('pt-BR')}
                       </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    {highlights.accelerated.trim() && (
+                      <div className="flex gap-2 text-xs">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-status-green shrink-0 mt-0.5" />
+                        <p className="text-muted-foreground"><span className="font-medium text-status-green">Acelerou:</span> {highlights.accelerated}</p>
+                      </div>
+                    )}
+                    {highlights.blocked.trim() && (
+                      <div className="flex gap-2 text-xs">
+                        <XCircle className="h-3.5 w-3.5 text-status-red shrink-0 mt-0.5" />
+                        <p className="text-muted-foreground"><span className="font-medium text-status-red">Travou:</span> {highlights.blocked}</p>
+                      </div>
+                    )}
+                    {highlights.needsDecision.trim() && (
+                      <div className="flex gap-2 text-xs">
+                        <AlertTriangle className="h-3.5 w-3.5 text-status-amber shrink-0 mt-0.5" />
+                        <p className="text-muted-foreground"><span className="font-medium text-status-amber">Precisa de decisão:</span> {highlights.needsDecision}</p>
+                      </div>
+                    )}
+                    {nextSteps.focus.trim() && (
+                      <div className="flex gap-2 text-xs">
+                        <Compass className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                        <p className="text-muted-foreground"><span className="font-medium">Foco do mês:</span> {nextSteps.focus}</p>
+                      </div>
+                    )}
+                    {nextSteps.prioritizedItems.length > 0 && (
+                      <div className="text-xs text-muted-foreground space-y-0.5 pl-5">
+                        {nextSteps.prioritizedItems.slice(0, 5).map((item, i) => (
+                          <p key={i}>{i + 1}. {item}</p>
+                        ))}
+                      </div>
+                    )}
+                    {nextSteps.crossDependencies.length > 0 && (
+                      <div className="pl-5">
+                        <Badge variant="outline" className="text-[10px]">
+                          {nextSteps.crossDependencies.length} dependência{nextSteps.crossDependencies.length > 1 ? 's' : ''} cross-team
+                        </Badge>
+                      </div>
+                    )}
+
+                    {/* KPI: justificativas */}
+                    {justifEntries.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <MessageSquare className="h-3.5 w-3.5 text-status-amber shrink-0" />
+                          <p className="text-xs font-medium">Justificativas de KPI ({justifEntries.length})</p>
+                        </div>
+                        {justifEntries.map(([id, txt]) => (
+                          <p key={id} className="text-xs text-muted-foreground pl-5">
+                            <span className="font-medium">{kpiName(id)}:</span> {txt}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* KPI: sem dados */}
+                    {noDataEntries.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <p className="text-xs font-medium">KPIs sem dados ({noDataEntries.length})</p>
+                        </div>
+                        {noDataEntries.map(([id, txt]) => (
+                          <p key={id} className="text-xs text-muted-foreground pl-5">
+                            <span className="font-medium">{kpiName(id)}:</span> {txt}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* KPI: atualizados durante o pré-MBR */}
+                    {outdatedEntries.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <RefreshCw className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-medium">KPIs atualizados na sessão ({outdatedEntries.length})</p>
+                        </div>
+                        {outdatedEntries.map(([id, upd]) => (
+                          <p key={id} className="text-xs text-muted-foreground pl-5">
+                            <span className="font-medium">{kpiName(id)}:</span> {upd.newValue} ({upd.inputType}) · {new Date(upd.referenceDate).toLocaleDateString('pt-BR')}
+                            {upd.notes ? ` — ${upd.notes}` : ''}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Projetos / milestones atrasados */}
+                    {(projJustifEntries.length > 0 || milestoneJustifEntries.length > 0) && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <ListChecks className="h-3.5 w-3.5 text-status-amber shrink-0" />
+                          <p className="text-xs font-medium">
+                            Justificativas de projeto ({projJustifEntries.length + milestoneJustifEntries.length})
+                          </p>
+                        </div>
+                        {projJustifEntries.map(([id, txt]) => (
+                          <p key={`p-${id}`} className="text-xs text-muted-foreground pl-5">
+                            <span className="font-medium">Projeto:</span> {txt}
+                          </p>
+                        ))}
+                        {milestoneJustifEntries.map(([id, txt]) => (
+                          <p key={`m-${id}`} className="text-xs text-muted-foreground pl-5">
+                            <span className="font-medium">Milestone:</span> {txt}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* KPIs sugeridos */}
+                    {kpisToCreate.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Lightbulb className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-medium">KPIs sugeridos ({kpisToCreate.length})</p>
+                        </div>
+                        {kpisToCreate.map((k, i) => (
+                          <p key={i} className="text-xs text-muted-foreground pl-5">
+                            <span className="font-medium">{k.suggestedScope}:</span> {k.description}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Sugestões de pauta */}
+                    {agendaSuggestions.length > 0 && (
+                      <div className="pt-2 border-t border-primary/20 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Compass className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <p className="text-xs font-medium">Sugestões de pauta ({agendaSuggestions.length})</p>
+                        </div>
+                        {agendaSuggestions.slice(0, 5).map((s: any, i) => (
+                          <p key={i} className="text-xs text-muted-foreground pl-5">
+                            • {s.title ?? s.text ?? JSON.stringify(s)}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
             );
           })()}
 
