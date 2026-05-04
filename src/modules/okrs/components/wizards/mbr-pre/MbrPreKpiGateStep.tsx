@@ -1,32 +1,33 @@
 /**
  * MbrPreKpiGateStep — Etapa "Indicadores do Time" do Pré-MBR.
  *
- * v3.30.0: passa a consumir o `KpiGateStep` canônico do framework
- * (`@/wizards-framework`) em modo `cardVariant: 'rich'`. Toda variação
- * visual vive na config; o componente do framework permanece agnóstico
- * de `wizardType` (TCR §4.8.1, Princípio #4).
+ * v3.32.0: passa a consumir `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`
+ * — snapshots **ancorados no mês de referência** — em vez do estado ATUAL
+ * (`useKpisForWizardV2`). Isso garante que valores lançados em meses
+ * posteriores não contaminem a análise do mês fechado.
  *
- * Fluxo:
- *   1. `useKpisForWizardV2` (filtrando por `responsibleTeamId`) →
- *      `classifyKpiGateBuckets` (6 buckets canônicos v3.0.0).
- *   2. Buckets passados ao `KpiGateStep`; justificativas hidratadas a
- *      partir de `kpiSnapshots[].impactAssessment` (SSOT do draft).
- *   3. Gate local: KPIs em buckets obrigatórios (overdue/critical/
- *      guardrailViolated) precisam de plano não vazio para "Próximo".
+ * Buckets são montados via `classifyKpiGateBucketsFromMonthlySnapshots`:
+ *   - overdue: sem valor consolidado dentro do mês (ou parcial / no_data)
+ *   - critical: ragStatus === 'red' no fim do mês
+ *   - attention: ragStatus === 'yellow'
+ *   - healthy: ragStatus === 'green'
+ *   - guardrailViolated / teamContext: vazios nesta variante mensal
+ *
+ * UI: continua usando o `KpiGateStep` canônico do framework em modo
+ * `cardVariant: 'rich-paginated'`, agnóstico de wizardType.
  */
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
+import { useMbrPreTeamKpisMonthly } from '@/modules/okrs/hooks/useMbrPreTeamKpisMonthly';
 import {
-  classifyKpiGateBuckets,
+  classifyKpiGateBucketsFromMonthlySnapshots,
   type KpiGateBucket,
   type KpiGateBucketId,
-  type KpiGateItem,
 } from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
 import { KpiGateStep, flattenBucketsForPagination } from '@/wizards-framework';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Badge } from '@/components/ui/badge';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
@@ -34,7 +35,9 @@ import type {
 
 export interface MbrPreKpiGateStepProps {
   teamId: string;
-  /** Snapshots persistidos no draft (usados como SSOT após reconciliação canônica). */
+  /** Mês fechado analisado pelo rito (YYYY-MM). */
+  referenceMonth: string;
+  /** Snapshots persistidos no draft (SSOT após reconciliação canônica). */
   kpiSnapshots: MbrKpiSnapshot[];
   onKpiSnapshotsChange: (snapshots: MbrKpiSnapshot[]) => void;
   decisions: TeamCheckinDecision[];
@@ -52,26 +55,16 @@ const MANDATORY_BUCKETS: ReadonlySet<KpiGateBucketId> = new Set([
   'guardrailViolated',
 ]);
 
-function gateItemToSnapshot(item: KpiGateItem): MbrKpiSnapshot {
-  const ragStatus: MbrKpiSnapshot['ragStatus'] =
-    item.status === 'red' ? 'red'
-      : item.status === 'amber' ? 'yellow'
-      : item.status === 'green' ? 'green'
-      : 'no_data';
-  return {
-    kpiId: item.id,
-    name: item.name,
-    currentValue: item.currentValue != null ? Number(item.currentValue) : null,
-    previousValue: null,
-    target: item.target != null ? Number(item.target) : null,
-    ragStatus,
-    requiresStrategicDecision: !!item.requiresDecision,
-    latestInputType: item.lastInputType ?? null,
-  } as MbrKpiSnapshot;
+function formatRefMonthLabel(refMonth: string): string {
+  const [y, m] = refMonth.split('-').map(Number);
+  if (!y || !m) return refMonth;
+  const d = new Date(y, m - 1, 1);
+  return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
 export function MbrPreKpiGateStep({
   teamId,
+  referenceMonth,
   kpiSnapshots,
   onKpiSnapshotsChange,
   decisions,
@@ -81,51 +74,42 @@ export function MbrPreKpiGateStep({
   onContinue,
   onBack,
 }: MbrPreKpiGateStepProps) {
-  const { profile } = useAuth();
-
-  const {
-    kpisToUpdate,
-    kpisInAlert,
-    kpisStrategic,
-    kpisTeamContext,
-    guardrailsViolated,
-    isLoading,
-  } = useKpisForWizardV2({
-    userId: profile?.id ?? '',
+  const { snapshots: monthlySnapshots, isLoading } = useMbrPreTeamKpisMonthly(
     teamId,
-    scope: 'leader',
-    responsibleTeamId: teamId,
-    lifecycleStatuses: ['active', 'proposed'],
-    includeGuardrailsAtRisk: true,
-  });
-
-  const buckets: KpiGateBucket[] = useMemo(
-    () => classifyKpiGateBuckets({
-      kpisToUpdate,
-      kpisInAlert,
-      kpisStrategic,
-      kpisTeamContext,
-      guardrailsViolated,
-    }),
-    [kpisToUpdate, kpisInAlert, kpisStrategic, kpisTeamContext, guardrailsViolated],
+    referenceMonth,
   );
 
-  // Reconcilia snapshots canônicos com o draft (preserva impactAssessment).
-  const reconciledSnapshots = useMemo(() => {
-    const snapshots: MbrKpiSnapshot[] = [];
+  const buckets: KpiGateBucket[] = useMemo(
+    () => classifyKpiGateBucketsFromMonthlySnapshots(
+      monthlySnapshots.map((s) => ({
+        kpiId: s.kpiId,
+        name: s.name,
+        currentValue: s.currentValue,
+        previousValue: s.previousValue,
+        target: s.target,
+        ragStatus: s.ragStatus,
+        unit: s.unit ?? null,
+        lastValueAt: s.lastValueAt ?? null,
+        scope: s.scope ?? null,
+        latestInputType: s.latestInputType ?? null,
+      })),
+    ),
+    [monthlySnapshots],
+  );
+
+  // Reconcilia snapshots persistidos com snapshots mensais ancorados,
+  // preservando `impactAssessment` e `requiresStrategicDecision` do draft.
+  const reconciledSnapshots = useMemo<MbrKpiSnapshot[]>(() => {
     const persistedByKpi = new Map(kpiSnapshots.map((s) => [s.kpiId, s]));
-    for (const bucket of buckets) {
-      for (const item of bucket.items) {
-        const next = gateItemToSnapshot(item);
-        const prev = persistedByKpi.get(next.kpiId);
-        snapshots.push({
-          ...next,
-          impactAssessment: prev?.impactAssessment ?? next.impactAssessment,
-        });
-      }
-    }
-    return snapshots;
-  }, [buckets, kpiSnapshots]);
+    return monthlySnapshots.map((next) => {
+      const prev = persistedByKpi.get(next.kpiId);
+      return {
+        ...next,
+        impactAssessment: prev?.impactAssessment,
+        requiresStrategicDecision: prev?.requiresStrategicDecision ?? false,
+      };
+    });
+  }, [monthlySnapshots, kpiSnapshots]);
 
   // Sincroniza draft com snapshots quando muda algo materialmente.
   useMemo(() => {
@@ -137,9 +121,9 @@ export function MbrPreKpiGateStep({
         return (
           !prev ||
           prev.currentValue !== s.currentValue ||
+          prev.previousValue !== s.previousValue ||
           prev.target !== s.target ||
-          prev.ragStatus !== s.ragStatus ||
-          prev.requiresStrategicDecision !== s.requiresStrategicDecision
+          prev.ragStatus !== s.ragStatus
         );
       });
     if (changed) onKpiSnapshotsChange(reconciledSnapshots);
