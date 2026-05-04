@@ -278,6 +278,18 @@ function pruneLlmCache(): void {
   }
 }
 
+/**
+ * Default timeout para chamadas LLM síncronas (não-streaming).
+ * Edge Functions podem definir um valor menor via `options.timeoutMs`
+ * (ex.: validadores rápidos com 15s; relatórios pesados com 60s).
+ *
+ * W1.B.1 — Sem timeout uma chamada pendurada pode segurar uma instância
+ * Edge inteira até o teto de 150s do gateway, multiplicando custo e
+ * latência percebida. Com AbortController encerramos o fetch de forma
+ * controlada e a exception sobe normal.
+ */
+const DEFAULT_LLM_TIMEOUT_MS = 60_000;
+
 export async function llmComplete(
   config: LLMConfig,
   messages: LLMMessage[],
@@ -286,6 +298,10 @@ export async function llmComplete(
     temperature?: number;
     tools?: LLMTool[];
     toolChoice?: string | { type: string; function: { name: string } };
+    /** Timeout em ms para a chamada HTTP. Default 60s. */
+    timeoutMs?: number;
+    /** AbortSignal externo (encadeado com o timeout interno). */
+    signal?: AbortSignal;
   }
 ): Promise<LLMResponse> {
   const maxTokens = options?.maxTokens ?? config.maxTokens;
@@ -314,14 +330,40 @@ export async function llmComplete(
     payload.tool_choice = options.toolChoice ?? "auto";
   }
 
-  const response = await fetch(config.apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  // W1.B.1 — Timeout via AbortController, encadeado com signal externo.
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_LLM_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  if (options?.signal) {
+    if (options.signal.aborted) controller.abort();
+    else options.signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(config.apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if ((err as Error)?.name === "AbortError") {
+      const e = new Error(`LLM API timeout after ${timeoutMs}ms`) as Error & {
+        status: number;
+        body: string;
+      };
+      e.status = 504;
+      e.body = "timeout";
+      throw e;
+    }
+    throw err;
+  }
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     const errorText = await response.text();
