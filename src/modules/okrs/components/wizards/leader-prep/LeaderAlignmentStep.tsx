@@ -14,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  ArrowLeft,
   Play,
   Target,
   ArrowUpRight,
@@ -23,6 +22,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MicrocopyQuestion } from '../shared/ReflectionQuestions';
+import { WizardLastStepFooter } from '../shared';
+import { getRitualFinalizationCopy } from '@/modules/okrs/constants/ritualLabels';
 import type { WizardKr } from '@/modules/okrs/hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 
@@ -224,19 +225,20 @@ export function LeaderAlignmentStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-          <Button onClick={onStartCheckin} className="flex-1" size="lg">
-            <Play className="h-4 w-4 mr-2" />
-            Iniciar Check-in do Time
-          </Button>
-        </div>
-      </div>
+      {/* Footer canônico com modal de confirmação */}
+      {(() => {
+        const copy = getRitualFinalizationCopy('leader-prep');
+        return (
+          <WizardLastStepFooter
+            onBack={onBack}
+            onPrimary={onStartCheckin}
+            primaryLabel="Iniciar Check-in do Time"
+            confirmTitle={copy?.title ?? 'Concluir Pré-Check-in do Time'}
+            confirmDescription={copy?.description}
+            confirmLabel={copy?.confirmLabel ?? 'Iniciar check-in'}
+          />
+        );
+      })()}
     </div>
   );
 }
