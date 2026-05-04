@@ -275,7 +275,7 @@ export default function MbrV2Page() {
   return (
     <FullPageWizardShell
       title="MBR v2 (beta)"
-      description={`Mês de referência: ${draft.data.referenceMonth}`}
+      subtitle={`Mês de referência: ${draft.data.referenceMonth}`}
       steps={WIZARD_STEPS}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
