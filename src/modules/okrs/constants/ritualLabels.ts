@@ -153,19 +153,6 @@ export const RITUAL_STEP_LABELS: Partial<
       'closing': { title: 'Encerramento', subtitle: 'Checklist, feedback e ata', shortLabel: 'Encerramento' },
     },
   },
-  'mbr-v2': {
-    v4: {
-      'opening-executive': { title: 'Abertura Executiva', subtitle: 'Curadoria do mês a partir dos Pré-MBRs', shortLabel: 'Abertura' },
-      'kpi-gate': { title: 'KPI Gate', subtitle: 'KPIs críticos — escolha o caminho de resolução', shortLabel: 'KPI Gate' },
-      'objectives-overview': { title: 'Objetivos Organizacionais', subtitle: 'Ordenados por severidade — defina o tempo', shortLabel: 'Objetivos' },
-      'objective-detail': { title: 'Discussão por Objetivo', subtitle: 'KRs, projetos e decisões inline', shortLabel: 'Objetivo' },
-      'loose-items': { title: 'Itens Avulsos', subtitle: 'Pautas que não pertencem a um objetivo', shortLabel: 'Avulsos' },
-      'carry-over': { title: 'Carry-over', subtitle: 'Status das decisões do MBR anterior', shortLabel: 'Carry-over' },
-      'decisions': { title: 'Decisões Formais', subtitle: 'Output canônico do rito', shortLabel: 'Decisões' },
-      'evaluation': { title: 'Avaliação Anônima', subtitle: 'Coleta via QR/short code', shortLabel: 'Avaliação' },
-      'closing': { title: 'Encerramento', subtitle: 'Cobertura derivada + ata', shortLabel: 'Encerramento' },
-    },
-  },
   'qbr-meeting': {
     v4: {
       'opening-executive': { title: 'Abertura Executiva', subtitle: 'Contexto e KPIs do ciclo', shortLabel: 'Abertura' },
