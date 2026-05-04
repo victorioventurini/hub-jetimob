@@ -351,7 +351,13 @@ export function healthResponse(
   details?: Record<string, unknown>
 ): Response {
   const statusCode = status === "unhealthy" ? 503 : 200;
-  
+
+  // W1.B.2 — Cache curto para reduzir carga em monitoramentos externos
+  // que pollam o endpoint a cada poucos segundos. 30s é coerente com
+  // o SLA do EDGE_PERFORMANCE_STANDARD (alvo < 300ms).
+  const cacheControl =
+    status === "healthy" ? "public, max-age=30" : "no-store";
+
   return new Response(
     JSON.stringify({
       status,
@@ -360,7 +366,11 @@ export function healthResponse(
     }),
     {
       status: statusCode,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Cache-Control": cacheControl,
+      },
     }
   );
 }
