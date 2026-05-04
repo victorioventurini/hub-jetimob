@@ -1,78 +1,56 @@
+## Objetivo
+
+Corrigir de forma canônica o trigger `public.handle_new_user()` que está falhando com erro de cast de enum (`employment_status`), bloqueando a criação de **qualquer novo usuário** (interno ou externo) no momento do magic link — incluindo `gabriel@ferrigoloadvogados.com.br`.
+
 ## Causa raiz
 
-`andressaf@ferrigoloadvogados.com.br` tem:
-- **1** `bu_user_memberships` (Jetimob) — perfil interno legado
-- **3** `partner_contact_bu_associations` ativas (Jetimob, Victorio Venturini, Jet Experience)
+`handle_new_user()` insere expressões `text` (`CASE WHEN ... THEN 'external' ELSE 'active' END`) em colunas tipadas como enum (`public.employment_status`, `public.app_role`). Postgres rejeita em runtime com:
 
-Em `src/contexts/BuContext.tsx` (linhas 56–64), `userBus` é **mutuamente exclusivo**:
+> `column "employment_status" is of type employment_status but expression is of type text`
 
-```ts
-const userBus = useMemo(() => {
-  if (internalBus.length > 0) return internalBus;   // ← descarta 3 externas
-  return externalBus as ...;
-}, [internalBus, externalBus]);
-```
+Resultado: `/admin/generate_link` retorna 500, `auth.users` não é criado, magic link nunca é enviado.
 
-Resultado: `userBus.length = 1` → `hasMultipleBus = false` → `<BuSelector>` retorna `null` (linha 26 do componente).
+## Escopo
 
-Isso **viola o padrão canônico** documentado em `docs/guides/EXTERNAL_USER_IDENTITY_PATTERN.md` (referenciado no TCR §22), que prescreve:
+**1 migration apenas.** Sem mudanças em UI, hooks, edge functions (`request-magic-link`, `auth-email-hook`) ou schema.
 
-> ```ts
-> // Merge com prioridade para interno
-> const userBus = mergeBuMemberships(internalBus, externalBus);
-> ```
+## Alterações na migration
 
-`BuSelector`, `Header`, `useExternalUserBus` e `applyBuSwitch` já estão corretos — não é problema de UI.
+`CREATE OR REPLACE FUNCTION public.handle_new_user()` mantendo:
 
-## Solução (cirúrgica, sem novos componentes)
+- `SECURITY DEFINER` + `SET search_path = public`
+- `set_config('app.internal_call', 'true', true)` (bypass de guards internos)
+- Detecção canônica de externo via `partner_contacts` + `partner_contact_bu_associations` (ativos: `deleted_at IS NULL`)
+- Prioridade ao `bu_id` pré-existente (deterministic onboarding — `mem://auth/deterministic-onboarding-logic`)
+- Vínculo `partner_contacts.user_id = NEW.id` (sem `profile_id`, coluna inexistente)
 
-Alinhar `BuContext` ao padrão canônico: **mesclar** internas + externas deduplicando por `bu_id`, com prioridade para a interna em colisão (carrega `role_in_bu` real).
+**Correções:**
+- `employment_status` → cast explícito `::public.employment_status` (`'external'` ou `'active'`)
+- `role_in_bu` em `bu_user_memberships` → cast explícito `::public.app_role` (`'member'`)
+- `work_mode` → cast explícito `::public.work_mode` quando inserido
+- `user_type` → cast explícito `::public.user_type`
 
-### Mudança única — `src/contexts/BuContext.tsx`
+## Validação pós-migration
 
-```ts
-const userBus = useMemo(() => {
-  const seen = new Set<string>();
-  const merged: UserBuMembership[] = [];
-  for (const m of internalBus) {
-    if (seen.has(m.bu_id)) continue;
-    seen.add(m.bu_id);
-    merged.push(m);
-  }
-  for (const m of externalBus as unknown as UserBuMembership[]) {
-    if (seen.has(m.bu_id)) continue;
-    seen.add(m.bu_id);
-    merged.push(m);
-  }
-  return merged;
-}, [internalBus, externalBus]);
+1. Reexecutar `request-magic-link` para `gabriel@ferrigoloadvogados.com.br`.
+2. Confirmar via `auth_logs` que `/admin/generate_link` retorna 200.
+3. Confirmar em `auth.users` que o registro foi criado.
+4. Confirmar em `profiles`: `employment_status='external'`, `user_type='external'`.
+5. Confirmar em `partner_contacts`: `user_id` populado.
+6. Confirmar em `bu_user_memberships`: 3 associações criadas (Jetimob / Victorio Venturini / Jet Experience) com `role_in_bu='member'`.
+7. Confirmar entrega do magic link.
 
-// Mantém semântica: "puramente externo" só quando não há interna
-const isExternalUser = internalBus.length === 0 && externalBus.length > 0;
-```
+## Riscos e mitigação
 
-`userRole` permanece inalterado: derivado de `currentMembership?.role_in_bu`, que será `"external"` quando a BU ativa vier de `externalBus` ou role interno real quando vier de `internalBus`.
+- **Risco:** quebrar criação de usuários internos. **Mitigação:** lógica de detecção externa preservada 1:1; só os casts mudam.
+- **Risco:** afetar usuários já existentes. **Mitigação:** trigger só roda em `INSERT` em `auth.users` (novos signups).
+- **Rollback:** reaplicar versão anterior da função via nova migration.
 
-## Por que não duplicar componentes
+## Pré-checklist (consultado)
 
-| Peça | Estado | Ação |
-|---|---|---|
-| `BuSelector` | já mostra dropdown quando `hasMultipleBus` | reaproveitado |
-| `Header` | já consome `BuSelector` + `hasMultipleBus` | inalterado |
-| `useExternalUserBus` | já entrega externas no formato `UserBuMembership` | inalterado |
-| `applyBuSwitch` | atomic swap + cache clear | reaproveitado para troca entre interna ↔ externa |
-| `useExternalUser` | PRE-BU, `globalClient` correto | inalterado |
-
-## Validação
-
-1. **Andressa** (1 interna + 3 externas) → header mostra dropdown com 3 BUs (Jetimob aparece uma vez, vinda da interna).
-2. **Trocar de BU** entre Jetimob ↔ Victorio Venturini → `selectBu` → `applyBuSwitch` → queries refazem com novo `x-bu-id`.
-3. **Usuário 100% interno** → `externalBus = []` → comportamento idêntico ao atual.
-4. **Usuário 100% externo** → `internalBus = []` → comportamento idêntico ao atual; `isExternalUser = true` mantido.
-5. **Usuário híbrido com mesma BU em ambos** (ex.: Jetimob nos dois) → BU listada uma vez, com role interno (prioridade correta para RBAC).
-
-## Arquivos
-
-- `src/contexts/BuContext.tsx` — apenas o `useMemo` de `userBus` (≈12 linhas).
-
-Sem migrações, sem RLS, sem novos componentes, sem novas rotas, sem novos hooks.
+- TCR v3.29.1 — fluxo Magic Link
+- `IDENTITY_CONVENTION.md` — `user_id` vs `profile_id`
+- `PERMISSIONS_AND_RBAC_MODEL.md` — persona `external`, `app_role`
+- `mem://auth/external-user-identity-unification-v3`
+- `mem://auth/deterministic-onboarding-logic`
+- `mem://architecture/security-privilege-policy` — `SECURITY DEFINER` + `search_path`
