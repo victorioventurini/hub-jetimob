@@ -1,70 +1,69 @@
 ## Problema
 
-Na rota `/rituals/mbr-pre?team=…&step=opening`, o card **"Análise IA do mês"** é gerado a partir de dados que **não refletem o mês de referência** (ex.: abril) nem necessariamente os KPIs do time selecionado:
+Hoje o `kpi_values` só tem `UNIQUE (kpi_id, reference_date)`. Isso permite **dois lançamentos consolidados no mesmo período** (ex.: Abril/2026) com `reference_date` diferentes (ex.: 2026-04-26 e 2026-04-30). Já existem 2 KPIs nessa situação.
 
-1. **KPIs sem ancoragem temporal.** Os `kpiSnapshots` enviados à edge function `mbr-pre-month-analysis` vêm do draft, populado pelo step "Indicadores do Time" (`MbrPreKpiGateStep`). Esse step usa `useKpisForWizardV2` que entrega o **estado atual** do KPI (último valor lançado) — `currentValue` não é o valor consolidado de abril e `previousValue` é sempre `null` (`gateItemToSnapshot` força `previousValue: null`). Resultado: a análise da IA fala do "mês" usando números do dia de hoje.
+Regra desejada: **um KPI não pode ter mais de um valor `consolidated` no mesmo período** (`period_start`/`period_end`).
 
-2. **Draft vazio quando o usuário abre direto na Abertura.** `STEP_ORDER` é `data-validation → opening → kpi-analysis → …`. Se o líder cair em `?step=opening` num draft novo, `draft.data.kpiSnapshots = []` e a IA é gerada **sem KPI algum** — só com KRs e projetos atrasados.
+---
 
-3. **Falta dado de "mês anterior" para o comparativo.** O bloco "Comparativo vs mês anterior" e o prompt da IA dependem de `previousValue`, mas hoje ele nunca é populado. A própria UI mostra "Nenhum KPI subiu/caiu este mês" mesmo havendo dados.
+## Plano
 
-KRs (`krFinalStates`) e projetos atrasados (`useMbrPreTeamProjects`) **já estão corretos**: ambos são ancorados no `monthBoundsDate(refMonth)` e filtrados por `team_id`. O problema está restrito ao pipeline de KPIs que abastece a Abertura.
+### 1. Limpeza dos duplicados existentes (data fix)
+Para cada par `(kpi_id, period_start, input_type='consolidated')` com mais de 1 registro, manter o **mais recente por `created_at`** e **soft-deletar** os anteriores convertendo para `partial` + anotando origem (`notes` apensado com prefixo `[auto-migrated:duplicate-consolidated]`).
+- Não excluímos fisicamente para preservar histórico/auditoria e não quebrar `sync_org_kr_from_primary_kpi`.
+- KPIs afetados (já mapeados): `c6d1834b-…` e `e0d15aca-…` em Abril/2026.
 
-## Solução proposta
+> Alternativa rejeitada: hard delete. Mantemos como `partial` para preservar a trilha.
 
-Introduzir um snapshot **mensal** de KPIs do time para a Abertura, independente do que o draft acumula no step seguinte. A análise IA passa a consumir esse snapshot ancorado em `referenceMonth`.
+### 2. Constraint no banco
+Criar **índice único parcial**:
+```sql
+CREATE UNIQUE INDEX kpi_values_one_consolidated_per_period
+  ON public.kpi_values (kpi_id, period_start)
+  WHERE input_type = 'consolidated';
+```
+- Só vale para `consolidated`. `partial` continua livre (vários ao longo do mês).
+- `period_start` é populado pelo trigger `kpi_validate_value_insert` antes do insert, então o índice fecha a brecha antes de qualquer escrita.
+- Sem CHECK constraint (em respeito ao canon "no CHECK constraints").
 
-### 1. Novo hook `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`
+### 3. Atualizar mensagem de erro do banco (opcional, mas recomendado)
+Estender o trigger `kpi_validate_value_insert` para checar explicitamente e levantar erro com **mensagem amigável em PT-BR** com `ERRCODE='23505'` (já é o code do unique violation) e detail estruturado, para o frontend conseguir interpretar:
+- Se já existir consolidado no mesmo período (excluindo o próprio id em UPDATE), `RAISE EXCEPTION USING ERRCODE='23505', MESSAGE='Já existe um valor consolidado para este período.', HINT='kpi_consolidated_period_conflict'`.
 
-Localização: `src/modules/okrs/hooks/useMbrPreTeamKpisMonthly.ts`
+### 4. UX de substituição (frontend)
+Em `KpiValueEntryForm` / `AddKpiValueDialog`:
+- Antes do submit, quando `input_type='consolidated'`, consultar `kpi_values` por `kpi_id` + período da `reference_date` (já temos `kpi_calculate_period` no DB; no client, derivar via `monthBoundsDate`/`useKpiData` evolução já carregada) para detectar conflito.
+- Se houver, abrir `AlertDialog` "Já existe um consolidado para Abril/2026 com valor X (lançado em DD/MM por Fulano). Substituir?".
+  - **Confirmar** → `updateKpiValue` no registro existente (mantém `id`, atualiza `value`, `reference_date`, `notes`).
+  - **Cancelar** → fecha modal, nada é salvo.
+- Capturar `error.code === '23505'` ou `hint==='kpi_consolidated_period_conflict'` em `addKpiValue` como rede de proteção e disparar o mesmo modal.
 
-Responsabilidades:
-- Buscar KPIs onde `responsible_team_id = teamId` (BU-scoped, soft-delete-aware, sem `select('*')`).
-- Para cada KPI, buscar de `kpi_values` o último valor consolidado com `reference_date` dentro de `monthBoundsDate(referenceMonth)` (mês alvo) **e** dentro de `monthBoundsDate(previousMonthOf(referenceMonth))` (mês anterior).
-- Devolver `MbrKpiSnapshot[]` com `currentValue` (mês alvo), `previousValue` (mês anterior), `target`, `unit`, `ragStatus` derivado canonicamente, e `name`.
-- Usar `mbrKeys.preTeamKpisMonthly(buId, teamId, referenceMonth)` (acrescentar helper em `src/lib/queryKeys/okrs.ts`).
-- `staleTime: 5 * 60 * 1000`, `enabled` quando `buSupabase && currentBuId && teamId`.
+### 5. Invalidações
+Sem mudanças — `updateKpiValue` já invalida `kpis.values`, `evolutionList`, `okrs.krPrimaryKpi*`.
 
-### 2. `MbrPreOpeningStep` consome o hook em vez do draft
+### 6. Memória
+Adicionar regra ao `mem://features/kpis/kpis-master-standard`: "1 consolidado por período por KPI; substituição via modal de confirmação".
 
-- Substituir a prop `kpiSnapshots` por dados do novo hook (chamado dentro do step usando `teamId` + `referenceMonth` que já recebe).
-- Recalcular `stats.kpisAttention/Total` e `kpiDeltas` a partir do snapshot mensal.
-- Ao chamar `generate(...)` para a IA, enviar o snapshot mensal (com `previousValue` populado) — não o do draft.
-- Mostrar `Skeleton` enquanto o hook está carregando.
+---
 
-### 3. Invalidar análise cacheada quando `referenceMonth` muda
+## Arquivos afetados
 
-Já existe (`MbrPrePage` faz `updateDraft({ referenceMonth: next, monthAnalysis: null })`). Manter — apenas confirmar que o novo hook re-busca via query key.
+**Migração (DB)**
+- Soft-migrar duplicados existentes (`UPDATE kpi_values SET input_type='partial', notes=...`).
+- Criar índice único parcial `kpi_values_one_consolidated_per_period`.
+- Atualizar `kpi_validate_value_insert` para erro amigável.
 
-### 4. Não alterar o pipeline do KPI Gate (step "Indicadores do Time")
+**Frontend**
+- `src/modules/kpis/components/shared/KpiValueEntryForm.tsx` — detectar conflito antes do submit.
+- `src/modules/kpis/components/AddKpiValueDialog.tsx` — `AlertDialog` de substituição + chamada a `updateKpiValue` quando confirmado.
+- `src/modules/kpis/hooks/useKpiData.ts` — `addKpiValue.onError` interpretando `23505/hint` para sinalizar conflito.
 
-O `MbrPreKpiGateStep` continua produzindo o `draft.data.kpiSnapshots` que alimenta o Resumo/Submissão. Esse snapshot tem outra função (gate de bucket + impactAssessment) e será mantido como SSOT do **gate**, não da **análise IA mensal**.
+**Memória**
+- `mem://features/kpis/kpis-master-standard` (append da regra).
 
-### 5. Edge function permanece igual
-
-`mbr-pre-month-analysis` já aceita `previousValue`, `currentValue`, `target`, `ragStatus` e calcula `deltaPct` server-side. Nenhuma mudança necessária; ela vai apenas receber dados corretos.
-
-## Aspectos técnicos
-
-- Respeitar **BU isolation** (`bu_id = currentBuId` em todas as queries) — Core memory.
-- Usar `useBuScopedSupabase` (não `globalClient`) — Core memory.
-- Filtragem `.is('deleted_at', null)` em `kpis` (e `cancelled_at` se aplicável — verificar via `mem://standards/soft-delete-policy-v1`).
-- Listar colunas explícitas (proibido `select('*')`).
-- Query keys via helper em `src/lib/queryKeys/okrs.ts` (não inline).
-- Não introduzir `React.memo` no Opening (não é list/card de alta densidade); seguir `frontend-memoization-standard`.
-- Tipagem: reusar `MbrKpiSnapshot` de `@/modules/okrs/types/wizard`.
+---
 
 ## Fora de escopo
-
-- Alterar como `MbrPreKpiGateStep` calcula `currentValue` (continua sendo o estado atual — é apropriado para o gate).
-- Mudar UI/copy do card de Análise IA.
-- Mudar a edge function ou o agente `analista-estrategico`.
-- Pré-MBR de outros times além do selecionado pela URL (`?team=`).
-
-## Verificação
-
-1. Abrir `/rituals/mbr-pre?team=<comercial>&step=opening`.
-2. Confirmar que o "Resumo de abril" mostra os KPIs do time comercial com valores **de abril**.
-3. Comparativo "vs mês anterior" exibe deltas reais (março → abril).
-4. Clicar "Gerar análise" e validar que a narrativa cita números do mês de abril (não atuais).
-5. Trocar mês de referência via `ReferenceMonthPicker` (se admin) → snapshot e análise são re-buscados/regenerados.
+- Mudanças em `period_start`/`period_end`/`reference_date` semantics.
+- Backfill histórico de outros períodos sem duplicação detectada.
+- UI de "ver histórico de valores do mesmo período".
