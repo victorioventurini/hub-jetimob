@@ -75,10 +75,10 @@ describe('WizardStepFooter', () => {
 });
 
 describe('WizardFirstStepFooter', () => {
-  it('hides back button', () => {
+  it('hides back button and shows "Começar"', () => {
     render(<WizardFirstStepFooter onPrimary={vi.fn()} />);
     expect(screen.queryByText('Voltar')).not.toBeInTheDocument();
-    expect(screen.getByText('Continuar')).toBeInTheDocument();
+    expect(screen.getByText('Começar')).toBeInTheDocument();
   });
 });
 
