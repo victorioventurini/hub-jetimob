@@ -26,4 +26,11 @@ export default defineConfig(({ mode }) => ({
     // e tela em branco no domínio publicado. Delegar a estratégia de split ao
     // Rollup garante que cada chunk receba suas dependências na ordem correta.
   },
+  // W1.F.1 — Strip de `console.*` e `debugger` no build de produção.
+  // Mantém logs em dev (preview/Lovable) para diagnóstico; remove os 352+
+  // `console.*` em `src/` no bundle final, reduzindo tamanho e ruído em prod.
+  // `console.error` é preservado para Sentry-like fallbacks.
+  esbuild: mode === "production"
+    ? { drop: ["debugger"], pure: ["console.log", "console.info", "console.debug", "console.warn"] }
+    : {},
 }));
