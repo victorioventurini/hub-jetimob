@@ -106,10 +106,10 @@ export function useAllTeamObjectivesForMbr(cycleId: string | undefined | null) {
 
       return (data || []).map((obj) => ({
         ...obj,
-        key_results: (obj.key_results || []).filter(
-          (kr: { deleted_at?: string | null; cancelled_at?: string | null }) =>
-            !kr.deleted_at && !kr.cancelled_at,
-        ),
+        key_results: (obj.key_results || []).filter((kr: unknown) => {
+          const k = kr as { deleted_at?: string | null; cancelled_at?: string | null };
+          return !k.deleted_at && !k.cancelled_at;
+        }),
       }));
     },
   });
