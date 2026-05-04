@@ -26,7 +26,8 @@ import { QbrPostDecisionsStep } from '@/modules/okrs/components/wizards/qbr-post
 import { QbrPostCommitmentsStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostCommitmentsStep';
 import { QbrPostFollowUpStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostFollowUpStep';
 import { QbrPostMinutesStep } from '@/modules/okrs/components/wizards/qbr-post/QbrPostMinutesStep';
-import { RitualPreparationStatus, RitualAttendance } from '@/modules/okrs/components/wizards/shared';
+import { RitualPreparationStatus, RitualAttendance, WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
+import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
 
 import type { ApprovedTeamOkr, DestinationCycleOption } from '@/modules/okrs/components/wizards/qbr-post/QbrPostOkrPromotionStep';
 import {
@@ -42,10 +43,11 @@ const WIZARD_STEPS = [
   { id: 'decisions' as const, label: 'Decisões', description: 'Complementar decisões' },
   { id: 'commitments' as const, label: 'Compromissos', description: 'Formalizar cross-área' },
   { id: 'follow-up' as const, label: 'Follow-up', description: 'Cadência e próximo MBR' },
+  { id: 'evaluation' as const, label: 'Avaliação do Rito', description: 'Coleta anônima' },
   { id: 'minutes' as const, label: 'Ata Executiva', description: 'Encerramento' },
 ];
 
-const STEP_ORDER: QbrPostStep[] = ['okr-promotion', 'decisions', 'commitments', 'follow-up', 'minutes'];
+const STEP_ORDER: QbrPostStep[] = ['okr-promotion', 'decisions', 'commitments', 'follow-up', 'evaluation', 'minutes'];
 
 const DEFAULT_DATA: QbrPostDraftData = {
   cycleId: '',
