@@ -246,6 +246,102 @@ export function getRitualGreetingConfig(persona: WizardPersona | string) {
 }
 
 // ============================================================
+// RITUAL FINALIZATION COPY — Modal de confirmação ao finalizar
+// ============================================================
+
+/**
+ * Cópia canônica do `ConfirmDialog` exibido pelo `WizardLastStepFooter`
+ * antes de submeter o ritual. Cada wizard pode passar manualmente o
+ * conteúdo via props; este SSOT existe para padronizar a comunicação
+ * por persona e evitar duplicação.
+ *
+ * Personas sem entrada caem no default genérico definido no componente
+ * (`"Concluir ritual" / "Confirmar conclusão"`).
+ */
+export interface RitualFinalizationCopy {
+  title: string;
+  description: string;
+  confirmLabel: string;
+}
+
+export const RITUAL_FINALIZATION_COPY: Partial<Record<WizardPersona, RitualFinalizationCopy>> = {
+  'collaborator': {
+    title: 'Enviar Check-in Individual',
+    description: 'Ao confirmar, seu check-in será registrado e ficará visível para o líder. Você poderá adicionar adendos depois, mas as respostas atuais ficarão imutáveis.',
+    confirmLabel: 'Enviar check-in',
+  },
+  'leader-prep': {
+    title: 'Concluir Pré-Check-in do Time',
+    description: 'A pauta e os marcadores escolhidos serão consolidados e enviados para o Check-in do Time.',
+    confirmLabel: 'Concluir preparação',
+  },
+  'team-checkin': {
+    title: 'Encerrar Check-in do Time',
+    description: 'Decisões e ata serão registradas. O ritual será marcado como concluído e poderá receber apenas adendos.',
+    confirmLabel: 'Encerrar check-in',
+  },
+  'team-okr-creation': {
+    title: 'Publicar OKR do time',
+    description: 'O OKR será publicado e ficará visível para o time. Edições posteriores ficarão registradas no histórico.',
+    confirmLabel: 'Publicar OKR',
+  },
+  'team-kr-creation': {
+    title: 'Publicar KRs do time',
+    description: 'Os Key Results serão criados e iniciarão o acompanhamento. Esta ação é definitiva.',
+    confirmLabel: 'Publicar KRs',
+  },
+  'pre-weekly': {
+    title: 'Enviar Pré-Weekly',
+    description: 'Sua destilação será enviada para a Weekly da BU. Após enviar, novos itens só podem entrar como adendo.',
+    confirmLabel: 'Enviar Pré-Weekly',
+  },
+  'weekly': {
+    title: 'Encerrar Weekly',
+    description: 'Decisões e ata da Weekly serão registradas e o ritual marcado como concluído.',
+    confirmLabel: 'Encerrar Weekly',
+  },
+  'mbr-pre': {
+    title: 'Enviar Pré-MBR',
+    description: 'Os dados, justificativas e sugestões serão enviados para o MBR. Após enviar, edições só são possíveis via adendo ou reabertura.',
+    confirmLabel: 'Enviar Pré-MBR',
+  },
+  'mbr': {
+    title: 'Encerrar MBR',
+    description: 'Decisões, ata e próximos passos serão registrados. O ritual será marcado como concluído.',
+    confirmLabel: 'Encerrar MBR',
+  },
+  'qbr-pre': {
+    title: 'Enviar Pré-QBR',
+    description: 'O balanço do ciclo e a proposta de OKRs serão enviados para o QBR.',
+    confirmLabel: 'Enviar Pré-QBR',
+  },
+  'qbr-pre-clevel': {
+    title: 'Enviar Pré-QBR Executivo',
+    description: 'A leitura estratégica e diretrizes serão enviadas para o QBR.',
+    confirmLabel: 'Enviar Pré-QBR Executivo',
+  },
+  'qbr-meeting': {
+    title: 'Encerrar QBR',
+    description: 'Aprovações de OKRs, decisões e compromissos serão registrados. O ritual será marcado como concluído.',
+    confirmLabel: 'Encerrar QBR',
+  },
+  'qbr-post': {
+    title: 'Encerrar Pós-QBR',
+    description: 'Promoções, decisões e compromissos serão formalizados. O ciclo trimestral será considerado fechado.',
+    confirmLabel: 'Encerrar Pós-QBR',
+  },
+  'clevel-checkin': {
+    title: 'Concluir Check-in Executivo',
+    description: 'As diretrizes e decisões serão registradas e poderão ser comunicadas para os times.',
+    confirmLabel: 'Concluir check-in',
+  },
+};
+
+export function getRitualFinalizationCopy(persona: WizardPersona | string): RitualFinalizationCopy | undefined {
+  return (RITUAL_FINALIZATION_COPY as Record<string, RitualFinalizationCopy | undefined>)[persona];
+}
+
+// ============================================================
 // AGENDA SUGGESTION TRIGGER LABELS (rodapé dos steps preparatórios)
 // ============================================================
 
