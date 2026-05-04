@@ -72,10 +72,11 @@ const WIZARD_STEPS = [
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Prioridades estratégicas' },
   { id: 'decisions' as const, label: 'Decisões', description: 'Consolidação' },
   { id: 'qbr-followup' as const, label: 'Follow-up QBR', description: 'Decisões do QBR' },
+  { id: 'evaluation' as const, label: 'Avaliação do Rito', description: 'Coleta anônima' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
 
-const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'closing'];
+const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'evaluation', 'closing'];
 
 const DEFAULT_DATA: MbrDraftData = {
   // Mês alvo padrão = mês imediatamente anterior (mês fechado).
