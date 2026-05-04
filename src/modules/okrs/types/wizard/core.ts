@@ -20,6 +20,7 @@ export type WizardPersona =
   | 'team-okr-creation'
   | 'team-kr-creation'
   | 'mbr'
+  | 'mbr-v2'
   | 'mbr-pre'
   | 'mbr-first'
   | 'mbr-pre-first'
