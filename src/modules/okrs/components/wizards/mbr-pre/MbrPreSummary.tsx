@@ -78,6 +78,12 @@ export function MbrPreSummary({
 }: MbrPreSummaryProps) {
   const { krFinalStates, kpiSnapshots, highlights, nextSteps, kpiJustifications, projectJustifications, krJustifications } = draftData;
   const agendaSuggestions = draftData.agendaSuggestions ?? [];
+  const noDataReasons = draftData.kpiNoDataReasons ?? {};
+  const noDataReasonList = Object.entries(noDataReasons).filter(([, v]) => (v ?? '').trim().length > 0);
+  const monthAnalysis = draftData.monthAnalysis ?? null;
+  const decisionsList = decisions ?? [];
+  // Mapa kpiId → nome (vindo dos snapshots, que já estão no draft).
+  const kpiNameById = new Map(kpiSnapshots.map((s) => [s.kpiId, s.name]));
 
   // Resolve nomes de projetos/milestones (BU-scoped, cache compartilhado com Step 3)
   const { projects: teamProjects } = useMbrPreTeamProjects(teamId ?? null, draftData.referenceMonth);
