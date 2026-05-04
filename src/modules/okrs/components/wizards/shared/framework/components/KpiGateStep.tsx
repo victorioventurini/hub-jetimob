@@ -658,6 +658,9 @@ export const KpiGateStep = memo(function KpiGateStep({
             bucketId={currentEntry.bucketId}
             justification={justifications?.[currentEntry.kpi.id] ?? ''}
             onJustificationChange={onJustificationChange}
+            splitNoDataReason={splitNoDataReason}
+            noDataReason={noDataReasons?.[currentEntry.kpi.id]}
+            onNoDataReasonChange={onNoDataReasonChange}
           />
         ) : buckets ? (
           buckets.map((bucket) => (
@@ -667,6 +670,9 @@ export const KpiGateStep = memo(function KpiGateStep({
               variant={variant === 'rich-paginated' ? 'rich' : variant}
               justifications={justifications ?? {}}
               onJustificationChange={onJustificationChange}
+              splitNoDataReason={splitNoDataReason}
+              noDataReasons={noDataReasons}
+              onNoDataReasonChange={onNoDataReasonChange}
             />
           ))
         ) : (
