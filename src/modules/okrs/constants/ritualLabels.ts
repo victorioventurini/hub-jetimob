@@ -312,11 +312,6 @@ export const RITUAL_FINALIZATION_COPY: Partial<Record<WizardPersona, RitualFinal
     description: 'Decisões, ata e próximos passos serão registrados. O ritual será marcado como concluído.',
     confirmLabel: 'Encerrar MBR',
   },
-  'mbr-v2': {
-    title: 'Encerrar MBR v2',
-    description: 'Decisões por objetivo, KPI Gate, carry-over e itens avulsos serão registrados. O ritual será marcado como concluído.',
-    confirmLabel: 'Encerrar MBR v2',
-  },
   'qbr-pre': {
     title: 'Enviar Pré-QBR',
     description: 'O balanço do ciclo e a proposta de OKRs serão enviados para o QBR.',
