@@ -37,7 +37,7 @@ export {
   WizardLastStepFooter, 
   WizardOptionalStepFooter 
 } from './WizardStepFooter';
-export type { WizardStepFooterProps } from './WizardStepFooter';
+export type { WizardStepFooterProps, WizardLastStepFooterProps } from './WizardStepFooter';
 
 export { WizardStepHeader } from './WizardStepHeader';
 export type { WizardStepHeaderProps, WizardHeaderVariant } from './WizardStepHeader';
