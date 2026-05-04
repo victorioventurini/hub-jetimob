@@ -240,10 +240,12 @@ export default function MbrPage() {
   // ── Load ALL BU KPIs (excl. metrics) with area/team joins ──
   const { currentBuId } = useBu();
   const { data: allBuKpis, isLoading: isLoadingKpis } = useQuery({
-    queryKey: mbrKeys.buKpis(currentBuId),
+    queryKey: [...mbrKeys.buKpis(currentBuId), 'scope:org+area'],
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      // MBR Executivo: somente KPIs de escopo global (org) ou de área.
+      // KPIs de time são tratados nos Pré-MBRs por cada líder.
       const { data: kpis, error: kpiErr } = await buSupabase
         .from('kpi_metrics')
         .select(`
@@ -255,7 +257,8 @@ export default function MbrPage() {
         `)
         .eq('lifecycle_status', 'active')
         .is('deleted_at', null)
-        .neq('indicator_type', 'metric');
+        .neq('indicator_type', 'metric')
+        .in('scope', ['org', 'area']);
 
       if (kpiErr || !kpis || kpis.length === 0) return [];
 
