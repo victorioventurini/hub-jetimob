@@ -462,17 +462,24 @@ export function MbrPreSummary({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-xs font-medium whitespace-pre-wrap flex-1 min-w-0">
-                        {d.title || d.description || '(sem descrição)'}
+                        {d.text || '(sem descrição)'}
                       </p>
-                      {d.sourceStep && (
-                        <Badge variant="outline" className="text-[10px] shrink-0">
-                          {d.sourceStep}
+                      <div className="flex flex-wrap items-center gap-1 shrink-0">
+                        <Badge variant="outline" className="text-[10px]">
+                          {d.category}
                         </Badge>
-                      )}
+                        {d.sourceStep && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {d.sourceStep}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    {d.title && d.description && (
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                        {d.description}
+                    {(d.owner?.name || d.deadline) && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {d.owner?.name ? `Dono: ${d.owner.name}` : ''}
+                        {d.owner?.name && d.deadline ? ' • ' : ''}
+                        {d.deadline ? `Prazo: ${d.deadline}` : ''}
                       </p>
                     )}
                   </li>
