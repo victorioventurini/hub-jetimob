@@ -482,7 +482,14 @@ export function MbrTeamOkrsDetailStep({
           })()}
 
           {/* OKRs for current team */}
-          {currentTeam.objectives.map((objective) => (
+          {(() => {
+            const sub = mbrPreByTeam[currentTeam.teamId];
+            const krJustifMap: Record<string, string> = sub?.krJustifications ?? {};
+            const krFinalStateMap = new Map<string, { state: string; finalProgress: number; paceStatus: string }>();
+            for (const f of sub?.krFinalStates ?? []) {
+              if (f?.krId) krFinalStateMap.set(f.krId, { state: f.state, finalProgress: f.finalProgress, paceStatus: f.paceStatus });
+            }
+            return currentTeam.objectives.map((objective) => (
             <Card
               key={objective.objectiveId}
               className={cn(
