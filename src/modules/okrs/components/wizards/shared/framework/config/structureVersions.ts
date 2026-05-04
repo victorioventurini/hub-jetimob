@@ -38,6 +38,7 @@ export const STRUCTURE_VERSION_BY_WIZARD_TYPE: Record<WizardPersona, StructureVe
   // (stepDefinitions v4 + completion/visibility rules v4);
   // sessões antigas (structure_version='v1') renderizam via SnapshotReportView.
   'mbr': 'v4',
+  'mbr-v2': 'v4',
   'qbr-meeting': 'v4',
   'qbr-post': 'v4',
 

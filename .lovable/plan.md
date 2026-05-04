@@ -1,68 +1,103 @@
+# Plano — MBR v2 paralelo (rito novo, v1 intacto)
 
-## Problema
+## Objetivo
+Criar um rito MBR v2 organizado por **objetivos organizacionais** (não por times), com tempo proporcional à severidade, KPI Gate canônico de 4 caminhos e classificação de problema explícita — **sem alterar o MBR v1 nem o Pré-MBR v1**. Se v2 não ficar pronto a tempo, a BU usa v1 normalmente.
 
-Gabriel (`gabriel@ferrigoloadvogados.com.br`), externo, envia mensagens no ticket `4cf94492…b563`, mas falha ao **anexar arquivos**. Postgres logs:
+## Pré-checklist final (a confirmar antes de codar, leitura focada)
+- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — confirmar que `mbr-v2` herda as mesmas permission keys de `mbr` (start/edit/finalize) ou se precisa de chaves novas.
+- `docs/canonical/DATA_MODEL_REGISTRY.md` — reconfirmar que `okr_wizard_sessions.wizard_type` é texto livre e que RLS não filtra por valor específico.
+- `src/modules/okrs/constants/ritualLabels.ts` — adicionar rótulo `mbr-v2` (SSOT).
+- `mem://features/rituals/anonymous-evaluation-standard` — garantir que `/p/r/:shortCode` aceita o novo `wizard_type` no allowlist (MBR/QBR já aceitos; v2 precisa entrar).
 
+## Princípios
+1. **Zero impacto no v1.** Nenhum arquivo de `mbr/` ou `mbr-pre/` v1 é editado.
+2. **Reuso máximo.** Reaproveitar `FullPageWizardShell`, `useOkrWizardSession`, `MbrKpiGateStep` (estendido por props, não duplicado quando possível), `EvaluationCollectionStep`, `MbrDecisionsStep` patterns.
+3. **Sem migração SQL.** `wizard_type='mbr-v2'` convive na mesma tabela `okr_wizard_sessions`. `reflection_data jsonb` armazena o payload novo.
+4. **Consome Pré-MBR v1 como está.** Onde o Pré-MBR v1 não trouxer classificação de problema, o v2 pede ao líder no próprio rito (campo opcional, com nudge).
+
+## Arquitetura proposta
+
+### Rota e ponto de entrada
+- Nova rota: `/okrs/rituals/mbr-v2` registrada em `src/routes/okrsRoutes.tsx` via `lazyWithRetry`.
+- Card adicional no hub de ritos (`OkrsRitualsPage` ou equivalente): "MBR v2 (beta)" ao lado do MBR atual, com badge "beta". Mesmo gate de permissão do MBR v1.
+- Sem feature flag por BU nesta primeira entrega — quem entrar na rota usa v2; quem não entrar segue no v1. (Flag fica como evolução futura, se pedido.)
+
+### Estrutura de arquivos novos
+```text
+src/modules/okrs/
+├── pages/
+│   └── MbrV2Page.tsx                      (novo; espelha MbrPage mas com steps v2)
+├── components/wizards/mbr-v2/
+│   ├── steps/
+│   │   ├── MbrV2OpeningStep.tsx           (abertura executiva curada por IA — reaproveita useMbrOpeningCuration)
+│   │   ├── MbrV2KpiGateStep.tsx           (KPI Gate v2: 4 caminhos canônicos)
+│   │   ├── MbrV2OrgObjectivesOverviewStep.tsx  (lista objetivos com severidade calculada)
+│   │   ├── MbrV2OrgObjectiveDetailStep.tsx     (step dinâmico, 1 por objetivo, tempo por severidade)
+│   │   ├── MbrV2LooseItemsStep.tsx        (itens avulsos opcional)
+│   │   ├── MbrV2CarryOverStep.tsx         (status obrigatório nas decisões anteriores)
+│   │   ├── MbrV2DecisionsStep.tsx         (decisões formais como output)
+│   │   └── MbrV2ClosingStep.tsx           (checklist enxuto + badges derivadas)
+│   └── shared/
+│       ├── ObjectiveSeverityBadge.tsx
+│       └── KpiGateResolutionPicker.tsx    (4 caminhos: immediate_decision | delegated_investigation | analyzed | blocked)
+├── hooks/
+│   ├── useMbrV2OrgObjectiveAnalyses.ts    (lê Pré-MBR v1 + KPIs/KRs/projetos e calcula severidade por objetivo)
+│   └── useMbrV2Session.ts                 (wrapper de useOkrWizardSession com wizard_type='mbr-v2')
+├── types/
+│   └── mbrV2.ts                           (MbrV2DraftData, MbrV2OrgObjectiveAnalysis, MbrV2KpiGateResolution, etc.)
+└── constants/
+    └── mbrV2.ts                           (STEP_ORDER v2, severity thresholds, time budgets)
 ```
-ERROR: new row violates row-level security policy for table "ticket_attachments"
-```
 
-## Causa raiz (canônica — vale para todos os externos)
+### Steps do MBR v2 (ordem)
+1. **Abertura Executiva** (curada por IA, reusa Pré-MBR v1 agregado).
+2. **KPI Gate** (6-bucket canônico; cada KPI crítico exige uma das 4 resoluções).
+3. **Visão Geral por Objetivo Organizacional** (cards ordenados por severidade: Alta 25-30 min, Média 15 min, Baixa 2-3 min).
+4. **Detalhe por Objetivo** (N steps dinâmicos — um por objetivo selecionado para discussão; mostra KRs, projetos vinculados, classificação do Pré-MBR v1 quando existir, espaço para decisões inline).
+5. **Itens Avulsos** (opcional; sugestões de pauta sem objetivo associado).
+6. **Carry-over** (decisões do MBR anterior — status obrigatório: concluida | replanejada | cancelada | em_andamento).
+7. **Decisões Formais** (output obrigatório — usa o vocabulário canônico de `wizard-vocabulary-canonical`).
+8. **Avaliação Anônima** (reusa `EvaluationCollectionStep`; wizard_type adicionado ao allowlist do `/p/r/:shortCode`).
+9. **Encerramento** (badges derivadas de cobertura: Pré-MBR consumido, KPI Gate resolvido, decisões registradas).
 
-A policy `ticket_attachments_insert_v4` exige **2 condições** com AND:
-1. `is_current_bu(bu_id)` — TRUE
-2. (permissão OU participante interno OU participante externo) — TRUE
+### Severidade do Objetivo (cálculo no `useMbrV2OrgObjectiveAnalyses`)
+Combina:
+- Status efetivo dos KRs filhos (`effective-kr-status-logic`): `at_risk` ou `stagnant` → +peso.
+- KPIs vinculados em bucket crítico (`critical`/`alert`).
+- Projetos vinculados atrasados/bloqueados.
+- Classificação de problema do Pré-MBR v1 (quando presente) — `unknown`/`external`/`capacity` adiciona peso.
 
-A condição (2) passa para Gabriel (validado: ele é `ticket_participants` ativo via `partner_contact_id` com `pc.user_id = auth.uid()`).
-A condição (1) **falha** para externos. Hoje `is_current_bu()` resolve `current_bu_id()`, que para externos só reconhece BUs presentes em `bu_user_memberships`. Como externos resolvem BU via `partner_contact_bu_associations` (não têm membership na BU do parceiro), `current_bu_id()` cai no fallback "primeira membership ativa" (BU de onboarding) ≠ `bu_id` do ticket → `is_current_bu(bu_id)` retorna FALSE → RLS recusa o INSERT.
+Output: `{ severity: 'high' | 'medium' | 'low', timeBudgetMin: number, drivers: string[] }`.
 
-Mensagens passam porque `ticket_messages_insert_v3` também exige `is_current_bu(bu_id)`, mas o ticket do Gabriel está exatamente na BU de onboarding dele (`a0000000…0001`). Em outras BUs onde ele é só partner_contact, o problema também afeta `ticket_messages` — então o fix é canônico para o módulo inteiro.
+### Persistência
+- `okr_wizard_sessions` com `wizard_type='mbr-v2'`, `reflection_data` armazenando `MbrV2DraftData`.
+- Decisões persistidas via fluxo canônico já usado pelo v1 (`okr_decisions` ou tabela equivalente — confirmar no `DATA_MODEL_REGISTRY`).
+- Avaliação anônima: shortcode emitido pelo mesmo mecanismo do v1.
 
-Adicionalmente, as policies de Storage do bucket `ticket-attachments` estão duplicadas/legadas e a de DELETE só reconhece `bu_user_memberships`, deixando externos sem rollback de upload.
+## Compatibilidade e fallback
+- v1 segue 100% funcional, mesma rota, mesmas queries. Nada em v1 é tocado.
+- Se v2 quebrar, basta esconder o card "MBR v2 (beta)" — feito por uma const `ENABLE_MBR_V2 = true` em `src/modules/okrs/constants/mbrV2.ts`.
 
-## Mudanças (1 migration SQL — sem código de UI/hooks/edge)
+## Fora de escopo
+- Pré-MBR v2 (decisão do usuário: consumir v1 sem alterações).
+- Migração de dados de MBRs v1 para v2.
+- Feature flag por BU.
+- Substituir cards do hub — v2 é adição, não substituição.
 
-### A) Estender `current_bu_id()` para reconhecer BUs do externo
+## Riscos
+- **Severidade calculada divergir da percepção do líder** → mitigado com botão "ajustar severidade" no Overview, persistido no draft.
+- **Avaliação anônima** → precisa adicionar `mbr-v2` ao allowlist do edge function/RPC; risco baixo, edição pontual.
+- **Permission keys** → se RBAC exigir chaves novas (`okrs.rituals.mbr_v2.*`), criar migração; senão herdar `mbr`.
 
-Adicionar à resolução do header `x-current-bu-id` e ao fallback uma condição que aceite BUs presentes em `partner_contact_bu_associations` ativas do `auth.uid()` (via `partner_contacts.user_id = auth.uid()`, `pc.deleted_at IS NULL`, `pcba.deleted_at IS NULL`, `pcba.is_active = true`).
+## Entregáveis
+1. Rota `/okrs/rituals/mbr-v2` funcional.
+2. Card no hub de ritos (beta).
+3. 9 steps + hooks + types + constants.
+4. Allowlist da avaliação anônima atualizada.
+5. Atualização de `ritualLabels.ts` (SSOT).
+6. Memória nova: `mem://features/rituals/mbr-v2-standard` documentando o rito.
 
-- Mantém `SECURITY DEFINER` + `SET search_path = public` + `STABLE`.
-- Privilégio NÃO se expande: a função continua restrita ao próprio `auth.uid()`.
-- Isso conserta `is_current_bu()` automaticamente (que delega a `current_bu_id()`), e qualquer policy que use `is_current_bu()` (incluindo `ticket_messages_insert_v3` e `ticket_attachments_insert_v4`) passa a aceitar externos na BU correta.
-
-### B) Limpar e canonizar policies do bucket `ticket-attachments` em `storage.objects`
-
-Hoje há 6 policies, duas duplicatas frouxas. Substituir por 4 canônicas:
-
-- **INSERT** (`Upload ticket attachments — canonical`): `bucket_id = 'ticket-attachments' AND auth.uid() IS NOT NULL`. A autorização real fica no INSERT em `public.ticket_attachments` (que já valida participação). Mantemos no Storage apenas o gate de "autenticado", evitando duplicação de regras.
-- **SELECT** (`Read ticket attachments — canonical`): mesmo gate de autenticado; download real é via **signed URL** (já implementado em `useAttachmentUrl`), e o acesso ao registro é gateado por `ticket_attachments_select_v3` (`can_view_ticket`).
-- **DELETE — interno**: dono do upload (`uploaded_by_user_id = my_profile_id()`) OU `is_platform_admin(auth.uid())`.
-- **DELETE — externo (cleanup de upload falho)**: `partner_contacts.user_id = auth.uid()` E objeto pertence a ticket no qual ele é participante ativo. Isso preserva o rollback do `useTicketMessageMutations.uploadAttachments` quando o INSERT no DB falha após o upload no storage.
-- DROP das 2 policies legadas duplicadas (`Authenticated users can upload ticket attachments`, `Users can upload ticket attachments`, `Users can read ticket attachments`, `Users can view ticket attachments they have access to`, e a `Users can delete their own ticket attachments` antiga baseada só em `bu_user_memberships`).
-
-### C) Reafirmar `ticket_attachments_insert_v4` como `TO authenticated`
-
-Não muda lógica — só garante o role e mantém a policy explícita após cleanup.
-
-## Validação pós-deploy
-
-1. Logado como Gabriel, abrir ticket `4cf94492…b563`, anexar arquivo → 200, linha em `ticket_attachments`, attachment visível para ambos os lados.
-2. Logada como Andressa em outra BU onde é externa → consegue anexar.
-3. Internos (Andre, etc.): comportamento preservado — anexar/baixar/deletar continuam funcionando.
-4. Conferir Postgres logs: nenhum `RLS violation` novo em `ticket_attachments`.
-5. `cross-bu-isolation`: tentar anexar em ticket de BU onde NÃO é participante → permanece bloqueado.
-
-## Pré-checklist canônico (consultado)
-
-- TCR / DEVELOPMENT_STANDARDS / BU_SCOPED_SUPABASE_RULES — regras 1, 3, 8 preservadas.
-- IDENTITY_CONVENTION.md — interno via `my_profile_id()`, externo via `partner_contacts.user_id = auth.uid()`.
-- PERMISSIONS_AND_RBAC_MODEL / RBAC_TEMPLATES_V3 — `tickets.attachment.create:bu` continua sendo o gate de internos; externos via participação.
-- `mem://auth/external-user-identity-unification-v3`, `mem://auth/identity-rbac-master`, `mem://standards/bu-isolation-master` — sem vazamento cross-BU.
-- `mem://architecture/security-privilege-policy` — função `current_bu_id` mantém SECURITY DEFINER + search_path; sem expansão de privilégio.
-- `mem://features/tickets/cross-bu-isolation` — RLS continua restringindo por participação ativa.
-
-## Não-mudanças
-
-- Nada em UI / hooks / edge functions.
-- `useTicketMessageMutations.uploadAttachments` permanece usando `buScopedSupabase`.
-- `useExternalUser` e BU-switcher inalterados.
+## Validação
+- Smoke test manual no preview: criar sessão v2, navegar todos os steps, finalizar, conferir `reflection_data` no banco.
+- Confirmar que MBR v1 segue abrindo e finalizando normal.
+- Conferir avaliação anônima emitindo shortcode válido para `mbr-v2`.

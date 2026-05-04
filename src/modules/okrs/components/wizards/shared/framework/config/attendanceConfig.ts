@@ -75,6 +75,14 @@ export const ATTENDANCE_CONFIG: Record<WizardPersona, AttendanceConfig> = {
     requireConfirmation: true,
     editableAfterConfirmation: true,
   },
+  'mbr-v2': {
+    enabled: true,
+    resolver: 'teams-with-active-okrs',
+    markerRole: 'conductor',
+    defaultPresence: 'none',
+    requireConfirmation: true,
+    editableAfterConfirmation: true,
+  },
   'mbr-first': {
     enabled: true,
     resolver: 'teams-with-active-okrs',

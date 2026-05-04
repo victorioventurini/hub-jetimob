@@ -32,6 +32,7 @@ export const RITUAL_LABELS: Record<WizardPersona, string> = {
   'weekly': 'Weekly',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
+  'mbr-v2': 'MBR v2 (beta)',
   'qbr-pre': 'Pré-QBR',
   'qbr-pre-clevel': 'Pré-QBR Executivo',
   'qbr-meeting': 'QBR',
@@ -152,6 +153,19 @@ export const RITUAL_STEP_LABELS: Partial<
       'closing': { title: 'Encerramento', subtitle: 'Checklist, feedback e ata', shortLabel: 'Encerramento' },
     },
   },
+  'mbr-v2': {
+    v4: {
+      'opening-executive': { title: 'Abertura Executiva', subtitle: 'Curadoria do mês a partir dos Pré-MBRs', shortLabel: 'Abertura' },
+      'kpi-gate': { title: 'KPI Gate', subtitle: 'KPIs críticos — escolha o caminho de resolução', shortLabel: 'KPI Gate' },
+      'objectives-overview': { title: 'Objetivos Organizacionais', subtitle: 'Ordenados por severidade — defina o tempo', shortLabel: 'Objetivos' },
+      'objective-detail': { title: 'Discussão por Objetivo', subtitle: 'KRs, projetos e decisões inline', shortLabel: 'Objetivo' },
+      'loose-items': { title: 'Itens Avulsos', subtitle: 'Pautas que não pertencem a um objetivo', shortLabel: 'Avulsos' },
+      'carry-over': { title: 'Carry-over', subtitle: 'Status das decisões do MBR anterior', shortLabel: 'Carry-over' },
+      'decisions': { title: 'Decisões Formais', subtitle: 'Output canônico do rito', shortLabel: 'Decisões' },
+      'evaluation': { title: 'Avaliação Anônima', subtitle: 'Coleta via QR/short code', shortLabel: 'Avaliação' },
+      'closing': { title: 'Encerramento', subtitle: 'Cobertura derivada + ata', shortLabel: 'Encerramento' },
+    },
+  },
   'qbr-meeting': {
     v4: {
       'opening-executive': { title: 'Abertura Executiva', subtitle: 'Contexto e KPIs do ciclo', shortLabel: 'Abertura' },
@@ -235,6 +249,7 @@ export const RITUAL_GREETING_PHRASES: Partial<
   'weekly':           { phrase: 'Vamos alinhar a BU esta semana.',                 cadence: 'weekly' },
   'mbr-pre':          { phrase: 'Como foi a performance do time {teamName} em {monthShort}?', cadence: 'monthly' },
   'mbr':              { phrase: 'Vamos revisar o mês da BU.',                      cadence: 'monthly' },
+  'mbr-v2':           { phrase: 'Vamos revisar o mês da BU por objetivo.',         cadence: 'monthly' },
   'qbr-pre':          { phrase: 'Hora de fechar o ciclo do seu time.',             cadence: 'quarterly' },
   'qbr-pre-clevel':   { phrase: 'Hora da leitura estratégica do ciclo.',           cadence: 'quarterly' },
   'qbr-meeting':      { phrase: 'Vamos revisar e planejar o próximo ciclo.',       cadence: 'quarterly' },
@@ -309,6 +324,11 @@ export const RITUAL_FINALIZATION_COPY: Partial<Record<WizardPersona, RitualFinal
     title: 'Encerrar MBR',
     description: 'Decisões, ata e próximos passos serão registrados. O ritual será marcado como concluído.',
     confirmLabel: 'Encerrar MBR',
+  },
+  'mbr-v2': {
+    title: 'Encerrar MBR v2',
+    description: 'Decisões por objetivo, KPI Gate, carry-over e itens avulsos serão registrados. O ritual será marcado como concluído.',
+    confirmLabel: 'Encerrar MBR v2',
   },
   'qbr-pre': {
     title: 'Enviar Pré-QBR',
