@@ -116,6 +116,8 @@ export interface MbrPreKrAnalysisStepProps {
   sourceObjectives?: MbrPreKrSourceObjective[];
   krJustifications: Record<string, string>;
   onKrJustificationChange: (krId: string, value: string) => void;
+  /** Mês fechado analisado pelo rito (YYYY-MM). Usado em badges de contexto. */
+  referenceMonth?: string;
   onContinue: () => void;
   onBack: () => void;
 }
