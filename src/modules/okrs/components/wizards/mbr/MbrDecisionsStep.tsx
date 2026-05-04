@@ -77,6 +77,9 @@ export function MbrDecisionsStep({
   decisions,
   onDecisionsChange,
   previousMbrPendingItems,
+  mbrPreSurfacedItems = [],
+  teamNamesById = {},
+  mbrPreAgendaSuggestions = [],
   onContinue,
   onBack,
 }: MbrDecisionsStepProps) {
