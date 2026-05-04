@@ -6592,6 +6592,13 @@ export type Database = {
             referencedColumns: ["session_id"]
           },
           {
+            foreignKeyName: "okr_team_objectives_qbr_origin_session_id_fkey"
+            columns: ["qbr_origin_session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_evaluation_summary"
+            referencedColumns: ["session_id"]
+          },
+          {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -6661,6 +6668,13 @@ export type Database = {
             referencedRelation: "v_ritual_attendance_summary"
             referencedColumns: ["session_id"]
           },
+          {
+            foreignKeyName: "okr_wizard_kr_actions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_evaluation_summary"
+            referencedColumns: ["session_id"]
+          },
         ]
       }
       okr_wizard_sessions: {
@@ -6673,6 +6687,9 @@ export type Database = {
           created_at: string
           cycle_id: string | null
           decisions: Json | null
+          evaluation_closed_at: string | null
+          evaluation_open_at: string | null
+          evaluation_short_code: string | null
           id: string
           meeting_notes: string | null
           reflection_data: Json | null
@@ -6694,6 +6711,9 @@ export type Database = {
           created_at?: string
           cycle_id?: string | null
           decisions?: Json | null
+          evaluation_closed_at?: string | null
+          evaluation_open_at?: string | null
+          evaluation_short_code?: string | null
           id?: string
           meeting_notes?: string | null
           reflection_data?: Json | null
@@ -6715,6 +6735,9 @@ export type Database = {
           created_at?: string
           cycle_id?: string | null
           decisions?: Json | null
+          evaluation_closed_at?: string | null
+          evaluation_open_at?: string | null
+          evaluation_short_code?: string | null
           id?: string
           meeting_notes?: string | null
           reflection_data?: Json | null
@@ -8120,6 +8143,98 @@ export type Database = {
           },
         ]
       }
+      ritual_evaluation_responses: {
+        Row: {
+          bu_id: string
+          change_one_thing: string
+          deleted_at: string | null
+          id: string
+          score_decisions: number
+          score_quality: number
+          score_time: number
+          score_value: number
+          session_id: string
+          submitted_at: string
+          what_worked: string | null
+        }
+        Insert: {
+          bu_id: string
+          change_one_thing: string
+          deleted_at?: string | null
+          id?: string
+          score_decisions: number
+          score_quality: number
+          score_time: number
+          score_value: number
+          session_id: string
+          submitted_at?: string
+          what_worked?: string | null
+        }
+        Update: {
+          bu_id?: string
+          change_one_thing?: string
+          deleted_at?: string | null
+          id?: string
+          score_decisions?: number
+          score_quality?: number
+          score_time?: number
+          score_value?: number
+          session_id?: string
+          submitted_at?: string
+          what_worked?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_evaluation_responses_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_evaluation_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "okr_wizard_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_evaluation_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "ritual_evaluation_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_evaluation_summary"
+            referencedColumns: ["session_id"]
+          },
+        ]
+      }
+      ritual_evaluation_submit_log: {
+        Row: {
+          id: number
+          ip_hash: string | null
+          short_code: string
+          submitted_at: string
+        }
+        Insert: {
+          id?: number
+          ip_hash?: string | null
+          short_code: string
+          submitted_at?: string
+        }
+        Update: {
+          id?: number
+          ip_hash?: string | null
+          short_code?: string
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       ritual_occurrences: {
         Row: {
           actual_date: string | null
@@ -8196,6 +8311,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "ritual_occurrences_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_evaluation_summary"
             referencedColumns: ["session_id"]
           },
           {
@@ -8342,6 +8464,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "v_ritual_attendance_summary"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "ritual_session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_ritual_evaluation_summary"
             referencedColumns: ["session_id"]
           },
         ]
@@ -10437,6 +10566,54 @@ export type Database = {
           },
         ]
       }
+      v_ritual_evaluation_summary: {
+        Row: {
+          avg_decisions: number | null
+          avg_quality: number | null
+          avg_time: number | null
+          avg_value: number | null
+          bu_id: string | null
+          completed_at: string | null
+          cycle_id: string | null
+          evaluation_closed_at: string | null
+          evaluation_open_at: string | null
+          expected_count: number | null
+          response_count: number | null
+          session_id: string | null
+          team_id: string | null
+          wizard_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_wizard_sessions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_wizard_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "v_teams_clean"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_shared_okrs_summary: {
         Row: {
           contributor_count: number | null
@@ -10793,6 +10970,7 @@ export type Database = {
         }[]
       }
       cleanup_orphan_memberships: { Args: never; Returns: Json }
+      close_ritual_evaluation: { Args: { p_session_id: string }; Returns: Json }
       collect_perf_metrics: { Args: never; Returns: Json }
       count_bu_calls_today: { Args: { p_bu_id: string }; Returns: number }
       count_collaborator_checkin_expected: {
@@ -10917,6 +11095,7 @@ export type Database = {
         }
         Returns: number
       }
+      generate_ritual_short_code: { Args: never; Returns: string }
       get_archived_project_v2: { Args: { p_project_id: string }; Returns: Json }
       get_asset_kit: {
         Args: { p_asset_id: string }
@@ -11200,6 +11379,28 @@ export type Database = {
           work_mode: string
         }[]
       }
+      get_public_ritual_evaluation_form: {
+        Args: { p_short_code: string }
+        Returns: {
+          is_open: boolean
+          ritual_label: string
+          session_id: string
+          show_what_worked: boolean
+          wizard_type: string
+        }[]
+      }
+      get_ritual_evaluation_live_count: {
+        Args: { p_session_id: string }
+        Returns: Json
+      }
+      get_ritual_evaluation_open_answers: {
+        Args: { p_session_id: string }
+        Returns: {
+          change_one_thing: string
+          submitted_at: string
+          what_worked: string
+        }[]
+      }
       get_system_setting: { Args: { p_key: string }; Returns: Json }
       get_team_kr_creation_context: {
         Args: { p_contributor_team_id?: string; p_objective_id: string }
@@ -11471,6 +11672,7 @@ export type Database = {
       my_profile_id: { Args: never; Returns: string }
       my_profile_id_strict: { Args: never; Returns: string }
       normalize_asset_code: { Args: { code_text: string }; Returns: string }
+      open_ritual_evaluation: { Args: { p_session_id: string }; Returns: Json }
       process_recommendation_expiry_notifications: {
         Args: never
         Returns: {
@@ -11676,6 +11878,19 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      submit_ritual_evaluation: {
+        Args: {
+          p_change_one_thing: string
+          p_client_fingerprint?: string
+          p_score_decisions: number
+          p_score_quality: number
+          p_score_time: number
+          p_score_value: number
+          p_short_code: string
+          p_what_worked: string
+        }
+        Returns: Json
       }
       sync_profile_bu_to_default_membership: {
         Args: { p_user_id: string }
