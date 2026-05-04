@@ -253,7 +253,8 @@ Gere uma análise executiva do mês para o líder do time, com:
 4. Riscos (até 3 sinais de alerta para o próximo mês — não confundir com ofensores; foco em tendência).
 5. Recomendações (2-4 ações concretas que o líder pode trazer ao MBR).
 
-Seja específico: cite nomes de KRs/KPIs e números reais quando relevantes.
+Seja específico: cite SEMPRE o campo "title" dos KRs e o campo "name" dos KPIs.
+NUNCA cite IDs/UUIDs (strings com formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) — use o título humano.
 Não invente entidades que não estão nos dados. Se não houver dados suficientes em alguma categoria, retorne array vazio.
 
 FORMATO DE SAÍDA (JSON estrito, sem markdown):

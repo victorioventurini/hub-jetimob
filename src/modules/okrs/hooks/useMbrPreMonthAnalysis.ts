@@ -140,15 +140,27 @@ export function useMbrPreMonthAnalysis() {
           return null;
         }
 
+        // Sanitização: substituir UUIDs sobreviventes por nomes (cinto+suspensórios).
+        const nameById = new Map<string, string>();
+        for (const [id, t] of (params.krTitleById ?? new Map<string, string>())) nameById.set(id, t);
+        for (const k of params.kpis) if (k.kpiId && k.name) nameById.set(k.kpiId, k.name);
+        const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+        const scrub = (s: string): string =>
+          (s ?? '').replace(UUID_RE, (u) => nameById.get(u.toLowerCase()) ?? nameById.get(u) ?? '(item)');
+        const scrubItem = (it: { title: string; detail: string }) => ({
+          title: scrub(it.title),
+          detail: scrub(it.detail),
+        });
+
         return {
           generatedAt: response.generatedAt || new Date().toISOString(),
           origin: 'ai-generated',
           referenceMonth: params.referenceMonth,
-          summary: response.output.summary || '',
-          highlights: response.output.highlights || [],
-          offenders: response.output.offenders || [],
-          risks: response.output.risks || [],
-          recommendations: response.output.recommendations || [],
+          summary: scrub(response.output.summary || ''),
+          highlights: (response.output.highlights || []).map(scrubItem),
+          offenders: (response.output.offenders || []).map(scrubItem),
+          risks: (response.output.risks || []).map(scrubItem),
+          recommendations: (response.output.recommendations || []).map(scrub),
         };
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Falha ao gerar análise');
