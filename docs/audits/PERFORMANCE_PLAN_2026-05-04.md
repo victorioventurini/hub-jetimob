@@ -29,11 +29,14 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
   (`team-checkin-summary` 962, `analysis-generate` 671, `invoke-vic` 552,
   `qbr-executive-report` 520, `mbr-summary` 513).
 
-### W1.F — Frontend (próximo)
-- 🟡 Quebrar `MbrV2Page` (1060) e `CreateKpiDialog` (1059) em sub-componentes.
-- 🟡 Adicionar `React.memo` em mais cards/listas (baseline 63 arquivos hoje).
+### W1.F — Frontend ✅ Parcial (2026-05-04)
+- ✅ **`esbuild.pure` em build de produção** remove `console.log/info/debug/warn`
+  do bundle final (mantém `console.error` para diagnóstico). Ataca os 352 `console.*`
+  em `src/` sem refactor manual. `debugger` também removido em prod.
+- 🟡 Quebrar `MbrV2Page` (1060) e `CreateKpiDialog` (1059) em sub-componentes — W2.F.
+- 🟡 Adicionar `React.memo` em mais cards/listas (baseline 63 arquivos hoje) — W2.F.
 - 🟡 Auditar `JSON.parse` (34 ocorrências) → migrar para `tryParseAiJson` onde
-  o input vier de LLM ou storage não-confiável.
+  o input vier de LLM ou storage não-confiável — W2.F.
 
 ---
 
