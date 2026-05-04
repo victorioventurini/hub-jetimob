@@ -961,9 +961,9 @@ export default function MbrPage() {
             persona="mbr"
             footer={
               <WizardStepFooter
-                onContinue={goNext}
+                onPrimary={goNext}
                 onBack={goBack}
-                continueLabel="Continuar para encerramento"
+                primaryLabel="Continuar para encerramento"
               />
             }
           />
