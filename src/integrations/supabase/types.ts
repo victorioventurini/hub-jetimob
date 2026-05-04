@@ -11761,6 +11761,10 @@ export type Database = {
         }
         Returns: string
       }
+      resolve_ticket_bu_for_user: {
+        Args: { p_ticket_id: string }
+        Returns: string
+      }
       resolve_work_email: { Args: { p_auth_user_id: string }; Returns: string }
       restore_project_v2: { Args: { p_project_id: string }; Returns: Json }
       rpc_decisions_inbox: {
