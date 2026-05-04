@@ -818,6 +818,11 @@ export default function MbrPage() {
             mbrPreKpiUpdatedCount={mbrPreAggregates.kpiUpdatedCount}
             mbrPreProjectJustifCount={mbrPreAggregates.projectJustifCount}
             mbrPreAgendaSuggestionCount={mbrPreAggregates.agendaSuggestionCount}
+            curation={panoramaCuration}
+            onCurationChange={handleCurationChange}
+            onGenerateCurationDraft={handleGenerateCurationDraft}
+            isGeneratingCuration={isGeneratingCuration}
+            onAddSuggestedDecision={handleAddSuggestedDecision}
             topSlot={
               <>
                 <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">
