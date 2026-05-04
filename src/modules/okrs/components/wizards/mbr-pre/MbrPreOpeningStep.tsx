@@ -365,6 +365,7 @@ export function MbrPreOpeningStep({
       krFinalStates,
       kpis: monthlyKpiSnapshots,
       overdueProjects: overdueProjectsForAi,
+      krTitleById,
     });
     if (result) {
       onMonthAnalysisChange(result);
@@ -378,6 +379,7 @@ export function MbrPreOpeningStep({
     krFinalStates,
     monthlyKpiSnapshots,
     overdueProjectsForAi,
+    krTitleById,
     generate,
     onMonthAnalysisChange,
   ]);
