@@ -1208,6 +1208,10 @@ Os seguintes padrões são **PROIBIDOS** no Hub da Jet. Não há exceções.
 | 13 | Select inline hardcoded para unidades (%, R$, dias) | Inconsistência de UX, usar `UnitSelect` |
 | 14 | Constante local `UNITS` em wizards/modais | Duplicação, usar `@/shared/constants/units` |
 | 15 | `.sort((a, b) => a.name.localeCompare(b.name))` sem null-guard | Crash se `name` for `undefined`/`null` |
+| 16 | Ler campos denormalizados de nome/título em snapshots de wizard (`*_name`, `*_title`) | Snapshots ficam stale; preferir lookup por ID — ver `mem://standards/wizard-snapshot-denormalized-fields-deprecation` |
+| 17 | Acessar `draft.xxx.subkey` direto sem fallback `?? {...}` | Drafts antigos quebram (`Cannot read properties of undefined`) — usar `safeXxx` memo (Seção Q.1) |
+| 18 | `.or("col.cs.{<uuid>}")` sem aspas no UUID | PostgREST 22P02; query inteira retorna vazio — usar `cs.{"<uuid>"}` (Seção Q.2) |
+| 19 | Importar páginas em `src/routes/*` com `lazy()` puro | Após deploy, "Failed to fetch dynamically imported module" — usar `lazyWithRetry` (Seção Q.3) |
 
 ### I.1 Null-Safe Sort — Padrão Obrigatório (v1.25.0)
 
