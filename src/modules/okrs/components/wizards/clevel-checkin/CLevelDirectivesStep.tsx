@@ -2,16 +2,12 @@
  * CLevelDirectivesStep - Diretrizes para comunicação
  */
 
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Megaphone,
-  Loader2,
-} from 'lucide-react';
+import { Megaphone } from 'lucide-react';
+import { WizardLastStepFooter } from '../shared';
+import { getRitualFinalizationCopy } from '@/modules/okrs/constants/ritualLabels';
 
 export interface CLevelDirectivesStepProps {
   value: string;
@@ -28,6 +24,8 @@ export function CLevelDirectivesStep({
   onBack,
   isSubmitting = false,
 }: CLevelDirectivesStepProps) {
+  const copy = getRitualFinalizationCopy('clevel-checkin');
+
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Header */}
@@ -66,26 +64,17 @@ export function CLevelDirectivesStep({
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onBack} disabled={isSubmitting}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar
-          </Button>
-
-          <Button 
-            onClick={onComplete}
-            className="flex-1 bg-success text-success-foreground hover:bg-success/90"
-            size="lg"
-            isLoading={isSubmitting}
-            loadingText="Concluindo..."
-          >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Concluir Check-in
-          </Button>
-        </div>
-      </div>
+      {/* Footer canônico com modal de confirmação */}
+      <WizardLastStepFooter
+        onBack={onBack}
+        backDisabled={isSubmitting}
+        onPrimary={onComplete}
+        primaryLoading={isSubmitting}
+        primaryLabel="Concluir Check-in"
+        confirmTitle={copy?.title ?? 'Concluir Check-in Executivo'}
+        confirmDescription={copy?.description}
+        confirmLabel={copy?.confirmLabel ?? 'Concluir check-in'}
+      />
     </div>
   );
 }
