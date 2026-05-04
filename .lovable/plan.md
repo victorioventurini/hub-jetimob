@@ -1,69 +1,37 @@
 ## Problema
 
-Hoje o `kpi_values` só tem `UNIQUE (kpi_id, reference_date)`. Isso permite **dois lançamentos consolidados no mesmo período** (ex.: Abril/2026) com `reference_date` diferentes (ex.: 2026-04-26 e 2026-04-30). Já existem 2 KPIs nessa situação.
+Na Abertura do Pré-MBR, a Análise IA do mês cita **UUIDs de KRs** (`a0761f3a...`) em vez do título. Causa raiz: na Onda 4 Fase 3, `krFinalStates` parou de gravar `krTitle` no draft (campo `@deprecated`). O hook `useMbrPreMonthAnalysis` faz fallback `krTitle ?? krId` — quando não há `krTitle`, manda o UUID como `title` para a LLM, que então cita o UUID.
 
-Regra desejada: **um KPI não pode ter mais de um valor `consolidated` no mesmo período** (`period_start`/`period_end`).
-
----
+KPIs já vão com `name` correto (via `useMbrPreTeamKpisMonthly`).
 
 ## Plano
 
-### 1. Limpeza dos duplicados existentes (data fix)
-Para cada par `(kpi_id, period_start, input_type='consolidated')` com mais de 1 registro, manter o **mais recente por `created_at`** e **soft-deletar** os anteriores convertendo para `partial` + anotando origem (`notes` apensado com prefixo `[auto-migrated:duplicate-consolidated]`).
-- Não excluímos fisicamente para preservar histórico/auditoria e não quebrar `sync_org_kr_from_primary_kpi`.
-- KPIs afetados (já mapeados): `c6d1834b-…` e `e0d15aca-…` em Abril/2026.
+### 1. Resolver títulos de KRs em runtime no Step
+Em `MbrPreOpeningStep`:
+- Coletar `krIds = krFinalStates.map(k => k.krId)`.
+- Chamar `useEntityLookup({ teamKrIds: krIds, orgKrIds: krIds })` (mesmo padrão dos renderers de relatório, que já fazem isso).
+- Construir `krTitleById = new Map<string, string>()` priorizando `teamKrs` e caindo em `orgKrs`.
+- Passar `krTitleById` para `generate(...)` (parâmetro já existente em `UseMbrPreMonthAnalysisParams`).
 
-> Alternativa rejeitada: hard delete. Mantemos como `partial` para preservar a trilha.
+### 2. Garantir resolução também na edge function (defesa em profundidade)
+Reforçar no `userPrompt` de `mbr-pre-month-analysis/index.ts`:
+- Frase explícita: **"Use SEMPRE o campo `title` dos KRs e `name` dos KPIs nas narrativas. NUNCA cite IDs/UUIDs."**
 
-### 2. Constraint no banco
-Criar **índice único parcial**:
-```sql
-CREATE UNIQUE INDEX kpi_values_one_consolidated_per_period
-  ON public.kpi_values (kpi_id, period_start)
-  WHERE input_type = 'consolidated';
-```
-- Só vale para `consolidated`. `partial` continua livre (vários ao longo do mês).
-- `period_start` é populado pelo trigger `kpi_validate_value_insert` antes do insert, então o índice fecha a brecha antes de qualquer escrita.
-- Sem CHECK constraint (em respeito ao canon "no CHECK constraints").
+### 3. Sanitizar saída da LLM (cinto + suspensórios)
+Em `useMbrPreMonthAnalysis.generate`, depois de receber a resposta:
+- Construir `idSet = new Set([...krIds, ...kpiIds])`.
+- Em `summary`, `highlights[].title/detail`, `offenders[].title/detail`, `risks[].title/detail`, `recommendations[]`: substituir qualquer ocorrência de UUID conhecido pelo título correspondente. Padrão UUID via regex `/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi` mapeado por `krTitleById`/`kpiNameById`. UUIDs desconhecidos viram `'(item)'`.
 
-### 3. Atualizar mensagem de erro do banco (opcional, mas recomendado)
-Estender o trigger `kpi_validate_value_insert` para checar explicitamente e levantar erro com **mensagem amigável em PT-BR** com `ERRCODE='23505'` (já é o code do unique violation) e detail estruturado, para o frontend conseguir interpretar:
-- Se já existir consolidado no mesmo período (excluindo o próprio id em UPDATE), `RAISE EXCEPTION USING ERRCODE='23505', MESSAGE='Já existe um valor consolidado para este período.', HINT='kpi_consolidated_period_conflict'`.
-
-### 4. UX de substituição (frontend)
-Em `KpiValueEntryForm` / `AddKpiValueDialog`:
-- Antes do submit, quando `input_type='consolidated'`, consultar `kpi_values` por `kpi_id` + período da `reference_date` (já temos `kpi_calculate_period` no DB; no client, derivar via `monthBoundsDate`/`useKpiData` evolução já carregada) para detectar conflito.
-- Se houver, abrir `AlertDialog` "Já existe um consolidado para Abril/2026 com valor X (lançado em DD/MM por Fulano). Substituir?".
-  - **Confirmar** → `updateKpiValue` no registro existente (mantém `id`, atualiza `value`, `reference_date`, `notes`).
-  - **Cancelar** → fecha modal, nada é salvo.
-- Capturar `error.code === '23505'` ou `hint==='kpi_consolidated_period_conflict'` em `addKpiValue` como rede de proteção e disparar o mesmo modal.
-
-### 5. Invalidações
-Sem mudanças — `updateKpiValue` já invalida `kpis.values`, `evolutionList`, `okrs.krPrimaryKpi*`.
-
-### 6. Memória
-Adicionar regra ao `mem://features/kpis/kpis-master-standard`: "1 consolidado por período por KPI; substituição via modal de confirmação".
-
----
+### 4. Memória
+Adicionar nota em `mem://features/rituals/...` ou no SSOT de wizards-snapshot-deprecation: **"Steps que enviam dados a LLMs devem resolver IDs → nomes via `useEntityLookup` antes de invocar a edge; nunca enviar IDs como `title`/`name`."**
 
 ## Arquivos afetados
 
-**Migração (DB)**
-- Soft-migrar duplicados existentes (`UPDATE kpi_values SET input_type='partial', notes=...`).
-- Criar índice único parcial `kpi_values_one_consolidated_per_period`.
-- Atualizar `kpi_validate_value_insert` para erro amigável.
-
-**Frontend**
-- `src/modules/kpis/components/shared/KpiValueEntryForm.tsx` — detectar conflito antes do submit.
-- `src/modules/kpis/components/AddKpiValueDialog.tsx` — `AlertDialog` de substituição + chamada a `updateKpiValue` quando confirmado.
-- `src/modules/kpis/hooks/useKpiData.ts` — `addKpiValue.onError` interpretando `23505/hint` para sinalizar conflito.
-
-**Memória**
-- `mem://features/kpis/kpis-master-standard` (append da regra).
-
----
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep.tsx` — `useEntityLookup` + `krTitleById` no `generate`.
+- `src/modules/okrs/hooks/useMbrPreMonthAnalysis.ts` — sanitização final do output (substituir UUIDs sobreviventes).
+- `supabase/functions/mbr-pre-month-analysis/index.ts` — instrução explícita no prompt.
+- `mem://standards/wizard-snapshot-denormalized-fields-deprecation` — nota sobre IA.
 
 ## Fora de escopo
-- Mudanças em `period_start`/`period_end`/`reference_date` semantics.
-- Backfill histórico de outros períodos sem duplicação detectada.
-- UI de "ver histórico de valores do mesmo período".
+- Outros ritos (Weekly, QBR) — auditar em loop separado se houver mesma incidência.
+- Re-introduzir `krTitle` denormalizado (vai contra o canon de Onda 4).
