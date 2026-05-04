@@ -411,7 +411,7 @@ export interface MbrPreTeamSubmission {
   kpiJustifications: MbrPreDraftData['kpiJustifications'];
   /** Razões para KPI sem dados (kpiId → texto). */
   kpiNoDataReasons: NonNullable<MbrPreDraftData['kpiNoDataReasons']>;
-  /** KPIs atualizados durante o Pré-MBR (kpiId → update). */
+  /** @deprecated v3.31.1 — ver `MbrPreDraftData.kpiOutdatedUpdates`. */
   kpiOutdatedUpdates: NonNullable<MbrPreDraftData['kpiOutdatedUpdates']>;
   /** Justificativas de projetos/milestones atrasados. */
   projectJustifications: MbrPreDraftData['projectJustifications'];
