@@ -59,8 +59,22 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
   - ✅ `CreateKpiDialog` (1059 → 263 LoC + `create-kpi/schema.ts` + 6 sections: Identity, TypeStatus, UnitFrequency, DirectionTarget, ScopeArea, Ownership, Advanced) — 2026-05-04
   - ✅ `ExecutiveQuarterReviewPage` (887 → 194 LoC + `executive-quarter-review/` com `useQuarterReviewData`, 5 sections, 3 components, types/helpers) — 2026-05-04
   - ✅ `CreateTicketPage` (879 → 226 LoC + `create-ticket/` com `schema`, `useTicketAttachments`, `useTicketFormDerivations` e 4 sections: Type, BasicInfo, DueDate, Message) — 2026-05-04
-- **F.3** `@tanstack/react-virtual` para listas > 50 itens.
-- **F.4** Reduzir `console.*` em produção (352 em src, 405 em functions).
+  - 🟡 **Pendentes (>700 LoC) — adiados para próxima janela:**
+    - `SettingsUiCatalog` (886) — showcase/catálogo, baixo risco; pode ficar por último
+    - `JetimoberDialog` (852)
+    - `CollaboratorSummary` (849, wizard step) — risco médio
+    - `CollaboratorCheckinPage` (793)
+    - `UserProfile/index` (789)
+    - `QbrKpiAnalysisStep` (785, wizard step) — risco médio
+    - `Profile` (760)
+    - `QbrMeetingOkrReviewStep` (727, wizard step) — risco médio
+    - `InternalRoutingRuleDialog` (719)
+    - `QbrPrePage` (710)
+- **F.3** `@tanstack/react-virtual` para listas > 50 itens. — 🟡 **pendente** (não iniciado)
+- **F.4** Reduzir `console.*` em produção (352 em src, 405 em functions). — 🟡 **pendente** parcial: `esbuild.pure` já remove em build prod (W1.F); falta limpeza no source p/ DX e em Edge Functions.
+- **B.2** `Promise.all` em agregações restantes — 🟡 **pendente** auditoria.
+- **B.3** Enforce `correlation-id` em todas as Edge Functions via middleware — 🟡 **pendente**.
+- **F.1** `React.memo` lint-enforced — 🟡 **pendente** (baseline 63 arquivos; sem regra ESLint ainda).
 
 ---
 
