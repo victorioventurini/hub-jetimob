@@ -10965,10 +10965,7 @@ export type Database = {
           p_perf_days?: number
           p_wizard_days?: number
         }
-        Returns: {
-          rows_deleted: number
-          table_name: string
-        }[]
+        Returns: undefined
       }
       cleanup_orphan_memberships: { Args: never; Returns: Json }
       close_ritual_evaluation: { Args: { p_session_id: string }; Returns: Json }
