@@ -223,6 +223,107 @@ export function MbrDecisionsStep({
               </div>
             </>
           )}
+
+          {/* Itens sinalizados pelos times no Pré-MBR */}
+          {mbrPreSurfacedItems.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2 text-sm">
+                  <Lightbulb className="h-4 w-4 text-status-amber" />
+                  Sinalizações dos Pré-MBRs ({mbrPreSurfacedItems.length})
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Itens trazidos pelos líderes que pedem decisão ou são dependências cross-team
+                </p>
+                {mbrPreSurfacedItems.map((item) => {
+                  const teamName = teamNamesById[item.teamId] ?? 'Time';
+                  const kindLabel = item.kind === 'needs_decision' ? 'Pede decisão' : 'Cross-team';
+                  return (
+                    <Card key={item.key} className="border-dashed">
+                      <CardContent className="p-3">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="h-4 w-4 text-status-amber flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm">{item.text}</p>
+                            <div className="flex gap-1.5 mt-1">
+                              <Badge variant="outline" className="text-[10px]">{teamName}</Badge>
+                              <Badge variant="outline" className="text-[10px]">{kindLabel}</Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const decision: TeamCheckinDecision = {
+                                id: `mbr-pre-${item.key}-${Date.now()}`,
+                                text: `[${teamName}] ${item.text}`,
+                                category: item.kind === 'needs_decision' ? 'decision' : 'next_step',
+                                sourceStep: 'decisions',
+                              };
+                              onDecisionsChange([...decisions, decision]);
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Sugestões de pauta agregadas dos Pré-MBRs */}
+          {mbrPreAgendaSuggestions.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2 text-sm">
+                  <Target className="h-4 w-4 text-primary" />
+                  Sugestões de pauta ({mbrPreAgendaSuggestions.length})
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Tópicos sugeridos pelos líderes para discutir neste MBR
+                </p>
+                {mbrPreAgendaSuggestions.map((s) => {
+                  const teamName = teamNamesById[s.teamId] ?? 'Time';
+                  return (
+                    <Card key={s.key} className="border-dashed">
+                      <CardContent className="p-3">
+                        <div className="flex items-start gap-2">
+                          <Target className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{s.title}</p>
+                            {s.detail && (
+                              <p className="text-xs text-muted-foreground mt-0.5">{s.detail}</p>
+                            )}
+                            <Badge variant="outline" className="text-[10px] mt-1">{teamName}</Badge>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const decision: TeamCheckinDecision = {
+                                id: `mbr-pre-agenda-${s.key}-${Date.now()}`,
+                                text: `[${teamName}] ${s.title}${s.detail ? ` — ${s.detail}` : ''}`,
+                                category: 'decision',
+                                sourceStep: 'decisions',
+                              };
+                              onDecisionsChange([...decisions, decision]);
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </ScrollArea>
 
