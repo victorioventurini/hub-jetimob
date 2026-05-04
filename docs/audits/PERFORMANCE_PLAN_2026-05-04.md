@@ -48,7 +48,8 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
   - ✅ `mbr-summary` (513 → 195 LoC index + 3 módulos: `types`, `data-loader`, `agents`) — 2026-05-04
   - ✅ `collaborator-checkin-summary` (508 → 180 LoC index + 3 módulos: `types`, `data-loader`, `agents`) — 2026-05-04
   - ✅ Helpers `_shared/ai-json.ts` e `_shared/invoke-agent.ts` extraídos e adotados por todas as funções acima — 2026-05-04
-  - 🟡 Restantes: `invoke-vic` (552), `qbr-executive-report` (520)
+  - ✅ `qbr-executive-report` (520 → 219 LoC index + 4 módulos: `types`, `extractors`, `data-loader`, `prompts`) — 2026-05-04
+  - 🟡 Restante: `invoke-vic` (552)
 - **B.2** `Promise.all` em agregações restantes (`invoke-vic` não usa hoje).
 - **B.3** Enforce `correlation-id` em todas as Edge Functions (validar via middleware).
 - **F.1** `React.memo` em 100% de cards/listas — meta: lint-enforced.
