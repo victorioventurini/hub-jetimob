@@ -58,6 +58,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
   - ✅ `MbrPage` (1014 → 610 LoC + 5 módulos: `constants`, `useMbrPreDerivations`, `useMbrDataSources`, `useMbrSeedingEffects`, `useScorecardMetrics`) — 2026-05-04
   - ✅ `CreateKpiDialog` (1059 → 263 LoC + `create-kpi/schema.ts` + 6 sections: Identity, TypeStatus, UnitFrequency, DirectionTarget, ScopeArea, Ownership, Advanced) — 2026-05-04
   - ✅ `ExecutiveQuarterReviewPage` (887 → 194 LoC + `executive-quarter-review/` com `useQuarterReviewData`, 5 sections, 3 components, types/helpers) — 2026-05-04
+  - ✅ `CreateTicketPage` (879 → 226 LoC + `create-ticket/` com `schema`, `useTicketAttachments`, `useTicketFormDerivations` e 4 sections: Type, BasicInfo, DueDate, Message) — 2026-05-04
 - **F.3** `@tanstack/react-virtual` para listas > 50 itens.
 - **F.4** Reduzir `console.*` em produção (352 em src, 405 em functions).
 
