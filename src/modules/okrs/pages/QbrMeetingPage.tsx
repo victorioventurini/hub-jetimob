@@ -555,6 +555,21 @@ export default function QbrMeetingPage() {
           />
         );
 
+      case 'evaluation':
+        return (
+          <EvaluationCollectionStep
+            sessionId={sessionId ?? null}
+            persona="qbr-meeting"
+            footer={
+              <WizardStepFooter
+                onPrimary={goNext}
+                onBack={goBack}
+                primaryLabel="Continuar para encerramento"
+              />
+            }
+          />
+        );
+
       case 'closing':
         return (
           <QbrMeetingClosingStep
