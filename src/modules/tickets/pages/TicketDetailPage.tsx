@@ -43,7 +43,6 @@ export default function TicketDetailPage() {
   }, [isExternal, currentBu?.id, externalContacts]);
 
   const { data: ticket, isLoading: isLoadingTicket, error: ticketError } = useTicket(id!);
-  const { switchBu, userBus } = useBu();
   const { data: resolvedTicketBuId } = useResolveTicketBu(!ticket && !isLoadingTicket ? id : null);
   const resolvedBuMembership = useMemo(
     () => (resolvedTicketBuId ? userBus.find((m) => m.bu_id === resolvedTicketBuId) : null),
