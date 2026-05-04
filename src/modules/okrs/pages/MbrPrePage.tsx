@@ -521,6 +521,12 @@ export default function MbrPrePage() {
             onKpiSnapshotsChange={(kpiSnapshots) => updateDraft({ kpiSnapshots })}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
+            noDataReasons={draft.data.kpiNoDataReasons ?? {}}
+            onNoDataReasonChange={(kpiId, value) =>
+              updateDraft({
+                kpiNoDataReasons: { ...(draft.data.kpiNoDataReasons ?? {}), [kpiId]: value },
+              })
+            }
             onContinue={goNext}
             onBack={goBack}
           />
