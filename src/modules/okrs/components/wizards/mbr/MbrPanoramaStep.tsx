@@ -34,6 +34,7 @@ import { formatValueWithUnit } from '@/shared/constants/units';
 import { variationVsLast, variationVsTarget as deriveVariationVsTarget } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
+import { MbrPanoramaCurationCard } from './MbrPanoramaCurationCard';
 
 // ============================================================
 // TYPES
@@ -76,6 +77,12 @@ export interface MbrPanoramaStepProps {
   mbrPreProjectJustifCount?: number;
   /** Sugestões de pauta agregadas dos pré-MBRs dos times */
   mbrPreAgendaSuggestionCount?: number;
+  /** Curadoria executiva opcional (Abertura Executiva curada por IA). */
+  curation?: import('@/modules/okrs/types/wizard').MbrPanoramaCuration;
+  onCurationChange?: (next: import('@/modules/okrs/types/wizard').MbrPanoramaCuration) => void;
+  onGenerateCurationDraft?: () => void | Promise<void>;
+  isGeneratingCuration?: boolean;
+  onAddSuggestedDecision?: (title: string, category?: string) => void;
 }
 
 interface KpiGroup {
@@ -353,6 +360,11 @@ export function MbrPanoramaStep({
   mbrPreKpiUpdatedCount = 0,
   mbrPreProjectJustifCount = 0,
   mbrPreAgendaSuggestionCount = 0,
+  curation,
+  onCurationChange,
+  onGenerateCurationDraft,
+  isGeneratingCuration = false,
+  onAddSuggestedDecision,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
@@ -427,6 +439,16 @@ export function MbrPanoramaStep({
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
           {topSlot}
+
+          {curation && onCurationChange && (
+            <MbrPanoramaCurationCard
+              curation={curation}
+              onCurationChange={onCurationChange}
+              onGenerateDraft={onGenerateCurationDraft}
+              isGenerating={isGeneratingCuration}
+              onAddSuggestedDecision={onAddSuggestedDecision}
+            />
+          )}
 
           {/* ── Preparação dos Times (Pré-MBR) ── */}
           {mbrPreSubmittedCount > 0 && (
