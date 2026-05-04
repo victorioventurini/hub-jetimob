@@ -222,9 +222,13 @@ const RichKpiCard = memo(function RichKpiCard({
   const showAction = mode !== 'view';
   const isRequired = mode === 'justify-required' || mode === 'explain-no-data';
 
+  const isSplitNoData = !!splitNoDataReason && mode === 'explain-no-data';
+
   const actionLabel =
     mode === 'explain-no-data'
-      ? 'Por que está sem dados? Plano para destravar'
+      ? isSplitNoData
+        ? 'Plano para destravar a coleta'
+        : 'Por que está sem dados? Plano para destravar'
       : mode === 'justify-required'
         ? 'Justificativa e plano de ação'
         : mode === 'justify-optional'
@@ -233,7 +237,9 @@ const RichKpiCard = memo(function RichKpiCard({
 
   const actionHint =
     mode === 'explain-no-data'
-      ? 'Obrigatório — explique a ausência de registros e descreva o plano para coletar e disponibilizar.'
+      ? isSplitNoData
+        ? 'Obrigatório — descreva o plano e prazo para coletar e disponibilizar o dado.'
+        : 'Obrigatório — explique a ausência de registros e descreva o plano para coletar e disponibilizar.'
       : mode === 'justify-required'
         ? 'Obrigatório — explique o motivo do desvio e descreva as próximas ações para corrigir a rota.'
         : mode === 'justify-optional'
