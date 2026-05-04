@@ -1,52 +1,8 @@
 // AI agent orchestration for team-checkin-summary
 import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
-import { loadAgent, buildSystemPrompt } from "../_shared/agent-loader.ts";
-import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
+import { invokeAgentDirect } from "../_shared/invoke-agent.ts";
 import { extractSettled, tryParseAiJson } from "../_shared/ai-json.ts";
 import type { AgentContextData, AgentSections } from "./types.ts";
-
-async function invokeAgentDirect(
-  serviceClient: EdgeSupabaseClient,
-  agentSlug: string,
-  userPromptContent: string,
-  buId: string,
-  requestId: string,
-): Promise<string> {
-  const loaded = await loadAgent(serviceClient, agentSlug, buId, requestId);
-  if (!loaded) {
-    console.warn(`[${requestId}] Agent ${agentSlug} not found or disabled, using fallback`);
-    return '';
-  }
-  if (!loaded.isEnabledInBu) {
-    console.warn(`[${requestId}] Agent ${agentSlug} disabled for BU ${buId}`);
-    return '';
-  }
-
-  const llmConfig = await resolveLLMConfig(serviceClient, loaded.agent.model_name);
-  if (!llmConfig) {
-    console.error(`[${requestId}] No LLM config resolved for agent ${agentSlug}`);
-    throw new Error(`NO_LLM_CONFIG for ${agentSlug}`);
-  }
-
-  const systemPrompt = await buildSystemPrompt(
-    serviceClient,
-    loaded.agent,
-    loaded.effectiveSystemPrompt,
-    buId,
-    requestId,
-  );
-
-  const messages: LLMMessage[] = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPromptContent },
-  ];
-
-  const maxTokens = loaded.agent.max_tokens || llmConfig.maxTokens;
-  const temperature = loaded.agent.temperature ?? llmConfig.temperature;
-
-  const response = await llmComplete(llmConfig, messages, { maxTokens, temperature });
-  return response.content || '';
-}
 
 export async function orchestrateAgents(
   serviceClient: EdgeSupabaseClient,
