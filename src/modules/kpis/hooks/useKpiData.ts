@@ -417,10 +417,13 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
         description: "O valor do KPI foi salvo com sucesso.",
       });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      // Conflito de consolidado por período é tratado via modal no dialog (não exibir toast).
+      const hint = (error as { hint?: string } | null)?.hint ?? '';
+      if (typeof hint === 'string' && hint.startsWith('kpi_consolidated_period_conflict')) return;
       toast({
         title: "Erro ao registrar valor",
-        description: error.message,
+        description: (error as { message?: string } | null)?.message ?? 'Erro desconhecido',
         variant: "destructive",
       });
     },
