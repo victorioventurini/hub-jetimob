@@ -93,7 +93,7 @@ export const ritualRoutes = (
     {/* MBR */}
     <Route path="/rituals/mbr-pre" element={<RitualRoute><MbrPrePage /></RitualRoute>} />
     <Route path="/rituals/mbr" element={<RitualRoute requiresBuAdmin><MbrPage /></RitualRoute>} />
-    <Route path="/rituals/mbr-v2" element={<RitualRoute requiresBuAdmin><MbrV2Page /></RitualRoute>} />
+    <Route path="/rituals/mbr-v2" element={<Navigate to="/rituals/mbr" replace />} />
     
     {/* QBR */}
     <Route path="/rituals/qbr-pre" element={<RitualRoute><QbrPrePage /></RitualRoute>} />
