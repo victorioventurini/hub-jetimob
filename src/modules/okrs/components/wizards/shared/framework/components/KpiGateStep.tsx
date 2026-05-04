@@ -563,11 +563,20 @@ export const KpiGateStep = memo(function KpiGateStep({
           noTarget;
         if (!requiresPlan) continue;
         const text = (justifications?.[item.id] ?? '').trim();
-        if (text.length === 0) list.push(item);
+        // Quando split: explain-no-data exige TANTO razão quanto plano.
+        const isExplainNoData =
+          bucket.id === 'overdue' ||
+          (bucket.id === 'teamContext' && item.status === 'unknown');
+        if (splitNoDataReason && isExplainNoData) {
+          const reason = (noDataReasons?.[item.id] ?? '').trim();
+          if (text.length === 0 || reason.length === 0) list.push(item);
+        } else if (text.length === 0) {
+          list.push(item);
+        }
       }
     }
     return list;
-  }, [isRichLike, buckets, justifications]);
+  }, [isRichLike, buckets, justifications, splitNoDataReason, noDataReasons]);
 
   const showGate = !!config.requireResolution && isRichLike;
   const hasGateBlock = showGate && mandatoryUnaddressed.length > 0;
