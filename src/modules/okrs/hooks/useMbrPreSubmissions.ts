@@ -202,6 +202,28 @@ export function useMbrPreSubmissions({
           kpisToCreate: Array.isArray(draftData.kpisToCreate) ? draftData.kpisToCreate : [],
           krFinalStates: Array.isArray(draftData.krFinalStates) ? draftData.krFinalStates : [],
           addendums,
+          kpiSnapshots: Array.isArray(draftData.kpiSnapshots) ? draftData.kpiSnapshots : [],
+          kpiJustifications: (draftData.kpiJustifications && typeof draftData.kpiJustifications === 'object')
+            ? draftData.kpiJustifications
+            : {},
+          kpiNoDataReasons: (draftData.kpiNoDataReasons && typeof draftData.kpiNoDataReasons === 'object')
+            ? draftData.kpiNoDataReasons
+            : {},
+          kpiOutdatedUpdates: (draftData.kpiOutdatedUpdates && typeof draftData.kpiOutdatedUpdates === 'object')
+            ? draftData.kpiOutdatedUpdates
+            : {},
+          projectJustifications: (draftData.projectJustifications && typeof draftData.projectJustifications === 'object')
+            ? {
+                projects: draftData.projectJustifications.projects ?? {},
+                milestones: draftData.projectJustifications.milestones ?? {},
+              }
+            : { projects: {}, milestones: {} },
+          krJustifications: (draftData.krJustifications && typeof draftData.krJustifications === 'object')
+            ? draftData.krJustifications
+            : {},
+          agendaSuggestions: Array.isArray(draftData.agendaSuggestions) ? draftData.agendaSuggestions : [],
+          monthAnalysis: draftData.monthAnalysis ?? null,
+          decisions: Array.isArray(draftData.decisions) ? draftData.decisions : [],
         };
       }
 
