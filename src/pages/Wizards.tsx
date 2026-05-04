@@ -191,18 +191,6 @@ const WIZARD_SECTIONS: WizardSection[] = [
         requiresTeam: false,
         route: '/rituals/mbr',
       },
-      {
-        id: 'mbr-v2',
-        name: 'MBR v2 (beta)',
-        description: 'Nova estrutura: por objetivo organizacional, com KPI Gate de 4 caminhos',
-        icon: Briefcase,
-        module: 'okrs',
-        requiredRole: 'executive',
-        badge: 'Beta',
-        badgeVariant: 'outline',
-        requiresTeam: false,
-        route: '/rituals/mbr-v2',
-      },
     ],
   },
 ];
