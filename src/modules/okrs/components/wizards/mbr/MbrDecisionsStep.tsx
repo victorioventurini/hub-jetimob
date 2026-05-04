@@ -38,6 +38,13 @@ export interface MbrDecisionsStepProps {
   }>;
   /** Mapa teamId → nome para exibir origem dos itens sinalizados */
   teamNamesById?: Record<string, string>;
+  /** Sugestões de pauta agregadas dos pré-MBRs dos times */
+  mbrPreAgendaSuggestions?: Array<{
+    key: string;
+    teamId: string;
+    title: string;
+    detail?: string;
+  }>;
   onContinue: () => void;
   onBack: () => void;
 }
