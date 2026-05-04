@@ -21,6 +21,7 @@ import {
   useAllOrgObjectivesView,
   useCarryOverDecisions,
   useMbrPreSubmissions,
+  useMbrOpeningCuration,
 } from '@/modules/okrs/hooks';
 import { usePreviousMbrPendingItems } from '@/modules/okrs/hooks/usePreviousMbrPendingItems';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
@@ -53,7 +54,9 @@ import type {
   MbrKpiSnapshot,
   MbrOrgOkrSnapshot,
   MbrTeamOkrSnapshot,
+  MbrPanoramaCuration,
 } from '@/modules/okrs/types/wizard';
+import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
 // ============================================================
 // CONSTANTS
@@ -95,6 +98,7 @@ const DEFAULT_DATA: MbrDraftData = {
   },
   ritualFeedback: [],
   qbrFollowUpItems: [],
+  panoramaCuration: EMPTY_MBR_PANORAMA_CURATION,
 };
 
 // ============================================================
@@ -699,6 +703,92 @@ export default function MbrPage() {
     }
   }, [clearDraft, navigate, buSupabase, quarterlyCycle, currentBu]);
 
+  // ── Panorama Curation (Abertura Executiva curada por IA) ──
+  // Espelha o padrão do Weekly: invoca `curador-orquestrador` com insumos mensais
+  // (via edge `mbr-curate-opening`) e mapeia para `MbrPanoramaCuration`.
+  const panoramaCuration = draft.data.panoramaCuration ?? EMPTY_MBR_PANORAMA_CURATION;
+
+  const orgObjectivesForCurator = useMemo(() => {
+    return (orgObjView ?? []).map((o) => ({
+      objectiveId: o.id,
+      title: o.title,
+      progress: o.aggregatedProgress ?? 0,
+      trend: undefined,
+      status: o.aggregatedStatus,
+    }));
+  }, [orgObjView]);
+
+  const curationCoverage = useMemo(() => {
+    const totalTeams = draft.data.teamOkrSnapshots.length;
+    return {
+      totalTeams,
+      submittedTeams: mbrPreSubmittedCount,
+      pendingTeams: Math.max(0, totalTeams - mbrPreSubmittedCount),
+    };
+  }, [draft.data.teamOkrSnapshots.length, mbrPreSubmittedCount]);
+
+  const curationAggregates = useMemo(
+    () => ({
+      needsDecisionCount: mbrPreSurfacedItems.filter((i) => i.kind === 'needs_decision').length,
+      crossDepCount: mbrPreSurfacedItems.filter((i) => i.kind === 'cross_dependency').length,
+      kpiJustifCount: mbrPreAggregates.kpiJustifCount,
+      kpiUpdatedCount: mbrPreAggregates.kpiUpdatedCount,
+      projectJustifCount: mbrPreAggregates.projectJustifCount,
+      agendaSuggestionCount: mbrPreAggregates.agendaSuggestionCount,
+    }),
+    [mbrPreSurfacedItems, mbrPreAggregates],
+  );
+
+  const { isGenerating: isGeneratingCuration, generate: generateCuration } = useMbrOpeningCuration({
+    referenceMonth: draft.data.referenceMonth,
+    kpiSnapshots: draft.data.kpiSnapshots,
+    orgObjectives: orgObjectivesForCurator,
+    mbrPreAggregates: curationAggregates,
+    coverage: curationCoverage,
+  });
+
+  const handleCurationChange = useCallback(
+    (next: MbrPanoramaCuration) => {
+      updateDraft({ panoramaCuration: next });
+    },
+    [updateDraft],
+  );
+
+  const handleGenerateCurationDraft = useCallback(async () => {
+    const result = await generateCuration(panoramaCuration);
+    if (!result) return;
+    if (result.reason) {
+      toast.warning('Não foi possível gerar o rascunho com IA. Modo manual ativado.');
+    } else {
+      toast.success('Rascunho da Abertura Executiva gerado.');
+    }
+    updateDraft({ panoramaCuration: result.next });
+  }, [generateCuration, panoramaCuration, updateDraft]);
+
+  const handleAddSuggestedDecision = useCallback(
+    (title: string, category?: string) => {
+      const allowed = ['decision', 'focus_adjustment', 'next_step', 'strategic_proposal'] as const;
+      const safeCategory = (allowed as readonly string[]).includes(category ?? '')
+        ? (category as TeamCheckinDecision['category'])
+        : 'decision';
+      const newDecision: TeamCheckinDecision = {
+        id: `mbr-curated-decision-${Date.now()}`,
+        text: title,
+        category: safeCategory,
+        sourceStep: 'panorama',
+      };
+      const nextSuggested = panoramaCuration.suggestedDecisions.map((s) =>
+        s.title === title ? { ...s, added: true } : s,
+      );
+      updateDraft({
+        decisions: [...draft.data.decisions, newDecision],
+        panoramaCuration: { ...panoramaCuration, suggestedDecisions: nextSuggested },
+      });
+      toast.success('Decisão adicionada à pauta.');
+    },
+    [draft.data.decisions, panoramaCuration, updateDraft],
+  );
+
   // Loading
   if (isLoadingCycles || isLoadingKpis || isLoadingOkrs || isLoadingTeamOkrs) {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
@@ -731,6 +821,11 @@ export default function MbrPage() {
             mbrPreKpiUpdatedCount={mbrPreAggregates.kpiUpdatedCount}
             mbrPreProjectJustifCount={mbrPreAggregates.projectJustifCount}
             mbrPreAgendaSuggestionCount={mbrPreAggregates.agendaSuggestionCount}
+            curation={panoramaCuration}
+            onCurationChange={handleCurationChange}
+            onGenerateCurationDraft={handleGenerateCurationDraft}
+            isGeneratingCuration={isGeneratingCuration}
+            onAddSuggestedDecision={handleAddSuggestedDecision}
             topSlot={
               <>
                 <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">

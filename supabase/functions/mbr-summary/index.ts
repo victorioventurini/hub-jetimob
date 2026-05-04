@@ -386,12 +386,18 @@ serve(async (req) => {
       decisions?: Array<Record<string, unknown>>;
       checklist?: Record<string, unknown>;
       referenceMonth?: string;
+      panoramaCuration?: {
+        summary?: string;
+        origin?: 'ai-curated' | 'manual';
+        state?: 'draft' | 'reviewed' | 'approved';
+      } | null;
     } | null;
     const kpiSnapshots = snapshotData?.kpiSnapshots || [];
     const orgOkrSnapshots = snapshotData?.orgOkrSnapshots || [];
     const decisions = snapshotData?.decisions || [];
     const checklist = snapshotData?.checklist || {};
     const referenceMonth = snapshotData?.referenceMonth || '';
+    const curatedOpening = (snapshotData?.panoramaCuration?.summary || '').trim();
 
     // Build agent context from snapshot (immutable data)
     const agentContext: MbrAgentContext = {
@@ -432,6 +438,13 @@ serve(async (req) => {
     // Orchestrate AI agents
     console.log(`[${requestId}] Orchestrating AI agents for MBR summary...`);
     const sections = await orchestrateAgents(serviceClient, buId, agentContext, requestId);
+
+    // Prioriza a Abertura Executiva curada por IA + revisada por humano (Step 1).
+    // Mantém intenção do facilitador no e-mail final, conforme padrão Weekly.
+    if (curatedOpening) {
+      console.log(`[${requestId}] Using curated executive opening from snapshot (${curatedOpening.length} chars)`);
+      sections.opening_text = curatedOpening;
+    }
 
     // Build notification metadata
     const currentDatetime = formatDate(new Date());
