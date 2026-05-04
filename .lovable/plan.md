@@ -1,99 +1,125 @@
-# Plano — Modal de confirmação canônico ao finalizar ritos
+## Pré-checklist canônico (cumprido)
 
-## Pré-checklist (executado)
-- TCR `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md` v3.29.1 — consultado
-- `docs/canonical/WIZARDS_FRAMEWORK_BOUNDARY.md` — fronteira `@/wizards-framework` respeitada
-- Memórias: Wizards Master SSOT + Ritual Labels SSOT
-- Componentes existentes auditados:
-  - `src/components/ui/confirm-dialog.tsx` — **canônico** (`ConfirmDialog`, variants `destructive/warning/info/default`, `isLoading`)
-  - `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx` — `WizardLastStepFooter` **já existe** com confirmação (mas reimplementa `AlertDialog` em vez de usar `ConfirmDialog`)
-  - 10 ritos já usam `WizardLastStepFooter`; 4 wizards finalizam sem ele
+- ✅ `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md:2226` — MBR v4 tem step canônico `opening-executive` (hoje renderizado como "Panorama Executivo" via legado `MbrPanoramaStep`). É **exatamente** o slot da Abertura Executiva.
+- ✅ `docs/canonical/AI_AGENTS_PHILOSOPHY.md:71-72,300` — *"`curador-orquestrador` invocado com insumos mensais → Abertura Executiva do MBR"* está no roadmap canônico do agente.
+- ✅ `AI_AGENTS_PHILOSOPHY.md:230-231` — **PROIBIDO** criar `curador-mbr`. Reutilizar `curador-orquestrador` com insumos mensais.
+- ✅ Agente confirmado no banco: `curador-orquestrador` ativo (mesmo do Weekly).
+- ✅ Edge `mbr-summary` existente continua dedicada ao **email pós-finalização** — não confundir com curadoria em tela.
+- ✅ Memories: BU isolation (`currentBu.id`), `realProfileId`, `tryParseAiJson`, `Promise.all` na edge, sem `select('*')`, sem CHECK constraints, sem `manualChunks`.
 
-## Diagnóstico
+## Contexto
 
-### Inconsistências atuais
-1. `WizardLastStepFooter` reimplementa o AlertDialog manualmente. Deveria delegar ao `ConfirmDialog` canônico (DRY + variantes coerentes).
-2. Cobertura incompleta — finalizam **sem modal**:
-   - `clevel-checkin/CLevelDirectivesStep.tsx` (Button manual `onClick={onComplete}`)
-   - `team-okr-creation/TeamOkrShareStep.tsx` (último step do OKR creation)
-   - `team-kr-creation/KrReviewStep.tsx` (último step do KR creation)
-   - `leader-prep/LeaderProjectsStep.tsx` (último step da leader-prep)
-3. O **framework genérico** `shared/framework/components/SummaryAndSubmitStep.tsx` e `ClosingStep.tsx` precisam usar o mesmo padrão para que QUALQUER wizard novo herde a confirmação.
-4. Texto da confirmação atual é genérico ("Concluir ritual"). Deve permitir customização leve por rito (título/descrição/label do botão), mantendo defaults canônicos.
+Hoje o MBR só usa IA depois de finalizado (email via `mbr-summary`). O usuário quer o mesmo padrão do **Weekly**: durante o rito, gerar um **rascunho executivo curado por IA** que o facilitador edita antes de conduzir a reunião. O TCR e a Filosofia de Agentes já preveem este caso explicitamente — **estamos apenas materializando uma decisão já canonizada**.
 
-## Mudanças propostas
+## Onde aparece
 
-### 1. Refatorar `WizardLastStepFooter` para usar `ConfirmDialog`
-Arquivo: `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx`
+**Step 1 do MBR — `MbrPanoramaStep` (slot canônico `opening-executive`)**, espelhando exatamente a "Abertura Executiva" do Weekly (`WeeklyExecutiveOpeningStep`).
 
-- Remover o bloco `<AlertDialog>...</AlertDialog>` manual.
-- Renderizar `<ConfirmDialog variant="info" />` (importado de `@/components/ui/confirm-dialog`).
-- Adicionar props opcionais ao `WizardLastStepFooter`:
-  - `confirmTitle?: string` (default: `"Concluir ritual"`)
-  - `confirmDescription?: ReactNode` (default: texto atual)
-  - `confirmLabel?: string` (default: `"Confirmar conclusão"`)
-  - `confirmVariant?: ConfirmDialogVariant` (default: `"info"`)
-- Propagar `isLoading` ao `ConfirmDialog` quando `primaryLoading` for true (evita duplo-clique).
-- Remover imports não usados de `AlertDialog*` no arquivo.
+Novo bloco `MbrPanoramaCurationCard` no topo do conteúdo, **acima** dos KPIs por escopo e abaixo do `RitualPreparationStatus`:
 
-### 2. Aplicar `WizardLastStepFooter` nos 4 wizards faltantes
-
-| Arquivo | Texto sugerido (confirmTitle / confirmDescription) |
-|---|---|
-| `clevel-checkin/CLevelDirectivesStep.tsx` | "Concluir Check-in C-Level" / "As diretrizes serão registradas e enviadas." |
-| `team-okr-creation/TeamOkrShareStep.tsx` | "Publicar OKR do time" / "O OKR será publicado e ficará visível para o time." |
-| `team-kr-creation/KrReviewStep.tsx` | "Publicar KR" / "O Key Result será publicado e ficará visível para o time." |
-| `leader-prep/LeaderProjectsStep.tsx` | "Concluir preparação do líder" / texto curto análogo |
-
-Em cada um:
-- Trocar `WizardStepFooter` (com `primaryLabel="Continuar"` ou Button manual) por `WizardLastStepFooter`.
-- Manter `onPrimary` / `primaryLoading` existentes.
-
-### 3. Aplicar nos componentes do framework genérico
-Arquivos:
-- `src/modules/okrs/components/wizards/shared/framework/components/SummaryAndSubmitStep.tsx`
-- `src/modules/okrs/components/wizards/shared/framework/components/ClosingStep.tsx`
-
-Garantir que ambos rendam `WizardLastStepFooter` em vez de `WizardStepFooter`. Mantém wizards futuros gerados pelo framework com modal por default.
-
-### 4. SSOT de cópia (texto da confirmação)
-Adicionar constantes em `src/modules/okrs/constants/ritualLabels.ts` (já é SSOT):
-```ts
-export const RITUAL_FINALIZATION_COPY: Record<RitualType, {
-  title: string;
-  description: string;
-  confirmLabel: string;
-}> = { /* mbr-pre, mbr, qbr-pre, qbr-meeting, qbr-post, weekly, pre-weekly,
-       team-checkin, collaborator, clevel-checkin, leader-prep,
-       team-okr-creation, team-kr-creation, qbr-pre-clevel */ };
+```text
+┌─ Curadoria do mês ─────────────────────── [Rascunho/Revisado/Aprovado] ┐
+│  Modo manual — peça ao curador para gerar rascunho a partir dos        │
+│  pré-MBRs do mês.        [✨ Gerar rascunho com IA]                    │
+├────────────────────────────────────────────────────────────────────────┤
+│  ✨ Resumo do mês             (textarea editável, 4 linhas)            │
+│  📊 KPIs críticos             (lista headline + impacto, editável)     │
+│  ⚠  Alertas por bloco          (performance / projetos / pessoas)      │
+│  💡 Decisões sugeridas         (chips → "+ adicionar" → Decisions step)│
+└────────────────────────────────────────────────────────────────────────┘
 ```
-Cada wizard passa `RITUAL_FINALIZATION_COPY[ritualType]` ao `WizardLastStepFooter`. Defaults do componente cobrem ausência da chave.
 
-### 5. Testes
-Atualizar/adicionar:
-- `shared/__tests__/WizardStepFooter.test.tsx` — confirmar que clique em "Finalizar e enviar" abre o `ConfirmDialog` (não `AlertDialog` direto), respeita `confirmTitle/Description/Label`, e respeita `isLoading`.
-- Os testes existentes de Closing/Summary que mockam o footer continuam válidos (interface preservada).
+Comportamento idêntico ao Weekly: `origin: 'manual' | 'ai-curated'`, banner inicial "modo manual", botão "Regenerar" quando já existe rascunho, transições registradas com `realProfileId`.
 
-## Detalhes técnicos
-- **Sem breaking change** na API de `WizardLastStepFooter` (props novas são todas opcionais).
-- **Sem nova dependência**.
-- **Sem migração de banco**.
-- O componente canônico `ConfirmDialog` já trata a11y (Radix `AlertDialog` por baixo), `Loader2`, `disableCancelOnLoading`.
-- Mantido o ponto de entrada `@/wizards-framework` para SummaryAndSubmit/Closing — mudança é interna ao framework.
+## Backend
 
-## Arquivos afetados (~10)
-1. `src/modules/okrs/components/wizards/shared/WizardStepFooter.tsx` (refator)
-2. `src/modules/okrs/constants/ritualLabels.ts` (novo SSOT de cópia)
-3. `src/modules/okrs/components/wizards/clevel-checkin/CLevelDirectivesStep.tsx`
-4. `src/modules/okrs/components/wizards/team-okr-creation/TeamOkrShareStep.tsx`
-5. `src/modules/okrs/components/wizards/team-kr-creation/KrReviewStep.tsx`
-6. `src/modules/okrs/components/wizards/leader-prep/LeaderProjectsStep.tsx`
-7. `src/modules/okrs/components/wizards/shared/framework/components/SummaryAndSubmitStep.tsx`
-8. `src/modules/okrs/components/wizards/shared/framework/components/ClosingStep.tsx`
-9. `src/modules/okrs/components/wizards/shared/__tests__/WizardStepFooter.test.tsx` (atualizar)
+Nova edge function **`mbr-curate-opening`** (espelho exato de `weekly-curate-opening`). Justificativa:
 
-## Validação pós-implementação
-- Em cada um dos 14 ritos, ao clicar no botão final aparece o modal canônico `ConfirmDialog`.
-- "Cancelar" fecha sem efeito; "Confirmar" dispara o submit e desabilita botões durante `isLoading`.
-- Texto do modal varia por rito conforme `RITUAL_FINALIZATION_COPY`.
-- Build limpo, sem regressão visual no footer.
+- Reutiliza o **mesmo agente** `curador-orquestrador` (sem violar AI_AGENTS_PHILOSOPHY) — a diferença é só o **insumo** (mensal vs. semanal), conforme o próprio doc canônico exige.
+- Não dá para reaproveitar `weekly-curate-opening` (input/output diferentes: KPIs estratégicos + objetivos org + agregados pré-MBR vs. temas de pré-weekly).
+- Não dá para reaproveitar `mbr-summary`: aquela tem semântica diferente (idempotência via `summary_sent_at`, dispara email/notificação ao final).
+
+**Input:**
+```ts
+{
+  bu_id, buName, referenceMonth,
+  criticalKpis: [{ id, name, currentValue, target, ragStatus, variationVsLastMonth }],
+  orgObjectives: [{ title, progress, trend, status }],
+  mbrPreAggregates: { needsDecisionCount, crossDepCount, kpiJustifCount, projectJustifCount, agendaSuggestionCount },
+  coverage: { totalTeams, submittedTeams, pendingTeams }
+}
+```
+
+**Orquestração** (`Promise.all`, padrão `EDGE_PERFORMANCE_STANDARD`):
+1. `curador-orquestrador` → `executiveSummary`, `alertsByBlock`, `suggestedDecisions`
+2. `analista-kpis` → `criticalKpiHighlights` (headline + impacto estratégico)
+
+**Output JSON via tool calling** (sem regex frágil):
+```ts
+{
+  origin: 'ai-curated' | 'manual',
+  reason?: string,
+  generatedAt: string,
+  output: {
+    executiveSummary: string,
+    criticalKpiHighlights: Array<{ kpiId, headline, impact }>,
+    alertsByBlock: { performance: string[], projetos: string[], pessoas: string[] },
+    suggestedDecisions: Array<{ title, category }>,
+    coverage: { rate, level }
+  }
+}
+```
+
+Reutiliza `_shared/middleware.ts`, `_shared/agent-loader.ts`, `_shared/llm-client.ts`. Padrão Edge v4. **Sem migrações de banco.**
+
+## Frontend
+
+### Novos arquivos
+
+1. **`src/modules/okrs/types/wizard/mbr.ts`** (estender) — adicionar `MbrPanoramaCuration` (state, origin, generatedAt, summary, criticalKpiHighlights, alertsByBlock, suggestedDecisions, transitions). Persistido em `draft.data.panoramaCuration`.
+
+2. **`src/modules/okrs/hooks/useMbrOpeningCuration.ts`** — espelho de `useWeeklyOpeningCuration`:
+   - Invoca `mbr-curate-opening`.
+   - Mapeia output → `MbrPanoramaCuration`.
+   - Estados `isGenerating`, `error`.
+   - Fallback `origin: 'manual'` quando IA falha/desabilitada.
+
+3. **`src/modules/okrs/components/wizards/mbr/MbrPanoramaCurationCard.tsx`** — UI do bloco. Reutiliza `Card`, `Textarea`, `Badge`, `Button`, `Sparkles/Wand2/Loader2/AlertTriangle`. **Mesmo vocabulário visual do Weekly.**
+
+### Mudanças
+
+- **`MbrPanoramaStep.tsx`**: nova prop `curation`, `onCurationChange`, `onGenerateDraft`, `isGenerating`. Renderiza `MbrPanoramaCurationCard` acima dos KPIs por escopo (após `RitualPreparationStatus`).
+- **`MbrPage.tsx`**:
+  - Default do draft inclui `panoramaCuration` (origin: 'manual', state: 'draft', vazio).
+  - Instancia `useMbrOpeningCuration` com os agregados já calculados (KPIs críticos, orgObjView, mbrPreAggregates, cobertura).
+  - Passa props ao `MbrPanoramaStep`.
+  - Decisões sugeridas → botão "+ adicionar como decisão" empurra para `draft.data.decisions` (mesmo formato que `InlineDecisionInput`).
+- **`mbr-summary` (edge existente)**: pequeno ajuste — quando `panoramaCuration.summary` existe no snapshot, usa como insumo prioritário do `opening_text` (preserva intenção humana editada na reunião).
+
+### Index/barrel
+- `src/modules/okrs/components/wizards/mbr/index.ts` exporta `MbrPanoramaCurationCard`.
+- `src/modules/okrs/hooks/index.ts` exporta `useMbrOpeningCuration` (segue `HOOKS_BARREL_STANDARD`).
+
+## Resiliência (não-negociáveis)
+
+- `tryParseAiJson` no parsing do output do LLM (Core memory: AI Safety).
+- Edge com timeout/fallback centralizados (memory: Vic Invoke Resilience aplicado no padrão).
+- BU isolation via `currentBu.id` (Core memory).
+- `realProfileId` em `transitions[].by` (Core memory: Identity).
+- `Promise.all` na orquestração (memory: Edge Function Performance).
+- Sem `manualChunks`, sem `select('*')`, sem CHECK constraints.
+
+## Fora de escopo
+
+- ❌ Não criar `curador-mbr` (proibido pela Filosofia de Agentes).
+- ❌ Não migrar o step para o framework canônico v4 puro (`opening-executive` → `BalanceStep`) — fora do escopo deste pedido; o MBR já roda na v4 com o componente legado preservado conforme `WIZARDS_FRAMEWORK_BOUNDARY.md`.
+- ❌ Não adicionar curadoria nos demais steps (Encerramento permanece como está).
+- ❌ Sem mudanças em DB.
+
+## Testes
+
+- Novo `supabase/functions/mbr-curate-opening/index.test.ts`:
+  - Payload válido com KPIs críticos → `ai-curated`.
+  - Payload sem KPIs críticos e sem agregados → `manual` (reason: `INSUFFICIENT_INPUT`).
+  - Agente desabilitado na BU → `manual` (reason: `AGENT_DISABLED`).
+- QA manual: gerar → editar resumo → continuar wizard → finalizar → confirmar email final usa o `summary` editado.
