@@ -1,156 +1,70 @@
+## Problema
 
-# Avaliação Anônima de Ritos Coletivos — Plano Final
+Na rota `/rituals/mbr-pre?team=…&step=opening`, o card **"Análise IA do mês"** é gerado a partir de dados que **não refletem o mês de referência** (ex.: abril) nem necessariamente os KPIs do time selecionado:
 
-**Status:** aprovado para implementação
-**Escopo:** MBR, MBR-first, QBR-Meeting, QBR-Post
-**Fora de escopo:** Weekly, QBR-Pre-CLevel, Pré-QBR, Check-ins individuais e Pré-Weekly (ritos individuais/operacionais — feedback inline atual nos dois primeiros será REMOVIDO)
+1. **KPIs sem ancoragem temporal.** Os `kpiSnapshots` enviados à edge function `mbr-pre-month-analysis` vêm do draft, populado pelo step "Indicadores do Time" (`MbrPreKpiGateStep`). Esse step usa `useKpisForWizardV2` que entrega o **estado atual** do KPI (último valor lançado) — `currentValue` não é o valor consolidado de abril e `previousValue` é sempre `null` (`gateItemToSnapshot` força `previousValue: null`). Resultado: a análise da IA fala do "mês" usando números do dia de hoje.
 
----
+2. **Draft vazio quando o usuário abre direto na Abertura.** `STEP_ORDER` é `data-validation → opening → kpi-analysis → …`. Se o líder cair em `?step=opening` num draft novo, `draft.data.kpiSnapshots = []` e a IA é gerada **sem KPI algum** — só com KRs e projetos atrasados.
 
-## 1. Banco de Dados (1 migração)
+3. **Falta dado de "mês anterior" para o comparativo.** O bloco "Comparativo vs mês anterior" e o prompt da IA dependem de `previousValue`, mas hoje ele nunca é populado. A própria UI mostra "Nenhum KPI subiu/caiu este mês" mesmo havendo dados.
 
-**1.1 Sessões — short-code de avaliação**
-```sql
-ALTER TABLE okr_wizard_sessions
-  ADD COLUMN evaluation_short_code TEXT UNIQUE,
-  ADD COLUMN evaluation_open_at    TIMESTAMPTZ,
-  ADD COLUMN evaluation_closed_at  TIMESTAMPTZ;
-```
-Função `generate_ritual_short_code()` → 4 chars `[A-Z2-9]` (sem 0/O/1/I/L), case-insensitive na busca via `UPPER()`.
+KRs (`krFinalStates`) e projetos atrasados (`useMbrPreTeamProjects`) **já estão corretos**: ambos são ancorados no `monthBoundsDate(refMonth)` e filtrados por `team_id`. O problema está restrito ao pipeline de KPIs que abastece a Abertura.
 
-**1.2 Tabela `ritual_evaluation_responses`** — sem `profile_id`, sem IP, sem user-agent. Campos: `session_id`, `bu_id`, `score_value/quality/decisions/time` (smallint), `change_one_thing` (text obrigatório), `what_worked` (text opcional), `submitted_at`, `deleted_at`.
+## Solução proposta
 
-**1.3 Validações por trigger** (sem CHECK — `mem://standards/database/check-constraint-prohibition`):
-- scores ∈ [1,5]
-- `length(change_one_thing) BETWEEN 3 AND 1000`
-- `length(what_worked) <= 1000`
-- bloqueia INSERT se `evaluation_open_at IS NULL` ou `evaluation_closed_at IS NOT NULL` ou `completed_at IS NOT NULL`
+Introduzir um snapshot **mensal** de KPIs do time para a Abertura, independente do que o draft acumula no step seguinte. A análise IA passa a consumir esse snapshot ancorado em `referenceMonth`.
 
-**1.4 RLS** — SELECT direto bloqueado (`USING (false)`); leitura só via view agregada e RPC pós-fechamento.
+### 1. Novo hook `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`
 
-**1.5 View `v_ritual_evaluation_summary`** (`security_invoker = true`) — médias das 4 dimensões + `response_count` + `expected_count` (vem de `ritual_session_attendance.is_present`).
+Localização: `src/modules/okrs/hooks/useMbrPreTeamKpisMonthly.ts`
 
-**1.6 RPCs (`SECURITY DEFINER`)**
-| RPC | Auth | Função |
-|---|---|---|
-| `get_public_ritual_evaluation_form(p_short_code)` | público | `{session_id, ritual_label, show_what_worked, is_open}` |
-| `submit_ritual_evaluation(...)` | público | Valida + insere; rate-limit 10/min por IP via `pg_temp` table |
-| `open_ritual_evaluation(p_session_id)` | auth + `okrs.evaluation.open:as_conductor` | Gera código, seta `evaluation_open_at` |
-| `close_ritual_evaluation(p_session_id)` | auth + `okrs.evaluation.close:as_conductor` | Seta `evaluation_closed_at` |
-| `get_ritual_evaluation_live_count(p_session_id)` | auth + acesso à sessão | `{response_count, expected_count}` |
-| `get_ritual_evaluation_open_answers(p_session_id)` | auth + `okrs.evaluation.view:as_conductor` | Só executa se `evaluation_closed_at IS NOT NULL` |
+Responsabilidades:
+- Buscar KPIs onde `responsible_team_id = teamId` (BU-scoped, soft-delete-aware, sem `select('*')`).
+- Para cada KPI, buscar de `kpi_values` o último valor consolidado com `reference_date` dentro de `monthBoundsDate(referenceMonth)` (mês alvo) **e** dentro de `monthBoundsDate(previousMonthOf(referenceMonth))` (mês anterior).
+- Devolver `MbrKpiSnapshot[]` com `currentValue` (mês alvo), `previousValue` (mês anterior), `target`, `unit`, `ragStatus` derivado canonicamente, e `name`.
+- Usar `mbrKeys.preTeamKpisMonthly(buId, teamId, referenceMonth)` (acrescentar helper em `src/lib/queryKeys/okrs.ts`).
+- `staleTime: 5 * 60 * 1000`, `enabled` quando `buSupabase && currentBuId && teamId`.
 
-**1.7 Permission keys** em `permissionsCatalog.ts` — incluídas em templates Líder de BU, Admin BU, Plataforma.
+### 2. `MbrPreOpeningStep` consome o hook em vez do draft
 
----
+- Substituir a prop `kpiSnapshots` por dados do novo hook (chamado dentro do step usando `teamId` + `referenceMonth` que já recebe).
+- Recalcular `stats.kpisAttention/Total` e `kpiDeltas` a partir do snapshot mensal.
+- Ao chamar `generate(...)` para a IA, enviar o snapshot mensal (com `previousValue` populado) — não o do draft.
+- Mostrar `Skeleton` enquanto o hook está carregando.
 
-## 2. Frontend — Framework (agnóstico)
+### 3. Invalidar análise cacheada quando `referenceMonth` muda
 
-**2.1 SSOT** `framework/config/evaluationConfig.ts` — espelha `attendanceConfig.ts`:
-```ts
-EVALUATION_CONFIG: {
-  mbr:           { enabled: true, showWhatWorked: true },
-  'mbr-first':   { enabled: true, showWhatWorked: true },
-  'qbr-meeting': { enabled: true, showWhatWorked: true },
-  'qbr-post':    { enabled: true, showWhatWorked: true },
-  // todos os outros: { enabled: false }
-}
-```
+Já existe (`MbrPrePage` faz `updateDraft({ referenceMonth: next, monthAnalysis: null })`). Manter — apenas confirmar que o novo hook re-busca via query key.
 
-**2.2 Componentes em `framework/components/evaluation/`**
-- `EvaluationCollectionStep.tsx` — step novo, posicionado **antes** do `ClosingStep`. Estados: idle → opened (QR + counter) → closed (resumo). `qrcode.react` para o QR.
-- `EvaluationLiveCounter.tsx` — polling 3s; "X de Y · ●●●○○".
-- `EvaluationSummary.tsx` — 4 medidores + 2 listas de citações pós-fechamento.
-- `EvaluationStartCard.tsx` — botão "Abrir avaliação" + URL curta + QR.
+### 4. Não alterar o pipeline do KPI Gate (step "Indicadores do Time")
 
-**2.3 Hooks** em `src/modules/okrs/hooks/evaluation/`:
-- `useOpenRitualEvaluation`, `useCloseRitualEvaluation`
-- `useRitualEvaluationLiveCount` (polling)
-- `useRitualEvaluationSummary`, `useRitualEvaluationOpenAnswers`
-- `usePublicRitualEvaluationForm`, `useSubmitRitualEvaluation` (usam `globalClient`)
+O `MbrPreKpiGateStep` continua produzindo o `draft.data.kpiSnapshots` que alimenta o Resumo/Submissão. Esse snapshot tem outra função (gate de bucket + impactAssessment) e será mantido como SSOT do **gate**, não da **análise IA mensal**.
 
-**2.4 Query keys** `src/lib/queryKeys/ritualEvaluation.ts` + tests (padrão de `attendance.ts`).
+### 5. Edge function permanece igual
 
----
+`mbr-pre-month-analysis` já aceita `previousValue`, `currentValue`, `target`, `ragStatus` e calcula `deltaPct` server-side. Nenhuma mudança necessária; ela vai apenas receber dados corretos.
 
-## 3. Frontend — Página pública
+## Aspectos técnicos
 
-**3.1 Rota** em `src/routes/public.routes.tsx` via `lazyWithRetry`:
-```
-/p/r/:shortCode → PublicRitualEvaluation
-```
-`PUBLIC_PATHS` atualizado.
+- Respeitar **BU isolation** (`bu_id = currentBuId` em todas as queries) — Core memory.
+- Usar `useBuScopedSupabase` (não `globalClient`) — Core memory.
+- Filtragem `.is('deleted_at', null)` em `kpis` (e `cancelled_at` se aplicável — verificar via `mem://standards/soft-delete-policy-v1`).
+- Listar colunas explícitas (proibido `select('*')`).
+- Query keys via helper em `src/lib/queryKeys/okrs.ts` (não inline).
+- Não introduzir `React.memo` no Opening (não é list/card de alta densidade); seguir `frontend-memoization-standard`.
+- Tipagem: reusar `MbrKpiSnapshot` de `@/modules/okrs/types/wizard`.
 
-**3.2 `src/pages/PublicRitualEvaluation.tsx`** — usa `globalClient` (PRE-BU). Estados: loading, form, sent, expired, invalid, alreadySubmitted (controle local via `localStorage[shortCode]`, nunca enviado ao servidor). Reusa `StarRatingInput` de `src/components/ui/star-rating.tsx`. Mobile-first.
+## Fora de escopo
 
-**3.3 Mensagem clara de anonimato** no topo: "Suas respostas são anônimas. O sistema não registra sua identidade."
+- Alterar como `MbrPreKpiGateStep` calcula `currentValue` (continua sendo o estado atual — é apropriado para o gate).
+- Mudar UI/copy do card de Análise IA.
+- Mudar a edge function ou o agente `analista-estrategico`.
+- Pré-MBR de outros times além do selecionado pela URL (`?team=`).
 
----
+## Verificação
 
-## 4. Refator dos ritos atuais
-
-**4.1 Adicionar step de avaliação ANTES do encerramento em:**
-- `MbrPage.tsx` + `MbrClosingStep.tsx`
-- `QbrMeetingPage.tsx` + `QbrMeetingClosingStep.tsx`
-- `QbrPostPage.tsx` + `QbrPostClosingStep.tsx`
-- `MbrFirstPage.tsx` (se existir como página separada; senão, mesma config de `mbr`)
-
-**4.2 Remover `ritualFeedback` inline (RitualImprovementFeedback)** desses 4 wizards. Tipos `MbrTeamSubmission`/`QbrTeamSubmission`: marcar `ritualFeedback` como `@deprecated` (retrocompat para snapshots antigos).
-
-**4.3 Remover feedback inline também de:**
-- `WeeklyClosingStep.tsx` (decisão do usuário: Weekly fora do escopo)
-- `QbrPreCLevelPage.tsx` (decisão do usuário: QBR-Pre-CLevel fora do escopo)
-
-**4.4 Histórico (`RitualHistoryPage`)**
-- Novo `RitualEvaluationSection.tsx` — lê `v_ritual_evaluation_summary` + `get_ritual_evaluation_open_answers`. Layout: 4 medidores horizontais + 2 colunas de citações.
-- `RitualFeedbackSection.tsx` e `ParticipantEvaluationsSection.tsx` viram **fallback legado** (badge "Formato anterior") quando a sessão não tem registros novos.
-
----
-
-## 5. Princípios intransigíveis (verificados contra canônicos)
-
-1. **Anonimato técnico real** — tabela sem qualquer FK ou metadado vinculável a pessoa.
-2. **Framework agnóstico** — zero `if (persona === ...)` em `framework/components/` (`WIZARDS_FRAMEWORK_BOUNDARY`).
-3. **BU resolvida server-side** — cliente público nunca informa `bu_id` (`BU_SCOPED_SUPABASE_RULES`).
-4. **Soft-delete** — `deleted_at` na tabela; anulação só por sessão inteira (preserva anonimato).
-5. **Validações em trigger**, não CHECK.
-6. **Permission keys**, nunca hardcode de roles.
-7. **Query keys via `src/lib/queryKeys/ritualEvaluation.ts`**.
-8. **`globalClient`** na página pública; `lazyWithRetry` na rota.
-9. **Snapshot imutável pós-`completed_at`** (mesma janela do `ritual-reopen-mechanism`).
-
----
-
-## 6. Riscos & mitigações
-
-| Risco | Mitigação |
-|---|---|
-| Brute-force do `short_code` (33⁴ ≈ 1.2M) | Rate-limit 10 submits/min por IP na RPC + código só funciona com `evaluation_open_at` setado + expira em 24h |
-| Resposta dupla via cache limpo | Aceito (anonimato > deduplicação). UI orienta "uma resposta por dispositivo" |
-| Vazamento via timing/log | RPC retorna apenas `{ok}`; sem logging do payload |
-| Quebra de histórico antigo | `RitualEvaluationSection` faz fallback para `reflectionData.data.ritualFeedback` legado |
-
----
-
-## 7. Não-objetivos desta entrega
-
-- Notificações pedindo avaliação (briefing exige captura ao vivo)
-- Dashboard de tendência longitudinal (fase 2: `/okrs/rituals/health`)
-- Edição/retorno individual ao respondente
-- Aplicação a Weekly e QBR-Pre-CLevel
-
----
-
-## 8. Entregáveis
-
-1. Migração única (tabela + view + RPCs + triggers + permission keys)
-2. `evaluationConfig.ts` + 4 componentes de framework
-3. Rota pública + `PublicRitualEvaluation.tsx`
-4. 7 hooks novos
-5. Refator de 4 wizards (adicionar step) + 2 wizards (remover feedback inline)
-6. `RitualEvaluationSection` + fallback legado no histórico
-7. Query keys + tests
-8. Memória `mem://features/rituals/anonymous-evaluation-standard` + atualização do índice
-9. Doc canônico `docs/canonical/RITUAL_EVALUATION_PLAN.md`
-10. Tests: RPC (sessão fechada, código inválido, score fora de range, rate-limit), parser pública, agregação, anti-duplo-voto local
-
+1. Abrir `/rituals/mbr-pre?team=<comercial>&step=opening`.
+2. Confirmar que o "Resumo de abril" mostra os KPIs do time comercial com valores **de abril**.
+3. Comparativo "vs mês anterior" exibe deltas reais (março → abril).
+4. Clicar "Gerar análise" e validar que a narrativa cita números do mês de abril (não atuais).
+5. Trocar mês de referência via `ReferenceMonthPicker` (se admin) → snapshot e análise são re-buscados/regenerados.

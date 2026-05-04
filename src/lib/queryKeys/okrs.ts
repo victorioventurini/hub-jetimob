@@ -514,6 +514,12 @@ export const mbrKeys = {
     teamId: string | null | undefined,
     referenceMonth?: string | null,
   ) => ['mbr-pre', 'team-projects', buId, teamId, referenceMonth ?? null] as const,
+  /** Snapshot mensal de KPIs do time para a Abertura do Pré-MBR (current vs previous month). */
+  preTeamKpisMonthly: (
+    buId: string | null,
+    teamId: string | null | undefined,
+    referenceMonth: string,
+  ) => ['mbr-pre', 'team-kpis-monthly', buId, teamId, referenceMonth] as const,
   /**
    * Submissões `mbr-pre` agregadas no mês de referência (BU-scoped).
    * Consumido pelo MBR para alimentar Panorama / KPI Gate / Detail / Decisions.

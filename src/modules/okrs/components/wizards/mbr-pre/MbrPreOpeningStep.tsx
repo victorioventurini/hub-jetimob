@@ -46,6 +46,7 @@ import {
   useRitualGreetingContext,
   useMbrPreTeamProjects,
   useMbrPreMonthAnalysis,
+  useMbrPreTeamKpisMonthly,
 } from '@/modules/okrs/hooks';
 import type {
   MbrKpiSnapshot,
@@ -70,7 +71,12 @@ export interface MbrPreOpeningStepProps {
   /** Handler ao trocar o mês alvo (deve invalidar análise IA cacheada). */
   onReferenceMonthChange?: (next: string) => void;
   krFinalStates: MbrPreDraftData['krFinalStates'];
-  kpiSnapshots: MbrKpiSnapshot[];
+  /**
+   * @deprecated Mantido por compat — a Abertura agora deriva o snapshot
+   * mensal direto via `useMbrPreTeamKpisMonthly` (ancorado em `referenceMonth`).
+   * O draft.kpiSnapshots continua sendo SSOT do KPI Gate (step seguinte).
+   */
+  kpiSnapshots?: MbrKpiSnapshot[];
   monthAnalysis?: MbrPreMonthAnalysis | null;
   onMonthAnalysisChange: (analysis: MbrPreMonthAnalysis | null) => void;
   onContinue: () => void;
@@ -236,7 +242,8 @@ export function MbrPreOpeningStep({
   referenceMonth: referenceMonthProp,
   onReferenceMonthChange,
   krFinalStates,
-  kpiSnapshots,
+  // `kpiSnapshots` (prop, do draft) não é mais usado para a análise mensal —
+  // a Abertura busca seu próprio snapshot ancorado em `referenceMonth`.
   monthAnalysis,
   onMonthAnalysisChange,
   onContinue,
@@ -275,6 +282,13 @@ export function MbrPreOpeningStep({
     isLoading: loadingProjects,
   } = useMbrPreTeamProjects(teamId, referenceMonth);
 
+  // Snapshot mensal de KPIs do time (current = mês de referência, previous = mês anterior).
+  // SSOT da Abertura — ancorado em `referenceMonth`, independente do draft do KPI Gate.
+  const {
+    snapshots: monthlyKpiSnapshots,
+    isLoading: loadingKpis,
+  } = useMbrPreTeamKpisMonthly(teamId, referenceMonth);
+
   const { isGenerating, error: genError, generate } = useMbrPreMonthAnalysis();
 
   const stats = useMemo(() => {
@@ -284,8 +298,8 @@ export function MbrPreOpeningStep({
       return s.includes('risk') || s.includes('off') || s.includes('stagnant');
     }).length;
 
-    const kpisTotal = kpiSnapshots.length;
-    const kpisAttention = kpiSnapshots.filter(
+    const kpisTotal = monthlyKpiSnapshots.length;
+    const kpisAttention = monthlyKpiSnapshots.filter(
       (k) => k.ragStatus === 'red' || k.ragStatus === 'yellow',
     ).length;
 
@@ -297,9 +311,9 @@ export function MbrPreOpeningStep({
       kpisTotal, kpisAttention,
       projectsTotal, projectsAttention,
     };
-  }, [krFinalStates, kpiSnapshots, projects.length, overdueProjectIds.length, overdueMilestoneIds.length]);
+  }, [krFinalStates, monthlyKpiSnapshots, projects.length, overdueProjectIds.length, overdueMilestoneIds.length]);
 
-  const kpiDeltas = useMemo(() => computeKpiDeltas(kpiSnapshots), [kpiSnapshots]);
+  const kpiDeltas = useMemo(() => computeKpiDeltas(monthlyKpiSnapshots), [monthlyKpiSnapshots]);
 
   const overdueProjectsForAi = useMemo(() => {
     const overdueIdSet = new Set(overdueProjectIds);
@@ -329,7 +343,7 @@ export function MbrPreOpeningStep({
       teamName,
       referenceMonth,
       krFinalStates,
-      kpis: kpiSnapshots,
+      kpis: monthlyKpiSnapshots,
       overdueProjects: overdueProjectsForAi,
     });
     if (result) {
@@ -342,13 +356,13 @@ export function MbrPreOpeningStep({
     teamName,
     referenceMonth,
     krFinalStates,
-    kpiSnapshots,
+    monthlyKpiSnapshots,
     overdueProjectsForAi,
     generate,
     onMonthAnalysisChange,
   ]);
 
-  const showLoading = !!isLoading || loadingProjects;
+  const showLoading = !!isLoading || loadingProjects || loadingKpis;
   const hasComparisonData = kpiDeltas.ups.length + kpiDeltas.downs.length > 0;
 
   return (
