@@ -1850,3 +1850,83 @@ const progress = Math.max(0, ((current - baseline) / (target - baseline)) * 100)
 // ou
 style={{ width: `${Math.min(100, progress)}%` }}
 ```
+
+---
+
+## P. Pré-Checklist Obrigatório
+
+> 📚 Versão renderizada do bloco "PRÉ-CHECKLIST OBRIGATÓRIO" definido em `<project-knowledge>`. Espelho legível para PR templates e onboarding. Doc dedicado: [`PRE_CHECKLIST.md`](./PRE_CHECKLIST.md).
+
+**EXECUTAR SEMPRE** antes de propor implementações, correções ou debugging:
+
+1. [ ] Consultar `TECHNICAL_CONTEXT_REGISTRY.md` para contexto geral
+2. [ ] Consultar `IDENTITY_CONVENTION.md` se envolver usuários/perfis
+3. [ ] Consultar `PERMISSIONS_AND_RBAC_MODEL.md` se envolver permissões
+4. [ ] Consultar `DATA_MODEL_REGISTRY.md` se envolver tabelas/entidades
+5. [ ] Verificar se já existe implementação similar no codebase
+
+> ⚠️ **Se não consultar a documentação antes → qualquer proposta está automaticamente incorreta.**
+
+---
+
+## Q. Padrões Recentes (v1.31.0)
+
+### Q.1 Resilient Draft Hydration
+
+```
+⚠️ REGRA: Drafts antigos podem ter shape parcial. Sempre usar fallbacks `?? {...}` e memos `safeXxx`.
+```
+
+Exemplo canônico — `MbrPreProjectsStep.tsx`:
+
+```tsx
+const safeProjectJustifications = useMemo(() => ({
+  projects: projectJustifications?.projects ?? {},
+  milestones: projectJustifications?.milestones ?? {},
+}), [projectJustifications]);
+```
+
+Aplicar **tanto na validação** quanto na **renderização**. Caller também deve passar fallback ao prop e aos handlers.
+
+### Q.2 PostgREST `or()` Array-Contains Quoting
+
+```
+⚠️ REGRA: Dentro de `.or()`, valores UUID em `cs.{}` exigem aspas — sem aspas, o filtro inteiro retorna vazio com 22P02.
+```
+
+| ✅ CORRETO | ❌ PROIBIDO |
+|------------|-------------|
+| `.or('linked_kr_ids.cs.{"<uuid>"}')` | `.or('linked_kr_ids.cs.{<uuid>}')` |
+
+SSOT: `mem://standards/postgrest-or-array-contains-quoting`.
+
+### Q.3 Lazy With Retry
+
+```
+⚠️ REGRA: Toda rota em `src/routes/*` DEVE usar `lazyWithRetry()` em vez de `lazy()` puro.
+```
+
+Evita `Failed to fetch dynamically imported module` após deploy quando o cliente tem o HTML antigo apontando para um chunk que já não existe. SSOT: `mem://standards/frontend-lazy-with-retry`.
+
+### Q.4 Entity Name Length Limits
+
+| Entidade | Limite | Trigger DB |
+|----------|--------|------------|
+| Org Objective | 120 | ✅ |
+| Team Objective | 120 | ✅ |
+| Key Result | 160 | ✅ |
+| Initiative | 120 | ✅ |
+| Project | 100 | ✅ |
+| Milestone | 80 | ✅ |
+
+Aplicar mesmo limite no UI (`maxLength`) e na validação. SSOT: `mem://standards/entity-name-length-limits`.
+
+### Q.5 Pré-MBR — KPI Gate por Mês de Referência
+
+A análise de KPIs/KRs no Pré-MBR usa **apenas** dados do mês de referência:
+
+- Hook: `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`
+- Classificador: `classifyKpiGateBucketsFromMonthlySnapshots()` em `stepContentAdapters.ts`
+- Buckets: `overdue` / `critical` / `attention` / `healthy` (sem `guardrailViolated` / `teamContext`)
+
+Doc: [`MBR_RITUAL.md`](./MBR_RITUAL.md).
