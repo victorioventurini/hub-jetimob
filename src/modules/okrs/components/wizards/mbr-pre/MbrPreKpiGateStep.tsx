@@ -76,6 +76,8 @@ export function MbrPreKpiGateStep({
   onKpiSnapshotsChange,
   decisions,
   onDecisionsChange,
+  noDataReasons,
+  onNoDataReasonChange,
   onContinue,
   onBack,
 }: MbrPreKpiGateStepProps) {
