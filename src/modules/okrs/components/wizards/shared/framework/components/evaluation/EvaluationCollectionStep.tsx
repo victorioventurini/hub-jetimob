@@ -31,34 +31,29 @@ import type { WizardPersona } from '@/modules/okrs/types/wizard';
 export interface EvaluationCollectionStepProps {
   sessionId: string | null;
   persona: WizardPersona;
-  /** short_code já existente na sessão (se foi aberto antes) */
-  initialShortCode?: string | null;
-  evaluationOpenAt?: string | null;
-  evaluationClosedAt?: string | null;
   footer: React.ReactNode;
 }
 
 export const EvaluationCollectionStep = memo(function EvaluationCollectionStep({
   sessionId,
   persona,
-  initialShortCode = null,
-  evaluationOpenAt = null,
-  evaluationClosedAt = null,
   footer,
 }: EvaluationCollectionStepProps) {
   const config = getEvaluationConfig(persona);
   const openMut = useOpenRitualEvaluation();
   const closeMut = useCloseRitualEvaluation();
 
-  // shortCode: do servidor (summary) tem prioridade sobre prop inicial
+  // Estado servidor é fonte de verdade. Mutações têm prioridade durante a sessão.
   const summaryQuery = useRitualEvaluationSummary(sessionId);
-  const isOpen = !!evaluationOpenAt && !evaluationClosedAt;
-  const wasClosedByMutation = closeMut.isSuccess || !!evaluationClosedAt;
+  const serverOpenAt = summaryQuery.data?.evaluationOpenAt ?? null;
+  const serverClosedAt = summaryQuery.data?.evaluationClosedAt ?? null;
+  const serverShortCode = summaryQuery.data?.evaluationShortCode ?? null;
 
-  const shortCode =
-    openMut.data?.shortCode ??
-    initialShortCode ??
-    null;
+  const isOpen = !!serverOpenAt && !serverClosedAt;
+  const wasClosedByMutation = closeMut.isSuccess || !!serverClosedAt;
+
+  const shortCode = openMut.data?.shortCode ?? serverShortCode ?? null;
+
 
   const liveCountQuery = useRitualEvaluationLiveCount(sessionId, {
     enabled: !!sessionId && !!shortCode && !wasClosedByMutation,
