@@ -1,103 +1,60 @@
-# Plano — MBR v2 paralelo (rito novo, v1 intacto)
+## Problema
 
-## Objetivo
-Criar um rito MBR v2 organizado por **objetivos organizacionais** (não por times), com tempo proporcional à severidade, KPI Gate canônico de 4 caminhos e classificação de problema explícita — **sem alterar o MBR v1 nem o Pré-MBR v1**. Se v2 não ficar pronto a tempo, a BU usa v1 normalmente.
+No Pré-MBR (`/rituals/mbr-pre`), as etapas **"Indicadores do Time" (KPIs)** e **"KRs do Time"** estão julgando bem/mal usando dados do **estado atual** (mês corrente / valor mais recente), não dados ancorados no **mês de referência** que está sendo analisado.
 
-## Pré-checklist final (a confirmar antes de codar, leitura focada)
-- `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` — confirmar que `mbr-v2` herda as mesmas permission keys de `mbr` (start/edit/finalize) ou se precisa de chaves novas.
-- `docs/canonical/DATA_MODEL_REGISTRY.md` — reconfirmar que `okr_wizard_sessions.wizard_type` é texto livre e que RLS não filtra por valor específico.
-- `src/modules/okrs/constants/ritualLabels.ts` — adicionar rótulo `mbr-v2` (SSOT).
-- `mem://features/rituals/anonymous-evaluation-standard` — garantir que `/p/r/:shortCode` aceita o novo `wizard_type` no allowlist (MBR/QBR já aceitos; v2 precisa entrar).
+Evidência: o screenshot mostra o KPI "MRR commit" como "Crítico / Parcial" com **R$ 200** e "Último: 02/05/2026", mas o Pré-MBR analisa **abril** (mês fechado). O valor de maio não deveria pintar a análise de abril.
 
-## Princípios
-1. **Zero impacto no v1.** Nenhum arquivo de `mbr/` ou `mbr-pre/` v1 é editado.
-2. **Reuso máximo.** Reaproveitar `FullPageWizardShell`, `useOkrWizardSession`, `MbrKpiGateStep` (estendido por props, não duplicado quando possível), `EvaluationCollectionStep`, `MbrDecisionsStep` patterns.
-3. **Sem migração SQL.** `wizard_type='mbr-v2'` convive na mesma tabela `okr_wizard_sessions`. `reflection_data jsonb` armazena o payload novo.
-4. **Consome Pré-MBR v1 como está.** Onde o Pré-MBR v1 não trouxer classificação de problema, o v2 pede ao líder no próprio rito (campo opcional, com nudge).
+## Causa raiz
 
-## Arquitetura proposta
+| Etapa | Hoje | Problema |
+|---|---|---|
+| **KPI Gate** (`MbrPreKpiGateStep`) | Consome `useKpisForWizardV2` → estado **atual** do KPI (último valor disponível, sem cutoff) | Inclui valores posteriores ao mês de referência → RAG e bucket errados |
+| **KR Analysis** (`MbrPreKrAnalysisStep`) | A seed do `MbrPrePage` (linhas 273-350) já usa cutoff no fim do `refMonth` para `current_value` e `last_checkin_at` ✅ | Tecnicamente já está correto; vale revisar somente |
 
-### Rota e ponto de entrada
-- Nova rota: `/okrs/rituals/mbr-v2` registrada em `src/routes/okrsRoutes.tsx` via `lazyWithRetry`.
-- Card adicional no hub de ritos (`OkrsRitualsPage` ou equivalente): "MBR v2 (beta)" ao lado do MBR atual, com badge "beta". Mesmo gate de permissão do MBR v1.
-- Sem feature flag por BU nesta primeira entrega — quem entrar na rota usa v2; quem não entrar segue no v1. (Flag fica como evolução futura, se pedido.)
+A snapshot mensal **já existe** (`useMbrPreTeamKpisMonthly`) — só não é consumida pelo KPI Gate; hoje só alimenta a Abertura.
 
-### Estrutura de arquivos novos
-```text
-src/modules/okrs/
-├── pages/
-│   └── MbrV2Page.tsx                      (novo; espelha MbrPage mas com steps v2)
-├── components/wizards/mbr-v2/
-│   ├── steps/
-│   │   ├── MbrV2OpeningStep.tsx           (abertura executiva curada por IA — reaproveita useMbrOpeningCuration)
-│   │   ├── MbrV2KpiGateStep.tsx           (KPI Gate v2: 4 caminhos canônicos)
-│   │   ├── MbrV2OrgObjectivesOverviewStep.tsx  (lista objetivos com severidade calculada)
-│   │   ├── MbrV2OrgObjectiveDetailStep.tsx     (step dinâmico, 1 por objetivo, tempo por severidade)
-│   │   ├── MbrV2LooseItemsStep.tsx        (itens avulsos opcional)
-│   │   ├── MbrV2CarryOverStep.tsx         (status obrigatório nas decisões anteriores)
-│   │   ├── MbrV2DecisionsStep.tsx         (decisões formais como output)
-│   │   └── MbrV2ClosingStep.tsx           (checklist enxuto + badges derivadas)
-│   └── shared/
-│       ├── ObjectiveSeverityBadge.tsx
-│       └── KpiGateResolutionPicker.tsx    (4 caminhos: immediate_decision | delegated_investigation | analyzed | blocked)
-├── hooks/
-│   ├── useMbrV2OrgObjectiveAnalyses.ts    (lê Pré-MBR v1 + KPIs/KRs/projetos e calcula severidade por objetivo)
-│   └── useMbrV2Session.ts                 (wrapper de useOkrWizardSession com wizard_type='mbr-v2')
-├── types/
-│   └── mbrV2.ts                           (MbrV2DraftData, MbrV2OrgObjectiveAnalysis, MbrV2KpiGateResolution, etc.)
-└── constants/
-    └── mbrV2.ts                           (STEP_ORDER v2, severity thresholds, time budgets)
-```
+## Plano de correção
 
-### Steps do MBR v2 (ordem)
-1. **Abertura Executiva** (curada por IA, reusa Pré-MBR v1 agregado).
-2. **KPI Gate** (6-bucket canônico; cada KPI crítico exige uma das 4 resoluções).
-3. **Visão Geral por Objetivo Organizacional** (cards ordenados por severidade: Alta 25-30 min, Média 15 min, Baixa 2-3 min).
-4. **Detalhe por Objetivo** (N steps dinâmicos — um por objetivo selecionado para discussão; mostra KRs, projetos vinculados, classificação do Pré-MBR v1 quando existir, espaço para decisões inline).
-5. **Itens Avulsos** (opcional; sugestões de pauta sem objetivo associado).
-6. **Carry-over** (decisões do MBR anterior — status obrigatório: concluida | replanejada | cancelada | em_andamento).
-7. **Decisões Formais** (output obrigatório — usa o vocabulário canônico de `wizard-vocabulary-canonical`).
-8. **Avaliação Anônima** (reusa `EvaluationCollectionStep`; wizard_type adicionado ao allowlist do `/p/r/:shortCode`).
-9. **Encerramento** (badges derivadas de cobertura: Pré-MBR consumido, KPI Gate resolvido, decisões registradas).
+### 1. KPI Gate ancorado no mês de referência (foco principal)
 
-### Severidade do Objetivo (cálculo no `useMbrV2OrgObjectiveAnalyses`)
-Combina:
-- Status efetivo dos KRs filhos (`effective-kr-status-logic`): `at_risk` ou `stagnant` → +peso.
-- KPIs vinculados em bucket crítico (`critical`/`alert`).
-- Projetos vinculados atrasados/bloqueados.
-- Classificação de problema do Pré-MBR v1 (quando presente) — `unknown`/`external`/`capacity` adiciona peso.
+Reescrever `MbrPreKpiGateStep` para:
 
-Output: `{ severity: 'high' | 'medium' | 'low', timeBudgetMin: number, drivers: string[] }`.
+- Consumir `useMbrPreTeamKpisMonthly(teamId, referenceMonth)` em vez de `useKpisForWizardV2`.
+- Construir os 6 buckets canônicos (KPIs Master v3) **a partir dos snapshots mensais**, usando `currentValue`/`previousValue`/`ragStatus` ancorados no fim do mês.
+- Manter o componente visual `KpiGateStep` (`@/wizards-framework`) e o gate de planos obrigatórios.
+- Receber `referenceMonth` via prop (já disponível em `draft.data.referenceMonth`).
 
-### Persistência
-- `okr_wizard_sessions` com `wizard_type='mbr-v2'`, `reflection_data` armazenando `MbrV2DraftData`.
-- Decisões persistidas via fluxo canônico já usado pelo v1 (`okr_decisions` ou tabela equivalente — confirmar no `DATA_MODEL_REGISTRY`).
-- Avaliação anônima: shortcode emitido pelo mesmo mecanismo do v1.
+Ajustar `classifyKpiGateBuckets` (ou criar variante mensal) para receber snapshots já ancorados e classificar:
+- **overdue**: KPI sem valor consolidado dentro do mês de referência
+- **critical**: `ragStatus === 'red'` no fim do mês
+- **alert / strategic / teamContext**: mesmas regras, agora com base nos valores mensais
+- **guardrailViolated**: requer dado mensal de guardrail (manter atual se não houver versão mensal — documentar como gap)
 
-## Compatibilidade e fallback
-- v1 segue 100% funcional, mesma rota, mesmas queries. Nada em v1 é tocado.
-- Se v2 quebrar, basta esconder o card "MBR v2 (beta)" — feito por uma const `ENABLE_MBR_V2 = true` em `src/modules/okrs/constants/mbrV2.ts`.
+### 2. Etiqueta visual de contexto temporal
 
-## Fora de escopo
-- Pré-MBR v2 (decisão do usuário: consumir v1 sem alterações).
-- Migração de dados de MBRs v1 para v2.
-- Feature flag por BU.
-- Substituir cards do hub — v2 é adição, não substituição.
+No header do KPI Gate e do KR Analysis, exibir badge: **"Análise de [mês/ano de referência]"** para deixar claro ao usuário que valores posteriores foram ignorados.
 
-## Riscos
-- **Severidade calculada divergir da percepção do líder** → mitigado com botão "ajustar severidade" no Overview, persistido no draft.
-- **Avaliação anônima** → precisa adicionar `mbr-v2` ao allowlist do edge function/RPC; risco baixo, edição pontual.
-- **Permission keys** → se RBAC exigir chaves novas (`okrs.rituals.mbr_v2.*`), criar migração; senão herdar `mbr`.
+### 3. Validação do KR Analysis
 
-## Entregáveis
-1. Rota `/okrs/rituals/mbr-v2` funcional.
-2. Card no hub de ritos (beta).
-3. 9 steps + hooks + types + constants.
-4. Allowlist da avaliação anônima atualizada.
-5. Atualização de `ritualLabels.ts` (SSOT).
-6. Memória nova: `mem://features/rituals/mbr-v2-standard` documentando o rito.
+Confirmar que `MbrPreKrAnalysisStep` exibe **somente** o `currentValue` ancorado no cutoff (vem de `krFinalStates` + `sourceObjectives`). Se o `CheckinContextBlock` mostrar "último check-in" em data posterior ao mês, fixar para usar o `last_checkin_at` do snapshot, não o do KR original.
 
-## Validação
-- Smoke test manual no preview: criar sessão v2, navegar todos os steps, finalizar, conferir `reflection_data` no banco.
-- Confirmar que MBR v1 segue abrindo e finalizando normal.
-- Conferir avaliação anônima emitindo shortcode válido para `mbr-v2`.
+### 4. QA
+
+Cenários a validar manualmente após implementação:
+- KPI com valor lançado em maio (mês posterior) → não deve aparecer no Pré-MBR de abril
+- KPI sem nenhum valor em abril → bucket **overdue**
+- KR com último check-in em 28/04 e novo em 03/05 → mostrar valor de 28/04
+- Badge "Análise de Abril/2026" visível em ambas as etapas
+
+## Detalhes técnicos
+
+**Arquivos a alterar:**
+- `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx` — trocar fonte de dados; receber `referenceMonth` como prop
+- `src/modules/okrs/pages/MbrPrePage.tsx` — passar `referenceMonth` para o `MbrPreKpiGateStep`
+- `src/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters.ts` — adicionar/ajustar `classifyKpiGateBucketsFromMonthlySnapshots` (ou parametrizar `classifyKpiGateBuckets` para aceitar snapshots já filtrados)
+- `src/modules/okrs/hooks/useMbrPreTeamKpisMonthly.ts` — possível enriquecer com `lastInputType`, guardrails mensais e flags necessários ao classificador
+- (Opcional) `MbrPreKrAnalysisStep.tsx` — badge de mês de referência
+
+**Fora de escopo:**
+- MBR v1 e MBR v2 não são alterados.
+- Lógica do Check-in individual e do QBR-Pre não muda.
