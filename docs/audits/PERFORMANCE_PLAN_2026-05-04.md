@@ -55,6 +55,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 - **B.3** Enforce `correlation-id` em todas as Edge Functions (validar via middleware).
 - **F.1** `React.memo` em 100% de cards/listas — meta: lint-enforced.
 - **F.2** Quebrar páginas > 700 LoC em sub-componentes (~14 arquivos).
+  - ✅ `MbrPage` (1014 → 610 LoC + 5 módulos: `constants`, `useMbrPreDerivations`, `useMbrDataSources`, `useMbrSeedingEffects`, `useScorecardMetrics`) — 2026-05-04
 - **F.3** `@tanstack/react-virtual` para listas > 50 itens.
 - **F.4** Reduzir `console.*` em produção (352 em src, 405 em functions).
 
