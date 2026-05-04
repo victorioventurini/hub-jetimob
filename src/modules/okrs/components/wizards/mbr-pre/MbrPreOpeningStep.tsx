@@ -316,6 +316,25 @@ export function MbrPreOpeningStep({
 
   const kpiDeltas = useMemo(() => computeKpiDeltas(monthlyKpiSnapshots), [monthlyKpiSnapshots]);
 
+  // Resolve KR titles em runtime — `krFinalStates.krTitle` foi descontinuado
+  // (Onda 4 Fase 3). Sem isto, a Análise IA recebe UUID e cita UUID.
+  const krIdsForLookup = useMemo(
+    () => Array.from(new Set(krFinalStates.map((k) => k.krId).filter(Boolean))),
+    [krFinalStates],
+  );
+  const lookups = useEntityLookup({
+    teamKrIds: krIdsForLookup,
+    orgKrIds: krIdsForLookup,
+  });
+  const krTitleById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const id of krIdsForLookup) {
+      const name = lookups.teamKrs.get(id)?.name ?? lookups.orgKrs.get(id)?.name;
+      if (name) m.set(id, name);
+    }
+    return m;
+  }, [krIdsForLookup, lookups.teamKrs, lookups.orgKrs]);
+
   const overdueProjectsForAi = useMemo(() => {
     const overdueIdSet = new Set(overdueProjectIds);
     const overdueMilestoneSet = new Set(overdueMilestoneIds);
