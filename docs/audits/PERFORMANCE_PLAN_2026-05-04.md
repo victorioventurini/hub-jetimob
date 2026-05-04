@@ -33,7 +33,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 - ✅ **`esbuild.pure` em build de produção** remove `console.log/info/debug/warn`
   do bundle final (mantém `console.error` para diagnóstico). Ataca os 352 `console.*`
   em `src/` sem refactor manual. `debugger` também removido em prod.
-- 🟡 Quebrar `MbrV2Page` (1060) e `CreateKpiDialog` (1059) em sub-componentes — W2.F.
+- ✅ Quebrar `CreateKpiDialog` (1059 → 263 LoC) — concluído em W2.F. (MBR v2 descontinuado; `MbrV2Page` removido do código.)
 - 🟡 Adicionar `React.memo` em mais cards/listas (baseline 63 arquivos hoje) — W2.F.
 - 🟡 Auditar `JSON.parse` (34 ocorrências) → migrar para `tryParseAiJson` onde
   o input vier de LLM ou storage não-confiável — W2.F.
@@ -57,6 +57,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 - **F.2** Quebrar páginas > 700 LoC em sub-componentes (~14 arquivos).
   - ✅ `MbrPage` (1014 → 610 LoC + 5 módulos: `constants`, `useMbrPreDerivations`, `useMbrDataSources`, `useMbrSeedingEffects`, `useScorecardMetrics`) — 2026-05-04
   - ✅ `CreateKpiDialog` (1059 → 263 LoC + `create-kpi/schema.ts` + 6 sections: Identity, TypeStatus, UnitFrequency, DirectionTarget, ScopeArea, Ownership, Advanced) — 2026-05-04
+  - ✅ `ExecutiveQuarterReviewPage` (887 → 194 LoC + `executive-quarter-review/` com `useQuarterReviewData`, 5 sections, 3 components, types/helpers) — 2026-05-04
 - **F.3** `@tanstack/react-virtual` para listas > 50 itens.
 - **F.4** Reduzir `console.*` em produção (352 em src, 405 em functions).
 

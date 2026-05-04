@@ -1,1 +1,48 @@
-# Plano de Otimização de Performance — Hub da Jet\n\n## Diagnóstico atual\n\nCruzando TCR v3.30.0, `DEVELOPMENT_STANDARDS.md` v1.31.0, `SYSTEMIC_AUDIT_2026-04-22`, `DATABASE_OPTIMIZATION_AUDIT_2026-02-08`, `BACKEND_ROBUSTNESS_AUDIT_2026-02-08`, `FRONTEND_UX_AUDIT_2026-02-08`, `PERF_PLAYBOOK.md` e `SLOW_QUERIES_ACTION_PLAN.md`, mais varredura ao vivo:\n\n**Saudável (manter):** RLS V2 100%, índices `bu_id`, cleanup de logs ativo, query keys centralizadas, edge factory `_shared/middleware`, `lazyWithRetry` em rotas, `useVicAgent` com timeout/fallback (Wave 1 do audit 04-22).\n\n**Débitos técnicos com impacto em performance:**\n\n| Camada | Débito | Evidência |\n|---|---|---|\n| DB | 3 tabelas com Seq Scans excessivos: `okr_wizard_sessions` (6.2K scans/499 rows), `permission_template_items_v2` (36K), `ai_agent_logs` (548 com índice 8.5MB **não-utilizado**) | `SLOW_QUERIES_ACTION_PLAN.md` §3 |\n| DB | 15 índices candidatos a remoção (~12 MB inúteis) | `DATABASE_OPTIMIZATION_AUDIT` |\n| DB | Tabela `perf_metrics_snapshots` com 92 MB — retenção 14d ativa, mas sem TTL escalonado | `DATABASE_OPTIMIZATION_AUDIT` |\n| DB | 7 colunas TEXT que deveriam ser ENUM | id. P3 |\n| DB | Realtime / RLS audit policy review pendente em `notifications`, `tickets` (cross-BU isolation foi adicionada mas falta EXPLAIN) | memórias `tickets/cross-bu-isolation`, `notifications/cross-bu-isolation` |\n| Backend | 5 Edge Functions > 500 linhas: `team-checkin-summary` (962), `analysis-generate` (671), `invoke-vic` (552), `qbr-executive-report` (520), `mbr-summary` (513) | `find supabase/functions` |\n| Backend | Edge `okr-construction-review` já reduzido para 388 linhas (Wave 2) — usar como template | audit |\n| Backend | Falta paralelismo via `Promise.all` em agregações pesadas em ≥2 funções (auditoria visual sugerida em `qbr-executive-report` e `mbr-summary`) | memória `edge-function-performance-standard` |\n| Backend | `.select(\
+## Correção
+
+Você está certo: **MBR v2 foi descontinuado** e `MbrV2Page` não existe mais no código (só `MbrPage` e `MbrPrePage`). A menção em `docs/audits/PERFORMANCE_PLAN_2026-05-04.md` (linha 36) é resíduo desatualizado — foi por isso que sugeri esse arquivo como "próximo alvo" no fim da última resposta. Erro meu.
+
+## Plano
+
+### 1. Limpar a doc
+
+- Remover a referência a `MbrV2Page (1060)` da linha 36 do `PERFORMANCE_PLAN_2026-05-04.md`. Como `CreateKpiDialog` já foi refatorado, o bullet inteiro vira:
+  > 🟢 ~~Quebrar `MbrV2Page` e `CreateKpiDialog`~~ — concluído em W2.F (`CreateKpiDialog`); MBR v2 descontinuado.
+
+### 2. Atualizar o backlog real de W2.F.2 (páginas > 700 LoC)
+
+Baseline novo (varredura agora):
+
+```text
+887  ExecutiveQuarterReviewPage.tsx
+886  SettingsUiCatalog.tsx
+879  CreateTicketPage.tsx
+852  JetimoberDialog.tsx
+849  CollaboratorSummary.tsx          (wizard step)
+793  CollaboratorCheckinPage.tsx
+789  UserProfile/index.tsx
+785  QbrKpiAnalysisStep.tsx           (wizard step)
+760  Profile.tsx
+727  QbrMeetingOkrReviewStep.tsx      (wizard step)
+719  InternalRoutingRuleDialog.tsx
+710  QbrPrePage.tsx
+```
+
+Sem mais nada > 1000 LoC. Sugestão de ordem (alto impacto / baixo risco primeiro):
+
+1. **`ExecutiveQuarterReviewPage` (887)** — página de leitura, baixo risco de regressão.
+2. **`CreateTicketPage` (879)** — formulário tipo `CreateKpiDialog`, mesmo padrão que acabei de aplicar.
+3. **`CollaboratorSummary` (849, wizard step)** — reaproveita módulos já criados em `mbr/`.
+4. Demais entram em ondas seguintes.
+
+### 3. Não tocar
+
+- Refatoração de wizards do QBR (`QbrKpiAnalysisStep`, `QbrMeetingOkrReviewStep`) fica para depois — risco maior, lógica de seeding/draft.
+- `SettingsUiCatalog` é catálogo de showcase — LoC alto é natural; pular.
+
+## Decisão pendente
+
+Qual primeiro?
+- **A.** Limpar a doc + começar por `ExecutiveQuarterReviewPage` (mais seguro).
+- **B.** Limpar a doc + começar por `CreateTicketPage` (mesmo padrão recém-aplicado).
+- **C.** Apenas limpar a doc agora e parar W2.F aqui.
