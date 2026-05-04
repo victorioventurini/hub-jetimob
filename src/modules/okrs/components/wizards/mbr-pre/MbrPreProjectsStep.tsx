@@ -166,16 +166,21 @@ export function MbrPreProjectsStep({
   const { projects, isLoading, overdueProjectIds, overdueMilestoneIds, cutoffDate } =
     useMbrPreTeamProjects(teamId, referenceMonth);
 
+  const safeProjectJustifications = useMemo(() => ({
+    projects: projectJustifications?.projects ?? {},
+    milestones: projectJustifications?.milestones ?? {},
+  }), [projectJustifications]);
+
   // Bloqueia avanço se houver atrasado sem justificativa preenchida.
   const blockingItems = useMemo(() => {
     const missingProjects = overdueProjectIds.filter(
-      (id) => !(projectJustifications.projects[id] ?? '').trim(),
+      (id) => !(safeProjectJustifications.projects[id] ?? '').trim(),
     );
     const missingMilestones = overdueMilestoneIds.filter(
-      (id) => !(projectJustifications.milestones[id] ?? '').trim(),
+      (id) => !(safeProjectJustifications.milestones[id] ?? '').trim(),
     );
     return missingProjects.length + missingMilestones.length;
-  }, [overdueProjectIds, overdueMilestoneIds, projectJustifications]);
+  }, [overdueProjectIds, overdueMilestoneIds, safeProjectJustifications]);
 
   const overdueCount = overdueProjectIds.length + overdueMilestoneIds.length;
 
@@ -264,9 +269,9 @@ export function MbrPreProjectsStep({
                 key={p.id}
                 project={p}
                 projectJustification={
-                  projectJustifications.projects[p.id] ?? ''
+                  safeProjectJustifications.projects[p.id] ?? ''
                 }
-                milestoneJustifications={projectJustifications.milestones}
+                milestoneJustifications={safeProjectJustifications.milestones}
                 onProjectJustificationChange={onProjectJustificationChange}
                 onMilestoneJustificationChange={onMilestoneJustificationChange}
               />
@@ -279,9 +284,9 @@ export function MbrPreProjectsStep({
                 key={p.id}
                 project={p}
                 projectJustification={
-                  projectJustifications.projects[p.id] ?? ''
+                  safeProjectJustifications.projects[p.id] ?? ''
                 }
-                milestoneJustifications={projectJustifications.milestones}
+                milestoneJustifications={safeProjectJustifications.milestones}
                 onProjectJustificationChange={onProjectJustificationChange}
                 onMilestoneJustificationChange={onMilestoneJustificationChange}
               />
