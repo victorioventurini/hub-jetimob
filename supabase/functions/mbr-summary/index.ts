@@ -439,6 +439,13 @@ serve(async (req) => {
     console.log(`[${requestId}] Orchestrating AI agents for MBR summary...`);
     const sections = await orchestrateAgents(serviceClient, buId, agentContext, requestId);
 
+    // Prioriza a Abertura Executiva curada por IA + revisada por humano (Step 1).
+    // Mantém intenção do facilitador no e-mail final, conforme padrão Weekly.
+    if (curatedOpening) {
+      console.log(`[${requestId}] Using curated executive opening from snapshot (${curatedOpening.length} chars)`);
+      sections.opening_text = curatedOpening;
+    }
+
     // Build notification metadata
     const currentDatetime = formatDate(new Date());
     const contextUrl = `/rituals/history?session=${sessionId}`;
