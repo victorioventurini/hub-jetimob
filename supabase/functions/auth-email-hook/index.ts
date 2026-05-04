@@ -83,6 +83,28 @@ async function isEmailDomainAllowed(email: string): Promise<{ allowed: boolean; 
     }
   }
 
+  // Fallback: external users (partner_contacts) — domain isn't in any BU,
+  // but email is explicitly registered as an active partner contact.
+  // Resolves the BU via the first active association so the email keeps the
+  // BU branding, and unblocks first-time magic links for renamed/new external emails.
+  const { data: contact } = await supabase
+    .from("partner_contacts")
+    .select("id, partner_contact_bu_associations!inner(bu_id, is_active, bu_units!inner(name, status))")
+    .ilike("email", email)
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .eq("partner_contact_bu_associations.is_active", true)
+    .is("partner_contact_bu_associations.deleted_at", null)
+    .eq("partner_contact_bu_associations.bu_units.status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (contact) {
+    const assoc = (contact as any).partner_contact_bu_associations?.[0];
+    const buName = assoc?.bu_units?.name ?? null;
+    return { allowed: true, buName };
+  }
+
   return { allowed: false, buName: null };
 }
 
