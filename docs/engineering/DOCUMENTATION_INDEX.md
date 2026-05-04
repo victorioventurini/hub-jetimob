@@ -1,7 +1,7 @@
 # 📚 Índice de Documentação Técnica — Hub da Jet
 
-**Última atualização:** 2026-01-22  
-**TCR Version:** 2.63.0
+**Última atualização:** 2026-05-04
+**TCR Version:** 3.30.0
 
 ---
 
@@ -9,7 +9,9 @@
 
 | Documento | Descrição | Status |
 |-----------|-----------|--------|
-| [TECHNICAL_CONTEXT_REGISTRY.md](../canonical/TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v2.63.0 |
+| [TECHNICAL_CONTEXT_REGISTRY.md](../canonical/TECHNICAL_CONTEXT_REGISTRY.md) | **Fonte única de verdade** para arquitetura, entidades, regras de negócio e padrões | ✅ v3.30.0 |
+| [PRE_CHECKLIST.md](../canonical/PRE_CHECKLIST.md) | **Pré-checklist obrigatório** antes de qualquer implementação | ✅ v1.0.0 |
+| [MBR_RITUAL.md](../canonical/MBR_RITUAL.md) | SSOT humano do Pré-MBR + MBR v2 (mês de referência, drafts resilientes) | ✅ v1.0.0 |
 
 ---
 

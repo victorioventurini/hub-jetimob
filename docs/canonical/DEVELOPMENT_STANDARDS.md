@@ -1,9 +1,9 @@
 # Padrões de Desenvolvimento — Hub da Jet
 
-**Versão:** 1.30.0
-**Última atualização:** 2026-04-22
-**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0** | **MBR Ritual v1.0** | **QBR Ritual v1.1** | **AI Agents Gemini 3 Flash Migration** | **Automated Testing Framework v1.2** | **Auth Token Refresh Deduplication v1.0** | **Bundling Standard v1.0 (no manualChunks)**
-**Referência:** TCR v3.28.0
+**Versão:** 1.31.0
+**Última atualização:** 2026-05-04
+**Status:** Normativo (V2-only mode ativo) | RLS 100% V2 | Hooks Consolidados | **Testes Automatizados Ativos** | **Internal Auth Hardening v1.0** | **Identity Hardening v2.1** | **P1/P2 Refatorações Concluídas** | **Context Resilience Pattern v1.0** | **useOptionalBuClient Stricter Gating v1.0** | **React Router forwardRef Fix v1.0** | **Supabase Client Singleton Pattern v1.0** | **Responsibility Transfer System (RTS) v1.0** | **Soft-Delete Filters Standard v1.1** | **PII Security Hardening v1.0** | **100% Query Keys Compliance** | **Query Key Prefixes v1.0** | **useDialogFormReset Standard v1.0** | **UnitSelect Canonical Component v1.0** | **Frontend BU Isolation Enforcement v1.0** | **Null-Safe Sort Standard v1.0** | **Progress Overachievement Display v1.0** | **MBR Ritual v1.0** | **MBR v2 Ritual v1.0** | **Pré-MBR Reference-Month KPI Gate v1.0** | **Resilient Draft Hydration v1.0** | **PostgREST or() Quoting v1.0** | **Lazy With Retry v1.0** | **Entity Name Length Limits v1.0** | **QBR Ritual v1.1** | **AI Agents Gemini 3 Flash Migration** | **Automated Testing Framework v1.2** | **Auth Token Refresh Deduplication v1.0** | **Bundling Standard v1.0 (no manualChunks)**
+**Referência:** TCR v3.30.0
 
 ---
 
@@ -27,6 +27,8 @@
 - [M. Limites de Código e Sustentabilidade](#m-limites-de-código-e-sustentabilidade)
 - [N. Testes Automatizados](#n-testes-automatizados)
 - [O. Responsabilidades e Migração](#o-responsabilidades-e-migração)
+- [P. Pré-Checklist Obrigatório](#p-pré-checklist-obrigatório)
+- [Q. Padrões Recentes (v1.31.0)](#q-padrões-recentes-v1310)
 
 ---
 
@@ -1206,6 +1208,10 @@ Os seguintes padrões são **PROIBIDOS** no Hub da Jet. Não há exceções.
 | 13 | Select inline hardcoded para unidades (%, R$, dias) | Inconsistência de UX, usar `UnitSelect` |
 | 14 | Constante local `UNITS` em wizards/modais | Duplicação, usar `@/shared/constants/units` |
 | 15 | `.sort((a, b) => a.name.localeCompare(b.name))` sem null-guard | Crash se `name` for `undefined`/`null` |
+| 16 | Ler campos denormalizados de nome/título em snapshots de wizard (`*_name`, `*_title`) | Snapshots ficam stale; preferir lookup por ID — ver `mem://standards/wizard-snapshot-denormalized-fields-deprecation` |
+| 17 | Acessar `draft.xxx.subkey` direto sem fallback `?? {...}` | Drafts antigos quebram (`Cannot read properties of undefined`) — usar `safeXxx` memo (Seção Q.1) |
+| 18 | `.or("col.cs.{<uuid>}")` sem aspas no UUID | PostgREST 22P02; query inteira retorna vazio — usar `cs.{"<uuid>"}` (Seção Q.2) |
+| 19 | Importar páginas em `src/routes/*` com `lazy()` puro | Após deploy, "Failed to fetch dynamically imported module" — usar `lazyWithRetry` (Seção Q.3) |
 
 ### I.1 Null-Safe Sort — Padrão Obrigatório (v1.25.0)
 
@@ -1844,3 +1850,83 @@ const progress = Math.max(0, ((current - baseline) / (target - baseline)) * 100)
 // ou
 style={{ width: `${Math.min(100, progress)}%` }}
 ```
+
+---
+
+## P. Pré-Checklist Obrigatório
+
+> 📚 Versão renderizada do bloco "PRÉ-CHECKLIST OBRIGATÓRIO" definido em `<project-knowledge>`. Espelho legível para PR templates e onboarding. Doc dedicado: [`PRE_CHECKLIST.md`](./PRE_CHECKLIST.md).
+
+**EXECUTAR SEMPRE** antes de propor implementações, correções ou debugging:
+
+1. [ ] Consultar `TECHNICAL_CONTEXT_REGISTRY.md` para contexto geral
+2. [ ] Consultar `IDENTITY_CONVENTION.md` se envolver usuários/perfis
+3. [ ] Consultar `PERMISSIONS_AND_RBAC_MODEL.md` se envolver permissões
+4. [ ] Consultar `DATA_MODEL_REGISTRY.md` se envolver tabelas/entidades
+5. [ ] Verificar se já existe implementação similar no codebase
+
+> ⚠️ **Se não consultar a documentação antes → qualquer proposta está automaticamente incorreta.**
+
+---
+
+## Q. Padrões Recentes (v1.31.0)
+
+### Q.1 Resilient Draft Hydration
+
+```
+⚠️ REGRA: Drafts antigos podem ter shape parcial. Sempre usar fallbacks `?? {...}` e memos `safeXxx`.
+```
+
+Exemplo canônico — `MbrPreProjectsStep.tsx`:
+
+```tsx
+const safeProjectJustifications = useMemo(() => ({
+  projects: projectJustifications?.projects ?? {},
+  milestones: projectJustifications?.milestones ?? {},
+}), [projectJustifications]);
+```
+
+Aplicar **tanto na validação** quanto na **renderização**. Caller também deve passar fallback ao prop e aos handlers.
+
+### Q.2 PostgREST `or()` Array-Contains Quoting
+
+```
+⚠️ REGRA: Dentro de `.or()`, valores UUID em `cs.{}` exigem aspas — sem aspas, o filtro inteiro retorna vazio com 22P02.
+```
+
+| ✅ CORRETO | ❌ PROIBIDO |
+|------------|-------------|
+| `.or('linked_kr_ids.cs.{"<uuid>"}')` | `.or('linked_kr_ids.cs.{<uuid>}')` |
+
+SSOT: `mem://standards/postgrest-or-array-contains-quoting`.
+
+### Q.3 Lazy With Retry
+
+```
+⚠️ REGRA: Toda rota em `src/routes/*` DEVE usar `lazyWithRetry()` em vez de `lazy()` puro.
+```
+
+Evita `Failed to fetch dynamically imported module` após deploy quando o cliente tem o HTML antigo apontando para um chunk que já não existe. SSOT: `mem://standards/frontend-lazy-with-retry`.
+
+### Q.4 Entity Name Length Limits
+
+| Entidade | Limite | Trigger DB |
+|----------|--------|------------|
+| Org Objective | 120 | ✅ |
+| Team Objective | 120 | ✅ |
+| Key Result | 160 | ✅ |
+| Initiative | 120 | ✅ |
+| Project | 100 | ✅ |
+| Milestone | 80 | ✅ |
+
+Aplicar mesmo limite no UI (`maxLength`) e na validação. SSOT: `mem://standards/entity-name-length-limits`.
+
+### Q.5 Pré-MBR — KPI Gate por Mês de Referência
+
+A análise de KPIs/KRs no Pré-MBR usa **apenas** dados do mês de referência:
+
+- Hook: `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`
+- Classificador: `classifyKpiGateBucketsFromMonthlySnapshots()` em `stepContentAdapters.ts`
+- Buckets: `overdue` / `critical` / `attention` / `healthy` (sem `guardrailViolated` / `teamContext`)
+
+Doc: [`MBR_RITUAL.md`](./MBR_RITUAL.md).

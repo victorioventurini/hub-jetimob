@@ -1,60 +1,64 @@
-## Problema
+# Plano — Atualização do TCR e Docs Canônicos
 
-No Pré-MBR (`/rituals/mbr-pre`), as etapas **"Indicadores do Time" (KPIs)** e **"KRs do Time"** estão julgando bem/mal usando dados do **estado atual** (mês corrente / valor mais recente), não dados ancorados no **mês de referência** que está sendo analisado.
+## Diagnóstico
 
-Evidência: o screenshot mostra o KPI "MRR commit" como "Crítico / Parcial" com **R$ 200** e "Último: 02/05/2026", mas o Pré-MBR analisa **abril** (mês fechado). O valor de maio não deveria pintar a análise de abril.
+Vários padrões e features recentes estão registrados apenas em memórias (`mem://...`) ou em código, mas **não** no TCR nem nos docs canônicos:
 
-## Causa raiz
+- **MBR v2** (`/rituals/mbr-v2`) — rito paralelo por Org Objective + severidade.
+- **Pré-MBR — KPI Gate ancorado ao mês de referência** (não contamina com valores de meses futuros).
+- **Pré-MBR — `safeProjectJustifications`** (fallback obrigatório para drafts antigos sem `projectJustifications`).
+- **Anonymous Ritual Evaluation** expandido (já em memória, ausente do TCR).
+- **PostgREST `or() / cs.{}` quoting** (memória recente, ausente dos standards).
+- **Lazy with retry** obrigatório em `src/routes/*` (idem).
+- **Entity name length limits** (idem).
+- **Wizard snapshot denorm deprecation** (idem).
+- **Pré-checklist obrigatório** (já está em `<project-knowledge>` mas não tem espelho em doc canônico legível pelos engenheiros).
 
-| Etapa | Hoje | Problema |
-|---|---|---|
-| **KPI Gate** (`MbrPreKpiGateStep`) | Consome `useKpisForWizardV2` → estado **atual** do KPI (último valor disponível, sem cutoff) | Inclui valores posteriores ao mês de referência → RAG e bucket errados |
-| **KR Analysis** (`MbrPreKrAnalysisStep`) | A seed do `MbrPrePage` (linhas 273-350) já usa cutoff no fim do `refMonth` para `current_value` e `last_checkin_at` ✅ | Tecnicamente já está correto; vale revisar somente |
+## Entregas
 
-A snapshot mensal **já existe** (`useMbrPreTeamKpisMonthly`) — só não é consumida pelo KPI Gate; hoje só alimenta a Abertura.
+### 1. `docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`
+- Bumpar para **v3.30.0** com `Última atualização: 2026-05-04`.
+- Ajustar a linha de **Status** adicionando: `MBR v2 ✅`, `Pré-MBR Reference-Month KPI Gate ✅`, `Pré-MBR Resilient Drafts ✅`.
+- Inserir nova entrada **`### v3.30.0 (2026-05-04) — MBR v2 + Pré-MBR Hardening`** no topo do Changelog cobrindo:
+  - MBR v2: rota, agrupamento por Org Objective, severidade, consumo do Pré-MBR v1 sem alteração.
+  - KPI Gate ancorado ao mês de referência (`classifyKpiGateBucketsFromMonthlySnapshots`, `useMbrPreTeamKpisMonthly`).
+  - `safeProjectJustifications` em `MbrPreProjectsStep` + fallbacks em `MbrPrePage`.
+- Atualizar §3 (Módulos do Hub) para referenciar o sub-rito MBR v2.
+- Atualizar §4 (Regras de Negócio) com a regra "análise de KR/KPI no Pré-MBR usa apenas dados do mês de referência".
 
-## Plano de correção
+### 2. `docs/canonical/DEVELOPMENT_STANDARDS.md`
+- Bumpar versão para **1.31.0**, referência **TCR v3.30.0**.
+- Em **D. Queries, Performance e DX**: adicionar subseção **D.x — Resilient Draft Hydration** (drafts antigos podem ter shape parcial; sempre usar fallbacks defensivos `?? {...}` e memos `safeXxx`).
+- Em **D**: adicionar regra **PostgREST `or()` array-contains quoting** (`cs.{"uuid"}` com aspas).
+- Em **L (Layout)**: registrar **Lazy with retry** obrigatório em rotas.
+- Em **G (Banco)**: registrar **Entity name length limits** (Org/Team Obj 120, KR 160, Initiative 120, Project 100, Milestone 80) e triggers correspondentes.
+- Em **I (Anti-patterns)**: incluir "ler campos de nome/título denormalizados em snapshots de wizard — preferir lookup por ID".
+- Adicionar nova **Seção P — Pré-Checklist Obrigatório** (espelho legível do bloco em `<project-knowledge>`).
 
-### 1. KPI Gate ancorado no mês de referência (foco principal)
+### 3. `docs/canonical/README.md`
+- Adicionar entradas para `MBR v2` e atualizar a referência de versão do TCR.
 
-Reescrever `MbrPreKpiGateStep` para:
+### 4. `docs/engineering/DOCUMENTATION_INDEX.md` e `docs/DOCUMENTATION_INDEX.md`
+- Linkar novos itens (MBR v2, Pré-MBR Reference-Month, Pré-Checklist).
 
-- Consumir `useMbrPreTeamKpisMonthly(teamId, referenceMonth)` em vez de `useKpisForWizardV2`.
-- Construir os 6 buckets canônicos (KPIs Master v3) **a partir dos snapshots mensais**, usando `currentValue`/`previousValue`/`ragStatus` ancorados no fim do mês.
-- Manter o componente visual `KpiGateStep` (`@/wizards-framework`) e o gate de planos obrigatórios.
-- Receber `referenceMonth` via prop (já disponível em `draft.data.referenceMonth`).
+### 5. Novo doc: `docs/canonical/MBR_RITUAL.md`
+- Single source-of-truth do **Pré-MBR + MBR v2** (rotas, steps, regras de KPI Gate por mês de referência, justificativas de projetos resilientes, persistência via `useMbrPreDraft`, agrupamento por Org Objective no v2).
+- Linkar para as memórias correspondentes (`mem://features/rituals/mbr-v2-standard`, `mem://features/rituals/anonymous-evaluation-standard`).
 
-Ajustar `classifyKpiGateBuckets` (ou criar variante mensal) para receber snapshots já ancorados e classificar:
-- **overdue**: KPI sem valor consolidado dentro do mês de referência
-- **critical**: `ragStatus === 'red'` no fim do mês
-- **alert / strategic / teamContext**: mesmas regras, agora com base nos valores mensais
-- **guardrailViolated**: requer dado mensal de guardrail (manter atual se não houver versão mensal — documentar como gap)
-
-### 2. Etiqueta visual de contexto temporal
-
-No header do KPI Gate e do KR Analysis, exibir badge: **"Análise de [mês/ano de referência]"** para deixar claro ao usuário que valores posteriores foram ignorados.
-
-### 3. Validação do KR Analysis
-
-Confirmar que `MbrPreKrAnalysisStep` exibe **somente** o `currentValue` ancorado no cutoff (vem de `krFinalStates` + `sourceObjectives`). Se o `CheckinContextBlock` mostrar "último check-in" em data posterior ao mês, fixar para usar o `last_checkin_at` do snapshot, não o do KR original.
-
-### 4. QA
-
-Cenários a validar manualmente após implementação:
-- KPI com valor lançado em maio (mês posterior) → não deve aparecer no Pré-MBR de abril
-- KPI sem nenhum valor em abril → bucket **overdue**
-- KR com último check-in em 28/04 e novo em 03/05 → mostrar valor de 28/04
-- Badge "Análise de Abril/2026" visível em ambas as etapas
+### 6. Novo doc: `docs/canonical/PRE_CHECKLIST.md`
+- Versão renderizada do pré-checklist obrigatório listado em `<project-knowledge>` (consultar TCR, IDENTITY_CONVENTION, PERMISSIONS_AND_RBAC_MODEL, DATA_MODEL_REGISTRY, busca por implementação similar).
+- Servirá como link único a citar em PR templates e onboarding.
 
 ## Detalhes técnicos
 
-**Arquivos a alterar:**
-- `src/modules/okrs/components/wizards/mbr-pre/MbrPreKpiGateStep.tsx` — trocar fonte de dados; receber `referenceMonth` como prop
-- `src/modules/okrs/pages/MbrPrePage.tsx` — passar `referenceMonth` para o `MbrPreKpiGateStep`
-- `src/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters.ts` — adicionar/ajustar `classifyKpiGateBucketsFromMonthlySnapshots` (ou parametrizar `classifyKpiGateBuckets` para aceitar snapshots já filtrados)
-- `src/modules/okrs/hooks/useMbrPreTeamKpisMonthly.ts` — possível enriquecer com `lastInputType`, guardrails mensais e flags necessários ao classificador
-- (Opcional) `MbrPreKrAnalysisStep.tsx` — badge de mês de referência
+- Mantém todas as memórias (`mem://...`) intactas — docs apenas espelham/referenciam.
+- Não toca código de produção (`src/`, `supabase/`).
+- Sem migrações de banco.
+- Não regenera `DATA_MODEL_REGISTRY.{md,json}` — schema não mudou nesta janela.
+- Edição em arquivos `.md` de docs apenas; nenhum impacto em build, runtime ou tipos.
 
-**Fora de escopo:**
-- MBR v1 e MBR v2 não são alterados.
-- Lógica do Check-in individual e do QBR-Pre não muda.
+## Fora de escopo
+
+- Refatorar código do MBR v2 ou Pré-MBR.
+- Atualizar `DATA_MODEL_REGISTRY` (não houve mudança de schema).
+- Tocar em memórias (já estão atualizadas).
