@@ -46,6 +46,7 @@ import {
   useRitualGreetingContext,
   useMbrPreTeamProjects,
   useMbrPreMonthAnalysis,
+  useMbrPreTeamKpisMonthly,
 } from '@/modules/okrs/hooks';
 import type {
   MbrKpiSnapshot,
@@ -70,7 +71,12 @@ export interface MbrPreOpeningStepProps {
   /** Handler ao trocar o mês alvo (deve invalidar análise IA cacheada). */
   onReferenceMonthChange?: (next: string) => void;
   krFinalStates: MbrPreDraftData['krFinalStates'];
-  kpiSnapshots: MbrKpiSnapshot[];
+  /**
+   * @deprecated Mantido por compat — a Abertura agora deriva o snapshot
+   * mensal direto via `useMbrPreTeamKpisMonthly` (ancorado em `referenceMonth`).
+   * O draft.kpiSnapshots continua sendo SSOT do KPI Gate (step seguinte).
+   */
+  kpiSnapshots?: MbrKpiSnapshot[];
   monthAnalysis?: MbrPreMonthAnalysis | null;
   onMonthAnalysisChange: (analysis: MbrPreMonthAnalysis | null) => void;
   onContinue: () => void;
