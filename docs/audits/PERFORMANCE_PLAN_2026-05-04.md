@@ -72,7 +72,7 @@ Plano consolidado de débitos técnicos e otimizações em 3 ondas. Documento vi
 | Métrica | Atual | Alvo |
 |---|---|---|
 | Seq scans/dia | < 200 (após W1) | < 200 |
-| Edge functions > 500 LoC | 5 | 2 |
+| Edge functions > 500 LoC | 5 → 5 (1 splitada, 962→152) | 2 |
 | `.select("*")` em src | 0 | 0 ✅ |
 | Arquivos src > 600 LoC | 19 | 10 |
 | `console.*` em src | 352 | < 80 |
