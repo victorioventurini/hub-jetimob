@@ -22,7 +22,6 @@ const LeaderPrepPage = lazyWithRetry(() => import('@/modules/okrs/pages/LeaderPr
 const TeamCheckinPage = lazyWithRetry(() => import('@/modules/okrs/pages/TeamCheckinPage'));
 // CLevelCheckinPage removido do roteamento — rito 'clevel-checkin' descontinuado.
 const MbrPage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrPage'));
-const MbrV2Page = lazyWithRetry(() => import('@/modules/okrs/pages/MbrV2Page'));
 const MbrPrePage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrPrePage'));
 const QbrPrePage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPrePage'));
 const QbrPreCLevelPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
