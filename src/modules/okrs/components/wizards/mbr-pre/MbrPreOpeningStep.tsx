@@ -48,6 +48,7 @@ import {
   useMbrPreMonthAnalysis,
   useMbrPreTeamKpisMonthly,
 } from '@/modules/okrs/hooks';
+import { useEntityLookup } from '@/modules/okrs/hooks/useEntityLookup';
 import type {
   MbrKpiSnapshot,
   MbrPreDraftData,
