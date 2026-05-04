@@ -767,13 +767,16 @@ export default function MbrPage() {
 
   const handleAddSuggestedDecision = useCallback(
     (title: string, category?: string) => {
+      const allowed = ['decision', 'focus_adjustment', 'next_step', 'strategic_proposal'] as const;
+      const safeCategory = (allowed as readonly string[]).includes(category ?? '')
+        ? (category as TeamCheckinDecision['category'])
+        : 'decision';
       const newDecision: TeamCheckinDecision = {
         id: `mbr-curated-decision-${Date.now()}`,
         text: title,
-        category: (category as TeamCheckinDecision['category']) ?? 'strategic',
-        owner: null,
-        deadline: null,
-      } as TeamCheckinDecision;
+        category: safeCategory,
+        sourceStep: 'panorama',
+      };
       const nextSuggested = panoramaCuration.suggestedDecisions.map((s) =>
         s.title === title ? { ...s, added: true } : s,
       );
