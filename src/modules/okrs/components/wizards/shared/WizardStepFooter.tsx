@@ -152,46 +152,84 @@ export function WizardFirstStepFooter(props: Omit<WizardStepFooterProps, 'showBa
   return <WizardStepFooter primaryLabel="Começar" {...props} showBack={false} />;
 }
 
-/** Footer for last step (complete button) with confirmation dialog */
-export function WizardLastStepFooter(props: Omit<WizardStepFooterProps, 'primaryLabel' | 'primaryVariant'>) {
+// ============================================================
+// LAST STEP FOOTER — confirmação canônica via ConfirmDialog
+// ============================================================
+
+export interface WizardLastStepFooterProps
+  extends Omit<WizardStepFooterProps, 'primaryLabel' | 'primaryVariant'> {
+  /** Label do botão primário (default: "Finalizar e enviar") */
+  primaryLabel?: string;
+  /** Título do modal de confirmação (default: "Concluir ritual") */
+  confirmTitle?: string;
+  /** Descrição do modal — string ou JSX */
+  confirmDescription?: ReactNode;
+  /** Label do botão de confirmar dentro do modal (default: "Confirmar conclusão") */
+  confirmLabel?: string;
+  /** Label do botão de cancelar (default: "Cancelar") */
+  cancelLabel?: string;
+  /** Variante visual do modal (default: "info") */
+  confirmVariant?: ConfirmDialogVariant;
+  /** Desabilita totalmente a confirmação (uso excepcional). Default: false. */
+  disableConfirmation?: boolean;
+}
+
+const DEFAULT_CONFIRM_DESCRIPTION =
+  'Ao confirmar, os dados serão salvos e o ritual será marcado como concluído. Tem certeza de que deseja prosseguir?';
+
+/** Footer for last step (complete button) with canonical confirmation modal */
+export function WizardLastStepFooter({
+  primaryLabel,
+  confirmTitle = 'Concluir ritual',
+  confirmDescription = DEFAULT_CONFIRM_DESCRIPTION,
+  confirmLabel = 'Confirmar conclusão',
+  cancelLabel = 'Cancelar',
+  confirmVariant = 'info',
+  disableConfirmation = false,
+  ...props
+}: WizardLastStepFooterProps) {
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const resolvedPrimaryLabel =
+    primaryLabel ?? (props.primaryLoading ? 'Enviando…' : 'Finalizar e enviar');
+
   const handlePrimaryClick = () => {
+    if (disableConfirmation) {
+      props.onPrimary?.();
+      return;
+    }
     setShowConfirm(true);
   };
 
-  const handleConfirm = () => {
-    setShowConfirm(false);
-    props.onPrimary?.();
+  const handleConfirm = async () => {
+    await props.onPrimary?.();
+    // Mantém o modal aberto durante isLoading; o pai controla o desmount via navegação.
+    if (!props.primaryLoading) setShowConfirm(false);
   };
 
   return (
     <>
-      <WizardStepFooter 
-        {...props} 
-        primaryLabel={props.primaryLoading ? 'Enviando…' : 'Finalizar e enviar'} 
+      <WizardStepFooter
+        {...props}
+        primaryLabel={resolvedPrimaryLabel}
         primaryVariant="success"
         onPrimary={handlePrimaryClick}
       />
 
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Concluir ritual</AlertDialogTitle>
-            <AlertDialogDescription>
-              Ao confirmar, os dados serão salvos e o ritual será marcado como concluído. 
-              Tem certeza de que deseja prosseguir?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirm}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Confirmar conclusão
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={(open) => {
+          if (props.primaryLoading) return; // bloqueia fechar enquanto envia
+          setShowConfirm(open);
+        }}
+        onConfirm={handleConfirm}
+        title={confirmTitle}
+        description={confirmDescription}
+        confirmLabel={confirmLabel}
+        cancelLabel={cancelLabel}
+        variant={confirmVariant}
+        isLoading={!!props.primaryLoading}
+      />
     </>
   );
 }
