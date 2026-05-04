@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Target, User, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepFooter } from '../shared';
+import { WizardLastStepFooter } from '../shared';
+import { getRitualFinalizationCopy } from '@/modules/okrs/constants/ritualLabels';
 import type { DraftTeamKr, DraftTeamDependency, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
 
 export interface KrReviewStepProps {
@@ -176,13 +177,21 @@ export function KrReviewStep({
         </div>
       </ScrollArea>
 
-      <WizardStepFooter
-        onBack={onBack}
-        primaryLabel="Criar KRs e iniciar acompanhamento"
-        onPrimary={onConfirm}
-        primaryLoading={isSubmitting}
-        primaryVariant="success"
-      />
+      {(() => {
+        const copy = getRitualFinalizationCopy('team-kr-creation');
+        return (
+          <WizardLastStepFooter
+            onBack={onBack}
+            backDisabled={isSubmitting}
+            primaryLabel="Criar KRs e iniciar acompanhamento"
+            onPrimary={onConfirm}
+            primaryLoading={isSubmitting}
+            confirmTitle={copy?.title ?? 'Publicar KRs do time'}
+            confirmDescription={copy?.description}
+            confirmLabel={copy?.confirmLabel ?? 'Publicar KRs'}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -14,9 +14,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Sparkles, Copy, CheckCircle2, Loader2, MessageSquare, Target, Users, Quote } from 'lucide-react';
+import { Sparkles, Copy, CheckCircle2, MessageSquare, Target, Users, Quote } from 'lucide-react';
 import { VicLoadingState, VicTypewriterText } from '@/modules/vic';
 import { WizardLastStepFooter } from '../shared';
+import { getRitualFinalizationCopy } from '@/modules/okrs/constants/ritualLabels';
 import { useWizardAI, type ShareStepContent } from '@/modules/okrs/hooks';
 import { toast } from 'sonner';
 import type { DraftTeamKr, DraftTeamInitiative } from '@/modules/okrs/types/wizard';
@@ -343,25 +344,22 @@ export function TeamOkrShareStep({
         </div>
       </ScrollArea>
 
-      <WizardLastStepFooter
-        onBack={onBack}
-        backDisabled={isSubmitting}
-        primaryLoading={isSubmitting}
-        onPrimary={onSubmit}
-        primaryDisabled={isGenerating || isSubmitting}
-        rightContent={
-          <Button
-            onClick={onSubmit}
-            disabled={isGenerating || isSubmitting}
-            isLoading={isSubmitting}
-            loadingText="Criando OKRs..."
-            className="bg-success text-success-foreground hover:bg-success/90"
-          >
-            <Send className="h-4 w-4" />
-            Compartilhar e iniciar o ciclo
-          </Button>
-        }
-      />
+      {(() => {
+        const copy = getRitualFinalizationCopy('team-okr-creation');
+        return (
+          <WizardLastStepFooter
+            onBack={onBack}
+            backDisabled={isSubmitting}
+            primaryLoading={isSubmitting}
+            onPrimary={onSubmit}
+            primaryDisabled={isGenerating || isSubmitting}
+            primaryLabel={isSubmitting ? 'Criando OKRs...' : 'Compartilhar e iniciar o ciclo'}
+            confirmTitle={copy?.title ?? 'Publicar OKR do time'}
+            confirmDescription={copy?.description}
+            confirmLabel={copy?.confirmLabel ?? 'Publicar OKR'}
+          />
+        );
+      })()}
     </div>
   );
 }
