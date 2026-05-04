@@ -386,12 +386,18 @@ serve(async (req) => {
       decisions?: Array<Record<string, unknown>>;
       checklist?: Record<string, unknown>;
       referenceMonth?: string;
+      panoramaCuration?: {
+        summary?: string;
+        origin?: 'ai-curated' | 'manual';
+        state?: 'draft' | 'reviewed' | 'approved';
+      } | null;
     } | null;
     const kpiSnapshots = snapshotData?.kpiSnapshots || [];
     const orgOkrSnapshots = snapshotData?.orgOkrSnapshots || [];
     const decisions = snapshotData?.decisions || [];
     const checklist = snapshotData?.checklist || {};
     const referenceMonth = snapshotData?.referenceMonth || '';
+    const curatedOpening = (snapshotData?.panoramaCuration?.summary || '').trim();
 
     // Build agent context from snapshot (immutable data)
     const agentContext: MbrAgentContext = {
