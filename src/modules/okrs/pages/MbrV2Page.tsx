@@ -252,7 +252,7 @@ export default function MbrV2Page() {
     navigate('/rituals');
   }, [clearDraft, navigate]);
 
-  if (isLoadingCycle) return <LoadingState message="Carregando ciclo…" />;
+  if (isLoadingCycle) return <LoadingState text="Carregando ciclo…" />;
   if (!cycle) {
     return (
       <div className="p-8">
@@ -275,7 +275,7 @@ export default function MbrV2Page() {
   return (
     <FullPageWizardShell
       title="MBR v2 (beta)"
-      subtitle={`Mês de referência: ${draft.data.referenceMonth}`}
+      description={`Mês de referência: ${draft.data.referenceMonth}`}
       steps={WIZARD_STEPS}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
@@ -475,7 +475,7 @@ function StepOpening({
     <div className="space-y-6">
       <WizardStepHeader
         title="Abertura Executiva"
-        subtitle="Curadoria do mês a partir dos Pré-MBRs recebidos"
+        description="Curadoria do mês a partir dos Pré-MBRs recebidos"
       />
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -529,7 +529,7 @@ function StepKpiGate({
     <div className="space-y-6">
       <WizardStepHeader
         title="KPI Gate"
-        subtitle="Para cada KPI crítico, escolha o caminho de resolução."
+        description="Para cada KPI crítico, escolha o caminho de resolução."
       />
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -605,7 +605,7 @@ function StepObjectivesOverview({
     <div className="space-y-6">
       <WizardStepHeader
         title="Objetivos Organizacionais"
-        subtitle="Lista ordenada por severidade. Ajuste tempo ou nível antes de discutir."
+        description="Lista ordenada por severidade. Ajuste tempo ou nível antes de discutir."
       />
       <div className="space-y-3">
         {analyses.map((a, idx) => {
@@ -713,7 +713,7 @@ function StepObjectiveDetail({
     <div className="space-y-6">
       <WizardStepHeader
         title={`Discussão: ${current.title}`}
-        subtitle={`Objetivo ${currentIndex + 1} de ${analyses.length} · ${current.timeBudgetMin} min · severidade ${SEVERITY_LABEL[sev]}`}
+        description={`Objetivo ${currentIndex + 1} de ${analyses.length} · ${current.timeBudgetMin} min · severidade ${SEVERITY_LABEL[sev]}`}
       />
       <Card>
         <CardContent className="p-6 space-y-3">
@@ -780,7 +780,7 @@ function StepLooseItems({
     <div className="space-y-6">
       <WizardStepHeader
         title="Itens Avulsos"
-        subtitle="Pautas que não pertencem a um objetivo organizacional."
+        description="Pautas que não pertencem a um objetivo organizacional."
       />
       <Card>
         <CardContent className="p-6 space-y-3">
@@ -866,7 +866,7 @@ function StepCarryOver({
     <div className="space-y-6">
       <WizardStepHeader
         title="Carry-over"
-        subtitle="Status obrigatório para cada decisão do MBR anterior."
+        description="Status obrigatório para cada decisão do MBR anterior."
       />
       <div className="space-y-3">
         {items.length === 0 ? (
@@ -917,7 +917,7 @@ function StepDecisions({
     <div className="space-y-6">
       <WizardStepHeader
         title="Decisões Formais"
-        subtitle="Output canônico do rito — cada decisão precisa de texto e responsável depois."
+        description="Output canônico do rito — cada decisão precisa de texto e responsável depois."
       />
       <Card>
         <CardContent className="p-6 space-y-3">
@@ -990,7 +990,7 @@ function StepClosing({
     <div className="space-y-6">
       <WizardStepHeader
         title="Encerramento"
-        subtitle="Cobertura derivada + checklist final."
+        description="Cobertura derivada + checklist final."
       />
       <Card>
         <CardContent className="p-6 space-y-3">
