@@ -220,6 +220,8 @@ export default function MbrPage() {
     let agendaSuggestionCount = 0;
     for (const sub of Object.values(mbrPreByTeam)) {
       kpiJustifCount += Object.values(sub.kpiJustifications ?? {}).filter((v) => (v ?? '').trim()).length;
+      // @deprecated v3.31.1 — Pré-MBR não captura mais update inline (sempre 0).
+      // Mantido para retrocompat de leitura de sessões antigas.
       kpiUpdatedCount += Object.keys(sub.kpiOutdatedUpdates ?? {}).length;
       projectJustifCount +=
         Object.values(sub.projectJustifications?.projects ?? {}).filter((v) => (v ?? '').trim()).length +

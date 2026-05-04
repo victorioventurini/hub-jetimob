@@ -66,6 +66,13 @@ export interface KpiGateStepProps {
   currentKpiIndex?: number;
   /** v3.31.0 (rich-paginated) — callback ao mudar de KPI via Anterior/Próximo. */
   onKpiIndexChange?: (next: number) => void;
+  /**
+   * v3.31.1 — mapa kpiId → "Por que está sem dados" (causa).
+   * Apenas usado quando `config.splitNoDataReason === true`.
+   */
+  noDataReasons?: Record<string, string>;
+  /** v3.31.1 — callback de mudança da razão de ausência de dados. */
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
@@ -188,6 +195,10 @@ interface RichKpiCardProps {
   bucketId: KpiGateBucketId;
   justification: string;
   onJustificationChange?: (kpiId: string, value: string) => void;
+  /** v3.31.1 — quando true, separa "razão de ausência" do "plano de ação". */
+  splitNoDataReason?: boolean;
+  noDataReason?: string;
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
 }
 
 const RichKpiCard = memo(function RichKpiCard({
@@ -195,6 +206,9 @@ const RichKpiCard = memo(function RichKpiCard({
   bucketId,
   justification,
   onJustificationChange,
+  splitNoDataReason,
+  noDataReason,
+  onNoDataReasonChange,
 }: RichKpiCardProps) {
   const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
@@ -208,9 +222,13 @@ const RichKpiCard = memo(function RichKpiCard({
   const showAction = mode !== 'view';
   const isRequired = mode === 'justify-required' || mode === 'explain-no-data';
 
+  const isSplitNoData = !!splitNoDataReason && mode === 'explain-no-data';
+
   const actionLabel =
     mode === 'explain-no-data'
-      ? 'Por que está sem dados? Plano para destravar'
+      ? isSplitNoData
+        ? 'Plano para destravar a coleta'
+        : 'Por que está sem dados? Plano para destravar'
       : mode === 'justify-required'
         ? 'Justificativa e plano de ação'
         : mode === 'justify-optional'
@@ -219,7 +237,9 @@ const RichKpiCard = memo(function RichKpiCard({
 
   const actionHint =
     mode === 'explain-no-data'
-      ? 'Obrigatório — explique a ausência de registros e descreva o plano para coletar e disponibilizar.'
+      ? isSplitNoData
+        ? 'Obrigatório — descreva o plano e prazo para coletar e disponibilizar o dado.'
+        : 'Obrigatório — explique a ausência de registros e descreva o plano para coletar e disponibilizar.'
       : mode === 'justify-required'
         ? 'Obrigatório — explique o motivo do desvio e descreva as próximas ações para corrigir a rota.'
         : mode === 'justify-optional'
@@ -330,12 +350,28 @@ const RichKpiCard = memo(function RichKpiCard({
             {actionHint && (
               <p className="text-[11px] text-muted-foreground">{actionHint}</p>
             )}
+            {isSplitNoData && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-foreground block">
+                  Por que está sem dados?<span className="text-status-amber"> *</span>
+                </Label>
+                <Textarea
+                  value={noDataReason ?? ''}
+                  onChange={(e) => onNoDataReasonChange?.(kpi.id, e.target.value)}
+                  placeholder="Ex.: integração indisponível, fonte ainda não definida, responsável de fora..."
+                  className="text-sm min-h-[64px] max-w-full"
+                  aria-required
+                />
+              </div>
+            )}
             <Textarea
               value={justification}
               onChange={(e) => onJustificationChange?.(kpi.id, e.target.value)}
               placeholder={
                 mode === 'explain-no-data'
-                  ? 'Descreva a causa da ausência de dados e o plano para sanar...'
+                  ? isSplitNoData
+                    ? 'Plano e prazo para destravar a coleta...'
+                    : 'Descreva a causa da ausência de dados e o plano para sanar...'
                   : 'Descreva o motivo do desvio e as próximas ações...'
               }
               className="text-sm min-h-[80px] max-w-full"
@@ -357,15 +393,18 @@ function BucketSection({
   variant,
   justifications,
   onJustificationChange,
+  splitNoDataReason,
+  noDataReasons,
+  onNoDataReasonChange,
 }: {
   bucket: KpiGateBucket;
   variant: 'compact' | 'rich';
   justifications: Record<string, string>;
   onJustificationChange?: (kpiId: string, value: string) => void;
+  splitNoDataReason?: boolean;
+  noDataReasons?: Record<string, string>;
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
 }) {
-  // teamContext é colapsado por default, MAS abrimos automaticamente se
-  // houver KPI em alerta (red/amber) — esses pedem plano de ação obrigatório/
-  // opcional do líder e devem ser visíveis sem clique extra.
   const hasAlert = bucket.items.some((k) => k.status === 'red' || k.status === 'amber');
   const initiallyOpen = !COLLAPSED_BY_DEFAULT.has(bucket.id) || hasAlert;
   const [open, setOpen] = useState(initiallyOpen);
@@ -401,6 +440,9 @@ function BucketSection({
                 bucketId={bucket.id}
                 justification={justifications[kpi.id] ?? ''}
                 onJustificationChange={onJustificationChange}
+                splitNoDataReason={splitNoDataReason}
+                noDataReason={noDataReasons?.[kpi.id]}
+                onNoDataReasonChange={onNoDataReasonChange}
               />
             ) : (
               <KpiCardItem key={kpi.id} kpi={kpi} />
@@ -473,7 +515,10 @@ export const KpiGateStep = memo(function KpiGateStep({
   onJustificationChange,
   currentKpiIndex,
   onKpiIndexChange,
+  noDataReasons,
+  onNoDataReasonChange,
 }: KpiGateStepProps) {
+  const splitNoDataReason = !!config.splitNoDataReason;
   const label = getStepLabel(persona, stepId, version);
   const variant: 'compact' | 'rich' | 'rich-paginated' = config.cardVariant ?? 'compact';
   const isRichLike = variant === 'rich' || variant === 'rich-paginated';
@@ -518,11 +563,20 @@ export const KpiGateStep = memo(function KpiGateStep({
           noTarget;
         if (!requiresPlan) continue;
         const text = (justifications?.[item.id] ?? '').trim();
-        if (text.length === 0) list.push(item);
+        // Quando split: explain-no-data exige TANTO razão quanto plano.
+        const isExplainNoData =
+          bucket.id === 'overdue' ||
+          (bucket.id === 'teamContext' && item.status === 'unknown');
+        if (splitNoDataReason && isExplainNoData) {
+          const reason = (noDataReasons?.[item.id] ?? '').trim();
+          if (text.length === 0 || reason.length === 0) list.push(item);
+        } else if (text.length === 0) {
+          list.push(item);
+        }
       }
     }
     return list;
-  }, [isRichLike, buckets, justifications]);
+  }, [isRichLike, buckets, justifications, splitNoDataReason, noDataReasons]);
 
   const showGate = !!config.requireResolution && isRichLike;
   const hasGateBlock = showGate && mandatoryUnaddressed.length > 0;
@@ -604,6 +658,9 @@ export const KpiGateStep = memo(function KpiGateStep({
             bucketId={currentEntry.bucketId}
             justification={justifications?.[currentEntry.kpi.id] ?? ''}
             onJustificationChange={onJustificationChange}
+            splitNoDataReason={splitNoDataReason}
+            noDataReason={noDataReasons?.[currentEntry.kpi.id]}
+            onNoDataReasonChange={onNoDataReasonChange}
           />
         ) : buckets ? (
           buckets.map((bucket) => (
@@ -613,6 +670,9 @@ export const KpiGateStep = memo(function KpiGateStep({
               variant={variant === 'rich-paginated' ? 'rich' : variant}
               justifications={justifications ?? {}}
               onJustificationChange={onJustificationChange}
+              splitNoDataReason={splitNoDataReason}
+              noDataReasons={noDataReasons}
+              onNoDataReasonChange={onNoDataReasonChange}
             />
           ))
         ) : (

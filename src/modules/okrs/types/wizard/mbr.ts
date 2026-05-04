@@ -330,9 +330,12 @@ export interface MbrPreDraftData {
    */
   kpiNoDataReasons?: Record<string, string>;
   /**
-   * Registro auditável de KPIs cujo valor foi efetivamente atualizado durante
-   * o rito (bucket `overdue`). O insert real vai para `kpi_values`; este map
-   * é só para a Summary e o Report mostrarem o que aconteceu na sessão.
+   * @deprecated v3.31.1 — não há mais UI no Pré-MBR para registrar update inline
+   * de valor de KPI durante o rito (o fluxo SSOT é o `KpiValueEntryForm` em
+   * `/kpis` ou no Check-in Individual). Mantido OPCIONAL para retrocompat de
+   * leitura de sessões antigas; novos drafts não escrevem este campo.
+   * Re-introduzir somente via flag `allowInlineValueEntry` no `KpiGateStep`
+   * (ticket separado) reutilizando o SSOT — JAMAIS duplicar formulário.
    */
   kpiOutdatedUpdates?: Record<string, {
     newValue: number;
@@ -408,7 +411,7 @@ export interface MbrPreTeamSubmission {
   kpiJustifications: MbrPreDraftData['kpiJustifications'];
   /** Razões para KPI sem dados (kpiId → texto). */
   kpiNoDataReasons: NonNullable<MbrPreDraftData['kpiNoDataReasons']>;
-  /** KPIs atualizados durante o Pré-MBR (kpiId → update). */
+  /** @deprecated v3.31.1 — ver `MbrPreDraftData.kpiOutdatedUpdates`. */
   kpiOutdatedUpdates: NonNullable<MbrPreDraftData['kpiOutdatedUpdates']>;
   /** Justificativas de projetos/milestones atrasados. */
   projectJustifications: MbrPreDraftData['projectJustifications'];

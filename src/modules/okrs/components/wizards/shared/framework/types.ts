@@ -49,6 +49,17 @@ export interface KpiGateStepConfig {
    *   navegação Anterior/Próximo (mesmo padrão do `MbrPreKrAnalysisStep`).
    */
   cardVariant?: 'compact' | 'rich' | 'rich-paginated';
+  /**
+   * v3.31.1 — quando true, separa em DOIS campos a captura para KPIs sem dados
+   * (bucket `overdue` ou `teamContext` com `status='unknown'`):
+   *   1) `noDataReason` — POR QUE está sem dados (causa)
+   *   2) `justification` — plano de ação para destravar (continua em `onJustificationChange`)
+   * Quando ausente/false, mantém o comportamento atual (um único textarea
+   * "explain-no-data" persistido em `justifications`).
+   * Consumidor deve fornecer `noDataReasons` + `onNoDataReasonChange`.
+   * AGNÓSTICO de wizardType — toggled apenas via config.
+   */
+  splitNoDataReason?: boolean;
 }
 
 export interface KrsStepConfig {

@@ -39,6 +39,9 @@ export interface MbrPreKpiGateStepProps {
   onKpiSnapshotsChange: (snapshots: MbrKpiSnapshot[]) => void;
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (decisions: TeamCheckinDecision[]) => void;
+  /** v3.31.1 — kpiId → "Por que está sem dados" (causa). */
+  noDataReasons: Record<string, string>;
+  onNoDataReasonChange: (kpiId: string, value: string) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -73,6 +76,8 @@ export function MbrPreKpiGateStep({
   onKpiSnapshotsChange,
   decisions,
   onDecisionsChange,
+  noDataReasons,
+  onNoDataReasonChange,
   onContinue,
   onBack,
 }: MbrPreKpiGateStepProps) {
@@ -188,8 +193,15 @@ export function MbrPreKpiGateStep({
     (currentEntry.bucketId === 'teamContext' && (currentEntry.kpi.status === 'red' || currentEntry.kpi.status === 'unknown')) ||
     kpiHasNoTarget
   );
+  const isExplainNoData = !!currentEntry && (
+    currentEntry.bucketId === 'overdue' ||
+    (currentEntry.bucketId === 'teamContext' && currentEntry.kpi.status === 'unknown')
+  );
   const currentJustOk = !currentRequiresPlan
-    || (justifications[currentEntry!.kpi.id] ?? '').trim().length > 0;
+    || (
+      (justifications[currentEntry!.kpi.id] ?? '').trim().length > 0
+      && (!isExplainNoData || (noDataReasons[currentEntry!.kpi.id] ?? '').trim().length > 0)
+    );
 
   const isFirst = currentKpiIndex === 0;
   const isLast = totalKpiCount === 0 || currentKpiIndex >= totalKpiCount - 1;
@@ -225,12 +237,14 @@ export function MbrPreKpiGateStep({
       persona="mbr-pre"
       version="v3"
       stepId="kpis"
-      config={{ requireResolution: true, cardVariant: 'rich-paginated' }}
+      config={{ requireResolution: true, cardVariant: 'rich-paginated', splitNoDataReason: true }}
       data={[]}
       onDataChange={() => { /* noop — buckets é a fonte */ }}
       buckets={buckets}
       justifications={justifications}
       onJustificationChange={handleJustificationChange}
+      noDataReasons={noDataReasons}
+      onNoDataReasonChange={onNoDataReasonChange}
       currentKpiIndex={currentKpiIndex}
       onKpiIndexChange={setCurrentKpiIndex}
       decisions={decisions}
