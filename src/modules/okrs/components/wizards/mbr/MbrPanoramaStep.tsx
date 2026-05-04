@@ -34,6 +34,7 @@ import { formatValueWithUnit } from '@/shared/constants/units';
 import { variationVsLast, variationVsTarget as deriveVariationVsTarget } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
+import { MbrPanoramaCurationCard } from './MbrPanoramaCurationCard';
 
 // ============================================================
 // TYPES
