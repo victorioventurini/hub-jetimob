@@ -427,6 +427,37 @@ export function MbrPanoramaStep({
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
           {topSlot}
+
+          {/* ── Preparação dos Times (Pré-MBR) ── */}
+          {mbrPreSubmittedCount > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Preparação dos Times (Pré-MBR)
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">{mbrPreSubmittedCount} times submeteram</Badge>
+                {mbrPreNeedsDecisionCount > 0 && (
+                  <Badge variant="outline">{mbrPreNeedsDecisionCount} pedem decisão</Badge>
+                )}
+                {mbrPreCrossDepCount > 0 && (
+                  <Badge variant="outline">{mbrPreCrossDepCount} dependências cross-team</Badge>
+                )}
+                {mbrPreKpiJustifCount > 0 && (
+                  <Badge variant="outline">{mbrPreKpiJustifCount} justificativas de KPI</Badge>
+                )}
+                {mbrPreKpiUpdatedCount > 0 && (
+                  <Badge variant="outline">{mbrPreKpiUpdatedCount} KPIs atualizados</Badge>
+                )}
+                {mbrPreProjectJustifCount > 0 && (
+                  <Badge variant="outline">{mbrPreProjectJustifCount} justificativas de projeto</Badge>
+                )}
+                {mbrPreAgendaSuggestionCount > 0 && (
+                  <Badge variant="outline">{mbrPreAgendaSuggestionCount} sugestões de pauta</Badge>
+                )}
+              </div>
+            </div>
+          )}
           {/* ── Bloco 1: Scorecard do mês ── */}
           {scorecardMetrics && (
             <div className="space-y-2">
