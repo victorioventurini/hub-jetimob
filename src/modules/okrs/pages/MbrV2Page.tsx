@@ -474,6 +474,7 @@ function StepOpening({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="Abertura Executiva"
         description="Curadoria do mês a partir dos Pré-MBRs recebidos"
       />
@@ -528,6 +529,7 @@ function StepKpiGate({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="KPI Gate"
         description="Para cada KPI crítico, escolha o caminho de resolução."
       />
@@ -604,6 +606,7 @@ function StepObjectivesOverview({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="Objetivos Organizacionais"
         description="Lista ordenada por severidade. Ajuste tempo ou nível antes de discutir."
       />
@@ -712,6 +715,7 @@ function StepObjectiveDetail({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title={`Discussão: ${current.title}`}
         description={`Objetivo ${currentIndex + 1} de ${analyses.length} · ${current.timeBudgetMin} min · severidade ${SEVERITY_LABEL[sev]}`}
       />
@@ -779,6 +783,7 @@ function StepLooseItems({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="Itens Avulsos"
         description="Pautas que não pertencem a um objetivo organizacional."
       />
@@ -865,6 +870,7 @@ function StepCarryOver({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="Carry-over"
         description="Status obrigatório para cada decisão do MBR anterior."
       />
@@ -916,6 +922,7 @@ function StepDecisions({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="Decisões Formais"
         description="Output canônico do rito — cada decisão precisa de texto e responsável depois."
       />
@@ -989,6 +996,7 @@ function StepClosing({
   return (
     <div className="space-y-6">
       <WizardStepHeader
+        icon={Circle}
         title="Encerramento"
         description="Cobertura derivada + checklist final."
       />
