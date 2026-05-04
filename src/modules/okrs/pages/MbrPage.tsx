@@ -825,6 +825,7 @@ export default function MbrPage() {
                 : mbrCarryOver
             }
             mbrPreSurfacedItems={mbrPreSurfacedItems}
+            mbrPreAgendaSuggestions={mbrPreAgendaSuggestions}
             teamNamesById={Object.fromEntries(draft.data.teamOkrSnapshots.map(t => [t.teamId, t.teamName]))}
             onContinue={goNext}
             onBack={goBack}
