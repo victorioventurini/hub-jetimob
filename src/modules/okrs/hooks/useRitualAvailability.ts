@@ -13,6 +13,7 @@ import type { WizardPersona } from '../types/wizard';
 import type { CycleWithStatus } from './useActiveCycle';
 import { addBusinessDaysToDate } from '../utils/generateCycles';
 import { RITUAL_LABELS as SSOT_RITUAL_LABELS } from '../constants/ritualLabels';
+import { useAuth } from '@/hooks/useAuth';
 
 // ⚠️ TEMPORARY DEV FLAG — remove after QBR flow testing
 const DEV_FORCE_QBR_AVAILABLE = new Date() < new Date('2026-04-15');
