@@ -343,6 +343,11 @@ export {
   type UseWeeklyPreWeeklyAggregationReturn,
 } from './useWeeklyPreWeeklyAggregation';
 export { useMbrPreMonthAnalysis } from './useMbrPreMonthAnalysis';
+export {
+  useMbrOpeningCuration,
+  type UseMbrOpeningCurationParams,
+  type UseMbrOpeningCurationReturn,
+} from './useMbrOpeningCuration';
 
 // =========================
 // SHARED TYPES re-exported for convenience
