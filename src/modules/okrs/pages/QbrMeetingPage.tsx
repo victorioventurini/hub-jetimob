@@ -40,6 +40,8 @@ import {
   QbrMeetingCommitmentsStep,
   QbrMeetingClosingStep,
 } from '@/modules/okrs/components/wizards/qbr-meeting';
+import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
+import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import type { TeamForReview } from '@/modules/okrs/components/wizards/qbr-meeting';
 
 import type {
@@ -58,17 +60,18 @@ import { normalizeProposedOkrs } from '@/modules/okrs/types/wizard';
 // CONSTANTS
 // ============================================================
 
-type QbrMeetingStep = 'opening' | 'okr-review' | 'decisions' | 'commitments' | 'closing';
+type QbrMeetingStep = 'opening' | 'okr-review' | 'decisions' | 'commitments' | 'evaluation' | 'closing';
 
 const WIZARD_STEPS = [
   { id: 'opening' as const, label: 'Contexto', description: 'Análise do C-Level' },
   { id: 'okr-review' as const, label: 'Aprovação OKRs', description: 'Time por time' },
   { id: 'decisions' as const, label: 'Decisões', description: 'Dono e prazo' },
   { id: 'commitments' as const, label: 'Compromissos', description: 'Entre times' },
+  { id: 'evaluation' as const, label: 'Avaliação do Rito', description: 'Coleta anônima' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
 
-const STEP_ORDER: QbrMeetingStep[] = ['opening', 'okr-review', 'decisions', 'commitments', 'closing'];
+const STEP_ORDER: QbrMeetingStep[] = ['opening', 'okr-review', 'decisions', 'commitments', 'evaluation', 'closing'];
 
 const DEFAULT_DATA: QbrMeetingDraftData = {
   cycleId: '',
@@ -549,6 +552,21 @@ export default function QbrMeetingPage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
+          />
+        );
+
+      case 'evaluation':
+        return (
+          <EvaluationCollectionStep
+            sessionId={sessionId ?? null}
+            persona="qbr-meeting"
+            footer={
+              <WizardStepFooter
+                onPrimary={goNext}
+                onBack={goBack}
+                primaryLabel="Continuar para encerramento"
+              />
+            }
           />
         );
 

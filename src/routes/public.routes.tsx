@@ -13,6 +13,7 @@ const AuthCallback = lazyWithRetry(() => import('@/pages/AuthCallback'));
 const AuthConfirm = lazyWithRetry(() => import('@/pages/AuthConfirm'));
 const PublicAsset = lazyWithRetry(() => import('@/pages/PublicAsset'));
 const EventsCapturePage = lazyWithRetry(() => import('@/modules/events/pages/EventsCapturePage'));
+const PublicRitualEvaluation = lazyWithRetry(() => import('@/pages/PublicRitualEvaluation'));
 
 export const publicRoutes = (
   <>
@@ -21,7 +22,8 @@ export const publicRoutes = (
     <Route path="/auth/confirm" element={<AuthConfirm />} />
     <Route path="/p/assets/:code" element={<PublicAsset />} />
     <Route path="/p/events/capture/:eventCode" element={<EventsCapturePage />} />
+    <Route path="/p/r/:shortCode" element={<PublicRitualEvaluation />} />
   </>
 );
 
-export const PUBLIC_PATHS = ['/auth', '/auth/callback', '/auth/confirm', '/p/assets', '/p/events'] as const;
+export const PUBLIC_PATHS = ['/auth', '/auth/callback', '/auth/confirm', '/p/assets', '/p/events', '/p/r'] as const;

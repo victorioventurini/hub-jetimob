@@ -44,6 +44,7 @@ export type QbrMeetingStep =
   | 'decisions'
   | 'commitments'
   | 'feedback'
+  | 'evaluation'
   | 'closing';
 
 export type QbrPostStep =
@@ -51,6 +52,7 @@ export type QbrPostStep =
   | 'decisions'
   | 'commitments'
   | 'follow-up'
+  | 'evaluation'
   | 'minutes';
 
 export type QbrApprovalStatus =

@@ -43,6 +43,13 @@ export interface MbrClosingStepProps {
   orgOkrSnapshots?: MbrOrgOkrSnapshot[];
   /** v1.2: QBR follow-up items for dynamic checklist */
   qbrFollowUpItems?: QbrFollowUpItem[];
+  /**
+   * Esconde o bloco "Como podemos melhorar essa reunião?" (rating 1-5 + comentário).
+   * Usado quando o rito tem coleta anônima padrão (`EvaluationCollectionStep`)
+   * ou quando o reuso é só do checklist (ex.: QBR-Pre-CLevel pós-2026-05-04).
+   * Quando true, `hasFeedback` deixa de ser exigido para concluir.
+   */
+  hideFeedbackBlock?: boolean;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -119,6 +126,7 @@ export function MbrClosingStep({
   teamOkrSnapshots = [],
   orgOkrSnapshots = [],
   qbrFollowUpItems = [],
+  hideFeedbackBlock = false,
   onComplete,
   onBack,
 }: MbrClosingStepProps) {
@@ -186,7 +194,7 @@ export function MbrClosingStep({
 
   const allChecked = legacyChecked && dynamicChecked;
   const hasFeedback = ritualFeedback.length > 0;
-  const canComplete = allChecked && hasFeedback;
+  const canComplete = allChecked && (hideFeedbackBlock || hasFeedback);
 
   // Summary counts
   const decisionCount = decisions.filter(d => d.category === 'decision').length;
@@ -326,7 +334,8 @@ export function MbrClosingStep({
 
           <Separator />
 
-          {/* Anonymous ritual feedback */}
+          {/* Anonymous ritual feedback — escondido quando rito usa coleta anônima padronizada */}
+          {!hideFeedbackBlock && (
           <div className="space-y-4">
             <h4 className="font-medium flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
@@ -392,6 +401,7 @@ export function MbrClosingStep({
               </div>
             )}
           </div>
+          )}
         </div>
       </ScrollArea>
 
@@ -413,7 +423,7 @@ export function MbrClosingStep({
       {!canComplete && (
         <p className="text-xs text-muted-foreground text-center pb-2">
           {!allChecked && 'Complete o checklist'}
-          {allChecked && !hasFeedback && 'Adicione pelo menos um feedback sobre a reunião'}
+          {allChecked && !hideFeedbackBlock && !hasFeedback && 'Adicione pelo menos um feedback sobre a reunião'}
         </p>
       )}
     </div>
