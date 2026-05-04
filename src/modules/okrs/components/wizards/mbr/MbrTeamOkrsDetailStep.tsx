@@ -515,6 +515,8 @@ export function MbrTeamOkrsDetailStep({
                 <div className="space-y-1.5 w-full min-w-0 max-w-full overflow-x-hidden">
                   {objective.keyResults.map((kr) => {
                     const rag = toRagStatus(kr.status ?? 'not_started');
+                    const krJustif = (krJustifMap[kr.krId] ?? '').trim();
+                    const finalState = krFinalStateMap.get(kr.krId);
 
                     return (
                       <div
@@ -523,6 +525,11 @@ export function MbrTeamOkrsDetailStep({
                       >
                         <div className="flex items-center gap-2 w-full min-w-0 max-w-full overflow-x-hidden">
                           <p className="text-xs font-medium truncate flex-1 min-w-0">{kr.title}</p>
+                          {finalState && (
+                            <Badge variant="outline" className="text-[10px] shrink-0">
+                              Pré-MBR: {finalState.state} · {finalState.finalProgress}%
+                            </Badge>
+                          )}
                           <OkrStatusBadge status={rag} type="kr" className="shrink-0 text-[10px]" />
                         </div>
 
@@ -548,6 +555,15 @@ export function MbrTeamOkrsDetailStep({
                           </div>
                         </div>
 
+                        {krJustif && (
+                          <div className="flex gap-2 mt-1.5 text-xs">
+                            <MessageSquare className="h-3.5 w-3.5 text-status-amber shrink-0 mt-0.5" />
+                            <p className="text-muted-foreground">
+                              <span className="font-medium">Justificativa do líder:</span> {krJustif}
+                            </p>
+                          </div>
+                        )}
+
                         {/* Linked initiatives & projects */}
                         <KrLinkedDetails krId={kr.krId} defaultExpanded />
                       </div>
@@ -556,7 +572,8 @@ export function MbrTeamOkrsDetailStep({
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ));
+          })()}
 
           {/* Projetos do time — bloco aditivo */}
           <ProjectsSummary teamId={currentTeam.teamId} mode="detail" className="mt-2" />
