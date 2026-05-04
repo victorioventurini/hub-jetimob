@@ -717,6 +717,10 @@ export default function MbrPage() {
             mbrPreSubmittedCount={mbrPreSubmittedCount}
             mbrPreNeedsDecisionCount={mbrPreSurfacedItems.filter(i => i.kind === 'needs_decision').length}
             mbrPreCrossDepCount={mbrPreSurfacedItems.filter(i => i.kind === 'cross_dependency').length}
+            mbrPreKpiJustifCount={mbrPreAggregates.kpiJustifCount}
+            mbrPreKpiUpdatedCount={mbrPreAggregates.kpiUpdatedCount}
+            mbrPreProjectJustifCount={mbrPreAggregates.projectJustifCount}
+            mbrPreAgendaSuggestionCount={mbrPreAggregates.agendaSuggestionCount}
             topSlot={
               <>
                 <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">
