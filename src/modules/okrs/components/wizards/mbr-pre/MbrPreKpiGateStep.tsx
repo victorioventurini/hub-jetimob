@@ -27,7 +27,7 @@ import {
 import { KpiGateStep, flattenBucketsForPagination } from '@/wizards-framework';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import { LoadingState } from '@/components/ui/loading-state';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import type {
   MbrKpiSnapshot,
   TeamCheckinDecision,
