@@ -51,14 +51,23 @@ export function BuProvider({ children }: { children: ReactNode }) {
   const { data: internalBus = [], isLoading: internalBusLoading } = useUserBus();
   const { data: externalBus = [], isLoading: externalBusLoading } = useExternalUserBus();
 
-  // Combine internal and external BUs
-  // Internal memberships take priority if user has both
+  // Merge internal + external BUs (canonical pattern from EXTERNAL_USER_IDENTITY_PATTERN.md).
+  // Dedup by bu_id with priority for internal membership (carries real role_in_bu).
+  // Hybrid users (internal in BU A + external in BUs A/B/C) see all unique BUs in the switcher.
   const userBus = useMemo(() => {
-    if (internalBus.length > 0) {
-      return internalBus;
+    const seen = new Set<string>();
+    const merged: UserBuMembership[] = [];
+    for (const m of internalBus) {
+      if (seen.has(m.bu_id)) continue;
+      seen.add(m.bu_id);
+      merged.push(m);
     }
-    // Cast external BUs to UserBuMembership format
-    return externalBus as unknown as UserBuMembership[];
+    for (const m of externalBus as unknown as UserBuMembership[]) {
+      if (seen.has(m.bu_id)) continue;
+      seen.add(m.bu_id);
+      merged.push(m);
+    }
+    return merged;
   }, [internalBus, externalBus]);
 
   const isExternalUser = internalBus.length === 0 && externalBus.length > 0;
