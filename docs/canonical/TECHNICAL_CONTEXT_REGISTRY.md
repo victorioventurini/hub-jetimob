@@ -2757,11 +2757,16 @@ export type { SomeType } from './types';
 
 ## Changelog
 
-### v3.30.0 (2026-05-04) — MBR v2 + Pré-MBR Hardening
+### v3.30.1 (2026-05-04) — Remoção do MBR v2
 
-- **MBR v2 (`/rituals/mbr-v2`)** — rito paralelo agrupado por **Org Objective + severidade**.
-  - Consome o **Pré-MBR v1 sem alteração** (mesmo draft, mesmas fontes); v1 permanece intacto.
-  - SSOT: `mem://features/rituals/mbr-v2-standard`. Doc canônico: [`MBR_RITUAL.md`](./MBR_RITUAL.md).
+- **MBR v2 removido por completo** (decisão do usuário 2026-05-04):
+  - Apagados: `src/modules/okrs/pages/MbrV2Page.tsx`, `src/modules/okrs/hooks/useMbrV2ObjectiveAnalyses.ts`, `src/modules/okrs/types/wizard/mbr-v2.ts`, `docs/canonical/MBR_RITUAL.md`.
+  - Removidas todas as entradas `'mbr-v2'` em `routes/rituals.routes.tsx` (rota `/rituals/mbr-v2` agora redireciona para `/rituals/mbr`), `pages/Wizards.tsx`, `types/wizard/core.ts`, `types/wizard/index.ts`, `constants/ritualLabels.ts`, `attendanceConfig.ts`, `evaluationConfig.ts`, `structureVersions.ts`.
+  - Migration: `'mbr-v2'` removido da CHECK constraint `okr_wizard_sessions_wizard_type_check` e da função `get_public_ritual_evaluation_form`. Drafts pendentes deletados.
+  - MBR v1 (`/rituals/mbr`) e Pré-MBR permanecem intactos.
+
+### v3.30.0 (2026-05-04) — Pré-MBR Hardening
+
 - **Pré-MBR — KPI Gate ancorado ao mês de referência**:
   - Novo classificador `classifyKpiGateBucketsFromMonthlySnapshots()` em `stepContentAdapters.ts` recebe `MonthlyKpiSnapshotForGate[]` e classifica buckets (overdue / critical / attention / healthy) usando `currentValue` / `previousValue` / `ragStatus` ancorados ao **fim do mês de referência**.
   - `MbrPreKpiGateStep` migrado de `useKpisForWizardV2` para `useMbrPreTeamKpisMonthly(teamId, referenceMonth)`; `reconciledSnapshots` mescla snapshots mensais com persistidos no draft.
@@ -2771,7 +2776,6 @@ export type { SomeType } from './types';
   - `MbrPrePage` aplica fallback `?? { projects: {}, milestones: {} }` ao prop e aos handlers `onProjectJustificationChange` / `onMilestoneJustificationChange`.
   - Elimina `TypeError: Cannot read properties of undefined (reading 'projects')` em drafts antigos.
 - **Documentação**:
-  - Novo doc canônico [`MBR_RITUAL.md`](./MBR_RITUAL.md) — SSOT humano para Pré-MBR + MBR v2.
   - Novo doc canônico [`PRE_CHECKLIST.md`](./PRE_CHECKLIST.md) — espelho legível do pré-checklist obrigatório.
   - `DEVELOPMENT_STANDARDS.md` v1.31.0 (Resilient Draft Hydration; PostgREST `or()` array-contains quoting; Lazy with retry; Entity name length limits; anti-pattern de leitura de campos denormalizados em snapshots; nova Seção P).
 
