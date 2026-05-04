@@ -19,6 +19,7 @@ export type MbrStep =
   | 'org-okrs'
   | 'decisions'
   | 'qbr-followup'
+  | 'evaluation'
   | 'closing';
 
 export type MbrDecisionSourceStep =

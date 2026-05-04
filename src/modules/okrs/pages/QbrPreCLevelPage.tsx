@@ -61,7 +61,7 @@ const WIZARD_STEPS = [
   { id: 'strategic-analysis' as const, label: 'Sua Análise', description: 'O que só você vê' },
   { id: 'okr-validation' as const, label: 'Calibração', description: 'Flags nas propostas' },
   { id: 'directives' as const, label: 'Pauta da Reunião', description: 'O que a sala decide' },
-  { id: 'feedback' as const, label: 'Avaliação do Rito', description: 'Feedback' },
+  { id: 'feedback' as const, label: 'Encerramento', description: 'Checklist de governança' },
 ];
 
 const STEP_ORDER: QbrPreCLevelStep[] = ['system-read', 'quarter-balance', 'strategic-analysis', 'okr-validation', 'directives', 'feedback'];
@@ -409,8 +409,9 @@ export default function QbrPreCLevelPage() {
               nextMbrScheduled: true,
             }}
             onChecklistChange={() => {}}
-            ritualFeedback={draft.data.ritualFeedback}
-            onRitualFeedbackChange={(ritualFeedback: RitualImprovementFeedback[]) => updateDraft({ ritualFeedback })}
+            ritualFeedback={[]}
+            onRitualFeedbackChange={() => {}}
+            hideFeedbackBlock
             onComplete={handleComplete}
             onBack={goBack}
           />

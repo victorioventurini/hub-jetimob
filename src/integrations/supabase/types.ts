@@ -10577,6 +10577,7 @@ export type Database = {
           cycle_id: string | null
           evaluation_closed_at: string | null
           evaluation_open_at: string | null
+          evaluation_short_code: string | null
           expected_count: number | null
           response_count: number | null
           session_id: string | null

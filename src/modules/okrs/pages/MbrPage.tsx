@@ -43,6 +43,8 @@ import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrs
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
 import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
+import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
+import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 
 import { calculateProgress } from '@/modules/okrs/types';
 import type {
@@ -70,10 +72,11 @@ const WIZARD_STEPS = [
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Prioridades estratégicas' },
   { id: 'decisions' as const, label: 'Decisões', description: 'Consolidação' },
   { id: 'qbr-followup' as const, label: 'Follow-up QBR', description: 'Decisões do QBR' },
+  { id: 'evaluation' as const, label: 'Avaliação do Rito', description: 'Coleta anônima' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
 
-const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'closing'];
+const STEP_ORDER: MbrStep[] = ['panorama', 'kpi-gate', 'team-okrs-overview', 'team-okrs-detail', 'org-okrs', 'decisions', 'qbr-followup', 'evaluation', 'closing'];
 
 const DEFAULT_DATA: MbrDraftData = {
   // Mês alvo padrão = mês imediatamente anterior (mês fechado).
@@ -948,6 +951,21 @@ export default function MbrPage() {
             onDecisionsChange={(decisions: TeamCheckinDecision[]) => updateDraft({ decisions })}
             onContinue={goNext}
             onBack={goBack}
+          />
+        );
+
+      case 'evaluation':
+        return (
+          <EvaluationCollectionStep
+            sessionId={sessionId ?? null}
+            persona="mbr"
+            footer={
+              <WizardStepFooter
+                onPrimary={goNext}
+                onBack={goBack}
+                primaryLabel="Continuar para encerramento"
+              />
+            }
           />
         );
 
