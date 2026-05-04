@@ -52,8 +52,8 @@ export const EvaluationCollectionStep = memo(function EvaluationCollectionStep({
 
   // shortCode: do servidor (summary) tem prioridade sobre prop inicial
   const summaryQuery = useRitualEvaluationSummary(sessionId);
-  const isOpen = !!evaluationOpenAt && !evaluationClosedAt && !openMut.data;
-  const wasClosedByMutation = !!closeMut.data || !!evaluationClosedAt;
+  const isOpen = !!evaluationOpenAt && !evaluationClosedAt;
+  const wasClosedByMutation = closeMut.isSuccess || !!evaluationClosedAt;
 
   const shortCode =
     openMut.data?.shortCode ??
