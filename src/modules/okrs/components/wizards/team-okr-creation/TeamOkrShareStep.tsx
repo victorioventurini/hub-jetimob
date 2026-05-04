@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Sparkles, Copy, CheckCircle2, Loader2, MessageSquare, Target, Users, Quote } from 'lucide-react';
+import { Sparkles, Copy, CheckCircle2, MessageSquare, Target, Users, Quote } from 'lucide-react';
 import { VicLoadingState, VicTypewriterText } from '@/modules/vic';
 import { WizardLastStepFooter } from '../shared';
 import { getRitualFinalizationCopy } from '@/modules/okrs/constants/ritualLabels';
