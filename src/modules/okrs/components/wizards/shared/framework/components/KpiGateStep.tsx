@@ -393,15 +393,18 @@ function BucketSection({
   variant,
   justifications,
   onJustificationChange,
+  splitNoDataReason,
+  noDataReasons,
+  onNoDataReasonChange,
 }: {
   bucket: KpiGateBucket;
   variant: 'compact' | 'rich';
   justifications: Record<string, string>;
   onJustificationChange?: (kpiId: string, value: string) => void;
+  splitNoDataReason?: boolean;
+  noDataReasons?: Record<string, string>;
+  onNoDataReasonChange?: (kpiId: string, value: string) => void;
 }) {
-  // teamContext é colapsado por default, MAS abrimos automaticamente se
-  // houver KPI em alerta (red/amber) — esses pedem plano de ação obrigatório/
-  // opcional do líder e devem ser visíveis sem clique extra.
   const hasAlert = bucket.items.some((k) => k.status === 'red' || k.status === 'amber');
   const initiallyOpen = !COLLAPSED_BY_DEFAULT.has(bucket.id) || hasAlert;
   const [open, setOpen] = useState(initiallyOpen);
@@ -437,6 +440,9 @@ function BucketSection({
                 bucketId={bucket.id}
                 justification={justifications[kpi.id] ?? ''}
                 onJustificationChange={onJustificationChange}
+                splitNoDataReason={splitNoDataReason}
+                noDataReason={noDataReasons?.[kpi.id]}
+                onNoDataReasonChange={onNoDataReasonChange}
               />
             ) : (
               <KpiCardItem key={kpi.id} kpi={kpi} />
