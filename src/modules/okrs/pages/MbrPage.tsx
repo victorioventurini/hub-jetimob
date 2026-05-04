@@ -954,6 +954,21 @@ export default function MbrPage() {
           />
         );
 
+      case 'evaluation':
+        return (
+          <EvaluationCollectionStep
+            sessionId={sessionId ?? null}
+            persona="mbr"
+            footer={
+              <WizardStepFooter
+                onContinue={goNext}
+                onBack={goBack}
+                continueLabel="Continuar para encerramento"
+              />
+            }
+          />
+        );
+
       case 'closing':
         return (
           <MbrClosingStep
