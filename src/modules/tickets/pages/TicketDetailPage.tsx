@@ -30,7 +30,7 @@ export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { profileId, realProfileId, userId } = useIdentity();
   const { isExternal, externalContacts } = useExternalUser();
-  const { currentBu } = useBu();
+  const { currentBu, switchBu, userBus } = useBu();
   const { isWildcard, has } = usePermissions();
   const isTicketAdmin = isWildcard || has("tickets.settings.manage:bu");
   const goBack = useSafeBack({ moduleRoot: "/tickets" });
