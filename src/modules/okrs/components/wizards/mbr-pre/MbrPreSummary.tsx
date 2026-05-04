@@ -22,6 +22,9 @@ import {
   XCircle,
   AlertCircle,
   FolderKanban,
+  HelpCircle,
+  Sparkles,
+  Gavel,
 } from 'lucide-react';
 import {
   WizardStepHeader,
