@@ -473,6 +473,7 @@ export default function MbrPage() {
 
       case 'team-okrs-overview':
         return (
+          <MbrTeamOkrsOverviewStep
             teamOkrSnapshots={draft.data.teamOkrSnapshots}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
