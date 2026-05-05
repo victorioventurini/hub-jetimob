@@ -171,9 +171,10 @@ export function useMbrMonthlyKpisByScope(
         scope: k.scope ?? undefined,
         teamId: k.responsible_team_id ?? null,
         direction: k.direction === 'maintain' ? null : (k.direction ?? null),
-        areaId: k.area?.id ?? k.area_id ?? null,
-        areaName: k.area?.name ?? null,
-        areaColor: k.area?.color ?? null,
+        // v3.33.0 — área efetiva (estrutural com fallback operacional).
+        areaId: k.area?.id ?? k.responsible_area?.id ?? k.area_id ?? k.responsible_area_id ?? null,
+        areaName: k.area?.name ?? k.responsible_area?.name ?? null,
+        areaColor: k.area?.color ?? k.responsible_area?.color ?? null,
         teamName: k.team?.name ?? null,
       };
     });
