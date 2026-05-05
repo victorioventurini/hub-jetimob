@@ -275,55 +275,7 @@ export function MbrDecisionsStep({
             </>
           )}
 
-          {/* Sugestões de pauta agregadas dos Pré-MBRs */}
-          {mbrPreAgendaSuggestions.length > 0 && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2 text-sm">
-                  <Target className="h-4 w-4 text-primary" />
-                  Sugestões de pauta ({mbrPreAgendaSuggestions.length})
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Tópicos sugeridos pelos líderes para discutir neste MBR
-                </p>
-                {mbrPreAgendaSuggestions.map((s) => {
-                  const teamName = teamNamesById[s.teamId] ?? 'Time';
-                  return (
-                    <Card key={s.key} className="border-dashed">
-                      <CardContent className="p-3">
-                        <div className="flex items-start gap-2">
-                          <Target className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{s.title}</p>
-                            {s.detail && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{s.detail}</p>
-                            )}
-                            <Badge variant="outline" className="text-[10px] mt-1">{teamName}</Badge>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              const decision: TeamCheckinDecision = {
-                                id: `mbr-pre-agenda-${s.key}-${Date.now()}`,
-                                text: `[${teamName}] ${s.title}${s.detail ? ` — ${s.detail}` : ''}`,
-                                category: 'decision',
-                                sourceStep: 'decisions',
-                              };
-                              onDecisionsChange([...decisions, decision]);
-                            }}
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </>
-          )}
+          {/* Sugestões de pauta foram movidas para o Step 1 (Panorama & Curadoria do MBR). */}
         </div>
       </ScrollArea>
 
