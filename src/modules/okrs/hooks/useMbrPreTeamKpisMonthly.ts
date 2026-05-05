@@ -101,13 +101,18 @@ export function useMbrPreTeamKpisMonthly(
       // 1) KPIs do time
       const { data: kpis, error: kpisErr } = await supabase
         .from('kpi_metrics')
-        .select('id, name, unit, direction, target_value, scope, responsible_team_id')
+        .select(
+          `id, name, unit, direction, target_value, scope, responsible_team_id, area_id, responsible_area_id,
+           area:areas!kpi_metrics_area_id_fkey(id, name, color),
+           responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
+           team:teams!kpi_metrics_responsible_team_id_fkey(id, name)`,
+        )
         .eq('bu_id', currentBuId!)
         .eq('responsible_team_id', teamId!)
         .is('deleted_at', null)
         .in('lifecycle_status', ['active', 'proposed']);
       if (kpisErr) throw kpisErr;
-      const kpiRows = (kpis ?? []) as KpiRow[];
+      const kpiRows = (kpis ?? []) as unknown as KpiRow[];
       if (kpiRows.length === 0) return { kpis: kpiRows, values: [] as KpiValueRow[] };
 
       // 2) Valores nos dois meses (consolidados ou parciais — pegamos o último por mês).
