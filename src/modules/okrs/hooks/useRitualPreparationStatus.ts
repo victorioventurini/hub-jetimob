@@ -240,6 +240,54 @@ export function useRitualPreparationStatus(
         const teams = teamsData ?? [];
         if (teams.length === 0) return null;
 
+        // Elegibilidade: time só entra no card de Pré-MBR se tiver insumo
+        // (KPI próprio, KR no ciclo, ou contribuição em KR no ciclo).
+        const eligibleTeamIds = new Set<string>();
+
+        const [kpiRes, ownerObjRes, contribObjRes] = await Promise.all([
+          buSupabase
+            .from('kpi_metrics')
+            .select('responsible_team_id')
+            .eq('lifecycle_status', 'active')
+            .is('deleted_at', null)
+            .neq('indicator_type', 'metric')
+            .not('responsible_team_id', 'is', null),
+          cycleId
+            ? buSupabase
+                .from('okr_team_objectives')
+                .select('team_id, key_results:okr_team_key_results(id, deleted_at, cancelled_at)')
+                .eq('cycle_id', cycleId)
+                .is('deleted_at', null)
+                .is('cancelled_at', null)
+                .not('status', 'in', '(cancelled,discarded)')
+            : Promise.resolve({ data: [] as Array<{ team_id: string | null; key_results: Array<{ id: string; deleted_at: string | null; cancelled_at: string | null }> }> }),
+          cycleId
+            ? buSupabase
+                .from('okr_team_objectives')
+                .select('contributor_team_id, key_results:okr_team_key_results(id, deleted_at, cancelled_at)')
+                .eq('cycle_id', cycleId)
+                .is('deleted_at', null)
+                .is('cancelled_at', null)
+                .not('status', 'in', '(cancelled,discarded)')
+                .not('contributor_team_id', 'is', null)
+            : Promise.resolve({ data: [] as Array<{ contributor_team_id: string | null; key_results: Array<{ id: string; deleted_at: string | null; cancelled_at: string | null }> }> }),
+        ]);
+
+        for (const k of kpiRes.data ?? []) {
+          if (k.responsible_team_id) eligibleTeamIds.add(k.responsible_team_id);
+        }
+        const hasActiveKr = (krs: Array<{ deleted_at: string | null; cancelled_at: string | null }> | null | undefined) =>
+          (krs ?? []).some((kr) => !kr.deleted_at && !kr.cancelled_at);
+        for (const o of (ownerObjRes.data ?? []) as Array<{ team_id: string | null; key_results: Array<{ id: string; deleted_at: string | null; cancelled_at: string | null }> }>) {
+          if (o.team_id && hasActiveKr(o.key_results)) eligibleTeamIds.add(o.team_id);
+        }
+        for (const o of (contribObjRes.data ?? []) as Array<{ contributor_team_id: string | null; key_results: Array<{ id: string; deleted_at: string | null; cancelled_at: string | null }> }>) {
+          if (o.contributor_team_id && hasActiveKr(o.key_results)) eligibleTeamIds.add(o.contributor_team_id);
+        }
+
+        const eligibleTeams = teams.filter((t) => eligibleTeamIds.has(t.id));
+        if (eligibleTeams.length === 0) return null;
+
         // mbr-pre do mês
         const { data: prepSessions } = await buSupabase
           .from('okr_wizard_sessions')
@@ -278,7 +326,7 @@ export function useRitualPreparationStatus(
           }
         }
 
-        const participants: PreparationParticipant[] = teams.map(t => {
+        const participants: PreparationParticipant[] = eligibleTeams.map(t => {
           const session = byTeam.get(t.id);
           const completed = !!session?.completed_at;
           return {
@@ -294,7 +342,7 @@ export function useRitualPreparationStatus(
           mode: 'list' as const,
           title: 'Pré-MBR dos times',
           description:
-            'Cobertura dos preparatórios mensais que alimentam esta MBR.',
+            'Cobertura dos preparatórios mensais entre os times com KPI ou KR neste ciclo.',
           participants,
         };
       }

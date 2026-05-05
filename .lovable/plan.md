@@ -1,76 +1,42 @@
-## Causa-raiz
+## Problema
+No card "Pré-MBR dos times" (página `/rituals/mbr`), todos os times ativos da BU aparecem como pendentes mesmo quando não têm nenhum KPI nem KR para preencher — o que polui a cobertura com falsos pendentes (aqueles times nunca vão entregar Pré-MBR).
 
-O log da Edge `mbr-curate-opening` mostra:
+## Causa
+`useRitualPreparationStatus` (caso `mbr`, linhas 227–300 de `src/modules/okrs/hooks/useRitualPreparationStatus.ts`) lista **todos** os times ativos (`teams.status='active'`) sem checar se o time tem insumos para um Pré-MBR.
 
-```
-LLM API error: 400 — Unsupported parameter: 'max_tokens' is not supported with this model.
-Use 'max_completion_tokens' instead.
-```
+## Correção
+Filtrar a lista de times do caso `mbr` para incluir somente os que efetivamente são alvo de Pré-MBR — aplicando o mesmo critério usado pelo próprio Pré-MBR para considerar um time elegível.
 
-Os modelos OpenAI da família **GPT-5** rejeitam `max_tokens` e exigem `max_completion_tokens`. Hoje o `_shared/llm-client.ts` envia sempre `max_tokens` no payload (linhas 324 e 420), tanto em `llmComplete` quanto em `llmStream`. Como o agente `curador-orquestrador` (usado por MBR/Weekly e outros ritos) está configurado com um modelo GPT-5, toda chamada falha com 400 → o frontend cai no fallback "modo manual" e exibe o toast.
+Critério de elegibilidade (espelho do `MbrPrePage` + `useMbrPreTeamKpisMonthly`):
+- **Tem KPI próprio**: existe `kpi_metrics` com `responsible_team_id = team.id`, `lifecycle_status='active'`, `deleted_at IS NULL`, `indicator_type != 'metric'`; **OU**
+- **Tem KR no ciclo corrente**: existe `okr_team_objectives` com `team_id = team.id` no `cycleId` ativo (não cancelado / não soft-deleted) com pelo menos um `okr_team_key_results` ativo; **OU**
+- **Contribui para KR de outro time no ciclo**: existe `okr_team_objectives.contributor_team_id = team.id` no ciclo, com KR ativo.
 
-Impacto: afeta **qualquer Edge Function** que use `llmComplete`/`llmStream` com modelos `openai/gpt-5*`. Hoje sabemos que `mbr-curate-opening` quebra; provavelmente `weekly-curate-opening` e outros também (mesmo agente).
+Times que falharem em todos os três são excluídos do card (não entram como `pending-late`).
 
-## Plano
+## Mudanças
+Arquivo único: `src/modules/okrs/hooks/useRitualPreparationStatus.ts`
 
-### 1. Corrigir `_shared/llm-client.ts` (SSOT do payload)
-Detectar o modelo no momento de montar o payload e usar a chave correta:
+1. No bloco `ritualType === 'mbr'`:
+   - Receber `cycleId` (já está em args, hoje não usado nesse caso) para resolver KRs do ciclo corrente — fallback: pegar o ciclo quarterly ativo via `okr_cycles` (BU + `is_active=true` + `cycle_type='quarterly'`) caso `cycleId` não venha.
+   - Após carregar `teams`, executar 3 consultas paralelas (BU já isolada via `buSupabase`):
+     - `kpi_metrics` selecionando `responsible_team_id` distinct.
+     - `okr_team_objectives` selecionando `team_id` (com join filtrando KR ativo) no ciclo.
+     - `okr_team_objectives` selecionando `contributor_team_id` no ciclo.
+   - Construir `Set<teamId>` de elegíveis = união dos três.
+   - `teams.filter(t => eligible.has(t.id))` antes de mapear participantes.
+   - Se a interseção ficar vazia, retornar `null` (oculta o card — `isEmpty`).
 
-- Se `config.model` começar com `openai/gpt-5` → enviar `max_completion_tokens`.
-- Caso contrário (Gemini, modelos OpenAI antigos) → manter `max_tokens`.
+2. Atualizar a `description` do card para refletir o recorte: "Cobertura dos preparatórios mensais entre os times com KPI ou KR neste ciclo."
 
-Aplicar nos dois pontos:
-- `llmComplete` (payload sync, ~linha 321-326).
-- `llmStream` (payload streaming, ~linha 417-423).
-
-Extrair um helper privado `buildTokenLimitField(model, maxTokens)` que devolve o objeto `{ max_tokens }` ou `{ max_completion_tokens }` para evitar duplicação.
-
-### 2. Validar via teste real
-
-- Após o deploy automático, chamar `mbr-curate-opening` via `curl_edge_functions` e confirmar 200 + curadoria gerada.
-- Conferir logs para ausência do erro `unsupported_parameter`.
-
-### 3. Registrar memória
-
-Salvar `mem://standards/ai/openai-gpt5-token-param` documentando que GPT-5 exige `max_completion_tokens` e que o helper em `llm-client.ts` é o ponto canônico (atualizar índice).
-
-### 4. Atualizar `docs/audits/PERFORMANCE_PLAN_2026-05-04.md`
-
-Adicionar nota de bugfix (não é otimização, mas é débito recente da Wave 1.B).
+3. Atualizar `queryKey` para incluir `cycleId` (já incluso no `useMemo`, ok).
 
 ## Fora de escopo
+- Não alterar `MbrPrePage`, gates do wizard, snapshots, edge functions ou regra de negócio do Pré-MBR.
+- Não tocar nos demais casos do hook (`team-checkin`, `qbr-*`, `mbr-pre`, `weekly`).
+- Sem migração de banco.
 
-- Não trocar o modelo do agente `curador-orquestrador`.
-- Não alterar a lógica de fallback no frontend (continua válido como rede de proteção).
-- Não auditar todos os modelos cadastrados — o helper cobre o universo OpenAI GPT-5 conhecido hoje; se surgir outra família com a mesma exigência, basta estender a função.
-
-## Detalhes técnicos
-
-```ts
-function buildTokenLimitField(model: string, maxTokens: number) {
-  // OpenAI GPT-5 family rejects max_tokens; requires max_completion_tokens.
-  if (/^openai\/gpt-5/i.test(model)) {
-    return { max_completion_tokens: maxTokens };
-  }
-  return { max_tokens: maxTokens };
-}
-
-// llmComplete
-const payload: Record<string, unknown> = {
-  model: config.model,
-  messages,
-  ...buildTokenLimitField(config.model, maxTokens),
-  temperature,
-};
-
-// llmStream
-const payload = {
-  model: config.model,
-  messages,
-  ...buildTokenLimitField(config.model, options?.maxTokens ?? config.maxTokens),
-  temperature: options?.temperature ?? config.temperature,
-  stream: true,
-};
-```
-
-Mudança mínima, cirúrgica, sem efeito colateral em chamadas Gemini ou OpenAI antigos.
+## Validação
+- `/rituals/mbr` → card "Pré-MBR dos times" deve listar apenas times com KPI ou KR; times sem nenhum dos dois somem.
+- Para uma BU sem times elegíveis, o card é ocultado (mesma semântica de outros casos `null`).
+- Console/network sem regressões.
