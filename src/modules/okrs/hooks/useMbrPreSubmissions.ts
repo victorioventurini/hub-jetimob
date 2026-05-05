@@ -123,12 +123,16 @@ export function useMbrPreSubmissions({
       if (!sessions || sessions.length === 0) return EMPTY_RESULT;
 
       // 2) Filtrar por referenceMonth do payload (com fallback p/ drafts antigos).
+      // Fallback heurístico (drafts sem `referenceMonth` persistido): pré-MBRs
+      // costumam ser concluídos no início do mês *seguinte* ao analisado.
+      // Aceitamos, portanto, completions cujo mês civil seja `refMonth` (envio
+      // dentro do próprio mês) OU o mês imediatamente seguinte (caso comum).
+      const nextOfRef = nextMonthYm; // já calculado acima
       const matching = sessions.filter((s) => {
         const explicit = extractRefMonth(s.reflection_data);
         if (explicit) return explicit === refMonth;
-        // Retrocompat: pré-MBRs antigos sem campo gravado — usa heurística
-        // histórica (mês civil de completed_at == referenceMonth solicitado).
-        return completedAtToYearMonth(s.completed_at as string) === refMonth;
+        const completedYm = completedAtToYearMonth(s.completed_at as string);
+        return completedYm === refMonth || completedYm === nextOfRef;
       });
       if (matching.length === 0) return EMPTY_RESULT;
 
