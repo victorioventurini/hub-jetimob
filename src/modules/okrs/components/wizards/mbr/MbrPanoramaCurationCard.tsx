@@ -19,6 +19,7 @@ import {
   ListChecks,
   Plus,
   Check,
+  RotateCcw,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
