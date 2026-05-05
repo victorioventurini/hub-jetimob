@@ -647,6 +647,7 @@ export default function MbrPage() {
             orgOkrSnapshots={draft.data.orgOkrSnapshots}
             qbrFollowUpItems={draft.data.qbrFollowUpItems}
             onComplete={handleComplete}
+            isCompleting={isSaving}
             onBack={goBack}
           />
         );
