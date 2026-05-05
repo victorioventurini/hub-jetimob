@@ -59,8 +59,10 @@ export function useAllBuKpisForMbr() {
 
       return kpis.map((kpi) => {
         const latest = latestByKpi.get(kpi.id);
-        const areaData = kpi.area as { name?: string; color?: string } | null;
-        const teamData = kpi.team as { name?: string } | null;
+        const areaData = (kpi.area as { name?: string; color?: string } | null)
+          ?? (kpi as any).responsible_area as { name?: string; color?: string } | null;
+        const teamData = (kpi.team as { name?: string } | null)
+          ?? (kpi as any).responsible_team as { name?: string } | null;
         return {
           ...kpi,
           latest_value: latest?.value ?? null,
