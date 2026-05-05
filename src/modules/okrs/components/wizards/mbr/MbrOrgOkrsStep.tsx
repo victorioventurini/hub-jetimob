@@ -155,6 +155,10 @@ export function MbrOrgOkrsStep({
                 ? `Decisão sobre: ${currentOkr.title}...`
                 : 'Nota geral sobre OKRs organizacionais...'
             }
+            subStep={currentOkr?.objectiveId ?? null}
+            metadataFactory={
+              currentOkr ? () => ({ objective_id: currentOkr.objectiveId }) : undefined
+            }
           />
         </div>
       }
