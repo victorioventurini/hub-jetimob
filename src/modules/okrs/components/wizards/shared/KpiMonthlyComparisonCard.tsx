@@ -188,7 +188,7 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
           <div>
             <p className="text-xs font-semibold text-status-green mb-1">Maiores avanços</p>
             {deltas.ups.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Nenhum KPI subiu este mês.</p>
+              <p className="text-xs text-muted-foreground italic">Nenhum KPI avançou este mês.</p>
             ) : (
               deltas.ups.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="up" />)
             )}
@@ -196,7 +196,7 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
           <div>
             <p className="text-xs font-semibold text-status-red mb-1">Maiores quedas</p>
             {deltas.downs.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Nenhum KPI caiu este mês.</p>
+              <p className="text-xs text-muted-foreground italic">Nenhum KPI piorou este mês.</p>
             ) : (
               deltas.downs.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="down" />)
             )}
