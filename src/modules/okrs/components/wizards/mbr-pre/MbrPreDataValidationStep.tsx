@@ -320,6 +320,8 @@ export function MbrPreDataValidationStep({
           unit={activeKpi.unit}
           consolidationFrequency={activeKpi.consolidation_frequency}
           updateFrequency={activeKpi.update_frequency}
+          targetValue={activeKpi.target_value}
+          direction={activeKpi.direction}
           open={!!activeKpi}
           onOpenChange={handleKpiDialogChange}
         />
