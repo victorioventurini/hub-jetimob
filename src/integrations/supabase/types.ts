@@ -11420,6 +11420,26 @@ export type Database = {
           what_worked: string
         }[]
       }
+      get_ritual_evaluation_summary: {
+        Args: { p_session_id: string }
+        Returns: {
+          avg_decisions: number
+          avg_quality: number
+          avg_time: number
+          avg_value: number
+          bu_id: string
+          completed_at: string
+          cycle_id: string
+          evaluation_closed_at: string
+          evaluation_open_at: string
+          evaluation_short_code: string
+          expected_count: number
+          response_count: number
+          session_id: string
+          team_id: string
+          wizard_type: string
+        }[]
+      }
       get_system_setting: { Args: { p_key: string }; Returns: Json }
       get_team_kr_creation_context: {
         Args: { p_contributor_team_id?: string; p_objective_id: string }

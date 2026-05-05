@@ -30,26 +30,27 @@ export function useRitualEvaluationSummary(sessionId: string | null) {
     queryKey: ritualEvaluationKeys.summary(sessionId),
     queryFn: async (): Promise<RitualEvaluationSummary | null> => {
       if (!sessionId) return null;
-      const { data, error } = await supabase
-        .from('v_ritual_evaluation_summary')
-        .select(
-          'session_id, response_count, expected_count, avg_value, avg_quality, avg_decisions, avg_time, evaluation_open_at, evaluation_closed_at, evaluation_short_code',
-        )
-        .eq('session_id', sessionId)
-        .maybeSingle();
+      // Usamos a RPC SECURITY DEFINER (não a view) porque a base
+      // `ritual_evaluation_responses` tem `SELECT USING(false)` para garantir
+      // anonimato — qualquer leitura via view (security_invoker) zera a contagem.
+      // A RPC valida BU + permission key `okrs.evaluation.view:as_conductor`.
+      const { data, error } = await supabase.rpc('get_ritual_evaluation_summary', {
+        p_session_id: sessionId,
+      });
       if (error) throw error;
-      if (!data) return null;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) return null;
       return {
-        sessionId: data.session_id as string,
-        responseCount: Number(data.response_count ?? 0),
-        expectedCount: Number(data.expected_count ?? 0),
-        avgValue: data.avg_value === null ? null : Number(data.avg_value),
-        avgQuality: data.avg_quality === null ? null : Number(data.avg_quality),
-        avgDecisions: data.avg_decisions === null ? null : Number(data.avg_decisions),
-        avgTime: data.avg_time === null ? null : Number(data.avg_time),
-        evaluationOpenAt: (data.evaluation_open_at as string | null) ?? null,
-        evaluationClosedAt: (data.evaluation_closed_at as string | null) ?? null,
-        evaluationShortCode: (data.evaluation_short_code as string | null) ?? null,
+        sessionId: row.session_id as string,
+        responseCount: Number(row.response_count ?? 0),
+        expectedCount: Number(row.expected_count ?? 0),
+        avgValue: row.avg_value === null ? null : Number(row.avg_value),
+        avgQuality: row.avg_quality === null ? null : Number(row.avg_quality),
+        avgDecisions: row.avg_decisions === null ? null : Number(row.avg_decisions),
+        avgTime: row.avg_time === null ? null : Number(row.avg_time),
+        evaluationOpenAt: (row.evaluation_open_at as string | null) ?? null,
+        evaluationClosedAt: (row.evaluation_closed_at as string | null) ?? null,
+        evaluationShortCode: (row.evaluation_short_code as string | null) ?? null,
       };
     },
     enabled: !!sessionId,
