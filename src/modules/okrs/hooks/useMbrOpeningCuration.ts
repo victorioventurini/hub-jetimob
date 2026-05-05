@@ -112,8 +112,10 @@ function unwrapCurateResponse(
   response: CurateEdgeResponse | EdgeSuccessEnvelope<CurateEdgeResponse> | null,
 ): CurateEdgeResponse | null {
   if (!response) return null;
-  if ('success' in response && response.success === true) return response.data;
-  return response;
+  if ('data' in response && 'success' in response && response.success === true) {
+    return response.data;
+  }
+  return response as CurateEdgeResponse;
 }
 
 // ============================================================
