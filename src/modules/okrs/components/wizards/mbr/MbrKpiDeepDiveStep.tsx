@@ -97,6 +97,19 @@ export function MbrKpiDeepDiveStep({
 
   const insightsByKpi = useMbrKpiLeaderInsights(mbrPreByTeam, teamNamesById);
 
+  // v3.x — valores reais do mês de referência e do mês anterior, derivados
+  // direto de kpi_values (mesma fonte do KPI Gate). Evita usar o snapshot
+  // congelado do draft, que só preenche `currentValue` e zera `previousValue`.
+  const { snapshots: monthlySnapshots } = useMbrMonthlyKpisByScope(
+    referenceMonth,
+    ['org', 'area', 'team'],
+  );
+  const monthlyByKpi = useMemo(() => {
+    const map = new Map<string, MbrMonthlyKpiSnapshot>();
+    for (const s of monthlySnapshots) map.set(s.kpiId, s);
+    return map;
+  }, [monthlySnapshots]);
+
   const flat = useMemo(() => flattenBucketsForPagination(buckets), [buckets]);
   const totalCount = flat.length;
   const [currentKpiIndex, setCurrentKpiIndex] = useState(0);
