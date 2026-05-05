@@ -143,6 +143,11 @@ const KpiDeltaRow = memo(function KpiDeltaRow({
       <div className="flex items-center gap-2 shrink-0 text-xs">
         <span className="text-muted-foreground">
           {formatKpiValue(delta.previous, delta.unit)} → {formatKpiValue(delta.current, delta.unit)}
+          {delta.target != null && (
+            <span className="ml-1 text-muted-foreground/80">
+              · meta {formatKpiValue(delta.target, delta.unit)}
+            </span>
+          )}
         </span>
         <span className={cn('font-semibold', color)}>
           {(delta.deltaPct ?? 0) > 0 ? '+' : ''}
