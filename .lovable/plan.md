@@ -1,79 +1,41 @@
-# Plano — MBR · KPI Deep Dive (1 página por KPI fora da meta)
+## Objetivo
 
-## Contexto / TCR (pré-checklist)
+Garantir que o "Registro de notas e decisões" (slot canônico `InlineDecisionInput` / `InlineDecisionsSlot`) apareça no footer de **todas** as páginas do MBR (`/rituals/mbr`), espelhando o padrão já usado nas demais steps e no Pré-MBR.
 
-- Consultei TCR §4.8.1 (Princípio #4 — variação por config; agnostic `wizardType`) e `mem://architecture/wizards/wizards-master-standard`.
-- O Pré-MBR já usa o **`KpiGateStep` canônico** do framework (`@/wizards-framework`) em `cardVariant: 'rich-paginated'` via `MbrPreKpiGateStep` — mesma UI desejada.
-- `useMbrPreSubmissions(referenceMonth)` já entrega, por time:
-  `kpiSnapshots[].impactAssessment`, `kpiJustifications`, `kpiNoDataReasons`, `decisions` (com `metadata.kpi_id`).
-- O step atual `kpi-gate` (`MbrKpiGateStep`) é o **overview executivo** (KPIs Globais + Área). Mantemos como está.
-- Sem novas tabelas, sem migrações, sem alterações de RLS. Sem mudanças no Pré-MBR.
+## Diagnóstico (estado atual)
 
-## O que fazer
+| Step MBR | Slot inline hoje | Ação |
+|---|---|---|
+| `panorama` | ✅ `InlineDecisionInput` (sourceStep=`panorama`) | manter |
+| `kpi-gate` | ❌ removido junto com os cards | **adicionar** |
+| `kpi-deep-dive` | ❌ `suppressInlineDecisions` | **adicionar** |
+| `team-okrs-overview` | ✅ | manter |
+| `team-okrs-detail` | ✅ | manter |
+| `org-okrs` | ✅ | manter |
+| `decisions` | — (é o próprio step canônico de decisões) | manter sem (redundante) |
+| `qbr-followup` | ✅ | manter |
+| `evaluation` | ❌ (step do framework de avaliação) | **adicionar** |
+| `closing` | ✅ | manter |
 
-Inserir uma nova etapa `kpi-deep-dive` **logo após `kpi-gate`** no MBR. Lista apenas KPIs `red`/`amber` (fora da meta) e renderiza **um KPI por página**, com a mesma UI do Pré-MBR (gráfico + bloco do líder), em **modo somente-leitura** consolidando o que cada líder respondeu no Pré-MBR daquele mês.
+## Mudanças
 
-### Estrutura da página (por KPI)
+Sem duplicar componentes — reutilizar o canônico (`InlineDecisionInput` exportado de `@/modules/okrs/components/wizards/shared`) e o slot do framework (`InlineDecisionsSlot` via `suppressInlineDecisions=false`). Sem alterações de regra de negócio.
 
-```
-[ KpiSparkline + valores + badges ]   ← reaproveitado do KpiGateStep rich
-─────────────────────────────────
-[ Justificativa do líder (Pré-MBR) ]  ← read-only, por time
-[ Razão sem dados (se overdue) ]      ← read-only, por time
-[ Plano de ação registrado no Pré-MBR ] ← decisões com metadata.kpi_id, por time
-```
+### 1. `MbrKpiGateStep.tsx`
+Adicionar `InlineDecisionInput` no `bottomFixed` do `WizardStepScaffold` (logo abaixo da mensagem de pendência), com `sourceStep="kpi-gate"`. Mantém o gate atual.
 
-Quando o KPI é `org`/`area` e múltiplos times responderam, agrupa as respostas por nome do time (mesma área visual do `KpiMonthlyComparisonCard`).
+### 2. `MbrKpiDeepDiveStep.tsx`
+Remover `suppressInlineDecisions` na chamada do `KpiGateStep` (framework já renderiza `InlineDecisionsSlot` com `stepId="kpi-deep-dive"`). Nada novo a criar.
 
-## Arquivos
+### 3. `MbrPage.tsx` — case `evaluation`
+Envelopar o `EvaluationCollectionStep` em um wrapper leve que renderize, abaixo do conteúdo, o mesmo `InlineDecisionInput` com `sourceStep="evaluation"`, ou — preferindo composição — adicionar a prop opcional ao step (se existir) ou injetar via slot já disponível. Decisão default: posicionar o `InlineDecisionInput` entre o conteúdo do step e o `WizardStepFooter`, sem alterar o componente compartilhado.
 
-### Criar
+### 4. Sem mudanças em
+`MbrPanoramaStep`, `MbrTeamOkrsOverviewStep`, `MbrTeamOkrsDetailStep`, `MbrOrgOkrsStep`, `MbrQbrFollowUpStep`, `MbrClosingStep` (já têm o slot), `MbrDecisionsStep` (é o consolidador — duplicação seria ruído).
 
-1. `src/modules/okrs/components/wizards/shared/KpiLeaderInsightsPanel.tsx`
-   - Componente shared, **somente leitura**, recebe `kpiId` + `entriesByTeam: { teamId, teamName, justification?, noDataReason?, decisions: TeamCheckinDecision[] }[]`.
-   - Reutiliza `JustificationField` (variant read-only) e o estilo de `DecisionCard` para os planos.
-   - Vazio-state explícito ("Nenhum líder respondeu este KPI no Pré-MBR de {mês}").
+## Canônicos respeitados
 
-2. `src/modules/okrs/hooks/useMbrKpiLeaderInsights.ts`
-   - Deriva, a partir de `mbrPreByTeam` (já disponível no `MbrPage`), `Map<kpiId, LeaderInsightEntry[]>`.
-   - Memoizado; sem queries novas.
-
-3. `src/modules/okrs/components/wizards/mbr/MbrKpiDeepDiveStep.tsx`
-   - Container que filtra `kpiSnapshots` para `ragStatus ∈ {red, amber}` (igual ao `criticalKpis` do `MbrKpiGateStep`).
-   - Reusa o **`KpiGateStep` canônico** (`@/wizards-framework`) em `cardVariant: 'rich-paginated'`, classificando via `classifyKpiGateBucketsFromMonthlySnapshots` para entregar `buckets` com a mesma flatten-pagination do Pré-MBR.
-   - Passa `justifications`/`noDataReasons` apenas como leitura (sem callbacks de edição → desabilita edição no rich card via prop existente `readOnlyJustification`; se não existir, adicionar flag `readOnly?: boolean` no `KpiGateStep` — alteração mínima).
-   - Renderiza `KpiLeaderInsightsPanel` **abaixo** do card do KPI atual via prop nova `extraContentForCurrentKpi?: (kpi) => ReactNode` no `KpiGateStep` (extensão mínima do framework, agnóstica de wizard).
-
-### Editar
-
-4. `src/modules/okrs/types/wizard/mbr.ts`
-   - Adicionar `'kpi-deep-dive'` ao union `MbrStep`.
-
-5. `src/modules/okrs/pages/mbr/constants.ts`
-   - Inserir `{ id: 'kpi-deep-dive', label: 'Indicadores fora da meta', description: 'Justificativas e planos do Pré-MBR' }` em `WIZARD_STEPS` e `STEP_ORDER`, **logo após `kpi-gate`**.
-
-6. `src/modules/okrs/pages/MbrPage.tsx`
-   - Novo `case 'kpi-deep-dive'` no switch, passando `kpiSnapshots` filtrados, `referenceMonth` e `mbrPreByTeam` (já disponível).
-   - Sem alterações no `kpi-gate` existente.
-
-7. `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx`
-   - Adicionar 2 props opcionais (extensão, sem breaking change):
-     - `readOnlyJustification?: boolean` → desabilita `Textarea` da justificativa quando `true`.
-     - `extraContentForCurrentKpi?: (kpi: KpiGateItem) => ReactNode` → slot renderizado abaixo do card no modo `rich-paginated`.
-
-### Não duplicar
-
-- **NÃO** criar nova UI de gráfico — reusar `KpiSparkline` já consumido pelo `KpiGateStep` rich.
-- **NÃO** criar novo wizard — é um novo step do MBR existente.
-- **NÃO** copiar a lógica de paginação — usar `flattenBucketsForPagination` + `cardVariant: 'rich-paginated'` já canônicos.
-- **NÃO** tocar no `MbrPreKpiGateStep` nem no `MbrKpiGateStep` (overview).
-
-## Gate / Navegação
-
-- Sem gate obrigatório (somente leitura). `Próximo` sempre habilitado.
-- Paginação: `Voltar` na primeira página → volta ao step `kpi-gate`; `Próximo` na última → avança para `team-okrs-overview`.
-
-## Riscos / Validação
-
-- Verificar que `KpiGateStep` rich-paginated aceita lista vazia (caso não haja KPI red/amber) — fallback: pular automaticamente o step ou exibir empty-state ("Nenhum KPI fora da meta neste mês 🎉") + botão `Próximo`. Usar empty-state.
-- Confirmar que `mbrPreByTeam` chega vazio quando nenhum time submeteu — `KpiLeaderInsightsPanel` mostra empty-state apropriado (não bloqueia navegação, alinhado ao pedido anterior do usuário sobre listar KPIs independente de submissão).
+- `mem://architecture/wizards/wizards-master-standard` — slot inline ubíquo via `InlineDecisionsSlot` / `InlineDecisionInput`
+- `mem://standards/wizard-vocabulary-canonical` — `sourceStep` reusa IDs já definidos das steps do MBR
+- Sem novos componentes; apenas extensão/composição do existente
+- Sem alteração de RLS, BU isolation ou regras de domínio
