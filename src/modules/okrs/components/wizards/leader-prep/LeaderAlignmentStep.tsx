@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 import {
   Target,
   ArrowUpRight,
@@ -152,7 +153,7 @@ export function LeaderAlignmentStep({
                           RAG_STATUS_COLORS[obj.status]?.badge
                         )}
                       >
-                        <span className={obj.progress > 100 ? "text-status-green" : ""}>{obj.progress}%{obj.progress > 100 && ' 🚀'}</span>
+                        <span className={obj.progress > 100 ? "text-status-green" : ""}>{formatPercent(obj.progress)}{obj.progress > 100 && ' 🚀'}</span>
                       </Badge>
                     </div>
                     <Progress

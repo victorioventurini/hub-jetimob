@@ -18,6 +18,7 @@ import { OkrStatusBadge } from '../../OkrStatusBadge';
 import type { MbrOrgOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OkrRagStatus, OkrDirection } from '@/modules/okrs/types';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 // ============================================================
 // TYPES
@@ -210,7 +211,7 @@ export function MbrOrgOkrsStep({
                                       <span>{emoji}</span>
                                       <span className="font-medium truncate">{c.teamName}</span>
                                       <span className="text-muted-foreground truncate flex-1">{c.krTitle}</span>
-                                      <span className="text-muted-foreground shrink-0">{c.progress}%</span>
+                                      <span className="text-muted-foreground shrink-0">{formatPercent(c.progress)}</span>
                                     </div>
                                   );
                                 })}

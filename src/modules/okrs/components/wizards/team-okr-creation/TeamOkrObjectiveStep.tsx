@@ -21,6 +21,7 @@ import { WizardStepFooter } from '../shared';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { ObjectiveInputWithValidation } from './ObjectiveInputWithValidation';
 import type { OrgObjectiveContext } from './TeamOkrContextStep';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 // ============================================================
 // TYPES
@@ -410,7 +411,7 @@ export function TeamOkrObjectiveStep({
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {obj.progress}% concluído • {obj.keyResultsCount} KRs
+                    {formatPercent(obj.progress)} concluído • {obj.keyResultsCount} KRs
                   </p>
                 </button>
               ))}
