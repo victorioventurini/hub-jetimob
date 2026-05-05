@@ -99,7 +99,54 @@ export function MbrKpiGateStep({
   showStrategicDecisionToggle = true,
   requirePlanForCriticalKpis = false,
   showInlineDecisionInput = true,
+  referenceMonth = null,
+  showMonthlyOverview = false,
 }: MbrKpiGateStepProps) {
+  // Overview mensal comparativo (KPIs globais + de área).
+  const overviewEnabled = !!showMonthlyOverview && !!referenceMonth;
+  const { snapshots: overviewSnapshots, isLoading: overviewLoading } =
+    useMbrMonthlyKpisByScope(overviewEnabled ? referenceMonth : null, ['org', 'area']);
+
+  const overviewGroups = useMemo(() => {
+    if (!overviewEnabled) return null;
+    const orgItems = overviewSnapshots.filter((k) => k.scope === 'org');
+    const areaItems = overviewSnapshots.filter((k) => k.scope === 'area');
+
+    // org: agrupar por Área → Time
+    const orgByAreaTeam = new Map<string, MbrMonthlyKpiSnapshot[]>();
+    for (const k of orgItems) {
+      const areaLabel = k.areaName ?? 'Sem área';
+      const teamLabel = k.teamName ?? 'Sem time';
+      const key = `${areaLabel}__${teamLabel}`;
+      const arr = orgByAreaTeam.get(key) ?? [];
+      arr.push(k);
+      orgByAreaTeam.set(key, arr);
+    }
+    const orgGroups = Array.from(orgByAreaTeam.entries())
+      .map(([key, items]) => {
+        const [areaLabel, teamLabel] = key.split('__');
+        return { key, areaLabel, teamLabel, items };
+      })
+      .sort((a, b) =>
+        a.areaLabel.localeCompare(b.areaLabel, 'pt-BR') ||
+        a.teamLabel.localeCompare(b.teamLabel, 'pt-BR'),
+      );
+
+    // area: agrupar por Time
+    const areaByTeam = new Map<string, MbrMonthlyKpiSnapshot[]>();
+    for (const k of areaItems) {
+      const teamLabel = k.teamName ?? 'Sem time';
+      const arr = areaByTeam.get(teamLabel) ?? [];
+      arr.push(k);
+      areaByTeam.set(teamLabel, arr);
+    }
+    const areaGroups = Array.from(areaByTeam.entries())
+      .map(([teamLabel, items]) => ({ teamLabel, items }))
+      .sort((a, b) => a.teamLabel.localeCompare(b.teamLabel, 'pt-BR'));
+
+    return { orgGroups, areaGroups };
+  }, [overviewEnabled, overviewSnapshots]);
+
   const criticalKpis = useMemo(
     () => kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow'),
     [kpiSnapshots]
