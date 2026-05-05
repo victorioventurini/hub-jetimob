@@ -92,11 +92,11 @@ export function useAllTeamObjectivesForMbr(cycleId: string | undefined | null) {
       const { data, error } = await buSupabase
         .from('okr_team_objectives')
         .select(`
-          id, title, status, team_id,
+          id, title, status, team_id, deleted_at, cancelled_at,
           team:teams!okr_team_objectives_team_id_fkey(id, name),
           key_results:okr_team_key_results(
             id, title, status, current_value, baseline, target, direction, unit,
-            owner_user_id, last_checkin_at,
+            owner_user_id, last_checkin_at, deleted_at, cancelled_at,
             owner:profiles!okr_team_key_results_owner_profile_fkey(id, display_name)
           )
         `)
@@ -108,13 +108,24 @@ export function useAllTeamObjectivesForMbr(cycleId: string | undefined | null) {
 
       if (error) throw error;
 
-      return (data || []).map((obj) => ({
-        ...obj,
-        key_results: (obj.key_results || []).filter((kr: unknown) => {
-          const k = kr as { deleted_at?: string | null; cancelled_at?: string | null };
-          return !k.deleted_at && !k.cancelled_at;
-        }),
-      }));
+      return (data || [])
+        .filter((obj) => {
+          const o = obj as { deleted_at?: string | null; cancelled_at?: string | null };
+          return !o.deleted_at && !o.cancelled_at;
+        })
+        .map((obj) => ({
+          ...obj,
+          key_results: (obj.key_results || []).filter((kr: unknown) => {
+            const k = kr as {
+              deleted_at?: string | null;
+              cancelled_at?: string | null;
+              status?: string | null;
+            };
+            if (k.deleted_at || k.cancelled_at) return false;
+            if (k.status === 'cancelled' || k.status === 'discarded') return false;
+            return true;
+          }),
+        }));
     },
   });
 }
