@@ -200,13 +200,9 @@ export function MbrKpiGateStep({
             {overviewLoading ? (
               <Skeleton className="h-32 w-full" />
             ) : orgSnapshots.length > 0 ? (
-              <KpiMonthlyComparisonCard
+              <MbrKpiGateTable
                 snapshots={orgSnapshots}
-                title="Visão consolidada do mês"
-                showNoData
-                stack
-                topN={5}
-                emptyMessage="Sem dados comparáveis no período."
+                monthLabel={formatMonthLabel(referenceMonth!)}
               />
             ) : (
               <p className="text-xs text-muted-foreground italic">
