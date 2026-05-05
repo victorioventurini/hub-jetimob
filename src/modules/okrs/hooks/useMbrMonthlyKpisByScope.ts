@@ -29,6 +29,8 @@ export interface MbrMonthlyKpiSnapshot extends MbrKpiSnapshot {
   areaName: string | null;
   areaColor: string | null;
   teamName: string | null;
+  indicatorType: string | null;
+  owner: { id: string; display_name: string; photo_url: string | null } | null;
 }
 
 interface KpiRow {
@@ -38,13 +40,16 @@ interface KpiRow {
   direction: 'up' | 'down' | 'maintain' | null;
   target_value: number | null;
   scope: KpiScope | null;
+  indicator_type: string | null;
   responsible_team_id: string | null;
+  owner_user_id: string | null;
   area_id: string | null;
   responsible_area_id: string | null;
   area: { id: string; name: string; color: string | null } | null;
   responsible_area: { id: string; name: string; color: string | null } | null;
   /** Alias do join `responsible_team_id` (operacional) — usado em todo o hook. */
   team: { id: string; name: string } | null;
+  owner: { id: string; display_name: string; photo_url: string | null } | null;
 }
 
 interface KpiValueRow {
