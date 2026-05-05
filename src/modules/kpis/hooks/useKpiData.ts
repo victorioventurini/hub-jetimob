@@ -563,7 +563,13 @@ export function useKpiDetail(kpiId: string) {
       // v2.2 governance defaults
       area_id: kpi.area_id,
       scope: kpi.scope || 'team',
-      area: kpi.area,
+      area: kpi.area ?? null,
+      team: kpi.team ?? null,
+      responsible_area: kpi.responsible_area ?? null,
+      responsible_team: kpi.responsible_team ?? null,
+      // v3.33.0 — SSOT exibição
+      effective_area: kpi.area ?? kpi.responsible_area ?? null,
+      effective_team: kpi.team ?? kpi.responsible_team ?? null,
     } : null,
     values: values || [],
     isLoading,
