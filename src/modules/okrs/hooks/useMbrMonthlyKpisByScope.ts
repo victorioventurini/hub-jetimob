@@ -40,7 +40,10 @@ interface KpiRow {
   scope: KpiScope | null;
   responsible_team_id: string | null;
   area_id: string | null;
+  responsible_area_id: string | null;
   area: { id: string; name: string; color: string | null } | null;
+  responsible_area: { id: string; name: string; color: string | null } | null;
+  /** Alias do join `responsible_team_id` (operacional) — usado em todo o hook. */
   team: { id: string; name: string } | null;
 }
 
@@ -102,8 +105,9 @@ export function useMbrMonthlyKpisByScope(
       const { data: kpis, error: kpisErr } = await supabase
         .from('kpi_metrics')
         .select(
-          `id, name, unit, direction, target_value, scope, responsible_team_id, area_id,
+          `id, name, unit, direction, target_value, scope, responsible_team_id, area_id, responsible_area_id,
            area:areas!kpi_metrics_area_id_fkey(id, name, color),
+           responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
            team:teams!kpi_metrics_responsible_team_id_fkey(id, name)`,
         )
         .eq('bu_id', currentBuId!)
@@ -167,9 +171,10 @@ export function useMbrMonthlyKpisByScope(
         scope: k.scope ?? undefined,
         teamId: k.responsible_team_id ?? null,
         direction: k.direction === 'maintain' ? null : (k.direction ?? null),
-        areaId: k.area?.id ?? k.area_id ?? null,
-        areaName: k.area?.name ?? null,
-        areaColor: k.area?.color ?? null,
+        // v3.33.0 — área efetiva (estrutural com fallback operacional).
+        areaId: k.area?.id ?? k.responsible_area?.id ?? k.area_id ?? k.responsible_area_id ?? null,
+        areaName: k.area?.name ?? k.responsible_area?.name ?? null,
+        areaColor: k.area?.color ?? k.responsible_area?.color ?? null,
         teamName: k.team?.name ?? null,
       };
     });

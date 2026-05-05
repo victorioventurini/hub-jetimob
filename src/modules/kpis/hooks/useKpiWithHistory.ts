@@ -35,7 +35,7 @@ export interface KpiWithHistoryData {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
   owner?: {
     id: string;
     display_name: string;
@@ -44,7 +44,27 @@ export interface KpiWithHistoryData {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  /** v3.33.0 — `area ?? responsible_area`. SSOT para exibição. */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `team ?? responsible_team`. SSOT para exibição. */
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export function useKpiWithHistory(kpiId: string | null | undefined) {
@@ -64,7 +84,9 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
           indicator_type, lifecycle_status, scope, bu_id,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
-          area:areas!kpi_metrics_area_id_fkey(id, name, color)
+          area:areas!kpi_metrics_area_id_fkey(id, name, color),
+          responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+          responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
         `)
         .eq('id', kpiId)
         .maybeSingle();
@@ -159,9 +181,13 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         variation,
         ragStatus: calculateRagStatus(currentValue, kpi.target_value, kpi.direction as KpiDirection),
         totalValues: values.length,
-        area: kpi.area,
+        area: (kpi as any).area ?? null,
         owner: kpi.owner,
-        team: kpi.team,
+        team: (kpi as any).team ?? null,
+        responsible_area: (kpi as any).responsible_area ?? null,
+        responsible_team: (kpi as any).responsible_team ?? null,
+        effective_area: (kpi as any).area ?? (kpi as any).responsible_area ?? null,
+        effective_team: (kpi as any).team ?? (kpi as any).responsible_team ?? null,
       };
     },
     enabled: !!kpiId && !!supabase,

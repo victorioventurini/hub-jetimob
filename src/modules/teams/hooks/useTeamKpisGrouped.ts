@@ -37,7 +37,9 @@ const KPI_FIELDS = `
   area_id, scope, responsible_area_id, responsible_team_id,
   owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
   team:teams!kpi_metrics_team_id_fkey(id, name),
-  area:areas!kpi_metrics_area_id_fkey(id, name, color)
+  area:areas!kpi_metrics_area_id_fkey(id, name, color),
+  responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+  responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
 ` as const;
 
 const KPI_VALUE_FIELDS = `
@@ -111,8 +113,12 @@ function hydrateKpi(kpi: any, allValues: any[]): KpiWithValues {
     responsible_area_id: kpi.responsible_area_id ?? null,
     responsible_team_id: kpi.responsible_team_id ?? null,
     owner: kpi.owner,
-    team: kpi.team,
-    area: kpi.area,
+    team: kpi.team ?? null,
+    area: kpi.area ?? null,
+    responsible_team: kpi.responsible_team ?? null,
+    responsible_area: kpi.responsible_area ?? null,
+    effective_area: kpi.area ?? kpi.responsible_area ?? null,
+    effective_team: kpi.team ?? kpi.responsible_team ?? null,
     values: mappedValues,
     current_value: currentValue,
     previous_value: previousValue,

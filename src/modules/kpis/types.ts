@@ -114,11 +114,30 @@ export interface KpiMetric {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
   responsible_team?: {
     id: string;
     name: string;
-  };
+  } | null;
+  /**
+   * v3.33.0 — Resolução canônica de área/time para EXIBIÇÃO.
+   * `effective_area = area ?? responsible_area`
+   * `effective_team = team ?? responsible_team`
+   *
+   * Forms de Create/Edit continuam lendo `area` / `team` (estrutural) e
+   * `responsible_area` / `responsible_team` (operacional) separadamente.
+   * Toda renderização de "área/time do KPI" em listagens, cards, tabelas,
+   * gráficos e ritos DEVE usar `effective_*`.
+   */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface KpiValue {
@@ -438,12 +457,37 @@ export interface KpiForWizardV2 {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
   area?: {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
+  /**
+   * v3.33.0 — Responsável operacional (KPIs Globais/Área delegados a um time).
+   * Lido só para resolver `effective_team`; não substitui `team`.
+   */
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  /** v3.33.0 — Área responsável operacional (override quando `area_id` é nulo). */
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `area ?? responsible_area`. SSOT para exibição. */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `team ?? responsible_team`. SSOT para exibição. */
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 /**

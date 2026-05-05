@@ -168,8 +168,8 @@ function KpiEvolutionCard({
           targetValue={kpi.target_value}
         />
         <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
-          {kpi.area && (
-            <AreaBadge area={kpi.area} />
+          {((kpi as any).effective_area ?? kpi.area) && (
+            <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
           )}
           {kpi.owner && (
             <div className="flex items-center gap-1.5">
@@ -201,8 +201,8 @@ function KpiExpandedChart({ kpi }: { kpi: KpiEvolutionItem }) {
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="secondary">{INDICATOR_TYPE_LABELS[kpi.indicator_type]}</Badge>
               <Badge variant="outline" className={ragConfig.color}>{ragConfig.label}</Badge>
-              {kpi.area && (
-                <AreaBadge area={kpi.area} />
+              {((kpi as any).effective_area ?? kpi.area) && (
+                <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
               )}
             </div>
           </div>
@@ -529,8 +529,8 @@ export default function KpiEvolutionPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {kpi.area ? (
-                          <AreaBadge area={kpi.area} />
+                        {((kpi as any).effective_area ?? kpi.area) ? (
+                          <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
                         ) : '—'}
                       </TableCell>
                       <TableCell className="text-right font-medium">

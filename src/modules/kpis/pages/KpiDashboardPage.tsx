@@ -213,7 +213,7 @@ export default function KpiDashboardPage() {
         const searchableFields = [
           kpi.name,
           kpi.description,
-          kpi.area?.name,
+          (kpi.effective_area ?? kpi.area)?.name,
           kpi.owner?.display_name,
           kpi.unit,
         ].filter(Boolean).join(" ").toLowerCase();
@@ -279,17 +279,19 @@ export default function KpiDashboardPage() {
   
   // Initialize with areas that have KPIs (use filtered data)
   filteredKpis.forEach((kpi) => {
-    const areaId = kpi.area_id;
-    const areaInfo = areas.find(a => a.id === areaId);
-    
+    // v3.33.0 — agrupar por ÁREA EFETIVA (estrutural com fallback operacional).
+    const eff = kpi.effective_area ?? kpi.area;
+    const areaId = eff?.id ?? kpi.area_id ?? null;
+    const areaInfo = areaId ? areas.find(a => a.id === areaId) : undefined;
+
     if (!kpisByArea.has(areaId)) {
       kpisByArea.set(areaId, {
-        areaName: areaInfo?.name || kpi.area?.name || "Sem Área",
-        areaColor: areaInfo?.color || kpi.area?.color || null,
+        areaName: areaInfo?.name || eff?.name || "Sem Área",
+        areaColor: areaInfo?.color || eff?.color || null,
         kpis: [],
       });
     }
-    
+
     kpisByArea.get(areaId)!.kpis.push(kpi);
   });
 

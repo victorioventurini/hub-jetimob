@@ -140,7 +140,7 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         <div className="space-y-2 flex-1">
           <h1 className="text-xl font-semibold">{kpi.name}</h1>
           <div className="flex items-center gap-2">
-            {kpi.area && <AreaBadge area={kpi.area} />}
+            {((kpi as any).effective_area ?? kpi.area) && <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />}
             <Badge variant="outline" className={cn("text-xs gap-1", getSourceColor(kpi.source_type))}>
               <SourceIcon type={kpi.source_type} />
               {SOURCE_TYPE_LABELS[kpi.source_type]}
@@ -219,13 +219,17 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
 
       {/* Metadata */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-        {kpi.area && (
-          <div className="flex items-center gap-2 min-w-0">
-            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" style={{ color: kpi.area.color || undefined }} />
-            <span className="text-sm text-muted-foreground shrink-0">Área:</span>
-            <span className="text-sm font-medium truncate">{kpi.area.name}</span>
-          </div>
-        )}
+        {(() => {
+          const eff = (kpi as any).effective_area ?? kpi.area;
+          if (!eff) return null;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" style={{ color: eff.color || undefined }} />
+              <span className="text-sm text-muted-foreground shrink-0">Área:</span>
+              <span className="text-sm font-medium truncate">{eff.name}</span>
+            </div>
+          );
+        })()}
         <div className="flex items-center gap-2 min-w-0">
           <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-sm text-muted-foreground shrink-0">Escopo:</span>

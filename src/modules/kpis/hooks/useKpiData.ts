@@ -73,12 +73,21 @@ interface DbKpiMetric {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
   area?: {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
 }
 
 interface DbKpiValue {
@@ -127,7 +136,9 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
           area_id, scope, responsible_area_id, responsible_team_id,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
-          area:areas!kpi_metrics_area_id_fkey(id, name, color)
+          area:areas!kpi_metrics_area_id_fkey(id, name, color),
+          responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+          responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
         `)
         .eq("status", "active")
         .eq("bu_id", currentBuId!)
@@ -144,8 +155,10 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       if (ownerId) {
         query = query.eq("owner_user_id", ownerId);
       }
+      // v3.33.0: filtro de área inclui responsible_area_id (KPIs Globais cuja
+      // responsabilidade operacional pertence à área).
       if (areaId) {
-        query = query.eq("area_id", areaId);
+        query = query.or(`area_id.eq.${areaId},responsible_area_id.eq.${areaId}`);
       }
       if (scope) {
         query = query.eq("scope", scope);
@@ -267,8 +280,13 @@ export function useKpiData(options: UseKpiDataOptions = {}) {
       consolidation_frequency: kpi.consolidation_frequency ?? null,
       update_frequency: kpi.update_frequency ?? null,
       owner: kpi.owner,
-      team: kpi.team,
-      area: kpi.area,
+      team: kpi.team ?? null,
+      area: kpi.area ?? null,
+      responsible_team: kpi.responsible_team ?? null,
+      responsible_area: kpi.responsible_area ?? null,
+      // v3.33.0 — SSOT para exibição (estrutural com fallback para operacional).
+      effective_area: kpi.area ?? kpi.responsible_area ?? null,
+      effective_team: kpi.team ?? kpi.responsible_team ?? null,
       values: mappedValues,
       current_value: currentValue,
       previous_value: previousValue,
@@ -460,7 +478,9 @@ export function useKpiDetail(kpiId: string) {
           area_id, scope, responsible_area_id, responsible_team_id,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
-          area:areas!kpi_metrics_area_id_fkey(id, name, color)
+          area:areas!kpi_metrics_area_id_fkey(id, name, color),
+          responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+          responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
         `)
         .eq("id", kpiId)
         .maybeSingle();
@@ -543,7 +563,13 @@ export function useKpiDetail(kpiId: string) {
       // v2.2 governance defaults
       area_id: kpi.area_id,
       scope: kpi.scope || 'team',
-      area: kpi.area,
+      area: kpi.area ?? null,
+      team: kpi.team ?? null,
+      responsible_area: kpi.responsible_area ?? null,
+      responsible_team: kpi.responsible_team ?? null,
+      // v3.33.0 — SSOT exibição
+      effective_area: kpi.area ?? kpi.responsible_area ?? null,
+      effective_team: kpi.team ?? kpi.responsible_team ?? null,
     } : null,
     values: values || [],
     isLoading,

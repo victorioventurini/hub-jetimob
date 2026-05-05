@@ -1,89 +1,101 @@
-# Direção da KPI nas análises de melhora/piora — canônico
+## Pré-checklist (consultado)
+
+- ✅ TCR (`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`) — seção `kpi_metrics`
+- ✅ `SCHEMA_QUICK_REFERENCE.md` — schema vigente
+- ✅ `RESPONSIBILITY_MIGRATION_POLICY.md` — confirma que `kpi_metrics` tem `owner_user_id` mandatório; responsabilidade operacional é dimensão paralela
+- ✅ `AREA_BADGE_STANDARD.md` — `AreaBadge` é SSOT visual; trocaremos só a fonte de dados
+- ✅ `UI_COMPONENTS_REGISTRY.md` — `AreaSelect`/`TeamSelect` já implementam corretamente o form de Edit/Create; **não mexer**
+- ✅ Memória `mem://features/kpis/kpis-master-standard` — base v3.0.0
+- ⚠️ TCR ainda não documenta `responsible_area_id` / `responsible_team_id` em `kpi_metrics` — gap será registrado em memória nova ao final
 
 ## Problema
 
-Hoje a classificação "Maiores avanços × Maiores quedas" e os ícones/cores de tendência usam apenas o sinal de `deltaPct` (`current - previous`). Para KPIs com `direction = 'down'` (ex.: CAC — menor é melhor), uma alta no valor é exibida como **avanço** (verde), o que está incorreto.
+`kpi_metrics` tem 2 dimensões de vínculo:
 
-Já temos um helper canônico parcial em `src/lib/colors.ts → getKpiTrendColor(trend, direction)`, mas ele não é usado pelos cards comparativos dos ritos (Pré-MBR, MBR Executivo, Panorama, Executive Quarter Review). Cada local reimplementa a lógica e nenhum consulta `direction`.
+| Coluna | Semântica |
+|---|---|
+| `area_id` / `team_id` | Ownership **estrutural** (preenchido em `scope='team'` / `scope='area'`) |
+| `responsible_area_id` / `responsible_team_id` | **Responsabilidade Operacional** — quem responde no dia a dia (preenchido em `scope='org'` Globais e em `scope='area'` quando delegado a um time) |
 
-## Princípio canônico
+**Caso NPS:** `scope='org'`, `area_id=NULL`, `team_id=NULL`, `responsible_area_id=Operações`, `responsible_team_id=Customer Success`.
 
-- **Avanço (improvement)** = o valor se moveu **na direção desejada** (`direction = 'up'` → subiu; `direction = 'down'` → caiu).
-- **Piora (regression)** = movimento contrário.
-- **Estável** = `deltaPct === 0` ou indefinido.
-- KPIs sem `direction` (ou `direction = 'maintain'` / `null`) caem no comportamento atual (`up = bom`) — único default seguro, já adotado em `getKpiTrendColor`.
-- Ranking "Maiores avanços / Maiores quedas" ordena pelo **módulo do delta orientado** (não pelo sinal bruto), mantendo top 3 de cada lado.
+A UI hoje só lê `kpi.area` / `kpi.team` (joins por `area_id`/`team_id`), então **KPIs Globais aparecem sem área e sem time** em `/kpis`, `/kpis/evolution` e em vários ritos — quando deveriam exibir os responsáveis operacionais.
 
-## SSOT a criar
+## Solução canônica
 
-`src/modules/okrs/utils/kpiVariations.ts` (estender — já existe):
+Estender o tipo do KPI com **campos derivados** (sem alterar schema):
 
 ```ts
-export type KpiDirection = 'up' | 'down' | 'maintain' | null | undefined;
-
-export function isKpiImprovement(deltaPct: number | null, direction: KpiDirection): boolean | null;
-export function classifyKpiDelta(deltaPct: number | null, direction: KpiDirection):
-  'improvement' | 'regression' | 'flat' | null;
-
-/** delta com sinal corrigido pela direção: positivo = bom, negativo = ruim */
-export function orientedDeltaPct(deltaPct: number | null, direction: KpiDirection): number | null;
+effective_area = area  ?? responsible_area
+effective_team = team  ?? responsible_team
 ```
 
-Tests novos em `kpiVariations.test.ts` cobrindo: direction up/down/maintain/null × delta positivo/negativo/zero/null.
+Toda renderização de "área/time do KPI" passa a usar `effective_*`. Edição/forms continuam vendo os campos brutos (área estrutural × área operacional).
 
-## Pontos de aplicação (todos os ritos)
+## Mudanças
 
-1. **`src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`** (SSOT visual usado por Pré-MBR Abertura e MBR Executivo KPI Gate)
-   - `computeKpiDeltas` passa a usar `orientedDeltaPct` e classifica `ups/downs` por `classifyKpiDelta`.
-   - Mantém top 3 ordenados por `Math.abs(orientedDeltaPct)`.
-   - `KpiDeltaRow` continua mostrando `previous → current` com `deltaPct` **bruto** (mantém realidade numérica), mas a cor e a coluna (avanços/quedas) seguem o oriented.
-   - Microcopy mantém "Maiores avanços" / "Maiores quedas".
+### 1. Tipos (SSOT)
+`src/modules/kpis/types.ts`
+- Adicionar `responsible_area`, `responsible_team`, `effective_area`, `effective_team` em `KpiWithValues` e `KpiForWizardV2`.
 
-2. **`src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx`** — `TrendIcon` + `formatVariation` na linha 138-211: passar `direction` do KPI; ícone/cor via `classifyKpiDelta`.
+### 2. Hooks de fetch — incluir joins de responsável e popular `effective_*`
+- `src/modules/kpis/hooks/useKpiData.ts` (lista + detalhe)
+- `src/modules/kpis/hooks/useKpiWithHistory.ts`
+- `src/modules/kpis/hooks/useKpiEvolutionList.ts`
+- `src/modules/kpis/hooks/useKpisForWizardV2.ts`
+- `src/modules/kpis/hooks/useKpisForWizard.ts`
+- `src/modules/okrs/hooks/useMbrMonthlyKpisByScope.ts` (já tem `responsible_team_id`; estender para `area`)
+- `src/modules/okrs/hooks/useMbrPreTeamKpisMonthly.ts`
+- `src/modules/teams/hooks/useTeamKpisGrouped.ts`
 
-3. **`src/modules/okrs/hooks/useMbrPreMonthAnalysis.ts`** — payload enviado à edge `mbr-pre-month-analysis` precisa incluir `direction` e `orientedDeltaPct` para o agente IA não inverter narrativa. Edge function lê e cita corretamente (ajuste de prompt: "considere a direção da KPI ao narrar avanço/piora").
+Joins padrão a adicionar:
+```
+responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
+responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name)
+```
 
-4. **`src/modules/okrs/pages/executive-quarter-review/helpers.tsx → trendArrow`** + `sections/KpisSection.tsx` — passar `direction` (já presente no objeto KPI) para escolher seta para cima/baixo coerente com bom/ruim, e cor via classify.
+### 3. Filtro por área no Dashboard `/kpis`
+`useKpiData.ts` — espelhar o que já é feito para `team_id`:
+```ts
+if (areaId) {
+  query = query.or(`area_id.eq.${areaId},responsible_area_id.eq.${areaId}`);
+}
+```
+E atualizar `KpiDashboardPage.tsx` para agrupar por `effective_area.id`/`name`/`color` em vez de `area_id`.
 
-5. **`src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`**
-   - `KrCard`: KRs têm `direction` (ver `CheckinProgressBlock`); usar `isKpiImprovement` (ou helper irmão para KR — mesma assinatura) em vez de `change > 0`.
-   - `KpiCard`: aplicar igualmente quando renderizar tendência.
+### 4. Consumidores UI — trocar `kpi.area`/`kpi.team` → `kpi.effective_area`/`kpi.effective_team`
+- `src/modules/kpis/components/KpiCard.tsx`
+- `src/modules/kpis/components/KpiDashboardTable.tsx`
+- `src/modules/kpis/components/KpiSidePanel.tsx`
+- `src/modules/kpis/components/KpiDetailContent.tsx`
+- `src/modules/kpis/components/KpiHistoryDialog.tsx`
+- `src/modules/kpis/pages/KpiEvolutionPage.tsx`
+- `src/modules/kpis/pages/KpiDashboardPage.tsx` (badges + agrupamento)
+- `src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`
+- `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx`
+- `src/modules/okrs/components/wizards/clevel-checkin/CLevelInsightsStep.tsx`
+- `src/modules/okrs/pages/mbr/useMbrDataSources.ts`
 
-6. **`src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx`** linhas 380-405 — já considera direção localmente; substituir bloco inline pelo helper canônico.
+### 5. NÃO mexer
+- Forms de Create/Edit (`CreateKpiDialog`, `EditKpiDialog`, `EditKpiScopeSection`, `ScopeAreaSection`, schemas).
+- `useCanEditKpi`, `useCanChangeKpiScope` — lógica de permissão correta.
+- `AreaBadge` (componente).
+- Banco / migrations.
 
-7. **`src/modules/okrs/components/checkin/CheckinProgressBlock.tsx`** — já considera `direction` para KRs; substituir cálculo inline pelo helper canônico (consolidação, sem mudança de comportamento).
-
-8. **`src/lib/colors.ts → getKpiTrendColor`** — manter (já correto); documentar que é a fonte de cor a partir de `trend` agregado. O novo helper convive porque opera sobre `deltaPct` numérico (necessário para os cards comparativos onde não existe `trend`).
-
-Itens onde **não** mexer (revisados, não envolvem direção de KPI):
-- `QbrMeetingOpeningStep.getTrend` (compara RAG ordinal entre quarters — semântica própria).
-- `KpiCard` / `KpiDashboardTable` / `KpiSidePanel` em `src/modules/kpis/...` — já usam `getKpiTrendColor(trend, direction)` corretamente.
-- `executive-quarter-review/sections/KpisSection` — só passar a `direction` no `trendArrow`.
-
-## Detalhes técnicos
-
-- Tipo `direction` no snapshot já existe (`MbrKpiSnapshot.direction: 'up' | 'down' | null`) e é populado pelos hooks `useMbrPreTeamKpisMonthly` e `useMbrMonthlyKpisByScope` (lendo `kpis.direction` do banco). Nada a migrar.
-- Para KR, `direction` já vem do objeto KR consumido pelos cards.
-- Edge function `mbr-pre-month-analysis`: adicionar campo `direction` em cada item de `kpis[]` no payload e ajustar prompt do agente `analista-estrategico` para interpretar `orientedDeltaPct` (sinal já corrigido) em vez de re-derivar.
-- Não criar novos componentes visuais; só estender helpers e roteamento de props.
+### 6. Memória / docs
+- Criar `mem://features/kpis/kpi-effective-area-team-resolution` com a regra: "Renderização sempre via `effective_area`/`effective_team`. Filtros por área incluem `responsible_area_id`."
+- Atualizar `mem://index.md` com a nova entrada.
 
 ## Validação
 
-- Unit tests em `kpiVariations.test.ts`.
-- Snapshot/regressão visual em `MbrKpiGateStep.test.tsx`, `MbrPanoramaStep.test.tsx`, `QbrKpiAnalysisStep.test.tsx`, `QbrMeetingSteps.test.tsx`, `QbrCLevelSteps.test.tsx` — adicionar caso com KPI `direction = 'down'` que sobe → vai para "Maiores quedas".
-- Manual no time citado: `/rituals/mbr-pre?team=c8e5d7a7-...&step=opening` deve mostrar **CAC** subindo dentro de "Maiores quedas" em vermelho.
-- Manual em `/rituals/mbr?step=kpi-gate` mesma checagem nos KPIs globais e de área.
+1. `/kpis` (NPS visível): badge "Operações" + chip "Customer Success".
+2. `/kpis/evolution` (table + cards): mesmo.
+3. Filtro `?area_id=<Operações>` em `/kpis`: NPS aparece (mesmo com `area_id=NULL`).
+4. `/rituals/mbr?step=kpi-gate`: NPS rotulado com área/time.
+5. `/rituals/mbr-pre?step=opening`: cards com área/time.
+6. KPIs `scope='team'` legados (com `area_id`/`team_id` setados) continuam exibindo igual — fallback transparente.
 
-## Arquivos a editar (sem criação de componentes novos)
+## Riscos
 
-- `src/modules/okrs/utils/kpiVariations.ts` (+ teste)
-- `src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`
-- `src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx`
-- `src/modules/okrs/hooks/useMbrPreMonthAnalysis.ts`
-- `supabase/functions/mbr-pre-month-analysis/index.ts` (payload + prompt)
-- `src/modules/okrs/pages/executive-quarter-review/helpers.tsx`
-- `src/modules/okrs/pages/executive-quarter-review/sections/KpisSection.tsx`
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
-- `src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx`
-- `src/modules/okrs/components/checkin/CheckinProgressBlock.tsx`
-- Memória `mem://standards/kpi-direction-aware-comparison` (novo) + entrada no `mem://index.md` em **Standards & Patterns**.
+- Cache: invalidar `queryKeys.kpis.*` após deploy (já garantido — só estamos adicionando colunas no select, mesmo cache key).
+- TS: novos campos opcionais em `KpiWithValues` — sem breaking change para consumidores que já leem `kpi.area`/`kpi.team` (mantidos).

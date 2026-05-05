@@ -37,7 +37,7 @@ export interface KpiEvolutionItem {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
   owner?: {
     id: string;
     display_name: string;
@@ -46,7 +46,27 @@ export interface KpiEvolutionItem {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  /** v3.33.0 — `area ?? responsible_area`. SSOT exibição. */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `team ?? responsible_team`. SSOT exibição. */
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface KpiEvolutionAggregates {
@@ -97,7 +117,9 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           indicator_type, scope, created_at,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
-          area:areas!kpi_metrics_area_id_fkey(id, name, color)
+          area:areas!kpi_metrics_area_id_fkey(id, name, color),
+          responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+          responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
         `)
         .eq('status', 'active')
         .eq('bu_id', buId!)
@@ -108,7 +130,9 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
         query = query.eq('indicator_type', indicatorType);
       }
       if (areaId) {
-        query = query.eq('area_id', areaId);
+        // v3.33.0: inclui responsible_area_id (KPIs Globais cuja
+        // responsabilidade operacional pertence à área).
+        query = query.or(`area_id.eq.${areaId},responsible_area_id.eq.${areaId}`);
       }
       if (scope) {
         query = query.eq('scope', scope);
@@ -191,9 +215,13 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           rag_status: rag,
           last_updated_at: values[0]?.created_at || null,
           total_values: countsByKpi[kpi.id] || 0,
-          area: kpi.area,
+          area: (kpi as any).area ?? null,
           owner: kpi.owner,
-          team: kpi.team,
+          team: (kpi as any).team ?? null,
+          responsible_area: (kpi as any).responsible_area ?? null,
+          responsible_team: (kpi as any).responsible_team ?? null,
+          effective_area: (kpi as any).area ?? (kpi as any).responsible_area ?? null,
+          effective_team: (kpi as any).team ?? (kpi as any).responsible_team ?? null,
         };
       });
 
