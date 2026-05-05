@@ -40,8 +40,11 @@ interface KpiRow {
   scope: KpiScope | null;
   responsible_team_id: string | null;
   area_id: string | null;
+  responsible_area_id: string | null;
   area: { id: string; name: string; color: string | null } | null;
+  responsible_area: { id: string; name: string; color: string | null } | null;
   team: { id: string; name: string } | null;
+  structural_team: { id: string; name: string } | null;
 }
 
 interface KpiValueRow {
