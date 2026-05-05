@@ -73,6 +73,7 @@ function MbrPanoramaCurationCardImpl({
   onGenerateDraft,
   isGenerating = false,
   onAddSuggestedDecision,
+  teamNamesById,
 }: MbrPanoramaCurationCardProps) {
   const stateBadge = STATE_BADGE[curation.state];
   const hasContent =
