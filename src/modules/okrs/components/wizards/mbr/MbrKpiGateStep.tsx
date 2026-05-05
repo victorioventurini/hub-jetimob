@@ -164,7 +164,7 @@ export function MbrKpiGateStep({
         <WizardStepFooter
           onBack={onBack}
           onPrimary={onContinue}
-          primaryLabel="Revisar OKRs Organizacionais"
+          primaryLabel="Avançar para Indicadores fora da meta"
           primaryDisabled={!canProceed}
         />
       }
