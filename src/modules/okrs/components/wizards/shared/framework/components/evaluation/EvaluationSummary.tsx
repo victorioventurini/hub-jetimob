@@ -56,6 +56,18 @@ export function EvaluationSummary({
     );
   }
 
+  const scored = dimensions.filter((d) => d.avg !== null) as Array<EvaluationDimension & { avg: number }>;
+  const overallAvg =
+    scored.length > 0 ? scored.reduce((sum, d) => sum + d.avg, 0) / scored.length : null;
+  const overallColor =
+    overallAvg === null
+      ? 'text-muted-foreground'
+      : overallAvg >= 4
+        ? 'text-success'
+        : overallAvg >= 3
+          ? 'text-warning'
+          : 'text-destructive';
+
   return (
     <div className="space-y-4">
       <Card>
@@ -67,6 +79,12 @@ export function EvaluationSummary({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-baseline justify-between rounded-lg border bg-muted/30 p-3">
+            <span className="text-sm font-semibold">Avaliação média do rito</span>
+            <span className={cn('font-mono text-lg font-semibold', overallColor)}>
+              {overallAvg === null ? '—' : `${overallAvg.toFixed(2)} / 5`}
+            </span>
+          </div>
           {dimensions.map((dim) => (
             <div key={dim.key} className="space-y-1">
               <div className="flex items-baseline justify-between text-sm">
