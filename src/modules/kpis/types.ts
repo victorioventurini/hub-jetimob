@@ -457,12 +457,37 @@ export interface KpiForWizardV2 {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
   area?: {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
+  /**
+   * v3.33.0 — Responsável operacional (KPIs Globais/Área delegados a um time).
+   * Lido só para resolver `effective_team`; não substitui `team`.
+   */
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  /** v3.33.0 — Área responsável operacional (override quando `area_id` é nulo). */
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `area ?? responsible_area`. SSOT para exibição. */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `team ?? responsible_team`. SSOT para exibição. */
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 /**
