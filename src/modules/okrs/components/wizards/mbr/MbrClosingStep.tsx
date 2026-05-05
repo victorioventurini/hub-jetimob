@@ -5,18 +5,16 @@
  * + feedback anônimo com rating 1-5 estrelas.
  */
 
-import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { ShieldCheck, Plus, X, MessageSquare, CheckCircle2, Star, BarChart3, Users, Target, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardLastStepFooter, InlineDecisionInput } from '../shared';
+import { WizardStepHeader, WizardLastStepFooter } from '../shared';
 import type {
   MbrGovernanceChecklist,
   RitualImprovementFeedback,
