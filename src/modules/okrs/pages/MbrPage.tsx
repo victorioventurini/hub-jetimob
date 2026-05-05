@@ -566,11 +566,22 @@ export default function MbrPage() {
             persona="mbr"
             ensureSession={saveDraft}
             footer={
-              <WizardStepFooter
-                onPrimary={goNext}
-                onBack={goBack}
-                primaryLabel="Continuar para encerramento"
-              />
+              <>
+                <div className="border-t bg-card/50 backdrop-blur-sm">
+                  <InlineDecisionInput
+                    decisions={draft.data.decisions}
+                    onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
+                      updateDraft({ decisions })
+                    }
+                    sourceStep="evaluation"
+                  />
+                </div>
+                <WizardStepFooter
+                  onPrimary={goNext}
+                  onBack={goBack}
+                  primaryLabel="Continuar para encerramento"
+                />
+              </>
             }
           />
         );
