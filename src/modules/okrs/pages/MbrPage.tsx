@@ -240,7 +240,16 @@ export default function MbrPage() {
   }, [discardDraft]);
 
   const handleComplete = useCallback(async () => {
-    const completedSessionId = await clearDraft();
+    let completedSessionId: string | null = null;
+    try {
+      completedSessionId = await clearDraft();
+    } catch (error) {
+      console.warn('[MBR] complete failed', { error });
+      toast.error(
+        'Não foi possível concluir o MBR. Seus dados estão preservados — tente novamente.',
+      );
+      return;
+    }
     toast.success('MBR concluído com sucesso!');
     navigate('/okrs/executive');
 
