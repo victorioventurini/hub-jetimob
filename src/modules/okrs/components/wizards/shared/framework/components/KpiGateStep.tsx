@@ -673,17 +673,20 @@ export const KpiGateStep = memo(function KpiGateStep({
             Nenhum KPI registrado para este escopo.
           </p>
         ) : isPaginated && currentEntry ? (
-          <RichKpiCard
-            key={currentEntry.kpi.id}
-            kpi={currentEntry.kpi}
-            bucketId={currentEntry.bucketId}
-            justification={justifications?.[currentEntry.kpi.id] ?? ''}
-            onJustificationChange={onJustificationChange}
-            splitNoDataReason={splitNoDataReason}
-            noDataReason={noDataReasons?.[currentEntry.kpi.id]}
-            onNoDataReasonChange={onNoDataReasonChange}
-          />
-        ) : buckets ? (
+          <>
+            <RichKpiCard
+              key={currentEntry.kpi.id}
+              kpi={currentEntry.kpi}
+              bucketId={currentEntry.bucketId}
+              justification={justifications?.[currentEntry.kpi.id] ?? ''}
+              onJustificationChange={onJustificationChange}
+              splitNoDataReason={splitNoDataReason}
+              noDataReason={noDataReasons?.[currentEntry.kpi.id]}
+              onNoDataReasonChange={onNoDataReasonChange}
+              readOnly={readOnlyJustification}
+            />
+            {extraContentForCurrentKpi?.(currentEntry.kpi)}
+          </>
           buckets.map((bucket) => (
             <BucketSection
               key={bucket.id}
