@@ -50,7 +50,7 @@ import { MbrTeamOkrsDetailStep } from '@/modules/okrs/components/wizards/mbr/Mbr
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecisionsStep';
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
-import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
+
 import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
 import { WizardStepFooter, InlineDecisionInput } from '@/modules/okrs/components/wizards/shared';
 
@@ -587,22 +587,6 @@ export default function MbrPage() {
             mbrPreSurfacedItems={mbrPreSurfacedItems}
             mbrPreAgendaSuggestions={mbrPreAgendaSuggestions}
             teamNamesById={teamNamesById}
-            onContinue={goNext}
-            onBack={goBack}
-          />
-        );
-
-      case 'qbr-followup':
-        return (
-          <MbrQbrFollowUpStep
-            followUpItems={draft.data.qbrFollowUpItems}
-            onFollowUpItemsChange={(qbrFollowUpItems) =>
-              updateDraft({ qbrFollowUpItems })
-            }
-            decisions={draft.data.decisions}
-            onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
-              updateDraft({ decisions })
-            }
             onContinue={goNext}
             onBack={goBack}
           />
