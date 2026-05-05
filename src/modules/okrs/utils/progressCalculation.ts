@@ -48,6 +48,41 @@ export interface CycleContext {
   name?: string;
 }
 
+export interface ProgressContext {
+  unit?: string | null;
+  referenceUnit?: string | null;
+}
+
+const UNIT_MULTIPLIERS: Record<string, number> = {
+  'R$': 1,
+  'R$ mil': 1_000,
+  'R$ milhão': 1_000_000,
+};
+
+function normalizeValueByUnit(value: number, unit?: string | null): number {
+  const multiplier = unit ? UNIT_MULTIPLIERS[unit] : undefined;
+  return multiplier ? value * multiplier : value;
+}
+
+export function normalizeProgressInputs(
+  baseline: number,
+  current: number,
+  target: number,
+  context?: ProgressContext
+) {
+  const normalizedBaseline = normalizeValueByUnit(baseline, context?.unit);
+  const normalizedCurrent = normalizeValueByUnit(current, context?.unit);
+
+  const targetUnit = context?.referenceUnit ?? context?.unit;
+  const normalizedTarget = normalizeValueByUnit(target, targetUnit);
+
+  return {
+    baseline: normalizedBaseline,
+    current: normalizedCurrent,
+    target: normalizedTarget,
+  };
+}
+
 // ============================================================
 // PACE CALCULATION (CANONICAL)
 // ============================================================
@@ -255,32 +290,38 @@ export function calculateProgress(
   baseline: number,
   current: number,
   target: number,
-  direction: OkrDirection
+  direction: OkrDirection,
+  context?: ProgressContext
 ): number {
+  const normalized = normalizeProgressInputs(baseline, current, target, context);
+  const normalizedBaseline = normalized.baseline;
+  const normalizedCurrent = normalized.current;
+  const normalizedTarget = normalized.target;
+
   // Direção 'maintain': tratado explicitamente como binário
   // - Se current >= target: 100%
   // - Se current < target: 0%
   if (direction === 'maintain') {
-    return current >= target ? 100 : 0;
+    return normalizedCurrent >= normalizedTarget ? 100 : 0;
   }
 
   if (direction === 'up') {
     // KR de manutenção implícita (baseline = meta): tratamento binário (compatibilidade)
-    if (target === baseline) {
-      return current >= target ? 100 : 0;
+    if (normalizedTarget === normalizedBaseline) {
+      return normalizedCurrent >= normalizedTarget ? 100 : 0;
     }
     // Fórmula padrão: (resultado - baseline) / (meta - baseline) × 100
     // Não limitar a 100% para permitir exibição de superação de metas
-    const progress = ((current - baseline) / (target - baseline)) * 100;
+    const progress = ((normalizedCurrent - normalizedBaseline) / (normalizedTarget - normalizedBaseline)) * 100;
     return Math.max(0, progress);
   } else {
     // KR de manutenção para redução
-    if (baseline === target) {
-      return current <= target ? 100 : 0;
+    if (normalizedBaseline === normalizedTarget) {
+      return normalizedCurrent <= normalizedTarget ? 100 : 0;
     }
     // Fórmula para redução: (baseline - resultado) / (baseline - meta) × 100
     // Não limitar a 100% para permitir exibição de superação de metas
-    const progress = ((baseline - current) / (baseline - target)) * 100;
+    const progress = ((normalizedBaseline - normalizedCurrent) / (normalizedBaseline - normalizedTarget)) * 100;
     return Math.max(0, progress);
   }
 }
@@ -294,6 +335,8 @@ export function calculateAggregatedProgress(
     current_value: number;
     target: number;
     direction: OkrDirection;
+    unit?: string | null;
+    target_unit?: string | null;
   }>
 ): number {
   if (!krs || krs.length === 0) return 0;
@@ -303,7 +346,8 @@ export function calculateAggregatedProgress(
       Number(kr.baseline) || 0,
       Number(kr.current_value) || 0,
       Number(kr.target) || 0,
-      kr.direction || 'up'
+      kr.direction || 'up',
+      { unit: kr.unit, referenceUnit: kr.target_unit }
     );
   }, 0);
   
@@ -317,12 +361,14 @@ export function calculateProgressFromNullable(
   baseline: number | string | null | undefined,
   current: number | string | null | undefined,
   target: number | string | null | undefined,
-  direction: string | null | undefined
+  direction: string | null | undefined,
+  context?: ProgressContext
 ): number {
   return calculateProgress(
     Number(baseline) || 0,
     Number(current) || 0,
     Number(target) || 0,
-    (direction as OkrDirection) || 'up'
+    (direction as OkrDirection) || 'up',
+    context
   );
 }
