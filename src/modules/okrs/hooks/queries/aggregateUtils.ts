@@ -9,8 +9,14 @@ import type { OrgKrWithTeamKrs } from './aggregateTypes';
 import { getEffectiveKrRagStatus } from '../../utils/effectiveStatus';
 import { calculateProgress as calculateCanonicalProgress } from '../../utils/progressCalculation';
 
-export function calculateProgress(baseline: number, current: number, target: number, direction: OkrDirection): number {
-  return calculateCanonicalProgress(baseline, current, target, direction);
+export function calculateProgress(
+  baseline: number,
+  current: number,
+  target: number,
+  direction: OkrDirection,
+  unit?: string | null,
+): number {
+  return calculateCanonicalProgress(baseline, current, target, direction, { unit });
 }
 
 export function determineTrend(status: OkrRagStatus, _progress: number): 'up' | 'stable' | 'down' {
