@@ -529,8 +529,8 @@ export default function KpiEvolutionPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {kpi.area ? (
-                          <AreaBadge area={kpi.area} />
+                        {((kpi as any).effective_area ?? kpi.area) ? (
+                          <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
                         ) : '—'}
                       </TableCell>
                       <TableCell className="text-right font-medium">
