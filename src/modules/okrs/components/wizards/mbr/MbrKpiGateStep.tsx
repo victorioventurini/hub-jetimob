@@ -165,10 +165,10 @@ export function MbrKpiGateStep({
       bottomFixed={
         <>
           {!canProceed && (
-            <p className="text-xs text-status-amber text-center pb-2 px-4">
+            <p className="text-xs text-muted-foreground text-center pb-2 px-4">
               {requirePlanForCriticalKpis
-                ? `Registre um plano para: ${missingKpis.map(k => k.name).join(', ')}`
-                : `Registre decisões (faltam ${aggregateMissing}) para continuar`}
+                ? `Sugestão: registre um plano para ${missingKpis.map(k => k.name).join(', ')} (opcional).`
+                : `Sugestão: registre decisões para os KPIs em atenção (opcional).`}
             </p>
           )}
           <div className="border-t bg-card/50 backdrop-blur-sm">
@@ -185,7 +185,6 @@ export function MbrKpiGateStep({
           onBack={onBack}
           onPrimary={onContinue}
           primaryLabel="Avançar para Indicadores fora da meta"
-          primaryDisabled={!canProceed}
         />
       }
     >
