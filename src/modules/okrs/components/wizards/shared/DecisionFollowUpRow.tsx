@@ -56,6 +56,8 @@ export interface DecisionFollowUpRowProps {
   isAddingMessage?: boolean;
   /** Hide thread UI (e.g. in compact views) */
   hideThread?: boolean;
+  /** Profile id of the user who conducted the ritual (allowed to edit owner/deadline) */
+  conductorProfileId?: string | null;
 }
 
 // ============================================================
