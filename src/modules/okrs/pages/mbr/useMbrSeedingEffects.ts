@@ -269,11 +269,6 @@ export function useSeedOrgOkrSnapshots(args: {
   useEffect(() => {
     if (seeded.current) return;
     if (isLoading || !orgObjectives || orgObjectives.length === 0) return;
-    if (draftOrgOkrSnapshots.length > 0) {
-      seeded.current = true;
-      return;
-    }
-
     const snapshots: MbrOrgOkrSnapshot[] = orgObjectives.map((obj: any) => {
       const krs = obj.key_results || [];
       const avgProgress =
@@ -325,6 +320,23 @@ export function useSeedOrgOkrSnapshots(args: {
         }),
       };
     });
+
+    if (draftOrgOkrSnapshots.length > 0) {
+      const recalculatedById = new Map(snapshots.map((snapshot) => [snapshot.objectiveId, snapshot]));
+      const needsRecalculation = draftOrgOkrSnapshots.some((draftSnapshot) => {
+        const recalculated = recalculatedById.get(draftSnapshot.objectiveId);
+        if (!recalculated) return false;
+        if (Math.abs((draftSnapshot.progress ?? 0) - recalculated.progress) >= 1) return true;
+        return draftSnapshot.keyResults.some((draftKr) => {
+          const recalculatedKr = recalculated.keyResults.find((kr) => kr.krId === draftKr.krId);
+          return recalculatedKr ? Math.abs((draftKr.progress ?? 0) - recalculatedKr.progress) >= 1 : false;
+        });
+      });
+      if (!needsRecalculation) {
+        seeded.current = true;
+        return;
+      }
+    }
 
     updateDraft({ orgOkrSnapshots: snapshots });
     seeded.current = true;
