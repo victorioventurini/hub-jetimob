@@ -177,18 +177,20 @@ export function MbrKpiDeepDiveStep({
       onDecisionsChange={onDecisionsChange}
       
       extraContentForCurrentKpi={(kpi) => {
+        const monthly = monthlyByKpi.get(kpi.id) ?? null;
         const snap = offTargetSnapshots.find((s) => s.kpiId === kpi.id);
-        const tableSnap: MbrMonthlyKpiSnapshot | null = snap
-          ? {
-              ...snap,
-              areaId: snap.areaId ?? null,
-              areaName: snap.areaName ?? null,
-              areaColor: snap.areaColor ?? null,
-              teamName: snap.teamName ?? null,
-              indicatorType: null,
-              owner: null,
-            }
-          : null;
+        const tableSnap: MbrMonthlyKpiSnapshot | null = monthly
+          ?? (snap
+            ? {
+                ...snap,
+                areaId: snap.areaId ?? null,
+                areaName: snap.areaName ?? null,
+                areaColor: snap.areaColor ?? null,
+                teamName: snap.teamName ?? null,
+                indicatorType: null,
+                owner: null,
+              }
+            : null);
         return (
           <>
             {tableSnap && (
