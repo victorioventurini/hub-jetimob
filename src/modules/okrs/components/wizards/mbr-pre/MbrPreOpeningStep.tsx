@@ -34,6 +34,8 @@ import {
   ReferenceMonthPicker,
   WizardStepHeader,
   WizardStepScaffold,
+  KpiMonthlyComparisonCard,
+  computeKpiDeltas,
 } from '../shared';
 import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
 import {
