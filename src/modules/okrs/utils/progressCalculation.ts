@@ -31,6 +31,8 @@ export type PaceStatus =
   | 'not_started'     // Não iniciado
   | 'completed';      // Meta atingida/superada
 
+export type ProgressRagStatus = 'green' | 'yellow' | 'red' | 'not_started';
+
 export interface PaceAnalysis {
   status: PaceStatus;
   label: string;
@@ -46,6 +48,92 @@ export interface CycleContext {
   endDate: Date;
   type: 'month' | 'quarter' | 'semester' | 'year';
   name?: string;
+}
+
+export interface ProgressContext {
+  unit?: string | null;
+}
+
+const UNIT_MULTIPLIERS: Record<string, number> = {
+  'R$': 1,
+  'R$ mil': 1_000,
+  'R$ milhão': 1_000_000,
+};
+
+function normalizeValueByUnit(value: number, unit?: string | null): number {
+  const multiplier = unit ? UNIT_MULTIPLIERS[unit] : undefined;
+  return multiplier ? value * multiplier : value;
+}
+
+function calculateDirectionalProgress(
+  baseline: number,
+  current: number,
+  target: number,
+  direction: OkrDirection
+): number {
+  if (direction === 'maintain') {
+    return current >= target ? 100 : 0;
+  }
+
+  if (direction === 'up') {
+    if (target === baseline) {
+      return current >= target ? 100 : 0;
+    }
+
+    const progress = ((current - baseline) / (target - baseline)) * 100;
+    return Math.max(0, progress);
+  }
+
+  if (baseline === target) {
+    return current <= target ? 100 : 0;
+  }
+
+  const progress = ((baseline - current) / (baseline - target)) * 100;
+  return Math.max(0, progress);
+}
+
+export function normalizeProgressInputs(
+  baseline: number,
+  current: number,
+  target: number,
+  context?: ProgressContext
+) {
+  const direct = { baseline, current, target };
+
+  if (!context?.unit || !(context.unit in UNIT_MULTIPLIERS)) {
+    return direct;
+  }
+
+  const multiplier = UNIT_MULTIPLIERS[context.unit];
+  const scaledTarget = {
+    baseline: normalizeValueByUnit(baseline, context.unit),
+    current,
+    target: normalizeValueByUnit(target, context.unit),
+  };
+
+  const directProgress = calculateDirectionalProgress(
+    direct.baseline,
+    direct.current,
+    direct.target,
+    'up'
+  );
+
+  const scaledProgress = calculateDirectionalProgress(
+    scaledTarget.baseline,
+    scaledTarget.current,
+    scaledTarget.target,
+    'up'
+  );
+
+  if (directProgress > 1000 && scaledProgress >= 0 && scaledProgress <= 1000) {
+    return scaledTarget;
+  }
+
+  return {
+    baseline: baseline,
+    current: current,
+    target: target,
+  };
 }
 
 // ============================================================
@@ -229,6 +317,33 @@ export function getPaceInterpretationText(analysis: PaceAnalysis): string {
   }
 }
 
+export function calculateProgressRagStatus(params: {
+  actualProgress: number;
+  cycle: CycleContext;
+  referenceDate?: Date;
+  warningTolerancePercent?: number;
+  criticalTolerancePercent?: number;
+}): ProgressRagStatus {
+  const {
+    actualProgress,
+    cycle,
+    referenceDate = new Date(),
+    warningTolerancePercent = 10,
+    criticalTolerancePercent = 25,
+  } = params;
+
+  const expectedProgress = calculateExpectedProgress(cycle, referenceDate);
+  const cycleElapsed = calculateCycleElapsed(cycle, referenceDate);
+  const gap = actualProgress - expectedProgress;
+
+  if (actualProgress >= 100) return 'green';
+  if (actualProgress === 0 && cycleElapsed > 10) return 'not_started';
+  if (cycleElapsed <= 15) return 'green';
+  if (gap <= -criticalTolerancePercent) return 'red';
+  if (gap <= -warningTolerancePercent) return 'yellow';
+  return 'green';
+}
+
 // ============================================================
 // PROGRESS CALCULATION (ORIGINAL)
 // ============================================================
@@ -255,34 +370,11 @@ export function calculateProgress(
   baseline: number,
   current: number,
   target: number,
-  direction: OkrDirection
+  direction: OkrDirection,
+  context?: ProgressContext
 ): number {
-  // Direção 'maintain': tratado explicitamente como binário
-  // - Se current >= target: 100%
-  // - Se current < target: 0%
-  if (direction === 'maintain') {
-    return current >= target ? 100 : 0;
-  }
-
-  if (direction === 'up') {
-    // KR de manutenção implícita (baseline = meta): tratamento binário (compatibilidade)
-    if (target === baseline) {
-      return current >= target ? 100 : 0;
-    }
-    // Fórmula padrão: (resultado - baseline) / (meta - baseline) × 100
-    // Não limitar a 100% para permitir exibição de superação de metas
-    const progress = ((current - baseline) / (target - baseline)) * 100;
-    return Math.max(0, progress);
-  } else {
-    // KR de manutenção para redução
-    if (baseline === target) {
-      return current <= target ? 100 : 0;
-    }
-    // Fórmula para redução: (baseline - resultado) / (baseline - meta) × 100
-    // Não limitar a 100% para permitir exibição de superação de metas
-    const progress = ((baseline - current) / (baseline - target)) * 100;
-    return Math.max(0, progress);
-  }
+  const normalized = normalizeProgressInputs(baseline, current, target, context);
+  return calculateDirectionalProgress(normalized.baseline, normalized.current, normalized.target, direction);
 }
 
 /**
@@ -294,6 +386,8 @@ export function calculateAggregatedProgress(
     current_value: number;
     target: number;
     direction: OkrDirection;
+    unit?: string | null;
+    target_unit?: string | null;
   }>
 ): number {
   if (!krs || krs.length === 0) return 0;
@@ -303,7 +397,8 @@ export function calculateAggregatedProgress(
       Number(kr.baseline) || 0,
       Number(kr.current_value) || 0,
       Number(kr.target) || 0,
-      kr.direction || 'up'
+      kr.direction || 'up',
+      { unit: kr.unit }
     );
   }, 0);
   
@@ -317,12 +412,14 @@ export function calculateProgressFromNullable(
   baseline: number | string | null | undefined,
   current: number | string | null | undefined,
   target: number | string | null | undefined,
-  direction: string | null | undefined
+  direction: string | null | undefined,
+  context?: ProgressContext
 ): number {
   return calculateProgress(
     Number(baseline) || 0,
     Number(current) || 0,
     Number(target) || 0,
-    (direction as OkrDirection) || 'up'
+    (direction as OkrDirection) || 'up',
+    context
   );
 }
