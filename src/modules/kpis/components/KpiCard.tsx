@@ -295,9 +295,9 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
             </span>
           </div>
 
-          {kpi.team && (
+          {(kpi.effective_team ?? kpi.team) && (
             <span className="text-xs text-muted-foreground">
-              {kpi.team.name}
+              {(kpi.effective_team ?? kpi.team)!.name}
             </span>
           )}
         </div>
