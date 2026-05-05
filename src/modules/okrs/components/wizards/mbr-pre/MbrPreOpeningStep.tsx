@@ -460,36 +460,7 @@ export function MbrPreOpeningStep({
 
         {/* ─── 2. Comparativo vs mês anterior ─── */}
         {!showLoading && hasComparisonData && (
-          <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Comparativo vs mês anterior
-              </p>
-              {kpiDeltas.withoutComparison > 0 && (
-                <Badge variant="outline" className="text-[10px] font-normal">
-                  {kpiDeltas.withoutComparison} sem dado anterior
-                </Badge>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-              <div>
-                <p className="text-xs font-semibold text-status-green mb-1">Maiores avanços</p>
-                {kpiDeltas.ups.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">Nenhum KPI subiu este mês.</p>
-                ) : (
-                  kpiDeltas.ups.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="up" />)
-                )}
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-status-red mb-1">Maiores quedas</p>
-                {kpiDeltas.downs.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">Nenhum KPI caiu este mês.</p>
-                ) : (
-                  kpiDeltas.downs.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="down" />)
-                )}
-              </div>
-            </div>
-          </div>
+          <KpiMonthlyComparisonCard snapshots={monthlyKpiSnapshots} />
         )}
 
         {/* ─── 3. Análise IA ─── */}
