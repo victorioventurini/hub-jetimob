@@ -400,7 +400,7 @@ export function MbrTeamOkrsDetailStep({
                       <div className="pt-2 border-t border-primary/20 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <MessageSquare className="h-3.5 w-3.5 text-status-amber shrink-0" />
-                          <p className="text-xs font-medium">Justificativas de KPI ({justifEntries.length})</p>
+                          <p className="text-xs font-semibold">Justificativas de KPI ({justifEntries.length})</p>
                         </div>
                         {justifEntries.map(([id, txt]) => (
                           <p key={id} className="text-xs text-muted-foreground pl-5">
@@ -415,7 +415,7 @@ export function MbrTeamOkrsDetailStep({
                       <div className="pt-2 border-t border-primary/20 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <p className="text-xs font-medium">KPIs sem dados ({noDataEntries.length})</p>
+                          <p className="text-xs font-semibold">KPIs sem dados ({noDataEntries.length})</p>
                         </div>
                         {noDataEntries.map(([id, txt]) => (
                           <p key={id} className="text-xs text-muted-foreground pl-5">
@@ -430,7 +430,7 @@ export function MbrTeamOkrsDetailStep({
                       <div className="pt-2 border-t border-primary/20 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <RefreshCw className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <p className="text-xs font-medium">KPIs atualizados na sessão ({outdatedEntries.length})</p>
+                          <p className="text-xs font-semibold">KPIs atualizados na sessão ({outdatedEntries.length})</p>
                         </div>
                         {outdatedEntries.map(([id, upd]) => (
                           <p key={id} className="text-xs text-muted-foreground pl-5">
@@ -468,7 +468,7 @@ export function MbrTeamOkrsDetailStep({
                       <div className="pt-2 border-t border-primary/20 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <Lightbulb className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <p className="text-xs font-medium">KPIs sugeridos ({kpisToCreate.length})</p>
+                          <p className="text-xs font-semibold">KPIs sugeridos ({kpisToCreate.length})</p>
                         </div>
                         {kpisToCreate.map((k, i) => (
                           <p key={i} className="text-xs text-muted-foreground pl-5">
@@ -483,7 +483,7 @@ export function MbrTeamOkrsDetailStep({
                       <div className="pt-2 border-t border-primary/20 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <Compass className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <p className="text-xs font-medium">Sugestões de pauta ({agendaSuggestions.length})</p>
+                          <p className="text-xs font-semibold">Sugestões de pauta ({agendaSuggestions.length})</p>
                         </div>
                         {agendaSuggestions.slice(0, 5).map((s: any, i) => (
                           <p key={i} className="text-xs text-muted-foreground pl-5">
