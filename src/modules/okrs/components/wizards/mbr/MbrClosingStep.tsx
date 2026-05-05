@@ -61,6 +61,7 @@ export function MbrClosingStep({
   teamOkrSnapshots = [],
   orgOkrSnapshots = [],
   onComplete,
+  isCompleting = false,
   onBack,
 }: MbrClosingStepProps) {
   // ── Dynamic checklist conditions ──
