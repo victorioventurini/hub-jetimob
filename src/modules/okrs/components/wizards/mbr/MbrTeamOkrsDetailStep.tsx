@@ -452,12 +452,12 @@ export function MbrTeamOkrsDetailStep({
                         </div>
                         {projJustifEntries.map(([id, txt]) => (
                           <p key={`p-${id}`} className="text-xs text-muted-foreground pl-5">
-                            <span className="font-medium">Projeto:</span> {txt}
+                            <span className="font-medium">Projeto · {projectNameById.get(id) ?? '(removido)'}:</span> {txt}
                           </p>
                         ))}
                         {milestoneJustifEntries.map(([id, txt]) => (
                           <p key={`m-${id}`} className="text-xs text-muted-foreground pl-5">
-                            <span className="font-medium">Milestone:</span> {txt}
+                            <span className="font-medium">Marco · {milestoneNameById.get(id) ?? '(removido)'}:</span> {txt}
                           </p>
                         ))}
                       </div>
