@@ -64,6 +64,7 @@ import type {
   MbrOrgOkrSnapshot,
   MbrTeamOkrSnapshot,
   MbrPanoramaCuration,
+  MbrPanoramaAgendaItem,
 } from '@/modules/okrs/types/wizard';
 import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
