@@ -209,7 +209,7 @@ function MbrPanoramaCurationCardImpl({
           <Label className="text-xs uppercase text-muted-foreground flex items-center gap-1.5">
             <AlertTriangle className="h-3 w-3" /> Alertas por bloco
           </Label>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="space-y-3">
             {(['performance', 'projetos', 'pessoas'] as const).map((block) => (
               <div key={block} className="space-y-1">
                 <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -219,7 +219,7 @@ function MbrPanoramaCurationCardImpl({
                   value={curation.alertsByBlock[block].join('\n')}
                   onChange={(e) => handleAlertChange(block, e.target.value)}
                   placeholder={`Um alerta por linha…`}
-                  rows={3}
+                  rows={2}
                   className="text-sm"
                 />
               </div>
