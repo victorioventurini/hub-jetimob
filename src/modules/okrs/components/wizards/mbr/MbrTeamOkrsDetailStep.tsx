@@ -24,6 +24,7 @@ import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
 import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 // ============================================================
 // TYPES
@@ -519,7 +520,7 @@ export function MbrTeamOkrsDetailStep({
                 <div className="flex items-center gap-2 w-full min-w-0 max-w-full overflow-x-hidden">
                   <Target className="h-3.5 w-3.5 text-primary shrink-0" />
                   <p className="text-sm font-medium truncate flex-1 min-w-0">{objective.title}</p>
-                  <span className="text-xs font-medium shrink-0">{objective.progress}%</span>
+                  <span className="text-xs font-medium shrink-0">{formatPercent(objective.progress)}</span>
                 </div>
 
                 {objective.krsAtRisk > 0 && (

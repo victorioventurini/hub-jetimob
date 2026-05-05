@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import type { LinkedTeamObjective, TeamKrLinked } from '../../hooks/queries';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 interface LinkedTeamObjectivesSectionProps {
   teamObjectives: LinkedTeamObjective[];
@@ -63,7 +64,7 @@ function TeamObjectiveCard({ objective }: { objective: LinkedTeamObjective }) {
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Progresso</span>
                       <span className={cn("font-medium", progress > 100 && "text-status-green")}>
-                        {progress}%
+                        {formatPercent(progress)}
                         {progress > 100 && ' 🚀'}
                       </span>
                     </div>

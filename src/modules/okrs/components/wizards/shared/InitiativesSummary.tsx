@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 import { 
   Collapsible,
   CollapsibleContent,
@@ -265,11 +266,11 @@ export function InitiativesSummary({
                               <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                                 <div 
                                   className="h-full bg-primary rounded-full"
-                                  style={{ width: `${init.progress}%` }}
+                                  style={{ width: `${formatPercent(init.progress)}` }}
                                 />
                               </div>
                               <span className="text-xs text-muted-foreground shrink-0">
-                                {init.progress}%
+                                {formatPercent(init.progress)}
                               </span>
                             </div>
                           )}

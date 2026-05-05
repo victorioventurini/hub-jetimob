@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { InitiativeStatusBadge } from "./InitiativeStatusBadge";
 import { getInitiativePriorityLabel, getInitiativePriorityColor, type Initiative } from "../../types/initiative";
 import { UserLink } from "@/components/links";
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 interface InitiativeCardProps {
   initiative: Initiative;
@@ -92,7 +93,7 @@ export function InitiativeCard({ initiative, isDraft = false, onQuickUpdate, onE
               <div className="pt-1">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                   <span>Progresso</span>
-                  <span>{initiative.progress}%</span>
+                  <span>{formatPercent(initiative.progress)}</span>
                 </div>
                 <Progress value={initiative.progress} className="h-1" />
               </div>

@@ -24,6 +24,7 @@ import { VicInsightCard } from '../shared/VicInsightCard';
 import { WizardTooltipInline } from '../shared/WizardTooltips';
 import { AskToVicInline } from '@/modules/vic/components/AskToVic';
 import { useWizardAI, type WizardAiInsight } from '@/modules/okrs/hooks';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 // ============================================================
 // TYPES
@@ -214,7 +215,7 @@ export function TeamOkrContextStep({
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium">{obj.title}</p>
                       <Badge className={cn("shrink-0 text-xs", STATUS_COLORS[obj.status])}>
-                        {obj.progress}%
+                        {formatPercent(obj.progress)}
                       </Badge>
                     </div>
                     <Progress value={obj.progress} className="h-1.5" />

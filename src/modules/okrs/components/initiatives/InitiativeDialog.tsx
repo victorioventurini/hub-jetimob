@@ -21,6 +21,7 @@ import { InitiativeNameFeedback } from "./InitiativeNameFeedback";
 import { InitiativeCulturalMessage } from "./InitiativeCulturalMessage";
 import { CharCountFeedback } from "@/components/shared/CharCountFeedback";
 import { ENTITY_NAME_LIMITS } from "@/shared/constants/entityLimits";
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 interface KrContext {
   id: string;
@@ -408,7 +409,7 @@ export function InitiativeDialog({ open, onOpenChange, krId, krContext, initiati
 
           {isEditing && (
             <div className="space-y-2">
-              <Label>Progresso: {formData.progress}%</Label>
+              <Label>Progresso: {formatPercent(formData.progress)}</Label>
               <Slider
                 value={[formData.progress]}
                 onValueChange={([value]) => setFormData({ ...formData, progress: value })}

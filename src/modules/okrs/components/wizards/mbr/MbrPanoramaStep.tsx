@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AreaBadge } from '@/components/ui/area-badge';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 import {
   Collapsible,
   CollapsibleContent,
@@ -297,7 +298,7 @@ function OrgObjectiveCard({ objective, showTeamKrs }: { objective: OrgObjectiveW
               <div className="flex items-center gap-2">
                 <OkrStatusBadge status={kr.status} type="kr" className="shrink-0 text-[10px]" />
                 <span className="text-xs truncate flex-1">{kr.title}</span>
-                <span className="text-xs text-muted-foreground shrink-0">{kr.progress}%</span>
+                <span className="text-xs text-muted-foreground shrink-0">{formatPercent(kr.progress)}</span>
               </div>
               <OkrProgressBar
                 baseline={kr.baseline}
@@ -321,7 +322,7 @@ function OrgObjectiveCard({ objective, showTeamKrs }: { objective: OrgObjectiveW
                           <span>{teamStatus}</span>
                           <span className="font-medium truncate">{tkr.team_name}</span>
                           <span className="text-muted-foreground truncate flex-1">{tkr.title}</span>
-                          <span className="text-muted-foreground shrink-0">{tkr.progress}%</span>
+                          <span className="text-muted-foreground shrink-0">{formatPercent(tkr.progress)}</span>
                         </div>
                       );
                     })}

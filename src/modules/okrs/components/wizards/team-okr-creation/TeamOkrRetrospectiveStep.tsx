@@ -22,6 +22,7 @@ import { VicInsightCard } from '../shared/VicInsightCard';
 import { useWizardAI, type WizardAiInsight } from '@/modules/okrs/hooks';
 import type { PreviousCycleAnalysis } from '@/modules/okrs/hooks';
 import { RAG_STATUS_COLORS, TREND_COLORS } from '@/lib/colors';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 // ============================================================
 // TYPES
@@ -224,7 +225,7 @@ export function TeamOkrRetrospectiveStep({
                             obj.progress >= 40 && obj.progress < 70 && RAG_STATUS_COLORS.yellow.badge,
                             obj.progress < 40 && RAG_STATUS_COLORS.red.badge
                           )}>
-                            {obj.progress}%
+                            {formatPercent(obj.progress)}
                           </Badge>
                         </div>
                         <Progress value={obj.progress} className="h-1.5" />

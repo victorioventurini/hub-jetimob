@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUpdateInitiative } from "../../hooks";
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 import { 
   getInitiativeStatusLabel, 
   getInitiativePriorityLabel, 
@@ -214,7 +215,7 @@ export function InitiativeQuickUpdateDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Progresso</Label>
-              <span className="text-sm font-medium text-muted-foreground">{formData.progress}%</span>
+              <span className="text-sm font-medium text-muted-foreground">{formatPercent(formData.progress)}</span>
             </div>
             <Slider
               value={[formData.progress]}

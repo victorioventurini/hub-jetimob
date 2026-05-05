@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LastCheckinBadge } from '../shared/LastCheckinBadge';
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 import {
   Target,
   ArrowRight,
@@ -127,7 +128,7 @@ export function CLevelCompanyOkrsStep({
                   </div>
                   <div className="flex items-center gap-3">
                     <Progress value={okr.progress} className="flex-1" />
-                    <span className="text-sm font-medium">{okr.progress}%</span>
+                    <span className="text-sm font-medium">{formatPercent(okr.progress)}</span>
                   </div>
                 </CardContent>
               </Card>

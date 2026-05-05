@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -83,7 +84,7 @@ export function OrgObjectiveHealthCard({
                     </span>
                     <span>•</span>
                     <span className={cn("font-medium", getProgressColor(review.progress))}>
-                      {review.progress}% progresso
+                      {formatPercent(review.progress)} progresso
                     </span>
                   </div>
                 </div>
@@ -284,7 +285,7 @@ function KrHealthRow({ kr }: { kr: OrgKrHealthData }) {
         </div>
         <div className="text-right shrink-0">
           <Badge className={cn("text-xs", getStatusBadgeColor(kr.status))}>
-            {kr.progress}%
+            {formatPercent(kr.progress)}
           </Badge>
         </div>
       </div>
