@@ -538,40 +538,6 @@ export function MbrPanoramaStep({
             </div>
           )}
 
-          {/* ── Bloco 3: Agenda da reunião ── */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <ListChecks className="h-4 w-4 text-primary" />
-              Agenda da Reunião
-            </h4>
-            <div className="space-y-1">
-              {MBR_AGENDA.map((item, i) => {
-                const isCurrent = i === currentStepIndex;
-                const isDone = i < currentStepIndex;
-                return (
-                  <div
-                    key={i}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm',
-                      isCurrent && 'bg-primary/10 font-medium',
-                      isDone && 'text-muted-foreground',
-                    )}
-                  >
-                    <span className={cn(
-                      'w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0',
-                      isCurrent ? 'bg-primary text-primary-foreground' : isDone ? 'bg-muted' : 'bg-muted/50',
-                    )}>
-                      {isDone ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
-                    </span>
-                    <span className="flex-1">{item.title}</span>
-                    <span className="text-xs text-muted-foreground">{item.subtitle}</span>
-                    {isCurrent && <span className="text-xs text-primary">← atual</span>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
         </div>
       </div>
 
