@@ -687,6 +687,12 @@ export const KpiGateStep = memo(function KpiGateStep({
               stepId={stepId}
               decisions={decisions}
               onDecisionsChange={onDecisionsChange}
+              subStep={isPaginated && currentEntry ? currentEntry.kpi.id : undefined}
+              metadataFactory={
+                isPaginated && currentEntry
+                  ? () => ({ kpi_id: currentEntry.kpi.id })
+                  : undefined
+              }
             />
           )}
         </>

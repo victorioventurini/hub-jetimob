@@ -16,6 +16,10 @@ export interface InlineDecisionsSlotProps {
   decisions: TeamCheckinDecision[];
   onDecisionsChange: (next: TeamCheckinDecision[]) => void;
   placeholder?: string;
+  /** Sub-step opcional para isolar notas em steps com paginação interna. */
+  subStep?: string | null;
+  /** Metadata extra a ser injetado em novas decisões. */
+  metadataFactory?: () => Record<string, unknown> | undefined;
 }
 
 export function InlineDecisionsSlot({
@@ -23,6 +27,8 @@ export function InlineDecisionsSlot({
   decisions,
   onDecisionsChange,
   placeholder,
+  subStep,
+  metadataFactory,
 }: InlineDecisionsSlotProps) {
   return (
     <div className="border-t bg-card/50 backdrop-blur-sm">
@@ -31,6 +37,8 @@ export function InlineDecisionsSlot({
         onDecisionsChange={onDecisionsChange}
         sourceStep={stepId}
         placeholder={placeholder}
+        subStep={subStep}
+        metadataFactory={metadataFactory}
       />
     </div>
   );
