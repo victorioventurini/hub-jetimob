@@ -26,6 +26,7 @@ import {
   WizardStepFooter,
   InlineDecisionInput,
   KpiMonthlyComparisonCard,
+  SummaryKpiList,
 } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
@@ -252,12 +253,14 @@ export function MbrKpiGateStep({
                     </div>
                     <div className="space-y-3">
                       {overviewGroups.orgGroups.map((g) => (
-                        <KpiMonthlyComparisonCard
-                          key={`org-${g.key}`}
-                          snapshots={g.items}
-                          title={`${g.areaLabel} · ${g.teamLabel}`}
-                          emptyMessage="Sem dados comparáveis no período."
-                        />
+                        <div key={`org-${g.key}`} className="space-y-2">
+                          <KpiMonthlyComparisonCard
+                            snapshots={g.items}
+                            title={`${g.areaLabel} · ${g.teamLabel}`}
+                            emptyMessage="Sem dados comparáveis no período."
+                          />
+                          <SummaryKpiList kpis={g.items} title="Todos os KPIs" initialVisible={g.items.length} />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -275,12 +278,14 @@ export function MbrKpiGateStep({
                     </div>
                     <div className="space-y-3">
                       {overviewGroups.areaGroups.map((g) => (
-                        <KpiMonthlyComparisonCard
-                          key={`area-${g.teamLabel}`}
-                          snapshots={g.items}
-                          title={g.teamLabel}
-                          emptyMessage="Sem dados comparáveis no período."
-                        />
+                        <div key={`area-${g.teamLabel}`} className="space-y-2">
+                          <KpiMonthlyComparisonCard
+                            snapshots={g.items}
+                            title={g.teamLabel}
+                            emptyMessage="Sem dados comparáveis no período."
+                          />
+                          <SummaryKpiList kpis={g.items} title="Todos os KPIs" initialVisible={g.items.length} />
+                        </div>
                       ))}
                     </div>
                   </div>
