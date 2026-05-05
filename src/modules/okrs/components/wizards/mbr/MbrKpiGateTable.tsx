@@ -83,7 +83,10 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
         </TableHeader>
         <TableBody>
           {snapshots.map((s) => {
-            const ragKey = (s.ragStatus === 'no_data' ? 'no_data' : s.ragStatus) as KpiRagStatus;
+            const ragKey: KpiRagStatus =
+              s.ragStatus === 'green' ? 'on_track' :
+              s.ragStatus === 'yellow' ? 'at_risk' :
+              s.ragStatus === 'red' ? 'off_track' : 'no_data';
             const ragConfig = RAG_STATUS_CONFIG[ragKey];
             const variation = computeVariation(s.currentValue, s.previousValue);
             const trend: 'up' | 'down' | 'flat' = variation == null
