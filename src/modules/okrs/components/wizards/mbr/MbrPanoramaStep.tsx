@@ -199,7 +199,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
                 return (
                   <div className="text-right space-y-1">
                     <div className="flex items-center gap-1 justify-end">
-                      <TrendIcon value={vsLast} />
+                      <TrendIcon value={vsLast} direction={kpi.direction} />
                       <span className="text-xs">{formatVariation(vsLast)} vs mês ant.</span>
                     </div>
                     <div className="flex items-center gap-1 justify-end">
