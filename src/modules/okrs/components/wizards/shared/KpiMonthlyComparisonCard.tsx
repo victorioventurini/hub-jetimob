@@ -83,6 +83,7 @@ export function computeKpiDeltas(
       unit: k.unit,
       current: k.currentValue,
       previous: k.previousValue,
+      target: k.target ?? null,
       deltaPct: rawDelta != null ? Math.round(rawDelta * 10) / 10 : null,
       orientedDeltaPct: oriented != null ? Math.round(oriented * 10) / 10 : null,
       ragStatus: k.ragStatus,
