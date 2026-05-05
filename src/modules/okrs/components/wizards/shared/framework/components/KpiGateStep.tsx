@@ -211,6 +211,8 @@ interface RichKpiCardProps {
   splitNoDataReason?: boolean;
   noDataReason?: string;
   onNoDataReasonChange?: (kpiId: string, value: string) => void;
+  /** v3.33.0 — desabilita os textareas (modo leitura). */
+  readOnly?: boolean;
 }
 
 const RichKpiCard = memo(function RichKpiCard({
@@ -221,6 +223,7 @@ const RichKpiCard = memo(function RichKpiCard({
   splitNoDataReason,
   noDataReason,
   onNoDataReasonChange,
+  readOnly,
 }: RichKpiCardProps) {
   const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
