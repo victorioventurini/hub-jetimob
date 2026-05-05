@@ -37,7 +37,7 @@ export interface KpiEvolutionItem {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
   owner?: {
     id: string;
     display_name: string;
@@ -46,7 +46,27 @@ export interface KpiEvolutionItem {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  /** v3.33.0 — `area ?? responsible_area`. SSOT exibição. */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `team ?? responsible_team`. SSOT exibição. */
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface KpiEvolutionAggregates {
