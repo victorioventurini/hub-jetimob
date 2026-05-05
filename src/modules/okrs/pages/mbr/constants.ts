@@ -25,7 +25,6 @@ export const STEP_ORDER: MbrStep[] = [
   'team-okrs-detail',
   'org-okrs',
   'decisions',
-  'qbr-followup',
   'evaluation',
   'closing',
 ];
