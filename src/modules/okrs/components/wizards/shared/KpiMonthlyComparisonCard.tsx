@@ -103,7 +103,7 @@ export function computeKpiDeltas(
 
   const noData: KpiNoData[] = kpis
     .filter((k) => k.currentValue == null)
-    .map((k) => ({ kpiId: k.kpiId, name: k.name, unit: k.unit }));
+    .map((k) => ({ kpiId: k.kpiId, name: k.name, unit: k.unit, target: k.target ?? null }));
 
   return {
     ups,
