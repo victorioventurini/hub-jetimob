@@ -160,13 +160,36 @@ export function MbrKpiDeepDiveStep({
       decisions={decisions}
       onDecisionsChange={onDecisionsChange}
       
-      extraContentForCurrentKpi={(kpi) => (
-        <KpiLeaderInsightsPanel
-          kpiId={kpi.id}
-          entriesByTeam={insightsByKpi.get(kpi.id) ?? []}
-          referenceMonth={formatMonthLabel(referenceMonth)}
-        />
-      )}
+      extraContentForCurrentKpi={(kpi) => {
+        const snap = offTargetSnapshots.find((s) => s.kpiId === kpi.id);
+        const tableSnap: MbrMonthlyKpiSnapshot | null = snap
+          ? {
+              ...snap,
+              areaId: snap.areaId ?? null,
+              areaName: snap.areaName ?? null,
+              areaColor: snap.areaColor ?? null,
+              teamName: snap.teamName ?? null,
+              indicatorType: null,
+              owner: null,
+            }
+          : null;
+        return (
+          <>
+            {tableSnap && (
+              <MbrKpiGateTable
+                snapshots={[tableSnap]}
+                monthLabel={formatMonthLabel(referenceMonth)}
+                previousMonthLabel={formatMonthLabel(previousMonthOf(referenceMonth))}
+              />
+            )}
+            <KpiLeaderInsightsPanel
+              kpiId={kpi.id}
+              entriesByTeam={insightsByKpi.get(kpi.id) ?? []}
+              referenceMonth={formatMonthLabel(referenceMonth)}
+            />
+          </>
+        );
+      }}
       footer={
         <WizardStepFooter
           showBack
