@@ -201,8 +201,8 @@ function KpiExpandedChart({ kpi }: { kpi: KpiEvolutionItem }) {
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="secondary">{INDICATOR_TYPE_LABELS[kpi.indicator_type]}</Badge>
               <Badge variant="outline" className={ragConfig.color}>{ragConfig.label}</Badge>
-              {kpi.area && (
-                <AreaBadge area={kpi.area} />
+              {((kpi as any).effective_area ?? kpi.area) && (
+                <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
               )}
             </div>
           </div>
