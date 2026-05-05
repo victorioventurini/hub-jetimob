@@ -538,6 +538,7 @@ export const KpiGateStep = memo(function KpiGateStep({
   onNoDataReasonChange,
   readOnlyJustification,
   extraContentForCurrentKpi,
+}: KpiGateStepProps) {
   const splitNoDataReason = !!config.splitNoDataReason;
   const label = getStepLabel(persona, stepId, version);
   const variant: 'compact' | 'rich' | 'rich-paginated' = config.cardVariant ?? 'compact';
