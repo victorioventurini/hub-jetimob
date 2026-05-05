@@ -44,8 +44,7 @@ export function useCompanyOkrs(year?: number) {
         .select(`
           id,
           title,
-          status,
-          unit
+          status
         `)
         .eq('bu_id', buId)
         .eq('year', currentYear)
