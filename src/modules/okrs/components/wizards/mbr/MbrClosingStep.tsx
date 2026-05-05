@@ -46,6 +46,7 @@ export interface MbrClosingStepProps {
   /** @deprecated avaliação foi removida deste step. */
   hideFeedbackBlock?: boolean;
   onComplete: () => void;
+  isCompleting?: boolean;
   onBack: () => void;
 }
 
@@ -60,6 +61,7 @@ export function MbrClosingStep({
   teamOkrSnapshots = [],
   orgOkrSnapshots = [],
   onComplete,
+  isCompleting = false,
   onBack,
 }: MbrClosingStepProps) {
   // ── Dynamic checklist conditions ──
@@ -236,7 +238,8 @@ export function MbrClosingStep({
       <WizardLastStepFooter
         onBack={onBack}
         onPrimary={onComplete}
-        primaryDisabled={!canComplete}
+        primaryDisabled={!canComplete || isCompleting}
+        primaryLoading={isCompleting}
       />
       {!canComplete && (
         <p className="text-xs text-muted-foreground text-center pb-2">

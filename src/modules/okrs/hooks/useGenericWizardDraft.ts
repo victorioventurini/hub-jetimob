@@ -239,10 +239,33 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     }
     isCompletingRef.current = true;
 
+    // Persist localStorage with the very latest draft as a safety net
+    // BEFORE we attempt the completion UPDATE. If the UPDATE fails we keep
+    // both localStorage AND React state intact so the user can retry.
+    persistToStorageNow(draft);
+
+    let resultId: string | null = null;
+    try {
+      // Flush any pending in-flight save: re-issue an explicit save with the
+      // current React draft so an in_progress row is up-to-date before we mark
+      // it completed. This protects against a failed completion leaving stale
+      // server state.
+      const ensuredId = await saveSession(sessionId, draft);
+      if (ensuredId && ensuredId !== sessionId) {
+        setSessionId(ensuredId);
+      }
+
+      resultId = await completeSession(ensuredId ?? sessionId, draft);
+    } catch (error) {
+      // Roll back the completion guard so the user can retry. Do NOT clear
+      // localStorage or reset React state — data must remain recoverable.
+      isCompletingRef.current = false;
+      console.warn('[useGenericWizardDraft] clearDraft failed; preserving draft', error);
+      throw error;
+    }
+
+    // Success path: now safe to clear local state.
     clearDraftFromStorage(storageKey);
-
-    const resultId = await completeSession(sessionId, draft);
-
     setDraft(createEmptyDraft());
     setSessionId(null);
     setLastSavedAt(null);
@@ -253,9 +276,9 @@ export function useGenericWizardDraft<TStep extends string, TData>({
     url.searchParams.delete('step');
     window.history.replaceState(window.history.state, '', url.toString());
 
-    // Note: do NOT reset isCompletingRef — once completed, prevent any further calls
+    // Note: do NOT reset isCompletingRef on success — prevent any further calls
     return resultId;
-  }, [storageKey, sessionId, completeSession, draft, createEmptyDraft]);
+  }, [storageKey, sessionId, completeSession, saveSession, draft, createEmptyDraft, persistToStorageNow]);
 
   // Reopen completed session
   const reopenSession = useCallback(

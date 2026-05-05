@@ -213,27 +213,42 @@ export function useWizardSessionStorage<TStep extends string, TData>({
       const completionDateIso = new Date().toISOString();
 
       if (sessionId) {
-        try {
-          // CRÍTICO: gravar `reflection_data` no momento de concluir.
-          // Sem isso, qualquer edit feito após o último auto-save (debounced)
-          // — tipicamente no step Resumo — fica perdido. O draft passado é
-          // sempre o estado React mais recente do wizard.
-          const reflectionData = JSON.parse(
-            JSON.stringify({ ...draft, updatedAt: completionDateIso }),
-          );
-          await buSupabase
-            .from('okr_wizard_sessions')
-            .update({
-              status: 'completed',
-              completed_at: completionDateIso,
-              reflection_data: reflectionData,
-              team_id: draft.teamId,
-              cycle_id: draft.cycleId,
-              updated_at: completionDateIso,
-            })
-            .eq('id', sessionId);
+        // CRÍTICO: gravar `reflection_data` no momento de concluir.
+        // Sem isso, qualquer edit feito após o último auto-save (debounced)
+        // — tipicamente no step Resumo — fica perdido. O draft passado é
+        // sempre o estado React mais recente do wizard.
+        const reflectionData = JSON.parse(
+          JSON.stringify({ ...draft, updatedAt: completionDateIso }),
+        );
+        const { data: updated, error } = await buSupabase
+          .from('okr_wizard_sessions')
+          .update({
+            status: 'completed',
+            completed_at: completionDateIso,
+            reflection_data: reflectionData,
+            team_id: draft.teamId,
+            cycle_id: draft.cycleId,
+            updated_at: completionDateIso,
+          })
+          .eq('id', sessionId)
+          .select('id')
+          .maybeSingle();
 
-          if (currentBu?.id) {
+        if (error) {
+          console.error('[completeSession] Failed to complete wizard session:', error);
+          throw error;
+        }
+        if (!updated) {
+          const notFound = new Error(
+            `[completeSession] Session ${sessionId} not found or not updatable (RLS?)`,
+          );
+          console.error(notFound.message);
+          throw notFound;
+        }
+
+        // Best-effort: occurrence association is non-critical
+        if (currentBu?.id) {
+          try {
             await associateCompletedSessionToOccurrence({
               supabase: buSupabase,
               sessionId,
@@ -242,41 +257,42 @@ export function useWizardSessionStorage<TStep extends string, TData>({
               teamId,
               completionDateIso,
             });
+          } catch (e) {
+            console.warn('[completeSession] occurrence association failed (non-blocking):', e);
           }
-          return sessionId;
-        } catch (e) {
-          console.error('Failed to complete wizard session:', e);
-          return sessionId;
         }
+        return sessionId;
       }
 
-      if (!profile?.id || !currentBu?.id) return null;
+      if (!profile?.id || !currentBu?.id) {
+        throw new Error('[completeSession] Missing profile or BU context');
+      }
+
+      const reflectionData = JSON.parse(JSON.stringify(draft));
+      const { data: inserted, error } = await buSupabase
+        .from('okr_wizard_sessions')
+        .insert([
+          {
+            bu_id: currentBu.id,
+            wizard_type: wizardType,
+            team_id: teamId,
+            cycle_id: cycleId,
+            started_by: profile.id,
+            status: 'completed' as const,
+            completed_at: completionDateIso,
+            reflection_data: reflectionData,
+            structure_version: getCurrentStructureVersion(wizardType),
+          },
+        ])
+        .select('id')
+        .single();
+
+      if (error || !inserted) {
+        console.error('[completeSession] Failed to create completed wizard session:', error);
+        throw error ?? new Error('[completeSession] Insert returned no row');
+      }
 
       try {
-        const reflectionData = JSON.parse(JSON.stringify(draft));
-        const { data: inserted, error } = await buSupabase
-          .from('okr_wizard_sessions')
-          .insert([
-            {
-              bu_id: currentBu.id,
-              wizard_type: wizardType,
-              team_id: teamId,
-              cycle_id: cycleId,
-              started_by: profile.id,
-              status: 'completed' as const,
-              completed_at: completionDateIso,
-              reflection_data: reflectionData,
-              structure_version: getCurrentStructureVersion(wizardType),
-            },
-          ])
-          .select('id')
-          .single();
-
-        if (error) {
-          console.error('Failed to create completed wizard session:', error);
-          return null;
-        }
-
         await associateCompletedSessionToOccurrence({
           supabase: buSupabase,
           sessionId: inserted.id,
@@ -285,12 +301,11 @@ export function useWizardSessionStorage<TStep extends string, TData>({
           teamId,
           completionDateIso,
         });
-
-        return inserted.id;
       } catch (e) {
-        console.error('Failed to create completed wizard session:', e);
-        return null;
+        console.warn('[completeSession] occurrence association failed (non-blocking):', e);
       }
+
+      return inserted.id;
     },
     [buSupabase, currentBu?.id, profile?.id, wizardType, teamId, cycleId],
   );
