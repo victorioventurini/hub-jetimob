@@ -1,48 +1,76 @@
-## Correção
+## Causa-raiz
 
-Você está certo: **MBR v2 foi descontinuado** e `MbrV2Page` não existe mais no código (só `MbrPage` e `MbrPrePage`). A menção em `docs/audits/PERFORMANCE_PLAN_2026-05-04.md` (linha 36) é resíduo desatualizado — foi por isso que sugeri esse arquivo como "próximo alvo" no fim da última resposta. Erro meu.
+O log da Edge `mbr-curate-opening` mostra:
+
+```
+LLM API error: 400 — Unsupported parameter: 'max_tokens' is not supported with this model.
+Use 'max_completion_tokens' instead.
+```
+
+Os modelos OpenAI da família **GPT-5** rejeitam `max_tokens` e exigem `max_completion_tokens`. Hoje o `_shared/llm-client.ts` envia sempre `max_tokens` no payload (linhas 324 e 420), tanto em `llmComplete` quanto em `llmStream`. Como o agente `curador-orquestrador` (usado por MBR/Weekly e outros ritos) está configurado com um modelo GPT-5, toda chamada falha com 400 → o frontend cai no fallback "modo manual" e exibe o toast.
+
+Impacto: afeta **qualquer Edge Function** que use `llmComplete`/`llmStream` com modelos `openai/gpt-5*`. Hoje sabemos que `mbr-curate-opening` quebra; provavelmente `weekly-curate-opening` e outros também (mesmo agente).
 
 ## Plano
 
-### 1. Limpar a doc
+### 1. Corrigir `_shared/llm-client.ts` (SSOT do payload)
+Detectar o modelo no momento de montar o payload e usar a chave correta:
 
-- Remover a referência a `MbrV2Page (1060)` da linha 36 do `PERFORMANCE_PLAN_2026-05-04.md`. Como `CreateKpiDialog` já foi refatorado, o bullet inteiro vira:
-  > 🟢 ~~Quebrar `MbrV2Page` e `CreateKpiDialog`~~ — concluído em W2.F (`CreateKpiDialog`); MBR v2 descontinuado.
+- Se `config.model` começar com `openai/gpt-5` → enviar `max_completion_tokens`.
+- Caso contrário (Gemini, modelos OpenAI antigos) → manter `max_tokens`.
 
-### 2. Atualizar o backlog real de W2.F.2 (páginas > 700 LoC)
+Aplicar nos dois pontos:
+- `llmComplete` (payload sync, ~linha 321-326).
+- `llmStream` (payload streaming, ~linha 417-423).
 
-Baseline novo (varredura agora):
+Extrair um helper privado `buildTokenLimitField(model, maxTokens)` que devolve o objeto `{ max_tokens }` ou `{ max_completion_tokens }` para evitar duplicação.
 
-```text
-887  ExecutiveQuarterReviewPage.tsx
-886  SettingsUiCatalog.tsx
-879  CreateTicketPage.tsx
-852  JetimoberDialog.tsx
-849  CollaboratorSummary.tsx          (wizard step)
-793  CollaboratorCheckinPage.tsx
-789  UserProfile/index.tsx
-785  QbrKpiAnalysisStep.tsx           (wizard step)
-760  Profile.tsx
-727  QbrMeetingOkrReviewStep.tsx      (wizard step)
-719  InternalRoutingRuleDialog.tsx
-710  QbrPrePage.tsx
+### 2. Validar via teste real
+
+- Após o deploy automático, chamar `mbr-curate-opening` via `curl_edge_functions` e confirmar 200 + curadoria gerada.
+- Conferir logs para ausência do erro `unsupported_parameter`.
+
+### 3. Registrar memória
+
+Salvar `mem://standards/ai/openai-gpt5-token-param` documentando que GPT-5 exige `max_completion_tokens` e que o helper em `llm-client.ts` é o ponto canônico (atualizar índice).
+
+### 4. Atualizar `docs/audits/PERFORMANCE_PLAN_2026-05-04.md`
+
+Adicionar nota de bugfix (não é otimização, mas é débito recente da Wave 1.B).
+
+## Fora de escopo
+
+- Não trocar o modelo do agente `curador-orquestrador`.
+- Não alterar a lógica de fallback no frontend (continua válido como rede de proteção).
+- Não auditar todos os modelos cadastrados — o helper cobre o universo OpenAI GPT-5 conhecido hoje; se surgir outra família com a mesma exigência, basta estender a função.
+
+## Detalhes técnicos
+
+```ts
+function buildTokenLimitField(model: string, maxTokens: number) {
+  // OpenAI GPT-5 family rejects max_tokens; requires max_completion_tokens.
+  if (/^openai\/gpt-5/i.test(model)) {
+    return { max_completion_tokens: maxTokens };
+  }
+  return { max_tokens: maxTokens };
+}
+
+// llmComplete
+const payload: Record<string, unknown> = {
+  model: config.model,
+  messages,
+  ...buildTokenLimitField(config.model, maxTokens),
+  temperature,
+};
+
+// llmStream
+const payload = {
+  model: config.model,
+  messages,
+  ...buildTokenLimitField(config.model, options?.maxTokens ?? config.maxTokens),
+  temperature: options?.temperature ?? config.temperature,
+  stream: true,
+};
 ```
 
-Sem mais nada > 1000 LoC. Sugestão de ordem (alto impacto / baixo risco primeiro):
-
-1. **`ExecutiveQuarterReviewPage` (887)** — página de leitura, baixo risco de regressão.
-2. **`CreateTicketPage` (879)** — formulário tipo `CreateKpiDialog`, mesmo padrão que acabei de aplicar.
-3. **`CollaboratorSummary` (849, wizard step)** — reaproveita módulos já criados em `mbr/`.
-4. Demais entram em ondas seguintes.
-
-### 3. Não tocar
-
-- Refatoração de wizards do QBR (`QbrKpiAnalysisStep`, `QbrMeetingOkrReviewStep`) fica para depois — risco maior, lógica de seeding/draft.
-- `SettingsUiCatalog` é catálogo de showcase — LoC alto é natural; pular.
-
-## Decisão pendente
-
-Qual primeiro?
-- **A.** Limpar a doc + começar por `ExecutiveQuarterReviewPage` (mais seguro).
-- **B.** Limpar a doc + começar por `CreateTicketPage` (mesmo padrão recém-aplicado).
-- **C.** Apenas limpar a doc agora e parar W2.F aqui.
+Mudança mínima, cirúrgica, sem efeito colateral em chamadas Gemini ou OpenAI antigos.
