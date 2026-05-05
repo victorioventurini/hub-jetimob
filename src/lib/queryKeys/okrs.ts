@@ -526,6 +526,12 @@ export const mbrKeys = {
    */
   preSubmissions: (buId: string | null, referenceMonth: string) =>
     ['mbr-pre', 'submissions-by-team', buId, referenceMonth] as const,
+  /** Snapshot mensal de KPIs por escopo (org/área) — overview do MBR Executivo. */
+  monthlyKpisByScope: (
+    buId: string | null,
+    referenceMonth: string,
+    scopesKey: string,
+  ) => ['mbr', 'monthly-kpis-by-scope', buId, referenceMonth, scopesKey] as const,
 } as const;
 
 /** Pre-Weekly wizard keys */
