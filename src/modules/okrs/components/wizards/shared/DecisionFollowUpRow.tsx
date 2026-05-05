@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, Clock, Lightbulb, Target, CheckCircle2, Send } from 'lucide-react';
+import { User, Clock, Lightbulb, Target, CheckCircle2, Send, Pencil, CalendarIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,8 +23,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { BuUserSelect } from '@/components/selects';
 import { cn } from '@/lib/utils';
 import { useIdentity } from '@/hooks/useIdentity';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useCanResolveDecision } from '@/modules/okrs/hooks';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import type { TeamCheckinDecision, DecisionThreadMessage } from '@/modules/okrs/types/wizard';
