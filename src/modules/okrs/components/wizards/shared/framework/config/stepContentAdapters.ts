@@ -48,6 +48,11 @@ export interface KpiGateItem {
   latestReferenceDate?: string | null;
   /** Escopo do KPI ('global'/'area'/'team'/'individual') */
   scope?: string | null;
+  /** v3.35.0 — Área efetiva (estrutural com fallback operacional) para AreaBadge. */
+  areaName?: string | null;
+  areaColor?: string | null;
+  /** v3.35.0 — Time responsável (operacional) para badge de time. */
+  teamName?: string | null;
 }
 
 /**
