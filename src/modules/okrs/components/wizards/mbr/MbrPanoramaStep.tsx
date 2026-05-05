@@ -83,6 +83,8 @@ export interface MbrPanoramaStepProps {
   onGenerateCurationDraft?: () => void | Promise<void>;
   isGeneratingCuration?: boolean;
   onAddSuggestedDecision?: (title: string, category?: string) => void;
+  /** Mapa teamId → nome (para badges em itens de pauta vindos de Pré-MBR). */
+  teamNamesById?: Record<string, string>;
 }
 
 interface KpiGroup {
