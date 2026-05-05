@@ -123,6 +123,9 @@ export function formatValueWithUnit(
     return `${unit} ${numStr}`;
   }
 
+  // Sufixo curto para indicadores em pontos (NPS, eNPS, Score, Índice)
+  if (unit === 'Pontos') return `${numStr} pts`;
+
   return `${numStr} ${unit}`;
 }
 
