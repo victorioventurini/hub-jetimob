@@ -560,6 +560,7 @@ export default function QbrMeetingPage() {
           <EvaluationCollectionStep
             sessionId={sessionId ?? null}
             persona="qbr-meeting"
+            ensureSession={saveDraft}
             footer={
               <WizardStepFooter
                 onPrimary={goNext}

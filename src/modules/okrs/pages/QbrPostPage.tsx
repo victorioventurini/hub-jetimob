@@ -363,6 +363,7 @@ export default function QbrPostPage() {
           <EvaluationCollectionStep
             sessionId={sessionId ?? null}
             persona="qbr-post"
+            ensureSession={saveDraft}
             footer={
               <WizardStepFooter
                 onPrimary={goNext}

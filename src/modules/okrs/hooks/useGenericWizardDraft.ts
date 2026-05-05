@@ -195,12 +195,13 @@ export function useGenericWizardDraft<TStep extends string, TData>({
   );
 
   // Save draft explicitly (localStorage + DB)
-  const saveDraft = useCallback(async () => {
+  const saveDraft = useCallback(async (): Promise<string | null> => {
     persistToStorageNow(draft);
     const newSessionId = await saveSession(sessionId, draft);
     setSessionId(newSessionId);
     setLastSavedAt(new Date().toISOString());
     setIsDirty(false);
+    return newSessionId;
   }, [saveSession, sessionId, draft, persistToStorageNow]);
 
   // Discard draft and start fresh

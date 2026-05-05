@@ -547,6 +547,7 @@ export default function MbrPage() {
           <EvaluationCollectionStep
             sessionId={sessionId ?? null}
             persona="mbr"
+            ensureSession={saveDraft}
             footer={
               <WizardStepFooter
                 onPrimary={goNext}
