@@ -110,15 +110,19 @@ export function formatValueWithUnit(
     return '—';
   }
 
-  const numStr = value.toLocaleString('pt-BR');
-  
+  // Canônico: máximo 2 casas decimais (sem zeros à direita desnecessários)
+  const numStr = value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+
   // Units that come before the number
   const prefixUnits = ['R$', 'R$ mil', 'R$ milhão'];
-  
+
   if (prefixUnits.includes(unit) && showPrefix) {
     return `${unit} ${numStr}`;
   }
-  
+
   return `${numStr} ${unit}`;
 }
 
