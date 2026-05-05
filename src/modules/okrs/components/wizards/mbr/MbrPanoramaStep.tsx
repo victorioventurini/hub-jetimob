@@ -571,46 +571,6 @@ export function MbrPanoramaStep({
             </div>
           </div>
 
-          {/* ── KPIs (conteúdo existente, reposicionado) ── */}
-          {atRiskCount > 0 && (
-            <div className="flex items-center gap-2 text-sm p-3 rounded-lg bg-status-amber/5 border border-status-amber/20">
-              <AlertTriangle className="h-4 w-4 text-status-amber" />
-              <span className="font-medium">{atRiskCount} KPI{atRiskCount !== 1 ? 's' : ''} em atenção</span>
-            </div>
-          )}
-
-          {/* KPIs desatualizados e pendentes */}
-          <KpiStatusBlocks kpiSnapshots={kpiSnapshots} />
-
-          {kpiSnapshots.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum KPI organizacional carregado. Os snapshots serão preenchidos conforme a integração.
-            </p>
-          ) : (
-            <Accordion type="multiple" defaultValue={accordionDefaults} className="space-y-1">
-              <ScopeSection
-                icon={Building2}
-                title={buName ? `KPIs Globais da ${buName}` : 'KPIs Globais da BU'}
-                count={orgKpis.length}
-                groups={orgGroupForSection}
-                accordionValue="scope-org"
-              />
-              <ScopeSection
-                icon={Layers}
-                title="KPIs por Área"
-                count={areaGroups.reduce((s, g) => s + g.kpis.length, 0)}
-                groups={areaGroups}
-                accordionValue="scope-area"
-              />
-              <ScopeSection
-                icon={Users}
-                title="KPIs por Time"
-                count={teamGroups.reduce((s, g) => s + g.kpis.length, 0)}
-                groups={teamGroups}
-                accordionValue="scope-team"
-              />
-            </Accordion>
-          )}
         </div>
       </div>
 
