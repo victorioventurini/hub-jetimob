@@ -155,13 +155,13 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
             last_checkin_at: kr.last_checkin_at,
             owner_user_id: kr.owner_user_id,
             owner_name: null,
-            progress: calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction),
+            progress: calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction, kr.unit),
           })),
       }));
 
       // Build the response
       const orgKrsWithTeamKrs: OrgKrWithTeamKrs[] = (orgKrs || []).map(orgKr => {
-        const progress = calculateProgress(orgKr.baseline, orgKr.current_value, orgKr.target, orgKr.direction);
+        const progress = calculateProgress(orgKr.baseline, orgKr.current_value, orgKr.target, orgKr.direction, orgKr.unit);
         const linkedTeamKrs: TeamKrLinked[] = teamKrsData
           .filter(tkr => tkr.linked_org_kr_id === orgKr.id)
           .map(tkr => ({
@@ -181,7 +181,7 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
             last_checkin_at: tkr.last_checkin_at,
             owner_user_id: tkr.owner_user_id,
             owner_name: tkr.owner?.display_name || null,
-            progress: calculateProgress(tkr.baseline, tkr.current_value, tkr.target, tkr.direction),
+            progress: calculateProgress(tkr.baseline, tkr.current_value, tkr.target, tkr.direction, tkr.unit),
           }));
 
         return {
@@ -303,7 +303,7 @@ export function useAllOrgObjectivesView(year?: number, cycleId?: string | null) 
         const objectiveOrgKrs = allOrgKrs?.filter(kr => kr.org_objective_id === objective.id) || [];
         
         const orgKrsWithTeamKrs: OrgKrWithTeamKrs[] = objectiveOrgKrs.map(orgKr => {
-          const progress = calculateProgress(orgKr.baseline, orgKr.current_value, orgKr.target, orgKr.direction);
+          const progress = calculateProgress(orgKr.baseline, orgKr.current_value, orgKr.target, orgKr.direction, orgKr.unit);
           const linkedTeamKrs: TeamKrLinked[] = teamKrsData
             .filter(tkr => tkr.linked_org_kr_id === orgKr.id)
             .map(tkr => ({
@@ -323,7 +323,7 @@ export function useAllOrgObjectivesView(year?: number, cycleId?: string | null) 
               last_checkin_at: tkr.last_checkin_at,
               owner_user_id: tkr.owner_user_id,
               owner_name: tkr.owner?.display_name || null,
-              progress: calculateProgress(tkr.baseline, tkr.current_value, tkr.target, tkr.direction),
+              progress: calculateProgress(tkr.baseline, tkr.current_value, tkr.target, tkr.direction, tkr.unit),
             }));
 
           return {

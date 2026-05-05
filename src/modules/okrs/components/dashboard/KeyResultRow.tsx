@@ -132,7 +132,8 @@ export const KeyResultRow = React.memo(function KeyResultRow({
     Number(kr.baseline) || 0,
     effectiveCurrent,
     effectiveTarget,
-    kr.direction || 'up'
+    kr.direction || 'up',
+    { unit: effectiveUnit }
   );
 
   const calculatedStatus = mapRagToCalculated(effectiveStatus);

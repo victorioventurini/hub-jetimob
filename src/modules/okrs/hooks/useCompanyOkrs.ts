@@ -70,7 +70,8 @@ export function useCompanyOkrs(year?: number) {
           current_value,
           target,
           direction,
-          status
+          status,
+          unit
         `)
         .in('org_objective_id', objectiveIds)
         .is('deleted_at', null)
@@ -92,7 +93,7 @@ export function useCompanyOkrs(year?: number) {
           const target = kr.target ?? 100;
           const direction = (kr.direction ?? 'up') as OkrDirection;
 
-          const progress = calculateProgress(baseline, current, target, direction);
+          const progress = calculateProgress(baseline, current, target, direction, { unit: kr.unit });
           totalProgress += progress;
 
           if (kr.status === 'yellow' || kr.status === 'red') {

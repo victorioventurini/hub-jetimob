@@ -73,7 +73,7 @@ export function CheckinProgressBlock({
   const previewValue = isAutomatic ? kr.current_value : (parseFloat(currentValue) || kr.current_value);
   const valueDiff = previewValue - kr.current_value;
   const isPositiveChange = kr.direction === 'up' ? valueDiff >= 0 : valueDiff <= 0;
-  const newProgress = calculateProgress(kr.baseline, previewValue, kr.target, kr.direction);
+  const newProgress = calculateProgress(kr.baseline, previewValue, kr.target, kr.direction, { unit: kr.unit });
 
   return (
     <div className="space-y-3">

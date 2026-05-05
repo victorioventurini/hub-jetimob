@@ -94,7 +94,8 @@ export const ObjectiveListItem = React.memo(function ObjectiveListItem({
         Number(kr.baseline) || 0,
         Number(kr.current_value) || 0,
         Number(kr.target) || 0,
-        kr.direction || 'up'
+        kr.direction || 'up',
+        { unit: (kr as KeyResult & { unit?: string | null }).unit }
       );
     }, 0);
 
