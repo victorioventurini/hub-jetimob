@@ -73,6 +73,18 @@ export interface KpiGateStepProps {
   noDataReasons?: Record<string, string>;
   /** v3.31.1 — callback de mudança da razão de ausência de dados. */
   onNoDataReasonChange?: (kpiId: string, value: string) => void;
+  /**
+   * v3.33.0 — quando `true`, desabilita os textareas de justificativa/razão.
+   * Use em ritos de leitura (ex: MBR Deep Dive) que apenas reapresentam o
+   * que o líder respondeu no Pré-MBR.
+   */
+  readOnlyJustification?: boolean;
+  /**
+   * v3.33.0 — slot opcional renderizado abaixo do card no modo
+   * `rich-paginated`. Usado para anexar painéis derivados (ex: insights do
+   * líder, addendums) sem duplicar o card. Agnóstico de wizardType.
+   */
+  extraContentForCurrentKpi?: (kpi: KpiGateItem) => React.ReactNode;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
