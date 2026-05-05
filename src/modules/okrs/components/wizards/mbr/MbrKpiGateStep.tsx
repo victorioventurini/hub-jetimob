@@ -153,13 +153,22 @@ export function MbrKpiGateStep({
         />
       }
       bottomFixed={
-        !canProceed ? (
-          <p className="text-xs text-status-amber text-center pb-2 px-4">
-            {requirePlanForCriticalKpis
-              ? `Registre um plano para: ${missingKpis.map(k => k.name).join(', ')}`
-              : `Registre decisões (faltam ${aggregateMissing}) para continuar`}
-          </p>
-        ) : undefined
+        <>
+          {!canProceed && (
+            <p className="text-xs text-status-amber text-center pb-2 px-4">
+              {requirePlanForCriticalKpis
+                ? `Registre um plano para: ${missingKpis.map(k => k.name).join(', ')}`
+                : `Registre decisões (faltam ${aggregateMissing}) para continuar`}
+            </p>
+          )}
+          <div className="border-t bg-card/50 backdrop-blur-sm">
+            <InlineDecisionInput
+              decisions={decisions}
+              onDecisionsChange={onDecisionsChange}
+              sourceStep="kpi-gate"
+            />
+          </div>
+        </>
       }
       footer={
         <WizardStepFooter
