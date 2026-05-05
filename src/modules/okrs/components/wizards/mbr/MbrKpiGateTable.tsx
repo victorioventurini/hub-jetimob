@@ -1,14 +1,10 @@
 /**
  * MbrKpiGateTable — Tabela canônica para listagem de KPIs no KPI Gate (MBR).
  *
- * Espelha o layout de `KpiDashboardTable` (`/kpis`), adaptado para o snapshot
- * mensal `MbrMonthlyKpiSnapshot` (valor do mês de referência vs anterior).
- *
- * Colunas: Indicador, Tipo, Área, Valor (mês), Meta, Variação, Status,
- * Responsável, Atualização.
+ * Colunas: Indicador, Área, Valor (mês), Meta, Variação.
  */
 
-import { TrendingUp, TrendingDown, Minus, Clock, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -20,14 +16,10 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AreaBadge } from '@/components/ui/area-badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { INDICATOR_TYPE_LABELS, RAG_STATUS_CONFIG, type KpiIndicatorType, type KpiRagStatus } from '@/modules/kpis/types';
 import { KpiScopeBadge } from '@/modules/kpis/components/KpiScopeBadge';
 import { useBu } from '@/contexts/BuContext';
+import { isPointsUnit } from '@/shared/constants/units';
 import type { MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 
 interface MbrKpiGateTableProps {
@@ -51,6 +43,8 @@ function formatValue(value: number | null, unit: string | undefined): string {
       return `${value.toFixed(1)}h`;
     case 'dias':
       return `${value.toFixed(0)} dias`;
+    case 'Pontos':
+      return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`;
     default:
       return value.toLocaleString('pt-BR');
   }
@@ -71,23 +65,14 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
         <TableHeader>
           <TableRow>
             <TableHead className="min-w-[200px]">Indicador</TableHead>
-            <TableHead>Tipo</TableHead>
             <TableHead>Área</TableHead>
             <TableHead className="text-right whitespace-nowrap">Valor {monthLabel}</TableHead>
             <TableHead className="text-right">Meta</TableHead>
             <TableHead className="text-right">Variação</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Responsável</TableHead>
-            <TableHead>Atualização</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {snapshots.map((s) => {
-            const ragKey: KpiRagStatus =
-              s.ragStatus === 'green' ? 'on_track' :
-              s.ragStatus === 'yellow' ? 'at_risk' :
-              s.ragStatus === 'red' ? 'off_track' : 'no_data';
-            const ragConfig = RAG_STATUS_CONFIG[ragKey];
             const variation = computeVariation(s.currentValue, s.previousValue);
             const trend: 'up' | 'down' | 'flat' = variation == null
               ? 'flat'
@@ -98,11 +83,6 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
               ? trend === 'up' ? 'text-status-green' : trend === 'down' ? 'text-destructive' : 'text-muted-foreground'
               : trend === 'down' ? 'text-status-green' : trend === 'up' ? 'text-destructive' : 'text-muted-foreground';
 
-            const lastUpdate = s.lastValueAt ? parseISO(s.lastValueAt) : null;
-            const indicatorLabel = s.indicatorType
-              ? INDICATOR_TYPE_LABELS[s.indicatorType as KpiIndicatorType] ?? s.indicatorType
-              : 'KPI';
-
             const area = s.areaId
               ? { id: s.areaId, name: s.areaName ?? '—', color: s.areaColor }
               : null;
@@ -112,13 +92,6 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
                 {/* Indicador */}
                 <TableCell>
                   <p className="font-medium truncate max-w-[240px]">{s.name}</p>
-                </TableCell>
-
-                {/* Tipo */}
-                <TableCell>
-                  <Badge variant="secondary" className="text-xs whitespace-nowrap">
-                    {indicatorLabel}
-                  </Badge>
                 </TableCell>
 
                 {/* Área */}
@@ -155,62 +128,14 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
                   {variation !== null ? (
                     <div className={cn('flex items-center justify-end gap-1', trendColor)}>
                       <TrendIcon className="h-3.5 w-3.5" />
-                      <span className="tabular-nums">{Math.abs(variation).toFixed(2)}%</span>
+                      <span className="tabular-nums">
+                        {isPointsUnit(s.unit) && s.currentValue != null && s.previousValue != null
+                          ? `${Math.abs(s.currentValue - s.previousValue).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`
+                          : `${Math.abs(variation).toFixed(2)}%`}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-
-                {/* Status */}
-                <TableCell>
-                  {ragConfig && (
-                    <Badge
-                      variant="outline"
-                      className={cn('text-xs whitespace-nowrap', ragConfig.color, ragConfig.bgColor)}
-                    >
-                      {ragConfig.label}
-                    </Badge>
-                  )}
-                </TableCell>
-
-                {/* Responsável */}
-                <TableCell>
-                  {s.owner ? (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={s.owner.photo_url || undefined} />
-                          <AvatarFallback className="text-xs bg-accent text-accent-foreground">
-                            {s.owner.display_name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{s.owner.display_name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-
-                {/* Atualização */}
-                <TableCell>
-                  {lastUpdate ? (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{format(lastUpdate, 'dd/MM', { locale: ptBR })}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{format(lastUpdate, "dd/MM/yyyy", { locale: ptBR })}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">—</span>
                   )}
                 </TableCell>
               </TableRow>
