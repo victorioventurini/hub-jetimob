@@ -17,10 +17,10 @@ import { ShieldAlert } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardStepFooter,
-  KpiMonthlyComparisonCard,
   InlineDecisionInput,
 } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { MbrKpiGateTable } from './MbrKpiGateTable';
 import { useMbrMonthlyKpisByScope } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
@@ -200,13 +200,9 @@ export function MbrKpiGateStep({
             {overviewLoading ? (
               <Skeleton className="h-32 w-full" />
             ) : orgSnapshots.length > 0 ? (
-              <KpiMonthlyComparisonCard
+              <MbrKpiGateTable
                 snapshots={orgSnapshots}
-                title="Visão consolidada do mês"
-                showNoData
-                stack
-                topN={5}
-                emptyMessage="Sem dados comparáveis no período."
+                monthLabel={formatMonthLabel(referenceMonth!)}
               />
             ) : (
               <p className="text-xs text-muted-foreground italic">
@@ -228,13 +224,9 @@ export function MbrKpiGateStep({
             {overviewLoading ? (
               <Skeleton className="h-32 w-full" />
             ) : areaSnapshots.length > 0 ? (
-              <KpiMonthlyComparisonCard
+              <MbrKpiGateTable
                 snapshots={areaSnapshots}
-                title="Visão consolidada do mês"
-                showNoData
-                stack
-                topN={5}
-                emptyMessage="Sem dados comparáveis no período."
+                monthLabel={formatMonthLabel(referenceMonth!)}
               />
             ) : (
               <p className="text-xs text-muted-foreground italic">
