@@ -70,6 +70,7 @@ export function MbrTeamOkrsDetailStep({
   onDecisionsChange,
   teamAddendums = {},
   mbrPreByTeam = {},
+  referenceMonth = null,
   onContinue,
   onBack,
 }: MbrTeamOkrsDetailStepProps) {
