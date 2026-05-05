@@ -153,17 +153,25 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                 {/* Área */}
                 <TableCell>
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {kpi.area && <AreaBadge area={kpi.area} />}
-                    {kpi.team && (
-                      <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
-                        <Users className="h-3 w-3" />
-                        {kpi.team.name}
-                      </Badge>
-                    )}
-                    <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
-                    {!kpi.area && !kpi.team && kpi.scope !== "org" && (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {(() => {
+                      const eff = (kpi as any).effective_area ?? kpi.area;
+                      const effTeam = (kpi as any).effective_team ?? kpi.team;
+                      return (
+                        <>
+                          {eff && <AreaBadge area={eff} />}
+                          {effTeam && (
+                            <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                              <Users className="h-3 w-3" />
+                              {effTeam.name}
+                            </Badge>
+                          )}
+                          <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
+                          {!eff && !effTeam && kpi.scope !== "org" && (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </TableCell>
 
