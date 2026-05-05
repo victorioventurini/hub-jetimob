@@ -61,6 +61,8 @@ export interface CalculateKrStateParams {
   daysSinceCheckin: number;
   cycleEnded: boolean;
   expectedProgress?: number;
+  warningGap?: number;
+  criticalGap?: number;
 }
 
 // ============================================================
@@ -188,7 +190,9 @@ export function calculateKrState(params: CalculateKrStateParams): KrState {
     status, 
     daysSinceCheckin, 
     cycleEnded, 
-    expectedProgress = 0 
+    expectedProgress = 0,
+    warningGap = 15,
+    criticalGap = 25,
   } = params;
   
   // Ciclo encerrado - estados finais
@@ -204,11 +208,16 @@ export function calculateKrState(params: CalculateKrStateParams): KrState {
   if (progress === 0) return 'not_started';
   if (daysSinceCheckin >= 14) return 'stagnant';
   
+  const progressGap = expectedProgress > 0 ? expectedProgress - progress : 0;
+
+  // Risco por ritmo: compara progresso real vs esperado para o período do ciclo.
+  if (progressGap >= criticalGap) return 'off_track';
+
   // RAG status crítico
   if (status === 'red') return 'off_track';
   
   // RAG status em atenção ou gap significativo
-  if (status === 'yellow' || (expectedProgress > 0 && (expectedProgress - progress) > 15)) {
+  if (status === 'yellow' || progressGap > warningGap) {
     return 'at_risk';
   }
   
