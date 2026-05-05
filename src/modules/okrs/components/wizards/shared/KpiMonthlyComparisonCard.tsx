@@ -175,6 +175,8 @@ export interface KpiMonthlyComparisonCardProps {
   showNoData?: boolean;
   /** Top-N por bloco. Default: 3. */
   topN?: number;
+  /** Empilha blocos verticalmente em vez de exibir em grid. Default: false. */
+  stack?: boolean;
 }
 
 export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
@@ -185,6 +187,7 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
   className,
   showNoData = false,
   topN = 3,
+  stack = false,
 }: KpiMonthlyComparisonCardProps) {
   const deltas = useMemo(
     () => computeKpiDeltas(snapshots, { topN }),
@@ -197,7 +200,11 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
     return null;
   }
 
-  const columns = showNoData ? 'md:grid-cols-3' : 'md:grid-cols-2';
+  const columns = stack
+    ? ''
+    : showNoData
+      ? 'md:grid-cols-3'
+      : 'md:grid-cols-2';
 
   return (
     <div
