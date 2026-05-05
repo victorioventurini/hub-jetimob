@@ -117,7 +117,9 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           indicator_type, scope, created_at,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
-          area:areas!kpi_metrics_area_id_fkey(id, name, color)
+          area:areas!kpi_metrics_area_id_fkey(id, name, color),
+          responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+          responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
         `)
         .eq('status', 'active')
         .eq('bu_id', buId!)
@@ -128,7 +130,9 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
         query = query.eq('indicator_type', indicatorType);
       }
       if (areaId) {
-        query = query.eq('area_id', areaId);
+        // v3.33.0: inclui responsible_area_id (KPIs Globais cuja
+        // responsabilidade operacional pertence à área).
+        query = query.or(`area_id.eq.${areaId},responsible_area_id.eq.${areaId}`);
       }
       if (scope) {
         query = query.eq('scope', scope);
