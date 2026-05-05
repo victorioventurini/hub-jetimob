@@ -47,7 +47,12 @@ interface KpiInput {
   previousValue: number | null;
   target: number | null;
   ragStatus: string;
+  /** Direção da meta: 'up' = maior é melhor; 'down' = menor é melhor. */
+  direction?: 'up' | 'down' | 'maintain' | null;
+  /** Delta percentual bruto (current vs previous). */
   deltaPct?: number | null;
+  /** Delta orientado pela direção: positivo = bom, negativo = ruim. */
+  orientedDeltaPct?: number | null;
 }
 
 interface ProjectInput {
