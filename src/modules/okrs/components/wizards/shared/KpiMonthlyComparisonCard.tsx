@@ -44,6 +44,7 @@ export interface KpiDelta {
   unit?: string;
   current: number | null;
   previous: number | null;
+  target: number | null;
   /** Delta percentual BRUTO (current vs previous), apenas para exibição numérica. */
   deltaPct: number | null;
   /** Delta percentual ORIENTADO pela direção: positivo = bom, negativo = ruim. */
@@ -56,6 +57,7 @@ export interface KpiNoData {
   kpiId: string;
   name: string;
   unit?: string;
+  target: number | null;
 }
 
 export function computeKpiDeltas(
@@ -81,6 +83,7 @@ export function computeKpiDeltas(
       unit: k.unit,
       current: k.currentValue,
       previous: k.previousValue,
+      target: k.target ?? null,
       deltaPct: rawDelta != null ? Math.round(rawDelta * 10) / 10 : null,
       orientedDeltaPct: oriented != null ? Math.round(oriented * 10) / 10 : null,
       ragStatus: k.ragStatus,
@@ -100,7 +103,7 @@ export function computeKpiDeltas(
 
   const noData: KpiNoData[] = kpis
     .filter((k) => k.currentValue == null)
-    .map((k) => ({ kpiId: k.kpiId, name: k.name, unit: k.unit }));
+    .map((k) => ({ kpiId: k.kpiId, name: k.name, unit: k.unit, target: k.target ?? null }));
 
   return {
     ups,
@@ -140,6 +143,11 @@ const KpiDeltaRow = memo(function KpiDeltaRow({
       <div className="flex items-center gap-2 shrink-0 text-xs">
         <span className="text-muted-foreground">
           {formatKpiValue(delta.previous, delta.unit)} → {formatKpiValue(delta.current, delta.unit)}
+          {delta.target != null && (
+            <span className="ml-1 text-muted-foreground/80">
+              · meta {formatKpiValue(delta.target, delta.unit)}
+            </span>
+          )}
         </span>
         <span className={cn('font-semibold', color)}>
           {(delta.deltaPct ?? 0) > 0 ? '+' : ''}
@@ -249,6 +257,11 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
                         className="text-sm text-foreground truncate"
                       />
                     </div>
+                    {k.target != null && (
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        meta {formatKpiValue(k.target, k.unit)}
+                      </span>
+                    )}
                   </div>
                 ))
               )}
