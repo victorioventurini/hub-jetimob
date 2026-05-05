@@ -38,7 +38,7 @@ export function OkrProgressBar({
   size = 'md',
   className,
 }: OkrProgressBarProps) {
-  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction);
+  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction, { unit });
   const isOverachieved = progress > 100;
 
   const getStatusColor = () => {
