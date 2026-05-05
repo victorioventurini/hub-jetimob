@@ -257,6 +257,11 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
                         className="text-sm text-foreground truncate"
                       />
                     </div>
+                    {k.target != null && (
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        meta {formatKpiValue(k.target, k.unit)}
+                      </span>
+                    )}
                   </div>
                 ))
               )}
