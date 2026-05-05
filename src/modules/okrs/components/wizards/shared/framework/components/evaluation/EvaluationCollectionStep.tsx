@@ -32,12 +32,19 @@ export interface EvaluationCollectionStepProps {
   sessionId: string | null;
   persona: WizardPersona;
   footer: React.ReactNode;
+  /**
+   * Garante que existe uma sessão persistida no banco antes de abrir a coleta.
+   * Necessário quando o usuário entra direto em ?step=evaluation sem ter
+   * salvo o draft previamente.
+   */
+  ensureSession?: () => Promise<string | null>;
 }
 
 export const EvaluationCollectionStep = memo(function EvaluationCollectionStep({
   sessionId,
   persona,
   footer,
+  ensureSession,
 }: EvaluationCollectionStepProps) {
   const config = getEvaluationConfig(persona);
   const openMut = useOpenRitualEvaluation();
@@ -75,9 +82,18 @@ export const EvaluationCollectionStep = memo(function EvaluationCollectionStep({
 
   const publicBaseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
-  const handleOpen = () => {
-    if (!sessionId) return;
-    openMut.mutate(sessionId);
+  const handleOpen = async () => {
+    let id = sessionId;
+    if (!id && ensureSession) {
+      try {
+        id = await ensureSession();
+      } catch {
+        // saveDraft já notifica via toast
+        return;
+      }
+    }
+    if (!id) return;
+    openMut.mutate(id);
   };
 
   const handleClose = () => {
