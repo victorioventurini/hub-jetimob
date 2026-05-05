@@ -220,6 +220,10 @@ export function MbrTeamOkrsDetailStep({
               onDecisionsChange={onDecisionsChange}
               sourceStep="team-okrs-detail"
               placeholder={`Nota sobre ${currentTeam?.teamName ?? 'este time'}...`}
+              subStep={currentTeam?.teamId ?? null}
+              metadataFactory={
+                currentTeam ? () => ({ team_id: currentTeam.teamId }) : undefined
+              }
             />
           </div>
           {isLastTeam && !allReviewed && (
