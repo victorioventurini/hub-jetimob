@@ -117,8 +117,8 @@ export function KrEvolutionChart({
             strokeDasharray="3 3"
             strokeOpacity={0.5}
             label={{
-              value: "Base",
-              position: "left",
+              value: `Base: ${formatValueWithUnit(baseline, unit)}`,
+              position: "insideBottomLeft",
               fill: "hsl(var(--muted-foreground))",
               fontSize: 9,
             }}
@@ -130,8 +130,8 @@ export function KrEvolutionChart({
             strokeDasharray="5 5"
             strokeOpacity={0.7}
             label={{
-              value: "Meta",
-              position: "right",
+              value: `Meta: ${formatValueWithUnit(target, unit)}`,
+              position: "insideTopRight",
               fill: "hsl(var(--muted-foreground))",
               fontSize: 10,
             }}

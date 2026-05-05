@@ -198,8 +198,8 @@ export function KpiEvolutionChart({
               strokeDasharray="5 5"
               strokeOpacity={0.7}
               label={{
-                value: "Meta",
-                position: "right",
+                value: `Meta: ${formatValue(targetValue, unit)}`,
+                position: "insideTopRight",
                 fill: "hsl(var(--muted-foreground))",
                 fontSize: 10,
               }}
