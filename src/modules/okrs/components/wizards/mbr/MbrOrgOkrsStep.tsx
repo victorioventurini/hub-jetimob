@@ -6,7 +6,7 @@
  * Se "Não é mais prioridade" → exige registro de Decisão/Ajuste de Foco.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
