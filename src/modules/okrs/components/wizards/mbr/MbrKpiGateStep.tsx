@@ -195,6 +195,7 @@ export function MbrKpiGateStep({
           <ScopeSection
             title={`KPIs Globais — ${formatMonthLabel(referenceMonth!)}`}
             monthLabel={formatMonthLabel(referenceMonth!)}
+            previousMonthLabel={formatMonthLabel(previousMonthOf(referenceMonth!))}
             snapshots={orgSnapshots}
             isLoading={overviewLoading}
             emptyMessage="Sem KPIs globais cadastrados nesta BU."
@@ -206,6 +207,7 @@ export function MbrKpiGateStep({
           <ScopeSection
             title={`KPIs de Área — ${formatMonthLabel(referenceMonth!)}`}
             monthLabel={formatMonthLabel(referenceMonth!)}
+            previousMonthLabel={formatMonthLabel(previousMonthOf(referenceMonth!))}
             snapshots={areaSnapshots}
             isLoading={overviewLoading}
             emptyMessage="Sem KPIs de área cadastrados nesta BU."
