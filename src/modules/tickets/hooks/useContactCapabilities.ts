@@ -9,7 +9,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/hooks/useIdentity";
 
 // ===========================================
