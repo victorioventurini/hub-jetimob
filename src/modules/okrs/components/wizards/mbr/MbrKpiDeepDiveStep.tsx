@@ -126,7 +126,7 @@ export function MbrKpiDeepDiveStep({
       onKpiIndexChange={setCurrentKpiIndex}
       decisions={decisions}
       onDecisionsChange={onDecisionsChange}
-      suppressInlineDecisions
+      
       extraContentForCurrentKpi={(kpi) => (
         <KpiLeaderInsightsPanel
           kpiId={kpi.id}

@@ -52,7 +52,7 @@ import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecis
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
 import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
 import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
-import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
+import { WizardStepFooter, InlineDecisionInput } from '@/modules/okrs/components/wizards/shared';
 
 import type {
   MbrStep,
@@ -566,11 +566,22 @@ export default function MbrPage() {
             persona="mbr"
             ensureSession={saveDraft}
             footer={
-              <WizardStepFooter
-                onPrimary={goNext}
-                onBack={goBack}
-                primaryLabel="Continuar para encerramento"
-              />
+              <>
+                <div className="border-t bg-card/50 backdrop-blur-sm">
+                  <InlineDecisionInput
+                    decisions={draft.data.decisions}
+                    onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
+                      updateDraft({ decisions })
+                    }
+                    sourceStep="evaluation"
+                  />
+                </div>
+                <WizardStepFooter
+                  onPrimary={goNext}
+                  onBack={goBack}
+                  primaryLabel="Continuar para encerramento"
+                />
+              </>
             }
           />
         );
