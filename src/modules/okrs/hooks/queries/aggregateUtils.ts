@@ -7,19 +7,10 @@
 import type { OkrDirection, OkrRagStatus } from '../../types';
 import type { OrgKrWithTeamKrs } from './aggregateTypes';
 import { getEffectiveKrRagStatus } from '../../utils/effectiveStatus';
+import { calculateProgress as calculateCanonicalProgress } from '../../utils/progressCalculation';
 
 export function calculateProgress(baseline: number, current: number, target: number, direction: OkrDirection): number {
-  if (direction === 'up') {
-    if (target === baseline) return current >= target ? 100 : 0;
-    const progress = ((current - baseline) / (target - baseline)) * 100;
-    // Não limitar a 100% para permitir exibição de superação de metas
-    return Math.max(0, progress);
-  } else {
-    if (baseline === target) return current <= target ? 100 : 0;
-    const progress = ((baseline - current) / (baseline - target)) * 100;
-    // Não limitar a 100% para permitir exibição de superação de metas
-    return Math.max(0, progress);
-  }
+  return calculateCanonicalProgress(baseline, current, target, direction);
 }
 
 export function determineTrend(status: OkrRagStatus, _progress: number): 'up' | 'stable' | 'down' {
