@@ -73,7 +73,7 @@ function buildKrStateParams(kr: {
   last_checkin_at: string | null;
 }) {
   const now = new Date();
-  const progress = calculateProgress(kr.baseline ?? 0, kr.current_value ?? 0, kr.target ?? 0, kr.direction as any);
+  const progress = calculateProgress(kr.baseline ?? 0, kr.current_value ?? 0, kr.target ?? 0, kr.direction as any, { unit: (kr as { unit?: string | null }).unit });
   const daysSinceCheckin = kr.last_checkin_at
     ? differenceInDays(now, parseISO(kr.last_checkin_at))
     : 999;

@@ -77,7 +77,7 @@ export const ContributingOkrCard = React.memo(function ContributingOkrCard({
     return (
       allKrs.reduce(
         (acc, kr) =>
-          acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction),
+          acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction, { unit: kr.unit }),
         0
       ) / allKrs.length
     );
