@@ -695,6 +695,7 @@ export const KpiGateStep = memo(function KpiGateStep({
               noDataReason={noDataReasons?.[currentEntry.kpi.id]}
               onNoDataReasonChange={onNoDataReasonChange}
               readOnly={readOnlyJustification}
+              hideActionBlock={hideLeaderActionBlock}
             />
             {extraContentForCurrentKpi?.(currentEntry.kpi)}
           </>
