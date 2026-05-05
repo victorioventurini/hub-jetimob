@@ -16,6 +16,9 @@ import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import {
   KpiLeaderInsightsPanel,
 } from '@/modules/okrs/components/wizards/shared/KpiLeaderInsightsPanel';
+import { MbrKpiGateTable } from './MbrKpiGateTable';
+import { previousMonthOf } from '@/modules/okrs/utils/mbr/referenceMonth';
+import type { MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 import {
   classifyKpiGateBucketsFromMonthlySnapshots,
   type KpiGateBucket,
