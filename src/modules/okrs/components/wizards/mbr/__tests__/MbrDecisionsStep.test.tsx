@@ -59,7 +59,7 @@ const defaultProps = () => ({
 describe('MbrDecisionsStep', () => {
   it('renders header', () => {
     render(<MbrDecisionsStep {...defaultProps()} />);
-    expect(screen.getByText('Decisões Estratégicas')).toBeInTheDocument();
+    expect(screen.getByText('Pautas e decisões')).toBeInTheDocument();
   });
 
   it('shows empty state when no decisions', () => {
