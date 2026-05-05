@@ -110,10 +110,11 @@ export function useMbrMonthlyKpisByScope(
       const { data: kpis, error: kpisErr } = await supabase
         .from('kpi_metrics')
         .select(
-          `id, name, unit, direction, target_value, scope, responsible_team_id, area_id, responsible_area_id,
+          `id, name, unit, direction, target_value, scope, indicator_type, responsible_team_id, owner_user_id, area_id, responsible_area_id,
            area:areas!kpi_metrics_area_id_fkey(id, name, color),
            responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
-           team:teams!kpi_metrics_responsible_team_id_fkey(id, name)`,
+           team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url)`,
         )
         .eq('bu_id', currentBuId!)
         .in('scope', scopes)
