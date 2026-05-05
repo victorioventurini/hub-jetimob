@@ -52,11 +52,22 @@ export interface KpiDelta {
   direction: 'up' | 'down' | null;
 }
 
-export function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
+export interface KpiNoData {
+  kpiId: string;
+  name: string;
+  unit?: string;
+}
+
+export function computeKpiDeltas(
+  kpis: MbrKpiSnapshot[],
+  options: { topN?: number } = {},
+): {
   ups: KpiDelta[];
   downs: KpiDelta[];
+  noData: KpiNoData[];
   withoutComparison: number;
 } {
+  const topN = options.topN ?? 3;
   const deltas: KpiDelta[] = kpis.map((k) => {
     const rawDelta =
       k.previousValue != null && k.currentValue != null && k.previousValue !== 0
@@ -81,15 +92,20 @@ export function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
   const ups = [...withDelta]
     .filter((d) => (d.orientedDeltaPct ?? 0) > 0)
     .sort((a, b) => (b.orientedDeltaPct ?? 0) - (a.orientedDeltaPct ?? 0))
-    .slice(0, 3);
+    .slice(0, topN);
   const downs = [...withDelta]
     .filter((d) => (d.orientedDeltaPct ?? 0) < 0)
     .sort((a, b) => (a.orientedDeltaPct ?? 0) - (b.orientedDeltaPct ?? 0))
-    .slice(0, 3);
+    .slice(0, topN);
+
+  const noData: KpiNoData[] = kpis
+    .filter((k) => k.currentValue == null)
+    .map((k) => ({ kpiId: k.kpiId, name: k.name, unit: k.unit }));
 
   return {
     ups,
     downs,
+    noData,
     withoutComparison: deltas.length - withDelta.length,
   };
 }
