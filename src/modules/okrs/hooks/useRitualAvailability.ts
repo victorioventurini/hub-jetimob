@@ -150,8 +150,8 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
   },
   'mbr': {
     getWindow: (c) => pickCompositeWindow(
-      buildWindow(c.review_date_first_month, 0, 2),
-      buildWindow(c.review_date, 0, 2),
+      buildWindow(c.review_date_first_month, -1, 1),
+      buildWindow(c.review_date, -1, 1),
     ),
   },
 
