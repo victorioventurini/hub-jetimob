@@ -32,26 +32,19 @@ interface KpiDashboardTableProps {
   isLoading?: boolean;
 }
 
+import { formatValueWithUnit, formatVariation } from "@/shared/constants/units";
+
 function formatValue(value: number | null, unit: string): string {
   if (value === null) return "—";
-  
-  switch (unit) {
-    case '%':
-      return `${value.toFixed(1)}%`;
-    case 'R$':
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value);
-    case 'horas':
-      return `${value.toFixed(1)}h`;
-    case 'dias':
-      return `${value.toFixed(0)} dias`;
-    default:
-      return value.toLocaleString("pt-BR");
+  if (unit === 'R$') {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   }
+  return formatValueWithUnit(value, unit);
 }
 
 function TableSkeleton() {
