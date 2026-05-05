@@ -43,8 +43,12 @@ export interface KpiDelta {
   unit?: string;
   current: number | null;
   previous: number | null;
+  /** Delta percentual BRUTO (current vs previous), apenas para exibição numérica. */
   deltaPct: number | null;
+  /** Delta percentual ORIENTADO pela direção: positivo = bom, negativo = ruim. */
+  orientedDeltaPct: number | null;
   ragStatus: string;
+  direction: 'up' | 'down' | null;
 }
 
 export function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
@@ -53,29 +57,33 @@ export function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
   withoutComparison: number;
 } {
   const deltas: KpiDelta[] = kpis.map((k) => {
-    const deltaPct =
+    const rawDelta =
       k.previousValue != null && k.currentValue != null && k.previousValue !== 0
         ? ((k.currentValue - k.previousValue) / Math.abs(k.previousValue)) * 100
         : null;
+    const direction = (k.direction ?? null) as 'up' | 'down' | null;
+    const oriented = orientedDeltaPct(rawDelta, direction);
     return {
       kpiId: k.kpiId,
       name: k.name,
       unit: k.unit,
       current: k.currentValue,
       previous: k.previousValue,
-      deltaPct: deltaPct != null ? Math.round(deltaPct * 10) / 10 : null,
+      deltaPct: rawDelta != null ? Math.round(rawDelta * 10) / 10 : null,
+      orientedDeltaPct: oriented != null ? Math.round(oriented * 10) / 10 : null,
       ragStatus: k.ragStatus,
+      direction,
     };
   });
 
-  const withDelta = deltas.filter((d) => d.deltaPct != null);
+  const withDelta = deltas.filter((d) => d.orientedDeltaPct != null);
   const ups = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) > 0)
-    .sort((a, b) => (b.deltaPct ?? 0) - (a.deltaPct ?? 0))
+    .filter((d) => (d.orientedDeltaPct ?? 0) > 0)
+    .sort((a, b) => (b.orientedDeltaPct ?? 0) - (a.orientedDeltaPct ?? 0))
     .slice(0, 3);
   const downs = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) < 0)
-    .sort((a, b) => (a.deltaPct ?? 0) - (b.deltaPct ?? 0))
+    .filter((d) => (d.orientedDeltaPct ?? 0) < 0)
+    .sort((a, b) => (a.orientedDeltaPct ?? 0) - (b.orientedDeltaPct ?? 0))
     .slice(0, 3);
 
   return {
