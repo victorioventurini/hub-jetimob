@@ -163,6 +163,10 @@ export interface KpiMonthlyComparisonCardProps {
   /** Microcopy quando não há nenhum delta calculável. */
   emptyMessage?: string;
   className?: string;
+  /** Renderiza terceiro bloco "Sem dados". Default: false. */
+  showNoData?: boolean;
+  /** Top-N por bloco. Default: 3. */
+  topN?: number;
 }
 
 export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
@@ -171,13 +175,21 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
   headerRight,
   emptyMessage = 'Sem dados comparáveis no período.',
   className,
+  showNoData = false,
+  topN = 3,
 }: KpiMonthlyComparisonCardProps) {
-  const deltas = useMemo(() => computeKpiDeltas(snapshots), [snapshots]);
+  const deltas = useMemo(
+    () => computeKpiDeltas(snapshots, { topN }),
+    [snapshots, topN],
+  );
   const hasComparison = deltas.ups.length + deltas.downs.length > 0;
+  const hasNoData = showNoData && deltas.noData.length > 0;
 
-  if (!hasComparison && deltas.withoutComparison === 0) {
+  if (!hasComparison && deltas.withoutComparison === 0 && !hasNoData) {
     return null;
   }
+
+  const columns = showNoData ? 'md:grid-cols-3' : 'md:grid-cols-2';
 
   return (
     <div
@@ -191,7 +203,7 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
           {title}
         </p>
         <div className="flex items-center gap-2">
-          {deltas.withoutComparison > 0 && (
+          {!showNoData && deltas.withoutComparison > 0 && (
             <Badge variant="outline" className="text-[10px] font-normal">
               {deltas.withoutComparison} sem dado anterior
             </Badge>
@@ -200,8 +212,8 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
         </div>
       </div>
 
-      {hasComparison ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+      {hasComparison || hasNoData ? (
+        <div className={cn('grid grid-cols-1 gap-x-6 gap-y-2', columns)}>
           <div>
             <p className="text-xs font-semibold text-status-green mb-1">Maiores avanços</p>
             {deltas.ups.length === 0 ? (
@@ -218,6 +230,30 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
               deltas.downs.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="down" />)
             )}
           </div>
+          {showNoData && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Sem dados</p>
+              {deltas.noData.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Todos os KPIs com dados.</p>
+              ) : (
+                deltas.noData.map((k) => (
+                  <div
+                    key={k.kpiId}
+                    className="flex items-center justify-between gap-3 py-1.5 min-w-0"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <MinusCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <KpiNameLink
+                        kpiId={k.kpiId}
+                        name={k.name}
+                        className="text-sm text-foreground truncate"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">{emptyMessage}</p>
