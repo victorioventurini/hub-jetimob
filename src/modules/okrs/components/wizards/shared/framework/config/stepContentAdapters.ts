@@ -334,6 +334,11 @@ export interface MonthlyKpiSnapshotForGate {
   lastValueAt?: string | null;
   scope?: string | null;
   latestInputType?: 'partial' | 'consolidated' | null;
+  /** v3.35.0 — área efetiva para badge */
+  areaName?: string | null;
+  areaColor?: string | null;
+  /** v3.35.0 — time responsável (operacional) */
+  teamName?: string | null;
 }
 
 function snapshotStatus(s: MonthlyKpiSnapshotForGate): KpiGateItem['status'] {
@@ -363,6 +368,9 @@ function snapshotToGateItem(
     unit: s.unit ?? undefined,
     latestReferenceDate: s.lastValueAt ?? null,
     scope: s.scope ?? null,
+    areaName: s.areaName ?? null,
+    areaColor: s.areaColor ?? null,
+    teamName: s.teamName ?? null,
   };
 }
 
