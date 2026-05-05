@@ -402,6 +402,7 @@ export function MbrKpiGateStep({
             </Card>
           ))
         )}
+        </div>
       </div>
     </WizardStepScaffold>
   );
