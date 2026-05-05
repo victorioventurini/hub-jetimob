@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { User, Clock, Lightbulb, Target, CheckCircle2, Send } from 'lucide-react';
+import { User, Clock, Lightbulb, Target, CheckCircle2, Send, Pencil, CalendarIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,8 +23,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { BuUserSelect } from '@/components/selects';
 import { cn } from '@/lib/utils';
 import { useIdentity } from '@/hooks/useIdentity';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useCanResolveDecision } from '@/modules/okrs/hooks';
 import { useResolveParticipant } from '@/hooks/useResolveParticipant';
 import type { TeamCheckinDecision, DecisionThreadMessage } from '@/modules/okrs/types/wizard';
@@ -52,6 +56,8 @@ export interface DecisionFollowUpRowProps {
   isAddingMessage?: boolean;
   /** Hide thread UI (e.g. in compact views) */
   hideThread?: boolean;
+  /** Profile id of the user who conducted the ritual (allowed to edit owner/deadline) */
+  conductorProfileId?: string | null;
 }
 
 // ============================================================
@@ -115,12 +121,19 @@ export function DecisionFollowUpRow({
   onAddMessage,
   isAddingMessage = false,
   hideThread = false,
+  conductorProfileId,
 }: DecisionFollowUpRowProps) {
   const { profileId } = useIdentity();
+  const { isWildcard } = usePermissions();
   const { canResolve, isLoading: permLoading } = useCanResolveDecision(decision.owner?.id);
   const config = CATEGORY_CONFIG[decision.category] ?? CATEGORY_CONFIG.decision;
   const Icon = config.icon;
   const isDone = decision.followUpStatus === 'done';
+  const canEditMeta = !isDone && (
+    isWildcard ||
+    (!!profileId && !!conductorProfileId && profileId === conductorProfileId)
+  );
+  const [isEditingMeta, setIsEditingMeta] = useState(false);
 
   // Resolution modal state
   const [showModal, setShowModal] = useState(false);
@@ -222,20 +235,105 @@ export function DecisionFollowUpRow({
                 </span>
               )}
 
-              {decision.owner && (
+              {!isEditingMeta && decision.owner && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <User className="h-3 w-3" />
                   <OwnerNameResolved ownerId={decision.owner.id} snapshotName={decision.owner.name} />
                 </span>
               )}
 
-              {decision.deadline && (
+              {!isEditingMeta && decision.deadline && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {format(parseISO(decision.deadline), 'dd/MM/yyyy', { locale: ptBR })}
                 </span>
               )}
+
+              {canEditMeta && !isEditingMeta && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditingMeta(true)}
+                >
+                  <Pencil className="h-3 w-3 mr-1" />
+                  {decision.owner || decision.deadline ? 'Editar' : 'Definir responsável/prazo'}
+                </Button>
+              )}
             </div>
+
+            {canEditMeta && isEditingMeta && (
+              <div className="flex items-center gap-2 flex-wrap pt-1">
+                <div className="w-[200px]">
+                  <BuUserSelect
+                    value={decision.owner?.id}
+                    onValueChange={() => { /* handled by onUserSelected */ }}
+                    onUserSelected={(user) => {
+                      if (user) {
+                        onUpdate({
+                          sessionId,
+                          decisionId: decision.id,
+                          updates: { owner: { id: user.id, name: user.displayName } },
+                        });
+                      } else {
+                        onUpdate({
+                          sessionId,
+                          decisionId: decision.id,
+                          updates: { owner: undefined },
+                        });
+                      }
+                    }}
+                    placeholder="Responsável"
+                    allowNone
+                    noneLabel="Sem responsável"
+                    showSearch
+                    showBadges={false}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'h-8 px-2.5 text-xs font-normal gap-1.5',
+                        !decision.deadline && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      {decision.deadline
+                        ? format(parseISO(decision.deadline), 'dd/MM/yyyy', { locale: ptBR })
+                        : 'Prazo'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={decision.deadline ? parseISO(decision.deadline) : undefined}
+                      onSelect={(date) => {
+                        onUpdate({
+                          sessionId,
+                          decisionId: decision.id,
+                          updates: { deadline: date ? date.toISOString() : null },
+                        });
+                      }}
+                      initialFocus
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[10px]"
+                  onClick={() => setIsEditingMeta(false)}
+                  disabled={isPending}
+                >
+                  Concluir
+                </Button>
+              </div>
+            )}
 
             {/* Resolution details */}
             {isDone && decision.resolutionNote && (
