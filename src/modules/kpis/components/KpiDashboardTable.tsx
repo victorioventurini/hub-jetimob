@@ -32,10 +32,11 @@ interface KpiDashboardTableProps {
   isLoading?: boolean;
 }
 
-import { formatValueWithUnit, formatVariation } from "@/shared/constants/units";
+import { formatValueWithUnit, formatVariation, isPointsUnit } from "@/shared/constants/units";
 
 function formatValue(value: number | null, unit: string): string {
   if (value === null) return "—";
+  if (unit === '%') return `${value.toFixed(1)}%`;
   if (unit === 'R$') {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -44,6 +45,8 @@ function formatValue(value: number | null, unit: string): string {
       maximumFractionDigits: 0,
     }).format(value);
   }
+  if (unit === 'horas') return `${value.toFixed(1)}h`;
+  if (unit === 'dias') return `${value.toFixed(0)} dias`;
   return formatValueWithUnit(value, unit);
 }
 
