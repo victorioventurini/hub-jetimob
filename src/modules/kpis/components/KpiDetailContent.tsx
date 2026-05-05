@@ -219,13 +219,17 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
 
       {/* Metadata */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-        {kpi.area && (
-          <div className="flex items-center gap-2 min-w-0">
-            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" style={{ color: kpi.area.color || undefined }} />
-            <span className="text-sm text-muted-foreground shrink-0">Área:</span>
-            <span className="text-sm font-medium truncate">{kpi.area.name}</span>
-          </div>
-        )}
+        {(() => {
+          const eff = (kpi as any).effective_area ?? kpi.area;
+          if (!eff) return null;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" style={{ color: eff.color || undefined }} />
+              <span className="text-sm text-muted-foreground shrink-0">Área:</span>
+              <span className="text-sm font-medium truncate">{eff.name}</span>
+            </div>
+          );
+        })()}
         <div className="flex items-center gap-2 min-w-0">
           <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-sm text-muted-foreground shrink-0">Escopo:</span>
