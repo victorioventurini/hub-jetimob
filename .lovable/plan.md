@@ -1,80 +1,89 @@
-## Contexto
+# Direção da KPI nas análises de melhora/piora — canônico
 
-No MBR Executivo (`/rituals/mbr?step=kpi-gate`) só existem hoje cards de "KPIs em atenção" (amarelo/vermelho). Falta um overview comparativo mês de referência vs mês anterior dos KPIs **globais (org)** e **de área**, agrupados por área/time — exatamente como o Pré-MBR já mostra em `MbrPreOpeningStep` ("Comparativo vs mês anterior").
+## Problema
 
-A análise sempre considera o **mês fechado anterior** (já existe `draft.data.referenceMonth` em `MbrPage` + `ReferenceMonthPicker`); a semântica de bucket mensal de `useMbrPreTeamKpisMonthly` ignora distorções de parciais do mês corrente (TCR §Q.5).
+Hoje a classificação "Maiores avanços × Maiores quedas" e os ícones/cores de tendência usam apenas o sinal de `deltaPct` (`current - previous`). Para KPIs com `direction = 'down'` (ex.: CAC — menor é melhor), uma alta no valor é exibida como **avanço** (verde), o que está incorreto.
 
-## Princípios
+Já temos um helper canônico parcial em `src/lib/colors.ts → getKpiTrendColor(trend, direction)`, mas ele não é usado pelos cards comparativos dos ritos (Pré-MBR, MBR Executivo, Panorama, Executive Quarter Review). Cada local reimplementa a lógica e nenhum consulta `direction`.
 
-- **Não duplicar**: extrair `KpiDeltaRow`, `computeKpiDeltas` e `formatKpiValue` (hoje internos a `MbrPreOpeningStep.tsx`) para `wizards/shared/`. Pré-MBR e MBR Executivo passam a consumir o mesmo componente.
-- **BU isolation + sem `select('*')`** + `.is('deleted_at', null)` + `.neq('indicator_type','metric')` + `.in('lifecycle_status', ['active'])`.
-- **Query keys** via `mbrKeys.*` (`src/lib/queryKeys/okrs.ts`).
-- **Ancoragem mensal**: usar a mesma lógica de `useMbrPreTeamKpisMonthly` (último valor por KPI dentro de cada bucket mensal).
-- **Sem mudanças** em backend, edge functions, migrations, draft schema, gate logic ou snapshots.
+## Princípio canônico
 
-## Mudanças
+- **Avanço (improvement)** = o valor se moveu **na direção desejada** (`direction = 'up'` → subiu; `direction = 'down'` → caiu).
+- **Piora (regression)** = movimento contrário.
+- **Estável** = `deltaPct === 0` ou indefinido.
+- KPIs sem `direction` (ou `direction = 'maintain'` / `null`) caem no comportamento atual (`up = bom`) — único default seguro, já adotado em `getKpiTrendColor`.
+- Ranking "Maiores avanços / Maiores quedas" ordena pelo **módulo do delta orientado** (não pelo sinal bruto), mantendo top 3 de cada lado.
 
-### 1. Componente compartilhado de comparativo mensal
+## SSOT a criar
 
-**Criar** `src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`:
-- Props: `snapshots: MbrKpiSnapshot[]`, `title?: string`, `headerRight?: React.ReactNode`.
-- Internamente: `KpiDeltaRow`, `computeKpiDeltas`, `formatKpiValue` (movidos de `MbrPreOpeningStep`).
-- Renderiza o mesmo bloco "Maiores avanços / Maiores quedas / N sem dado anterior" — mesma UI da screenshot.
-- Exportar em `wizards/shared/index.ts`.
+`src/modules/okrs/utils/kpiVariations.ts` (estender — já existe):
 
-`MbrPreOpeningStep` passa a importar e usar `KpiMonthlyComparisonCard` (regressão visual zero).
+```ts
+export type KpiDirection = 'up' | 'down' | 'maintain' | null | undefined;
 
-### 2. Hook de KPIs mensais por escopo (org/área)
+export function isKpiImprovement(deltaPct: number | null, direction: KpiDirection): boolean | null;
+export function classifyKpiDelta(deltaPct: number | null, direction: KpiDirection):
+  'improvement' | 'regression' | 'flat' | null;
 
-**Criar** `src/modules/okrs/hooks/useMbrMonthlyKpisByScope.ts`:
-- Assinatura: `useMbrMonthlyKpisByScope(referenceMonth, scopes: Array<'org'|'area'>)`.
-- Mesma estrutura de `useMbrPreTeamKpisMonthly` (último valor em cada bucket mensal), mas:
-  - Sem filtro por `responsible_team_id`.
-  - `.in('scope', scopes)`, `.neq('indicator_type','metric')`, `.eq('lifecycle_status','active')`.
-  - Joins para `area` e `team` (igual `useAllBuKpisForMbr`).
-- Retorna `Array<MbrKpiSnapshot & { areaId, areaName, areaColor, teamId, teamName }>`.
-- Query key: `mbrKeys.monthlyKpisByScope(currentBuId, refMonth, scopesKey)` (adicionar helper).
-- Exportar via `hooks/index.ts`.
-
-### 3. Overview prepend no `MbrKpiGateStep`
-
-Estender `MbrKpiGateStep` (retrocompatível) com props opcionais:
-- `referenceMonth?: string`
-- `showMonthlyOverview?: boolean` (default `false`).
-
-Quando `showMonthlyOverview && referenceMonth`:
-1. Chama `useMbrMonthlyKpisByScope(referenceMonth, ['org','area'])`.
-2. Acima dos cards atuais, renderiza dois blocos:
-   - **"KPIs Globais"** (`scope='org'`) — agrupados por **Área → Time** (KPI sem área → "Sem área"; sem time → "Sem time").
-   - **"KPIs de Área"** (`scope='area'`) — agrupados por **Time** (sem time → "Sem time").
-3. Cada grupo renderiza um `KpiMonthlyComparisonCard` com o sub-header `"Área X · Time Y"` (ou só `"Time Y"` no segundo bloco).
-4. Se um grupo não tem dados comparáveis: microcopy `"Sem dados comparáveis em <mês>."`.
-
-### 4. Wire em `MbrPage.tsx`
-
-No `case 'kpi-gate'`:
-```tsx
-<MbrKpiGateStep
-  ...props atuais
-  referenceMonth={draft.data.referenceMonth}
-  showMonthlyOverview
-/>
+/** delta com sinal corrigido pela direção: positivo = bom, negativo = ruim */
+export function orientedDeltaPct(deltaPct: number | null, direction: KpiDirection): number | null;
 ```
 
-## Arquivos tocados
+Tests novos em `kpiVariations.test.ts` cobrindo: direction up/down/maintain/null × delta positivo/negativo/zero/null.
 
-- **Criar** `src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`
-- **Criar** `src/modules/okrs/hooks/useMbrMonthlyKpisByScope.ts`
-- **Editar** `src/modules/okrs/components/wizards/shared/index.ts` (export)
-- **Editar** `src/modules/okrs/hooks/index.ts` (export)
-- **Editar** `src/lib/queryKeys/okrs.ts` (`mbrKeys.monthlyKpisByScope`)
-- **Editar** `src/modules/okrs/components/wizards/mbr-pre/MbrPreOpeningStep.tsx` (consome shared; remove duplicatas)
-- **Editar** `src/modules/okrs/components/wizards/mbr/MbrKpiGateStep.tsx` (Overview + props novas)
-- **Editar** `src/modules/okrs/pages/MbrPage.tsx` (passa `referenceMonth` + `showMonthlyOverview`)
+## Pontos de aplicação (todos os ritos)
+
+1. **`src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`** (SSOT visual usado por Pré-MBR Abertura e MBR Executivo KPI Gate)
+   - `computeKpiDeltas` passa a usar `orientedDeltaPct` e classifica `ups/downs` por `classifyKpiDelta`.
+   - Mantém top 3 ordenados por `Math.abs(orientedDeltaPct)`.
+   - `KpiDeltaRow` continua mostrando `previous → current` com `deltaPct` **bruto** (mantém realidade numérica), mas a cor e a coluna (avanços/quedas) seguem o oriented.
+   - Microcopy mantém "Maiores avanços" / "Maiores quedas".
+
+2. **`src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx`** — `TrendIcon` + `formatVariation` na linha 138-211: passar `direction` do KPI; ícone/cor via `classifyKpiDelta`.
+
+3. **`src/modules/okrs/hooks/useMbrPreMonthAnalysis.ts`** — payload enviado à edge `mbr-pre-month-analysis` precisa incluir `direction` e `orientedDeltaPct` para o agente IA não inverter narrativa. Edge function lê e cita corretamente (ajuste de prompt: "considere a direção da KPI ao narrar avanço/piora").
+
+4. **`src/modules/okrs/pages/executive-quarter-review/helpers.tsx → trendArrow`** + `sections/KpisSection.tsx` — passar `direction` (já presente no objeto KPI) para escolher seta para cima/baixo coerente com bom/ruim, e cor via classify.
+
+5. **`src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`**
+   - `KrCard`: KRs têm `direction` (ver `CheckinProgressBlock`); usar `isKpiImprovement` (ou helper irmão para KR — mesma assinatura) em vez de `change > 0`.
+   - `KpiCard`: aplicar igualmente quando renderizar tendência.
+
+6. **`src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx`** linhas 380-405 — já considera direção localmente; substituir bloco inline pelo helper canônico.
+
+7. **`src/modules/okrs/components/checkin/CheckinProgressBlock.tsx`** — já considera `direction` para KRs; substituir cálculo inline pelo helper canônico (consolidação, sem mudança de comportamento).
+
+8. **`src/lib/colors.ts → getKpiTrendColor`** — manter (já correto); documentar que é a fonte de cor a partir de `trend` agregado. O novo helper convive porque opera sobre `deltaPct` numérico (necessário para os cards comparativos onde não existe `trend`).
+
+Itens onde **não** mexer (revisados, não envolvem direção de KPI):
+- `QbrMeetingOpeningStep.getTrend` (compara RAG ordinal entre quarters — semântica própria).
+- `KpiCard` / `KpiDashboardTable` / `KpiSidePanel` em `src/modules/kpis/...` — já usam `getKpiTrendColor(trend, direction)` corretamente.
+- `executive-quarter-review/sections/KpisSection` — só passar a `direction` no `trendArrow`.
+
+## Detalhes técnicos
+
+- Tipo `direction` no snapshot já existe (`MbrKpiSnapshot.direction: 'up' | 'down' | null`) e é populado pelos hooks `useMbrPreTeamKpisMonthly` e `useMbrMonthlyKpisByScope` (lendo `kpis.direction` do banco). Nada a migrar.
+- Para KR, `direction` já vem do objeto KR consumido pelos cards.
+- Edge function `mbr-pre-month-analysis`: adicionar campo `direction` em cada item de `kpis[]` no payload e ajustar prompt do agente `analista-estrategico` para interpretar `orientedDeltaPct` (sinal já corrigido) em vez de re-derivar.
+- Não criar novos componentes visuais; só estender helpers e roteamento de props.
 
 ## Validação
 
-- `/rituals/mbr?step=kpi-gate`: dois blocos novos no topo (Globais → Área→Time; Área → Time), com a mesma UI do Pré-MBR.
-- `/rituals/mbr-pre?step=opening`: card "Comparativo vs mês anterior" idêntico (regressão zero).
-- Trocar mês no `ReferenceMonthPicker` do MBR atualiza os blocos.
-- KPIs sem valor no mês anterior aparecem em "N sem dado anterior".
+- Unit tests em `kpiVariations.test.ts`.
+- Snapshot/regressão visual em `MbrKpiGateStep.test.tsx`, `MbrPanoramaStep.test.tsx`, `QbrKpiAnalysisStep.test.tsx`, `QbrMeetingSteps.test.tsx`, `QbrCLevelSteps.test.tsx` — adicionar caso com KPI `direction = 'down'` que sobe → vai para "Maiores quedas".
+- Manual no time citado: `/rituals/mbr-pre?team=c8e5d7a7-...&step=opening` deve mostrar **CAC** subindo dentro de "Maiores quedas" em vermelho.
+- Manual em `/rituals/mbr?step=kpi-gate` mesma checagem nos KPIs globais e de área.
+
+## Arquivos a editar (sem criação de componentes novos)
+
+- `src/modules/okrs/utils/kpiVariations.ts` (+ teste)
+- `src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`
+- `src/modules/okrs/components/wizards/mbr/MbrPanoramaStep.tsx`
+- `src/modules/okrs/hooks/useMbrPreMonthAnalysis.ts`
+- `supabase/functions/mbr-pre-month-analysis/index.ts` (payload + prompt)
+- `src/modules/okrs/pages/executive-quarter-review/helpers.tsx`
+- `src/modules/okrs/pages/executive-quarter-review/sections/KpisSection.tsx`
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorSummary.tsx`
+- `src/modules/okrs/components/wizards/collaborator/CollaboratorKpiStep.tsx`
+- `src/modules/okrs/components/checkin/CheckinProgressBlock.tsx`
+- Memória `mem://standards/kpi-direction-aware-comparison` (novo) + entrada no `mem://index.md` em **Standards & Patterns**.
