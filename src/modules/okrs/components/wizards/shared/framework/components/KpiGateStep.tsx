@@ -303,9 +303,28 @@ const RichKpiCard = memo(function RichKpiCard({
               <Badge variant="secondary" className={cn('text-[10px] h-5 border', statusBadge.className)}>
                 {statusBadge.label}
               </Badge>
-              {scopeLabel && (
+              {/* v3.35.0 — escopo canônico (alinhado a /kpis):
+                  - Global → badge "Global" com ícone
+                  - Área   → AreaBadge (cor da área)
+                  - Time   → nome do time (operacional) */}
+              {(kpi.scope === 'global' || kpi.scope === 'org') && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] h-5 gap-1 bg-info/5 text-info border-info/20"
+                >
+                  <Globe className="h-3 w-3" />
+                  Global
+                </Badge>
+              )}
+              {kpi.areaName && (
+                <AreaBadge
+                  area={{ name: kpi.areaName, color: kpi.areaColor ?? null }}
+                  size="sm"
+                />
+              )}
+              {kpi.teamName && (
                 <Badge variant="outline" className="text-[10px] h-5">
-                  {scopeLabel}
+                  {kpi.teamName}
                 </Badge>
               )}
               {kpi.lastInputType && (
