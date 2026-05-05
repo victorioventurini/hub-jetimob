@@ -18,7 +18,7 @@
  */
 
 import { memo, useMemo, useState } from 'react';
-import { Activity, ChevronDown, ChevronRight, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Activity, ChevronDown, ChevronRight, AlertTriangle, ShieldAlert, Globe } from 'lucide-react';
 import { WizardStepScaffold } from '../../WizardStepScaffold';
 import { WizardStepHeader } from '../../WizardStepHeader';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getStepLabel, type StructureVersion } from '@/modules/okrs/constants/ritualLabels';
 import { KpiSparkline } from '@/modules/kpis/components/shared/KpiSparkline';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
+import { AreaBadge } from '@/components/ui/area-badge';
 import { formatValueWithUnit } from '@/shared/constants/units';
 import type { WizardPersona, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { KpiGateStepConfig } from '../types';
