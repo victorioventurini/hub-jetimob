@@ -260,7 +260,7 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
                     variation: kpi.variation,
                     trend: kpi.trend,
                     direction: kpi.direction,
-                    areaName: kpi.area?.name,
+                    areaName: (kpi.effective_area ?? kpi.area)?.name,
                     ragStatus: kpi.rag_status,
                   },
                 },
