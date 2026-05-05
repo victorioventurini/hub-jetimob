@@ -22,10 +22,12 @@ export function useAllBuKpisForMbr() {
         .from('kpi_metrics')
         .select(`
           id, name, unit, target_value, direction, frequency,
-          lifecycle_status, scope, area_id, team_id,
+          lifecycle_status, scope, area_id, team_id, responsible_area_id, responsible_team_id,
           indicator_type,
           area:areas!kpi_metrics_area_id_fkey(id, name, color),
-          team:teams!kpi_metrics_team_id_fkey(id, name)
+          team:teams!kpi_metrics_team_id_fkey(id, name),
+          responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
+          responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name)
         `)
         .eq('lifecycle_status', 'active')
         .is('deleted_at', null)
