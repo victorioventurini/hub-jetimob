@@ -24,6 +24,7 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { FREQUENCY_VALUE_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
+import { formatValueWithUnit, isPointsUnit } from "@/shared/constants/units";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
