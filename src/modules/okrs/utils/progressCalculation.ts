@@ -50,7 +50,6 @@ export interface CycleContext {
 
 export interface ProgressContext {
   unit?: string | null;
-  referenceUnit?: string | null;
 }
 
 const UNIT_MULTIPLIERS: Record<string, number> = {
@@ -64,22 +63,74 @@ function normalizeValueByUnit(value: number, unit?: string | null): number {
   return multiplier ? value * multiplier : value;
 }
 
+function calculateDirectionalProgress(
+  baseline: number,
+  current: number,
+  target: number,
+  direction: OkrDirection
+): number {
+  if (direction === 'maintain') {
+    return current >= target ? 100 : 0;
+  }
+
+  if (direction === 'up') {
+    if (target === baseline) {
+      return current >= target ? 100 : 0;
+    }
+
+    const progress = ((current - baseline) / (target - baseline)) * 100;
+    return Math.max(0, progress);
+  }
+
+  if (baseline === target) {
+    return current <= target ? 100 : 0;
+  }
+
+  const progress = ((baseline - current) / (baseline - target)) * 100;
+  return Math.max(0, progress);
+}
+
 export function normalizeProgressInputs(
   baseline: number,
   current: number,
   target: number,
   context?: ProgressContext
 ) {
-  const normalizedBaseline = normalizeValueByUnit(baseline, context?.unit);
-  const normalizedCurrent = normalizeValueByUnit(current, context?.unit);
+  const direct = { baseline, current, target };
 
-  const targetUnit = context?.referenceUnit ?? context?.unit;
-  const normalizedTarget = normalizeValueByUnit(target, targetUnit);
+  if (!context?.unit || !(context.unit in UNIT_MULTIPLIERS)) {
+    return direct;
+  }
+
+  const multiplier = UNIT_MULTIPLIERS[context.unit];
+  const scaledTarget = {
+    baseline: normalizeValueByUnit(baseline, context.unit),
+    current,
+    target: normalizeValueByUnit(target, context.unit),
+  };
+
+  const directProgress = calculateDirectionalProgress(
+    direct.baseline,
+    direct.current,
+    direct.target,
+    'up'
+  );
+
+  const scaledProgress = calculateDirectionalProgress(
+    scaledTarget.baseline,
+    scaledTarget.current,
+    scaledTarget.target,
+    'up'
+  );
+
+  if (directProgress > 1000 && scaledProgress >= 0 && scaledProgress <= 1000) {
+    return scaledTarget;
+  }
 
   return {
-    baseline: normalizedBaseline,
-    current: normalizedCurrent,
-    target: normalizedTarget,
+    baseline: baseline,
+    current: current,
+    target: target,
   };
 }
 
@@ -294,36 +345,7 @@ export function calculateProgress(
   context?: ProgressContext
 ): number {
   const normalized = normalizeProgressInputs(baseline, current, target, context);
-  const normalizedBaseline = normalized.baseline;
-  const normalizedCurrent = normalized.current;
-  const normalizedTarget = normalized.target;
-
-  // Direção 'maintain': tratado explicitamente como binário
-  // - Se current >= target: 100%
-  // - Se current < target: 0%
-  if (direction === 'maintain') {
-    return normalizedCurrent >= normalizedTarget ? 100 : 0;
-  }
-
-  if (direction === 'up') {
-    // KR de manutenção implícita (baseline = meta): tratamento binário (compatibilidade)
-    if (normalizedTarget === normalizedBaseline) {
-      return normalizedCurrent >= normalizedTarget ? 100 : 0;
-    }
-    // Fórmula padrão: (resultado - baseline) / (meta - baseline) × 100
-    // Não limitar a 100% para permitir exibição de superação de metas
-    const progress = ((normalizedCurrent - normalizedBaseline) / (normalizedTarget - normalizedBaseline)) * 100;
-    return Math.max(0, progress);
-  } else {
-    // KR de manutenção para redução
-    if (normalizedBaseline === normalizedTarget) {
-      return normalizedCurrent <= normalizedTarget ? 100 : 0;
-    }
-    // Fórmula para redução: (baseline - resultado) / (baseline - meta) × 100
-    // Não limitar a 100% para permitir exibição de superação de metas
-    const progress = ((normalizedBaseline - normalizedCurrent) / (normalizedBaseline - normalizedTarget)) * 100;
-    return Math.max(0, progress);
-  }
+  return calculateDirectionalProgress(normalized.baseline, normalized.current, normalized.target, direction);
 }
 
 /**
@@ -347,7 +369,7 @@ export function calculateAggregatedProgress(
       Number(kr.current_value) || 0,
       Number(kr.target) || 0,
       kr.direction || 'up',
-      { unit: kr.unit, referenceUnit: kr.target_unit }
+      { unit: kr.unit }
     );
   }, 0);
   
