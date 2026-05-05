@@ -90,16 +90,20 @@ export function KpiSidePanel({ className }: KpiSidePanelProps) {
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{kpi.name}</span>
-                  {kpi.area && (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <AreaBadge area={kpi.area} size="sm" compact />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{kpi.area.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                  {(() => {
+                    const eff = (kpi as any).effective_area ?? kpi.area;
+                    if (!eff) return null;
+                    return (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <AreaBadge area={eff} size="sm" compact />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{eff.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="flex items-center gap-2">
