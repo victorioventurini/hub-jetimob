@@ -125,28 +125,8 @@ function StatTile({ icon: Icon, label, value, total, tone }: StatTileProps) {
   );
 }
 
-function KpiDeltaRow({ delta, direction }: { delta: KpiDelta; direction: 'up' | 'down' }) {
-  const Icon = direction === 'up' ? ArrowUpRight : ArrowDownRight;
-  const color = direction === 'up' ? 'text-status-green' : 'text-status-red';
+// `KpiDeltaRow` movido para `../shared/KpiMonthlyComparisonCard`.
 
-  return (
-    <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <Icon className={cn('h-4 w-4 shrink-0', color)} />
-        <span className="text-sm text-foreground truncate">{delta.name}</span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0 text-xs">
-        <span className="text-muted-foreground">
-          {formatKpiValue(delta.previous, delta.unit)} → {formatKpiValue(delta.current, delta.unit)}
-        </span>
-        <span className={cn('font-semibold', color)}>
-          {(delta.deltaPct ?? 0) > 0 ? '+' : ''}
-          {delta.deltaPct?.toFixed(1)}%
-        </span>
-      </div>
-    </div>
-  );
-}
 
 interface AnalysisListProps {
   title: string;
