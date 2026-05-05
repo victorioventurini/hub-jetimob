@@ -10,7 +10,8 @@
  */
 
 import { memo, useMemo } from 'react';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, MinusCircle } from 'lucide-react';
+import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
