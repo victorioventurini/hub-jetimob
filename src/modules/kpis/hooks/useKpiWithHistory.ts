@@ -35,7 +35,7 @@ export interface KpiWithHistoryData {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
   owner?: {
     id: string;
     display_name: string;
@@ -44,7 +44,27 @@ export interface KpiWithHistoryData {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  /** v3.33.0 — `area ?? responsible_area`. SSOT para exibição. */
+  effective_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+  /** v3.33.0 — `team ?? responsible_team`. SSOT para exibição. */
+  effective_team?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export function useKpiWithHistory(kpiId: string | null | undefined) {
