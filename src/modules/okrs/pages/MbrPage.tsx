@@ -118,6 +118,36 @@ export default function MbrPage() {
     enabled: !!quarterlyCycle,
   });
 
+  // ── Sub-step na URL (?substep=) para steps com cursor interno ──
+  // - team-okrs-detail: substep = `team:<teamId>`
+  // - kpi-deep-dive: gerenciado dentro do próprio step (kpiId direto)
+  // Saindo do step, limpamos o param para evitar contexto stale.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const param = url.searchParams.get('substep');
+    if (draft.currentStep === 'team-okrs-detail') {
+      // Hidrata index a partir do substep, caso seja navegação por link.
+      if (param?.startsWith('team:')) {
+        const teamId = param.slice('team:'.length);
+        const idx = draft.data.teamOkrSnapshots.findIndex((t) => t.teamId === teamId);
+        if (idx >= 0 && idx !== draft.data.currentTeamIndex) {
+          updateDraft({ currentTeamIndex: idx });
+        }
+      } else {
+        // Sem param: escreve o atual.
+        const teamId = draft.data.teamOkrSnapshots[draft.data.currentTeamIndex]?.teamId;
+        if (teamId) {
+          url.searchParams.set('substep', `team:${teamId}`);
+          window.history.replaceState(window.history.state, '', url.toString());
+        }
+      }
+    } else if (draft.currentStep !== 'kpi-deep-dive' && param) {
+      url.searchParams.delete('substep');
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.currentStep, draft.data.teamOkrSnapshots.length]);
+
   // Carry-over: pendências do MBR anterior (fonte canônica)
   const { data: mbrCarryOver = [] } = useCarryOverDecisions({
     wizardType: 'mbr',
@@ -549,9 +579,14 @@ export default function MbrPage() {
               updateDraft({ teamOkrSnapshots })
             }
             currentTeamIndex={draft.data.currentTeamIndex}
-            onCurrentTeamIndexChange={(currentTeamIndex: number) =>
-              updateDraft({ currentTeamIndex })
-            }
+            onCurrentTeamIndexChange={(currentTeamIndex: number) => {
+              updateDraft({ currentTeamIndex });
+              const teamId = draft.data.teamOkrSnapshots[currentTeamIndex]?.teamId;
+              const url = new URL(window.location.href);
+              if (teamId) url.searchParams.set('substep', `team:${teamId}`);
+              else url.searchParams.delete('substep');
+              window.history.replaceState(window.history.state, '', url.toString());
+            }}
             decisions={draft.data.decisions}
             onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
               updateDraft({ decisions })
