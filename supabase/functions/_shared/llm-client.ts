@@ -303,6 +303,16 @@ function buildTokenLimitField(model: string, maxTokens: number): Record<string, 
   return { max_tokens: maxTokens };
 }
 
+/**
+ * Some reasoning OpenAI models only accept the provider default temperature.
+ * Omitting the field avoids 400 `unsupported_value` errors while keeping
+ * deterministic temperature control for Gemini and older OpenAI models.
+ */
+function buildTemperatureField(model: string, temperature: number): Record<string, number> {
+  if (/^(openai\/)?gpt-5/i.test(model) && temperature !== 1) return {};
+  return { temperature };
+}
+
 export async function llmComplete(
   config: LLMConfig,
   messages: LLMMessage[],
@@ -335,7 +345,7 @@ export async function llmComplete(
     model: config.model,
     messages,
     ...buildTokenLimitField(config.model, maxTokens),
-    temperature,
+    ...buildTemperatureField(config.model, temperature),
   };
 
   if (options?.tools?.length) {
@@ -431,7 +441,7 @@ export function llmStream(
     model: config.model,
     messages,
     ...buildTokenLimitField(config.model, options?.maxTokens ?? config.maxTokens),
-    temperature: options?.temperature ?? config.temperature,
+    ...buildTemperatureField(config.model, options?.temperature ?? config.temperature),
     stream: true,
   };
 
