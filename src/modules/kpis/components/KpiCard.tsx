@@ -116,8 +116,8 @@ export const KpiCard = React.memo(function KpiCard({ kpi, onClick }: KpiCardProp
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              {kpi.area && (
-                <AreaBadge area={kpi.area} className="shrink-0" />
+              {(kpi.effective_area ?? kpi.area) && (
+                <AreaBadge area={(kpi.effective_area ?? kpi.area)!} className="shrink-0" />
               )}
               <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
               <Tooltip>
