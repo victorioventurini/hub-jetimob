@@ -12,6 +12,7 @@ import { Info } from "lucide-react";
 import { useKrChartData, type KrCheckinHistory } from "../hooks";
 import { formatValueWithUnit } from "@/shared/constants/units";
 import { cn } from "@/lib/utils";
+import { formatValueWithUnit } from "@/shared/constants/units";
 
 interface KrEvolutionChartProps {
   checkins: KrCheckinHistory[];
