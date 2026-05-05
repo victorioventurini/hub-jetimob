@@ -455,7 +455,21 @@ export default function MbrPage() {
           />
         );
 
-      case 'team-okrs-overview':
+      case 'kpi-deep-dive':
+        return (
+          <MbrKpiDeepDiveStep
+            kpiSnapshots={draft.data.kpiSnapshots}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
+              updateDraft({ decisions })
+            }
+            referenceMonth={draft.data.referenceMonth}
+            mbrPreByTeam={mbrPreByTeam}
+            teamNamesById={teamNamesById}
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
         return (
           <MbrTeamOkrsOverviewStep
             teamOkrSnapshots={draft.data.teamOkrSnapshots}
