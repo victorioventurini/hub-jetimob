@@ -12,7 +12,7 @@
  * - mbr/useScorecardMetrics ........ métrica agregada de OKRs por estado
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
@@ -64,6 +64,7 @@ import type {
   MbrOrgOkrSnapshot,
   MbrTeamOkrSnapshot,
   MbrPanoramaCuration,
+  MbrPanoramaAgendaItem,
 } from '@/modules/okrs/types/wizard';
 import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
@@ -348,6 +349,52 @@ export default function MbrPage() {
     [draft.data.decisions, panoramaCuration, updateDraft],
   );
 
+  // Hidratar pauta consolidada do MBR a partir dos Pré-MBR + curadoria IA.
+  // Adiciona itens novos ao final preservando ordem definida pelo líder.
+  const teamNamesByIdMemo = useMemo(
+    () =>
+      Object.fromEntries(
+        draft.data.teamOkrSnapshots.map((t) => [t.teamId, t.teamName]),
+      ),
+    [draft.data.teamOkrSnapshots],
+  );
+
+  useEffect(() => {
+    const current = panoramaCuration.agenda ?? [];
+    const seen = new Set(current.map((i) => i.id));
+    const additions: MbrPanoramaAgendaItem[] = [];
+
+    for (const s of mbrPreAgendaSuggestions) {
+      const id = `pre-mbr:${s.key}`;
+      if (seen.has(id)) continue;
+      additions.push({
+        id,
+        title: s.title,
+        detail: s.detail || undefined,
+        source: 'pre-mbr',
+        teamId: s.teamId,
+        included: true,
+        order: current.length + additions.length,
+      });
+    }
+
+    for (const d of panoramaCuration.suggestedDecisions) {
+      const id = `ai:${d.id}`;
+      if (seen.has(id)) continue;
+      additions.push({
+        id,
+        title: d.title,
+        source: 'ai',
+        category: d.category,
+        included: true,
+        order: current.length + additions.length,
+      });
+    }
+
+    if (additions.length === 0) return;
+    handleCurationChange({ ...panoramaCuration, agenda: [...current, ...additions] });
+  }, [mbrPreAgendaSuggestions, panoramaCuration, handleCurationChange]);
+
   // Loading
   if (isLoadingCycles || isLoadingKpis || isLoadingOkrs || isLoadingTeamOkrs) {
     return <LoadingState text="Carregando dados do MBR..." fullPage />;
@@ -397,6 +444,7 @@ export default function MbrPage() {
             onGenerateCurationDraft={handleGenerateCurationDraft}
             isGeneratingCuration={isGeneratingCuration}
             onAddSuggestedDecision={handleAddSuggestedDecision}
+            teamNamesById={teamNamesByIdMemo}
             topSlot={
               <>
                 <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">

@@ -27,9 +27,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type {
+  MbrPanoramaAgendaItem,
   MbrPanoramaCuration,
   MbrPanoramaCurationState,
 } from '@/modules/okrs/types/wizard';
+import { MbrAgendaCuration } from './MbrAgendaCuration';
 
 // ============================================================
 // CONSTANTS
@@ -57,6 +59,8 @@ export interface MbrPanoramaCurationCardProps {
    * Recebe o título e categoria; retorna `true` se foi adicionada.
    */
   onAddSuggestedDecision?: (title: string, category?: string) => void;
+  /** Mapa teamId → nome (para badges em itens vindos de Pré-MBR). */
+  teamNamesById?: Record<string, string>;
 }
 
 // ============================================================
@@ -69,6 +73,7 @@ function MbrPanoramaCurationCardImpl({
   onGenerateDraft,
   isGenerating = false,
   onAddSuggestedDecision,
+  teamNamesById,
 }: MbrPanoramaCurationCardProps) {
   const stateBadge = STATE_BADGE[curation.state];
   const hasContent =
@@ -111,6 +116,13 @@ function MbrPanoramaCurationCardImpl({
       onCurationChange({ ...curation, suggestedDecisions: updated });
     },
     [curation, onCurationChange, onAddSuggestedDecision],
+  );
+
+  const handleAgendaChange = useCallback(
+    (next: MbrPanoramaAgendaItem[]) => {
+      onCurationChange({ ...curation, agenda: next });
+    },
+    [curation, onCurationChange],
   );
 
   return (
@@ -214,6 +226,13 @@ function MbrPanoramaCurationCardImpl({
             ))}
           </div>
         </div>
+
+        {/* Pauta do MBR — drag-and-drop, incluir/excluir, adicionar manual */}
+        <MbrAgendaCuration
+          agenda={curation.agenda ?? []}
+          onChange={handleAgendaChange}
+          teamNamesById={teamNamesById}
+        />
 
         {/* Decisões sugeridas */}
         {curation.suggestedDecisions.length > 0 && (

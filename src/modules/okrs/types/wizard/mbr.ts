@@ -199,6 +199,27 @@ export interface MbrPanoramaSuggestedDecision {
 }
 
 /**
+ * Item da pauta curada do MBR. Consolida sugestões dos Pré-MBR (líderes),
+ * temas curados pela IA e adições manuais do líder do rito. A ordem e o
+ * `included` são definidos no Step 1 (Panorama & Curadoria) e usados como
+ * roteiro da reunião.
+ */
+export interface MbrPanoramaAgendaItem {
+  id: string;
+  title: string;
+  detail?: string;
+  source: 'pre-mbr' | 'ai' | 'manual';
+  /** teamId quando vier de Pré-MBR (para badge "Time X"). */
+  teamId?: string;
+  /** Categoria semântica quando vier da IA (decision/focus_adjustment/etc.). */
+  category?: string;
+  /** Quando true, entra no roteiro do MBR. */
+  included: boolean;
+  /** Ordem definida pelo líder (0..n). */
+  order: number;
+}
+
+/**
  * Curadoria executiva do Step 1 do MBR — produzida pelo agente
  * `curador-orquestrador` (mesmo do Weekly), com insumos mensais.
  * Persistida em `MbrDraftData.panoramaCuration`.
@@ -216,6 +237,12 @@ export interface MbrPanoramaCuration {
   };
   suggestedDecisions: MbrPanoramaSuggestedDecision[];
   transitions: MbrPanoramaCurationTransition[];
+  /**
+   * Pauta consolidada do rito — preenchida pelo Step 1 (Panorama & Curadoria)
+   * a partir das sugestões dos Pré-MBR e da curadoria IA. Opcional para
+   * retrocompat com drafts anteriores; hidratada por `MbrPage`.
+   */
+  agenda?: MbrPanoramaAgendaItem[];
 }
 
 export const EMPTY_MBR_PANORAMA_CURATION: MbrPanoramaCuration = {
@@ -227,6 +254,7 @@ export const EMPTY_MBR_PANORAMA_CURATION: MbrPanoramaCuration = {
   alertsByBlock: { performance: [], projetos: [], pessoas: [] },
   suggestedDecisions: [],
   transitions: [],
+  agenda: [],
 };
 
 // ============================================================

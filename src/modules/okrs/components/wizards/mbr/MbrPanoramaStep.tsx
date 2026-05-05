@@ -83,6 +83,8 @@ export interface MbrPanoramaStepProps {
   onGenerateCurationDraft?: () => void | Promise<void>;
   isGeneratingCuration?: boolean;
   onAddSuggestedDecision?: (title: string, category?: string) => void;
+  /** Mapa teamId → nome (para badges em itens de pauta vindos de Pré-MBR). */
+  teamNamesById?: Record<string, string>;
 }
 
 interface KpiGroup {
@@ -366,6 +368,7 @@ export function MbrPanoramaStep({
   onGenerateCurationDraft,
   isGeneratingCuration = false,
   onAddSuggestedDecision,
+  teamNamesById,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
@@ -425,9 +428,9 @@ export function MbrPanoramaStep({
     <div className="flex flex-col h-full">
       <WizardStepHeader
         icon={BarChart3}
-        title="Panorama Executivo"
+        title="Panorama & Curadoria do MBR"
         tooltip="mbr-panorama"
-        description="Saúde consolidada do negócio"
+        description="Saúde do mês e pauta consolidada da reunião"
         variant="primary"
         rightContent={
           <div className="flex flex-col items-end gap-1">
@@ -448,6 +451,7 @@ export function MbrPanoramaStep({
               onGenerateDraft={onGenerateCurationDraft}
               isGenerating={isGeneratingCuration}
               onAddSuggestedDecision={onAddSuggestedDecision}
+              teamNamesById={teamNamesById}
             />
           )}
 
