@@ -11,6 +11,9 @@ export {
   calculateProgressFromNullable,
 } from './progressCalculation';
 
+// Percent Formatting (canônico: máx. 2 casas decimais)
+export { formatPercent } from './formatPercent';
+
 // KR Validation
 export {
   validateKrTitle,
