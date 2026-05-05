@@ -87,6 +87,9 @@ export function useMbrPreMonthAnalysis() {
             k.previousValue != null && k.currentValue != null && k.previousValue !== 0
               ? ((k.currentValue - k.previousValue) / Math.abs(k.previousValue)) * 100
               : null;
+          // Direção: 'down' = menor é melhor. Inverte sinal para "positivo = bom".
+          const orientedDeltaPct =
+            deltaPct == null ? null : k.direction === 'down' ? -deltaPct : deltaPct;
           return {
             name: k.name,
             unit: k.unit,
@@ -94,7 +97,9 @@ export function useMbrPreMonthAnalysis() {
             previousValue: k.previousValue,
             target: k.target,
             ragStatus: k.ragStatus,
+            direction: k.direction ?? 'up',
             deltaPct: deltaPct != null ? Math.round(deltaPct * 10) / 10 : null,
+            orientedDeltaPct: orientedDeltaPct != null ? Math.round(orientedDeltaPct * 10) / 10 : null,
           };
         });
 
