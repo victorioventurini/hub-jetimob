@@ -111,10 +111,7 @@ export function MbrKpiGateTable({ snapshots, monthLabel, previousMonthLabel }: M
                         {s.teamName}
                       </Badge>
                     )}
-                    {s.scope && (
-                      <KpiScopeBadge scope={s.scope} buName={currentBu?.name} />
-                    )}
-                    {!area && !s.teamName && s.scope !== 'org' && (
+                    {!area && !s.teamName && (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </div>
