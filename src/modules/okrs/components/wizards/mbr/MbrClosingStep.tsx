@@ -46,6 +46,7 @@ export interface MbrClosingStepProps {
   /** @deprecated avaliação foi removida deste step. */
   hideFeedbackBlock?: boolean;
   onComplete: () => void;
+  isCompleting?: boolean;
   onBack: () => void;
 }
 
