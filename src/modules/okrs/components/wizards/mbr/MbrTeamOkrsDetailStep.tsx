@@ -40,6 +40,8 @@ export interface MbrTeamOkrsDetailStepProps {
   teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
   /** Submissão pré-MBR consolidada por time (highlights, nextSteps, etc.) */
   mbrPreByTeam?: Record<string, MbrPreTeamSubmission>;
+  /** Mês de referência do MBR (YYYY-MM) — usado para resolver nomes de projetos/marcos. */
+  referenceMonth?: string | null;
   onContinue: () => void;
   onBack: () => void;
 }
