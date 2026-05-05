@@ -72,6 +72,17 @@ export interface MbrKpiGateStepProps {
    * Default: `true` (preserva MBR executivo).
    */
   showInlineDecisionInput?: boolean;
+  /**
+   * Mês de referência (`YYYY-MM`) para o overview comparativo de KPIs
+   * globais e de área. Obrigatório quando `showMonthlyOverview = true`.
+   */
+  referenceMonth?: string | null;
+  /**
+   * Quando `true`, renderiza acima dos KPIs em atenção um overview
+   * comparativo (mês de referência vs anterior) dos KPIs `org` e `area`,
+   * agrupados por área e/ou time. Default: `false`.
+   */
+  showMonthlyOverview?: boolean;
 }
 
 // ============================================================
