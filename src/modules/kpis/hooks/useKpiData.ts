@@ -73,12 +73,21 @@ interface DbKpiMetric {
   team?: {
     id: string;
     name: string;
-  };
+  } | null;
   area?: {
     id: string;
     name: string;
     color: string | null;
-  };
+  } | null;
+  responsible_team?: {
+    id: string;
+    name: string;
+  } | null;
+  responsible_area?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
 }
 
 interface DbKpiValue {
