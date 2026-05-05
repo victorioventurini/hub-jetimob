@@ -254,8 +254,8 @@ function SingleKpiChart({ history, compact = false }: SingleKpiChartProps) {
                   strokeDasharray="5 5" 
                   strokeOpacity={0.7}
                   label={{ 
-                    value: "Meta", 
-                    position: "right", 
+                    value: `Meta: ${safeFormat(targetLine)}${history.kpi.unit ? ` ${history.kpi.unit}` : ''}`, 
+                    position: "insideTopRight", 
                     fill: "hsl(var(--muted-foreground))",
                     fontSize: 10,
                   }}
