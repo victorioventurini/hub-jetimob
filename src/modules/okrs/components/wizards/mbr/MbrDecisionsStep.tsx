@@ -123,7 +123,7 @@ export function MbrDecisionsStep({
     <div className="flex flex-col h-full">
       <WizardStepHeader
         icon={LayoutDashboard}
-        title="Decisões Estratégicas"
+        title="Pautas e decisões"
         tooltip="mbr-decisions"
         description={`${decisions.length} registro${decisions.length !== 1 ? 's' : ''} consolidados`}
         variant="green"
