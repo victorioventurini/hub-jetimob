@@ -549,6 +549,7 @@ export default function MbrPage() {
             }
             teamAddendums={mbrPreAddendumsByTeam}
             mbrPreByTeam={mbrPreByTeam}
+            referenceMonth={draft.data.referenceMonth}
             onContinue={goNext}
             onBack={goBack}
           />

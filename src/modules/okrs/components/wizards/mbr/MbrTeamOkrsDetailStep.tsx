@@ -22,6 +22,7 @@ import { LastCheckinBadge } from '../shared/LastCheckinBadge';
 import { KrLinkedDetails } from '../shared/KrLinkedDetails';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { ProjectsSummary } from '@/modules/projects/components/ProjectsSummary';
+import { useMbrPreTeamProjects } from '@/modules/okrs/hooks/useMbrPreTeamProjects';
 import type { MbrTeamOkrSnapshot, TeamCheckinDecision, MbrPreTeamSubmission } from '@/modules/okrs/types/wizard';
 
 // ============================================================
@@ -39,6 +40,8 @@ export interface MbrTeamOkrsDetailStepProps {
   teamAddendums?: Record<string, Array<{ text: string; created_at: string; created_by: string }>>;
   /** Submissão pré-MBR consolidada por time (highlights, nextSteps, etc.) */
   mbrPreByTeam?: Record<string, MbrPreTeamSubmission>;
+  /** Mês de referência do MBR (YYYY-MM) — usado para resolver nomes de projetos/marcos. */
+  referenceMonth?: string | null;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -67,6 +70,7 @@ export function MbrTeamOkrsDetailStep({
   onDecisionsChange,
   teamAddendums = {},
   mbrPreByTeam = {},
+  referenceMonth = null,
   onContinue,
   onBack,
 }: MbrTeamOkrsDetailStepProps) {
@@ -83,6 +87,19 @@ export function MbrTeamOkrsDetailStep({
   // Clamp index to valid range
   const safeIndex = Math.max(0, Math.min(currentTeamIndex, totalTeams - 1));
   const currentTeam = teamsWithOkrs[safeIndex] ?? null;
+
+  // Resolve nomes de projetos/marcos do time atual (BU-scoped, cache compartilhado com Pré-MBR)
+  const { projects: teamProjects } = useMbrPreTeamProjects(currentTeam?.teamId ?? null, referenceMonth);
+  const projectNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of teamProjects) m.set(p.id, p.name);
+    return m;
+  }, [teamProjects]);
+  const milestoneNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of teamProjects) for (const ms of p.milestones) m.set(ms.id, ms.name);
+    return m;
+  }, [teamProjects]);
 
   const isFirstTeam = safeIndex === 0;
   const isLastTeam = safeIndex === totalTeams - 1;
@@ -435,12 +452,12 @@ export function MbrTeamOkrsDetailStep({
                         </div>
                         {projJustifEntries.map(([id, txt]) => (
                           <p key={`p-${id}`} className="text-xs text-muted-foreground pl-5">
-                            <span className="font-medium">Projeto:</span> {txt}
+                            <span className="font-medium">Projeto · {projectNameById.get(id) ?? '(removido)'}:</span> {txt}
                           </p>
                         ))}
                         {milestoneJustifEntries.map(([id, txt]) => (
                           <p key={`m-${id}`} className="text-xs text-muted-foreground pl-5">
-                            <span className="font-medium">Milestone:</span> {txt}
+                            <span className="font-medium">Marco · {milestoneNameById.get(id) ?? '(removido)'}:</span> {txt}
                           </p>
                         ))}
                       </div>
