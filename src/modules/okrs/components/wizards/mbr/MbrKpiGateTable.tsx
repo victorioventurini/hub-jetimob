@@ -122,13 +122,22 @@ export function MbrKpiGateTable({ snapshots, monthLabel, previousMonthLabel }: M
                   {formatValue(s.previousValue, s.unit)}
                 </TableCell>
 
-                {/* Mês atual / Meta */}
+                {/* Mês atual / Meta (% atingido da meta) */}
                 <TableCell className="text-right tabular-nums">
                   <span className="font-medium">{formatValue(s.currentValue, s.unit)}</span>
                   <span className="text-muted-foreground"> / </span>
                   <span className="text-muted-foreground">
                     {s.target != null ? formatValue(s.target, s.unit) : '—'}
                   </span>
+                  {(() => {
+                    if (s.currentValue == null || s.target == null || s.target === 0) return null;
+                    const pct = (s.direction ?? 'up') === 'down'
+                      ? (s.currentValue === 0 ? 100 : (s.target / s.currentValue) * 100)
+                      : (s.currentValue / s.target) * 100;
+                    return (
+                      <span className="text-muted-foreground"> ({pct.toFixed(0)}%)</span>
+                    );
+                  })()}
                 </TableCell>
 
                 {/* Variação % */}
