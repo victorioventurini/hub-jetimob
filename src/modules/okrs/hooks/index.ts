@@ -348,6 +348,12 @@ export {
   type UseMbrPreTeamKpisMonthlyResult,
 } from './useMbrPreTeamKpisMonthly';
 export {
+  useMbrMonthlyKpisByScope,
+  type UseMbrMonthlyKpisByScopeResult,
+  type MbrMonthlyKpiSnapshot,
+  type KpiScope,
+} from './useMbrMonthlyKpisByScope';
+export {
   useMbrOpeningCuration,
   type UseMbrOpeningCurationParams,
   type UseMbrOpeningCurationReturn,

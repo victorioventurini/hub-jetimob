@@ -447,6 +447,8 @@ export default function MbrPage() {
             }
             teamNamesById={teamNamesById}
             proposedKpis={proposedKpis}
+            referenceMonth={draft.data.referenceMonth}
+            showMonthlyOverview
             onContinue={goNext}
             onBack={goBack}
           />

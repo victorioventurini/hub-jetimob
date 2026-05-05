@@ -15,8 +15,6 @@ import {
   TrendingUp,
   Activity,
   FolderKanban,
-  ArrowUpRight,
-  ArrowDownRight,
   Brain,
   RefreshCw,
   AlertTriangle,
@@ -26,7 +24,6 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -34,6 +31,8 @@ import {
   ReferenceMonthPicker,
   WizardStepHeader,
   WizardStepScaffold,
+  KpiMonthlyComparisonCard,
+  computeKpiDeltas,
 } from '../shared';
 import { WizardFirstStepFooter } from '../shared/WizardStepFooter';
 import {
@@ -86,65 +85,8 @@ export interface MbrPreOpeningStepProps {
 // ============================================================
 // HELPERS
 // ============================================================
-
-function formatKpiValue(value: number | null | undefined, unit?: string): string {
-  if (value == null) return '—';
-  const formatted = Math.abs(value) >= 1000
-    ? value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
-    : value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-  if (!unit) return formatted;
-  if (unit === '%') return `${formatted}%`;
-  if (unit === 'R$') return `R$ ${formatted}`;
-  return `${formatted} ${unit}`;
-}
-
-interface KpiDelta {
-  kpiId: string;
-  name: string;
-  unit?: string;
-  current: number | null;
-  previous: number | null;
-  deltaPct: number | null;
-  ragStatus: string;
-}
-
-function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
-  ups: KpiDelta[];
-  downs: KpiDelta[];
-  withoutComparison: number;
-} {
-  const deltas: KpiDelta[] = kpis.map((k) => {
-    const deltaPct =
-      k.previousValue != null && k.currentValue != null && k.previousValue !== 0
-        ? ((k.currentValue - k.previousValue) / Math.abs(k.previousValue)) * 100
-        : null;
-    return {
-      kpiId: k.kpiId,
-      name: k.name,
-      unit: k.unit,
-      current: k.currentValue,
-      previous: k.previousValue,
-      deltaPct: deltaPct != null ? Math.round(deltaPct * 10) / 10 : null,
-      ragStatus: k.ragStatus,
-    };
-  });
-
-  const withDelta = deltas.filter((d) => d.deltaPct != null);
-  const ups = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) > 0)
-    .sort((a, b) => (b.deltaPct ?? 0) - (a.deltaPct ?? 0))
-    .slice(0, 3);
-  const downs = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) < 0)
-    .sort((a, b) => (a.deltaPct ?? 0) - (b.deltaPct ?? 0))
-    .slice(0, 3);
-
-  return {
-    ups,
-    downs,
-    withoutComparison: deltas.length - withDelta.length,
-  };
-}
+// `formatKpiValue` / `computeKpiDeltas` movidos para
+// `../shared/KpiMonthlyComparisonCard` (SSOT visual).
 
 // ============================================================
 // SUBCOMPONENTS
@@ -180,28 +122,8 @@ function StatTile({ icon: Icon, label, value, total, tone }: StatTileProps) {
   );
 }
 
-function KpiDeltaRow({ delta, direction }: { delta: KpiDelta; direction: 'up' | 'down' }) {
-  const Icon = direction === 'up' ? ArrowUpRight : ArrowDownRight;
-  const color = direction === 'up' ? 'text-status-green' : 'text-status-red';
+// `KpiDeltaRow` movido para `../shared/KpiMonthlyComparisonCard`.
 
-  return (
-    <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <Icon className={cn('h-4 w-4 shrink-0', color)} />
-        <span className="text-sm text-foreground truncate">{delta.name}</span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0 text-xs">
-        <span className="text-muted-foreground">
-          {formatKpiValue(delta.previous, delta.unit)} → {formatKpiValue(delta.current, delta.unit)}
-        </span>
-        <span className={cn('font-semibold', color)}>
-          {(delta.deltaPct ?? 0) > 0 ? '+' : ''}
-          {delta.deltaPct?.toFixed(1)}%
-        </span>
-      </div>
-    </div>
-  );
-}
 
 interface AnalysisListProps {
   title: string;
@@ -460,36 +382,7 @@ export function MbrPreOpeningStep({
 
         {/* ─── 2. Comparativo vs mês anterior ─── */}
         {!showLoading && hasComparisonData && (
-          <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Comparativo vs mês anterior
-              </p>
-              {kpiDeltas.withoutComparison > 0 && (
-                <Badge variant="outline" className="text-[10px] font-normal">
-                  {kpiDeltas.withoutComparison} sem dado anterior
-                </Badge>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-              <div>
-                <p className="text-xs font-semibold text-status-green mb-1">Maiores avanços</p>
-                {kpiDeltas.ups.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">Nenhum KPI subiu este mês.</p>
-                ) : (
-                  kpiDeltas.ups.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="up" />)
-                )}
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-status-red mb-1">Maiores quedas</p>
-                {kpiDeltas.downs.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">Nenhum KPI caiu este mês.</p>
-                ) : (
-                  kpiDeltas.downs.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="down" />)
-                )}
-              </div>
-            </div>
-          </div>
+          <KpiMonthlyComparisonCard snapshots={monthlyKpiSnapshots} />
         )}
 
         {/* ─── 3. Análise IA ─── */}

@@ -133,3 +133,13 @@ export type { RitualGreetingForStepProps } from './RitualGreetingForStep';
 
 export { ReferenceMonthPicker } from './ReferenceMonthPicker';
 export type { ReferenceMonthPickerProps } from './ReferenceMonthPicker';
+
+export {
+  KpiMonthlyComparisonCard,
+  computeKpiDeltas,
+  formatKpiValue,
+} from './KpiMonthlyComparisonCard';
+export type {
+  KpiMonthlyComparisonCardProps,
+  KpiDelta,
+} from './KpiMonthlyComparisonCard';

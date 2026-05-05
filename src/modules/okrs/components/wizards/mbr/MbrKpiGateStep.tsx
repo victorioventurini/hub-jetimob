@@ -17,11 +17,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
-import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
+import {
+  WizardStepHeader,
+  WizardStepFooter,
+  InlineDecisionInput,
+  KpiMonthlyComparisonCard,
+} from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
+import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
 // TYPES
@@ -64,6 +72,17 @@ export interface MbrKpiGateStepProps {
    * Default: `true` (preserva MBR executivo).
    */
   showInlineDecisionInput?: boolean;
+  /**
+   * Mês de referência (`YYYY-MM`) para o overview comparativo de KPIs
+   * globais e de área. Obrigatório quando `showMonthlyOverview = true`.
+   */
+  referenceMonth?: string | null;
+  /**
+   * Quando `true`, renderiza acima dos KPIs em atenção um overview
+   * comparativo (mês de referência vs anterior) dos KPIs `org` e `area`,
+   * agrupados por área e/ou time. Default: `false`.
+   */
+  showMonthlyOverview?: boolean;
 }
 
 // ============================================================
@@ -80,7 +99,54 @@ export function MbrKpiGateStep({
   showStrategicDecisionToggle = true,
   requirePlanForCriticalKpis = false,
   showInlineDecisionInput = true,
+  referenceMonth = null,
+  showMonthlyOverview = false,
 }: MbrKpiGateStepProps) {
+  // Overview mensal comparativo (KPIs globais + de área).
+  const overviewEnabled = !!showMonthlyOverview && !!referenceMonth;
+  const { snapshots: overviewSnapshots, isLoading: overviewLoading } =
+    useMbrMonthlyKpisByScope(overviewEnabled ? referenceMonth : null, ['org', 'area']);
+
+  const overviewGroups = useMemo(() => {
+    if (!overviewEnabled) return null;
+    const orgItems = overviewSnapshots.filter((k) => k.scope === 'org');
+    const areaItems = overviewSnapshots.filter((k) => k.scope === 'area');
+
+    // org: agrupar por Área → Time
+    const orgByAreaTeam = new Map<string, MbrMonthlyKpiSnapshot[]>();
+    for (const k of orgItems) {
+      const areaLabel = k.areaName ?? 'Sem área';
+      const teamLabel = k.teamName ?? 'Sem time';
+      const key = `${areaLabel}__${teamLabel}`;
+      const arr = orgByAreaTeam.get(key) ?? [];
+      arr.push(k);
+      orgByAreaTeam.set(key, arr);
+    }
+    const orgGroups = Array.from(orgByAreaTeam.entries())
+      .map(([key, items]) => {
+        const [areaLabel, teamLabel] = key.split('__');
+        return { key, areaLabel, teamLabel, items };
+      })
+      .sort((a, b) =>
+        a.areaLabel.localeCompare(b.areaLabel, 'pt-BR') ||
+        a.teamLabel.localeCompare(b.teamLabel, 'pt-BR'),
+      );
+
+    // area: agrupar por Time
+    const areaByTeam = new Map<string, MbrMonthlyKpiSnapshot[]>();
+    for (const k of areaItems) {
+      const teamLabel = k.teamName ?? 'Sem time';
+      const arr = areaByTeam.get(teamLabel) ?? [];
+      arr.push(k);
+      areaByTeam.set(teamLabel, arr);
+    }
+    const areaGroups = Array.from(areaByTeam.entries())
+      .map(([teamLabel, items]) => ({ teamLabel, items }))
+      .sort((a, b) => a.teamLabel.localeCompare(b.teamLabel, 'pt-BR'));
+
+    return { orgGroups, areaGroups };
+  }, [overviewEnabled, overviewSnapshots]);
+
   const criticalKpis = useMemo(
     () => kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow'),
     [kpiSnapshots]
@@ -163,7 +229,73 @@ export function MbrKpiGateStep({
         />
       }
     >
-      <div className="p-6 space-y-4 min-w-0 max-w-full">
+      <div className="p-6 space-y-6 min-w-0 max-w-full">
+        {/* ─── Overview comparativo (KPIs Globais + KPIs de Área) ─── */}
+        {overviewEnabled && (
+          <section className="space-y-6">
+            {overviewLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-28 w-full" />
+              </div>
+            ) : overviewGroups && (overviewGroups.orgGroups.length + overviewGroups.areaGroups.length) > 0 ? (
+              <>
+                {overviewGroups.orgGroups.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        KPIs Globais — {formatMonthLabel(referenceMonth!)}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Agrupados por área e time
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      {overviewGroups.orgGroups.map((g) => (
+                        <KpiMonthlyComparisonCard
+                          key={`org-${g.key}`}
+                          snapshots={g.items}
+                          title={`${g.areaLabel} · ${g.teamLabel}`}
+                          emptyMessage="Sem dados comparáveis no período."
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {overviewGroups.areaGroups.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        KPIs de Área — {formatMonthLabel(referenceMonth!)}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Agrupados por time
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      {overviewGroups.areaGroups.map((g) => (
+                        <KpiMonthlyComparisonCard
+                          key={`area-${g.teamLabel}`}
+                          snapshots={g.items}
+                          title={g.teamLabel}
+                          emptyMessage="Sem dados comparáveis no período."
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                Sem KPIs globais ou de área cadastrados nesta BU.
+              </p>
+            )}
+            <div className="border-t border-border" />
+          </section>
+        )}
+
+        <div className="space-y-4">
         {criticalKpis.length === 0 ? (
           <div className="text-center py-8 space-y-2">
             <p className="text-sm text-muted-foreground">
@@ -270,6 +402,7 @@ export function MbrKpiGateStep({
             </Card>
           ))
         )}
+        </div>
       </div>
     </WizardStepScaffold>
   );
