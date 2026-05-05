@@ -47,7 +47,12 @@ interface KpiInput {
   previousValue: number | null;
   target: number | null;
   ragStatus: string;
+  /** Direção da meta: 'up' = maior é melhor; 'down' = menor é melhor. */
+  direction?: 'up' | 'down' | 'maintain' | null;
+  /** Delta percentual bruto (current vs previous). */
   deltaPct?: number | null;
+  /** Delta orientado pela direção: positivo = bom, negativo = ruim. */
+  orientedDeltaPct?: number | null;
 }
 
 interface ProjectInput {
@@ -239,7 +244,7 @@ PANORAMA AGREGADO:
 KEY RESULTS (estado final do mês):
 ${JSON.stringify(payload.krs, null, 2)}
 
-KPIs (com delta vs mês anterior, quando disponível):
+KPIs (com delta vs mês anterior, quando disponível). IMPORTANTE: cada KPI traz \`direction\` ('up' = maior é melhor; 'down' = menor é melhor). Sempre interprete avanço/piora pelo \`orientedDeltaPct\` (positivo = bom, negativo = ruim) — NUNCA pelo \`deltaPct\` bruto. Ex.: CAC com \`direction='down'\` que sobe é PIORA, mesmo com deltaPct positivo.
 ${JSON.stringify(payload.kpis, null, 2)}
 
 PROJETOS/MARCOS ATRASADOS:

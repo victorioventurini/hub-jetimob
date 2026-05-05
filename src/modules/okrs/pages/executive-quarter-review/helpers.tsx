@@ -6,13 +6,15 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-export function trendArrow(variation: number | null) {
-  const v = variation ?? 0;
-  if (v >= 10) return <ArrowUp className="h-3.5 w-3.5" />;
-  if (v > 1) return <TrendingUp className="h-3.5 w-3.5" />;
-  if (v <= -10) return <ArrowDown className="h-3.5 w-3.5" />;
-  if (v < -1) return <TrendingDown className="h-3.5 w-3.5" />;
-  return <ArrowRight className="h-3.5 w-3.5" />;
+export function trendArrow(variation: number | null, direction?: 'up' | 'down' | null) {
+  if (variation == null) return <ArrowRight className="h-3.5 w-3.5" />;
+  // Normaliza pelo sentido desejado: positivo = bom.
+  const oriented = direction === 'down' ? -variation : variation;
+  if (oriented >= 10) return <ArrowUp className="h-3.5 w-3.5 text-status-green" />;
+  if (oriented > 1) return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
+  if (oriented <= -10) return <ArrowDown className="h-3.5 w-3.5 text-status-red" />;
+  if (oriented < -1) return <TrendingDown className="h-3.5 w-3.5 text-status-red" />;
+  return <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />;
 }
 
 export function statusToKpiBadge(rag: string | null) {

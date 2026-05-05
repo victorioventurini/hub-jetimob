@@ -40,7 +40,7 @@ export function KpisSection({ kpisByCategory }: Props) {
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge className={rag.cls}>{rag.label}</Badge>
                       <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                        {trendArrow(kpi.variation)}
+                        {trendArrow(kpi.variation, kpi.direction)}
                         {kpi.variation === null ? '—' : `${kpi.variation.toFixed(1)}%`}
                       </span>
                     </div>

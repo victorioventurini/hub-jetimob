@@ -31,7 +31,7 @@ import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheck
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { formatValueWithUnit } from '@/shared/constants/units';
-import { variationVsLast, variationVsTarget as deriveVariationVsTarget } from '@/modules/okrs/utils/kpiVariations';
+import { variationVsLast, variationVsTarget as deriveVariationVsTarget, classifyKpiDelta } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 import { MbrPanoramaCurationCard } from './MbrPanoramaCurationCard';
@@ -135,9 +135,10 @@ function ragBadgeClass(rag: string) {
   }
 }
 
-function TrendIcon({ value }: { value: number | null }) {
-  if (!value || value === 0) return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
-  if (value > 0) return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
+function TrendIcon({ value, direction }: { value: number | null; direction?: 'up' | 'down' | null }) {
+  const klass = classifyKpiDelta(value, direction);
+  if (!klass || klass === 'flat') return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (klass === 'improvement') return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
   return <TrendingDown className="h-3.5 w-3.5 text-status-red" />;
 }
 
@@ -198,7 +199,7 @@ function KpiCardGrid({ kpis }: { kpis: MbrKpiSnapshot[] }) {
                 return (
                   <div className="text-right space-y-1">
                     <div className="flex items-center gap-1 justify-end">
-                      <TrendIcon value={vsLast} />
+                      <TrendIcon value={vsLast} direction={kpi.direction} />
                       <span className="text-xs">{formatVariation(vsLast)} vs mês ant.</span>
                     </div>
                     <div className="flex items-center gap-1 justify-end">

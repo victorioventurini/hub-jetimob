@@ -14,6 +14,10 @@ import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
+import {
+  classifyKpiDelta,
+  orientedDeltaPct,
+} from '@/modules/okrs/utils/kpiVariations';
 
 // ============================================================
 // HELPERS (canônicos — antes duplicados em MbrPreOpeningStep)
@@ -39,8 +43,12 @@ export interface KpiDelta {
   unit?: string;
   current: number | null;
   previous: number | null;
+  /** Delta percentual BRUTO (current vs previous), apenas para exibição numérica. */
   deltaPct: number | null;
+  /** Delta percentual ORIENTADO pela direção: positivo = bom, negativo = ruim. */
+  orientedDeltaPct: number | null;
   ragStatus: string;
+  direction: 'up' | 'down' | null;
 }
 
 export function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
@@ -49,29 +57,33 @@ export function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
   withoutComparison: number;
 } {
   const deltas: KpiDelta[] = kpis.map((k) => {
-    const deltaPct =
+    const rawDelta =
       k.previousValue != null && k.currentValue != null && k.previousValue !== 0
         ? ((k.currentValue - k.previousValue) / Math.abs(k.previousValue)) * 100
         : null;
+    const direction = (k.direction ?? null) as 'up' | 'down' | null;
+    const oriented = orientedDeltaPct(rawDelta, direction);
     return {
       kpiId: k.kpiId,
       name: k.name,
       unit: k.unit,
       current: k.currentValue,
       previous: k.previousValue,
-      deltaPct: deltaPct != null ? Math.round(deltaPct * 10) / 10 : null,
+      deltaPct: rawDelta != null ? Math.round(rawDelta * 10) / 10 : null,
+      orientedDeltaPct: oriented != null ? Math.round(oriented * 10) / 10 : null,
       ragStatus: k.ragStatus,
+      direction,
     };
   });
 
-  const withDelta = deltas.filter((d) => d.deltaPct != null);
+  const withDelta = deltas.filter((d) => d.orientedDeltaPct != null);
   const ups = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) > 0)
-    .sort((a, b) => (b.deltaPct ?? 0) - (a.deltaPct ?? 0))
+    .filter((d) => (d.orientedDeltaPct ?? 0) > 0)
+    .sort((a, b) => (b.orientedDeltaPct ?? 0) - (a.orientedDeltaPct ?? 0))
     .slice(0, 3);
   const downs = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) < 0)
-    .sort((a, b) => (a.deltaPct ?? 0) - (b.deltaPct ?? 0))
+    .filter((d) => (d.orientedDeltaPct ?? 0) < 0)
+    .sort((a, b) => (a.orientedDeltaPct ?? 0) - (b.orientedDeltaPct ?? 0))
     .slice(0, 3);
 
   return {
@@ -94,11 +106,19 @@ const KpiDeltaRow = memo(function KpiDeltaRow({
 }) {
   const Icon = direction === 'up' ? ArrowUpRight : ArrowDownRight;
   const color = direction === 'up' ? 'text-status-green' : 'text-status-red';
+  const directionHint =
+    delta.direction === 'down'
+      ? ' · menor é melhor'
+      : delta.direction === 'up'
+        ? ''
+        : '';
   return (
     <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <Icon className={cn('h-4 w-4 shrink-0', color)} />
-        <span className="text-sm text-foreground truncate">{delta.name}</span>
+        <span className="text-sm text-foreground truncate" title={`${delta.name}${directionHint}`}>
+          {delta.name}
+        </span>
       </div>
       <div className="flex items-center gap-2 shrink-0 text-xs">
         <span className="text-muted-foreground">
@@ -168,7 +188,7 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
           <div>
             <p className="text-xs font-semibold text-status-green mb-1">Maiores avanços</p>
             {deltas.ups.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Nenhum KPI subiu este mês.</p>
+              <p className="text-xs text-muted-foreground italic">Nenhum KPI avançou este mês.</p>
             ) : (
               deltas.ups.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="up" />)
             )}
@@ -176,7 +196,7 @@ export const KpiMonthlyComparisonCard = memo(function KpiMonthlyComparisonCard({
           <div>
             <p className="text-xs font-semibold text-status-red mb-1">Maiores quedas</p>
             {deltas.downs.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Nenhum KPI caiu este mês.</p>
+              <p className="text-xs text-muted-foreground italic">Nenhum KPI piorou este mês.</p>
             ) : (
               deltas.downs.map((d) => <KpiDeltaRow key={d.kpiId} delta={d} direction="down" />)
             )}

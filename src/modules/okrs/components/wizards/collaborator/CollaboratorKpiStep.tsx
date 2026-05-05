@@ -377,6 +377,7 @@ function CollaboratorKpiStepWithKpi({
           valueAdornmentSlot={
             <div className="flex items-center justify-between gap-2 mt-1">
               {valueChange !== null && kpi.latest_value !== null && (() => {
+                // Direção: 'down' = menor é melhor; 'up'/null = maior é melhor.
                 const isImprovement =
                   kpi.direction === 'down' ? valueChange < 0 : valueChange > 0;
                 const isWorse =
