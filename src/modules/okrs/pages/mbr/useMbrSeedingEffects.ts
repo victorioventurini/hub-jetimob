@@ -278,21 +278,12 @@ export function useSeedOrgOkrSnapshots(args: {
       const krs = obj.key_results || [];
       const avgProgress =
         krs.length > 0
-          ? krs.reduce((sum: number, kr: any) => {
+            ? krs.reduce((sum: number, kr: any) => {
               const baseline = Number(kr.baseline ?? 0);
               const current = Number(kr.current_value ?? baseline);
               const target = Number(kr.target ?? baseline);
-              const direction = kr.direction || 'up';
-              if (direction === 'up') {
-                if (target === baseline) return sum + (current >= target ? 100 : 0);
-                return (
-                  sum + Math.max(0, ((current - baseline) / (target - baseline)) * 100)
-                );
-              }
-              if (baseline === target) return sum + (current <= target ? 100 : 0);
-              return (
-                sum + Math.max(0, ((baseline - current) / (baseline - target)) * 100)
-              );
+              const direction = (kr.direction || 'up') as 'up' | 'down' | 'maintain';
+              return sum + calculateProgress(baseline, current, target, direction, { unit: kr.unit });
             }, 0) / krs.length
           : 0;
 
@@ -317,20 +308,7 @@ export function useSeedOrgOkrSnapshots(args: {
           const krCurrent = Number(kr.current_value ?? krBaseline);
           const krTarget = Number(kr.target ?? krBaseline);
           const krDirection = (kr.direction || 'up') as 'up' | 'down';
-          const krProgress = (() => {
-            if (krDirection === 'up') {
-              if (krTarget === krBaseline) return krCurrent >= krTarget ? 100 : 0;
-              return Math.max(
-                0,
-                ((krCurrent - krBaseline) / (krTarget - krBaseline)) * 100,
-              );
-            }
-            if (krBaseline === krTarget) return krCurrent <= krTarget ? 100 : 0;
-            return Math.max(
-              0,
-              ((krBaseline - krCurrent) / (krBaseline - krTarget)) * 100,
-            );
-          })();
+          const krProgress = calculateProgress(krBaseline, krCurrent, krTarget, krDirection, { unit: kr.unit });
           return {
             krId: kr.id,
             title: kr.title,
