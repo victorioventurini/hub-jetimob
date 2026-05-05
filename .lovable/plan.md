@@ -1,34 +1,36 @@
-## Mudança
+## Objetivo
+No step `org-okrs` do MBR (`/rituals/mbr?step=org-okrs`), exibir **um Objetivo Organizacional por página**, com navegação interna "Anterior / Próximo" — mesmo padrão do `MbrKpiDeepDiveStep` (1 KPI fora da meta por página).
 
-No `MbrKpiGateStep.tsx`, substituir a única seção "KPIs Globais e de Área" por **duas seções independentes**, filtrando `overviewSnapshots` por `scope`:
+## Escopo
+Apenas `src/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep.tsx`. Sem alterar:
+- Ordem de steps (`STEP_ORDER`/`WIZARD_STEPS`)
+- `MbrPage.tsx` (props do step inalteradas)
+- Tipos `MbrOrgOkrSnapshot` / `MbrDraftData`
+- Canônicos: `WizardStepScaffold`, `WizardStepFooter`, `OkrProgressBar`, `OkrStatusBadge`, `InlineDecisionInput`
 
-```text
-┌─ KPIs Globais — abril de 2026 ──────────────┐
-│  KpiMonthlyComparisonCard (scope='org')     │
-└─────────────────────────────────────────────┘
+## Mudanças no `MbrOrgOkrsStep.tsx`
+1. **Estado de paginação local** (efêmero, igual ao KPI deep-dive):
+   - `const [currentObjectiveIndex, setCurrentObjectiveIndex] = useState(0)`
+   - `useEffect` para clampar quando `orgOkrSnapshots.length` mudar.
+2. **Header** (`WizardStepHeader`): badge passa a `${idx+1} / ${total}` (mantém `TeamKrsToggle`).
+3. **Render**: substituir `.map(...)` por render do único `okr = orgOkrSnapshots[currentObjectiveIndex]`. Conteúdo do card preservado (título, trend, status, % badge, lista de KRs com `OkrProgressBar` + contribuições por time via `showTeamKrs`). Empty state preservado.
+4. **Gate por página + footer**:
+   - `currentNeedsDecision` = objetivo da página marcado "não é mais prioridade" e sem decisão `sourceStep === 'org-okrs'` ligada ao seu título.
+   - `handlePrimary`: bloqueia se `currentNeedsDecision`; senão, se `!isLast` avança índice; se `isLast` chama `onContinue()`.
+   - `handleBack`: se `isFirst` chama `onBack()`; senão recua índice.
+   - `WizardStepFooter`: `backLabel = isFirst ? 'Voltar' : 'Anterior'`; `primaryLabel = isLast ? 'Consolidar Diretrizes' : 'Próximo Objetivo'`; `primaryDisabled = currentNeedsDecision`.
+   - Mensagem amber só aparece quando `currentNeedsDecision`.
+5. **InlineDecisionInput**: `sourceStep="org-okrs"` mantido; placeholder pode contextualizar com o título do objetivo atual (somente UX).
 
-┌─ KPIs de Área — abril de 2026 ──────────────┐
-│  KpiMonthlyComparisonCard (scope='area')    │
-└─────────────────────────────────────────────┘
-```
+## Conformidade canônica (verificada)
+- TCR v3.30.x: framework v4 do MBR mantém `org-okrs` como step próprio — sem mudança estrutural.
+- `WIZARDS_FRAMEWORK_BOUNDARY.md`: scaffold/footer canônicos preservados.
+- Padrão `rich-paginated` (1 item/página) já é canônico em `KpiGateStep`/`MbrKpiDeepDiveStep`.
+- Sem queries novas → sem impacto em BU isolation, RLS, identity, query keys.
 
-## Detalhes técnicos
-
-Arquivo único: `src/modules/okrs/components/wizards/mbr/MbrKpiGateStep.tsx` (linhas 182–209).
-
-1. Derivar com `useMemo`:
-   - `orgSnapshots = overviewSnapshots.filter(s => s.scope === 'org')`
-   - `areaSnapshots = overviewSnapshots.filter(s => s.scope === 'area')`
-
-2. Renderizar duas `<section>` separadas, cada uma com:
-   - Heading: `KPIs Globais — {formatMonthLabel(referenceMonth)}` / `KPIs de Área — {formatMonthLabel(referenceMonth)}`
-   - Loading: `<Skeleton>` enquanto `overviewLoading`
-   - Conteúdo: `KpiMonthlyComparisonCard` (mesmas props atuais — `showNoData`, `stack`, `topN={5}`)
-   - Empty: mensagem específica ("Sem KPIs globais cadastrados nesta BU." / "Sem KPIs de área cadastrados nesta BU.")
-   - Divider entre as seções
-
-3. Sem mudança no hook `useMbrMonthlyKpisByScope` — ele já retorna ambos os escopos (`['org', 'area']`) com o campo `scope` em cada snapshot.
-
-4. Sem mudanças em DB, RLS, queryKey, ou outros ritos. Apenas presentation.
-
-Quer que eu implemente?
+## QA manual
+- `/rituals/mbr?step=org-okrs` com ≥ 2 objetivos org: badge `1/N` correto; "Próximo Objetivo" navega; no último vira "Consolidar Diretrizes" e avança para `decisions`.
+- "Anterior" recua; no primeiro vira "Voltar" e sai do step.
+- Marcar "não é mais prioridade" sem decisão bloqueia o botão e mostra msg amber.
+- Toggle "KRs dos times" continua funcionando dentro da página.
+- Empty state (0 objetivos) inalterado.
