@@ -239,6 +239,31 @@ function MbrPanoramaCurationCardImpl({
           </div>
         </div>
 
+        {/* Roteiro fixo do rito — derivado de WIZARD_STEPS (SSOT) */}
+        <div className="space-y-2">
+          <Label className="text-xs uppercase text-muted-foreground flex items-center gap-1.5">
+            <ListChecks className="h-3 w-3" /> Roteiro do rito ({WIZARD_STEPS.length} etapas)
+          </Label>
+          <ol className="space-y-1">
+            {WIZARD_STEPS.map((s, idx) => (
+              <li
+                key={s.id}
+                className="flex items-start gap-2 rounded-md border bg-muted/20 px-2.5 py-1.5"
+              >
+                <span className="text-[11px] font-medium text-muted-foreground shrink-0 w-5 tabular-nums">
+                  {idx + 1}.
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium leading-tight">{s.label}</p>
+                  {s.description && (
+                    <p className="text-[11px] text-muted-foreground leading-tight">{s.description}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
         {/* Pauta do MBR — drag-and-drop, incluir/excluir, adicionar manual */}
         <MbrAgendaCuration
           agenda={curation.agenda ?? []}
