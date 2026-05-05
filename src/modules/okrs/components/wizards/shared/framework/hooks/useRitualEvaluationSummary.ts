@@ -41,16 +41,16 @@ export function useRitualEvaluationSummary(sessionId: string | null) {
       const row = Array.isArray(data) ? data[0] : data;
       if (!row) return null;
       return {
-        sessionId: data.session_id as string,
-        responseCount: Number(data.response_count ?? 0),
-        expectedCount: Number(data.expected_count ?? 0),
-        avgValue: data.avg_value === null ? null : Number(data.avg_value),
-        avgQuality: data.avg_quality === null ? null : Number(data.avg_quality),
-        avgDecisions: data.avg_decisions === null ? null : Number(data.avg_decisions),
-        avgTime: data.avg_time === null ? null : Number(data.avg_time),
-        evaluationOpenAt: (data.evaluation_open_at as string | null) ?? null,
-        evaluationClosedAt: (data.evaluation_closed_at as string | null) ?? null,
-        evaluationShortCode: (data.evaluation_short_code as string | null) ?? null,
+        sessionId: row.session_id as string,
+        responseCount: Number(row.response_count ?? 0),
+        expectedCount: Number(row.expected_count ?? 0),
+        avgValue: row.avg_value === null ? null : Number(row.avg_value),
+        avgQuality: row.avg_quality === null ? null : Number(row.avg_quality),
+        avgDecisions: row.avg_decisions === null ? null : Number(row.avg_decisions),
+        avgTime: row.avg_time === null ? null : Number(row.avg_time),
+        evaluationOpenAt: (row.evaluation_open_at as string | null) ?? null,
+        evaluationClosedAt: (row.evaluation_closed_at as string | null) ?? null,
+        evaluationShortCode: (row.evaluation_short_code as string | null) ?? null,
       };
     },
     enabled: !!sessionId,
