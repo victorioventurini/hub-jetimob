@@ -212,6 +212,9 @@ export function kpiForWizardV2ToGateItem(
     unit: kpi.unit,
     latestReferenceDate: kpi.latest_reference_date,
     scope: kpi.scope,
+    areaName: kpi.effective_area?.name ?? null,
+    areaColor: kpi.effective_area?.color ?? null,
+    teamName: kpi.effective_team?.name ?? null,
   };
 }
 
