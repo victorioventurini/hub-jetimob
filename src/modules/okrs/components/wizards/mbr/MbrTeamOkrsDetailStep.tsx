@@ -88,6 +88,19 @@ export function MbrTeamOkrsDetailStep({
   const safeIndex = Math.max(0, Math.min(currentTeamIndex, totalTeams - 1));
   const currentTeam = teamsWithOkrs[safeIndex] ?? null;
 
+  // Resolve nomes de projetos/marcos do time atual (BU-scoped, cache compartilhado com Pré-MBR)
+  const { projects: teamProjects } = useMbrPreTeamProjects(currentTeam?.teamId ?? null, referenceMonth);
+  const projectNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of teamProjects) m.set(p.id, p.name);
+    return m;
+  }, [teamProjects]);
+  const milestoneNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of teamProjects) for (const ms of p.milestones) m.set(ms.id, ms.name);
+    return m;
+  }, [teamProjects]);
+
   const isFirstTeam = safeIndex === 0;
   const isLastTeam = safeIndex === totalTeams - 1;
 
