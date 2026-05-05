@@ -444,6 +444,7 @@ export default function MbrPage() {
             onGenerateCurationDraft={handleGenerateCurationDraft}
             isGeneratingCuration={isGeneratingCuration}
             onAddSuggestedDecision={handleAddSuggestedDecision}
+            teamNamesById={teamNamesByIdMemo}
             topSlot={
               <>
                 <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">
