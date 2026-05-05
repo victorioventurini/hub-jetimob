@@ -55,6 +55,11 @@ interface CurateEdgeResponse {
   output?: CuratorOutput | null;
 }
 
+interface EdgeSuccessEnvelope<T> {
+  success: true;
+  data: T;
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -101,6 +106,16 @@ function mapCuratorOutputToCuration(
       { state: 'draft', at: generatedAt, by: byProfileId },
     ],
   };
+}
+
+function unwrapCurateResponse(
+  response: CurateEdgeResponse | EdgeSuccessEnvelope<CurateEdgeResponse> | null,
+): CurateEdgeResponse | null {
+  if (!response) return null;
+  if ('data' in response && 'success' in response && response.success === true) {
+    return response.data;
+  }
+  return response as CurateEdgeResponse;
 }
 
 // ============================================================
@@ -186,37 +201,38 @@ export function useMbrOpeningCuration(
           status: o.status,
         }));
 
-        const { data, error: invokeError } = await supabase.functions.invoke<CurateEdgeResponse>(
-          'mbr-curate-opening',
-          {
-            body: {
-              bu_id: currentBu.id,
-              buName: currentBu.name,
-              referenceMonth: params.referenceMonth,
-              criticalKpis,
-              orgObjectives,
-              mbrPreAggregates: params.mbrPreAggregates,
-              coverage: params.coverage,
-            },
+        const { data, error: invokeError } = await supabase.functions.invoke<
+          CurateEdgeResponse | EdgeSuccessEnvelope<CurateEdgeResponse>
+        >('mbr-curate-opening', {
+          body: {
+            bu_id: currentBu.id,
+            buName: currentBu.name,
+            referenceMonth: params.referenceMonth,
+            criticalKpis,
+            orgObjectives,
+            mbrPreAggregates: params.mbrPreAggregates,
+            coverage: params.coverage,
           },
-        );
+        });
 
         if (invokeError) {
           setError(invokeError.message);
           return null;
         }
 
-        if (!data || data.origin === 'manual' || !data.output) {
+        const response = unwrapCurateResponse(data ?? null);
+
+        if (!response || response.origin === 'manual' || !response.output) {
           // Fallback: mantém estrutura atual mas registra origem manual
           return {
             next: { ...prevCuration, origin: 'manual' as const },
-            reason: data?.reason || 'MANUAL_FALLBACK',
+            reason: response?.reason || 'MANUAL_FALLBACK',
           };
         }
 
-        const generatedAt = data.generatedAt || new Date().toISOString();
+        const generatedAt = response.generatedAt || new Date().toISOString();
         const next = mapCuratorOutputToCuration(
-          data.output,
+          response.output,
           generatedAt,
           realProfileId,
           prevCuration.transitions,
