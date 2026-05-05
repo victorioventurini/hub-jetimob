@@ -114,8 +114,8 @@ export function MbrKpiDeepDiveStep({
   return (
     <KpiGateStep
       persona="mbr"
-      version="v3"
-      stepId="kpis"
+      version="v4"
+      stepId="kpi-deep-dive"
       config={{ requireResolution: false, cardVariant: 'rich-paginated' }}
       data={[]}
       onDataChange={() => { /* noop */ }}
