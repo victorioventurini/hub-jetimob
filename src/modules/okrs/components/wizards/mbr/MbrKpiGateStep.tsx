@@ -21,8 +21,9 @@ import {
 } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { MbrKpiGateTable } from './MbrKpiGateTable';
-import { useMbrMonthlyKpisByScope } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
+import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
+import { orientedDeltaPct } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
 // TYPES
@@ -191,54 +192,132 @@ export function MbrKpiGateStep({
       <div className="p-6 space-y-6 min-w-0 max-w-full">
         {/* ─── KPIs Globais ─── */}
         {overviewEnabled && (
-          <section className="space-y-3">
-            <div className="flex items-baseline justify-between gap-2 flex-wrap">
-              <h3 className="text-sm font-semibold text-foreground">
-                KPIs Globais — {formatMonthLabel(referenceMonth!)}
-              </h3>
-            </div>
-            {overviewLoading ? (
-              <Skeleton className="h-32 w-full" />
-            ) : orgSnapshots.length > 0 ? (
-              <MbrKpiGateTable
-                snapshots={orgSnapshots}
-                monthLabel={formatMonthLabel(referenceMonth!)}
-              />
-            ) : (
-              <p className="text-xs text-muted-foreground italic">
-                Sem KPIs globais cadastrados nesta BU.
-              </p>
-            )}
-            <div className="border-t border-border" />
-          </section>
+          <ScopeSection
+            title={`KPIs Globais — ${formatMonthLabel(referenceMonth!)}`}
+            monthLabel={formatMonthLabel(referenceMonth!)}
+            snapshots={orgSnapshots}
+            isLoading={overviewLoading}
+            emptyMessage="Sem KPIs globais cadastrados nesta BU."
+          />
         )}
 
         {/* ─── KPIs de Área ─── */}
         {overviewEnabled && (
-          <section className="space-y-3">
-            <div className="flex items-baseline justify-between gap-2 flex-wrap">
-              <h3 className="text-sm font-semibold text-foreground">
-                KPIs de Área — {formatMonthLabel(referenceMonth!)}
-              </h3>
-            </div>
-            {overviewLoading ? (
-              <Skeleton className="h-32 w-full" />
-            ) : areaSnapshots.length > 0 ? (
-              <MbrKpiGateTable
-                snapshots={areaSnapshots}
-                monthLabel={formatMonthLabel(referenceMonth!)}
-              />
-            ) : (
-              <p className="text-xs text-muted-foreground italic">
-                Sem KPIs de área cadastrados nesta BU.
-              </p>
-            )}
-            <div className="border-t border-border" />
-          </section>
+          <ScopeSection
+            title={`KPIs de Área — ${formatMonthLabel(referenceMonth!)}`}
+            monthLabel={formatMonthLabel(referenceMonth!)}
+            snapshots={areaSnapshots}
+            isLoading={overviewLoading}
+            emptyMessage="Sem KPIs de área cadastrados nesta BU."
+          />
         )}
 
         {/* Cards individuais por KPI removidos — análise por KPI vive no step `kpi-deep-dive`. */}
       </div>
     </WizardStepScaffold>
+  );
+}
+
+// ============================================================
+// SUB-COMPONENTS
+// ============================================================
+
+interface ScopeSectionProps {
+  title: string;
+  monthLabel: string;
+  snapshots: MbrMonthlyKpiSnapshot[];
+  isLoading: boolean;
+  emptyMessage: string;
+}
+
+function ScopeSection({ title, monthLabel, snapshots, isLoading, emptyMessage }: ScopeSectionProps) {
+  const { gains, drops, noData } = useMemo(() => {
+    const gains: MbrMonthlyKpiSnapshot[] = [];
+    const drops: MbrMonthlyKpiSnapshot[] = [];
+    const noData: MbrMonthlyKpiSnapshot[] = [];
+
+    for (const s of snapshots) {
+      if (s.currentValue == null || s.previousValue == null || s.previousValue === 0) {
+        noData.push(s);
+        continue;
+      }
+      const rawDelta = ((s.currentValue - s.previousValue) / Math.abs(s.previousValue)) * 100;
+      const oriented = orientedDeltaPct(rawDelta, s.direction ?? 'up');
+      if (oriented == null || oriented === 0) {
+        noData.push(s);
+      } else if (oriented > 0) {
+        gains.push({ ...s, _oriented: oriented } as MbrMonthlyKpiSnapshot);
+      } else {
+        drops.push({ ...s, _oriented: oriented } as MbrMonthlyKpiSnapshot);
+      }
+    }
+
+    gains.sort((a, b) => ((b as any)._oriented ?? 0) - ((a as any)._oriented ?? 0));
+    drops.sort((a, b) => ((a as any)._oriented ?? 0) - ((b as any)._oriented ?? 0));
+
+    return { gains, drops, noData };
+  }, [snapshots]);
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-baseline justify-between gap-2 flex-wrap">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      </div>
+
+      {isLoading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : snapshots.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">{emptyMessage}</p>
+      ) : (
+        <div className="space-y-5 pl-1">
+          <SubGroup
+            label="Maiores avanços"
+            count={gains.length}
+            snapshots={gains}
+            monthLabel={monthLabel}
+            emptyMessage="Nenhum KPI com avanço no período."
+          />
+          <SubGroup
+            label="Maiores quedas"
+            count={drops.length}
+            snapshots={drops}
+            monthLabel={monthLabel}
+            emptyMessage="Nenhum KPI com queda no período."
+          />
+          <SubGroup
+            label="Sem dados"
+            count={noData.length}
+            snapshots={noData}
+            monthLabel={monthLabel}
+            emptyMessage="Todos os KPIs têm dados comparáveis."
+          />
+        </div>
+      )}
+
+      <div className="border-t border-border" />
+    </section>
+  );
+}
+
+interface SubGroupProps {
+  label: string;
+  count: number;
+  snapshots: MbrMonthlyKpiSnapshot[];
+  monthLabel: string;
+  emptyMessage: string;
+}
+
+function SubGroup({ label, count, snapshots, monthLabel, emptyMessage }: SubGroupProps) {
+  return (
+    <div className="space-y-2">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label} <span className="text-muted-foreground/70 normal-case">({count})</span>
+      </h4>
+      {snapshots.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">{emptyMessage}</p>
+      ) : (
+        <MbrKpiGateTable snapshots={snapshots} monthLabel={monthLabel} />
+      )}
+    </div>
   );
 }
