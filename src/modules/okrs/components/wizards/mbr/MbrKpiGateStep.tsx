@@ -26,6 +26,7 @@ import {
   WizardStepFooter,
   InlineDecisionInput,
   KpiMonthlyComparisonCard,
+  SummaryKpiList,
 } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
