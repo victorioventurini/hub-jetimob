@@ -687,6 +687,7 @@ export const KpiGateStep = memo(function KpiGateStep({
             />
             {extraContentForCurrentKpi?.(currentEntry.kpi)}
           </>
+        ) : buckets ? (
           buckets.map((bucket) => (
             <BucketSection
               key={bucket.id}
