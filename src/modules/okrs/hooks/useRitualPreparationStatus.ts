@@ -326,7 +326,7 @@ export function useRitualPreparationStatus(
           }
         }
 
-        const participants: PreparationParticipant[] = teams.map(t => {
+        const participants: PreparationParticipant[] = eligibleTeams.map(t => {
           const session = byTeam.get(t.id);
           const completed = !!session?.completed_at;
           return {
@@ -342,7 +342,7 @@ export function useRitualPreparationStatus(
           mode: 'list' as const,
           title: 'Pré-MBR dos times',
           description:
-            'Cobertura dos preparatórios mensais que alimentam esta MBR.',
+            'Cobertura dos preparatórios mensais entre os times com KPI ou KR neste ciclo.',
           participants,
         };
       }
