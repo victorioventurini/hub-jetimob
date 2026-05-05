@@ -70,17 +70,30 @@ export function MbrOrgOkrsStep({
   onBack,
 }: MbrOrgOkrsStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
-  // Gate: OKRs marked as "not a priority" need a decision registered
-  const okrsWithoutDecision = useMemo(() => {
-    return orgOkrSnapshots.filter(okr => {
-      if (okr.remainsStrategicPriority) return false;
-      return !decisions.some(
-        d => d.sourceStep === 'org-okrs' && d.text.toLowerCase().includes(okr.title.toLowerCase().substring(0, 20))
-      );
-    });
-  }, [orgOkrSnapshots, decisions]);
+  const total = orgOkrSnapshots.length;
 
-  const canProceed = okrsWithoutDecision.length === 0;
+  const [currentObjectiveIndex, setCurrentObjectiveIndex] = useState(0);
+  useEffect(() => {
+    if (currentObjectiveIndex > Math.max(0, total - 1)) {
+      setCurrentObjectiveIndex(Math.max(0, total - 1));
+    }
+  }, [total, currentObjectiveIndex]);
+
+  const currentOkr = total > 0 ? orgOkrSnapshots[currentObjectiveIndex] : undefined;
+
+  // Gate por página: o objetivo atual marcado como "não é mais prioridade"
+  // exige decisão registrada com sourceStep="org-okrs" referenciando seu título.
+  const currentNeedsDecision = useMemo(() => {
+    if (!currentOkr) return false;
+    if (currentOkr.remainsStrategicPriority) return false;
+    const titleKey = currentOkr.title.toLowerCase().substring(0, 20);
+    return !decisions.some(
+      (d) => d.sourceStep === 'org-okrs' && d.text.toLowerCase().includes(titleKey),
+    );
+  }, [currentOkr, decisions]);
+
+  const isFirst = currentObjectiveIndex === 0;
+  const isLast = total === 0 || currentObjectiveIndex >= total - 1;
 
   // Build a lookup map from live org objectives for team contributions
   const orgKrContributions = useMemo(() => {
@@ -105,6 +118,17 @@ export function MbrOrgOkrsStep({
     );
   };
 
+  const handlePrimary = useCallback(() => {
+    if (currentNeedsDecision) return;
+    if (isLast) onContinue();
+    else setCurrentObjectiveIndex((i) => Math.min(total - 1, i + 1));
+  }, [currentNeedsDecision, isLast, onContinue, total]);
+
+  const handleBack = useCallback(() => {
+    if (isFirst) onBack();
+    else setCurrentObjectiveIndex((i) => Math.max(0, i - 1));
+  }, [isFirst, onBack]);
+
   return (
     <WizardStepScaffold
       header={
@@ -114,7 +138,7 @@ export function MbrOrgOkrsStep({
           tooltip="mbr-org-okrs"
           description="Validação de prioridades estratégicas"
           variant="purple"
-          badge={`${orgOkrSnapshots.length}`}
+          badge={total > 0 ? `${currentObjectiveIndex + 1} / ${total}` : '0'}
           rightContent={
             <TeamKrsToggle visible={showTeamKrs} onToggle={() => setShowTeamKrs(v => !v)} />
           }
@@ -126,33 +150,40 @@ export function MbrOrgOkrsStep({
             decisions={decisions}
             onDecisionsChange={onDecisionsChange}
             sourceStep="org-okrs"
-            placeholder="Nota geral sobre OKRs organizacionais..."
+            placeholder={
+              currentOkr
+                ? `Decisão sobre: ${currentOkr.title}...`
+                : 'Nota geral sobre OKRs organizacionais...'
+            }
           />
         </div>
       }
       footer={
         <>
           <WizardStepFooter
-            onBack={onBack}
-            onPrimary={onContinue}
-            primaryLabel="Consolidar Diretrizes"
-            primaryDisabled={!canProceed}
+            onBack={handleBack}
+            backLabel={isFirst ? 'Voltar' : 'Anterior'}
+            onPrimary={handlePrimary}
+            primaryLabel={isLast ? 'Consolidar Diretrizes' : 'Próximo Objetivo'}
+            primaryDisabled={currentNeedsDecision}
           />
-          {!canProceed && (
+          {currentNeedsDecision && (
             <p className="text-xs text-status-amber text-center pb-2">
-              Registre decisões para OKRs que não são mais prioridade
+              Registre uma decisão para este OKR que não é mais prioridade
             </p>
           )}
         </>
       }
     >
       <div className="p-6 space-y-4">
-        {orgOkrSnapshots.length === 0 ? (
+        {!currentOkr ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             Nenhuma OKR organizacional carregada. Os snapshots serão preenchidos conforme a integração.
           </p>
         ) : (
-          orgOkrSnapshots.map((okr) => (
+          (() => {
+            const okr = currentOkr;
+            return (
             <Card key={okr.objectiveId} className={cn(
               'transition-colors',
               !okr.remainsStrategicPriority && 'border-status-amber/40 bg-status-amber/5'
@@ -233,7 +264,8 @@ export function MbrOrgOkrsStep({
 
               </CardContent>
             </Card>
-          ))
+            );
+          })()
         )}
       </div>
     </WizardStepScaffold>
