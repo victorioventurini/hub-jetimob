@@ -193,12 +193,18 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                 >
                   {ragConfig.label}
                 </Badge>
-                {kpi.area && (
-                  <AreaBadge area={kpi.area} />
-                )}
-                {kpi.team && (
-                  <span className="text-xs text-muted-foreground">• {kpi.team.name}</span>
-                )}
+                {(() => {
+                  const eff = (kpi as any).effective_area ?? kpi.area;
+                  const effTeam = (kpi as any).effective_team ?? kpi.team;
+                  return (
+                    <>
+                      {eff && <AreaBadge area={eff} />}
+                      {effTeam && (
+                        <span className="text-xs text-muted-foreground">• {effTeam.name}</span>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
