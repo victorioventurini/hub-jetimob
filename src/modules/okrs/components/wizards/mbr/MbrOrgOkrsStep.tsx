@@ -232,7 +232,7 @@ export function MbrOrgOkrsStep({
 
                 {/* Priority question */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <p className="text-sm">Continua sendo prioridade estratégica?</p>
+                  <p className="text-sm" />
                   <div className="flex items-center gap-2">
                     <Button
                       variant={okr.remainsStrategicPriority ? 'default' : 'outline'}
