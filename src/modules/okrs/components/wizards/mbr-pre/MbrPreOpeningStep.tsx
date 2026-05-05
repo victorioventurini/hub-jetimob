@@ -88,65 +88,8 @@ export interface MbrPreOpeningStepProps {
 // ============================================================
 // HELPERS
 // ============================================================
-
-function formatKpiValue(value: number | null | undefined, unit?: string): string {
-  if (value == null) return '—';
-  const formatted = Math.abs(value) >= 1000
-    ? value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
-    : value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-  if (!unit) return formatted;
-  if (unit === '%') return `${formatted}%`;
-  if (unit === 'R$') return `R$ ${formatted}`;
-  return `${formatted} ${unit}`;
-}
-
-interface KpiDelta {
-  kpiId: string;
-  name: string;
-  unit?: string;
-  current: number | null;
-  previous: number | null;
-  deltaPct: number | null;
-  ragStatus: string;
-}
-
-function computeKpiDeltas(kpis: MbrKpiSnapshot[]): {
-  ups: KpiDelta[];
-  downs: KpiDelta[];
-  withoutComparison: number;
-} {
-  const deltas: KpiDelta[] = kpis.map((k) => {
-    const deltaPct =
-      k.previousValue != null && k.currentValue != null && k.previousValue !== 0
-        ? ((k.currentValue - k.previousValue) / Math.abs(k.previousValue)) * 100
-        : null;
-    return {
-      kpiId: k.kpiId,
-      name: k.name,
-      unit: k.unit,
-      current: k.currentValue,
-      previous: k.previousValue,
-      deltaPct: deltaPct != null ? Math.round(deltaPct * 10) / 10 : null,
-      ragStatus: k.ragStatus,
-    };
-  });
-
-  const withDelta = deltas.filter((d) => d.deltaPct != null);
-  const ups = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) > 0)
-    .sort((a, b) => (b.deltaPct ?? 0) - (a.deltaPct ?? 0))
-    .slice(0, 3);
-  const downs = [...withDelta]
-    .filter((d) => (d.deltaPct ?? 0) < 0)
-    .sort((a, b) => (a.deltaPct ?? 0) - (b.deltaPct ?? 0))
-    .slice(0, 3);
-
-  return {
-    ups,
-    downs,
-    withoutComparison: deltas.length - withDelta.length,
-  };
-}
+// `formatKpiValue` / `computeKpiDeltas` movidos para
+// `../shared/KpiMonthlyComparisonCard` (SSOT visual).
 
 // ============================================================
 // SUBCOMPONENTS
