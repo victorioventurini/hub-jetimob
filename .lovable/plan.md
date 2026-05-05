@@ -1,23 +1,42 @@
-## Problema
+## Objetivo
 
-Ao adicionar uma capacidade de contato em `/tickets/settings?tab=capabilities`, o insert em `partner_contact_capabilities` falha por violação de chave estrangeira.
+Alinhar `partner_contact_capabilities.created_by` à convenção canônica de identidade (IDENTITY_CONVENTION.md §1.3 + TCR §4.10): coluna de auditoria de criação deve referenciar `profiles.id`, não `auth.users.id`.
 
-**Causa raiz:** a coluna `partner_contact_capabilities.created_by` tem FK para `auth.users(id)`, mas o hook `useCreateContactCapability` envia `profile?.id` (ID do **profile**, não do **auth user**). Profile ID ≠ auth user ID no Hub da Jet.
+## Estado atual (verificado no banco)
 
-## Correção
+- FK atual: `created_by` → `auth.users(id)` (divergente da convenção).
+- 114 registros totais; **1 único** com `created_by` preenchido (auth user `dcb85e6f-…`); 113 com `NULL` (vieram de import).
+- Frontend foi temporariamente ajustado para enviar `realUserId` — será revertido para `realProfileId` após a migração.
+- Nenhum consumidor de `partner_contact_capabilities` (8 arquivos) lê/filtra por `created_by` — risco de regressão é baixo.
 
-Arquivo: `src/modules/tickets/hooks/useContactCapabilities.ts` (linha ~127–144)
+## Plano
 
-1. Substituir `useAuth().profile.id` por `useIdentity()` e usar `authUserId` (ou ler `supabase.auth.getUser()` no momento do insert) para preencher `created_by`.
-2. Padrão equivalente já usado em outros mutations do módulo Tickets (verificar `useCreateTicket` para consistência).
-3. Manter fallback `null` se por algum motivo `authUserId` não estiver disponível (a coluna é nullable).
+### 1. Migration (DB) — uma única migration atômica
 
-## Validação
+1. Converter o registro existente de `auth.users.id` → `profiles.id` via subquery em `profiles.user_id`.
+2. Validar que conversão resultou em valor não-nulo antes de trocar a FK (caso contrário, abortar com `RAISE EXCEPTION`).
+3. `DROP CONSTRAINT partner_contact_capabilities_created_by_fkey`.
+4. `ADD CONSTRAINT partner_contact_capabilities_created_by_profile_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL`.
+5. `COMMENT ON COLUMN`: documentar que armazena `profiles.id` conforme IDENTITY_CONVENTION §1.3.
 
-- Adicionar nova capacidade pelo dialog → toast "Capacidade adicionada", linha visível na lista.
-- Linha aparece com `created_by` = auth.users.id válido.
-- Operação como admin impersonando: `created_by` reflete o auth user real (não o impersonado), evitando FK error.
+### 2. Frontend — `src/modules/tickets/hooks/useContactCapabilities.ts`
 
-## Observação adicional
+- Trocar `realUserId` por `realProfileId` nos dois mutations (`useCreateContactCapability`, `useSaveContactCapabilities`) e no log de `onSuccess`.
+- Manter `useIdentity()` (já importado).
 
-Não alterar a regra de unique index nem RLS — ambas estão corretas. Apenas o valor enviado em `created_by` está incorreto.
+### 3. Documentação canônica
+
+- **IDENTITY_CONVENTION.md** §1.2 (Tickets): adicionar linha
+  `| partner_contact_capabilities | created_by | profiles.id | partner_contact_capabilities_created_by_profile_fkey | Migrado em 2026-05 |`.
+- **DATA_MODEL_REGISTRY.md**: adicionar nota de identity-mapping na seção `partner_contact_capabilities`.
+
+### 4. Validação
+
+- Adicionar capacidade pelo dialog em `/tickets/settings?tab=capabilities` → toast de sucesso, sem FK error.
+- SQL pós-migration:
+  `SELECT created_by, EXISTS(SELECT 1 FROM profiles WHERE id = pcc.created_by) FROM partner_contact_capabilities pcc WHERE created_by IS NOT NULL` → todos `true`.
+- Operação como admin impersonando: `created_by` reflete o profile real (não impersonado), via `realProfileId`.
+
+## Riscos
+
+- **Baixo.** O único registro existente tem profile correspondente (a confirmar no momento da execução). RLS, índices únicos e nenhum JOIN crítico dependem de `created_by`.
