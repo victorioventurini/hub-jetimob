@@ -261,7 +261,9 @@ export default function OkrDashboardPage() {
   
   const statusCounts = useKrStatusDistribution(krsForDistribution as any);
 
-  // Calculate overall progress
+  // Calculate overall progress.
+  // Média simples por KR, com cada KR limitado a 100% para que uma meta
+  // superada não distorça o agregado (1 KR a 300% + 2 a 0% deve dar 33%, não 100%).
   const overallProgress = useMemo(() => {
     const krs = activeView === 'company' 
       ? allOrgKrs 
@@ -271,13 +273,14 @@ export default function OkrDashboardPage() {
     if (!krs || krs.length === 0) return 0;
     
     const totalProgress = krs.reduce((acc, kr) => {
-      return acc + calculateProgress(
+      const p = calculateProgress(
         Number(kr.baseline) || 0,
         Number(kr.current_value) || 0,
         Number(kr.target) || 0,
         kr.direction || 'up',
         { unit: (kr as { unit?: string | null }).unit }
       );
+      return acc + Math.min(100, Math.max(0, p));
     }, 0);
     
     return totalProgress / krs.length;
