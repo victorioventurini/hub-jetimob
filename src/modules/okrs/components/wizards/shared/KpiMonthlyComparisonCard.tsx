@@ -44,6 +44,7 @@ export interface KpiDelta {
   unit?: string;
   current: number | null;
   previous: number | null;
+  target: number | null;
   /** Delta percentual BRUTO (current vs previous), apenas para exibição numérica. */
   deltaPct: number | null;
   /** Delta percentual ORIENTADO pela direção: positivo = bom, negativo = ruim. */
@@ -56,6 +57,7 @@ export interface KpiNoData {
   kpiId: string;
   name: string;
   unit?: string;
+  target: number | null;
 }
 
 export function computeKpiDeltas(
