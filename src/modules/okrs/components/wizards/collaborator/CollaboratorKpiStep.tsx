@@ -296,13 +296,21 @@ function CollaboratorKpiStepWithKpi({
                   Precisa atualização
                 </Badge>
               )}
-              {kpi.area && <AreaBadge area={kpi.area} />}
-              {kpi.team && (
-                <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
-                  <Users className="h-3 w-3" />
-                  {kpi.team.name}
-                </Badge>
-              )}
+              {(() => {
+                const eff = (kpi as any).effective_area ?? kpi.area;
+                const effTeam = (kpi as any).effective_team ?? kpi.team;
+                return (
+                  <>
+                    {eff && <AreaBadge area={eff} />}
+                    {effTeam && (
+                      <Badge variant="outline" className="text-xs whitespace-nowrap gap-1">
+                        <Users className="h-3 w-3" />
+                        {effTeam.name}
+                      </Badge>
+                    )}
+                  </>
+                );
+              })()}
               <KpiScopeBadge scope={kpi.scope} buName={currentBu?.name} />
             </div>
           </div>
