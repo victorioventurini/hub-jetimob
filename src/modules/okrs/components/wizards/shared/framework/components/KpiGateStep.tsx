@@ -548,6 +548,7 @@ export const KpiGateStep = memo(function KpiGateStep({
   onNoDataReasonChange,
   readOnlyJustification,
   extraContentForCurrentKpi,
+  hideLeaderActionBlock,
 }: KpiGateStepProps) {
   const splitNoDataReason = !!config.splitNoDataReason;
   const label = getStepLabel(persona, stepId, version);
