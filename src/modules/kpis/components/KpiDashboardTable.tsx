@@ -186,7 +186,11 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                   {kpi.variation !== null ? (
                     <div className={cn("flex items-center justify-end gap-1", trendColor)}>
                       <TrendIcon className="h-3.5 w-3.5" />
-                      <span className="tabular-nums">{Math.abs(kpi.variation).toFixed(1)}%</span>
+                      <span className="tabular-nums">
+                        {isPointsUnit(kpi.unit) && kpi.previous_value != null && kpi.current_value != null
+                          ? `${Math.abs(kpi.current_value - kpi.previous_value).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`
+                          : `${Math.abs(kpi.variation).toFixed(1)}%`}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">—</span>
