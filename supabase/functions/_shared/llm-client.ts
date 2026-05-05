@@ -295,7 +295,9 @@ const DEFAULT_LLM_TIMEOUT_MS = 60_000;
  * Gemini and older OpenAI models still accept `max_tokens`.
  */
 function buildTokenLimitField(model: string, maxTokens: number): Record<string, number> {
-  if (/^openai\/gpt-5/i.test(model)) {
+  // GPT-5 family rejects `max_tokens` whether routed via Gateway (`openai/gpt-5*`)
+  // or OpenAI Direct (prefix stripped → `gpt-5*`).
+  if (/^(openai\/)?gpt-5/i.test(model)) {
     return { max_completion_tokens: maxTokens };
   }
   return { max_tokens: maxTokens };
