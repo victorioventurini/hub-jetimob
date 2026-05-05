@@ -26,10 +26,9 @@ import {
   WizardStepFooter,
   InlineDecisionInput,
   KpiMonthlyComparisonCard,
-  SummaryKpiList,
 } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
-import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
+import { useMbrMonthlyKpisByScope } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
