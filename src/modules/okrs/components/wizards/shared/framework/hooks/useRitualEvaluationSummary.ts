@@ -30,15 +30,16 @@ export function useRitualEvaluationSummary(sessionId: string | null) {
     queryKey: ritualEvaluationKeys.summary(sessionId),
     queryFn: async (): Promise<RitualEvaluationSummary | null> => {
       if (!sessionId) return null;
-      const { data, error } = await supabase
-        .from('v_ritual_evaluation_summary')
-        .select(
-          'session_id, response_count, expected_count, avg_value, avg_quality, avg_decisions, avg_time, evaluation_open_at, evaluation_closed_at, evaluation_short_code',
-        )
-        .eq('session_id', sessionId)
-        .maybeSingle();
+      // Usamos a RPC SECURITY DEFINER (não a view) porque a base
+      // `ritual_evaluation_responses` tem `SELECT USING(false)` para garantir
+      // anonimato — qualquer leitura via view (security_invoker) zera a contagem.
+      // A RPC valida BU + permission key `okrs.evaluation.view:as_conductor`.
+      const { data, error } = await supabase.rpc('get_ritual_evaluation_summary', {
+        p_session_id: sessionId,
+      });
       if (error) throw error;
-      if (!data) return null;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) return null;
       return {
         sessionId: data.session_id as string,
         responseCount: Number(data.response_count ?? 0),
