@@ -100,6 +100,15 @@ export function MbrKpiGateStep({
   const { snapshots: overviewSnapshots, isLoading: overviewLoading } =
     useMbrMonthlyKpisByScope(overviewEnabled ? referenceMonth : null, ['org', 'area']);
 
+  const orgSnapshots = useMemo(
+    () => overviewSnapshots.filter(s => s.scope === 'org'),
+    [overviewSnapshots]
+  );
+  const areaSnapshots = useMemo(
+    () => overviewSnapshots.filter(s => s.scope === 'area'),
+    [overviewSnapshots]
+  );
+
   const criticalKpis = useMemo(
     () => kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow'),
     [kpiSnapshots]
@@ -180,19 +189,19 @@ export function MbrKpiGateStep({
       }
     >
       <div className="p-6 space-y-6 min-w-0 max-w-full">
-        {/* ─── Overview consolidado: Maiores avanços · Maiores quedas · Sem dados ─── */}
+        {/* ─── KPIs Globais ─── */}
         {overviewEnabled && (
           <section className="space-y-3">
             <div className="flex items-baseline justify-between gap-2 flex-wrap">
               <h3 className="text-sm font-semibold text-foreground">
-                KPIs Globais e de Área — {formatMonthLabel(referenceMonth!)}
+                KPIs Globais — {formatMonthLabel(referenceMonth!)}
               </h3>
             </div>
             {overviewLoading ? (
               <Skeleton className="h-32 w-full" />
-            ) : overviewSnapshots.length > 0 ? (
+            ) : orgSnapshots.length > 0 ? (
               <KpiMonthlyComparisonCard
-                snapshots={overviewSnapshots}
+                snapshots={orgSnapshots}
                 title="Visão consolidada do mês"
                 showNoData
                 stack
@@ -201,7 +210,35 @@ export function MbrKpiGateStep({
               />
             ) : (
               <p className="text-xs text-muted-foreground italic">
-                Sem KPIs globais ou de área cadastrados nesta BU.
+                Sem KPIs globais cadastrados nesta BU.
+              </p>
+            )}
+            <div className="border-t border-border" />
+          </section>
+        )}
+
+        {/* ─── KPIs de Área ─── */}
+        {overviewEnabled && (
+          <section className="space-y-3">
+            <div className="flex items-baseline justify-between gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold text-foreground">
+                KPIs de Área — {formatMonthLabel(referenceMonth!)}
+              </h3>
+            </div>
+            {overviewLoading ? (
+              <Skeleton className="h-32 w-full" />
+            ) : areaSnapshots.length > 0 ? (
+              <KpiMonthlyComparisonCard
+                snapshots={areaSnapshots}
+                title="Visão consolidada do mês"
+                showNoData
+                stack
+                topN={5}
+                emptyMessage="Sem dados comparáveis no período."
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                Sem KPIs de área cadastrados nesta BU.
               </p>
             )}
             <div className="border-t border-border" />
