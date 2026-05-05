@@ -132,3 +132,42 @@ export function formatValueWithUnit(
 export function isKnownUnit(value: string): boolean {
   return ALL_UNITS.some((u) => u.value === value && u.value !== 'custom');
 }
+
+/**
+ * Indicadores em pontos (NPS, eNPS, Score, Índice) — variação deve ser
+ * expressa em pontos absolutos, NÃO em percentual.
+ */
+export function isPointsUnit(unit: string | null | undefined): boolean {
+  if (!unit) return false;
+  return unit === 'Pontos' || unit === 'Score' || unit === 'Índice';
+}
+
+/**
+ * Calcula e formata a variação entre dois valores respeitando a unidade.
+ * - Para unidades em pontos: retorna delta absoluto sufixado com `pts`
+ *   (ex.: "+5 pts", "-12 pts").
+ * - Para demais unidades: retorna variação percentual (ex.: "+3.2%").
+ * Retorna `null` quando não há base de comparação.
+ */
+export function formatVariation(
+  current: number | null | undefined,
+  previous: number | null | undefined,
+  unit: string | null | undefined,
+): { label: string; signed: number } | null {
+  if (current == null || previous == null) return null;
+  if (isPointsUnit(unit)) {
+    const delta = current - previous;
+    const sign = delta > 0 ? '+' : delta < 0 ? '−' : '';
+    return {
+      label: `${sign}${Math.abs(delta).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`,
+      signed: delta,
+    };
+  }
+  if (previous === 0) return null;
+  const pct = ((current - previous) / Math.abs(previous)) * 100;
+  const sign = pct > 0 ? '+' : pct < 0 ? '−' : '';
+  return {
+    label: `${sign}${Math.abs(pct).toFixed(1)}%`,
+    signed: pct,
+  };
+}
