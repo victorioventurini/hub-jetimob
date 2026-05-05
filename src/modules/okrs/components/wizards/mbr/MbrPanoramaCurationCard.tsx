@@ -265,23 +265,37 @@ function MbrPanoramaCurationCardImpl({
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant={d.added ? 'ghost' : 'outline'}
-                    disabled={d.added || !onAddSuggestedDecision}
-                    onClick={() => handleAddDecision(idx)}
-                    className="gap-1.5 shrink-0"
-                  >
-                    {d.added ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" /> Adicionada
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-3.5 w-3.5" /> Adicionar
-                      </>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant={d.added ? 'ghost' : 'outline'}
+                      disabled={!onAddSuggestedDecision}
+                      onClick={() => handleAddDecision(idx)}
+                      className="gap-1.5"
+                      title={d.added ? 'Adicionar novamente ao plano' : 'Adicionar ao plano'}
+                    >
+                      {d.added ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-status-green" /> Adicionada
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-3.5 w-3.5" /> Adicionar
+                        </>
+                      )}
+                    </Button>
+                    {d.added && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleResetDecision(idx)}
+                        className="h-8 w-8 p-0"
+                        title="Marcar como não adicionada (permitir readicionar)"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </li>
               ))}
             </ul>
