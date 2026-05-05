@@ -592,22 +592,6 @@ export default function MbrPage() {
           />
         );
 
-      case 'qbr-followup':
-        return (
-          <MbrQbrFollowUpStep
-            followUpItems={draft.data.qbrFollowUpItems}
-            onFollowUpItemsChange={(qbrFollowUpItems) =>
-              updateDraft({ qbrFollowUpItems })
-            }
-            decisions={draft.data.decisions}
-            onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
-              updateDraft({ decisions })
-            }
-            onContinue={goNext}
-            onBack={goBack}
-          />
-        );
-
       case 'evaluation':
         return (
           <EvaluationCollectionStep
