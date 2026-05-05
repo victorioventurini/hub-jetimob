@@ -106,11 +106,19 @@ const KpiDeltaRow = memo(function KpiDeltaRow({
 }) {
   const Icon = direction === 'up' ? ArrowUpRight : ArrowDownRight;
   const color = direction === 'up' ? 'text-status-green' : 'text-status-red';
+  const directionHint =
+    delta.direction === 'down'
+      ? ' · menor é melhor'
+      : delta.direction === 'up'
+        ? ''
+        : '';
   return (
     <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <Icon className={cn('h-4 w-4 shrink-0', color)} />
-        <span className="text-sm text-foreground truncate">{delta.name}</span>
+        <span className="text-sm text-foreground truncate" title={`${delta.name}${directionHint}`}>
+          {delta.name}
+        </span>
       </div>
       <div className="flex items-center gap-2 shrink-0 text-xs">
         <span className="text-muted-foreground">
