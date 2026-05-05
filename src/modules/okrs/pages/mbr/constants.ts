@@ -13,7 +13,6 @@ export const WIZARD_STEPS = [
   { id: 'team-okrs-detail' as const, label: 'Análise por Time', description: 'Drill-down' },
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Prioridades estratégicas' },
   { id: 'decisions' as const, label: 'Decisões', description: 'Consolidação' },
-  { id: 'qbr-followup' as const, label: 'Follow-up QBR', description: 'Decisões do QBR' },
   { id: 'evaluation' as const, label: 'Avaliação do Rito', description: 'Coleta anônima' },
   { id: 'closing' as const, label: 'Encerramento', description: 'Governança' },
 ];
