@@ -52,7 +52,7 @@ import { MbrDecisionsStep } from '@/modules/okrs/components/wizards/mbr/MbrDecis
 import { MbrClosingStep } from '@/modules/okrs/components/wizards/mbr/MbrClosingStep';
 import { MbrQbrFollowUpStep } from '@/modules/okrs/components/wizards/mbr/MbrQbrFollowUpStep';
 import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
-import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
+import { WizardStepFooter, InlineDecisionInput } from '@/modules/okrs/components/wizards/shared';
 
 import type {
   MbrStep,
