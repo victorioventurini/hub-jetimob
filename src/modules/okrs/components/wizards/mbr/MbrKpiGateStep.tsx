@@ -140,18 +140,6 @@ export function MbrKpiGateStep({
     ? missingKpis.length === 0
     : aggregateMissing === 0;
 
-  const handleToggleRequiresDecision = (kpiId: string, value: boolean) => {
-    onKpiSnapshotsChange(
-      kpiSnapshots.map(k => k.kpiId === kpiId ? { ...k, requiresStrategicDecision: value } : k)
-    );
-  };
-
-  const handleImpactChange = (kpiId: string, text: string) => {
-    onKpiSnapshotsChange(
-      kpiSnapshots.map(k => k.kpiId === kpiId ? { ...k, impactAssessment: text } : k)
-    );
-  };
-
   return (
     <WizardStepScaffold
       header={
