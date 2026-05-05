@@ -10,7 +10,7 @@
  * inputs do Pré-MBR para fundamentar a discussão executiva.
  */
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useWizardSubStep } from '@/modules/okrs/hooks/useWizardSubStep';
 import { KpiGateStep, flattenBucketsForPagination } from '@/wizards-framework';
 import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
