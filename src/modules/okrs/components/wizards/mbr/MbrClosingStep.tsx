@@ -1,8 +1,9 @@
 /**
  * MbrClosingStep - Etapa 8: Encerramento & Governança
- * 
- * v1.2: Resumo de governança + checklist dinâmico (cada item habilitado por condição)
- * + feedback anônimo com rating 1-5 estrelas.
+ *
+ * v1.3: Removidos itens de checklist "Follow-up do QBR endereçado" e
+ * "Próximo MBR agendado", bloco de avaliação anônima (existe step dedicado)
+ * e InlineDecisionInput do rodapé (decisões registradas em steps próprios).
  */
 
 import { useMemo } from 'react';
@@ -30,23 +31,19 @@ import type {
 
 export interface MbrClosingStepProps {
   decisions: TeamCheckinDecision[];
+  /** @deprecated mantido por compatibilidade — não usado neste step. */
   onDecisionsChange?: (decisions: TeamCheckinDecision[]) => void;
   checklist: MbrGovernanceChecklist;
   onChecklistChange: (checklist: MbrGovernanceChecklist) => void;
-  ritualFeedback: RitualImprovementFeedback[];
-  onRitualFeedbackChange: (feedback: RitualImprovementFeedback[]) => void;
-  /** v1.2: Team snapshots for dynamic checklist */
+  /** @deprecated avaliação migrada para EvaluationCollectionStep. */
+  ritualFeedback?: RitualImprovementFeedback[];
+  /** @deprecated avaliação migrada para EvaluationCollectionStep. */
+  onRitualFeedbackChange?: (feedback: RitualImprovementFeedback[]) => void;
   teamOkrSnapshots?: MbrTeamOkrSnapshot[];
-  /** v1.2: Org OKR snapshots for dynamic checklist */
   orgOkrSnapshots?: MbrOrgOkrSnapshot[];
-  /** v1.2: QBR follow-up items for dynamic checklist */
+  /** @deprecated não mais usado no checklist. */
   qbrFollowUpItems?: QbrFollowUpItem[];
-  /**
-   * Esconde o bloco "Como podemos melhorar essa reunião?" (rating 1-5 + comentário).
-   * Usado quando o rito tem coleta anônima padrão (`EvaluationCollectionStep`)
-   * ou quando o reuso é só do checklist (ex.: QBR-Pre-CLevel pós-2026-05-04).
-   * Quando true, `hasFeedback` deixa de ser exigido para concluir.
-   */
+  /** @deprecated avaliação foi removida deste step. */
   hideFeedbackBlock?: boolean;
   onComplete: () => void;
   onBack: () => void;
@@ -56,28 +53,15 @@ export interface MbrClosingStepProps {
 // COMPONENT
 // ============================================================
 
-
-// ============================================================
-// COMPONENT
-// ============================================================
-
 export function MbrClosingStep({
   decisions,
-  onDecisionsChange,
   checklist,
   onChecklistChange,
-  ritualFeedback,
-  onRitualFeedbackChange,
   teamOkrSnapshots = [],
   orgOkrSnapshots = [],
-  qbrFollowUpItems = [],
-  hideFeedbackBlock = false,
   onComplete,
   onBack,
 }: MbrClosingStepProps) {
-  const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackRating, setFeedbackRating] = useState(0);
-
   // ── Dynamic checklist conditions ──
   const conditions = useMemo(() => {
     const kpiDecisions = decisions.filter(d => d.sourceStep === 'panorama' || d.sourceStep === 'kpi-gate');
@@ -86,39 +70,17 @@ export function MbrClosingStep({
     const orgOkrsAllDecided = orgOkrSnapshots.length === 0 || orgOkrSnapshots.every(o => o.remainsStrategicPriority !== undefined);
     const decisionsWithOwner = decisions.filter(d => d.sourceStep === 'decisions');
     const allDecisionsHaveOwner = decisionsWithOwner.length === 0 || decisionsWithOwner.every(d => (d as any).owner_user_id);
-    const overdueItems = qbrFollowUpItems.filter(i => !i.resolved && i.deadline && new Date(i.deadline) < new Date());
-    const qbrAddressed = overdueItems.length === 0;
 
     return {
       kpiGateEnabled: kpiDecisions.length > 0 || decisions.some(d => d.sourceStep === 'kpi-gate'),
       allTeamsReviewedEnabled: allTeamsReviewed,
       orgOkrsVerifiedEnabled: orgOkrsAllDecided,
       decisionsHaveOwnerEnabled: allDecisionsHaveOwner,
-      qbrFollowUpAddressedEnabled: qbrAddressed,
-      nextMbrScheduledEnabled: true, // always enabled (manual)
     };
-  }, [decisions, teamOkrSnapshots, orgOkrSnapshots, qbrFollowUpItems]);
+  }, [decisions, teamOkrSnapshots, orgOkrSnapshots]);
 
   const handleCheckChange = (key: keyof MbrGovernanceChecklist, value: boolean) => {
     onChecklistChange({ ...checklist, [key]: value });
-  };
-
-  const handleAddFeedback = () => {
-    if (feedbackRating < 1) return;
-    const fb: RitualImprovementFeedback = {
-      id: `fb-${Date.now()}`,
-      rating: feedbackRating,
-      text: feedbackText.trim(),
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-    onRitualFeedbackChange([...ritualFeedback, fb]);
-    setFeedbackText('');
-    setFeedbackRating(0);
-  };
-
-  const handleRemoveFeedback = (id: string) => {
-    onRitualFeedbackChange(ritualFeedback.filter(f => f.id !== id));
   };
 
   // Legacy checklist check (backward compatible)
@@ -128,18 +90,15 @@ export function MbrClosingStep({
     checklist.nonPrioritiesClear &&
     checklist.communicateInAllHands;
 
-  // Dynamic checklist check
+  // Dynamic checklist check (sem qbrFollowUpAddressed e nextMbrScheduled)
   const dynamicChecked =
     checklist.kpiGateClear &&
     checklist.allTeamsReviewed &&
     checklist.orgOkrsVerified &&
-    checklist.decisionsHaveOwner &&
-    checklist.qbrFollowUpAddressed &&
-    checklist.nextMbrScheduled;
+    checklist.decisionsHaveOwner;
 
   const allChecked = legacyChecked && dynamicChecked;
-  const hasFeedback = ritualFeedback.length > 0;
-  const canComplete = allChecked && (hideFeedbackBlock || hasFeedback);
+  const canComplete = allChecked;
 
   // Summary counts
   const decisionCount = decisions.filter(d => d.category === 'decision').length;
@@ -149,7 +108,7 @@ export function MbrClosingStep({
   const totalTeams = teamOkrSnapshots.filter(t => t.objectives.length > 0).length;
   const orgGaps = orgOkrSnapshots.filter(o => !o.remainsStrategicPriority).length;
 
-  // Dynamic checklist items
+  // Dynamic checklist items (sem QBR follow-up e sem Próximo MBR)
   const dynamicItems: Array<{
     key: keyof MbrGovernanceChecklist;
     label: string;
@@ -160,8 +119,6 @@ export function MbrClosingStep({
     { key: 'allTeamsReviewed', label: `Todos os times revisados (${reviewedTeams}/${totalTeams})`, enabled: conditions.allTeamsReviewedEnabled, disabledHint: 'Revise todos os times no Step 4' },
     { key: 'orgOkrsVerified', label: 'OKRs organizacionais verificadas', enabled: conditions.orgOkrsVerifiedEnabled, disabledHint: 'Confirme todas OKRs no Step 5' },
     { key: 'decisionsHaveOwner', label: 'Decisões estratégicas têm dono', enabled: conditions.decisionsHaveOwnerEnabled, disabledHint: 'Atribua donos às decisões no Step 6' },
-    { key: 'qbrFollowUpAddressed', label: 'Follow-up do QBR endereçado', enabled: conditions.qbrFollowUpAddressedEnabled, disabledHint: 'Resolva decisões vencidas no Step 7' },
-    { key: 'nextMbrScheduled', label: 'Próximo MBR agendado', enabled: true },
   ];
 
   return (
@@ -276,89 +233,8 @@ export function MbrClosingStep({
               ))}
             </div>
           </div>
-
-          <Separator />
-
-          {/* Anonymous ritual feedback — escondido quando rito usa coleta anônima padronizada */}
-          {!hideFeedbackBlock && (
-          <div className="space-y-4">
-            <h4 className="font-medium flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              Como podemos melhorar essa reunião?
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Feedback anônimo — não será associado ao seu nome.
-            </p>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <StarRatingInput value={feedbackRating} onChange={setFeedbackRating} />
-                <span className="text-xs text-muted-foreground">
-                  {feedbackRating === 0 ? 'Selecione uma nota' : `${feedbackRating}/5`}
-                </span>
-              </div>
-
-              <div className="flex gap-2">
-                <Textarea
-                  value={feedbackText}
-                  onChange={(e) => setFeedbackText(e.target.value)}
-                  placeholder="Comentário opcional..."
-                  className="text-sm min-h-[48px]"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAddFeedback();
-                    }
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 w-8 p-0 flex-shrink-0 self-end"
-                  onClick={handleAddFeedback}
-                  disabled={feedbackRating < 1}
-                  data-testid="add-feedback-btn"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-
-            {ritualFeedback.length > 0 && (
-              <div className="space-y-2">
-                {ritualFeedback.map((fb) => (
-                  <Card key={fb.id}>
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <StarRatingDisplay rating={fb.rating} />
-                      {fb.text && <p className="text-sm flex-1">{fb.text}</p>}
-                      {!fb.text && <span className="flex-1" />}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive flex-shrink-0"
-                        onClick={() => handleRemoveFeedback(fb.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-          )}
         </div>
       </ScrollArea>
-
-      {onDecisionsChange && (
-        <div className="border-t">
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={onDecisionsChange}
-            sourceStep="mbr-closing"
-          />
-        </div>
-      )}
 
       <WizardLastStepFooter
         onBack={onBack}
@@ -367,8 +243,7 @@ export function MbrClosingStep({
       />
       {!canComplete && (
         <p className="text-xs text-muted-foreground text-center pb-2">
-          {!allChecked && 'Complete o checklist'}
-          {allChecked && !hideFeedbackBlock && !hasFeedback && 'Adicione pelo menos um feedback sobre a reunião'}
+          Complete o checklist
         </p>
       )}
     </div>
