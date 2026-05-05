@@ -43,8 +43,8 @@ interface KpiRow {
   responsible_area_id: string | null;
   area: { id: string; name: string; color: string | null } | null;
   responsible_area: { id: string; name: string; color: string | null } | null;
+  /** Alias do join `responsible_team_id` (operacional) — usado em todo o hook. */
   team: { id: string; name: string } | null;
-  structural_team: { id: string; name: string } | null;
 }
 
 interface KpiValueRow {
