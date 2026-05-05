@@ -109,7 +109,7 @@ function MbrPanoramaCurationCardImpl({
   const handleAddDecision = useCallback(
     (idx: number) => {
       const target = curation.suggestedDecisions[idx];
-      if (!target || target.added) return;
+      if (!target) return;
       onAddSuggestedDecision?.(target.title, target.category);
       const updated = curation.suggestedDecisions.map((d, i) =>
         i === idx ? { ...d, added: true } : d,
@@ -117,6 +117,16 @@ function MbrPanoramaCurationCardImpl({
       onCurationChange({ ...curation, suggestedDecisions: updated });
     },
     [curation, onCurationChange, onAddSuggestedDecision],
+  );
+
+  const handleResetDecision = useCallback(
+    (idx: number) => {
+      const updated = curation.suggestedDecisions.map((d, i) =>
+        i === idx ? { ...d, added: false } : d,
+      );
+      onCurationChange({ ...curation, suggestedDecisions: updated });
+    },
+    [curation, onCurationChange],
   );
 
   const handleAgendaChange = useCallback(
