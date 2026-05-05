@@ -238,6 +238,8 @@ export function KpiActionsMenu({ kpi, onActionComplete, alwaysVisible = false }:
         unit={kpi.unit ?? '%'}
         consolidationFrequency={kpi.consolidation_frequency ?? null}
         updateFrequency={kpi.update_frequency ?? null}
+        targetValue={kpi.target_value ?? null}
+        direction={(kpi.direction as KpiDirection | undefined) ?? 'up'}
         open={updateValueOpen}
         onOpenChange={setUpdateValueOpen}
       />

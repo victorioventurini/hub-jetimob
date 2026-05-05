@@ -500,6 +500,8 @@ export default function KpiDashboardPage() {
           unit={addValueKpi.unit}
           consolidationFrequency={addValueKpi.consolidation_frequency ?? null}
           updateFrequency={addValueKpi.update_frequency ?? null}
+          targetValue={addValueKpi.target_value}
+          direction={addValueKpi.direction}
           open={addValueOpen}
           onOpenChange={setAddValueOpen}
         />
