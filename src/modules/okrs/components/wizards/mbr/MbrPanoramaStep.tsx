@@ -135,9 +135,10 @@ function ragBadgeClass(rag: string) {
   }
 }
 
-function TrendIcon({ value }: { value: number | null }) {
-  if (!value || value === 0) return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
-  if (value > 0) return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
+function TrendIcon({ value, direction }: { value: number | null; direction?: 'up' | 'down' | null }) {
+  const klass = classifyKpiDelta(value, direction);
+  if (!klass || klass === 'flat') return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (klass === 'improvement') return <TrendingUp className="h-3.5 w-3.5 text-status-green" />;
   return <TrendingDown className="h-3.5 w-3.5 text-status-red" />;
 }
 
