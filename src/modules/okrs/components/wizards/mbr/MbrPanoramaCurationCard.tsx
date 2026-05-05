@@ -33,6 +33,7 @@ import type {
   MbrPanoramaCurationState,
 } from '@/modules/okrs/types/wizard';
 import { MbrAgendaCuration } from './MbrAgendaCuration';
+import { WIZARD_STEPS } from '@/modules/okrs/pages/mbr/constants';
 
 // ============================================================
 // CONSTANTS
