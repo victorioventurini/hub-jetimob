@@ -85,6 +85,13 @@ export interface KpiGateStepProps {
    * líder, addendums) sem duplicar o card. Agnóstico de wizardType.
    */
   extraContentForCurrentKpi?: (kpi: KpiGateItem) => React.ReactNode;
+  /**
+   * v3.34.0 — quando `true`, oculta o bloco "Plano de ação do líder"
+   * dentro do `RichKpiCard`. Usado por ritos puramente de leitura
+   * (ex: MBR Deep Dive) que renderizam as respostas do líder em um
+   * painel próprio (`extraContentForCurrentKpi`).
+   */
+  hideLeaderActionBlock?: boolean;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
