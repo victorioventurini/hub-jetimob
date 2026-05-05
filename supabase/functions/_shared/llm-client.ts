@@ -290,6 +290,17 @@ function pruneLlmCache(): void {
  */
 const DEFAULT_LLM_TIMEOUT_MS = 60_000;
 
+/**
+ * OpenAI GPT-5 family rejects `max_tokens` and requires `max_completion_tokens`.
+ * Gemini and older OpenAI models still accept `max_tokens`.
+ */
+function buildTokenLimitField(model: string, maxTokens: number): Record<string, number> {
+  if (/^openai\/gpt-5/i.test(model)) {
+    return { max_completion_tokens: maxTokens };
+  }
+  return { max_tokens: maxTokens };
+}
+
 export async function llmComplete(
   config: LLMConfig,
   messages: LLMMessage[],
@@ -321,7 +332,7 @@ export async function llmComplete(
   const payload: Record<string, unknown> = {
     model: config.model,
     messages,
-    max_tokens: maxTokens,
+    ...buildTokenLimitField(config.model, maxTokens),
     temperature,
   };
 
@@ -417,7 +428,7 @@ export function llmStream(
   const payload = {
     model: config.model,
     messages,
-    max_tokens: options?.maxTokens ?? config.maxTokens,
+    ...buildTokenLimitField(config.model, options?.maxTokens ?? config.maxTokens),
     temperature: options?.temperature ?? config.temperature,
     stream: true,
   };
