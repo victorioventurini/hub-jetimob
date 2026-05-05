@@ -213,7 +213,7 @@ export default function KpiDashboardPage() {
         const searchableFields = [
           kpi.name,
           kpi.description,
-          kpi.area?.name,
+          (kpi.effective_area ?? kpi.area)?.name,
           kpi.owner?.display_name,
           kpi.unit,
         ].filter(Boolean).join(" ").toLowerCase();
