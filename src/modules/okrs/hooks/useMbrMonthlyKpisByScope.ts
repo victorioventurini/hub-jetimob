@@ -182,6 +182,8 @@ export function useMbrMonthlyKpisByScope(
         areaName: k.area?.name ?? k.responsible_area?.name ?? null,
         areaColor: k.area?.color ?? k.responsible_area?.color ?? null,
         teamName: k.team?.name ?? null,
+        indicatorType: k.indicator_type ?? null,
+        owner: k.owner ?? null,
       };
     });
   }, [data, refMonth, prevMonth]);
