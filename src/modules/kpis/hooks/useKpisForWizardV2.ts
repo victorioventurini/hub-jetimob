@@ -285,8 +285,12 @@ export function useKpisForWizardV2(options: UseKpisForWizardV2Options): UseKpisF
             alertReason,
             // Relations
             owner: kpi.owner as KpiForWizardV2['owner'],
-            team: kpi.team as KpiForWizardV2['team'],
-            area: kpi.area as KpiForWizardV2['area'],
+            team: (kpi as any).team ?? null,
+            area: (kpi as any).area ?? null,
+            responsible_team: (kpi as any).responsible_team ?? null,
+            responsible_area: (kpi as any).responsible_area ?? null,
+            effective_area: ((kpi as any).area ?? (kpi as any).responsible_area) ?? null,
+            effective_team: ((kpi as any).team ?? (kpi as any).responsible_team) ?? null,
           };
         });
 
