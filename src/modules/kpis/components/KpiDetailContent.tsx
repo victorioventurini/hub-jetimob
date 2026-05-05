@@ -122,7 +122,7 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
     }
     if (kpi.unit === "horas") return `${value.toFixed(1)}h`;
     if (kpi.unit === "score") return value.toFixed(0);
-    return value.toLocaleString("pt-BR");
+    return formatValueWithUnit(value, kpi.unit);
   };
 
   const formatDateTime = (dateStr: string) => {
