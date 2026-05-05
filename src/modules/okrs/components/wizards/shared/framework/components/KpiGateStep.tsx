@@ -682,9 +682,6 @@ export const KpiGateStep = memo(function KpiGateStep({
               Registre o plano de ação para: {mandatoryUnaddressed.map((k) => k.name).join(', ')}
             </p>
           )}
-          {false && isPaginated && currentEntry && (
-            <p className="text-xs text-status-amber text-center pb-2 px-4" />
-          )}
           {!suppressInlineDecisions && (
             <InlineDecisionsSlot
               stepId={stepId}
