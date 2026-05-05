@@ -215,9 +215,13 @@ export function useKpiEvolutionList(options: UseKpiEvolutionListOptions = {}): U
           rag_status: rag,
           last_updated_at: values[0]?.created_at || null,
           total_values: countsByKpi[kpi.id] || 0,
-          area: kpi.area,
+          area: (kpi as any).area ?? null,
           owner: kpi.owner,
-          team: kpi.team,
+          team: (kpi as any).team ?? null,
+          responsible_area: (kpi as any).responsible_area ?? null,
+          responsible_team: (kpi as any).responsible_team ?? null,
+          effective_area: (kpi as any).area ?? (kpi as any).responsible_area ?? null,
+          effective_team: (kpi as any).team ?? (kpi as any).responsible_team ?? null,
         };
       });
 
