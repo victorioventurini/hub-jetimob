@@ -243,7 +243,7 @@ const RichKpiCard = memo(function RichKpiCard({
   const numericTarget = kpi.target != null ? Number(kpi.target) : null;
   const numericValue = kpi.currentValue != null ? Number(kpi.currentValue) : null;
   const unit = kpi.unit ?? '';
-  const scopeLabel = kpi.scope ? SCOPE_LABEL[kpi.scope] ?? kpi.scope : null;
+  void SCOPE_LABEL;
 
   const showAction = mode !== 'view';
   const isRequired = mode === 'justify-required' || mode === 'explain-no-data';
