@@ -446,7 +446,7 @@ export function MbrTeamOkrsDetailStep({
                       <div className="pt-2 border-t border-primary/20 space-y-1">
                         <div className="flex items-center gap-1.5">
                           <ListChecks className="h-3.5 w-3.5 text-status-amber shrink-0" />
-                          <p className="text-xs font-medium">
+                          <p className="text-xs font-semibold">
                             Justificativas de projeto ({projJustifEntries.length + milestoneJustifEntries.length})
                           </p>
                         </div>
