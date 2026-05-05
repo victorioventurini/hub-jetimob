@@ -49,12 +49,21 @@ export function MbrKpiDeepDiveStep({
   onContinue,
   onBack,
 }: MbrKpiDeepDiveStepProps) {
-  // KPIs fora da meta: red/amber e também "sem dados" (overdue) para análise.
+  // KPIs fora da meta: red/off_track, amber/yellow/at_risk e "sem dados".
+  // Aceita tanto a nomenclatura RAG (red/yellow) quanto a operacional
+  // (off_track/at_risk) para garantir paridade com o que o Pré-MBR registra.
   const offTargetSnapshots = useMemo(
-    () =>
-      kpiSnapshots.filter(
-        (k) => k.ragStatus === 'red' || k.ragStatus === 'yellow' || k.ragStatus === 'no_data',
-      ),
+    () => {
+      const OFF_TARGET = new Set([
+        'red',
+        'yellow',
+        'amber',
+        'no_data',
+        'off_track',
+        'at_risk',
+      ]);
+      return kpiSnapshots.filter((k) => OFF_TARGET.has(k.ragStatus));
+    },
     [kpiSnapshots],
   );
 
@@ -92,14 +101,31 @@ export function MbrKpiDeepDiveStep({
   }, [totalCount, currentKpiIndex]);
 
   // Justificativas (read-only) — preferem `impactAssessment` do snapshot do
-  // próprio MBR (que já foi semeado) para apresentar contexto ao executivo.
+  // próprio MBR; quando ausente, caem no que o líder respondeu no Pré-MBR
+  // (`impactAssessment` por time ou `kpiJustifications[kpiId]`).
   const justifications = useMemo(() => {
     const map: Record<string, string> = {};
     for (const s of offTargetSnapshots) {
-      if (s.impactAssessment) map[s.kpiId] = s.impactAssessment;
+      if (s.impactAssessment) {
+        map[s.kpiId] = s.impactAssessment;
+        continue;
+      }
+      // Fallback: agrega o que algum líder escreveu no Pré-MBR.
+      const fromPre: string[] = [];
+      for (const sub of Object.values(mbrPreByTeam)) {
+        const snap = sub.kpiSnapshots?.find((x) => x.kpiId === s.kpiId);
+        const txt =
+          snap?.impactAssessment?.trim() ||
+          sub.kpiJustifications?.[s.kpiId]?.trim();
+        if (txt) {
+          const teamName = teamNamesById[sub.teamId] ?? 'Time';
+          fromPre.push(`[${teamName}] ${txt}`);
+        }
+      }
+      if (fromPre.length > 0) map[s.kpiId] = fromPre.join('\n\n');
     }
     return map;
-  }, [offTargetSnapshots]);
+  }, [offTargetSnapshots, mbrPreByTeam, teamNamesById]);
 
   const isFirst = currentKpiIndex === 0;
   const isLast = totalCount === 0 || currentKpiIndex >= totalCount - 1;
