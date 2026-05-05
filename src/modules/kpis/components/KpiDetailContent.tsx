@@ -140,7 +140,7 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         <div className="space-y-2 flex-1">
           <h1 className="text-xl font-semibold">{kpi.name}</h1>
           <div className="flex items-center gap-2">
-            {kpi.area && <AreaBadge area={kpi.area} />}
+            {((kpi as any).effective_area ?? kpi.area) && <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />}
             <Badge variant="outline" className={cn("text-xs gap-1", getSourceColor(kpi.source_type))}>
               <SourceIcon type={kpi.source_type} />
               {SOURCE_TYPE_LABELS[kpi.source_type]}
