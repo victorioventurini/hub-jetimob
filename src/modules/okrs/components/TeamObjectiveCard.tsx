@@ -89,17 +89,20 @@ export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objecti
   // Filter KRs for this objective
   const objectiveKrs = allKeyResults?.filter(kr => kr.team_objective_id === objective.id && !kr.deleted_at) || [];
   
-  // Calculate average progress
+  // Calculate average progress — cada KR contribui no máx. 100% para não
+  // distorcer a média do objetivo quando uma KR supera a meta (>100%).
   const avgProgress = objectiveKrs.length > 0
     ? objectiveKrs.reduce((acc, kr) => {
         const direction = kr.direction as 'up' | 'down';
+        let krProgress = 0;
         if (direction === 'up') {
-          if (kr.target === kr.baseline) return acc + (kr.current_value >= kr.target ? 100 : 0);
-          return acc + Math.max(0, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100);
+          if (kr.target === kr.baseline) krProgress = kr.current_value >= kr.target ? 100 : 0;
+          else krProgress = ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100;
         } else {
-          if (kr.baseline === kr.target) return acc + (kr.current_value <= kr.target ? 100 : 0);
-          return acc + Math.max(0, ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100);
+          if (kr.baseline === kr.target) krProgress = kr.current_value <= kr.target ? 100 : 0;
+          else krProgress = ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100;
         }
+        return acc + Math.max(0, Math.min(100, krProgress));
       }, 0) / objectiveKrs.length
     : 0;
 
