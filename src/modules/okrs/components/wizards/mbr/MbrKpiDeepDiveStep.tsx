@@ -18,7 +18,10 @@ import {
 } from '@/modules/okrs/components/wizards/shared/KpiLeaderInsightsPanel';
 import { MbrKpiGateTable } from './MbrKpiGateTable';
 import { previousMonthOf } from '@/modules/okrs/utils/mbr/referenceMonth';
-import type { MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
+import {
+  useMbrMonthlyKpisByScope,
+  type MbrMonthlyKpiSnapshot,
+} from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 import {
   classifyKpiGateBucketsFromMonthlySnapshots,
   type KpiGateBucket,
@@ -94,6 +97,19 @@ export function MbrKpiDeepDiveStep({
 
   const insightsByKpi = useMbrKpiLeaderInsights(mbrPreByTeam, teamNamesById);
 
+  // v3.x — valores reais do mês de referência e do mês anterior, derivados
+  // direto de kpi_values (mesma fonte do KPI Gate). Evita usar o snapshot
+  // congelado do draft, que só preenche `currentValue` e zera `previousValue`.
+  const { snapshots: monthlySnapshots } = useMbrMonthlyKpisByScope(
+    referenceMonth,
+    ['org', 'area', 'team'],
+  );
+  const monthlyByKpi = useMemo(() => {
+    const map = new Map<string, MbrMonthlyKpiSnapshot>();
+    for (const s of monthlySnapshots) map.set(s.kpiId, s);
+    return map;
+  }, [monthlySnapshots]);
+
   const flat = useMemo(() => flattenBucketsForPagination(buckets), [buckets]);
   const totalCount = flat.length;
   const [currentKpiIndex, setCurrentKpiIndex] = useState(0);
@@ -161,18 +177,20 @@ export function MbrKpiDeepDiveStep({
       onDecisionsChange={onDecisionsChange}
       
       extraContentForCurrentKpi={(kpi) => {
+        const monthly = monthlyByKpi.get(kpi.id) ?? null;
         const snap = offTargetSnapshots.find((s) => s.kpiId === kpi.id);
-        const tableSnap: MbrMonthlyKpiSnapshot | null = snap
-          ? {
-              ...snap,
-              areaId: snap.areaId ?? null,
-              areaName: snap.areaName ?? null,
-              areaColor: snap.areaColor ?? null,
-              teamName: snap.teamName ?? null,
-              indicatorType: null,
-              owner: null,
-            }
-          : null;
+        const tableSnap: MbrMonthlyKpiSnapshot | null = monthly
+          ?? (snap
+            ? {
+                ...snap,
+                areaId: snap.areaId ?? null,
+                areaName: snap.areaName ?? null,
+                areaColor: snap.areaColor ?? null,
+                teamName: snap.teamName ?? null,
+                indicatorType: null,
+                owner: null,
+              }
+            : null);
         return (
           <>
             {tableSnap && (
