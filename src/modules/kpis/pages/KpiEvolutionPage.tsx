@@ -168,8 +168,8 @@ function KpiEvolutionCard({
           targetValue={kpi.target_value}
         />
         <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
-          {kpi.area && (
-            <AreaBadge area={kpi.area} />
+          {((kpi as any).effective_area ?? kpi.area) && (
+            <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
           )}
           {kpi.owner && (
             <div className="flex items-center gap-1.5">
