@@ -278,6 +278,7 @@ function ScopeSection({ title, monthLabel, previousMonthLabel, snapshots, isLoad
             count={gains.length}
             snapshots={gains}
             monthLabel={monthLabel}
+            previousMonthLabel={previousMonthLabel}
             emptyMessage="Nenhum KPI com avanço no período."
           />
           <SubGroup
@@ -285,6 +286,7 @@ function ScopeSection({ title, monthLabel, previousMonthLabel, snapshots, isLoad
             count={drops.length}
             snapshots={drops}
             monthLabel={monthLabel}
+            previousMonthLabel={previousMonthLabel}
             emptyMessage="Nenhum KPI com queda no período."
           />
           <SubGroup
@@ -292,6 +294,7 @@ function ScopeSection({ title, monthLabel, previousMonthLabel, snapshots, isLoad
             count={noData.length}
             snapshots={noData}
             monthLabel={monthLabel}
+            previousMonthLabel={previousMonthLabel}
             emptyMessage="Todos os KPIs têm dados comparáveis."
           />
         </div>
@@ -307,10 +310,11 @@ interface SubGroupProps {
   count: number;
   snapshots: MbrMonthlyKpiSnapshot[];
   monthLabel: string;
+  previousMonthLabel: string;
   emptyMessage: string;
 }
 
-function SubGroup({ label, count, snapshots, monthLabel, emptyMessage }: SubGroupProps) {
+function SubGroup({ label, count, snapshots, monthLabel, previousMonthLabel, emptyMessage }: SubGroupProps) {
   return (
     <div className="space-y-2">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -319,7 +323,7 @@ function SubGroup({ label, count, snapshots, monthLabel, emptyMessage }: SubGrou
       {snapshots.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">{emptyMessage}</p>
       ) : (
-        <MbrKpiGateTable snapshots={snapshots} monthLabel={monthLabel} />
+        <MbrKpiGateTable snapshots={snapshots} monthLabel={monthLabel} previousMonthLabel={previousMonthLabel} />
       )}
     </div>
   );
