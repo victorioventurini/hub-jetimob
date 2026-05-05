@@ -17,10 +17,10 @@ import { ShieldAlert } from 'lucide-react';
 import {
   WizardStepHeader,
   WizardStepFooter,
-  KpiMonthlyComparisonCard,
   InlineDecisionInput,
 } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { MbrKpiGateTable } from './MbrKpiGateTable';
 import { useMbrMonthlyKpisByScope } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
 import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
