@@ -73,6 +73,18 @@ export interface KpiGateStepProps {
   noDataReasons?: Record<string, string>;
   /** v3.31.1 — callback de mudança da razão de ausência de dados. */
   onNoDataReasonChange?: (kpiId: string, value: string) => void;
+  /**
+   * v3.33.0 — quando `true`, desabilita os textareas de justificativa/razão.
+   * Use em ritos de leitura (ex: MBR Deep Dive) que apenas reapresentam o
+   * que o líder respondeu no Pré-MBR.
+   */
+  readOnlyJustification?: boolean;
+  /**
+   * v3.33.0 — slot opcional renderizado abaixo do card no modo
+   * `rich-paginated`. Usado para anexar painéis derivados (ex: insights do
+   * líder, addendums) sem duplicar o card. Agnóstico de wizardType.
+   */
+  extraContentForCurrentKpi?: (kpi: KpiGateItem) => React.ReactNode;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
@@ -199,6 +211,8 @@ interface RichKpiCardProps {
   splitNoDataReason?: boolean;
   noDataReason?: string;
   onNoDataReasonChange?: (kpiId: string, value: string) => void;
+  /** v3.33.0 — desabilita os textareas (modo leitura). */
+  readOnly?: boolean;
 }
 
 const RichKpiCard = memo(function RichKpiCard({
@@ -209,6 +223,7 @@ const RichKpiCard = memo(function RichKpiCard({
   splitNoDataReason,
   noDataReason,
   onNoDataReasonChange,
+  readOnly,
 }: RichKpiCardProps) {
   const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
@@ -361,6 +376,8 @@ const RichKpiCard = memo(function RichKpiCard({
                   placeholder="Ex.: integração indisponível, fonte ainda não definida, responsável de fora..."
                   className="text-sm min-h-[64px] max-w-full"
                   aria-required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
             )}
@@ -376,6 +393,8 @@ const RichKpiCard = memo(function RichKpiCard({
               }
               className="text-sm min-h-[80px] max-w-full"
               aria-required={isRequired}
+              disabled={readOnly}
+              readOnly={readOnly}
             />
           </div>
         )}
@@ -517,6 +536,8 @@ export const KpiGateStep = memo(function KpiGateStep({
   onKpiIndexChange,
   noDataReasons,
   onNoDataReasonChange,
+  readOnlyJustification,
+  extraContentForCurrentKpi,
 }: KpiGateStepProps) {
   const splitNoDataReason = !!config.splitNoDataReason;
   const label = getStepLabel(persona, stepId, version);
@@ -652,16 +673,20 @@ export const KpiGateStep = memo(function KpiGateStep({
             Nenhum KPI registrado para este escopo.
           </p>
         ) : isPaginated && currentEntry ? (
-          <RichKpiCard
-            key={currentEntry.kpi.id}
-            kpi={currentEntry.kpi}
-            bucketId={currentEntry.bucketId}
-            justification={justifications?.[currentEntry.kpi.id] ?? ''}
-            onJustificationChange={onJustificationChange}
-            splitNoDataReason={splitNoDataReason}
-            noDataReason={noDataReasons?.[currentEntry.kpi.id]}
-            onNoDataReasonChange={onNoDataReasonChange}
-          />
+          <>
+            <RichKpiCard
+              key={currentEntry.kpi.id}
+              kpi={currentEntry.kpi}
+              bucketId={currentEntry.bucketId}
+              justification={justifications?.[currentEntry.kpi.id] ?? ''}
+              onJustificationChange={onJustificationChange}
+              splitNoDataReason={splitNoDataReason}
+              noDataReason={noDataReasons?.[currentEntry.kpi.id]}
+              onNoDataReasonChange={onNoDataReasonChange}
+              readOnly={readOnlyJustification}
+            />
+            {extraContentForCurrentKpi?.(currentEntry.kpi)}
+          </>
         ) : buckets ? (
           buckets.map((bucket) => (
             <BucketSection

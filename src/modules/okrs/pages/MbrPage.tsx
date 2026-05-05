@@ -44,6 +44,7 @@ import { handleError } from '@/lib/errorMessages';
 // Step components
 import { MbrPanoramaStep } from '@/modules/okrs/components/wizards/mbr/MbrPanoramaStep';
 import { MbrKpiGateStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiGateStep';
+import { MbrKpiDeepDiveStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiDeepDiveStep';
 import { MbrTeamOkrsOverviewStep } from '@/modules/okrs/components/wizards/mbr/MbrTeamOkrsOverviewStep';
 import { MbrTeamOkrsDetailStep } from '@/modules/okrs/components/wizards/mbr/MbrTeamOkrsDetailStep';
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
@@ -449,6 +450,22 @@ export default function MbrPage() {
             proposedKpis={proposedKpis}
             referenceMonth={draft.data.referenceMonth}
             showMonthlyOverview
+            onContinue={goNext}
+            onBack={goBack}
+          />
+        );
+
+      case 'kpi-deep-dive':
+        return (
+          <MbrKpiDeepDiveStep
+            kpiSnapshots={draft.data.kpiSnapshots}
+            decisions={draft.data.decisions}
+            onDecisionsChange={(decisions: TeamCheckinDecision[]) =>
+              updateDraft({ decisions })
+            }
+            referenceMonth={draft.data.referenceMonth}
+            mbrPreByTeam={mbrPreByTeam}
+            teamNamesById={teamNamesById}
             onContinue={goNext}
             onBack={goBack}
           />

@@ -8,6 +8,7 @@ import type { MbrStep, MbrDraftData, MbrTeamOkrSnapshot } from '@/modules/okrs/t
 export const WIZARD_STEPS = [
   { id: 'panorama' as const, label: 'Panorama Executivo', description: 'Saúde do negócio' },
   { id: 'kpi-gate' as const, label: 'KPI Gate', description: 'KPIs críticos' },
+  { id: 'kpi-deep-dive' as const, label: 'Indicadores fora da meta', description: 'Justificativas e plano dos líderes' },
   { id: 'team-okrs-overview' as const, label: 'OKRs dos Times', description: 'Visão consolidada' },
   { id: 'team-okrs-detail' as const, label: 'Análise por Time', description: 'Drill-down' },
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Prioridades estratégicas' },
@@ -20,6 +21,7 @@ export const WIZARD_STEPS = [
 export const STEP_ORDER: MbrStep[] = [
   'panorama',
   'kpi-gate',
+  'kpi-deep-dive',
   'team-okrs-overview',
   'team-okrs-detail',
   'org-okrs',

@@ -1,101 +1,79 @@
-## Pré-checklist (consultado)
+# Plano — MBR · KPI Deep Dive (1 página por KPI fora da meta)
 
-- ✅ TCR (`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`) — seção `kpi_metrics`
-- ✅ `SCHEMA_QUICK_REFERENCE.md` — schema vigente
-- ✅ `RESPONSIBILITY_MIGRATION_POLICY.md` — confirma que `kpi_metrics` tem `owner_user_id` mandatório; responsabilidade operacional é dimensão paralela
-- ✅ `AREA_BADGE_STANDARD.md` — `AreaBadge` é SSOT visual; trocaremos só a fonte de dados
-- ✅ `UI_COMPONENTS_REGISTRY.md` — `AreaSelect`/`TeamSelect` já implementam corretamente o form de Edit/Create; **não mexer**
-- ✅ Memória `mem://features/kpis/kpis-master-standard` — base v3.0.0
-- ⚠️ TCR ainda não documenta `responsible_area_id` / `responsible_team_id` em `kpi_metrics` — gap será registrado em memória nova ao final
+## Contexto / TCR (pré-checklist)
 
-## Problema
+- Consultei TCR §4.8.1 (Princípio #4 — variação por config; agnostic `wizardType`) e `mem://architecture/wizards/wizards-master-standard`.
+- O Pré-MBR já usa o **`KpiGateStep` canônico** do framework (`@/wizards-framework`) em `cardVariant: 'rich-paginated'` via `MbrPreKpiGateStep` — mesma UI desejada.
+- `useMbrPreSubmissions(referenceMonth)` já entrega, por time:
+  `kpiSnapshots[].impactAssessment`, `kpiJustifications`, `kpiNoDataReasons`, `decisions` (com `metadata.kpi_id`).
+- O step atual `kpi-gate` (`MbrKpiGateStep`) é o **overview executivo** (KPIs Globais + Área). Mantemos como está.
+- Sem novas tabelas, sem migrações, sem alterações de RLS. Sem mudanças no Pré-MBR.
 
-`kpi_metrics` tem 2 dimensões de vínculo:
+## O que fazer
 
-| Coluna | Semântica |
-|---|---|
-| `area_id` / `team_id` | Ownership **estrutural** (preenchido em `scope='team'` / `scope='area'`) |
-| `responsible_area_id` / `responsible_team_id` | **Responsabilidade Operacional** — quem responde no dia a dia (preenchido em `scope='org'` Globais e em `scope='area'` quando delegado a um time) |
+Inserir uma nova etapa `kpi-deep-dive` **logo após `kpi-gate`** no MBR. Lista apenas KPIs `red`/`amber` (fora da meta) e renderiza **um KPI por página**, com a mesma UI do Pré-MBR (gráfico + bloco do líder), em **modo somente-leitura** consolidando o que cada líder respondeu no Pré-MBR daquele mês.
 
-**Caso NPS:** `scope='org'`, `area_id=NULL`, `team_id=NULL`, `responsible_area_id=Operações`, `responsible_team_id=Customer Success`.
+### Estrutura da página (por KPI)
 
-A UI hoje só lê `kpi.area` / `kpi.team` (joins por `area_id`/`team_id`), então **KPIs Globais aparecem sem área e sem time** em `/kpis`, `/kpis/evolution` e em vários ritos — quando deveriam exibir os responsáveis operacionais.
-
-## Solução canônica
-
-Estender o tipo do KPI com **campos derivados** (sem alterar schema):
-
-```ts
-effective_area = area  ?? responsible_area
-effective_team = team  ?? responsible_team
+```
+[ KpiSparkline + valores + badges ]   ← reaproveitado do KpiGateStep rich
+─────────────────────────────────
+[ Justificativa do líder (Pré-MBR) ]  ← read-only, por time
+[ Razão sem dados (se overdue) ]      ← read-only, por time
+[ Plano de ação registrado no Pré-MBR ] ← decisões com metadata.kpi_id, por time
 ```
 
-Toda renderização de "área/time do KPI" passa a usar `effective_*`. Edição/forms continuam vendo os campos brutos (área estrutural × área operacional).
+Quando o KPI é `org`/`area` e múltiplos times responderam, agrupa as respostas por nome do time (mesma área visual do `KpiMonthlyComparisonCard`).
 
-## Mudanças
+## Arquivos
 
-### 1. Tipos (SSOT)
-`src/modules/kpis/types.ts`
-- Adicionar `responsible_area`, `responsible_team`, `effective_area`, `effective_team` em `KpiWithValues` e `KpiForWizardV2`.
+### Criar
 
-### 2. Hooks de fetch — incluir joins de responsável e popular `effective_*`
-- `src/modules/kpis/hooks/useKpiData.ts` (lista + detalhe)
-- `src/modules/kpis/hooks/useKpiWithHistory.ts`
-- `src/modules/kpis/hooks/useKpiEvolutionList.ts`
-- `src/modules/kpis/hooks/useKpisForWizardV2.ts`
-- `src/modules/kpis/hooks/useKpisForWizard.ts`
-- `src/modules/okrs/hooks/useMbrMonthlyKpisByScope.ts` (já tem `responsible_team_id`; estender para `area`)
-- `src/modules/okrs/hooks/useMbrPreTeamKpisMonthly.ts`
-- `src/modules/teams/hooks/useTeamKpisGrouped.ts`
+1. `src/modules/okrs/components/wizards/shared/KpiLeaderInsightsPanel.tsx`
+   - Componente shared, **somente leitura**, recebe `kpiId` + `entriesByTeam: { teamId, teamName, justification?, noDataReason?, decisions: TeamCheckinDecision[] }[]`.
+   - Reutiliza `JustificationField` (variant read-only) e o estilo de `DecisionCard` para os planos.
+   - Vazio-state explícito ("Nenhum líder respondeu este KPI no Pré-MBR de {mês}").
 
-Joins padrão a adicionar:
-```
-responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
-responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name)
-```
+2. `src/modules/okrs/hooks/useMbrKpiLeaderInsights.ts`
+   - Deriva, a partir de `mbrPreByTeam` (já disponível no `MbrPage`), `Map<kpiId, LeaderInsightEntry[]>`.
+   - Memoizado; sem queries novas.
 
-### 3. Filtro por área no Dashboard `/kpis`
-`useKpiData.ts` — espelhar o que já é feito para `team_id`:
-```ts
-if (areaId) {
-  query = query.or(`area_id.eq.${areaId},responsible_area_id.eq.${areaId}`);
-}
-```
-E atualizar `KpiDashboardPage.tsx` para agrupar por `effective_area.id`/`name`/`color` em vez de `area_id`.
+3. `src/modules/okrs/components/wizards/mbr/MbrKpiDeepDiveStep.tsx`
+   - Container que filtra `kpiSnapshots` para `ragStatus ∈ {red, amber}` (igual ao `criticalKpis` do `MbrKpiGateStep`).
+   - Reusa o **`KpiGateStep` canônico** (`@/wizards-framework`) em `cardVariant: 'rich-paginated'`, classificando via `classifyKpiGateBucketsFromMonthlySnapshots` para entregar `buckets` com a mesma flatten-pagination do Pré-MBR.
+   - Passa `justifications`/`noDataReasons` apenas como leitura (sem callbacks de edição → desabilita edição no rich card via prop existente `readOnlyJustification`; se não existir, adicionar flag `readOnly?: boolean` no `KpiGateStep` — alteração mínima).
+   - Renderiza `KpiLeaderInsightsPanel` **abaixo** do card do KPI atual via prop nova `extraContentForCurrentKpi?: (kpi) => ReactNode` no `KpiGateStep` (extensão mínima do framework, agnóstica de wizard).
 
-### 4. Consumidores UI — trocar `kpi.area`/`kpi.team` → `kpi.effective_area`/`kpi.effective_team`
-- `src/modules/kpis/components/KpiCard.tsx`
-- `src/modules/kpis/components/KpiDashboardTable.tsx`
-- `src/modules/kpis/components/KpiSidePanel.tsx`
-- `src/modules/kpis/components/KpiDetailContent.tsx`
-- `src/modules/kpis/components/KpiHistoryDialog.tsx`
-- `src/modules/kpis/pages/KpiEvolutionPage.tsx`
-- `src/modules/kpis/pages/KpiDashboardPage.tsx` (badges + agrupamento)
-- `src/modules/okrs/components/wizards/shared/KpiMonthlyComparisonCard.tsx`
-- `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx`
-- `src/modules/okrs/components/wizards/clevel-checkin/CLevelInsightsStep.tsx`
-- `src/modules/okrs/pages/mbr/useMbrDataSources.ts`
+### Editar
 
-### 5. NÃO mexer
-- Forms de Create/Edit (`CreateKpiDialog`, `EditKpiDialog`, `EditKpiScopeSection`, `ScopeAreaSection`, schemas).
-- `useCanEditKpi`, `useCanChangeKpiScope` — lógica de permissão correta.
-- `AreaBadge` (componente).
-- Banco / migrations.
+4. `src/modules/okrs/types/wizard/mbr.ts`
+   - Adicionar `'kpi-deep-dive'` ao union `MbrStep`.
 
-### 6. Memória / docs
-- Criar `mem://features/kpis/kpi-effective-area-team-resolution` com a regra: "Renderização sempre via `effective_area`/`effective_team`. Filtros por área incluem `responsible_area_id`."
-- Atualizar `mem://index.md` com a nova entrada.
+5. `src/modules/okrs/pages/mbr/constants.ts`
+   - Inserir `{ id: 'kpi-deep-dive', label: 'Indicadores fora da meta', description: 'Justificativas e planos do Pré-MBR' }` em `WIZARD_STEPS` e `STEP_ORDER`, **logo após `kpi-gate`**.
 
-## Validação
+6. `src/modules/okrs/pages/MbrPage.tsx`
+   - Novo `case 'kpi-deep-dive'` no switch, passando `kpiSnapshots` filtrados, `referenceMonth` e `mbrPreByTeam` (já disponível).
+   - Sem alterações no `kpi-gate` existente.
 
-1. `/kpis` (NPS visível): badge "Operações" + chip "Customer Success".
-2. `/kpis/evolution` (table + cards): mesmo.
-3. Filtro `?area_id=<Operações>` em `/kpis`: NPS aparece (mesmo com `area_id=NULL`).
-4. `/rituals/mbr?step=kpi-gate`: NPS rotulado com área/time.
-5. `/rituals/mbr-pre?step=opening`: cards com área/time.
-6. KPIs `scope='team'` legados (com `area_id`/`team_id` setados) continuam exibindo igual — fallback transparente.
+7. `src/modules/okrs/components/wizards/shared/framework/components/KpiGateStep.tsx`
+   - Adicionar 2 props opcionais (extensão, sem breaking change):
+     - `readOnlyJustification?: boolean` → desabilita `Textarea` da justificativa quando `true`.
+     - `extraContentForCurrentKpi?: (kpi: KpiGateItem) => ReactNode` → slot renderizado abaixo do card no modo `rich-paginated`.
 
-## Riscos
+### Não duplicar
 
-- Cache: invalidar `queryKeys.kpis.*` após deploy (já garantido — só estamos adicionando colunas no select, mesmo cache key).
-- TS: novos campos opcionais em `KpiWithValues` — sem breaking change para consumidores que já leem `kpi.area`/`kpi.team` (mantidos).
+- **NÃO** criar nova UI de gráfico — reusar `KpiSparkline` já consumido pelo `KpiGateStep` rich.
+- **NÃO** criar novo wizard — é um novo step do MBR existente.
+- **NÃO** copiar a lógica de paginação — usar `flattenBucketsForPagination` + `cardVariant: 'rich-paginated'` já canônicos.
+- **NÃO** tocar no `MbrPreKpiGateStep` nem no `MbrKpiGateStep` (overview).
+
+## Gate / Navegação
+
+- Sem gate obrigatório (somente leitura). `Próximo` sempre habilitado.
+- Paginação: `Voltar` na primeira página → volta ao step `kpi-gate`; `Próximo` na última → avança para `team-okrs-overview`.
+
+## Riscos / Validação
+
+- Verificar que `KpiGateStep` rich-paginated aceita lista vazia (caso não haja KPI red/amber) — fallback: pular automaticamente o step ou exibir empty-state ("Nenhum KPI fora da meta neste mês 🎉") + botão `Próximo`. Usar empty-state.
+- Confirmar que `mbrPreByTeam` chega vazio quando nenhum time submeteu — `KpiLeaderInsightsPanel` mostra empty-state apropriado (não bloqueia navegação, alinhado ao pedido anterior do usuário sobre listar KPIs independente de submissão).

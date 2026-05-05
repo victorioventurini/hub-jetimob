@@ -145,6 +145,7 @@ export const RITUAL_STEP_LABELS: Partial<
     v4: {
       'opening-executive': { title: 'Abertura Executiva', subtitle: 'Panorama do mês', shortLabel: 'Abertura' },
       'kpi-gate': { title: 'KPI Gate', subtitle: 'KPIs em alerta — decidir antes de avançar', shortLabel: 'KPI Gate' },
+      'kpi-deep-dive': { title: 'Indicadores fora da meta', subtitle: 'Justificativas e planos do Pré-MBR — 1 KPI por página', shortLabel: 'Deep Dive' },
       'teams-overview': { title: 'Overview dos Times', subtitle: 'Triagem visual de saúde por time', shortLabel: 'Overview' },
       'team-analysis': { title: 'Análise por Time', subtitle: 'Aprofundamento time a time', shortLabel: 'Análise' },
       'org-okrs': { title: 'OKRs Organizacionais', subtitle: 'Cobertura e progresso dos OKRs da BU', shortLabel: 'OKRs Org' },

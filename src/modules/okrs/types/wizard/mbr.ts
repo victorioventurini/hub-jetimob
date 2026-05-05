@@ -14,6 +14,7 @@ import type { KpiFrequencyValue, KpiInputType } from '@/modules/kpis/types';
 export type MbrStep =
   | 'panorama'
   | 'kpi-gate'
+  | 'kpi-deep-dive'
   | 'team-okrs-overview'
   | 'team-okrs-detail'
   | 'org-okrs'
