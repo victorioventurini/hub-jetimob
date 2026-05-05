@@ -31,6 +31,8 @@ export type PaceStatus =
   | 'not_started'     // Não iniciado
   | 'completed';      // Meta atingida/superada
 
+export type ProgressRagStatus = 'green' | 'yellow' | 'red' | 'not_started';
+
 export interface PaceAnalysis {
   status: PaceStatus;
   label: string;
@@ -313,6 +315,33 @@ export function getPaceInterpretationText(analysis: PaceAnalysis): string {
     default:
       return `${actualProgress}%`;
   }
+}
+
+export function calculateProgressRagStatus(params: {
+  actualProgress: number;
+  cycle: CycleContext;
+  referenceDate?: Date;
+  warningTolerancePercent?: number;
+  criticalTolerancePercent?: number;
+}): ProgressRagStatus {
+  const {
+    actualProgress,
+    cycle,
+    referenceDate = new Date(),
+    warningTolerancePercent = 10,
+    criticalTolerancePercent = 25,
+  } = params;
+
+  const expectedProgress = calculateExpectedProgress(cycle, referenceDate);
+  const cycleElapsed = calculateCycleElapsed(cycle, referenceDate);
+  const gap = actualProgress - expectedProgress;
+
+  if (actualProgress >= 100) return 'green';
+  if (actualProgress === 0 && cycleElapsed > 10) return 'not_started';
+  if (cycleElapsed <= 15) return 'green';
+  if (gap <= -criticalTolerancePercent) return 'red';
+  if (gap <= -warningTolerancePercent) return 'yellow';
+  return 'green';
 }
 
 // ============================================================
