@@ -227,6 +227,13 @@ function MbrPanoramaCurationCardImpl({
           </div>
         </div>
 
+        {/* Pauta do MBR — drag-and-drop, incluir/excluir, adicionar manual */}
+        <MbrAgendaCuration
+          agenda={curation.agenda ?? []}
+          onChange={handleAgendaChange}
+          teamNamesById={teamNamesById}
+        />
+
         {/* Decisões sugeridas */}
         {curation.suggestedDecisions.length > 0 && (
           <div className="space-y-2">
