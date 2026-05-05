@@ -230,42 +230,6 @@ export function MbrOrgOkrsStep({
                   </div>
                 )}
 
-                {/* Priority question */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <p className="text-sm" />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={okr.remainsStrategicPriority ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-7 gap-1"
-                      onClick={() => handleTogglePriority(okr.objectiveId, true)}
-                    >
-                      <ThumbsUp className="h-3.5 w-3.5" />
-                      Sim
-                    </Button>
-                    <Button
-                      variant={!okr.remainsStrategicPriority ? 'destructive' : 'outline'}
-                      size="sm"
-                      className="h-7 gap-1"
-                      onClick={() => handleTogglePriority(okr.objectiveId, false)}
-                    >
-                      <ThumbsDown className="h-3.5 w-3.5" />
-                      Não
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Decision required when not priority */}
-                {!okr.remainsStrategicPriority && (
-                  <div className="border rounded-lg border-status-amber/30">
-                    <InlineDecisionInput
-                      decisions={decisions}
-                      onDecisionsChange={onDecisionsChange}
-                      sourceStep="org-okrs"
-                      placeholder={`Decisão ou ajuste sobre "${okr.title.substring(0, 30)}..."...`}
-                    />
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))
