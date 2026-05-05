@@ -122,6 +122,7 @@ export function MbrKpiDeepDiveStep({
       buckets={buckets}
       justifications={justifications}
       readOnlyJustification
+      hideLeaderActionBlock
       currentKpiIndex={currentKpiIndex}
       onKpiIndexChange={setCurrentKpiIndex}
       decisions={decisions}
