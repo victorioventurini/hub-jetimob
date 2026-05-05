@@ -195,6 +195,7 @@ export function MbrKpiGateStep({
                 snapshots={overviewSnapshots}
                 title="Visão consolidada do mês"
                 showNoData
+                stack
                 topN={5}
                 emptyMessage="Sem dados comparáveis no período."
               />
