@@ -121,12 +121,19 @@ export function DecisionFollowUpRow({
   onAddMessage,
   isAddingMessage = false,
   hideThread = false,
+  conductorProfileId,
 }: DecisionFollowUpRowProps) {
   const { profileId } = useIdentity();
+  const { isWildcard } = usePermissions();
   const { canResolve, isLoading: permLoading } = useCanResolveDecision(decision.owner?.id);
   const config = CATEGORY_CONFIG[decision.category] ?? CATEGORY_CONFIG.decision;
   const Icon = config.icon;
   const isDone = decision.followUpStatus === 'done';
+  const canEditMeta = !isDone && (
+    isWildcard ||
+    (!!profileId && !!conductorProfileId && profileId === conductorProfileId)
+  );
+  const [isEditingMeta, setIsEditingMeta] = useState(false);
 
   // Resolution modal state
   const [showModal, setShowModal] = useState(false);
