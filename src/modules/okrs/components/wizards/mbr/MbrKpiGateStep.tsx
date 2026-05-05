@@ -100,6 +100,15 @@ export function MbrKpiGateStep({
   const { snapshots: overviewSnapshots, isLoading: overviewLoading } =
     useMbrMonthlyKpisByScope(overviewEnabled ? referenceMonth : null, ['org', 'area']);
 
+  const orgSnapshots = useMemo(
+    () => overviewSnapshots.filter(s => s.scope === 'org'),
+    [overviewSnapshots]
+  );
+  const areaSnapshots = useMemo(
+    () => overviewSnapshots.filter(s => s.scope === 'area'),
+    [overviewSnapshots]
+  );
+
   const criticalKpis = useMemo(
     () => kpiSnapshots.filter(k => k.ragStatus === 'red' || k.ragStatus === 'yellow'),
     [kpiSnapshots]
