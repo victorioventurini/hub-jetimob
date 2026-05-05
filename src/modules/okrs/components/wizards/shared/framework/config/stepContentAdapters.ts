@@ -48,6 +48,11 @@ export interface KpiGateItem {
   latestReferenceDate?: string | null;
   /** Escopo do KPI ('global'/'area'/'team'/'individual') */
   scope?: string | null;
+  /** v3.35.0 — Área efetiva (estrutural com fallback operacional) para AreaBadge. */
+  areaName?: string | null;
+  areaColor?: string | null;
+  /** v3.35.0 — Time responsável (operacional) para badge de time. */
+  teamName?: string | null;
 }
 
 /**
@@ -207,6 +212,9 @@ export function kpiForWizardV2ToGateItem(
     unit: kpi.unit,
     latestReferenceDate: kpi.latest_reference_date,
     scope: kpi.scope,
+    areaName: kpi.effective_area?.name ?? null,
+    areaColor: kpi.effective_area?.color ?? null,
+    teamName: kpi.effective_team?.name ?? null,
   };
 }
 
@@ -329,6 +337,11 @@ export interface MonthlyKpiSnapshotForGate {
   lastValueAt?: string | null;
   scope?: string | null;
   latestInputType?: 'partial' | 'consolidated' | null;
+  /** v3.35.0 — área efetiva para badge */
+  areaName?: string | null;
+  areaColor?: string | null;
+  /** v3.35.0 — time responsável (operacional) */
+  teamName?: string | null;
 }
 
 function snapshotStatus(s: MonthlyKpiSnapshotForGate): KpiGateItem['status'] {
@@ -358,6 +371,9 @@ function snapshotToGateItem(
     unit: s.unit ?? undefined,
     latestReferenceDate: s.lastValueAt ?? null,
     scope: s.scope ?? null,
+    areaName: s.areaName ?? null,
+    areaColor: s.areaColor ?? null,
+    teamName: s.teamName ?? null,
   };
 }
 

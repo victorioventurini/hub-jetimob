@@ -37,6 +37,11 @@ interface KpiRow {
   target_value: number | null;
   scope: 'org' | 'area' | 'team' | null;
   responsible_team_id: string | null;
+  area_id: string | null;
+  responsible_area_id: string | null;
+  area: { id: string; name: string; color: string | null } | null;
+  responsible_area: { id: string; name: string; color: string | null } | null;
+  team: { id: string; name: string } | null;
 }
 
 interface KpiValueRow {
@@ -96,13 +101,18 @@ export function useMbrPreTeamKpisMonthly(
       // 1) KPIs do time
       const { data: kpis, error: kpisErr } = await supabase
         .from('kpi_metrics')
-        .select('id, name, unit, direction, target_value, scope, responsible_team_id')
+        .select(
+          `id, name, unit, direction, target_value, scope, responsible_team_id, area_id, responsible_area_id,
+           area:areas!kpi_metrics_area_id_fkey(id, name, color),
+           responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
+           team:teams!kpi_metrics_responsible_team_id_fkey(id, name)`,
+        )
         .eq('bu_id', currentBuId!)
         .eq('responsible_team_id', teamId!)
         .is('deleted_at', null)
         .in('lifecycle_status', ['active', 'proposed']);
       if (kpisErr) throw kpisErr;
-      const kpiRows = (kpis ?? []) as KpiRow[];
+      const kpiRows = (kpis ?? []) as unknown as KpiRow[];
       if (kpiRows.length === 0) return { kpis: kpiRows, values: [] as KpiValueRow[] };
 
       // 2) Valores nos dois meses (consolidados ou parciais — pegamos o último por mês).
@@ -157,7 +167,11 @@ export function useMbrPreTeamKpisMonthly(
         unit: k.unit ?? undefined,
         lastValueAt: cur?.reference_date ?? null,
         scope: k.scope ?? undefined,
+        areaId: k.area?.id ?? k.responsible_area?.id ?? k.area_id ?? k.responsible_area_id ?? null,
+        areaName: k.area?.name ?? k.responsible_area?.name ?? null,
+        areaColor: k.area?.color ?? k.responsible_area?.color ?? null,
         teamId: k.responsible_team_id ?? null,
+        teamName: k.team?.name ?? null,
         direction: k.direction === 'maintain' ? null : (k.direction ?? null),
       };
     });
