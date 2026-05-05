@@ -59,6 +59,8 @@ export interface MbrPanoramaCurationCardProps {
    * Recebe o título e categoria; retorna `true` se foi adicionada.
    */
   onAddSuggestedDecision?: (title: string, category?: string) => void;
+  /** Mapa teamId → nome (para badges em itens vindos de Pré-MBR). */
+  teamNamesById?: Record<string, string>;
 }
 
 // ============================================================
