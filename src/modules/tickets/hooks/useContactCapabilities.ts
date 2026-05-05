@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/hooks/useIdentity";
 
 // ===========================================
 // TYPES
@@ -124,7 +124,7 @@ export function useCompanyContactCapabilities(companyId?: string) {
 export function useCreateContactCapability() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
-  const { profile } = useAuth();
+  const { realUserId } = useIdentity();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
@@ -140,7 +140,7 @@ export function useCreateContactCapability() {
           contact_id: data.contact_id,
           category_id: data.category_id,
           subcategory_id: data.subcategory_id || null,
-          created_by: profile?.id || null,
+          created_by: realUserId ?? null,
         })
         .select("id, bu_id, external_company_id, contact_id, category_id, subcategory_id, is_active, created_at")
         .single();
@@ -230,7 +230,7 @@ export function useUpdateContactCapability() {
 export function useSaveContactCapabilities() {
   const queryClient = useQueryClient();
   const { currentBu } = useBu();
-  const { profile } = useAuth();
+  const { realUserId } = useIdentity();
   const buId = currentBu?.id;
   const supabase = useBuScopedSupabase();
 
@@ -277,7 +277,7 @@ export function useSaveContactCapabilities() {
             contact_id: contactId,
             category_id: selection.categoryId,
             subcategory_id: null,
-            created_by: profile?.id || null,
+            created_by: realUserId ?? null,
           });
         } else if (selection.subcategoryIds.length > 0) {
           // Specific subcategories
@@ -288,7 +288,7 @@ export function useSaveContactCapabilities() {
               contact_id: contactId,
               category_id: selection.categoryId,
               subcategory_id: subId,
-              created_by: profile?.id || null,
+              created_by: realUserId ?? null,
             });
           }
         }
