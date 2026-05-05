@@ -31,7 +31,7 @@ import { WizardStepHeader, WizardFirstStepFooter, InlineDecisionInput, LastCheck
 import { OkrProgressBar } from '../../OkrProgressBar';
 import { OkrStatusBadge } from '../../OkrStatusBadge';
 import { formatValueWithUnit } from '@/shared/constants/units';
-import { variationVsLast, variationVsTarget as deriveVariationVsTarget } from '@/modules/okrs/utils/kpiVariations';
+import { variationVsLast, variationVsTarget as deriveVariationVsTarget, classifyKpiDelta } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
 import { MbrPanoramaCurationCard } from './MbrPanoramaCurationCard';
