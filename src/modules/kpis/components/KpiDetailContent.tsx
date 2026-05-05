@@ -169,7 +169,11 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         {variation !== null && (
           <div className={cn("flex items-center gap-1 text-lg", trendColor)}>
             <TrendIcon className="h-5 w-5" />
-            <span>{Math.abs(variation).toFixed(1)}%</span>
+            <span>
+              {isPointsUnit(kpi.unit) && currentValue != null && previousValue != null
+                ? `${Math.abs(currentValue - previousValue).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`
+                : `${Math.abs(variation).toFixed(1)}%`}
+            </span>
           </div>
         )}
       </div>
