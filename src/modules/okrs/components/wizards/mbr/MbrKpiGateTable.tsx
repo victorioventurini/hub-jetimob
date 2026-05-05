@@ -1,7 +1,7 @@
 /**
  * MbrKpiGateTable — Tabela canônica para listagem de KPIs no KPI Gate (MBR).
  *
- * Colunas: Indicador, Área, Valor (mês), Meta, Variação.
+ * Colunas: Indicador, Área, [mês anterior], [mês atual] / Meta, Variação %.
  */
 
 import { TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
@@ -24,7 +24,10 @@ import type { MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKp
 
 interface MbrKpiGateTableProps {
   snapshots: MbrMonthlyKpiSnapshot[];
+  /** Rótulo do mês de referência (atual). Ex.: "abril de 2026". */
   monthLabel: string;
+  /** Rótulo do mês imediatamente anterior. Ex.: "março de 2026". */
+  previousMonthLabel: string;
 }
 
 function formatValue(value: number | null, unit: string | undefined): string {
@@ -56,7 +59,11 @@ function computeVariation(current: number | null, previous: number | null): numb
   return ((current - previous) / Math.abs(previous)) * 100;
 }
 
-export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps) {
+function capitalize(label: string): string {
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function MbrKpiGateTable({ snapshots, monthLabel, previousMonthLabel }: MbrKpiGateTableProps) {
   const { currentBu } = useBu();
 
   return (
@@ -66,9 +73,9 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
           <TableRow>
             <TableHead className="min-w-[200px]">Indicador</TableHead>
             <TableHead>Área</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Valor {monthLabel}</TableHead>
-            <TableHead className="text-right">Meta</TableHead>
-            <TableHead className="text-right">Variação</TableHead>
+            <TableHead className="text-right whitespace-nowrap">{capitalize(previousMonthLabel)}</TableHead>
+            <TableHead className="text-right whitespace-nowrap">{capitalize(monthLabel)} / Meta</TableHead>
+            <TableHead className="text-right whitespace-nowrap">Variação %</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -113,17 +120,21 @@ export function MbrKpiGateTable({ snapshots, monthLabel }: MbrKpiGateTableProps)
                   </div>
                 </TableCell>
 
-                {/* Valor (mês) */}
-                <TableCell className="text-right font-medium tabular-nums">
-                  {formatValue(s.currentValue, s.unit)}
-                </TableCell>
-
-                {/* Meta */}
+                {/* Mês anterior */}
                 <TableCell className="text-right text-muted-foreground tabular-nums">
-                  {s.target != null ? formatValue(s.target, s.unit) : '—'}
+                  {formatValue(s.previousValue, s.unit)}
                 </TableCell>
 
-                {/* Variação */}
+                {/* Mês atual / Meta */}
+                <TableCell className="text-right tabular-nums">
+                  <span className="font-medium">{formatValue(s.currentValue, s.unit)}</span>
+                  <span className="text-muted-foreground"> / </span>
+                  <span className="text-muted-foreground">
+                    {s.target != null ? formatValue(s.target, s.unit) : '—'}
+                  </span>
+                </TableCell>
+
+                {/* Variação % */}
                 <TableCell className="text-right">
                   {variation !== null ? (
                     <div className={cn('flex items-center justify-end gap-1', trendColor)}>
