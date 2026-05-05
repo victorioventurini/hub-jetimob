@@ -14,6 +14,10 @@ import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { MbrKpiSnapshot } from '@/modules/okrs/types/wizard';
+import {
+  classifyKpiDelta,
+  orientedDeltaPct,
+} from '@/modules/okrs/utils/kpiVariations';
 
 // ============================================================
 // HELPERS (canônicos — antes duplicados em MbrPreOpeningStep)
