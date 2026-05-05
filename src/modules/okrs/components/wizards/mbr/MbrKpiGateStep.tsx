@@ -22,7 +22,7 @@ import {
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
 import { MbrKpiGateTable } from './MbrKpiGateTable';
 import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
-import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
+import { formatMonthLabel, previousMonthOf } from '@/modules/okrs/utils/mbr/referenceMonth';
 import { orientedDeltaPct } from '@/modules/okrs/utils/kpiVariations';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
@@ -195,6 +195,7 @@ export function MbrKpiGateStep({
           <ScopeSection
             title={`KPIs Globais — ${formatMonthLabel(referenceMonth!)}`}
             monthLabel={formatMonthLabel(referenceMonth!)}
+            previousMonthLabel={formatMonthLabel(previousMonthOf(referenceMonth!))}
             snapshots={orgSnapshots}
             isLoading={overviewLoading}
             emptyMessage="Sem KPIs globais cadastrados nesta BU."
@@ -206,6 +207,7 @@ export function MbrKpiGateStep({
           <ScopeSection
             title={`KPIs de Área — ${formatMonthLabel(referenceMonth!)}`}
             monthLabel={formatMonthLabel(referenceMonth!)}
+            previousMonthLabel={formatMonthLabel(previousMonthOf(referenceMonth!))}
             snapshots={areaSnapshots}
             isLoading={overviewLoading}
             emptyMessage="Sem KPIs de área cadastrados nesta BU."
@@ -225,12 +227,13 @@ export function MbrKpiGateStep({
 interface ScopeSectionProps {
   title: string;
   monthLabel: string;
+  previousMonthLabel: string;
   snapshots: MbrMonthlyKpiSnapshot[];
   isLoading: boolean;
   emptyMessage: string;
 }
 
-function ScopeSection({ title, monthLabel, snapshots, isLoading, emptyMessage }: ScopeSectionProps) {
+function ScopeSection({ title, monthLabel, previousMonthLabel, snapshots, isLoading, emptyMessage }: ScopeSectionProps) {
   const { gains, drops, noData } = useMemo(() => {
     const gains: MbrMonthlyKpiSnapshot[] = [];
     const drops: MbrMonthlyKpiSnapshot[] = [];
@@ -275,6 +278,7 @@ function ScopeSection({ title, monthLabel, snapshots, isLoading, emptyMessage }:
             count={gains.length}
             snapshots={gains}
             monthLabel={monthLabel}
+            previousMonthLabel={previousMonthLabel}
             emptyMessage="Nenhum KPI com avanço no período."
           />
           <SubGroup
@@ -282,6 +286,7 @@ function ScopeSection({ title, monthLabel, snapshots, isLoading, emptyMessage }:
             count={drops.length}
             snapshots={drops}
             monthLabel={monthLabel}
+            previousMonthLabel={previousMonthLabel}
             emptyMessage="Nenhum KPI com queda no período."
           />
           <SubGroup
@@ -289,6 +294,7 @@ function ScopeSection({ title, monthLabel, snapshots, isLoading, emptyMessage }:
             count={noData.length}
             snapshots={noData}
             monthLabel={monthLabel}
+            previousMonthLabel={previousMonthLabel}
             emptyMessage="Todos os KPIs têm dados comparáveis."
           />
         </div>
@@ -304,10 +310,11 @@ interface SubGroupProps {
   count: number;
   snapshots: MbrMonthlyKpiSnapshot[];
   monthLabel: string;
+  previousMonthLabel: string;
   emptyMessage: string;
 }
 
-function SubGroup({ label, count, snapshots, monthLabel, emptyMessage }: SubGroupProps) {
+function SubGroup({ label, count, snapshots, monthLabel, previousMonthLabel, emptyMessage }: SubGroupProps) {
   return (
     <div className="space-y-2">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -316,7 +323,7 @@ function SubGroup({ label, count, snapshots, monthLabel, emptyMessage }: SubGrou
       {snapshots.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">{emptyMessage}</p>
       ) : (
-        <MbrKpiGateTable snapshots={snapshots} monthLabel={monthLabel} />
+        <MbrKpiGateTable snapshots={snapshots} monthLabel={monthLabel} previousMonthLabel={previousMonthLabel} />
       )}
     </div>
   );
