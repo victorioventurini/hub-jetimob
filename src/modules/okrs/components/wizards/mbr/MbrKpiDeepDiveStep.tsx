@@ -180,12 +180,12 @@ export function MbrKpiDeepDiveStep({
   const handlePrimary = useCallback(() => {
     if (isLast) onContinue();
     else setCurrentKpiIndex((i) => Math.min(totalCount - 1, i + 1));
-  }, [isLast, onContinue, totalCount]);
+  }, [isLast, onContinue, totalCount, setCurrentKpiIndex]);
 
   const handleBack = useCallback(() => {
     if (isFirst) onBack();
     else setCurrentKpiIndex((i) => Math.max(0, i - 1));
-  }, [isFirst, onBack]);
+  }, [isFirst, onBack, setCurrentKpiIndex]);
 
   return (
     <KpiGateStep
