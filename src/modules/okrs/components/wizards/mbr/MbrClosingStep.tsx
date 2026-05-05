@@ -238,7 +238,8 @@ export function MbrClosingStep({
       <WizardLastStepFooter
         onBack={onBack}
         onPrimary={onComplete}
-        primaryDisabled={!canComplete}
+        primaryDisabled={!canComplete || isCompleting}
+        primaryLoading={isCompleting}
       />
       {!canComplete && (
         <p className="text-xs text-muted-foreground text-center pb-2">
