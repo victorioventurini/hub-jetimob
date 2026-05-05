@@ -63,18 +63,28 @@ export function InlineDecisionInput({
   sourceStep,
   placeholder = 'Registrar decisão, ajuste de foco ou próximo passo...',
   metadataFactory,
+  subStep,
 }: InlineDecisionInputProps) {
-  // Filter decisions for this step
-  const stepDecisions = decisions.filter((d) => d.sourceStep === sourceStep);
+  // Filter decisions for this step + sub-step (when defined)
+  const stepDecisions = decisions.filter((d) => {
+    if (d.sourceStep !== sourceStep) return false;
+    if (subStep === undefined) return true;
+    const ds = (d.metadata as { sub_step?: string | null } | undefined)?.sub_step ?? null;
+    return (ds ?? null) === (subStep ?? null);
+  });
 
   const handleAdd = (text: string, category: TeamCheckinDecision['category']) => {
-    const metadata = metadataFactory?.();
+    const baseMetadata = metadataFactory?.() ?? {};
+    const metadata: Record<string, unknown> = { ...baseMetadata };
+    if (subStep !== undefined && subStep !== null) {
+      metadata.sub_step = subStep;
+    }
     const newDecision: TeamCheckinDecision = {
       id: `decision-${Date.now()}`,
       text,
       category,
       sourceStep: sourceStep as TeamCheckinDecision['sourceStep'],
-      ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
     onDecisionsChange([...decisions, newDecision]);
   };
