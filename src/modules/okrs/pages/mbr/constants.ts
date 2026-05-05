@@ -21,6 +21,7 @@ export const WIZARD_STEPS = [
 export const STEP_ORDER: MbrStep[] = [
   'panorama',
   'kpi-gate',
+  'kpi-deep-dive',
   'team-okrs-overview',
   'team-okrs-detail',
   'org-okrs',
