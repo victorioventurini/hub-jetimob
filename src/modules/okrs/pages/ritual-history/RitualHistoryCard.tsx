@@ -159,6 +159,7 @@ export function RitualHistoryCard({ ritual, autoExpand = false }: RitualHistoryC
                       key={decision.id}
                       decision={decision}
                       sessionId={ritual.id}
+                      conductorProfileId={ritual.startedBy}
                       onUpdate={({ sessionId, decisionId, updates }) => {
                         updateFollowUp({ sessionId, decisionId, updates });
                       }}
