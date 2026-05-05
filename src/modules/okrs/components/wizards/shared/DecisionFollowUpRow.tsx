@@ -235,20 +235,105 @@ export function DecisionFollowUpRow({
                 </span>
               )}
 
-              {decision.owner && (
+              {!isEditingMeta && decision.owner && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <User className="h-3 w-3" />
                   <OwnerNameResolved ownerId={decision.owner.id} snapshotName={decision.owner.name} />
                 </span>
               )}
 
-              {decision.deadline && (
+              {!isEditingMeta && decision.deadline && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {format(parseISO(decision.deadline), 'dd/MM/yyyy', { locale: ptBR })}
                 </span>
               )}
+
+              {canEditMeta && !isEditingMeta && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditingMeta(true)}
+                >
+                  <Pencil className="h-3 w-3 mr-1" />
+                  {decision.owner || decision.deadline ? 'Editar' : 'Definir responsável/prazo'}
+                </Button>
+              )}
             </div>
+
+            {canEditMeta && isEditingMeta && (
+              <div className="flex items-center gap-2 flex-wrap pt-1">
+                <div className="w-[200px]">
+                  <BuUserSelect
+                    value={decision.owner?.id}
+                    onValueChange={() => { /* handled by onUserSelected */ }}
+                    onUserSelected={(user) => {
+                      if (user) {
+                        onUpdate({
+                          sessionId,
+                          decisionId: decision.id,
+                          updates: { owner: { id: user.id, name: user.displayName } },
+                        });
+                      } else {
+                        onUpdate({
+                          sessionId,
+                          decisionId: decision.id,
+                          updates: { owner: undefined },
+                        });
+                      }
+                    }}
+                    placeholder="Responsável"
+                    allowNone
+                    noneLabel="Sem responsável"
+                    showSearch
+                    showBadges={false}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'h-8 px-2.5 text-xs font-normal gap-1.5',
+                        !decision.deadline && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      {decision.deadline
+                        ? format(parseISO(decision.deadline), 'dd/MM/yyyy', { locale: ptBR })
+                        : 'Prazo'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={decision.deadline ? parseISO(decision.deadline) : undefined}
+                      onSelect={(date) => {
+                        onUpdate({
+                          sessionId,
+                          decisionId: decision.id,
+                          updates: { deadline: date ? date.toISOString() : null },
+                        });
+                      }}
+                      initialFocus
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[10px]"
+                  onClick={() => setIsEditingMeta(false)}
+                  disabled={isPending}
+                >
+                  Concluir
+                </Button>
+              </div>
+            )}
 
             {/* Resolution details */}
             {isDone && decision.resolutionNote && (
