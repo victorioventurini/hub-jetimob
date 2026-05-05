@@ -17,11 +17,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { KpiNameLink } from '@/modules/kpis/components/KpiNameLink';
-import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
+import {
+  WizardStepHeader,
+  WizardStepFooter,
+  InlineDecisionInput,
+  KpiMonthlyComparisonCard,
+} from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
+import { useMbrMonthlyKpisByScope, type MbrMonthlyKpiSnapshot } from '@/modules/okrs/hooks/useMbrMonthlyKpisByScope';
+import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
 import type { MbrKpiSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
 // ============================================================
 // TYPES
