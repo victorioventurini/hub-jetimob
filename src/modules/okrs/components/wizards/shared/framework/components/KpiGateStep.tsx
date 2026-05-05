@@ -85,6 +85,13 @@ export interface KpiGateStepProps {
    * líder, addendums) sem duplicar o card. Agnóstico de wizardType.
    */
   extraContentForCurrentKpi?: (kpi: KpiGateItem) => React.ReactNode;
+  /**
+   * v3.34.0 — quando `true`, oculta o bloco "Plano de ação do líder"
+   * dentro do `RichKpiCard`. Usado por ritos puramente de leitura
+   * (ex: MBR Deep Dive) que renderizam as respostas do líder em um
+   * painel próprio (`extraContentForCurrentKpi`).
+   */
+  hideLeaderActionBlock?: boolean;
 }
 
 const STATUS_STYLES: Record<KpiGateItem['status'], string> = {
@@ -213,6 +220,8 @@ interface RichKpiCardProps {
   onNoDataReasonChange?: (kpiId: string, value: string) => void;
   /** v3.33.0 — desabilita os textareas (modo leitura). */
   readOnly?: boolean;
+  /** v3.34.0 — oculta totalmente o bloco "Plano de ação do líder". */
+  hideActionBlock?: boolean;
 }
 
 const RichKpiCard = memo(function RichKpiCard({
@@ -224,6 +233,7 @@ const RichKpiCard = memo(function RichKpiCard({
   noDataReason,
   onNoDataReasonChange,
   readOnly,
+  hideActionBlock,
 }: RichKpiCardProps) {
   const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
@@ -337,7 +347,7 @@ const RichKpiCard = memo(function RichKpiCard({
         </div>
 
         {/* Bloco de ação do líder */}
-        {showAction && actionLabel && (
+        {showAction && actionLabel && !hideActionBlock && (
           <div
             className={cn(
               'rounded-lg border p-3 space-y-2',
@@ -538,6 +548,7 @@ export const KpiGateStep = memo(function KpiGateStep({
   onNoDataReasonChange,
   readOnlyJustification,
   extraContentForCurrentKpi,
+  hideLeaderActionBlock,
 }: KpiGateStepProps) {
   const splitNoDataReason = !!config.splitNoDataReason;
   const label = getStepLabel(persona, stepId, version);
@@ -684,6 +695,7 @@ export const KpiGateStep = memo(function KpiGateStep({
               noDataReason={noDataReasons?.[currentEntry.kpi.id]}
               onNoDataReasonChange={onNoDataReasonChange}
               readOnly={readOnlyJustification}
+              hideActionBlock={hideLeaderActionBlock}
             />
             {extraContentForCurrentKpi?.(currentEntry.kpi)}
           </>
