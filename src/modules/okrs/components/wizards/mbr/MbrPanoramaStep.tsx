@@ -368,6 +368,7 @@ export function MbrPanoramaStep({
   onGenerateCurationDraft,
   isGeneratingCuration = false,
   onAddSuggestedDecision,
+  teamNamesById,
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
