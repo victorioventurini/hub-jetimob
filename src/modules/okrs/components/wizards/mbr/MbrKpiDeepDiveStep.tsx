@@ -113,12 +113,39 @@ export function MbrKpiDeepDiveStep({
 
   const flat = useMemo(() => flattenBucketsForPagination(buckets), [buckets]);
   const totalCount = flat.length;
-  const [currentKpiIndex, setCurrentKpiIndex] = useState(0);
+
+  // Sub-step na URL: ?substep=<kpiId>. Permite saber exatamente qual KPI
+  // estava ativo quando uma nota/decisão foi registrada.
+  const [activeKpiId, setActiveKpiId] = useWizardSubStep<string | null>({
+    currentStep: 'kpi-deep-dive',
+    ownerStep: 'kpi-deep-dive',
+    defaultValue: null,
+    serialize: (v) => v ?? '',
+    deserialize: (raw) => (raw && raw.length > 0 ? raw : null),
+  });
+
+  const currentKpiIndex = useMemo(() => {
+    if (!activeKpiId) return 0;
+    const idx = flat.findIndex((f) => f.kpi.id === activeKpiId);
+    return idx >= 0 ? idx : 0;
+  }, [activeKpiId, flat]);
+
+  const setCurrentKpiIndex = useCallback(
+    (next: number | ((prev: number) => number)) => {
+      const resolved = typeof next === 'function' ? (next as (p: number) => number)(currentKpiIndex) : next;
+      const clamped = Math.max(0, Math.min(totalCount - 1, resolved));
+      const id = flat[clamped]?.kpi.id ?? null;
+      setActiveKpiId(id);
+    },
+    [currentKpiIndex, totalCount, flat, setActiveKpiId],
+  );
+
   useEffect(() => {
-    if (currentKpiIndex > Math.max(0, totalCount - 1)) {
+    if (totalCount === 0) return;
+    if (currentKpiIndex > totalCount - 1) {
       setCurrentKpiIndex(Math.max(0, totalCount - 1));
     }
-  }, [totalCount, currentKpiIndex]);
+  }, [totalCount, currentKpiIndex, setCurrentKpiIndex]);
 
   // Justificativas (read-only) — preferem `impactAssessment` do snapshot do
   // próprio MBR; quando ausente, caem no que o líder respondeu no Pré-MBR
