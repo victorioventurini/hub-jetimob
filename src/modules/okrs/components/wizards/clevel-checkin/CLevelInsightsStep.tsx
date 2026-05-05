@@ -76,14 +76,18 @@ function StrategicSignalCard({ kpi, trend }: StrategicSignalCardProps) {
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <p className="font-medium truncate">{kpi.name}</p>
-            {kpi.area && (
-              <Badge variant="outline" className="mt-1 text-xs" style={{
-                backgroundColor: kpi.area.color ? `${kpi.area.color}20` : undefined,
-                borderColor: kpi.area.color || undefined,
-              }}>
-                {kpi.area.name}
-              </Badge>
-            )}
+            {(() => {
+              const eff = (kpi as any).effective_area ?? kpi.area;
+              if (!eff) return null;
+              return (
+                <Badge variant="outline" className="mt-1 text-xs" style={{
+                  backgroundColor: eff.color ? `${eff.color}20` : undefined,
+                  borderColor: eff.color || undefined,
+                }}>
+                  {eff.name}
+                </Badge>
+              );
+            })()}
           </div>
           <Badge variant="outline" className={cn("text-xs ml-2", ragConfig.bgColor, ragConfig.color)}>
             {ragConfig.label}
