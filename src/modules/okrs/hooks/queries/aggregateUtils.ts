@@ -44,7 +44,10 @@ export function calculateAggregatedStatus(orgKrs: OrgKrWithTeamKrs[]): 'on_track
 
 export function calculateAggregatedProgress(orgKrs: OrgKrWithTeamKrs[]): number {
   if (orgKrs.length === 0) return 0;
-  const total = orgKrs.reduce((sum, kr) => sum + kr.progress, 0);
+  // Progresso agregado do Objetivo: cap per-KR a 100% antes da média.
+  // Canon no-clamp vale para exibição por KR (superação visível); para o agregado,
+  // um KR muito acima de 100% (ex.: unidade inconsistente) distorceria o todo.
+  const total = orgKrs.reduce((sum, kr) => sum + Math.min(100, Math.max(0, kr.progress)), 0);
   return Math.round(total / orgKrs.length);
 }
 
