@@ -6,7 +6,7 @@ import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 import type { MbrStep, MbrDraftData, MbrTeamOkrSnapshot } from '@/modules/okrs/types/wizard';
 
 export const WIZARD_STEPS = [
-  { id: 'panorama' as const, label: 'Panorama Executivo', description: 'Saúde do negócio' },
+  { id: 'panorama' as const, label: 'Panorama & Curadoria', description: 'Saúde do mês e pauta do MBR' },
   { id: 'kpi-gate' as const, label: 'KPI Gate', description: 'KPIs críticos' },
   { id: 'kpi-deep-dive' as const, label: 'Indicadores fora da meta', description: 'Justificativas e plano dos líderes' },
   { id: 'team-okrs-overview' as const, label: 'OKRs dos Times', description: 'Visão consolidada' },
