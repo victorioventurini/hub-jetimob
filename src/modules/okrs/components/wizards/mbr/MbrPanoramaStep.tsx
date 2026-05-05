@@ -99,16 +99,6 @@ interface KpiGroup {
 // CONSTANTS
 // ============================================================
 
-const MBR_AGENDA = [
-  { title: 'Panorama executivo', subtitle: 'Saúde do negócio' },
-  { title: 'KPI Gate estratégico', subtitle: 'KPIs críticos' },
-  { title: 'Visão geral dos times', subtitle: 'Consolidado' },
-  { title: 'Análise detalhada por time', subtitle: 'Drill-down' },
-  { title: 'OKRs organizacionais', subtitle: 'Prioridades' },
-  { title: 'Decisões estratégicas', subtitle: 'Consolidação' },
-  { title: 'Follow-up do QBR', subtitle: 'Decisões pendentes' },
-  { title: 'Encerramento', subtitle: 'Governança' },
-];
 
 const AGG_STATUS_CONFIG = {
   on_track: { label: 'No ritmo', className: 'bg-status-green-muted text-status-green' },
