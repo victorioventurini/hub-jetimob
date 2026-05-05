@@ -20,9 +20,10 @@ import { Button } from '@/components/ui/button';
 
 import { useKpiData, useKpiMutations } from '../hooks';
 import { useAuth } from '@/hooks/useAuth';
-import type { KpiFrequencyValue } from '../types';
+import type { KpiDirection, KpiFrequencyValue, KpiRagStatus } from '../types';
 import { KpiValueEntryForm } from './shared';
 import { useToast } from '@/hooks/use-toast';
+import { calculateKpiRag } from '../utils/rag';
 
 /**
  * AddKpiValueDialog — Modal canônico para registrar valor de KPI.
@@ -30,6 +31,10 @@ import { useToast } from '@/hooks/use-toast';
  * Regra: 1 valor `consolidated` por período por KPI.
  * Em caso de conflito, abre AlertDialog perguntando se o usuário
  * deseja substituir o consolidado existente.
+ *
+ * Gate canônico (TCR §KPI Values): notes obrigatória quando o RAG estimado
+ * for `at_risk` ou `off_track`. A regra é validada também por trigger no DB
+ * (`kpi_validate_value_insert`); aqui antecipamos para UX clara.
  */
 interface AddKpiValueDialogProps {
   kpiId: string;
@@ -37,6 +42,10 @@ interface AddKpiValueDialogProps {
   unit: string;
   consolidationFrequency?: KpiFrequencyValue | null;
   updateFrequency?: KpiFrequencyValue | null;
+  /** Necessário para estimar o RAG e exigir justificativa em amarelo/vermelho. */
+  targetValue?: number | null;
+  /** Necessário para estimar o RAG corretamente em KPIs `down`. */
+  direction?: KpiDirection;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -56,10 +65,13 @@ export function AddKpiValueDialog({
   unit,
   consolidationFrequency,
   updateFrequency,
+  targetValue,
+  direction,
   open,
   onOpenChange,
 }: AddKpiValueDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentValue, setCurrentValue] = useState<number | undefined>(undefined);
   const [conflict, setConflict] = useState<{
     existingId: string;
     pending: PendingValues;
@@ -69,7 +81,23 @@ export function AddKpiValueDialog({
   const { profile } = useAuth();
   const { toast } = useToast();
 
+  // RAG estimado para gate de notes obrigatória (espelha kpi_calculate_rag).
+  const estimatedRag: KpiRagStatus | null =
+    currentValue !== undefined && targetValue !== null && targetValue !== undefined
+      ? calculateKpiRag(currentValue, targetValue, direction ?? 'up')
+      : null;
+  const notesRequired = estimatedRag === 'at_risk' || estimatedRag === 'off_track';
+
   const submit = async (values: PendingValues) => {
+    if (notesRequired && (!values.notes || values.notes.trim().length === 0)) {
+      toast({
+        title: 'Justificativa obrigatória',
+        description:
+          'Indicadores fora da meta (amarelo/vermelho) exigem um comentário explicando o desvio.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       await addKpiValue.mutateAsync({
@@ -131,8 +159,23 @@ export function AddKpiValueDialog({
             unit={unit}
             consolidationFrequency={consolidationFrequency}
             updateFrequency={updateFrequency}
+            placeholderValue={targetValue ?? undefined}
             formId={FORM_ID}
             onValidSubmit={submit}
+            onValueChange={setCurrentValue}
+            notesRequired={notesRequired}
+            notesPlaceholder={
+              notesRequired
+                ? 'Explique o desvio da meta (obrigatório para indicadores amarelo/vermelho)'
+                : 'Contexto adicional sobre este valor...'
+            }
+            notesHeaderSlot={
+              notesRequired ? (
+                <p className="text-xs text-warning">
+                  Justificativa obrigatória para indicadores fora da meta
+                </p>
+              ) : null
+            }
           />
 
           <DialogFooter>
