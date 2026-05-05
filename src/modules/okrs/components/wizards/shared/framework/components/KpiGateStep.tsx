@@ -220,6 +220,8 @@ interface RichKpiCardProps {
   onNoDataReasonChange?: (kpiId: string, value: string) => void;
   /** v3.33.0 — desabilita os textareas (modo leitura). */
   readOnly?: boolean;
+  /** v3.34.0 — oculta totalmente o bloco "Plano de ação do líder". */
+  hideActionBlock?: boolean;
 }
 
 const RichKpiCard = memo(function RichKpiCard({
@@ -231,6 +233,7 @@ const RichKpiCard = memo(function RichKpiCard({
   noDataReason,
   onNoDataReasonChange,
   readOnly,
+  hideActionBlock,
 }: RichKpiCardProps) {
   const mode = actionModeForKpi(bucketId, kpi);
   const statusBadge = statusBadgeFor(kpi);
