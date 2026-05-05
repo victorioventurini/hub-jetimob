@@ -118,6 +118,13 @@ function MbrPanoramaCurationCardImpl({
     [curation, onCurationChange, onAddSuggestedDecision],
   );
 
+  const handleAgendaChange = useCallback(
+    (next: MbrPanoramaAgendaItem[]) => {
+      onCurationChange({ ...curation, agenda: next });
+    },
+    [curation, onCurationChange],
+  );
+
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
