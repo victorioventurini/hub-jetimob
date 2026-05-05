@@ -345,7 +345,8 @@ export default function QbrMeetingPage() {
       for (const obj of orgObjectives) {
         for (const orgKr of obj.orgKrs) {
           const progress = calculateProgress(
-            orgKr.baseline ?? 0, orgKr.current_value ?? 0, orgKr.target ?? 0, orgKr.direction as any
+            orgKr.baseline ?? 0, orgKr.current_value ?? 0, orgKr.target ?? 0, orgKr.direction as any,
+            { unit: (orgKr as { unit?: string | null }).unit }
           );
           const state = calculateKrState({
             progress,

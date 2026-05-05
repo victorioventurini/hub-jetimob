@@ -181,7 +181,7 @@ export function useSeedTeamOkrSnapshots(args: {
                     | 'down'
                     | 'maintain';
                   return (
-                    sum + calculateProgress(baseline, current, target, direction)
+                    sum + calculateProgress(baseline, current, target, direction, { unit: kr.unit })
                   );
                 }, 0) / krCount
               : 0;
@@ -212,7 +212,7 @@ export function useSeedTeamOkrSnapshots(args: {
                 | 'maintain';
               const direction = kr.direction === 'down' ? 'down' : 'up';
               const progress = Math.round(
-                calculateProgress(baseline, current, target, directionForProgress),
+                calculateProgress(baseline, current, target, directionForProgress, { unit: kr.unit }),
               );
               return {
                 krId: kr.id,

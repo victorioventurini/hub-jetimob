@@ -67,6 +67,7 @@ export function AreaPerformanceSection({ groupedAreaData, selectedCycle }: Props
                                 Number(kr.current_value) || 0,
                                 Number(kr.target) || 0,
                                 (kr.direction || 'up') as 'up' | 'down',
+                                { unit: (kr as { unit?: string | null }).unit },
                               );
                               const daysSinceCheckin = kr.last_checkin_at
                                 ? Math.max(

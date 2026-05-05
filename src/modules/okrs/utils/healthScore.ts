@@ -49,7 +49,7 @@ interface HealthCalculationInput {
  * Calculate progress for a single KR using centralized utility
  */
 function calculateKrProgress(kr: KrData): number {
-  return calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
+  return calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction, { unit: (kr as { unit?: string | null }).unit });
 }
 
 /**

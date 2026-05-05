@@ -215,7 +215,7 @@ export default function QbrPrePage() {
         const current = Number(kr.current_value ?? baseline);
         const target = Number(kr.target ?? baseline);
         const direction = (kr.direction ?? 'up') as 'up' | 'down' | 'maintain';
-        const progress = calculateProgress(baseline, current, target, direction);
+        const progress = calculateProgress(baseline, current, target, direction, { unit: (kr as { unit?: string | null }).unit });
 
         const daysSinceCheckin = kr.last_checkin_at
           ? Math.floor((Date.now() - new Date(kr.last_checkin_at).getTime()) / (1000 * 60 * 60 * 24))

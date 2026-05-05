@@ -120,6 +120,7 @@ export function useQuarterReviewData({ selectedCycleId }: Args) {
                   Number(kr.current_value) || 0,
                   Number(kr.target) || 0,
                   (kr.direction || 'up') as 'up' | 'down',
+                  { unit: (kr as { unit?: string | null }).unit },
                 ),
               0,
             ) / krs.length,
