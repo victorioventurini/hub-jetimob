@@ -323,7 +323,7 @@ export function MbrTeamOkrsDetailStep({
                     <CardContent className="p-3 space-y-2">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                        <p className="text-xs font-semibold">Análise mensal (IA)</p>
+                        <p className="text-sm font-semibold">Análise mensal (IA)</p>
                         <Badge variant="outline" className="text-[10px] ml-auto">
                           {monthAnalysis.origin === 'ai-generated' ? 'IA' : 'Manual'}
                         </Badge>
