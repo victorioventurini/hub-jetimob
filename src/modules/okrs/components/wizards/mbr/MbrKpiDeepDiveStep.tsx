@@ -49,12 +49,21 @@ export function MbrKpiDeepDiveStep({
   onContinue,
   onBack,
 }: MbrKpiDeepDiveStepProps) {
-  // KPIs fora da meta: red/amber e também "sem dados" (overdue) para análise.
+  // KPIs fora da meta: red/off_track, amber/yellow/at_risk e "sem dados".
+  // Aceita tanto a nomenclatura RAG (red/yellow) quanto a operacional
+  // (off_track/at_risk) para garantir paridade com o que o Pré-MBR registra.
   const offTargetSnapshots = useMemo(
-    () =>
-      kpiSnapshots.filter(
-        (k) => k.ragStatus === 'red' || k.ragStatus === 'yellow' || k.ragStatus === 'no_data',
-      ),
+    () => {
+      const OFF_TARGET = new Set([
+        'red',
+        'yellow',
+        'amber',
+        'no_data',
+        'off_track',
+        'at_risk',
+      ]);
+      return kpiSnapshots.filter((k) => OFF_TARGET.has(k.ragStatus));
+    },
     [kpiSnapshots],
   );
 
