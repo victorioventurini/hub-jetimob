@@ -37,7 +37,9 @@ const KPI_FIELDS = `
   area_id, scope, responsible_area_id, responsible_team_id,
   owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
   team:teams!kpi_metrics_team_id_fkey(id, name),
-  area:areas!kpi_metrics_area_id_fkey(id, name, color)
+  area:areas!kpi_metrics_area_id_fkey(id, name, color),
+  responsible_team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
+  responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color)
 ` as const;
 
 const KPI_VALUE_FIELDS = `
