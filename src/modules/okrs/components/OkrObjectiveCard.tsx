@@ -48,7 +48,7 @@ const calculateObjectiveProgress = (krs: KeyResult[]): number => {
   if (krs.length === 0) return 0;
   
   return krs.reduce((acc, kr) => {
-    return acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
+    return acc + calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction, { unit: kr.unit });
   }, 0) / krs.length;
 };
 

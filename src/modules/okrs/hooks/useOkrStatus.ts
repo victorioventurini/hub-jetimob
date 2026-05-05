@@ -67,9 +67,10 @@ export function calculateAutoStatus(
   target: number,
   direction: OkrDirection,
   periodStartDate: Date,
-  periodEndDate: Date
+  periodEndDate: Date,
+  unit?: string | null
 ): OkrCalculatedStatus {
-  const progress = calculateProgress(baseline, currentValue, target, direction);
+  const progress = calculateProgress(baseline, currentValue, target, direction, { unit });
   
   // If progress is 0 and current equals baseline, it's genuinely not started
   if (progress === 0 && currentValue === baseline) {
@@ -128,6 +129,7 @@ export function useKrStatusDistribution(
     current_value: number;
     target: number;
     direction?: OkrDirection;
+    unit?: string | null;
   }> | undefined
 ) {
   return useMemo(() => {
@@ -158,7 +160,8 @@ export function useKrStatusDistribution(
         Number(kr.baseline) || 0,
         Number(kr.current_value) || 0,
         Number(kr.target) || 0,
-        kr.direction || 'up'
+        kr.direction || 'up',
+        { unit: kr.unit }
       );
       
       // Map RAG status but also check for completion

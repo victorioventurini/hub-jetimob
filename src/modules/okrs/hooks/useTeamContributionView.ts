@@ -189,7 +189,8 @@ export const useTeamContributionView = (teamId: string | undefined) => {
               Number(tkr.baseline),
               Number(tkr.current_value),
               Number(tkr.target),
-              tkr.direction
+              tkr.direction,
+              { unit: tkr.unit }
             ),
             status: ragToStatus(tkr.status),
             lastCheckinAt: tkr.last_checkin_at,
@@ -207,7 +208,8 @@ export const useTeamContributionView = (teamId: string | undefined) => {
               Number(orgKr.baseline),
               Number(orgKr.current_value),
               Number(orgKr.target),
-              orgKr.direction
+              orgKr.direction,
+              { unit: (orgKr as { unit?: string | null }).unit }
             ),
             teamOkrs,
           };

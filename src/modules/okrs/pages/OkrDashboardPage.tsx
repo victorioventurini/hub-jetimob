@@ -275,7 +275,8 @@ export default function OkrDashboardPage() {
         Number(kr.baseline) || 0,
         Number(kr.current_value) || 0,
         Number(kr.target) || 0,
-        kr.direction || 'up'
+        kr.direction || 'up',
+        { unit: (kr as { unit?: string | null }).unit }
       );
     }, 0);
     

@@ -30,8 +30,8 @@ export function KrProgressPreview({
   direction,
 }: KrProgressPreviewProps) {
   const progress = useMemo(() => {
-    return calculateProgress(baseline, currentValue, target, direction);
-  }, [baseline, currentValue, target, direction]);
+    return calculateProgress(baseline, currentValue, target, direction, { unit });
+  }, [baseline, currentValue, target, direction, unit]);
 
   const progressColor = useMemo(() => {
     return getProgressColor(progress);

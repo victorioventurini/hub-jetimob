@@ -303,7 +303,7 @@ export default function MbrPrePage() {
         const currentAtCutoff = snapshot ? snapshot.value : baseline;
         const lastCheckinDateAtCutoff = snapshot?.date ?? null;
 
-        const progress = calculateProgress(baseline, currentAtCutoff, target, direction);
+        const progress = calculateProgress(baseline, currentAtCutoff, target, direction, { unit: (kr as { unit?: string | null }).unit });
 
         const daysSinceCheckin = lastCheckinDateAtCutoff
           ? Math.max(

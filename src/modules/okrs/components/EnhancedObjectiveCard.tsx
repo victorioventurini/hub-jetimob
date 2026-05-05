@@ -145,7 +145,7 @@ export const EnhancedObjectiveCard = React.memo(function EnhancedObjectiveCard({
         ? primaryKpi.targetValue
         : kr.target;
 
-      return acc + calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction);
+      return acc + calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction, { unit: kr.unit });
     }, 0);
 
     const effectiveStatuses = keyResults.map((kr) => {
@@ -387,7 +387,7 @@ function EnhancedKrRow({ kr, index, type, hasPrimaryKpi, primaryKpiInfo, onEdit,
   const effectiveUnit = hasPrimaryKpi && primaryKpiInfo?.kpiUnit
     ? primaryKpiInfo.kpiUnit
     : kr.unit;
-  const progress = calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction);
+  const progress = calculateProgress(kr.baseline, effectiveCurrent, effectiveTarget, kr.direction, { unit: effectiveUnit });
 
   const formatValue = (value: number | null | undefined, unit: string) => {
     if (value === null || value === undefined) return '—';

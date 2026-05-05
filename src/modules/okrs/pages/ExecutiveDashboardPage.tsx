@@ -51,7 +51,8 @@ export default function ExecutiveDashboardPage() {
           Number(kr.baseline) || 0,
           Number(kr.current_value) || 0,
           Number(kr.target) || 0,
-          kr.direction || 'up'
+          kr.direction || 'up',
+          { unit: (kr as { unit?: string | null }).unit }
         );
         return acc + progress;
       }, 0) / teamKeyResults.length
