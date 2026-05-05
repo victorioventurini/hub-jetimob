@@ -24,6 +24,7 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { FREQUENCY_VALUE_LABELS, DIRECTION_LABELS, SOURCE_TYPE_LABELS, getScopeLabels, KpiValueSource, KpiScope } from "../types";
 import { useBu } from "@/contexts/BuContext";
 import { cn } from "@/lib/utils";
+import { formatValueWithUnit, isPointsUnit } from "@/shared/constants/units";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -122,7 +123,7 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
     }
     if (kpi.unit === "horas") return `${value.toFixed(1)}h`;
     if (kpi.unit === "score") return value.toFixed(0);
-    return value.toLocaleString("pt-BR");
+    return formatValueWithUnit(value, kpi.unit);
   };
 
   const formatDateTime = (dateStr: string) => {
@@ -168,7 +169,11 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
         {variation !== null && (
           <div className={cn("flex items-center gap-1 text-lg", trendColor)}>
             <TrendIcon className="h-5 w-5" />
-            <span>{Math.abs(variation).toFixed(1)}%</span>
+            <span>
+              {isPointsUnit(kpi.unit) && currentValue != null && previousValue != null
+                ? `${Math.abs(currentValue - previousValue).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`
+                : `${Math.abs(variation).toFixed(1)}%`}
+            </span>
           </div>
         )}
       </div>

@@ -32,26 +32,22 @@ interface KpiDashboardTableProps {
   isLoading?: boolean;
 }
 
+import { formatValueWithUnit, formatVariation, isPointsUnit } from "@/shared/constants/units";
+
 function formatValue(value: number | null, unit: string): string {
   if (value === null) return "—";
-  
-  switch (unit) {
-    case '%':
-      return `${value.toFixed(1)}%`;
-    case 'R$':
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value);
-    case 'horas':
-      return `${value.toFixed(1)}h`;
-    case 'dias':
-      return `${value.toFixed(0)} dias`;
-    default:
-      return value.toLocaleString("pt-BR");
+  if (unit === '%') return `${value.toFixed(1)}%`;
+  if (unit === 'R$') {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   }
+  if (unit === 'horas') return `${value.toFixed(1)}h`;
+  if (unit === 'dias') return `${value.toFixed(0)} dias`;
+  return formatValueWithUnit(value, unit);
 }
 
 function TableSkeleton() {
@@ -190,7 +186,11 @@ export function KpiDashboardTable({ kpis, onKpiClick, isLoading }: KpiDashboardT
                   {kpi.variation !== null ? (
                     <div className={cn("flex items-center justify-end gap-1", trendColor)}>
                       <TrendIcon className="h-3.5 w-3.5" />
-                      <span className="tabular-nums">{Math.abs(kpi.variation).toFixed(1)}%</span>
+                      <span className="tabular-nums">
+                        {isPointsUnit(kpi.unit) && kpi.previous_value != null && kpi.current_value != null
+                          ? `${Math.abs(kpi.current_value - kpi.previous_value).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pts`
+                          : `${Math.abs(kpi.variation).toFixed(1)}%`}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">—</span>
