@@ -376,6 +376,8 @@ const RichKpiCard = memo(function RichKpiCard({
                   placeholder="Ex.: integração indisponível, fonte ainda não definida, responsável de fora..."
                   className="text-sm min-h-[64px] max-w-full"
                   aria-required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
             )}
@@ -391,6 +393,8 @@ const RichKpiCard = memo(function RichKpiCard({
               }
               className="text-sm min-h-[80px] max-w-full"
               aria-required={isRequired}
+              disabled={readOnly}
+              readOnly={readOnly}
             />
           </div>
         )}
