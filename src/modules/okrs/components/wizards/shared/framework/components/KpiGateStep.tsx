@@ -347,7 +347,7 @@ const RichKpiCard = memo(function RichKpiCard({
         </div>
 
         {/* Bloco de ação do líder */}
-        {showAction && actionLabel && (
+        {showAction && actionLabel && !hideActionBlock && (
           <div
             className={cn(
               'rounded-lg border p-3 space-y-2',
