@@ -19,6 +19,7 @@ import {
   ListChecks,
   Plus,
   Check,
+  RotateCcw,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -108,7 +109,7 @@ function MbrPanoramaCurationCardImpl({
   const handleAddDecision = useCallback(
     (idx: number) => {
       const target = curation.suggestedDecisions[idx];
-      if (!target || target.added) return;
+      if (!target) return;
       onAddSuggestedDecision?.(target.title, target.category);
       const updated = curation.suggestedDecisions.map((d, i) =>
         i === idx ? { ...d, added: true } : d,
@@ -116,6 +117,16 @@ function MbrPanoramaCurationCardImpl({
       onCurationChange({ ...curation, suggestedDecisions: updated });
     },
     [curation, onCurationChange, onAddSuggestedDecision],
+  );
+
+  const handleResetDecision = useCallback(
+    (idx: number) => {
+      const updated = curation.suggestedDecisions.map((d, i) =>
+        i === idx ? { ...d, added: false } : d,
+      );
+      onCurationChange({ ...curation, suggestedDecisions: updated });
+    },
+    [curation, onCurationChange],
   );
 
   const handleAgendaChange = useCallback(
@@ -254,23 +265,37 @@ function MbrPanoramaCurationCardImpl({
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant={d.added ? 'ghost' : 'outline'}
-                    disabled={d.added || !onAddSuggestedDecision}
-                    onClick={() => handleAddDecision(idx)}
-                    className="gap-1.5 shrink-0"
-                  >
-                    {d.added ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" /> Adicionada
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-3.5 w-3.5" /> Adicionar
-                      </>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant={d.added ? 'ghost' : 'outline'}
+                      disabled={!onAddSuggestedDecision}
+                      onClick={() => handleAddDecision(idx)}
+                      className="gap-1.5"
+                      title={d.added ? 'Adicionar novamente ao plano' : 'Adicionar ao plano'}
+                    >
+                      {d.added ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-status-green" /> Adicionada
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-3.5 w-3.5" /> Adicionar
+                        </>
+                      )}
+                    </Button>
+                    {d.added && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleResetDecision(idx)}
+                        className="h-8 w-8 p-0"
+                        title="Marcar como não adicionada (permitir readicionar)"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </li>
               ))}
             </ul>
