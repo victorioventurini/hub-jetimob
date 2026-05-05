@@ -167,7 +167,11 @@ export function useMbrPreTeamKpisMonthly(
         unit: k.unit ?? undefined,
         lastValueAt: cur?.reference_date ?? null,
         scope: k.scope ?? undefined,
+        areaId: k.area?.id ?? k.responsible_area?.id ?? k.area_id ?? k.responsible_area_id ?? null,
+        areaName: k.area?.name ?? k.responsible_area?.name ?? null,
+        areaColor: k.area?.color ?? k.responsible_area?.color ?? null,
         teamId: k.responsible_team_id ?? null,
+        teamName: k.team?.name ?? null,
         direction: k.direction === 'maintain' ? null : (k.direction ?? null),
       };
     });
