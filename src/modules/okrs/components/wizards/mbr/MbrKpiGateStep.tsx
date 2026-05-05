@@ -227,12 +227,13 @@ export function MbrKpiGateStep({
 interface ScopeSectionProps {
   title: string;
   monthLabel: string;
+  previousMonthLabel: string;
   snapshots: MbrMonthlyKpiSnapshot[];
   isLoading: boolean;
   emptyMessage: string;
 }
 
-function ScopeSection({ title, monthLabel, snapshots, isLoading, emptyMessage }: ScopeSectionProps) {
+function ScopeSection({ title, monthLabel, previousMonthLabel, snapshots, isLoading, emptyMessage }: ScopeSectionProps) {
   const { gains, drops, noData } = useMemo(() => {
     const gains: MbrMonthlyKpiSnapshot[] = [];
     const drops: MbrMonthlyKpiSnapshot[] = [];
