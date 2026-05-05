@@ -32,6 +32,14 @@ export interface InlineDecisionInputProps {
    * `decision.metadata` para auditoria (ex: `{ source: 'kpi_gate', ... }`).
    */
   metadataFactory?: () => Record<string, unknown> | undefined;
+  /**
+   * Quando definido, filtra a lista exibida para mostrar somente as
+   * decisões registradas nesse sub-step (por `metadata.sub_step`) e
+   * injeta `metadata.sub_step` em novas decisões. Permite isolar notas
+   * por KPI/time/sub-tela quando o step tem paginação interna.
+   * `null`/`undefined` = sem sub-step (mostra apenas as sem sub_step).
+   */
+  subStep?: string | null;
 }
 
 // ============================================================
