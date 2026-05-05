@@ -90,12 +90,10 @@ export function MbrClosingStep({
     checklist.nonPrioritiesClear &&
     checklist.communicateInAllHands;
 
-  // Dynamic checklist check (sem qbrFollowUpAddressed e nextMbrScheduled)
+  // Dynamic checklist check
   const dynamicChecked =
-    checklist.kpiGateClear &&
     checklist.allTeamsReviewed &&
-    checklist.orgOkrsVerified &&
-    checklist.decisionsHaveOwner;
+    checklist.orgOkrsVerified;
 
   const allChecked = legacyChecked && dynamicChecked;
   const canComplete = allChecked;
@@ -108,18 +106,17 @@ export function MbrClosingStep({
   const totalTeams = teamOkrSnapshots.filter(t => t.objectives.length > 0).length;
   const orgGaps = orgOkrSnapshots.filter(o => !o.remainsStrategicPriority).length;
 
-  // Dynamic checklist items (sem QBR follow-up e sem Próximo MBR)
+  // Dynamic checklist items
   const dynamicItems: Array<{
     key: keyof MbrGovernanceChecklist;
     label: string;
     enabled: boolean;
     disabledHint?: string;
   }> = [
-    { key: 'kpiGateClear', label: 'KPI Gate concluído — decisões obrigatórias registradas', enabled: conditions.kpiGateEnabled, disabledHint: 'Registre decisões no Step 2' },
     { key: 'allTeamsReviewed', label: `Todos os times revisados (${reviewedTeams}/${totalTeams})`, enabled: conditions.allTeamsReviewedEnabled, disabledHint: 'Revise todos os times no Step 4' },
     { key: 'orgOkrsVerified', label: 'OKRs organizacionais verificadas', enabled: conditions.orgOkrsVerifiedEnabled, disabledHint: 'Confirme todas OKRs no Step 5' },
-    { key: 'decisionsHaveOwner', label: 'Decisões estratégicas têm dono', enabled: conditions.decisionsHaveOwnerEnabled, disabledHint: 'Atribua donos às decisões no Step 6' },
   ];
+
 
   return (
     <div className="flex flex-col h-full">
