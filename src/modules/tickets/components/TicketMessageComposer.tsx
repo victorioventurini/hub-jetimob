@@ -43,21 +43,8 @@ interface TicketMessageComposerProps {
   onCancelReply?: () => void;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB (alinhado ao create-ticket)
 const MAX_FILES = 5;
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/plain",
-  "text/csv",
-];
 
 /**
  * Extract text content from body_richtext.
@@ -127,12 +114,7 @@ export function TicketMessageComposer({
     
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`Arquivo "${file.name}" excede o limite de 10MB`);
-        continue;
-      }
-      
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        toast.error(`Tipo de arquivo não permitido: ${file.name}`);
+        toast.error(`Arquivo "${file.name}" excede o limite de 20MB`);
         continue;
       }
 
@@ -268,7 +250,7 @@ export function TicketMessageComposer({
             ref={fileInputRef}
             type="file"
             multiple
-            accept={ALLOWED_TYPES.join(",")}
+            accept="*/*"
             onChange={handleFileSelect}
             className="hidden"
             disabled={isSubmitting || selectedFiles.length >= MAX_FILES}
