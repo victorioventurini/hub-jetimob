@@ -114,12 +114,7 @@ export function TicketMessageComposer({
     
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`Arquivo "${file.name}" excede o limite de 10MB`);
-        continue;
-      }
-      
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        toast.error(`Tipo de arquivo não permitido: ${file.name}`);
+        toast.error(`Arquivo "${file.name}" excede o limite de 20MB`);
         continue;
       }
 
