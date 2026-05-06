@@ -250,7 +250,7 @@ export function TicketMessageComposer({
             ref={fileInputRef}
             type="file"
             multiple
-            accept={ALLOWED_TYPES.join(",")}
+            accept="*/*"
             onChange={handleFileSelect}
             className="hidden"
             disabled={isSubmitting || selectedFiles.length >= MAX_FILES}
