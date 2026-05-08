@@ -166,6 +166,7 @@ export default function AllHandsPage() {
             decisions={mbrPayload.decisions ?? []}
             onDecisionsChange={noop}
             orgObjectives={[]}
+            showInlineDecisionInput={false}
             onContinue={goNext}
             onBack={goBack}
           />
