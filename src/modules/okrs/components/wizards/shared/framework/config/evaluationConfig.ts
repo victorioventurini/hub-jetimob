@@ -49,13 +49,14 @@ export interface EvaluationConfig {
  * removido.
  */
 export const EVALUATION_CONFIG: Record<WizardPersona, EvaluationConfig> = {
-  // ── Coletivos com avaliação ──
-  mbr:           { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
+  // ── Coletivos com avaliação (4 dimensões) ──
+  mbr:           { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
   
-  'mbr-first':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'qbr-meeting': { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'qbr-post':    { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'all-hands':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
+  'mbr-first':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
+  'qbr-meeting': { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
+  'qbr-post':    { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
+  // ── Variante enxuta (apenas valor + tempo) ──
+  'all-hands':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ['value', 'time'] },
 
   // ── Coletivos SEM avaliação (decisão explícita) ──
   weekly:           { enabled: false },
