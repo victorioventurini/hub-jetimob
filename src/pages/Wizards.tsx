@@ -31,6 +31,7 @@ import {
   History,
   Inbox,
   Sparkles,
+  Megaphone,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLeaderTeams } from '@/modules/home/hooks/useLeaderTeams';
@@ -190,6 +191,18 @@ const WIZARD_SECTIONS: WizardSection[] = [
         badgeVariant: 'secondary',
         requiresTeam: false,
         route: '/rituals/mbr',
+      },
+      {
+        id: 'all-hands',
+        name: 'All Hands',
+        description: 'Apresentação mensal aberta da BU com KPIs e OKRs organizacionais',
+        icon: Megaphone,
+        module: 'okrs',
+        requiredRole: 'admin',
+        badge: 'Mensal',
+        badgeVariant: 'secondary',
+        requiresTeam: false,
+        route: '/rituals/all-hands',
       },
     ],
   },
