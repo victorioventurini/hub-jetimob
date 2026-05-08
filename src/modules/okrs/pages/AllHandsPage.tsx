@@ -38,7 +38,8 @@ const noop = () => {};
 
 export default function AllHandsPage() {
   const navigate = useNavigate();
-  // BU context é resolvida dentro dos hooks/queries; não usada aqui diretamente.
+  const { currentBu } = useBu();
+  const buName = currentBu?.name?.trim() || 'BU';
 
   usePageTitle('All Hands');
 
