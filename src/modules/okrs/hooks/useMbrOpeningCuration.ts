@@ -214,6 +214,7 @@ export function useMbrOpeningCuration(
             orgObjectives,
             mbrPreAggregates: params.mbrPreAggregates,
             coverage: params.coverage,
+            ritualContext: params.ritualContext ?? 'mbr',
           },
         });
 
