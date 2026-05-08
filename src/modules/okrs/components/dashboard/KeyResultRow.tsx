@@ -11,6 +11,7 @@ import { useProfileId } from '@/hooks/useIdentity';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
+import { getEffectiveKrRagStatus } from '../../utils/effectiveStatus';
 import { KrPrimaryKpiBadge } from '../ui';
 
 /**
