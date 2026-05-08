@@ -148,22 +148,24 @@ export function MbrOrgOkrsStep({
         />
       }
       bottomFixed={
-        <div className="border-t">
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={onDecisionsChange}
-            sourceStep="org-okrs"
-            placeholder={
-              currentOkr
-                ? `Decisão sobre: ${currentOkr.title}...`
-                : 'Nota geral sobre OKRs organizacionais...'
-            }
-            subStep={currentOkr?.objectiveId ?? null}
-            metadataFactory={
-              currentOkr ? () => ({ objective_id: currentOkr.objectiveId }) : undefined
-            }
-          />
-        </div>
+        showInlineDecisionInput ? (
+          <div className="border-t">
+            <InlineDecisionInput
+              decisions={decisions}
+              onDecisionsChange={onDecisionsChange}
+              sourceStep="org-okrs"
+              placeholder={
+                currentOkr
+                  ? `Decisão sobre: ${currentOkr.title}...`
+                  : 'Nota geral sobre OKRs organizacionais...'
+              }
+              subStep={currentOkr?.objectiveId ?? null}
+              metadataFactory={
+                currentOkr ? () => ({ objective_id: currentOkr.objectiveId }) : undefined
+              }
+            />
+          </div>
+        ) : undefined
       }
       footer={
         <>
