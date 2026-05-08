@@ -45,7 +45,7 @@ export function useLatestMbrForMonth(referenceMonth: string | null | undefined) 
       if (!data || data.length === 0) return null;
 
       const match = data.find((row) => {
-        const p = (row.reflection_data ?? {}) as Partial<MbrDraftData>;
+        const p = (row.reflection_data ?? {}) as Record<string, unknown>;
         return typeof p.referenceMonth === 'string' && p.referenceMonth === referenceMonth;
       });
 
