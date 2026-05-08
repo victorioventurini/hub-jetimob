@@ -131,9 +131,7 @@ export function monthBoundsDate(yyyymm: string): { start: string; end: string } 
   const monthIdx = Number(m[2]) - 1;
   const startDate = new Date(year, monthIdx, 1);
   const endDate = new Date(year, monthIdx + 1, 0); // último dia do mês
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return { start: fmt(startDate), end: fmt(endDate) };
+  return { start: fmtDate(startDate), end: fmtDate(endDate) };
 }
 
 /**
