@@ -33,6 +33,8 @@ export interface MbrOrgOkrsStepProps {
   orgObjectives?: OrgObjectiveWithKrs[];
   onContinue: () => void;
   onBack: () => void;
+  /** Quando false, oculta o InlineDecisionInput do rodapé. Default: true. */
+  showInlineDecisionInput?: boolean;
 }
 
 // ============================================================
@@ -68,6 +70,7 @@ export function MbrOrgOkrsStep({
   orgObjectives = [],
   onContinue,
   onBack,
+  showInlineDecisionInput = true,
 }: MbrOrgOkrsStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   const total = orgOkrSnapshots.length;
@@ -145,22 +148,24 @@ export function MbrOrgOkrsStep({
         />
       }
       bottomFixed={
-        <div className="border-t">
-          <InlineDecisionInput
-            decisions={decisions}
-            onDecisionsChange={onDecisionsChange}
-            sourceStep="org-okrs"
-            placeholder={
-              currentOkr
-                ? `Decisão sobre: ${currentOkr.title}...`
-                : 'Nota geral sobre OKRs organizacionais...'
-            }
-            subStep={currentOkr?.objectiveId ?? null}
-            metadataFactory={
-              currentOkr ? () => ({ objective_id: currentOkr.objectiveId }) : undefined
-            }
-          />
-        </div>
+        showInlineDecisionInput ? (
+          <div className="border-t">
+            <InlineDecisionInput
+              decisions={decisions}
+              onDecisionsChange={onDecisionsChange}
+              sourceStep="org-okrs"
+              placeholder={
+                currentOkr
+                  ? `Decisão sobre: ${currentOkr.title}...`
+                  : 'Nota geral sobre OKRs organizacionais...'
+              }
+              subStep={currentOkr?.objectiveId ?? null}
+              metadataFactory={
+                currentOkr ? () => ({ objective_id: currentOkr.objectiveId }) : undefined
+              }
+            />
+          </div>
+        ) : undefined
       }
       footer={
         <>
