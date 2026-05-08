@@ -315,6 +315,11 @@ export const RITUAL_FINALIZATION_COPY: Partial<Record<WizardPersona, RitualFinal
     description: 'Decisões, ata e próximos passos serão registrados. O ritual será marcado como concluído.',
     confirmLabel: 'Encerrar MBR',
   },
+  'all-hands': {
+    title: 'Encerrar All Hands',
+    description: 'O All Hands será marcado como concluído. A coleta de avaliação anônima será encerrada (se aberta) e a sessão ficará disponível no histórico.',
+    confirmLabel: 'Encerrar All Hands',
+  },
   'qbr-pre': {
     title: 'Enviar Pré-QBR',
     description: 'O balanço do ciclo e a proposta de OKRs serão enviados para o QBR.',
