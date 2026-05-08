@@ -115,7 +115,7 @@ export function useMbrMonthlyKpisByScope(
       const { data: kpis, error: kpisErr } = await supabase
         .from('kpi_metrics')
         .select(
-          `id, name, unit, direction, target_value, scope, indicator_type, responsible_team_id, owner_user_id, area_id, responsible_area_id,
+          `id, name, unit, direction, target_value, scope, indicator_type, consolidation_frequency, responsible_team_id, owner_user_id, area_id, responsible_area_id,
            area:areas!kpi_metrics_area_id_fkey(id, name, color),
            responsible_area:areas!kpi_metrics_responsible_area_id_fkey(id, name, color),
            team:teams!kpi_metrics_responsible_team_id_fkey(id, name),
@@ -130,12 +130,16 @@ export function useMbrMonthlyKpisByScope(
       const kpiRows = (kpis ?? []) as unknown as KpiRow[];
       if (kpiRows.length === 0) return { kpis: kpiRows, values: [] as KpiValueRow[] };
 
+      // Janela ampla cobre buckets mensal/trimestral/anual (até 1 ano antes
+      // do mês de referência) — necessário para KPIs com cadência > mensal.
+      const prevYearBounds = previousYearBoundsOfMonth(refMonth);
+      const fetchStart = prevYearBounds?.start ?? prevBounds.start;
       const kpiIds = kpiRows.map((k) => k.id);
       const { data: values, error: valsErr } = await supabase
         .from('kpi_values')
         .select('kpi_id, value, reference_date, rag_status')
         .in('kpi_id', kpiIds)
-        .gte('reference_date', prevBounds.start)
+        .gte('reference_date', fetchStart)
         .lte('reference_date', refBounds.end)
         .order('reference_date', { ascending: false });
       if (valsErr) throw valsErr;
@@ -146,24 +150,46 @@ export function useMbrMonthlyKpisByScope(
 
   const snapshots = useMemo<MbrMonthlyKpiSnapshot[]>(() => {
     if (!data) return [];
-    const refBounds = monthBoundsDate(refMonth);
-    const prevBounds = monthBoundsDate(prevMonth);
-    if (!refBounds || !prevBounds) return [];
+    const monthRefBounds = monthBoundsDate(refMonth);
+    const monthPrevBounds = monthBoundsDate(prevMonth);
+    const quarterRefBounds = quarterBoundsOfMonth(refMonth);
+    const quarterPrevBounds = previousQuarterBoundsOfMonth(refMonth);
+    const yearRefBounds = yearBoundsOfMonth(refMonth);
+    const yearPrevBounds = previousYearBoundsOfMonth(refMonth);
+    if (!monthRefBounds || !monthPrevBounds) return [];
 
-    const lastInRef = new Map<string, KpiValueRow>();
-    const lastInPrev = new Map<string, KpiValueRow>();
+    // Pré-agrupa valores por KPI (já vem ordenado desc por reference_date).
+    const byKpi = new Map<string, KpiValueRow[]>();
     for (const v of data.values) {
-      const d = v.reference_date;
-      if (d >= refBounds.start && d <= refBounds.end) {
-        if (!lastInRef.has(v.kpi_id)) lastInRef.set(v.kpi_id, v);
-      } else if (d >= prevBounds.start && d <= prevBounds.end) {
-        if (!lastInPrev.has(v.kpi_id)) lastInPrev.set(v.kpi_id, v);
-      }
+      const arr = byKpi.get(v.kpi_id);
+      if (arr) arr.push(v);
+      else byKpi.set(v.kpi_id, [v]);
     }
 
+    const pickInRange = (
+      rows: KpiValueRow[] | undefined,
+      bounds: { start: string; end: string } | null,
+    ): KpiValueRow | undefined => {
+      if (!rows || !bounds) return undefined;
+      // rows está em ordem desc por data → primeiro match é o mais recente.
+      return rows.find((r) => r.reference_date >= bounds.start && r.reference_date <= bounds.end);
+    };
+
     return data.kpis.map((k): MbrMonthlyKpiSnapshot => {
-      const cur = lastInRef.get(k.id);
-      const prev = lastInPrev.get(k.id);
+      const freq = (k.consolidation_frequency ?? '').toLowerCase();
+      let refBounds = monthRefBounds;
+      let prevBoundsLocal = monthPrevBounds;
+      if (freq === 'quarterly') {
+        refBounds = quarterRefBounds ?? monthRefBounds;
+        prevBoundsLocal = quarterPrevBounds ?? monthPrevBounds;
+      } else if (freq === 'yearly' || freq === 'annual') {
+        refBounds = yearRefBounds ?? monthRefBounds;
+        prevBoundsLocal = yearPrevBounds ?? monthPrevBounds;
+      }
+
+      const rows = byKpi.get(k.id);
+      const cur = pickInRange(rows, refBounds);
+      const prev = pickInRange(rows, prevBoundsLocal);
       const currentValue = cur ? Number(cur.value) : null;
       const previousValue = prev ? Number(prev.value) : null;
       const target = k.target_value != null ? Number(k.target_value) : null;
