@@ -102,7 +102,16 @@ export function calculateAutoStatus(
 }
 
 /**
- * Maps RAG status from database to calculated status
+ * Maps RAG status from database to calculated status.
+ *
+ * Aceita tanto a nomenclatura RAG (`green`/`yellow`/`red`) usada em
+ * `okr_team_key_results.status` / `okr_org_key_results.status`, quanto a
+ * nomenclatura calculada (`on_track`/`at_risk`/`off_track`/`completed`/
+ * `dropped`/`not_started`) usada em `kpi_values.rag_status`.
+ *
+ * Antes só lidava com green/yellow/red — qualquer valor calculado caía em
+ * `not_started`, fazendo KRs com KPI primário aparecerem como "não iniciada"
+ * mesmo após registros (ex.: eNPS retornando `at_risk`).
  */
 export function mapRagToCalculated(ragStatus: OkrRagStatus | string | null | undefined): OkrCalculatedStatus {
   switch (ragStatus) {
@@ -112,8 +121,13 @@ export function mapRagToCalculated(ragStatus: OkrRagStatus | string | null | und
       return 'at_risk';
     case 'red':
       return 'off_track';
+    case 'on_track':
+    case 'at_risk':
+    case 'off_track':
+    case 'completed':
+    case 'dropped':
     case 'not_started':
-      return 'not_started';
+      return ragStatus;
     default:
       return 'not_started';
   }
