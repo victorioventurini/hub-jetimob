@@ -80,6 +80,49 @@ export function monthBoundsISO(yyyymm: string): { start: string; end: string } |
   return { start, end };
 }
 
+const fmtDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Bounds (DATE) do trimestre que contém o `YYYY-MM` informado. */
+export function quarterBoundsOfMonth(yyyymm: string): { start: string; end: string } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(yyyymm);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const monthIdx = Number(m[2]) - 1;
+  const qStartMonth = Math.floor(monthIdx / 3) * 3; // 0,3,6,9
+  const start = new Date(year, qStartMonth, 1);
+  const end = new Date(year, qStartMonth + 3, 0);
+  return { start: fmtDate(start), end: fmtDate(end) };
+}
+
+/** Bounds (DATE) do trimestre imediatamente anterior ao que contém `YYYY-MM`. */
+export function previousQuarterBoundsOfMonth(yyyymm: string): { start: string; end: string } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(yyyymm);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const monthIdx = Number(m[2]) - 1;
+  const qStartMonth = Math.floor(monthIdx / 3) * 3;
+  const start = new Date(year, qStartMonth - 3, 1);
+  const end = new Date(year, qStartMonth, 0);
+  return { start: fmtDate(start), end: fmtDate(end) };
+}
+
+/** Bounds (DATE) do ano que contém o `YYYY-MM` informado. */
+export function yearBoundsOfMonth(yyyymm: string): { start: string; end: string } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(yyyymm);
+  if (!m) return null;
+  const year = Number(m[1]);
+  return { start: `${year}-01-01`, end: `${year}-12-31` };
+}
+
+/** Bounds (DATE) do ano imediatamente anterior ao que contém `YYYY-MM`. */
+export function previousYearBoundsOfMonth(yyyymm: string): { start: string; end: string } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(yyyymm);
+  if (!m) return null;
+  const year = Number(m[1]) - 1;
+  return { start: `${year}-01-01`, end: `${year}-12-31` };
+}
+
 /** Bounds em formato `YYYY-MM-DD` (para colunas DATE puras como `kpi_values.reference_date`). */
 export function monthBoundsDate(yyyymm: string): { start: string; end: string } | null {
   const m = /^(\d{4})-(\d{2})$/.exec(yyyymm);
