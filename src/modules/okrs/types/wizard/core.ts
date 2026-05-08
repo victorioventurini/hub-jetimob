@@ -29,7 +29,9 @@ export type WizardPersona =
   | 'qbr-post'
   // Onda 4 — Ritos semanais (Pré-Weekly v2 / Weekly v2)
   | 'pre-weekly'
-  | 'weekly';
+  | 'weekly'
+  // Onda 5 — All Hands (rito mensal de comunicação da BU, derivado do MBR)
+  | 'all-hands';
 
 // ============================================================
 // STEP CONFIG
