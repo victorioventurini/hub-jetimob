@@ -238,6 +238,7 @@ export const RITUAL_GREETING_PHRASES: Partial<
   'weekly':           { phrase: 'Vamos alinhar a BU esta semana.',                 cadence: 'weekly' },
   'mbr-pre':          { phrase: 'Como foi a performance do time {teamName} em {monthShort}?', cadence: 'monthly' },
   'mbr':              { phrase: 'Vamos revisar o mês da BU.',                      cadence: 'monthly' },
+  'all-hands':        { phrase: 'Hora de comunicar o mês para a BU.',              cadence: 'monthly' },
   
   'qbr-pre':          { phrase: 'Hora de fechar o ciclo do seu time.',             cadence: 'quarterly' },
   'qbr-pre-clevel':   { phrase: 'Hora da leitura estratégica do ciclo.',           cadence: 'quarterly' },
