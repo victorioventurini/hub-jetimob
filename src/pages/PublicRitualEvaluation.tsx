@@ -251,18 +251,21 @@ export default function PublicRitualEvaluation() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-8">
-            {DIMENSIONS.map((d) => (
-              <DimensionRow
-                key={d.key}
-                dimensionKey={d.key}
-                label={d.label}
-                hintLow={d.hintLow}
-                hintHigh={d.hintHigh}
-                value={scores[d.key]}
-                onChange={handleScoreChange}
-                disabled={submitMut.isPending}
-              />
-            ))}
+            {dimensions.map((key) => {
+              const meta = DIMENSION_META[key];
+              return (
+                <DimensionRow
+                  key={key}
+                  dimensionKey={key}
+                  label={meta.label}
+                  hintLow={meta.hintLow}
+                  hintHigh={meta.hintHigh}
+                  value={scores[key] ?? null}
+                  onChange={handleScoreChange}
+                  disabled={submitMut.isPending}
+                />
+              );
+            })}
 
             <div className="space-y-2">
               <Label htmlFor="change-one-thing" className="text-base font-medium">
