@@ -25,7 +25,7 @@ import { useRitualEvaluationOpenAnswers } from '../../hooks/useRitualEvaluationO
 import { EvaluationStartCard } from './EvaluationStartCard';
 import { EvaluationLiveCounter } from './EvaluationLiveCounter';
 import { EvaluationSummary, type EvaluationDimension } from './EvaluationSummary';
-import { getEvaluationConfig } from '../../config/evaluationConfig';
+import { getEvaluationConfig, getEvaluationDimensions } from '../../config/evaluationConfig';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 
 export interface EvaluationCollectionStepProps {
