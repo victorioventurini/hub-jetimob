@@ -70,6 +70,7 @@ export function MbrOrgOkrsStep({
   orgObjectives = [],
   onContinue,
   onBack,
+  showInlineDecisionInput = true,
 }: MbrOrgOkrsStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   const total = orgOkrSnapshots.length;
