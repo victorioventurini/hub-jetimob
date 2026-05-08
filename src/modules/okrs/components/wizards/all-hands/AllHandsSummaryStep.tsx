@@ -153,7 +153,7 @@ const AllHandsSummaryStepInner = ({
         </>
       )}
 
-      <WizardStepFooter onPrimary={onContinue} primaryLabel="Continuar para KPI Gate" disabled={!mbrPayload} />
+      <WizardStepFooter onPrimary={onContinue} primaryLabel="Continuar para KPI Gate" primaryDisabled={!mbrPayload} showBack={false} />
     </div>
   );
 };
