@@ -14,6 +14,15 @@
 
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 
+export type EvaluationDimensionKey = 'value' | 'quality' | 'decisions' | 'time';
+
+export const ALL_EVALUATION_DIMENSIONS: EvaluationDimensionKey[] = [
+  'value',
+  'quality',
+  'decisions',
+  'time',
+];
+
 export interface EvaluationConfig {
   /** Quando false, o rito NÃO exibe o step de avaliação anônima */
   enabled: boolean;
@@ -21,6 +30,12 @@ export interface EvaluationConfig {
   showWhatWorked?: boolean;
   /** Recomenda encerrar a coleta antes de avançar para o encerramento do rito */
   closeRequiredBeforeComplete?: boolean;
+  /**
+   * Dimensões coletadas (1..5). Default = todas as 4.
+   * Use subset (ex.: ['value','time']) para variantes enxutas (All Hands).
+   * O servidor é a fonte de verdade — esta config alinha o cliente.
+   */
+  dimensions?: EvaluationDimensionKey[];
 }
 
 /**
