@@ -227,6 +227,7 @@ serve(async (req: Request) => {
         submittedTeams: 0,
         pendingTeams: 0,
       },
+      ritualContext: body.ritualContext === "all-hands" ? "all-hands" : "mbr",
     };
 
     // Guard: se não há absolutamente nenhum insumo, não vale invocar IA.
