@@ -1,51 +1,60 @@
-## Contexto
+## All Hands — Rito mensal de comunicação da BU
 
-KPI **MRR Churn + Downsell** continua aparecendo no MBR mesmo "removido" porque `kpi_metrics` tem **dois campos divergentes**:
+Rito decisório/comunicacional da BU, conduzido na 1ª sexta-feira de cada mês, **reaproveitando integralmente** os componentes de step já existentes no MBR (não duplicar). Apenas BU admin + super_admin conduzem. 4 steps. Avaliação anônima pública (mesmo padrão MBR/QBR).
 
-- `status` (enum `kpi_status`: `active|inactive`) — usado pelo dashboard `/kpis`.
-- `lifecycle_status` (enum `kpi_lifecycle_status`: `proposed|active|observing|deprecated`) — **SSOT canônico segundo TCR §kpi_metrics**, usado pelos ritos.
+### Pré-checklist (cumprido)
+- TCR + DEVELOPMENT_STANDARDS + DATA_MODEL_REGISTRY consultados.
+- SSOTs revisados: `ritualLabels.ts`, `wizard-configs.ts`, `WizardPersona`, `MbrPage`, `mbr/constants.ts`, `comprehensive-calendar-architecture-v2`, `anonymous-evaluation-standard`, `cycles-and-rituals-master`.
+- Confirmado: nenhum `all-hands` existente; só uma flag de checklist `communicateInAllHands` no MBR.
 
-Estado atual no banco (Jetimob, não-deletados): 2 KPIs com `status='inactive'` + `lifecycle='active'` — somem do `/kpis` mas continuam nos ritos.
+### Princípios de reuso (não duplicar)
+- **Reaproveitar**: `FullPageWizardShell`, `MbrPanoramaCurationCard` (ou versão simplificada de sumário), `MbrKpiGateStep`, `MbrOrgOkrsStep`, framework de evaluation (`evaluationConfig.ts` + step anônimo), `RitualPreparationStatus`, `RitualAttendance`, `ReferenceMonthPicker`, hooks (`useGenericWizardDraft`, `useRitualAvailability`, `useMbrPreSubmissions`).
+- **Criar mínimo**: 1 página + 1 step novo de "Sumário" (que apenas compõe blocos read-only do MBR mais recente do mês) + 1 hook `useLatestMbrForMonth` + entradas em SSOTs.
+- **Não tocar**: MBR, MBR-Pre, edge functions de geração de ocorrências (apenas adicionar entrada de cadência).
 
-Pré-checklist: TCR §809/872, DATA_MODEL_REGISTRY §enums (com divergência detectada — doc lista `paused/archived`, banco tem `proposed/observing`), `mem://kpi-value-entry-ssot` (precedente de remoção limpa de campo legado), Core Rules (sem CHECK, soft-delete, sem `select('*')`, sem editar `types.ts`).
+### Steps
+1. **Sumário** (`summary`) — read-only, hidratado do último MBR finalizado do mês de referência: panorama + decisões + checklist comunicacional. Se não há MBR fechado no mês, exibe `RitualUnavailableScreen` com CTA "Conduzir MBR primeiro".
+2. **KPI Gate** (`kpi-gate`) — reusa `MbrKpiGateStep` em modo read-only (snapshot do MBR), sem permitir edição.
+3. **OKRs Org** (`org-okrs`) — reusa `MbrOrgOkrsStep` em modo read-only.
+4. **Avaliação** (`evaluation`) — step anônimo do framework canônico (`/p/r/:shortCode`), idêntico ao MBR/QBR-Meeting.
 
-## Plano
+Sem step de "Encerramento" próprio: o submit final apenas marca `completed_at` e fecha avaliação.
 
-### Etapa 1 — Correção pontual (dado, via insert tool)
-Atualizar os 2 KPIs divergentes: `lifecycle_status='deprecated'` onde `status='inactive'` AND `deleted_at IS NULL`. Resolve o caso reportado e zera divergência atual.
+### Permissão & rota
+- `/rituals/all-hands` envolto por `<RitualRoute requiresBuAdmin>` (mesmo gate do MBR).
+- Card no Hub Rituais aparece só para BU admin + super_admin.
+- `requiresMbrFinalized` enforce na page (estado vazio com CTA se ausente).
 
-### Etapa 2 — Blindagem dos ritos (frontend)
-Adicionar `.eq('status','active')` ao lado dos filtros `lifecycle_status='active'` existentes, evitando regressão se alguém arquivar pelo dashboard:
-- `src/modules/okrs/pages/mbr/useMbrDataSources.ts` (`useAllBuKpisForMbr`)
-- `src/modules/kpis/hooks/useKpisForWizard.ts`
-- `src/modules/kpis/hooks/useKpisForWizardV2.ts`
-- Demais hooks identificados via `rg "lifecycle_status.*active"`.
+### Cadência automática (CyclesTab)
+- Adicionar upsert em `ritual_cadences` com: `wizard_type='all-hands'`, `cadence_type='monthly'`, `month_week_ordinal=1`, `day_of_week=5` (sexta), `team_id=NULL` (BU-wide).
+- Reusar edge function `generate-ritual-occurrences` sem alteração (já trata cadências globais).
 
-### Etapa 3 — Consolidação no schema (migration)
-1. **Backfill idempotente**: `UPDATE kpi_metrics SET lifecycle_status='deprecated' WHERE status='inactive' AND lifecycle_status <> 'deprecated' AND deleted_at IS NULL`.
-2. **Trigger de sincronização** `BEFORE INSERT OR UPDATE` em `kpi_metrics` (`SECURITY DEFINER`, `SET search_path=public`, **sem CHECK constraint** — segue Core Rule):
-   - `status='inactive'` → força `lifecycle_status='deprecated'`;
-   - `lifecycle_status='deprecated'` → força `status='inactive'`;
-   - `lifecycle_status IN ('active','proposed','observing')` sem mudança explícita em `status` → mantém `status='active'`.
-3. **Comentário SQL** marcando `kpi_metrics.status` como `@deprecated — mantido por trigger; usar lifecycle_status`.
+### Schema / SSOTs
+- `WizardPersona` += `'all-hands'` em `types/wizard/core.ts`.
+- `RITUAL_LABELS['all-hands'] = 'All Hands'`; `RITUAL_GREETING['all-hands']` cadence `monthly`.
+- `WIZARD_CONFIGS['all-hands']` com 4 steps acima.
+- `evaluationConfig.ts`: incluir `'all-hands'` na allowlist de avaliação anônima.
+- `RITUAL_FINALIZATION_COPY['all-hands']` (1 frase).
+- Sem novas tabelas. Sessão grava em `okr_wizard_sessions` com `wizard_type='all-hands'` (RLS já trata por BU).
 
-### Etapa 4 — Atualização documental
-- **`docs/canonical/DATA_MODEL_REGISTRY.md`**: corrigir enum `kpi_lifecycle_status` para `proposed, active, observing, deprecated` (doc atual está errado) e marcar `kpi_status` como legado.
-- **`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`**: nota em `kpi_metrics` — "`status` é legado, sincronizado por trigger; toda lógica nova lê `lifecycle_status`".
-- **Memória nova** `mem://standards/kpi-status-consolidation` registrando a regra para sessões futuras.
+### Estrutura de arquivos novos (mínima)
+```text
+src/modules/okrs/pages/AllHandsPage.tsx
+src/modules/okrs/pages/all-hands/constants.ts
+src/modules/okrs/pages/all-hands/useLatestMbrForMonth.ts
+src/modules/okrs/components/wizards/all-hands/
+  AllHandsSummaryStep.tsx           (compõe MbrPanoramaCurationCard read-only)
+  AllHandsWizardCard.tsx            (card de entrada — variant do MbrWizardCard)
+  index.ts
+src/modules/okrs/types/wizard/all-hands.ts   (AllHandsDraftData mínimo)
+```
+Rota em `src/routes/rituals.routes.tsx` com `lazyWithRetry`.
 
-### Etapa 5 — Fora deste PR (próxima onda)
-Mover mutações de "arquivar/ativar KPI" no frontend para escrever em `lifecycle_status` em vez de `status`, e auditar para então droppar fisicamente a coluna `status` em migration futura.
+### Out of scope
+- Alterações no MBR.
+- Novas RLS / tabelas / colunas (cabe inteiro nas existentes `okr_wizard_sessions` + `ritual_evaluation_responses` + `ritual_cadences`).
+- Edge functions novas.
+- Notificações automáticas (cabe num PR futuro).
 
-## Detalhes técnicos
-
-- Soft delete continua obrigatório (`deleted_at IS NULL`); `lifecycle_status='deprecated'` é o estado lógico de "arquivado/inativo".
-- `types.ts` regenerado automaticamente pós-migration — sem edit manual.
-- Etapa 1 usa **insert tool** (data update); Etapa 3 usa **migration tool** (schema/trigger). Etapas serão executadas separadamente, com aprovação do usuário entre elas.
-- Sem alteração em RLS, BU isolation, query keys ou contratos públicos de hooks.
-
-## Fora de escopo
-
-- Drop físico da coluna `status` (Etapa 5).
-- Refatoração de UI do dashboard `/kpis` para esconder o controle antigo de "ativar/desativar".
-- Mudança em outros enums KPI.
+### Memória a criar pós-implementação
+`mem://features/rituals/all-hands-standard` — escopo, reuso e gate de MBR prévio.
