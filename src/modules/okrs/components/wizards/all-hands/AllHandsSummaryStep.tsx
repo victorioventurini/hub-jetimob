@@ -118,16 +118,42 @@ const AllHandsSummaryStepInner = ({
                     : 'Snapshot do MBR fechado'}
                 </CardDescription>
               </CardHeader>
-              {summary && (
-                <CardContent>
-                  <div className="rounded-md border bg-muted/30 p-3">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground mb-2">
+              <CardContent className="space-y-3">
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                       <FileText className="h-3.5 w-3.5" /> Resumo executivo
+                      {isOverride && (
+                        <Badge variant="secondary" className="text-[10px] uppercase">Regenerado</Badge>
+                      )}
                     </div>
-                    <p className="text-sm whitespace-pre-line leading-relaxed">{summary}</p>
+                    {onRegenerateSummary && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={onRegenerateSummary}
+                        disabled={isRegeneratingSummary}
+                      >
+                        {isRegeneratingSummary ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        {summary ? 'Gerar novamente' : 'Gerar resumo'}
+                      </Button>
+                    )}
                   </div>
-                </CardContent>
-              )}
+                  {summary ? (
+                    <p className="text-sm whitespace-pre-line leading-relaxed">{summary}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Nenhum resumo executivo disponível. Clique em "Gerar resumo" para produzir uma
+                      análise via curador IA.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
             </Card>
 
             {decisions.length > 0 && (
