@@ -56,7 +56,12 @@ const AllHandsSummaryStepInner = ({
   isRegeneratingSummary = false,
 }: AllHandsSummaryStepProps) => {
   const summary = executiveSummary?.trim() ?? '';
-  const decisions = mbrPayload?.decisions ?? [];
+  // Filtra apenas decisões efetivamente registradas pelo time. Exclui sugestões
+  // da curadoria IA (id prefixado com `mbr-curated-decision-`), que são
+  // propostas — não decisões tomadas — e não devem aparecer no All Hands.
+  const decisions = (mbrPayload?.decisions ?? []).filter(
+    (d) => !(typeof d.id === 'string' && d.id.startsWith('mbr-curated-decision-')),
+  );
   const kpiCritical = (mbrPayload?.kpiSnapshots ?? []).filter(
     (k) => k.ragStatus === 'red' || k.ragStatus === 'critical' || k.ragStatus === 'amber' || k.ragStatus === 'attention',
   );
