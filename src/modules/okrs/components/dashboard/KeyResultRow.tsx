@@ -11,6 +11,7 @@ import { useProfileId } from '@/hooks/useIdentity';
 import { cn } from '@/lib/utils';
 import { calculateProgress, OkrDirection, OkrRagStatus, OkrKrType } from '../../types';
 import { STATUS_CONFIG, mapRagToCalculated } from '../../hooks/useOkrStatus';
+import { getEffectiveKrRagStatus } from '../../utils/effectiveStatus';
 import { KrPrimaryKpiBadge } from '../ui';
 
 /**
@@ -121,7 +122,7 @@ export const KeyResultRow = React.memo(function KeyResultRow({
 
   const effectiveStatus = hasPrimaryKpi && primaryKpiInfo?.ragStatus && primaryKpiInfo.ragStatus !== 'no_data'
     ? primaryKpiInfo.ragStatus
-    : kr.status;
+    : getEffectiveKrRagStatus(kr.status, Number(kr.baseline) || 0, Number(kr.current_value) || 0);
 
   // KPI primário é a fonte única de verdade: unidade segue a do KPI quando vinculado
   const effectiveUnit = hasPrimaryKpi && primaryKpiInfo?.kpiUnit
