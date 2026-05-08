@@ -150,6 +150,8 @@ export interface UseMbrOpeningCurationParams {
     submittedTeams: number;
     pendingTeams: number;
   };
+  /** Define o tom do prompt: 'mbr' (default) ou 'all-hands' (comunicação ampla, sem sugestões). */
+  ritualContext?: 'mbr' | 'all-hands';
 }
 
 export interface UseMbrOpeningCurationReturn {
@@ -212,6 +214,7 @@ export function useMbrOpeningCuration(
             orgObjectives,
             mbrPreAggregates: params.mbrPreAggregates,
             coverage: params.coverage,
+            ritualContext: params.ritualContext ?? 'mbr',
           },
         });
 

@@ -92,6 +92,7 @@ export default function AllHandsPage() {
         agendaSuggestionCount: 0,
       },
       coverage: { totalTeams: 0, submittedTeams: 0, pendingTeams: 0 },
+      ritualContext: 'all-hands' as const,
     }),
     [draft.data.referenceMonth, mbrPayloadEarly],
   );

@@ -76,6 +76,12 @@ interface CuratePayload {
     submittedTeams: number;
     pendingTeams: number;
   };
+  /**
+   * Contexto de uso da curadoria. 'mbr' (default) gera linguagem para MBR
+   * (executivos, decisões propostas). 'all-hands' gera resumo de comunicação
+   * para a BU inteira, sem sugestões/recomendações ou referências ao MBR.
+   */
+  ritualContext?: "mbr" | "all-hands";
 }
 
 interface CuratorOutput {
@@ -221,6 +227,7 @@ serve(async (req: Request) => {
         submittedTeams: 0,
         pendingTeams: 0,
       },
+      ritualContext: body.ritualContext === "all-hands" ? "all-hands" : "mbr",
     };
 
     // Guard: se não há absolutamente nenhum insumo, não vale invocar IA.
@@ -284,7 +291,40 @@ serve(async (req: Request) => {
       requestId,
     );
 
-    const userPrompt = `Contexto: curadoria de Abertura Executiva do MBR (Monthly Business Review) da BU "${payload.buName}".
+    const isAllHands = payload.ritualContext === "all-hands";
+
+    const ritualHeader = isAllHands
+      ? `Contexto: curadoria do Resumo Executivo do All Hands mensal da BU "${payload.buName}", apresentado a TODA a BU (não apenas C-level). O conteúdo será lido em uma reunião de comunicação ampla.`
+      : `Contexto: curadoria de Abertura Executiva do MBR (Monthly Business Review) da BU "${payload.buName}".`;
+
+    const taskBlock = isAllHands
+      ? `TAREFA:
+Produza um Resumo Executivo do mês para comunicação ao All Hands (toda a BU).
+Tom: claro, direto, acessível para todas as áreas. NÃO use jargão de executivo
+nem o nome "MBR". NÃO escreva frases como "No MBR proponho...", "sugiro decidir...",
+"próximos passos", "recomendações" ou qualquer chamada para decisão — o All Hands
+é um rito de comunicação, não de decisão.
+O campo "executiveSummary" deve conter SOMENTE análise descritiva do mês:
+como performou em relação aos meses anteriores (tendência, variação de KPIs e
+progresso dos OKRs) e em relação aos objetivos anuais da BU (quanto avançou vs.
+meta do ano). Sem sugestões, sem recomendações, sem próximos passos.
+Os campos "suggestedDecisions" e "alertsByBlock" devem vir como arrays vazios.`
+      : `TAREFA:
+Sintetize uma Abertura Executiva do MBR em estilo conciso (executivos C-level mensais).
+O campo "executiveSummary" deve conter SOMENTE análise descritiva do mês de referência,
+comparando-o com os meses anteriores (tendência, variação de KPIs e progresso dos OKRs)
+e com os objetivos anuais da BU (quanto já foi avançado vs. meta do ano).
+NÃO inclua no "executiveSummary" sugestões, recomendações, próximos passos, decisões
+propostas ou chamadas para ação — sugestões devem ir APENAS no campo "suggestedDecisions".
+Identifique padrões cross-times, ressalte os KPIs mais críticos com impacto estratégico,
+agrupe alertas em 3 blocos (performance, projetos, pessoas) e proponha decisões a serem
+tomadas durante o MBR. Classifique a cobertura ("full" >=80%, "partial" 50-79%, "critical" <50%).`;
+
+    const summaryFieldHint = isAllHands
+      ? `"executiveSummary": "2-3 parágrafos curtos, sem markdown, em tom de comunicação ampla (All Hands). SOMENTE ANÁLISE do mês ${payload.referenceMonth}: como performou vs. meses anteriores e quanto avançou nos objetivos anuais. Proibido: jargão 'MBR', sugestões, recomendações, decisões propostas, próximos passos, chamadas para ação."`
+      : `"executiveSummary": "2-3 parágrafos curtos, sem markdown. SOMENTE ANÁLISE do mês de referência (${payload.referenceMonth}): como o mês performou em relação aos meses anteriores (tendência, variação) e em relação aos objetivos anuais da BU (avanço acumulado vs. meta do ano). NÃO inclua sugestões, recomendações, próximos passos, ações ou decisões propostas — apenas leitura analítica do que aconteceu e do quanto avançou no anual."`;
+
+    const userPrompt = `${ritualHeader}
 Mês de referência: ${payload.referenceMonth}.
 
 Cobertura dos Pré-MBR recebidos:
@@ -306,31 +346,20 @@ ${JSON.stringify(payload.criticalKpis, null, 2)}
 OKRs organizacionais (progresso e tendência):
 ${JSON.stringify(payload.orgObjectives, null, 2)}
 
-TAREFA:
-Sintetize uma Abertura Executiva do MBR em estilo conciso (executivos C-level mensais).
-O campo "executiveSummary" deve conter SOMENTE análise descritiva do mês de referência,
-comparando-o com os meses anteriores (tendência, variação de KPIs e progresso dos OKRs)
-e com os objetivos anuais da BU (quanto já foi avançado vs. meta do ano).
-NÃO inclua no "executiveSummary" sugestões, recomendações, próximos passos, decisões
-propostas ou chamadas para ação — sugestões devem ir APENAS no campo "suggestedDecisions".
-Identifique padrões cross-times, ressalte os KPIs mais críticos com impacto estratégico,
-agrupe alertas em 3 blocos (performance, projetos, pessoas) e proponha decisões a serem
-tomadas durante o MBR. Classifique a cobertura ("full" >=80%, "partial" 50-79%, "critical" <50%).
+${taskBlock}
 
 FORMATO DE SAÍDA (JSON estrito):
 {
-  "executiveSummary": "2-3 parágrafos curtos, sem markdown. SOMENTE ANÁLISE do mês de referência (${payload.referenceMonth}): como o mês performou em relação aos meses anteriores (tendência, variação) e em relação aos objetivos anuais da BU (avanço acumulado vs. meta do ano). NÃO inclua sugestões, recomendações, próximos passos, ações ou decisões propostas — apenas leitura analítica do que aconteceu e do quanto avançou no anual.",
+  ${summaryFieldHint},
   "criticalKpiHighlights": [
     { "kpiId": "uuid-ou-vazio", "headline": "...", "impact": "1-2 frases sobre impacto estratégico" }
   ],
   "alertsByBlock": {
-    "performance": ["alerta 1", "alerta 2"],
-    "projetos": ["alerta 1"],
-    "pessoas": ["alerta 1"]
+    "performance": ${isAllHands ? "[]" : '["alerta 1", "alerta 2"]'},
+    "projetos": ${isAllHands ? "[]" : '["alerta 1"]'},
+    "pessoas": ${isAllHands ? "[]" : '["alerta 1"]'}
   },
-  "suggestedDecisions": [
-    { "title": "...", "category": "estrategica|operacional|pessoas|priorizacao" }
-  ],
+  "suggestedDecisions": ${isAllHands ? "[]" : '[\n    { "title": "...", "category": "estrategica|operacional|pessoas|priorizacao" }\n  ]'},
   "coverage": { "rate": 0.0-1.0, "level": "full|partial|critical" }
 }
 
