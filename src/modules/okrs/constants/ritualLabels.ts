@@ -32,6 +32,7 @@ export const RITUAL_LABELS: Record<WizardPersona, string> = {
   'weekly': 'Weekly',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
+  'all-hands': 'All Hands',
   
   'qbr-pre': 'Pré-QBR',
   'qbr-pre-clevel': 'Pré-QBR Executivo',
@@ -171,6 +172,16 @@ export const RITUAL_STEP_LABELS: Partial<
     },
   },
 
+  // ============= Onda 5 — All Hands =============
+  'all-hands': {
+    v1: {
+      'summary': { title: 'Sumário do MBR', subtitle: 'Panorama, decisões e destaques do mês', shortLabel: 'Sumário' },
+      'kpi-gate': { title: 'KPI Gate', subtitle: 'KPIs em alerta — comunicar com clareza', shortLabel: 'KPI Gate' },
+      'org-okrs': { title: 'OKRs Organizacionais', subtitle: 'Cobertura e progresso dos OKRs da BU', shortLabel: 'OKRs Org' },
+      'evaluation': { title: 'Avaliação do Rito', subtitle: 'Coleta anônima dos participantes', shortLabel: 'Avaliação' },
+    },
+  },
+
   // ============= Onda 4 — Ritos semanais =============
   'pre-weekly': {
     v2: {
@@ -237,6 +248,7 @@ export const RITUAL_GREETING_PHRASES: Partial<
   'weekly':           { phrase: 'Vamos alinhar a BU esta semana.',                 cadence: 'weekly' },
   'mbr-pre':          { phrase: 'Como foi a performance do time {teamName} em {monthShort}?', cadence: 'monthly' },
   'mbr':              { phrase: 'Vamos revisar o mês da BU.',                      cadence: 'monthly' },
+  'all-hands':        { phrase: 'Hora de comunicar o mês para a BU.',              cadence: 'monthly' },
   
   'qbr-pre':          { phrase: 'Hora de fechar o ciclo do seu time.',             cadence: 'quarterly' },
   'qbr-pre-clevel':   { phrase: 'Hora da leitura estratégica do ciclo.',           cadence: 'quarterly' },
@@ -312,6 +324,11 @@ export const RITUAL_FINALIZATION_COPY: Partial<Record<WizardPersona, RitualFinal
     title: 'Encerrar MBR',
     description: 'Decisões, ata e próximos passos serão registrados. O ritual será marcado como concluído.',
     confirmLabel: 'Encerrar MBR',
+  },
+  'all-hands': {
+    title: 'Encerrar All Hands',
+    description: 'O All Hands será marcado como concluído. A coleta de avaliação anônima será encerrada (se aberta) e a sessão ficará disponível no histórico.',
+    confirmLabel: 'Encerrar All Hands',
   },
   'qbr-pre': {
     title: 'Enviar Pré-QBR',

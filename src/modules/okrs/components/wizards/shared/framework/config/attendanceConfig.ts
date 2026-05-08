@@ -107,6 +107,14 @@ export const ATTENDANCE_CONFIG: Record<WizardPersona, AttendanceConfig> = {
     requireConfirmation: true,
     editableAfterConfirmation: true,
   },
+  'all-hands': {
+    enabled: true,
+    resolver: 'bu-leaders',
+    markerRole: 'conductor',
+    defaultPresence: 'none',
+    requireConfirmation: true,
+    editableAfterConfirmation: true,
+  },
 
   // ── Individuais (sem presença) ──
   collaborator: { enabled: false },

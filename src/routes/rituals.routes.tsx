@@ -22,6 +22,7 @@ const LeaderPrepPage = lazyWithRetry(() => import('@/modules/okrs/pages/LeaderPr
 const TeamCheckinPage = lazyWithRetry(() => import('@/modules/okrs/pages/TeamCheckinPage'));
 // CLevelCheckinPage removido do roteamento — rito 'clevel-checkin' descontinuado.
 const MbrPage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrPage'));
+const AllHandsPage = lazyWithRetry(() => import('@/modules/okrs/pages/AllHandsPage'));
 const MbrPrePage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrPrePage'));
 const QbrPrePage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPrePage'));
 const QbrPreCLevelPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrPreCLevelPage'));
@@ -94,6 +95,7 @@ export const ritualRoutes = (
     <Route path="/rituals/mbr-pre" element={<RitualRoute><MbrPrePage /></RitualRoute>} />
     <Route path="/rituals/mbr" element={<RitualRoute requiresBuAdmin><MbrPage /></RitualRoute>} />
     <Route path="/rituals/mbr-v2" element={<Navigate to="/rituals/mbr" replace />} />
+    <Route path="/rituals/all-hands" element={<RitualRoute requiresBuAdmin><AllHandsPage /></RitualRoute>} />
     
     {/* QBR */}
     <Route path="/rituals/qbr-pre" element={<RitualRoute><QbrPrePage /></RitualRoute>} />

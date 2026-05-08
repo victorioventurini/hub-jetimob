@@ -40,6 +40,7 @@ export const EVALUATION_CONFIG: Record<WizardPersona, EvaluationConfig> = {
   'mbr-first':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
   'qbr-meeting': { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
   'qbr-post':    { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
+  'all-hands':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
 
   // ── Coletivos SEM avaliação (decisão explícita) ──
   weekly:           { enabled: false },

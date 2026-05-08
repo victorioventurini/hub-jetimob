@@ -155,6 +155,15 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
     ),
   },
 
+  // All Hands — abre logo após o MBR; janela ampla (10 dias úteis) para
+  // suportar agendamento na 1ª sexta do mês mesmo quando o MBR roda na 1ª terça.
+  'all-hands': {
+    getWindow: (c) => pickCompositeWindow(
+      buildWindow(c.review_date_first_month, 0, 10),
+      buildWindow(c.review_date, 0, 10),
+    ),
+  },
+
   // QBR phases
   'qbr-pre': {
     getWindow: (c) => {

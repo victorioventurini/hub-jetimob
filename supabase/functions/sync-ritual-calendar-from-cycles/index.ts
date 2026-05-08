@@ -24,13 +24,11 @@ const ALL_WIZARD_TYPES = [
   'collaborator',
   'leader-prep',
   'team-checkin',
-  // 'managers-checkin' removido — rito descontinuado.
-  // 'clevel-checkin' removido — rito descontinuado.
   'team-okr-creation',
   'team-kr-creation',
   'mbr',
   'mbr-pre',
-  // 'mbr-first' / 'mbr-pre-first' unificados em 'mbr'/'mbr-pre' com cadência mensal (1ª terça).
+  'all-hands',
   'qbr-pre',
   'qbr-pre-clevel',
   'qbr-meeting',
@@ -167,9 +165,16 @@ Deno.serve(async (req) => {
         start_date: firstReviewMonth1,
         cycle_derived: true,
       },
-      // 'mbr-first' e 'mbr-pre-first' removidos — cadência unificada em 'mbr'/'mbr-pre'
-      // (monthly, 1ª terça-feira). M1 e M2 do quarter recebem uma ocorrência cada;
-      // M3 é bloqueado pela regra QBR (today >= planning_date) no frontend.
+      {
+        // All Hands — 1ª sexta-feira do mês (cadência mensal global da BU)
+        wizard_type: 'all-hands',
+        frequency: 'monthly',
+        month_week_ordinal: 1,
+        day_of_week: 5,
+        day_of_month: null,
+        start_date: firstReviewMonth1,
+        cycle_derived: true,
+      },
       {
         wizard_type: 'qbr-pre',
         frequency: 'quarterly',

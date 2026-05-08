@@ -49,6 +49,9 @@ export const STRUCTURE_VERSION_BY_WIZARD_TYPE: Record<WizardPersona, StructureVe
   'pre-weekly': 'v2',
   'weekly': 'v2',
 
+  // Onda 5 — All Hands (rito mensal de comunicação da BU, derivado do MBR)
+  'all-hands': 'v1',
+
   // Não impactados pela padronização (mantêm v1)
   'clevel-checkin': 'v1',
   'team-okr-creation': 'v1',
