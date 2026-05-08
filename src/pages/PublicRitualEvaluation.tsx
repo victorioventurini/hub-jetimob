@@ -132,12 +132,10 @@ export default function PublicRitualEvaluation() {
   const formQuery = usePublicRitualEvaluationForm(shortCode ?? null);
   const submitMut = useSubmitRitualEvaluation();
 
-  const [scores, setScores] = useState<ScoreState>({
-    value: null,
-    quality: null,
-    decisions: null,
-    time: null,
-  });
+  const form = formQuery.data;
+  const dimensions = form?.dimensions ?? null;
+
+  const [scores, setScores] = useState<ScoreState>({});
   const [changeOneThing, setChangeOneThing] = useState('');
   const [whatWorked, setWhatWorked] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -148,21 +146,21 @@ export default function PublicRitualEvaluation() {
     setScores((prev) => ({ ...prev, [key]: v }));
   };
 
-  const allScored = SCALE && Object.values(scores).every((v) => v !== null);
+  const allScored = !!dimensions && dimensions.every((k) => typeof scores[k] === 'number');
   const changeOneThingValid = changeOneThing.trim().length >= 3 && changeOneThing.trim().length <= 1000;
   const whatWorkedValid = whatWorked.length <= 1000;
   const canSubmit = allScored && changeOneThingValid && whatWorkedValid && !submitMut.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shortCode || !canSubmit) return;
+    if (!shortCode || !canSubmit || !dimensions) return;
     try {
       await submitMut.mutateAsync({
         shortCode,
-        scoreValue: scores.value!,
-        scoreQuality: scores.quality!,
-        scoreDecisions: scores.decisions!,
-        scoreTime: scores.time!,
+        scoreValue: scores.value as number,
+        scoreQuality: dimensions.includes('quality') ? (scores.quality as number) : null,
+        scoreDecisions: dimensions.includes('decisions') ? (scores.decisions as number) : null,
+        scoreTime: scores.time as number,
         changeOneThing: changeOneThing.trim(),
         whatWorked: whatWorked.trim() || undefined,
         clientFingerprint: fingerprint,
