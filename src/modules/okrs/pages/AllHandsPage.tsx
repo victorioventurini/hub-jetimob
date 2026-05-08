@@ -29,6 +29,8 @@ import { handleError } from '@/lib/errorMessages';
 import { MbrKpiGateStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiGateStep';
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { AllHandsSummaryStep } from '@/modules/okrs/components/wizards/all-hands/AllHandsSummaryStep';
+import { useMbrOpeningCuration } from '@/modules/okrs/hooks/useMbrOpeningCuration';
+import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
 import type { AllHandsStep, AllHandsDraftData } from '@/modules/okrs/types/wizard';
 import { WIZARD_STEPS, STEP_ORDER, DEFAULT_DATA } from './all-hands/constants';
