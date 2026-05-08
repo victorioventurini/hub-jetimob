@@ -47,7 +47,7 @@ const AllHandsSummaryStepInner = ({
   const summary = mbrPayload?.panoramaCuration?.summary?.trim() ?? '';
   const decisions = mbrPayload?.decisions ?? [];
   const kpiCritical = (mbrPayload?.kpiSnapshots ?? []).filter(
-    (k) => k.statusBucket === 'critical' || k.statusBucket === 'attention',
+    (k) => k.ragStatus === 'red' || k.ragStatus === 'critical' || k.ragStatus === 'amber' || k.ragStatus === 'attention',
   );
 
   return (
