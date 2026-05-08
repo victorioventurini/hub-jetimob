@@ -84,6 +84,10 @@ export function isEvaluationEnabled(persona: WizardPersona): boolean {
   return getEvaluationConfig(persona).enabled;
 }
 
+export function getEvaluationDimensions(persona: WizardPersona): EvaluationDimensionKey[] {
+  return getEvaluationConfig(persona).dimensions ?? ALL_EVALUATION_DIMENSIONS;
+}
+
 /** Permission keys (mesmo padrão de attendance) */
 export const EVALUATION_PERMISSIONS = {
   open:  'okrs.evaluation.open:as_conductor',
