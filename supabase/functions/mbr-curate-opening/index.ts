@@ -308,13 +308,18 @@ ${JSON.stringify(payload.orgObjectives, null, 2)}
 
 TAREFA:
 Sintetize uma Abertura Executiva do MBR em estilo conciso (executivos C-level mensais).
+O campo "executiveSummary" deve conter SOMENTE análise descritiva do mês de referência,
+comparando-o com os meses anteriores (tendência, variação de KPIs e progresso dos OKRs)
+e com os objetivos anuais da BU (quanto já foi avançado vs. meta do ano).
+NÃO inclua no "executiveSummary" sugestões, recomendações, próximos passos, decisões
+propostas ou chamadas para ação — sugestões devem ir APENAS no campo "suggestedDecisions".
 Identifique padrões cross-times, ressalte os KPIs mais críticos com impacto estratégico,
 agrupe alertas em 3 blocos (performance, projetos, pessoas) e proponha decisões a serem
 tomadas durante o MBR. Classifique a cobertura ("full" >=80%, "partial" 50-79%, "critical" <50%).
 
 FORMATO DE SAÍDA (JSON estrito):
 {
-  "executiveSummary": "2-3 parágrafos curtos, sem markdown, foco em saúde do mês e o que muda",
+  "executiveSummary": "2-3 parágrafos curtos, sem markdown. SOMENTE ANÁLISE do mês de referência (${payload.referenceMonth}): como o mês performou em relação aos meses anteriores (tendência, variação) e em relação aos objetivos anuais da BU (avanço acumulado vs. meta do ano). NÃO inclua sugestões, recomendações, próximos passos, ações ou decisões propostas — apenas leitura analítica do que aconteceu e do quanto avançou no anual.",
   "criticalKpiHighlights": [
     { "kpiId": "uuid-ou-vazio", "headline": "...", "impact": "1-2 frases sobre impacto estratégico" }
   ],
