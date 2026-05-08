@@ -197,7 +197,7 @@ export default function AllHandsPage() {
   return (
     <FullPageWizardShell
       title="All Hands"
-      subtitle="Comunicação mensal da BU — derivada do MBR fechado"
+      subtitle={`Comunicação mensal da ${buName} — derivada do MBR fechado`}
       steps={WIZARD_STEPS.map((s) => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
