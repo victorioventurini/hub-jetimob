@@ -26,23 +26,23 @@ import {
   useSubmitRitualEvaluation,
 } from '@/modules/okrs/components/wizards/shared/framework/hooks/usePublicRitualEvaluation';
 
+import type { EvaluationDimensionKey } from '@/modules/okrs/components/wizards/shared/framework/config/evaluationConfig';
+
 const SCALE = [1, 2, 3, 4, 5] as const;
 
-const DIMENSIONS = [
-  { key: 'value',     label: 'Este rito gerou valor para a empresa?',     hintLow: 'Pouco valor', hintHigh: 'Muito valor' },
-  { key: 'quality',   label: 'A qualidade da discussão foi alta?',         hintLow: 'Baixa',       hintHigh: 'Alta' },
-  { key: 'decisions', label: 'As decisões saíram claras (dono e prazo)?',  hintLow: 'Pouco claras', hintHigh: 'Muito claras' },
-  { key: 'time',      label: 'O uso do tempo foi adequado?',                hintLow: 'Mal usado',   hintHigh: 'Bem usado' },
-] as const;
+const DIMENSION_META: Record<
+  EvaluationDimensionKey,
+  { label: string; hintLow: string; hintHigh: string }
+> = {
+  value:     { label: 'Este rito gerou valor para a empresa?',    hintLow: 'Pouco valor',  hintHigh: 'Muito valor' },
+  quality:   { label: 'A qualidade da discussão foi alta?',        hintLow: 'Baixa',         hintHigh: 'Alta' },
+  decisions: { label: 'As decisões saíram claras (dono e prazo)?', hintLow: 'Pouco claras',  hintHigh: 'Muito claras' },
+  time:      { label: 'O uso do tempo foi adequado?',              hintLow: 'Mal usado',     hintHigh: 'Bem usado' },
+};
 
-type DimensionKey = (typeof DIMENSIONS)[number]['key'];
+type DimensionKey = EvaluationDimensionKey;
 
-interface ScoreState {
-  value: number | null;
-  quality: number | null;
-  decisions: number | null;
-  time: number | null;
-}
+type ScoreState = Partial<Record<DimensionKey, number | null>>;
 
 function buildFingerprint(): string {
   if (typeof window === 'undefined') return 'ssr';
