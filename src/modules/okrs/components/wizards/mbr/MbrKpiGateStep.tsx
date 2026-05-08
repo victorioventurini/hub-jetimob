@@ -171,13 +171,15 @@ export function MbrKpiGateStep({
                 : `Sugestão: registre decisões para os KPIs em atenção (opcional).`}
             </p>
           )}
-          <div className="border-t bg-card/50 backdrop-blur-sm">
-            <InlineDecisionInput
-              decisions={decisions}
-              onDecisionsChange={onDecisionsChange}
-              sourceStep="kpi-gate"
-            />
-          </div>
+          {showInlineDecisionInput && (
+            <div className="border-t bg-card/50 backdrop-blur-sm">
+              <InlineDecisionInput
+                decisions={decisions}
+                onDecisionsChange={onDecisionsChange}
+                sourceStep="kpi-gate"
+              />
+            </div>
+          )}
         </>
       }
       footer={
