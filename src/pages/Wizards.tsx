@@ -394,6 +394,9 @@ export default function WizardsPage() {
         if (section.title === 'OKRs – Gestores e Executivos' && !userRoles.has('manager') && !isWildcard) {
           return false;
         }
+        if (section.title === 'Comunicação da BU' && !isWildcard) {
+          return false;
+        }
         return true;
       })
       .map(section => ({
