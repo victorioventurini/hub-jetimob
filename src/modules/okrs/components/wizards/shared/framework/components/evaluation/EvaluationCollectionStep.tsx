@@ -25,7 +25,7 @@ import { useRitualEvaluationOpenAnswers } from '../../hooks/useRitualEvaluationO
 import { EvaluationStartCard } from './EvaluationStartCard';
 import { EvaluationLiveCounter } from './EvaluationLiveCounter';
 import { EvaluationSummary, type EvaluationDimension } from './EvaluationSummary';
-import { getEvaluationConfig } from '../../config/evaluationConfig';
+import { getEvaluationConfig, getEvaluationDimensions } from '../../config/evaluationConfig';
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 
 export interface EvaluationCollectionStepProps {
@@ -70,14 +70,18 @@ export const EvaluationCollectionStep = memo(function EvaluationCollectionStep({
     enabled: !!sessionId && wasClosedByMutation,
   });
 
+  const enabledDims = useMemo(() => getEvaluationDimensions(persona), [persona]);
   const dimensions: EvaluationDimension[] = useMemo(
-    () => [
-      { key: 'value',     label: 'Valor para a empresa',  avg: summaryQuery.data?.avgValue ?? null },
-      { key: 'quality',   label: 'Qualidade da discussão', avg: summaryQuery.data?.avgQuality ?? null },
-      { key: 'decisions', label: 'Clareza das decisões',   avg: summaryQuery.data?.avgDecisions ?? null },
-      { key: 'time',      label: 'Uso do tempo',           avg: summaryQuery.data?.avgTime ?? null },
-    ],
-    [summaryQuery.data],
+    () => {
+      const all: EvaluationDimension[] = [
+        { key: 'value',     label: 'Valor para a empresa',  avg: summaryQuery.data?.avgValue ?? null },
+        { key: 'quality',   label: 'Qualidade da discussão', avg: summaryQuery.data?.avgQuality ?? null },
+        { key: 'decisions', label: 'Clareza das decisões',   avg: summaryQuery.data?.avgDecisions ?? null },
+        { key: 'time',      label: 'Uso do tempo',           avg: summaryQuery.data?.avgTime ?? null },
+      ];
+      return all.filter((d) => enabledDims.includes(d.key as typeof enabledDims[number]));
+    },
+    [summaryQuery.data, enabledDims],
   );
 
   const publicBaseUrl = typeof window !== 'undefined' ? window.location.origin : '';
