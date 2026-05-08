@@ -29,6 +29,8 @@ import { handleError } from '@/lib/errorMessages';
 import { MbrKpiGateStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiGateStep';
 import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { AllHandsSummaryStep } from '@/modules/okrs/components/wizards/all-hands/AllHandsSummaryStep';
+import { useMbrOpeningCuration } from '@/modules/okrs/hooks/useMbrOpeningCuration';
+import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
 import type { AllHandsStep, AllHandsDraftData } from '@/modules/okrs/types/wizard';
 import { WIZARD_STEPS, STEP_ORDER, DEFAULT_DATA } from './all-hands/constants';
@@ -68,6 +70,45 @@ export default function AllHandsPage() {
   });
 
   const { data: mbrSource, isLoading: isLoadingMbr } = useLatestMbrForMonth(draft.data.referenceMonth);
+  const mbrPayloadEarly = mbrSource?.payload ?? null;
+
+  const curationParams = useMemo(
+    () => ({
+      referenceMonth: draft.data.referenceMonth,
+      kpiSnapshots: mbrPayloadEarly?.kpiSnapshots ?? [],
+      orgObjectives: (mbrPayloadEarly?.orgOkrSnapshots ?? []).map((o) => ({
+        objectiveId: o.objectiveId,
+        title: o.title,
+        progress: Number(o.progress ?? 0),
+        trend: o.trend,
+        status: o.status,
+      })),
+      mbrPreAggregates: {
+        needsDecisionCount: 0,
+        crossDepCount: 0,
+        kpiJustifCount: 0,
+        kpiUpdatedCount: 0,
+        projectJustifCount: 0,
+        agendaSuggestionCount: 0,
+      },
+      coverage: { totalTeams: 0, submittedTeams: 0, pendingTeams: 0 },
+    }),
+    [draft.data.referenceMonth, mbrPayloadEarly],
+  );
+
+  const { generate: generateSummary, isGenerating: isRegeneratingSummary } =
+    useMbrOpeningCuration(curationParams);
+
+  const handleRegenerateSummary = useCallback(async () => {
+    const prev = mbrPayloadEarly?.panoramaCuration ?? EMPTY_MBR_PANORAMA_CURATION;
+    const result = await generateSummary(prev);
+    if (result?.next?.summary) {
+      updateDraft({ overrideExecutiveSummary: result.next.summary });
+      toast.success('Resumo executivo regenerado.');
+    } else {
+      toast.error('Não foi possível regenerar o resumo. Tente novamente.');
+    }
+  }, [generateSummary, mbrPayloadEarly, updateDraft]);
 
   const completedSteps = useMemo(() => {
     const completed: string[] = [];
@@ -123,7 +164,11 @@ export default function AllHandsPage() {
     return <RitualUnavailableScreen wizardType="all-hands" availability={availability} />;
   }
 
-  const mbrPayload = mbrSource?.payload ?? null;
+  const mbrPayload = mbrPayloadEarly;
+  const effectiveSummary =
+    (draft.data.overrideExecutiveSummary ?? '').trim() ||
+    (mbrPayload?.panoramaCuration?.summary ?? '');
+  const isSummaryOverride = !!(draft.data.overrideExecutiveSummary ?? '').trim();
 
   const renderStepContent = () => {
     switch (draft.currentStep) {
@@ -132,11 +177,15 @@ export default function AllHandsPage() {
           <AllHandsSummaryStep
             referenceMonth={draft.data.referenceMonth}
             onReferenceMonthChange={(referenceMonth) =>
-              updateDraft({ referenceMonth, sourceMbrSessionId: null })
+              updateDraft({ referenceMonth, sourceMbrSessionId: null, overrideExecutiveSummary: null })
             }
             mbrPayload={mbrPayload}
             mbrCompletedAt={mbrSource?.completedAt ?? null}
             onContinue={goNext}
+            executiveSummary={effectiveSummary}
+            isOverride={isSummaryOverride}
+            onRegenerateSummary={mbrPayload ? handleRegenerateSummary : undefined}
+            isRegeneratingSummary={isRegeneratingSummary}
           />
         );
 

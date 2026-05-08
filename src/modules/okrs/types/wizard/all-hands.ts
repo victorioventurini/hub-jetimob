@@ -14,4 +14,9 @@ export interface AllHandsDraftData {
   referenceMonth: string;
   /** Sessão MBR (status='completed') que abastece o conteúdo dos steps 1-3. */
   sourceMbrSessionId: string | null;
+  /**
+   * Resumo executivo regenerado especificamente para o All Hands.
+   * Quando preenchido, sobrepõe `panoramaCuration.summary` do MBR de origem.
+   */
+  overrideExecutiveSummary?: string | null;
 }

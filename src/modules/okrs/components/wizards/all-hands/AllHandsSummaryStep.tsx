@@ -14,8 +14,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ListChecks, AlertTriangle, FileText, Calendar, Megaphone } from 'lucide-react';
+import { ListChecks, AlertTriangle, FileText, Calendar, Megaphone, Sparkles, Loader2 } from 'lucide-react';
 import { WizardStepFooter, WizardStepScaffold, WizardStepHeader, ReferenceMonthPicker } from '@/modules/okrs/components/wizards/shared';
 import type { MbrDraftData } from '@/modules/okrs/types/wizard';
 
@@ -25,6 +26,13 @@ export interface AllHandsSummaryStepProps {
   mbrPayload: MbrDraftData | null;
   mbrCompletedAt: string | null;
   onContinue: () => void;
+  /** Resumo executivo a exibir (override do All Hands ou do MBR). */
+  executiveSummary: string;
+  /** Indica se o resumo exibido foi regenerado para o All Hands. */
+  isOverride?: boolean;
+  /** Handler para regenerar o resumo via curador IA. */
+  onRegenerateSummary?: () => void;
+  isRegeneratingSummary?: boolean;
 }
 
 function formatMonthLabel(referenceMonth: string): string {
@@ -42,8 +50,12 @@ const AllHandsSummaryStepInner = ({
   mbrPayload,
   mbrCompletedAt,
   onContinue,
+  executiveSummary,
+  isOverride = false,
+  onRegenerateSummary,
+  isRegeneratingSummary = false,
 }: AllHandsSummaryStepProps) => {
-  const summary = mbrPayload?.panoramaCuration?.summary?.trim() ?? '';
+  const summary = executiveSummary?.trim() ?? '';
   const decisions = mbrPayload?.decisions ?? [];
   const kpiCritical = (mbrPayload?.kpiSnapshots ?? []).filter(
     (k) => k.ragStatus === 'red' || k.ragStatus === 'critical' || k.ragStatus === 'amber' || k.ragStatus === 'attention',
@@ -106,16 +118,42 @@ const AllHandsSummaryStepInner = ({
                     : 'Snapshot do MBR fechado'}
                 </CardDescription>
               </CardHeader>
-              {summary && (
-                <CardContent>
-                  <div className="rounded-md border bg-muted/30 p-3">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground mb-2">
+              <CardContent className="space-y-3">
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                       <FileText className="h-3.5 w-3.5" /> Resumo executivo
+                      {isOverride && (
+                        <Badge variant="secondary" className="text-[10px] uppercase">Regenerado</Badge>
+                      )}
                     </div>
-                    <p className="text-sm whitespace-pre-line leading-relaxed">{summary}</p>
+                    {onRegenerateSummary && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={onRegenerateSummary}
+                        disabled={isRegeneratingSummary}
+                      >
+                        {isRegeneratingSummary ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        {summary ? 'Gerar novamente' : 'Gerar resumo'}
+                      </Button>
+                    )}
                   </div>
-                </CardContent>
-              )}
+                  {summary ? (
+                    <p className="text-sm whitespace-pre-line leading-relaxed">{summary}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Nenhum resumo executivo disponível. Clique em "Gerar resumo" para produzir uma
+                      análise via curador IA.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
             </Card>
 
             {decisions.length > 0 && (
