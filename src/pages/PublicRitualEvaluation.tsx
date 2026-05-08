@@ -334,7 +334,7 @@ export default function PublicRitualEvaluation() {
 
             {!allScored && (
               <p className="text-xs text-muted-foreground text-center">
-                Responda as 4 perguntas e o que você mudaria para enviar.
+                Responda {dimensions.length === 1 ? 'a pergunta' : `as ${dimensions.length} perguntas`} e o que você mudaria para enviar.
               </p>
             )}
           </form>
