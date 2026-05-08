@@ -207,15 +207,8 @@ export default function AllHandsPage() {
         );
 
       case 'org-okrs':
-        if (isLoadingMbr || !mbrPayload) return <LoadingState text="Carregando MBR de referência..." />;
         return (
-          <MbrOrgOkrsStep
-            orgOkrSnapshots={mbrPayload.orgOkrSnapshots ?? []}
-            onOrgOkrSnapshotsChange={noop}
-            decisions={mbrPayload.decisions ?? []}
-            onDecisionsChange={noop}
-            orgObjectives={[]}
-            showInlineDecisionInput={false}
+          <AllHandsOrgOkrsStep
             onContinue={goNext}
             onBack={goBack}
           />
