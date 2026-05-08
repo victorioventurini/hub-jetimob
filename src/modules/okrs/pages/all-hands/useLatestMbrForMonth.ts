@@ -34,7 +34,7 @@ export function useLatestMbrForMonth(referenceMonth: string | null | undefined) 
 
       const { data, error } = await supabase
         .from('okr_wizard_sessions')
-        .select('id, completed_at, started_by, payload')
+        .select('id, completed_at, started_by, reflection_data')
         .eq('wizard_type', 'mbr')
         .eq('status', 'completed')
         .not('completed_at', 'is', null)
@@ -44,9 +44,8 @@ export function useLatestMbrForMonth(referenceMonth: string | null | undefined) 
       if (error) throw error;
       if (!data || data.length === 0) return null;
 
-      // Filtra os MBR cujo payload referencia o mesmo mês.
       const match = data.find((row) => {
-        const p = (row.payload ?? {}) as Partial<MbrDraftData>;
+        const p = (row.reflection_data ?? {}) as Partial<MbrDraftData>;
         return typeof p.referenceMonth === 'string' && p.referenceMonth === referenceMonth;
       });
 
@@ -55,7 +54,7 @@ export function useLatestMbrForMonth(referenceMonth: string | null | undefined) 
         sessionId: match.id,
         completedAt: match.completed_at as string,
         startedBy: match.started_by as string,
-        payload: (match.payload ?? {}) as MbrDraftData,
+        payload: (match.reflection_data ?? {}) as MbrDraftData,
       };
     },
     staleTime: 5 * 60 * 1000,
