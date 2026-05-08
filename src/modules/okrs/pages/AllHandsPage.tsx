@@ -16,11 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { FullPageWizardShell } from '@/modules/okrs/components/wizards/shared/FullPageWizardShell';
-import {
-  RitualPreparationStatus,
-  RitualAttendance,
-  WizardStepFooter,
-} from '@/modules/okrs/components/wizards/shared';
+import { WizardStepFooter } from '@/modules/okrs/components/wizards/shared';
 import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/shared/RitualUnavailableScreen';
 import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
 
