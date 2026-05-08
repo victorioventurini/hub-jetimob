@@ -27,8 +27,8 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
 
 import { MbrKpiGateStep } from '@/modules/okrs/components/wizards/mbr/MbrKpiGateStep';
-import { MbrOrgOkrsStep } from '@/modules/okrs/components/wizards/mbr/MbrOrgOkrsStep';
 import { AllHandsSummaryStep } from '@/modules/okrs/components/wizards/all-hands/AllHandsSummaryStep';
+import { AllHandsOrgOkrsStep } from '@/modules/okrs/components/wizards/all-hands/AllHandsOrgOkrsStep';
 import { useMbrOpeningCuration } from '@/modules/okrs/hooks/useMbrOpeningCuration';
 import { EMPTY_MBR_PANORAMA_CURATION } from '@/modules/okrs/types/wizard';
 
@@ -207,15 +207,8 @@ export default function AllHandsPage() {
         );
 
       case 'org-okrs':
-        if (isLoadingMbr || !mbrPayload) return <LoadingState text="Carregando MBR de referência..." />;
         return (
-          <MbrOrgOkrsStep
-            orgOkrSnapshots={mbrPayload.orgOkrSnapshots ?? []}
-            onOrgOkrSnapshotsChange={noop}
-            decisions={mbrPayload.decisions ?? []}
-            onDecisionsChange={noop}
-            orgObjectives={[]}
-            showInlineDecisionInput={false}
+          <AllHandsOrgOkrsStep
             onContinue={goNext}
             onBack={goBack}
           />
