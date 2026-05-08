@@ -24,6 +24,7 @@ export * from './team-okr-creation';
 export * from './mbr';
 export * from './qbr';
 export * from './weekly';
+export * from './all-hands';
 
 // Persistência + integração com Vic
 export * from './session';
