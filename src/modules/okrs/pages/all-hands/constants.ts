@@ -5,7 +5,7 @@ import type { AllHandsStep, AllHandsDraftData } from '@/modules/okrs/types/wizar
 import { defaultReferenceMonth } from '@/modules/okrs/utils/mbr/referenceMonth';
 
 export const WIZARD_STEPS = [
-  { id: 'summary' as const, label: 'Sumário do MBR', description: 'Panorama, decisões e destaques do mês' },
+  { id: 'summary' as const, label: 'Sumário do MBR', description: 'Panorama, decisões e destaques' },
   { id: 'kpi-gate' as const, label: 'KPI Gate', description: 'KPIs em alerta' },
   { id: 'org-okrs' as const, label: 'OKRs Org', description: 'Cobertura e progresso' },
   { id: 'evaluation' as const, label: 'Avaliação do Rito', description: 'Coleta anônima' },
