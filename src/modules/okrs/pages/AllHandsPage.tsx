@@ -164,7 +164,11 @@ export default function AllHandsPage() {
     return <RitualUnavailableScreen wizardType="all-hands" availability={availability} />;
   }
 
-  const mbrPayload = mbrSource?.payload ?? null;
+  const mbrPayload = mbrPayloadEarly;
+  const effectiveSummary =
+    (draft.data.overrideExecutiveSummary ?? '').trim() ||
+    (mbrPayload?.panoramaCuration?.summary ?? '');
+  const isSummaryOverride = !!(draft.data.overrideExecutiveSummary ?? '').trim();
 
   const renderStepContent = () => {
     switch (draft.currentStep) {
@@ -173,11 +177,15 @@ export default function AllHandsPage() {
           <AllHandsSummaryStep
             referenceMonth={draft.data.referenceMonth}
             onReferenceMonthChange={(referenceMonth) =>
-              updateDraft({ referenceMonth, sourceMbrSessionId: null })
+              updateDraft({ referenceMonth, sourceMbrSessionId: null, overrideExecutiveSummary: null })
             }
             mbrPayload={mbrPayload}
             mbrCompletedAt={mbrSource?.completedAt ?? null}
             onContinue={goNext}
+            executiveSummary={effectiveSummary}
+            isOverride={isSummaryOverride}
+            onRegenerateSummary={mbrPayload ? handleRegenerateSummary : undefined}
+            isRegeneratingSummary={isRegeneratingSummary}
           />
         );
 
