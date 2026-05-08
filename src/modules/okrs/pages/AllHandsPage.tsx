@@ -21,7 +21,7 @@ import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/share
 import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
 
 import { useGenericWizardDraft, useActiveCycle, useRitualAvailability } from '@/modules/okrs/hooks';
-import { useBu } from '@/contexts/BuContext';
+// useBu intentionally unused — All Hands não exibe RitualPreparationStatus/Attendance no shell.
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
