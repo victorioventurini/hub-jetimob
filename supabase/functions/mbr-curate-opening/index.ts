@@ -76,6 +76,12 @@ interface CuratePayload {
     submittedTeams: number;
     pendingTeams: number;
   };
+  /**
+   * Contexto de uso da curadoria. 'mbr' (default) gera linguagem para MBR
+   * (executivos, decisões propostas). 'all-hands' gera resumo de comunicação
+   * para a BU inteira, sem sugestões/recomendações ou referências ao MBR.
+   */
+  ritualContext?: "mbr" | "all-hands";
 }
 
 interface CuratorOutput {
