@@ -199,7 +199,7 @@ export default function PublicRitualEvaluation() {
     );
   }
 
-  const form = formQuery.data;
+  if (!form || !dimensions) return null;
 
   if (!form.isOpen) {
     return (
