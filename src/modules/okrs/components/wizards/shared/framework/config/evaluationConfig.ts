@@ -14,6 +14,15 @@
 
 import type { WizardPersona } from '@/modules/okrs/types/wizard';
 
+export type EvaluationDimensionKey = 'value' | 'quality' | 'decisions' | 'time';
+
+export const ALL_EVALUATION_DIMENSIONS: EvaluationDimensionKey[] = [
+  'value',
+  'quality',
+  'decisions',
+  'time',
+];
+
 export interface EvaluationConfig {
   /** Quando false, o rito NÃO exibe o step de avaliação anônima */
   enabled: boolean;
@@ -21,6 +30,12 @@ export interface EvaluationConfig {
   showWhatWorked?: boolean;
   /** Recomenda encerrar a coleta antes de avançar para o encerramento do rito */
   closeRequiredBeforeComplete?: boolean;
+  /**
+   * Dimensões coletadas (1..5). Default = todas as 4.
+   * Use subset (ex.: ['value','time']) para variantes enxutas (All Hands).
+   * O servidor é a fonte de verdade — esta config alinha o cliente.
+   */
+  dimensions?: EvaluationDimensionKey[];
 }
 
 /**
@@ -34,13 +49,14 @@ export interface EvaluationConfig {
  * removido.
  */
 export const EVALUATION_CONFIG: Record<WizardPersona, EvaluationConfig> = {
-  // ── Coletivos com avaliação ──
-  mbr:           { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
+  // ── Coletivos com avaliação (4 dimensões) ──
+  mbr:           { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
   
-  'mbr-first':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'qbr-meeting': { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'qbr-post':    { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
-  'all-hands':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true },
+  'mbr-first':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
+  'qbr-meeting': { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
+  'qbr-post':    { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ALL_EVALUATION_DIMENSIONS },
+  // ── Variante enxuta (apenas valor + tempo) ──
+  'all-hands':   { enabled: true, showWhatWorked: true, closeRequiredBeforeComplete: true, dimensions: ['value', 'time'] },
 
   // ── Coletivos SEM avaliação (decisão explícita) ──
   weekly:           { enabled: false },
@@ -66,6 +82,10 @@ export function getEvaluationConfig(persona: WizardPersona): EvaluationConfig {
 
 export function isEvaluationEnabled(persona: WizardPersona): boolean {
   return getEvaluationConfig(persona).enabled;
+}
+
+export function getEvaluationDimensions(persona: WizardPersona): EvaluationDimensionKey[] {
+  return getEvaluationConfig(persona).dimensions ?? ALL_EVALUATION_DIMENSIONS;
 }
 
 /** Permission keys (mesmo padrão de attendance) */

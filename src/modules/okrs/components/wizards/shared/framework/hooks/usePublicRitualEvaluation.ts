@@ -9,6 +9,10 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase as globalClient } from '@/integrations/supabase/globalClient';
 import { ritualEvaluationKeys } from '@/lib/queryKeys/ritualEvaluation';
+import {
+  ALL_EVALUATION_DIMENSIONS,
+  type EvaluationDimensionKey,
+} from '@/modules/okrs/components/wizards/shared/framework/config/evaluationConfig';
 
 export interface PublicEvaluationForm {
   sessionId: string;
@@ -16,6 +20,18 @@ export interface PublicEvaluationForm {
   wizardType: string;
   showWhatWorked: boolean;
   isOpen: boolean;
+  /** Dimensões coletadas; default = todas (compat com sessões antigas) */
+  dimensions: EvaluationDimensionKey[];
+}
+
+const DIMENSION_SET = new Set<EvaluationDimensionKey>(ALL_EVALUATION_DIMENSIONS);
+
+function normalizeDimensions(input: unknown): EvaluationDimensionKey[] {
+  if (!Array.isArray(input) || input.length === 0) return ALL_EVALUATION_DIMENSIONS;
+  const filtered = input.filter(
+    (k): k is EvaluationDimensionKey => typeof k === 'string' && DIMENSION_SET.has(k as EvaluationDimensionKey),
+  );
+  return filtered.length > 0 ? filtered : ALL_EVALUATION_DIMENSIONS;
 }
 
 export function usePublicRitualEvaluationForm(shortCode: string | null | undefined) {
@@ -35,6 +51,7 @@ export function usePublicRitualEvaluationForm(shortCode: string | null | undefin
             wizard_type: string;
             show_what_worked: boolean;
             is_open: boolean;
+            dimensions?: string[] | null;
           }
         | null;
       if (!row) return null;
@@ -44,6 +61,7 @@ export function usePublicRitualEvaluationForm(shortCode: string | null | undefin
         wizardType: row.wizard_type,
         showWhatWorked: !!row.show_what_worked,
         isOpen: !!row.is_open,
+        dimensions: normalizeDimensions(row.dimensions),
       };
     },
     enabled: !!shortCode,
@@ -55,8 +73,10 @@ export function usePublicRitualEvaluationForm(shortCode: string | null | undefin
 export interface SubmitEvaluationInput {
   shortCode: string;
   scoreValue: number;
-  scoreQuality: number;
-  scoreDecisions: number;
+  /** Opcional — variantes enxutas (ex.: All Hands) enviam null */
+  scoreQuality?: number | null;
+  /** Opcional — variantes enxutas (ex.: All Hands) enviam null */
+  scoreDecisions?: number | null;
   scoreTime: number;
   changeOneThing: string;
   whatWorked?: string;
@@ -70,8 +90,8 @@ export function useSubmitRitualEvaluation() {
       const { data, error } = await globalClient.rpc('submit_ritual_evaluation', {
         p_short_code: input.shortCode,
         p_score_value: input.scoreValue,
-        p_score_quality: input.scoreQuality,
-        p_score_decisions: input.scoreDecisions,
+        p_score_quality: input.scoreQuality ?? null,
+        p_score_decisions: input.scoreDecisions ?? null,
         p_score_time: input.scoreTime,
         p_change_one_thing: input.changeOneThing,
         p_what_worked: input.whatWorked ?? null,

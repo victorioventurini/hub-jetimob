@@ -26,23 +26,23 @@ import {
   useSubmitRitualEvaluation,
 } from '@/modules/okrs/components/wizards/shared/framework/hooks/usePublicRitualEvaluation';
 
+import type { EvaluationDimensionKey } from '@/modules/okrs/components/wizards/shared/framework/config/evaluationConfig';
+
 const SCALE = [1, 2, 3, 4, 5] as const;
 
-const DIMENSIONS = [
-  { key: 'value',     label: 'Este rito gerou valor para a empresa?',     hintLow: 'Pouco valor', hintHigh: 'Muito valor' },
-  { key: 'quality',   label: 'A qualidade da discussão foi alta?',         hintLow: 'Baixa',       hintHigh: 'Alta' },
-  { key: 'decisions', label: 'As decisões saíram claras (dono e prazo)?',  hintLow: 'Pouco claras', hintHigh: 'Muito claras' },
-  { key: 'time',      label: 'O uso do tempo foi adequado?',                hintLow: 'Mal usado',   hintHigh: 'Bem usado' },
-] as const;
+const DIMENSION_META: Record<
+  EvaluationDimensionKey,
+  { label: string; hintLow: string; hintHigh: string }
+> = {
+  value:     { label: 'Este rito gerou valor para a empresa?',    hintLow: 'Pouco valor',  hintHigh: 'Muito valor' },
+  quality:   { label: 'A qualidade da discussão foi alta?',        hintLow: 'Baixa',         hintHigh: 'Alta' },
+  decisions: { label: 'As decisões saíram claras (dono e prazo)?', hintLow: 'Pouco claras',  hintHigh: 'Muito claras' },
+  time:      { label: 'O uso do tempo foi adequado?',              hintLow: 'Mal usado',     hintHigh: 'Bem usado' },
+};
 
-type DimensionKey = (typeof DIMENSIONS)[number]['key'];
+type DimensionKey = EvaluationDimensionKey;
 
-interface ScoreState {
-  value: number | null;
-  quality: number | null;
-  decisions: number | null;
-  time: number | null;
-}
+type ScoreState = Partial<Record<DimensionKey, number | null>>;
 
 function buildFingerprint(): string {
   if (typeof window === 'undefined') return 'ssr';
@@ -132,12 +132,10 @@ export default function PublicRitualEvaluation() {
   const formQuery = usePublicRitualEvaluationForm(shortCode ?? null);
   const submitMut = useSubmitRitualEvaluation();
 
-  const [scores, setScores] = useState<ScoreState>({
-    value: null,
-    quality: null,
-    decisions: null,
-    time: null,
-  });
+  const form = formQuery.data;
+  const dimensions = form?.dimensions ?? null;
+
+  const [scores, setScores] = useState<ScoreState>({});
   const [changeOneThing, setChangeOneThing] = useState('');
   const [whatWorked, setWhatWorked] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -148,21 +146,21 @@ export default function PublicRitualEvaluation() {
     setScores((prev) => ({ ...prev, [key]: v }));
   };
 
-  const allScored = SCALE && Object.values(scores).every((v) => v !== null);
+  const allScored = !!dimensions && dimensions.every((k) => typeof scores[k] === 'number');
   const changeOneThingValid = changeOneThing.trim().length >= 3 && changeOneThing.trim().length <= 1000;
   const whatWorkedValid = whatWorked.length <= 1000;
   const canSubmit = allScored && changeOneThingValid && whatWorkedValid && !submitMut.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shortCode || !canSubmit) return;
+    if (!shortCode || !canSubmit || !dimensions) return;
     try {
       await submitMut.mutateAsync({
         shortCode,
-        scoreValue: scores.value!,
-        scoreQuality: scores.quality!,
-        scoreDecisions: scores.decisions!,
-        scoreTime: scores.time!,
+        scoreValue: scores.value as number,
+        scoreQuality: dimensions.includes('quality') ? (scores.quality as number) : null,
+        scoreDecisions: dimensions.includes('decisions') ? (scores.decisions as number) : null,
+        scoreTime: scores.time as number,
         changeOneThing: changeOneThing.trim(),
         whatWorked: whatWorked.trim() || undefined,
         clientFingerprint: fingerprint,
@@ -201,7 +199,7 @@ export default function PublicRitualEvaluation() {
     );
   }
 
-  const form = formQuery.data;
+  if (!form || !dimensions) return null;
 
   if (!form.isOpen) {
     return (
@@ -253,18 +251,21 @@ export default function PublicRitualEvaluation() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-8">
-            {DIMENSIONS.map((d) => (
-              <DimensionRow
-                key={d.key}
-                dimensionKey={d.key}
-                label={d.label}
-                hintLow={d.hintLow}
-                hintHigh={d.hintHigh}
-                value={scores[d.key]}
-                onChange={handleScoreChange}
-                disabled={submitMut.isPending}
-              />
-            ))}
+            {dimensions.map((key) => {
+              const meta = DIMENSION_META[key];
+              return (
+                <DimensionRow
+                  key={key}
+                  dimensionKey={key}
+                  label={meta.label}
+                  hintLow={meta.hintLow}
+                  hintHigh={meta.hintHigh}
+                  value={scores[key] ?? null}
+                  onChange={handleScoreChange}
+                  disabled={submitMut.isPending}
+                />
+              );
+            })}
 
             <div className="space-y-2">
               <Label htmlFor="change-one-thing" className="text-base font-medium">
@@ -333,7 +334,7 @@ export default function PublicRitualEvaluation() {
 
             {!allScored && (
               <p className="text-xs text-muted-foreground text-center">
-                Responda as 4 perguntas e o que você mudaria para enviar.
+                Responda {dimensions.length === 1 ? 'a pergunta' : `as ${dimensions.length} perguntas`} e o que você mudaria para enviar.
               </p>
             )}
           </form>

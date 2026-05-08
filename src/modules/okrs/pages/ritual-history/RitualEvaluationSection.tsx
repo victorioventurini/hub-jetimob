@@ -49,15 +49,17 @@ export const RitualEvaluationSection = memo(function RitualEvaluationSection({
     enabled: hasNewResponses && !!summaryQuery.data?.evaluationClosedAt,
   });
 
-  const dimensions: EvaluationDimension[] = useMemo(
-    () => [
+  const dimensions: EvaluationDimension[] = useMemo(() => {
+    const all: EvaluationDimension[] = [
       { key: 'value',     label: 'Valor para a empresa',  avg: summaryQuery.data?.avgValue ?? null },
       { key: 'quality',   label: 'Qualidade da discussão', avg: summaryQuery.data?.avgQuality ?? null },
       { key: 'decisions', label: 'Clareza das decisões',   avg: summaryQuery.data?.avgDecisions ?? null },
       { key: 'time',      label: 'Uso do tempo',           avg: summaryQuery.data?.avgTime ?? null },
-    ],
-    [summaryQuery.data],
-  );
+    ];
+    // Variantes enxutas (ex.: All Hands) não coletam quality/decisions —
+    // a média vem null e a barra fica oculta.
+    return all.filter((d) => d.avg !== null && d.avg !== undefined);
+  }, [summaryQuery.data]);
 
   // Persona determina se a seção é aplicável; quando não aplicável, mantém apenas legado.
   const personaEnabled =
