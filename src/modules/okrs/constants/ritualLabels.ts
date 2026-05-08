@@ -175,7 +175,7 @@ export const RITUAL_STEP_LABELS: Partial<
   // ============= Onda 5 — All Hands =============
   'all-hands': {
     v1: {
-      'summary': { title: 'Sumário do MBR', subtitle: 'Panorama, decisões e destaques do mês', shortLabel: 'Sumário' },
+      'summary': { title: 'Sumário do MBR', subtitle: 'Panorama, decisões e destaques', shortLabel: 'Sumário' },
       'kpi-gate': { title: 'KPI Gate', subtitle: 'KPIs em alerta — comunicar com clareza', shortLabel: 'KPI Gate' },
       'org-okrs': { title: 'OKRs Organizacionais', subtitle: 'Cobertura e progresso dos OKRs da BU', shortLabel: 'OKRs Org' },
       'evaluation': { title: 'Avaliação do Rito', subtitle: 'Coleta anônima dos participantes', shortLabel: 'Avaliação' },
