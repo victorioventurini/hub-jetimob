@@ -32,6 +32,7 @@ export const RITUAL_LABELS: Record<WizardPersona, string> = {
   'weekly': 'Weekly',
   'mbr-pre': 'Pré-MBR',
   'mbr': 'MBR',
+  'all-hands': 'All Hands',
   
   'qbr-pre': 'Pré-QBR',
   'qbr-pre-clevel': 'Pré-QBR Executivo',
