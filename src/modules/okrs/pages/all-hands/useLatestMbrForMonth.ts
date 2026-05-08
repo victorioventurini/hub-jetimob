@@ -54,7 +54,7 @@ export function useLatestMbrForMonth(referenceMonth: string | null | undefined) 
         sessionId: match.id,
         completedAt: match.completed_at as string,
         startedBy: match.started_by as string,
-        payload: (match.reflection_data ?? {}) as MbrDraftData,
+        payload: (match.reflection_data ?? {}) as unknown as MbrDraftData,
       };
     },
     staleTime: 5 * 60 * 1000,
