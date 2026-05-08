@@ -314,7 +314,7 @@ tomadas durante o MBR. Classifique a cobertura ("full" >=80%, "partial" 50-79%, 
 
 FORMATO DE SAÍDA (JSON estrito):
 {
-  "executiveSummary": "2-3 parágrafos curtos, sem markdown, foco em saúde do mês e o que muda",
+  "executiveSummary": "2-3 parágrafos curtos, sem markdown. SOMENTE ANÁLISE do mês de referência (${payload.referenceMonth}): como o mês performou em relação aos meses anteriores (tendência, variação) e em relação aos objetivos anuais da BU (avanço acumulado vs. meta do ano). NÃO inclua sugestões, recomendações, próximos passos, ações ou decisões propostas — apenas leitura analítica do que aconteceu e do quanto avançou no anual.",
   "criticalKpiHighlights": [
     { "kpiId": "uuid-ou-vazio", "headline": "...", "impact": "1-2 frases sobre impacto estratégico" }
   ],
