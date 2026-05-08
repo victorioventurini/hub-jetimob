@@ -228,10 +228,10 @@ Lista completa das tabelas no schema `public`:
 | `kpi_direction` | `up`, `down` |
 | `kpi_frequency` | `daily`, `weekly`, `monthly`, `quarterly` |
 | `kpi_indicator_type` | `kpi`, `metric` |
-| `kpi_lifecycle_status` | `active`, `paused`, `deprecated`, `archived` |
+| `kpi_lifecycle_status` | `proposed`, `active`, `observing`, `deprecated` — **SSOT canônico** de ciclo de vida do KPI |
 | `kpi_rag_status` | `green`, `yellow`, `red`, `not_started` |
 | `kpi_scope` | `org`, `area`, `team` |
-| `kpi_status` | `active`, `inactive` |
+| `kpi_status` | `active`, `inactive` — **@deprecated** mantido por trigger `trg_kpi_metrics_sync_status_lifecycle`; toda lógica nova lê/escreve `lifecycle_status` |
 | `kpi_value_source` | `manual`, `integration`, `calculation` |
 | `migration_status` | `pending`, `in_progress`, `completed`, `failed`, `rolled_back` |
 | `milestone_status` | `not_started`, `in_progress`, `completed`, `cancelled` |

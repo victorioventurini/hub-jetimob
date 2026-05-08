@@ -803,10 +803,10 @@ Definição de KPIs com lifecycle e classificação.
 | direction | enum | `up`, `down` |
 | frequency | enum | `daily`, `weekly`, `monthly`, `quarterly`, `manual` |
 | target_value | numeric | Meta |
-| status | enum | `active`, `inactive` |
+| status | enum | `active`, `inactive` — **@deprecated**: mantido por trigger `trg_kpi_metrics_sync_status_lifecycle` para retrocompatibilidade. Toda lógica nova deve ler/escrever `lifecycle_status`. |
 | is_global | bool | Se é global (visível para toda BU) |
 | **indicator_type** | enum | `kpi`, `metric` |
-| **lifecycle_status** | enum | `proposed`, `active`, `observing`, `deprecated` — v2.1 |
+| **lifecycle_status** | enum | `proposed`, `active`, `observing`, `deprecated` — **SSOT canônico** de ciclo de vida (v2.1). Sincronizado com `status` legado via trigger. |
 | **target_source** | text | Fonte/URL do target/benchmark — v2.1 |
 | **recovery_protocol** | text | Protocolo de recuperação quando fora da meta — v2.1 |
 | deleted_at | timestamptz | Soft delete |

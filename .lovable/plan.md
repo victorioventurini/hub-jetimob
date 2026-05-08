@@ -1,42 +1,51 @@
-## Objetivo
+## Contexto
 
-Alinhar `partner_contact_capabilities.created_by` à convenção canônica de identidade (IDENTITY_CONVENTION.md §1.3 + TCR §4.10): coluna de auditoria de criação deve referenciar `profiles.id`, não `auth.users.id`.
+KPI **MRR Churn + Downsell** continua aparecendo no MBR mesmo "removido" porque `kpi_metrics` tem **dois campos divergentes**:
 
-## Estado atual (verificado no banco)
+- `status` (enum `kpi_status`: `active|inactive`) — usado pelo dashboard `/kpis`.
+- `lifecycle_status` (enum `kpi_lifecycle_status`: `proposed|active|observing|deprecated`) — **SSOT canônico segundo TCR §kpi_metrics**, usado pelos ritos.
 
-- FK atual: `created_by` → `auth.users(id)` (divergente da convenção).
-- 114 registros totais; **1 único** com `created_by` preenchido (auth user `dcb85e6f-…`); 113 com `NULL` (vieram de import).
-- Frontend foi temporariamente ajustado para enviar `realUserId` — será revertido para `realProfileId` após a migração.
-- Nenhum consumidor de `partner_contact_capabilities` (8 arquivos) lê/filtra por `created_by` — risco de regressão é baixo.
+Estado atual no banco (Jetimob, não-deletados): 2 KPIs com `status='inactive'` + `lifecycle='active'` — somem do `/kpis` mas continuam nos ritos.
+
+Pré-checklist: TCR §809/872, DATA_MODEL_REGISTRY §enums (com divergência detectada — doc lista `paused/archived`, banco tem `proposed/observing`), `mem://kpi-value-entry-ssot` (precedente de remoção limpa de campo legado), Core Rules (sem CHECK, soft-delete, sem `select('*')`, sem editar `types.ts`).
 
 ## Plano
 
-### 1. Migration (DB) — uma única migration atômica
+### Etapa 1 — Correção pontual (dado, via insert tool)
+Atualizar os 2 KPIs divergentes: `lifecycle_status='deprecated'` onde `status='inactive'` AND `deleted_at IS NULL`. Resolve o caso reportado e zera divergência atual.
 
-1. Converter o registro existente de `auth.users.id` → `profiles.id` via subquery em `profiles.user_id`.
-2. Validar que conversão resultou em valor não-nulo antes de trocar a FK (caso contrário, abortar com `RAISE EXCEPTION`).
-3. `DROP CONSTRAINT partner_contact_capabilities_created_by_fkey`.
-4. `ADD CONSTRAINT partner_contact_capabilities_created_by_profile_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL`.
-5. `COMMENT ON COLUMN`: documentar que armazena `profiles.id` conforme IDENTITY_CONVENTION §1.3.
+### Etapa 2 — Blindagem dos ritos (frontend)
+Adicionar `.eq('status','active')` ao lado dos filtros `lifecycle_status='active'` existentes, evitando regressão se alguém arquivar pelo dashboard:
+- `src/modules/okrs/pages/mbr/useMbrDataSources.ts` (`useAllBuKpisForMbr`)
+- `src/modules/kpis/hooks/useKpisForWizard.ts`
+- `src/modules/kpis/hooks/useKpisForWizardV2.ts`
+- Demais hooks identificados via `rg "lifecycle_status.*active"`.
 
-### 2. Frontend — `src/modules/tickets/hooks/useContactCapabilities.ts`
+### Etapa 3 — Consolidação no schema (migration)
+1. **Backfill idempotente**: `UPDATE kpi_metrics SET lifecycle_status='deprecated' WHERE status='inactive' AND lifecycle_status <> 'deprecated' AND deleted_at IS NULL`.
+2. **Trigger de sincronização** `BEFORE INSERT OR UPDATE` em `kpi_metrics` (`SECURITY DEFINER`, `SET search_path=public`, **sem CHECK constraint** — segue Core Rule):
+   - `status='inactive'` → força `lifecycle_status='deprecated'`;
+   - `lifecycle_status='deprecated'` → força `status='inactive'`;
+   - `lifecycle_status IN ('active','proposed','observing')` sem mudança explícita em `status` → mantém `status='active'`.
+3. **Comentário SQL** marcando `kpi_metrics.status` como `@deprecated — mantido por trigger; usar lifecycle_status`.
 
-- Trocar `realUserId` por `realProfileId` nos dois mutations (`useCreateContactCapability`, `useSaveContactCapabilities`) e no log de `onSuccess`.
-- Manter `useIdentity()` (já importado).
+### Etapa 4 — Atualização documental
+- **`docs/canonical/DATA_MODEL_REGISTRY.md`**: corrigir enum `kpi_lifecycle_status` para `proposed, active, observing, deprecated` (doc atual está errado) e marcar `kpi_status` como legado.
+- **`docs/canonical/TECHNICAL_CONTEXT_REGISTRY.md`**: nota em `kpi_metrics` — "`status` é legado, sincronizado por trigger; toda lógica nova lê `lifecycle_status`".
+- **Memória nova** `mem://standards/kpi-status-consolidation` registrando a regra para sessões futuras.
 
-### 3. Documentação canônica
+### Etapa 5 — Fora deste PR (próxima onda)
+Mover mutações de "arquivar/ativar KPI" no frontend para escrever em `lifecycle_status` em vez de `status`, e auditar para então droppar fisicamente a coluna `status` em migration futura.
 
-- **IDENTITY_CONVENTION.md** §1.2 (Tickets): adicionar linha
-  `| partner_contact_capabilities | created_by | profiles.id | partner_contact_capabilities_created_by_profile_fkey | Migrado em 2026-05 |`.
-- **DATA_MODEL_REGISTRY.md**: adicionar nota de identity-mapping na seção `partner_contact_capabilities`.
+## Detalhes técnicos
 
-### 4. Validação
+- Soft delete continua obrigatório (`deleted_at IS NULL`); `lifecycle_status='deprecated'` é o estado lógico de "arquivado/inativo".
+- `types.ts` regenerado automaticamente pós-migration — sem edit manual.
+- Etapa 1 usa **insert tool** (data update); Etapa 3 usa **migration tool** (schema/trigger). Etapas serão executadas separadamente, com aprovação do usuário entre elas.
+- Sem alteração em RLS, BU isolation, query keys ou contratos públicos de hooks.
 
-- Adicionar capacidade pelo dialog em `/tickets/settings?tab=capabilities` → toast de sucesso, sem FK error.
-- SQL pós-migration:
-  `SELECT created_by, EXISTS(SELECT 1 FROM profiles WHERE id = pcc.created_by) FROM partner_contact_capabilities pcc WHERE created_by IS NOT NULL` → todos `true`.
-- Operação como admin impersonando: `created_by` reflete o profile real (não impersonado), via `realProfileId`.
+## Fora de escopo
 
-## Riscos
-
-- **Baixo.** O único registro existente tem profile correspondente (a confirmar no momento da execução). RLS, índices únicos e nenhum JOIN crítico dependem de `created_by`.
+- Drop físico da coluna `status` (Etapa 5).
+- Refatoração de UI do dashboard `/kpis` para esconder o controle antigo de "ativar/desativar".
+- Mudança em outros enums KPI.
