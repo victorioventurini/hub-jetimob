@@ -8170,8 +8170,8 @@ export type Database = {
           change_one_thing: string
           deleted_at: string | null
           id: string
-          score_decisions: number
-          score_quality: number
+          score_decisions: number | null
+          score_quality: number | null
           score_time: number
           score_value: number
           session_id: string
@@ -8183,8 +8183,8 @@ export type Database = {
           change_one_thing: string
           deleted_at?: string | null
           id?: string
-          score_decisions: number
-          score_quality: number
+          score_decisions?: number | null
+          score_quality?: number | null
           score_time: number
           score_value: number
           session_id: string
@@ -8196,8 +8196,8 @@ export type Database = {
           change_one_thing?: string
           deleted_at?: string | null
           id?: string
-          score_decisions?: number
-          score_quality?: number
+          score_decisions?: number | null
+          score_quality?: number | null
           score_time?: number
           score_value?: number
           session_id?: string
@@ -11401,6 +11401,7 @@ export type Database = {
       get_public_ritual_evaluation_form: {
         Args: { p_short_code: string }
         Returns: {
+          dimensions: string[]
           is_open: boolean
           ritual_label: string
           session_id: string
