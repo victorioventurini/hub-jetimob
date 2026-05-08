@@ -24,13 +24,11 @@ const ALL_WIZARD_TYPES = [
   'collaborator',
   'leader-prep',
   'team-checkin',
-  // 'managers-checkin' removido — rito descontinuado.
-  // 'clevel-checkin' removido — rito descontinuado.
   'team-okr-creation',
   'team-kr-creation',
   'mbr',
   'mbr-pre',
-  // 'mbr-first' / 'mbr-pre-first' unificados em 'mbr'/'mbr-pre' com cadência mensal (1ª terça).
+  'all-hands',
   'qbr-pre',
   'qbr-pre-clevel',
   'qbr-meeting',
