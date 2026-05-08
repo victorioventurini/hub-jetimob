@@ -21,7 +21,7 @@ import { RitualUnavailableScreen } from '@/modules/okrs/components/wizards/share
 import { EvaluationCollectionStep } from '@/modules/okrs/components/wizards/shared/framework/components/evaluation';
 
 import { useGenericWizardDraft, useActiveCycle, useRitualAvailability } from '@/modules/okrs/hooks';
-// useBu intentionally unused — All Hands não exibe RitualPreparationStatus/Attendance no shell.
+import { useBu } from '@/contexts/BuContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { LoadingState } from '@/components/ui/loading-state';
 import { handleError } from '@/lib/errorMessages';
@@ -38,7 +38,8 @@ const noop = () => {};
 
 export default function AllHandsPage() {
   const navigate = useNavigate();
-  // BU context é resolvida dentro dos hooks/queries; não usada aqui diretamente.
+  const { currentBu } = useBu();
+  const buName = currentBu?.name?.trim() || 'BU';
 
   usePageTitle('All Hands');
 
@@ -196,7 +197,7 @@ export default function AllHandsPage() {
   return (
     <FullPageWizardShell
       title="All Hands"
-      subtitle="Comunicação mensal da BU — derivada do MBR fechado"
+      subtitle={`Comunicação mensal da ${buName} — derivada do MBR fechado`}
       steps={WIZARD_STEPS.map((s) => ({ id: s.id, label: s.label, description: s.description }))}
       currentStepId={draft.currentStep}
       completedSteps={completedSteps}
