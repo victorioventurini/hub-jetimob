@@ -33,6 +33,8 @@ export interface MbrOrgOkrsStepProps {
   orgObjectives?: OrgObjectiveWithKrs[];
   onContinue: () => void;
   onBack: () => void;
+  /** Quando false, oculta o InlineDecisionInput do rodapé. Default: true. */
+  showInlineDecisionInput?: boolean;
 }
 
 // ============================================================
