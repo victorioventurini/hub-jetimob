@@ -140,9 +140,9 @@ const AllHandsSummaryStepInner = ({
                 <ul className="space-y-1.5">
                   {kpiCritical.map((k) => (
                     <li key={k.kpiId} className="flex items-center justify-between text-sm">
-                      <span className="truncate">{k.kpiName ?? k.kpiId}</span>
-                      <Badge variant={k.statusBucket === 'critical' ? 'destructive' : 'secondary'}>
-                        {k.statusBucket}
+                      <span className="truncate">{k.name ?? k.kpiId}</span>
+                      <Badge variant={k.ragStatus === 'red' || k.ragStatus === 'critical' ? 'destructive' : 'secondary'}>
+                        {k.ragStatus}
                       </Badge>
                     </li>
                   ))}
