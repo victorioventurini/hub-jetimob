@@ -44,17 +44,27 @@ export function useLatestMbrForMonth(referenceMonth: string | null | undefined) 
       if (error) throw error;
       if (!data || data.length === 0) return null;
 
+      // Payload do draft genérico vive em `reflection_data.data` (envelope
+      // {wizardType, currentStep, data, ...}). Algumas sessões legadas podem
+      // ter o payload diretamente na raiz — aceitamos ambos os formatos.
+      const extractPayload = (row: { reflection_data: unknown }): Record<string, unknown> => {
+        const raw = (row.reflection_data ?? {}) as Record<string, unknown>;
+        const inner = (raw.data ?? null) as Record<string, unknown> | null;
+        return inner && typeof inner === 'object' ? inner : raw;
+      };
+
       const match = data.find((row) => {
-        const p = (row.reflection_data ?? {}) as Record<string, unknown>;
+        const p = extractPayload(row);
         return typeof p.referenceMonth === 'string' && p.referenceMonth === referenceMonth;
       });
 
       if (!match) return null;
+      const payload = extractPayload(match);
       return {
         sessionId: match.id,
         completedAt: match.completed_at as string,
         startedBy: match.started_by as string,
-        payload: (match.reflection_data ?? {}) as unknown as MbrDraftData,
+        payload: payload as unknown as MbrDraftData,
       };
     },
     staleTime: 5 * 60 * 1000,
