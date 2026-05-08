@@ -192,6 +192,13 @@ const WIZARD_SECTIONS: WizardSection[] = [
         requiresTeam: false,
         route: '/rituals/mbr',
       },
+    ],
+  },
+  {
+    title: 'Comunicação da BU',
+    description: 'Rituais abertos da BU',
+    icon: Megaphone,
+    wizards: [
       {
         id: 'all-hands',
         name: 'All Hands',

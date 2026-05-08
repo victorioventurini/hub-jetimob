@@ -1,57 +1,62 @@
 ## Objetivo
-Variante "enxuta" da avaliação anônima para o **All Hands**: remover **Qualidade da discussão** (`score_quality`) e **Clareza das decisões** (`score_decisions`). Mantém **Valor** (`score_value`) e **Tempo** (`score_time`) + `change_one_thing` (obrigatório) + `what_worked` (opcional). MBR/QBR permanecem com 4 dimensões. Sem duplicar página/componentes — extensão por SSOT.
 
-## Princípio (alinhado ao canônico ANONYMOUS_RITUAL_EVALUATION §1.2)
-- **Componentes não conhecem persona.** Adicionar entrada em `evaluationConfig.ts` + `dimensions` opcional → tudo herda.
-- **Server-side é fonte de verdade**: trigger valida quais dimensões podem ser nulas por `wizard_type`.
-- **Anonimato preservado** — nada novo na superfície de privacidade.
+Garantir que o card **All Hands** apareça em `/rituals` para qualquer usuário que seja admin da BU ativa (ou super_admin), sem depender de outras roles intermediárias e sem duplicar componentes.
 
-## Mudanças
+## Diagnóstico
 
-### 1) Banco (migração única)
-- `ritual_evaluation_responses`: tornar `score_quality` e `score_decisions` `NULL`-able. Demais NOT NULL preservados.
-- `fn_validate_ritual_evaluation_response`: ler `wizard_type` da sessão. Para `all-hands`: exigir `score_quality IS NULL` e `score_decisions IS NULL`; `score_value`/`score_time` em 1..5. Para outras personas: comportamento atual (4 scores 1..5).
-- `get_public_ritual_evaluation_form`:
-  - Adicionar `'all-hands' → 'All Hands'` no `CASE` de label.
-  - Estender `show_what_worked` para incluir `'all-hands'`.
-  - Adicionar coluna `dimensions text[]` no retorno (e.g. `ARRAY['value','time']` para `all-hands`; `ARRAY['value','quality','decisions','time']` para os demais).
-- `submit_ritual_evaluation`: aceitar `p_score_quality int DEFAULT NULL` e `p_score_decisions int DEFAULT NULL`, gravar como vier; trigger faz a validação por persona.
-- `get_ritual_evaluation_summary`: trocar `AVG(score_quality)` e `AVG(score_decisions)` por `AVG(...) FILTER (WHERE ... IS NOT NULL)` (retornará `NULL` quando todas as respostas forem da variante enxuta).
-- `v_ritual_evaluation_summary`: replicar o mesmo `FILTER` para as duas colunas (consistência entre RPC e view).
-- `get_ritual_evaluation_open_answers`: nada (só lê textos).
+- O código em `src/pages/Wizards.tsx` (linhas 195–206) já registra o wizard `all-hands` dentro da seção `OKRs – Gestores e Executivos`, com `requiredRole: 'admin'`.
+- `victorio@jetimob.com` tem `role_in_bu='admin'` na BU jetimob → `get_my_permissions` retorna `['*']` → `isWildcard=true`.
+- Logo, em código ele deveria ver o card. Se não está aparecendo, as causas restantes são:
+  1. **Cache/deploy**: build publicada (`hub.jetimob.com`) ainda sem o código novo, ou bundle antigo no navegador.
+  2. **Acoplamento de seção**: o card depende da seção "OKRs – Gestores e Executivos" estar visível, o que hoje exige `manager` OU `isWildcard`. Para um admin de BU "puro", isso funciona via wildcard, mas qualquer regressão na regra de seção esconderia o card silenciosamente.
 
-### 2) Frontend — SSOT
-`src/modules/okrs/components/wizards/shared/framework/config/evaluationConfig.ts`:
-- Novo tipo `EvaluationDimensionKey = 'value'|'quality'|'decisions'|'time'`.
-- Adicionar `dimensions: EvaluationDimensionKey[]` em `EvaluationConfig` (opcional; default = todas as 4).
-- Definir explicitamente:
-  - `mbr`, `mbr-first`, `qbr-meeting`, `qbr-post`: `dimensions: ['value','quality','decisions','time']`.
-  - `all-hands`: `dimensions: ['value','time']`.
-- Helper `getEvaluationDimensions(persona)`.
+## Mudanças (apenas frontend, sem novos componentes)
 
-### 3) Página pública (`src/pages/PublicRitualEvaluation.tsx`)
-- `usePublicRitualEvaluationForm` lê `dimensions` da RPC e expõe em `PublicEvaluationForm`. Fallback: 4 dimensões (compat com sessões antigas).
-- Refatorar constantes: `DIMENSIONS` (array fixa) → `DIMENSION_META: Record<DimensionKey, {label, hintLow, hintHigh}>`. Render itera `form.dimensions`.
-- `scores` segue `Record<DimensionKey, number|null>`; `allScored` valida apenas as habilitadas.
-- `handleSubmit` envia `null` para dimensões não presentes em `form.dimensions`.
+### 1. Mover All Hands para uma seção própria "Comunicação da BU"
 
-### 4) Hook submit
-`useSubmitRitualEvaluation`:
-- `SubmitEvaluationInput.scoreQuality?: number | null` e `scoreDecisions?: number | null` (opcionais).
-- Repassa `null` quando ausente.
+Em `src/pages/Wizards.tsx`:
 
-### 5) Histórico (`RitualEvaluationSection`)
-- Já consome `useRitualEvaluationSummary`. Quando `avg_quality`/`avg_decisions` vierem `NULL`, ocultar essas duas barras (não renderizar "0"). Ajuste pontual no componente.
+- Adicionar uma nova `WizardSection` ao final de `WIZARD_SECTIONS`:
+  - `title: 'Comunicação da BU'`
+  - `description: 'Rituais abertos da BU'`
+  - `icon: Megaphone`
+  - `wizards: [<All Hands>]` (mover o objeto atual, mantendo `requiredRole: 'admin'`, `route: '/rituals/all-hands'`).
+- Remover o card All Hands de "OKRs – Gestores e Executivos".
 
-## Componentes preservados (sem duplicar)
-- `PublicRitualEvaluation`, `EvaluationCollectionStep`, `EvaluationSummary`, `EvaluationStartCard`, `EvaluationLiveCounter`, todos os hooks (`usePublicRitualEvaluationForm`, `useSubmitRitualEvaluation`, `useRitualEvaluationSummary`, `useRitualEvaluationLiveCount`, `useRitualEvaluationOpenAnswers`, `useOpenRitualEvaluation`, `useCloseRitualEvaluation`), rota `/p/r/:shortCode`, query keys, fingerprint, RLS, RBAC keys.
+Justificativa: card passa a ser visualmente distinto, não compete com MBR/QBR e a regra de visibilidade fica isolada.
 
-## Não-objetivos
-- Sem nova tabela / nova rota / nova página.
-- Sem mudança em MBR, QBR, ou nos steps internos do All Hands (segue `EvaluationCollectionStep`).
-- Sem mexer em `change_one_thing` / `what_worked` (textos seguem iguais).
-- Sem alteração de permission keys.
+### 2. Tornar a regra de seção explícita para admin
 
-## Atualização documental (após merge)
-- `docs/canonical/ANONYMOUS_RITUAL_EVALUATION.md`: adicionar linha `all-hands` na tabela §2 (com nota "2 dimensões: valor + tempo") e descrever `dimensions` em §4/§7.
-- `mem://features/rituals/anonymous-evaluation-standard`: nota da variante enxuta.
+No filtro `visibleSections`:
+
+- Adicionar caso para `'Comunicação da BU'`: visível somente quando `isWildcard === true` (ou seja, super_admin global ou admin da BU). Sem dependência de `manager`/`executive`.
+
+```ts
+if (section.title === 'Comunicação da BU' && !isWildcard) {
+  return false;
+}
+```
+
+Isso garante que admins puros de BU vejam o card mesmo se a regra da seção "Gestores e Executivos" mudar.
+
+### 3. Sem mudanças em backend, rotas, RBAC ou componentes do wizard
+
+- A rota `/rituals/all-hands` (com `RitualRoute requiresBuAdmin`) já está correta e protege o acesso server-side.
+- `useRitualAvailability['all-hands']`, `ritualLabels['all-hands']` e `wizard-configs['all-hands']` permanecem inalterados.
+- Nenhum novo componente. O card reusa o mesmo `Card`/`CardHeader` da grade existente.
+
+### 4. Pós-deploy
+
+- Republicar (`hub.jetimob.com`) e instruir refresh com cache limpo, para descartar a hipótese (1) acima.
+
+## Critério de aceite
+
+- Logado como `victorio@jetimob.com` na BU jetimob, em `/rituals`, aparece a seção **Comunicação da BU** com o card **All Hands**, ícone `Megaphone`, badge "Mensal", botão "Iniciar ritual" navegando para `/rituals/all-hands`.
+- Usuários sem `admin`/`super_admin` na BU não veem a seção nem o card.
+- Nenhuma outra seção/card é alterado.
+
+## Fora de escopo
+
+- Janela de disponibilidade do ritual (`useRitualAvailability`).
+- Alterações em RLS, edge functions, esquema, rotas ou Pré-MBR/MBR/QBR.
+- Mudanças visuais nos demais cards.
