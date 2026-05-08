@@ -213,17 +213,6 @@ export default function AllHandsPage() {
       onDiscardDraft={handleDiscardDraft}
       onClose={() => {}}
       backUrl="/rituals"
-      topSlot={
-        <>
-          <RitualPreparationStatus ritualType="all-hands" cycleId={quarterlyCycle?.id ?? null} />
-          <RitualAttendance
-            persona="all-hands"
-            sessionId={sessionId}
-            buId={currentBu?.id}
-            cycleId={quarterlyCycle?.id ?? null}
-          />
-        </>
-      }
     >
       {renderStepContent()}
     </FullPageWizardShell>
