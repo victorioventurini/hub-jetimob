@@ -194,4 +194,16 @@ export const WIZARD_CONFIGS: Partial<Record<WizardPersona, WizardConfig>> = {
     ],
     aiAgents: ['facilitador-decisoes', 'alinhamento-estrategico'],
   },
+  'all-hands': {
+    persona: 'all-hands',
+    title: 'All Hands',
+    description: 'Comunicação mensal da BU — derivada do MBR fechado do mês',
+    steps: [
+      { id: 'summary', label: 'Sumário do MBR', shortLabel: 'Sumário' },
+      { id: 'kpi-gate', label: 'KPI Gate', shortLabel: 'KPI Gate' },
+      { id: 'org-okrs', label: 'OKRs Organizacionais', shortLabel: 'OKRs Org' },
+      { id: 'evaluation', label: 'Avaliação do Rito', shortLabel: 'Avaliação' },
+    ],
+    aiAgents: ['alinhamento-estrategico'],
+  },
 };
