@@ -164,7 +164,7 @@ export function MbrKpiGateStep({
       }
       bottomFixed={
         <>
-          {!canProceed && (
+          {!canProceed && showInlineDecisionInput && (
             <p className="text-xs text-muted-foreground text-center pb-2 px-4">
               {requirePlanForCriticalKpis
                 ? `Sugestão: registre um plano para ${missingKpis.map(k => k.name).join(', ')} (opcional).`
