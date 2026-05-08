@@ -1,0 +1,1 @@
+ALTER TABLE public.okr_wizard_sessions DROP CONSTRAINT IF EXISTS okr_wizard_sessions_wizard_type_check;
