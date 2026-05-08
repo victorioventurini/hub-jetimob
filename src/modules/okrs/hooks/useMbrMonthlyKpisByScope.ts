@@ -45,6 +45,7 @@ interface KpiRow {
   target_value: number | null;
   scope: KpiScope | null;
   indicator_type: string | null;
+  consolidation_frequency: string | null;
   responsible_team_id: string | null;
   owner_user_id: string | null;
   area_id: string | null;
