@@ -36,8 +36,10 @@ const DecisionsPage = lazyWithRetry(() => import('@/modules/okrs/pages/Decisions
 /**
  * Wrapper padrão para rotas de rituais
  */
-function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false, requiresAreaLeader = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean; requiresAreaLeader?: boolean }) {
-  const inner = (
+function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false, requiresAreaLeader = false, skipModule = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean; requiresAreaLeader?: boolean; skipModule?: boolean }) {
+  const inner = skipModule ? (
+    <>{children}</>
+  ) : (
     <ModuleRoute moduleSlug="okrs">
       {children}
     </ModuleRoute>
@@ -106,8 +108,8 @@ export const ritualRoutes = (
     {/* Histórico */}
     <Route path="/rituals/history" element={<RitualRoute><RitualHistoryPage /></RitualRoute>} />
 
-    {/* Decisões — inbox unificado */}
-    <Route path="/decisions" element={<RitualRoute><DecisionsPage /></RitualRoute>} />
+    {/* Decisões — inbox unificado (acessível sem módulo okrs) */}
+    <Route path="/decisions" element={<RitualRoute skipModule><DecisionsPage /></RitualRoute>} />
     <Route path="/rituals/decisions" element={<RedirectWithParams to="/decisions" />} />
 
     {/* ============================================================ */}

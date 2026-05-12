@@ -81,7 +81,11 @@ const fixedItems = [
 // Itens condicionais baseados em acesso a módulos
 const conditionalItems = [
   { name: "Rituais", href: "/rituals", icon: Rocket, requiresModule: "okrs" },
-  { name: "Decisões", href: "/decisions", icon: Lightbulb, requiresModule: "okrs" },
+];
+
+// Itens fixos exibidos quando há BU ativa (sem gate de módulo)
+const buFixedItems = [
+  { name: "Decisões", href: "/decisions", icon: Lightbulb },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)
@@ -236,6 +240,10 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                   .map((item) => (
                     <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                   ))}
+                {/* Itens fixos da BU (sem gate de módulo) */}
+                {currentBu && buFixedItems.map((item) => (
+                  <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                ))}
               </div>
               {!currentBu && globalModules.length > 0 && (
                 <div className="pt-4 mt-4 border-t space-y-1">
