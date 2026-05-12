@@ -36,8 +36,10 @@ const DecisionsPage = lazyWithRetry(() => import('@/modules/okrs/pages/Decisions
 /**
  * Wrapper padrão para rotas de rituais
  */
-function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false, requiresAreaLeader = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean; requiresAreaLeader?: boolean }) {
-  const inner = (
+function RitualRoute({ children, requiresBuAdmin = false, requiresCLevel = false, requiresAreaLeader = false, skipModule = false }: { children: React.ReactNode; requiresBuAdmin?: boolean; requiresCLevel?: boolean; requiresAreaLeader?: boolean; skipModule?: boolean }) {
+  const inner = skipModule ? (
+    <>{children}</>
+  ) : (
     <ModuleRoute moduleSlug="okrs">
       {children}
     </ModuleRoute>
