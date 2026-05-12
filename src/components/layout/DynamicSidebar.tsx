@@ -78,7 +78,11 @@ const fixedItems = [
 // Itens condicionais baseados em acesso a módulos
 const conditionalItems = [
   { name: "Rituais", href: "/rituals", icon: Rocket, requiresModule: "okrs" },
-  { name: "Decisões", href: "/decisions", icon: Lightbulb, requiresModule: "okrs" },
+];
+
+// Itens fixos exibidos quando há BU ativa (sem gate de módulo)
+const buFixedItems = [
+  { name: "Decisões", href: "/decisions", icon: Lightbulb },
 ];
 
 // Menu dentro da BU - ordem específica (módulos operacionais)
