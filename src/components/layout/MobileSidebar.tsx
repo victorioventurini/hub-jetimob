@@ -240,6 +240,10 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                   .map((item) => (
                     <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
                   ))}
+                {/* Itens fixos da BU (sem gate de módulo) */}
+                {currentBu && buFixedItems.map((item) => (
+                  <NavItem key={item.href} name={item.name} href={item.href} icon={item.icon} />
+                ))}
               </div>
               {!currentBu && globalModules.length > 0 && (
                 <div className="pt-4 mt-4 border-t space-y-1">
