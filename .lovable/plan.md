@@ -1,62 +1,38 @@
 ## Objetivo
 
-Garantir que o card **All Hands** apareça em `/rituals` para qualquer usuário que seja admin da BU ativa (ou super_admin), sem depender de outras roles intermediárias e sem duplicar componentes.
+Tornar o item **Decisões** do menu visível e a página `/decisions` acessível para qualquer usuário autenticado com BU ativa, independentemente do módulo `okrs` estar habilitado na BU.
 
-## Diagnóstico
+## Diagnóstico (validado contra TCR + canônicos)
 
-- O código em `src/pages/Wizards.tsx` (linhas 195–206) já registra o wizard `all-hands` dentro da seção `OKRs – Gestores e Executivos`, com `requiredRole: 'admin'`.
-- `victorio@jetimob.com` tem `role_in_bu='admin'` na BU jetimob → `get_my_permissions` retorna `['*']` → `isWildcard=true`.
-- Logo, em código ele deveria ver o card. Se não está aparecendo, as causas restantes são:
-  1. **Cache/deploy**: build publicada (`hub.jetimob.com`) ainda sem o código novo, ou bundle antigo no navegador.
-  2. **Acoplamento de seção**: o card depende da seção "OKRs – Gestores e Executivos" estar visível, o que hoje exige `manager` OU `isWildcard`. Para um admin de BU "puro", isso funciona via wildcard, mas qualquer regressão na regra de seção esconderia o card silenciosamente.
+- **Sidebar (desktop e mobile):** `Decisões` está em `conditionalItems` filtrado por `hasModuleAccess('okrs')` → some quando a BU não tem `okrs` ativo.
+- **Rota:** `/decisions` (e alias `/rituals/decisions`) usa `RitualRoute`, que internamente envolve em `ModuleRoute moduleSlug="okrs"` → 403/redireciona quando o módulo está desativado.
+- **Backend / RLS:** já é universal — `useDecisionsScopeContext` sempre concede `self` a qualquer usuário com BU; RPC `rpc_decisions_inbox` é `SECURITY INVOKER` com RLS própria. Nenhuma mudança de banco, RLS, RPC ou edge function é necessária.
+- **RBAC:** não há permission key específica; o único gate hoje é o de módulo. Sem hardcode novo de role.
+- **Reuso:** estendemos `RitualRoute` com flag `skipModule` e movemos o item de `conditionalItems` para uma lista renderizada incondicionalmente quando há BU. Nenhum componente novo.
 
-## Mudanças (apenas frontend, sem novos componentes)
+## Mudanças (apenas frontend)
 
-### 1. Mover All Hands para uma seção própria "Comunicação da BU"
+### 1. `src/routes/rituals.routes.tsx`
+- Adicionar prop `skipModule?: boolean` em `RitualRoute`. Quando `true`, não envolve filhos em `ModuleRoute` (mantém `ProtectedRoute` + `BuRequiredRoute` e demais guards opcionais).
+- Aplicar `skipModule` apenas nas rotas `/decisions` e `/rituals/decisions`. Todas as demais rotas seguem com gate de `okrs`.
 
-Em `src/pages/Wizards.tsx`:
+### 2. `src/components/layout/DynamicSidebar.tsx`
+- Remover `Decisões` de `conditionalItems`.
+- Criar/usar uma lista de itens fixos exibidos quando há BU ativa (sem `requiresModule`) e renderizar `Decisões` ali, na mesma posição visual atual (logo após Rituais).
+- `Rituais` permanece em `conditionalItems` (gate `okrs` mantido).
 
-- Adicionar uma nova `WizardSection` ao final de `WIZARD_SECTIONS`:
-  - `title: 'Comunicação da BU'`
-  - `description: 'Rituais abertos da BU'`
-  - `icon: Megaphone`
-  - `wizards: [<All Hands>]` (mover o objeto atual, mantendo `requiredRole: 'admin'`, `route: '/rituals/all-hands'`).
-- Remover o card All Hands de "OKRs – Gestores e Executivos".
-
-Justificativa: card passa a ser visualmente distinto, não compete com MBR/QBR e a regra de visibilidade fica isolada.
-
-### 2. Tornar a regra de seção explícita para admin
-
-No filtro `visibleSections`:
-
-- Adicionar caso para `'Comunicação da BU'`: visível somente quando `isWildcard === true` (ou seja, super_admin global ou admin da BU). Sem dependência de `manager`/`executive`.
-
-```ts
-if (section.title === 'Comunicação da BU' && !isWildcard) {
-  return false;
-}
-```
-
-Isso garante que admins puros de BU vejam o card mesmo se a regra da seção "Gestores e Executivos" mudar.
-
-### 3. Sem mudanças em backend, rotas, RBAC ou componentes do wizard
-
-- A rota `/rituals/all-hands` (com `RitualRoute requiresBuAdmin`) já está correta e protege o acesso server-side.
-- `useRitualAvailability['all-hands']`, `ritualLabels['all-hands']` e `wizard-configs['all-hands']` permanecem inalterados.
-- Nenhum novo componente. O card reusa o mesmo `Card`/`CardHeader` da grade existente.
-
-### 4. Pós-deploy
-
-- Republicar (`hub.jetimob.com`) e instruir refresh com cache limpo, para descartar a hipótese (1) acima.
-
-## Critério de aceite
-
-- Logado como `victorio@jetimob.com` na BU jetimob, em `/rituals`, aparece a seção **Comunicação da BU** com o card **All Hands**, ícone `Megaphone`, badge "Mensal", botão "Iniciar ritual" navegando para `/rituals/all-hands`.
-- Usuários sem `admin`/`super_admin` na BU não veem a seção nem o card.
-- Nenhuma outra seção/card é alterado.
+### 3. `src/components/layout/MobileSidebar.tsx`
+- Mesma alteração equivalente para o menu mobile.
 
 ## Fora de escopo
 
-- Janela de disponibilidade do ritual (`useRitualAvailability`).
-- Alterações em RLS, edge functions, esquema, rotas ou Pré-MBR/MBR/QBR.
-- Mudanças visuais nos demais cards.
+- Mudanças em RLS, RPCs, edge functions, schema, permission keys.
+- Visual/UX da página `/decisions`.
+- Gate do módulo `okrs` em qualquer outro item (Rituais continua restrito).
+
+## Critério de aceite
+
+- Em BU sem módulo `okrs` ativo, usuário autenticado vê o item **Decisões** no sidebar (desktop e mobile) e consegue abrir `/decisions` sem 403/redirect.
+- Em BU com `okrs` ativo, comportamento permanece idêntico ao atual.
+- Usuário sem BU ativa continua sendo barrado por `BuRequiredRoute`.
+- Nenhum outro item de menu ou rota muda.
