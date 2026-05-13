@@ -174,6 +174,7 @@ function FormsLinkTab({ assessmentId, links, disabled }: { assessmentId: string;
 function InvitesTab({ assessmentId }: { assessmentId: string }) {
   const { data: invites } = useInvites(assessmentId);
   const revoke = useRevokeInvite();
+  const reactivate = useReactivateInvite();
   const [open, setOpen] = useState(false);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
