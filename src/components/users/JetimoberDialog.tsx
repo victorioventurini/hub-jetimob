@@ -25,12 +25,13 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { TeamSelect, SimpleSelect } from "@/components/selects";
 import { JobTitleSelect } from "@/modules/settings/components/JobTitleSelect";
+import { normalizeCpf, maskCpfInput, isValidCpf, formatCpf } from "@/lib/validation/cpf";
 
 const emailSchema = z.object({
   work_email: z.string().trim().email("E-mail inválido"),
 });
 
-const jetimoberSchema = z.object({
+const baseJetimoberShape = {
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
   work_email: z.string().trim().email("E-mail inválido"),
@@ -42,7 +43,33 @@ const jetimoberSchema = z.object({
   team_id: z.string().uuid().nullable(),
   manager_user_id: z.string().uuid().nullable(),
   start_date: z.string().min(1, "Data de início é obrigatória"),
+};
+
+// Criação: CPF é obrigatório e deve ser válido.
+const jetimoberCreateSchema = z.object({
+  ...baseJetimoberShape,
+  cpf: z
+    .string({ required_error: "CPF é obrigatório" })
+    .min(1, "CPF é obrigatório")
+    .transform(normalizeCpf)
+    .refine((v) => v.length === 11, { message: "CPF deve ter 11 dígitos" })
+    .refine(isValidCpf, { message: "CPF inválido" }),
 });
+
+// Edição: CPF é opcional nesta fatia (perfis legados podem estar sem CPF).
+// Quando preenchido, deve ser válido.
+const jetimoberEditSchema = z.object({
+  ...baseJetimoberShape,
+  cpf: z
+    .string()
+    .optional()
+    .transform((v) => normalizeCpf(v ?? ""))
+    .refine((v) => v === "" || (v.length === 11 && isValidCpf(v)), {
+      message: "CPF inválido",
+    }),
+});
+
+const jetimoberSchema = jetimoberCreateSchema;
 
 type JetimoberFormData = z.infer<typeof jetimoberSchema>;
 
