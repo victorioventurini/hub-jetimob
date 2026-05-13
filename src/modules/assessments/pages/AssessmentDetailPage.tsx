@@ -83,7 +83,7 @@ export default function AssessmentDetailPage() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="forms">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
           <TabsList>
             <TabsTrigger value="forms">Formulários</TabsTrigger>
             <TabsTrigger value="invites">Convites</TabsTrigger>
