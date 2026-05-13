@@ -26,6 +26,7 @@ import {
   useDeleteQuestion,
   usePublishVersion,
   useUpdateForm,
+  useDeleteForm,
 } from "../hooks/useAssessmentsData";
 
 export default function FormEditorPage() {
