@@ -2,7 +2,6 @@
  * RunDetailPage — visualiza respostas + sinais anti-fraude de uma tentativa.
  */
 import { useParams, Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -13,6 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { useAnswers } from "../hooks/useAssessmentsData";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { SavedLinksPopover } from "@/shared/saved-links";
+import { RunStatusBadge } from "../components/StatusBadges";
 
 export default function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -53,15 +55,12 @@ export default function RunDetailPage() {
   const fraud = (run?.tab_switch_count ?? 0) + (run?.paste_attempt_count ?? 0) + (run?.copy_attempt_count ?? 0);
 
   const respondent = run?.respondent_name || run?.respondent_cpf;
-  const metaTitle = respondent ? `${respondent} — Tentativa` : "Carregando tentativa…";
-  const metaDescription = "Resultado e respostas do participante, com sinais anti-fraude.";
+  usePageTitle(respondent ? `Tentativa de ${respondent}` : "Tentativa", {
+    customDescription: "Resultado e respostas do participante, com sinais anti-fraude.",
+  });
 
   return (
     <HubLayout>
-      <Helmet>
-        <title>{metaTitle}</title>
-        <meta name="description" content={metaDescription} />
-      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={run?.respondent_name || run?.respondent_cpf || "Tentativa"}
@@ -71,20 +70,23 @@ export default function RunDetailPage() {
             { label: "Tentativa" },
           ]}
           actions={
-            <Button variant="outline" asChild>
-              <Link to={run?.assessment_id ? `/assessments/provas/${run.assessment_id}` : "/assessments"}>
-                <ArrowLeft className="h-4 w-4 mr-2" />Voltar
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <SavedLinksPopover moduleSlug="assessments" />
+              <Button variant="outline" asChild>
+                <Link to={run?.assessment_id ? `/assessments/provas/${run.assessment_id}` : "/assessments"}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />Voltar
+                </Link>
+              </Button>
+            </div>
           }
         />
 
         <Card>
-          <CardContent className="p-4 grid gap-3 sm:grid-cols-4 text-sm">
-            <div><p className="text-muted-foreground">Status</p><Badge variant={run?.status === "submitted" ? "default" : "secondary"}>{run?.status}</Badge></div>
-            <div><p className="text-muted-foreground">Trocas de aba</p><p>{run?.tab_switch_count ?? 0}</p></div>
-            <div><p className="text-muted-foreground">Tentativas de colar</p><p>{run?.paste_attempt_count ?? 0}</p></div>
-            <div><p className="text-muted-foreground">Tentativas de copiar</p><p>{run?.copy_attempt_count ?? 0}</p></div>
+          <CardContent className="p-4 grid gap-4 sm:grid-cols-4 text-sm">
+            <div><p className="text-xs text-muted-foreground">Status</p><div className="mt-1"><RunStatusBadge status={run?.status} /></div></div>
+            <div><p className="text-xs text-muted-foreground">Trocas de aba</p><p className="mt-1 font-medium">{run?.tab_switch_count ?? 0}</p></div>
+            <div><p className="text-xs text-muted-foreground">Tentativas de colar</p><p className="mt-1 font-medium">{run?.paste_attempt_count ?? 0}</p></div>
+            <div><p className="text-xs text-muted-foreground">Tentativas de copiar</p><p className="mt-1 font-medium">{run?.copy_attempt_count ?? 0}</p></div>
           </CardContent>
         </Card>
 
