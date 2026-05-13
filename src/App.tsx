@@ -43,7 +43,7 @@ import { eventsRoutes } from "./routes/events.routes";
 import { projectRoutes } from "./routes/projects.routes";
 import { analysisRoutes } from "./routes/analysis.routes";
 import { assessmentRoutes } from "./routes/assessments.routes";
-const PublicAssessmentRunner = lazyWithRetry(() => import("@/pages/PublicAssessmentRunner"));
+const PublicAssessmentRunner = lazy(() => import("@/pages/PublicAssessmentRunner"));
 
 /**
  * Fallback de loading otimizado
