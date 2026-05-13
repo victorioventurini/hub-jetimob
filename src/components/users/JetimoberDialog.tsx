@@ -810,6 +810,32 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         </div>
       </div>
 
+      {/* CPF */}
+      <div className="space-y-2">
+        <Label htmlFor="cpf">
+          CPF {!isEditing && "*"}
+        </Label>
+        <Input
+          id="cpf"
+          inputMode="numeric"
+          maxLength={14}
+          value={maskCpfInput(formData.cpf ?? "")}
+          onChange={(e) => handleChange("cpf", maskCpfInput(e.target.value))}
+          onBlur={handleCpfBlur}
+          placeholder="000.000.000-00"
+          className={errors.cpf ? "border-destructive" : ""}
+          autoComplete="off"
+        />
+        {errors.cpf && (
+          <p className="text-xs text-destructive">{errors.cpf}</p>
+        )}
+        {isEditing && !formData.cpf && (
+          <p className="text-xs text-muted-foreground">
+            CPF ainda não cadastrado. Preencher é opcional nesta etapa.
+          </p>
+        )}
+      </div>
+
       <Separator />
 
       {/* Time e Gestor */}
