@@ -25,12 +25,13 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { TeamSelect, SimpleSelect } from "@/components/selects";
 import { JobTitleSelect } from "@/modules/settings/components/JobTitleSelect";
+import { normalizeCpf, maskCpfInput, isValidCpf, formatCpf } from "@/lib/validation/cpf";
 
 const emailSchema = z.object({
   work_email: z.string().trim().email("E-mail inválido"),
 });
 
-const jetimoberSchema = z.object({
+const baseJetimoberShape = {
   first_name: z.string().trim().min(1, "Nome é obrigatório").max(100),
   last_name: z.string().trim().min(1, "Sobrenome é obrigatório").max(100),
   work_email: z.string().trim().email("E-mail inválido"),
@@ -42,9 +43,36 @@ const jetimoberSchema = z.object({
   team_id: z.string().uuid().nullable(),
   manager_user_id: z.string().uuid().nullable(),
   start_date: z.string().min(1, "Data de início é obrigatória"),
+};
+
+// Criação: CPF é obrigatório e deve ser válido.
+const jetimoberCreateSchema = z.object({
+  ...baseJetimoberShape,
+  cpf: z
+    .string({ required_error: "CPF é obrigatório" })
+    .min(1, "CPF é obrigatório")
+    .transform(normalizeCpf)
+    .refine((v) => v.length === 11, { message: "CPF deve ter 11 dígitos" })
+    .refine(isValidCpf, { message: "CPF inválido" }),
 });
 
-type JetimoberFormData = z.infer<typeof jetimoberSchema>;
+// Edição: CPF é opcional nesta fatia (perfis legados podem estar sem CPF).
+// Quando preenchido, deve ser válido.
+const jetimoberEditSchema = z.object({
+  ...baseJetimoberShape,
+  cpf: z
+    .string()
+    .optional()
+    .transform((v) => normalizeCpf(v ?? ""))
+    .refine((v) => v === "" || (v.length === 11 && isValidCpf(v)), {
+      message: "CPF inválido",
+    }),
+});
+
+const jetimoberSchema = jetimoberCreateSchema;
+
+type JetimoberFormData = z.input<typeof jetimoberCreateSchema>;
+type JetimoberFormParsed = z.output<typeof jetimoberCreateSchema>;
 
 interface Profile {
   id: string;
@@ -83,6 +111,7 @@ const defaultFormData: JetimoberFormData = {
   first_name: "",
   last_name: "",
   work_email: "",
+  cpf: "",
   job_title_id: null,
   city: "Porto Alegre",
   state: "RS",
@@ -146,7 +175,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       setStep("form");
       supabase
         .from("profiles")
-        .select("id, first_name, last_name, work_email, job_title_id, city, state, work_mode, employment_status, team_id, manager_user_id, start_date")
+        .select("id, first_name, last_name, work_email, cpf, job_title_id, city, state, work_mode, employment_status, team_id, manager_user_id, start_date")
         .eq("id", profile.id)
         .single()
         .then(({ data }) => {
@@ -155,6 +184,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
               first_name: data.first_name,
               last_name: data.last_name,
               work_email: data.work_email,
+              cpf: data.cpf ?? "",
               job_title_id: data.job_title_id,
               city: data.city,
               state: data.state,
@@ -327,17 +357,49 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
   });
 
+  // Verifica unicidade do CPF (informativo; banco garante via índice único parcial)
+  const checkCpfUniqueness = useCallback(
+    async (cpfDigits: string): Promise<string | null> => {
+      if (!cpfDigits || cpfDigits.length !== 11) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .eq("cpf", cpfDigits)
+        .eq("user_type", "internal")
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+      if (data && (!profile || data.id !== profile.id)) {
+        return `CPF já cadastrado em ${data.display_name}`;
+      }
+      return null;
+    },
+    [supabase, profile]
+  );
+
+  const handleCpfBlur = async () => {
+    const digits = normalizeCpf(formData.cpf);
+    if (!digits) return;
+    if (digits.length !== 11 || !isValidCpf(digits)) {
+      setErrors((prev) => ({ ...prev, cpf: "CPF inválido" }));
+      return;
+    }
+    const dupErr = await checkCpfUniqueness(digits);
+    if (dupErr) setErrors((prev) => ({ ...prev, cpf: dupErr }));
+  };
+
   const createMutation = useMutation({
-    mutationFn: async (data: JetimoberFormData) => {
+    mutationFn: async (data: JetimoberFormParsed) => {
       if (!currentBu?.id) throw new Error("BU não selecionada");
-      
+
       const display_name = `${data.first_name} ${data.last_name}`.trim();
-      
+
       const { error } = await supabase.from("profiles").insert([{
         first_name: data.first_name,
         last_name: data.last_name,
         display_name,
         work_email: data.work_email.toLowerCase().trim(),
+        cpf: data.cpf,
         job_title_id: data.job_title_id,
         city: data.city,
         state: data.state,
@@ -348,7 +410,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         start_date: data.start_date,
         bu_id: currentBu.id,
       }]);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -359,8 +421,15 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     onError: (error: any) => {
       console.error("Error creating profile:", error);
-      if (error.message?.includes("profiles_work_email_unique")) {
+      const msg = String(error?.message ?? "");
+      if (msg.includes("profiles_work_email_unique")) {
         toast.error("Este e-mail já está cadastrado.");
+      } else if (msg.includes("profiles_cpf_internal_unique")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF já cadastrado em outro usuário" }));
+        toast.error("CPF já cadastrado em outro usuário.");
+      } else if (msg.includes("CPF inválido")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF inválido" }));
+        toast.error("CPF inválido.");
       } else {
         toast.error("Erro ao cadastrar. Tente novamente.");
       }
@@ -368,11 +437,11 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: JetimoberFormData) => {
+    mutationFn: async (data: z.output<typeof jetimoberEditSchema>) => {
       if (!profile) throw new Error("Profile not found");
-      
+
       const display_name = `${data.first_name} ${data.last_name}`.trim();
-      
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -380,6 +449,8 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           last_name: data.last_name,
           display_name,
           work_email: data.work_email,
+          // CPF: só envia se preenchido (não sobrescreve com null nesta fatia)
+          ...(data.cpf ? { cpf: data.cpf } : {}),
           job_title_id: data.job_title_id,
           city: data.city,
           state: data.state,
@@ -391,7 +462,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -402,18 +473,26 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     onError: (error: any) => {
       console.error("Error updating profile:", error);
-      if (error.message?.includes("profiles_work_email_unique")) {
+      const msg = String(error?.message ?? "");
+      if (msg.includes("profiles_work_email_unique")) {
         toast.error("Este e-mail já está cadastrado.");
+      } else if (msg.includes("profiles_cpf_internal_unique")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF já cadastrado em outro usuário" }));
+        toast.error("CPF já cadastrado em outro usuário.");
+      } else if (msg.includes("CPF inválido")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF inválido" }));
+        toast.error("CPF inválido.");
       } else {
         toast.error("Erro ao atualizar. Tente novamente.");
       }
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const result = jetimoberSchema.safeParse(formData);
+    const schema = isEditing ? jetimoberEditSchema : jetimoberCreateSchema;
+    const result = schema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof JetimoberFormData, string>> = {};
       result.error.errors.forEach((err) => {
@@ -425,11 +504,22 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       return;
     }
 
+    // Check de unicidade pré-submit (best-effort; banco garante)
+    const cpfDigits = (result.data as { cpf?: string }).cpf ?? "";
+    if (cpfDigits) {
+      const dupErr = await checkCpfUniqueness(cpfDigits);
+      if (dupErr) {
+        setErrors((prev) => ({ ...prev, cpf: dupErr }));
+        toast.error(dupErr);
+        return;
+      }
+    }
+
     setErrors({});
     if (isEditing) {
-      updateMutation.mutate(result.data);
+      updateMutation.mutate(result.data as z.output<typeof jetimoberEditSchema>);
     } else {
-      createMutation.mutate(result.data);
+      createMutation.mutate(result.data as JetimoberFormParsed);
     }
   };
 
@@ -718,6 +808,32 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
             <p className="text-xs text-destructive">{errors.job_title_id}</p>
           )}
         </div>
+      </div>
+
+      {/* CPF */}
+      <div className="space-y-2">
+        <Label htmlFor="cpf">
+          CPF {!isEditing && "*"}
+        </Label>
+        <Input
+          id="cpf"
+          inputMode="numeric"
+          maxLength={14}
+          value={maskCpfInput(formData.cpf ?? "")}
+          onChange={(e) => handleChange("cpf", maskCpfInput(e.target.value))}
+          onBlur={handleCpfBlur}
+          placeholder="000.000.000-00"
+          className={errors.cpf ? "border-destructive" : ""}
+          autoComplete="off"
+        />
+        {errors.cpf && (
+          <p className="text-xs text-destructive">{errors.cpf}</p>
+        )}
+        {isEditing && !formData.cpf && (
+          <p className="text-xs text-muted-foreground">
+            CPF ainda não cadastrado. Preencher é opcional nesta etapa.
+          </p>
+        )}
       </div>
 
       <Separator />

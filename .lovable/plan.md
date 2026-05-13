@@ -1,61 +1,91 @@
+> **Pré-checklist:** ✅ TCR, IDENTITY_CONVENTION, DATA_MODEL_REGISTRY, SCHEMA_QUICK_REFERENCE, PERMISSIONS_AND_RBAC_MODEL e PRE_CHECKLIST consultados. CPF é dado de domínio → fica em `public.profiles` (nunca em `auth.users`). `assessment_invites.invitee_cpf` e `assessment_runs.respondent_cpf` já existem e serão a ponte para o vínculo futuro.
+
 ## Objetivo
 
-Criar o questionário "Autoavaliação Pippi" como um formulário pronto no módulo `/assessments`, com as 10 perguntas (todas com sub-itens a/b/c/...) já cadastradas e prontas para gerar uma prova e convite.
+Adicionar **CPF** como identificador único de **usuários internos** do Hub. Nesta fatia: schema + validação + obrigatoriedade no cadastro. **Sem** vínculo retroativo com assessments (fica para a próxima fatia).
 
-## O que será feito
+---
 
-1. **Seed via migration idempotente** (`INSERT ... ON CONFLICT DO NOTHING`) executado no contexto da BU "Jetimob" (resolvido por slug/nome — fallback: primeira BU com módulo `assessments` habilitado):
-   - 1 `assessment_themes` → "Autoavaliação Pippi"
-   - 1 `assessment_forms` → "Autoavaliação Pippi", `level = senior` (ou default), descrição curta
-   - 1 `assessment_form_versions` → versão 1 publicada (frozen)
-   - 28 `assessment_form_questions` (uma por sub-item a/b/c/d/e), `kind = text`, parágrafo longo, sem timer, ordenadas por `order_index`. Cada pergunta carrega no `prompt`:
-     - Cabeçalho do bloco (ex.: "Pergunta 1 — O que você entende por estratégico")
-     - Sub-item ("a) ...") com o enunciado completo
-   - Sem `multiple_choice`/`scale`: o questionário é 100% dissertativo.
+## 1. Schema (migration)
 
-2. **Mapeamento das 28 sub-perguntas** (ordem final):
-   - P1: a, b, c, d (4)
-   - P2: a, b, c, d (4)
-   - P3: a, b, c, d (4)
-   - P4: a, b (2)
-   - P5: a, b, c, d, e (5)
-   - P6: a, b, c (3)
-   - P7: a, b, c, d (4)
-   - P8: a, b, c (3)
-   - P9: a, b, c (3)
-   - P10: a, b (2)
-   - **Total: 34 sub-itens** (corrigindo a contagem). Cada um é uma `assessment_form_questions` independente para permitir resposta separada e revisão item-a-item.
+Em `public.profiles`:
 
-3. **Sem alteração de UI nesta fatia.** O formulário aparece automaticamente em `/assessments` (aba Formulários). Nenhuma página/rotas/componentes novos.
+- Coluna `cpf TEXT NULL` — armazenado **somente dígitos** (11 chars), sem máscara.
+- Índice único parcial:
+  ```
+  UNIQUE (cpf)
+  WHERE cpf IS NOT NULL
+    AND user_type = 'internal'
+    AND deleted_at IS NULL
+  ```
+  Garante unicidade **global** entre internos vivos; não conflita com externos, soft-deleted ou legados sem CPF.
+- Trigger `validate_profile_cpf` (BEFORE INSERT/UPDATE) — **sem CHECK constraint** (proibido pelo padrão):
+  - Normaliza removendo não-dígitos antes de gravar.
+  - Se `user_type = 'internal'` e `cpf IS NOT NULL`: exige 11 dígitos + valida dígitos verificadores + rejeita sequências repetidas.
+  - Se `user_type = 'external'`: força `cpf = NULL` (CPF é só para internos).
+  - **Não** torna NOT NULL no DB nesta fatia (perfis legados ficam NULL; obrigatoriedade é no app).
+- **Não** mexer em `assessment_invites` / `assessment_runs` agora — apenas garantir que o normalizador frontend grave os mesmos 11 dígitos lá quando for o caso (próxima fatia).
 
-4. **Saída para o usuário**: link direto para o formulário (`/assessments/forms/:id`) e instrução de como criar a prova + convite pela UI já existente.
+---
 
-## Detalhes técnicos
+## 2. Validação (SSOT frontend)
 
-- Migration usa bloco `DO $$ ... $$` em PL/pgSQL para:
-  - Resolver `bu_id` por `name ILIKE 'jetimob%'` (ou primeiro BU com `assessments` em `bu_modules`).
-  - `INSERT` tema → form → version → 34 questions (ids gerados, `order_index` 1..34).
-  - `ON CONFLICT (bu_id, name)` no tema/form para idempotência (criar índice único parcial caso não exista — verificar antes; se não existir, usar guarda `IF NOT EXISTS (SELECT 1 ...)`).
-- `kind = 'text'`, `required = true`, `paragraph = true`, `timer_seconds = NULL`.
-- `prompt` em Markdown leve para preservar quebras (negrito no cabeçalho do bloco, item em nova linha).
-- Não toca em `assessments` (instância) nem `invites` — o usuário cria pela UI quando quiser aplicar.
+`src/lib/validation/cpf.ts`:
 
-## Riscos / decisões a confirmar
+- `normalizeCpf(input)` — só dígitos.
+- `formatCpf(digits)` — máscara `000.000.000-00` para exibição.
+- `isValidCpf(digits)` — 11 dígitos + algoritmo dos verificadores + rejeita repetidos.
+- `cpfZodSchema` — `z.string().transform(normalizeCpf).refine(isValidCpf, "CPF inválido")`.
+- Testes Vitest com casos válidos/inválidos.
 
-- **Nível do form** (`level`): default `senior` — ok?
-- **Identificação do candidato**: manter padrão atual (CPF + nome no runner) sem CPF esperado pré-fixado.
-- **Anti-fraude**: já vem do padrão do módulo (LockedTextarea, telemetria). Sem mudanças.
+---
 
-## Não-objetivos
+## 3. UI — `src/components/users/JetimoberDialog.tsx`
 
-- Não implementa correção/score (perguntas dissertativas).
-- Não cria convite nem dispara e-mail.
-- Não altera schema do módulo.
+- Adicionar `cpf` ao `jetimoberSchema` como **obrigatório no fluxo de criação** de interno.
+- Novo `Input` com máscara visual `000.000.000-00` (`inputMode="numeric"`, `maxLength=14`).
+- Validação no blur: formato + verificadores via `cpfZodSchema`.
+- Check de unicidade no blur (debounced) usando `useBuScopedSupabase`:
+  - `select id, display_name from profiles where cpf=$1 and user_type='internal' and deleted_at is null limit 1`.
+  - Erro inline: "CPF já cadastrado em [nome]".
+  - Query key nova: `profilesKeys.cpfCheck(cpf)` em `src/lib/queryKeys/auth.ts`.
+- No submit: enviar `cpf` normalizado (11 dígitos) no `insert` em `profiles`.
+- Tratar `23505` (unique violation) com toast amigável caso a corrida vença o check.
+- **Edição** de internos existentes: campo aparece **opcional** nesta fatia (permite preencher quando vazio; mantém valor existente). Não obrigatório em UPDATE para não bloquear edição de perfis legados.
+- Fluxo de **externos** não muda.
 
-```text
-Migration → seed (theme + form + version + 34 questions)
-              ↓
-          /assessments (UI já existente lista o form)
-              ↓
-   usuário cria prova + convite manualmente pela UI
-```
+---
+
+## 4. Exibição
+
+- `UsersTable`, `UserGlobalSheet`, `UserProfile`: exibir CPF formatado via `formatCpf`, **somente** para `user_type = 'internal'`.
+- Visibilidade reaproveita gate existente para dados sensíveis do perfil (admins de BU + o próprio usuário) — sem nova permission key.
+
+---
+
+## 5. Fora de escopo (próximas fatias)
+
+- Vínculo automático `assessment_runs.respondent_cpf` ↔ `profiles.cpf` (view/RPC + UI no detalhe do usuário listando assessments respondidos antes da contratação).
+- Tornar CPF NOT NULL no DB após backfill dos perfis legados.
+- Importação em massa via CSV com CPF.
+- Histórico de alterações de CPF (audit log dedicado).
+
+---
+
+## Detalhes técnicos (resumo)
+
+- **Migração**: `supabase--migration` idempotente — `ALTER TABLE`, índice único parcial, função PL/pgSQL + trigger.
+- **Identidade**: CPF fica em `profiles` (domínio), nunca em `auth.users` — alinhado com `IDENTITY_CONVENTION.md`.
+- **BU isolation**: unicidade é **global**; uma pessoa física = um CPF na empresa toda. Leitura para o check de duplicidade depende da RLS atual de `profiles` (v3.24.0 com cross-BU OR EXISTS) — caso a verificação retorne vazio para um CPF que existe em outra BU invisível ao usuário, o `23505` da unique cobre.
+- **Tipos**: `src/integrations/supabase/types.ts` é regenerado automaticamente após a migração ser aprovada.
+- **Sem** `select('*')`, query-keys via SSOT, sem CHECK constraint, sem mexer em `auth`.
+
+---
+
+## Entregáveis
+
+1. Migration: coluna `cpf` + índice único parcial + trigger de validação.
+2. `src/lib/validation/cpf.ts` + testes.
+3. Atualização do `JetimoberDialog` (schema, input mascarado, check de unicidade, submit, tratamento de 23505).
+4. Exibição de CPF em `UsersTable`, `UserGlobalSheet`, `UserProfile`.
+5. Nova query key `profilesKeys.cpfCheck` em `src/lib/queryKeys/auth.ts`.

@@ -8177,6 +8177,7 @@ export type Database = {
           birth_month: number | null
           bu_id: string | null
           city: string
+          cpf: string | null
           created_at: string
           deleted_at: string | null
           discord_id: string | null
@@ -8207,6 +8208,7 @@ export type Database = {
           birth_month?: number | null
           bu_id?: string | null
           city: string
+          cpf?: string | null
           created_at?: string
           deleted_at?: string | null
           discord_id?: string | null
@@ -8237,6 +8239,7 @@ export type Database = {
           birth_month?: number | null
           bu_id?: string | null
           city?: string
+          cpf?: string | null
           created_at?: string
           deleted_at?: string | null
           discord_id?: string | null
@@ -12345,6 +12348,7 @@ export type Database = {
         Returns: boolean
       }
       is_user_leader: { Args: { p_user_id?: string }; Returns: boolean }
+      is_valid_cpf: { Args: { p_cpf: string }; Returns: boolean }
       job_title_belongs_to_bu: {
         Args: { p_bu_id: string; p_job_title_id: string }
         Returns: boolean
