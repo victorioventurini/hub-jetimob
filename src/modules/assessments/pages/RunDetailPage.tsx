@@ -2,6 +2,7 @@
  * RunDetailPage — visualiza respostas + sinais anti-fraude de uma tentativa.
  */
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
