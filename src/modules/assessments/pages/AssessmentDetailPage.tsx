@@ -496,26 +496,36 @@ function NewInviteDialog({
 function ResultsTab({ assessmentId }: { assessmentId: string }) {
   const { data: runs } = useRuns(assessmentId);
   if (!runs || runs.length === 0) {
-    return <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma resposta ainda.</CardContent></Card>;
+    return (
+      <EmptyState
+        variant="default"
+        title="Nenhuma resposta ainda"
+        description="Quando respondentes enviarem suas tentativas, elas aparecerão aqui."
+      />
+    );
   }
   return (
     <div className="grid gap-2">
       {runs.map((r) => {
         const fraud = (r.tab_switch_count ?? 0) + (r.paste_attempt_count ?? 0) + (r.copy_attempt_count ?? 0);
         return (
-          <Link key={r.id} to={`/assessments/runs/${r.id}`}>
+          <Link
+            key={r.id}
+            to={`/assessments/runs/${r.id}`}
+            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <Card className="hover:bg-accent/40 transition-colors">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{r.respondent_name || r.respondent_cpf}</p>
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{r.respondent_name || r.respondent_cpf}</p>
                   <p className="text-xs text-muted-foreground">
                     Iniciado em {new Date(r.started_at).toLocaleString()}
                     {r.submitted_at && ` · Enviado em ${new Date(r.submitted_at).toLocaleString()}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {fraud > 0 && <Badge variant="destructive">⚠ {fraud} sinais</Badge>}
-                  <Badge variant={r.status === "submitted" ? "default" : "secondary"}>{r.status}</Badge>
+                  {fraud > 0 && <Badge variant="destructive" aria-label={`${fraud} sinais de risco`}>⚠ {fraud}</Badge>}
+                  <RunStatusBadge status={r.status} />
                 </div>
               </CardContent>
             </Card>
