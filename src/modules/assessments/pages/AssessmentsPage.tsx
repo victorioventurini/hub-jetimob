@@ -196,6 +196,7 @@ const FORM_STATUS_OPTIONS = [
 function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
   const { data, isLoading } = useForms();
   const create = useCreateForm();
+  const deleteForm = useDeleteForm();
   const navigate = useNavigate();
   const search = useUrlState<string>({ key: "qf", defaultValue: "" });
   const status = useUrlState<string>({ key: "sf", defaultValue: "all" });
