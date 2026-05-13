@@ -3,14 +3,16 @@
  */
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Plus, Trash2, Copy, Mail } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUrlTab } from "@/shared/url";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { SavedLinksPopover } from "@/shared/saved-links";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +40,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { maskCpfInput, normalizeCpf, isValidCpf } from "@/lib/validation/cpf";
 import { AlertCircle, X as XIcon } from "lucide-react";
+import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../components/StatusBadges";
+import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,16 +51,12 @@ export default function AssessmentDetailPage() {
   const update = useUpdateAssessment();
   const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
 
-  const metaTitle = a?.title ? `${a.title} — Assessments` : "Carregando… — Assessments";
-  const metaDescription = a?.description?.trim()
-    || "Detalhes da prova: formulários vinculados, convites e resultados.";
+  usePageTitle(a?.title ?? "Prova", {
+    customDescription: a?.description?.trim() || "Detalhes da prova: formulários, convites e resultados.",
+  });
 
   return (
     <HubLayout>
-      <Helmet>
-        <title>{metaTitle}</title>
-        <meta name="description" content={metaDescription} />
-      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={a?.title ?? "Prova"}
@@ -64,22 +64,39 @@ export default function AssessmentDetailPage() {
           breadcrumbs={[{ label: "Assessments", href: "/assessments" }, { label: a?.title ?? "..." }]}
           actions={
             <div className="flex items-center gap-2">
+              <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
               {a && a.status !== "active" && (
                 <Button onClick={() => update.mutate({ id: id!, status: "active" })}>Ativar</Button>
               )}
               {a?.status === "active" && (
-                <Button variant="outline" onClick={() => update.mutate({ id: id!, status: "archived" })}>Arquivar</Button>
+                <ConfirmActionDialog
+                  trigger={<Button variant="outline">Arquivar</Button>}
+                  title="Arquivar prova?"
+                  description="A prova ficará indisponível para novos respondentes. Convites pendentes não poderão mais ser usados."
+                  confirmLabel="Arquivar"
+                  destructive
+                  onConfirm={() => update.mutate({ id: id!, status: "archived" })}
+                />
               )}
             </div>
           }
         />
 
         <Card>
-          <CardContent className="p-4 grid gap-3 sm:grid-cols-3">
-            <div><Label>Status</Label><p><Badge variant={a?.status === "active" ? "default" : "secondary"}>{a?.status}</Badge></p></div>
-            <div><Label>Formulários</Label><p>{links.length}</p></div>
-            <div><Label>Tempo total padrão</Label><p>{a?.default_total_time_seconds ?? "auto"}</p></div>
+          <CardContent className="p-4 grid gap-4 sm:grid-cols-3 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <div className="mt-1"><AssessmentStatusBadge status={a?.status} /></div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Formulários vinculados</p>
+              <p className="mt-1 font-medium">{links.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Tempo total padrão</p>
+              <p className="mt-1 font-medium">{a?.default_total_time_seconds ? `${a.default_total_time_seconds}s` : "Automático"}</p>
+            </div>
           </CardContent>
         </Card>
 
