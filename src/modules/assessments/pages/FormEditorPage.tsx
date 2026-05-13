@@ -93,6 +93,14 @@ export default function FormEditorPage() {
                   onConfirm={() => publish.mutate({ form_id: id!, version_id: draft.id })}
                 />
               )}
+              {draft?.frozen && (
+                <Button
+                  onClick={() => createDraft.mutate({ form_id: id! })}
+                  disabled={createDraft.isPending}
+                >
+                  <Plus className="h-4 w-4 mr-2" />Criar nova versão (rascunho)
+                </Button>
+              )}
             </div>
           }
         />
