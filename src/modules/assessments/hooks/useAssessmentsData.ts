@@ -379,6 +379,90 @@ export function usePublishVersion() {
   });
 }
 
+export function useCreateDraftVersion() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const { realProfileId } = useIdentity();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { form_id: string }) => {
+      // Garante que não existe rascunho ainda
+      const { data: existingDraft } = await supabase
+        .from("assessment_form_versions")
+        .select("id")
+        .eq("form_id", input.form_id)
+        .eq("bu_id", currentBuId!)
+        .eq("frozen", false)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (existingDraft) return { versionId: existingDraft.id as string };
+
+      // Pega última versão (maior version_number) para herdar perguntas
+      const { data: latest, error: lErr } = await supabase
+        .from("assessment_form_versions")
+        .select("id, version_number")
+        .eq("form_id", input.form_id)
+        .eq("bu_id", currentBuId!)
+        .is("deleted_at", null)
+        .order("version_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lErr) throw lErr;
+
+      const nextNumber = (latest?.version_number ?? 0) + 1;
+
+      const { data: newVersion, error: vErr } = await supabase
+        .from("assessment_form_versions")
+        .insert({
+          bu_id: currentBuId!,
+          form_id: input.form_id,
+          version_number: nextNumber,
+          status: "draft",
+          frozen: false,
+          created_by: realProfileId,
+        })
+        .select("id")
+        .single();
+      if (vErr) throw vErr;
+
+      // Duplica perguntas da versão anterior
+      if (latest?.id) {
+        const { data: prevQs, error: qErr } = await supabase
+          .from("assessment_form_questions")
+          .select("position, question_type, prompt, help_text, required, time_limit_seconds, options")
+          .eq("version_id", latest.id)
+          .eq("bu_id", currentBuId!)
+          .is("deleted_at", null)
+          .order("position", { ascending: true });
+        if (qErr) throw qErr;
+        if (prevQs && prevQs.length > 0) {
+          const toInsert = prevQs.map((q) => ({
+            ...q,
+            bu_id: currentBuId!,
+            version_id: newVersion.id,
+          }));
+          const { error: iErr } = await supabase.from("assessment_form_questions").insert(toInsert);
+          if (iErr) throw iErr;
+        }
+      }
+
+      await supabase
+        .from("assessment_forms")
+        .update({ current_version_id: newVersion.id, status: "draft" })
+        .eq("id", input.form_id)
+        .eq("bu_id", currentBuId!);
+
+      return { versionId: newVersion.id as string };
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["assessments", "versions", currentBuId!, v.form_id] });
+      qc.invalidateQueries({ queryKey: ["assessments", "forms", currentBuId!] });
+      toast.success("Nova versão (rascunho) criada");
+    },
+    onError: (e: Error) => toast.error(`Erro ao criar rascunho: ${e.message}`),
+  });
+}
+
 export function useCreateAssessment() {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();

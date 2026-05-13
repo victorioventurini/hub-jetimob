@@ -25,6 +25,7 @@ import {
   useUpsertQuestion,
   useDeleteQuestion,
   usePublishVersion,
+  useCreateDraftVersion,
   useUpdateForm,
   useDeleteForm,
 } from "../hooks/useAssessmentsData";
@@ -41,6 +42,7 @@ export default function FormEditorPage() {
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
   const deleteForm = useDeleteForm();
+  const createDraft = useCreateDraftVersion();
   const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
   const editing = editingState.value || null;
   const setEditing = (v: string | null) => editingState.set(v ?? "");
@@ -90,6 +92,14 @@ export default function FormEditorPage() {
                   destructive={false}
                   onConfirm={() => publish.mutate({ form_id: id!, version_id: draft.id })}
                 />
+              )}
+              {draft?.frozen && (
+                <Button
+                  onClick={() => createDraft.mutate({ form_id: id! })}
+                  disabled={createDraft.isPending}
+                >
+                  <Plus className="h-4 w-4 mr-2" />Criar nova versão (rascunho)
+                </Button>
               )}
             </div>
           }
