@@ -431,6 +431,8 @@ function NewInviteDialog({
     </Dialog>
   );
 }
+
+function ResultsTab({ assessmentId }: { assessmentId: string }) {
   const { data: runs } = useRuns(assessmentId);
   if (!runs || runs.length === 0) {
     return <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma resposta ainda.</CardContent></Card>;
