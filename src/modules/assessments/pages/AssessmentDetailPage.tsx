@@ -187,7 +187,7 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
       )}
       <div className="grid gap-2">
         {invites?.map((inv) => {
-          const link = `${baseUrl}/assessments/run/${inv.token}`;
+          const link = `${baseUrl}/q/${inv.token}`;
           return (
             <Card key={inv.id}>
               <CardContent className="p-3 flex items-center justify-between gap-3">
