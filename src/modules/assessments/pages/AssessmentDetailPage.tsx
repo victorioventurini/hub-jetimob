@@ -164,12 +164,8 @@ function FormsLinkTab({ assessmentId, links, disabled }: { assessmentId: string;
 
 function InvitesTab({ assessmentId }: { assessmentId: string }) {
   const { data: invites } = useInvites(assessmentId);
-  const create = useCreateInvite();
   const revoke = useRevokeInvite();
   const [open, setOpen] = useState(false);
-  const [cpf, setCpf] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -183,20 +179,21 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
       )}
       <div className="grid gap-2">
         {invites?.map((inv) => {
-          const link = `${baseUrl}/q/${inv.token}`;
+          const link = `${baseUrl}/assessments/run/${inv.token}`;
           return (
             <Card key={inv.id}>
-              <CardContent className="p-3 flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex-1 min-w-0">
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">{inv.invitee_name || inv.invitee_cpf}</p>
                   <p className="text-xs text-muted-foreground truncate">CPF {inv.invitee_cpf} · {inv.invitee_email ?? "sem email"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{link}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={inv.status === "submitted" ? "default" : "secondary"}>{inv.status}</Badge>
-                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado"); }}><Copy className="h-3 w-3" /></Button>
+                <Badge variant={inv.status === "submitted" ? "default" : inv.status === "revoked" ? "destructive" : "secondary"}>{inv.status}</Badge>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado"); }}>
+                    <Copy className="h-3 w-3" />
+                  </Button>
                   {inv.invitee_email && (
-                    <Button size="sm" variant="outline" asChild>
+                    <Button size="sm" variant="ghost" asChild>
                       <a href={`mailto:${inv.invitee_email}?subject=${encodeURIComponent("Convite para questionário")}&body=${encodeURIComponent(link)}`}><Mail className="h-3 w-3" /></a>
                     </Button>
                   )}
@@ -210,31 +207,12 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
         })}
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Novo convite</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>CPF</Label><Input value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="00000000000" /></div>
-            <div><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div><Label>Email (opcional)</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button
-              disabled={cpf.replace(/\D/g, "").length !== 11 || create.isPending}
-              onClick={async () => {
-                await create.mutateAsync({
-                  assessment_id: assessmentId,
-                  invitee_cpf: cpf,
-                  invitee_name: name || undefined,
-                  invitee_email: email || undefined,
-                });
-                setOpen(false); setCpf(""); setName(""); setEmail("");
-              }}
-            >Criar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <NewInviteDialog
+        open={open}
+        onOpenChange={setOpen}
+        assessmentId={assessmentId}
+        existingCpfs={(invites ?? []).map((i) => i.invitee_cpf)}
+      />
     </div>
   );
 }
