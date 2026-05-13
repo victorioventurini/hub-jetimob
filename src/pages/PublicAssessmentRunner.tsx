@@ -194,6 +194,9 @@ function RunnerActive({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [now, setNow] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
+  const [tabSwitches, setTabSwitches] = useState(0);
+  const [pasteAttempts, setPasteAttempts] = useState(0);
+  const [copyAttempts, setCopyAttempts] = useState(0);
   const startTimeRef = useRef<Record<string, number>>({});
   const visHiddenAtRef = useRef<number | null>(null);
 
@@ -220,6 +223,7 @@ function RunnerActive({
       } else if (visHiddenAtRef.current) {
         const seconds = Math.round((Date.now() - visHiddenAtRef.current) / 1000);
         visHiddenAtRef.current = null;
+        setTabSwitches((c) => c + 1);
         supabase.rpc("rpc_assessment_run_telemetry", {
           p_run_id: runId,
           p_tab_switch_inc: 1,
@@ -295,6 +299,18 @@ function RunnerActive({
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs" aria-label="Indicadores de monitoramento">
+          <Badge variant={tabSwitches > 0 ? "destructive" : "outline"} className="font-mono">
+            Trocas de aba: {tabSwitches}
+          </Badge>
+          <Badge variant={pasteAttempts > 0 ? "destructive" : "outline"} className="font-mono">
+            Tentativas de colar: {pasteAttempts}
+          </Badge>
+          <Badge variant={copyAttempts > 0 ? "destructive" : "outline"} className="font-mono">
+            Tentativas de copiar: {copyAttempts}
+          </Badge>
+          <span className="text-muted-foreground">Estes eventos são enviados ao avaliador.</span>
+        </div>
         <Card>
           <CardContent className="p-4 space-y-3">
             <p className="text-xs text-muted-foreground">{q._formTitle} · até {q.time_limit_seconds}s</p>
@@ -306,6 +322,7 @@ function RunnerActive({
               value={answers[q.id] ?? ""}
               onChange={(e) => setAnswers((s) => ({ ...s, [q.id]: e.target.value }))}
               onPasteAttempt={() => {
+                setPasteAttempts((c) => c + 1);
                 supabase.rpc("rpc_assessment_run_telemetry", {
                   p_run_id: runId, p_tab_switch_inc: 0, p_paste_inc: 1, p_copy_inc: 0, p_visibility_loss_inc: 0, p_signals: {},
                 });
@@ -313,6 +330,7 @@ function RunnerActive({
                 toast.error("Colar não é permitido. Esta tentativa foi registrada.");
               }}
               onCopyAttempt={() => {
+                setCopyAttempts((c) => c + 1);
                 supabase.rpc("rpc_assessment_run_telemetry", {
                   p_run_id: runId, p_tab_switch_inc: 0, p_paste_inc: 0, p_copy_inc: 1, p_visibility_loss_inc: 0, p_signals: {},
                 });
