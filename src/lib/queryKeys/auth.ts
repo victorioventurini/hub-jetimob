@@ -16,6 +16,7 @@ export const profilesKeys = {
   me: () => ['profiles', 'me'] as const,
   buProfiles: (buId: string | null) => ['profiles', 'bu', buId] as const,
   buMembers: (buId: string | null) => ['profiles', 'bu-members', buId] as const,
+  cpfCheck: (cpf: string | null) => ['profiles', 'cpf-check', cpf] as const,
 } as const;
 
 export const identityKeys = {
