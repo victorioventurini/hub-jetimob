@@ -23,8 +23,9 @@ import { UrlSelect } from "@/shared/filters/UrlSelect";
 import { useUrlTab, useUrlState } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { SavedLinksPopover } from "@/shared/saved-links";
-import { useAssessments, useForms, useCreateAssessment, useCreateForm } from "../hooks/useAssessmentsData";
+import { useAssessments, useForms, useCreateAssessment, useCreateForm, useDeleteForm } from "../hooks/useAssessmentsData";
 import { AssessmentStatusBadge, FormStatusBadge } from "../components/StatusBadges";
+import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
 export default function AssessmentsPage() {
   const [tab, setTab] = useUrlTab<"provas" | "forms">("provas");
