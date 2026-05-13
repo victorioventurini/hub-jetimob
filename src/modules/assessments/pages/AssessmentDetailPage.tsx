@@ -23,10 +23,18 @@ import {
   useAddFormToAssessment,
   useRemoveFormFromAssessment,
   useInvites,
-  useCreateInvite,
+  useCreateInvitesBatch,
   useRevokeInvite,
   useRuns,
+  type BatchInviteInput,
 } from "../hooks/useAssessmentsData";
+import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
+import { TeamSelect } from "@/components/selects/TeamSelect";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useQuery } from "@tanstack/react-query";
+import { useBu } from "@/contexts/BuContext";
+import { maskCpfInput, normalizeCpf, isValidCpf } from "@/lib/validation/cpf";
+import { AlertCircle, X as XIcon } from "lucide-react";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
