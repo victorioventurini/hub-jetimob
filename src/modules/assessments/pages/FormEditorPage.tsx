@@ -31,6 +31,7 @@ import {
 
 export default function FormEditorPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: form } = useForm(id);
   const { data: versions } = useVersions(id);
   const draft = useMemo(() => versions?.find((v) => !v.frozen) ?? versions?.[0], [versions]);
@@ -39,6 +40,7 @@ export default function FormEditorPage() {
   const del = useDeleteQuestion();
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
+  const deleteForm = useDeleteForm();
   const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
   const editing = editingState.value || null;
   const setEditing = (v: string | null) => editingState.set(v ?? "");
