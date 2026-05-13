@@ -71,7 +71,8 @@ const jetimoberEditSchema = z.object({
 
 const jetimoberSchema = jetimoberCreateSchema;
 
-type JetimoberFormData = z.infer<typeof jetimoberSchema>;
+type JetimoberFormData = z.input<typeof jetimoberCreateSchema>;
+type JetimoberFormParsed = z.output<typeof jetimoberCreateSchema>;
 
 interface Profile {
   id: string;
