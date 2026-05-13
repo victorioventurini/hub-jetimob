@@ -434,6 +434,38 @@ export function useUpdateAssessment() {
   });
 }
 
+export function useDeleteAssessment() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Guarda: bloqueia exclusão se houver convites ativos (pending/in_progress)
+      const { count, error: cErr } = await supabase
+        .from("assessment_invites")
+        .select("id", { count: "exact", head: true })
+        .eq("assessment_id", id)
+        .eq("bu_id", currentBuId!)
+        .in("status", ["pending", "started"]);
+      if (cErr) throw cErr;
+      if ((count ?? 0) > 0) {
+        throw new Error(`Existem ${count} convite(s) ativo(s). Revogue-os antes de excluir a prova.`);
+      }
+      const { error } = await supabase
+        .from("assessments")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("bu_id", currentBuId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assessments", "assessments", currentBuId!] });
+      toast.success("Prova excluída");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+}
+
 export function useAddFormToAssessment() {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();

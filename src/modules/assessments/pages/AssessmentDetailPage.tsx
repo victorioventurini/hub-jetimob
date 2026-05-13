@@ -1,9 +1,9 @@
 /**
  * AssessmentDetailPage — detalhes de uma prova: forms vinculados, convites, respostas.
  */
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Copy, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Plus, Trash2, Copy, Mail, Pencil } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUrlTab } from "@/shared/url";
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import {
   useAssessment,
   useUpdateAssessment,
+  useDeleteAssessment,
   useForms,
   useVersions,
   useAddFormToAssessment,
@@ -45,11 +46,25 @@ import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data } = useAssessment(id);
   const a = data?.assessment;
   const links = data?.links ?? [];
   const update = useUpdateAssessment();
+  const del = useDeleteAssessment();
   const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editTime, setEditTime] = useState<string>("");
+
+  useEffect(() => {
+    if (a && editOpen) {
+      setEditTitle(a.title ?? "");
+      setEditDescription(a.description ?? "");
+      setEditTime(a.default_total_time_seconds ? String(a.default_total_time_seconds) : "");
+    }
+  }, [a, editOpen]);
 
   usePageTitle(a?.title ?? "Prova", {
     customDescription: a?.description?.trim() || "Detalhes da prova: formulários, convites e resultados.",
@@ -66,6 +81,9 @@ export default function AssessmentDetailPage() {
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              <Button variant="outline" onClick={() => setEditOpen(true)} disabled={!a}>
+                <Pencil className="h-4 w-4 mr-2" />Editar
+              </Button>
               {a && a.status !== "active" && (
                 <Button onClick={() => update.mutate({ id: id!, status: "active" })}>Ativar</Button>
               )}
@@ -79,6 +97,20 @@ export default function AssessmentDetailPage() {
                   onConfirm={() => update.mutate({ id: id!, status: "archived" })}
                 />
               )}
+              <ConfirmActionDialog
+                trigger={
+                  <Button variant="outline" className="text-destructive hover:text-destructive" disabled={!a}>
+                    <Trash2 className="h-4 w-4 mr-2" />Excluir
+                  </Button>
+                }
+                title="Excluir prova?"
+                description="A prova será removida. Convites ativos (pendentes ou em andamento) precisam ser revogados antes."
+                confirmLabel="Excluir"
+                destructive
+                onConfirm={() =>
+                  del.mutate(id!, { onSuccess: () => navigate("/assessments?tab=assessments") })
+                }
+              />
             </div>
           }
         />
@@ -110,6 +142,48 @@ export default function AssessmentDetailPage() {
           <TabsContent value="invites" className="mt-6"><InvitesTab assessmentId={id!} /></TabsContent>
           <TabsContent value="results" className="mt-6"><ResultsTab assessmentId={id!} /></TabsContent>
         </Tabs>
+
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Editar prova</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label>Título</Label>
+                <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+              </div>
+              <div>
+                <Label>Descrição</Label>
+                <Input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+              </div>
+              <div>
+                <Label>Tempo total padrão (segundos, vazio = automático)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  placeholder="Automático"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+              <Button
+                disabled={!editTitle.trim() || update.isPending}
+                onClick={async () => {
+                  await update.mutateAsync({
+                    id: id!,
+                    title: editTitle.trim(),
+                    description: editDescription.trim() || null,
+                    default_total_time_seconds: editTime ? Number(editTime) : null,
+                  });
+                  toast.success("Prova atualizada");
+                  setEditOpen(false);
+                }}
+              >Salvar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </HubLayout>
   );
