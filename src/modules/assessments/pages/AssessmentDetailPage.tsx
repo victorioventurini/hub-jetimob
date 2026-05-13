@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import {
   useAssessment,
   useUpdateAssessment,
+  useDeleteAssessment,
   useForms,
   useVersions,
   useAddFormToAssessment,
