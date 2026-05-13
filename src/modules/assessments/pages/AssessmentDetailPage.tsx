@@ -23,10 +23,18 @@ import {
   useAddFormToAssessment,
   useRemoveFormFromAssessment,
   useInvites,
-  useCreateInvite,
+  useCreateInvitesBatch,
   useRevokeInvite,
   useRuns,
+  type BatchInviteInput,
 } from "../hooks/useAssessmentsData";
+import { BuUserMultiSelect } from "@/components/selects/BuUserMultiSelect";
+import { TeamSelect } from "@/components/selects/TeamSelect";
+import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
+import { useQuery } from "@tanstack/react-query";
+import { useBu } from "@/contexts/BuContext";
+import { maskCpfInput, normalizeCpf, isValidCpf } from "@/lib/validation/cpf";
+import { AlertCircle, X as XIcon } from "lucide-react";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -164,12 +172,8 @@ function FormsLinkTab({ assessmentId, links, disabled }: { assessmentId: string;
 
 function InvitesTab({ assessmentId }: { assessmentId: string }) {
   const { data: invites } = useInvites(assessmentId);
-  const create = useCreateInvite();
   const revoke = useRevokeInvite();
   const [open, setOpen] = useState(false);
-  const [cpf, setCpf] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -183,20 +187,21 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
       )}
       <div className="grid gap-2">
         {invites?.map((inv) => {
-          const link = `${baseUrl}/q/${inv.token}`;
+          const link = `${baseUrl}/assessments/run/${inv.token}`;
           return (
             <Card key={inv.id}>
-              <CardContent className="p-3 flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex-1 min-w-0">
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">{inv.invitee_name || inv.invitee_cpf}</p>
                   <p className="text-xs text-muted-foreground truncate">CPF {inv.invitee_cpf} · {inv.invitee_email ?? "sem email"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{link}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={inv.status === "submitted" ? "default" : "secondary"}>{inv.status}</Badge>
-                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado"); }}><Copy className="h-3 w-3" /></Button>
+                <Badge variant={inv.status === "submitted" ? "default" : inv.status === "revoked" ? "destructive" : "secondary"}>{inv.status}</Badge>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado"); }}>
+                    <Copy className="h-3 w-3" />
+                  </Button>
                   {inv.invitee_email && (
-                    <Button size="sm" variant="outline" asChild>
+                    <Button size="sm" variant="ghost" asChild>
                       <a href={`mailto:${inv.invitee_email}?subject=${encodeURIComponent("Convite para questionário")}&body=${encodeURIComponent(link)}`}><Mail className="h-3 w-3" /></a>
                     </Button>
                   )}
@@ -210,32 +215,220 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
         })}
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Novo convite</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>CPF</Label><Input value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="00000000000" /></div>
-            <div><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div><Label>Email (opcional)</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button
-              disabled={cpf.replace(/\D/g, "").length !== 11 || create.isPending}
-              onClick={async () => {
-                await create.mutateAsync({
-                  assessment_id: assessmentId,
-                  invitee_cpf: cpf,
-                  invitee_name: name || undefined,
-                  invitee_email: email || undefined,
-                });
-                setOpen(false); setCpf(""); setName(""); setEmail("");
-              }}
-            >Criar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <NewInviteDialog
+        open={open}
+        onOpenChange={setOpen}
+        assessmentId={assessmentId}
+        existingCpfs={(invites ?? []).map((i) => i.invitee_cpf)}
+      />
     </div>
+  );
+}
+
+function NewInviteDialog({
+  open,
+  onOpenChange,
+  assessmentId,
+  existingCpfs,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  assessmentId: string;
+  existingCpfs: string[];
+}) {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const batch = useCreateInvitesBatch();
+
+  const [tab, setTab] = useState<"internal" | "external">("internal");
+
+  // Internos
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>([]);
+
+  const internalProfilesQ = useQuery({
+    queryKey: ["assessments", "invite-profiles-cpf", currentBuId, selectedProfileIds],
+    enabled: !!currentBuId && selectedProfileIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, cpf, display_name, work_email")
+        .in("id", selectedProfileIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Externos
+  const [externals, setExternals] = useState<Array<{ cpf: string; name: string; email: string }>>([
+    { cpf: "", name: "", email: "" },
+  ]);
+
+  const existingSet = new Set(existingCpfs.map((c) => c.replace(/\D/g, "")));
+
+  const internalRows = (internalProfilesQ.data ?? []).map((p) => {
+    const cpf = (p.cpf ?? "").replace(/\D/g, "");
+    let warning: string | null = null;
+    if (!cpf) warning = "Sem CPF cadastrado no perfil";
+    else if (existingSet.has(cpf)) warning = "Já possui convite ativo";
+    return { ...p, cpf, warning };
+  });
+  const validInternal = internalRows.filter((r) => !r.warning);
+
+  const externalParsed = externals.map((e) => {
+    const cpf = normalizeCpf(e.cpf);
+    let error: string | null = null;
+    if (!cpf) error = "CPF obrigatório";
+    else if (!isValidCpf(cpf)) error = "CPF inválido";
+    else if (existingSet.has(cpf)) error = "Já possui convite ativo";
+    return { ...e, cpf, error };
+  });
+  // dedup interno na lista de externos
+  const seen = new Set<string>();
+  for (const e of externalParsed) {
+    if (e.cpf && !e.error) {
+      if (seen.has(e.cpf)) e.error = "CPF duplicado na lista";
+      seen.add(e.cpf);
+    }
+  }
+  const validExternal = externalParsed.filter((e) => !e.error);
+
+  const totalValid = tab === "internal" ? validInternal.length : validExternal.length;
+
+  const handleSubmit = async () => {
+    let invites: BatchInviteInput[] = [];
+    if (tab === "internal") {
+      invites = validInternal.map((r) => ({
+        invitee_profile_id: r.id,
+        invitee_cpf: r.cpf,
+        invitee_name: r.display_name ?? null,
+        invitee_email: r.work_email ?? null,
+      }));
+    } else {
+      invites = validExternal.map((e) => ({
+        invitee_cpf: e.cpf,
+        invitee_name: e.name || null,
+        invitee_email: e.email || null,
+      }));
+    }
+    if (invites.length === 0) return;
+    const res = await batch.mutateAsync({ assessment_id: assessmentId, invites });
+    if (res.created > 0 || res.skipped_duplicates.length || res.failed.length) {
+      onOpenChange(false);
+      setSelectedProfileIds([]);
+      setExternals([{ cpf: "", name: "", email: "" }]);
+      setTeamId(null);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader><DialogTitle>Novo convite</DialogTitle></DialogHeader>
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="internal">Usuários internos</TabsTrigger>
+            <TabsTrigger value="external">Externos (CPF)</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="internal" className="space-y-3 mt-4">
+            <div>
+              <Label>Filtrar por time (opcional)</Label>
+              <TeamSelect
+                value={teamId}
+                onValueChange={setTeamId}
+                includeAll
+                allLabel="Todos os times"
+              />
+            </div>
+            <div>
+              <Label>Selecionar usuários</Label>
+              <BuUserMultiSelect
+                value={selectedProfileIds}
+                onValueChange={setSelectedProfileIds}
+                excludeExternal
+                teamId={teamId ?? undefined}
+                placeholder="Selecione um ou mais usuários"
+              />
+            </div>
+            {selectedProfileIds.length > 0 && (
+              <div className="rounded-md border p-2 max-h-56 overflow-y-auto space-y-1">
+                {internalProfilesQ.isLoading ? (
+                  <p className="text-xs text-muted-foreground p-2">Carregando…</p>
+                ) : internalRows.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-2 text-sm py-1">
+                    <span className="truncate">{r.display_name}</span>
+                    {r.warning ? (
+                      <Badge variant="destructive" className="gap-1 text-[10px]">
+                        <AlertCircle className="h-3 w-3" />{r.warning}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">CPF ok</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="external" className="space-y-3 mt-4">
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {externalParsed.map((row, i) => (
+                <div key={i} className="grid grid-cols-12 gap-2 items-start">
+                  <div className="col-span-4">
+                    <Input
+                      placeholder="CPF"
+                      inputMode="numeric"
+                      maxLength={14}
+                      value={maskCpfInput(row.cpf || externals[i].cpf)}
+                      onChange={(e) => setExternals((prev) => prev.map((p, idx) => idx === i ? { ...p, cpf: e.target.value } : p))}
+                    />
+                    {row.error && <p className="text-[10px] text-destructive mt-0.5">{row.error}</p>}
+                  </div>
+                  <Input
+                    className="col-span-3"
+                    placeholder="Nome"
+                    value={externals[i].name}
+                    onChange={(e) => setExternals((prev) => prev.map((p, idx) => idx === i ? { ...p, name: e.target.value } : p))}
+                  />
+                  <Input
+                    className="col-span-4"
+                    placeholder="Email (opcional)"
+                    type="email"
+                    value={externals[i].email}
+                    onChange={(e) => setExternals((prev) => prev.map((p, idx) => idx === i ? { ...p, email: e.target.value } : p))}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="col-span-1"
+                    disabled={externals.length === 1}
+                    onClick={() => setExternals((prev) => prev.filter((_, idx) => idx !== i))}
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExternals((prev) => [...prev, { cpf: "", name: "", email: "" }])}
+            >
+              <Plus className="h-3 w-3 mr-1" /> Adicionar mais um
+            </Button>
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button disabled={totalValid === 0 || batch.isPending} onClick={handleSubmit}>
+            Criar {totalValid > 0 ? `${totalValid} convite${totalValid > 1 ? "s" : ""}` : "convites"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

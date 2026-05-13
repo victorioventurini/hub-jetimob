@@ -480,6 +480,111 @@ export function useCreateInvite() {
   });
 }
 
+export interface BatchInviteInput {
+  invitee_profile_id?: string | null;
+  invitee_cpf: string;
+  invitee_name?: string | null;
+  invitee_email?: string | null;
+}
+
+export interface BatchInviteResult {
+  created: number;
+  skipped_duplicates: string[]; // CPFs
+  failed: Array<{ cpf: string; reason: string }>;
+}
+
+export function useCreateInvitesBatch() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const { realProfileId } = useIdentity();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      assessment_id: string;
+      invites: BatchInviteInput[];
+      expires_at?: string | null;
+    }): Promise<BatchInviteResult> => {
+      // Normaliza CPF + remove duplicados internos preservando o primeiro
+      const seen = new Set<string>();
+      const rows = input.invites
+        .map((i) => ({
+          ...i,
+          invitee_cpf: i.invitee_cpf.replace(/\D/g, ""),
+        }))
+        .filter((i) => i.invitee_cpf.length === 11)
+        .filter((i) => {
+          if (seen.has(i.invitee_cpf)) return false;
+          seen.add(i.invitee_cpf);
+          return true;
+        });
+
+      if (rows.length === 0) {
+        return { created: 0, skipped_duplicates: [], failed: [] };
+      }
+
+      const payload = rows.map((r) => ({
+        bu_id: currentBuId!,
+        assessment_id: input.assessment_id,
+        token: generateToken(),
+        invitee_cpf: r.invitee_cpf,
+        invitee_name: r.invitee_name ?? null,
+        invitee_email: r.invitee_email ?? null,
+        invitee_profile_id: r.invitee_profile_id ?? null,
+        expires_at: input.expires_at ?? null,
+        created_by: realProfileId,
+      }));
+
+      // Tenta lote; em 23505, identifica CPFs duplicados existentes e re-tenta sem eles.
+      let toInsert = payload;
+      const skipped: string[] = [];
+      const failed: BatchInviteResult["failed"] = [];
+
+      for (let attempt = 0; attempt < 2 && toInsert.length > 0; attempt++) {
+        const { error } = await supabase.from("assessment_invites").insert(toInsert);
+        if (!error) {
+          break;
+        }
+        if (error.code === "23505" && attempt === 0) {
+          // Identifica CPFs já existentes para esta prova (qualquer status não revogado).
+          const cpfs = toInsert.map((r) => r.invitee_cpf);
+          const { data: existing } = await supabase
+            .from("assessment_invites")
+            .select("invitee_cpf")
+            .eq("assessment_id", input.assessment_id)
+            .in("invitee_cpf", cpfs)
+            .is("deleted_at", null);
+          const existingSet = new Set((existing ?? []).map((r) => r.invitee_cpf));
+          for (const cpf of cpfs) if (existingSet.has(cpf)) skipped.push(cpf);
+          toInsert = toInsert.filter((r) => !existingSet.has(r.invitee_cpf));
+          continue;
+        }
+        // outro erro → marca todos como falha
+        for (const r of toInsert) failed.push({ cpf: r.invitee_cpf, reason: error.message });
+        toInsert = [];
+      }
+
+      return {
+        created: payload.length - skipped.length - failed.length,
+        skipped_duplicates: skipped,
+        failed,
+      };
+    },
+    onSuccess: (res, v) => {
+      qc.invalidateQueries({ queryKey: ["assessments", "invites", currentBuId!, v.assessment_id] });
+      const parts: string[] = [];
+      if (res.created > 0) parts.push(`${res.created} convite(s) criado(s)`);
+      if (res.skipped_duplicates.length) parts.push(`${res.skipped_duplicates.length} duplicado(s)`);
+      if (res.failed.length) parts.push(`${res.failed.length} falha(s)`);
+      if (res.created > 0 && res.skipped_duplicates.length === 0 && res.failed.length === 0) {
+        toast.success(parts.join(" · "));
+      } else {
+        toast(parts.join(" · ") || "Nada a fazer");
+      }
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+}
+
 export function useRevokeInvite() {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
