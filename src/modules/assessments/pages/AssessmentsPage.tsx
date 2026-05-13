@@ -105,10 +105,10 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
       >
         <UrlSelect
           value={status.value}
-          onValueChange={status.set}
+          onChange={status.set}
           options={ASSESSMENT_STATUS_OPTIONS}
-          allLabel="Todos os status"
-          includeAll
+          allOptionLabel="Todos os status"
+          includeAllOption
           triggerClassName="w-full sm:w-[180px]"
         />
       </ListPageFilters>
@@ -221,10 +221,10 @@ function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => v
       >
         <UrlSelect
           value={status.value}
-          onValueChange={status.set}
+          onChange={status.set}
           options={FORM_STATUS_OPTIONS}
-          allLabel="Todos os status"
-          includeAll
+          allOptionLabel="Todos os status"
+          includeAllOption
           triggerClassName="w-full sm:w-[180px]"
         />
       </ListPageFilters>
