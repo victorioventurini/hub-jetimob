@@ -1,9 +1,9 @@
 /**
  * AssessmentDetailPage — detalhes de uma prova: forms vinculados, convites, respostas.
  */
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Copy, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Plus, Trash2, Copy, Mail, Pencil } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUrlTab } from "@/shared/url";
