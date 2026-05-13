@@ -256,7 +256,7 @@ function NewInviteDialog({
   const { currentBuId } = useBu();
   const batch = useCreateInvitesBatch();
 
-  const [tab, setTab] = useState<"internal" | "external">("internal");
+  const [tab, setTab] = useUrlTab<"internal" | "external">("internal", "invite");
 
   // Internos
   const [teamId, setTeamId] = useState<string | null>(null);
