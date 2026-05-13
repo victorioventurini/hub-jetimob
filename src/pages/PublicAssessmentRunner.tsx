@@ -194,6 +194,9 @@ function RunnerActive({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [now, setNow] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
+  const [tabSwitches, setTabSwitches] = useState(0);
+  const [pasteAttempts, setPasteAttempts] = useState(0);
+  const [copyAttempts, setCopyAttempts] = useState(0);
   const startTimeRef = useRef<Record<string, number>>({});
   const visHiddenAtRef = useRef<number | null>(null);
 
