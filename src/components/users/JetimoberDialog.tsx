@@ -357,17 +357,49 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
   });
 
+  // Verifica unicidade do CPF (informativo; banco garante via índice único parcial)
+  const checkCpfUniqueness = useCallback(
+    async (cpfDigits: string): Promise<string | null> => {
+      if (!cpfDigits || cpfDigits.length !== 11) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .eq("cpf", cpfDigits)
+        .eq("user_type", "internal")
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+      if (data && (!profile || data.id !== profile.id)) {
+        return `CPF já cadastrado em ${data.display_name}`;
+      }
+      return null;
+    },
+    [supabase, profile]
+  );
+
+  const handleCpfBlur = async () => {
+    const digits = normalizeCpf(formData.cpf);
+    if (!digits) return;
+    if (digits.length !== 11 || !isValidCpf(digits)) {
+      setErrors((prev) => ({ ...prev, cpf: "CPF inválido" }));
+      return;
+    }
+    const dupErr = await checkCpfUniqueness(digits);
+    if (dupErr) setErrors((prev) => ({ ...prev, cpf: dupErr }));
+  };
+
   const createMutation = useMutation({
-    mutationFn: async (data: JetimoberFormData) => {
+    mutationFn: async (data: JetimoberFormParsed) => {
       if (!currentBu?.id) throw new Error("BU não selecionada");
-      
+
       const display_name = `${data.first_name} ${data.last_name}`.trim();
-      
+
       const { error } = await supabase.from("profiles").insert([{
         first_name: data.first_name,
         last_name: data.last_name,
         display_name,
         work_email: data.work_email.toLowerCase().trim(),
+        cpf: data.cpf,
         job_title_id: data.job_title_id,
         city: data.city,
         state: data.state,
@@ -378,7 +410,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         start_date: data.start_date,
         bu_id: currentBu.id,
       }]);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -389,8 +421,15 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     onError: (error: any) => {
       console.error("Error creating profile:", error);
-      if (error.message?.includes("profiles_work_email_unique")) {
+      const msg = String(error?.message ?? "");
+      if (msg.includes("profiles_work_email_unique")) {
         toast.error("Este e-mail já está cadastrado.");
+      } else if (msg.includes("profiles_cpf_internal_unique")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF já cadastrado em outro usuário" }));
+        toast.error("CPF já cadastrado em outro usuário.");
+      } else if (msg.includes("CPF inválido")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF inválido" }));
+        toast.error("CPF inválido.");
       } else {
         toast.error("Erro ao cadastrar. Tente novamente.");
       }
@@ -398,11 +437,11 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: JetimoberFormData) => {
+    mutationFn: async (data: z.output<typeof jetimoberEditSchema>) => {
       if (!profile) throw new Error("Profile not found");
-      
+
       const display_name = `${data.first_name} ${data.last_name}`.trim();
-      
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -410,6 +449,8 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           last_name: data.last_name,
           display_name,
           work_email: data.work_email,
+          // CPF: só envia se preenchido (não sobrescreve com null nesta fatia)
+          ...(data.cpf ? { cpf: data.cpf } : {}),
           job_title_id: data.job_title_id,
           city: data.city,
           state: data.state,
@@ -421,7 +462,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -432,18 +473,26 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     },
     onError: (error: any) => {
       console.error("Error updating profile:", error);
-      if (error.message?.includes("profiles_work_email_unique")) {
+      const msg = String(error?.message ?? "");
+      if (msg.includes("profiles_work_email_unique")) {
         toast.error("Este e-mail já está cadastrado.");
+      } else if (msg.includes("profiles_cpf_internal_unique")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF já cadastrado em outro usuário" }));
+        toast.error("CPF já cadastrado em outro usuário.");
+      } else if (msg.includes("CPF inválido")) {
+        setErrors((prev) => ({ ...prev, cpf: "CPF inválido" }));
+        toast.error("CPF inválido.");
       } else {
         toast.error("Erro ao atualizar. Tente novamente.");
       }
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const result = jetimoberSchema.safeParse(formData);
+    const schema = isEditing ? jetimoberEditSchema : jetimoberCreateSchema;
+    const result = schema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof JetimoberFormData, string>> = {};
       result.error.errors.forEach((err) => {
@@ -455,11 +504,22 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       return;
     }
 
+    // Check de unicidade pré-submit (best-effort; banco garante)
+    const cpfDigits = (result.data as { cpf?: string }).cpf ?? "";
+    if (cpfDigits) {
+      const dupErr = await checkCpfUniqueness(cpfDigits);
+      if (dupErr) {
+        setErrors((prev) => ({ ...prev, cpf: dupErr }));
+        toast.error(dupErr);
+        return;
+      }
+    }
+
     setErrors({});
     if (isEditing) {
-      updateMutation.mutate(result.data);
+      updateMutation.mutate(result.data as z.output<typeof jetimoberEditSchema>);
     } else {
-      createMutation.mutate(result.data);
+      createMutation.mutate(result.data as JetimoberFormParsed);
     }
   };
 
