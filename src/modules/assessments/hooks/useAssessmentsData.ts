@@ -268,6 +268,41 @@ export function useUpdateForm() {
   });
 }
 
+export function useDeleteForm() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Guarda: não permitir excluir se houver vínculos ativos com provas
+      const { count, error: cErr } = await supabase
+        .from("assessment_form_links")
+        .select("id", { count: "exact", head: true })
+        .eq("form_id", id)
+        .eq("bu_id", currentBuId!)
+        .is("deleted_at", null);
+      if (cErr) throw cErr;
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Formulário em uso por ${count} prova(s). Desvincule antes de excluir.`,
+        );
+      }
+      const { error } = await supabase
+        .from("assessment_forms")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("bu_id", currentBuId!);
+      if (error) throw error;
+    },
+    onSuccess: (_d, id) => {
+      qc.invalidateQueries({ queryKey: ["assessments", "forms", currentBuId!] });
+      qc.invalidateQueries({ queryKey: ["assessments", "form", currentBuId!, id] });
+      toast.success("Formulário excluído");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível excluir o formulário"),
+  });
+}
+
 export function useUpsertQuestion() {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
