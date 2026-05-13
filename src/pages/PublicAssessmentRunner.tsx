@@ -223,6 +223,7 @@ function RunnerActive({
       } else if (visHiddenAtRef.current) {
         const seconds = Math.round((Date.now() - visHiddenAtRef.current) / 1000);
         visHiddenAtRef.current = null;
+        setTabSwitches((c) => c + 1);
         supabase.rpc("rpc_assessment_run_telemetry", {
           p_run_id: runId,
           p_tab_switch_inc: 1,
