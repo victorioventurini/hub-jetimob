@@ -142,6 +142,48 @@ export default function AssessmentDetailPage() {
           <TabsContent value="invites" className="mt-6"><InvitesTab assessmentId={id!} /></TabsContent>
           <TabsContent value="results" className="mt-6"><ResultsTab assessmentId={id!} /></TabsContent>
         </Tabs>
+
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Editar prova</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label>Título</Label>
+                <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+              </div>
+              <div>
+                <Label>Descrição</Label>
+                <Input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+              </div>
+              <div>
+                <Label>Tempo total padrão (segundos, vazio = automático)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  placeholder="Automático"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+              <Button
+                disabled={!editTitle.trim() || update.isPending}
+                onClick={async () => {
+                  await update.mutateAsync({
+                    id: id!,
+                    title: editTitle.trim(),
+                    description: editDescription.trim() || null,
+                    default_total_time_seconds: editTime ? Number(editTime) : null,
+                  });
+                  toast.success("Prova atualizada");
+                  setEditOpen(false);
+                }}
+              >Salvar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </HubLayout>
   );
