@@ -260,21 +260,39 @@ function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => v
       ) : (
         <div className="grid gap-3">
           {filtered.map((f) => (
-            <Link
-              key={f.id}
-              to={`/assessments/forms/${f.id}`}
-              className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Card className="hover:bg-accent/40 transition-colors">
-                <CardContent className="p-4 flex items-center justify-between gap-3">
+            <Card key={f.id} className="hover:bg-accent/40 transition-colors">
+              <CardContent className="p-0 flex items-stretch">
+                <Link
+                  to={`/assessments/forms/${f.id}`}
+                  className="flex-1 p-4 flex items-center justify-between gap-3 rounded-l-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <div className="min-w-0">
                     <p className="font-medium truncate">{f.title}</p>
                     <p className="text-xs text-muted-foreground">Nível {f.level}</p>
                   </div>
                   <FormStatusBadge status={f.status} />
-                </CardContent>
-              </Card>
-            </Link>
+                </Link>
+                <div className="flex items-center pr-3">
+                  <ConfirmActionDialog
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Excluir formulário"
+                        disabled={deleteForm.isPending}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    title="Excluir formulário?"
+                    description="Esta ação remove o formulário e todas as suas perguntas. Provas ativas vinculadas precisam ser desvinculadas primeiro."
+                    confirmLabel="Excluir"
+                    onConfirm={() => deleteForm.mutate(f.id)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
