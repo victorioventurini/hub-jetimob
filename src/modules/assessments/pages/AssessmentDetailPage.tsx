@@ -210,6 +210,9 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
                   {inv.status !== "submitted" && inv.status !== "revoked" && (
                     <Button size="sm" variant="ghost" onClick={() => revoke.mutate({ id: inv.id, assessment_id: assessmentId })}>Revogar</Button>
                   )}
+                  {inv.status === "revoked" && (
+                    <Button size="sm" variant="ghost" onClick={() => reactivate.mutate({ id: inv.id, assessment_id: assessmentId })}>Reativar</Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
