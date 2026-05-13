@@ -111,6 +111,7 @@ const defaultFormData: JetimoberFormData = {
   first_name: "",
   last_name: "",
   work_email: "",
+  cpf: "",
   job_title_id: null,
   city: "Porto Alegre",
   state: "RS",
