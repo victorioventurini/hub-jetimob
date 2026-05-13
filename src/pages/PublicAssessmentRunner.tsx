@@ -322,6 +322,7 @@ function RunnerActive({
               value={answers[q.id] ?? ""}
               onChange={(e) => setAnswers((s) => ({ ...s, [q.id]: e.target.value }))}
               onPasteAttempt={() => {
+                setPasteAttempts((c) => c + 1);
                 supabase.rpc("rpc_assessment_run_telemetry", {
                   p_run_id: runId, p_tab_switch_inc: 0, p_paste_inc: 1, p_copy_inc: 0, p_visibility_loss_inc: 0, p_signals: {},
                 });
@@ -329,6 +330,7 @@ function RunnerActive({
                 toast.error("Colar não é permitido. Esta tentativa foi registrada.");
               }}
               onCopyAttempt={() => {
+                setCopyAttempts((c) => c + 1);
                 supabase.rpc("rpc_assessment_run_telemetry", {
                   p_run_id: runId, p_tab_switch_inc: 0, p_paste_inc: 0, p_copy_inc: 1, p_visibility_loss_inc: 0, p_signals: {},
                 });
