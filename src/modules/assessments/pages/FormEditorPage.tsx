@@ -36,12 +36,22 @@ export default function FormEditorPage() {
   const del = useDeleteQuestion();
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
-  const [editing, setEditing] = useState<string | null>(null);
+  const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
+  const editing = editingState.value || null;
+  const setEditing = (v: string | null) => editingState.set(v ?? "");
 
   const totalSeconds = (questions ?? []).reduce((s, q) => s + (q.time_limit_seconds || 0), 0);
 
+  const metaTitle = form?.title ? `${form.title} — Formulários` : "Carregando… — Formulários";
+  const metaDescription = form?.description?.trim()
+    || "Editor de perguntas, tipos e tempo por questão.";
+
   return (
     <HubLayout>
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={form?.title ?? "Formulário"}
