@@ -46,11 +46,25 @@ import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data } = useAssessment(id);
   const a = data?.assessment;
   const links = data?.links ?? [];
   const update = useUpdateAssessment();
+  const del = useDeleteAssessment();
   const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editTime, setEditTime] = useState<string>("");
+
+  useEffect(() => {
+    if (a && editOpen) {
+      setEditTitle(a.title ?? "");
+      setEditDescription(a.description ?? "");
+      setEditTime(a.default_total_time_seconds ? String(a.default_total_time_seconds) : "");
+    }
+  }, [a, editOpen]);
 
   usePageTitle(a?.title ?? "Prova", {
     customDescription: a?.description?.trim() || "Detalhes da prova: formulários, convites e resultados.",
