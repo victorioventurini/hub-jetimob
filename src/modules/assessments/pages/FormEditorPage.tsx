@@ -61,7 +61,22 @@ export default function FormEditorPage() {
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
-              <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              <Button variant="outline" asChild><Link to="/assessments?tab=forms"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              <ConfirmActionDialog
+                trigger={
+                  <Button variant="ghost" size="icon" aria-label="Excluir formulário" disabled={deleteForm.isPending}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                }
+                title="Excluir formulário?"
+                description="Esta ação remove o formulário e todas as suas perguntas. Provas ativas vinculadas precisam ser desvinculadas primeiro."
+                confirmLabel="Excluir"
+                onConfirm={() =>
+                  deleteForm.mutate(id!, {
+                    onSuccess: () => navigate("/assessments?tab=forms"),
+                  })
+                }
+              />
               {draft && !draft.frozen && (
                 <ConfirmActionDialog
                   trigger={
