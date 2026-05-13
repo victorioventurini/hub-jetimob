@@ -604,3 +604,25 @@ export function useRevokeInvite() {
     },
   });
 }
+
+export function useReactivateInvite() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; assessment_id: string }) => {
+      const { error } = await supabase
+        .from("assessment_invites")
+        .update({ status: "pending" })
+        .eq("id", input.id)
+        .eq("bu_id", currentBuId!)
+        .eq("status", "revoked");
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["assessments", "invites", currentBuId!, v.assessment_id] });
+      toast.success("Convite reativado");
+    },
+    onError: () => toast.error("Erro ao reativar convite"),
+  });
+}

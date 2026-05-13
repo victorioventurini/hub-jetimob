@@ -25,6 +25,7 @@ import {
   useInvites,
   useCreateInvitesBatch,
   useRevokeInvite,
+  useReactivateInvite,
   useRuns,
   type BatchInviteInput,
 } from "../hooks/useAssessmentsData";
@@ -173,6 +174,7 @@ function FormsLinkTab({ assessmentId, links, disabled }: { assessmentId: string;
 function InvitesTab({ assessmentId }: { assessmentId: string }) {
   const { data: invites } = useInvites(assessmentId);
   const revoke = useRevokeInvite();
+  const reactivate = useReactivateInvite();
   const [open, setOpen] = useState(false);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -207,6 +209,9 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
                   )}
                   {inv.status !== "submitted" && inv.status !== "revoked" && (
                     <Button size="sm" variant="ghost" onClick={() => revoke.mutate({ id: inv.id, assessment_id: assessmentId })}>Revogar</Button>
+                  )}
+                  {inv.status === "revoked" && (
+                    <Button size="sm" variant="ghost" onClick={() => reactivate.mutate({ id: inv.id, assessment_id: assessmentId })}>Reativar</Button>
                   )}
                 </div>
               </CardContent>

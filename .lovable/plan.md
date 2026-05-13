@@ -1,95 +1,55 @@
-> **Pré-checklist:** ✅ TCR, IDENTITY_CONVENTION, DATA_MODEL_REGISTRY, PERMISSIONS_AND_RBAC_MODEL, PRE_CHECKLIST consultados. Reuso obrigatório de `BuUserMultiSelect`, `MultiTeamSelect`, `useBuUsersDirectory`. Schema `assessment_invites` já tem `invitee_cpf` (NOT NULL), `invitee_profile_id`, `invitee_name`, `invitee_email` — sem migration necessária.
-
 ## Objetivo
 
-No detalhe do assessment (`/assessments/provas/:id`, aba **Convites**), substituir o diálogo "1 CPF por vez" por um fluxo com 2 abas:
+Hoje, quando um convite é revogado, ele permanece com `status = 'revoked'` e o `rpc_assessment_invite_lookup` bloqueia o acesso ao runner público (`/q/:token`). Não há UI para desfazer.
 
-- **Internos** — seleção em massa (individual e por time) usando os componentes canônicos.
-- **Externos** — manual (CPF + nome + email), como hoje, mas com máscara/validação via `cpfZodSchema`.
+Adicionar a ação **"Reativar"** ao lado do badge `revoked` na aba **Convites**, que volta o convite para `pending` (status pré-uso), reabilitando o link existente sem gerar novo token.
 
-Sem novos componentes de seleção. Sem alteração de schema. Sem mexer em externos do hub.
+## Escopo
 
----
+- Apenas convites com `status = 'revoked'` ganham a ação.
+- Convites `submitted` continuam imutáveis (concluídos).
+- Convites `expired` ficam fora desta fatia (não foi pedido; reativar exigiria estender `expires_at`).
+- Mantém o **mesmo `token`** — o link já compartilhado volta a funcionar.
+- Sem migration: o RPC `rpc_assessment_invite_lookup` já libera `pending` automaticamente.
 
-## 1. Reuso (sem duplicar)
+## Reuso (sem duplicar)
 
-| Necessidade | Componente/hook canônico |
+| Necessidade | Fonte canônica |
 |---|---|
-| Selecionar múltiplos internos | `BuUserMultiSelect` (`excludeExternal`, `teamId`) |
-| Filtrar por time | `TeamSelect` (single) — alimenta `teamId` do componente acima |
-| Listar perfis da BU | `useBuUsersDirectory` (já usado pelo MultiSelect) |
-| Validar CPF de externos | `cpfZodSchema` / `maskCpfInput` (`src/lib/validation/cpf.ts`) |
-| Mutation de criação | `useCreateInvite` (estendida — ver §3) |
+| Mutation pattern | espelha `useRevokeInvite` em `useAssessmentsData.ts` |
+| Cliente Supabase | `useBuScopedSupabase` (BU isolation mandatória) |
+| Identidade na escrita | `realProfileId` via `useIdentity` (campo `created_by` permanece o original; só atualizamos `status`) |
+| Query key | `["assessments", "invites", buId, assessment_id]` (mesma chave já invalidada pelo revoke) |
+| Permissão | mesma RLS do revoke (`assessments.invite.create:bu` / update policy já existente) |
 
----
+## Mudanças
 
-## 2. UI — `AssessmentDetailPage > InvitesTab`
+### 1. `src/modules/assessments/hooks/useAssessmentsData.ts`
 
-Substituir o `<Dialog>` atual por um diálogo com `Tabs` (`internal` | `external`):
+Adicionar `useReactivateInvite` (espelho do `useRevokeInvite`):
 
-### Aba "Internos"
-- `TeamSelect` opcional ("Filtrar por time") → reduz a lista do MultiSelect.
-- `BuUserMultiSelect` com `excludeExternal=true`, `teamId={teamFilter}`, `includeSubteams`, `excludeUserIds={profileIdsJaConvidados}` (perfis com convite ativo no assessment, evita duplicatas óbvias).
-- Resumo: "X usuários selecionados" + lista compacta com avisos:
-  - ⚠ "Sem CPF cadastrado — preencha no perfil" (bloqueia inclusão desse usuário).
-  - ⚠ "Já possui convite ativo" (apenas info — quando `excludeUserIds` não pegar por race).
-- Botão **Criar N convites** (desabilitado se nenhum válido).
+- Input: `{ id: string; assessment_id: string }`.
+- Update: `{ status: "pending" }` em `assessment_invites`, com `.eq("id", input.id).eq("bu_id", currentBuId).eq("status", "revoked")` (guard para não sobrescrever convites em outro estado por race).
+- Invalida `["assessments", "invites", currentBuId, assessment_id]`.
+- Toast: `"Convite reativado"`.
 
-### Aba "Externos"
-- 1 linha por convidado (CPF mascarado + nome + email), botão "+ Adicionar mais um".
-- Validação inline com `cpfZodSchema`. Bloqueia duplicatas dentro da própria lista.
-- Botão **Criar N convites**.
+### 2. `src/modules/assessments/pages/AssessmentDetailPage.tsx` (`InvitesTab`)
 
-Mensagens de erro/sucesso consolidadas em um único toast por lote ("3 convites criados, 1 falhou: CPF duplicado").
+Na linha do convite (já existente, ~L208-210):
 
----
+- Quando `inv.status === "revoked"` → mostrar botão **"Reativar"** (`variant="ghost"`, ícone `RotateCcw` se já importado em outro lugar — senão sem ícone) que dispara a mutation.
+- Botão de copiar link continua escondido para revoked (já está condicionado).
+- Após reativação, badge muda para `pending` automaticamente via invalidação.
 
-## 3. Hook — estender `useCreateInvite` para lote
+## Fora de escopo
 
-Adicionar `useCreateInvitesBatch` em `src/modules/assessments/hooks/useAssessmentsData.ts`:
-
-- Input: `{ assessment_id, invites: Array<{ invitee_profile_id?: string; invitee_cpf: string; invitee_name?: string; invitee_email?: string }> }`.
-- Para internos vindos da UI (apenas `profile_id`), o hook resolve `cpf`/`display_name`/`work_email` via `select("id, cpf, display_name, work_email").in("id", ids)` em `profiles` — filtra fora os sem CPF e devolve no resultado para a UI exibir.
-- `insert` em lote (`.insert(rows).select("id")`) com `bu_id`, `created_by = realProfileId`, `token` gerado por linha, `invitee_profile_id` preenchido para internos.
-- Erros parciais: como `.insert([...])` é atômico, fazer pré-filtragem (sem CPF, duplicatas locais) e tratar `23505` retentando sem o(s) ofensor(es) — máximo 2 tentativas; reportar restantes ao usuário.
-- Invalida `["assessments", "invites", buId, assessment_id]` 1x ao final.
-
-`useCreateInvite` (singular) permanece para compatibilidade, agora delegando ao batch.
-
----
-
-## 4. Validação e bloqueios
-
-- Internos sem CPF em `profiles.cpf` → não são enviados ao DB; UI mostra ação "Editar perfil" linkando para `/users/:id`.
-- CPF duplicado entre internos selecionados e externos digitados → bloqueio na UI antes do submit.
-- Permissão: já gated por RLS `invites_insert` (`assessments.invite.create:bu`). Sem mudanças de RBAC.
-
----
-
-## 5. Identidade & isolamento
-
-- `invitee_profile_id` é FK para `profiles(id)` — alinhado com `IDENTITY_CONVENTION` (profile_id em FK de domínio).
-- `created_by = realProfileId` (mantém comportamento atual; respeita impersonation via `useIdentity`).
-- `bu_id = currentBuId` em todas as linhas (BU isolation mandatória).
-- `useBuScopedSupabase` para todas as leituras/escritas; query keys via SSOT existente em `useAssessmentsData`.
-
----
-
-## 6. Fora de escopo
-
-- Importação CSV de convites em massa.
-- Pré-vínculo retroativo entre `assessment_runs.respondent_cpf` e `profiles.cpf` no perfil do usuário.
-- Alterar fluxo público (`PublicAssessmentRunner`) — convidado continua confirmando CPF normalmente.
-- Notificação automática (in-app/email) ao convidado interno — fica para próxima fatia; por ora, link copiável continua igual.
-
----
+- Reativar `expired` (precisaria UI para nova `expires_at`).
+- Auditoria de reativações (já existe trigger genérico de history em `assessment_invites`? sem alterações aqui).
+- Notificação ao convidado.
 
 ## Entregáveis
 
-1. `useCreateInvitesBatch` em `useAssessmentsData.ts` (resolução de CPF para internos, insert em lote, retry no 23505).
-2. Refatorar `InvitesTab` em `AssessmentDetailPage.tsx`:
-   - Diálogo "Novo convite" com `Tabs internos | externos`.
-   - Aba internos: `TeamSelect` + `BuUserMultiSelect` (reuso 100%).
-   - Aba externos: lista dinâmica com `maskCpfInput` + `cpfZodSchema`.
-3. Sem novos componentes de seleção, sem nova migration, sem mexer em RLS.
+1. `useReactivateInvite` em `useAssessmentsData.ts` (~15 linhas, padrão idêntico ao revoke).
+2. Botão "Reativar" condicional ao `status === "revoked"` em `InvitesTab`.
 
+Sem migration. Sem alteração de RLS. Sem alteração no runner público.
