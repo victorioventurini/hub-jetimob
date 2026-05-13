@@ -1021,6 +1021,728 @@ export type Database = {
           },
         ]
       }
+      assessment_answers: {
+        Row: {
+          answer_options: Json | null
+          answer_text: string | null
+          bu_id: string
+          created_at: string
+          id: string
+          paste_detected: boolean
+          question_id: string
+          run_id: string
+          signals: Json | null
+          time_spent_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          answer_options?: Json | null
+          answer_text?: string | null
+          bu_id: string
+          created_at?: string
+          id?: string
+          paste_detected?: boolean
+          question_id: string
+          run_id: string
+          signals?: Json | null
+          time_spent_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          answer_options?: Json | null
+          answer_text?: string | null
+          bu_id?: string
+          created_at?: string
+          id?: string
+          paste_detected?: boolean
+          question_id?: string
+          run_id?: string
+          signals?: Json | null
+          time_spent_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_answers_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_form_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_answers_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_form_links: {
+        Row: {
+          assessment_id: string
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          form_id: string
+          id: string
+          position: number
+          updated_at: string
+          version_id: string
+        }
+        Insert: {
+          assessment_id: string
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          form_id: string
+          id?: string
+          position?: number
+          updated_at?: string
+          version_id: string
+        }
+        Update: {
+          assessment_id?: string
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          form_id?: string
+          id?: string
+          position?: number
+          updated_at?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_form_links_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_links_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_links_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_links_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_form_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_form_questions: {
+        Row: {
+          bu_id: string
+          created_at: string
+          deleted_at: string | null
+          help_text: string | null
+          id: string
+          options: Json | null
+          position: number
+          prompt: string
+          question_type: Database["public"]["Enums"]["assessment_question_type"]
+          required: boolean
+          time_limit_seconds: number
+          updated_at: string
+          version_id: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          deleted_at?: string | null
+          help_text?: string | null
+          id?: string
+          options?: Json | null
+          position?: number
+          prompt: string
+          question_type?: Database["public"]["Enums"]["assessment_question_type"]
+          required?: boolean
+          time_limit_seconds?: number
+          updated_at?: string
+          version_id: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          help_text?: string | null
+          id?: string
+          options?: Json | null
+          position?: number
+          prompt?: string
+          question_type?: Database["public"]["Enums"]["assessment_question_type"]
+          required?: boolean
+          time_limit_seconds?: number
+          updated_at?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_form_questions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_questions_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_form_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_form_versions: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          form_id: string
+          frozen: boolean
+          id: string
+          published_at: string | null
+          status: Database["public"]["Enums"]["assessment_form_status"]
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          form_id: string
+          frozen?: boolean
+          id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["assessment_form_status"]
+          updated_at?: string
+          version_number: number
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          form_id?: string
+          frozen?: boolean
+          id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["assessment_form_status"]
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_form_versions_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_form_versions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_forms: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          current_version_id: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          level: number
+          status: Database["public"]["Enums"]["assessment_form_status"]
+          theme_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          level?: number
+          status?: Database["public"]["Enums"]["assessment_form_status"]
+          theme_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          level?: number
+          status?: Database["public"]["Enums"]["assessment_form_status"]
+          theme_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_forms_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_forms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_forms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_forms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_forms_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_invites: {
+        Row: {
+          assessment_id: string
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          expires_at: string | null
+          id: string
+          invitee_cpf: string
+          invitee_email: string | null
+          invitee_name: string | null
+          invitee_profile_id: string | null
+          sent_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["assessment_invite_status"]
+          submitted_at: string | null
+          token: string
+          total_time_seconds: number | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitee_cpf: string
+          invitee_email?: string | null
+          invitee_name?: string | null
+          invitee_profile_id?: string | null
+          sent_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["assessment_invite_status"]
+          submitted_at?: string | null
+          token: string
+          total_time_seconds?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitee_cpf?: string
+          invitee_email?: string | null
+          invitee_name?: string | null
+          invitee_profile_id?: string | null
+          sent_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["assessment_invite_status"]
+          submitted_at?: string | null
+          token?: string
+          total_time_seconds?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_invites_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_invitee_profile_id_fkey"
+            columns: ["invitee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_invitee_profile_id_fkey"
+            columns: ["invitee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_invites_invitee_profile_id_fkey"
+            columns: ["invitee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_runs: {
+        Row: {
+          assessment_id: string
+          bu_id: string
+          client_meta: Json | null
+          copy_attempt_count: number
+          created_at: string
+          deleted_at: string | null
+          expires_at: string | null
+          fraud_signals: Json | null
+          id: string
+          invite_id: string
+          paste_attempt_count: number
+          respondent_cpf: string
+          respondent_name: string | null
+          respondent_profile_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["assessment_run_status"]
+          submitted_at: string | null
+          tab_switch_count: number
+          updated_at: string
+          visibility_loss_seconds: number
+        }
+        Insert: {
+          assessment_id: string
+          bu_id: string
+          client_meta?: Json | null
+          copy_attempt_count?: number
+          created_at?: string
+          deleted_at?: string | null
+          expires_at?: string | null
+          fraud_signals?: Json | null
+          id?: string
+          invite_id: string
+          paste_attempt_count?: number
+          respondent_cpf: string
+          respondent_name?: string | null
+          respondent_profile_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["assessment_run_status"]
+          submitted_at?: string | null
+          tab_switch_count?: number
+          updated_at?: string
+          visibility_loss_seconds?: number
+        }
+        Update: {
+          assessment_id?: string
+          bu_id?: string
+          client_meta?: Json | null
+          copy_attempt_count?: number
+          created_at?: string
+          deleted_at?: string | null
+          expires_at?: string | null
+          fraud_signals?: Json | null
+          id?: string
+          invite_id?: string
+          paste_attempt_count?: number
+          respondent_cpf?: string
+          respondent_name?: string | null
+          respondent_profile_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["assessment_run_status"]
+          submitted_at?: string | null
+          tab_switch_count?: number
+          updated_at?: string
+          visibility_loss_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_runs_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_runs_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_runs_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_runs_respondent_profile_id_fkey"
+            columns: ["respondent_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_runs_respondent_profile_id_fkey"
+            columns: ["respondent_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_runs_respondent_profile_id_fkey"
+            columns: ["respondent_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_themes: {
+        Row: {
+          bu_id: string
+          color: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_themes_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_themes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_themes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_themes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessments: {
+        Row: {
+          available_from: string | null
+          available_until: string | null
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          default_total_time_seconds: number | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["assessment_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          available_from?: string | null
+          available_until?: string | null
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          default_total_time_seconds?: number | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["assessment_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          available_from?: string | null
+          available_until?: string | null
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          default_total_time_seconds?: number | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["assessment_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_categories: {
         Row: {
           bu_id: string
@@ -11530,6 +12252,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      has_assessment_permission: {
+        Args: { _bu_id: string; _key: string; _user_id: string }
+        Returns: boolean
+      }
       has_asset_permission: {
         Args: {
           p_bu_id: string
@@ -12020,6 +12746,24 @@ export type Database = {
       analysis_status: "pending" | "generating" | "complete" | "failed"
       analysis_template_scope: "global" | "bu"
       app_role: "super_admin" | "admin" | "collaborator" | "external"
+      assessment_form_status: "draft" | "published" | "archived"
+      assessment_invite_status:
+        | "pending"
+        | "started"
+        | "submitted"
+        | "expired"
+        | "revoked"
+      assessment_question_type:
+        | "short_text"
+        | "long_text"
+        | "single_choice"
+        | "multiple_choice"
+      assessment_run_status:
+        | "in_progress"
+        | "submitted"
+        | "expired"
+        | "abandoned"
+      assessment_status: "draft" | "active" | "archived"
       asset_group_item_role: "primary" | "accessory"
       asset_group_status: "active" | "inactive"
       asset_group_type: "kit" | "bundle"
@@ -12324,6 +13068,27 @@ export const Constants = {
       analysis_status: ["pending", "generating", "complete", "failed"],
       analysis_template_scope: ["global", "bu"],
       app_role: ["super_admin", "admin", "collaborator", "external"],
+      assessment_form_status: ["draft", "published", "archived"],
+      assessment_invite_status: [
+        "pending",
+        "started",
+        "submitted",
+        "expired",
+        "revoked",
+      ],
+      assessment_question_type: [
+        "short_text",
+        "long_text",
+        "single_choice",
+        "multiple_choice",
+      ],
+      assessment_run_status: [
+        "in_progress",
+        "submitted",
+        "expired",
+        "abandoned",
+      ],
+      assessment_status: ["draft", "active", "archived"],
       asset_group_item_role: ["primary", "accessory"],
       asset_group_status: ["active", "inactive"],
       asset_group_type: ["kit", "bundle"],
