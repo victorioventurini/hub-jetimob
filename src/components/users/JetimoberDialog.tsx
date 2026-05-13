@@ -175,7 +175,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
       setStep("form");
       supabase
         .from("profiles")
-        .select("id, first_name, last_name, work_email, job_title_id, city, state, work_mode, employment_status, team_id, manager_user_id, start_date")
+        .select("id, first_name, last_name, work_email, cpf, job_title_id, city, state, work_mode, employment_status, team_id, manager_user_id, start_date")
         .eq("id", profile.id)
         .single()
         .then(({ data }) => {
@@ -184,6 +184,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
               first_name: data.first_name,
               last_name: data.last_name,
               work_email: data.work_email,
+              cpf: data.cpf ?? "",
               job_title_id: data.job_title_id,
               city: data.city,
               state: data.state,
