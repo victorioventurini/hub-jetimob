@@ -1,7 +1,7 @@
 /**
  * FormEditorPage — editor de versão draft de um formulário (perguntas + tempos).
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Plus, Trash2, Lock } from "lucide-react";
