@@ -25,6 +25,7 @@ import {
   useInvites,
   useCreateInvitesBatch,
   useRevokeInvite,
+  useReactivateInvite,
   useRuns,
   type BatchInviteInput,
 } from "../hooks/useAssessmentsData";
