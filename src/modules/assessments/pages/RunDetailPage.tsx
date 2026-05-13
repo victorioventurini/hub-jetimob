@@ -52,8 +52,16 @@ export default function RunDetailPage() {
   const qById = new Map((questions ?? []).map((q) => [q.id, q]));
   const fraud = (run?.tab_switch_count ?? 0) + (run?.paste_attempt_count ?? 0) + (run?.copy_attempt_count ?? 0);
 
+  const respondent = run?.respondent_name || run?.respondent_cpf;
+  const metaTitle = respondent ? `${respondent} — Tentativa` : "Carregando tentativa…";
+  const metaDescription = "Resultado e respostas do participante, com sinais anti-fraude.";
+
   return (
     <HubLayout>
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={run?.respondent_name || run?.respondent_cpf || "Tentativa"}
