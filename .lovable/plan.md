@@ -1,55 +1,62 @@
-## Objetivo
+# Permitir excluir formulário (Assessments)
 
-Hoje, quando um convite é revogado, ele permanece com `status = 'revoked'` e o `rpc_assessment_invite_lookup` bloqueia o acesso ao runner público (`/q/:token`). Não há UI para desfazer.
+## Diagnóstico
 
-Adicionar a ação **"Reativar"** ao lado do badge `revoked` na aba **Convites**, que volta o convite para `pending` (status pré-uso), reabilitando o link existente sem gerar novo token.
+Hoje não existe nenhuma ação de excluir formulário no módulo:
+- `FormEditorPage` (`/assessments/forms/:id`) não tem botão de remover.
+- A aba "Formulários" em `AssessmentsPage` lista os formulários sem ação de exclusão.
+- Não existe hook `useDeleteForm` em `useAssessmentsData.ts` (só há `useDeleteQuestion`, `useRemoveFormFromAssessment` para desvincular de uma prova, e `useUpdateAssessment` que arquiva prova — não formulário).
 
-## Escopo
+A tabela `assessment_forms` já tem coluna `deleted_at` (soft delete suportado), seguindo o padrão `mem://standards/soft-delete-policy-v1`.
 
-- Apenas convites com `status = 'revoked'` ganham a ação.
-- Convites `submitted` continuam imutáveis (concluídos).
-- Convites `expired` ficam fora desta fatia (não foi pedido; reativar exigiria estender `expires_at`).
-- Mantém o **mesmo `token`** — o link já compartilhado volta a funcionar.
-- Sem migration: o RPC `rpc_assessment_invite_lookup` já libera `pending` automaticamente.
+## Escopo (apenas UI/presentation, sem mexer em RLS/edge)
 
-## Reuso (sem duplicar)
+### 1. Hook novo em `src/modules/assessments/hooks/useAssessmentsData.ts`
 
-| Necessidade | Fonte canônica |
-|---|---|
-| Mutation pattern | espelha `useRevokeInvite` em `useAssessmentsData.ts` |
-| Cliente Supabase | `useBuScopedSupabase` (BU isolation mandatória) |
-| Identidade na escrita | `realProfileId` via `useIdentity` (campo `created_by` permanece o original; só atualizamos `status`) |
-| Query key | `["assessments", "invites", buId, assessment_id]` (mesma chave já invalidada pelo revoke) |
-| Permissão | mesma RLS do revoke (`assessments.invite.create:bu` / update policy já existente) |
+`useDeleteForm()` — soft delete:
+- `update assessment_forms set deleted_at = now() where id = :id` via cliente BU-scoped.
+- Antes de deletar: contar `assessment_form_links` ativos (`deleted_at is null`) com `form_id`. Se `> 0`, lançar erro PT-BR ("Formulário em uso por N prova(s) ativa(s). Desvincule antes de excluir.").
+- Invalidar `queryKeys.assessments.forms(buId)` e `queryKeys.assessments.form(buId, id)`.
+- Toast de sucesso/erro.
 
-## Mudanças
+### 2. `FormEditorPage.tsx` — botão "Excluir formulário"
 
-### 1. `src/modules/assessments/hooks/useAssessmentsData.ts`
+- Adicionar no `PageHeader.actions`, à esquerda de "Voltar", um `Button variant="ghost"` com ícone `Trash2` e `aria-label="Excluir formulário"`.
+- Envolver com `ConfirmActionDialog`:
+  - title: "Excluir formulário?"
+  - description: "Esta ação remove o formulário e todas as suas perguntas. Provas ativas vinculadas precisam ser desvinculadas primeiro."
+  - confirmLabel: "Excluir"
+  - destructive: true
+- `onConfirm`: `del.mutate(id, { onSuccess: () => navigate("/assessments?tab=forms") })`.
+- Após sucesso, navegar de volta para a listagem.
 
-Adicionar `useReactivateInvite` (espelho do `useRevokeInvite`):
+### 3. `AssessmentsPage.tsx` (tab "forms") — ação inline por card
 
-- Input: `{ id: string; assessment_id: string }`.
-- Update: `{ status: "pending" }` em `assessment_invites`, com `.eq("id", input.id).eq("bu_id", currentBuId).eq("status", "revoked")` (guard para não sobrescrever convites em outro estado por race).
-- Invalida `["assessments", "invites", currentBuId, assessment_id]`.
-- Toast: `"Convite reativado"`.
+- Trocar o `<Link>` que envolve o card por um `Card` com área clicável (botão/Link cobrindo o conteúdo) + slot de ação à direita com `ConfirmActionDialog` (mesmo conteúdo do item 2). Garantir `e.preventDefault()`/`e.stopPropagation()` no botão para não navegar.
+- Padrão visual igual aos demais cards do módulo (Trash2 ghost, `aria-label`).
 
-### 2. `src/modules/assessments/pages/AssessmentDetailPage.tsx` (`InvitesTab`)
+### 4. Mensagens & i18n
 
-Na linha do convite (já existente, ~L208-210):
+- Toast sucesso: "Formulário excluído".
+- Toast erro genérico: "Não foi possível excluir o formulário".
+- Toast vínculo ativo: usa mensagem do erro lançado pelo hook.
 
-- Quando `inv.status === "revoked"` → mostrar botão **"Reativar"** (`variant="ghost"`, ícone `RotateCcw` se já importado em outro lugar — senão sem ícone) que dispara a mutation.
-- Botão de copiar link continua escondido para revoked (já está condicionado).
-- Após reativação, badge muda para `pending` automaticamente via invalidação.
+## Fora do escopo
 
-## Fora de escopo
+- Mudanças em RLS, triggers ou edge functions.
+- Hard delete.
+- Restauração ("desfazer exclusão") — pode entrar em onda futura.
+- Mudanças no runner público `/q/:token`.
+- Mudanças em `useAssessmentsData.ts` além do novo hook.
 
-- Reativar `expired` (precisaria UI para nova `expires_at`).
-- Auditoria de reativações (já existe trigger genérico de history em `assessment_invites`? sem alterações aqui).
-- Notificação ao convidado.
+## Arquivos
 
-## Entregáveis
+- editar `src/modules/assessments/hooks/useAssessmentsData.ts` (+ `useDeleteForm`)
+- editar `src/modules/assessments/pages/FormEditorPage.tsx`
+- editar `src/modules/assessments/pages/AssessmentsPage.tsx`
 
-1. `useReactivateInvite` em `useAssessmentsData.ts` (~15 linhas, padrão idêntico ao revoke).
-2. Botão "Reativar" condicional ao `status === "revoked"` em `InvitesTab`.
+## Verificação
 
-Sem migration. Sem alteração de RLS. Sem alteração no runner público.
+- Abrir `/assessments/forms/ed1f81f9-...` → clicar Excluir → confirmar → redirecionar para `/assessments?tab=forms` e card sumir.
+- Tentar excluir formulário vinculado a prova ativa → toast de erro com contagem.
+- Tab "Formulários" → ação inline funciona sem disparar navegação para o editor.

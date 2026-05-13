@@ -2,7 +2,7 @@
  * FormEditorPage — editor de versão draft de um formulário (perguntas + tempos).
  */
 import { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Lock } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -26,10 +26,12 @@ import {
   useDeleteQuestion,
   usePublishVersion,
   useUpdateForm,
+  useDeleteForm,
 } from "../hooks/useAssessmentsData";
 
 export default function FormEditorPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: form } = useForm(id);
   const { data: versions } = useVersions(id);
   const draft = useMemo(() => versions?.find((v) => !v.frozen) ?? versions?.[0], [versions]);
@@ -38,6 +40,7 @@ export default function FormEditorPage() {
   const del = useDeleteQuestion();
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
+  const deleteForm = useDeleteForm();
   const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
   const editing = editingState.value || null;
   const setEditing = (v: string | null) => editingState.set(v ?? "");
@@ -58,7 +61,22 @@ export default function FormEditorPage() {
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
-              <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              <Button variant="outline" asChild><Link to="/assessments?tab=forms"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              <ConfirmActionDialog
+                trigger={
+                  <Button variant="ghost" size="icon" aria-label="Excluir formulário" disabled={deleteForm.isPending}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                }
+                title="Excluir formulário?"
+                description="Esta ação remove o formulário e todas as suas perguntas. Provas ativas vinculadas precisam ser desvinculadas primeiro."
+                confirmLabel="Excluir"
+                onConfirm={() =>
+                  deleteForm.mutate(id!, {
+                    onSuccess: () => navigate("/assessments?tab=forms"),
+                  })
+                }
+              />
               {draft && !draft.frozen && (
                 <ConfirmActionDialog
                   trigger={
