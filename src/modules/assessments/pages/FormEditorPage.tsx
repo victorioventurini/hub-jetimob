@@ -2,7 +2,7 @@
  * FormEditorPage — editor de versão draft de um formulário (perguntas + tempos).
  */
 import { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Lock } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
