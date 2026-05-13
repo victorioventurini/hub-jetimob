@@ -3,19 +3,21 @@
  */
 import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Plus, Trash2, Lock } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUrlState } from "@/shared/url";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { SavedLinksPopover } from "@/shared/saved-links";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { FormStatusBadge } from "../components/StatusBadges";
+import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 import {
   useForm,
   useVersions,
@@ -42,16 +44,12 @@ export default function FormEditorPage() {
 
   const totalSeconds = (questions ?? []).reduce((s, q) => s + (q.time_limit_seconds || 0), 0);
 
-  const metaTitle = form?.title ? `${form.title} — Formulários` : "Carregando… — Formulários";
-  const metaDescription = form?.description?.trim()
-    || "Editor de perguntas, tipos e tempo por questão.";
+  usePageTitle(form?.title ?? "Formulário", {
+    customDescription: form?.description?.trim() || "Editor de perguntas, tipos e tempo por questão.",
+  });
 
   return (
     <HubLayout>
-      <Helmet>
-        <title>{metaTitle}</title>
-        <meta name="description" content={metaDescription} />
-      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={form?.title ?? "Formulário"}
@@ -59,36 +57,44 @@ export default function FormEditorPage() {
           breadcrumbs={[{ label: "Assessments", href: "/assessments" }, { label: form?.title ?? "..." }]}
           actions={
             <div className="flex items-center gap-2">
+              <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
               {draft && !draft.frozen && (
-                <Button
-                  disabled={(questions?.length ?? 0) === 0 || publish.isPending}
-                  onClick={() => publish.mutate({ form_id: id!, version_id: draft.id })}
-                >
-                  Publicar versão
-                </Button>
+                <ConfirmActionDialog
+                  trigger={
+                    <Button disabled={(questions?.length ?? 0) === 0 || publish.isPending}>
+                      Publicar versão
+                    </Button>
+                  }
+                  title="Publicar versão?"
+                  description="Após publicar, as perguntas e tempos ficarão congelados nesta versão. Edições futuras criarão uma nova versão."
+                  confirmLabel="Publicar"
+                  destructive={false}
+                  onConfirm={() => publish.mutate({ form_id: id!, version_id: draft.id })}
+                />
               )}
             </div>
           }
         />
 
         <Card>
-          <CardContent className="p-4 grid gap-3 sm:grid-cols-3">
+          <CardContent className="p-4 grid gap-4 sm:grid-cols-3 text-sm">
             <div>
-              <Label>Status</Label>
-              <p><Badge variant={form?.status === "published" ? "default" : "secondary"}>{form?.status}</Badge></p>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <div className="mt-1"><FormStatusBadge status={form?.status} /></div>
             </div>
             <div>
-              <Label>Versão atual</Label>
-              <p className="text-sm">v{draft?.version_number} {draft?.frozen && <Lock className="h-3 w-3 inline ml-1" />}</p>
+              <p className="text-xs text-muted-foreground">Versão atual</p>
+              <p className="mt-1 font-medium">v{draft?.version_number} {draft?.frozen && <Lock className="h-3 w-3 inline ml-1" aria-label="Versão congelada" />}</p>
             </div>
             <div>
-              <Label>Tempo total</Label>
-              <p className="text-sm">{Math.ceil(totalSeconds / 60)} min ({totalSeconds}s)</p>
+              <p className="text-xs text-muted-foreground">Tempo total</p>
+              <p className="mt-1 font-medium">{Math.ceil(totalSeconds / 60)} min ({totalSeconds}s)</p>
             </div>
             <div className="sm:col-span-3">
-              <Label>Nível</Label>
+              <Label htmlFor="form-level">Nível</Label>
               <Input
+                id="form-level"
                 type="number"
                 min={1}
                 defaultValue={form?.level ?? 1}
