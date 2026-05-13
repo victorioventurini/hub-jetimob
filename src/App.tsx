@@ -213,6 +213,9 @@ function AuthenticatedRoutes() {
 
         {/* Analysis (Estratégica) */}
         {analysisRoutes}
+
+        {/* Assessments */}
+        {assessmentRoutes}
         
         {/* Core (Home, Profile, Users, etc.) */}
         {coreRoutes}
