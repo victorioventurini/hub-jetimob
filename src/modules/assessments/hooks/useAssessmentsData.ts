@@ -282,14 +282,16 @@ export function useUpsertQuestion() {
       help_text?: string | null;
       required: boolean;
       time_limit_seconds: number;
-      options?: unknown;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      options?: any;
     }) => {
       if (input.id) {
         const { id, ...rest } = input;
         const { error } = await supabase.from("assessment_form_questions").update(rest).eq("id", id).eq("bu_id", currentBuId!);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("assessment_form_questions").insert({ ...input, bu_id: currentBuId! });
+        const { id: _ignore, ...rest } = input;
+        const { error } = await supabase.from("assessment_form_questions").insert([{ ...rest, bu_id: currentBuId! }]);
         if (error) throw error;
       }
     },
