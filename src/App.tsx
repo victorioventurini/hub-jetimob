@@ -42,6 +42,8 @@ import { coreRoutes } from "./routes/core.routes";
 import { eventsRoutes } from "./routes/events.routes";
 import { projectRoutes } from "./routes/projects.routes";
 import { analysisRoutes } from "./routes/analysis.routes";
+import { assessmentRoutes } from "./routes/assessments.routes";
+const PublicAssessmentRunner = lazy(() => import("@/pages/PublicAssessmentRunner"));
 
 /**
  * Fallback de loading otimizado
@@ -121,6 +123,7 @@ function AppRoutes() {
       <Routes>
         {/* ===== ROTAS PÚBLICAS (sem BuProvider) — vindas de src/routes/public.routes.tsx ===== */}
         {publicRoutes}
+        <Route path="/q/:token" element={<PublicAssessmentRunner />} />
         
         {/* ===== ROTAS AUTENTICADAS (com BuProvider) ===== */}
         <Route path="*" element={<AuthenticatedRoutesWrapper />} />
@@ -211,6 +214,9 @@ function AuthenticatedRoutes() {
 
         {/* Analysis (Estratégica) */}
         {analysisRoutes}
+
+        {/* Assessments */}
+        {assessmentRoutes}
         
         {/* Core (Home, Profile, Users, etc.) */}
         {coreRoutes}

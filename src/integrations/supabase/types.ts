@@ -12532,6 +12532,40 @@ export type Database = {
       }
       resolve_work_email: { Args: { p_auth_user_id: string }; Returns: string }
       restore_project_v2: { Args: { p_project_id: string }; Returns: Json }
+      rpc_assessment_answer_upsert: {
+        Args: {
+          p_answer_options?: Json
+          p_answer_text?: string
+          p_paste_detected?: boolean
+          p_question_id: string
+          p_run_id: string
+          p_signals?: Json
+          p_time_spent_seconds?: number
+        }
+        Returns: Json
+      }
+      rpc_assessment_invite_lookup: { Args: { p_token: string }; Returns: Json }
+      rpc_assessment_run_start: {
+        Args: {
+          p_client_meta?: Json
+          p_cpf: string
+          p_name?: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      rpc_assessment_run_submit: { Args: { p_run_id: string }; Returns: Json }
+      rpc_assessment_run_telemetry: {
+        Args: {
+          p_copy_inc?: number
+          p_paste_inc?: number
+          p_run_id: string
+          p_signals?: Json
+          p_tab_switch_inc?: number
+          p_visibility_loss_inc?: number
+        }
+        Returns: Json
+      }
       rpc_decisions_inbox: {
         Args: {
           p_area_ids?: string[]
