@@ -299,6 +299,18 @@ function RunnerActive({
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs" aria-label="Indicadores de monitoramento">
+          <Badge variant={tabSwitches > 0 ? "destructive" : "outline"} className="font-mono">
+            Trocas de aba: {tabSwitches}
+          </Badge>
+          <Badge variant={pasteAttempts > 0 ? "destructive" : "outline"} className="font-mono">
+            Tentativas de colar: {pasteAttempts}
+          </Badge>
+          <Badge variant={copyAttempts > 0 ? "destructive" : "outline"} className="font-mono">
+            Tentativas de copiar: {copyAttempts}
+          </Badge>
+          <span className="text-muted-foreground">Estes eventos são enviados ao avaliador.</span>
+        </div>
         <Card>
           <CardContent className="p-4 space-y-3">
             <p className="text-xs text-muted-foreground">{q._formTitle} · até {q.time_limit_seconds}s</p>
