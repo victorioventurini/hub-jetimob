@@ -185,7 +185,13 @@ function QuestionRow({
           {!frozen && (
             <div className="flex gap-1">
               <Button size="sm" variant="ghost" onClick={onEdit}>Editar</Button>
-              <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="h-4 w-4" /></Button>
+              <ConfirmActionDialog
+                trigger={<Button size="sm" variant="ghost" aria-label="Excluir pergunta"><Trash2 className="h-4 w-4" /></Button>}
+                title="Excluir pergunta?"
+                description="Esta ação não pode ser desfeita."
+                confirmLabel="Excluir"
+                onConfirm={onDelete}
+              />
             </div>
           )}
         </CardContent>
