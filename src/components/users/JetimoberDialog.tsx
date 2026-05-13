@@ -495,12 +495,30 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
     const result = schema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof JetimoberFormData, string>> = {};
+      const FIELD_LABELS: Record<string, string> = {
+        first_name: "Nome",
+        last_name: "Sobrenome",
+        work_email: "E-mail",
+        cpf: "CPF",
+        job_title_id: "Cargo",
+        city: "Cidade",
+        state: "Estado",
+        work_mode: "Modalidade",
+        employment_status: "Status",
+        team_id: "Time",
+        manager_user_id: "Gestor",
+        start_date: "Data de início",
+      };
       result.error.errors.forEach((err) => {
         const field = err.path[0] as keyof JetimoberFormData;
         fieldErrors[field] = err.message;
       });
       setErrors(fieldErrors);
-      toast.error("Por favor, corrija os erros no formulário.");
+      const firstErr = result.error.errors[0];
+      const firstField = String(firstErr?.path[0] ?? "");
+      const label = FIELD_LABELS[firstField] ?? firstField;
+      console.warn("[JetimoberDialog] validation errors", result.error.errors);
+      toast.error(label ? `${label}: ${firstErr.message}` : "Por favor, corrija os erros no formulário.");
       return;
     }
 
