@@ -45,9 +45,18 @@ export default function AssessmentDetailPage() {
   const a = data?.assessment;
   const links = data?.links ?? [];
   const update = useUpdateAssessment();
+  const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
+
+  const metaTitle = a?.title ? `${a.title} — Assessments` : "Carregando… — Assessments";
+  const metaDescription = a?.description?.trim()
+    || "Detalhes da prova: formulários vinculados, convites e resultados.";
 
   return (
     <HubLayout>
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={a?.title ?? "Prova"}
