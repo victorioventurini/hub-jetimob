@@ -446,7 +446,7 @@ export function useDeleteAssessment() {
         .select("id", { count: "exact", head: true })
         .eq("assessment_id", id)
         .eq("bu_id", currentBuId!)
-        .in("status", ["pending", "in_progress"]);
+        .in("status", ["pending", "started"]);
       if (cErr) throw cErr;
       if ((count ?? 0) > 0) {
         throw new Error(`Existem ${count} convite(s) ativo(s). Revogue-os antes de excluir a prova.`);
