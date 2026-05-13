@@ -123,6 +123,7 @@ function AppRoutes() {
       <Routes>
         {/* ===== ROTAS PÚBLICAS (sem BuProvider) — vindas de src/routes/public.routes.tsx ===== */}
         {publicRoutes}
+        <Route path="/q/:token" element={<PublicAssessmentRunner />} />
         
         {/* ===== ROTAS AUTENTICADAS (com BuProvider) ===== */}
         <Route path="*" element={<AuthenticatedRoutesWrapper />} />
