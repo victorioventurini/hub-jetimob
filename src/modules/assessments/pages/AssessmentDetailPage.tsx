@@ -3,14 +3,16 @@
  */
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Plus, Trash2, Copy, Mail } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUrlTab } from "@/shared/url";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { SavedLinksPopover } from "@/shared/saved-links";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +40,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useBu } from "@/contexts/BuContext";
 import { maskCpfInput, normalizeCpf, isValidCpf } from "@/lib/validation/cpf";
 import { AlertCircle, X as XIcon } from "lucide-react";
+import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../components/StatusBadges";
+import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,16 +51,12 @@ export default function AssessmentDetailPage() {
   const update = useUpdateAssessment();
   const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
 
-  const metaTitle = a?.title ? `${a.title} — Assessments` : "Carregando… — Assessments";
-  const metaDescription = a?.description?.trim()
-    || "Detalhes da prova: formulários vinculados, convites e resultados.";
+  usePageTitle(a?.title ?? "Prova", {
+    customDescription: a?.description?.trim() || "Detalhes da prova: formulários, convites e resultados.",
+  });
 
   return (
     <HubLayout>
-      <Helmet>
-        <title>{metaTitle}</title>
-        <meta name="description" content={metaDescription} />
-      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={a?.title ?? "Prova"}
@@ -64,22 +64,39 @@ export default function AssessmentDetailPage() {
           breadcrumbs={[{ label: "Assessments", href: "/assessments" }, { label: a?.title ?? "..." }]}
           actions={
             <div className="flex items-center gap-2">
+              <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
               {a && a.status !== "active" && (
                 <Button onClick={() => update.mutate({ id: id!, status: "active" })}>Ativar</Button>
               )}
               {a?.status === "active" && (
-                <Button variant="outline" onClick={() => update.mutate({ id: id!, status: "archived" })}>Arquivar</Button>
+                <ConfirmActionDialog
+                  trigger={<Button variant="outline">Arquivar</Button>}
+                  title="Arquivar prova?"
+                  description="A prova ficará indisponível para novos respondentes. Convites pendentes não poderão mais ser usados."
+                  confirmLabel="Arquivar"
+                  destructive
+                  onConfirm={() => update.mutate({ id: id!, status: "archived" })}
+                />
               )}
             </div>
           }
         />
 
         <Card>
-          <CardContent className="p-4 grid gap-3 sm:grid-cols-3">
-            <div><Label>Status</Label><p><Badge variant={a?.status === "active" ? "default" : "secondary"}>{a?.status}</Badge></p></div>
-            <div><Label>Formulários</Label><p>{links.length}</p></div>
-            <div><Label>Tempo total padrão</Label><p>{a?.default_total_time_seconds ?? "auto"}</p></div>
+          <CardContent className="p-4 grid gap-4 sm:grid-cols-3 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <div className="mt-1"><AssessmentStatusBadge status={a?.status} /></div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Formulários vinculados</p>
+              <p className="mt-1 font-medium">{links.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Tempo total padrão</p>
+              <p className="mt-1 font-medium">{a?.default_total_time_seconds ? `${a.default_total_time_seconds}s` : "Automático"}</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -115,29 +132,44 @@ function FormsLinkTab({ assessmentId, links, disabled }: { assessmentId: string;
       <div className="flex justify-end">
         <Button onClick={() => setOpen(true)} disabled={disabled || available.length === 0}><Plus className="h-4 w-4 mr-2" />Adicionar formulário</Button>
       </div>
-      {links.length === 0 && (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhum formulário vinculado.</CardContent></Card>
+      {links.length === 0 ? (
+        <EmptyState
+          variant="firstUse"
+          title="Nenhum formulário vinculado"
+          description={disabled ? "Esta prova está arquivada." : "Vincule um formulário publicado para começar."}
+          actionLabel={disabled || available.length === 0 ? undefined : "Adicionar formulário"}
+          onAction={disabled || available.length === 0 ? undefined : () => setOpen(true)}
+        />
+      ) : (
+        <div className="grid gap-2">
+          {links.map((l, idx) => {
+            const f = forms?.find((x) => x.id === l.form_id);
+            return (
+              <Card key={l.id}>
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">#{idx + 1}</p>
+                    <p className="font-medium">{f?.title ?? l.form_id}</p>
+                  </div>
+                  {!disabled && (
+                    <ConfirmActionDialog
+                      trigger={
+                        <Button size="sm" variant="ghost" aria-label="Remover formulário">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      }
+                      title="Remover formulário?"
+                      description="O formulário será desvinculado desta prova. Convites pendentes podem ser afetados."
+                      confirmLabel="Remover"
+                      onConfirm={() => remove.mutate({ link_id: l.id, assessment_id: assessmentId })}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
-      <div className="grid gap-2">
-        {links.map((l, idx) => {
-          const f = forms?.find((x) => x.id === l.form_id);
-          return (
-            <Card key={l.id}>
-              <CardContent className="p-3 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">#{idx + 1}</p>
-                  <p className="font-medium">{f?.title ?? l.form_id}</p>
-                </div>
-                {!disabled && (
-                  <Button size="sm" variant="ghost" onClick={() => remove.mutate({ link_id: l.id, assessment_id: assessmentId })}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -195,41 +227,54 @@ function InvitesTab({ assessmentId }: { assessmentId: string }) {
       <div className="flex justify-end">
         <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Novo convite</Button>
       </div>
-      {(invites?.length ?? 0) === 0 && (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhum convite ainda.</CardContent></Card>
-      )}
-      <div className="grid gap-2">
-        {invites?.map((inv) => {
-          const link = `${baseUrl}/q/${inv.token}`;
-          return (
-            <Card key={inv.id}>
-              <CardContent className="p-3 flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{inv.invitee_name || inv.invitee_cpf}</p>
-                  <p className="text-xs text-muted-foreground truncate">CPF {inv.invitee_cpf} · {inv.invitee_email ?? "sem email"}</p>
-                </div>
-                <Badge variant={inv.status === "submitted" ? "default" : inv.status === "revoked" ? "destructive" : "secondary"}>{inv.status}</Badge>
-                <div className="flex items-center gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado"); }}>
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                  {inv.invitee_email && (
-                    <Button size="sm" variant="ghost" asChild>
-                      <a href={`mailto:${inv.invitee_email}?subject=${encodeURIComponent("Convite para questionário")}&body=${encodeURIComponent(link)}`}><Mail className="h-3 w-3" /></a>
+      {(invites?.length ?? 0) === 0 ? (
+        <EmptyState
+          variant="firstUse"
+          title="Nenhum convite ainda"
+          description="Crie convites para que respondentes acessem a prova com link único."
+          actionLabel="Novo convite"
+          onAction={() => setOpen(true)}
+        />
+      ) : (
+        <div className="grid gap-2">
+          {invites?.map((inv) => {
+            const link = `${baseUrl}/q/${inv.token}`;
+            return (
+              <Card key={inv.id}>
+                <CardContent className="p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{inv.invitee_name || inv.invitee_cpf}</p>
+                    <p className="text-xs text-muted-foreground truncate">CPF {inv.invitee_cpf} · {inv.invitee_email ?? "sem email"}</p>
+                  </div>
+                  <InviteStatusBadge status={inv.status} />
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" aria-label="Copiar link" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado"); }}>
+                      <Copy className="h-3 w-3" />
                     </Button>
-                  )}
-                  {inv.status !== "submitted" && inv.status !== "revoked" && (
-                    <Button size="sm" variant="ghost" onClick={() => revoke.mutate({ id: inv.id, assessment_id: assessmentId })}>Revogar</Button>
-                  )}
-                  {inv.status === "revoked" && (
-                    <Button size="sm" variant="ghost" onClick={() => reactivate.mutate({ id: inv.id, assessment_id: assessmentId })}>Reativar</Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                    {inv.invitee_email && (
+                      <Button size="sm" variant="ghost" aria-label="Enviar email" asChild>
+                        <a href={`mailto:${inv.invitee_email}?subject=${encodeURIComponent("Convite para questionário")}&body=${encodeURIComponent(link)}`}><Mail className="h-3 w-3" /></a>
+                      </Button>
+                    )}
+                    {inv.status !== "submitted" && inv.status !== "revoked" && (
+                      <ConfirmActionDialog
+                        trigger={<Button size="sm" variant="ghost">Revogar</Button>}
+                        title="Revogar convite?"
+                        description="O respondente perderá o acesso ao link. Você pode reativar depois."
+                        confirmLabel="Revogar"
+                        onConfirm={() => revoke.mutate({ id: inv.id, assessment_id: assessmentId })}
+                      />
+                    )}
+                    {inv.status === "revoked" && (
+                      <Button size="sm" variant="ghost" onClick={() => reactivate.mutate({ id: inv.id, assessment_id: assessmentId })}>Reativar</Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <NewInviteDialog
         open={open}
@@ -451,26 +496,36 @@ function NewInviteDialog({
 function ResultsTab({ assessmentId }: { assessmentId: string }) {
   const { data: runs } = useRuns(assessmentId);
   if (!runs || runs.length === 0) {
-    return <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma resposta ainda.</CardContent></Card>;
+    return (
+      <EmptyState
+        variant="default"
+        title="Nenhuma resposta ainda"
+        description="Quando respondentes enviarem suas tentativas, elas aparecerão aqui."
+      />
+    );
   }
   return (
     <div className="grid gap-2">
       {runs.map((r) => {
         const fraud = (r.tab_switch_count ?? 0) + (r.paste_attempt_count ?? 0) + (r.copy_attempt_count ?? 0);
         return (
-          <Link key={r.id} to={`/assessments/runs/${r.id}`}>
+          <Link
+            key={r.id}
+            to={`/assessments/runs/${r.id}`}
+            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <Card className="hover:bg-accent/40 transition-colors">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{r.respondent_name || r.respondent_cpf}</p>
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{r.respondent_name || r.respondent_cpf}</p>
                   <p className="text-xs text-muted-foreground">
                     Iniciado em {new Date(r.started_at).toLocaleString()}
                     {r.submitted_at && ` · Enviado em ${new Date(r.submitted_at).toLocaleString()}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {fraud > 0 && <Badge variant="destructive">⚠ {fraud} sinais</Badge>}
-                  <Badge variant={r.status === "submitted" ? "default" : "secondary"}>{r.status}</Badge>
+                  {fraud > 0 && <Badge variant="destructive" aria-label={`${fraud} sinais de risco`}>⚠ {fraud}</Badge>}
+                  <RunStatusBadge status={r.status} />
                 </div>
               </CardContent>
             </Card>
