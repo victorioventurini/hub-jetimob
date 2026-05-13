@@ -42,6 +42,7 @@ export default function FormEditorPage() {
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
   const deleteForm = useDeleteForm();
+  const createDraft = useCreateDraftVersion();
   const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
   const editing = editingState.value || null;
   const setEditing = (v: string | null) => editingState.set(v ?? "");
