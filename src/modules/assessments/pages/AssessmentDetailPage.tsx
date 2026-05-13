@@ -81,6 +81,9 @@ export default function AssessmentDetailPage() {
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              <Button variant="outline" onClick={() => setEditOpen(true)} disabled={!a}>
+                <Pencil className="h-4 w-4 mr-2" />Editar
+              </Button>
               {a && a.status !== "active" && (
                 <Button onClick={() => update.mutate({ id: id!, status: "active" })}>Ativar</Button>
               )}
@@ -94,6 +97,20 @@ export default function AssessmentDetailPage() {
                   onConfirm={() => update.mutate({ id: id!, status: "archived" })}
                 />
               )}
+              <ConfirmActionDialog
+                trigger={
+                  <Button variant="outline" className="text-destructive hover:text-destructive" disabled={!a}>
+                    <Trash2 className="h-4 w-4 mr-2" />Excluir
+                  </Button>
+                }
+                title="Excluir prova?"
+                description="A prova será removida. Convites ativos (pendentes ou em andamento) precisam ser revogados antes."
+                confirmLabel="Excluir"
+                destructive
+                onConfirm={() =>
+                  del.mutate(id!, { onSuccess: () => navigate("/assessments?tab=assessments") })
+                }
+              />
             </div>
           }
         />
