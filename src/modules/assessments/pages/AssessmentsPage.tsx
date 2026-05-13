@@ -3,9 +3,11 @@
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Plus, ClipboardList, FileText } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
+import { useUrlTab } from "@/shared/url";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAssessments, useForms, useCreateAssessment, useCreateForm } from "../hooks/useAssessmentsData";
@@ -18,15 +20,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 
 export default function AssessmentsPage() {
+  const [tab, setTab] = useUrlTab<"provas" | "forms">("provas");
   return (
     <HubLayout>
+      <Helmet>
+        <title>Assessments — Hub da Jet</title>
+        <meta
+          name="description"
+          content="Provas e formulários com controle de tempo e anti-fraude no Hub da Jet."
+        />
+      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title="Assessments"
           description="Provas e formulários com controle de tempo e anti-fraude"
           breadcrumbs={[{ label: "Assessments" }]}
         />
-        <Tabs defaultValue="provas">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "provas" | "forms")}>
           <TabsList>
             <TabsTrigger value="provas"><ClipboardList className="h-4 w-4 mr-2" />Provas</TabsTrigger>
             <TabsTrigger value="forms"><FileText className="h-4 w-4 mr-2" />Formulários</TabsTrigger>

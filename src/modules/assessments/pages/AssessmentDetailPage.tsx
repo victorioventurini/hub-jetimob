@@ -3,9 +3,11 @@
  */
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Plus, Trash2, Copy, Mail } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
+import { useUrlTab } from "@/shared/url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -43,9 +45,18 @@ export default function AssessmentDetailPage() {
   const a = data?.assessment;
   const links = data?.links ?? [];
   const update = useUpdateAssessment();
+  const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
+
+  const metaTitle = a?.title ? `${a.title} — Assessments` : "Carregando… — Assessments";
+  const metaDescription = a?.description?.trim()
+    || "Detalhes da prova: formulários vinculados, convites e resultados.";
 
   return (
     <HubLayout>
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+      </Helmet>
       <div className="space-y-6">
         <PageHeader
           title={a?.title ?? "Prova"}
@@ -72,7 +83,7 @@ export default function AssessmentDetailPage() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="forms">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
           <TabsList>
             <TabsTrigger value="forms">Formulários</TabsTrigger>
             <TabsTrigger value="invites">Convites</TabsTrigger>
@@ -245,7 +256,7 @@ function NewInviteDialog({
   const { currentBuId } = useBu();
   const batch = useCreateInvitesBatch();
 
-  const [tab, setTab] = useState<"internal" | "external">("internal");
+  const [tab, setTab] = useUrlTab<"internal" | "external">("internal", "invite");
 
   // Internos
   const [teamId, setTeamId] = useState<string | null>(null);
