@@ -294,7 +294,17 @@ function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => v
                   </div>
                   <FormStatusBadge status={f.status} />
                 </Link>
-                <div className="flex items-center pr-3">
+                <div className="flex items-center gap-1 pr-3">
+                  <DuplicateActionButton
+                    title="Duplicar formulário?"
+                    description="Cria um novo formulário em rascunho com todas as perguntas copiadas. Não copia vínculos com provas."
+                    isPending={duplicate.isPending}
+                    ariaLabel="Duplicar formulário"
+                    onConfirm={async () => {
+                      const r = await duplicate.mutateAsync({ id: f.id });
+                      navigate(`/assessments/forms/${r.formId}`);
+                    }}
+                  />
                   <ConfirmActionDialog
                     trigger={
                       <Button
