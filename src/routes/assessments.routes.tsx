@@ -11,6 +11,7 @@ const AssessmentsPage = lazyWithRetry(() => import("@/modules/assessments/pages/
 const FormEditorPage = lazyWithRetry(() => import("@/modules/assessments/pages/FormEditorPage"));
 const AssessmentDetailPage = lazyWithRetry(() => import("@/modules/assessments/pages/AssessmentDetailPage"));
 const RunDetailPage = lazyWithRetry(() => import("@/modules/assessments/pages/RunDetailPage"));
+const AssessmentPreviewPage = lazyWithRetry(() => import("@/modules/assessments/pages/AssessmentPreviewPage"));
 
 function AssessmentsRoute({ children }: { children: React.ReactNode }) {
   return (
@@ -27,6 +28,7 @@ export const assessmentRoutes = (
     <Route path="/assessments" element={<AssessmentsRoute><AssessmentsPage /></AssessmentsRoute>} />
     <Route path="/assessments/forms/:id" element={<AssessmentsRoute><FormEditorPage /></AssessmentsRoute>} />
     <Route path="/assessments/provas/:id" element={<AssessmentsRoute><AssessmentDetailPage /></AssessmentsRoute>} />
+    <Route path="/assessments/provas/:id/preview" element={<AssessmentsRoute><AssessmentPreviewPage /></AssessmentsRoute>} />
     <Route path="/assessments/runs/:runId" element={<AssessmentsRoute><RunDetailPage /></AssessmentsRoute>} />
   </>
 );

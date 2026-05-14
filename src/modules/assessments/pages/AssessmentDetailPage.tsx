@@ -43,6 +43,7 @@ import { maskCpfInput, normalizeCpf, isValidCpf } from "@/lib/validation/cpf";
 import { AlertCircle, X as XIcon } from "lucide-react";
 import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
+import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -84,6 +85,7 @@ export default function AssessmentDetailPage() {
               <Button variant="outline" onClick={() => setEditOpen(true)} disabled={!a}>
                 <Pencil className="h-4 w-4 mr-2" />Editar
               </Button>
+              {id && <PreviewEnvironmentButton assessmentId={id} />}
               {a && a.status !== "active" && (
                 <Button onClick={() => update.mutate({ id: id!, status: "active" })}>Ativar</Button>
               )}

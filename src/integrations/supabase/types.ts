@@ -12549,6 +12549,10 @@ export type Database = {
         Returns: Json
       }
       rpc_assessment_invite_lookup: { Args: { p_token: string }; Returns: Json }
+      rpc_assessment_preview_lookup: {
+        Args: { p_assessment_id: string }
+        Returns: Json
+      }
       rpc_assessment_run_start: {
         Args: {
           p_client_meta?: Json
