@@ -287,11 +287,9 @@ export function useDeleteForm() {
           `Formulário em uso por ${count} prova(s). Desvincule antes de excluir.`,
         );
       }
-      const { error } = await supabase
-        .from("assessment_forms")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id)
-        .eq("bu_id", currentBuId!);
+      const { error } = await (supabase as any).rpc("soft_delete_assessment_form", {
+        p_form_id: id,
+      });
       if (error) throw error;
     },
     onSuccess: (_d, id) => {
