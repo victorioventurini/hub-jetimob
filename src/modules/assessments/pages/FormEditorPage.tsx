@@ -35,6 +35,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { FormStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
+import { DuplicateActionButton } from "../components/DuplicateActionButton";
 import {
   useForm,
   useVersions,
@@ -46,6 +47,7 @@ import {
   useCreateDraftVersion,
   useUpdateForm,
   useDeleteForm,
+  useDuplicateForm,
 } from "../hooks/useAssessmentsData";
 
 export default function FormEditorPage() {
