@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { LockedTextarea } from "@/modules/assessments/components/LockedTextarea";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { RunnerApi } from "../runner/runnerApi";
@@ -202,6 +203,7 @@ function RunnerActive({
   const [tabSwitches, setTabSwitches] = useState(0);
   const [pasteAttempts, setPasteAttempts] = useState(0);
   const [copyAttempts, setCopyAttempts] = useState(0);
+  const [confirmNextOpen, setConfirmNextOpen] = useState(false);
   const startTimeRef = useRef<Record<string, number>>({});
   const visHiddenAtRef = useRef<number | null>(null);
 
@@ -337,12 +339,12 @@ function RunnerActive({
           </CardContent>
         </Card>
 
-        <div className={cn("flex justify-between gap-2", "flex-col-reverse sm:flex-row")}>
-          <Button variant="outline" disabled={idx === 0} onClick={async () => { await saveAnswer(); setIdx((i) => Math.max(0, i - 1)); }}>
-            Anterior
-          </Button>
+        <div className="flex justify-end gap-2">
           {idx < questions.length - 1 ? (
-            <Button onClick={next} disabled={q.required && !(answers[q.id] ?? "").trim()}>
+            <Button
+              onClick={() => setConfirmNextOpen(true)}
+              disabled={q.required && !(answers[q.id] ?? "").trim()}
+            >
               Próxima
             </Button>
           ) : (
@@ -352,6 +354,20 @@ function RunnerActive({
             </Button>
           )}
         </div>
+
+        <ConfirmDialog
+          open={confirmNextOpen}
+          onOpenChange={setConfirmNextOpen}
+          title="Avançar para a próxima pergunta?"
+          description="Atenção: após avançar, não será possível voltar e revisar ou alterar esta resposta."
+          confirmLabel="Avançar"
+          cancelLabel="Continuar respondendo"
+          variant="warning"
+          onConfirm={async () => {
+            setConfirmNextOpen(false);
+            await next();
+          }}
+        />
       </main>
     </div>
   );
