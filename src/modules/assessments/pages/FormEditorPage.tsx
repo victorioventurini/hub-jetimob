@@ -41,6 +41,7 @@ import {
   useQuestions,
   useUpsertQuestion,
   useDeleteQuestion,
+  useReorderQuestions,
   usePublishVersion,
   useCreateDraftVersion,
   useUpdateForm,
