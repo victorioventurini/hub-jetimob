@@ -212,7 +212,7 @@ export default function FormEditorPage() {
   );
 }
 
-function QuestionRow({
+function SortableQuestionRow({
   q,
   index,
   versionId,
@@ -238,11 +238,31 @@ function QuestionRow({
   const [type, setType] = useState(q.question_type as "short_text" | "long_text" | "single_choice" | "multiple_choice");
   const [required, setRequired] = useState(q.required);
   const [time, setTime] = useState(q.time_limit_seconds);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: q.id,
+    disabled: frozen || editing,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   if (!editing) {
     return (
-      <Card>
+      <Card ref={setNodeRef} style={style}>
         <CardContent className="p-4 flex items-start justify-between gap-3">
+          {!frozen && (
+            <button
+              type="button"
+              className="mt-1 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+              aria-label="Arrastar para reordenar"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">#{index + 1} · {q.question_type} · {q.time_limit_seconds}s {q.required && "· obrigatória"}</p>
             <p className="font-medium">{q.prompt}</p>
