@@ -166,6 +166,16 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
                 <div className="flex items-center gap-2 shrink-0">
                   <AssessmentStatusBadge status={a.status} />
                   <PreviewEnvironmentButton assessmentId={a.id} variant="icon" />
+                  <DuplicateActionButton
+                    title="Duplicar prova?"
+                    description="Cria uma nova prova em rascunho com os mesmos formulários vinculados. Convites e respostas não são copiados."
+                    isPending={duplicate.isPending}
+                    ariaLabel="Duplicar prova"
+                    onConfirm={async () => {
+                      const newId = await duplicate.mutateAsync({ id: a.id });
+                      navigate(`/assessments/provas/${newId}`);
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
