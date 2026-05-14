@@ -62,6 +62,7 @@ export function AssessmentRunnerView({
   const [cpf, setCpf] = useState(isPreview ? "00000000000" : "");
   const [name, setName] = useState(lookup.invite?.invitee_name ?? (isPreview ? "Pré-visualização" : ""));
   const [starting, setStarting] = useState(false);
+  const [confirmNextOpen, setConfirmNextOpen] = useState(false);
 
   const questions = useMemo(() => {
     return (lookup.forms ?? []).flatMap((f) => f.questions.map((q) => ({ ...q, _formTitle: f.title })));
