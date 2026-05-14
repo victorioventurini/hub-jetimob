@@ -203,6 +203,7 @@ function RunnerActive({
   const [tabSwitches, setTabSwitches] = useState(0);
   const [pasteAttempts, setPasteAttempts] = useState(0);
   const [copyAttempts, setCopyAttempts] = useState(0);
+  const [confirmNextOpen, setConfirmNextOpen] = useState(false);
   const startTimeRef = useRef<Record<string, number>>({});
   const visHiddenAtRef = useRef<number | null>(null);
 
