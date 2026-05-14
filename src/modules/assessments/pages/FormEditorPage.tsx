@@ -286,7 +286,7 @@ function SortableQuestionRow({
   }
 
   return (
-    <Card>
+    <Card ref={setNodeRef} style={style}>
       <CardContent className="p-4 space-y-3">
         <div><Label>Pergunta</Label><Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} /></div>
         <div><Label>Ajuda (opcional)</Label><Input value={help} onChange={(e) => setHelp(e.target.value)} /></div>
