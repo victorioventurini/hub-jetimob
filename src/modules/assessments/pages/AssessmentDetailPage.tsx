@@ -45,6 +45,7 @@ import { AlertCircle, X as XIcon } from "lucide-react";
 import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
+import { DuplicateActionButton } from "../components/DuplicateActionButton";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
