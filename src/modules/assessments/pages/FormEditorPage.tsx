@@ -101,6 +101,18 @@ export default function FormEditorPage() {
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments?tab=forms"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              {id && (
+                <DuplicateActionButton
+                  variant="full"
+                  title="Duplicar formulário?"
+                  description="Cria um novo formulário em rascunho com todas as perguntas copiadas. Não copia vínculos com provas."
+                  isPending={duplicate.isPending}
+                  onConfirm={async () => {
+                    const r = await duplicate.mutateAsync({ id });
+                    navigate(`/assessments/forms/${r.formId}`);
+                  }}
+                />
+              )}
               <ConfirmActionDialog
                 trigger={
                   <Button variant="ghost" size="icon" aria-label="Excluir formulário" disabled={deleteForm.isPending}>
