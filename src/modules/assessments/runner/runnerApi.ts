@@ -16,8 +16,8 @@ export type StartRunInput = {
 };
 
 export type StartRunResult =
-  | { ok: true; runId: string; expiresAt: string }
-  | { ok: false; error: string };
+  | { ok: true; runId: string; expiresAt: string; error?: undefined }
+  | { ok: false; runId?: undefined; expiresAt?: undefined; error: string };
 
 export type AnswerInput = {
   runId: string;
