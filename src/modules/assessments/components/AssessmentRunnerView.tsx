@@ -82,8 +82,9 @@ export function AssessmentRunnerView({
       toast.error(res.error);
       return;
     }
-    setRunId(res.runId);
-    setExpiresAt(res.expiresAt);
+    const ok = res;
+    setRunId(ok.runId);
+    setExpiresAt(ok.expiresAt);
     setStage("running");
   }
 
