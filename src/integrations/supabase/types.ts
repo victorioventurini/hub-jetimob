@@ -12695,6 +12695,10 @@ export type Database = {
         Args: { p_form_id: string }
         Returns: undefined
       }
+      soft_delete_assessment_form_question: {
+        Args: { p_question_id: string; p_version_id: string }
+        Returns: undefined
+      }
       submit_ritual_evaluation: {
         Args: {
           p_change_one_thing: string
