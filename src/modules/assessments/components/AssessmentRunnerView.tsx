@@ -340,11 +340,12 @@ function RunnerActive({
         </Card>
 
         <div className={cn("flex justify-between gap-2", "flex-col-reverse sm:flex-row")}>
-          <Button variant="outline" disabled={idx === 0} onClick={async () => { await saveAnswer(); setIdx((i) => Math.max(0, i - 1)); }}>
-            Anterior
-          </Button>
+        <div className="flex justify-end gap-2">
           {idx < questions.length - 1 ? (
-            <Button onClick={next} disabled={q.required && !(answers[q.id] ?? "").trim()}>
+            <Button
+              onClick={() => setConfirmNextOpen(true)}
+              disabled={q.required && !(answers[q.id] ?? "").trim()}
+            >
               Próxima
             </Button>
           ) : (
@@ -354,6 +355,20 @@ function RunnerActive({
             </Button>
           )}
         </div>
+
+        <ConfirmDialog
+          open={confirmNextOpen}
+          onOpenChange={setConfirmNextOpen}
+          title="Avançar para a próxima pergunta?"
+          description="Atenção: após avançar, não será possível voltar e revisar ou alterar esta resposta."
+          confirmLabel="Avançar"
+          cancelLabel="Continuar respondendo"
+          variant="warning"
+          onConfirm={async () => {
+            setConfirmNextOpen(false);
+            await next();
+          }}
+        />
       </main>
     </div>
   );
