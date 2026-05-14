@@ -144,21 +144,21 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
       ) : (
         <div className="grid gap-3">
           {filtered.map((a) => (
-            <Link
-              key={a.id}
-              to={`/assessments/provas/${a.id}`}
-              className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Card className="hover:bg-accent/40 transition-colors">
-                <CardContent className="p-4 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{a.title}</p>
-                    {a.description && <p className="text-sm text-muted-foreground line-clamp-1">{a.description}</p>}
-                  </div>
+            <Card key={a.id} className="hover:bg-accent/40 transition-colors">
+              <CardContent className="p-4 flex items-center justify-between gap-3">
+                <Link
+                  to={`/assessments/provas/${a.id}`}
+                  className="min-w-0 flex-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <p className="font-medium truncate">{a.title}</p>
+                  {a.description && <p className="text-sm text-muted-foreground line-clamp-1">{a.description}</p>}
+                </Link>
+                <div className="flex items-center gap-2 shrink-0">
                   <AssessmentStatusBadge status={a.status} />
-                </CardContent>
-              </Card>
-            </Link>
+                  <PreviewEnvironmentButton assessmentId={a.id} variant="icon" />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
