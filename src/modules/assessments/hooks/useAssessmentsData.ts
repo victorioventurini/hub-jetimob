@@ -495,8 +495,9 @@ export function useUpsertQuestion() {
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["assessments", "questions", currentBuId!, v.version_id] });
+      toast.success(v.id ? "Pergunta atualizada" : "Pergunta criada");
     },
-    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+    onError: (e: Error) => toast.error(`Erro ao salvar pergunta: ${e.message}`),
   });
 }
 
@@ -506,15 +507,41 @@ export function useDeleteQuestion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; version_id: string }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("assessment_form_questions")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", input.id)
-        .eq("bu_id", currentBuId!);
+        .eq("bu_id", currentBuId!)
+        .is("deleted_at", null)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Sem permissão para excluir esta pergunta (RLS bloqueou o update)");
+      }
     },
-    onSuccess: (_d, v) => {
-      qc.invalidateQueries({ queryKey: ["assessments", "questions", currentBuId!, v.version_id] });
+    onMutate: async (vars) => {
+      const key = qk.questions(currentBuId!, vars.version_id);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<Array<{ id: string }>>(key);
+      if (previous) {
+        qc.setQueryData(
+          key,
+          previous.filter((q) => q.id !== vars.id),
+        );
+      }
+      return { previous };
+    },
+    onError: (e: Error, vars, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(qk.questions(currentBuId!, vars.version_id), ctx.previous);
+      }
+      toast.error(`Erro ao excluir pergunta: ${e.message}`);
+    },
+    onSuccess: () => {
+      toast.success("Pergunta excluída");
+    },
+    onSettled: (_d, _e, v) => {
+      qc.invalidateQueries({ queryKey: qk.questions(currentBuId!, v.version_id) });
     },
   });
 }
