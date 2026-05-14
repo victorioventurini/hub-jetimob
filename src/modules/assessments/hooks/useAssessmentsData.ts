@@ -507,7 +507,7 @@ export function useDeleteQuestion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; version_id: string }) => {
-      const { error } = await (supabase as any).rpc("soft_delete_assessment_form_question", {
+      const { error } = await supabase.rpc("soft_delete_assessment_form_question", {
         p_question_id: input.id,
         p_version_id: input.version_id,
       });
