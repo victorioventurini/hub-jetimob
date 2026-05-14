@@ -495,8 +495,9 @@ export function useUpsertQuestion() {
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["assessments", "questions", currentBuId!, v.version_id] });
+      toast.success(v.id ? "Pergunta atualizada" : "Pergunta criada");
     },
-    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+    onError: (e: Error) => toast.error(`Erro ao salvar pergunta: ${e.message}`),
   });
 }
 
