@@ -63,6 +63,7 @@ export default function FormEditorPage() {
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
   const deleteForm = useDeleteForm();
+  const duplicate = useDuplicateForm();
   const createDraft = useCreateDraftVersion();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
