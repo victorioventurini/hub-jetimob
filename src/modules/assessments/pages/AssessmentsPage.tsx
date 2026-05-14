@@ -218,6 +218,7 @@ function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => v
   const { data, isLoading } = useForms();
   const create = useCreateForm();
   const deleteForm = useDeleteForm();
+  const duplicate = useDuplicateForm();
   const navigate = useNavigate();
   const search = useUrlState<string>({ key: "qf", defaultValue: "" });
   const status = useUrlState<string>({ key: "sf", defaultValue: "all" });
