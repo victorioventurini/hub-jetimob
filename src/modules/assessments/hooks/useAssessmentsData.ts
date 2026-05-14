@@ -754,42 +754,17 @@ export function useDeleteAssessment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      console.log("[useDeleteAssessment] start", { id, currentBuId });
-      // Guarda: bloqueia exclusão se houver convites ativos (pending/started)
-      const { count, error: cErr } = await supabase
-        .from("assessment_invites")
-        .select("id", { count: "exact", head: true })
-        .eq("assessment_id", id)
-        .eq("bu_id", currentBuId!)
-        .in("status", ["pending", "started"]);
-      if (cErr) {
-        console.error("[useDeleteAssessment] count invites error", cErr);
-        throw cErr;
-      }
-      if ((count ?? 0) > 0) {
-        throw new Error(`Existem ${count} convite(s) ativo(s). Revogue-os antes de excluir a prova.`);
-      }
-      const { data, error } = await supabase
-        .from("assessments")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id)
-        .eq("bu_id", currentBuId!)
-        .select("id");
-      if (error) {
-        console.error("[useDeleteAssessment] update error", error);
-        throw error;
-      }
-      if (!data || data.length === 0) {
-        throw new Error("Sem permissão para excluir esta prova (RLS bloqueou o update).");
-      }
-      console.log("[useDeleteAssessment] success", { id });
+      const { error } = await (supabase as any).rpc("soft_delete_assessment", {
+        p_assessment_id: id,
+      });
+      if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_d, id) => {
       qc.invalidateQueries({ queryKey: ["assessments", "assessments", currentBuId!] });
+      qc.invalidateQueries({ queryKey: ["assessments", "assessment", currentBuId!, id] });
       toast.success("Prova excluída");
     },
     onError: (e: Error) => {
-      console.error("[useDeleteAssessment] onError", e);
       toast.error(`Erro ao excluir: ${e.message}`, { duration: 8000 });
     },
   });
