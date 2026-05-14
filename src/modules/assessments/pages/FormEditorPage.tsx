@@ -167,24 +167,28 @@ export default function FormEditorPage() {
         </Card>
 
         <div className="space-y-3">
-          {(questions ?? []).map((q, idx) => (
-            <QuestionRow
-              key={q.id}
-              q={q}
-              index={idx}
-              versionId={draft!.id}
-              frozen={draft?.frozen ?? false}
-              editing={editing === q.id}
-              onEdit={() => setEditing(q.id)}
-              onClose={() => setEditing(null)}
-              onSave={(payload) => {
-                upsert.mutate({ ...payload, id: q.id, version_id: draft!.id });
-                setEditing(null);
-              }}
-              onDelete={() => del.mutate({ id: q.id, version_id: draft!.id })}
-            />
-          ))}
-          {!draft?.frozen && (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={(questions ?? []).map((q) => q.id)} strategy={verticalListSortingStrategy}>
+              {(questions ?? []).map((q, idx) => (
+                <SortableQuestionRow
+                  key={q.id}
+                  q={q}
+                  index={idx}
+                  versionId={draft!.id}
+                  frozen={frozen}
+                  editing={editing === q.id}
+                  onEdit={() => setEditing(q.id)}
+                  onClose={() => setEditing(null)}
+                  onSave={(payload) => {
+                    upsert.mutate({ ...payload, id: q.id, version_id: draft!.id });
+                    setEditing(null);
+                  }}
+                  onDelete={() => del.mutate({ id: q.id, version_id: draft!.id })}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {!frozen && (
             <Button
               variant="outline"
               className="w-full"
