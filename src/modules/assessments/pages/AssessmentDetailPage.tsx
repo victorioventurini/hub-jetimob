@@ -55,6 +55,7 @@ export default function AssessmentDetailPage() {
   const links = data?.links ?? [];
   const update = useUpdateAssessment();
   const del = useDeleteAssessment();
+  const duplicate = useDuplicateAssessment();
   const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
