@@ -28,6 +28,7 @@ export const assessmentRoutes = (
     <Route path="/assessments" element={<AssessmentsRoute><AssessmentsPage /></AssessmentsRoute>} />
     <Route path="/assessments/forms/:id" element={<AssessmentsRoute><FormEditorPage /></AssessmentsRoute>} />
     <Route path="/assessments/provas/:id" element={<AssessmentsRoute><AssessmentDetailPage /></AssessmentsRoute>} />
+    <Route path="/assessments/provas/:id/preview" element={<AssessmentsRoute><AssessmentPreviewPage /></AssessmentsRoute>} />
     <Route path="/assessments/runs/:runId" element={<AssessmentsRoute><RunDetailPage /></AssessmentsRoute>} />
   </>
 );
