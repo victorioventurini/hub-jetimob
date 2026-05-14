@@ -11,6 +11,7 @@ const AssessmentsPage = lazyWithRetry(() => import("@/modules/assessments/pages/
 const FormEditorPage = lazyWithRetry(() => import("@/modules/assessments/pages/FormEditorPage"));
 const AssessmentDetailPage = lazyWithRetry(() => import("@/modules/assessments/pages/AssessmentDetailPage"));
 const RunDetailPage = lazyWithRetry(() => import("@/modules/assessments/pages/RunDetailPage"));
+const AssessmentPreviewPage = lazyWithRetry(() => import("@/modules/assessments/pages/AssessmentPreviewPage"));
 
 function AssessmentsRoute({ children }: { children: React.ReactNode }) {
   return (
