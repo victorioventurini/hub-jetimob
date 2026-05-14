@@ -23,6 +23,7 @@ import {
   useAssessment,
   useUpdateAssessment,
   useDeleteAssessment,
+  useDuplicateAssessment,
   useForms,
   useVersions,
   useAddFormToAssessment,
@@ -44,6 +45,7 @@ import { AlertCircle, X as XIcon } from "lucide-react";
 import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
+import { DuplicateActionButton } from "../components/DuplicateActionButton";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +55,7 @@ export default function AssessmentDetailPage() {
   const links = data?.links ?? [];
   const update = useUpdateAssessment();
   const del = useDeleteAssessment();
+  const duplicate = useDuplicateAssessment();
   const [tab, setTab] = useUrlTab<"forms" | "invites" | "results">("forms");
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -86,6 +89,18 @@ export default function AssessmentDetailPage() {
                 <Pencil className="h-4 w-4 mr-2" />Editar
               </Button>
               {id && <PreviewEnvironmentButton assessmentId={id} />}
+              {id && (
+                <DuplicateActionButton
+                  variant="full"
+                  title="Duplicar prova?"
+                  description="Cria uma nova prova em rascunho com os mesmos formulários vinculados. Convites e respostas não são copiados."
+                  isPending={duplicate.isPending}
+                  onConfirm={async () => {
+                    const newId = await duplicate.mutateAsync({ id });
+                    navigate(`/assessments/provas/${newId}`);
+                  }}
+                />
+              )}
               {a && a.status !== "active" && (
                 <Button onClick={() => update.mutate({ id: id!, status: "active" })}>Ativar</Button>
               )}

@@ -35,6 +35,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { FormStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
+import { DuplicateActionButton } from "../components/DuplicateActionButton";
 import {
   useForm,
   useVersions,
@@ -46,6 +47,7 @@ import {
   useCreateDraftVersion,
   useUpdateForm,
   useDeleteForm,
+  useDuplicateForm,
 } from "../hooks/useAssessmentsData";
 
 export default function FormEditorPage() {
@@ -61,6 +63,7 @@ export default function FormEditorPage() {
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
   const deleteForm = useDeleteForm();
+  const duplicate = useDuplicateForm();
   const createDraft = useCreateDraftVersion();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -98,6 +101,18 @@ export default function FormEditorPage() {
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
               <Button variant="outline" asChild><Link to="/assessments?tab=forms"><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Link></Button>
+              {id && (
+                <DuplicateActionButton
+                  variant="full"
+                  title="Duplicar formulário?"
+                  description="Cria um novo formulário em rascunho com todas as perguntas copiadas. Não copia vínculos com provas."
+                  isPending={duplicate.isPending}
+                  onConfirm={async () => {
+                    const r = await duplicate.mutateAsync({ id });
+                    navigate(`/assessments/forms/${r.formId}`);
+                  }}
+                />
+              )}
               <ConfirmActionDialog
                 trigger={
                   <Button variant="ghost" size="icon" aria-label="Excluir formulário" disabled={deleteForm.isPending}>

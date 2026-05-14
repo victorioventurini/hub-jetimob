@@ -24,7 +24,16 @@ import { useUrlTab, useUrlState } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { SavedLinksPopover } from "@/shared/saved-links";
 import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
-import { useAssessments, useForms, useCreateAssessment, useCreateForm, useDeleteForm } from "../hooks/useAssessmentsData";
+import { DuplicateActionButton } from "../components/DuplicateActionButton";
+import {
+  useAssessments,
+  useForms,
+  useCreateAssessment,
+  useCreateForm,
+  useDeleteForm,
+  useDuplicateAssessment,
+  useDuplicateForm,
+} from "../hooks/useAssessmentsData";
 import { AssessmentStatusBadge, FormStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
@@ -81,6 +90,7 @@ const ASSESSMENT_STATUS_OPTIONS = [
 function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
   const { data, isLoading } = useAssessments();
   const create = useCreateAssessment();
+  const duplicate = useDuplicateAssessment();
   const navigate = useNavigate();
   const search = useUrlState<string>({ key: "qa", defaultValue: "" });
   const status = useUrlState<string>({ key: "sa", defaultValue: "all" });
@@ -156,6 +166,16 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
                 <div className="flex items-center gap-2 shrink-0">
                   <AssessmentStatusBadge status={a.status} />
                   <PreviewEnvironmentButton assessmentId={a.id} variant="icon" />
+                  <DuplicateActionButton
+                    title="Duplicar prova?"
+                    description="Cria uma nova prova em rascunho com os mesmos formulários vinculados. Convites e respostas não são copiados."
+                    isPending={duplicate.isPending}
+                    ariaLabel="Duplicar prova"
+                    onConfirm={async () => {
+                      const newId = await duplicate.mutateAsync({ id: a.id });
+                      navigate(`/assessments/provas/${newId}`);
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -198,6 +218,7 @@ function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => v
   const { data, isLoading } = useForms();
   const create = useCreateForm();
   const deleteForm = useDeleteForm();
+  const duplicate = useDuplicateForm();
   const navigate = useNavigate();
   const search = useUrlState<string>({ key: "qf", defaultValue: "" });
   const status = useUrlState<string>({ key: "sf", defaultValue: "all" });
@@ -273,7 +294,17 @@ function FormsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => v
                   </div>
                   <FormStatusBadge status={f.status} />
                 </Link>
-                <div className="flex items-center pr-3">
+                <div className="flex items-center gap-1 pr-3">
+                  <DuplicateActionButton
+                    title="Duplicar formulário?"
+                    description="Cria um novo formulário em rascunho com todas as perguntas copiadas. Não copia vínculos com provas."
+                    isPending={duplicate.isPending}
+                    ariaLabel="Duplicar formulário"
+                    onConfirm={async () => {
+                      const r = await duplicate.mutateAsync({ id: f.id });
+                      navigate(`/assessments/forms/${r.formId}`);
+                    }}
+                  />
                   <ConfirmActionDialog
                     trigger={
                       <Button

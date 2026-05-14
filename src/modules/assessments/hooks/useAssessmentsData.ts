@@ -301,6 +301,171 @@ export function useDeleteForm() {
   });
 }
 
+export function useDuplicateForm() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const { realProfileId } = useIdentity();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string }): Promise<{ formId: string }> => {
+      // 1) Carrega form original
+      const { data: original, error: oErr } = await supabase
+        .from("assessment_forms")
+        .select("title, description, level, theme_id, current_version_id")
+        .eq("id", input.id)
+        .eq("bu_id", currentBuId!)
+        .is("deleted_at", null)
+        .single();
+      if (oErr) throw oErr;
+
+      // 2) Cria novo form
+      const { data: newForm, error: fErr } = await supabase
+        .from("assessment_forms")
+        .insert({
+          bu_id: currentBuId!,
+          title: `Cópia de ${original.title}`,
+          description: original.description ?? null,
+          level: original.level,
+          theme_id: original.theme_id ?? null,
+          status: "draft",
+          created_by: realProfileId,
+        })
+        .select("id")
+        .single();
+      if (fErr) throw fErr;
+
+      // 3) Cria versão 1 draft
+      const { data: newVersion, error: vErr } = await supabase
+        .from("assessment_form_versions")
+        .insert({
+          bu_id: currentBuId!,
+          form_id: newForm.id,
+          version_number: 1,
+          status: "draft",
+          frozen: false,
+          created_by: realProfileId,
+        })
+        .select("id")
+        .single();
+      if (vErr) throw vErr;
+
+      // 4) Copia perguntas da versão de origem (current_version_id ou primeira existente)
+      let sourceVersionId = original.current_version_id as string | null;
+      if (!sourceVersionId) {
+        const { data: anyV } = await supabase
+          .from("assessment_form_versions")
+          .select("id")
+          .eq("form_id", input.id)
+          .eq("bu_id", currentBuId!)
+          .is("deleted_at", null)
+          .order("version_number", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        sourceVersionId = anyV?.id ?? null;
+      }
+
+      if (sourceVersionId) {
+        const { data: prevQs, error: qErr } = await supabase
+          .from("assessment_form_questions")
+          .select("position, question_type, prompt, help_text, required, time_limit_seconds, options")
+          .eq("version_id", sourceVersionId)
+          .eq("bu_id", currentBuId!)
+          .is("deleted_at", null)
+          .order("position", { ascending: true });
+        if (qErr) throw qErr;
+        if (prevQs && prevQs.length > 0) {
+          const toInsert = prevQs.map((q) => ({
+            ...q,
+            bu_id: currentBuId!,
+            version_id: newVersion.id,
+          }));
+          const { error: iErr } = await supabase.from("assessment_form_questions").insert(toInsert);
+          if (iErr) throw iErr;
+        }
+      }
+
+      // 5) Define current_version_id
+      const { error: uErr } = await supabase
+        .from("assessment_forms")
+        .update({ current_version_id: newVersion.id })
+        .eq("id", newForm.id)
+        .eq("bu_id", currentBuId!);
+      if (uErr) throw uErr;
+
+      return { formId: newForm.id as string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assessments", "forms", currentBuId!] });
+      toast.success("Formulário duplicado");
+    },
+    onError: (e: Error) => toast.error(`Erro ao duplicar formulário: ${e.message}`),
+  });
+}
+
+export function useDuplicateAssessment() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const { realProfileId } = useIdentity();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string }): Promise<string> => {
+      // 1) Carrega prova original
+      const { data: original, error: oErr } = await supabase
+        .from("assessments")
+        .select("title, description, default_total_time_seconds, available_from, available_until")
+        .eq("id", input.id)
+        .eq("bu_id", currentBuId!)
+        .is("deleted_at", null)
+        .single();
+      if (oErr) throw oErr;
+
+      // 2) Cria nova prova (draft)
+      const { data: newAssessment, error: aErr } = await supabase
+        .from("assessments")
+        .insert({
+          bu_id: currentBuId!,
+          title: `Cópia de ${original.title}`,
+          description: original.description ?? null,
+          default_total_time_seconds: original.default_total_time_seconds ?? null,
+          available_from: original.available_from ?? null,
+          available_until: original.available_until ?? null,
+          status: "draft",
+          created_by: realProfileId,
+        })
+        .select("id")
+        .single();
+      if (aErr) throw aErr;
+
+      // 3) Copia vínculos com formulários
+      const { data: links, error: lErr } = await supabase
+        .from("assessment_form_links")
+        .select("form_id, version_id, position")
+        .eq("assessment_id", input.id)
+        .eq("bu_id", currentBuId!)
+        .is("deleted_at", null)
+        .order("position", { ascending: true });
+      if (lErr) throw lErr;
+
+      if (links && links.length > 0) {
+        const toInsert = links.map((l) => ({
+          ...l,
+          bu_id: currentBuId!,
+          assessment_id: newAssessment.id,
+        }));
+        const { error: iErr } = await supabase.from("assessment_form_links").insert(toInsert);
+        if (iErr) throw iErr;
+      }
+
+      return newAssessment.id as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assessments", "assessments", currentBuId!] });
+      toast.success("Prova duplicada");
+    },
+    onError: (e: Error) => toast.error(`Erro ao duplicar prova: ${e.message}`),
+  });
+}
+
 export function useUpsertQuestion() {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
