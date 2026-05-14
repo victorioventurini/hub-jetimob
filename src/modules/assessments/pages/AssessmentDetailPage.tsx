@@ -43,6 +43,7 @@ import { maskCpfInput, normalizeCpf, isValidCpf } from "@/lib/validation/cpf";
 import { AlertCircle, X as XIcon } from "lucide-react";
 import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
+import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
