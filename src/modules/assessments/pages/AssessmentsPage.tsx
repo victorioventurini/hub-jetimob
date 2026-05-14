@@ -24,7 +24,16 @@ import { useUrlTab, useUrlState } from "@/shared/url";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { SavedLinksPopover } from "@/shared/saved-links";
 import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
-import { useAssessments, useForms, useCreateAssessment, useCreateForm, useDeleteForm } from "../hooks/useAssessmentsData";
+import { DuplicateActionButton } from "../components/DuplicateActionButton";
+import {
+  useAssessments,
+  useForms,
+  useCreateAssessment,
+  useCreateForm,
+  useDeleteForm,
+  useDuplicateAssessment,
+  useDuplicateForm,
+} from "../hooks/useAssessmentsData";
 import { AssessmentStatusBadge, FormStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 
