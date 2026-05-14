@@ -356,6 +356,52 @@ export function useDeleteQuestion() {
   });
 }
 
+export function useReorderQuestions() {
+  const supabase = useBuScopedSupabase();
+  const { currentBuId } = useBu();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { version_id: string; ordered_ids: string[] }) => {
+      // Persist new positions sequentially-safe via Promise.all (no UNIQUE constraint on position).
+      const updates = input.ordered_ids.map((id, idx) =>
+        supabase
+          .from("assessment_form_questions")
+          .update({ position: idx + 1 })
+          .eq("id", id)
+          .eq("bu_id", currentBuId!)
+      );
+      const results = await Promise.all(updates);
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
+    },
+    onMutate: async (vars) => {
+      const key = qk.questions(currentBuId!, vars.version_id);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<Array<{ id: string; position: number }>>(key);
+      if (previous) {
+        const byId = new Map(previous.map((q) => [q.id, q]));
+        const next = vars.ordered_ids
+          .map((id, idx) => {
+            const q = byId.get(id);
+            return q ? { ...q, position: idx + 1 } : null;
+          })
+          .filter(Boolean);
+        qc.setQueryData(key, next);
+      }
+      return { previous };
+    },
+    onError: (e: Error, vars, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(qk.questions(currentBuId!, vars.version_id), ctx.previous);
+      }
+      toast.error(`Erro ao reordenar: ${e.message}`);
+    },
+    onSettled: (_d, _e, vars) => {
+      qc.invalidateQueries({ queryKey: qk.questions(currentBuId!, vars.version_id) });
+    },
+  });
+}
+
 export function usePublishVersion() {
   const supabase = useBuScopedSupabase();
   const { currentBuId } = useBu();
