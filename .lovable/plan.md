@@ -1,42 +1,61 @@
-## Problema
+## Diagnóstico
 
-Em `/assessments/forms/:id`, ao clicar no ícone de lixeira de uma pergunta e confirmar, nada visível acontece — a pergunta continua na lista e nenhum toast é exibido.
+Na prova `53eb6d37…` o preview aparece **sem perguntas** porque:
 
-## Causa raiz
+- A tabela `assessment_form_links` guarda `version_id` capturado **no momento em que o formulário foi vinculado à prova** (versão 1).
+- O formulário já evoluiu: hoje existem v1, v2, v3 e v4 (todas `published`). A v4 tem 16 perguntas ativas.
+- A v1 ficou com `0` perguntas ativas (todas com `deleted_at`), porque o usuário continuou editando o formulário e, ao gerar novos rascunhos/publicações, o conteúdo "vivo" migrou para v2→v3→v4.
+- Como `rpc_assessment_preview_lookup` (e o público `rpc_assessment_invite_lookup`) lê perguntas **da `version_id` pinada no link**, o respondente vê uma versão vazia.
 
-`useDeleteQuestion` (em `src/modules/assessments/hooks/useAssessmentsData.ts`, linhas 503-520) executa um soft-delete (`update deleted_at = now()`) mas:
+Resultado prático: toda vez que o admin republica o formulário, todas as provas que apontam para esse formulário "esvaziam" silenciosamente. Não é só este caso — é estrutural.
 
-1. **Não tem `onError`** — qualquer erro (RLS bloqueando, bu_id divergente, falta de permissão `assessments.form.update/delete:bu`) é engolido silenciosamente.
-2. **Não tem `onSuccess` toast** — usuário não recebe feedback positivo.
-3. **Não detecta UPDATE bloqueado por RLS retornando 0 linhas** (mesma classe de bug já corrigida em `useDeleteAssessment`).
-4. **Sem optimistic update** — mesmo quando a query é invalidada, há janela perceptível antes do refetch.
+## Decisão
 
-A política RLS `questions_update` exige uma das três permissões (`form.update:bu`, `form.delete:bu`, `form.publish:bu`). Se o usuário não tiver nenhuma, o UPDATE retorna 0 linhas sem erro — bug clássico de PostgREST + RLS.
+A `version_id` no link continua existindo (auditoria/histórico de runs já emitidos), **mas a renderização para o respondente passa a usar sempre a versão `published` mais recente do formulário**. Isso elimina a necessidade do admin re-vincular o formulário a cada publicação.
 
-## Escopo do fix (apenas frontend, hook centralizado)
+## Mudanças
 
-Edição única em `src/modules/assessments/hooks/useAssessmentsData.ts` no hook `useDeleteQuestion`:
+### 1. Banco — migration
 
-- Trocar o `.update(...)` para retornar linhas via `.select("id")`.
-- Se `data?.length === 0`, lançar erro explícito: "Sem permissão para excluir esta pergunta (RLS bloqueou o update)".
-- `onMutate`: optimistic update removendo a pergunta do cache `["assessments","questions",buId,versionId]`.
-- `onError`: rollback do cache + `toast.error` com mensagem real do Supabase.
-- `onSuccess`: `toast.success("Pergunta excluída")`.
-- `onSettled`: invalidate da query (refetch confirmando estado final).
+Atualizar duas RPCs (mantendo assinatura/forma de retorno):
 
-Aplicar **o mesmo padrão de toast de erro** (sem optimistic, só feedback) também a `useUpsertQuestion` e `useReorderQuestions`, que sofrem da mesma falta de feedback (out-of-scope visual mas previne reincidência da reclamação no mesmo editor).
+- `rpc_assessment_preview_lookup(p_assessment_id uuid)`
+- `rpc_assessment_invite_lookup(p_token text)`
 
-Nenhuma mudança em UI, componentes, RLS ou banco.
+Em ambas, ao montar `forms`, ao invés de:
 
-## Como validar
+```text
+WHERE q.version_id = l.version_id
+```
 
-1. Reproduzir no form `9e737c1b-d214-4ab6-a142-88d984bca083`: clicar lixeira → Excluir.
-2. Esperado: pergunta some imediatamente, toast "Pergunta excluída".
-3. Se RLS bloquear (usuário sem permissão na BU): toast vermelho com motivo claro.
-4. Console: nenhum erro silencioso.
+resolver dinamicamente:
 
-## Detalhes técnicos
+```text
+v_effective := (
+  SELECT id FROM assessment_form_versions
+  WHERE form_id = l.form_id
+    AND status = 'published'
+    AND deleted_at IS NULL
+  ORDER BY version_number DESC
+  LIMIT 1
+)
+-- fallback: l.version_id (caso o form ainda não tenha publicação)
+```
 
-- Não tocar em `ConfirmActionDialog` nem em `FormEditorPage.tsx`.
-- Reutilizar `toast` do `sonner` (já presente no projeto).
-- Padrão idêntico ao já estabelecido em `useDeleteAssessment` (mesma classe de bug, mesma solução).
+E retornar `version_id = v_effective` no payload, para o frontend (que usa esse id como chave de runId/respostas) continuar consistente.
+
+### 2. Frontend
+
+Nenhuma mudança de UI. `AssessmentRunnerView` já consome `forms[].version_id` e `forms[].questions` exatamente como vierem da RPC.
+
+## Validação
+
+1. Abrir `/assessments/provas/53eb6d37-617b-4d31-9a50-d4726dcaa2cc/preview` → deve listar as 16 perguntas ativas da v4.
+2. Conferir que o link público (`/q/:token`) de qualquer convite ativo dessa prova também passa a mostrar as 16 perguntas.
+3. Criar nova versão draft → publicar → reabrir o preview: deve mostrar a nova versão automaticamente, sem precisar mexer no vínculo da prova.
+4. Provas com formulário sem nenhuma versão `published` ainda funcionam (fallback para `link.version_id`).
+
+## Fora de escopo
+
+- Limpar/normalizar registros antigos de `assessment_form_links.version_id` (não é necessário; o fallback cuida).
+- Mudar a forma como runs já submetidos guardam `version_id` (continua o pinado, para auditoria).
