@@ -12691,6 +12691,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      soft_delete_assessment: {
+        Args: { p_assessment_id: string }
+        Returns: undefined
+      }
       soft_delete_assessment_form: {
         Args: { p_form_id: string }
         Returns: undefined
