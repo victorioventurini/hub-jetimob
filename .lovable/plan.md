@@ -1,49 +1,42 @@
-## Objetivo
+## Problema
 
-Adicionar ação "Duplicar" para **provas** e **formulários** em `/assessments`, gerando cópias independentes em status `draft`.
+Em `/assessments/forms/:id`, ao clicar no ícone de lixeira de uma pergunta e confirmar, nada visível acontece — a pergunta continua na lista e nenhum toast é exibido.
 
-## Regras de negócio
+## Causa raiz
 
-**Duplicar formulário**
-- Cria novo `assessment_forms` com `status='draft'`, `title = "Cópia de {original}"`, mesmos `description`, `level`, `theme_id`.
-- Cria `assessment_form_versions` v1 (`status='draft'`, `frozen=false`).
-- Copia todas as perguntas da `current_version_id` do original (ou v1 se nulo) para a nova versão, preservando `position`, `question_type`, `prompt`, `help_text`, `required`, `time_limit_seconds`, `options`.
-- Define `current_version_id` no novo form.
-- Não copia: vínculos com provas, runs, convites.
+`useDeleteQuestion` (em `src/modules/assessments/hooks/useAssessmentsData.ts`, linhas 503-520) executa um soft-delete (`update deleted_at = now()`) mas:
 
-**Duplicar prova**
-- Cria nova `assessments` com `status='draft'`, `title = "Cópia de {original}"`, mesmos `description`, `default_total_time_seconds`, `available_from/until`.
-- Copia `assessment_form_links` (mesmo `form_id` + `version_id` + `position`) — formulários referenciados são compartilhados, não duplicados.
-- Não copia: convites, runs, respostas.
+1. **Não tem `onError`** — qualquer erro (RLS bloqueando, bu_id divergente, falta de permissão `assessments.form.update/delete:bu`) é engolido silenciosamente.
+2. **Não tem `onSuccess` toast** — usuário não recebe feedback positivo.
+3. **Não detecta UPDATE bloqueado por RLS retornando 0 linhas** (mesma classe de bug já corrigida em `useDeleteAssessment`).
+4. **Sem optimistic update** — mesmo quando a query é invalidada, há janela perceptível antes do refetch.
 
-Em ambos os casos, navegar para o detalhe da nova entidade após criação.
+A política RLS `questions_update` exige uma das três permissões (`form.update:bu`, `form.delete:bu`, `form.publish:bu`). Se o usuário não tiver nenhuma, o UPDATE retorna 0 linhas sem erro — bug clássico de PostgREST + RLS.
 
-## Arquivos novos
+## Escopo do fix (apenas frontend, hook centralizado)
 
-- `src/modules/assessments/components/DuplicateActionButton.tsx` — componente centralizado: `Button` ícone `Copy` + `ConfirmActionDialog`, recebe `{ label, description, onConfirm, isPending }`. Reaproveitável em listas e header de detalhe.
+Edição única em `src/modules/assessments/hooks/useAssessmentsData.ts` no hook `useDeleteQuestion`:
 
-## Arquivos editados
+- Trocar o `.update(...)` para retornar linhas via `.select("id")`.
+- Se `data?.length === 0`, lançar erro explícito: "Sem permissão para excluir esta pergunta (RLS bloqueou o update)".
+- `onMutate`: optimistic update removendo a pergunta do cache `["assessments","questions",buId,versionId]`.
+- `onError`: rollback do cache + `toast.error` com mensagem real do Supabase.
+- `onSuccess`: `toast.success("Pergunta excluída")`.
+- `onSettled`: invalidate da query (refetch confirmando estado final).
 
-- `src/modules/assessments/hooks/useAssessmentsData.ts`
-  - `useDuplicateForm()` — mutation; invalida `qk.forms`; retorna `{ formId }`.
-  - `useDuplicateAssessment()` — mutation; invalida `qk.assessments`; retorna `assessmentId`.
-- `src/modules/assessments/pages/AssessmentsPage.tsx`
-  - `AssessmentsTab`: adicionar `DuplicateActionButton` em cada card (ao lado de `PreviewEnvironmentButton`).
-  - `FormsTab`: adicionar `DuplicateActionButton` em cada card (ao lado do `ConfirmActionDialog` de exclusão); ajustar layout do card para acomodar 2 ações.
-- `src/modules/assessments/pages/AssessmentDetailPage.tsx` — adicionar `DuplicateActionButton` em `actions` do `PageHeader`.
-- `src/modules/assessments/pages/FormEditorPage.tsx` — adicionar `DuplicateActionButton` em `actions` do `PageHeader`.
+Aplicar **o mesmo padrão de toast de erro** (sem optimistic, só feedback) também a `useUpsertQuestion` e `useReorderQuestions`, que sofrem da mesma falta de feedback (out-of-scope visual mas previne reincidência da reclamação no mesmo editor).
+
+Nenhuma mudança em UI, componentes, RLS ou banco.
+
+## Como validar
+
+1. Reproduzir no form `9e737c1b-d214-4ab6-a142-88d984bca083`: clicar lixeira → Excluir.
+2. Esperado: pergunta some imediatamente, toast "Pergunta excluída".
+3. Se RLS bloquear (usuário sem permissão na BU): toast vermelho com motivo claro.
+4. Console: nenhum erro silencioso.
 
 ## Detalhes técnicos
 
-- Usa `useBuScopedSupabase` + `useIdentity().realProfileId` (padrão já estabelecido).
-- Mutations executam INSERTs sequenciais (form → version → questions; assessment → links) com tratamento de erro propagando `toast.error`.
-- Cópia de perguntas: `select` explícito (nunca `*`), `insert` em batch único.
-- Confirmação obrigatória via `ConfirmActionDialog` (impede cliques acidentais em listas densas).
-- `e.preventDefault()/stopPropagation()` no botão dentro do `<Link>` do card (mesmo padrão do botão excluir já existente em `FormsTab`).
-- Sem migrations: políticas RLS de INSERT já cobrem admin BU.
-
-## Fora de escopo
-
-- Duplicar versões individuais de um formulário (já coberto por `useCreateDraftVersion`).
-- Duplicar com novo `bu_id` (cross-BU).
-- Renomeação inline na hora de duplicar (usuário renomeia depois no editor).
+- Não tocar em `ConfirmActionDialog` nem em `FormEditorPage.tsx`.
+- Reutilizar `toast` do `sonner` (já presente no projeto).
+- Padrão idêntico ao já estabelecido em `useDeleteAssessment` (mesma classe de bug, mesma solução).
