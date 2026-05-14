@@ -1,30 +1,57 @@
-## Diagnóstico
+## Objetivo
 
-- Consultei o TCR e os docs canônicos exigidos: `TECHNICAL_CONTEXT_REGISTRY`, `DATA_MODEL_REGISTRY`, `IDENTITY_CONVENTION` e `PERMISSIONS_AND_RBAC_MODEL`.
-- O formulário informado existe, está ativo como rascunho e não tem vínculos ativos com provas.
-- As políticas atuais de `assessment_forms` permitem update por `assessments.form.delete:bu`, mas a remoção ainda pode falhar no fluxo atual porque o update de soft-delete usa uma política com `WITH CHECK` sobre o estado novo da linha. Ao setar `deleted_at`, a validação pode bloquear a operação e aparecer como erro de RLS.
+Permitir que admins/líderes verifiquem a usabilidade do ambiente do respondente (`/q/:token`) de cada prova **sem precisar consumir um convite real** nem expor um link público.
 
-## Plano de correção
+## Pré-checklist
 
-1. Ajustar a política RLS de soft-delete de formulários
-   - Separar a política de edição normal da política de remoção lógica.
-   - Permitir que usuários com `assessments.form.delete:bu` alterem `deleted_at` sem serem bloqueados pelo estado novo da linha.
-   - Manter isolamento por `bu_id` e permission keys; sem hardcode de role.
+- TCR / DATA_MODEL_REGISTRY / PERMISSIONS_AND_RBAC_MODEL: módulo Assessments ainda **não está catalogado**; o código vigente é a SSOT.
+- IDENTITY_CONVENTION: fluxo é leitura via RPC `SECURITY DEFINER`; `auth.uid()` é suficiente, sem `useIdentity`/`realProfileId`.
+- BU isolation: rota nova entra em `assessments.routes.tsx` sob `AssessmentsRoute` (Protected + BuRequired + ModuleRoute).
+- Reutilização: `PublicAssessmentRunner` será refatorado para extrair o `RunnerFlow` em um view compartilhado — sem duplicar UI.
+- Lazy: rota nova usa `lazyWithRetry`.
 
-2. Revisar as políticas relacionadas
-   - Validar se `assessment_form_versions` e `assessment_form_questions` precisam da mesma separação para remoções em cascata/edição de rascunho.
-   - Não alterar permissões de visualização nem criação.
+## Decisões de design
 
-3. Melhorar o hook `useDeleteForm`
-   - Manter o guarda que impede excluir formulários vinculados a provas.
-   - Confirmar filtro por `currentBuId` e soft-delete via `deleted_at`.
-   - Ajustar a mensagem do toast se necessário para diferenciar “sem permissão” de “formulário vinculado”.
+- **Não duplicar UI.** Extrair o `RunnerFlow` interno do `PublicAssessmentRunner` para um componente centralizado:
+  - `src/modules/assessments/components/AssessmentRunnerView.tsx` — recebe `{ lookup, runnerApi, isPreview }` e renderiza a experiência inteira (identificação → instruções → questões → finalização).
+  - `runnerApi` é uma interface com `startRun`, `upsertAnswer`, `submitRun`, `telemetry` — implementação real em `src/modules/assessments/runner/realRunnerApi.ts` (RPCs atuais), implementação preview em `previewRunnerApi.ts` (no-ops + estado em memória).
+- Em modo preview o view mostra um `Badge` semântico ("PREVIEW — respostas não são salvas") fixo no topo, e a tela final exibe "Submissão simulada" no lugar de "Enviada".
+- **Backend (1 migration):** RPC `rpc_assessment_preview_lookup(p_assessment_id uuid)` `SECURITY DEFINER`, `search_path = public`:
+  - valida `bu_id` da prova = `current_bu_id()` (RAISE 'forbidden' caso contrário);
+  - exige `has_assessment_permission(current_bu_id(), auth.uid(), 'assessments.assessment.read:bu')` (confirmar nome exato no momento da escrita; fallback `update:bu` se a key específica não existir);
+  - retorna o **mesmo shape** de `rpc_assessment_invite_lookup`, com `invite = { id: 'preview', status: 'preview', invitee_name: 'Preview', invitee_cpf_masked: '***.***.***-**', expires_at: null }`;
+  - `REVOKE ALL FROM PUBLIC, anon` + `GRANT EXECUTE TO authenticated`.
+- **Rota nova (BU-scoped):** `/assessments/provas/:id/preview` em `src/routes/assessments.routes.tsx`, dentro de `AssessmentsRoute`, lazy via `lazyWithRetry`. Renderiza um wrapper full-screen (sem `HubLayout`) para reproduzir fielmente o ambiente público; um `Button` "Voltar para a prova" no canto.
+- **Botão de entrada centralizado:** `src/modules/assessments/components/PreviewEnvironmentButton.tsx` (`<Button asChild><Link target="_blank" to={...}><Eye/>Pré-visualizar ambiente</Link></Button>`). Reutilizado em:
+  1. `AssessmentDetailPage` — nas `actions` do `PageHeader`, ao lado de "Editar".
+  2. `AssessmentsPage` — ação secundária por linha/card (ícone-only com tooltip).
 
-4. Validar
-   - Conferir políticas aplicadas no backend.
-   - Testar o cenário do formulário `ed1f81f9-2770-4929-973b-82fdcfa3de9c`: remover deve ocultar da lista sem violar RLS.
+## Mudanças
 
-## Arquivos/tabelas envolvidos
+### Backend (1 migration)
 
-- Backend: políticas de `assessment_forms` e, se necessário, `assessment_form_versions` / `assessment_form_questions`.
-- Frontend: `src/modules/assessments/hooks/useAssessmentsData.ts` apenas se o tratamento de erro precisar ser refinado.
+- `CREATE FUNCTION public.rpc_assessment_preview_lookup(p_assessment_id uuid) RETURNS jsonb` — reusa exatamente os mesmos `JOIN`s de `rpc_assessment_invite_lookup`.
+
+### Frontend
+
+- `src/modules/assessments/components/AssessmentRunnerView.tsx` (novo) — recebe `lookup`, `runnerApi`, `isPreview`.
+- `src/modules/assessments/runner/realRunnerApi.ts` (novo) — wrappers das RPCs atuais.
+- `src/modules/assessments/runner/previewRunnerApi.ts` (novo) — no-ops.
+- `src/pages/PublicAssessmentRunner.tsx` — vira um shell fino: faz `rpc_assessment_invite_lookup` e renderiza `<AssessmentRunnerView lookup={lookup} runnerApi={realRunnerApi(...)} />`.
+- `src/modules/assessments/pages/AssessmentPreviewPage.tsx` (novo) — chama `rpc_assessment_preview_lookup` (via `useBuScopedSupabase`) e renderiza `<AssessmentRunnerView lookup={lookup} runnerApi={previewRunnerApi()} isPreview />`.
+- `src/routes/assessments.routes.tsx` — registra a rota nova com `lazyWithRetry`.
+- `src/modules/assessments/components/PreviewEnvironmentButton.tsx` (novo) — botão centralizado.
+- `src/modules/assessments/pages/AssessmentDetailPage.tsx` — adiciona o botão nas `actions`.
+- `src/modules/assessments/pages/AssessmentsPage.tsx` — adiciona o botão na linha/card.
+
+## Fora de escopo
+
+- Preview anônimo (sem login).
+- Snapshots/print do ambiente.
+- Editar a prova a partir do preview.
+
+## Riscos
+
+- Garantir que `previewRunnerApi` realmente bloqueia toda escrita (cobrir com no-op + log local).
+- Confirmar a permission key exata (`assessments.assessment.read:bu` vs `update:bu`) lendo `permission_catalog` no momento da migration.
+- Refator do `PublicAssessmentRunner` precisa preservar 100% do comportamento atual (timer, anti-fraude, `LockedTextarea`, telemetria).
