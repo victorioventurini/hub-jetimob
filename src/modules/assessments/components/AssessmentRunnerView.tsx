@@ -339,7 +339,6 @@ function RunnerActive({
           </CardContent>
         </Card>
 
-        <div className={cn("flex justify-between gap-2", "flex-col-reverse sm:flex-row")}>
         <div className="flex justify-end gap-2">
           {idx < questions.length - 1 ? (
             <Button
