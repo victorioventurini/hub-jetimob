@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS forms_soft_delete ON public.assessment_forms;
