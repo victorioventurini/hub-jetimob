@@ -57,10 +57,26 @@ export default function FormEditorPage() {
   const { data: questions } = useQuestions(draft?.id);
   const upsert = useUpsertQuestion();
   const del = useDeleteQuestion();
+  const reorder = useReorderQuestions();
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
   const deleteForm = useDeleteForm();
   const createDraft = useCreateDraftVersion();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const frozen = draft?.frozen ?? false;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !draft || frozen) return;
+    const list = questions ?? [];
+    const oldIndex = list.findIndex((q) => q.id === active.id);
+    const newIndex = list.findIndex((q) => q.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const ordered = arrayMove(list, oldIndex, newIndex).map((q) => q.id);
+    reorder.mutate({ version_id: draft.id, ordered_ids: ordered });
+  };
   const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
   const editing = editingState.value || null;
   const setEditing = (v: string | null) => editingState.set(v ?? "");
