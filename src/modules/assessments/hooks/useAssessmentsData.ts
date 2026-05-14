@@ -507,17 +507,11 @@ export function useDeleteQuestion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; version_id: string }) => {
-      const { data, error } = await supabase
-        .from("assessment_form_questions")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", input.id)
-        .eq("bu_id", currentBuId!)
-        .is("deleted_at", null)
-        .select("id");
+      const { error } = await supabase.rpc("soft_delete_assessment_form_question", {
+        p_question_id: input.id,
+        p_version_id: input.version_id,
+      });
       if (error) throw error;
-      if (!data || data.length === 0) {
-        throw new Error("Sem permissão para excluir esta pergunta (RLS bloqueou o update)");
-      }
     },
     onMutate: async (vars) => {
       const key = qk.questions(currentBuId!, vars.version_id);
