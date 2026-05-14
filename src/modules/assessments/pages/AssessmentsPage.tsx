@@ -90,6 +90,7 @@ const ASSESSMENT_STATUS_OPTIONS = [
 function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
   const { data, isLoading } = useAssessments();
   const create = useCreateAssessment();
+  const duplicate = useDuplicateAssessment();
   const navigate = useNavigate();
   const search = useUrlState<string>({ key: "qa", defaultValue: "" });
   const status = useUrlState<string>({ key: "sa", defaultValue: "all" });
