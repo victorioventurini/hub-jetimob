@@ -23,6 +23,7 @@ import {
   useAssessment,
   useUpdateAssessment,
   useDeleteAssessment,
+  useDuplicateAssessment,
   useForms,
   useVersions,
   useAddFormToAssessment,
