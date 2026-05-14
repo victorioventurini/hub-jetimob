@@ -3,7 +3,24 @@
  */
 import { useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Lock } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Lock, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUrlState } from "@/shared/url";
@@ -24,6 +41,7 @@ import {
   useQuestions,
   useUpsertQuestion,
   useDeleteQuestion,
+  useReorderQuestions,
   usePublishVersion,
   useCreateDraftVersion,
   useUpdateForm,
@@ -39,10 +57,26 @@ export default function FormEditorPage() {
   const { data: questions } = useQuestions(draft?.id);
   const upsert = useUpsertQuestion();
   const del = useDeleteQuestion();
+  const reorder = useReorderQuestions();
   const publish = usePublishVersion();
   const updateForm = useUpdateForm();
   const deleteForm = useDeleteForm();
   const createDraft = useCreateDraftVersion();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const frozen = draft?.frozen ?? false;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !draft || frozen) return;
+    const list = questions ?? [];
+    const oldIndex = list.findIndex((q) => q.id === active.id);
+    const newIndex = list.findIndex((q) => q.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const ordered = arrayMove(list, oldIndex, newIndex).map((q) => q.id);
+    reorder.mutate({ version_id: draft.id, ordered_ids: ordered });
+  };
   const editingState = useUrlState<string>({ key: "q", defaultValue: "" });
   const editing = editingState.value || null;
   const setEditing = (v: string | null) => editingState.set(v ?? "");
@@ -133,24 +167,28 @@ export default function FormEditorPage() {
         </Card>
 
         <div className="space-y-3">
-          {(questions ?? []).map((q, idx) => (
-            <QuestionRow
-              key={q.id}
-              q={q}
-              index={idx}
-              versionId={draft!.id}
-              frozen={draft?.frozen ?? false}
-              editing={editing === q.id}
-              onEdit={() => setEditing(q.id)}
-              onClose={() => setEditing(null)}
-              onSave={(payload) => {
-                upsert.mutate({ ...payload, id: q.id, version_id: draft!.id });
-                setEditing(null);
-              }}
-              onDelete={() => del.mutate({ id: q.id, version_id: draft!.id })}
-            />
-          ))}
-          {!draft?.frozen && (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={(questions ?? []).map((q) => q.id)} strategy={verticalListSortingStrategy}>
+              {(questions ?? []).map((q, idx) => (
+                <SortableQuestionRow
+                  key={q.id}
+                  q={q}
+                  index={idx}
+                  versionId={draft!.id}
+                  frozen={frozen}
+                  editing={editing === q.id}
+                  onEdit={() => setEditing(q.id)}
+                  onClose={() => setEditing(null)}
+                  onSave={(payload) => {
+                    upsert.mutate({ ...payload, id: q.id, version_id: draft!.id });
+                    setEditing(null);
+                  }}
+                  onDelete={() => del.mutate({ id: q.id, version_id: draft!.id })}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {!frozen && (
             <Button
               variant="outline"
               className="w-full"
@@ -174,7 +212,7 @@ export default function FormEditorPage() {
   );
 }
 
-function QuestionRow({
+function SortableQuestionRow({
   q,
   index,
   versionId,
@@ -200,11 +238,31 @@ function QuestionRow({
   const [type, setType] = useState(q.question_type as "short_text" | "long_text" | "single_choice" | "multiple_choice");
   const [required, setRequired] = useState(q.required);
   const [time, setTime] = useState(q.time_limit_seconds);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: q.id,
+    disabled: frozen || editing,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   if (!editing) {
     return (
-      <Card>
+      <Card ref={setNodeRef} style={style}>
         <CardContent className="p-4 flex items-start justify-between gap-3">
+          {!frozen && (
+            <button
+              type="button"
+              className="mt-1 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+              aria-label="Arrastar para reordenar"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">#{index + 1} · {q.question_type} · {q.time_limit_seconds}s {q.required && "· obrigatória"}</p>
             <p className="font-medium">{q.prompt}</p>
@@ -228,7 +286,7 @@ function QuestionRow({
   }
 
   return (
-    <Card>
+    <Card ref={setNodeRef} style={style}>
       <CardContent className="p-4 space-y-3">
         <div><Label>Pergunta</Label><Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} /></div>
         <div><Label>Ajuda (opcional)</Label><Input value={help} onChange={(e) => setHelp(e.target.value)} /></div>
