@@ -318,7 +318,8 @@ function RunnerActive({
             <p className="font-medium text-base">{q.prompt}</p>
             {q.help_text && <p className="text-xs text-muted-foreground">{q.help_text}</p>}
             <LockedTextarea
-              rows={6}
+              rows={14}
+              className="min-h-[320px] text-base leading-relaxed"
               placeholder="Digite sua resposta…"
               value={answers[q.id] ?? ""}
               onChange={(e) => setAnswers((s) => ({ ...s, [q.id]: e.target.value }))}
