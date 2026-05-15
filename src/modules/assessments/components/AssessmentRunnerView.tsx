@@ -248,6 +248,20 @@ function RunnerActive({
     if (!startTimeRef.current[q.id]) startTimeRef.current[q.id] = Date.now();
   }, [q]);
 
+  useEffect(() => {
+    if (!q) return;
+    if (!q.time_limit_seconds || q.time_limit_seconds <= 0) return;
+    if (qRemaining > 0) return;
+    if (idx < questions.length - 1) {
+      toast.warning("Tempo da pergunta esgotado. Avançando…");
+      next();
+    } else {
+      toast.warning("Tempo da pergunta esgotado. Enviando respostas…");
+      submit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qRemaining, q?.id]);
+
   async function saveAnswer(extra?: { paste?: boolean }) {
     if (!q) return;
     const started = startTimeRef.current[q.id] ?? Date.now();
