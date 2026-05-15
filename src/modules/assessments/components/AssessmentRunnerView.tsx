@@ -209,6 +209,9 @@ function RunnerActive({
 
   const remaining = Math.max(0, Math.floor((new Date(expiresAt).getTime() - now) / 1000));
   const q = questions[idx];
+  const qStartedAt = q ? startTimeRef.current[q.id] : undefined;
+  const qElapsed = qStartedAt ? Math.floor((now - qStartedAt) / 1000) : 0;
+  const qRemaining = q ? Math.max(0, (q.time_limit_seconds ?? 0) - qElapsed) : 0;
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -244,6 +247,20 @@ function RunnerActive({
     if (!q) return;
     if (!startTimeRef.current[q.id]) startTimeRef.current[q.id] = Date.now();
   }, [q]);
+
+  useEffect(() => {
+    if (!q) return;
+    if (!q.time_limit_seconds || q.time_limit_seconds <= 0) return;
+    if (qRemaining > 0) return;
+    if (idx < questions.length - 1) {
+      toast.warning("Tempo da pergunta esgotado. Avançando…");
+      next();
+    } else {
+      toast.warning("Tempo da pergunta esgotado. Enviando respostas…");
+      submit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qRemaining, q?.id]);
 
   async function saveAnswer(extra?: { paste?: boolean }) {
     if (!q) return;
@@ -287,18 +304,29 @@ function RunnerActive({
   const min = Math.floor(remaining / 60);
   const sec = remaining % 60;
   const lowTime = remaining < 60;
+  const qMin = Math.floor(qRemaining / 60);
+  const qSec = qRemaining % 60;
+  const qLowTime = q?.time_limit_seconds ? qRemaining <= Math.max(10, Math.floor(q.time_limit_seconds * 0.1)) : false;
+  const hasQTimer = !!q?.time_limit_seconds && q.time_limit_seconds > 0;
 
   return (
     <div className={cn("min-h-screen bg-background flex flex-col", isPreview && "pt-9")}>
       {isPreview && <PreviewBanner />}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground truncate">{assessmentTitle}</p>
           <p className="text-sm font-medium">Pergunta {idx + 1} de {questions.length}</p>
         </div>
-        <Badge variant={lowTime ? "destructive" : "secondary"} className="font-mono">
-          <Clock className="h-3 w-3 mr-1" />{String(min).padStart(2, "0")}:{String(sec).padStart(2, "0")}
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {hasQTimer && (
+            <Badge variant={qLowTime ? "destructive" : "outline"} className="font-mono" title="Tempo restante desta pergunta">
+              <Clock className="h-3 w-3 mr-1" />Q {String(qMin).padStart(2, "0")}:{String(qSec).padStart(2, "0")}
+            </Badge>
+          )}
+          <Badge variant={lowTime ? "destructive" : "secondary"} className="font-mono" title="Tempo total restante da prova">
+            <Clock className="h-3 w-3 mr-1" />{String(min).padStart(2, "0")}:{String(sec).padStart(2, "0")}
+          </Badge>
+        </div>
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
