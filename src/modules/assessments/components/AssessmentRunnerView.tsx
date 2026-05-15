@@ -209,6 +209,9 @@ function RunnerActive({
 
   const remaining = Math.max(0, Math.floor((new Date(expiresAt).getTime() - now) / 1000));
   const q = questions[idx];
+  const qStartedAt = q ? startTimeRef.current[q.id] : undefined;
+  const qElapsed = qStartedAt ? Math.floor((now - qStartedAt) / 1000) : 0;
+  const qRemaining = q ? Math.max(0, (q.time_limit_seconds ?? 0) - qElapsed) : 0;
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
