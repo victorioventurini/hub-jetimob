@@ -97,6 +97,7 @@ const buMenuItems = [
   { name: "Assets", href: "/assets", icon: Briefcase, slug: "assets" },
   { name: "Teams", href: "/teams", icon: Building2, slug: "teams" },
   { name: "Events", href: "/events", icon: Calendar, slug: "events" },
+  { name: "Assessments", href: "/assessments", icon: FileText, slug: "assessments" },
 ];
 
 // Módulos globais que aparecem sempre (mesmo com BU selecionada)
