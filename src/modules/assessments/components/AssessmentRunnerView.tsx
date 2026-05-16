@@ -310,7 +310,15 @@ function RunnerActive({
     await saveAnswer();
     const res = await api.submitRun(runId);
     if (!res.ok) {
-      toast.error(res.error ?? "Erro ao enviar");
+      const code = res.error ?? "";
+      const map: Record<string, { title: string; description?: string }> = {
+        run_not_found: { title: "Sua sessão da prova expirou", description: "Recarregue a página para iniciar uma nova tentativa. Se você acredita que isso é um engano, fale com quem te enviou o convite." },
+        run_submitted: { title: "Esta prova já foi enviada", description: "Não é necessário enviar novamente." },
+        run_expired: { title: "O tempo da prova acabou", description: "Suas respostas anteriores foram registradas até o momento do encerramento." },
+        run_cancelled: { title: "Esta tentativa foi cancelada", description: "Solicite um novo convite a quem te enviou o link." },
+      };
+      const m = map[code] ?? { title: "Não foi possível enviar", description: code || "Tente novamente em instantes." };
+      toast.error(m.title, { description: m.description });
       setSubmitting(false);
       return;
     }
