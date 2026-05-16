@@ -14,7 +14,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { useHasPermission } from "@/hooks/usePermissions";
-import { ConfirmActionDialog } from "../ConfirmActionDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AssessmentCategoryDialog } from "./AssessmentCategoryDialog";
 import { AssessmentSubcategoryDialog } from "./AssessmentSubcategoryDialog";
 import {
