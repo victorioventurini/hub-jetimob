@@ -17,12 +17,15 @@
 
 1. [ ] **Regras Core (sempre):** as regras inquebráveis em `mem://index.md` (seção **Core**) já estão em contexto. Aplicar sem ler nada.
 2. [ ] **Identificar módulo(s)** afetado(s) a partir do pedido do usuário.
-3. [ ] **Ler o módulo-master correspondente** em `mem://` (lista em `mem://index.md` § **Masters**) — ex.: OKRs → `mem://features/okrs/okrs-master-standard`; Rituais → `mem://features/rituals/rituals-master-standard`.
-4. [ ] **Se envolver schema/RLS de tabelas:** consultar `docs/canonical/DATA_MODEL_REGISTRY.md` (lista mestre) e, se houver dúvida sobre colunas, `src/integrations/supabase/types.ts` (fonte da verdade).
-5. [ ] **Se envolver permissões:** consultar `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` + `RBAC_TEMPLATES_V3.md`.
-6. [ ] **Se envolver identidade (usuário/perfil/impersonation):** consultar `docs/canonical/IDENTITY_CONVENTION.md`.
-7. [ ] **Reutilização:** antes de criar novo hook/component/edge function, buscar similar com `rg` no projeto.
-8. [ ] **TCR** (`TECHNICAL_CONTEXT_REGISTRY.md`): só ler quando o pedido for **arquitetural transversal** (multi-BU, ciclos, eventos cross-módulo). Para mudanças dentro de um módulo, NÃO carregar o TCR.
+3. [ ] **Consultar o router:** `docs/canonical/core/INDEX.md` mapeia tipo de pedido → arquivos mínimos a carregar.
+4. [ ] **Ler o módulo-master correspondente** em `mem://` (lista em `mem://index.md` § **Masters**) — ex.: OKRs → `mem://features/okrs/okrs-master-standard`.
+5. [ ] **Ler `docs/canonical/modules/<módulo>.md`** (operacional/UI específico não coberto pelo Master).
+6. [ ] **Se mudança transversal (multi-módulo / arquitetural):** ler `docs/canonical/core/TCR_CORE.md`.
+7. [ ] **Se envolver schema/RLS:** fonte = `src/integrations/supabase/types.ts`. `DATA_MODEL_REGISTRY.md` para presença/triggers não-óbvios.
+8. [ ] **Se envolver permissões:** `docs/canonical/PERMISSIONS_AND_RBAC_MODEL.md` + `RBAC_TEMPLATES_V3.md`.
+9. [ ] **Se envolver identidade/impersonation:** `docs/canonical/IDENTITY_CONVENTION.md`.
+10. [ ] **Reutilização:** antes de criar novo hook/component/edge function, buscar similar com `rg` no projeto.
+11. [ ] **TCR completo** (`TECHNICAL_CONTEXT_REGISTRY.md`): **não carregar**. Substituído por `core/TCR_CORE.md` + `modules/*.md`. Manter apenas como referência histórica.
 
 ## Anti-padrões proibidos
 
