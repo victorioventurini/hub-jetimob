@@ -11,7 +11,7 @@
  * Usage:
  *   npx tsx scripts/generate-rbac-templates.ts
  */
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 
 const DOC_PATH = "docs/canonical/RBAC_TEMPLATES_V3.md";
@@ -28,9 +28,12 @@ interface TemplateRow {
 }
 
 function psql(sql: string): string {
-  return execSync(`psql -tAF '\u0001' -c ${JSON.stringify(sql)}`, {
+  const r = spawnSync("psql", ["-tAF", "\u0001", "-v", "ON_ERROR_STOP=1"], {
+    input: sql,
     encoding: "utf8",
   });
+  if (r.status !== 0) throw new Error(`psql failed: ${r.stderr}`);
+  return r.stdout;
 }
 
 function fetchTemplates(): TemplateRow[] {
