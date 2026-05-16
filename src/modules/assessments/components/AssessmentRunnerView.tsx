@@ -209,12 +209,10 @@ function RunnerActive({
   isPreview: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const total = questions.length;
-  const parsedQ = Number(searchParams.get("q"));
-  const initialIdx = Number.isFinite(parsedQ) && parsedQ >= 1 && parsedQ <= total ? parsedQ - 1 : 0;
-  const [idx, setIdx] = useState(initialIdx);
+  // URL mirrors the current question (?q=N, 1-based) but is forward-only:
+  // we always start at question 1 and ignore manual URL edits to prevent skipping.
+  const [idx, setIdx] = useState(0);
 
-  // Sync idx → URL (?q=N, 1-based). Keep other params intact.
   useEffect(() => {
     const desired = String(idx + 1);
     if (searchParams.get("q") === desired) return;
