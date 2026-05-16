@@ -699,13 +699,20 @@ export function useCreateAssessment() {
   const { realProfileId } = useIdentity();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { title: string; description?: string }) => {
+    mutationFn: async (input: {
+      title: string;
+      description?: string;
+      category_id?: string | null;
+      subcategory_id?: string | null;
+    }) => {
       const { data, error } = await supabase
         .from("assessments")
         .insert({
           bu_id: currentBuId!,
           title: input.title,
           description: input.description ?? null,
+          category_id: input.category_id ?? null,
+          subcategory_id: input.subcategory_id ?? null,
           status: "draft",
           created_by: realProfileId,
         })
@@ -735,6 +742,8 @@ export function useUpdateAssessment() {
       default_total_time_seconds?: number | null;
       available_from?: string | null;
       available_until?: string | null;
+      category_id?: string | null;
+      subcategory_id?: string | null;
     }) => {
       const { id, ...rest } = input;
       const { error } = await supabase.from("assessments").update(rest).eq("id", id).eq("bu_id", currentBuId!);

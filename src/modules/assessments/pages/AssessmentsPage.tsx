@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ClipboardList, FileText, Trash2 } from "lucide-react";
+import { Plus, ClipboardList, FileText, Trash2, FolderTree } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
@@ -36,9 +36,12 @@ import {
 } from "../hooks/useAssessmentsData";
 import { AssessmentStatusBadge, FormStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
+import { AssessmentCategoriesSettings } from "../components/settings/AssessmentCategoriesSettings";
+import { AssessmentCategorySelect } from "../components/settings/AssessmentCategorySelect";
+import { AssessmentSubcategorySelect } from "../components/settings/AssessmentSubcategorySelect";
 
 export default function AssessmentsPage() {
-  const [tab, setTab] = useUrlTab<"provas" | "forms">("provas");
+  const [tab, setTab] = useUrlTab<"provas" | "forms" | "categorias">("provas");
   const [open, setOpen] = useState(false);
 
   usePageTitle("Assessments", {
@@ -55,25 +58,31 @@ export default function AssessmentsPage() {
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
-              <Button onClick={() => setOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{tab === "provas" ? "Nova prova" : "Novo formulário"}</span>
-                <span className="sm:hidden">Novo</span>
-              </Button>
+              {tab !== "categorias" && (
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">{tab === "provas" ? "Nova prova" : "Novo formulário"}</span>
+                  <span className="sm:hidden">Novo</span>
+                </Button>
+              )}
             </div>
           }
         />
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "provas" | "forms")}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "provas" | "forms" | "categorias")}>
           <TabsList>
             <TabsTrigger value="provas"><ClipboardList className="h-4 w-4 mr-2" />Provas</TabsTrigger>
             <TabsTrigger value="forms"><FileText className="h-4 w-4 mr-2" />Formulários</TabsTrigger>
+            <TabsTrigger value="categorias"><FolderTree className="h-4 w-4 mr-2" />Categorias</TabsTrigger>
           </TabsList>
           <TabsContent value="provas" className="mt-6">
             <AssessmentsTab open={open} setOpen={setOpen} />
           </TabsContent>
           <TabsContent value="forms" className="mt-6">
             <FormsTab open={open} setOpen={setOpen} />
+          </TabsContent>
+          <TabsContent value="categorias" className="mt-6">
+            <AssessmentCategoriesSettings />
           </TabsContent>
         </Tabs>
       </div>
@@ -96,6 +105,8 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
   const status = useUrlState<string>({ key: "sa", defaultValue: "all" });
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [subcategoryId, setSubcategoryId] = useState<string>("");
 
   const filtered = useMemo(() => {
     const q = search.value.trim().toLowerCase();
@@ -189,15 +200,41 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
           <div className="space-y-3">
             <div><Label htmlFor="new-assessment-title">Título</Label><Input id="new-assessment-title" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
             <div><Label htmlFor="new-assessment-desc">Descrição</Label><Textarea id="new-assessment-desc" value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Categoria</Label>
+                <AssessmentCategorySelect
+                  value={categoryId}
+                  onValueChange={(v) => { setCategoryId(v); setSubcategoryId(""); }}
+                  placeholder="Sem categoria"
+                  triggerClassName="w-full"
+                />
+              </div>
+              <div>
+                <Label>Subcategoria</Label>
+                <AssessmentSubcategorySelect
+                  categoryId={categoryId || null}
+                  value={subcategoryId}
+                  onValueChange={setSubcategoryId}
+                  placeholder="Sem subcategoria"
+                  triggerClassName="w-full"
+                />
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
               disabled={!title.trim() || create.isPending}
               onClick={async () => {
-                const id = await create.mutateAsync({ title: title.trim(), description: description.trim() || undefined });
+                const id = await create.mutateAsync({
+                  title: title.trim(),
+                  description: description.trim() || undefined,
+                  category_id: categoryId || null,
+                  subcategory_id: subcategoryId || null,
+                });
                 setOpen(false);
-                setTitle(""); setDescription("");
+                setTitle(""); setDescription(""); setCategoryId(""); setSubcategoryId("");
                 navigate(`/assessments/provas/${id}`);
               }}
             >Criar</Button>
