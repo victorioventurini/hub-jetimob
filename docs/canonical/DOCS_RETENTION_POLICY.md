@@ -1,7 +1,7 @@
 # 📋 Política de Retenção de Documentação
 
-**Versão:** v1.0.0  
-**Última atualização:** 2026-04-22  
+**Versão:** v1.1.0  
+**Última atualização:** 2026-05-16  
 **Status:** Normativo
 
 ---
@@ -9,9 +9,10 @@
 ## Princípios
 
 1. **Documentos canônicos** (`docs/canonical/`) — vivos, versionados, nunca arquivados.
-2. **Auditorias e relatórios** (`docs/audits/`) — só a versão **mais recente de cada categoria** permanece ativa; o restante é movido para `docs/archive/audits-<período>/`.
-3. **Guias operacionais** (`docs/guides/`) — vivos enquanto refletirem prática vigente; obsoletos vão para `docs/archive/guides/`.
-4. **Memórias persistentes** (`mem://`) — máximo de ~50; consolidar quando ultrapassar.
+2. **Changelog do TCR** — manter no máximo **5 entradas** em `TECHNICAL_CONTEXT_REGISTRY.md`; histórico completo vive em `docs/canonical/changelog/CHANGELOG.md` e é cortado trimestralmente para `changelog/CHANGELOG_<YYYY>Q<n>.md` quando passar de ~30 entradas / 90 dias.
+3. **Auditorias e relatórios** (`docs/audits/`) — só a versão **mais recente de cada categoria** permanece ativa; o restante é movido para `docs/archive/audits-<período>/`.
+4. **Guias operacionais** (`docs/guides/`) — vivos enquanto refletirem prática vigente; obsoletos vão para `docs/archive/guides/`.
+5. **Memórias persistentes** (`mem://`) — máximo de ~50; consolidar quando ultrapassar.
 
 ---
 
