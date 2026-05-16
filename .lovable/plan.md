@@ -1,61 +1,56 @@
 ## Diagnóstico
 
-Na prova `53eb6d37…` o preview aparece **sem perguntas** porque:
+O cronômetro total (`00:08` no canto direito) zera em ~1 minuto por causa de uma **divergência entre dois RPCs**:
 
-- A tabela `assessment_form_links` guarda `version_id` capturado **no momento em que o formulário foi vinculado à prova** (versão 1).
-- O formulário já evoluiu: hoje existem v1, v2, v3 e v4 (todas `published`). A v4 tem 16 perguntas ativas.
-- A v1 ficou com `0` perguntas ativas (todas com `deleted_at`), porque o usuário continuou editando o formulário e, ao gerar novos rascunhos/publicações, o conteúdo "vivo" migrou para v2→v3→v4.
-- Como `rpc_assessment_preview_lookup` (e o público `rpc_assessment_invite_lookup`) lê perguntas **da `version_id` pinada no link**, o respondente vê uma versão vazia.
+- `rpc_assessment_invite_lookup` (carrega as perguntas na tela) resolve a versão de cada formulário via **última versão publicada** (`assessment_form_versions WHERE status='published' ORDER BY version_number DESC`), caindo para `l.version_id` só como fallback. Por isso a tela mostra as 16 perguntas atuais com `time_limit_seconds = 300s`.
+- `rpc_assessment_run_start` (calcula `expires_at` da run) soma `time_limit_seconds` usando **apenas `l.version_id`** — que neste caso aponta para `facf8e55...`, uma versão antiga cujas perguntas estão todas com `deleted_at IS NOT NULL` e `time_limit_seconds = 0`.
 
-Resultado prático: toda vez que o admin republica o formulário, todas as provas que apontam para esse formulário "esvaziam" silenciosamente. Não é só este caso — é estrutural.
+Resultado: `v_total_time = 0` → `GREATEST(0, 60) = 60` → `expires_at = started_at + 1min`. A prova “real” precisaria de ~80 min (16 × 300s).
 
-## Decisão
-
-A `version_id` no link continua existindo (auditoria/histórico de runs já emitidos), **mas a renderização para o respondente passa a usar sempre a versão `published` mais recente do formulário**. Isso elimina a necessidade do admin re-vincular o formulário a cada publicação.
-
-## Mudanças
-
-### 1. Banco — migration
-
-Atualizar duas RPCs (mantendo assinatura/forma de retorno):
-
-- `rpc_assessment_preview_lookup(p_assessment_id uuid)`
-- `rpc_assessment_invite_lookup(p_token text)`
-
-Em ambas, ao montar `forms`, ao invés de:
+Dados confirmados para o invite `0q0w211r47482v5q5r351o2p6c01011j`:
 
 ```text
-WHERE q.version_id = l.version_id
+assessment.default_total_time_seconds = NULL
+l.version_id                          = facf8e55-a17f-4b8e-956c-95a4a12c6181 (16 perguntas, todas deletadas, 0s)
+run.expires_at - run.started_at       = 60 segundos
 ```
 
-resolver dinamicamente:
+## Plano
+
+### 1. Corrigir `rpc_assessment_run_start` (migração SQL)
+
+Alterar a query que calcula `v_total_time` para resolver `version_id` da mesma forma que o lookup: preferir a última versão publicada do `form_id` ligado, com fallback para `l.version_id`.
 
 ```text
-v_effective := (
-  SELECT id FROM assessment_form_versions
-  WHERE form_id = l.form_id
-    AND status = 'published'
-    AND deleted_at IS NULL
-  ORDER BY version_number DESC
-  LIMIT 1
-)
--- fallback: l.version_id (caso o form ainda não tenha publicação)
+SELECT COALESCE(SUM(q.time_limit_seconds), 0)
+FROM assessment_form_links l
+JOIN assessment_form_questions q
+  ON q.version_id = COALESCE(
+       (SELECT v.id FROM assessment_form_versions v
+         WHERE v.form_id = l.form_id
+           AND v.status = 'published'
+           AND v.deleted_at IS NULL
+         ORDER BY v.version_number DESC LIMIT 1),
+       l.version_id
+     )
+ AND q.deleted_at IS NULL
+WHERE l.assessment_id = v_invite.assessment_id
+  AND l.deleted_at IS NULL;
 ```
 
-E retornar `version_id = v_effective` no payload, para o frontend (que usa esse id como chave de runId/respostas) continuar consistente.
+Manter o resto do RPC intacto (assinatura, segurança, demais validações).
 
-### 2. Frontend
+### 2. Limpar a run expirada do Guilherme
 
-Nenhuma mudança de UI. `AssessmentRunnerView` já consome `forms[].version_id` e `forms[].questions` exatamente como vierem da RPC.
+A run `861d5663-0dbc-4bc7-82de-43664455f2d0` já está `expired`. Hard delete dela + answers + reabrir o invite (`status='pending'`, `started_at=NULL`) para ele iniciar de novo já com o tempo total correto.
 
-## Validação
+### 3. Validação
 
-1. Abrir `/assessments/provas/53eb6d37-617b-4d31-9a50-d4726dcaa2cc/preview` → deve listar as 16 perguntas ativas da v4.
-2. Conferir que o link público (`/q/:token`) de qualquer convite ativo dessa prova também passa a mostrar as 16 perguntas.
-3. Criar nova versão draft → publicar → reabrir o preview: deve mostrar a nova versão automaticamente, sem precisar mexer no vínculo da prova.
-4. Provas com formulário sem nenhuma versão `published` ainda funcionam (fallback para `link.version_id`).
+- Re-query a soma esperada (`16 × 300 = 4800s`) com a nova resolução e confirmar.
+- Após a migração, novo `rpc_assessment_run_start` para esse invite deve devolver `expires_at ≈ now() + 80min`.
 
 ## Fora de escopo
 
-- Limpar/normalizar registros antigos de `assessment_form_links.version_id` (não é necessário; o fallback cuida).
-- Mudar a forma como runs já submetidos guardam `version_id` (continua o pinado, para auditoria).
+- Não mexer no front-end (`AssessmentRunnerView`): ele só consome `expires_at` do servidor.
+- Não alterar `rpc_assessment_invite_lookup` — já está correto.
+- Não introduzir snapshot da versão na própria run (mudança maior, fica para outro momento se quisermos imutabilidade pós-publicação).
