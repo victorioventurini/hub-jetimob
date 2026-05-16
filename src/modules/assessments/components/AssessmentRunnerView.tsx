@@ -80,7 +80,18 @@ export function AssessmentRunnerView({
     });
     setStarting(false);
     if (!res.ok) {
-      toast.error(res.error);
+      const code = res.error ?? "";
+      const map: Record<string, { title: string; description?: string }> = {
+        invite_submitted: { title: "Este questionário já foi respondido", description: "Se você acredita que isso é um engano, fale com quem te enviou o convite." },
+        invite_expired: { title: "Convite expirado", description: "Solicite um novo convite a quem te enviou o link." },
+        invite_cancelled: { title: "Convite cancelado", description: "Este convite foi cancelado. Solicite um novo." },
+        invite_not_found: { title: "Convite não encontrado", description: "Confira o link com quem te convidou." },
+        cpf_mismatch: { title: "CPF não confere", description: "Verifique o CPF informado e tente novamente." },
+        cpf_required: { title: "Informe seu CPF para continuar" },
+        invite_in_progress: { title: "Já existe uma tentativa em andamento", description: "Aguarde alguns minutos e tente novamente." },
+      };
+      const m = map[code] ?? { title: "Não foi possível iniciar", description: code || "Tente novamente em instantes." };
+      toast.error(m.title, { description: m.description });
       return;
     }
     setRunId(res.runId);
