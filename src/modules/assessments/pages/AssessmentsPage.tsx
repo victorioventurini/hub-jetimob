@@ -105,6 +105,8 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
   const status = useUrlState<string>({ key: "sa", defaultValue: "all" });
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [subcategoryId, setSubcategoryId] = useState<string>("");
 
   const filtered = useMemo(() => {
     const q = search.value.trim().toLowerCase();
