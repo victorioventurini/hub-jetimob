@@ -1,6 +1,6 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
-**Versão:** 3.30.1  
+**Versão:** 3.31.0  
 **Última atualização:** 2026-05-04 (v3.30.0 — **MBR v2 + Pré-MBR Hardening**: novo rito paralelo `/rituals/mbr-v2` agrupado por Org Objective + severidade (consome Pré-MBR v1 sem alteração); KPI Gate do Pré-MBR ancorado ao **mês de referência** via `classifyKpiGateBucketsFromMonthlySnapshots` + `useMbrPreTeamKpisMonthly` (elimina contaminação por valores de meses futuros); `safeProjectJustifications` em `MbrPreProjectsStep` e fallbacks `?? { projects: {}, milestones: {} }` em `MbrPrePage` para drafts antigos sem `projectJustifications`; novos docs canônicos `MBR_RITUAL.md` e `PRE_CHECKLIST.md`. v3.29.1 anterior — **KPI Input Type Rename**: valor `kpi_input_type.projection` renomeado para `partial` via `ALTER TYPE RENAME VALUE`. Semântica correta: valor parcial observado até a data antes do período fechar (não é estimativa). UI atualizada (radio "Parcial / Valor atingido até a data, antes do período fechar"), badges e legendas em chart/tabela/KPI Gate. Zero registros afetados (todos os 63 valores existentes eram `consolidated`). Funções DB e RLS preservadas. v3.29.0 anterior — **KPI Frequency Split v3.0.0** ✅: novos enums `kpi_frequency_value` (7 valores), `kpi_update_mode`, `kpi_input_type`; `kpi_metrics` ganha `consolidation_frequency`, `update_frequency`, `update_mode`, `frequency_migration_reviewed`; `kpi_values` ganha `input_type`; triggers `kpi_frequency_validation` e `trg_kpi_value_derive_confidence`; função `kpi_calculate_period_v2` com semântica formal de biweekly/semiannual; UI: 6-bucket KPI Gate, banners de migração, parcial × consolidado em chart/tabela, auditoria 100% íntegra (32/32 KPIs migrados, 63/63 valores marcados consolidated). SSOT em `mem://features/kpis/kpis-master-standard`.)
 **Responsável:** Lovable AI / Equipe de Engenharia
 **Status:** V2-only mode ativo | Identity Cutover v3.0 completo | RLS V2 100% migrado | **Pré-MBR Reference-Month KPI Gate ✅** | **Pré-MBR Resilient Drafts ✅** | Vic Culture System ativo | Auth Magic Link ativo | Automated Testing Framework v1.2 ativo | **AI Agents Philosophy v1.0** ✅ | **Áreas (Strategic Layer) v1.0** | **Performance Metrics Dashboard (P4)** | **Saved Links System v1.4** | **Performance Wave P5.1 COMPLETO** | **Cycle Checkins Evolution View v1.0** | **Team OKR/KR Linking Edit v1.0** | **Internal User Auth Hardening v1.0** | **Global Partner Companies v1.0** | **Global Partner Contacts v1.0** | **RLS Security Audit v1.0** | **Tickets Pinned Messages v1.0** | **Tickets Transfer System v1.0** | **Tickets Attachments RLS v3** | **Identity Hardening v2.1** | **Notification Templates v2.0** | **Impersonation Wildcard Fix v1.0** | **can_view_ticket Hybrid User Support v1.0** | **Unified Participant Layer v1.0** | **External User Identity Pattern v1.0** | **Edge Functions Error Handler v1.0** | **Hooks Barrel Consolidation v1.0** | **Documentation Hierarchy v1.0** | **SQL Functions Audit** | **Edge Functions Audit (26 funções)** | **Ticket Message Pinning RLS v3** | **Database Hygiene v1.0** | **Routes Modularization v1.0** | **Systemic Health Audit v1.0** | **Comprehensive Hygiene Audit v1.0** | **Backend Robustness Audit v2.0** | **PII Security Hardening v1.0** ✅ | **Security Scan 0 Errors** ✅ | **System Health Score 10/10** ✅ | **Módulo Projetos v1.4** ✅ | **Ritual Calendar & Cadences v1.0** ✅ | **handle_new_user Deterministic BU Fix v1.0** ✅ | **Hub Admin Deep Dive Docs v1.0** ✅ | **BU Settings Deep Dive Docs v1.0** ✅ | **QBR Rituals Enhancement v1.1** ✅ | **QBR Executive Report v1.1** ✅ | **Auth Token Refresh Deduplication v1.0** ✅ | **URL Detonation Mitigation v1.1** ✅ | **Unified Wizard Framework v4 (Ondas 1-3 ATIVAS)** ✅
@@ -2824,6 +2824,24 @@ export type { SomeType } from './types';
   - Subjects agora seguem padrão: `[{{bu_name}}] {{ticket_title}} — {{new_status}} - {{current_datetime}}`
   - Bodies incluem tipo (Interno/Externo), categoria/subcategoria, ator da ação
   - Nenhuma alteração em frontend ou Edge Functions (sistema server-side via `p_metadata` → `templateVars`)
+
+### v3.31.0 (2026-05-16) — Assessments: Categorias e Subcategorias
+- **Catálogo BU-scoped** seguindo o padrão de `ticket_categories`/`ticket_subcategories` (sem `scope` e sem `default_initial_message`):
+  - Tabelas: `assessment_categories` e `assessment_subcategories` (status via enum `catalog_status`, soft delete via `deleted_at`).
+  - Vínculo opcional em `assessments`: colunas `category_id` e `subcategory_id` (nullable, `ON DELETE SET NULL`).
+  - Trigger `assessment_subcategory_validate_bu` garante mesma BU entre categoria e subcategoria.
+  - Trigger `assessment_validate_category_subcategory` garante coerência entre `category_id` e `subcategory_id` na prova.
+  - Limites de nome (1..120) via **validation triggers** (padrão canônico — sem CHECK constraints).
+- **RBAC**:
+  - Nova permission key: `assessments.category.manage:bu` (CRUD de categorias e subcategorias).
+  - Atribuída aos templates **Administrador BU v2** e **Avaliações: Admin v2**.
+  - SELECT exige `assessments.assessment.view:bu` (qualquer usuário com leitura de provas vê o catálogo).
+- **Frontend**:
+  - `useAssessmentCategoriesData` — hooks CRUD com guards (impede excluir categoria vinculada a provas).
+  - `AssessmentCategorySelect` / `AssessmentSubcategorySelect` — selects unificados (memoizados).
+  - `AssessmentCategoriesSettings` — tab "Categorias" em `/assessments` (admin).
+  - Edição de categoria/subcategoria no dialog "Editar prova" em `AssessmentDetailPage`.
+  - Criação no dialog "Nova prova".
 
 ### v2.99.0 (2026-02-07) — Comprehensive Hygiene Audit v1.0
 - **Database Hygiene**:

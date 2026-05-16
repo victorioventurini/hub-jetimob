@@ -139,13 +139,16 @@ Lista completa das tabelas no schema `public`:
 | `ticket_routing_rules` | ✅ | ✅ | Regras de roteamento |
 | `ticket_subcategories` | ✅ | ✅ | Subcategorias de tickets |
 | `tickets` | ✅ | ✅ | Tickets |
+| `assessments` | ✅ | ✅ | Provas (avaliações) — possui `category_id`, `subcategory_id` |
+| `assessment_categories` | ✅ | ✅ | Categorias de avaliações (catálogo BU-scoped) |
+| `assessment_subcategories` | ✅ | ✅ | Subcategorias de avaliações (FK → `assessment_categories`) |
 | `user_notification_preferences_v2` | ✅ | ✅ | Preferências de notificação V2 |
 | `user_preferences` | ✅ | ✅ | Preferências do usuário |
 | `user_roles` | ✅ | ❌ | Roles globais |
 | `user_saved_links` | ✅ | ✅ | Links salvos por usuário/módulo (v2.36.0) |
 | `user_team_memberships` | ✅ | ✅ | Membros de times |
 
-**Total:** 123 tabelas
+**Total:** 125 tabelas
 
 ---
 

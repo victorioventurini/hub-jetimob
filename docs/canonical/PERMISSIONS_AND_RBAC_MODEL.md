@@ -145,6 +145,7 @@ O catálogo completo está em `permission_catalog`. Algumas categorias:
 | Teams | `teams.` | `teams.member.view`, `teams.structure.manage` |
 | Users | `users.` | `users.view`, `users.profile.update` |
 | Settings | `settings.` | `settings.bu.manage`, `settings.integrations.view` |
+| Assessments | `assessments.` | `assessments.assessment.view:bu`, `assessments.form.publish:bu`, `assessments.category.manage:bu`, `assessments.theme.manage:bu` |
 
 #### Detalhamento de KPIs
 

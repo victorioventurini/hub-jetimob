@@ -441,6 +441,18 @@
 
 ---
 
+## Assessments
+
+### assessment_categories
+`id, bu_id, name, description, status, created_at, created_by, updated_at, deleted_at`
+
+### assessment_subcategories
+`id, bu_id, category_id, name, status, created_at, created_by, updated_at, deleted_at`
+
+> Vínculo em `assessments` via `category_id` e `subcategory_id` (ambos nullable). Trigger valida que a subcategoria pertence à categoria informada e à mesma BU. Limite de nome (1..120) é aplicado por trigger (sem CHECK).
+
+---
+
 ## User Preferences
 
 ### user_notification_preferences_v2

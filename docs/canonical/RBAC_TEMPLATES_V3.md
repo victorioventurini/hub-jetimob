@@ -129,6 +129,16 @@ Acesso total a todos os módulos e configurações da BU.
 | Projetos: Gestor | `projects_manager` | 7 | Criar/editar projetos e milestones. Sem exclusão. |
 | Projetos: Admin | `projects_admin` | 8 | Tudo + exclusão de projetos |
 
+#### Avaliações (Assessments)
+
+| Template | Nome | Keys | Descrição |
+|----------|------|------|-----------|
+| `assessments_view_v2` | Avaliações: Visualização v2 | 5 | Visualiza provas, formulários, convites, execuções e temas |
+| `assessments_operate_v2` | Avaliações: Operador v2 | 12 | Cria/edita provas, formulários, convites — sem exclusão e sem catálogos |
+| `assessments_admin_v2` | Avaliações: Admin v2 | 17 | Tudo + excluir, publicar, gerenciar temas, **categorias** e settings da BU |
+
+> A permission key `assessments.category.manage:bu` controla CRUD de `assessment_categories` e `assessment_subcategories`. Está incluída em **Avaliações: Admin v2** e **Administrador BU v2** — não é concedida ao Operador.
+
 ---
 
 ## Regras de Ouro
