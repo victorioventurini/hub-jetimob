@@ -1,5 +1,17 @@
 # Technical Context Registry (TCR) — Hub da Jet
 
+> ⚠️ **ARQUIVO LEGADO — NÃO CARREGAR EM LOOPS DE TRABALHO.**
+>
+> Substituído pela estrutura fragmentada em `docs/canonical/core/` + `docs/canonical/modules/`:
+> - **Router:** [`core/INDEX.md`](./core/INDEX.md) — mapeia pedido → arquivos mínimos
+> - **Regras transversais:** [`core/TCR_CORE.md`](./core/TCR_CORE.md) (~280 linhas vs 2800 deste arquivo)
+> - **Por módulo:** [`modules/<x>.md`](./modules/) — ex.: `modules/okrs.md`, `modules/projects.md`
+> - **Masters em `mem://`** continuam sendo SSOT para detalhes funcionais.
+>
+> Este arquivo é mantido apenas como referência histórica. Conteúdo movido — fonte da verdade agora é a estrutura acima + `src/integrations/supabase/types.ts` para schema.
+
+---
+
 **Versão:** 3.31.1  
 **Última atualização:** 2026-05-04 (v3.30.0 — **MBR v2 + Pré-MBR Hardening**: novo rito paralelo `/rituals/mbr-v2` agrupado por Org Objective + severidade (consome Pré-MBR v1 sem alteração); KPI Gate do Pré-MBR ancorado ao **mês de referência** via `classifyKpiGateBucketsFromMonthlySnapshots` + `useMbrPreTeamKpisMonthly` (elimina contaminação por valores de meses futuros); `safeProjectJustifications` em `MbrPreProjectsStep` e fallbacks `?? { projects: {}, milestones: {} }` em `MbrPrePage` para drafts antigos sem `projectJustifications`; novos docs canônicos `MBR_RITUAL.md` e `PRE_CHECKLIST.md`. v3.29.1 anterior — **KPI Input Type Rename**: valor `kpi_input_type.projection` renomeado para `partial` via `ALTER TYPE RENAME VALUE`. Semântica correta: valor parcial observado até a data antes do período fechar (não é estimativa). UI atualizada (radio "Parcial / Valor atingido até a data, antes do período fechar"), badges e legendas em chart/tabela/KPI Gate. Zero registros afetados (todos os 63 valores existentes eram `consolidated`). Funções DB e RLS preservadas. v3.29.0 anterior — **KPI Frequency Split v3.0.0** ✅: novos enums `kpi_frequency_value` (7 valores), `kpi_update_mode`, `kpi_input_type`; `kpi_metrics` ganha `consolidation_frequency`, `update_frequency`, `update_mode`, `frequency_migration_reviewed`; `kpi_values` ganha `input_type`; triggers `kpi_frequency_validation` e `trg_kpi_value_derive_confidence`; função `kpi_calculate_period_v2` com semântica formal de biweekly/semiannual; UI: 6-bucket KPI Gate, banners de migração, parcial × consolidado em chart/tabela, auditoria 100% íntegra (32/32 KPIs migrados, 63/63 valores marcados consolidated). SSOT em `mem://features/kpis/kpis-master-standard`.)
 **Responsável:** Lovable AI / Equipe de Engenharia
