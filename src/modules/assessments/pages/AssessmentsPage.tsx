@@ -36,6 +36,9 @@ import {
 } from "../hooks/useAssessmentsData";
 import { AssessmentStatusBadge, FormStatusBadge } from "../components/StatusBadges";
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
+import { AssessmentCategoriesSettings } from "../components/settings/AssessmentCategoriesSettings";
+import { AssessmentCategorySelect } from "../components/settings/AssessmentCategorySelect";
+import { AssessmentSubcategorySelect } from "../components/settings/AssessmentSubcategorySelect";
 
 export default function AssessmentsPage() {
   const [tab, setTab] = useUrlTab<"provas" | "forms">("provas");
