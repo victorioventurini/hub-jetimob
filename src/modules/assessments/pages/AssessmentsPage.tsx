@@ -41,7 +41,7 @@ import { AssessmentCategorySelect } from "../components/settings/AssessmentCateg
 import { AssessmentSubcategorySelect } from "../components/settings/AssessmentSubcategorySelect";
 
 export default function AssessmentsPage() {
-  const [tab, setTab] = useUrlTab<"provas" | "forms">("provas");
+  const [tab, setTab] = useUrlTab<"provas" | "forms" | "categorias">("provas");
   const [open, setOpen] = useState(false);
 
   usePageTitle("Assessments", {
@@ -58,25 +58,31 @@ export default function AssessmentsPage() {
           actions={
             <div className="flex items-center gap-2">
               <SavedLinksPopover moduleSlug="assessments" />
-              <Button onClick={() => setOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{tab === "provas" ? "Nova prova" : "Novo formulário"}</span>
-                <span className="sm:hidden">Novo</span>
-              </Button>
+              {tab !== "categorias" && (
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">{tab === "provas" ? "Nova prova" : "Novo formulário"}</span>
+                  <span className="sm:hidden">Novo</span>
+                </Button>
+              )}
             </div>
           }
         />
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "provas" | "forms")}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "provas" | "forms" | "categorias")}>
           <TabsList>
             <TabsTrigger value="provas"><ClipboardList className="h-4 w-4 mr-2" />Provas</TabsTrigger>
             <TabsTrigger value="forms"><FileText className="h-4 w-4 mr-2" />Formulários</TabsTrigger>
+            <TabsTrigger value="categorias"><FolderTree className="h-4 w-4 mr-2" />Categorias</TabsTrigger>
           </TabsList>
           <TabsContent value="provas" className="mt-6">
             <AssessmentsTab open={open} setOpen={setOpen} />
           </TabsContent>
           <TabsContent value="forms" className="mt-6">
             <FormsTab open={open} setOpen={setOpen} />
+          </TabsContent>
+          <TabsContent value="categorias" className="mt-6">
+            <AssessmentCategoriesSettings />
           </TabsContent>
         </Tabs>
       </div>
