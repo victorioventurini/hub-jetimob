@@ -127,7 +127,7 @@ export function useAssessment(id: string | undefined) {
     queryFn: async () => {
       const { data: assessment, error } = await supabase
         .from("assessments")
-        .select("id, title, description, status, default_total_time_seconds, available_from, available_until")
+        .select("id, title, description, status, default_total_time_seconds, available_from, available_until, category_id, subcategory_id")
         .eq("id", id!)
         .eq("bu_id", currentBuId!)
         .is("deleted_at", null)
