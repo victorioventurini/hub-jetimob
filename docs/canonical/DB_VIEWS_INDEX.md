@@ -76,3 +76,47 @@
 - Atualizar este índice ao criar/alterar/dropar views
 - `security_invoker = true` é o padrão (`docs/architecture/security-privilege-policy`)
 - Toda view que retorna dados BU-scoped DEVE filtrar via RLS dos seus base tables
+
+---
+
+## 🔄 Auto-Generated Reference (do banco)
+
+<!-- @generated:db-views:start -->
+
+<!-- Gerado automaticamente por scripts/generate-db-views-index.ts — NÃO EDITAR -->
+> **Gerado em:** 2026-05-16T21:56:26.436Z
+> **Total:** 29 views no schema `public`
+
+| View | Colunas | security_invoker |
+|------|---------|------------------|
+| `identity_rls_violations` | 6 | ✅ |
+| `users_without_v2_permissions` | 6 | ✅ |
+| `v_ai_agents_public` | 11 | ✅ |
+| `v_all_participants` | 12 | ✅ |
+| `v_bu_active_profiles` | 24 | ❌ |
+| `v_bu_all_profiles_admin` | 23 | ✅ |
+| `v_bu_id_null_report` | 3 | ❌ |
+| `v_bu_memberships_active` | 26 | ✅ |
+| `v_identity_health_check` | 6 | ❌ |
+| `v_notification_delivery_health` | 8 | ✅ |
+| `v_notification_failures` | 11 | ✅ |
+| `v_notification_slo_by_channel_daily` | 9 | ✅ |
+| `v_notification_slo_by_event_daily` | 7 | ✅ |
+| `v_notification_slo_summary_7d` | 9 | ✅ |
+| `v_objective_health` | 6 | ✅ |
+| `v_okr_insights_active` | 13 | ✅ |
+| `v_partner_services` | 14 | ✅ |
+| `v_partner_services_by_bu` | 12 | ❌ |
+| `v_pending_checkins` | 20 | ❌ |
+| `v_perf_indexes_report` | 3 | ❌ |
+| `v_permission_risk_report` | 8 | ❌ |
+| `v_permissions_without_explanation` | 5 | ❌ |
+| `v_profiles_directory` | 19 | ❌ |
+| `v_ritual_attendance_summary` | 10 | ✅ |
+| `v_ritual_evaluation_summary` | 15 | ✅ |
+| `v_shared_okrs_summary` | 14 | ❌ |
+| `v_team_contributed_okrs` | 11 | ❌ |
+| `v_teams_clean` | 15 | ✅ |
+| `v_users_without_templates` | 6 | ❌ |
+
+<!-- @generated:db-views:end -->

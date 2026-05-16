@@ -9,15 +9,16 @@
  *   ou
  *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/regen-canonical-docs.ts
  *
- * Docs regenerados (atualmente):
+ * Docs regenerados:
  *   - docs/canonical/DATA_MODEL_REGISTRY.md (+ .json)  via generate-data-model-registry.ts
+ *   - docs/canonical/DB_FUNCTIONS_INDEX.md             via generate-db-functions-index.ts  (híbrido)
+ *   - docs/canonical/DB_VIEWS_INDEX.md                 via generate-db-views-index.ts      (híbrido)
+ *   - docs/canonical/RBAC_TEMPLATES_V3.md              via generate-rbac-templates.ts      (híbrido)
  *
- * TODO (futuro — gerar a partir do banco):
- *   - DB_FUNCTIONS_INDEX.md   (pg_proc + descrições)
- *   - DB_VIEWS_INDEX.md       (pg_views + colunas)
- *   - RBAC_TEMPLATES_V3.md    (permission_templates + permission_template_keys)
+ * Geradores híbridos preservam curadoria manual e atualizam apenas o bloco
+ * entre os marcadores `<!-- @generated:<id>:start --> ... <!-- @generated:<id>:end -->`.
  *
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import { execSync } from "node:child_process";
@@ -26,12 +27,11 @@ const STEPS: Array<{ name: string; cmd: string; required?: boolean }> = [
   {
     name: "Data Model Registry",
     cmd: "npx tsx scripts/generate-data-model-registry.ts",
-    required: true,
+    required: false,
   },
-  // Adicionar futuros geradores aqui:
-  // { name: "DB Functions Index", cmd: "npx tsx scripts/generate-db-functions-index.ts" },
-  // { name: "DB Views Index",     cmd: "npx tsx scripts/generate-db-views-index.ts" },
-  // { name: "RBAC Templates",     cmd: "npx tsx scripts/generate-rbac-templates.ts" },
+  { name: "DB Functions Index", cmd: "npx tsx scripts/generate-db-functions-index.ts", required: true },
+  { name: "DB Views Index",     cmd: "npx tsx scripts/generate-db-views-index.ts",     required: true },
+  { name: "RBAC Templates",     cmd: "npx tsx scripts/generate-rbac-templates.ts",     required: true },
 ];
 
 function log(prefix: string, msg: string) {
