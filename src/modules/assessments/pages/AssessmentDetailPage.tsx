@@ -46,6 +46,8 @@ import { AssessmentStatusBadge, InviteStatusBadge, RunStatusBadge } from "../com
 import { ConfirmActionDialog } from "../components/ConfirmActionDialog";
 import { PreviewEnvironmentButton } from "../components/PreviewEnvironmentButton";
 import { DuplicateActionButton } from "../components/DuplicateActionButton";
+import { AssessmentCategorySelect } from "../components/settings/AssessmentCategorySelect";
+import { AssessmentSubcategorySelect } from "../components/settings/AssessmentSubcategorySelect";
 
 export default function AssessmentDetailPage() {
   const { id } = useParams<{ id: string }>();
