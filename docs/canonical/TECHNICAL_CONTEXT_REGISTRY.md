@@ -2825,6 +2825,24 @@ export type { SomeType } from './types';
   - Bodies incluem tipo (Interno/Externo), categoria/subcategoria, ator da ação
   - Nenhuma alteração em frontend ou Edge Functions (sistema server-side via `p_metadata` → `templateVars`)
 
+### v3.31.0 (2026-05-16) — Assessments: Categorias e Subcategorias
+- **Catálogo BU-scoped** seguindo o padrão de `ticket_categories`/`ticket_subcategories` (sem `scope` e sem `default_initial_message`):
+  - Tabelas: `assessment_categories` e `assessment_subcategories` (status via enum `catalog_status`, soft delete via `deleted_at`).
+  - Vínculo opcional em `assessments`: colunas `category_id` e `subcategory_id` (nullable, `ON DELETE SET NULL`).
+  - Trigger `assessment_subcategory_validate_bu` garante mesma BU entre categoria e subcategoria.
+  - Trigger `assessment_validate_category_subcategory` garante coerência entre `category_id` e `subcategory_id` na prova.
+  - Limites de nome (1..120) via **validation triggers** (padrão canônico — sem CHECK constraints).
+- **RBAC**:
+  - Nova permission key: `assessments.category.manage:bu` (CRUD de categorias e subcategorias).
+  - Atribuída aos templates **Administrador BU v2** e **Avaliações: Admin v2**.
+  - SELECT exige `assessments.assessment.view:bu` (qualquer usuário com leitura de provas vê o catálogo).
+- **Frontend**:
+  - `useAssessmentCategoriesData` — hooks CRUD com guards (impede excluir categoria vinculada a provas).
+  - `AssessmentCategorySelect` / `AssessmentSubcategorySelect` — selects unificados (memoizados).
+  - `AssessmentCategoriesSettings` — tab "Categorias" em `/assessments` (admin).
+  - Edição de categoria/subcategoria no dialog "Editar prova" em `AssessmentDetailPage`.
+  - Criação no dialog "Nova prova".
+
 ### v2.99.0 (2026-02-07) — Comprehensive Hygiene Audit v1.0
 - **Database Hygiene**:
   - Removidas 4 funções SQL deprecated: `cleanup_old_agent_logs`, `cleanup_old_cron_logs`, `cleanup_old_perf_snapshots`, `cleanup_old_wizard_sessions`
