@@ -8,6 +8,7 @@
  * modo preview não escreve nada (no-ops) sem precisar duplicar UI.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Loader2, ShieldCheck, CheckCircle2, Clock, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -207,7 +208,19 @@ function RunnerActive({
   api: RunnerApi;
   isPreview: boolean;
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  // URL mirrors the current question (?q=N, 1-based) but is forward-only:
+  // we always start at question 1 and ignore manual URL edits to prevent skipping.
   const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const desired = String(idx + 1);
+    if (searchParams.get("q") === desired) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("q", desired);
+    setSearchParams(next, { replace: true });
+  }, [idx, searchParams, setSearchParams]);
+
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [now, setNow] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
