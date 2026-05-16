@@ -8,6 +8,7 @@
  * modo preview não escreve nada (no-ops) sem precisar duplicar UI.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Loader2, ShieldCheck, CheckCircle2, Clock, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
