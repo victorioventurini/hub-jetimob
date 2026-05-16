@@ -156,42 +156,59 @@ export function AssessmentCategoriesSettings() {
         categoryId={subDialogCategory?.id ?? null}
         categoryName={subDialogCategory?.name}
       />
-      <ConfirmActionDialog
-        open={!!deleteCategoryTarget}
-        onOpenChange={(o) => !o && setDeleteCategoryTarget(null)}
-        title="Excluir categoria"
-        description={
-          deleteCategoryTarget
-            ? `A categoria "${deleteCategoryTarget.name}" e todas as suas subcategorias serão excluídas. Provas vinculadas precisam ser desvinculadas antes.`
-            : ""
-        }
-        confirmLabel="Excluir"
-        variant="destructive"
-        onConfirm={async () => {
-          if (deleteCategoryTarget) {
-            await deleteCategory.mutateAsync(deleteCategoryTarget.id);
-            setDeleteCategoryTarget(null);
-          }
-        }}
-      />
-      <ConfirmActionDialog
-        open={!!deleteSubcategoryTarget}
-        onOpenChange={(o) => !o && setDeleteSubcategoryTarget(null)}
-        title="Excluir subcategoria"
-        description={
-          deleteSubcategoryTarget
-            ? `A subcategoria "${deleteSubcategoryTarget.name}" será excluída. Provas vinculadas precisam ser desvinculadas antes.`
-            : ""
-        }
-        confirmLabel="Excluir"
-        variant="destructive"
-        onConfirm={async () => {
-          if (deleteSubcategoryTarget) {
-            await deleteSubcategory.mutateAsync(deleteSubcategoryTarget.id);
-            setDeleteSubcategoryTarget(null);
-          }
-        }}
-      />
+      <AlertDialog open={!!deleteCategoryTarget} onOpenChange={(o) => !o && setDeleteCategoryTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir categoria</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteCategoryTarget
+                ? `A categoria "${deleteCategoryTarget.name}" e todas as suas subcategorias serão excluídas. Provas vinculadas precisam ser desvinculadas antes.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (deleteCategoryTarget) {
+                  await deleteCategory.mutateAsync(deleteCategoryTarget.id);
+                  setDeleteCategoryTarget(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteSubcategoryTarget} onOpenChange={(o) => !o && setDeleteSubcategoryTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir subcategoria</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteSubcategoryTarget
+                ? `A subcategoria "${deleteSubcategoryTarget.name}" será excluída. Provas vinculadas precisam ser desvinculadas antes.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (deleteSubcategoryTarget) {
+                  await deleteSubcategory.mutateAsync(deleteSubcategoryTarget.id);
+                  setDeleteSubcategoryTarget(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
