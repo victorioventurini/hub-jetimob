@@ -228,6 +228,7 @@ function RunnerActive({
   const [pasteAttempts, setPasteAttempts] = useState(0);
   const [copyAttempts, setCopyAttempts] = useState(0);
   const [confirmNextOpen, setConfirmNextOpen] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
   const startTimeRef = useRef<Record<string, number>>({});
   const visHiddenAtRef = useRef<number | null>(null);
 
