@@ -208,7 +208,21 @@ function RunnerActive({
   api: RunnerApi;
   isPreview: boolean;
 }) {
-  const [idx, setIdx] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const total = questions.length;
+  const parsedQ = Number(searchParams.get("q"));
+  const initialIdx = Number.isFinite(parsedQ) && parsedQ >= 1 && parsedQ <= total ? parsedQ - 1 : 0;
+  const [idx, setIdx] = useState(initialIdx);
+
+  // Sync idx → URL (?q=N, 1-based). Keep other params intact.
+  useEffect(() => {
+    const desired = String(idx + 1);
+    if (searchParams.get("q") === desired) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("q", desired);
+    setSearchParams(next, { replace: true });
+  }, [idx, searchParams, setSearchParams]);
+
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [now, setNow] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
