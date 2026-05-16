@@ -188,6 +188,29 @@ export default function AssessmentDetailPage() {
                   placeholder="Automático"
                 />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Categoria</Label>
+                  <AssessmentCategorySelect
+                    value={editCategoryId}
+                    onValueChange={(v) => {
+                      setEditCategoryId(v);
+                      setEditSubcategoryId("none");
+                    }}
+                    includeNone
+                  />
+                </div>
+                <div>
+                  <Label>Subcategoria</Label>
+                  <AssessmentSubcategorySelect
+                    categoryId={editCategoryId === "none" ? null : editCategoryId}
+                    value={editSubcategoryId}
+                    onValueChange={setEditSubcategoryId}
+                    includeNone
+                    disabled={editCategoryId === "none"}
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
@@ -199,6 +222,8 @@ export default function AssessmentDetailPage() {
                     title: editTitle.trim(),
                     description: editDescription.trim() || null,
                     default_total_time_seconds: editTime ? Number(editTime) : null,
+                    category_id: editCategoryId === "none" ? null : editCategoryId,
+                    subcategory_id: editSubcategoryId === "none" ? null : editSubcategoryId,
                   });
                   toast.success("Prova atualizada");
                   setEditOpen(false);
