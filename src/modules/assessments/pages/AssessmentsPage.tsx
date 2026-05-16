@@ -200,15 +200,41 @@ function AssessmentsTab({ open, setOpen }: { open: boolean; setOpen: (v: boolean
           <div className="space-y-3">
             <div><Label htmlFor="new-assessment-title">Título</Label><Input id="new-assessment-title" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
             <div><Label htmlFor="new-assessment-desc">Descrição</Label><Textarea id="new-assessment-desc" value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Categoria</Label>
+                <AssessmentCategorySelect
+                  value={categoryId}
+                  onValueChange={(v) => { setCategoryId(v); setSubcategoryId(""); }}
+                  placeholder="Sem categoria"
+                  triggerClassName="w-full"
+                />
+              </div>
+              <div>
+                <Label>Subcategoria</Label>
+                <AssessmentSubcategorySelect
+                  categoryId={categoryId || null}
+                  value={subcategoryId}
+                  onValueChange={setSubcategoryId}
+                  placeholder="Sem subcategoria"
+                  triggerClassName="w-full"
+                />
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
               disabled={!title.trim() || create.isPending}
               onClick={async () => {
-                const id = await create.mutateAsync({ title: title.trim(), description: description.trim() || undefined });
+                const id = await create.mutateAsync({
+                  title: title.trim(),
+                  description: description.trim() || undefined,
+                  category_id: categoryId || null,
+                  subcategory_id: subcategoryId || null,
+                });
                 setOpen(false);
-                setTitle(""); setDescription("");
+                setTitle(""); setDescription(""); setCategoryId(""); setSubcategoryId("");
                 navigate(`/assessments/provas/${id}`);
               }}
             >Criar</Button>
