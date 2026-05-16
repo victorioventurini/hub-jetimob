@@ -63,12 +63,16 @@ export default function AssessmentDetailPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editTime, setEditTime] = useState<string>("");
+  const [editCategoryId, setEditCategoryId] = useState<string>("none");
+  const [editSubcategoryId, setEditSubcategoryId] = useState<string>("none");
 
   useEffect(() => {
     if (a && editOpen) {
       setEditTitle(a.title ?? "");
       setEditDescription(a.description ?? "");
       setEditTime(a.default_total_time_seconds ? String(a.default_total_time_seconds) : "");
+      setEditCategoryId((a as any).category_id ?? "none");
+      setEditSubcategoryId((a as any).subcategory_id ?? "none");
     }
   }, [a, editOpen]);
 
