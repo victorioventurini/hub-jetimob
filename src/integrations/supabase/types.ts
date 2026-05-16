@@ -1085,6 +1085,71 @@ export type Database = {
           },
         ]
       }
+      assessment_categories: {
+        Row: {
+          bu_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["catalog_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_categories_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_form_links: {
         Row: {
           assessment_id: string
@@ -1604,6 +1669,78 @@ export type Database = {
           },
         ]
       }
+      assessment_subcategories: {
+        Row: {
+          bu_id: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["catalog_status"]
+          updated_at: string
+        }
+        Insert: {
+          bu_id: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Update: {
+          bu_id?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["catalog_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_subcategories_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_subcategories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_subcategories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_subcategories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_themes: {
         Row: {
           bu_id: string
@@ -1674,6 +1811,7 @@ export type Database = {
           available_from: string | null
           available_until: string | null
           bu_id: string
+          category_id: string | null
           created_at: string
           created_by: string | null
           default_total_time_seconds: number | null
@@ -1681,6 +1819,7 @@ export type Database = {
           description: string | null
           id: string
           status: Database["public"]["Enums"]["assessment_status"]
+          subcategory_id: string | null
           title: string
           updated_at: string
         }
@@ -1688,6 +1827,7 @@ export type Database = {
           available_from?: string | null
           available_until?: string | null
           bu_id: string
+          category_id?: string | null
           created_at?: string
           created_by?: string | null
           default_total_time_seconds?: number | null
@@ -1695,6 +1835,7 @@ export type Database = {
           description?: string | null
           id?: string
           status?: Database["public"]["Enums"]["assessment_status"]
+          subcategory_id?: string | null
           title: string
           updated_at?: string
         }
@@ -1702,6 +1843,7 @@ export type Database = {
           available_from?: string | null
           available_until?: string | null
           bu_id?: string
+          category_id?: string | null
           created_at?: string
           created_by?: string | null
           default_total_time_seconds?: number | null
@@ -1709,6 +1851,7 @@ export type Database = {
           description?: string | null
           id?: string
           status?: Database["public"]["Enums"]["assessment_status"]
+          subcategory_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -1718,6 +1861,13 @@ export type Database = {
             columns: ["bu_id"]
             isOneToOne: false
             referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_categories"
             referencedColumns: ["id"]
           },
           {
@@ -1739,6 +1889,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_subcategories"
             referencedColumns: ["id"]
           },
         ]
