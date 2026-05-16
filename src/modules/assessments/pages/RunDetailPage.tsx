@@ -110,6 +110,7 @@ export default function RunDetailPage() {
                 <CardContent className="p-4 space-y-2">
                   <p className="text-xs text-muted-foreground">Tempo: {a.time_spent_seconds}s {a.paste_detected && <Badge variant="destructive" className="ml-2">colou</Badge>}</p>
                   <p className="font-medium">{q?.prompt ?? a.question_id}</p>
+                  {q?.help_text && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{q.help_text}</p>}
                   <p className="whitespace-pre-wrap text-sm bg-muted/40 rounded p-3">{a.answer_text || JSON.stringify(a.answer_options) || "—"}</p>
                 </CardContent>
               </Card>
