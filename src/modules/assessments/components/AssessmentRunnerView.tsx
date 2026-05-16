@@ -409,7 +409,7 @@ function RunnerActive({
               Próxima
             </Button>
           ) : (
-            <Button onClick={submit} disabled={submitting || (q.required && !(answers[q.id] ?? "").trim())}>
+            <Button onClick={() => setConfirmSubmitOpen(true)} disabled={submitting || (q.required && !(answers[q.id] ?? "").trim())}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {isPreview ? "Simular envio" : "Enviar respostas"}
             </Button>
@@ -427,6 +427,20 @@ function RunnerActive({
           onConfirm={async () => {
             setConfirmNextOpen(false);
             await next();
+          }}
+        />
+
+        <ConfirmDialog
+          open={confirmSubmitOpen}
+          onOpenChange={setConfirmSubmitOpen}
+          title={isPreview ? "Simular envio da prova?" : "Enviar respostas e encerrar a prova?"}
+          description="Após o envio, não será possível alterar suas respostas ou retomar a prova. Confira se você concluiu esta última pergunta antes de enviar."
+          confirmLabel={isPreview ? "Simular envio" : "Enviar respostas"}
+          cancelLabel="Revisar resposta"
+          variant="warning"
+          onConfirm={async () => {
+            setConfirmSubmitOpen(false);
+            await submit();
           }}
         />
       </main>
