@@ -5,7 +5,7 @@
 import { memo, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useAssessmentCategories } from "../hooks/useAssessmentCategoriesData";
+import { useAssessmentCategories } from "../../hooks/useAssessmentCategoriesData";
 
 interface AssessmentCategorySelectProps {
   value: string | "all" | "none" | "";
