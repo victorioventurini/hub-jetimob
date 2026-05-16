@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ClipboardList, FileText, Trash2 } from "lucide-react";
+import { Plus, ClipboardList, FileText, Trash2, FolderTree } from "lucide-react";
 import { HubLayout } from "@/components/layout/HubLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { ListPageFilters } from "@/components/ui/list-page-filters";
