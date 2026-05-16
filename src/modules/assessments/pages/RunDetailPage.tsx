@@ -44,7 +44,7 @@ export default function RunDetailPage() {
       const ids = answers!.map((a) => a.question_id);
       const { data, error } = await supabase
         .from("assessment_form_questions")
-        .select("id, prompt, question_type, time_limit_seconds")
+        .select("id, prompt, help_text, question_type, time_limit_seconds")
         .in("id", ids);
       if (error) throw error;
       return data ?? [];
