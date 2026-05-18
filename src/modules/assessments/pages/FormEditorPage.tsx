@@ -71,6 +71,7 @@ export default function FormEditorPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const frozen = draft?.frozen ?? false;
+  const canEditScoring = useHasPermission("assessments.form.update:bu");
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !draft || frozen) return;
@@ -192,6 +193,7 @@ export default function FormEditorPage() {
                   index={idx}
                   versionId={draft!.id}
                   frozen={frozen}
+                  canEditScoring={canEditScoring}
                   editing={editing === q.id}
                   onEdit={() => setEditing(q.id)}
                   onClose={() => setEditing(null)}
@@ -263,6 +265,7 @@ function SortableQuestionRow({
   index,
   versionId: _versionId,
   frozen,
+  canEditScoring,
   editing,
   onEdit,
   onClose,
@@ -284,6 +287,7 @@ function SortableQuestionRow({
   index: number;
   versionId: string;
   frozen: boolean;
+  canEditScoring: boolean;
   editing: boolean;
   onEdit: () => void;
   onClose: () => void;
@@ -494,6 +498,7 @@ function SortableQuestionRow({
           </div>
         )}
 
+        {canEditScoring && (
         <div className="rounded-md border bg-muted/30 p-3 space-y-3">
           <div className="flex items-center gap-2">
             <Switch
