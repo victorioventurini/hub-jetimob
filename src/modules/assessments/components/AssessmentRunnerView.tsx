@@ -359,8 +359,13 @@ function RunnerActive({
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {hasQTimer && (
-            <Badge variant={qLowTime ? "destructive" : "outline"} className="font-mono" title="Tempo restante desta pergunta">
-              <Clock className="h-3 w-3 mr-1" />Q {String(qMin).padStart(2, "0")}:{String(qSec).padStart(2, "0")}
+            <Badge
+              variant={qExpired ? "destructive" : qLowTime ? "secondary" : "outline"}
+              className="font-mono"
+              title="Tempo sugerido desta pergunta (informativo — não encerra)"
+            >
+              <Clock className="h-3 w-3 mr-1" />
+              {qExpired ? "Q vencido" : `Q ${String(qMin).padStart(2, "0")}:${String(qSec).padStart(2, "0")}`}
             </Badge>
           )}
           <Badge variant={lowTime ? "destructive" : "secondary"} className="font-mono" title="Tempo total restante da prova">
