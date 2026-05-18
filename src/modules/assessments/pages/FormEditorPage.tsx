@@ -49,6 +49,7 @@ import {
   useDeleteForm,
   useDuplicateForm,
 } from "../hooks/useAssessmentsData";
+import { useHasPermission } from "@/hooks/usePermissions";
 
 export default function FormEditorPage() {
   const { id } = useParams<{ id: string }>();
