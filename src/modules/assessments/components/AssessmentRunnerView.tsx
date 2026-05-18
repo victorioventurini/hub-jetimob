@@ -389,7 +389,7 @@ function RunnerActive({
         </div>
         <Card>
           <CardContent className="p-4 space-y-3">
-            <p className="text-xs text-muted-foreground">{q._formTitle} · até {q.time_limit_seconds}s</p>
+            <p className="text-xs text-muted-foreground">{q._formTitle}{q.time_limit_seconds ? ` · sugerido: ${q.time_limit_seconds}s (informativo)` : ""}</p>
             <p className="font-medium text-base">{q.prompt}</p>
             {q.help_text && <p className="text-xs text-muted-foreground">{q.help_text}</p>}
             <QuestionRenderer
