@@ -475,13 +475,16 @@ export function useUpsertQuestion() {
       id?: string;
       version_id: string;
       position: number;
-      question_type: "short_text" | "long_text" | "single_choice" | "multiple_choice";
+      question_type: "short_text" | "long_text" | "single_choice" | "multiple_choice" | "scale";
       prompt: string;
       help_text?: string | null;
       required: boolean;
       time_limit_seconds: number;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       options?: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      scoring?: any;
+      points?: number;
     }) => {
       if (input.id) {
         const { id, ...rest } = input;
