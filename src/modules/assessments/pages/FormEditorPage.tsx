@@ -215,6 +215,8 @@ export default function FormEditorPage() {
                   prompt: "Nova pergunta",
                   required: true,
                   time_limit_seconds: 120,
+                  scoring: { mode: "none" },
+                  points: 1,
                 })
               }
             >
@@ -227,10 +229,38 @@ export default function FormEditorPage() {
   );
 }
 
+type QType = "short_text" | "long_text" | "single_choice" | "multiple_choice" | "scale";
+type ChoiceOpt = { id: string; label: string; order?: number };
+type ScaleCfg = { min: number; max: number; step?: number; min_label?: string | null; max_label?: string | null };
+type Scoring =
+  | { mode: "none" }
+  | { mode: "exact" | "partial"; correct_option_ids: string[] }
+  | { mode: "scale_target"; target: number; tolerance?: number };
+
+function uuid(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
+  return `opt-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function defaultOptionsFor(type: QType, prev: unknown): unknown {
+  if (type === "single_choice" || type === "multiple_choice") {
+    if (Array.isArray(prev) && prev.length >= 2) return prev;
+    return [
+      { id: uuid(), label: "Alternativa 1", order: 1 },
+      { id: uuid(), label: "Alternativa 2", order: 2 },
+    ];
+  }
+  if (type === "scale") {
+    if (prev && typeof prev === "object" && "min" in (prev as object)) return prev;
+    return { min: 0, max: 10, step: 1, min_label: "Discordo", max_label: "Concordo" };
+  }
+  return null;
+}
+
 function SortableQuestionRow({
   q,
   index,
-  versionId,
+  versionId: _versionId,
   frozen,
   editing,
   onEdit,
@@ -238,21 +268,58 @@ function SortableQuestionRow({
   onSave,
   onDelete,
 }: {
-  q: { id: string; position: number; question_type: string; prompt: string; help_text: string | null; required: boolean; time_limit_seconds: number };
+  q: {
+    id: string;
+    position: number;
+    question_type: string;
+    prompt: string;
+    help_text: string | null;
+    required: boolean;
+    time_limit_seconds: number;
+    options?: unknown;
+    scoring?: unknown;
+    points?: number | null;
+  };
   index: number;
   versionId: string;
   frozen: boolean;
   editing: boolean;
   onEdit: () => void;
   onClose: () => void;
-  onSave: (p: { position: number; question_type: "short_text" | "long_text" | "single_choice" | "multiple_choice"; prompt: string; help_text: string | null; required: boolean; time_limit_seconds: number }) => void;
+  onSave: (p: {
+    position: number;
+    question_type: QType;
+    prompt: string;
+    help_text: string | null;
+    required: boolean;
+    time_limit_seconds: number;
+    options: unknown;
+    scoring: Scoring;
+    points: number;
+  }) => void;
   onDelete: () => void;
 }) {
   const [prompt, setPrompt] = useState(q.prompt);
   const [help, setHelp] = useState(q.help_text ?? "");
-  const [type, setType] = useState(q.question_type as "short_text" | "long_text" | "single_choice" | "multiple_choice");
+  const [type, setType] = useState<QType>(q.question_type as QType);
   const [required, setRequired] = useState(q.required);
   const [time, setTime] = useState(q.time_limit_seconds);
+  const [opts, setOpts] = useState<unknown>(q.options ?? defaultOptionsFor(q.question_type as QType, null));
+  const initialScoring = (q.scoring as Scoring | null) ?? { mode: "none" };
+  const [scoreMode, setScoreMode] = useState<Scoring["mode"]>(initialScoring.mode);
+  const [correctIds, setCorrectIds] = useState<string[]>(
+    initialScoring.mode === "exact" || initialScoring.mode === "partial"
+      ? initialScoring.correct_option_ids ?? []
+      : [],
+  );
+  const [scaleTarget, setScaleTarget] = useState<number>(
+    initialScoring.mode === "scale_target" ? initialScoring.target : 0,
+  );
+  const [scaleTolerance, setScaleTolerance] = useState<number>(
+    initialScoring.mode === "scale_target" ? initialScoring.tolerance ?? 0 : 0,
+  );
+  const [points, setPoints] = useState<number>(q.points ?? 1);
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: q.id,
     disabled: frozen || editing,
@@ -263,7 +330,47 @@ function SortableQuestionRow({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  function changeType(next: QType) {
+    setType(next);
+    setOpts(defaultOptionsFor(next, opts));
+    // reset scoring se o modo atual deixou de fazer sentido
+    if (next !== "single_choice" && next !== "multiple_choice" && (scoreMode === "exact" || scoreMode === "partial")) {
+      setScoreMode("none");
+    }
+    if (next !== "scale" && scoreMode === "scale_target") setScoreMode("none");
+  }
+
+  function buildScoring(): Scoring {
+    if (scoreMode === "none") return { mode: "none" };
+    if (scoreMode === "exact" || scoreMode === "partial") {
+      return { mode: scoreMode, correct_option_ids: correctIds };
+    }
+    return { mode: "scale_target", target: scaleTarget, tolerance: scaleTolerance };
+  }
+
+  function handleSave() {
+    onSave({
+      position: q.position,
+      question_type: type,
+      prompt,
+      help_text: help || null,
+      required,
+      time_limit_seconds: time,
+      options: opts,
+      scoring: buildScoring(),
+      points,
+    });
+  }
+
   if (!editing) {
+    const typeLabel: Record<string, string> = {
+      short_text: "Texto curto",
+      long_text: "Texto longo",
+      single_choice: "Escolha única",
+      multiple_choice: "Múltipla escolha",
+      scale: "Escala",
+    };
+    const hasGabarito = q.scoring && typeof q.scoring === "object" && (q.scoring as { mode?: string }).mode !== "none";
     return (
       <Card ref={setNodeRef} style={style}>
         <CardContent className="p-4 flex items-start justify-between gap-3">
@@ -279,7 +386,11 @@ function SortableQuestionRow({
             </button>
           )}
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground">#{index + 1} · {q.question_type} · {q.time_limit_seconds}s {q.required && "· obrigatória"}</p>
+            <p className="text-xs text-muted-foreground">
+              #{index + 1} · {typeLabel[q.question_type] ?? q.question_type} · {q.time_limit_seconds}s
+              {q.required && " · obrigatória"}
+              {hasGabarito && ` · ${q.points ?? 1} pt`}
+            </p>
             <p className="font-medium">{q.prompt}</p>
             {q.help_text && <p className="text-xs text-muted-foreground mt-1">{q.help_text}</p>}
           </div>
@@ -300,6 +411,11 @@ function SortableQuestionRow({
     );
   }
 
+  const isChoice = type === "single_choice" || type === "multiple_choice";
+  const isScale = type === "scale";
+  const optsArr = Array.isArray(opts) ? (opts as ChoiceOpt[]) : [];
+  const scaleCfg = (opts && typeof opts === "object" && !Array.isArray(opts) ? (opts as ScaleCfg) : { min: 0, max: 10, step: 1 });
+
   return (
     <Card ref={setNodeRef} style={style}>
       <CardContent className="p-4 space-y-3">
@@ -308,13 +424,14 @@ function SortableQuestionRow({
         <div className="grid sm:grid-cols-3 gap-3">
           <div>
             <Label>Tipo</Label>
-            <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
+            <Select value={type} onValueChange={(v) => changeType(v as QType)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="short_text">Texto curto</SelectItem>
                 <SelectItem value="long_text">Texto longo</SelectItem>
                 <SelectItem value="single_choice">Escolha única</SelectItem>
                 <SelectItem value="multiple_choice">Múltipla escolha</SelectItem>
+                <SelectItem value="scale">Escala / NPS</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -327,11 +444,122 @@ function SortableQuestionRow({
             <Label>Obrigatória</Label>
           </div>
         </div>
+
+        {isChoice && (
+          <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+            <Label className="text-xs uppercase text-muted-foreground">Alternativas</Label>
+            {optsArr.map((opt, i) => (
+              <div key={opt.id} className="flex items-center gap-2">
+                <Input
+                  value={opt.label}
+                  onChange={(e) => {
+                    const next = optsArr.map((o) => (o.id === opt.id ? { ...o, label: e.target.value } : o));
+                    setOpts(next);
+                  }}
+                  placeholder={`Alternativa ${i + 1}`}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Remover alternativa"
+                  disabled={optsArr.length <= 2}
+                  onClick={() => {
+                    const next = optsArr.filter((o) => o.id !== opt.id).map((o, idx2) => ({ ...o, order: idx2 + 1 }));
+                    setOpts(next);
+                    setCorrectIds((ids) => ids.filter((id) => id !== opt.id));
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setOpts([...optsArr, { id: uuid(), label: `Alternativa ${optsArr.length + 1}`, order: optsArr.length + 1 }])}
+            >
+              <Plus className="h-3 w-3 mr-1" />Adicionar alternativa
+            </Button>
+          </div>
+        )}
+
+        {isScale && (
+          <div className="grid sm:grid-cols-5 gap-3 rounded-md border bg-muted/30 p-3">
+            <div><Label>Min</Label><Input type="number" value={scaleCfg.min} onChange={(e) => setOpts({ ...scaleCfg, min: Number(e.target.value) })} /></div>
+            <div><Label>Max</Label><Input type="number" value={scaleCfg.max} onChange={(e) => setOpts({ ...scaleCfg, max: Number(e.target.value) })} /></div>
+            <div><Label>Step</Label><Input type="number" min={1} value={scaleCfg.step ?? 1} onChange={(e) => setOpts({ ...scaleCfg, step: Number(e.target.value) || 1 })} /></div>
+            <div><Label>Rótulo mín.</Label><Input value={scaleCfg.min_label ?? ""} onChange={(e) => setOpts({ ...scaleCfg, min_label: e.target.value })} /></div>
+            <div><Label>Rótulo máx.</Label><Input value={scaleCfg.max_label ?? ""} onChange={(e) => setOpts({ ...scaleCfg, max_label: e.target.value })} /></div>
+          </div>
+        )}
+
+        <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={scoreMode !== "none"}
+              onCheckedChange={(c) => {
+                if (!c) setScoreMode("none");
+                else if (isChoice) setScoreMode("exact");
+                else if (isScale) setScoreMode("scale_target");
+              }}
+              disabled={!isChoice && !isScale}
+            />
+            <Label>Esta questão tem gabarito</Label>
+            {!isChoice && !isScale && <span className="text-xs text-muted-foreground">(disponível em escolha / escala)</span>}
+          </div>
+
+          {scoreMode !== "none" && isChoice && (
+            <>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs">Modo:</Label>
+                <Select value={scoreMode} onValueChange={(v) => setScoreMode(v as Scoring["mode"])}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="exact">Exato (tudo ou nada)</SelectItem>
+                    <SelectItem value="partial">Parcial (proporcional)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs uppercase text-muted-foreground">Alternativas corretas</Label>
+                {optsArr.map((opt) => {
+                  const isSelected = correctIds.includes(opt.id);
+                  return (
+                    <Label key={opt.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setCorrectIds([...correctIds, opt.id]);
+                          else setCorrectIds(correctIds.filter((id) => id !== opt.id));
+                        }}
+                      />
+                      <span className="text-sm">{opt.label}</span>
+                    </Label>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {scoreMode === "scale_target" && isScale && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div><Label>Resposta esperada</Label><Input type="number" value={scaleTarget} onChange={(e) => setScaleTarget(Number(e.target.value))} /></div>
+              <div><Label>Tolerância (±)</Label><Input type="number" min={0} value={scaleTolerance} onChange={(e) => setScaleTolerance(Number(e.target.value))} /></div>
+            </div>
+          )}
+
+          {scoreMode !== "none" && (
+            <div className="w-32">
+              <Label>Pontos</Label>
+              <Input type="number" min={0} step={0.5} value={points} onChange={(e) => setPoints(Number(e.target.value) || 0)} />
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSave({ position: q.position, question_type: type, prompt, help_text: help || null, required, time_limit_seconds: time })}>
-            Salvar
-          </Button>
+          <Button onClick={handleSave}>Salvar</Button>
         </div>
       </CardContent>
     </Card>
