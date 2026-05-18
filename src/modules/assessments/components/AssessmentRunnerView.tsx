@@ -342,7 +342,8 @@ function RunnerActive({
   const lowTime = remaining < 60;
   const qMin = Math.floor(qRemaining / 60);
   const qSec = qRemaining % 60;
-  const qLowTime = q?.time_limit_seconds ? qRemaining <= Math.max(10, Math.floor(q.time_limit_seconds * 0.1)) : false;
+  const qExpired = !!q?.time_limit_seconds && q.time_limit_seconds > 0 && qRemaining === 0;
+  const qLowTime = q?.time_limit_seconds ? qRemaining > 0 && qRemaining <= Math.max(10, Math.floor(q.time_limit_seconds * 0.1)) : false;
   const hasQTimer = !!q?.time_limit_seconds && q.time_limit_seconds > 0;
 
   const currentValue = answers[q.id] ?? {};
