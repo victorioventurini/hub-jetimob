@@ -1223,10 +1223,12 @@ export type Database = {
           help_text: string | null
           id: string
           options: Json | null
+          points: number
           position: number
           prompt: string
           question_type: Database["public"]["Enums"]["assessment_question_type"]
           required: boolean
+          scoring: Json
           time_limit_seconds: number
           updated_at: string
           version_id: string
@@ -1238,10 +1240,12 @@ export type Database = {
           help_text?: string | null
           id?: string
           options?: Json | null
+          points?: number
           position?: number
           prompt: string
           question_type?: Database["public"]["Enums"]["assessment_question_type"]
           required?: boolean
+          scoring?: Json
           time_limit_seconds?: number
           updated_at?: string
           version_id: string
@@ -1253,10 +1257,12 @@ export type Database = {
           help_text?: string | null
           id?: string
           options?: Json | null
+          points?: number
           position?: number
           prompt?: string
           question_type?: Database["public"]["Enums"]["assessment_question_type"]
           required?: boolean
+          scoring?: Json
           time_limit_seconds?: number
           updated_at?: string
           version_id?: string
@@ -1560,6 +1566,7 @@ export type Database = {
       assessment_runs: {
         Row: {
           assessment_id: string
+          auto_score: number | null
           bu_id: string
           client_meta: Json | null
           copy_attempt_count: number
@@ -1567,8 +1574,10 @@ export type Database = {
           deleted_at: string | null
           expires_at: string | null
           fraud_signals: Json | null
+          graded_at: string | null
           id: string
           invite_id: string
+          objective_score: number | null
           paste_attempt_count: number
           respondent_cpf: string
           respondent_name: string | null
@@ -1582,6 +1591,7 @@ export type Database = {
         }
         Insert: {
           assessment_id: string
+          auto_score?: number | null
           bu_id: string
           client_meta?: Json | null
           copy_attempt_count?: number
@@ -1589,8 +1599,10 @@ export type Database = {
           deleted_at?: string | null
           expires_at?: string | null
           fraud_signals?: Json | null
+          graded_at?: string | null
           id?: string
           invite_id: string
+          objective_score?: number | null
           paste_attempt_count?: number
           respondent_cpf: string
           respondent_name?: string | null
@@ -1604,6 +1616,7 @@ export type Database = {
         }
         Update: {
           assessment_id?: string
+          auto_score?: number | null
           bu_id?: string
           client_meta?: Json | null
           copy_attempt_count?: number
@@ -1611,8 +1624,10 @@ export type Database = {
           deleted_at?: string | null
           expires_at?: string | null
           fraud_signals?: Json | null
+          graded_at?: string | null
           id?: string
           invite_id?: string
+          objective_score?: number | null
           paste_attempt_count?: number
           respondent_cpf?: string
           respondent_name?: string | null
@@ -12710,6 +12725,7 @@ export type Database = {
         Args: { p_assessment_id: string }
         Returns: Json
       }
+      rpc_assessment_run_grade: { Args: { p_run_id: string }; Returns: Json }
       rpc_assessment_run_start: {
         Args: {
           p_client_meta?: Json
@@ -12969,6 +12985,7 @@ export type Database = {
         | "long_text"
         | "single_choice"
         | "multiple_choice"
+        | "scale"
       assessment_run_status:
         | "in_progress"
         | "submitted"
@@ -13292,6 +13309,7 @@ export const Constants = {
         "long_text",
         "single_choice",
         "multiple_choice",
+        "scale",
       ],
       assessment_run_status: [
         "in_progress",

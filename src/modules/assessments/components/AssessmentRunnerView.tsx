@@ -6,6 +6,9 @@
  *
  * Toda interação com backend passa pelo `RunnerApi` injetado — isso garante que o
  * modo preview não escreve nada (no-ops) sem precisar duplicar UI.
+ *
+ * Suporta múltiplos formatos de questão via `QuestionRenderer`:
+ * short_text, long_text, single_choice, multiple_choice, scale.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -15,21 +18,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LockedTextarea } from "@/modules/assessments/components/LockedTextarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { RunnerApi } from "../runner/runnerApi";
+import { QuestionRenderer } from "./runner/QuestionRenderer";
+import { isAnswered, type AnswerValue, type QuestionType } from "./runner/types";
 
 export type RunnerQuestion = {
   id: string;
   position: number;
-  question_type: "short_text" | "long_text" | "single_choice" | "multiple_choice";
+  question_type: QuestionType;
   prompt: string;
   help_text: string | null;
   required: boolean;
   time_limit_seconds: number;
-  options: { id: string; label: string }[] | null;
+  options: unknown;
 };
 
 export type RunnerForm = {
@@ -47,6 +51,16 @@ export type RunnerLookup = {
   assessment?: { id: string; title: string; description: string | null; default_total_time_seconds: number | null };
   forms?: RunnerForm[];
 };
+
+function buildOptionsPayload(type: QuestionType, value: AnswerValue): unknown {
+  if (type === "single_choice" || type === "multiple_choice") {
+    return value.option_ids ?? [];
+  }
+  if (type === "scale") {
+    return value.scale_value !== undefined ? { value: value.scale_value } : null;
+  }
+  return null;
+}
 
 export function AssessmentRunnerView({
   lookup,
@@ -209,8 +223,6 @@ function RunnerActive({
   isPreview: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  // URL mirrors the current question (?q=N, 1-based) but is forward-only:
-  // we always start at question 1 and ignore manual URL edits to prevent skipping.
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -221,7 +233,7 @@ function RunnerActive({
     setSearchParams(next, { replace: true });
   }, [idx, searchParams, setSearchParams]);
 
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [now, setNow] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [tabSwitches, setTabSwitches] = useState(0);
@@ -289,12 +301,14 @@ function RunnerActive({
 
   async function saveAnswer(extra?: { paste?: boolean }) {
     if (!q) return;
+    const value = answers[q.id] ?? {};
     const started = startTimeRef.current[q.id] ?? Date.now();
     const elapsed = Math.round((Date.now() - started) / 1000);
     await api.upsertAnswer({
       runId,
       questionId: q.id,
-      text: answers[q.id] ?? "",
+      text: q.question_type === "short_text" || q.question_type === "long_text" ? value.text ?? "" : null,
+      options: buildOptionsPayload(q.question_type, value),
       timeSpentSeconds: elapsed,
       pasteDetected: !!extra?.paste,
     });
@@ -342,6 +356,9 @@ function RunnerActive({
   const qLowTime = q?.time_limit_seconds ? qRemaining <= Math.max(10, Math.floor(q.time_limit_seconds * 0.1)) : false;
   const hasQTimer = !!q?.time_limit_seconds && q.time_limit_seconds > 0;
 
+  const currentValue = answers[q.id] ?? {};
+  const answered = isAnswered(q.question_type, currentValue);
+
   return (
     <div className={cn("min-h-screen bg-background flex flex-col", isPreview && "pt-9")}>
       {isPreview && <PreviewBanner />}
@@ -380,21 +397,22 @@ function RunnerActive({
             <p className="text-xs text-muted-foreground">{q._formTitle} · até {q.time_limit_seconds}s</p>
             <p className="font-medium text-base">{q.prompt}</p>
             {q.help_text && <p className="text-xs text-muted-foreground">{q.help_text}</p>}
-            <LockedTextarea
-              rows={14}
-              className="min-h-[320px] text-base leading-relaxed"
-              placeholder="Digite sua resposta…"
-              value={answers[q.id] ?? ""}
-              onChange={(e) => setAnswers((s) => ({ ...s, [q.id]: e.target.value }))}
-              onPasteAttempt={() => {
-                setPasteAttempts((c) => c + 1);
-                api.telemetry({ runId, pasteInc: 1 });
-                saveAnswer({ paste: true });
-                toast.error("Colar não é permitido. Esta tentativa foi registrada.");
-              }}
-              onCopyAttempt={() => {
-                setCopyAttempts((c) => c + 1);
-                api.telemetry({ runId, copyInc: 1 });
+            <QuestionRenderer
+              type={q.question_type}
+              options={q.options}
+              value={currentValue}
+              onChange={(next) => setAnswers((s) => ({ ...s, [q.id]: next }))}
+              onTelemetry={(evt) => {
+                if (evt.paste) {
+                  setPasteAttempts((c) => c + 1);
+                  api.telemetry({ runId, pasteInc: 1 });
+                  saveAnswer({ paste: true });
+                  toast.error("Colar não é permitido. Esta tentativa foi registrada.");
+                }
+                if (evt.copy) {
+                  setCopyAttempts((c) => c + 1);
+                  api.telemetry({ runId, copyInc: 1 });
+                }
               }}
             />
           </CardContent>
@@ -404,12 +422,12 @@ function RunnerActive({
           {idx < questions.length - 1 ? (
             <Button
               onClick={() => setConfirmNextOpen(true)}
-              disabled={q.required && !(answers[q.id] ?? "").trim()}
+              disabled={q.required && !answered}
             >
               Próxima
             </Button>
           ) : (
-            <Button onClick={() => setConfirmSubmitOpen(true)} disabled={submitting || (q.required && !(answers[q.id] ?? "").trim())}>
+            <Button onClick={() => setConfirmSubmitOpen(true)} disabled={submitting || (q.required && !answered)}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {isPreview ? "Simular envio" : "Enviar respostas"}
             </Button>

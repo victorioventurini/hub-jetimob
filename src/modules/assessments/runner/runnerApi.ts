@@ -22,7 +22,10 @@ export type StartRunResult =
 export type AnswerInput = {
   runId: string;
   questionId: string;
-  text: string;
+  /** texto livre (short_text / long_text) */
+  text?: string | null;
+  /** estrutura por tipo: choice → string[] de option ids; scale → {value:number} */
+  options?: unknown;
   timeSpentSeconds: number;
   pasteDetected: boolean;
 };
@@ -62,12 +65,12 @@ export function createRealRunnerApi(token: string): RunnerApi {
       }
       return { ok: true, runId: res.run_id!, expiresAt: res.expires_at! };
     },
-    async upsertAnswer({ runId, questionId, text, timeSpentSeconds, pasteDetected }) {
+    async upsertAnswer({ runId, questionId, text, options, timeSpentSeconds, pasteDetected }) {
       await globalSupabase.rpc("rpc_assessment_answer_upsert", {
         p_run_id: runId,
         p_question_id: questionId,
-        p_answer_text: text,
-        p_answer_options: null,
+        p_answer_text: text ?? null,
+        p_answer_options: (options ?? null) as never,
         p_time_spent_seconds: timeSpentSeconds,
         p_paste_detected: pasteDetected,
         p_signals: {} as never,
