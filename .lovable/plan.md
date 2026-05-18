@@ -1,164 +1,133 @@
-## Objetivo
+## Pré-checklist (cumprido)
 
-Reduzir tokens por loop em **60–85%**, e zerar o trabalho recorrente de manter docs canônicos sincronizados com o banco.
+- ✅ Regras Core de `mem://index.md` aplicadas.
+- ✅ `docs/canonical/core/INDEX.md` (router) e `PRE_CHECKLIST.md` consultados.
+- ✅ `docs/canonical/modules/assessments.md` lido — **detectado desatualizado**: cita tabelas inexistentes (`assessment_responses`, `assessment_questions`). Reais: `assessment_form_questions`, `assessment_answers`, `assessment_form_versions`, `assessment_runs`, `assessment_invites`, `assessment_form_links`, `assessment_themes`.
+- ✅ Master `mem://features/assessments/categories-standard` **não existe** no filesystem (referência órfã em `mem://index`). Tratada como anomalia documental.
+- ✅ Permission keys reais checadas em `permission_template_items_v2`: usar `assessments.form.update:bu` para gabarito (não criar key nova).
+- ✅ Schema atual: ENUM `assessment_question_type = (short_text, long_text, single_choice, multiple_choice)`; colunas `options jsonb`, `answer_options jsonb`, `signals jsonb` já existem; RPC `rpc_assessment_answer_upsert` já aceita `p_answer_options`.
 
-Estratégia em 6 alavancas, ordenadas por ROI: ganhos rápidos primeiro, refatoração estrutural depois, automação por último.
+## Contexto
 
----
+Só `long_text` é funcional. Editor (`FormEditorPage`) não tem UI para `options`; runner (`AssessmentRunnerView`) só renderiza textarea; `runnerApi.upsertAnswer` envia `p_answer_options: null` fixo.
 
-## Fase 1 — Quick-Wins (paga em TODO loop, mesmo os pequenos)
+## Escopo
 
-### D. Extrair changelog do TCR
+1. Ativar `single_choice` e `multiple_choice` end-to-end.
+2. Adicionar `scale` (Likert/NPS) ao ENUM.
+3. Scoring com gabarito para objetivas.
+4. Anti-cheat (timer/paste/tab/visibility) universal.
 
-- Mover linhas 2758→4136 do `TECHNICAL_CONTEXT_REGISTRY.md` (93 entradas) para `docs/canonical/changelog/CHANGELOG.md`.
-- Manter no TCR apenas as **5 últimas** entradas como "Histórico recente".
-- Atualizar `DOCS_RETENTION_POLICY.md`: changelog ativo = 90 dias / 30 entradas. Restante → `changelog/CHANGELOG_<ano>Q<n>.md`.
+Fora de escopo: upload, numérico, data, sim/não dedicado.
 
-**Impacto:** TCR cai de 4136 → ~2750 linhas (-33%) sem perder informação.
-
-### E. Compactar `mem://index.md`
-
-Hoje: ~150 linhas, sempre em contexto.
-
-- Consolidar memórias avulsas em **memórias-master por módulo** (padrão já adotado em KPIs Master, AI Master, QBR Master).
-- Alvos óbvios: `OKRs Master` (12 entradas viram 1), `Rituals Master` (consolidar 18 entradas já parcialmente cobertas), `Standards Master` (16 entradas → 1 sumário com links).
-- Resultado esperado: ~55 linhas no índice (~60% de redução).
-
-### F. Enxugar `<project-knowledge>` do custom_instructions
-
-- Pré-checklist atual repete em todo prompt o que já está em `core` do `mem://index`.
-- Reduzir para 8-10 linhas: "Antes de qualquer ação, ler `docs/canonical/PRE_CHECKLIST.md` e o(s) `modules/*.md` afetado(s). Regras inquebráveis em `mem://index`."
-- Mover tabela de "Regras Inquebráveis" para `PRE_CHECKLIST.md`.
-
-**Impacto combinado D+E+F:** ~35-40% menos contexto em **todo loop**, em ~1h de trabalho.
-
----
-
-## Fase 2 — Reestruturação por módulo (A)
-
-### Nova árvore `docs/canonical/`
+## Modelo de dados (migration)
 
 ```text
-docs/canonical/
-  core/                      ← lido sempre que pré-checklist é acionado
-    INDEX.md                 (roteador "afetou módulo X → leia Y")
-    TCR_CORE.md              (~350 linhas: 1.x stack/auth/multi-BU + 4.x regras críticas + 10 convenções)
-    DEVELOPMENT_STANDARDS.md
-    IDENTITY_CONVENTION.md
-    PERMISSIONS_AND_RBAC_MODEL.md
-    PRE_CHECKLIST.md
+ALTER TYPE assessment_question_type ADD VALUE 'scale';
 
-  modules/                   ← lido APENAS no escopo
-    okrs.md  kpis.md  rituals.md  assessments.md
-    tickets.md  projects.md  assets.md  partners.md
-    automations.md  integrations-ai.md  teams.md  notifications.md
+ALTER TABLE assessment_form_questions
+  ADD COLUMN scoring jsonb NOT NULL DEFAULT '{"mode":"none"}'::jsonb,
+  ADD COLUMN points  numeric NOT NULL DEFAULT 1;
 
-  reference/                 ← lookup pontual, sob demanda
-    UI_COMPONENTS_REGISTRY.md  TYPES_INDEX.md
-    LIB_INDEX.md  HOOKS_BARREL_STANDARD.md
-    QUERY_KEYS_STANDARD.md  EDGE_*.md
-    BUNDLING_*.md  BU_SCOPED_SUPABASE_RULES.md
-
-  generated/                 ← gerado por script (Fase 4)
-    DB_FUNCTIONS_INDEX.md  DB_VIEWS_INDEX.md
-    SCHEMA_QUICK_REFERENCE.md  RBAC_TEMPLATES_V3.md
-
-  changelog/
-    CHANGELOG.md  CHANGELOG_2026Q1.md  ...
+ALTER TABLE assessment_runs
+  ADD COLUMN auto_score      numeric,
+  ADD COLUMN objective_score numeric,
+  ADD COLUMN graded_at       timestamptz;
 ```
 
-### Template fixo de `modules/<nome>.md` (~150-250 linhas)
+Formato de `options` por tipo:
 
 ```text
-# <Módulo>
-## Resumo (≤5 linhas)
-## Tabelas (nome + FKs principais — não duplicar types.ts)
-## Permission keys + templates V2
-## Hooks/Selects canônicos
-## Edge functions e RPCs
-## Regras de negócio inquebráveis
-## Integrações com outros módulos
-## Últimas 5 mudanças (changelog do módulo)
+single_choice / multiple_choice:
+  [{ id: uuid, label: text, order: int }]
+scale:
+  { min: int, max: int, step: int, min_label?: text, max_label?: text }
 ```
 
-### Atualizar `PRE_CHECKLIST.md`
+Formato de `scoring`:
 
-Novo fluxo determinístico:
-1. Ler `core/INDEX.md`.
-2. Identificar módulo(s) afetado(s) a partir do pedido.
-3. Carregar `core/TCR_CORE.md` + `core/<arquivos pertinentes>` + `modules/<modulo>.md`.
-4. **Nunca** ler outros `modules/*.md` salvo dependência explícita.
-5. `reference/` e `generated/` apenas sob demanda.
+```text
+{ mode: "none" | "exact" | "partial" | "scale_target",
+  correct_option_ids?: uuid[],
+  target?: number,
+  tolerance?: number }
+```
 
----
+Formato de `assessment_answers`:
+- Choice: `answer_options = ["opt-id-1", ...]`
+- Scale:  `answer_options = { value: 7 }`
+- Text:   continua em `answer_text`
 
-## Fase 3 — Deduplicação (B)
+**Validation trigger** (regra Core: nada de CHECK) em `assessment_form_questions`:
+- `single_choice`/`multiple_choice` exigem `options` array ≥2 itens.
+- `scale` exige `options.min < options.max` e `step > 0`.
+- `scoring.mode` consistente com `question_type`.
+- Quando `scoring.mode='exact'|'partial'`: `correct_option_ids` ⊆ `options[].id`.
 
-Hoje, schema vive em 4 lugares: `TCR §2`, `DATA_MODEL_REGISTRY.md`, `SCHEMA_QUICK_REFERENCE.md`, `src/integrations/supabase/types.ts`.
+## RPC e scoring
 
-- **Fonte da verdade = `types.ts`** (já é auto-gerado e nunca desatualiza).
-- **Deletar** seções de "lista de colunas" em `SCHEMA_QUICK_REFERENCE.md` e `TCR §2`. Manter apenas:
-  - Relacionamentos não-óbvios (FKs polimórficas, identity map).
-  - Triggers e seus efeitos.
-  - RLS resumida (1 linha por tabela: "BU-scoped via `has_X_permission`").
-- `DATA_MODEL_REGISTRY.md` vira só **a tabela mestre de presença** (qual tabela existe, BU-scoped sim/não, módulo dono) — sem colunas.
-- Cada `modules/<x>.md` referencia `types.ts` para detalhe de colunas: "Schema completo: `Database['public']['Tables']['assessment_categories']`".
+- `rpc_assessment_answer_upsert` — sem mudança de assinatura.
+- **Nova** `rpc_assessment_run_grade(p_run_id uuid)` SECURITY DEFINER — invocada dentro de `rpc_assessment_run_submit`. Soma `points` × correção / total → `auto_score`, `objective_score`, `graded_at`.
+- Texto (`short_text`/`long_text`) fica fora do `objective_score` (correção manual posterior).
 
-**Impacto:** elimina 2 lugares de drift; remove ~600 linhas redundantes de docs.
+## UI — `FormEditorPage.tsx`
 
----
+Reescrever `SortableQuestionRow` (linhas 230–339):
+- Select de tipo expõe 5 valores (acrescenta "Escala/NPS").
+- `single_choice`/`multiple_choice`: lista editável de alternativas (label + reorder + remover + marcar como correta).
+- `scale`: inputs `min`/`max`/`step`/`min_label`/`max_label` + preview.
+- Switch "Esta questão tem gabarito" → revela `points` + marcação de corretas / target.
+- Manter regra `frozen` para versões publicadas.
 
-## Fase 4 — Geração automática (C)
+## UI — `AssessmentRunnerView.tsx`
 
-Criar `scripts/regen-canonical-docs.ts` que regenera todo `docs/canonical/generated/`:
+Substituir o `LockedTextarea` único por dispatcher em `src/modules/assessments/components/runner/`:
 
-| Arquivo | Origem |
-|---|---|
-| `DB_FUNCTIONS_INDEX.md` | `pg_proc` + `pg_namespace` |
-| `DB_VIEWS_INDEX.md` | `pg_views` |
-| `RBAC_TEMPLATES_V3.md` | `permission_templates_v2` + `permission_template_items_v2` |
-| `SCHEMA_QUICK_REFERENCE.md` (relacional, só FKs/triggers) | `information_schema` + `pg_trigger` |
-| `DATA_MODEL_REGISTRY.md` (tabela mestre) | introspecção + RLS de `pg_policy` |
+```text
+ShortTextQuestion.tsx       (Input + bloqueio paste)
+LongTextQuestion.tsx        (mantém LockedTextarea)
+SingleChoiceQuestion.tsx    (RadioGroup — semantic tokens)
+MultipleChoiceQuestion.tsx  (Checkbox list)
+ScaleQuestion.tsx           (RadioGroup horizontal estilo NPS)
+```
 
-Plug-in:
-- CI step opcional: rodar a cada migration e abrir PR de docs.
-- Comando manual: `bun run docs:regen`.
+Telemetria (timer por questão, paste, tab-switch, visibility) passa a valer para todos os tipos. `signals` no answer recebe `{ type, interactions }`.
 
-**Impacto:** manutenção dessas 5 docs cai a zero. Hoje toda mudança de schema/permissão obriga ~4 edições manuais (e historicamente algumas ficam desatualizadas — vide ausência de "assessments" em `PERMISSIONS_AND_RBAC_MODEL` antes desta sessão).
+## UI — `RunDetailPage.tsx`
 
----
+- Header: `auto_score` / `objective_score` quando `graded_at`.
+- Por questão: badge "Correta" / "Incorreta" / "Parcial" nas objetivas; texto exibido cru aguardando correção manual.
 
-## Detalhes técnicos
+## Documentação (saneamento)
 
-- **Sem impacto em código de produção, RLS, edge functions ou DB.** Tudo é movimentação documental + 1 script Node.
-- Reorganização de `docs/canonical/` é puro `mv`/refactor — git history preservado.
-- Compactação do `mem://index` usa `code--write mem://<path>` (substituição atômica).
-- Custom instructions: o arquivo `<project-knowledge>` é gerenciado pelo usuário fora do código — eu preparo o texto novo e você cola.
-- Script de regeneração roda via `psql` (já disponível no sandbox) ou `supabase--read_query`. Sem dependências novas.
-- Mudanças no `PRE_CHECKLIST.md` precisam ser comunicadas ao usuário porque elas alteram o contrato de comportamento do agente em loops futuros.
+- Atualizar `docs/canonical/modules/assessments.md` com tabelas reais, novos tipos suportados, scoring.
+- Remover referência órfã ao Master inexistente OU criar `mem://features/assessments/assessments-master-standard` consolidando categorias + tipos de questão + scoring. **Decisão recomendada:** criar o Master agora, já que este plano gera material consolidável.
 
----
+## Arquivos afetados
 
-## Economia estimada por tipo de loop
+```text
+supabase/migrations/<ts>_assessments_question_types.sql              (novo)
+src/modules/assessments/pages/FormEditorPage.tsx                     (editor multi-tipo)
+src/modules/assessments/components/AssessmentRunnerView.tsx          (dispatcher)
+src/modules/assessments/components/runner/*.tsx                      (novo)
+src/modules/assessments/runner/runnerApi.ts                          (AnswerInput aceita options)
+src/modules/assessments/pages/RunDetailPage.tsx                      (exibe score)
+src/modules/assessments/hooks/useAssessmentsData.ts                  (tipos)
+docs/canonical/modules/assessments.md                                (correção + escopo novo)
+mem://features/assessments/assessments-master-standard               (criar — opcional)
+```
 
-| Tipo de loop | Hoje | Pós-D+E+F | Pós-A | Pós-B+C |
-|---|---:|---:|---:|---:|
-| Bug em 1 módulo | ~5100 linhas | ~3000 | ~900 | ~700 |
-| Refactor 2 módulos | ~5100 | ~3000 | ~1200 | ~950 |
-| Pergunta RBAC pura | ~5100 | ~3000 | ~920 | ~700 |
-| Conversa curta (esta) | ~1500 | ~900 | ~900 | ~900 |
+## Compatibilidade
 
-Quick-wins (Fase 1) por si só já cortam ~40% dos tokens em **todo** loop. Fase 2 leva para 80% em loops de implementação. Fases 3-4 são consolidação e fim de débito recorrente.
+- Questões existentes continuam funcionando (`scoring` default `{mode:"none"}`, `points=1`).
+- Runs antigos: `auto_score` `NULL`, página de detalhe esconde seção.
+- Versões publicadas permanecem imutáveis (regra `frozen`).
 
----
+## QA / aceitação
 
-## Sequência sugerida
-
-1. **Sessão 1 — Fase 1 (D+E+F):** mover changelog, compactar `mem://index`, propor novo `<project-knowledge>`. ~30-45min.
-2. **Sessão 2 — Fase 2 base:** criar `core/`, `core/INDEX.md`, `TCR_CORE.md`, `PRE_CHECKLIST.md` reescrito. Mover arquivos. ~45min.
-3. **Sessão 3-4 — Fase 2 módulos:** criar `modules/*.md` (4 módulos por sessão). ~2 sessões.
-4. **Sessão 5 — Fase 3 (B):** deduplicar contra `types.ts`. ~45min.
-5. **Sessão 6 — Fase 4 (C):** escrever `scripts/regen-canonical-docs.ts` + primeira execução. ~60min.
-6. **Sessão 7 (opcional):** revisar memórias para deduplicar com `modules/*.md`.
-
-Cada fase é independente — podemos parar em qualquer ponto sem quebrar o restante.
+- Criar prova com 1 questão de cada tipo, publicar, gerar convite.
+- Respondente submete os 5 tipos via `/q/:token`.
+- Telemetria de paste/tab funciona em choice e scale.
+- `auto_score` aparece em `RunDetailPage` com breakdown.
+- Salvar `single_choice` sem alternativas → erro pelo validation trigger.
+- Lints/linter Supabase limpos após migration.
