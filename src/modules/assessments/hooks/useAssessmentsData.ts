@@ -88,7 +88,7 @@ export function useQuestions(versionId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assessment_form_questions")
-        .select("id, position, question_type, prompt, help_text, required, time_limit_seconds, options")
+        .select("id, position, question_type, prompt, help_text, required, time_limit_seconds, options, scoring, points")
         .eq("version_id", versionId!)
         .eq("bu_id", currentBuId!)
         .is("deleted_at", null)
