@@ -22,7 +22,10 @@ export type StartRunResult =
 export type AnswerInput = {
   runId: string;
   questionId: string;
-  text: string;
+  /** texto livre (short_text / long_text) */
+  text?: string | null;
+  /** estrutura por tipo: choice → string[] de option ids; scale → {value:number} */
+  options?: unknown;
   timeSpentSeconds: number;
   pasteDetected: boolean;
 };
