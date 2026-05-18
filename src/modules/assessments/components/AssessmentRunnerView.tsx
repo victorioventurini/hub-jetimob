@@ -285,19 +285,8 @@ function RunnerActive({
     if (!startTimeRef.current[q.id]) startTimeRef.current[q.id] = Date.now();
   }, [q]);
 
-  useEffect(() => {
-    if (!q) return;
-    if (!q.time_limit_seconds || q.time_limit_seconds <= 0) return;
-    if (qRemaining > 0) return;
-    if (idx < questions.length - 1) {
-      toast.warning("Tempo da pergunta esgotado. Avançando…");
-      next();
-    } else {
-      toast.warning("Tempo da pergunta esgotado. Enviando respostas…");
-      submit();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qRemaining, q?.id]);
+  // O tempo por pergunta é apenas informativo: ao esgotar, NÃO avança nem encerra.
+  // Apenas o tempo total da prova encerra a tentativa (efeito acima em `remaining`).
 
   async function saveAnswer(extra?: { paste?: boolean }) {
     if (!q) return;
@@ -353,7 +342,8 @@ function RunnerActive({
   const lowTime = remaining < 60;
   const qMin = Math.floor(qRemaining / 60);
   const qSec = qRemaining % 60;
-  const qLowTime = q?.time_limit_seconds ? qRemaining <= Math.max(10, Math.floor(q.time_limit_seconds * 0.1)) : false;
+  const qExpired = !!q?.time_limit_seconds && q.time_limit_seconds > 0 && qRemaining === 0;
+  const qLowTime = q?.time_limit_seconds ? qRemaining > 0 && qRemaining <= Math.max(10, Math.floor(q.time_limit_seconds * 0.1)) : false;
   const hasQTimer = !!q?.time_limit_seconds && q.time_limit_seconds > 0;
 
   const currentValue = answers[q.id] ?? {};
@@ -369,8 +359,13 @@ function RunnerActive({
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {hasQTimer && (
-            <Badge variant={qLowTime ? "destructive" : "outline"} className="font-mono" title="Tempo restante desta pergunta">
-              <Clock className="h-3 w-3 mr-1" />Q {String(qMin).padStart(2, "0")}:{String(qSec).padStart(2, "0")}
+            <Badge
+              variant={qExpired ? "destructive" : qLowTime ? "secondary" : "outline"}
+              className="font-mono"
+              title="Tempo sugerido desta pergunta (informativo — não encerra)"
+            >
+              <Clock className="h-3 w-3 mr-1" />
+              {qExpired ? "Q vencido" : `Q ${String(qMin).padStart(2, "0")}:${String(qSec).padStart(2, "0")}`}
             </Badge>
           )}
           <Badge variant={lowTime ? "destructive" : "secondary"} className="font-mono" title="Tempo total restante da prova">
@@ -394,7 +389,7 @@ function RunnerActive({
         </div>
         <Card>
           <CardContent className="p-4 space-y-3">
-            <p className="text-xs text-muted-foreground">{q._formTitle} · até {q.time_limit_seconds}s</p>
+            <p className="text-xs text-muted-foreground">{q._formTitle}{q.time_limit_seconds ? ` · sugerido: ${q.time_limit_seconds}s (informativo)` : ""}</p>
             <p className="font-medium text-base">{q.prompt}</p>
             {q.help_text && <p className="text-xs text-muted-foreground">{q.help_text}</p>}
             <QuestionRenderer
