@@ -304,22 +304,19 @@ export default function TicketDetailPage() {
               { label: otherBuName ? "Outra BU" : "Não encontrado" },
             ]}
           />
-          <VicErrorState
-            title={otherBuName ? "Esse ticket está em outra BU 🔄" : "Esse ticket sumiu! 👀"}
-            description={
-              otherBuName
-                ? `Você tem acesso a esse ticket na BU "${otherBuName}". Troque para essa BU para visualizá-lo.`
-                : "O ticket que você está procurando não existe ou foi removido."
-            }
-            onBack={goBack}
-            backLabel="Voltar para lista"
-          />
-          {otherBuName && resolvedTicketBuId && (
-            <div className="flex justify-center">
-              <Button onClick={() => switchBu(resolvedTicketBuId)}>
-                Trocar para BU {otherBuName}
-              </Button>
-            </div>
+          {otherBuName && resolvedTicketBuId ? (
+            <CrossBuTicketBanner
+              buName={otherBuName}
+              onSwitch={() => switchBu(resolvedTicketBuId)}
+              onBack={goBack}
+            />
+          ) : (
+            <VicErrorState
+              title="Esse ticket sumiu! 👀"
+              description="O ticket que você está procurando não existe ou foi removido."
+              onBack={goBack}
+              backLabel="Voltar para lista"
+            />
           )}
         </div>
       </HubLayout>
@@ -341,22 +338,19 @@ export default function TicketDetailPage() {
               { label: "Acesso negado" },
             ]}
           />
-          <VicErrorState
-            title="Esse ticket pertence a outra BU 🔒"
-            description={
-              targetName
-                ? `Você tem acesso a esse ticket na BU "${targetName}". Troque para essa BU para visualizá-lo.`
-                : "Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
-            }
-            onBack={goBack}
-            backLabel="Voltar para tickets"
-          />
-          {targetMembership && (
-            <div className="flex justify-center">
-              <Button onClick={() => switchBu(ticket.bu_id)}>
-                Trocar para BU {targetName}
-              </Button>
-            </div>
+          {targetMembership && targetName ? (
+            <CrossBuTicketBanner
+              buName={targetName}
+              onSwitch={() => switchBu(ticket.bu_id)}
+              onBack={goBack}
+            />
+          ) : (
+            <VicErrorState
+              title="Esse ticket pertence a outra BU 🔒"
+              description="Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+              onBack={goBack}
+              backLabel="Voltar para tickets"
+            />
           )}
         </div>
       </HubLayout>
