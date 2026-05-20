@@ -23,6 +23,7 @@ import { TicketDetailHeader } from "../components/TicketDetailHeader";
 import { TicketTransferModal } from "../components/TicketTransferModal";
 import { TicketDetailSidebar } from "../components/TicketDetailSidebar";
 import { PinnedMessagesSection } from "../components/PinnedMessagesSection";
+import { CrossBuTicketBanner } from "../components/CrossBuTicketBanner";
 import type { TicketStatus, TicketMessage } from "../types";
 import type { ParsedMention } from "@/components/mentions";
 
