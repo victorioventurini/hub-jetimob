@@ -58,6 +58,8 @@ export interface WeeklyExecutiveOpeningStepProps {
   onGenerateDraft?: () => void | Promise<void>;
   /** Indica geração em curso (desabilita botão e mostra spinner) */
   isGenerating?: boolean;
+  /** Desabilita o botão de gerar (ex.: agregação de Pré-Weeklies ainda carregando) */
+  disableGenerate?: boolean;
   /** Slot opcional renderizado abaixo do PreparationStatusCard (ex.: RitualAttendance) */
   topSlot?: ReactNode;
   /** Decisões pendentes da Weekly anterior (carry-over). */
