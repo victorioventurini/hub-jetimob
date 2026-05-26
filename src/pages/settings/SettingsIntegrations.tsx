@@ -100,7 +100,7 @@ export default function SettingsIntegrations() {
   };
 
   const handleConfigure = (integrationKey: string) => {
-    navigate(`/next/integrations/${integrationKey}`);
+    navigate(`/hub/integrations/${integrationKey}`);
   };
 
   return (

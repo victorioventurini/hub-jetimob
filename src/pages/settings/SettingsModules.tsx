@@ -427,7 +427,7 @@ export default function SettingsModules() {
                   return moduleHasSettings ? (
                     <Link
                       key={module.id}
-                      to={`/next/modules/${module.slug}/settings`}
+                      to={`/hub/modules/${module.slug}/settings`}
                       className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
                     >
                       {content}
@@ -513,7 +513,7 @@ export default function SettingsModules() {
                               </DropdownMenuItem>
                               {hasSettings(module.slug) && (
                                 <DropdownMenuItem asChild>
-                                  <Link to={`/next/modules/${module.slug}/settings`}>
+                                  <Link to={`/hub/modules/${module.slug}/settings`}>
                                     <Settings className="h-4 w-4 mr-2" />
                                     Configurações
                                   </Link>
@@ -601,7 +601,7 @@ export default function SettingsModules() {
                     asChild
                     onClick={() => setSelectedModule(null)}
                   >
-                    <Link to={`/next/modules/${selectedModule.slug}/settings`}>
+                    <Link to={`/hub/modules/${selectedModule.slug}/settings`}>
                       <Settings className="h-4 w-4 mr-2" />
                       Configurações do Módulo
                     </Link>

@@ -29,22 +29,22 @@ interface NextGlobalSidebarProps {
 
 // Itens do menu principal
 const mainItems = [
-  { name: "Início", href: "/next", icon: Home, exact: true },
+  { name: "Início", href: "/hub", icon: Home, exact: true },
 ];
 
 // Itens da seção Plataforma
 const platformItems = [
-  { name: "Unidades de Negócio", href: "/next/business-units", icon: Building2 },
-  { name: "Módulos", href: "/next/modules", icon: Blocks },
-  { name: "Integrações", href: "/next/integrations", icon: Puzzle },
-  { name: "Automações", href: "/next/automations", icon: Workflow },
-  { name: "Permissões", href: "/next/permissions", icon: Shield },
-  { name: "Cargos", href: "/next/job-titles", icon: Briefcase },
-  { name: "Usuários", href: "/next/users", icon: Users },
-  { name: "Parceiros", href: "/next/partners", icon: Handshake },
-  { name: "Notificações", href: "/next/notifications", icon: Bell },
-  { name: "Performance", href: "/next/performance", icon: Activity },
-  { name: "Catálogo UI", href: "/next/ui", icon: Palette },
+  { name: "Unidades de Negócio", href: "/hub/business-units", icon: Building2 },
+  { name: "Módulos", href: "/hub/modules", icon: Blocks },
+  { name: "Integrações", href: "/hub/integrations", icon: Puzzle },
+  { name: "Automações", href: "/hub/automations", icon: Workflow },
+  { name: "Permissões", href: "/hub/permissions", icon: Shield },
+  { name: "Cargos", href: "/hub/job-titles", icon: Briefcase },
+  { name: "Usuários", href: "/hub/users", icon: Users },
+  { name: "Parceiros", href: "/hub/partners", icon: Handshake },
+  { name: "Notificações", href: "/hub/notifications", icon: Bell },
+  { name: "Performance", href: "/hub/performance", icon: Activity },
+  { name: "Catálogo UI", href: "/hub/ui", icon: Palette },
 ];
 
 // Links externos
@@ -144,7 +144,7 @@ export function NextGlobalSidebar({ collapsed, onCollapse }: NextGlobalSidebarPr
     >
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-        <Link to="/next" className="flex items-center gap-3">
+        <Link to="/hub" className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg shrink-0">
             H
           </div>

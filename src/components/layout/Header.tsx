@@ -37,7 +37,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const { userRole, hasMultipleBus, currentBuId } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
-  const isNextPage = location.pathname.startsWith("/next");
+  const isNextPage = location.pathname.startsWith("/hub");
   const { isImpersonating } = useOptionalImpersonation();
   const { isExternal, externalInfo } = useExternalUser();
   const { symbolUrl, buName, primaryColor } = useBuBranding();

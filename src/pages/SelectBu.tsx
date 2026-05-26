@@ -171,7 +171,7 @@ export default function SelectBu() {
               <DropdownMenuSeparator />
               {isAdmin && (
                 <DropdownMenuItem asChild>
-                  <Link to="/next" className="cursor-pointer">
+                  <Link to="/hub" className="cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />
                     Configurações
                   </Link>
