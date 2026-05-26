@@ -175,7 +175,7 @@ export function WeeklyExecutiveOpeningStep({
               variant="outline"
               size="sm"
               onClick={() => void onGenerateDraft()}
-              disabled={isGenerating}
+              disabled={isGenerating || disableGenerate}
               className="gap-2"
             >
               {isGenerating ? (
