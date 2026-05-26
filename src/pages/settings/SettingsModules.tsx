@@ -76,7 +76,7 @@ const MODULES_WITH_SETTINGS = ["okrs"];
 export default function SettingsModules() {
   usePageTitle("Módulos", { 
     skipBu: true, 
-    customDescription: "Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit." 
+    customDescription: "Configure os módulos disponíveis no Next e gerencie a ativação por Business Unit." 
   });
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const search = searchState.value;
@@ -250,7 +250,7 @@ export default function SettingsModules() {
     <div className="space-y-6">
       <PageHeader
         title="Módulos"
-        description="Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit"
+        description="Configure os módulos disponíveis no Next e gerencie a ativação por Business Unit"
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -427,7 +427,7 @@ export default function SettingsModules() {
                   return moduleHasSettings ? (
                     <Link
                       key={module.id}
-                      to={`/hub/modules/${module.slug}/settings`}
+                      to={`/next/modules/${module.slug}/settings`}
                       className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
                     >
                       {content}
@@ -513,7 +513,7 @@ export default function SettingsModules() {
                               </DropdownMenuItem>
                               {hasSettings(module.slug) && (
                                 <DropdownMenuItem asChild>
-                                  <Link to={`/hub/modules/${module.slug}/settings`}>
+                                  <Link to={`/next/modules/${module.slug}/settings`}>
                                     <Settings className="h-4 w-4 mr-2" />
                                     Configurações
                                   </Link>
@@ -601,7 +601,7 @@ export default function SettingsModules() {
                     asChild
                     onClick={() => setSelectedModule(null)}
                   >
-                    <Link to={`/hub/modules/${selectedModule.slug}/settings`}>
+                    <Link to={`/next/modules/${selectedModule.slug}/settings`}>
                       <Settings className="h-4 w-4 mr-2" />
                       Configurações do Módulo
                     </Link>

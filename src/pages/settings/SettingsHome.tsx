@@ -93,9 +93,9 @@ function StatCard({ title, value, subtitle, icon: Icon, subtitleIcon: SubIcon, s
 }
 
 export default function SettingsHome() {
-  usePageTitle("Configurações do Hub", { 
+  usePageTitle("Configurações do Next", { 
     skipBu: true, 
-    customDescription: "Painel central de configurações globais do Hub." 
+    customDescription: "Painel central de configurações globais do Next." 
   });
   const { currentBu } = useBu();
 
@@ -137,10 +137,10 @@ export default function SettingsHome() {
     queryFn: async () => {
       const [catalogResult, enabledResult] = await Promise.all([
         supabase
-          .from("hub_integrations_catalog")
+          .from("next_integrations_catalog")
           .select("id", { count: "exact", head: true }),
         supabase
-          .from("hub_integrations_global_config")
+          .from("next_integrations_global_config")
           .select("id", { count: "exact", head: true })
           .eq("is_enabled_global", true),
       ]);
@@ -186,7 +186,7 @@ export default function SettingsHome() {
     <div className="space-y-8 max-w-5xl">
       <PageHeader
         title="Painel de Configurações"
-        description="Gerencie as configurações globais do Hub"
+        description="Gerencie as configurações globais do Next"
         breadcrumbs={[{ label: "Configurações" }]}
       />
 
@@ -235,7 +235,7 @@ export default function SettingsHome() {
         <h2 className="text-lg font-semibold mb-4">Configurações da Plataforma</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <QuickAccessCard
-            to="/hub/business-units"
+            to="/next/business-units"
             icon={Building2}
             iconBgColor="bg-success-muted text-success"
             title="Business Units"
@@ -244,16 +244,16 @@ export default function SettingsHome() {
             loading={busLoading}
           />
           <QuickAccessCard
-            to="/hub/modules"
+            to="/next/modules"
             icon={Blocks}
             iconBgColor="bg-status-purple-muted text-status-purple"
             title="Módulos"
-            description="Configurar módulos do Hub"
+            description="Configurar módulos do Next"
             count={modulesData?.total}
             loading={modulesLoading}
           />
           <QuickAccessCard
-            to="/hub/integrations"
+            to="/next/integrations"
             icon={Puzzle}
             iconBgColor="bg-status-orange-muted text-status-orange"
             title="Integrações"
@@ -300,7 +300,7 @@ export default function SettingsHome() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Link
-              to="/hub/business-units"
+              to="/next/business-units"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
@@ -310,7 +310,7 @@ export default function SettingsHome() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
             <Link
-              to="/hub/modules"
+              to="/next/modules"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">
@@ -320,7 +320,7 @@ export default function SettingsHome() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
             <Link
-              to="/hub/integrations"
+              to="/next/integrations"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
             >
               <div className="flex items-center gap-2">

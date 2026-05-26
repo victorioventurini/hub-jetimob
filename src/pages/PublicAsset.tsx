@@ -66,7 +66,7 @@ export default function PublicAsset() {
   useEffect(() => {
     if (data?.asset) {
       const { asset, bu } = data;
-      document.title = `Item ${asset.internal_code} - ${asset.name} | Hub`;
+      document.title = `Item ${asset.internal_code} - ${asset.name} | Next`;
       
       // Update meta description
       let metaDescriptionTag = document.querySelector('meta[name="description"]');
@@ -81,13 +81,13 @@ export default function PublicAsset() {
         `Visualize informações do item ${asset.internal_code} (${asset.name}) da ${bu.name}. Status: ${statusLabel}.`
       );
     } else if (error) {
-      document.title = `Item ${code || ''} não encontrado | Hub`;
+      document.title = `Item ${code || ''} não encontrado | Next`;
     } else {
-      document.title = `Carregando item... | Hub`;
+      document.title = `Carregando item... | Next`;
     }
 
     return () => {
-      document.title = "Hub";
+      document.title = "Next";
     };
   }, [data, error, code]);
 
@@ -173,7 +173,7 @@ export default function PublicAsset() {
             <Button asChild variant="outline">
               <Link to="/auth">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Ir para o Hub
+                Ir para o Next
               </Link>
             </Button>
           </CardContent>
@@ -327,7 +327,7 @@ export default function PublicAsset() {
             className="w-full"
           >
             <ExternalLink className="h-4 w-4 mr-2" />
-            Ver no Hub (interno)
+            Ver no Next (interno)
           </Button>
         </div>
       </div>

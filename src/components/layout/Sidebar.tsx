@@ -39,7 +39,7 @@ const navigation = [
 
 const adminNavigation = [
   { name: "Unidades de Negócio", href: "/business-units", icon: Briefcase },
-  { name: "Configurações", href: "/hub", icon: Settings },
+  { name: "Configurações", href: "/next", icon: Settings },
   { name: "Auditoria", href: "/audit", icon: Shield },
 ];
 
@@ -117,7 +117,7 @@ export function Sidebar({ collapsed, onCollapse }: SidebarProps) {
             </Avatar>
             {!collapsed && (
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-sidebar-foreground">Hub</span>
+                <span className="text-lg font-bold text-sidebar-foreground">Next</span>
                 <span className="text-xs text-sidebar-foreground/60">{buName}</span>
               </div>
             )}

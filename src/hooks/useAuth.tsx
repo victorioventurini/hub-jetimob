@@ -263,7 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             data?.error?.message ||
             data?.message ||
             (status === 403
-              ? 'Esse e-mail não tem acesso ao Hub.'
+              ? 'Esse e-mail não tem acesso ao Next.'
               : 'Erro ao enviar link de acesso. Tente novamente.');
           return { error: new Error(message) };
         }

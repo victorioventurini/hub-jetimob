@@ -22,7 +22,7 @@ interface PageHeaderProps {
   backLabel?: string;
   /** 
    * Breadcrumbs de navegação. Se fornecido, exibe breadcrumbs em vez do botão de voltar.
-   * O primeiro item (Hub) é adicionado automaticamente.
+   * O primeiro item (Next) é adicionado automaticamente.
    */
   breadcrumbs?: BreadcrumbItem[];
 }
@@ -32,7 +32,7 @@ interface PageHeaderProps {
  * 
  * Suporta dois modos de navegação:
  * 1. backTo/backLabel: Exibe botão de voltar
- * 2. breadcrumbs: Exibe breadcrumbs automáticos (Hub → ...)
+ * 2. breadcrumbs: Exibe breadcrumbs automáticos (Next → ...)
  * 
  * @example
  * // Com botão de voltar
@@ -60,10 +60,10 @@ export function PageHeader({
   backLabel = "Voltar",
   breadcrumbs,
 }: PageHeaderProps) {
-  // Se breadcrumbs forem fornecidos, monta com Hub como primeiro item
+  // Se breadcrumbs forem fornecidos, monta com Next como primeiro item
   // Usa "/" como link para a tela inicial da BU (acessível a todos os usuários)
   const fullBreadcrumbs: BreadcrumbItem[] | undefined = breadcrumbs
-    ? [{ label: "Hub", href: "/" }, ...breadcrumbs]
+    ? [{ label: "Next", href: "/" }, ...breadcrumbs]
     : undefined;
 
   return (

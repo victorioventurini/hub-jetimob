@@ -353,7 +353,7 @@ const PublicShell = memo(function PublicShell({ children }: { children: React.Re
         </header>
         {children}
         <footer className="mt-6 text-center text-[11px] text-muted-foreground">
-          Feedback anônimo • Hub da Jet
+          Feedback anônimo • Next da Jet
         </footer>
       </div>
     </main>

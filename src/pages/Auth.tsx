@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import JetimobIcon from "@/assets/jetimob-icon.svg";
 import { normalizeAuthNext } from "@/lib/authRedirect";
 
-const STORAGE_KEY = "hub_last_email";
+const STORAGE_KEY = "next_last_email";
 const STORAGE_TTL_DAYS = 30;
 
 interface SavedEmail {
@@ -147,7 +147,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       const msg = (error.message || '').toLowerCase();
       // Check if it's a domain/authorization error from edge function
       if (msg.includes("não está autorizado") || msg.includes("não tem acesso")) {
-        setDomainError("Esse e-mail não tem acesso ao Hub.");
+        setDomainError("Esse e-mail não tem acesso ao Next.");
       } else if (msg.includes("demorou demais") || msg.includes("conectar ao servidor") || msg.includes("conexão")) {
         toast.error(error.message);
       } else {
@@ -216,7 +216,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
             <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-6">
               <img
                 src={JetimobIcon}
-                alt="Hub"
+                alt="Next"
                 className="w-8 h-8"
                 style={{ filter: "brightness(0) invert(1)" }}
               />
@@ -294,7 +294,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
           <div className="lg:hidden w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-6">
             <img
               src={JetimobIcon}
-              alt="Hub"
+              alt="Next"
               className="w-8 h-8"
               style={{ filter: "brightness(0) invert(1)" }}
             />
@@ -416,7 +416,7 @@ function BrandingSide() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-20 h-20 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8"
         >
-          <img src={JetimobIcon} alt="Hub" className="w-12 h-12" />
+          <img src={JetimobIcon} alt="Next" className="w-12 h-12" />
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -424,7 +424,7 @@ function BrandingSide() {
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
           className="text-4xl font-bold text-white mb-4"
         >
-          Hub
+          Next
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}

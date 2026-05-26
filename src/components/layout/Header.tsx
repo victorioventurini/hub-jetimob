@@ -37,7 +37,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
   const { userRole, hasMultipleBus, currentBuId } = useBu();
   const location = useLocation();
   const navigate = useNavigate();
-  const isHubPage = location.pathname.startsWith("/hub");
+  const isNextPage = location.pathname.startsWith("/next");
   const { isImpersonating } = useOptionalImpersonation();
   const { isExternal, externalInfo } = useExternalUser();
   const { symbolUrl, buName, primaryColor } = useBuBranding();
@@ -69,7 +69,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("Você saiu do Hub");
+    toast.success("Você saiu do Next");
   };
 
   return (
@@ -77,7 +77,7 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
       className={cn(
         "fixed top-0 right-0 z-30 h-16 bg-card/80 backdrop-blur-md border-b border-border",
         "transition-all duration-300 ease-in-out",
-        isHubPage 
+        isNextPage 
           ? "left-0" 
           : cn("left-0 lg:left-64", sidebarCollapsed && "lg:left-20")
       )}
@@ -116,15 +116,15 @@ export function Header({ sidebarCollapsed, onMobileMenuToggle }: HeaderProps) {
         </div>
 
         {/* Cycle Progress Indicator */}
-        {!isHubPage && currentBuId && <CycleProgressHeader variant="segmented" />}
+        {!isNextPage && currentBuId && <CycleProgressHeader variant="segmented" />}
 
         {/* Spacer */}
         <div className="flex-1" />
 
         {/* Right section */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* BU Selector - Show button on hub (if multiple BUs), dropdown elsewhere */}
-          {isHubPage ? (
+          {/* BU Selector - Show button on next (if multiple BUs), dropdown elsewhere */}
+          {isNextPage ? (
             hasMultipleBus && (
               <Button asChild variant="outline" size="sm" className="gap-2 hidden sm:flex">
                 <Link to="/select-bu">

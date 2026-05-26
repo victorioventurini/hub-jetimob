@@ -124,7 +124,7 @@ export function ReportProblemDialog({
           </DialogTitle>
           <DialogDescription>
             Conta pra gente o que você estava tentando fazer. Isso nos ajuda a
-            melhorar o Hub.
+            melhorar o Next.
           </DialogDescription>
         </DialogHeader>
 
