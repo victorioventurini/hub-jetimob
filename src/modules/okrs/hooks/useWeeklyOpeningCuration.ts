@@ -52,6 +52,21 @@ interface CurateEdgeResponse {
   output?: CuratorOutput | null;
 }
 
+interface EdgeSuccessEnvelope<T> {
+  success: true;
+  data: T;
+}
+
+function unwrapCurateResponse(
+  response: CurateEdgeResponse | EdgeSuccessEnvelope<CurateEdgeResponse> | null,
+): CurateEdgeResponse | null {
+  if (!response) return null;
+  if ('data' in response && 'success' in response && response.success === true) {
+    return response.data;
+  }
+  return response as CurateEdgeResponse;
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
