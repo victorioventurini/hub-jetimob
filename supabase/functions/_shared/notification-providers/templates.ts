@@ -51,7 +51,7 @@ export function absolutizeUrl(url: unknown): string {
  *
  * Variáveis cujo nome é exatamente `context_url` ou termina em `_url` são
  * automaticamente absolutizadas — ver `absolutizeUrl()`. Isso garante que
- * `[Ver detalhes]({{context_url}})` no markdown vire `<a href="https://hub.jetimob.com/go/...">`
+ * `[Ver detalhes]({{context_url}})` no markdown vire `<a href="https://next.jetimob.com/go/...">`
  * em vez de `<a href="/go/...">` (quebrado em emails).
  */
 export function renderTemplate(template: string, variables: Record<string, unknown>): string {
