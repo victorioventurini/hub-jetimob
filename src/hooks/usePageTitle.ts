@@ -84,7 +84,7 @@ export function usePageTitle(
     metaDescriptionTag.setAttribute("content", metaDescription);
 
     // Canonical: sempre apontar para o domínio oficial, sem query/hash,
-    // para evitar duplicidade entre preview, lovable.app e hub.jetimob.com.
+    // para evitar duplicidade entre preview, lovable.app e next.jetimob.com.
     const canonicalHref = `${CANONICAL_ORIGIN}${window.location.pathname}`;
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {
