@@ -171,14 +171,31 @@ export default function WeeklyPage() {
   // Agregação dos Pré-Weekly da semana → insumo para o curador IA
   const aggregation = useWeeklyPreWeeklyAggregation(draft.data.referenceWeek);
 
+  // Memorizar coverage para evitar re-renders desnecessários do hook curador
+  const coverage = useMemo(
+    () => aggregation.coverage,
+    [
+      aggregation.coverage.totalLeaders,
+      aggregation.coverage.submittedLeaders,
+      aggregation.coverage.pendingLeaders,
+    ],
+  );
+
   const { isGenerating, generate } = useWeeklyOpeningCuration({
     referenceWeek: draft.data.referenceWeek,
     topics: aggregation.topics,
     peopleSignals: aggregation.peopleSignals,
-    coverage: aggregation.coverage,
+    coverage,
   });
 
   const handleGenerateDraft = useCallback(async () => {
+    // Guard: bloqueia invocação enquanto a agregação dos Pré-Weeklies ainda
+    // não resolveu — evita enviar coverage {0,0,0} ao curador (LLM passaria
+    // a relatar "0 líderes enviaram" mesmo havendo submissões).
+    if (aggregation.isLoading) {
+      toast.info('Aguarde — carregando Pré-Weeklies da semana…');
+      return;
+    }
     try {
       const result = await generate(draft.data.executiveOpening);
       if (!result) return;
@@ -191,7 +208,7 @@ export default function WeeklyPage() {
     } catch (error) {
       handleError(error, { context: 'Weekly Curate Opening' });
     }
-  }, [generate, draft.data.executiveOpening, updateDraft]);
+  }, [aggregation.isLoading, generate, draft.data.executiveOpening, updateDraft]);
 
   const renderStepContent = () => {
     switch (draft.currentStep) {
