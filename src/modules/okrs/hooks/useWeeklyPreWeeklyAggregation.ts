@@ -73,7 +73,7 @@ export function useWeeklyPreWeeklyAggregation(
   const buId = currentBu?.id ?? null;
   const supabase = useBuScopedSupabase();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: queryKeys.okrs.weeklyAggregation(buId, referenceWeek),
     enabled: !!buId && !!referenceWeek,
     staleTime: 60 * 1000,
