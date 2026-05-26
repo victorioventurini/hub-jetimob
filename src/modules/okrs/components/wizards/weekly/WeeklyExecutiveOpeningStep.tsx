@@ -58,6 +58,8 @@ export interface WeeklyExecutiveOpeningStepProps {
   onGenerateDraft?: () => void | Promise<void>;
   /** Indica geração em curso (desabilita botão e mostra spinner) */
   isGenerating?: boolean;
+  /** Desabilita o botão de gerar (ex.: agregação de Pré-Weeklies ainda carregando) */
+  disableGenerate?: boolean;
   /** Slot opcional renderizado abaixo do PreparationStatusCard (ex.: RitualAttendance) */
   topSlot?: ReactNode;
   /** Decisões pendentes da Weekly anterior (carry-over). */
@@ -76,6 +78,7 @@ export function WeeklyExecutiveOpeningStep({
   onContinue,
   onGenerateDraft,
   isGenerating = false,
+  disableGenerate = false,
   topSlot,
   carryOverDecisions,
 }: WeeklyExecutiveOpeningStepProps) {
@@ -150,7 +153,7 @@ export function WeeklyExecutiveOpeningStep({
               <CardContent>
                 <Button
                   onClick={() => void onGenerateDraft()}
-                  disabled={isGenerating}
+                  disabled={isGenerating || disableGenerate}
                   size="sm"
                   className="gap-2"
                 >
@@ -172,7 +175,7 @@ export function WeeklyExecutiveOpeningStep({
               variant="outline"
               size="sm"
               onClick={() => void onGenerateDraft()}
-              disabled={isGenerating}
+              disabled={isGenerating || disableGenerate}
               className="gap-2"
             >
               {isGenerating ? (

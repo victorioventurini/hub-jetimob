@@ -1,55 +1,58 @@
-# Magic link não chega para `joao@jetxp.com.br`
+## Diagnóstico
 
-## Causa-raiz (confirmada)
+O texto **"Nenhum dos 18 líderes enviou Pre-Weekly (0% de cobertura)... critical"** foi gerado pelo LLM com base no `payload.coverage` que recebeu **`{ totalLeaders: 18, submittedLeaders: 0, pendingLeaders: 18 }`**.
 
-O envio do magic link nunca chega à etapa de e-mail porque a chamada `supabase.auth.admin.generateLink()` dentro da edge function `request-magic-link` retorna **HTTP 500** do GoTrue.
+Verificação no banco:
 
-Nos logs de auth aparece, no mesmo período em que o usuário tentou:
+- 6 sessões de `pre-weekly` `status='completed'` para a BU `a000…0001` na semana de 2026-05-25 → 6 `started_by` distintos. ✓
+- 18 `teams` ativos não-deletados. ✓
+- `useWeeklyPreWeeklyAggregation` calcula `submittedLeaders = new Set(started_by).size` corretamente quando a query resolve.
 
-```
-500: Database error finding user
-error finding user: sql: Scan error on column index 8, name "email_change":
-converting NULL to string is unsupported
-```
+A causa é uma **race condition** no `useWeeklyOpeningCuration` + ausência de guard no botão:
 
-Validei no banco:
+1. `useWeeklyPreWeeklyAggregation` retorna o default `{ totalLeaders: 0, submittedLeaders: 0, pendingLeaders: 0 }` enquanto `isLoading` é `true`.
+2. `WeeklyExecutiveOpeningStep` desabilita o botão **apenas** por `isGenerating`, não por `aggregation.isLoading`. Em refresh/F5, o usuário consegue clicar antes da agregação terminar.
+3. Em uma chamada concreta hoje (10:44 UTC), antes das submissões de 10:43 e 11:17 entrarem na janela, o `submittedLeaders` real era 4; mas se a query estivesse parcialmente carregada (cobertura com `totalLeaders=18` já populado e `submittedLeaders` ainda 0 por timing/cache), o LLM recebeu 0/18 e materializou a frase "Nenhum dos 18 líderes…".
+4. O `executiveOpening.summary` é persistido no draft local do wizard — **não recalcula sozinho** quando novos Pré-Weeklies chegam.
 
-```
-auth.users WHERE email = 'joao@jetxp.com.br'
-  email_change IS NULL  →  true
-```
+Adicionalmente: o objeto `coverage` é construído inline a cada render em `WeeklyPage.tsx:174-179`, então a referência muda toda render e o `useCallback`/`generate` se reconstrói; isso não causa o bug em si, mas reforça a fragilidade.
 
-Esse é um bug conhecido do GoTrue/Go: certas colunas de string em `auth.users` (como `email_change`, `recovery_token`, `confirmation_token`, etc.) **não podem ser NULL** — o driver Go falha ao escanear NULL em `string`, e qualquer operação que carregue o registro do usuário (incluindo `generateLink`) responde 500. Como a edge function trata isso como `INTERNAL_ERROR`, o front mostra erro genérico e nenhum e-mail é enfileirado/enviado.
+## Mudança proposta (mínima e cirúrgica)
 
-A varredura mostra que **somente 2 usuários** estão nesse estado em todo o projeto:
+**Arquivo 1: `src/modules/okrs/hooks/useWeeklyPreWeeklyAggregation.ts`**
 
-| user_id | email |
-|---|---|
-| a761358c-d643-4b51-88b3-f730748e5dad | joao@jetxp.com.br |
-| 7823135c-71ff-481f-8834-25c1c5242764 | tania@jetxp.com.br |
+- Expor `isLoading` no retorno (já existe) e adicionar `isFetching` derivado do `useQuery` para o caller conseguir distinguir "primeira carga" de "refetch silencioso".
 
-Todas as outras colunas sensíveis (`email_change_token_current/new`, `recovery_token`, `confirmation_token`, `phone_change*`, `reauthentication_token`) já estão como string vazia para todos os 75 usuários — só `email_change` ficou NULL nesses 2 registros (provavelmente herdados de uma versão antiga do GoTrue antes do default `''`).
+**Arquivo 2: `src/modules/okrs/pages/WeeklyPage.tsx`**
 
-## Fix
+- Memorizar o objeto `coverage` com `useMemo` para evitar re-renders desnecessários do hook curador.
+- Em `handleGenerateDraft`, bloquear a invocação se `aggregation.isLoading === true` e exibir `toast.info('Aguarde — carregando Pré-Weeklies da semana…')`.
 
-Migration única, idempotente, só de dados — sem mudança de schema, sem trigger, sem tocar policies do schema `auth`:
+**Arquivo 3: `src/modules/okrs/components/wizards/weekly/WeeklyExecutiveOpeningStep.tsx`**
 
-```sql
-UPDATE auth.users
-SET email_change = ''
-WHERE email_change IS NULL;
-```
+- Aceitar nova prop opcional `disableGenerate?: boolean` (default `false`).
+- Aplicar `disabled={isGenerating || disableGenerate}` nos dois botões "Gerar rascunho com IA" (linhas 153 e 175).
+- Passar `disableGenerate={aggregation.isLoading}` na chamada em `WeeklyPage`.
 
-Cobertura: os 2 usuários acima. Demais 73 não são afetados.
+Nada mais muda: contrato da edge function, prompt, schema do LLM, RLS, BU isolation, query keys.
 
-## Verificação pós-fix
+## Conformidade canônica
 
-1. `SELECT count(*) FROM auth.users WHERE email_change IS NULL;` → deve retornar `0`.
-2. Pedir para `joao@jetxp.com.br` solicitar o magic link novamente em `/auth`.
-3. Conferir nos auth-logs que `/admin/generate_link` agora retorna `200` e que a edge `request-magic-link` loga `Magic link sent successfully to: joao@jetxp.com.br`.
+- **BU Isolation**: query mantém `.eq('bu_id', buId!)`.
+- **Soft Deletes**: `okr_wizard_sessions` continua sem filtro `deleted_at` (coluna inexistente — exceção já documentada).
+- **AI Safety**: não toca em parsing.
+- **Identity**: nenhum mutation neste fluxo.
+- **React.memo**: não aplicável (não é card de lista).
+- **Standards / Rituals Master**: Weekly v2 — `executiveOpening` continua sendo a fonte de verdade do draft; só prevenimos invocação com dados parciais.
+
+## Pós-fix — validação
+
+1. `/rituals/weekly` → na primeira renderização o botão "Gerar rascunho com IA" fica desabilitado por ~300ms até a agregação carregar.
+2. Após carregar, clicar gera rascunho com `coverage: { totalLeaders: 18, submittedLeaders: 6, pendingLeaders: 12 }`; o LLM produz resumo coerente (33% cobertura, nível `partial`).
+3. Para o caso atual do usuário: após shipar este fix, ele deve clicar **"Regenerar com IA"** uma vez para substituir o resumo stale.
 
 ## Fora de escopo
 
-- **Não** vou mexer em código da edge function `request-magic-link` (ela está correta — o problema é dado no `auth.users`).
-- **Não** vou alterar políticas RLS nem schema do GoTrue.
-- **Não** vou criar trigger preventivo: o GoTrue moderno já grava `''` por padrão; criar trigger no schema `auth` viola o canônico ("Avoid Modifying Supabase-Reserved Schemas").
+- Auto-regeneração reativa quando `coverage` muda (UX maior — exigiria invalidar trabalho manual já feito no draft).
+- Persistir o draft do Weekly em `okr_wizard_sessions` (hoje só persiste ao concluir — comportamento mantido).
+- Refatorar `useMbrOpeningCuration` para o mesmo guard (MBR tem fluxo distinto; tratado em ticket separado se observado).
