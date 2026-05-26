@@ -173,5 +173,6 @@ export function useWeeklyPreWeeklyAggregation(
     coverage:
       data?.coverage ?? { totalLeaders: 0, submittedLeaders: 0, pendingLeaders: 0 },
     isLoading,
+    isFetching,
   };
 }
