@@ -182,36 +182,37 @@ export function useWeeklyOpeningCuration(
           description: s.signal.description,
         }));
 
-        const { data, error: invokeError } = await supabase.functions.invoke<CurateEdgeResponse>(
-          'weekly-curate-opening',
-          {
-            body: {
-              bu_id: currentBu.id,
-              buName: currentBu.name,
-              referenceWeek: params.referenceWeek,
-              topics: aggregatedTopics,
-              peopleSignals: aggregatedSignals,
-              coverage: params.coverage,
-            },
+        const { data, error: invokeError } = await supabase.functions.invoke<
+          CurateEdgeResponse | EdgeSuccessEnvelope<CurateEdgeResponse>
+        >('weekly-curate-opening', {
+          body: {
+            bu_id: currentBu.id,
+            buName: currentBu.name,
+            referenceWeek: params.referenceWeek,
+            topics: aggregatedTopics,
+            peopleSignals: aggregatedSignals,
+            coverage: params.coverage,
           },
-        );
+        });
 
         if (invokeError) {
           setError(invokeError.message);
           return null;
         }
 
-        if (!data || data.origin === 'manual' || !data.output) {
+        const response = unwrapCurateResponse(data ?? null);
+
+        if (!response || response.origin === 'manual' || !response.output) {
           // Fallback: mantém estrutura atual mas registra origem manual
           return {
             next: { ...prevOpening, origin: 'manual' as const },
-            reason: data?.reason || 'MANUAL_FALLBACK',
+            reason: response?.reason || 'MANUAL_FALLBACK',
           };
         }
 
-        const generatedAt = data.generatedAt || new Date().toISOString();
+        const generatedAt = response.generatedAt || new Date().toISOString();
         const next = mapCuratorOutputToOpening(
-          data.output,
+          response.output,
           generatedAt,
           realProfileId,
           prevOpening.transitions,
