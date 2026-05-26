@@ -51,7 +51,7 @@ function normalizeNextPath(raw: string | null | undefined): string {
   }
 
   try {
-    const url = new URL(raw, "https://hub.jetimob.com");
+    const url = new URL(raw, "https://next.jetimob.com");
     const nestedNext = url.searchParams.get("next");
 
     if ((url.pathname === "/auth/callback" || url.pathname === "/auth/confirm") && nestedNext) {
