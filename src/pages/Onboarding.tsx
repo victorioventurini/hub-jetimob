@@ -17,7 +17,7 @@ export default function Onboarding() {
 
   usePageTitle("Seja bem-vindo(a)", {
     skipBu: true,
-    customDescription: "Complete seu perfil para começar a usar o Hub. Configure suas informações pessoais, contato e localização em poucos passos.",
+    customDescription: "Complete seu perfil para começar a usar o Next. Configure suas informações pessoais, contato e localização em poucos passos.",
   });
 
   const { data: profile, isLoading: profileLoading } = useQuery({

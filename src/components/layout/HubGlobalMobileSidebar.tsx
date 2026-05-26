@@ -23,7 +23,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-interface HubGlobalMobileSidebarProps {
+interface NextGlobalMobileSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -55,7 +55,7 @@ const externalLinks = [
   },
 ];
 
-export function HubGlobalMobileSidebar({ open, onOpenChange }: HubGlobalMobileSidebarProps) {
+export function NextGlobalMobileSidebar({ open, onOpenChange }: NextGlobalMobileSidebarProps) {
   const location = useLocation();
   
   // Fecha automaticamente ao trocar de rota
@@ -124,7 +124,7 @@ export function HubGlobalMobileSidebar({ open, onOpenChange }: HubGlobalMobileSi
             H
           </div>
           <SheetTitle className="flex flex-col items-start">
-            <span className="text-lg font-bold text-foreground">Hub</span>
+            <span className="text-lg font-bold text-foreground">Next</span>
             <span className="text-xs text-muted-foreground font-normal">Configurações Globais</span>
           </SheetTitle>
         </SheetHeader>

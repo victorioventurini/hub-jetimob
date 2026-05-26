@@ -25,7 +25,7 @@ import { PageHeader } from "@/components/ui/page-header";
 export default function SettingsBusinessUnits() {
   usePageTitle("Business Units", { 
     skipBu: true, 
-    customDescription: "Gerencie as unidades de negócio cadastradas no Hub." 
+    customDescription: "Gerencie as unidades de negócio cadastradas no Next." 
   });
 
   const { value: search, setValue: setSearch } = useLocalSearch("q");
@@ -86,7 +86,7 @@ export default function SettingsBusinessUnits() {
     <div className="space-y-6">
       <PageHeader
         title="Business Units"
-        description="Gerencie as unidades de negócio do Hub"
+        description="Gerencie as unidades de negócio do Next"
         breadcrumbs={[{ label: "Business Units" }]}
         actions={
           <Button onClick={() => setCreateDialogOpen(true)}>

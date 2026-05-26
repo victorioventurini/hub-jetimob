@@ -53,7 +53,7 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
           <div className="space-y-2">
             <h1 className="text-xl font-semibold">Confirme seu acesso</h1>
             <p className="text-sm text-muted-foreground">
-              Por motivos de segurança, confirme o acesso ao Hub clicando no botão abaixo.
+              Por motivos de segurança, confirme o acesso ao Next clicando no botão abaixo.
             </p>
           </div>
 
@@ -76,7 +76,7 @@ const AuthConfirm = forwardRef<HTMLDivElement>(function AuthConfirm(_props, _ref
                 onClick={handleConfirm}
                 disabled={confirming}
               >
-                {confirming ? "Acessando..." : "Acessar o Hub"}
+                {confirming ? "Acessando..." : "Acessar o Next"}
                 {!confirming && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
               <p className="text-xs text-muted-foreground">

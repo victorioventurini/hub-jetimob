@@ -214,7 +214,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
               />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-lg font-bold">Hub</span>
+              <span className="text-lg font-bold">Next</span>
               <span className="text-xs text-muted-foreground font-normal">{buName}</span>
             </div>
           </SheetTitle>

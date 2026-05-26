@@ -1,5 +1,5 @@
 /**
- * WizardsPage - Central hub for all OKR rituals (wizards)
+ * WizardsPage - Central next for all OKR rituals (wizards)
  * 
  * Lists all available rituals organized by module and user role.
  * Visibility is controlled by user permissions and role context.
@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { HubLayout } from '@/components/layout/HubLayout';
+import { NextLayout } from '@/components/layout/NextLayout';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
@@ -324,7 +324,7 @@ export default function WizardsPage() {
   const navigate = useNavigate();
   
   usePageTitle('Rituais', {
-    customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Hub.',
+    customDescription: 'Fluxos guiados para gestão de OKRs, check-ins e criação de metas no Next.',
   });
 
   const { has, isWildcard, isLoading: permissionsLoading } = usePermissions();
@@ -429,7 +429,7 @@ export default function WizardsPage() {
   const isLoading = permissionsLoading || qbrLoading || creationWindowLoading;
 
   return (
-    <HubLayout>
+    <NextLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <PageHeader
@@ -525,6 +525,6 @@ export default function WizardsPage() {
           </div>
         )}
       </div>
-    </HubLayout>
+    </NextLayout>
   );
 }

@@ -76,7 +76,7 @@ const MODULES_WITH_SETTINGS = ["okrs"];
 export default function SettingsModules() {
   usePageTitle("Módulos", { 
     skipBu: true, 
-    customDescription: "Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit." 
+    customDescription: "Configure os módulos disponíveis no Next e gerencie a ativação por Business Unit." 
   });
   const searchState = useUrlState<string>({ key: "q", defaultValue: "" });
   const search = searchState.value;
@@ -250,7 +250,7 @@ export default function SettingsModules() {
     <div className="space-y-6">
       <PageHeader
         title="Módulos"
-        description="Configure os módulos disponíveis no Hub e gerencie a ativação por Business Unit"
+        description="Configure os módulos disponíveis no Next e gerencie a ativação por Business Unit"
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

@@ -93,9 +93,9 @@ function StatCard({ title, value, subtitle, icon: Icon, subtitleIcon: SubIcon, s
 }
 
 export default function SettingsHome() {
-  usePageTitle("Configurações do Hub", { 
+  usePageTitle("Configurações do Next", { 
     skipBu: true, 
-    customDescription: "Painel central de configurações globais do Hub." 
+    customDescription: "Painel central de configurações globais do Next." 
   });
   const { currentBu } = useBu();
 
@@ -137,10 +137,10 @@ export default function SettingsHome() {
     queryFn: async () => {
       const [catalogResult, enabledResult] = await Promise.all([
         supabase
-          .from("hub_integrations_catalog")
+          .from("next_integrations_catalog")
           .select("id", { count: "exact", head: true }),
         supabase
-          .from("hub_integrations_global_config")
+          .from("next_integrations_global_config")
           .select("id", { count: "exact", head: true })
           .eq("is_enabled_global", true),
       ]);
@@ -186,7 +186,7 @@ export default function SettingsHome() {
     <div className="space-y-8 max-w-5xl">
       <PageHeader
         title="Painel de Configurações"
-        description="Gerencie as configurações globais do Hub"
+        description="Gerencie as configurações globais do Next"
         breadcrumbs={[{ label: "Configurações" }]}
       />
 
@@ -248,7 +248,7 @@ export default function SettingsHome() {
             icon={Blocks}
             iconBgColor="bg-status-purple-muted text-status-purple"
             title="Módulos"
-            description="Configurar módulos do Hub"
+            description="Configurar módulos do Next"
             count={modulesData?.total}
             loading={modulesLoading}
           />
