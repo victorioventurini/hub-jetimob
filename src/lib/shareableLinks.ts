@@ -48,7 +48,7 @@ export function getShareableUrl(entity: ShareableEntity, id: string): string {
  * 
  * @param entity The entity type  
  * @param id The entity UUID
- * @returns A full URL like `https://hub.jetimob.com/go/asset/abc-123`
+ * @returns A full URL like `https://next.jetimob.com/go/asset/abc-123`
  */
 export function getShareableAbsoluteUrl(entity: ShareableEntity, id: string): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "";

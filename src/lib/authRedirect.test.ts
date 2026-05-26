@@ -4,7 +4,7 @@ import { normalizeAuthNext } from './authRedirect';
 describe('normalizeAuthNext', () => {
   beforeEach(() => {
     Object.defineProperty(window, 'location', {
-      value: { origin: 'https://hub.jetimob.com' },
+      value: { origin: 'https://next.jetimob.com' },
       writable: true,
     });
   });

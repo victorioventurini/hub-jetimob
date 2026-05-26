@@ -26,7 +26,7 @@ interface UsePageTitleOptions {
  * Garante que previews (id-preview--*.lovable.app) e o domínio publicado
  * (hub-jetimob.lovable.app) não sejam tratados como conteúdo duplicado.
  */
-const CANONICAL_ORIGIN = "https://hub.jetimob.com";
+const CANONICAL_ORIGIN = "https://next.jetimob.com";
 
 /**
  * Hook para definir o meta title e meta description da página dinamicamente.
@@ -84,7 +84,7 @@ export function usePageTitle(
     metaDescriptionTag.setAttribute("content", metaDescription);
 
     // Canonical: sempre apontar para o domínio oficial, sem query/hash,
-    // para evitar duplicidade entre preview, lovable.app e hub.jetimob.com.
+    // para evitar duplicidade entre preview, lovable.app e next.jetimob.com.
     const canonicalHref = `${CANONICAL_ORIGIN}${window.location.pathname}`;
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {

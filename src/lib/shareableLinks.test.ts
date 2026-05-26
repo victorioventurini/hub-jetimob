@@ -94,7 +94,7 @@ describe('getShareableAbsoluteUrl', () => {
     Object.defineProperty(global, 'window', {
       value: {
         location: {
-          origin: 'https://hub.jetimob.com',
+          origin: 'https://next.jetimob.com',
         },
       },
       writable: true,
@@ -107,12 +107,12 @@ describe('getShareableAbsoluteUrl', () => {
 
   it('should generate absolute URL with origin', () => {
     const url = getShareableAbsoluteUrl('asset', 'abc-123');
-    expect(url).toBe('https://hub.jetimob.com/go/asset/abc-123');
+    expect(url).toBe('https://next.jetimob.com/go/asset/abc-123');
   });
 
   it('should generate absolute URL for ticket', () => {
     const url = getShareableAbsoluteUrl('ticket', 'ticket-uuid');
-    expect(url).toBe('https://hub.jetimob.com/go/ticket/ticket-uuid');
+    expect(url).toBe('https://next.jetimob.com/go/ticket/ticket-uuid');
   });
 
   it('should handle different origins', () => {
