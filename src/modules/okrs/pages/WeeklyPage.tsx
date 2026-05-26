@@ -224,6 +224,7 @@ export default function WeeklyPage() {
             onContinue={goNext}
             onGenerateDraft={handleGenerateDraft}
             isGenerating={isGenerating}
+            disableGenerate={aggregation.isLoading}
             carryOverDecisions={carryOverDecisions}
             topSlot={
               <RitualAttendance
