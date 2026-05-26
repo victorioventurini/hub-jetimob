@@ -37,6 +37,7 @@ export interface UseWeeklyPreWeeklyAggregationReturn {
   peopleSignals: WeeklyPeopleSignalAggregated[];
   coverage: WeeklyAggregationCoverage;
   isLoading: boolean;
+  isFetching: boolean;
 }
 
 // ============================================================
