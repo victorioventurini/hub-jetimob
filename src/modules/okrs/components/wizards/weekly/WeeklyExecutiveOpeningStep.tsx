@@ -153,7 +153,7 @@ export function WeeklyExecutiveOpeningStep({
               <CardContent>
                 <Button
                   onClick={() => void onGenerateDraft()}
-                  disabled={isGenerating}
+                  disabled={isGenerating || disableGenerate}
                   size="sm"
                   className="gap-2"
                 >
