@@ -547,6 +547,7 @@ export function useRitualPreparationStatus(
         const teams = teamsData ?? [];
         if (teams.length === 0) return null;
 
+        // NOTA: okr_wizard_sessions NÃO possui coluna `deleted_at` — não filtrar.
         const { data: preWeeklySessions } = await buSupabase
           .from('okr_wizard_sessions')
           .select('id, team_id, completed_at, started_by')
@@ -554,8 +555,7 @@ export function useRitualPreparationStatus(
           .eq('wizard_type', 'pre-weekly')
           .eq('status', 'completed')
           .gte('completed_at', weekStart)
-          .lte('completed_at', weekEnd)
-          .is('deleted_at', null);
+          .lte('completed_at', weekEnd);
 
         const byTeam = new Map<
           string,
