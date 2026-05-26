@@ -26,7 +26,7 @@ interface UsePageTitleOptions {
  * Garante que previews (id-preview--*.lovable.app) e o domínio publicado
  * (hub-jetimob.lovable.app) não sejam tratados como conteúdo duplicado.
  */
-const CANONICAL_ORIGIN = "https://hub.jetimob.com";
+const CANONICAL_ORIGIN = "https://next.jetimob.com";
 
 /**
  * Hook para definir o meta title e meta description da página dinamicamente.
