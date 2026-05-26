@@ -78,6 +78,7 @@ export function WeeklyExecutiveOpeningStep({
   onContinue,
   onGenerateDraft,
   isGenerating = false,
+  disableGenerate = false,
   topSlot,
   carryOverDecisions,
 }: WeeklyExecutiveOpeningStepProps) {
