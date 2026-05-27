@@ -34,6 +34,7 @@ export function createMockArea(overrides: MockAreaData = {}): AreaWithRelations 
     id,
     bu_id: overrides.bu_id ?? 'bu-test-123',
     name: overrides.name ?? 'Test Area',
+    slug: 'test-area',
     description: overrides.description ?? 'Test area description',
     status: overrides.status ?? 'active',
     color: overrides.color ?? '#3B82F6',
