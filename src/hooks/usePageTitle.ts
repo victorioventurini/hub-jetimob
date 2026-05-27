@@ -150,7 +150,7 @@ function getGlobalDescription(title: string, pageType?: PageType, customDescript
 
   // Descrições para telas globais (sem BU)
   const globalDescriptions: Record<string, string> = {
-    "Login": "Acesse o Hub para gerenciar pessoas, times, OKRs, KPIs e a operação da Jet.",
+    "Login": "Acesse o Next para gerenciar pessoas, times, OKRs, KPIs e a operação da Jet.",
     "Configurações": "Gerencie as configurações globais do Next, integrações, usuários e permissões.",
     "Integrações": "Gerencie as integrações globais do Next.",
     "Usuários": "Gerencie os usuários e permissões do Next.",
