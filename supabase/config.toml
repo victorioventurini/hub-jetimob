@@ -69,3 +69,6 @@ verify_jwt = false
 
 [functions.generate-ritual-occurrences]
 verify_jwt = false
+
+[functions.internal-api]
+verify_jwt = false
