@@ -1,5 +1,5 @@
 // ============================================================
-// USE BU PARTICIPANTS DIRECTORY HOOK - Hub da Jet
+// USE BU PARTICIPANTS DIRECTORY HOOK - Next da Jet
 // ============================================================
 // Hook for listing all participants (internal + external) in the current BU.
 // Uses the unified v_all_participants view.

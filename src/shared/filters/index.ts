@@ -1,5 +1,5 @@
 // ============================================================
-// URL FILTER COMPONENTS - Hub da Jet
+// URL FILTER COMPONENTS - Next da Jet
 // ============================================================
 // Componentes UI integrados com URL state para filtros,
 // paginação, ordenação e busca

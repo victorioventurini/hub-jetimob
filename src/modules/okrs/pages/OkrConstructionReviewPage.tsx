@@ -153,7 +153,7 @@ export default function OkrConstructionReviewPage() {
     return (
       <div className="container max-w-7xl mx-auto py-6 px-4">
         <Helmet>
-          <title>Acesso Restrito | Hub Jetimob</title>
+          <title>Acesso Restrito | Next Jetimob</title>
         </Helmet>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="p-4 rounded-full bg-muted mb-4"><ShieldX className="w-12 h-12 text-muted-foreground" /></div>
@@ -170,7 +170,7 @@ export default function OkrConstructionReviewPage() {
     return (
       <div className="container max-w-7xl mx-auto py-6 px-4">
         <Helmet>
-          <title>Acesso Negado | Hub Jetimob</title>
+          <title>Acesso Negado | Next Jetimob</title>
         </Helmet>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="p-4 rounded-full bg-destructive/10 mb-4"><Lock className="w-12 h-12 text-destructive" /></div>
@@ -192,7 +192,7 @@ export default function OkrConstructionReviewPage() {
   return (
     <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
       <Helmet>
-        <title>Avaliação de Construção{selectedTeam ? ` - ${selectedTeam.name}` : ''} | Hub Jetimob</title>
+        <title>Avaliação de Construção{selectedTeam ? ` - ${selectedTeam.name}` : ''} | Next Jetimob</title>
         <meta name="description" content="Avaliação automática por IA da qualidade de construção das OKRs." />
       </Helmet>
 

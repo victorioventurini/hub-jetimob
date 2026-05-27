@@ -1,5 +1,5 @@
 // ============================================================
-// PARTICIPANT LINK COMPONENT - Hub da Jet
+// PARTICIPANT LINK COMPONENT - Next da Jet
 // ============================================================
 // Link component that navigates to the appropriate profile page
 // based on participant type.

@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     // Build the prompt for generating a culture message
     const userPrompt = `
 Hoje é ${dateStr}.\n
-Gere UMA mensagem de cultura para exibir na Home do Hub da Jetimob.\n
+Gere UMA mensagem de cultura para exibir na Home do Next da Jetimob.\n
 REGRAS:\n- Máximo 180 caracteres\n- Linguagem humana e direta\n- Ligada a um valor ou ao propósito\n- Incentive ação ou reflexão prática\n- Não use emojis em excesso (máximo 1 se necessário)\n- Não soe como mensagem automática de sistema\n- Não repita textos literais do manual\n- Pode usar expressões como "buenas" em contextos leves\n
 ${repetitionBlock}\n
 ID DE VARIAÇÃO: ${requestId}\n

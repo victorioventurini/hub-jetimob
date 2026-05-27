@@ -1,5 +1,5 @@
 // ============================================================
-// MENTIONS COMPONENTS - Hub da Jet
+// MENTIONS COMPONENTS - Next da Jet
 // ============================================================
 // Centralized exports for mention-related components and helpers.
 // ============================================================

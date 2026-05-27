@@ -140,7 +140,7 @@ export default function OrgAnalysisPage() {
   return (
     <>
       <Helmet>
-        <title>Análise de OKRs Organizacionais | Hub Jetimob</title>
+        <title>Análise de OKRs Organizacionais | Next Jetimob</title>
         <meta 
           name="description" 
           content="Avalie a coesão, distribuição, cobertura e rastreabilidade das OKRs da empresa" 

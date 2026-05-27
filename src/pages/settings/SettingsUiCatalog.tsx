@@ -464,7 +464,7 @@ export default function SettingsUiCatalog() {
     <div className="space-y-6">
       <PageHeader
         title="Catálogo de Componentes UI"
-        description="Visualize todos os componentes de interface disponíveis no Hub e onde são utilizados"
+        description="Visualize todos os componentes de interface disponíveis no Next e onde são utilizados"
       />
 
       <div className="flex items-center gap-4">

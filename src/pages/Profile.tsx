@@ -687,7 +687,7 @@ export default function Profile() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Seu aniversário será exibido no Hub para os colegas
+                  Seu aniversário será exibido no Next para os colegas
                 </p>
               </div>
 

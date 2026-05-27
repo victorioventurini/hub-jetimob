@@ -77,7 +77,7 @@ export const ritualRoutes = (
     {/* ACTIVE ROUTES — /rituals/* namespace                         */}
     {/* ============================================================ */}
     
-    {/* Hub de Rituais */}
+    {/* Central de Rituais */}
     <Route path="/rituals" element={<RitualRoute><WizardsPage /></RitualRoute>} />
     
     {/* Check-ins */}

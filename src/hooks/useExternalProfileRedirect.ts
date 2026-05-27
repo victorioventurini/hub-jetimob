@@ -1,5 +1,5 @@
 // ============================================================
-// USE EXTERNAL PROFILE REDIRECT - Hub da Jet
+// USE EXTERNAL PROFILE REDIRECT - Next da Jet
 // ============================================================
 // Defensive redirect: when /users/:id points to an external user,
 // automatically redirects to /contacts/:contactId.

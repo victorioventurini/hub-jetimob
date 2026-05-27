@@ -46,7 +46,7 @@ serve(async (req) => {
       // Return specific section
       const sectionData = TCR_SECTIONS[section];
       title = sectionData.title;
-      content = `# Technical Context Registry (TCR) — Hub da Jet
+      content = `# Technical Context Registry (TCR) — Next da Jet
 
 **Versão:** ${TCR_VERSION}  
 **Seção:** ${title}

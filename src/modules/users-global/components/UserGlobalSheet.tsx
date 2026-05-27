@@ -209,7 +209,7 @@ export function UserGlobalSheet({ open, onOpenChange, user }: UserGlobalSheetPro
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Role global define acesso às configurações do Hub. Apenas Super
+                Role global define acesso às configurações do Next. Apenas Super
                 Admins podem promover outros a Super Admin.
               </p>
             </div>

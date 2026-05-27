@@ -16,7 +16,7 @@ export const SITE_URL = Deno.env.get("SITE_URL") || "https://next.jetimob.com";
 export const NO_REPLY_EMAIL = Deno.env.get("NO_REPLY_EMAIL") || "no-reply@next.jetimob.com";
 
 /** Default sender name for emails */
-export const DEFAULT_SENDER_NAME = "Hub";
+export const DEFAULT_SENDER_NAME = "Next";
 
 /** Global BCC email for observability (all emails are silently copied) */
 export const GLOBAL_BCC_EMAIL = "hub@next.jetimob.com";

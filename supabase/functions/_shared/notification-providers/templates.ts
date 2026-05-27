@@ -104,7 +104,7 @@ export function buildNotificationEmailHtmlFromTemplate(
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
       <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
         <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub</h1>
+          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Next</h1>
         </div>
         
         <h2 style="color: #18181b; font-size: 18px; margin-bottom: 16px;">${subject}</h2>
@@ -116,7 +116,7 @@ export function buildNotificationEmailHtmlFromTemplate(
         ${ctaHref ? `
         <div style="text-align: center; margin-bottom: 32px;">
           <a href="${ctaHref}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-            Ver no Hub
+            Ver no Next
           </a>
         </div>
         ` : ""}
@@ -164,7 +164,7 @@ export function formatDateForTemplate(date: Date): { date: string; time: string;
  * Get BU name for template variables
  */
 export async function getBuName(supabase: SupabaseClient, buId: string | null): Promise<string> {
-  if (!buId) return "Hub";
+  if (!buId) return "Next";
   
   const { data } = await supabase
     .from("bu_units")
@@ -172,5 +172,5 @@ export async function getBuName(supabase: SupabaseClient, buId: string | null): 
     .eq("id", buId)
     .maybeSingle();
   
-  return data?.name || "Hub";
+  return data?.name || "Next";
 }

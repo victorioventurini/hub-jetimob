@@ -1,5 +1,5 @@
 // ============================================================
-// CONTACT HOVER CARD COMPONENT - Hub da Jet
+// CONTACT HOVER CARD COMPONENT - Next da Jet
 // ============================================================
 // HoverCard for external contacts (partner_contacts).
 // Mirrors UserHoverCard behavior for consistent UX across participant types.

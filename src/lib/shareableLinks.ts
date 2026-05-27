@@ -1,5 +1,5 @@
 /**
- * Shareable Links - Hub da Jet
+ * Shareable Links - Next da Jet
  * 
  * Centralized helper for generating shareable/external URLs.
  * All shared links, notifications, search results, and external references

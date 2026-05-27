@@ -1,5 +1,5 @@
 // ============================================================
-// CANONICAL SELECT COMPONENTS - Hub da Jet
+// CANONICAL SELECT COMPONENTS - Next da Jet
 // ============================================================
 // Componentes de seleção padronizados para uso em todo o sistema.
 // NUNCA reimplemente selects inline - use estes componentes.

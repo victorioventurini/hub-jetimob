@@ -1,5 +1,5 @@
 // ============================================================
-// MENTIONS LIB - Hub da Jet
+// MENTIONS LIB - Next da Jet
 // ============================================================
 // Global helpers for parsing and displaying mentions across modules.
 // Supports internal users (profiles) and external contacts (partner_contacts).

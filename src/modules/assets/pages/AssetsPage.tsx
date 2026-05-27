@@ -9,7 +9,7 @@ import { SavedLinksPopover } from "@/shared/saved-links";
 
 export default function AssetsPage() {
   usePageTitle("Ativos", {
-    customDescription: "Gerencie inventário, chaveiros e brindes corporativos no Hub."
+    customDescription: "Gerencie inventário, chaveiros e brindes corporativos no Next."
   });
   const navigate = useNavigate();
   const location = useLocation();

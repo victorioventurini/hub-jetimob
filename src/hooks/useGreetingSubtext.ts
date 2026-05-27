@@ -147,7 +147,7 @@ const FALLBACK_SUBTEXTS: Record<string, string[]> = {
     "Performance e alinhamento",
   ],
   collaborator: [
-    "Seu dia no Hub",
+    "Seu dia no Next",
     "Vamos ao que importa",
     "Foco no que move a agulha",
     "Sua jornada hoje",

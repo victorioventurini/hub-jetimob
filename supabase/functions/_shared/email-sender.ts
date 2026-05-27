@@ -149,7 +149,7 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: from ? `${from.name} <${from.email}>` : "Hub <onboarding@resend.dev>",
+      from: from ? `${from.name} <${from.email}>` : "Next <onboarding@resend.dev>",
       to: [to],
       subject,
       html,
@@ -271,7 +271,7 @@ export function buildMagicLinkEmailHtml(options: {
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px;">
       <div style="max-width: 480px; margin: 0 auto; background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
         <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Hub</h1>
+          <h1 style="margin: 0; color: #18181b; font-size: 24px; font-weight: 600;">Next</h1>
         </div>
         
         <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
@@ -279,13 +279,13 @@ export function buildMagicLinkEmailHtml(options: {
         </p>
         
         <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-          Clique no botão abaixo para acessar o Hub.<br>
+          Clique no botão abaixo para acessar o Next.<br>
           Este link é válido por 10 minutos.
         </p>
         
         <div style="text-align: center; margin-bottom: 32px;">
           <a href="${magicLink}" style="display: inline-block; background-color: #379eff; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-            Acessar o Hub
+            Acessar o Next
           </a>
         </div>
         

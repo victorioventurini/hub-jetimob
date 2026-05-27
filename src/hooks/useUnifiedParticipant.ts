@@ -1,5 +1,5 @@
 // ============================================================
-// USE UNIFIED PARTICIPANT HOOK - Hub da Jet
+// USE UNIFIED PARTICIPANT HOOK - Next da Jet
 // ============================================================
 // Hook that provides unified identity for the current user,
 // abstracting whether they are internal (profile) or external (partner_contact).

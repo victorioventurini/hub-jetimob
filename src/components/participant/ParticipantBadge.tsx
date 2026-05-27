@@ -1,5 +1,5 @@
 // ============================================================
-// PARTICIPANT BADGE COMPONENT - Hub da Jet
+// PARTICIPANT BADGE COMPONENT - Next da Jet
 // ============================================================
 // Composite component showing avatar + name + optional company info.
 // ============================================================

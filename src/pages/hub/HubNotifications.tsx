@@ -24,7 +24,7 @@ import { EventFormDialog } from './notifications/EventFormDialog';
 export default function HubNotifications() {
   usePageTitle('Central de Notificações', {
     skipBu: true,
-    customDescription: 'Gerencie canais, eventos e diagnóstico de notificações do Hub.',
+    customDescription: 'Gerencie canais, eventos e diagnóstico de notificações do Next.',
   });
 
   const { data: events = [], isLoading: eventsLoading } = useNotificationEvents();
@@ -118,7 +118,7 @@ export default function HubNotifications() {
     <div className="container py-8 space-y-6">
       <PageHeader
         title="Central de Notificações"
-        description="Gerencie canais e eventos de notificação do Hub"
+        description="Gerencie canais e eventos de notificação do Next"
       />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as HubTabValue)}>

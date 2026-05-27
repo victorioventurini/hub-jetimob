@@ -1,5 +1,5 @@
 // ============================================================
-// PARTICIPANT QUERY KEYS - Hub da Jet
+// PARTICIPANT QUERY KEYS - Next da Jet
 // ============================================================
 // Centralized query keys for the Unified Participant Layer.
 // ============================================================

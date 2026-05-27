@@ -80,12 +80,12 @@ export function BuSelector() {
           </DropdownMenuItem>
         ))}
         
-        {/* Configurações do Hub - apenas super_admin */}
+        {/* Configurações do Next - apenas super_admin */}
         {isSuperAdmin && (
           <DropdownMenuItem asChild className="border-t mt-1 pt-1">
             <Link to="/hub" className="flex items-center gap-2 cursor-pointer">
               <Cog className="h-4 w-4" />
-              <span>Configurações do Hub</span>
+              <span>Configurações do Next</span>
             </Link>
           </DropdownMenuItem>
         )}

@@ -3,7 +3,7 @@
  *
  * Por que existir
  * ---------------
- * Wizards do Hub (criação de OKR, MBR Pre, QBR Pre, Check-in etc.) seguem
+ * Wizards do Next (criação de OKR, MBR Pre, QBR Pre, Check-in etc.) seguem
  * sempre o MESMO padrão para enriquecer telas com IA:
  *
  *   1. Esperar `isReady` do client + `buId` selecionado.

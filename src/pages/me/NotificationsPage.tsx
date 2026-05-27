@@ -583,7 +583,7 @@ function NotificationSettings() {
 // Main Page Component
 export default function NotificationsPage() {
   usePageTitle("Notificações", {
-    customDescription: "Visualize suas notificações e configure como deseja recebê-las no Hub.",
+    customDescription: "Visualize suas notificações e configure como deseja recebê-las no Next.",
   });
 
   const [searchParams, setSearchParams] = useSearchParams();

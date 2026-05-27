@@ -17,7 +17,7 @@
  *  - Sem cor hardcoded; sem RGB; tudo via index.css
  *
  * Princípio de transparência: nomes de pendentes são públicos (decisão consciente,
- * alinhada com filosofia do Hub e padrão já estabelecido em RitualHistoryPage).
+ * alinhada com filosofia do Next e padrão já estabelecido em RitualHistoryPage).
  */
 
 import { ReactNode, useMemo } from 'react';

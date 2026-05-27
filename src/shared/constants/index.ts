@@ -1,5 +1,5 @@
 // ============================================================
-// SHARED CONSTANTS - Hub da Jet
+// SHARED CONSTANTS - Next da Jet
 // ============================================================
 //
 // Ponto único de exportação de constantes transversais.

@@ -84,7 +84,7 @@ export function useBuBranding() {
     logoUrl: currentBu?.logo_url || null,
     primaryColor: currentBu?.primary_color || DEFAULT_PRIMARY_COLOR,
     secondaryColor: currentBu?.secondary_color || DEFAULT_SECONDARY_COLOR,
-    buName: currentBu?.name || "Hub",
+    buName: currentBu?.name || "Next",
     memberDisplayName: currentBu?.member_display_name || "Usuários",
     memberMenuLabel: currentBu?.member_display_name || "Users",
   };

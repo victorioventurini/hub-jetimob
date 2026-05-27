@@ -1,5 +1,5 @@
 // ============================================================
-// CONTACT COMPONENTS - Hub da Jet
+// CONTACT COMPONENTS - Next da Jet
 // ============================================================
 // Centralized exports for contact-related components.
 // ============================================================

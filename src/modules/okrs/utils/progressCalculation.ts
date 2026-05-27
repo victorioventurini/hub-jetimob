@@ -181,7 +181,7 @@ export function calculateCycleElapsed(
  * REGRA CANÔNICA: Analisa o ritmo de progresso considerando o ciclo.
  * 
  * Esta é a função central para interpretação estratégica de progresso.
- * Todas as análises do Hub (e-mails, wizards, dashboards, agentes IA)
+ * Todas as análises do Next (e-mails, wizards, dashboards, agentes IA)
  * DEVEM usar esta função para consistência.
  * 
  * @example

@@ -42,7 +42,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function GlobalUsersPage() {
-  usePageTitle("Usuários do Hub", { 
+  usePageTitle("Usuários do Next", { 
     skipBu: true, 
     customDescription: "Gerencie todos os usuários da plataforma, acessos e configurações." 
   });
@@ -125,7 +125,7 @@ export default function GlobalUsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Usuários do Hub"
+        title="Usuários do Next"
         description="Gerenciar todos os usuários da plataforma, acessos e configurações"
         breadcrumbs={[{ label: "Usuários" }]}
       />

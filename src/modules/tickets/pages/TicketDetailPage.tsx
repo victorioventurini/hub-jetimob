@@ -348,7 +348,7 @@ export default function TicketDetailPage() {
           ) : (
             <VicErrorState
               title="Esse ticket pertence a outra BU 🔒"
-              description="Você está visualizando o Hub em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
+              description="Você está visualizando o Next em uma BU diferente da BU desse ticket. Selecione a BU correta no topo da tela para acessá-lo."
               onBack={goBack}
               backLabel="Voltar para tickets"
             />

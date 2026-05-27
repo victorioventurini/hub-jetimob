@@ -1,5 +1,5 @@
 // ============================================================
-// USE RESOLVE PARTICIPANT HOOK - Hub da Jet
+// USE RESOLVE PARTICIPANT HOOK - Next da Jet
 // ============================================================
 // Hook for resolving a participant ID to unified identity data.
 // Uses the resolve_participant_identity RPC.

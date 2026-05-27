@@ -1,5 +1,5 @@
 // ============================================================
-// MENTION INPUT - Hub da Jet
+// MENTION INPUT - Next da Jet
 // ============================================================
 // Unified mention input component that supports both contexts:
 // - 'internal': Only internal users (for OKRs, internal comments)

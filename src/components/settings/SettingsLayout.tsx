@@ -53,7 +53,7 @@ function SettingsHeader({ sidebarCollapsed, onMobileMenuToggle }: SettingsHeader
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("Você saiu do Hub");
+    toast.success("Você saiu do Next");
   };
 
   return (

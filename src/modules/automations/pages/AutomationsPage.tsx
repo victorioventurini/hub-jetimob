@@ -37,7 +37,7 @@ import type { AutomationEventCatalog, AutomationActionCatalog } from '../types';
 export default function AutomationsPage() {
   usePageTitle("Automações", { 
     skipBu: true, 
-    customDescription: "Catálogo de eventos e ações disponíveis para automações do Hub." 
+    customDescription: "Catálogo de eventos e ações disponíveis para automações do Next." 
   });
 
   const { currentBu } = useBu();
@@ -111,7 +111,7 @@ export default function AutomationsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Automações"
-        description="Catálogo de eventos e ações disponíveis para automações do Hub"
+        description="Catálogo de eventos e ações disponíveis para automações do Next"
         breadcrumbs={[{ label: "Automações" }]}
       />
 

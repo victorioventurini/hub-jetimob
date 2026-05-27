@@ -70,7 +70,7 @@ export function ChannelConfigDialog({
               <Label htmlFor="from_name">Nome do Remetente</Label>
               <Input
                 id="from_name"
-                placeholder="Hub Jet"
+                placeholder="Next Jet"
                 value={configForm.from_name || ''}
                 onChange={(e) => update({ from_name: e.target.value })}
               />

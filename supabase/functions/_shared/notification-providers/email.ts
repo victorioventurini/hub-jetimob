@@ -72,7 +72,7 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<voi
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: options.from ? `${options.from.name} <${options.from.email}>` : "Hub <onboarding@resend.dev>",
+      from: options.from ? `${options.from.name} <${options.from.email}>` : "Next <onboarding@resend.dev>",
       to: [options.to],
       subject: options.subject,
       html: options.html,

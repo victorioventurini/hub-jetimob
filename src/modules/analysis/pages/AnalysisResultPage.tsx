@@ -416,7 +416,7 @@ export default function AnalysisResultPage() {
                 Essa análise pertence a outra BU 🔒
               </p>
               <p className="text-sm text-muted-foreground">
-                Você está visualizando o Hub em uma BU diferente da BU dessa análise.
+                Você está visualizando o Next em uma BU diferente da BU dessa análise.
                 Selecione a BU correta no topo da tela para acessá-la.
               </p>
             </CardContent>

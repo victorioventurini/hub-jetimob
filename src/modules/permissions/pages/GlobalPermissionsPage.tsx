@@ -31,12 +31,12 @@ import type { Permission, PermissionScope } from "../types";
 type GlobalPermissionTab = "catalog" | "templates-v2" | "presets" | "governance" | "surfaces" | "audit";
 
 /**
- * GlobalPermissionsPage - Gerenciamento do catálogo global de permissões do Hub
+ * GlobalPermissionsPage - Gerenciamento do catálogo global de permissões do Next
  */
 export default function GlobalPermissionsPage() {
   usePageTitle("Permissões Globais", { 
     skipBu: true, 
-    customDescription: "Gerencie o catálogo de permissões, templates e governança do Hub." 
+    customDescription: "Gerencie o catálogo de permissões, templates e governança do Next." 
   });
 
   const [activeTab, setActiveTab] = useUrlTab<GlobalPermissionTab>("catalog");
@@ -74,7 +74,7 @@ export default function GlobalPermissionsPage() {
     <div className="space-y-6">
       <PageHeader 
         title="Permissões Globais" 
-        description="Gerencie o catálogo de permissões e templates globais do Hub"
+        description="Gerencie o catálogo de permissões e templates globais do Next"
         breadcrumbs={[{ label: "Permissões" }]}
       />
 

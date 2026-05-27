@@ -239,8 +239,8 @@ export default function PerfDashboardPage() {
   return (
     <>
       <Helmet>
-        <title>Performance do Banco | Hub Jetimob</title>
-        <meta name="description" content="Monitore a saúde e performance do banco de dados do Hub." />
+        <title>Performance do Banco | Next Jetimob</title>
+        <meta name="description" content="Monitore a saúde e performance do banco de dados do Next." />
       </Helmet>
 
       <div className="space-y-6">

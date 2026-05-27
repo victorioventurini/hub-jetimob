@@ -1,7 +1,7 @@
 import type { TcrSection } from "./types.ts";
 
 export const modulesSection: TcrSection = {
-  title: "3. Módulos do Hub",
+  title: "3. Módulos do Next",
   content: `
 ### 3.1 Módulos Ativos
 

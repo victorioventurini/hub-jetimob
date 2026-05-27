@@ -60,7 +60,7 @@ Crie abertura e encerramento para o e-mail de resumo do check-in.
 Retorne em formato JSON com as chaves:
 - opening_text: 2-3 frases de abertura contextualizando o fechamento do check-in
 - closing_text: 1-2 frases de encerramento com tom positivo
-Linguagem humana, sem burocracia. Não mencione "Hub" na abertura.`,
+Linguagem humana, sem burocracia. Não mencione "Next" na abertura.`,
       buId,
       requestId,
     ),

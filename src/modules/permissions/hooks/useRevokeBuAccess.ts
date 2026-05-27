@@ -72,7 +72,7 @@ export function useRevokeBuAccess() {
       if (result.hadOtherMemberships) {
         toast.success(`Acesso de ${userName} a esta BU foi revogado`);
       } else {
-        toast.success(`${userName} não tem mais acesso ao Hub`);
+        toast.success(`${userName} não tem mais acesso ao Next`);
       }
     },
     onError: (error: Error, { userName }) => {

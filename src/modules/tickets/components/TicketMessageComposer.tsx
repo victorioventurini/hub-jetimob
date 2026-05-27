@@ -1,5 +1,5 @@
 // ============================================================
-// TICKET MESSAGE COMPOSER - Hub da Jet
+// TICKET MESSAGE COMPOSER - Next da Jet
 // ============================================================
 // Composer for ticket messages with reply support.
 // Supports: mentions, file attachments, and reply mode.

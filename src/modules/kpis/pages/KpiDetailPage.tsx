@@ -52,7 +52,7 @@ export default function KpiDetailPage() {
           <EmptyState
             icon={AlertCircle}
             title="Esse indicador pertence a outra BU 🔒"
-            description="Você está visualizando o Hub em uma BU diferente da BU desse indicador. Selecione a BU correta no topo da tela para acessá-lo."
+            description="Você está visualizando o Next em uma BU diferente da BU desse indicador. Selecione a BU correta no topo da tela para acessá-lo."
           />
         </div>
       </HubLayout>

@@ -1,5 +1,5 @@
 /**
- * OKR_LIMITS — Fonte única de verdade dos limites metodológicos de OKRs no Hub.
+ * OKR_LIMITS — Fonte única de verdade dos limites metodológicos de OKRs no Next.
  *
  * ⚠️ REGRA INQUEBRÁVEL:
  * Estes valores DEVEM permanecer sincronizados com os triggers do banco:

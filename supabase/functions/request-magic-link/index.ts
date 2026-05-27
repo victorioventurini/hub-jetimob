@@ -252,7 +252,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     const domain = email.split('@')[1] || 'unknown';
     console.warn(`[${requestId}] Unauthorized email attempted: ${email}, domain: ${domain}`);
     return createErrorResponse("FORBIDDEN", requestId, {
-      message: `O email ${email} não está autorizado para acesso ao Hub.`,
+      message: `O email ${email} não está autorizado para acesso ao Next.`,
     });
   }
 
@@ -304,7 +304,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
 
   const emailResult = await sendEmail({
     to: email,
-    subject: `Seu link de acesso ao Hub - ${formatEmailDateTime()}`,
+    subject: `Seu link de acesso ao Next - ${formatEmailDateTime()}`,
     html: emailHtml,
   });
 

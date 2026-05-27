@@ -29,7 +29,7 @@ describe("Tipos de Analysis — contratos canônicos", () => {
     expect(valid).toEqual(["quick", "standard", "deep"]);
   });
 
-  it("AnalysisModule cobre os 6 módulos do Hub", () => {
+  it("AnalysisModule cobre os 6 módulos do Next", () => {
     const valid: AnalysisModule[] = [
       "kpis",
       "okrs",

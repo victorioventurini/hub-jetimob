@@ -1,5 +1,5 @@
 // ============================================================
-// URL PARSERS & SERIALIZERS - Hub da Jet
+// URL PARSERS & SERIALIZERS - Next da Jet
 // ============================================================
 
 import { format, parseISO, isValid } from "date-fns";

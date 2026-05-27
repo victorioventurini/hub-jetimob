@@ -3,7 +3,7 @@ import type { UrlParamConfig } from "./types";
 import { parsers, serializers } from "./parsers";
 
 // ============================================================
-// URL SCHEMAS REUTILIZÁVEIS - Hub da Jet
+// URL SCHEMAS REUTILIZÁVEIS - Next da Jet
 // ============================================================
 // Schemas pré-configurados para padrões comuns de URL state
 // ============================================================

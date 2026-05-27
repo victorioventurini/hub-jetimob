@@ -1,5 +1,5 @@
 // ============================================================
-// KPI Module Types - Hub da Jet
+// KPI Module Types - Next da Jet
 // v2.1: Lifecycle, Confidence, Period, RAG
 // v2.82.0: Category deprecated, governance evolution
 // ============================================================

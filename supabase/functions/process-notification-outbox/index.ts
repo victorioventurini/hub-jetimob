@@ -149,7 +149,7 @@ async function processOutboxItem(
         html = buildNotificationEmailHtmlFromTemplate(subject, renderedBody, payload.context_url as string | undefined);
         console.log(`[Outbox] Using template version_id=${template.version_id} for ${item.event_slug}/email`);
       } else {
-        subject = `[Hub] ${(payload.title as string) || "Nova Notificação"}`;
+        subject = `[Next] ${(payload.title as string) || "Nova Notificação"}`;
         html = buildFallbackEmailHtml(payload);
         console.log(`[Outbox] Using fallback template for ${item.event_slug}/email`);
       }

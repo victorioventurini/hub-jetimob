@@ -1,5 +1,5 @@
 // ============================================================
-// PARTICIPANT AVATAR COMPONENT - Hub da Jet
+// PARTICIPANT AVATAR COMPONENT - Next da Jet
 // ============================================================
 // Avatar component that handles both internal and external participants.
 // ============================================================
