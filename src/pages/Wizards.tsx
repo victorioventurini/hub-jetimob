@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { NextLayout } from '@/components/layout/NextLayout';
+import { HubLayout } from '@/components/layout/HubLayout';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
@@ -429,7 +429,7 @@ export default function WizardsPage() {
   const isLoading = permissionsLoading || qbrLoading || creationWindowLoading;
 
   return (
-    <NextLayout>
+    <HubLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <PageHeader
@@ -525,6 +525,6 @@ export default function WizardsPage() {
           </div>
         )}
       </div>
-    </NextLayout>
+    </HubLayout>
   );
 }

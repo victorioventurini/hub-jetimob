@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface NextGlobalSidebarProps {
+interface HubGlobalSidebarProps {
   collapsed: boolean;
   onCollapse: (collapsed: boolean) => void;
 }
@@ -56,7 +56,7 @@ const externalLinks = [
   },
 ];
 
-export function NextGlobalSidebar({ collapsed, onCollapse }: NextGlobalSidebarProps) {
+export function HubGlobalSidebar({ collapsed, onCollapse }: HubGlobalSidebarProps) {
   const location = useLocation();
 
   const NavItem = ({ 

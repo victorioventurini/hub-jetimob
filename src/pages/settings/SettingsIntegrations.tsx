@@ -30,14 +30,14 @@ export default function SettingsIntegrations() {
     queryKey: queryKeys.settings.integrationsCatalog(),
     queryFn: async () => {
       const { data: catalog, error: catalogError } = await supabase
-        .from("next_integrations_catalog")
+        .from("hub_integrations_catalog")
         .select("id, integration_key, name, description, icon, color, supports_global_config, supports_bu_override, supports_agents, status, display_order, documentation_url")
         .order("display_order")
         .order("name");
       if (catalogError) throw catalogError;
 
       const { data: globalConfig, error: globalError } = await supabase
-        .from("next_integrations_global_config")
+        .from("hub_integrations_global_config")
         .select("id, integration_key, is_enabled_global, config_encrypted, last_test_status, last_test_at, last_test_message");
       if (globalError) throw globalError;
 
@@ -60,20 +60,20 @@ export default function SettingsIntegrations() {
   const toggleIntegration = useMutation({
     mutationFn: async ({ integrationKey, enabled }: { integrationKey: string; enabled: boolean }) => {
       const { data: existing } = await supabase
-        .from("next_integrations_global_config")
+        .from("hub_integrations_global_config")
         .select("id")
         .eq("integration_key", integrationKey)
         .maybeSingle();
 
       if (existing) {
         const { error } = await supabase
-          .from("next_integrations_global_config")
+          .from("hub_integrations_global_config")
           .update({ is_enabled_global: enabled })
           .eq("integration_key", integrationKey);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("next_integrations_global_config")
+          .from("hub_integrations_global_config")
           .insert({ integration_key: integrationKey, is_enabled_global: enabled });
         if (error) throw error;
       }

@@ -23,7 +23,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-interface NextGlobalMobileSidebarProps {
+interface HubGlobalMobileSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -55,7 +55,7 @@ const externalLinks = [
   },
 ];
 
-export function NextGlobalMobileSidebar({ open, onOpenChange }: NextGlobalMobileSidebarProps) {
+export function HubGlobalMobileSidebar({ open, onOpenChange }: HubGlobalMobileSidebarProps) {
   const location = useLocation();
   
   // Fecha automaticamente ao trocar de rota
