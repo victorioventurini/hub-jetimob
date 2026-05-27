@@ -100,6 +100,7 @@ export function createMockTeam(overrides: MockTeamData = {}): TeamWithRelations 
     id,
     bu_id: overrides.bu_id ?? 'bu-test-123',
     name: overrides.name ?? 'Test Team',
+    slug: 'test-team',
     description: overrides.description ?? 'Test team description',
     status: overrides.status ?? 'active',
     parent_team_id: overrides.parent_team_id ?? null,
