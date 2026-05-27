@@ -9,7 +9,10 @@ import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BuRequiredRoute } from '@/components/auth/BuRequiredRoute';
 import { ModuleRoute } from '@/components/auth/ModuleRoute';
+import { AdminRoute } from '@/components/auth/AdminRoute';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
+
+const InternalDirectoryPage = lazyWithRetry(() => import('@/modules/internal-directory/pages/InternalDirectoryPage'));
 
 const Index = lazyWithRetry(() => import('@/pages/Index'));
 const ExternalDashboardPage = lazyWithRetry(() => import('@/pages/ExternalDashboard'));
@@ -227,6 +230,18 @@ export const coreRoutes = (
         />
       </>
     )}
+
+    {/* Internal Directory (super admin only) */}
+    <Route
+      path="/internal-directory"
+      element={
+        <ProtectedRoute skipBuCheck>
+          <AdminRoute>
+            <InternalDirectoryPage />
+          </AdminRoute>
+        </ProtectedRoute>
+      }
+    />
 
     {/* Catch-all 404 */}
     <Route path="*" element={<NotFound />} />
