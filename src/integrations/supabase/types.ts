@@ -938,6 +938,7 @@ export type Database = {
           id: string
           leader_user_id: string | null
           name: string
+          slug: string
           status: Database["public"]["Enums"]["team_status"]
           updated_at: string
         }
@@ -952,6 +953,7 @@ export type Database = {
           id?: string
           leader_user_id?: string | null
           name: string
+          slug: string
           status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
         }
@@ -966,6 +968,7 @@ export type Database = {
           id?: string
           leader_user_id?: string | null
           name?: string
+          slug?: string
           status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
         }
@@ -4310,6 +4313,7 @@ export type Database = {
           name: string
           primary_color: string | null
           secondary_color: string | null
+          slug: string
           status: Database["public"]["Enums"]["bu_status"]
           symbol_url: string | null
           updated_at: string
@@ -4326,6 +4330,7 @@ export type Database = {
           name: string
           primary_color?: string | null
           secondary_color?: string | null
+          slug: string
           status?: Database["public"]["Enums"]["bu_status"]
           symbol_url?: string | null
           updated_at?: string
@@ -4342,6 +4347,7 @@ export type Database = {
           name?: string
           primary_color?: string | null
           secondary_color?: string | null
+          slug?: string
           status?: Database["public"]["Enums"]["bu_status"]
           symbol_url?: string | null
           updated_at?: string
@@ -4909,6 +4915,51 @@ export type Database = {
             referencedColumns: ["integration_key"]
           },
         ]
+      }
+      internal_api_tokens: {
+        Row: {
+          allowed_system: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          expires_at: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          scopes: string[]
+          status: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_system: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          scopes?: string[]
+          status?: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_system?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          scopes?: string[]
+          status?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       job_titles: {
         Row: {
@@ -9588,6 +9639,7 @@ export type Database = {
           member_count: number | null
           name: string
           parent_team_id: string | null
+          slug: string
           status: Database["public"]["Enums"]["team_status"]
           updated_at: string
         }
@@ -9605,6 +9657,7 @@ export type Database = {
           member_count?: number | null
           name: string
           parent_team_id?: string | null
+          slug: string
           status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
         }
@@ -9622,6 +9675,7 @@ export type Database = {
           member_count?: number | null
           name?: string
           parent_team_id?: string | null
+          slug?: string
           status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
         }
@@ -12864,6 +12918,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      slugify: { Args: { input: string }; Returns: string }
       soft_delete_assessment: {
         Args: { p_assessment_id: string }
         Returns: undefined
