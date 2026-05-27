@@ -137,10 +137,10 @@ export default function SettingsHome() {
     queryFn: async () => {
       const [catalogResult, enabledResult] = await Promise.all([
         supabase
-          .from("next_integrations_catalog")
+          .from("hub_integrations_catalog")
           .select("id", { count: "exact", head: true }),
         supabase
-          .from("next_integrations_global_config")
+          .from("hub_integrations_global_config")
           .select("id", { count: "exact", head: true })
           .eq("is_enabled_global", true),
       ]);
