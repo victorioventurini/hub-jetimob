@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { NextLayout } from "@/components/layout/NextLayout";
+import { HubLayout } from "@/components/layout/HubLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -225,7 +225,7 @@ export default function Modules() {
   const enabledCount = modules.filter((m) => m.is_enabled).length;
 
   return (
-    <NextLayout>
+    <HubLayout>
       <div className="space-y-6">
         <PageHeader
           title="Módulos"
@@ -387,6 +387,6 @@ export default function Modules() {
           </TabsContent>
         </Tabs>
       </div>
-    </NextLayout>
+    </HubLayout>
   );
 }
