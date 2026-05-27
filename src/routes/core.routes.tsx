@@ -231,6 +231,18 @@ export const coreRoutes = (
       </>
     )}
 
+    {/* Internal Directory (super admin only) */}
+    <Route
+      path="/internal-directory"
+      element={
+        <ProtectedRoute skipBuCheck>
+          <AdminRoute>
+            <InternalDirectoryPage />
+          </AdminRoute>
+        </ProtectedRoute>
+      }
+    />
+
     {/* Catch-all 404 */}
     <Route path="*" element={<NotFound />} />
   </>
