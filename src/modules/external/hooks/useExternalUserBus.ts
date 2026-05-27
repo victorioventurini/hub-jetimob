@@ -42,6 +42,7 @@ export function useExternalUserBus() {
             id: contact.buId,
             name: contact.buName,
             legal_entity: contact.buLegalName,
+            slug: contact.buId,
             // Minimal BuUnit fields - others are optional
             allowed_email_domains: [],
             status: "active",
