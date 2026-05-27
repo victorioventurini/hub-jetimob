@@ -1,5 +1,5 @@
 /**
- * App.tsx — Hub da Jet
+ * App.tsx — Next da Jet
  * 
  * Ponto de entrada da aplicação React.
  * Rotas foram modularizadas em src/routes/ para manter este arquivo enxuto.

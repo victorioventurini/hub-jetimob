@@ -1,5 +1,5 @@
 // ============================================================
-// BUILD QUERY KEY - Hub da Jet
+// BUILD QUERY KEY - Next da Jet
 // ============================================================
 // Helper para construir queryKeys consistentes que incluem
 // o estado da URL, garantindo invalidação correta do cache

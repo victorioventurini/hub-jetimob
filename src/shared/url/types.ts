@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // ============================================================
-// URL STATE TYPES - Hub da Jet
+// URL STATE TYPES - Next da Jet
 // ============================================================
 
 /** Valores que podem ser armazenados em URL */

@@ -45,7 +45,7 @@ export default function AssessmentsPage() {
   const [open, setOpen] = useState(false);
 
   usePageTitle("Assessments", {
-    customDescription: "Provas e formulários com controle de tempo e anti-fraude no Hub da Jet.",
+    customDescription: "Provas e formulários com controle de tempo e anti-fraude no Next da Jet.",
   });
 
   return (

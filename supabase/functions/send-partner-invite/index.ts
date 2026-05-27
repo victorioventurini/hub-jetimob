@@ -127,7 +127,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     .single();
 
   const contactData = contact as { external_company?: { name?: string } | null };
-  const buName = buData?.name || "Hub";
+  const buName = buData?.name || "Next";
   const companyName = contactData.external_company?.name || "Empresa Parceira";
 
   // Fetch inviter profile
@@ -149,7 +149,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
       p_bu_id: bu_id,
     });
 
-  let subject = "Você foi convidado para acessar o Hub";
+  let subject = "Você foi convidado para acessar o Next";
   let body_html = "";
 
   // Build base URL for access
@@ -158,14 +158,14 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
   if (templateError || !templateData || templateData.length === 0) {
     console.warn(`[${requestId}] No template found, using fallback`);
     
-    subject = `Você foi convidado para acessar o Hub ${buName}`;
+    subject = `Você foi convidado para acessar o Next ${buName}`;
     body_html = `
       <!DOCTYPE html>
       <html>
       <head><meta charset="utf-8"></head>
       <body style="font-family: sans-serif; padding: 20px;">
         <h2>Olá, ${contactData.name}!</h2>
-        <p>Você foi convidado(a) por <strong>${inviterName}</strong> para acessar o Hub como parceiro externo da empresa <strong>${companyName}</strong>.</p>
+        <p>Você foi convidado(a) por <strong>${inviterName}</strong> para acessar o Next como parceiro externo da empresa <strong>${companyName}</strong>.</p>
         <p>Acesse: <a href="${accessUrl}">${accessUrl}</a></p>
         <p>Use o e-mail <strong>${contactData.email}</strong> para fazer login.</p>
       </body>
@@ -194,7 +194,7 @@ const handler = withErrorHandling(async (req: Request, requestId: string): Promi
     html: body_html,
     from: {
       email: NO_REPLY_EMAIL,
-      name: `Hub ${buName}`,
+      name: `Next ${buName}`,
     },
   });
 

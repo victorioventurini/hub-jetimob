@@ -149,7 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ 
           error: {
             http_code: 403,
-            message: `O domínio @${domain} não está autorizado para acesso ao Hub.` 
+            message: `O domínio @${domain} não está autorizado para acesso ao Next.` 
           }
         }),
         {
@@ -180,11 +180,11 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email via SendGrid (with Resend fallback)
     const result = await sendEmail({
       to: user.email,
-      subject: `Seu link de acesso ao Hub ${buName || "Jet"} - ${formatEmailDateTime()}`,
+      subject: `Seu link de acesso ao Next ${buName || "Jet"} - ${formatEmailDateTime()}`,
       html,
       from: {
         email: NO_REPLY_EMAIL,
-        name: `Hub ${buName || "Jet"}`,
+        name: `Next ${buName || "Jet"}`,
       },
     });
 

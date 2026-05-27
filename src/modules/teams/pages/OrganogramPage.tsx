@@ -116,7 +116,7 @@ export default function OrganogramPage() {
     return (
       <>
         <Helmet>
-          <title>Organograma | Hub Jetimob</title>
+          <title>Organograma | Next Jetimob</title>
           <meta 
             name="description" 
             content="Visualize a estrutura organizacional da empresa com áreas, times, squads e membros." 
@@ -183,7 +183,7 @@ export default function OrganogramPage() {
   return (
     <>
       <Helmet>
-        <title>Organograma | Hub Jetimob</title>
+        <title>Organograma | Next Jetimob</title>
         <meta 
           name="description" 
           content="Visualize a estrutura organizacional da empresa com áreas, times, squads e membros." 
@@ -195,7 +195,7 @@ export default function OrganogramPage() {
         <Button variant="outline" size="sm" asChild className="mb-4">
           <Link to="/">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Hub
+            Voltar ao Next
           </Link>
         </Button>
 

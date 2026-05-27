@@ -126,7 +126,7 @@ export default function SquadDetailPage() {
           <Layers className="h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">Esse squad pertence a outra BU 🔒</h2>
           <p className="text-muted-foreground mb-4 max-w-md text-center">
-            Você está visualizando o Hub em uma BU diferente da BU desse squad.
+            Você está visualizando o Next em uma BU diferente da BU desse squad.
             Selecione a BU correta no topo da tela para acessá-lo.
           </p>
           <Button asChild>

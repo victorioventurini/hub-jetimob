@@ -140,7 +140,7 @@ export default function OkrQualityPage() {
     return (
       <div className="container max-w-7xl mx-auto py-6 px-4">
         <Helmet>
-          <title>Acesso Restrito | Hub Jetimob</title>
+          <title>Acesso Restrito | Next Jetimob</title>
           <meta name="description" content="Esta página é exclusiva para líderes de time e administradores." />
         </Helmet>
         
@@ -166,7 +166,7 @@ export default function OkrQualityPage() {
   return (
     <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
       <Helmet>
-        <title>Qualidade das OKRs{selectedTeam ? ` - ${selectedTeam.name}` : ''} | Hub Jetimob</title>
+        <title>Qualidade das OKRs{selectedTeam ? ` - ${selectedTeam.name}` : ''} | Next Jetimob</title>
         <meta 
           name="description" 
           content="Visualize a saúde e qualidade das OKRs do seu time. Identifique objetivos em risco e KRs que precisam de atenção." 

@@ -1,5 +1,5 @@
 // ============================================================
-// USE OPTIMISTIC MUTATION - Hub da Jet
+// USE OPTIMISTIC MUTATION - Next da Jet
 // ============================================================
 // Hook utilitário para mutações com atualização otimista do cache
 // Remove/oculta itens imediatamente da UI antes da confirmação do servidor

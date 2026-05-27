@@ -1,5 +1,5 @@
 /**
- * Logger central — Hub da Jet
+ * Logger central — Next da Jet
  *
  * Wrapper fino sobre `console` que silencia logs informativos em produção
  * mas preserva avisos e erros (que continuam úteis para diagnóstico no

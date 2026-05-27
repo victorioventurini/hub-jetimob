@@ -1,5 +1,5 @@
 // ============================================================
-// UNIFIED PARTICIPANT TYPES - Hub da Jet
+// UNIFIED PARTICIPANT TYPES - Next da Jet
 // ============================================================
 // Types and utilities for handling internal users (profiles) and
 // external users (partner_contacts) transparently.

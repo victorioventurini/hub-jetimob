@@ -27,7 +27,7 @@ const MODULE_CONFIG: Record<string, { label: string; order: number; color: strin
   kpis: { label: "KPIs", order: 4, color: "bg-status-pink" },
   tickets: { label: "Tickets", order: 5, color: "bg-status-orange" },
   assets: { label: "Assets", order: 6, color: "bg-status-green" },
-  hub: { label: "Hub/Config", order: 7, color: "bg-status-amber" },
+  hub: { label: "Next/Config", order: 7, color: "bg-status-amber" },
   platform: { label: "Plataforma", order: 8, color: "bg-status-red" },
 };
 

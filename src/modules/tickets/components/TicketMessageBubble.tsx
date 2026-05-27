@@ -1,5 +1,5 @@
 // ============================================================
-// TICKET MESSAGE BUBBLE - Hub da Jet
+// TICKET MESSAGE BUBBLE - Next da Jet
 // ============================================================
 // Renders a ticket message with reply support.
 // Wraps the generic MessageBubble with ticket-specific logic.

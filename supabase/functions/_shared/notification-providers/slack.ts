@@ -27,7 +27,7 @@ export async function sendSlack(
     },
     ...(contextUrl ? [{
       type: "section",
-      text: { type: "mrkdwn", text: `<${siteUrl}${contextUrl}|Ver no Hub>` }
+      text: { type: "mrkdwn", text: `<${siteUrl}${contextUrl}|Ver no Next>` }
     }] : [])
   ];
 

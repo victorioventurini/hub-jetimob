@@ -44,7 +44,7 @@ export function AreasPage() {
   return (
     <>
       <Helmet>
-        <title>Áreas | Configurações | Hub Jetimob</title>
+        <title>Áreas | Configurações | Next Jetimob</title>
         <meta
           name="description"
           content="Gerencie as áreas estratégicas que agrupam os times da organização."

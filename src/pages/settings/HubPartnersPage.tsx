@@ -67,7 +67,7 @@ export default function HubPartnersPage() {
   return (
     <>
       <Helmet>
-        <title>Parceiros | Hub Jetimob</title>
+        <title>Parceiros | Next Jetimob</title>
         <meta name="description" content="Gestão global de empresas parceiras da plataforma" />
       </Helmet>
 

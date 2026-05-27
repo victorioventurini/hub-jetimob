@@ -1,5 +1,5 @@
 // ============================================================
-// PARTICIPANT COMPONENTS - Hub da Jet
+// PARTICIPANT COMPONENTS - Next da Jet
 // ============================================================
 // Barrel export for participant-related components.
 // ============================================================

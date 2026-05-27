@@ -178,7 +178,7 @@ export default function PartnersPage() {
   return (
     <HubLayout>
       <Helmet>
-        <title>Empresas Parceiras | Hub Jetimob</title>
+        <title>Empresas Parceiras | Next Jetimob</title>
         <meta name="description" content="Gerencie empresas parceiras globalmente e ative-as por unidade de negócio." />
       </Helmet>
 

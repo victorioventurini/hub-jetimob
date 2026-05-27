@@ -116,10 +116,10 @@ const buildSubtext = (
     return "Acompanhe suas demandas";
   }
   
-  // Collaborator - "Seu dia no Hub"
+  // Collaborator - "Seu dia no Next"
   if (profile === "collaborator") {
     const collaboratorOptions = [
-      "Seu dia no Hub",
+      "Seu dia no Next",
       "Vamos ao que importa",
       "Foco no que move a agulha",
     ];

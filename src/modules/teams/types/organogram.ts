@@ -1,5 +1,5 @@
 /**
- * Organogram Types - Hub da Jet
+ * Organogram Types - Next da Jet
  * Tipos para visualização hierárquica da estrutura organizacional
  */
 

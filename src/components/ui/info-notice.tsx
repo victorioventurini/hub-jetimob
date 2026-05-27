@@ -2,7 +2,7 @@
  * InfoNotice - Componente global para avisos informativos
  * 
  * Uso: frases de atenção em páginas, wizards, formulários.
- * Segue o padrão de cores do Hub (ALERT_BANNER_STYLES).
+ * Segue o padrão de cores do Next (ALERT_BANNER_STYLES).
  */
 
 import { AlertTriangle, Info, CheckCircle, AlertCircle } from 'lucide-react';

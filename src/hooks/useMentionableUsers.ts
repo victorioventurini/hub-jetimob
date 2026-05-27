@@ -1,5 +1,5 @@
 // ============================================================
-// USE MENTIONABLE USERS HOOK - Hub da Jet
+// USE MENTIONABLE USERS HOOK - Next da Jet
 // ============================================================
 // Unified hook for searching mentionable users across modules.
 // Supports two contexts:

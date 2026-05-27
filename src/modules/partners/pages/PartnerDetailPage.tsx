@@ -131,7 +131,7 @@ export default function PartnerDetailPage() {
   return (
     <HubLayout>
       <Helmet>
-        <title>{partner.name} | Parceiros | Hub Jetimob</title>
+        <title>{partner.name} | Parceiros | Next Jetimob</title>
         <meta name="description" content={`Detalhes do parceiro ${partner.name}`} />
       </Helmet>
 

@@ -21,7 +21,7 @@ Todos os agentes utilizam o modelo \`google/gemini-3-flash-preview\` via Lovable
 
 | Slug | Descrição | Uso |
 |------|-----------|-----|
-| \`persona-vic\` | Assistente principal do Hub (Vic) | Chat, sidebar |
+| \`persona-vic\` | Assistente principal do Next (Vic) | Chat, sidebar |
 | \`coach-okrs\` | Coach de OKRs | Wizards de check-in |
 | \`kr-advisor\` | Assistente de Key Results | Criação de KRs |
 | \`initiative-validator\` | Validador de iniciativas | Wizard de OKRs |
@@ -31,7 +31,7 @@ Todos os agentes utilizam o modelo \`google/gemini-3-flash-preview\` via Lovable
 | \`revisor-comunicacao\` | Revisor de comunicação interna | QBR summaries |
 | \`hr-onboarding-assistant\` | Assistente de onboarding RH | Onboarding |
 | \`ticket-assistant\` | Assistente de tickets | Tickets |
-| \`hub-admin-assistant\` | Assistente administrativo | Hub admin |
+| \`hub-admin-assistant\` | Assistente administrativo | Next admin |
 
 ### 6.3 Invocação
 

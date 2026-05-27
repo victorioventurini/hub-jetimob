@@ -180,7 +180,7 @@ export default function HubPartnerDetailPage() {
   return (
     <>
       <Helmet>
-        <title>{partner.name} | Parceiros | Hub Jetimob</title>
+        <title>{partner.name} | Parceiros | Next Jetimob</title>
         <meta name="description" content={`Gestão global do parceiro ${partner.name}`} />
       </Helmet>
 

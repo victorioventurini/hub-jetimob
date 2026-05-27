@@ -78,7 +78,7 @@ export default function ProjectDetailPage() {
   usePageTitle(projectName, {
     customDescription: project?.description
       ? `${projectName} — ${project.description}`
-      : `Detalhes do projeto ${projectName} no Hub.`,
+      : `Detalhes do projeto ${projectName} no Next.`,
   });
 
   const writerProfileId = realProfileId ?? profileId;
@@ -223,7 +223,7 @@ export default function ProjectDetailPage() {
             Esse projeto pertence a outra BU 🔒
           </p>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Você está visualizando o Hub em uma BU diferente da BU desse projeto.
+            Você está visualizando o Next em uma BU diferente da BU desse projeto.
             Selecione a BU correta no topo da tela para acessá-lo.
           </p>
           <Button variant="outline" className="mt-4" asChild>

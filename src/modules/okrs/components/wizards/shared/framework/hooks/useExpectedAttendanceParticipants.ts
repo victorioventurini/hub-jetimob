@@ -4,7 +4,7 @@
  * Resolve a lista de "participantes esperados" para um rito coletivo,
  * conforme `ParticipantsResolverId` declarado em `attendanceConfig.ts`.
  *
- * Estratégia: cada resolver mapeia para uma fonte de dados existente no Hub
+ * Estratégia: cada resolver mapeia para uma fonte de dados existente no Next
  * (useBuUsersDirectory, useHierarchicalTeamList, useCompanyOkrs etc.) — não
  * duplicamos queries. A composição final é feita no hook.
  *

@@ -167,7 +167,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
       if (profileError) throw profileError;
     },
     onSuccess: () => {
-      toast.success("Bem-vindo ao Hub Jetimob! 🚀");
+      toast.success("Bem-vindo ao Next Jetimob! 🚀");
       
       // CRITICAL: Atualizar cache SINCRONAMENTE antes de navegar.
       // Sem isso, OnboardingGuard monta com dados stale (onboarding_completed=false)
@@ -318,7 +318,7 @@ export function OnboardingWizard({ profileId, userId, initialData, onComplete }:
           <CardTitle className="text-2xl">
             {initialData?.first_name 
               ? `Olá, ${initialData.first_name}! 👋` 
-              : "Bem-vindo ao Hub!"}
+              : "Bem-vindo ao Next!"}
           </CardTitle>
           <CardDescription>
             Complete seu perfil para começar

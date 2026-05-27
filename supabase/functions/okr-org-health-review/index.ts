@@ -2,7 +2,7 @@
  * Edge Function: okr-org-health-review
  * 
  * Avalia a SAÚDE DE EXECUÇÃO das OKRs organizacionais
- * Usa o agente "coach-okrs" configurado no Hub via invoke-vic
+ * Usa o agente "coach-okrs" configurado no Next via invoke-vic
  * 
  * Dois modos:
  * - "objective": Analisa saúde de um objetivo específico

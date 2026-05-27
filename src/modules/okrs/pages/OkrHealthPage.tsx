@@ -53,7 +53,7 @@ export default function OkrHealthPage() {
   return (
     <>
       <Helmet>
-        <title>Saúde das OKRs Organizacionais | Hub Jetimob</title>
+        <title>Saúde das OKRs Organizacionais | Next Jetimob</title>
         <meta 
           name="description" 
           content="Monitore a execução das OKRs organizacionais: progresso, check-ins, contribuições de times e análise de saúde por IA" 

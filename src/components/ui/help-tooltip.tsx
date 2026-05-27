@@ -2,7 +2,7 @@
  * HelpTooltip - Tooltip de ajuda padronizado com ícone HelpCircle
  * 
  * Uso para campos, labels ou conceitos que precisam de explicação adicional.
- * Segue o padrão visual do Hub com ícone discreto e tooltip informativo.
+ * Segue o padrão visual do Next com ícone discreto e tooltip informativo.
  * 
  * @example
  * <Label>

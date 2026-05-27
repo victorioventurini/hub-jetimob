@@ -196,7 +196,7 @@ export default function OrgObjectiveViewPage() {
           <Building2 className="w-12 h-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">Esse objetivo pertence a outra BU 🔒</h2>
           <p className="text-muted-foreground mb-4 max-w-md text-center">
-            Você está visualizando o Hub em uma BU diferente da BU desse objetivo.
+            Você está visualizando o Next em uma BU diferente da BU desse objetivo.
             Selecione a BU correta no topo da tela para acessá-lo.
           </p>
           <Button asChild variant="outline">

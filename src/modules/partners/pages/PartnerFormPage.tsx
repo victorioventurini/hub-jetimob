@@ -146,7 +146,7 @@ export default function PartnerFormPage() {
   return (
     <HubLayout>
       <Helmet>
-        <title>Novo Parceiro | Hub Jetimob</title>
+        <title>Novo Parceiro | Next Jetimob</title>
         <meta name="description" content="Cadastre uma nova empresa parceira no sistema." />
       </Helmet>
 

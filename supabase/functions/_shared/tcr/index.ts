@@ -38,14 +38,14 @@ export const TCR_SECTIONS: Record<string, TcrSection> = {
  * Build the full TCR document from all sections
  */
 export function buildFullTcr(): string {
-  const header = `# Technical Context Registry (TCR) — Hub da Jet
+  const header = `# Technical Context Registry (TCR) — Next da Jet
 
 **Versão:** ${TCR_VERSION}  
 **Última atualização:** ${TCR_UPDATED_AT}
 
 ---
 
-> Este documento é a **fonte única de verdade** para desenvolvimento no Hub.
+> Este documento é a **fonte única de verdade** para desenvolvimento no Next.
 > Sempre consulte-o antes de tomar decisões de arquitetura ou implementação.
 
 ---
@@ -82,7 +82,7 @@ Para usar este documento como contexto no ChatGPT:
 
 **Prompt sugerido:**
 \`\`\`
-Você é um desenvolvedor sênior trabalhando no Hub da Jet.
+Você é um desenvolvedor sênior trabalhando no Next da Jet.
 Todas as decisões devem respeitar o TCR (Technical Context Registry) fornecido.
 Se houver conflito ou ambiguidade, pergunte antes de prosseguir.
 Priorize: segurança, consistência com padrões existentes, simplicidade.

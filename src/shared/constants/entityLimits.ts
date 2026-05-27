@@ -1,6 +1,6 @@
 /**
  * ENTITY_NAME_LIMITS — Fonte única de verdade dos limites máximos de caracteres
- * para títulos/nomes das principais entidades do Hub.
+ * para títulos/nomes das principais entidades do Next.
  *
  * ⚠️ REGRA INQUEBRÁVEL:
  * Estes valores DEVEM permanecer sincronizados com os triggers de validação

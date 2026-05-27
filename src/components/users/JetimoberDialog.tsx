@@ -602,7 +602,7 @@ export function JetimoberDialog({ open, onOpenChange, profile }: JetimoberDialog
         <div>
           <h3 className="font-semibold text-lg">Qual o e-mail corporativo?</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Vamos verificar se já existe cadastro no Hub
+            Vamos verificar se já existe cadastro no Next
           </p>
         </div>
       </div>

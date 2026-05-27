@@ -22,7 +22,7 @@ interface UsePageTitleOptions {
 }
 
 /**
- * Domínio canônico oficial do Hub.
+ * Domínio canônico oficial do Next.
  * Garante que previews (id-preview--*.lovable.app) e o domínio publicado
  * (hub-jetimob.lovable.app) não sejam tratados como conteúdo duplicado.
  */
@@ -32,9 +32,9 @@ const CANONICAL_ORIGIN = "https://next.jetimob.com";
  * Hook para definir o meta title e meta description da página dinamicamente.
  * 
  * Formato do Title:
- * - Com BU: "<Título> | Hub <Nome da BU>"
+ * - Com BU: "<Título> | Next <Nome da BU>"
  * - Sem BU: "<Título> | Hub"
- * - Só Hub (select-bu): "Hub"
+ * - Só Hub (select-bu): "Next"
  * 
  * NOTE: Uses optional BuContext access to work on public routes (e.g., /auth)
  * where BuProvider is not available.
@@ -59,15 +59,15 @@ export function usePageTitle(
 
     if (options?.hubOnly) {
       // Tela de seleção de BU
-      pageTitle = "Hub";
-      metaDescription = "Escolha a unidade de negócio para acessar o Hub e gerenciar times, metas e operações.";
+      pageTitle = "Next";
+      metaDescription = "Escolha a unidade de negócio para acessar o Next e gerenciar times, metas e operações.";
     } else if (buSelected && currentBu && !options?.skipBu) {
       // Com BU selecionada
-      pageTitle = `${title} | Hub ${buName}`;
+      pageTitle = `${title} | Next ${buName}`;
       metaDescription = getDescriptionForPage(title, buName, options?.pageType, options?.customDescription);
     } else {
       // Sem BU (telas globais ou antes da seleção)
-      pageTitle = `${title} | Hub`;
+      pageTitle = `${title} | Next`;
       metaDescription = getGlobalDescription(title, options?.pageType, options?.customDescription);
     }
 
@@ -106,7 +106,7 @@ export function usePageTitle(
 
     // Cleanup
     return () => {
-      document.title = "Hub";
+      document.title = "Next";
     };
   }, [title, currentBu, buSelected, options?.skipBu, options?.hubOnly, options?.pageType, options?.customDescription, options?.indexable]);
 }
@@ -116,33 +116,33 @@ function getDescriptionForPage(title: string, buName: string, pageType?: PageTyp
 
   // Descrições específicas por página com BU
   const descriptions: Record<string, string> = {
-    "Home": `Visão geral da ${buName} no Hub, com acesso rápido a cultura, OKRs, KPIs e informações do time.`,
-    "OKRs": `Gerencie os OKRs da ${buName} e acompanhe o progresso das metas no Hub.`,
-    "Dashboard OKRs": `Acompanhe o progresso dos OKRs da ${buName} com visão consolidada no Hub.`,
-    "Dashboard Executivo": `Visão executiva dos OKRs e resultados da ${buName} no Hub.`,
-    "KPIs": `Gerencie os KPIs da ${buName} e acompanhe indicadores estratégicos no Hub.`,
-    "Times": `Gerencie os times da ${buName} e a estrutura organizacional no Hub.`,
-    "Pessoas": `Gerencie as pessoas da ${buName} e informações do time no Hub.`,
-    "Configurações": `Gerencie as configurações da ${buName} no Hub.`,
-    "Perfil": `Visualize e edite seu perfil no Hub ${buName}.`,
-    "Integrações": `Gerencie as integrações da ${buName} no Hub.`,
-    "Agentes IA": `Configure e gerencie agentes de IA da ${buName} no Hub.`,
-    "Módulos": `Visualize os módulos disponíveis para a ${buName} no Hub.`,
+    "Home": `Visão geral da ${buName} no Next, com acesso rápido a cultura, OKRs, KPIs e informações do time.`,
+    "OKRs": `Gerencie os OKRs da ${buName} e acompanhe o progresso das metas no Next.`,
+    "Dashboard OKRs": `Acompanhe o progresso dos OKRs da ${buName} com visão consolidada no Next.`,
+    "Dashboard Executivo": `Visão executiva dos OKRs e resultados da ${buName} no Next.`,
+    "KPIs": `Gerencie os KPIs da ${buName} e acompanhe indicadores estratégicos no Next.`,
+    "Times": `Gerencie os times da ${buName} e a estrutura organizacional no Next.`,
+    "Pessoas": `Gerencie as pessoas da ${buName} e informações do time no Next.`,
+    "Configurações": `Gerencie as configurações da ${buName} no Next.`,
+    "Perfil": `Visualize e edite seu perfil no Next ${buName}.`,
+    "Integrações": `Gerencie as integrações da ${buName} no Next.`,
+    "Agentes IA": `Configure e gerencie agentes de IA da ${buName} no Next.`,
+    "Módulos": `Visualize os módulos disponíveis para a ${buName} no Next.`,
     // Assets
-    "Ativos": `Gerencie inventário, chaveiros e brindes corporativos da ${buName} no Hub.`,
-    "Inventário": `Gerencie equipamentos e itens do inventário da ${buName} no Hub.`,
-    "Chaveiros": `Gerencie chaveiros e controle de acessos físicos da ${buName} no Hub.`,
-    "Brindes": `Gerencie brindes corporativos e controle de estoque da ${buName} no Hub.`,
-    "Relatórios de Ativos": `Acompanhe métricas de inventário, chaveiros e brindes da ${buName} no Hub.`,
+    "Ativos": `Gerencie inventário, chaveiros e brindes corporativos da ${buName} no Next.`,
+    "Inventário": `Gerencie equipamentos e itens do inventário da ${buName} no Next.`,
+    "Chaveiros": `Gerencie chaveiros e controle de acessos físicos da ${buName} no Next.`,
+    "Brindes": `Gerencie brindes corporativos e controle de estoque da ${buName} no Next.`,
+    "Relatórios de Ativos": `Acompanhe métricas de inventário, chaveiros e brindes da ${buName} no Next.`,
     "Configurações de Ativos": `Configure categorias, inventário e claviculários de ativos da ${buName}.`,
     // Projects
-    "Projetos": `Gerencie projetos estratégicos e acompanhe milestones da ${buName} no Hub.`,
+    "Projetos": `Gerencie projetos estratégicos e acompanhe milestones da ${buName} no Next.`,
     // Tickets
-    "Tickets": `Gerencie tickets internos e externos, acompanhe status, prazos e mensagens da ${buName} no Hub.`,
+    "Tickets": `Gerencie tickets internos e externos, acompanhe status, prazos e mensagens da ${buName} no Next.`,
     "Configurações de Tickets": `Configure empresas parceiras, categorias e regras de roteamento de tickets da ${buName}.`,
   };
 
-  return descriptions[title] || `Gerencie ${title.toLowerCase()} da ${buName} no Hub.`;
+  return descriptions[title] || `Gerencie ${title.toLowerCase()} da ${buName} no Next.`;
 }
 
 function getGlobalDescription(title: string, pageType?: PageType, customDescription?: string): string {
@@ -150,13 +150,13 @@ function getGlobalDescription(title: string, pageType?: PageType, customDescript
 
   // Descrições para telas globais (sem BU)
   const globalDescriptions: Record<string, string> = {
-    "Login": "Acesse o Hub para gerenciar pessoas, times, OKRs, KPIs e a operação da Jet.",
-    "Configurações": "Gerencie as configurações globais do Hub, integrações, usuários e permissões.",
-    "Integrações": "Gerencie as integrações globais do Hub.",
-    "Usuários": "Gerencie os usuários e permissões do Hub.",
-    "Unidades de Negócio": "Gerencie as unidades de negócio cadastradas no Hub.",
-    "Página não encontrada": "Esta página não existe ou mudou de lugar. Volte para a Home do Hub e acesse seus módulos e atalhos.",
+    "Login": "Acesse o Next para gerenciar pessoas, times, OKRs, KPIs e a operação da Jet.",
+    "Configurações": "Gerencie as configurações globais do Next, integrações, usuários e permissões.",
+    "Integrações": "Gerencie as integrações globais do Next.",
+    "Usuários": "Gerencie os usuários e permissões do Next.",
+    "Unidades de Negócio": "Gerencie as unidades de negócio cadastradas no Next.",
+    "Página não encontrada": "Esta página não existe ou mudou de lugar. Volte para a Home do Next e acesse seus módulos e atalhos.",
   };
 
-  return globalDescriptions[title] || `Gerencie ${title.toLowerCase()} no Hub.`;
+  return globalDescriptions[title] || `Gerencie ${title.toLowerCase()} no Next.`;
 }

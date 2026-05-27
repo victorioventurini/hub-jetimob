@@ -121,7 +121,7 @@ export default function OkrFullConstructionReviewPage() {
   return (
     <div className="container max-w-7xl mx-auto py-6 px-4 space-y-6">
       <Helmet>
-        <title>Avaliação Cross-Team{selectedCycle ? ` - ${selectedCycle.name}` : ''} | Hub Jetimob</title>
+        <title>Avaliação Cross-Team{selectedCycle ? ` - ${selectedCycle.name}` : ''} | Next Jetimob</title>
         <meta name="description" content="Avaliação consolidada por IA de OKRs de todos os times — identifica sinergias e sugere colaborações." />
       </Helmet>
 

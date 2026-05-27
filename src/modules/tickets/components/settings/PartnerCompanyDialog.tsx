@@ -346,7 +346,7 @@ export function PartnerCompanyDialog({
             <DialogHeader>
               <DialogTitle>Nova Empresa Parceira</DialogTitle>
               <DialogDescription>
-                Informe o CPF ou CNPJ para verificar se a empresa já está cadastrada no Hub.
+                Informe o CPF ou CNPJ para verificar se a empresa já está cadastrada no Next.
               </DialogDescription>
             </DialogHeader>
 
@@ -425,7 +425,7 @@ export function PartnerCompanyDialog({
                 Empresa Encontrada
               </DialogTitle>
               <DialogDescription>
-                Esta empresa já está cadastrada no Hub. 
+                Esta empresa já está cadastrada no Next. 
                 {existingCompany.is_active_in_current_bu 
                   ? " Ela já está ativa nesta BU."
                   : " Deseja ativá-la nesta BU?"}
