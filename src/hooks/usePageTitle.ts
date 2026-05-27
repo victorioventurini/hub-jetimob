@@ -67,7 +67,7 @@ export function usePageTitle(
       metaDescription = getDescriptionForPage(title, buName, options?.pageType, options?.customDescription);
     } else {
       // Sem BU (telas globais ou antes da seleção)
-      pageTitle = `${title} | Hub`;
+      pageTitle = `${title} | Next`;
       metaDescription = getGlobalDescription(title, options?.pageType, options?.customDescription);
     }
 
