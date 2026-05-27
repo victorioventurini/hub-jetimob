@@ -34,10 +34,21 @@ function OverviewTab() {
         supabase.from("bu_units").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("areas").select("id", { count: "exact", head: true }).is("deleted_at", null),
         supabase.from("teams").select("id", { count: "exact", head: true }).is("deleted_at", null),
-        supabase.rpc("count_multi_bu_users").then(
-          (r) => ({ count: (r.data as number) ?? 0 }),
-          () => ({ count: 0 }),
-        ),
+        // Multi-BU: contagem feita client-side a partir de bu_user_memberships
+        supabase
+          .from("bu_user_memberships")
+          .select("profile_id")
+          .is("deleted_at", null)
+          .then((r) => {
+            const counts = new Map<string, number>();
+            for (const m of r.data ?? []) {
+              if (!m.profile_id) continue;
+              counts.set(m.profile_id, (counts.get(m.profile_id) ?? 0) + 1);
+            }
+            let multi = 0;
+            counts.forEach((c) => { if (c > 1) multi++; });
+            return { count: multi };
+          }),
       ]);
       return {
         users: users.count ?? 0,
