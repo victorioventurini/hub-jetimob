@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { NextLayout } from '@/components/layout/NextLayout';
+import { HubLayout as NextLayout } from '@/components/layout/HubLayout';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
