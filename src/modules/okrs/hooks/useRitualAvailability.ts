@@ -385,5 +385,5 @@ export function useRitualAvailability(
       reason: 'available',
       message: '',
     };
-  }, [wizardType, cycle, isAdmin]);
+  }, [wizardType, cycle, isAdmin, overrides]);
 }
