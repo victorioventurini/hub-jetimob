@@ -1,205 +1,70 @@
+## Objetivo
 
-# Plano — Internal Directory (API + UI administrativa)
+Permitir overrides pontuais de janelas de ritos por BU + ciclo + persona, e aplicar o primeiro override:
 
-## Decisões confirmadas pelo usuário
+- **MBR (maio/2026, BU ativa):** mover de **ter 02/jun** para **qua 03/jun**.
+- **Pré-MBR:** janela **seg 01/jun 00:00 → ter 02/jun 23:59**.
 
-1. **Slugs:** adicionar coluna `slug` em `bu_units`, `areas`, `teams` (com backfill + trigger).
-2. **UI `/internal-directory`:** gate apenas para `super_admin` (via `AdminRoute` + `is_platform_admin`).
-3. **Token (POC):** validar Bearer contra secret `INTERNAL_API_TOKEN`. A tabela `internal_api_tokens` fica modelada (vazia) para o próximo ciclo.
+Fora desse caso, a regra padrão de cálculo (1ª terça + janelas em dias úteis) continua intacta.
 
-**Convenção de nomes (instrução do usuário):** nada de "Next" em URLs/arquivos. Uso de `internal-api`, `internal_api_tokens`, módulo `internal-directory`, key `next_user_id` apenas no payload JSON (alias de `profiles.id`) como contrato externo.
+## Mudanças
 
----
+### 1. Schema — nova tabela `ritual_window_overrides`
 
-## Reaproveitamento do schema existente (não duplicar)
-
-| Prompt sugeria criar | Já existe | Uso |
-|---|---|---|
-| `users` | `profiles` | `display_name`, `email`/`work_email`, `employment_status`, `photo_url`, soft delete |
-| `business_units` | `bu_units` | `name`, `cnpj`, `logo_url`, `primary_color`, `allowed_email_domains` |
-| `areas` | `areas` | BU-scoped |
-| `teams` | `teams` | BU-scoped + hierarquia + `area_id` |
-| `user_business_units` | `bu_user_memberships` | `is_default` = `is_primary`, `role_in_bu`, `job_title_id` |
-| `role_title` | `job_titles` (+ `bu_user_memberships.job_title_id`) | cargos reutilizáveis |
-| view cross-BU | `v_bu_active_profiles` | já une primária + memberships |
-
-Criar tabelas paralelas quebraria BU Isolation, RLS, Magic Link e Identity Convention. Mantemos as canônicas e expomos via API com o shape do contrato.
-
----
-
-## 1. Migration única
-
-**1.1. Slugs** (idempotente):
-- `ALTER TABLE bu_units ADD COLUMN slug text` + UNIQUE (`slug`).
-- `ALTER TABLE areas ADD COLUMN slug text` + UNIQUE (`bu_id, slug`).
-- `ALTER TABLE teams ADD COLUMN slug text` + UNIQUE (`bu_id, slug`).
-- Function `public.slugify(text)` (lower, regex, trim).
-- Backfill: `UPDATE ... SET slug = slugify(name) WHERE slug IS NULL` resolvendo colisões com sufixo numérico em PL/pgSQL DO block.
-- Trigger `BEFORE INSERT OR UPDATE` em cada tabela: se `NEW.slug IS NULL` → derivar de `NEW.name`.
-- `ALTER TABLE ... ALTER COLUMN slug SET NOT NULL` após backfill.
-
-**1.2. `internal_api_tokens`** (modelada, ainda não usada):
-
-```sql
-CREATE TABLE public.internal_api_tokens (
-  id uuid PK default gen_random_uuid(),
-  name text NOT NULL,
-  token_hash text NOT NULL UNIQUE,         -- sha256 do plaintext
-  allowed_system text NOT NULL,            -- ex: 'flow'
-  status text NOT NULL DEFAULT 'active',
-  scopes text[] NOT NULL DEFAULT '{}',
-  last_used_at timestamptz,
-  expires_at timestamptz,
-  created_by uuid REFERENCES auth.users(id),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  deleted_at timestamptz
-);
-
-GRANT ALL ON public.internal_api_tokens TO service_role;
-GRANT SELECT ON public.internal_api_tokens TO authenticated;  -- via policy só super_admin
-ALTER TABLE public.internal_api_tokens ENABLE ROW LEVEL SECURITY;
-CREATE POLICY internal_api_tokens_select_admin ON public.internal_api_tokens
-  FOR SELECT TO authenticated USING (is_platform_admin(auth.uid()));
+```text
+ritual_window_overrides
+- id uuid pk
+- bu_id uuid (FK bus, NOT NULL)
+- cycle_id uuid (FK cycles, NOT NULL)
+- wizard_type text NOT NULL   -- 'mbr' | 'mbr-pre' (extensível)
+- anchor text NOT NULL         -- 'review_date' | 'review_date_first_month'
+                               -- identifica QUAL das janelas compostas substituir
+- opens_date date NOT NULL
+- closes_date date NOT NULL    -- fechamento EOD
+- reason text
+- created_by, created_at, updated_at
+- UNIQUE (bu_id, cycle_id, wizard_type, anchor)
 ```
 
-Validation trigger (não CHECK):
-- `status IN ('active','inactive','revoked','expired')`.
-- `expires_at IS NULL OR expires_at > created_at`.
+- RLS: leitura para `authenticated` da BU; escrita restrita a `bu_admin`.
+- GRANTs padrão (authenticated CRUD, service_role ALL).
+- Sem CHECK constraint para datas — validação via trigger (`closes_date >= opens_date`).
 
-Trigger `update_internal_api_tokens_updated_at` reutilizando `update_updated_at_column()`.
+### 2. Hook `useRitualAvailability.ts`
 
-> Sem `verify_internal_api_token` / `generate_internal_api_token` agora — fica para o ciclo de produção do token.
+- Carregar overrides ativos da BU + ciclo via React Query (`queryKeys.okrs.ritualWindowOverrides(buId, cycleId)`).
+- Em `WINDOW_DEFS['mbr']` e `WINDOW_DEFS['mbr-pre']`, antes de chamar `buildWindow(c.review_date_first_month, ...)` ou `buildWindow(c.review_date, ...)`, checar se existe override para aquele `(wizard_type, anchor)` e usar `{ opens: opens_date, closes: closes_date }` no lugar.
+- `pickCompositeWindow` permanece igual.
 
----
+### 3. Seed do override (maio/2026)
 
-## 2. Edge Function `internal-api`
+Identificar `cycle_id` de `2026-Q2` da BU ativa e inserir 2 linhas:
 
-`supabase/functions/internal-api/index.ts` — uma função com roteador interno por `url.pathname`.
+- `wizard_type='mbr'`, `anchor='review_date'`, opens=2026-06-03, closes=2026-06-03.
+- `wizard_type='mbr-pre'`, `anchor='review_date'`, opens=2026-06-01, closes=2026-06-02.
 
-`supabase/config.toml`:
-```toml
-[functions.internal-api]
-verify_jwt = false
-```
+(Inserção via `supabase--insert` após approval da migration.)
 
-**Middleware:**
-1. `OPTIONS` → CORS preflight (`npm:@supabase/supabase-js@2/cors`).
-2. `Authorization: Bearer <token>` → comparar com `Deno.env.get('INTERNAL_API_TOKEN')` usando comparação constant-time.
-3. Falha → 401 `{ error: { code: 'UNAUTHORIZED', message: 'Invalid or missing internal API token.' } }`.
-4. Rota `/health` ignora auth.
-5. Cliente Supabase com **service role** dentro da função (chamador já autenticado como sistema).
-6. Sempre filtra `deleted_at IS NULL` e `employment_status <> 'terminated'`.
-7. Resposta de erro padronizada (`UNAUTHORIZED`, `NOT_FOUND`, `BAD_REQUEST`, `INTERNAL_ERROR`).
+### 4. Sincronização do calendário (`ritual_occurrences`)
 
-**Rotas:**
+A edge `sync-ritual-calendar-from-cycles` materializa MBR como 1ª terça do mês. Para refletir o override:
 
-| Método + Path | Query | Fonte |
-|---|---|---|
-| `GET /internal-api/health` | — | constante |
-| `GET /internal-api/users` | `business_unit_slug, area_slug, team_slug, status, search, include_inactive, page, limit` | `profiles` + `bu_user_memberships` + `bu_units` + `areas` + `teams` + `job_titles` |
-| `GET /internal-api/users/:id` | — | idem agregado por user |
-| `GET /internal-api/users/by-email` | `email` (required) | match em `profiles.email` OR `profiles.work_email` |
-| `GET /internal-api/business-units` | `status, search` | `bu_units` |
-| `GET /internal-api/areas` | `business_unit_slug, status, search` | `areas` JOIN `bu_units` |
-| `GET /internal-api/teams` | `business_unit_slug, area_slug, status, search` | `teams` JOIN `areas` + `bu_units` |
+- Após inserir os overrides, executar **update direto** em `ritual_occurrences` da BU ativa para `wizard_type IN ('mbr','mbr-pre')` cuja `planned_date` cai em 02/jun/2026, ajustando para as novas datas (mbr → 03/jun, mbr-pre → 02/jun ou 01/jun).
+- Override permanente da edge function fica fora deste escopo (ela continua gerando 1ª terça; o override só corrige o caso pontual).
 
-**Mapeamento de campos para o contrato:**
-- `next_user_id` = `profiles.id`
-- `full_name` = `profiles.display_name`
-- `preferred_name` = `profiles.first_name`
-- `email` = COALESCE(`profiles.email`, `profiles.work_email`)
-- `avatar_url` = `profiles.photo_url`
-- `business_units[].is_primary` = `bu_user_memberships.is_default`
-- `business_units[].role_title` = `job_titles.name`
-- `business_units[].status` = derivado de `bu_user_memberships.deleted_at`
-- `business_units[].area` / `team` = via `teams.area_id` e `profiles.team_id` (vínculo primário) — fora do vínculo primário, usar última associação conhecida ou null se não houver
+### 5. Nada de UI nova
 
-**Paginação:** `page` default 1, `limit` default 20, máx 100. Total via `count: 'exact'` na primeira query.
+Sem tela de gestão de overrides nesta entrega — é uma exceção pontual aplicada via migration + seed. A tabela fica pronta para futura UI.
 
----
+## Detalhes técnicos
 
-## 3. Front-end — módulo `Internal Directory`
-
-```
-src/modules/internal-directory/
-  pages/InternalDirectoryPage.tsx
-  components/
-    DirectoryOverviewCards.tsx
-    DirectoryUsersTab.tsx
-    DirectoryUserDetailDialog.tsx
-    DirectoryBusTab.tsx
-    DirectoryAreasTeamsTab.tsx
-    DirectoryApiDocsTab.tsx
-  hooks/
-    useDirectoryOverview.ts
-    useDirectoryUsers.ts
-    useDirectoryBus.ts
-    useDirectoryAreasTeams.ts
-  index.ts
-src/lib/queryKeys/internalDirectory.ts
-```
-
-- Rota: `/internal-directory` em `src/routes/core.routes.tsx` envolta em `<AdminRoute>`.
-- Item de menu: adicionar em `HubGlobalSidebar` / `HubGlobalMobileSidebar` na seção admin, visível só para super_admin (`useAuth().isAdmin`).
-- **Lê do Supabase direto** (RLS já permite a super_admin) — não bate na edge function (essa é p/ sistemas externos).
-- Filtros (`bu`, `area`, `team`, `status`, `search`) via `src/shared/url/` (URL state).
-- shadcn/ui: Tabs, Table, Card, Dialog, Badge, Input.
-- `OptimizedAvatar`, `EntityNamesCell` (para múltiplas BUs).
-- `React.memo` em linhas/cards. Loading/empty/error states. Responsivo (table → cards no mobile).
-- Sem `select('*')`; colunas explícitas em cada query.
-
-**Tabs:**
-1. **Visão geral** — 6 cards: total usuários, ativos, BUs ativas, áreas, times, usuários multi-BU. Counts via `count: 'exact', head: true`.
-2. **Usuários** — tabela + filtros + busca; clique abre Dialog de detalhe.
-3. **Business Units** — lista + contagem de membros (via `bu_user_memberships`).
-4. **Áreas e Times** — árvore BU → Área → Time → Pessoas (accordion + lazy).
-5. **API interna** — documentação estática (endpoints + exemplos `curl`), link para Cloud → Secrets explicando que o token está em `INTERNAL_API_TOKEN`.
-
----
-
-## 4. Seeds (insert tool, dev)
-
-Antes de inserir, ler IDs reais via `read_query` para idempotência.
-
-1. BU `Jetimob` (já existe) → setar `slug='jetimob'`, garantir `allowed_email_domains` contém `jetimob.com`. Criar `Jet Experience` (slug `jet-experience`) e `Next` (slug `next`) se não existirem.
-2. Áreas Jetimob (7) com slugs do prompt.
-3. Times Jetimob (10) com `area_id` correto.
-4. `job_titles` faltantes: CEO, Líder de CS, Coordenadora de G&G, Product Manager, Coordenador de Marketing, Coordenador Comercial, Advisor CS, Advisor de Eventos.
-5. `profiles` (7) sem `user_id` (padrão "pré-cadastrado"), `employment_status='active'`, `bu_id` primária = Jetimob, `team_id` correspondente, `job_title_id` correspondente.
-6. `bu_user_memberships` (8) — incluindo o Multi-BU em Jetimob (`is_default=true`) e Jet Experience (`is_default=false`).
-
----
-
-## 5. Documentação canônica
-
-- `docs/canonical/modules/internal-directory.md` (template dos outros módulos): tabelas reutilizadas, endpoints da edge, gate de UI, mapeamento de campos.
-- Adicionar linha em `docs/canonical/core/INDEX.md`.
-- Atualizar `docs/canonical/modules/bu.md` mencionando coluna `slug`.
-- Memory: `mem://features/internal-directory/internal-directory-master`.
-
----
-
-## 6. Secret a configurar
-
-`INTERNAL_API_TOKEN` (runtime secret via Lovable Cloud) — vou pedir via `add_secret` no momento da implementação, **depois** que migration e edge function estiverem prontas.
-
----
-
-## Ordem de execução
-
-1. Migration (slugs + `internal_api_tokens` + triggers).
-2. Seeds (insert tool).
-3. Edge function `internal-api` + `config.toml`.
-4. `add_secret` `INTERNAL_API_TOKEN`.
-5. Front-end (`src/modules/internal-directory/*`, query keys, rota, item de menu).
-6. Documentação canônica + memory.
-7. QA: `curl` em cada endpoint com e sem token; abrir `/internal-directory` validando 6 cards, filtros, detalhe multi-BU.
-
----
+- Query key novo em `src/lib/queryKeys/okrs.ts`: `ritualWindowOverrides(buId, cycleId)`.
+- Cliente: `buScopedClient` (dado operacional BU-scoped).
+- `useRitualAvailability` recebe overrides como parâmetro opcional ou os busca internamente quando há ciclo ativo; manter o hook síncrono para o consumidor — usar `useQuery` interno com `enabled: !!cycle?.id`.
+- Documentar comportamento em `mem://features/okrs/mbr-multi-date-governance` (atualizar) com nota sobre override.
 
 ## Fora de escopo
 
-- Implementar Flow ou qualquer consumidor real.
-- Ativar a tabela `internal_api_tokens` (criar/revogar via UI) — fica para ciclo seguinte.
-- Renomear identificadores existentes ("Hub"/"Next") em código.
+- Mudar a regra padrão de geração de ciclos (`generateCycles.ts`).
+- Suporte a janelas com precisão de hora (corte 12h descartado pelo usuário).
+- UI de CRUD de overrides.

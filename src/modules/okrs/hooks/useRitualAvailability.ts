@@ -9,11 +9,14 @@
  */
 
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { WizardPersona } from '../types/wizard';
 import type { CycleWithStatus } from './useActiveCycle';
 import { addBusinessDaysToDate } from '../utils/generateCycles';
 import { RITUAL_LABELS as SSOT_RITUAL_LABELS } from '../constants/ritualLabels';
 import { useAuth } from '@/hooks/useAuth';
+import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 // ⚠️ TEMPORARY DEV FLAG — remove after QBR flow testing
 const DEV_FORCE_QBR_AVAILABLE = new Date() < new Date('2026-04-15');
@@ -58,11 +61,18 @@ function formatDateBR(date: Date): string {
 }
 
 // ============================================================
-// WINDOW DEFINITIONS — ALL WINDOWS USE BUSINESS DAYS
-// ============================================================
-
 interface WindowDef {
-  getWindow: (cycle: CycleWithStatus) => { opens: Date | null; closes: Date | null };
+  getWindow: (
+    cycle: CycleWithStatus,
+    overrides?: RitualWindowOverride[],
+  ) => { opens: Date | null; closes: Date | null };
+}
+
+export interface RitualWindowOverride {
+  wizard_type: string;
+  anchor: 'review_date' | 'review_date_first_month';
+  opens_date: string;
+  closes_date: string;
 }
 
 /** Build a business-day window [offsetOpen..offsetClose] relative to a reference ISO date. */
@@ -76,6 +86,24 @@ function buildWindow(
   return {
     opens: offsetOpen === 0 ? ref : addBusinessDaysToDate(ref, offsetOpen),
     closes: addBusinessDaysToDate(ref, offsetClose),
+  };
+}
+
+/**
+ * Apply optional override for a given (wizard_type, anchor). If an override
+ * exists, its dates replace the computed window.
+ */
+function withOverride(
+  defaultWindow: { opens: Date | null; closes: Date | null },
+  overrides: RitualWindowOverride[] | undefined,
+  wizardType: string,
+  anchor: 'review_date' | 'review_date_first_month',
+): { opens: Date | null; closes: Date | null } {
+  const o = overrides?.find(x => x.wizard_type === wizardType && x.anchor === anchor);
+  if (!o) return defaultWindow;
+  return {
+    opens: parseDate(o.opens_date),
+    closes: parseDate(o.closes_date),
   };
 }
 
@@ -141,17 +169,17 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
   // 'clevel-checkin' removido — rito descontinuado (sem janela = indisponível).
 
   // MBR / Pré-MBR — janela composta (MBR₁ sobre review_date_first_month + MBR₂ sobre review_date).
-  // Retorna a janela ativa se `today` estiver dentro de alguma; caso contrário, a próxima futura.
+  // Overrides pontuais (tabela ritual_window_overrides) substituem a janela calculada.
   'mbr-pre': {
-    getWindow: (c) => pickCompositeWindow(
-      buildWindow(c.review_date_first_month, -5, -1),
-      buildWindow(c.review_date, -5, -1),
+    getWindow: (c, overrides) => pickCompositeWindow(
+      withOverride(buildWindow(c.review_date_first_month, -5, -1), overrides, 'mbr-pre', 'review_date_first_month'),
+      withOverride(buildWindow(c.review_date, -5, -1), overrides, 'mbr-pre', 'review_date'),
     ),
   },
   'mbr': {
-    getWindow: (c) => pickCompositeWindow(
-      buildWindow(c.review_date_first_month, -1, 1),
-      buildWindow(c.review_date, -1, 1),
+    getWindow: (c, overrides) => pickCompositeWindow(
+      withOverride(buildWindow(c.review_date_first_month, -1, 1), overrides, 'mbr', 'review_date_first_month'),
+      withOverride(buildWindow(c.review_date, -1, 1), overrides, 'mbr', 'review_date'),
     ),
   },
 
@@ -216,6 +244,26 @@ export function useRitualAvailability(
   cycle: CycleWithStatus | null | undefined,
 ): RitualAvailability {
   const { isAdmin } = useAuth();
+  const { client, buId, isReady } = useOptionalBuClient();
+
+  const isMbrFamily = wizardType === 'mbr' || wizardType === 'mbr-pre';
+  const cycleId = cycle?.id ?? null;
+
+  const { data: overrides } = useQuery({
+    queryKey: queryKeys.okrs.ritualWindowOverrides(buId, cycleId),
+    queryFn: async (): Promise<RitualWindowOverride[]> => {
+      if (!client || !buId || !cycleId) return [];
+      const { data, error } = await client
+        .from('ritual_window_overrides')
+        .select('wizard_type, anchor, opens_date, closes_date')
+        .eq('bu_id', buId)
+        .eq('cycle_id', cycleId);
+      if (error) throw error;
+      return (data ?? []) as RitualWindowOverride[];
+    },
+    enabled: isReady && !!cycleId && isMbrFamily,
+    staleTime: 60_000,
+  });
 
   return useMemo((): RitualAvailability => {
     // 🛡️ Admin/super_admin bypass — acesso irrestrito a qualquer rito,
@@ -288,7 +336,7 @@ export function useRitualAvailability(
       }
     }
 
-    const { opens, closes } = windowDef.getWindow(cycle);
+    const { opens, closes } = windowDef.getWindow(cycle, overrides);
 
     // Dates not configured — permissive fallback
     if (!opens && !closes) {
@@ -337,5 +385,5 @@ export function useRitualAvailability(
       reason: 'available',
       message: '',
     };
-  }, [wizardType, cycle, isAdmin]);
+  }, [wizardType, cycle, isAdmin, overrides]);
 }
