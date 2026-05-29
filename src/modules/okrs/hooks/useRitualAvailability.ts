@@ -61,11 +61,18 @@ function formatDateBR(date: Date): string {
 }
 
 // ============================================================
-// WINDOW DEFINITIONS — ALL WINDOWS USE BUSINESS DAYS
-// ============================================================
-
 interface WindowDef {
-  getWindow: (cycle: CycleWithStatus) => { opens: Date | null; closes: Date | null };
+  getWindow: (
+    cycle: CycleWithStatus,
+    overrides?: RitualWindowOverride[],
+  ) => { opens: Date | null; closes: Date | null };
+}
+
+export interface RitualWindowOverride {
+  wizard_type: string;
+  anchor: 'review_date' | 'review_date_first_month';
+  opens_date: string;
+  closes_date: string;
 }
 
 /** Build a business-day window [offsetOpen..offsetClose] relative to a reference ISO date. */
@@ -79,6 +86,24 @@ function buildWindow(
   return {
     opens: offsetOpen === 0 ? ref : addBusinessDaysToDate(ref, offsetOpen),
     closes: addBusinessDaysToDate(ref, offsetClose),
+  };
+}
+
+/**
+ * Apply optional override for a given (wizard_type, anchor). If an override
+ * exists, its dates replace the computed window.
+ */
+function withOverride(
+  defaultWindow: { opens: Date | null; closes: Date | null },
+  overrides: RitualWindowOverride[] | undefined,
+  wizardType: string,
+  anchor: 'review_date' | 'review_date_first_month',
+): { opens: Date | null; closes: Date | null } {
+  const o = overrides?.find(x => x.wizard_type === wizardType && x.anchor === anchor);
+  if (!o) return defaultWindow;
+  return {
+    opens: parseDate(o.opens_date),
+    closes: parseDate(o.closes_date),
   };
 }
 
@@ -144,17 +169,17 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
   // 'clevel-checkin' removido — rito descontinuado (sem janela = indisponível).
 
   // MBR / Pré-MBR — janela composta (MBR₁ sobre review_date_first_month + MBR₂ sobre review_date).
-  // Retorna a janela ativa se `today` estiver dentro de alguma; caso contrário, a próxima futura.
+  // Overrides pontuais (tabela ritual_window_overrides) substituem a janela calculada.
   'mbr-pre': {
-    getWindow: (c) => pickCompositeWindow(
-      buildWindow(c.review_date_first_month, -5, -1),
-      buildWindow(c.review_date, -5, -1),
+    getWindow: (c, overrides) => pickCompositeWindow(
+      withOverride(buildWindow(c.review_date_first_month, -5, -1), overrides, 'mbr-pre', 'review_date_first_month'),
+      withOverride(buildWindow(c.review_date, -5, -1), overrides, 'mbr-pre', 'review_date'),
     ),
   },
   'mbr': {
-    getWindow: (c) => pickCompositeWindow(
-      buildWindow(c.review_date_first_month, -1, 1),
-      buildWindow(c.review_date, -1, 1),
+    getWindow: (c, overrides) => pickCompositeWindow(
+      withOverride(buildWindow(c.review_date_first_month, -1, 1), overrides, 'mbr', 'review_date_first_month'),
+      withOverride(buildWindow(c.review_date, -1, 1), overrides, 'mbr', 'review_date'),
     ),
   },
 
@@ -206,6 +231,9 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
         opens: retro,
         closes: addBusinessDaysToDate(retro, 5),
       };
+    },
+  },
+};
     },
   },
 };
