@@ -244,6 +244,26 @@ export function useRitualAvailability(
   cycle: CycleWithStatus | null | undefined,
 ): RitualAvailability {
   const { isAdmin } = useAuth();
+  const { client, buId, isReady } = useOptionalBuClient();
+
+  const isMbrFamily = wizardType === 'mbr' || wizardType === 'mbr-pre';
+  const cycleId = cycle?.id ?? null;
+
+  const { data: overrides } = useQuery({
+    queryKey: queryKeys.okrs.ritualWindowOverrides(buId, cycleId),
+    queryFn: async (): Promise<RitualWindowOverride[]> => {
+      if (!client || !buId || !cycleId) return [];
+      const { data, error } = await client
+        .from('ritual_window_overrides')
+        .select('wizard_type, anchor, opens_date, closes_date')
+        .eq('bu_id', buId)
+        .eq('cycle_id', cycleId);
+      if (error) throw error;
+      return (data ?? []) as RitualWindowOverride[];
+    },
+    enabled: isReady && !!cycleId && isMbrFamily,
+    staleTime: 60_000,
+  });
 
   return useMemo((): RitualAvailability => {
     // 🛡️ Admin/super_admin bypass — acesso irrestrito a qualquer rito,
