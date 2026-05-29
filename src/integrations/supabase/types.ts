@@ -9444,6 +9444,63 @@ export type Database = {
           },
         ]
       }
+      ritual_window_overrides: {
+        Row: {
+          anchor: string
+          bu_id: string
+          closes_date: string
+          created_at: string
+          created_by: string | null
+          cycle_id: string
+          id: string
+          opens_date: string
+          reason: string | null
+          updated_at: string
+          wizard_type: string
+        }
+        Insert: {
+          anchor: string
+          bu_id: string
+          closes_date: string
+          created_at?: string
+          created_by?: string | null
+          cycle_id: string
+          id?: string
+          opens_date: string
+          reason?: string | null
+          updated_at?: string
+          wizard_type: string
+        }
+        Update: {
+          anchor?: string
+          bu_id?: string
+          closes_date?: string
+          created_at?: string
+          created_by?: string | null
+          cycle_id?: string
+          id?: string
+          opens_date?: string
+          reason?: string | null
+          updated_at?: string
+          wizard_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_window_overrides_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_window_overrides_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_memberships: {
         Row: {
           bu_id: string
