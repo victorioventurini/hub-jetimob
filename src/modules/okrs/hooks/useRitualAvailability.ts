@@ -234,9 +234,6 @@ const WINDOW_DEFS: Partial<Record<WizardPersona, WindowDef>> = {
     },
   },
 };
-    },
-  },
-};
 
 // ============================================================
 // HOOK
