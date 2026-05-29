@@ -336,7 +336,7 @@ export function useRitualAvailability(
       }
     }
 
-    const { opens, closes } = windowDef.getWindow(cycle);
+    const { opens, closes } = windowDef.getWindow(cycle, overrides);
 
     // Dates not configured — permissive fallback
     if (!opens && !closes) {
