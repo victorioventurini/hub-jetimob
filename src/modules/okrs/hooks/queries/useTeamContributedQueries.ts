@@ -80,12 +80,13 @@ export interface SharedOkrsScope {
  */
 export function useSharedOkrsSummary(scope: SharedOkrsScope = {}) {
   const { client: supabase, isReady } = useOptionalBuClient();
+  const { currentBuId } = useBu();
   const { teamId, year } = scope;
 
   return useQuery({
-    queryKey: queryKeys.okrs.sharedSummary(teamId ?? null, year ?? null),
+    queryKey: queryKeys.okrs.sharedSummary(currentBuId ?? null, teamId ?? null, year ?? null),
     queryFn: async () => {
-      if (!supabase) return [];
+      if (!supabase || !currentBuId) return [];
 
       let query = supabase
         .from('v_shared_okrs_summary')
