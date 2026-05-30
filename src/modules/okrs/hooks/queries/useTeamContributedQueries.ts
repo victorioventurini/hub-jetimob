@@ -6,6 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { AGGREGATE_FIELDS } from './aggregateUtils';
 
@@ -79,12 +80,13 @@ export interface SharedOkrsScope {
  */
 export function useSharedOkrsSummary(scope: SharedOkrsScope = {}) {
   const { client: supabase, isReady } = useOptionalBuClient();
+  const { currentBuId } = useBu();
   const { teamId, year } = scope;
 
   return useQuery({
-    queryKey: queryKeys.okrs.sharedSummary(teamId ?? null, year ?? null),
+    queryKey: queryKeys.okrs.sharedSummary(currentBuId ?? null, teamId ?? null, year ?? null),
     queryFn: async () => {
-      if (!supabase) return [];
+      if (!supabase || !currentBuId) return [];
 
       let query = supabase
         .from('v_shared_okrs_summary')
@@ -111,7 +113,7 @@ export function useSharedOkrsSummary(scope: SharedOkrsScope = {}) {
 
       return data || [];
     },
-    enabled: isReady && !!supabase,
+    enabled: isReady && !!supabase && !!currentBuId,
     staleTime: 3 * 60 * 1000,
   });
 }

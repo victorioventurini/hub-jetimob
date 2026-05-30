@@ -66,13 +66,15 @@ export const okrsKeys = {
    * Shared OKRs summary com escopo opcional.
    * IMPORTANTE: numerador (`sharedOkrsCount`) e denominador (`totalOkrsCount`)
    * em SharedOkrInsights DEVEM usar o mesmo escopo (teamId + year).
-   * Ver mem://features/okrs/shared-okrs-insights-scope-standard.
+   * `buId` é OBRIGATÓRIO na chave para evitar vazamento de cache entre BUs.
+   * Ver mem://features/okrs/shared-okrs-insights-scope-standard
+   *  e Core "BU Isolation".
    */
-  sharedSummary: (teamId?: string | null, year?: number | null) => 
-    ['shared-okrs-summary', teamId ?? null, year ?? null] as const,
-  /** Prefix para invalidação ampla independente de teamId/year */
-  sharedSummaryPrefix: () => 
-    ['shared-okrs-summary'] as const,
+  sharedSummary: (buId: string | null, teamId?: string | null, year?: number | null) =>
+    ['shared-okrs-summary', buId, teamId ?? null, year ?? null] as const,
+  /** Prefix para invalidação. Sem buId → invalida todas as BUs. */
+  sharedSummaryPrefix: (buId?: string | null) =>
+    (buId ? (['shared-okrs-summary', buId] as const) : (['shared-okrs-summary'] as const)),
   objectiveContributors: (objectiveId: string | null) =>
     ['okr-objective-contributors', objectiveId] as const,
   teamContributedObjectives: (teamId: string | null) =>
