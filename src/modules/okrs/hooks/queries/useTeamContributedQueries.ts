@@ -113,7 +113,7 @@ export function useSharedOkrsSummary(scope: SharedOkrsScope = {}) {
 
       return data || [];
     },
-    enabled: isReady && !!supabase,
+    enabled: isReady && !!supabase && !!currentBuId,
     staleTime: 3 * 60 * 1000,
   });
 }
