@@ -6,6 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient';
+import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { AGGREGATE_FIELDS } from './aggregateUtils';
 
