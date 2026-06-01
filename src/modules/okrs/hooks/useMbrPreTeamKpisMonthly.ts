@@ -120,7 +120,7 @@ export function useMbrPreTeamKpisMonthly(
       const kpiIds = kpiRows.map((k) => k.id);
       const { data: values, error: valsErr } = await supabase
         .from('kpi_values')
-        .select('kpi_id, value, reference_date, rag_status')
+        .select('kpi_id, value, reference_date, rag_status, input_type')
         .in('kpi_id', kpiIds)
         .gte('reference_date', prevBounds.start)
         .lte('reference_date', refBounds.end)
