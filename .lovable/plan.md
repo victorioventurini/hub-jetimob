@@ -1,35 +1,28 @@
-## Diagnóstico
+## Objetivo
+Remover o campo "Status do Ciclo" dos modais de cadastro e edição de KPIs. Toda nova KPI passa a ser criada com `lifecycle_status = 'active'`. KPIs existentes mantêm o valor atual (não há mais UI para alterar).
 
-A tela ainda mostra `Consolidação pendente` porque o registro atual da KPI `MRR Novas Funcionalidades` no banco continua assim:
+## Mudanças de UI
 
-```text
-value: 0
-reference_date: 2026-05-31
-input_type: partial
-rag_status: no_data
-period_label: 2026-05
-```
+### Cadastro
+- `src/modules/kpis/components/create-kpi/sections/TypeStatusSection.tsx`
+  - Remover o `FormField` de `lifecycle_status` (bloco do select "Status do Ciclo").
+  - Ajustar o container de `grid grid-cols-2 gap-4` para layout de um único campo "Tipo".
+- `src/modules/kpis/components/create-kpi/schema.ts`
+  - `DEFAULT_CREATE_KPI_VALUES.lifecycle_status`: `"proposed"` → `"active"`.
+  - Manter o campo no schema; a validação condicional `=== "active"` (que exige `updated_by_user_id`, `area_id`/`responsible_area_id` por escopo) passa a aplicar-se a toda criação — comportamento desejado.
 
-Ou seja: apesar da intenção de registrar como consolidado, o valor que chegou no banco ficou `partial`, então a validação inicial do Pré-MBR continua bloqueando o Nicolas.
+### Edição
+- `src/modules/kpis/components/edit-kpi/EditKpiBasicFields.tsx`
+  - Remover o `FormField` de `lifecycle_status` e qualquer label de seção dedicada a ele; ajustar grid.
+- `src/modules/kpis/components/edit-kpi/useEditKpiForm.ts` e `editKpiSchema.ts`
+  - Manter campo no schema/form. O `defaultValue` preserva `kpi.lifecycle_status || 'active'`, então a submissão envia o valor atual do KPI sem alteração.
 
-## Plano de correção
+## Sem mudanças
+- `useKpiMutations.ts` continua persistindo `lifecycle_status`.
+- Sem migração de banco (já normalizamos: todas as 31 KPIs estão `active`).
+- Sem mudanças em listagens, filtros, RAG, gates de ritos ou wizards.
 
-1. **Correção operacional imediata**
-   - Atualizar somente esse registro de `kpi_values` para:
-     - `input_type = 'consolidated'`
-     - `rag_status = 'off_track'` ou o valor equivalente usado pelo sistema para vermelho
-   - Manter `value = 0` e `reference_date = 2026-05-31`.
-
-2. **Correção de produto para não repetir**
-   - Ajustar o modal de registro aberto pelo Pré-MBR para já iniciar com:
-     - `reference_date` no último dia do `referenceMonth` do rito
-     - `input_type = 'consolidated'` quando o rito está cobrando consolidação do mês fechado
-   - Isso evita que o usuário registre corretamente o valor 0, mas o form salve como parcial.
-
-3. **Reclassificação correta após salvar**
-   - Incluir/propagar `input_type` no snapshot mensal usado pelo gate do Pré-MBR, para que valores parciais e consolidados sejam diferenciados de forma explícita.
-   - Invalidar também as queries mensais do Pré-MBR após fechar o modal de KPI, não apenas a query genérica `wizard-v2`.
-
-4. **Validação**
-   - Confirmar via consulta que a KPI não aparece mais como `Consolidação pendente` para o time Produto no mês `2026-04`/referência mensal aplicável.
-   - Conferir que Nicolas consegue sair da etapa 1 sem precisar criar outro valor.
+## Validação
+- Criar nova KPI (time/área/org): nasce `active`; validações de campos obrigatórios para ativos seguem disparando.
+- Editar KPI existente: modal não exibe o campo; submissão preserva o status atual.
+- Smoke test no MBR-pré: KPIs aparecem nos buckets conforme RAG (não dependem mais da UI de status).
