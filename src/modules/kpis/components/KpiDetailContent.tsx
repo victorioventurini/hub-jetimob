@@ -28,6 +28,8 @@ import { formatValueWithUnit, isPointsUnit } from "@/shared/constants/units";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { getConsolidationPeriod } from "../utils/frequency";
+
 
 // ============================================================
 // HELPERS (internos)
