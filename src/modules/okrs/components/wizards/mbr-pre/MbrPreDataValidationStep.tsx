@@ -359,9 +359,11 @@ export function MbrPreDataValidationStep({
 
 function KpiPendingRow({
   item,
+  referenceMonth,
   onResolve,
 }: {
   item: KpiPendingItem;
+  referenceMonth: string;
   onResolve: () => void;
 }) {
   return (
@@ -372,7 +374,7 @@ function KpiPendingRow({
           <span className="font-medium text-sm truncate">{item.kpi.name}</span>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5 ml-6">
-          {kpiReasonLabel(item.reason, item.kpi)}
+          {kpiReasonLabel(item.reason, item.kpi, referenceMonth)}
         </p>
       </div>
       <Button size="sm" variant="outline" onClick={onResolve}>
