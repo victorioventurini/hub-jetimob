@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { queryKeys } from "@/lib/queryKeys";
-import { getConsolidationPeriod } from "@/modules/kpis/utils/frequency";
+import { getConsolidationPeriod, formatConsolidationPeriodLabel } from "@/modules/kpis/utils/frequency";
 import type { KpiFrequencyValue, KpiInputType } from "@/modules/kpis/types";
 
 export interface KpiHistoryValue {
