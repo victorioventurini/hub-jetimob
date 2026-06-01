@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { queryKeys } from "@/lib/queryKeys";
+import { getConsolidationPeriod } from "@/modules/kpis/utils/frequency";
+import type { KpiFrequencyValue, KpiInputType } from "@/modules/kpis/types";
 
 export interface KpiHistoryValue {
   id: string;
@@ -12,6 +14,7 @@ export interface KpiHistoryValue {
   source: string;
   notes: string | null;
   created_at: string;
+  input_type?: KpiInputType | null;
 }
 
 export interface KpiHistoryData {
@@ -21,6 +24,7 @@ export interface KpiHistoryData {
     unit: string;
     direction: "up" | "down";
     target_value: number | null;
+    consolidation_frequency: KpiFrequencyValue | null;
   };
   values: KpiHistoryValue[];
   trend: "up" | "down" | "stable";
