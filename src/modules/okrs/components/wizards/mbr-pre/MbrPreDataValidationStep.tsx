@@ -103,6 +103,26 @@ function krReasonLabel(reason: KrPendingItem['reason'], referenceMonth: string):
   return `Sem check-in dentro de ${referenceMonth}`;
 }
 
+function summarizePendings(
+  kpisPending: KpiPendingItem[],
+  krsPending: KrPendingItem[],
+  referenceMonth: string,
+): string {
+  const lines: string[] = [];
+  for (const item of kpisPending.slice(0, 3)) {
+    lines.push(`• ${item.kpi.name} — ${kpiReasonLabel(item.reason, item.kpi, referenceMonth)}`);
+  }
+  const remainingSlots = Math.max(0, 3 - lines.length);
+  for (const item of krsPending.slice(0, remainingSlots)) {
+    lines.push(`• ${item.kr.title} — ${krReasonLabel(item.reason, referenceMonth)}`);
+  }
+  const total = kpisPending.length + krsPending.length;
+  if (total > lines.length) {
+    lines.push(`…e mais ${total - lines.length} pendência(s).`);
+  }
+  return lines.join('\n');
+}
+
 // ============================================================
 // Component
 // ============================================================
