@@ -28,9 +28,7 @@ export function useQbrPreTeamProjects(teamId: string | undefined) {
         const filteredMilestones = (p.milestones || []).filter(
           (m) => m.owner_id && members.has(m.owner_id),
         );
-        const ownerIsMember = !!(p as any).owner_id
-          ? members.has((p as any).owner_id)
-          : false;
+        const ownerIsMember = !!p.owner_id && members.has(p.owner_id);
 
         if (!ownerIsMember && filteredMilestones.length === 0) return null;
 
