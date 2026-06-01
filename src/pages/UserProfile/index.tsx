@@ -739,12 +739,6 @@ export default function UserProfile() {
                   <PhoneLink phone={profile.whatsapp_personal} />
                 )}
 
-                {cpfDisplay && (
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span>CPF: <span className="font-mono">{cpfDisplay}</span></span>
-                  </div>
-                )}
 
                 {profile.birth_day && profile.birth_month && (
                   <div className="flex items-center gap-2">
