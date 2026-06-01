@@ -82,7 +82,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         .from('kpi_metrics')
         .select(`
           id, name, description, unit, direction, target_value, target_source,
-          indicator_type, lifecycle_status, scope, bu_id,
+          indicator_type, lifecycle_status, scope, bu_id, consolidation_frequency,
           owner:profiles!kpi_metrics_owner_user_id_fkey(id, display_name, photo_url),
           team:teams!kpi_metrics_team_id_fkey(id, name),
           area:areas!kpi_metrics_area_id_fkey(id, name, color),
