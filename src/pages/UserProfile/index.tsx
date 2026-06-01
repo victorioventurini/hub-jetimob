@@ -48,10 +48,6 @@ import { InitiativeCard } from "@/modules/okrs/components/initiatives";
 import { OkrProgressBar } from "@/modules/okrs/components/OkrProgressBar";
 import { useActiveCycle } from "@/modules/okrs/hooks/useActiveCycle";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { formatCpf } from "@/lib/validation/cpf";
-import { profilesKeys } from "@/lib/queryKeys/auth";
 
 
 const workModeLabels: Record<string, string> = {
