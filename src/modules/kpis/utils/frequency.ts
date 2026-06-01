@@ -24,6 +24,8 @@ import {
   setMonth,
   setDate,
 } from 'date-fns';
+import type { Locale } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type {
   KpiFrequency,
   KpiFrequencyValue,
