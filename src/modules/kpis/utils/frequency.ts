@@ -24,6 +24,8 @@ import {
   setMonth,
   setDate,
 } from 'date-fns';
+import type { Locale } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type {
   KpiFrequency,
   KpiFrequencyValue,
@@ -245,6 +247,69 @@ export function getConsolidationPeriod(
         end: endOfYear(date),
         label: String(getYear(start)),
       };
+    }
+  }
+}
+
+/**
+ * Rótulo human-readable do período de consolidação para uso em
+ * gráficos (eixo X + tooltip). Recebe a `reference_date` de um
+ * `kpi_value` e retorna `short` (eixo) e `long` (tooltip),
+ * já normalizados ao início do período via `getConsolidationPeriod`.
+ *
+ * Exemplos (pt-BR):
+ *   monthly    → { short: 'mai/26',  long: 'maio 2026' }
+ *   quarterly  → { short: 'Q2/26',   long: 'Trim. 2 2026' }
+ *   semiannual → { short: 'S1/26',   long: 'S1 2026' }
+ *   annual     → { short: '2026',    long: '2026' }
+ *   weekly     → { short: '06/05',   long: '06/05 – 12/05 2026' }
+ *   biweekly   → idem weekly
+ *   daily      → { short: '15/05',   long: '15 mai 2026' }
+ */
+export function formatConsolidationPeriodLabel(
+  freq: KpiFrequencyValue,
+  date: Date,
+  locale: Locale = ptBR,
+): { short: string; long: string } {
+  const period = getConsolidationPeriod(freq, date);
+  const start = period.start;
+  const end = period.end;
+  switch (freq) {
+    case 'daily':
+      return {
+        short: format(start, 'dd/MM', { locale }),
+        long: format(start, 'dd MMM yyyy', { locale }),
+      };
+    case 'weekly':
+    case 'biweekly':
+      return {
+        short: format(start, 'dd/MM', { locale }),
+        long: `${format(start, 'dd/MM', { locale })} – ${format(end, 'dd/MM yyyy', { locale })}`,
+      };
+    case 'monthly':
+      return {
+        short: format(start, 'MMM/yy', { locale }),
+        long: format(start, 'MMMM yyyy', { locale }),
+      };
+    case 'quarterly': {
+      const q = Math.floor(getMonth(start) / 3) + 1;
+      const yy = format(start, 'yy', { locale });
+      return {
+        short: `Q${q}/${yy}`,
+        long: `Trim. ${q} ${getYear(start)}`,
+      };
+    }
+    case 'semiannual': {
+      const h = getMonth(start) <= 5 ? 1 : 2;
+      const yy = format(start, 'yy', { locale });
+      return {
+        short: `S${h}/${yy}`,
+        long: `S${h} ${getYear(start)}`,
+      };
+    }
+    case 'annual': {
+      const y = String(getYear(start));
+      return { short: y, long: y };
     }
   }
 }

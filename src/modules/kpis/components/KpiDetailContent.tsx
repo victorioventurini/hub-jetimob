@@ -28,7 +28,7 @@ import { formatValueWithUnit, isPointsUnit } from "@/shared/constants/units";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { getConsolidationPeriod } from "../utils/frequency";
+import { getConsolidationPeriod, formatConsolidationPeriodLabel } from "../utils/frequency";
 
 
 // ============================================================
@@ -115,10 +115,16 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
   const chartData = [...dedupedValues]
     .sort((a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime())
     .slice(-12)
-    .map((v) => ({
-      date: format(parseISO(v.reference_date), "MMM/yy", { locale: ptBR }),
-      value: v.value,
-    }));
+    .map((v) => {
+      const ref = parseISO(v.reference_date);
+      const label = kpi.consolidation_frequency
+        ? formatConsolidationPeriodLabel(kpi.consolidation_frequency, ref)
+        : { short: format(ref, "MMM/yy", { locale: ptBR }) };
+      return {
+        date: label.short,
+        value: v.value,
+      };
+    });
 
 
   const currentValue = values[0]?.value ?? null;

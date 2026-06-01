@@ -22,7 +22,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { KpiValue, KpiDirection, KpiFrequencyValue } from "../types";
-import { getConsolidationPeriod } from "../utils/frequency";
+import { getConsolidationPeriod, formatConsolidationPeriodLabel } from "../utils/frequency";
 import { useMemo } from "react";
 
 export interface KpiEvolutionChartProps {
@@ -107,15 +107,24 @@ function useKpiChartData(
       (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime()
     );
 
-    const data = sortedValues.map((v) => ({
-      date: format(parseISO(v.reference_date), "dd/MM", { locale: ptBR }),
-      fullDate: format(parseISO(v.reference_date), "dd MMM yyyy", { locale: ptBR }),
-      value: v.value,
-      source: v.source,
-      notes: v.notes,
-      ragStatus: v.rag_status,
-      inputType: v.input_type ?? 'consolidated',
-    }));
+    const data = sortedValues.map((v) => {
+      const ref = parseISO(v.reference_date);
+      const label = consolidationFrequency
+        ? formatConsolidationPeriodLabel(consolidationFrequency, ref)
+        : {
+            short: format(ref, "dd/MM", { locale: ptBR }),
+            long: format(ref, "dd MMM yyyy", { locale: ptBR }),
+          };
+      return {
+        date: label.short,
+        fullDate: label.long,
+        value: v.value,
+        source: v.source,
+        notes: v.notes,
+        ragStatus: v.rag_status,
+        inputType: v.input_type ?? 'consolidated',
+      };
+    });
 
     const chartValues = sortedValues.map((v) => v.value);
     const allValues = targetValue !== null ? [...chartValues, targetValue] : chartValues;
