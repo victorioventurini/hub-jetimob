@@ -52,7 +52,7 @@ function useLinkedProjectIds(krIds: string[]): { linkedIds: Set<string>; isLoadi
 }
 
 export function UnlinkedProjectsList({ teamId, linkedKrIds }: UnlinkedProjectsListProps) {
-  const { data: allProjects, isLoading: loadingAll } = useProjectsForWizard(teamId);
+  const { data: allProjects, isLoading: loadingAll } = useQbrPreTeamProjects(teamId);
   const { linkedIds, isLoading: loadingLinked } = useLinkedProjectIds(linkedKrIds);
 
   const unlinkedProjects = useMemo(() => {
