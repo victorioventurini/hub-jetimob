@@ -155,8 +155,13 @@ export function useMbrPreTeamKpisMonthly(
       const currentValue = cur ? Number(cur.value) : null;
       const previousValue = prev ? Number(prev.value) : null;
       const target = k.target_value != null ? Number(k.target_value) : null;
-      const ragStatus = (cur?.rag_status as MbrKpiSnapshot['ragStatus'] | null)
-        ?? deriveRagFromValue(currentValue, target, k.direction);
+      const rawRag = cur?.rag_status as MbrKpiSnapshot['ragStatus'] | null | undefined;
+      // Quando o trigger DB grava 'no_data' (ex.: valor=0 com meta>0) mas o
+      // input tem valor consolidado, re-derivamos o RAG a partir do valor para
+      // que o gate do Pré-MBR não trate como "consolidação pendente".
+      const ragStatus = (rawRag && rawRag !== 'no_data')
+        ? rawRag
+        : deriveRagFromValue(currentValue, target, k.direction);
       return {
         kpiId: k.id,
         name: k.name,
@@ -174,6 +179,7 @@ export function useMbrPreTeamKpisMonthly(
         teamId: k.responsible_team_id ?? null,
         teamName: k.team?.name ?? null,
         direction: k.direction === 'maintain' ? null : (k.direction ?? null),
+        latestInputType: (cur?.input_type as 'partial' | 'consolidated' | null | undefined) ?? null,
       };
     });
   }, [data, refMonth, prevMonth]);
