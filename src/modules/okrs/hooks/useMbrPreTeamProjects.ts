@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { mbrKeys } from '@/lib/queryKeys/okrs';
+import { useTeamResponsibilityScope } from '@/modules/teams/hooks/useTeamResponsibilityScope';
 import {
   defaultReferenceMonth,
   monthBoundsDate,
