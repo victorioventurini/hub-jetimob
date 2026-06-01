@@ -49,6 +49,7 @@ interface KpiValueRow {
   value: number;
   reference_date: string;
   rag_status: string | null;
+  input_type: 'partial' | 'consolidated' | null;
 }
 
 function deriveRagFromValue(
