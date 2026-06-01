@@ -176,6 +176,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         indicator_type: (kpi.indicator_type || 'kpi') as KpiIndicatorType,
         lifecycle_status: (kpi.lifecycle_status || 'active') as KpiLifecycleStatus,
         scope: (kpi.scope || 'team') as KpiScope,
+        consolidation_frequency: ((kpi as any).consolidation_frequency ?? null) as KpiFrequencyValue | null,
         values,
         currentValue,
         previousValue,
