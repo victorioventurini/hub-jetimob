@@ -79,11 +79,12 @@ function formatValue(value: number | null, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-function KpiMiniChart({ kpiId, unit, direction, targetValue }: { 
+function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFrequency }: { 
   kpiId: string; 
   unit: string; 
   direction: 'up' | 'down'; 
   targetValue: number | null;
+  consolidationFrequency?: import("../types").KpiFrequencyValue | null;
 }) {
   const { data, isLoading } = useKpiWithHistory(kpiId);
   
@@ -106,9 +107,11 @@ function KpiMiniChart({ kpiId, unit, direction, targetValue }: {
       unit={unit}
       direction={direction}
       compact
+      consolidationFrequency={consolidationFrequency ?? null}
     />
   );
 }
+
 
 function KpiEvolutionCard({ 
   kpi, 
@@ -166,7 +169,9 @@ function KpiEvolutionCard({
           unit={kpi.unit}
           direction={kpi.direction}
           targetValue={kpi.target_value}
+          consolidationFrequency={kpi.consolidation_frequency ?? null}
         />
+
         <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
           {((kpi as any).effective_area ?? kpi.area) && (
             <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
@@ -226,7 +231,9 @@ function KpiExpandedChart({ kpi }: { kpi: KpiEvolutionItem }) {
             targetValue={kpi.target_value}
             unit={kpi.unit}
             direction={kpi.direction}
+            consolidationFrequency={kpi.consolidation_frequency ?? null}
           />
+
         ) : (
           <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
             <ChartLine className="h-12 w-12 opacity-30 mb-2" />

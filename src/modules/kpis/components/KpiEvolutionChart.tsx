@@ -21,7 +21,8 @@ import { Info } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { KpiValue, KpiDirection } from "../types";
+import type { KpiValue, KpiDirection, KpiFrequencyValue } from "../types";
+import { getConsolidationPeriod } from "../utils/frequency";
 import { useMemo } from "react";
 
 export interface KpiEvolutionChartProps {
@@ -36,7 +37,14 @@ export interface KpiEvolutionChartProps {
    * O toggle é controlado pelo parent (ex: KpiHistoryDialog via useUrlState).
    */
   onlyConsolidated?: boolean;
+  /**
+   * v3.32 — Quando informado, deduplica pontos por período de consolidação:
+   * mantém o último consolidado do período; se não houver consolidado,
+   * mantém apenas o último parcial. Sem a prop, mantém comportamento legado.
+   */
+  consolidationFrequency?: KpiFrequencyValue | null;
 }
+
 
 const sourceLabels: Record<string, string> = {
   manual: 'Manual',
@@ -58,10 +66,12 @@ function formatValue(value: number, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
+
 function useKpiChartData(
   values: KpiValue[],
   targetValue: number | null,
   onlyConsolidated: boolean,
+  consolidationFrequency: KpiFrequencyValue | null | undefined,
 ) {
   return useMemo(() => {
     const filtered = onlyConsolidated
@@ -72,8 +82,28 @@ function useKpiChartData(
       return { data: [], minValue: 0, maxValue: 100 };
     }
 
-    // Reverse to show oldest first in chart
-    const sortedValues = [...filtered].sort(
+    // Dedupe por período de consolidação: prefere consolidated; fallback último partial.
+    let deduped = filtered;
+    if (consolidationFrequency) {
+      const groups = new Map<string, KpiValue[]>();
+      for (const v of filtered) {
+        const key = getConsolidationPeriod(consolidationFrequency, new Date(v.reference_date)).label;
+        const arr = groups.get(key);
+        if (arr) arr.push(v);
+        else groups.set(key, [v]);
+      }
+      const picked: KpiValue[] = [];
+      for (const arr of groups.values()) {
+        const sorted = [...arr].sort(
+          (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+        );
+        const consolidatedOnes = sorted.filter((v) => v.input_type !== 'partial');
+        picked.push(consolidatedOnes.length ? consolidatedOnes[consolidatedOnes.length - 1] : sorted[sorted.length - 1]);
+      }
+      deduped = picked;
+    }
+
+    const sortedValues = [...deduped].sort(
       (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime()
     );
 
@@ -98,8 +128,9 @@ function useKpiChartData(
       minValue: Math.floor(min - padding),
       maxValue: Math.ceil(max + padding),
     };
-  }, [values, targetValue, onlyConsolidated]);
+  }, [values, targetValue, onlyConsolidated, consolidationFrequency]);
 }
+
 
 export function KpiEvolutionChart({
   values,
@@ -109,8 +140,10 @@ export function KpiEvolutionChart({
   className,
   compact = false,
   onlyConsolidated = false,
+  consolidationFrequency = null,
 }: KpiEvolutionChartProps) {
-  const { data, minValue, maxValue } = useKpiChartData(values, targetValue, onlyConsolidated);
+  const { data, minValue, maxValue } = useKpiChartData(values, targetValue, onlyConsolidated, consolidationFrequency);
+
 
   if (data.length === 0) {
     return (

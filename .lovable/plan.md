@@ -1,57 +1,47 @@
 
-# Aprimorar UI de "Registrar Valor" de KPI — Direção: Radios descritivos + Recomendado
+# Gráfico de KPI: deduplicar partial × consolidated por período
 
-## Objetivo
+## Problema
 
-Eliminar a confusão entre **Consolidado** e **Parcial** no formulário de registrar valor de KPI, aplicando o conceito do protótipo aprovado: pré-seleção automática + badge "RECOMENDADO" + descrições contextuais com período calculado.
+No gráfico de evolução, quando um período (ex.: mai/26) tem tanto um valor **consolidado** quanto valores **parciais** registrados, ambos aparecem como pontos distintos no eixo X (no print: dois "mai/26"). Visualmente confunde e inflaciona a série.
 
-## Comportamento
+## Regra desejada
 
-1. **Pré-seleção automática.** Ao abrir o form (e sempre que `reference_date`, `consolidation_frequency` ou `update_frequency` mudarem), chamar `suggestInputType(kpi, refDate)` e setar `input_type` automaticamente. Marcar internamente que a sugestão é "automática" até o usuário clicar manualmente.
+Para cada **período de consolidação** do KPI (mensal, semanal, etc.):
 
-2. **Badge "Sugestão automática"** ao lado do label do grupo, enquanto o usuário não tiver feito override.
+1. Se existir pelo menos um valor `input_type='consolidated'` → mostrar apenas o **último** consolidado do período.
+2. Se NÃO existir consolidado mas existir parcial → mostrar apenas o **último** parcial do período.
+3. Períodos sem nenhum valor permanecem ausentes da série.
 
-3. **Badge "RECOMENDADO"** no radio que veio da sugestão (estilo do protótipo v1: pill cinza claro com borda).
+A regra vale para todas as instâncias do `KpiEvolutionChart` (cards do `KpiEvolutionPage`, modal `KpiHistoryDialog`, comparações).
 
-4. **Descrições contextuais por radio** — substituem os textos genéricos atuais. Usar período calculado via `getConsolidationPeriod(consolidation_frequency, refDate)`:
-   - **Parcial:** "O período de **{mês/ano}** ainda está em aberto. Este valor representa o acumulado até a data."
-   - **Consolidado:** "Valor final do período. Use apenas se estiver registrando o dado de fechamento de **{mês/ano}**."
+O toggle existente "apenas consolidados" continua funcionando como filtro independente: quando ligado, parciais somem mesmo dos períodos sem consolidado.
 
-5. **Período abaixo do campo Data de Referência** (microcopy estilo protótipo): linha pequena uppercase com "Maio/2026 — 01/05 → 31/05", substituindo o texto atual "Informe o último dia do período consolidado (até ontem)".
+## Implementação
 
-6. **Caso sem ambiguidade** (`update_frequency === consolidation_frequency`): a sugestão é sempre "Consolidado" e o grupo de radios continua visível com a mesma estética, mas o radio "Parcial" fica desabilitado com tooltip "Este KPI não tem janela parcial — atualiza no fechamento do período."
+### `src/modules/kpis/components/KpiEvolutionChart.tsx`
+- Adicionar prop **`consolidationFrequency?: KpiFrequencyValue | null`**.
+- No hook `useKpiChartData`, após o filtro `onlyConsolidated`:
+  - Se `consolidationFrequency` existir, agrupar `values` por `getConsolidationPeriod(freq, refDate).label` (já temos o helper em `utils/frequency`).
+  - Para cada grupo: separar consolidados vs. parciais; escolher o último consolidado por `reference_date`, ou, na ausência, o último parcial.
+  - Sem `consolidationFrequency` (KPIs legados/manuais), manter o comportamento atual (sem dedupe) — fallback seguro.
+- Manter ordenação cronológica final por `reference_date`.
 
-## Escopo de arquivos (somente frontend)
-
-- **`src/modules/kpis/components/shared/KpiValueEntryForm.tsx`**
-  - Importar e usar `suggestInputType` e `getConsolidationPeriod`.
-  - Estado local `userTouchedInputType` para pausar a sugestão após override.
-  - Reescrever o bloco `Tipo do input` no estilo do protótipo v1 (cards-radio com `border-2 border-primary` quando selecionado, badge RECOMENDADO no item sugerido).
-  - Adicionar linha de período abaixo de "Data de Referência".
-  - Trocar label `Tipo do input *` → `Tipo do registro` + badge "Sugestão automática".
-
-- **`src/modules/kpis/utils/frequency.ts`** *(opcional, helper de microcopy)*
-  - Novo helper `formatPeriodHuman(freq, refDate)` que devolve `{ label: "Maio/2026", range: "01/05 → 31/05" }` em pt-BR, encapsulando o uso de `getConsolidationPeriod` + `date-fns/locale/ptBR`.
-
-- **Tokens semânticos** — usar `border-primary`, `bg-muted`, `text-muted-foreground`, `bg-info/10 text-info` (mapeando o slate/blue do protótipo para o design system Hub). NÃO usar `slate-*`/`blue-*` diretamente.
-
-## Sem mudanças em
-
-- `kpiValueEntrySchema.ts` (continua exigindo `input_type`).
-- DB, RLS, triggers, `kpi_values`.
-- Wizards específicos (CollaboratorKpiStep etc.) — consomem o SSOT e herdam.
-- Layout geral do modal (Dialog, footer, tamanho).
-
-## Validação
-
-1. KPI mensal/mensal: abre com "Consolidado" pré-marcado + RECOMENDADO; "Parcial" desabilitado com tooltip.
-2. KPI mensal/semanal, data hoje (período aberto): abre com "Parcial" pré-marcado + RECOMENDADO; usuário pode trocar para Consolidado.
-3. KPI mensal/semanal, data = último dia do mês passado: abre com "Consolidado" pré-marcado.
-4. Caso do print original (Logo Churn): não cai mais em estado de radio vazio obrigatório.
-5. Microcopy do período aparece e atualiza ao trocar a data.
+### Consumidores — passar a prop
+- `src/modules/kpis/components/KpiHistoryDialog.tsx` — já tem `kpi.consolidation_frequency`; adicionar `consolidationFrequency={kpi.consolidation_frequency}` no `<KpiEvolutionChart>`.
+- `src/modules/kpis/pages/KpiEvolutionPage.tsx` — duas instâncias (card compacto + detalhe single mode). Em ambas, propagar `consolidation_frequency` que já vem em `kpi`/`data`.
 
 ## Fora de escopo
 
-- Reintrodução do campo `confidence` (proibida pela memória `kpi-value-entry-ssot`).
-- Mudanças na lógica de RAG / suggest backend.
-- Mudanças em outros formulários ou modais de KPI.
+- Backend / `kpi_values` / triggers: nenhuma mudança.
+- Tooltip e estilo dos pontos: mantidos (o ponto único de cada período já carrega o `inputType` correto e ganha o badge "(parcial)" no tooltip quando aplicável).
+- Toggle "apenas consolidados": mantido e independente.
+- Outros componentes que listam `kpi_values` em tabela (`KpiValuesTable`): fora do escopo — tabela mostra histórico bruto por design.
+
+## Validação
+
+1. KPI mensal com mai/26 consolidado + mai/26 parcial → gráfico mostra **um único ponto** em mai/26 com o valor consolidado.
+2. KPI mensal só com mai/26 parcial → mostra um ponto em mai/26 com o valor parcial (estilo "anel vazado").
+3. Toggle "apenas consolidados" ligado: períodos sem consolidado somem.
+4. KPI sem `consolidation_frequency`: gráfico se comporta como hoje.
+5. URL do exemplo (`/kpis/93f6a7c7-...`): mai/26 deixa de aparecer duplicado.
