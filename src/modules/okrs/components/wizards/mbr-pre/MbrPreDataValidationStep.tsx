@@ -79,20 +79,21 @@ export interface MbrPreDataValidationStepProps {
 // Helpers visuais
 // ============================================================
 
-function kpiReasonLabel(reason: KpiPendingItem['reason'], kpi: KpiForWizardV2): string {
+function kpiReasonLabel(
+  reason: KpiPendingItem['reason'],
+  kpi: KpiForWizardV2,
+  referenceMonth: string,
+): string {
   const updateLabel = kpi.update_frequency
     ? getFrequencyLabel(kpi.update_frequency).toLowerCase()
-    : 'definida';
-  const consLabel = kpi.consolidation_frequency
-    ? getFrequencyLabel(kpi.consolidation_frequency).toLowerCase()
     : 'definida';
   switch (reason) {
     case 'overdue':
       return `Atualização atrasada (cadência ${updateLabel})`;
     case 'pending_consolidation':
-      return `Consolidação pendente (${consLabel}) — ${kpi.missing_consolidation_count} período(s)`;
+      return `Sem valor consolidado para ${referenceMonth}`;
     case 'both':
-      return `Atualização atrasada e consolidação pendente`;
+      return `Atualização atrasada e sem consolidado de ${referenceMonth}`;
   }
 }
 
