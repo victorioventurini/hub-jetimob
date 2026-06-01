@@ -140,8 +140,10 @@ export function KpiEvolutionChart({
   className,
   compact = false,
   onlyConsolidated = false,
+  consolidationFrequency = null,
 }: KpiEvolutionChartProps) {
-  const { data, minValue, maxValue } = useKpiChartData(values, targetValue, onlyConsolidated);
+  const { data, minValue, maxValue } = useKpiChartData(values, targetValue, onlyConsolidated, consolidationFrequency);
+
 
   if (data.length === 0) {
     return (
