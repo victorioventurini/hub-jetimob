@@ -330,7 +330,9 @@ export function KpiHistoryDialog({ open, onOpenChange, kpi }: KpiHistoryDialogPr
                     targetValue={kpi.target_value}
                     unit={kpi.unit}
                     direction={kpi.direction}
+                    consolidationFrequency={kpi.consolidation_frequency ?? null}
                   />
+
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
                     <ChartLine className="h-12 w-12 opacity-30 mb-3" />
