@@ -1,9 +1,14 @@
 /**
  * useCompletedSessionForCycle - Detects if there's a completed session
- * for a given wizard_type + team + cycle.
- * 
+ * for a given wizard_type + team + cycle (+ optional referenceMonth).
+ *
  * Returns the full session (including reflection_data & addendums) if found.
  * Priority: in_progress > completed > none.
+ *
+ * `referenceMonth` (YYYY-MM) is REQUIRED for monthly rituals inside a
+ * quarterly cycle (MBR, MBR-pre). Without it, a session completed in M1
+ * of the quarter would be treated as "already completed" in M2, blocking
+ * the user from filling the new monthly ritual.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -25,12 +30,19 @@ export function useCompletedSessionForCycle(
   wizardType: WizardPersona,
   teamId: string | null | undefined,
   cycleId: string | null | undefined,
+  referenceMonth?: string | null,
 ) {
   const buSupabase = useBuScopedSupabase();
   const { profile } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.okrs.completedSessionForCycle(wizardType, teamId, cycleId, profile?.id),
+    queryKey: queryKeys.okrs.completedSessionForCycle(
+      wizardType,
+      teamId,
+      cycleId,
+      profile?.id,
+      referenceMonth ?? null,
+    ),
     enabled: !!profile?.id && !!cycleId,
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
@@ -48,6 +60,10 @@ export function useCompletedSessionForCycle(
       if (teamId) ipQuery = ipQuery.eq('team_id', teamId);
       else ipQuery = ipQuery.is('team_id', null);
 
+      if (referenceMonth) {
+        ipQuery = ipQuery.eq('reflection_data->data->>referenceMonth', referenceMonth);
+      }
+
       const { data: ipData } = await ipQuery.limit(1).maybeSingle();
       if (ipData) return { type: 'in_progress' as const, session: null };
 
@@ -64,6 +80,10 @@ export function useCompletedSessionForCycle(
 
       if (teamId) cQuery = cQuery.eq('team_id', teamId);
       else cQuery = cQuery.is('team_id', null);
+
+      if (referenceMonth) {
+        cQuery = cQuery.eq('reflection_data->data->>referenceMonth', referenceMonth);
+      }
 
       const { data: cData, error } = await cQuery.maybeSingle();
       if (error) throw error;
