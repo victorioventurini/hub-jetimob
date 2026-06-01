@@ -99,6 +99,12 @@ export default function ExecutiveDashboardPage() {
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
+              <Link to="/okrs/executive/mbr-report" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Relatório MBR
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
               <Link to="/okrs/executive/qbr-report" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Relatório QBR

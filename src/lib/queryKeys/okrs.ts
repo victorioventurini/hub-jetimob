@@ -324,6 +324,13 @@ export const okrsKeys = {
   qbrExecutiveReport: (buId: string | null, cycleId: string | null) =>
     ['qbr-executive-report', buId, cycleId] as const,
 
+  // MBR Executive Report (AI-generated, por mês de referência)
+  mbrExecutiveReport: (
+    buId: string | null,
+    cycleId: string | null,
+    monthRef: string | null,
+  ) => ['mbr-executive-report', buId, cycleId, monthRef ?? null] as const,
+
   // Weekly v2 — agregação a partir de Pré-Weekly concluídos
   weeklyAggregationListPrefix: (buId: string | null) =>
     ['weekly', 'pre-weekly-aggregation', buId] as const,
