@@ -1,31 +1,24 @@
 /**
  * KpiValueEntryForm — SSOT compartilhado para registrar valor de KPI.
  *
- * Consumidores:
- *  - `AddKpiValueDialog` (modal do módulo /kpis).
- *  - `CollaboratorKpiStep` (rito de check-in colaborador).
- *  - Qualquer rito futuro que precise registrar valor de KPI.
+ * UX (v3.31): Tipo do registro (Consolidado × Parcial) é pré-selecionado
+ * automaticamente via `suggestInputType`, com badge "RECOMENDADO" e
+ * descrições contextuais usando o período calculado. Quando o KPI não tem
+ * janela parcial (update_frequency === consolidation_frequency), o radio
+ * "Parcial" fica desabilitado.
  *
- * Princípios:
- *  - Não duplicar schema/validação. Use `kpiValueEntrySchema`.
- *  - Sugestão automática de `input_type` via `suggestInputType` quando o
- *    consumidor passar `consolidationFrequency`.
- *  - Submit é externo (footer do wizard). O componente expõe `formId` e
- *    chama `onValidSubmit` quando o form é válido.
- *
- * Conforme TCR v3.30.0, o campo `input_type` precisa SEMPRE ser enviado no
- * insert em `kpi_values`. O conceito de `confidence` foi removido de KPIs
- * (era autoavaliação subjetiva, redundante com input_type + source).
+ * Conforme TCR v3.30.0, `input_type` precisa SEMPRE ser enviado no insert
+ * em `kpi_values`. `confidence` foi removido (autoavaliação subjetiva).
  */
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format, subDays } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -34,14 +27,20 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
+import { type KpiFrequencyValue, type KpiInputType } from '../../types';
 import {
-  FREQUENCY_VALUE_LABELS,
-  type KpiFrequencyValue,
-  type KpiInputType,
-} from '../../types';
-import { isUpdateFrequencyValid } from '../../utils/frequency';
+  getConsolidationPeriod,
+  isUpdateFrequencyValid,
+  suggestInputType,
+} from '../../utils/frequency';
 import {
   kpiValueEntrySchema,
   type KpiValueEntryFormValues,
@@ -50,39 +49,60 @@ import {
 export interface KpiValueEntryFormProps {
   /** Unidade do KPI, exibida ao lado do label "Valor". */
   unit: string;
-  /**
-   * Frequência de consolidação do KPI. Quando informada, habilita a sugestão
-   * automática de `input_type` (consolidated × partial) via `suggestInputType`.
-   */
+  /** Frequência de consolidação do KPI. Habilita sugestão automática e microcopy de período. */
   consolidationFrequency?: KpiFrequencyValue | null;
-  /**
-   * Frequência de update do KPI. Combinada com `consolidationFrequency`,
-   * habilita o banner explicativo "consolida X mas atualiza Y".
-   */
+  /** Frequência de update do KPI. Combinada com consolidação, define se há janela parcial. */
   updateFrequency?: KpiFrequencyValue | null;
   /** Valor sugerido como placeholder (ex.: target). */
   placeholderValue?: string | number;
-  /**
-   * `formId` do `<form>` interno — permite que um botão fora do componente
-   * (ex.: footer do wizard) submeta via `<button form={formId} type="submit">`.
-   */
+  /** `formId` para submit externo. */
   formId?: string;
-  /** Slot extra renderizado abaixo do campo "Valor" (ex.: indicador de delta + RAG estimado). */
+  /** Slot abaixo do campo "Valor" (ex.: delta + RAG estimado). */
   valueAdornmentSlot?: React.ReactNode;
-  /** Slot opcional renderizado acima do campo de Observações (ex.: legenda de notas obrigatórias). */
+  /** Slot acima de Observações (ex.: legenda de notas obrigatórias). */
   notesHeaderSlot?: React.ReactNode;
-  /** Marca o campo Observações como obrigatório (validação extra é responsabilidade do consumidor). */
+  /** Marca Observações como obrigatória (gating real é do consumidor). */
   notesRequired?: boolean;
-  /** Placeholder customizado para Observações. */
   notesPlaceholder?: string;
-  /** Callback quando o form é submetido válido. */
   onValidSubmit: (values: KpiValueEntryFormValues) => void | Promise<void>;
-  /** Permite ao consumidor observar mudanças de valor (ex.: para RAG estimado). */
   onValueChange?: (value: number | undefined) => void;
-  /** Permite ao consumidor reagir ao input_type efetivo (após sugestão). */
   onInputTypeChange?: (inputType: KpiInputType) => void;
-  /** className do `<form>` raiz. */
   className?: string;
+}
+
+// === Helpers de microcopy ===
+
+function formatPeriodHuman(
+  freq: KpiFrequencyValue | null | undefined,
+  refDateIso: string,
+): { label: string; range: string } | null {
+  if (!freq || !refDateIso) return null;
+  let date: Date;
+  try {
+    date = parseISO(refDateIso);
+    if (Number.isNaN(date.getTime())) return null;
+  } catch {
+    return null;
+  }
+  const period = getConsolidationPeriod(freq, date);
+
+  const labelMap: Record<KpiFrequencyValue, string> = {
+    daily: format(period.start, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+    weekly: `Semana de ${format(period.start, 'dd/MM', { locale: ptBR })}`,
+    biweekly: `Quinzena de ${format(period.start, 'dd/MM', { locale: ptBR })}`,
+    monthly: format(period.start, "MMMM 'de' yyyy", { locale: ptBR }),
+    quarterly: `${format(period.start, 'QQQ', { locale: ptBR })} de ${format(period.start, 'yyyy', { locale: ptBR })}`,
+    semiannual: `${format(period.start, 'MM') === '01' ? 'H1' : 'H2'} de ${format(period.start, 'yyyy', { locale: ptBR })}`,
+    annual: format(period.start, 'yyyy', { locale: ptBR }),
+  };
+
+  const label = labelMap[freq];
+  const range = `${format(period.start, 'dd/MM', { locale: ptBR })} → ${format(period.end, 'dd/MM', { locale: ptBR })}`;
+  return { label: capitalize(label), range };
+}
+
+function capitalize(s: string): string {
+  return s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export function KpiValueEntryForm({
@@ -100,7 +120,7 @@ export function KpiValueEntryForm({
   onInputTypeChange,
   className,
 }: KpiValueEntryFormProps) {
-  // Data máxima permitida: ontem (regra v3.0.0 — Primary KPIs / KPI inputs restricted to past dates)
+  // Data máxima: ontem (v3.0.0 — KPI inputs restricted to past dates)
   const maxDate = useMemo(() => format(subDays(new Date(), 1), 'yyyy-MM-dd'), []);
 
   const form = useForm<KpiValueEntryFormValues>({
@@ -113,7 +133,61 @@ export function KpiValueEntryForm({
     },
   });
 
-  // Notify upstream
+  // Flag: usuário tocou manualmente no radio → sugestão automática para de sobrescrever
+  const [userTouched, setUserTouched] = useState(false);
+
+  // === Cálculos derivados ===
+
+  // KPIs sem janela parcial: update_frequency === consolidation_frequency (ou updateFreq ausente)
+  const hasPartialWindow = useMemo(() => {
+    if (!consolidationFrequency || !updateFrequency) return false;
+    if (!isUpdateFrequencyValid(consolidationFrequency, updateFrequency)) return false;
+    return updateFrequency !== consolidationFrequency;
+  }, [consolidationFrequency, updateFrequency]);
+
+  const watchedRefDate = form.watch('reference_date');
+  const watchedInputType = form.watch('input_type');
+
+  // Sugestão automática (recalcula quando data ou cadências mudam)
+  const suggested: KpiInputType = useMemo(() => {
+    if (!consolidationFrequency) return 'consolidated';
+    let date: Date;
+    try {
+      date = watchedRefDate ? parseISO(watchedRefDate) : new Date();
+      if (Number.isNaN(date.getTime())) date = new Date();
+    } catch {
+      date = new Date();
+    }
+    return suggestInputType(
+      {
+        consolidation_frequency: consolidationFrequency,
+        update_frequency: updateFrequency ?? consolidationFrequency,
+        frequency: undefined as any,
+      },
+      date,
+    );
+  }, [consolidationFrequency, updateFrequency, watchedRefDate]);
+
+  // Pré-seleção / re-sugestão enquanto o usuário não fez override
+  const lastSuggestedRef = useRef<KpiInputType | null>(null);
+  useEffect(() => {
+    if (userTouched) return;
+    // KPI sem janela parcial → sempre consolidado
+    const effective: KpiInputType = hasPartialWindow ? suggested : 'consolidated';
+    if (lastSuggestedRef.current === effective && form.getValues('input_type') === effective) {
+      return;
+    }
+    lastSuggestedRef.current = effective;
+    form.setValue('input_type', effective, { shouldDirty: false, shouldValidate: true });
+  }, [suggested, hasPartialWindow, userTouched, form]);
+
+  // Period microcopy
+  const period = useMemo(
+    () => formatPeriodHuman(consolidationFrequency, watchedRefDate),
+    [consolidationFrequency, watchedRefDate],
+  );
+
+  // Upstream notifications
   const watchedValue = form.watch('value');
   useEffect(() => {
     if (!onValueChange) return;
@@ -121,16 +195,9 @@ export function KpiValueEntryForm({
     onValueChange(Number.isFinite(num) ? num : undefined);
   }, [watchedValue, onValueChange]);
 
-  const watchedInputType = form.watch('input_type');
   useEffect(() => {
     if (onInputTypeChange && watchedInputType) onInputTypeChange(watchedInputType);
   }, [watchedInputType, onInputTypeChange]);
-
-  const isIntermediateAllowed =
-    consolidationFrequency && updateFrequency
-      ? isUpdateFrequencyValid(consolidationFrequency, updateFrequency) &&
-        updateFrequency !== consolidationFrequency
-      : false;
 
   const placeholder = placeholderValue !== undefined && placeholderValue !== null
     ? `Ex: ${placeholderValue}`
@@ -140,6 +207,27 @@ export function KpiValueEntryForm({
     await onValidSubmit(values);
   });
 
+  const isAutoSuggested = !userTouched && !!consolidationFrequency;
+  const currentSuggestion: KpiInputType = hasPartialWindow ? suggested : 'consolidated';
+
+  const handleInputTypeChange = (next: string) => {
+    setUserTouched(true);
+    form.setValue('input_type', next as KpiInputType, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  // === Descrições contextuais ===
+
+  const partialDesc = period
+    ? `O período de ${period.label} ainda está em aberto. Este valor representa o acumulado até a data.`
+    : 'Valor parcial: registrado antes do fechamento do período.';
+
+  const consolidatedDesc = period
+    ? `Valor final do período. Use apenas se estiver registrando o dado de fechamento de ${period.label}.`
+    : 'Valor final do período consolidado.';
+
   return (
     <Form {...form}>
       <form
@@ -147,7 +235,7 @@ export function KpiValueEntryForm({
         onSubmit={handleSubmit}
         className={cn('space-y-4', className)}
       >
-        {/* Valor + Data — lado a lado em ≥sm, empilhados no mobile */}
+        {/* Valor + Data */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -156,14 +244,12 @@ export function KpiValueEntryForm({
               <FormItem>
                 <FormLabel>Valor ({unit})</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder={placeholder}
-                      {...field}
-                    />
-                  </div>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder={placeholder}
+                    {...field}
+                  />
                 </FormControl>
                 {valueAdornmentSlot}
                 <FormMessage />
@@ -180,73 +266,69 @@ export function KpiValueEntryForm({
                 <FormControl>
                   <Input type="date" max={maxDate} {...field} />
                 </FormControl>
-                <p className="text-xs text-muted-foreground">
-                  Informe o último dia do período consolidado (até ontem)
-                </p>
+                {period ? (
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {period.label} — {period.range}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Informe o último dia do período consolidado (até ontem)
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        {/* Tipo do input — Consolidado / Parcial */}
+        {/* Tipo do registro */}
         <FormField
           control={form.control}
           name="input_type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Tipo do input <span className="text-destructive">*</span>
-              </FormLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FormLabel className="flex items-center gap-2">
+                  Tipo do registro
+                  {isAutoSuggested && (
+                    <span className="px-1.5 py-0.5 bg-info/10 text-info text-[10px] font-bold rounded border border-info/20 uppercase tracking-tight">
+                      Sugestão automática
+                    </span>
+                  )}
+                </FormLabel>
+              </div>
               <FormControl>
                 <RadioGroup
                   value={field.value ?? ''}
-                  onValueChange={field.onChange}
-                  className="flex flex-col gap-2"
+                  onValueChange={handleInputTypeChange}
+                  className="grid gap-2"
                 >
-                  <div className="flex items-start gap-2">
-                    <RadioGroupItem
-                      value="consolidated"
-                      id={`${formId ?? 'kpi-value'}-it-consolidated`}
-                      className="mt-0.5"
-                    />
-                    <Label
-                      htmlFor={`${formId ?? 'kpi-value'}-it-consolidated`}
-                      className="font-normal cursor-pointer"
-                    >
-                      <span className="font-medium">Consolidado</span>
-                      <span className="block text-xs text-muted-foreground">
-                        Valor final do período fechado.
-                      </span>
-                    </Label>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <RadioGroupItem
-                      value="partial"
-                      id={`${formId ?? 'kpi-value'}-it-partial`}
-                      className="mt-0.5"
-                    />
-                    <Label
-                      htmlFor={`${formId ?? 'kpi-value'}-it-partial`}
-                      className="font-normal cursor-pointer"
-                    >
-                      <span className="font-medium">Parcial</span>
-                      <span className="block text-xs text-muted-foreground">
-                        Valor atingido até a data, antes do período fechar.
-                      </span>
-                    </Label>
-                  </div>
+                  {/* Consolidado */}
+                  <InputTypeCard
+                    id={`${formId ?? 'kpi-value'}-it-consolidated`}
+                    value="consolidated"
+                    title="Consolidado"
+                    description={consolidatedDesc}
+                    selected={field.value === 'consolidated'}
+                    recommended={isAutoSuggested && currentSuggestion === 'consolidated'}
+                  />
+                  {/* Parcial */}
+                  <InputTypeCard
+                    id={`${formId ?? 'kpi-value'}-it-partial`}
+                    value="partial"
+                    title="Parcial"
+                    description={
+                      hasPartialWindow
+                        ? partialDesc
+                        : 'Este KPI não tem janela parcial — só aceita valor consolidado no fechamento do período.'
+                    }
+                    selected={field.value === 'partial'}
+                    recommended={isAutoSuggested && currentSuggestion === 'partial'}
+                    disabled={!hasPartialWindow && !!consolidationFrequency}
+                    disabledTooltip="Este KPI não tem janela parcial — atualiza no fechamento do período."
+                  />
                 </RadioGroup>
               </FormControl>
-              {isIntermediateAllowed && consolidationFrequency && updateFrequency && (
-                <p className="text-xs text-muted-foreground">
-                  Este KPI consolida{' '}
-                  <strong>{FREQUENCY_VALUE_LABELS[consolidationFrequency].toLowerCase()}</strong>{' '}
-                  mas é atualizado{' '}
-                  <strong>{FREQUENCY_VALUE_LABELS[updateFrequency].toLowerCase()}</strong>.
-                  Inputs antes do fechamento são tratados como parciais.
-                </p>
-              )}
               <FormMessage />
             </FormItem>
           )}
@@ -278,4 +360,73 @@ export function KpiValueEntryForm({
       </form>
     </Form>
   );
+}
+
+// === Subcomponente ===
+
+interface InputTypeCardProps {
+  id: string;
+  value: KpiInputType;
+  title: string;
+  description: string;
+  selected: boolean;
+  recommended?: boolean;
+  disabled?: boolean;
+  disabledTooltip?: string;
+}
+
+function InputTypeCard({
+  id,
+  value,
+  title,
+  description,
+  selected,
+  recommended,
+  disabled,
+  disabledTooltip,
+}: InputTypeCardProps) {
+  const card = (
+    <label
+      htmlFor={id}
+      className={cn(
+        'relative flex flex-col gap-1 p-3 rounded-lg border transition-colors cursor-pointer',
+        selected
+          ? 'border-2 border-primary bg-muted'
+          : 'border-border hover:bg-muted/50',
+        disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent',
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <RadioGroupItem
+            value={value}
+            id={id}
+            disabled={disabled}
+            className="shrink-0"
+          />
+          <span className="text-sm font-semibold text-foreground">{title}</span>
+        </div>
+        {recommended && !disabled && (
+          <span className="text-[10px] font-bold text-muted-foreground bg-background border border-border px-1.5 py-0.5 rounded uppercase tracking-tight">
+            Recomendado
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground pl-6">{description}</p>
+    </label>
+  );
+
+  if (disabled && disabledTooltip) {
+    return (
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>{card}</div>
+          </TooltipTrigger>
+          <TooltipContent>{disabledTooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  return card;
 }
