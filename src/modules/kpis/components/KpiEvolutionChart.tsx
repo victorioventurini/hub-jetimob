@@ -22,7 +22,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { KpiValue, KpiDirection, KpiFrequencyValue } from "../types";
-import { getConsolidationPeriod } from "../utils/frequency";
+import { getConsolidationPeriod, formatConsolidationPeriodLabel } from "../utils/frequency";
 import { useMemo } from "react";
 
 export interface KpiEvolutionChartProps {
