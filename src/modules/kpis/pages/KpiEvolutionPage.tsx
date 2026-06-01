@@ -231,7 +231,9 @@ function KpiExpandedChart({ kpi }: { kpi: KpiEvolutionItem }) {
             targetValue={kpi.target_value}
             unit={kpi.unit}
             direction={kpi.direction}
+            consolidationFrequency={kpi.consolidation_frequency ?? null}
           />
+
         ) : (
           <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
             <ChartLine className="h-12 w-12 opacity-30 mb-2" />
