@@ -169,7 +169,9 @@ function KpiEvolutionCard({
           unit={kpi.unit}
           direction={kpi.direction}
           targetValue={kpi.target_value}
+          consolidationFrequency={kpi.consolidation_frequency ?? null}
         />
+
         <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
           {((kpi as any).effective_area ?? kpi.area) && (
             <AreaBadge area={((kpi as any).effective_area ?? kpi.area)!} />
