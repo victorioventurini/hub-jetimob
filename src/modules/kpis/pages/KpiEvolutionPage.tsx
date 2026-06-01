@@ -107,7 +107,7 @@ function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFreque
       unit={unit}
       direction={direction}
       compact
-      consolidationFrequency={consolidationFrequency ?? null}
+      consolidationFrequency={data?.consolidation_frequency ?? consolidationFrequency ?? null}
     />
   );
 }
