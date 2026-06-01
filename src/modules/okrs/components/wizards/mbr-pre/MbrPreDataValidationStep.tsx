@@ -142,11 +142,14 @@ export function MbrPreDataValidationStep({
     (open: boolean) => {
       if (!open) {
         setActiveKpi(null);
-        // Invalida wizardV2 para reclassificar pendências.
+        // Invalida wizardV2 e o snapshot mensal do Pré-MBR para reclassificar pendências.
         queryClient.invalidateQueries({ queryKey: ['kpis', 'wizard-v2'] });
+        queryClient.invalidateQueries({
+          queryKey: mbrKeys.preTeamKpisMonthly(currentBuId, teamId, referenceMonth),
+        });
       }
     },
-    [queryClient],
+    [queryClient, currentBuId, teamId, referenceMonth],
   );
 
   const handleKrDialogChange = useCallback(
