@@ -11,8 +11,9 @@
  * `WizardStepHeader`, `WizardStepFooter`). Nenhum form é duplicado aqui.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   ShieldCheck,
   AlertTriangle,
