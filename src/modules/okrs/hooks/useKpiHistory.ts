@@ -47,7 +47,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
       // Fetch KPI metadata
       const { data: kpi, error: kpiError } = await supabase
         .from("kpi_metrics")
-        .select("id, name, unit, direction, target_value")
+        .select("id, name, unit, direction, target_value, consolidation_frequency")
         .eq("id", kpiId)
         .maybeSingle();
 
@@ -57,7 +57,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
       // Fetch values
       let query = supabase
         .from("kpi_values")
-        .select("id, value, reference_date, source, notes, created_at")
+        .select("id, value, reference_date, source, notes, created_at, input_type")
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: true });
 
@@ -94,6 +94,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
           unit: kpi.unit,
           direction: kpi.direction as "up" | "down",
           target_value: kpi.target_value,
+          consolidation_frequency: (kpi.consolidation_frequency ?? null) as KpiFrequencyValue | null,
         },
         values: values || [],
         trend,
