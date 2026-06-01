@@ -227,12 +227,21 @@ export function useKpiChartData(history: KpiHistoryData | null | undefined) {
       );
     }
 
-    const data = dedupedValues.map((v) => ({
-      date: format(parseISO(v.reference_date), "dd/MM", { locale: ptBR }),
-      fullDate: format(parseISO(v.reference_date), "dd MMM yyyy", { locale: ptBR }),
-      value: v.value,
-      target: history.kpi.target_value,
-    }));
+    const data = dedupedValues.map((v) => {
+      const ref = parseISO(v.reference_date);
+      const label = freq
+        ? formatConsolidationPeriodLabel(freq, ref)
+        : {
+            short: format(ref, "dd/MM", { locale: ptBR }),
+            long: format(ref, "dd MMM yyyy", { locale: ptBR }),
+          };
+      return {
+        date: label.short,
+        fullDate: label.long,
+        value: v.value,
+        target: history.kpi.target_value,
+      };
+    });
 
     const values = dedupedValues.map((v) => v.value);
     const minValue = Math.min(...values, history.kpi.target_value || Infinity) * 0.9;
