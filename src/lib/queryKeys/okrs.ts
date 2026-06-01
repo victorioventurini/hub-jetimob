@@ -191,9 +191,17 @@ export const okrsKeys = {
   lastCompletedSession: (wizardType: string, teamId?: string | null) =>
     ['okr-wizard-last-completed', wizardType, teamId] as const,
 
-  /** Sessão completada para ciclo específico (detecção de rito já submetido) */
-  completedSessionForCycle: (wizardType: string, teamId?: string | null, cycleId?: string | null, userId?: string | null) =>
-    ['okr-completed-session-cycle', wizardType, teamId ?? 'none', cycleId ?? 'none', userId] as const,
+  /** Sessão completada para ciclo específico (detecção de rito já submetido).
+   *  `referenceMonth` é necessário para rituais mensais dentro de ciclo trimestral (MBR, MBR-pre)
+   *  para evitar que a sessão de M1 do quarter seja interpretada como completada em M2. */
+  completedSessionForCycle: (
+    wizardType: string,
+    teamId?: string | null,
+    cycleId?: string | null,
+    userId?: string | null,
+    referenceMonth?: string | null,
+  ) =>
+    ['okr-completed-session-cycle', wizardType, teamId ?? 'none', cycleId ?? 'none', userId, referenceMonth ?? 'none'] as const,
 
   // Draft objectives from QBR-pre (for wizard hydration)
   draftObjectives: (teamId: string, cycleId: string) =>

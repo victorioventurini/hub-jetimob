@@ -1,46 +1,46 @@
-# Fix: SharedOkrInsights vaza dados entre BUs
+## Problema
 
-## Diagnóstico
+Vitor (vitor.severo@jetimob.com) abre o Pré-MBR de **junho/2026** (analisando maio) e enxerga, em modo somente-leitura, o que ele preencheu no **Pré-MBR anterior** (analisando abril, completado em 05/maio/2026).
 
-Na BU **Jet Experience** (sem OKRs cadastradas), o card de Insights mostra
-"2 OKRs envolvem múltiplos times". Esses 2 OKRs vêm do cache da BU
-**Jetimob** carregada anteriormente.
+## Causa raiz
 
-**Causa raiz:** `queryKeys.okrs.sharedSummary(teamId, year)` **não inclui
-`buId`** na chave. Ao trocar de BU, o React Query devolve o cache da BU
-anterior porque a chave colide. A query em si até roda pelo cliente
-BU-scoped (RLS via `security_invoker` no `v_shared_okrs_summary` filtra
-corretamente), mas o usuário vê o cache antigo até o refetch completar —
-e o insight é renderizado com `sharedOkrs.length > 0`.
+`useCompletedSessionForCycle` decide se já existe Pré-MBR completado considerando apenas a tupla **(wizard_type, team_id, cycle_id, started_by)**. Como Pré-MBR e MBR são rituais **mensais** dentro de um ciclo **trimestral** (M1 e M2 do quarter), qualquer sessão completada no mês 1 do trimestre é interpretada como "já preenchido" no mês 2 — o componente cai no `CompletedRitualView` e bloqueia o preenchimento do novo mês.
 
-Isso viola a regra Core de **BU Isolation** (chave de query precisa
-carregar `bu_id`).
+Confirmação no banco: existe uma única sessão `mbr-pre` de Vitor, `cycle_id = Q2/2026`, `completed_at = 2026-05-05`. Hoje (1º/jun) ele abre Pré-MBR de maio (mesmo cycle) e o hook devolve essa sessão antiga.
 
-## Mudanças
+A mesma lógica afeta `MbrPage` (rito MBR), que também roda 2x por trimestre. `QbrPrePage`/`QbrMeetingPage` não são afetados (1x por trimestre = 1 sessão por cycle).
 
-### 1. `src/lib/queryKeys/okrs.ts`
-- `sharedSummary(buId, teamId, year)` — adicionar `buId` como **primeiro**
-  segmento após o namespace: `['shared-okrs-summary', buId, teamId, year]`.
-- `sharedSummaryPrefix(buId?)` — aceitar `buId` opcional para permitir
-  invalidação escopada por BU, mantendo compat com invalidação global
-  quando chamado sem argumento.
+## Solução
 
-### 2. `src/modules/okrs/hooks/queries/useTeamContributedQueries.ts`
-- Em `useSharedOkrsSummary`: ler `currentBuId` via `useCurrentBuId()` (ou
-  `useBu()`), passar na query key, e bloquear via `enabled: isReady && !!supabase && !!buId`.
-- `useSharedOkrsInsights` não muda assinatura (continua repassando scope).
+Escopar a detecção de "sessão completada" também por **`referenceMonth`** nos rituais MBR e MBR-pre. Esse campo já existe em `okr_wizard_sessions.reflection_data->'data'->>'referenceMonth'` (`YYYY-MM`).
 
-### 3. `src/modules/okrs/components/TeamKrFormDialog.tsx`
-- Atualizar `invalidateQueries({ queryKey: queryKeys.okrs.sharedSummaryPrefix() })`
-  — chamada sem argumento mantém invalidação ampla; comportamento preservado.
+### 1. `src/modules/okrs/hooks/useCompletedSessionForCycle.ts`
 
-## Fora de escopo
-- Não mexer no `v_shared_okrs_summary` (RLS já correta via security_invoker).
-- Não tocar em `useOkrDashboardData` / RPC.
-- Sem mudança visual.
+- Aceitar novo parâmetro opcional `referenceMonth?: string | null`.
+- Quando informado: filtrar a busca de sessão `completed` por `reflection_data->data->>referenceMonth = referenceMonth` (via `.eq('reflection_data->data->>referenceMonth', referenceMonth)`).
+- Quando informado: filtrar também a busca de `in_progress` pelo mesmo critério (evita resumir draft de outro mês como "in_progress" do mês corrente).
+- Incluir `referenceMonth` na query key via `queryKeys.okrs.completedSessionForCycle(...)`. Atualizar a assinatura dessa key em `src/lib/queryKeys/okrs.ts` (novo segmento final opcional).
+
+### 2. `src/modules/okrs/pages/MbrPrePage.tsx`
+
+- Calcular `refMonth` já é feito (linha 163). Passar `refMonth` como 4º arg para `useCompletedSessionForCycle('mbr-pre', teamIdParam, activeCycle?.id, refMonth)`.
+
+### 3. `src/modules/okrs/pages/MbrPage.tsx`
+
+- Mesmo padrão: extrair `refMonth` do draft (`draft.data.referenceMonth || defaultReferenceMonth()`) e — se o MbrPage usar/passar a vir a usar `useCompletedSessionForCycle` — passar como 4º arg. Hoje MbrPage NÃO chama `useCompletedSessionForCycle`, então **apenas adicionar a chamada** com `wizardType: 'mbr'`, `teamId: null`, `cycleId: quarterlyCycle?.id`, `referenceMonth: refMonth`, e renderizar o `CompletedRitualView` quando `sessionState === 'completed'` (espelhando o que o MbrPrePage faz). Se preferirmos manter o MbrPage fora do escopo da correção pontual, fica apenas a mudança no MBR-pre e ficamos com a dívida documentada.
+
+### 4. Draft uniqueness (verificar, sem mudar se não for necessário)
+
+O lookup de draft `in_progress` em `useGenericWizardDraft.session.ts` busca por `(wizard_type, team_id, cycle_id, started_by, status=in_progress)`. Como o draft anterior foi `completed` (não `in_progress`), ele não será carregado por engano para o novo mês. Nenhuma mudança necessária aqui.
 
 ## Validação
-1. Logar como user com acesso a Jetimob e Jet Experience.
-2. Abrir `/okrs` em Jetimob → insight mostra "2 OKRs...".
-3. Trocar BU para Jet Experience → insight some imediatamente (cache não
-   colide; query roda com `buId` correto e retorna 0).
+
+1. Logar como Vitor na BU Jetimob → abrir `/okrs/mbr-pre?team=<id>` → wizard abre em modo edição (não mais read-only) com `referenceMonth = 2026-05`.
+2. Após completar maio, abrir novamente → cai em read-only (mesmo mês).
+3. Em julho, ao abrir Pré-MBR de junho (mesmo cycle Q2) → wizard em modo edição.
+
+## Fora de escopo
+
+- Não alterar RLS, schema ou backfill.
+- Não mudar `useGenericWizardDraft`.
+- Não tocar QbrPre/QbrMeeting (rituais 1x/quarter — não afetados).
