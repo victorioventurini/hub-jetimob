@@ -159,17 +159,6 @@ export function useMbrPreTeamProjects(
     },
   });
 
-  const result = useMemo<UseMbrPreTeamProjectsResult>(() => {
-    if (!data) {
-      return {
-        projects: [],
-        isLoading,
-        overdueProjectIds: [],
-        overdueMilestoneIds: [],
-        cutoffDate,
-      };
-    }
-
   const memberIds = scope.memberProfileIds;
 
   const result = useMemo<UseMbrPreTeamProjectsResult>(() => {
