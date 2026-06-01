@@ -129,12 +129,16 @@ export default function MbrPrePage() {
   const { activeCycle, isLoading: isLoadingCycles } = useActiveCycle();
   const availability = useRitualAvailability('mbr-pre', activeCycle);
 
-  // Detect already-completed session for this cycle+team
+  // Detect already-completed session for this cycle+team+month.
+  // `referenceMonth` é obrigatório: MBR-pre é mensal dentro de ciclo trimestral,
+  // sem ele a sessão de M1 do quarter seria interpretada como completada em M2.
+  const completedCheckRefMonth = defaultReferenceMonth();
   const {
     sessionState,
     completedSession,
     isLoading: isLoadingCompletedCheck,
-  } = useCompletedSessionForCycle('mbr-pre', teamIdParam, activeCycle?.id);
+  } = useCompletedSessionForCycle('mbr-pre', teamIdParam, activeCycle?.id, completedCheckRefMonth);
+
 
   // Draft persistence (only if not already completed)
   const {
