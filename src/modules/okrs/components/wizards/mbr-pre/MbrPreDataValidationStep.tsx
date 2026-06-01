@@ -159,9 +159,14 @@ export function MbrPreDataValidationStep({
   const [activeKpi, setActiveKpi] = useState<KpiForWizardV2 | null>(null);
   const [activeKr, setActiveKr] = useState<KrItem | null>(null);
 
+  // Refs para detectar se o item recém-resolvido continua pendente após reload.
+  const lastResolvedKpiIdRef = useRef<string | null>(null);
+  const lastResolvedKrIdRef = useRef<string | null>(null);
+
   const handleKpiDialogChange = useCallback(
     (open: boolean) => {
       if (!open) {
+        lastResolvedKpiIdRef.current = activeKpi?.id ?? null;
         setActiveKpi(null);
         // Invalida wizardV2 e o snapshot mensal do Pré-MBR para reclassificar pendências.
         queryClient.invalidateQueries({ queryKey: ['kpis', 'wizard-v2'] });
@@ -170,12 +175,13 @@ export function MbrPreDataValidationStep({
         });
       }
     },
-    [queryClient, currentBuId, teamId, referenceMonth],
+    [queryClient, currentBuId, teamId, referenceMonth, activeKpi],
   );
 
   const handleKrDialogChange = useCallback(
     (open: boolean) => {
       if (!open) {
+        lastResolvedKrIdRef.current = activeKr?.krId ?? null;
         setActiveKr(null);
         // Invalida a query de KRs do Pré-MBR para reclassificar.
         queryClient.invalidateQueries({
@@ -183,8 +189,35 @@ export function MbrPreDataValidationStep({
         });
       }
     },
-    [queryClient, currentBuId, teamId, cycleId, referenceMonth],
+    [queryClient, currentBuId, teamId, cycleId, referenceMonth, activeKr],
   );
+
+  // Após reload, se o KPI recém-resolvido continuar pendente, avisa o motivo.
+  useEffect(() => {
+    const resolvedId = lastResolvedKpiIdRef.current;
+    if (!resolvedId || isLoadingKpis) return;
+    const stillPending = kpisPending.find((item) => item.kpi.id === resolvedId);
+    if (stillPending) {
+      toast.warning('KPI ainda pendente', {
+        description: `${stillPending.kpi.name} — ${kpiReasonLabel(stillPending.reason, stillPending.kpi, referenceMonth)}. Verifique se o valor foi registrado no mês de referência (${referenceMonth}).`,
+        duration: 8000,
+      });
+    }
+    lastResolvedKpiIdRef.current = null;
+  }, [kpisPending, isLoadingKpis, referenceMonth]);
+
+  useEffect(() => {
+    const resolvedId = lastResolvedKrIdRef.current;
+    if (!resolvedId || isLoadingObjectives) return;
+    const stillPending = krsPending.find((item) => item.kr.krId === resolvedId);
+    if (stillPending) {
+      toast.warning('KR ainda pendente', {
+        description: `${stillPending.kr.title} — ${krReasonLabel(stillPending.reason, referenceMonth)}. Confirme se o check-in foi feito dentro de ${referenceMonth}.`,
+        duration: 8000,
+      });
+    }
+    lastResolvedKrIdRef.current = null;
+  }, [krsPending, isLoadingObjectives, referenceMonth]);
 
   const isLoading = isLoadingKpis || isLoadingObjectives;
 
@@ -192,6 +225,17 @@ export function MbrPreDataValidationStep({
     if (totalPending === 0) return 'Iniciar Pré-MBR';
     return `Resolver pendências (${totalPending})`;
   }, [totalPending]);
+
+  const handlePrimary = useCallback(() => {
+    if (totalPending > 0) {
+      toast.error(`${totalPending} pendência(s) bloqueando o Pré-MBR de ${referenceMonth}`, {
+        description: summarizePendings(kpisPending, krsPending, referenceMonth),
+        duration: 10000,
+      });
+      return;
+    }
+    onContinue();
+  }, [totalPending, kpisPending, krsPending, referenceMonth, onContinue]);
 
   return (
     <>
