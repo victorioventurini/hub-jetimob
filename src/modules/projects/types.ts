@@ -92,6 +92,7 @@ export interface ProjectForWizard {
   milestones_total: number;
   milestones_done: number;
   completion_pct: number;
+  owner_id: string | null;
   owner_name: string | null;
   owner_photo_url: string | null;
   teams?: Array<{ team_id: string; team_name: string }>;

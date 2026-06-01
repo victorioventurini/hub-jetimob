@@ -520,12 +520,13 @@ export const mbrKeys = {
   preTeamKpis: (teamId: string | null | undefined, buId: string | null) =>
     ['mbr-pre', 'team-kpis', teamId, buId] as const,
   /** Projetos do time consumidos pelo Step 3 (Projetos) do Pré-MBR.
-   *  `referenceMonth` (YYYY-MM) ancora o cut-off de atrasos. */
+   *  `referenceMonth` (YYYY-MM) ancora o cut-off de atrasos.
+   *  v2: filtrado por responsabilidade do time + subtimes. */
   preTeamProjects: (
     buId: string | null,
     teamId: string | null | undefined,
     referenceMonth?: string | null,
-  ) => ['mbr-pre', 'team-projects', buId, teamId, referenceMonth ?? null] as const,
+  ) => ['mbr-pre', 'team-projects', 'v2', buId, teamId, referenceMonth ?? null] as const,
   /** Snapshot mensal de KPIs do time para a Abertura do Pré-MBR (current vs previous month). */
   preTeamKpisMonthly: (
     buId: string | null,

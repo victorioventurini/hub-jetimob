@@ -51,6 +51,7 @@ export function useProjectsForWizard(teamId: string | undefined) {
           milestones_total: completion.total,
           milestones_done: completion.done,
           completion_pct: completion.pct,
+          owner_id: p.owner_id ?? null,
           owner_name: owner?.display_name ?? null,
           owner_photo_url: owner?.photo_url ?? null,
           teams: (p.project_teams || []).map((pt: any) => ({
