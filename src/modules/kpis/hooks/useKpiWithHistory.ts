@@ -103,7 +103,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         .from('kpi_values')
         .select(`
           id, kpi_id, value, reference_date, source, notes, created_by, created_at,
-          period_start, period_end, period_label, rag_status
+          period_start, period_end, period_label, rag_status, input_type
         `)
         .eq('kpi_id', kpiId)
         .order('reference_date', { ascending: false })
