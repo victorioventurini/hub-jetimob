@@ -170,15 +170,34 @@ export function useMbrPreTeamProjects(
       };
     }
 
+  const memberIds = scope.memberProfileIds;
+
+  const result = useMemo<UseMbrPreTeamProjectsResult>(() => {
+    if (!data) {
+      return {
+        projects: [],
+        isLoading: isLoading || scope.isLoading,
+        overdueProjectIds: [],
+        overdueMilestoneIds: [],
+        cutoffDate,
+      };
+    }
+
     const overdueProjectIds: string[] = [];
     const overdueMilestoneIds: string[] = [];
 
     const projects: MbrPreProjectRow[] = (data as any[])
-      .map((p): MbrPreProjectRow => {
+      .map((p): MbrPreProjectRow | null => {
+        // Filtra milestones por responsabilidade do time + subtimes
         const rawMilestones = (p.project_milestones ?? []).filter(
           // project_milestones tem APENAS deleted_at (mem://standards/soft-delete-policy-v1)
-          (m: any) => !m.deleted_at,
+          (m: any) => !m.deleted_at && m.owner_id && memberIds.has(m.owner_id),
         );
+        const ownerIsMember = !!p.owner_id && memberIds.has(p.owner_id);
+
+        // Projeto só aparece se owner é membro OU tem milestone de membro
+        if (!ownerIsMember && rawMilestones.length === 0) return null;
+
         const total = rawMilestones.length;
         const done = rawMilestones.filter(
           (m: any) => m.status === 'done',
@@ -219,6 +238,7 @@ export function useMbrPreTeamProjects(
           hasAnyOverdue,
         };
       })
+      .filter((p): p is MbrPreProjectRow => p !== null)
       // Ordena: atrasados primeiro, depois por nome
       .sort((a, b) => {
         if (a.hasAnyOverdue !== b.hasAnyOverdue) {
@@ -229,12 +249,12 @@ export function useMbrPreTeamProjects(
 
     return {
       projects,
-      isLoading,
+      isLoading: isLoading || scope.isLoading,
       overdueProjectIds,
       overdueMilestoneIds,
       cutoffDate,
     };
-  }, [data, isLoading, cutoffDate]);
+  }, [data, isLoading, scope.isLoading, memberIds, cutoffDate]);
 
   return result;
 }
