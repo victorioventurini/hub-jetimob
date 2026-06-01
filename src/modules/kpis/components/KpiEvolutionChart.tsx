@@ -21,7 +21,8 @@ import { Info } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { KpiValue, KpiDirection } from "../types";
+import type { KpiValue, KpiDirection, KpiFrequencyValue } from "../types";
+import { getConsolidationPeriod } from "../utils/frequency";
 import { useMemo } from "react";
 
 export interface KpiEvolutionChartProps {
@@ -36,7 +37,14 @@ export interface KpiEvolutionChartProps {
    * O toggle é controlado pelo parent (ex: KpiHistoryDialog via useUrlState).
    */
   onlyConsolidated?: boolean;
+  /**
+   * v3.32 — Quando informado, deduplica pontos por período de consolidação:
+   * mantém o último consolidado do período; se não houver consolidado,
+   * mantém apenas o último parcial. Sem a prop, mantém comportamento legado.
+   */
+  consolidationFrequency?: KpiFrequencyValue | null;
 }
+
 
 const sourceLabels: Record<string, string> = {
   manual: 'Manual',
