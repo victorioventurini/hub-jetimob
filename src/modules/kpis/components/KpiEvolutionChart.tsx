@@ -76,12 +76,43 @@ function useKpiChartData(
       ? values.filter((v) => v.input_type !== 'partial')
       : values;
 
+function useKpiChartData(
+  values: KpiValue[],
+  targetValue: number | null,
+  onlyConsolidated: boolean,
+  consolidationFrequency: KpiFrequencyValue | null | undefined,
+) {
+  return useMemo(() => {
+    const filtered = onlyConsolidated
+      ? values.filter((v) => v.input_type !== 'partial')
+      : values;
+
     if (!filtered?.length) {
       return { data: [], minValue: 0, maxValue: 100 };
     }
 
-    // Reverse to show oldest first in chart
-    const sortedValues = [...filtered].sort(
+    // Dedupe por período de consolidação: prefere consolidated; fallback último partial.
+    let deduped = filtered;
+    if (consolidationFrequency) {
+      const groups = new Map<string, KpiValue[]>();
+      for (const v of filtered) {
+        const key = getConsolidationPeriod(consolidationFrequency, new Date(v.reference_date)).label;
+        const arr = groups.get(key);
+        if (arr) arr.push(v);
+        else groups.set(key, [v]);
+      }
+      const picked: KpiValue[] = [];
+      for (const arr of groups.values()) {
+        const sorted = [...arr].sort(
+          (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+        );
+        const consolidatedOnes = sorted.filter((v) => v.input_type !== 'partial');
+        picked.push(consolidatedOnes.length ? consolidatedOnes[consolidatedOnes.length - 1] : sorted[sorted.length - 1]);
+      }
+      deduped = picked;
+    }
+
+    const sortedValues = [...deduped].sort(
       (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime()
     );
 
@@ -106,8 +137,9 @@ function useKpiChartData(
       minValue: Math.floor(min - padding),
       maxValue: Math.ceil(max + padding),
     };
-  }, [values, targetValue, onlyConsolidated]);
+  }, [values, targetValue, onlyConsolidated, consolidationFrequency]);
 }
+
 
 export function KpiEvolutionChart({
   values,
