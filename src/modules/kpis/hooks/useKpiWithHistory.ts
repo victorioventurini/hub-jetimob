@@ -24,6 +24,7 @@ export interface KpiWithHistoryData {
   indicator_type: KpiIndicatorType;
   lifecycle_status: KpiLifecycleStatus;
   scope: KpiScope;
+  consolidation_frequency: KpiFrequencyValue | null;
   values: KpiValue[];
   currentValue: number | null;
   previousValue: number | null;
