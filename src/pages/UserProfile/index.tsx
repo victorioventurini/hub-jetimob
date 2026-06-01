@@ -48,10 +48,6 @@ import { InitiativeCard } from "@/modules/okrs/components/initiatives";
 import { OkrProgressBar } from "@/modules/okrs/components/OkrProgressBar";
 import { useActiveCycle } from "@/modules/okrs/hooks/useActiveCycle";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
-import { formatCpf } from "@/lib/validation/cpf";
-import { profilesKeys } from "@/lib/queryKeys/auth";
 
 
 const workModeLabels: Record<string, string> = {
@@ -132,22 +128,8 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useUrlTab<EngagementTab>("overview");
   const profileId = profile?.id;
 
-  // CPF (somente internos; RLS de profiles gera o gate de visibilidade)
-  const buScoped = useBuScopedSupabase();
-  const { data: cpfRow } = useQuery({
-    queryKey: profilesKeys.detail(profileId ?? "", "cpf"),
-    enabled: !!profileId,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const { data } = await buScoped
-        .from("profiles")
-        .select("cpf, user_type")
-        .eq("id", profileId!)
-        .maybeSingle();
-      return data;
-    },
-  });
-  const cpfDisplay = cpfRow?.user_type === "internal" && cpfRow?.cpf ? formatCpf(cpfRow.cpf) : null;
+
+
 
   // Lazy-fetch per tab — overview also needs all of them for counts
   const fetchProjects = !!profileId && (activeTab === "overview" || activeTab === "projects");
@@ -757,12 +739,6 @@ export default function UserProfile() {
                   <PhoneLink phone={profile.whatsapp_personal} />
                 )}
 
-                {cpfDisplay && (
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span>CPF: <span className="font-mono">{cpfDisplay}</span></span>
-                  </div>
-                )}
 
                 {profile.birth_day && profile.birth_month && (
                   <div className="flex items-center gap-2">
