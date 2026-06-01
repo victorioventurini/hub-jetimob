@@ -66,15 +66,6 @@ function formatValue(value: number, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-function useKpiChartData(
-  values: KpiValue[],
-  targetValue: number | null,
-  onlyConsolidated: boolean,
-) {
-  return useMemo(() => {
-    const filtered = onlyConsolidated
-      ? values.filter((v) => v.input_type !== 'partial')
-      : values;
 
 function useKpiChartData(
   values: KpiValue[],
