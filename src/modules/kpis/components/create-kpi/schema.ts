@@ -130,7 +130,7 @@ export const DEFAULT_CREATE_KPI_VALUES: Partial<CreateKpiFormValues> = {
   consolidation_frequency: "monthly",
   update_frequency: "monthly",
   indicator_type: "metric",
-  lifecycle_status: "proposed",
+  lifecycle_status: "active",
   target_source: "",
   recovery_protocol: "",
   area_id: undefined,
