@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { monthBoundsDate } from '@/modules/okrs/utils/mbr/referenceMonth';
+import { useMbrPreTeamKpisMonthly } from '@/modules/okrs/hooks/useMbrPreTeamKpisMonthly';
 
 // ============================================================
 // Types
