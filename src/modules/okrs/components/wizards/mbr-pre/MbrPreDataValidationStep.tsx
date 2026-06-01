@@ -236,6 +236,7 @@ export function MbrPreDataValidationStep({
                     <KpiPendingRow
                       key={item.kpi.id}
                       item={item}
+                      referenceMonth={referenceMonth}
                       onResolve={() => setActiveKpi(item.kpi)}
                     />
                   ))}
