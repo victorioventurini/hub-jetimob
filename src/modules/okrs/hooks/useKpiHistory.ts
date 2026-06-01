@@ -202,14 +202,39 @@ export function useKpiChartData(history: KpiHistoryData | null | undefined) {
       };
     }
 
-    const data = history.values.map((v) => ({
+    // Dedupe por período de consolidação: prefere o último consolidated;
+    // fallback para o último partial quando o período ainda não fechou.
+    const freq = history.kpi.consolidation_frequency;
+    let dedupedValues = history.values;
+    if (freq) {
+      const groups = new Map<string, KpiHistoryValue[]>();
+      for (const v of history.values) {
+        const key = getConsolidationPeriod(freq, new Date(v.reference_date)).label;
+        const arr = groups.get(key);
+        if (arr) arr.push(v);
+        else groups.set(key, [v]);
+      }
+      const picked: KpiHistoryValue[] = [];
+      for (const arr of groups.values()) {
+        const sorted = [...arr].sort(
+          (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+        );
+        const consolidated = sorted.filter((v) => v.input_type !== 'partial');
+        picked.push(consolidated.length > 0 ? consolidated[consolidated.length - 1] : sorted[sorted.length - 1]);
+      }
+      dedupedValues = picked.sort(
+        (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+      );
+    }
+
+    const data = dedupedValues.map((v) => ({
       date: format(parseISO(v.reference_date), "dd/MM", { locale: ptBR }),
       fullDate: format(parseISO(v.reference_date), "dd MMM yyyy", { locale: ptBR }),
       value: v.value,
       target: history.kpi.target_value,
     }));
 
-    const values = history.values.map((v) => v.value);
+    const values = dedupedValues.map((v) => v.value);
     const minValue = Math.min(...values, history.kpi.target_value || Infinity) * 0.9;
     const maxValue = Math.max(...values, history.kpi.target_value || 0) * 1.1;
 
