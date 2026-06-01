@@ -1,45 +1,41 @@
-## Objetivo
+## Diagnóstico
 
-Nos gráficos de KPI, exibir o **rótulo do período de consolidação** (ex.: "mai/26", "Q2/26", "2026", "S1/26", semana "06–12/mai") no eixo X e no tooltip, em vez da data crua de atualização (`dd/MM`).
+A página `/kpis/evolution` (cards e charts) já renderiza via `KpiEvolutionChart`, que recebe `consolidationFrequency` e — a partir da última iteração — usa `formatConsolidationPeriodLabel` para o rótulo do eixo X.
 
-## Mudança
+Porém, o caminho `cards` (mini-charts) usa `useKpiWithHistory`, que:
 
-Centralizar a formatação no mesmo lugar onde já é feita a deduplicação por período, usando `getConsolidationPeriod(freq, reference_date).start` como base do label.
+1. **Não busca `input_type`** em `kpi_values` → a regra de dedupe "último consolidado por período, fallback último parcial" colapsa para "último ponto por período" (ok para o rótulo, mas mostra partial quando já há consolidado).
+2. **Não busca `consolidation_frequency`** em `kpi_metrics` (a frequência hoje chega só via prop a partir do `KpiEvolutionItem`).
 
-### Mapeamento por frequência
+E o `KpiHistoryDialog` (acionado pelo botão "Histórico") também usa o mesmo hook → tem o mesmo problema.
 
-| `consolidation_frequency` | `date` (eixo X) | `fullDate` (tooltip) |
-|---|---|---|
-| `daily` | `dd/MM` | `dd MMM yyyy` |
-| `weekly` | `dd/MM` (início da semana) | `dd/MM – dd/MM yyyy` |
-| `biweekly` | `dd/MM` (início) | `dd/MM – dd/MM yyyy` |
-| `monthly` | `MMM/yy` (ex. `mai/26`) | `MMMM yyyy` (ex. `maio 2026`) |
-| `quarterly` | `'Q'Q/yy` (ex. `Q2/26`) | `'Trim.' Q yyyy` |
-| `semiannual` | `S1/yy` ou `S2/yy` | `S1 yyyy` / `S2 yyyy` |
-| `annual` | `yyyy` | `yyyy` |
-| `null` (sem freq.) | `dd/MM` (fallback atual) | `dd MMM yyyy` |
+## Mudanças
 
-## Arquivos afetados
+### 1. `src/modules/kpis/hooks/useKpiWithHistory.ts`
 
-1. **`src/modules/kpis/utils/frequency.ts`** — adicionar helper puro `formatConsolidationPeriodLabel(freq, date)` retornando `{ short, long }` conforme tabela acima. Mantém a SSOT da nomenclatura de períodos.
+- Adicionar `consolidation_frequency` ao `select` de `kpi_metrics`.
+- Adicionar `input_type` ao `select` de `kpi_values`.
+- Refletir ambos no `KpiWithHistoryData` (tipos) e na construção de `KpiValue[]`.
 
-2. **`src/modules/okrs/hooks/useKpiHistory.ts`** (`useKpiChartData`) — após o dedupe já existente, montar `date`/`fullDate` chamando o novo helper com `freq` quando existir, e mantendo o fallback `dd/MM` quando `freq` for `null`. Cobre: `KpiSparkline`, `KpiHistoryChart`, MBR/QBR/Collaborator wizards.
+### 2. `src/modules/kpis/pages/KpiEvolutionPage.tsx`
 
-3. **`src/modules/kpis/components/KpiEvolutionChart.tsx`** (linhas 111–112) — usar o mesmo helper quando `consolidationFrequency` estiver presente.
+- Em `KpiMiniChart`, passar `consolidationFrequency` priorizando `data?.consolidation_frequency ?? consolidationFrequency` (segurança), mantendo a prop como fallback.
 
-4. **`src/modules/kpis/components/KpiDetailContent.tsx`** (linha 119) — usar o mesmo helper para o label do eixo X (já está em `MMM/yy`, vai virar canônico via helper).
+### 3. (Verificação) `KpiEvolutionChart`
+
+- Confirmar que a formatação por `formatConsolidationPeriodLabel` continua ativa quando `consolidationFrequency` é truthy (já implementada).
 
 ## Fora de escopo
 
-- Backend, RLS, triggers, schema.
-- Lógica de deduplicação (já feita em iterações anteriores).
-- Página de histórico/tabela (continua mostrando `reference_date` cru, pois ali a data exata da atualização importa).
-- `KpiValueEntryForm` e demais formulários de entrada.
+- Backend / RLS / triggers.
+- Outras páginas (Sparkline, HistoryDialog, MBR, etc. — já cobertas em iterações anteriores via `useKpiHistory`).
+- Tabela `Valores` (mantém `reference_date` cru, pois ali a data exata importa).
 
 ## Validação
 
-URL: `/rituals/mbr?step=kpi-deep-dive&substep=57a26ec8-...`
-- KPI mensal: eixo X passa a mostrar `jan/26`, `fev/26`, …, `mai/26` (em vez de `28/05`, `30/04`, etc.).
+Em `/kpis/evolution?type=kpi` (cards) e `?view=charts`:
+- KPI mensal: eixo X passa a mostrar `jan/26`, `fev/26`, …, `mai/26`.
 - KPI trimestral: `Q1/26`, `Q2/26`.
-- Tooltip exibe a versão longa (`maio 2026`, `Trim. 2 2026`).
-- KPIs sem `consolidation_frequency` continuam com `dd/MM` (sem regressão).
+- Tooltip: forma longa (`maio 2026`, `Trim. 2 2026`).
+- KPI sem `consolidation_frequency`: continua `dd/MM` (sem regressão).
+- Dedupe preserva o último consolidado quando partials coexistem no mesmo período.
