@@ -1,28 +1,32 @@
 ## Objetivo
-Remover o campo "Status do Ciclo" dos modais de cadastro e edição de KPIs. Toda nova KPI passa a ser criada com `lifecycle_status = 'active'`. KPIs existentes mantêm o valor atual (não há mais UI para alterar).
 
-## Mudanças de UI
+Tornar o motivo do bloqueio do Pré-MBR explícito via toast, complementando a exibição inline já existente em `MbrPreDataValidationStep`. Hoje os motivos aparecem em cada linha de pendência, mas o líder não recebe feedback ativo quando:
 
-### Cadastro
-- `src/modules/kpis/components/create-kpi/sections/TypeStatusSection.tsx`
-  - Remover o `FormField` de `lifecycle_status` (bloco do select "Status do Ciclo").
-  - Ajustar o container de `grid grid-cols-2 gap-4` para layout de um único campo "Tipo".
-- `src/modules/kpis/components/create-kpi/schema.ts`
-  - `DEFAULT_CREATE_KPI_VALUES.lifecycle_status`: `"proposed"` → `"active"`.
-  - Manter o campo no schema; a validação condicional `=== "active"` (que exige `updated_by_user_id`, `area_id`/`responsible_area_id` por escopo) passa a aplicar-se a toda criação — comportamento desejado.
+1. tenta avançar e o botão está desabilitado (não há clique → nenhum toast);
+2. registra um valor de KPI e ele continua pendente (ex.: salvou em `2026-05`, mas o Pré-MBR é de `2026-04`).
 
-### Edição
-- `src/modules/kpis/components/edit-kpi/EditKpiBasicFields.tsx`
-  - Remover o `FormField` de `lifecycle_status` e qualquer label de seção dedicada a ele; ajustar grid.
-- `src/modules/kpis/components/edit-kpi/useEditKpiForm.ts` e `editKpiSchema.ts`
-  - Manter campo no schema/form. O `defaultValue` preserva `kpi.lifecycle_status || 'active'`, então a submissão envia o valor atual do KPI sem alteração.
+## Mudanças (apenas UI, sem alterar regra de negócio)
 
-## Sem mudanças
-- `useKpiMutations.ts` continua persistindo `lifecycle_status`.
-- Sem migração de banco (já normalizamos: todas as 31 KPIs estão `active`).
-- Sem mudanças em listagens, filtros, RAG, gates de ritos ou wizards.
+### 1. `MbrPreDataValidationStep.tsx`
+
+- **Toast ao tentar avançar com pendências**: trocar o `primaryDisabled` por um handler que, se `totalPending > 0`, dispara `toast.error` com a contagem e até 3 motivos resumidos (ex.: `MRR Novas Funcionalidades — Sem valor consolidado para 2026-04`). Manter o botão visualmente em estado bloqueado (`aria-disabled`) mas clicável para emitir o toast; quando `totalPending === 0`, comporta-se normalmente.
+- **Toast pós-registro de KPI**: em `handleKpiDialogChange`, após invalidar as queries e elas reassentarem, comparar o conjunto de `kpisPending` antes/depois (via `useRef` do snapshot). Se o KPI recém-resolvido continuar em `kpisPending`, emitir `toast.warning` com o motivo retornado por `kpiReasonLabel` (ex.: explicando que o valor precisa ser do mês `referenceMonth`).
+- **Toast pós-check-in de KR**: mesma lógica em `handleKrDialogChange` usando `krReasonLabel`.
+
+### 2. Helpers
+
+- Extrair uma função `summarizePendings(kpisPending, krsPending, referenceMonth)` no próprio arquivo (sem novo módulo) para montar a mensagem do toast de avanço, reutilizando `kpiReasonLabel` / `krReasonLabel` já existentes.
+
+## Não muda
+
+- Lógica de detecção de pendências (`useMbrPreValidationData`).
+- Regras de gate, RLS, queries, snapshots mensais.
+- Comportamento do super admin (skip continua disponível).
+- Layout dos cards e badges.
 
 ## Validação
-- Criar nova KPI (time/área/org): nasce `active`; validações de campos obrigatórios para ativos seguem disparando.
-- Editar KPI existente: modal não exibe o campo; submissão preserva o status atual.
-- Smoke test no MBR-pré: KPIs aparecem nos buckets conforme RAG (não dependem mais da UI de status).
+
+- BU Jetimob, usuário `nicolas@jetimob.com`, Pré-MBR `2026-04`:
+  - Botão "Resolver pendências (N)" → ao clicar, toast lista `MRR Novas Funcionalidades — Sem valor consolidado para 2026-04`.
+  - Registrar valor no mês errado (ex.: `2026-05`) → toast warning explicando que o mês de referência é `2026-04`.
+  - Registrar valor correto em `2026-04` → pendência some, sem toast de erro, botão habilita para "Iniciar Pré-MBR".
