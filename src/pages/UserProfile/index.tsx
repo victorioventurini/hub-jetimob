@@ -128,22 +128,8 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useUrlTab<EngagementTab>("overview");
   const profileId = profile?.id;
 
-  // CPF (somente internos; RLS de profiles gera o gate de visibilidade)
-  const buScoped = useBuScopedSupabase();
-  const { data: cpfRow } = useQuery({
-    queryKey: profilesKeys.detail(profileId ?? "", "cpf"),
-    enabled: !!profileId,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const { data } = await buScoped
-        .from("profiles")
-        .select("cpf, user_type")
-        .eq("id", profileId!)
-        .maybeSingle();
-      return data;
-    },
-  });
-  const cpfDisplay = cpfRow?.user_type === "internal" && cpfRow?.cpf ? formatCpf(cpfRow.cpf) : null;
+
+
 
   // Lazy-fetch per tab — overview also needs all of them for counts
   const fetchProjects = !!profileId && (activeTab === "overview" || activeTab === "projects");
