@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { queryKeys } from "@/lib/queryKeys";
+import { getConsolidationPeriod } from "@/modules/kpis/utils/frequency";
+import type { KpiFrequencyValue, KpiInputType } from "@/modules/kpis/types";
 
 export interface KpiHistoryValue {
   id: string;
@@ -12,6 +14,7 @@ export interface KpiHistoryValue {
   source: string;
   notes: string | null;
   created_at: string;
+  input_type?: KpiInputType | null;
 }
 
 export interface KpiHistoryData {
@@ -21,6 +24,7 @@ export interface KpiHistoryData {
     unit: string;
     direction: "up" | "down";
     target_value: number | null;
+    consolidation_frequency: KpiFrequencyValue | null;
   };
   values: KpiHistoryValue[];
   trend: "up" | "down" | "stable";
@@ -43,7 +47,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
       // Fetch KPI metadata
       const { data: kpi, error: kpiError } = await supabase
         .from("kpi_metrics")
-        .select("id, name, unit, direction, target_value")
+        .select("id, name, unit, direction, target_value, consolidation_frequency")
         .eq("id", kpiId)
         .maybeSingle();
 
@@ -53,7 +57,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
       // Fetch values
       let query = supabase
         .from("kpi_values")
-        .select("id, value, reference_date, source, notes, created_at")
+        .select("id, value, reference_date, source, notes, created_at, input_type")
         .eq("kpi_id", kpiId)
         .order("reference_date", { ascending: true });
 
@@ -90,6 +94,7 @@ export function useKpiHistory(kpiId: string | null | undefined, dateRange?: { st
           unit: kpi.unit,
           direction: kpi.direction as "up" | "down",
           target_value: kpi.target_value,
+          consolidation_frequency: (kpi.consolidation_frequency ?? null) as KpiFrequencyValue | null,
         },
         values: values || [],
         trend,
@@ -143,13 +148,13 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
         guardrailKpiIds.map(async (kpiId) => {
           const { data: kpi } = await supabase
             .from("kpi_metrics")
-            .select("id, name, unit, direction, target_value")
+            .select("id, name, unit, direction, target_value, consolidation_frequency")
             .eq("id", kpiId)
             .maybeSingle();
 
           const { data: values } = await supabase
             .from("kpi_values")
-            .select("id, value, reference_date, source, notes, created_at")
+            .select("id, value, reference_date, source, notes, created_at, input_type")
             .eq("kpi_id", kpiId)
             .order("reference_date", { ascending: true });
 
@@ -162,6 +167,7 @@ export function useKrKpiHistory(krId: string, krType: "org" | "team") {
               unit: kpi.unit,
               direction: kpi.direction as "up" | "down",
               target_value: kpi.target_value,
+              consolidation_frequency: (kpi.consolidation_frequency ?? null) as KpiFrequencyValue | null,
             },
             values: values || [],
           };
@@ -196,14 +202,39 @@ export function useKpiChartData(history: KpiHistoryData | null | undefined) {
       };
     }
 
-    const data = history.values.map((v) => ({
+    // Dedupe por período de consolidação: prefere o último consolidated;
+    // fallback para o último partial quando o período ainda não fechou.
+    const freq = history.kpi.consolidation_frequency;
+    let dedupedValues = history.values;
+    if (freq) {
+      const groups = new Map<string, KpiHistoryValue[]>();
+      for (const v of history.values) {
+        const key = getConsolidationPeriod(freq, new Date(v.reference_date)).label;
+        const arr = groups.get(key);
+        if (arr) arr.push(v);
+        else groups.set(key, [v]);
+      }
+      const picked: KpiHistoryValue[] = [];
+      for (const arr of groups.values()) {
+        const sorted = [...arr].sort(
+          (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+        );
+        const consolidated = sorted.filter((v) => v.input_type !== 'partial');
+        picked.push(consolidated.length > 0 ? consolidated[consolidated.length - 1] : sorted[sorted.length - 1]);
+      }
+      dedupedValues = picked.sort(
+        (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+      );
+    }
+
+    const data = dedupedValues.map((v) => ({
       date: format(parseISO(v.reference_date), "dd/MM", { locale: ptBR }),
       fullDate: format(parseISO(v.reference_date), "dd MMM yyyy", { locale: ptBR }),
       value: v.value,
       target: history.kpi.target_value,
     }));
 
-    const values = history.values.map((v) => v.value);
+    const values = dedupedValues.map((v) => v.value);
     const minValue = Math.min(...values, history.kpi.target_value || Infinity) * 0.9;
     const maxValue = Math.max(...values, history.kpi.target_value || 0) * 1.1;
 
