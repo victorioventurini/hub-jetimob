@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptionalBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase";
 import { useBu } from "@/contexts/BuContext";
 import { queryKeys } from "@/lib/queryKeys";
-import type { KpiValue, KpiDirection, KpiRagStatus, KpiValueSource, KpiIndicatorType, KpiLifecycleStatus, KpiScope } from "../types";
+import type { KpiValue, KpiDirection, KpiRagStatus, KpiValueSource, KpiIndicatorType, KpiLifecycleStatus, KpiScope, KpiFrequencyValue, KpiInputType } from "../types";
 import { calculateRagStatus } from "../types";
 
 export interface KpiWithHistoryData {
