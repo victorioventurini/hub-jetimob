@@ -79,11 +79,12 @@ function formatValue(value: number | null, unit: string): string {
   return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unit}`;
 }
 
-function KpiMiniChart({ kpiId, unit, direction, targetValue }: { 
+function KpiMiniChart({ kpiId, unit, direction, targetValue, consolidationFrequency }: { 
   kpiId: string; 
   unit: string; 
   direction: 'up' | 'down'; 
   targetValue: number | null;
+  consolidationFrequency?: import("../types").KpiFrequencyValue | null;
 }) {
   const { data, isLoading } = useKpiWithHistory(kpiId);
   
@@ -106,9 +107,11 @@ function KpiMiniChart({ kpiId, unit, direction, targetValue }: {
       unit={unit}
       direction={direction}
       compact
+      consolidationFrequency={consolidationFrequency ?? null}
     />
   );
 }
+
 
 function KpiEvolutionCard({ 
   kpi, 
