@@ -108,8 +108,8 @@ function isPastDueAtCutoff(
 // ============================================================
 
 const PROJECT_COLUMNS =
-  'id, name, status, due_date, ' +
-  'project_milestones(id, name, status, due_date, deleted_at)';
+  'id, name, status, due_date, owner_id, ' +
+  'project_milestones(id, name, status, due_date, owner_id, deleted_at)';
 
 export function useMbrPreTeamProjects(
   teamId: string | null | undefined,
@@ -117,6 +117,7 @@ export function useMbrPreTeamProjects(
 ): UseMbrPreTeamProjectsResult {
   const { currentBuId } = useBu();
   const supabase = useBuScopedSupabase();
+  const scope = useTeamResponsibilityScope(teamId);
 
   const refMonth = referenceMonth || defaultReferenceMonth();
   const cutoffDate = useMemo(() => {
@@ -126,18 +127,23 @@ export function useMbrPreTeamProjects(
 
   const { data, isLoading } = useQuery({
     queryKey: mbrKeys.preTeamProjects(currentBuId, teamId, refMonth),
-    enabled: !!supabase && !!currentBuId && !!teamId,
+    enabled:
+      !!supabase &&
+      !!currentBuId &&
+      !!teamId &&
+      !scope.isLoading &&
+      scope.teamIds.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      // 1. IDs de projetos vinculados ao time
+      // 1. IDs de projetos vinculados ao time OU subtimes
       const { data: links, error: linksErr } = await supabase
         .from('project_teams')
         .select('project_id')
-        .eq('team_id', teamId!);
+        .in('team_id', scope.teamIds);
       if (linksErr) throw linksErr;
-      const projectIds = (links ?? [])
-        .map((l) => l.project_id)
-        .filter(Boolean);
+      const projectIds = Array.from(
+        new Set((links ?? []).map((l) => l.project_id).filter(Boolean)),
+      );
       if (projectIds.length === 0) return [];
 
       // 2. Projetos ativos (não done/cancelled) com milestones
