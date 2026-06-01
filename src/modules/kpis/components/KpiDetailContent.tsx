@@ -28,6 +28,8 @@ import { formatValueWithUnit, isPointsUnit } from "@/shared/constants/units";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { getConsolidationPeriod } from "../utils/frequency";
+
 
 // ============================================================
 // HELPERS (internos)
@@ -84,13 +86,40 @@ export function KpiDetailContent({ kpiId }: KpiDetailContentProps) {
     );
   }
 
-  const chartData = [...values]
-    .reverse()
+  // Dedupe por período de consolidação: prefere consolidated; fallback último partial.
+  const dedupedValues = (() => {
+    const freq = kpi.consolidation_frequency;
+    if (!freq) return [...values];
+    const groups = new Map<string, typeof values>();
+    for (const v of values) {
+      const key = getConsolidationPeriod(freq, new Date(v.reference_date)).label;
+      const arr = groups.get(key);
+      if (arr) arr.push(v);
+      else groups.set(key, [v]);
+    }
+    const picked: typeof values = [];
+    for (const arr of groups.values()) {
+      const sorted = [...arr].sort(
+        (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+      );
+      const consolidatedOnes = sorted.filter((v) => v.input_type !== 'partial');
+      picked.push(
+        consolidatedOnes.length
+          ? consolidatedOnes[consolidatedOnes.length - 1]
+          : sorted[sorted.length - 1],
+      );
+    }
+    return picked;
+  })();
+
+  const chartData = [...dedupedValues]
+    .sort((a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime())
     .slice(-12)
     .map((v) => ({
       date: format(parseISO(v.reference_date), "MMM/yy", { locale: ptBR }),
       value: v.value,
     }));
+
 
   const currentValue = values[0]?.value ?? null;
   const previousValue = values[1]?.value ?? null;
