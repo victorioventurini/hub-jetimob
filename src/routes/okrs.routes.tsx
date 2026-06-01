@@ -30,6 +30,7 @@ const OkrFullConstructionReviewPage = lazyWithRetry(() => import('@/modules/okrs
 const OrgAnalysisPage = lazyWithRetry(() => import('@/modules/okrs/pages/OrgAnalysisPage'));
 const OkrHealthPage = lazyWithRetry(() => import('@/modules/okrs/pages/OkrHealthPage'));
 const QbrExecutiveReportPage = lazyWithRetry(() => import('@/modules/okrs/pages/QbrExecutiveReportPage'));
+const MbrExecutiveReportPage = lazyWithRetry(() => import('@/modules/okrs/pages/MbrExecutiveReportPage'));
 /**
  * Helper para wrapping consistente de rotas OKR
  */
@@ -82,6 +83,7 @@ export const okrRoutes = (
     <Route path="/okrs/executive" element={<OkrRoute><ExecutiveDashboardPage /></OkrRoute>} />
     <Route path="/okrs/executive/quarter-review" element={<OkrRoute requiresBuAdmin><ExecutiveQuarterReviewPage /></OkrRoute>} />
     <Route path="/okrs/executive/qbr-report" element={<OkrRoute><QbrExecutiveReportPage /></OkrRoute>} />
+    <Route path="/okrs/executive/mbr-report" element={<OkrRoute><MbrExecutiveReportPage /></OkrRoute>} />
     
     {/* Creation */}
     <Route path="/okrs/create" element={<OkrRoute><TeamOkrCreationRoute><OkrCreationPage /></TeamOkrCreationRoute></OkrRoute>} />
