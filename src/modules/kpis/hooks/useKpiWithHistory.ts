@@ -148,6 +148,7 @@ export function useKpiWithHistory(kpiId: string | null | undefined) {
         period_end: v.period_end,
         period_label: v.period_label,
         rag_status: v.rag_status as KpiRagStatus | null,
+        input_type: ((v as any).input_type ?? null) as KpiInputType | null,
         created_by_user: v.created_by ? userMap[v.created_by] || null : null,
       }));
 
