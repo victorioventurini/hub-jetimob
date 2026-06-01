@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FolderKanban, CheckCircle2, Circle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useProjectsForWizard } from '@/modules/projects/hooks/useProjectsForWizard';
+import { useQbrPreTeamProjects } from '@/modules/okrs/hooks/useQbrPreTeamProjects';
 import { useProjectsForKr } from '@/modules/projects/hooks/useProjectsForKr';
 import { ProjectHealthBadge } from '@/modules/projects/components/ProjectHealthBadge';
 import { ProjectProgressBar } from '@/modules/projects/components/ProjectProgressBar';
