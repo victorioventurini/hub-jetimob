@@ -79,20 +79,21 @@ export interface MbrPreDataValidationStepProps {
 // Helpers visuais
 // ============================================================
 
-function kpiReasonLabel(reason: KpiPendingItem['reason'], kpi: KpiForWizardV2): string {
+function kpiReasonLabel(
+  reason: KpiPendingItem['reason'],
+  kpi: KpiForWizardV2,
+  referenceMonth: string,
+): string {
   const updateLabel = kpi.update_frequency
     ? getFrequencyLabel(kpi.update_frequency).toLowerCase()
-    : 'definida';
-  const consLabel = kpi.consolidation_frequency
-    ? getFrequencyLabel(kpi.consolidation_frequency).toLowerCase()
     : 'definida';
   switch (reason) {
     case 'overdue':
       return `Atualização atrasada (cadência ${updateLabel})`;
     case 'pending_consolidation':
-      return `Consolidação pendente (${consLabel}) — ${kpi.missing_consolidation_count} período(s)`;
+      return `Sem valor consolidado para ${referenceMonth}`;
     case 'both':
-      return `Atualização atrasada e consolidação pendente`;
+      return `Atualização atrasada e sem consolidado de ${referenceMonth}`;
   }
 }
 
@@ -141,11 +142,14 @@ export function MbrPreDataValidationStep({
     (open: boolean) => {
       if (!open) {
         setActiveKpi(null);
-        // Invalida wizardV2 para reclassificar pendências.
+        // Invalida wizardV2 e o snapshot mensal do Pré-MBR para reclassificar pendências.
         queryClient.invalidateQueries({ queryKey: ['kpis', 'wizard-v2'] });
+        queryClient.invalidateQueries({
+          queryKey: mbrKeys.preTeamKpisMonthly(currentBuId, teamId, referenceMonth),
+        });
       }
     },
-    [queryClient],
+    [queryClient, currentBuId, teamId, referenceMonth],
   );
 
   const handleKrDialogChange = useCallback(
@@ -235,6 +239,7 @@ export function MbrPreDataValidationStep({
                     <KpiPendingRow
                       key={item.kpi.id}
                       item={item}
+                      referenceMonth={referenceMonth}
                       onResolve={() => setActiveKpi(item.kpi)}
                     />
                   ))}
@@ -357,9 +362,11 @@ export function MbrPreDataValidationStep({
 
 function KpiPendingRow({
   item,
+  referenceMonth,
   onResolve,
 }: {
   item: KpiPendingItem;
+  referenceMonth: string;
   onResolve: () => void;
 }) {
   return (
@@ -370,7 +377,7 @@ function KpiPendingRow({
           <span className="font-medium text-sm truncate">{item.kpi.name}</span>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5 ml-6">
-          {kpiReasonLabel(item.reason, item.kpi)}
+          {kpiReasonLabel(item.reason, item.kpi, referenceMonth)}
         </p>
       </div>
       <Button size="sm" variant="outline" onClick={onResolve}>

@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useKpisForWizardV2 } from '@/modules/kpis/hooks/useKpisForWizardV2';
 import type { KpiForWizardV2 } from '@/modules/kpis/types';
 import { monthBoundsDate } from '@/modules/okrs/utils/mbr/referenceMonth';
+import { useMbrPreTeamKpisMonthly } from '@/modules/okrs/hooks/useMbrPreTeamKpisMonthly';
 
 // ============================================================
 // Types
@@ -112,6 +113,14 @@ export function useMbrPreValidationData({
     includeGuardrailsAtRisk: false,
   });
 
+  // Snapshot mensal ancorado em `referenceMonth` — fonte de verdade para
+  // "tem valor consolidado do mês fechado?". Evita que períodos históricos
+  // (anteriores ao referenceMonth) bloqueiem o início do Pré-MBR.
+  const { snapshots: monthlySnapshots } = useMbrPreTeamKpisMonthly(
+    teamId ?? undefined,
+    referenceMonth,
+  );
+
   // Universo de KPIs para o gate: tudo sob responsabilidade do time
   // (owned/contributed) + KPIs operacionalmente do time (kpisTeamContext já
   // exclui os de toUpdate). Usamos union por id para evitar duplicatas.
@@ -125,19 +134,27 @@ export function useMbrPreValidationData({
   const { kpisPending, kpisOk } = useMemo(() => {
     const pending: KpiPendingItem[] = [];
     const ok: KpiForWizardV2[] = [];
+    const snapByKpi = new Map(monthlySnapshots.map((s) => [s.kpiId, s]));
     for (const k of allTeamKpis) {
-      if (k.update_overdue && k.consolidation_pending) {
+      const snap = snapByKpi.get(k.id);
+      // "Consolidação pendente" agora é restrita ao `referenceMonth`: o time
+      // só precisa ter o valor consolidado do mês analisado pelo rito.
+      // Períodos anteriores são dívida histórica e não bloqueiam o Pré-MBR.
+      const refMonthMissing = !snap
+        || snap.currentValue == null
+        || snap.latestInputType === 'partial';
+      if (k.update_overdue && refMonthMissing) {
         pending.push({ kpi: k, reason: 'both' });
       } else if (k.update_overdue) {
         pending.push({ kpi: k, reason: 'overdue' });
-      } else if (k.consolidation_pending) {
+      } else if (refMonthMissing) {
         pending.push({ kpi: k, reason: 'pending_consolidation' });
       } else {
         ok.push(k);
       }
     }
     return { kpisPending: pending, kpisOk: ok };
-  }, [allTeamKpis]);
+  }, [allTeamKpis, monthlySnapshots]);
 
   const { krsPending, krsOk } = useMemo(() => {
     const pending: KrPendingItem[] = [];
