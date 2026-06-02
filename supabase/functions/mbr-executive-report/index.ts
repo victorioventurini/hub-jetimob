@@ -16,12 +16,9 @@ import {
 } from "../_shared/middleware.ts";
 import { errorResponse, successResponse } from "../_shared/response.ts";
 import {
-  llmComplete,
-  type LLMMessage,
   mapLLMError,
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
-import { tryParseAiJson } from "../_shared/ai-json.ts";
 import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData, ritualSubmissionWindowIso } from "./data-loader.ts";
 import {
   buildAnalyzedTeams,
