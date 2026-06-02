@@ -362,40 +362,71 @@ export async function llmComplete(
     else options.signal.addEventListener("abort", () => controller.abort(), { once: true });
   }
 
-  let response: Response;
-  try {
-    response = await fetch(config.apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if ((err as Error)?.name === "AbortError") {
-      const e = new Error(`LLM API timeout after ${timeoutMs}ms`) as Error & {
+  // Retry transient upstream issues (503 UNAVAILABLE / "overloaded") with backoff.
+  // Não retenta 4xx (incl. 429/402) — esses precisam subir intactos.
+  const MAX_ATTEMPTS = 3;
+  const BACKOFF_MS = [800, 2400];
+  let response: Response | null = null;
+  let lastErrorText = "";
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      response = await fetch(config.apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if ((err as Error)?.name === "AbortError") {
+        const e = new Error(`LLM API timeout after ${timeoutMs}ms`) as Error & {
+          status: number;
+          body: string;
+        };
+        e.status = 504;
+        e.body = "timeout";
+        throw e;
+      }
+      throw err;
+    }
+
+    if (response.ok) break;
+
+    lastErrorText = await response.text();
+    const isTransient =
+      response.status === 503 ||
+      /UNAVAILABLE|overloaded|high demand/i.test(lastErrorText);
+
+    if (!isTransient || attempt === MAX_ATTEMPTS - 1) {
+      clearTimeout(timeoutId);
+      const error = new Error(`LLM API error: ${response.status}`) as Error & {
         status: number;
         body: string;
       };
-      e.status = 504;
-      e.body = "timeout";
-      throw e;
+      error.status = response.status;
+      error.body = lastErrorText;
+      throw error;
     }
-    throw err;
+
+    console.warn(
+      `[llmComplete] Upstream ${response.status} (transient), retrying in ${BACKOFF_MS[attempt]}ms (attempt ${attempt + 1}/${MAX_ATTEMPTS})`,
+    );
+    await new Promise((r) => setTimeout(r, BACKOFF_MS[attempt]));
   }
+
   clearTimeout(timeoutId);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    const error = new Error(`LLM API error: ${response.status}`) as Error & {
+  if (!response || !response.ok) {
+    const error = new Error(`LLM API error: ${response?.status ?? "unknown"}`) as Error & {
       status: number;
       body: string;
     };
-    error.status = response.status;
-    error.body = errorText;
+    error.status = response?.status ?? 503;
+    error.body = lastErrorText;
     throw error;
   }
 
