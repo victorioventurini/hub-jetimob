@@ -19,9 +19,10 @@ import {
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
-import { loadCycle, loadReportData } from "./data-loader.ts";
+import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
 import {
   buildKpiSummary,
+  buildOverallAchievement,
   buildTeamHealthSummary,
   extractCLevelFlags,
   extractDecisions,
@@ -34,10 +35,12 @@ import {
   QBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  KrRow,
   OrgObjectiveRow,
   ParsedReport,
   ReportRequest,
   ReportResponse,
+  TeamObjectiveRow,
 } from "./types.ts";
 
 async function handler(req: Request, ctx: RequestContext): Promise<Response> {
@@ -102,7 +105,34 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const teamsMap = new Map(
       (teamsData || []).map((t: { id: string; name: string }) => [t.id, t.name]),
     );
-    const teamHealthSummary = buildTeamHealthSummary(teamObjectives || [], teamsMap);
+
+    // Resolve valor efetivo das KRs com KPI primária até o fim do ciclo
+    // (Core Rule: Primary KPIs dictate KR progress automatically).
+    const teamObjList = (teamObjectives || []) as TeamObjectiveRow[];
+    const allKrIds: string[] = [];
+    for (const obj of teamObjList) {
+      for (const kr of obj.key_results || []) {
+        if (kr.id) allKrIds.push(kr.id);
+      }
+    }
+    const cycleEndIso = new Date(`${cycle.end_date}T23:59:59.999Z`).toISOString();
+    const primaryKpiValues = await loadPrimaryKpiValuesForKrs(
+      sc,
+      allKrIds,
+      cycleEndIso,
+    );
+    if (primaryKpiValues.size > 0) {
+      for (const obj of teamObjList) {
+        for (const kr of obj.key_results || []) {
+          if (kr.id && primaryKpiValues.has(kr.id)) {
+            (kr as KrRow).effective_current_value = primaryKpiValues.get(kr.id)!;
+          }
+        }
+      }
+    }
+
+    const teamHealthSummary = buildTeamHealthSummary(teamObjList, teamsMap);
+    const overallAchievement = buildOverallAchievement(teamObjList, teamsMap);
     const kpisSummary = buildKpiSummary(orgKpis || []);
     const leaderLearnings = extractLearnings(qbrPreSessions || []);
     const nextCycleProposals = extractNextCycleProposals(qbrPreSessions || [], teamsMap);
@@ -111,7 +141,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const orgObjectivesSummary = extractKrSummary((orgObjectives || []) as OrgObjectiveRow[]);
 
     console.log(
-      `[${requestId}] Prompt data ready: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, proposals=${nextCycleProposals.length}, decisions=${pendingDecisions.length}`,
+      `[${requestId}] Prompt data ready: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, proposals=${nextCycleProposals.length}, decisions=${pendingDecisions.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
     );
 
     const llmConfig = await resolveLLMConfig(sc, "google/gemini-3-flash-preview");
@@ -133,6 +163,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         content: buildQbrExecUserPrompt({
           cycleName: cycle.name,
           teamHealthSummary,
+          overallAchievement,
           kpisSummary,
           leaderLearnings,
           nextCycleProposals,
@@ -173,6 +204,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           ? parsed.decisionsNeeded
           : [],
         teamProposals: nextCycleProposals,
+        overallAchievement,
       };
 
       console.log(`[${requestId}] QBR executive report generated successfully`);
