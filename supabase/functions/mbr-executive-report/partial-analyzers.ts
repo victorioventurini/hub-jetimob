@@ -116,15 +116,23 @@ export async function analyzeKrIssues(
 
   const prompt = `Abaixo estão KRs fora da meta com as justificativas dos líderes, e o contexto dos OKRs organizacionais.
 
-=== KRs FORA DA META ===
+=== KRs FORA DA META (${items.length} no total) ===
 ${JSON.stringify(items.slice(0, 30))}
 
 === OKRs ORGANIZACIONAIS (referência) ===
 ${JSON.stringify(orgObjectivesSummary)}
 
+Produza uma análise EXECUTIVA E ANALÍTICA (não descritiva). Cubra:
+1. CAUSAS-RAIZ AGRUPADAS — agrupe as justificativas em 3-5 padrões (capacidade, dependências, escopo, premissa errada, mudança de prioridade, etc.) e diga quantos KRs caem em cada. Inclua a leitura: "é problema de execução, premissa ou priorização?".
+2. CONEXÃO COM OKRs ORGANIZACIONAIS — quais OKRs org estão sendo puxados para baixo por esses KRs e qual a magnitude (use o progresso/atingimento informado).
+3. RISCO DE CICLO — quais KRs ainda têm tempo de virar e quais já estão estruturalmente comprometidos.
+4. RECOMENDAÇÕES — 2-3 movimentos concretos (re-baseline, realocação, kill, ajuste de meta).
+
+Tamanho-alvo: 14-20 linhas em UM único parágrafo denso (sem bullets, sem markdown).
+
 Gere JSON:
 {
-  "krIssuesAnalysis": "parágrafo de 3-5 linhas agrupando as causas declaradas pelos líderes em PADRÕES (capacidade, dependências, escopo, etc.)"
+  "krIssuesAnalysis": "parágrafo único, denso, analítico"
 }`;
 
   return await callPartial<KrIssuesPartial>(
