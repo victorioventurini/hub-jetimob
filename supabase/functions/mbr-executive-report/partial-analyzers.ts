@@ -270,13 +270,18 @@ export interface ConsolidationInputs {
   decisionsNeeded: string[];
 }
 
-const CONSOLIDATION_SYSTEM = `Você é um consultor estratégico finalizando um relatório executivo MENSAL (MBR) para o CEO.
-Escreva em português brasileiro, tom executivo e direto.
-O recorte é o MÊS de referência informado — não o quarter inteiro. Refira-se ao "mês" (não ao "quarter").
+const CONSOLIDATION_SYSTEM = `Você é um consultor estratégico sênior (ex-McKinsey/BCG) finalizando o relatório executivo MENSAL (MBR) para o CEO.
+Tom executivo, denso, ANALÍTICO — não descritivo. Português brasileiro.
+O recorte é o MÊS de referência informado — não o quarter inteiro. Refira-se ao "mês" (não ao "quarter") quando estiver falando do período coberto.
+Estilo:
+- Vá além de relatar o que aconteceu: explique POR QUE aconteceu, o QUE ISSO SIGNIFICA e O QUE FAZER.
+- Cruze times/áreas/projetos/KRs sempre que possível.
+- Quantifique sempre que os dados permitirem.
+- Frases curtas, parágrafos longos. Sem bullets, sem markdown, sem títulos, sem emojis.
 NUNCA use linguagem punitiva — prefira "abaixo do ritmo esperado".
-Nunca limite progresso a 100% — 156% é uma superação real.
+Nunca limite progresso a 100% — 156% é superação real.
 Use SEMPRE os números oficiais informados — não recalcule.
-Responda APENAS com JSON válido, sem markdown.`;
+Responda APENAS com JSON válido.`;
 
 export async function consolidateReport(
   llmConfig: LLMConfig,
@@ -286,7 +291,7 @@ export async function consolidateReport(
   const slice = (v: unknown, n: number) => Array.isArray(v) ? v.slice(0, n) : v;
 
   const prompt = `Você está finalizando o relatório executivo do MÊS "${inputs.monthLabel}" (ciclo "${inputs.cycleName}").
-As análises de projetos, KRs, KPIs e decisões JÁ FORAM FEITAS — use-as como contexto, NÃO as repita textualmente.
+As análises de projetos, KRs, KPIs e decisões JÁ FORAM FEITAS — use-as como contexto, NÃO as repita textualmente. Conecte-as numa narrativa única.
 
 === % DE ATINGIMENTO DOS OKRs (NÚMEROS OFICIAIS — USE EXATAMENTE) ===
 ${JSON.stringify(inputs.overallAchievement)}
@@ -305,17 +310,20 @@ ${JSON.stringify(slice(inputs.teamCommitments, 15))}
 === ANÁLISES MENSAIS IA REVISADAS PELOS LÍDERES ===
 ${JSON.stringify(slice(inputs.monthAnalyses, 10))}
 
-=== ANÁLISES PARCIAIS JÁ PRODUZIDAS (contexto) ===
+=== ANÁLISES PARCIAIS JÁ PRODUZIDAS (contexto, não repetir) ===
 projectsAnalysis: ${JSON.stringify(inputs.projectsAnalysis)}
 krIssuesAnalysis: ${JSON.stringify(inputs.krIssuesAnalysis)}
 kpiInsights: ${JSON.stringify(inputs.kpiInsights)}
 decisionsNeeded: ${JSON.stringify(inputs.decisionsNeeded)}
 
-Gere JSON com exatamente esta estrutura:
+Gere JSON com exatamente esta estrutura. CADA campo deve ser denso, analítico e cruzar dados:
+
 {
-  "monthNarrative":      "parágrafo de 5-8 linhas interpretando o mês — saúde dos OKRs (cite overallProgress), ritmo, principais movimentos e ofensores",
-  "commitmentsAnalysis": "parágrafo de 4-6 linhas analisando os compromissos dos times para o próximo mês (foco, dependências cruzadas, riscos)",
-  "leaderSignals":       "parágrafo de 2-4 linhas consolidando o que os líderes pediram (pauta, KPIs a criar, sinais das análises mensais). String vazia se não houver."
+  "monthNarrative": "Parágrafo único de 15-22 linhas. Estrutura recomendada (sem nomear as partes): (a) abertura com o overallProgress oficial e leitura macro do mês — estamos acelerando, estagnados ou desacelerando? (b) destaques positivos com nomes de times e o motivo do avanço; (c) ofensores principais conectando KRs, projetos e KPIs — não apenas listar, mas mostrar como se reforçam; (d) padrão transversal mais importante do mês (ex.: gargalo cruzado em uma área, mudança de premissa, dependência externa); (e) leitura de risco para o fechamento do ciclo e o que o CEO deveria observar nas próximas semanas. Sem bullets, sem markdown.",
+
+  "commitmentsAnalysis": "Parágrafo único de 10-15 linhas analisando os compromissos para o próximo mês: foco coletivo emergente, dependências cruzadas explícitas ou implícitas entre times, sobrecarga aparente em algum time, compromissos que parecem desconectados dos ofensores deste mês, e a probabilidade realista de cumprimento dado o histórico. Sinalize 1-2 riscos concretos e 1-2 oportunidades de alavancagem.",
+
+  "leaderSignals": "Parágrafo único de 6-10 linhas consolidando o que os líderes pediram coletivamente — pauta sugerida, KPIs a criar, sinais das análises mensais revisadas. Destaque CONVERGÊNCIAS (vários líderes pedindo a mesma coisa) e DIVERGÊNCIAS notáveis. String vazia se não houver sinais relevantes."
 }`;
 
   const messages: LLMMessage[] = [
@@ -324,9 +332,9 @@ Gere JSON com exatamente esta estrutura:
   ];
 
   const response = await llmComplete(
-    { ...llmConfig, maxTokens: 2500, temperature: 0.4 },
+    { ...llmConfig, maxTokens: 5000, temperature: 0.45 },
     messages,
-    { maxTokens: 2500, temperature: 0.4 },
+    { maxTokens: 5000, temperature: 0.45 },
   );
   if (!response.content) {
     throw new Error("Empty consolidation response");
