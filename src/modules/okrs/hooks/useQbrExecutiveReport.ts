@@ -13,6 +13,28 @@ import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
+export interface QbrExecutiveReportObjectiveAchievement {
+  id: string;
+  title: string;
+  teamName: string;
+  progress: number;
+  krCount: number;
+}
+
+export interface QbrExecutiveReportTeamAchievement {
+  teamId: string;
+  teamName: string;
+  progress: number;
+  objectivesCount: number;
+  krCount: number;
+}
+
+export interface QbrExecutiveReportOverallAchievement {
+  overallProgress: number;
+  byTeam: QbrExecutiveReportTeamAchievement[];
+  byObjective: QbrExecutiveReportObjectiveAchievement[];
+}
+
 export interface QbrExecutiveReportData {
   quarterNarrative: string;
   proposalsAnalysis: string;
@@ -28,6 +50,7 @@ export interface QbrExecutiveReportData {
     krCount: number;
     krs: string[];
   }>;
+  overallAchievement: QbrExecutiveReportOverallAchievement;
 }
 
 type ReportRecord = Record<string, unknown>;
