@@ -378,6 +378,7 @@ export function MbrPanoramaStep({
   onAddSuggestedDecision,
   teamNamesById,
   mbrPreSurfacedItems = [],
+  mbrPreSubmissionsByTeam = {},
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
