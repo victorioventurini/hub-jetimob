@@ -295,8 +295,20 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
         byObjective,
       };
     })(),
+    analyzedTeams: Array.isArray(source.analyzedTeams)
+      ? source.analyzedTeams.map((t) => {
+          const r = isRecord(t) ? t : {};
+          return {
+            teamId: toText(r.teamId),
+            teamName: toText(r.teamName) || 'Time não informado',
+            leaderName: typeof r.leaderName === 'string' && r.leaderName.trim() ? r.leaderName : null,
+            completedAt: typeof r.completedAt === 'string' ? r.completedAt : null,
+          };
+        })
+      : [],
   };
 }
+
 
 export function useMbrExecutiveReport(cycleId: string | null, monthRef: string | null) {
   const supabase = useBuScopedSupabase();
