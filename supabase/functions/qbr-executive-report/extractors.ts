@@ -11,6 +11,7 @@ import {
 } from "../_shared/okr-progress.ts";
 
 import type {
+  AnalyzedTeam,
   KpiRow,
   KpiValueRow,
   KrRow,
