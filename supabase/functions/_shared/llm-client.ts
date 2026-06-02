@@ -467,6 +467,76 @@ export async function llmComplete(
 }
 
 /**
+ * Fallback chain de modelos usado quando o modelo preferido falha por
+ * rate-limit (429), créditos (402) ou sobrecarga (503/504).
+ *
+ * Ordem mistura provedores (Google → OpenAI) e tamanhos (flash → lite → nano)
+ * para maximizar a chance de sucesso quando o Gateway está saturado em um
+ * provider específico.
+ */
+export const LLM_FALLBACK_CHAIN = [
+  "google/gemini-3-flash-preview",
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-flash-lite",
+  "openai/gpt-5-mini",
+  "openai/gpt-5-nano",
+];
+
+function isTransientLlmFailure(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status === 429 || status === 402 || status === 503 || status === 504) return true;
+  const body = String((err as { body?: string })?.body ?? "").toLowerCase();
+  return /rate.?limit|overloaded|unavailable|high demand|quota|credits/.test(body);
+}
+
+/**
+ * llmComplete com fallback automático entre modelos/provedores.
+ *
+ * Resolve o config para `preferredModel` e chama `llmComplete`. Se a chamada
+ * falhar com 429/402/503/504, tenta cada modelo de `LLM_FALLBACK_CHAIN` em
+ * sequência (ignorando o já tentado). Erros não-transitórios sobem direto.
+ *
+ * Use isto SEMPRE que uma edge function fizer chamadas LLM de relatórios ou
+ * batches — evita que um pico de rate-limit no provider preferido derrube o
+ * fluxo inteiro.
+ */
+export async function llmCompleteWithFallback(
+  serviceClient: EdgeSupabaseClient,
+  preferredModel: string | null,
+  messages: LLMMessage[],
+  options?: Parameters<typeof llmComplete>[2],
+): Promise<LLMResponse> {
+  const tried = new Set<string>();
+  const candidates: (string | null)[] = [preferredModel, ...LLM_FALLBACK_CHAIN];
+  let lastError: unknown = null;
+
+  for (const candidate of candidates) {
+    const key = candidate ?? "__default__";
+    if (tried.has(key)) continue;
+    tried.add(key);
+
+    const config = await resolveLLMConfig(serviceClient, candidate);
+    if (!config) continue;
+
+    try {
+      return await llmComplete(config, messages, options);
+    } catch (err) {
+      lastError = err;
+      if (isTransientLlmFailure(err)) {
+        const status = (err as { status?: number })?.status;
+        console.warn(
+          `[llmCompleteWithFallback] ${config.model} failed (status=${status ?? "?"}). Trying next fallback…`,
+        );
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw (lastError ?? new Error("LLM_NO_CONFIG_AVAILABLE"));
+}
+
+/**
  * Create a streaming LLM response
  */
 export function llmStream(
