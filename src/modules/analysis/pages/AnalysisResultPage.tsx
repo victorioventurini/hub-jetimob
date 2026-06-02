@@ -392,6 +392,13 @@ export default function AnalysisResultPage() {
   const { currentBuId } = useBu();
   const [shareOpen, setShareOpen] = useState(false);
   const generate = useGenerateAnalysis();
+  const deleteReport = useDeleteAnalysisReport();
+
+  const handleDelete = async () => {
+    if (!report) return;
+    await deleteReport.mutateAsync(report.id);
+    navigate("/analysis");
+  };
 
   const handleRegenerate = async () => {
     if (!report) return;
