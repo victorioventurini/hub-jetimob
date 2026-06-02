@@ -6,13 +6,13 @@ export const agentsSection: TcrSection = {
 ### 6.1 Arquitetura de Agentes
 
 Os agentes são configurados na tabela \`ai_agents\` e invocados via edge function \`invoke-vic\`.
-Todos os agentes utilizam o modelo \`google/gemini-2.5-pro\` via Lovable AI (sem API key do usuário).
+Todos os agentes utilizam o modelo \`google/gemini-3.5-flash\` via Lovable AI (sem API key do usuário).
 
 | Campo | Descrição |
 |-------|-----------|
 | \`slug\` | Identificador único do agente |
 | \`integration_key\` | Qual LLM usar (\`lovable-ai\`) |
-| \`model_name\` | Modelo: \`google/gemini-2.5-pro\` |
+| \`model_name\` | Modelo: \`google/gemini-3.5-flash\` |
 | \`system_prompt\` | Prompt base do agente |
 | \`output_format\` | \`text\`, \`json\`, \`structured\` |
 | \`scope\` | \`global\` ou \`bu\` |

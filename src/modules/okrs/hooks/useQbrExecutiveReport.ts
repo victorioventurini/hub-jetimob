@@ -12,6 +12,7 @@ import { okrsKeys } from '@/lib/queryKeys/okrs';
 import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { showAiEdgeFunctionErrorToast } from '@/modules/okrs/utils/edgeFunctionError';
 
 export interface QbrExecutiveReportObjectiveAchievement {
   id: string;
@@ -252,17 +253,9 @@ export function useQbrExecutiveReport(cycleId: string | null) {
         generatedAt: new Date().toISOString(),
       });
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       console.error('Failed to generate QBR report:', error);
-
-      const message = error?.message || '';
-      if (message.includes('429') || message.includes('Rate limit')) {
-        toast.error('Limite de requisições atingido. Tente novamente em alguns minutos.');
-      } else if (message.includes('402') || message.includes('credits')) {
-        toast.error('Créditos de IA esgotados. Contate o administrador.');
-      } else {
-        toast.error('Erro ao gerar o relatório executivo. Tente novamente.');
-      }
+      await showAiEdgeFunctionErrorToast(error, 'Erro ao gerar o relatório executivo. Tente novamente.');
     },
   });
 
