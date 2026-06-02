@@ -1,68 +1,27 @@
-## Causa raiz do 17706%
+## Diagnóstico
 
-KR `Gerar um incremento de R$ 400 mil em MRR`: `target=400`, `unit="R$ mil"`, `current_value=70822` (digitado em R$ cru). Fórmula inline `(70822-0)/(400-0)*100 = 17.705%`.
+O 17706% que aparece no screenshot não vem do bloco gerado pelo backend do MBR Executive Report. Ele vem da seção reutilizada `Como chegamos aqui — OKRs da empresa`, renderizada por `OrgOkrsReportSection`.
 
-O canon `progressCalculation.ts` já normaliza isso (heurística `normalizeProgressInputs`: se progresso direto > 1000% e o escalado por unidade ≤ 1000%, usa o escalado → 17,7%). O problema é que **vários componentes/hooks ignoram o canon** e calculam progresso inline.
+Nessa seção, a linha do KR usa `OkrProgressBar`, mas não passa `unit={orgKr.unit}`. Como `OkrProgressBar` assume `unit='%'` por padrão, o cálculo canônico roda sem contexto de unidade e volta a calcular `70822 / 400 * 100 = 17706%`.
 
-## Cobertura completa (varredura de `src/` + `supabase/functions/`)
+## Plano de correção
 
-### Frontend — fórmula inline a substituir por `calculateProgress(baseline, current, target, direction, { unit })`
+1. Corrigir `OrgOkrsReportSection`
+   - Passar `unit={orgKr.unit}` para o `OkrProgressBar` dos KRs organizacionais.
+   - Manter os KRs de time vinculados usando o `progress` já calculado pela query, que já passa unidade corretamente.
 
-1. `src/modules/okrs/components/OrgObjectiveCard.tsx` (l.60-71)
-2. `src/modules/okrs/components/TeamObjectiveCard.tsx` (l.95-105)
-3. `src/modules/okrs/components/KrHistoryDialog.tsx` (l.82)
-4. `src/modules/okrs/components/cycle-checkins/CycleCheckinsEvolution.tsx` (l.180, l.256)
-5. `src/modules/okrs/hooks/useManagersPanorama.ts` (l.145)
-6. `src/modules/okrs/hooks/useUserKrsForWizard.ts` (l.152)
-7. `src/modules/okrs/hooks/useTeamPreviousCycleAnalysis.ts` (l.138, l.146)
-8. `src/modules/okrs/hooks/useTeamPendingKrs.ts` (l.171)
-9. `src/modules/okrs/hooks/useOrgOkrsForContext.ts` (l.99)
+2. Blindar o componente base
+   - Ajustar o tipo de `OkrProgressBar` para aceitar `unit?: string | null`, compatível com dados do banco.
+   - Evitar que `null` caia como unidade inválida; usar fallback apenas quando não houver unidade.
 
-Garantir em cada hook acima que `unit` está no `select` (proibido `select *`); adicionar coluna se faltar.
+3. Adicionar teste de regressão específico
+   - Em `OkrProgressBar.test.tsx`, adicionar caso com `baseline=0`, `current=70822`, `target=400`, `unit="R$ mil"`.
+   - Esperado: renderizar aproximadamente `18%`, nunca `17706%`.
 
-### Edge — única fórmula inline remanescente fora do canon
+4. Verificar usos restantes
+   - Revisar todos os usos de `<OkrProgressBar>` encontrados para garantir que chamadas com KR real passam `unit`.
+   - Se houver outro uso sem unidade vindo de KR, corrigir no mesmo padrão.
 
-10. `supabase/functions/mbr-executive-report/extractors.ts` (l.52) — substituir pela função do `_shared/okr-progress.ts` (já importada em outros pontos do mesmo arquivo; resquício de refactor anterior).
-
-### Já no canon (não tocar)
-`_shared/okr-progress.ts`, `_shared/hub-tools.ts`, `qbr-executive-report/extractors.ts`, `progressCalculation.ts` e os consumidores via `calculateProgress` / `calculateAggregatedProgress`.
-
-## Guard-rails para prevenir recorrência
-
-### a) Lint rule custom (ESLint local)
-Criar `eslint-rules/no-inline-kr-progress.js` e registrar em `eslint.config.js`. Regra:
-- Bloqueia o padrão AST `BinaryExpression` que combina identificadores `current(_value)?`, `baseline`, `target` em divisão `* 100`.
-- Permite apenas dentro de:
-  - `src/modules/okrs/utils/progressCalculation.ts`
-  - `supabase/functions/_shared/okr-progress.ts`
-- Mensagem: *"Cálculo de progresso de KR inline é proibido. Use `calculateProgress()` (frontend) ou `_shared/okr-progress.ts` (edge). Ver mem://features/okrs/okrs-master-standard."*
-
-### b) Teste de contrato canônico
-`src/modules/okrs/utils/__tests__/progressCalculation.contract.test.ts` com casos de regressão:
-- `unit="R$ mil"`, target=400, current=70822 → resultado < 1000% (regressão direta do bug atual)
-- `direction="maintain"` → binário 0/100
-- Over-achievement sem clamp (target=100, current=163 → 163)
-- `target === baseline` → binário
-Espelhar o mesmo arquivo em `supabase/functions/_shared/__tests__/okr-progress.contract.test.ts` para o canon edge.
-
-### c) Memória de projeto
-Atualizar `mem://features/okrs/okrs-master-standard` adicionando seção **"Progresso de KR — Canon obrigatório"** com:
-- Frontend: `calculateProgress` de `@/modules/okrs/utils/progressCalculation`
-- Edge: `calculateProgress` de `_shared/okr-progress.ts`
-- Sempre passar `{ unit: kr.unit }` no contexto
-- Sem clamp em 100 (over-achievement permitido)
-- Proibido cálculo inline (enforcement: lint + teste)
-
-Adicionar linha ao **Core** de `mem://index.md`:
-> **Progresso de KR:** SEMPRE via canon (`calculateProgress`). Inline proibido — barrado por lint.
-
-## Validação
-
-- `/okrs/?cycle=8fd8d5fa-…`: KR "R$ 400 mil em MRR" deixa de exibir 17706% (passa a ~17,7%); demais KRs preservam seus % (incl. over-achievement como 163%).
-- `npm run lint` falha se alguém reintroduzir a fórmula inline em qualquer arquivo fora dos 2 permitidos.
-- `vitest run progressCalculation.contract` verde no CI.
-- MBR/QBR Executive Report continuam alinhados com `/okrs/` (após item 10).
-
-## Fora do escopo
-- Sanear dados existentes (`current_value` digitado em escala errada). Heurística do canon cobre enquanto a UI de input não força a unidade.
-- Refatorar `useCompanyOkrs`, regras de RAG, ou base de cálculo de KPI primária.
+5. Validação esperada
+   - Após regenerar/recarregar o MBR Report, o KR “Gerar um incremento de R$ 400 mil em MRR...” deve aparecer em torno de `18%`/`17,7%`, não `17706%`.
+   - O guardrail já criado para fórmulas inline continua válido; este fix cobre o vazamento pela camada visual do componente.
