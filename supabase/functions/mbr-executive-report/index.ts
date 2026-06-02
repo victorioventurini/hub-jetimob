@@ -420,28 +420,28 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       let decisionsPartial: DecisionsPartial = { decisionsNeeded: [] };
 
       try {
-        projectsPartial = await analyzeProjects(llmConfig, projectIssues, requestId);
+        projectsPartial = await analyzeProjects(sc, PREFERRED_MODEL, projectIssues, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeProjects rejected:`, (e as Error)?.message);
       }
       await pause();
 
       try {
-        krIssuesPartial = await analyzeKrIssues(llmConfig, krIssues, orgObjectivesSummary, requestId);
+        krIssuesPartial = await analyzeKrIssues(sc, PREFERRED_MODEL, krIssues, orgObjectivesSummary, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeKrIssues rejected:`, (e as Error)?.message);
       }
       await pause();
 
       try {
-        kpisPartial = await analyzeKpis(llmConfig, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId);
+        kpisPartial = await analyzeKpis(sc, PREFERRED_MODEL, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeKpis rejected:`, (e as Error)?.message);
       }
       await pause();
 
       try {
-        decisionsPartial = await analyzeDecisions(llmConfig, pendingDecisions, agendaSuggestions, requestId);
+        decisionsPartial = await analyzeDecisions(sc, PREFERRED_MODEL, pendingDecisions, agendaSuggestions, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeDecisions rejected:`, (e as Error)?.message);
       }
