@@ -167,7 +167,7 @@ export async function analyzeKpis(
 
   const prompt = `Abaixo está o status dos KPIs organizacionais até o fim de ${monthLabel}.
 
-=== KPIs ORGANIZACIONAIS ===
+=== KPIs ORGANIZACIONAIS (${summary.length}) ===
 ${JSON.stringify(summary)}
 
 === KPIs COM JUSTIFICATIVA OU SEM DADOS (por time) ===
@@ -176,12 +176,20 @@ ${JSON.stringify(issues.slice(0, 20))}
 === NOVOS KPIs SUGERIDOS PELOS LÍDERES ===
 ${JSON.stringify(Array.isArray(kpisToCreate) ? kpisToCreate.slice(0, 10) : [])}
 
+Para CADA bucket, escreva um parágrafo analítico (não um bullet) de 4-7 linhas que:
+- nomeie os KPIs relevantes (com o número quando útil — currentValue vs targetValue, RAG),
+- explique POR QUE estão nesse estado (causas declaradas ou inferidas com cuidado),
+- aponte SINAIS LIDERANÇA (tendência: melhorando, estagnado, piorando) e
+- termine com a IMPLICAÇÃO para o ciclo (o que isso significa para o CEO).
+
+Use string vazia ("") quando não houver KPI naquele bucket.
+
 Gere JSON:
 {
   "kpiInsights": {
-    "healthy":  "1-2 linhas sobre KPIs em boa forma (string vazia se não houver)",
-    "atRisk":   "1-2 linhas sobre KPIs que merecem atenção (string vazia se não houver)",
-    "critical": "1-2 linhas sobre KPIs críticos (string vazia se não houver)"
+    "healthy":  "parágrafo denso de 4-7 linhas (ou string vazia)",
+    "atRisk":   "parágrafo denso de 4-7 linhas (ou string vazia)",
+    "critical": "parágrafo denso de 4-7 linhas (ou string vazia)"
   }
 }`;
 
