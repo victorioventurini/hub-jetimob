@@ -26,9 +26,15 @@ import { loadCycle, loadReportData } from "./data-loader.ts";
 import {
   buildKpiSummary,
   buildTeamHealthSummary,
+  extractAgendaSuggestions,
   extractDecisions,
+  extractKpiIssues,
+  extractKpisToCreate,
+  extractKrIssues,
   extractKrSummary,
+  extractMonthAnalyses,
   extractMonthlyHighlights,
+  extractProjectIssues,
   extractTeamCommitments,
   filterSessionsByMonth,
 } from "./extractors.ts";
