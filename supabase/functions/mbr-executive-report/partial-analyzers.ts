@@ -284,7 +284,8 @@ Gere APENAS este JSON:
 export interface DecisionsPartial { decisionsNeeded: string[] }
 
 export async function analyzeDecisions(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   pendingDecisions: unknown,
   agendaSuggestions: unknown,
   requestId: string,
