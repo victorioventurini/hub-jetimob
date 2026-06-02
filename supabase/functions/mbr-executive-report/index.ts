@@ -501,6 +501,40 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           `${agendaSuggestions.length} sugestão(ões) de pauta. Detalhes nas seções correspondentes.`;
       }
 
+      // Fallback determinístico para "Sinais dos KPIs": se a IA não preencheu
+      // nenhum bucket mas existem KPIs, gera parágrafos factuais por RAG
+      // nomeando os KPIs com currentValue vs targetValue. Garante que o card
+      // "Os sinais dos KPIs" nunca apareça vazio quando há dados.
+      const kpiAllEmpty =
+        !kpisPartial.kpiInsights.healthy &&
+        !kpisPartial.kpiInsights.atRisk &&
+        !kpisPartial.kpiInsights.critical;
+      if (kpiAllEmpty && kpisSummary.length > 0) {
+        const fmt = (v: unknown) =>
+          v === null || v === undefined || v === "" ? "s/ leitura" : String(v);
+        const lineFor = (k: { name?: string; currentValue?: unknown; targetValue?: unknown; unit?: string | null }) => {
+          const unit = k.unit ? ` ${k.unit}` : "";
+          return `${k.name ?? "KPI"} (${fmt(k.currentValue)}${unit} vs meta ${fmt(k.targetValue)}${unit})`;
+        };
+        const b = bucketKpisByRag(kpisSummary as Parameters<typeof bucketKpisByRag>[0]);
+        if (b.healthy.length > 0) {
+          kpisPartial.kpiInsights.healthy =
+            `KPIs em conformidade com a meta (${b.healthy.length}): ${b.healthy.slice(0, 6).map(lineFor).join("; ")}. ` +
+            `Análise narrativa automatizada não pôde ser gerada por instabilidade temporária da IA — números refletem leituras oficiais até ${monthLabelStr}.`;
+        }
+        const atRiskAll = [...b.atRisk, ...b.unknown];
+        if (atRiskAll.length > 0) {
+          kpisPartial.kpiInsights.atRisk =
+            `KPIs com atenção (${atRiskAll.length}): ${atRiskAll.slice(0, 6).map(lineFor).join("; ")}. ` +
+            `Análise narrativa automatizada não pôde ser gerada por instabilidade temporária da IA — recomenda-se revisar causas declaradas pelos líderes nas seções abaixo.`;
+        }
+        if (b.critical.length > 0) {
+          kpisPartial.kpiInsights.critical =
+            `KPIs em ponto crítico (${b.critical.length}): ${b.critical.slice(0, 6).map(lineFor).join("; ")}. ` +
+            `Análise narrativa automatizada não pôde ser gerada por instabilidade temporária da IA — priorizar discussão destes KPIs na próxima reunião executiva.`;
+        }
+      }
+
       const reportData: ReportResponse & { aiGenerationStatus?: string } = {
         monthRef: body.monthRef,
         monthNarrative: consolidation.monthNarrative,
