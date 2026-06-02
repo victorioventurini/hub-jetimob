@@ -3,10 +3,16 @@
 // ============================================================================
 
 import type {
+  AgendaSuggestionItem,
+  KpiIssue,
   KpiRow,
+  KpiToCreateSuggestion,
   KpiValueRow,
+  KrIssue,
   KrRow,
   MbrSessionRow,
+  MonthAnalysisSummary,
+  ProjectIssue,
   TeamCommitment,
   TeamMonthlyHighlight,
   TeamObjectiveRow,
