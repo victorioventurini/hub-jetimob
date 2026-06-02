@@ -14,6 +14,8 @@ import { TeamKrFormDialog } from './TeamKrFormDialog';
 import { CheckinDialog } from './CheckinDialog';
 import { TeamObjectiveFormDialog } from './TeamObjectiveFormDialog';
 import type { OkrStatus, OkrRagStatus, OkrDirection, OkrKrType } from '../types';
+import { calculateProgress } from '../utils/progressCalculation';
+
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -13,6 +13,9 @@ import { useBuScopedSupabase } from "@/integrations/supabase/useBuScopedSupabase
 import { useBu } from "@/contexts/BuContext";
 import { differenceInDays, parseISO } from "date-fns";
 import { queryKeys } from "@/lib/queryKeys";
+import { calculateProgress } from "../utils/progressCalculation";
+import type { OkrDirection } from "../types";
+
 
 // ============================================================
 // TYPES
@@ -165,11 +168,15 @@ export function useTeamPendingKrs(
         const isPending = daysSinceCheckin > PENDING_THRESHOLD_DAYS;
         const isAtRisk = kr.status === 'yellow' || kr.status === 'red';
 
-        // Calculate progress
-        const range = kr.target - kr.baseline;
-        const progress = range !== 0
-          ? Math.min(100, Math.max(0, ((kr.current_value - kr.baseline) / range) * 100))
-          : 0;
+        // Calculate progress via canon (normaliza unidade); clamp visual em 100%.
+        const progress = Math.min(100, calculateProgress(
+          Number(kr.baseline) || 0,
+          Number(kr.current_value) || 0,
+          Number(kr.target) || 0,
+          ((kr.direction as OkrDirection) || 'up'),
+          { unit: (kr as { unit?: string | null }).unit ?? null },
+        ));
+
 
         // Get owner info from batch lookup
         const owner = kr.owner_user_id ? ownerMap.get(kr.owner_user_id) : null;

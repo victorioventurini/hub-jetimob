@@ -10,6 +10,9 @@ import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { differenceInDays, parseISO } from 'date-fns';
 import type { AreaOkrSummary, CrossDependency } from '@/modules/okrs/types/wizard';
+import { calculateProgress } from '../utils/progressCalculation';
+import type { OkrDirection } from '../types';
+
 
 // ============================================================
 // PANORAMA HOOK
@@ -132,22 +135,16 @@ export function useManagersPanorama(cycleId: string | null | undefined) {
         const stats = areaStats.get(rootTeamId)!;
         stats.okrCount++;
 
-        // Calculate progress
-        const baseline = kr.baseline ?? 0;
-        const current = kr.current_value ?? 0;
-        const target = kr.target ?? 100;
-        const direction = kr.direction ?? 'up';
-
-        // Permitir progresso acima de 100% para superação de metas
-        let progress: number;
-        if (direction === 'up') {
-          progress = target === baseline ? (current >= target ? 100 : 0) 
-            : Math.max(0, ((current - baseline) / (target - baseline)) * 100);
-        } else {
-          progress = baseline === target ? (current <= target ? 100 : 0)
-            : Math.max(0, ((baseline - current) / (baseline - target)) * 100);
-        }
+        // Calculate progress via canon (normalização de unidade + sem clamp superior)
+        const progress = calculateProgress(
+          Number(kr.baseline) || 0,
+          Number(kr.current_value) || 0,
+          Number(kr.target) || 100,
+          ((kr.direction as OkrDirection) || 'up'),
+          { unit: (kr as { unit?: string | null }).unit ?? null },
+        );
         stats.progressSum += progress;
+
 
         // Count at-risk
         if (kr.status === 'yellow' || kr.status === 'red') {

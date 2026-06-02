@@ -13,6 +13,8 @@ import { OrgKrFormDialog } from './OrgKrFormDialog';
 import { OrgObjectiveFormDialog } from './OrgObjectiveFormDialog';
 import type { OkrStatus, OkrRagStatus, OkrDirection } from '../types';
 import { getEffectiveKrRagStatus } from '../utils/effectiveStatus';
+import { calculateProgress } from '../utils/progressCalculation';
+
 import {
   DropdownMenu,
   DropdownMenuContent,

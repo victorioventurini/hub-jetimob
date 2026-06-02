@@ -9,6 +9,9 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { differenceInDays, parseISO } from 'date-fns';
+import { calculateProgress } from '../utils/progressCalculation';
+import type { OkrDirection } from '../types';
+
 
 // ============================================================
 // TYPES
@@ -121,7 +124,8 @@ export function useTeamPreviousCycleAnalysis(
       if (objectiveIds.length > 0) {
         const { data: krsData, error: krsError } = await supabase
           .from('okr_team_key_results')
-          .select('id, title, baseline, current_value, target, status, last_checkin_at, team_objective_id')
+          .select('id, title, baseline, current_value, target, direction, unit, status, last_checkin_at, team_objective_id')
+
           .in('team_objective_id', objectiveIds)
           .is('deleted_at', null)
           .is('cancelled_at', null);
@@ -130,22 +134,23 @@ export function useTeamPreviousCycleAnalysis(
         krs = krsData || [];
       }
 
+      // Helper local — usa o canon (normaliza unidade, sem clamp superior).
+      const krProgress = (kr: typeof krs[number]) => calculateProgress(
+        Number(kr.baseline) || 0,
+        Number(kr.current_value) || 0,
+        Number(kr.target) || 0,
+        ((kr.direction as OkrDirection) || 'up'),
+        { unit: (kr as { unit?: string | null }).unit ?? null },
+      );
+
       // Calculate objectives with progress
       const objectivesWithProgress: PreviousCycleObjective[] = (objectives || []).map(obj => {
         const objKrs = krs.filter(kr => kr.team_objective_id === obj.id);
-        const completedKrs = objKrs.filter(kr => {
-          const range = kr.target - kr.baseline;
-          const progress = range !== 0 ? ((kr.current_value - kr.baseline) / range) * 100 : 0;
-          return progress >= 100;
-        });
-        
+        const completedKrs = objKrs.filter(kr => krProgress(kr) >= 100);
+
         const avgProgress = objKrs.length > 0
           // Permitir progresso acima de 100% para superação de metas
-          ? objKrs.reduce((sum, kr) => {
-              const range = kr.target - kr.baseline;
-              const progress = range !== 0 ? ((kr.current_value - kr.baseline) / range) * 100 : 0;
-              return sum + Math.max(0, progress);
-            }, 0) / objKrs.length
+          ? objKrs.reduce((sum, kr) => sum + krProgress(kr), 0) / objKrs.length
           : 0;
 
         return {
@@ -157,6 +162,7 @@ export function useTeamPreviousCycleAnalysis(
           krsCompleted: completedKrs.length,
         };
       });
+
 
       // Calculate average completion
       const avgCompletion = objectivesWithProgress.length > 0

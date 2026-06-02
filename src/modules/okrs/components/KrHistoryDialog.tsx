@@ -24,6 +24,8 @@ import { KrCheckinsTable } from "./KrCheckinsTable";
 import { formatValueWithUnit } from "@/shared/constants/units";
 import { cn } from "@/lib/utils";
 import type { OkrDirection } from "../types";
+import { calculateProgress } from "../utils/progressCalculation";
+
 
 interface KrData {
   id: string;

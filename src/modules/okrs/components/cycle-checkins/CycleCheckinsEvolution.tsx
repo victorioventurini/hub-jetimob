@@ -17,6 +17,9 @@ import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { type CheckinFeedItem, useKrWithHistory } from "../../hooks";
 import { KrEvolutionChart } from '../KrEvolutionChart';
 import { KrHistoryDialog } from '../KrHistoryDialog';
+import { calculateProgress } from '../../utils/progressCalculation';
+import type { OkrDirection } from '../../types';
+
 
 interface CycleCheckinsEvolutionProps {
   checkins: CheckinFeedItem[];
@@ -175,10 +178,9 @@ function SingleKrEvolutionView({ krId, krData }: SingleKrEvolutionViewProps) {
   const direction = krWithHistory?.direction ?? 'up';
   const currentValue = krWithHistory?.currentValue ?? krData.latest_value;
   
-  // Calcular progresso - permitir acima de 100% para superação de metas
-  const progress = target !== baseline 
-    ? Math.max(0, ((currentValue - baseline) / (target - baseline)) * 100)
-    : 0;
+  // Calcular progresso via canon — permite acima de 100% para superação de metas.
+  const progress = calculateProgress(baseline, currentValue, target, direction as OkrDirection, { unit });
+
   
   return (
     <Card>
@@ -251,10 +253,9 @@ function MiniKrEvolutionCard({ krData, onClick }: MiniKrEvolutionCardProps) {
   const direction = krWithHistory?.direction ?? 'up';
   const currentValue = krWithHistory?.currentValue ?? krData.latest_value;
   
-  // Calcular progresso - permitir acima de 100% para superação de metas
-  const progress = target !== baseline 
-    ? Math.max(0, ((currentValue - baseline) / (target - baseline)) * 100)
-    : 0;
+  // Calcular progresso via canon — permite acima de 100% para superação de metas.
+  const progress = calculateProgress(baseline, currentValue, target, direction as OkrDirection, { unit });
+
   
   return (
     <Card 
