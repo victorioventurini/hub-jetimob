@@ -6,6 +6,7 @@ const SCOPES = [
   { value: "team", label: "Times" },
   { value: "area", label: "Áreas" },
   { value: "user", label: "Pessoas" },
+  { value: "project", label: "Projetos" },
 ];
 
 interface Props {
