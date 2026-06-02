@@ -455,35 +455,83 @@ export function MbrPanoramaStep({
           )}
 
           {/* ── Preparação dos Times (Pré-MBR) ── */}
-          {mbrPreSubmittedCount > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                Preparação dos Times (Pré-MBR)
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{mbrPreSubmittedCount} times submeteram</Badge>
-                {mbrPreNeedsDecisionCount > 0 && (
-                  <Badge variant="outline">{mbrPreNeedsDecisionCount} pedem decisão</Badge>
+          {mbrPreSubmittedCount > 0 && (() => {
+            const needsDecisionItems = mbrPreSurfacedItems.filter((i) => i.kind === 'needs_decision');
+            const crossDepItems = mbrPreSurfacedItems.filter((i) => i.kind === 'cross_dependency');
+            const teamLabel = (teamId: string) =>
+              teamNamesById?.[teamId] ?? `Time ${teamId.slice(0, 6)}`;
+            return (
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Preparação dos Times (Pré-MBR)
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">{mbrPreSubmittedCount} times submeteram</Badge>
+                  {mbrPreNeedsDecisionCount > 0 && (
+                    <Badge variant="outline">{mbrPreNeedsDecisionCount} pedem decisão</Badge>
+                  )}
+                  {mbrPreCrossDepCount > 0 && (
+                    <Badge variant="outline">{mbrPreCrossDepCount} dependências cross-team</Badge>
+                  )}
+                  {mbrPreKpiJustifCount > 0 && (
+                    <Badge variant="outline">{mbrPreKpiJustifCount} justificativas de KPI</Badge>
+                  )}
+                  {mbrPreKpiUpdatedCount > 0 && (
+                    <Badge variant="outline">{mbrPreKpiUpdatedCount} KPIs atualizados</Badge>
+                  )}
+                  {mbrPreProjectJustifCount > 0 && (
+                    <Badge variant="outline">{mbrPreProjectJustifCount} justificativas de projeto</Badge>
+                  )}
+                  {mbrPreAgendaSuggestionCount > 0 && (
+                    <Badge variant="outline">{mbrPreAgendaSuggestionCount} sugestões de pauta</Badge>
+                  )}
+                </div>
+
+                {needsDecisionItems.length > 0 && (
+                  <Card className="border-status-amber/30">
+                    <CardContent className="p-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-status-amber" />
+                        Times que pedem decisão
+                      </p>
+                      <ul className="space-y-2">
+                        {needsDecisionItems.map((item) => (
+                          <li key={item.key} className="flex gap-2 text-sm">
+                            <Badge variant="secondary" className="shrink-0 h-fit">
+                              {teamLabel(item.teamId)}
+                            </Badge>
+                            <span className="text-foreground/90 whitespace-pre-wrap">{item.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 )}
-                {mbrPreCrossDepCount > 0 && (
-                  <Badge variant="outline">{mbrPreCrossDepCount} dependências cross-team</Badge>
-                )}
-                {mbrPreKpiJustifCount > 0 && (
-                  <Badge variant="outline">{mbrPreKpiJustifCount} justificativas de KPI</Badge>
-                )}
-                {mbrPreKpiUpdatedCount > 0 && (
-                  <Badge variant="outline">{mbrPreKpiUpdatedCount} KPIs atualizados</Badge>
-                )}
-                {mbrPreProjectJustifCount > 0 && (
-                  <Badge variant="outline">{mbrPreProjectJustifCount} justificativas de projeto</Badge>
-                )}
-                {mbrPreAgendaSuggestionCount > 0 && (
-                  <Badge variant="outline">{mbrPreAgendaSuggestionCount} sugestões de pauta</Badge>
+
+                {crossDepItems.length > 0 && (
+                  <Card>
+                    <CardContent className="p-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-primary" />
+                        Dependências cross-team
+                      </p>
+                      <ul className="space-y-2">
+                        {crossDepItems.map((item) => (
+                          <li key={item.key} className="flex gap-2 text-sm">
+                            <Badge variant="secondary" className="shrink-0 h-fit">
+                              {teamLabel(item.teamId)}
+                            </Badge>
+                            <span className="text-foreground/90 whitespace-pre-wrap">{item.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
-            </div>
-          )}
+            );
+          })()}
           {/* ── Bloco 1: Scorecard do mês ── */}
           {scorecardMetrics && (
             <div className="space-y-2">
