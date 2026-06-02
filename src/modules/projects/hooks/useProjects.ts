@@ -177,6 +177,11 @@ export function useProjects(filters: ProjectFilters = {}) {
         results = results.filter((p) => p.krs.length === 0);
       }
 
+      // Health filter (computed client-side via computeHealth above)
+      if (filters.health && filters.health !== 'all') {
+        results = results.filter((p) => p.health === filters.health);
+      }
+
       return results;
     },
     enabled: isReady && !!supabase && !!buId,
