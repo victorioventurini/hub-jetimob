@@ -454,7 +454,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       };
       let consolidationFailed = false;
       try {
-        consolidation = await consolidateReport(llmConfig, {
+        consolidation = await consolidateReport(sc, PREFERRED_MODEL, {
           cycleName: cycle.name,
           monthLabel: monthLabelStr,
           overallAchievement,
