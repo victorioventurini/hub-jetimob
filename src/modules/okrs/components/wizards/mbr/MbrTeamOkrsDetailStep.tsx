@@ -5,13 +5,14 @@
  * Navegação interna prev/next via currentTeamIndex — tudo dentro do wizard.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
@@ -88,6 +89,28 @@ export function MbrTeamOkrsDetailStep({
   // Clamp index to valid range
   const safeIndex = Math.max(0, Math.min(currentTeamIndex, totalTeams - 1));
   const currentTeam = teamsWithOkrs[safeIndex] ?? null;
+
+  // Toggle: hide/show on-track OKRs (default: hidden — focus on risk/off-track)
+  const [showOnTrack, setShowOnTrack] = useState(false);
+
+  // Objetivo "on track" = todos os KRs verdes/not_started e nenhum em risco
+  const isObjectiveOnTrack = useCallback((obj: { krsAtRisk: number; keyResults: Array<{ status?: string | null }> }) => {
+    if (obj.krsAtRisk > 0) return false;
+    return obj.keyResults.every((kr) => {
+      const rag = toRagStatus(kr.status ?? 'not_started');
+      return rag === 'green' || rag === 'not_started';
+    });
+  }, []);
+
+  const visibleObjectives = useMemo(() => {
+    if (!currentTeam) return [];
+    if (showOnTrack) return currentTeam.objectives;
+    return currentTeam.objectives.filter((obj) => !isObjectiveOnTrack(obj));
+  }, [currentTeam, showOnTrack, isObjectiveOnTrack]);
+
+  const hiddenOnTrackCount = currentTeam
+    ? currentTeam.objectives.length - (showOnTrack ? currentTeam.objectives.length : visibleObjectives.length)
+    : 0;
 
   // Resolve nomes de projetos/marcos do time atual (BU-scoped, cache compartilhado com Pré-MBR)
   const { projects: teamProjects } = useMbrPreTeamProjects(currentTeam?.teamId ?? null, referenceMonth);
@@ -185,30 +208,57 @@ export function MbrTeamOkrsDetailStep({
               {reviewedCount}/{totalTeams} revisados
             </span>
 
-            {/* Reviewed checkbox for current team */}
-            {currentTeam && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Checkbox
-                  id={`reviewed-${currentTeam.teamId}`}
-                  checked={currentTeam.reviewed}
-                  onCheckedChange={(checked) =>
-                    handleToggleReviewed(currentTeam.teamId, checked === true)
-                  }
-                />
-                <Label
-                  htmlFor={`reviewed-${currentTeam.teamId}`}
-                  className="text-xs cursor-pointer flex items-center gap-1 min-w-0"
-                >
-                  <CheckCircle2
-                    className={cn(
-                      'h-3.5 w-3.5 shrink-0',
-                      currentTeam.reviewed ? 'text-status-green' : 'text-muted-foreground'
+            <div className="flex items-center gap-4 min-w-0 flex-wrap">
+              {/* Toggle: show on-track OKRs */}
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {showOnTrack ? (
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  )}
+                  <Label
+                    htmlFor="toggle-on-track"
+                    className="text-xs cursor-pointer min-w-0 truncate"
+                  >
+                    Mostrar OKRs on track
+                    {!showOnTrack && hiddenOnTrackCount > 0 && (
+                      <span className="text-muted-foreground ml-1">({hiddenOnTrackCount} ocultos)</span>
                     )}
+                  </Label>
+                  <Switch
+                    id="toggle-on-track"
+                    checked={showOnTrack}
+                    onCheckedChange={setShowOnTrack}
                   />
-                  <span className="truncate">Marcar como revisado</span>
-                </Label>
-              </div>
-            )}
+                </div>
+              )}
+
+              {/* Reviewed checkbox for current team */}
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Checkbox
+                    id={`reviewed-${currentTeam.teamId}`}
+                    checked={currentTeam.reviewed}
+                    onCheckedChange={(checked) =>
+                      handleToggleReviewed(currentTeam.teamId, checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor={`reviewed-${currentTeam.teamId}`}
+                    className="text-xs cursor-pointer flex items-center gap-1 min-w-0"
+                  >
+                    <CheckCircle2
+                      className={cn(
+                        'h-3.5 w-3.5 shrink-0',
+                        currentTeam.reviewed ? 'text-status-green' : 'text-muted-foreground'
+                      )}
+                    />
+                    <span className="truncate">Marcar como revisado</span>
+                  </Label>
+                </div>
+              )}
+            </div>
           </div>
         </>
       }
@@ -511,7 +561,19 @@ export function MbrTeamOkrsDetailStep({
             for (const f of sub?.krFinalStates ?? []) {
               if (f?.krId) krFinalStateMap.set(f.krId, { state: f.state, finalProgress: f.finalProgress, paceStatus: f.paceStatus });
             }
-            return currentTeam.objectives.map((objective) => (
+            if (visibleObjectives.length === 0 && currentTeam.objectives.length > 0) {
+              return (
+                <Card className="border-dashed">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-status-green shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Todos os {currentTeam.objectives.length} OKRs deste time estão on track. Ative "Mostrar OKRs on track" para visualizá-los.
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            }
+            return visibleObjectives.map((objective) => (
             <Card
               key={objective.objectiveId}
               className={cn(
