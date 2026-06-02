@@ -390,7 +390,11 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     }
 
 
-    const llmConfig = await resolveLLMConfig(sc, "google/gemini-3.5-flash");
+    // Modelo preferido — `llmCompleteWithFallback` (chamado dentro de cada
+    // analyzer) tenta automaticamente outros provedores/modelos em caso de
+    // 429/402/503 no Gateway.
+    const PREFERRED_MODEL = "google/gemini-3.5-flash";
+    const llmConfig = await resolveLLMConfig(sc, PREFERRED_MODEL);
     if (!llmConfig) {
       console.error(`[${requestId}] AI service not configured`);
       return errorResponse("AI service not configured", 500, {
@@ -416,28 +420,28 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       let decisionsPartial: DecisionsPartial = { decisionsNeeded: [] };
 
       try {
-        projectsPartial = await analyzeProjects(llmConfig, projectIssues, requestId);
+        projectsPartial = await analyzeProjects(sc, PREFERRED_MODEL, projectIssues, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeProjects rejected:`, (e as Error)?.message);
       }
       await pause();
 
       try {
-        krIssuesPartial = await analyzeKrIssues(llmConfig, krIssues, orgObjectivesSummary, requestId);
+        krIssuesPartial = await analyzeKrIssues(sc, PREFERRED_MODEL, krIssues, orgObjectivesSummary, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeKrIssues rejected:`, (e as Error)?.message);
       }
       await pause();
 
       try {
-        kpisPartial = await analyzeKpis(llmConfig, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId);
+        kpisPartial = await analyzeKpis(sc, PREFERRED_MODEL, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeKpis rejected:`, (e as Error)?.message);
       }
       await pause();
 
       try {
-        decisionsPartial = await analyzeDecisions(llmConfig, pendingDecisions, agendaSuggestions, requestId);
+        decisionsPartial = await analyzeDecisions(sc, PREFERRED_MODEL, pendingDecisions, agendaSuggestions, requestId);
       } catch (e) {
         console.warn(`[${requestId}] analyzeDecisions rejected:`, (e as Error)?.message);
       }
@@ -450,7 +454,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       };
       let consolidationFailed = false;
       try {
-        consolidation = await consolidateReport(llmConfig, {
+        consolidation = await consolidateReport(sc, PREFERRED_MODEL, {
           cycleName: cycle.name,
           monthLabel: monthLabelStr,
           overallAchievement,

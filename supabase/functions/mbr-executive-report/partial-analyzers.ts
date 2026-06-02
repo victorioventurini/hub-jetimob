@@ -5,7 +5,8 @@
 // Failures degrade gracefully to neutral text so the final report still renders.
 // ============================================================================
 
-import { llmComplete, type LLMConfig, type LLMMessage } from "../_shared/llm-client.ts";
+import { llmCompleteWithFallback, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
 
 const PARTIAL_MAX_TOKENS = 3500;
@@ -26,7 +27,8 @@ Estilo OBRIGATÓRIO:
 Responda APENAS com JSON válido.`;
 
 async function callPartial<T>(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   userPrompt: string,
   fallback: T,
   requestId: string,
@@ -37,8 +39,9 @@ async function callPartial<T>(
     { role: "user", content: userPrompt },
   ];
   try {
-    const response = await llmComplete(
-      { ...llmConfig, maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE },
+    const response = await llmCompleteWithFallback(
+      sc,
+      preferredModel,
       messages,
       { maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE, timeoutMs: 90_000 },
     );
@@ -66,7 +69,8 @@ async function callPartial<T>(
 export interface ProjectsPartial { projectsAnalysis: string }
 
 export async function analyzeProjects(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   projectIssues: unknown,
   requestId: string,
 ): Promise<ProjectsPartial> {
@@ -92,7 +96,8 @@ Gere JSON:
 }`;
 
   return await callPartial<ProjectsPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     { projectsAnalysis: "" },
     requestId,
@@ -106,7 +111,8 @@ Gere JSON:
 export interface KrIssuesPartial { krIssuesAnalysis: string }
 
 export async function analyzeKrIssues(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   krIssues: unknown,
   orgObjectivesSummary: unknown,
   requestId: string,
@@ -136,7 +142,8 @@ Gere JSON:
 }`;
 
   return await callPartial<KrIssuesPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     { krIssuesAnalysis: "" },
     requestId,
@@ -178,7 +185,8 @@ export function bucketKpisByRag(summary: KpiSummaryItem[]) {
 }
 
 export async function analyzeKpis(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   kpisSummary: unknown,
   kpiIssues: unknown,
   kpisToCreate: unknown,
@@ -239,7 +247,8 @@ Gere APENAS este JSON:
   const fallback: KpiInsightsPartial = { kpiInsights: { healthy: "", atRisk: "", critical: "" } };
 
   let result = await callPartial<KpiInsightsPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     fallback,
     requestId,
@@ -257,7 +266,8 @@ Gere APENAS este JSON:
     console.warn(`[${requestId}] [analyzeKpis] All buckets empty with data present — retrying once`);
     await new Promise((r) => setTimeout(r, 800));
     result = await callPartial<KpiInsightsPartial>(
-      llmConfig,
+      sc,
+      preferredModel,
       prompt,
       fallback,
       requestId,
@@ -274,7 +284,8 @@ Gere APENAS este JSON:
 export interface DecisionsPartial { decisionsNeeded: string[] }
 
 export async function analyzeDecisions(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   pendingDecisions: unknown,
   agendaSuggestions: unknown,
   requestId: string,
@@ -302,7 +313,8 @@ Gere JSON:
 }`;
 
   const result = await callPartial<DecisionsPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     { decisionsNeeded: [] },
     requestId,
@@ -350,7 +362,8 @@ Use SEMPRE os números oficiais informados — não recalcule.
 Responda APENAS com JSON válido.`;
 
 export async function consolidateReport(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   inputs: ConsolidationInputs,
   requestId: string,
 ): Promise<ConsolidationPartial> {
@@ -397,8 +410,9 @@ Gere JSON com exatamente esta estrutura. CADA campo deve ser denso, analítico e
     { role: "user", content: prompt },
   ];
 
-  const response = await llmComplete(
-    { ...llmConfig, maxTokens: 5000, temperature: 0.45 },
+  const response = await llmCompleteWithFallback(
+    sc,
+    preferredModel,
     messages,
     { maxTokens: 5000, temperature: 0.45, timeoutMs: 120_000 },
   );
