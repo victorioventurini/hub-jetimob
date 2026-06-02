@@ -50,6 +50,7 @@ import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSectio
 import { CriticalKpiComparison } from '../components/qbr-report/CriticalKpiComparison';
 import { OrgOkrsReportSection } from '../components/qbr-report/OrgOkrsReportSection';
 import { AnalyzedTeamsHeader } from '../components/shared/AnalyzedTeamsHeader';
+import { useAuth } from '@/hooks/useAuth';
 
 // ============================================================
 // LOADING MESSAGES
@@ -167,6 +168,7 @@ function ReportDisplay({
   onRegenerate: () => void;
   isRegenerating: boolean;
 }) {
+  const { isAdmin } = useAuth();
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -201,20 +203,22 @@ function ReportDisplay({
                 <Copy className="h-3.5 w-3.5" />
                 Copiar link
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRegenerate}
-                disabled={isRegenerating}
-                className="gap-1.5"
-              >
-                {isRegenerating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3.5 w-3.5" />
-                )}
-                Regenerar
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onRegenerate}
+                  disabled={isRegenerating}
+                  className="gap-1.5"
+                >
+                  {isRegenerating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Regenerar
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
