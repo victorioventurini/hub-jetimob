@@ -116,10 +116,13 @@ export function useTeamPreviousCycleAnalysis(
         baseline: number;
         current_value: number;
         target: number;
+        direction: string | null;
+        unit: string | null;
         status: string;
         last_checkin_at: string | null;
         team_objective_id: string;
       }> = [];
+
       
       if (objectiveIds.length > 0) {
         const { data: krsData, error: krsError } = await supabase
