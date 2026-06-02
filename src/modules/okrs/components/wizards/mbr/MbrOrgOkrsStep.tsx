@@ -52,8 +52,8 @@ export function MbrOrgOkrsStep({
   onBack,
   showInlineDecisionInput = true,
 }: MbrOrgOkrsStepProps) {
-  const [showTeamKrs, setShowTeamKrs] = useState(true);
   const total = orgOkrSnapshots.length;
+
 
   const [currentObjectiveIndex, setCurrentObjectiveIndex] = useState(0);
   useEffect(() => {
