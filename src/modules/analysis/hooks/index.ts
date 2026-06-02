@@ -14,6 +14,7 @@ export { useAnalysisDecisions } from "./useAnalysisDecisions";
 export { useAnalysisFeedback } from "./useAnalysisFeedback";
 export { useAnalysisHistory } from "./useAnalysisHistory";
 export { useAnalysisReport } from "./useAnalysisReport";
+export { useDeleteAnalysisReport } from "./useDeleteAnalysisReport";
 export { useAnalysisShare } from "./useAnalysisShare";
 export {
   useCreateTemplate,
