@@ -554,6 +554,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         monthAnalyses,
         overallAchievement,
         analyzedTeams,
+        kpisSummary,
         aiGenerationStatus,
       };
 
