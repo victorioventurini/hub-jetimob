@@ -487,6 +487,7 @@ export default function MbrPage() {
             onAddSuggestedDecision={handleAddSuggestedDecision}
             teamNamesById={teamNamesByIdMemo}
             mbrPreSurfacedItems={mbrPreSurfacedItems}
+            mbrPreSubmissionsByTeam={mbrPreByTeam}
             topSlot={
               <>
                 <div className="flex items-center gap-3 flex-wrap rounded-lg border border-border/60 bg-card p-3">

@@ -93,6 +93,16 @@ export interface MbrPanoramaStepProps {
     kind: 'needs_decision' | 'cross_dependency';
     text: string;
   }>;
+  /**
+   * Submissões Pré-MBR por time. Usado para renderizar painel por time com
+   * o que o líder preencheu (Acelerou / Travou / Decisão / Foco do mês).
+   */
+  mbrPreSubmissionsByTeam?: Record<string, {
+    teamId: string;
+    submittedByName?: string;
+    highlights?: { accelerated?: string; blocked?: string; needsDecision?: string };
+    nextSteps?: { focus?: string };
+  }>;
 }
 
 interface KpiGroup {
@@ -368,6 +378,7 @@ export function MbrPanoramaStep({
   onAddSuggestedDecision,
   teamNamesById,
   mbrPreSurfacedItems = [],
+  mbrPreSubmissionsByTeam = {},
 }: MbrPanoramaStepProps) {
   const [showTeamKrs, setShowTeamKrs] = useState(true);
   // Group KPIs by scope
@@ -487,6 +498,88 @@ export function MbrPanoramaStep({
                     <Badge variant="outline">{mbrPreAgendaSuggestionCount} sugestões de pauta</Badge>
                   )}
                 </div>
+
+                {/* Submissões por time — o que cada líder preencheu */}
+                {(() => {
+                  const teamPanels = Object.values(mbrPreSubmissionsByTeam)
+                    .map((sub) => {
+                      const accelerated = sub.highlights?.accelerated?.trim() ?? '';
+                      const blocked = sub.highlights?.blocked?.trim() ?? '';
+                      const needsDecision = sub.highlights?.needsDecision?.trim() ?? '';
+                      const focus = sub.nextSteps?.focus?.trim() ?? '';
+                      return { sub, accelerated, blocked, needsDecision, focus };
+                    })
+                    .filter((p) => p.accelerated || p.blocked || p.needsDecision || p.focus)
+                    .sort((a, b) => teamLabel(a.sub.teamId).localeCompare(teamLabel(b.sub.teamId)));
+
+                  if (teamPanels.length === 0) return null;
+
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Submissões por time
+                      </p>
+                      <div className="grid gap-2">
+                        {teamPanels.map(({ sub, accelerated, blocked, needsDecision, focus }) => (
+                          <Card key={sub.teamId}>
+                            <CardContent className="p-3 space-y-2.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="secondary" className="h-fit">
+                                  {teamLabel(sub.teamId)}
+                                </Badge>
+                                {sub.submittedByName && (
+                                  <span className="text-xs text-muted-foreground">
+                                    enviado por {sub.submittedByName}
+                                  </span>
+                                )}
+                              </div>
+                              <dl className="space-y-1.5 text-sm">
+                                {accelerated && (
+                                  <div className="flex gap-2">
+                                    <dt className="flex items-center gap-1 shrink-0 font-medium text-status-green">
+                                      <CheckCircle2 className="h-3.5 w-3.5" />
+                                      Acelerou:
+                                    </dt>
+                                    <dd className="text-foreground/90 whitespace-pre-wrap">{accelerated}</dd>
+                                  </div>
+                                )}
+                                {blocked && (
+                                  <div className="flex gap-2">
+                                    <dt className="flex items-center gap-1 shrink-0 font-medium text-status-red">
+                                      <XCircle className="h-3.5 w-3.5" />
+                                      Travou:
+                                    </dt>
+                                    <dd className="text-foreground/90 whitespace-pre-wrap">{blocked}</dd>
+                                  </div>
+                                )}
+                                {needsDecision && (
+                                  <div className="flex gap-2">
+                                    <dt className="flex items-center gap-1 shrink-0 font-medium text-status-amber">
+                                      <AlertTriangle className="h-3.5 w-3.5" />
+                                      Precisa de decisão:
+                                    </dt>
+                                    <dd className="text-foreground/90 whitespace-pre-wrap">{needsDecision}</dd>
+                                  </div>
+                                )}
+                                {focus && (
+                                  <div className="flex gap-2">
+                                    <dt className="flex items-center gap-1 shrink-0 font-medium text-primary">
+                                      <Target className="h-3.5 w-3.5" />
+                                      Foco do mês:
+                                    </dt>
+                                    <dd className="text-foreground/90 whitespace-pre-wrap">{focus}</dd>
+                                  </div>
+                                )}
+                              </dl>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+
 
                 {needsDecisionItems.length > 0 && (
                   <Card className="border-status-amber/30">
