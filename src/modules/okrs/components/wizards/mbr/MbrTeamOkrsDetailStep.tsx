@@ -208,30 +208,57 @@ export function MbrTeamOkrsDetailStep({
               {reviewedCount}/{totalTeams} revisados
             </span>
 
-            {/* Reviewed checkbox for current team */}
-            {currentTeam && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Checkbox
-                  id={`reviewed-${currentTeam.teamId}`}
-                  checked={currentTeam.reviewed}
-                  onCheckedChange={(checked) =>
-                    handleToggleReviewed(currentTeam.teamId, checked === true)
-                  }
-                />
-                <Label
-                  htmlFor={`reviewed-${currentTeam.teamId}`}
-                  className="text-xs cursor-pointer flex items-center gap-1 min-w-0"
-                >
-                  <CheckCircle2
-                    className={cn(
-                      'h-3.5 w-3.5 shrink-0',
-                      currentTeam.reviewed ? 'text-status-green' : 'text-muted-foreground'
+            <div className="flex items-center gap-4 min-w-0 flex-wrap">
+              {/* Toggle: show on-track OKRs */}
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {showOnTrack ? (
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  )}
+                  <Label
+                    htmlFor="toggle-on-track"
+                    className="text-xs cursor-pointer min-w-0 truncate"
+                  >
+                    Mostrar OKRs on track
+                    {!showOnTrack && hiddenOnTrackCount > 0 && (
+                      <span className="text-muted-foreground ml-1">({hiddenOnTrackCount} ocultos)</span>
                     )}
+                  </Label>
+                  <Switch
+                    id="toggle-on-track"
+                    checked={showOnTrack}
+                    onCheckedChange={setShowOnTrack}
                   />
-                  <span className="truncate">Marcar como revisado</span>
-                </Label>
-              </div>
-            )}
+                </div>
+              )}
+
+              {/* Reviewed checkbox for current team */}
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Checkbox
+                    id={`reviewed-${currentTeam.teamId}`}
+                    checked={currentTeam.reviewed}
+                    onCheckedChange={(checked) =>
+                      handleToggleReviewed(currentTeam.teamId, checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor={`reviewed-${currentTeam.teamId}`}
+                    className="text-xs cursor-pointer flex items-center gap-1 min-w-0"
+                  >
+                    <CheckCircle2
+                      className={cn(
+                        'h-3.5 w-3.5 shrink-0',
+                        currentTeam.reviewed ? 'text-status-green' : 'text-muted-foreground'
+                      )}
+                    />
+                    <span className="truncate">Marcar como revisado</span>
+                  </Label>
+                </div>
+              )}
+            </div>
           </div>
         </>
       }
