@@ -391,6 +391,49 @@ async function enrichProjectIssueNames(
   }
 }
 
+/**
+ * Enriquece krIssues com o título do KR. Primeiro tenta resolver a partir
+ * dos team_objectives já carregados; KRs ausentes (ex.: removidos do escopo
+ * atual) são buscados em batch em `okr_team_key_results`.
+ */
+async function enrichKrIssueTitles(
+  // deno-lint-ignore no-explicit-any
+  sc: any,
+  issues: import("./types.ts").KrIssue[],
+  teamObjList: import("./types.ts").TeamObjectiveRow[],
+): Promise<void> {
+  if (issues.length === 0) return;
+
+  const titleById = new Map<string, string>();
+  for (const obj of teamObjList) {
+    for (const kr of obj.key_results || []) {
+      if (kr.id && kr.title) titleById.set(kr.id, kr.title);
+    }
+  }
+
+  const missing = Array.from(
+    new Set(
+      issues
+        .map((i) => i.krId)
+        .filter((id) => id && !titleById.has(id)),
+    ),
+  );
+  if (missing.length > 0) {
+    const { data } = await sc
+      .from("okr_team_key_results")
+      .select("id, title")
+      .in("id", missing);
+    for (const r of (data || []) as Array<{ id: string; title: string }>) {
+      if (r?.id && r.title) titleById.set(r.id, r.title);
+    }
+  }
+
+  for (const it of issues) {
+    const t = titleById.get(it.krId);
+    if (t) it.title = t;
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
