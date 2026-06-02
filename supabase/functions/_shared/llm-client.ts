@@ -41,6 +41,7 @@ export interface ToolCall {
 export interface LLMResponse {
   content: string | null;
   toolCalls: ToolCall[] | null;
+  modelUsed?: string;
   usage: {
     promptTokens: number;
     completionTokens: number;
@@ -448,6 +449,7 @@ export async function llmComplete(
   const result: LLMResponse = {
     content: data.choices?.[0]?.message?.content ?? null,
     toolCalls: data.choices?.[0]?.message?.tool_calls ?? null,
+    modelUsed: config.model,
     usage: data.usage
       ? {
           promptTokens: data.usage.prompt_tokens ?? 0,
