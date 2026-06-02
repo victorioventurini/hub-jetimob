@@ -26,9 +26,15 @@ import { loadCycle, loadReportData } from "./data-loader.ts";
 import {
   buildKpiSummary,
   buildTeamHealthSummary,
+  extractAgendaSuggestions,
   extractDecisions,
+  extractKpiIssues,
+  extractKpisToCreate,
+  extractKrIssues,
   extractKrSummary,
+  extractMonthAnalyses,
   extractMonthlyHighlights,
+  extractProjectIssues,
   extractTeamCommitments,
   filterSessionsByMonth,
 } from "./extractors.ts";
@@ -134,9 +140,15 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const teamHighlights = extractMonthlyHighlights(monthMbrPre, teamsMap);
     const pendingDecisions = extractDecisions([...monthMbrPre, ...monthMbr]);
     const orgObjectivesSummary = extractKrSummary((orgObjectives || []) as OrgObjectiveRow[]);
+    const projectIssues = extractProjectIssues(monthMbrPre, teamsMap);
+    const krIssues = extractKrIssues(monthMbrPre, teamsMap);
+    const kpiIssues = extractKpiIssues(monthMbrPre, teamsMap);
+    const kpisToCreate = extractKpisToCreate(monthMbrPre, teamsMap);
+    const agendaSuggestions = extractAgendaSuggestions(monthMbrPre, teamsMap);
+    const monthAnalyses = extractMonthAnalyses(monthMbrPre, teamsMap);
 
     console.log(
-      `[${requestId}] Prompt data: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, commitments=${teamCommitments.length}, highlights=${teamHighlights.length}, decisions=${pendingDecisions.length}`,
+      `[${requestId}] Prompt data: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, commitments=${teamCommitments.length}, highlights=${teamHighlights.length}, decisions=${pendingDecisions.length}, projects=${projectIssues.length}, krIssues=${krIssues.length}, kpiIssues=${kpiIssues.length}, kpisToCreate=${kpisToCreate.length}, agenda=${agendaSuggestions.length}, monthAnalyses=${monthAnalyses.length}`,
     );
 
     if (monthMbrPre.length === 0) {
@@ -156,7 +168,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       });
     }
 
-    llmConfig.maxTokens = 2000;
+    llmConfig.maxTokens = 2400;
     llmConfig.temperature = 0.4;
 
     const messages: LLMMessage[] = [
@@ -172,13 +184,19 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           teamCommitments,
           pendingDecisions,
           orgObjectivesSummary,
+          projectIssues,
+          krIssues,
+          kpiIssues,
+          kpisToCreate,
+          agendaSuggestions,
+          monthAnalyses,
         }),
       },
     ];
 
     try {
       const response = await llmComplete(llmConfig, messages, {
-        maxTokens: 2000,
+        maxTokens: 2400,
         temperature: 0.4,
       });
 
@@ -206,6 +224,15 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           : [],
         teamCommitments,
         teamHighlights,
+        projectsAnalysis: parsed.projectsAnalysis || "",
+        krIssuesAnalysis: parsed.krIssuesAnalysis || "",
+        leaderSignals: parsed.leaderSignals || "",
+        projectIssues,
+        krIssues,
+        kpiIssues,
+        kpisToCreate,
+        agendaSuggestions,
+        monthAnalyses,
       };
 
       console.log(`[${requestId}] MBR executive report generated successfully`);

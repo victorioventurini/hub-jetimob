@@ -60,11 +60,60 @@ export interface TeamMonthlyHighlight {
   needsDecision: string;
 }
 
+export interface ProjectIssue {
+  teamName: string;
+  /** 'project' = atraso/risco no projeto inteiro; 'milestone' = um marco. */
+  kind: 'project' | 'milestone';
+  refId: string;
+  justification: string;
+}
+
+export interface KrIssue {
+  teamName: string;
+  krId: string;
+  /** 'justified' = líder explicou RAG ≠ verde; */
+  kind: 'justified';
+  paceStatus?: string | null;
+  finalProgress?: number | null;
+  state?: string | null;
+  justification: string;
+}
+
+export interface KpiIssue {
+  teamName: string;
+  kpiId: string;
+  /** 'justified' = RAG ≠ verde com justificativa; 'no_data' = sem leitura no mês. */
+  kind: 'justified' | 'no_data';
+  text: string;
+}
+
+export interface KpiToCreateSuggestion {
+  teamName: string;
+  description: string;
+  suggestedScope: string;
+}
+
+export interface AgendaSuggestionItem {
+  teamName: string;
+  text: string;
+}
+
+export interface MonthAnalysisSummary {
+  teamName: string;
+  summary: string;
+  offenders: string[];
+  risks: string[];
+  recommendations: string[];
+}
+
 export interface ParsedReport {
   monthNarrative?: string;
   commitmentsAnalysis?: string;
   kpiInsights?: { healthy?: string; atRisk?: string; critical?: string };
   decisionsNeeded?: string[];
+  projectsAnalysis?: string;
+  krIssuesAnalysis?: string;
+  leaderSignals?: string;
 }
 
 export interface ReportRequest {
@@ -84,4 +133,13 @@ export interface ReportResponse {
   decisionsNeeded: string[];
   teamCommitments: TeamCommitment[];
   teamHighlights: TeamMonthlyHighlight[];
+  projectsAnalysis: string;
+  krIssuesAnalysis: string;
+  leaderSignals: string;
+  projectIssues: ProjectIssue[];
+  krIssues: KrIssue[];
+  kpiIssues: KpiIssue[];
+  kpisToCreate: KpiToCreateSuggestion[];
+  agendaSuggestions: AgendaSuggestionItem[];
+  monthAnalyses: MonthAnalysisSummary[];
 }
