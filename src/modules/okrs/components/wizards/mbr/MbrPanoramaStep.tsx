@@ -93,6 +93,16 @@ export interface MbrPanoramaStepProps {
     kind: 'needs_decision' | 'cross_dependency';
     text: string;
   }>;
+  /**
+   * Submissões Pré-MBR por time. Usado para renderizar painel por time com
+   * o que o líder preencheu (Acelerou / Travou / Decisão / Foco do mês).
+   */
+  mbrPreSubmissionsByTeam?: Record<string, {
+    teamId: string;
+    submittedByName?: string;
+    highlights?: { accelerated?: string; blocked?: string; needsDecision?: string };
+    nextSteps?: { focus?: string };
+  }>;
 }
 
 interface KpiGroup {
