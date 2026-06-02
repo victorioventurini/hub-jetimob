@@ -60,6 +60,89 @@ import type {
 
 const MONTH_REF_RE = /^\d{4}-\d{2}$/;
 
+type ReportJobEnvelope = {
+  success?: boolean;
+  data?: unknown;
+  error?: { message?: string; code?: string };
+};
+
+async function markReportJobFailed(
+  sc: RequestContext["serviceClient"],
+  jobId: string,
+  body: ReportRequest,
+  requestId: string,
+  message: string,
+  code = "MBR_REPORT_GENERATION_FAILED",
+): Promise<void> {
+  await sc
+    .from("okr_wizard_sessions")
+    .update({
+      status: "abandoned",
+      reflection_data: {
+        monthRef: body.monthRef,
+        generationStatus: "failed",
+        aiGenerationStatus: "failed",
+        failedAt: new Date().toISOString(),
+        requestId,
+        errorMessage: message,
+        errorCode: code,
+      },
+    })
+    .eq("id", jobId);
+}
+
+async function runReportJob(
+  reqUrl: string,
+  ctx: RequestContext,
+  jobId: string,
+  body: ReportRequest,
+  parentRequestId: string,
+): Promise<void> {
+  const jobRequestId = `${parentRequestId}:job`;
+  const jobCtx: RequestContext = { ...ctx, requestId: jobRequestId };
+  const internalReq = new Request(reqUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cycleId: body.cycleId,
+      monthRef: body.monthRef,
+      bu_id: ctx.buId,
+      mode: "sync",
+      jobRequestId,
+    }),
+  });
+
+  try {
+    const response = await handler(internalReq, jobCtx);
+    const payload = await response.json().catch(() => null) as ReportJobEnvelope | null;
+    if (!response.ok || payload?.success === false) {
+      const message = payload?.error?.message || `Report generation failed with HTTP ${response.status}`;
+      await markReportJobFailed(ctx.serviceClient, jobId, body, jobRequestId, message, payload?.error?.code);
+      return;
+    }
+
+    const reportData = payload?.data ?? payload;
+    await ctx.serviceClient
+      .from("okr_wizard_sessions")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        reflection_data: reportData,
+      })
+      .eq("id", jobId);
+  } catch (err) {
+    const error = err as Error;
+    console.error(`[${jobRequestId}] Background MBR report job failed:`, error?.message || err);
+    await markReportJobFailed(
+      ctx.serviceClient,
+      jobId,
+      body,
+      jobRequestId,
+      error?.message || "Unknown report generation error",
+    );
+  }
+}
+
 function monthLabel(monthRef: string): string {
   const m = MONTH_REF_RE.exec(monthRef);
   if (!m) return monthRef;
@@ -83,12 +166,14 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
 
   try {
     let body: ReportRequest;
+    let mode: "async" | "sync" = "async";
     try {
-      const raw = await req.json() as Partial<ReportRequest>;
+      const raw = await req.json() as Partial<ReportRequest> & { mode?: string };
       body = {
         cycleId: typeof raw?.cycleId === "string" ? raw.cycleId : "",
         monthRef: typeof raw?.monthRef === "string" ? raw.monthRef : "",
       };
+      mode = raw?.mode === "sync" ? "sync" : "async";
     } catch (parseError) {
       console.error(`[${requestId}] Invalid JSON body:`, parseError);
       return errorResponse("Invalid JSON body", 400, { requestId });
@@ -99,6 +184,87 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     }
     if (!body.monthRef || !MONTH_REF_RE.test(body.monthRef)) {
       return errorResponse("monthRef (YYYY-MM) is required", 400, { requestId });
+    }
+
+    if (mode === "async") {
+      const { data: profile, error: profileErr } = await ctx.serviceClient
+        .from("profiles")
+        .select("id")
+        .eq("user_id", ctx.user!.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (profileErr || !profile?.id) {
+        console.error(`[${requestId}] Profile lookup for report job failed:`, profileErr?.message);
+        return errorResponse("Profile not found", 403, { requestId, error: "PROFILE_NOT_FOUND" });
+      }
+
+      const { data: existingJobs } = await ctx.serviceClient
+        .from("okr_wizard_sessions")
+        .select("id, reflection_data, updated_at")
+        .eq("wizard_type", "mbr-executive-report")
+        .eq("cycle_id", body.cycleId)
+        .eq("bu_id", buId)
+        .eq("status", "in_progress")
+        .order("updated_at", { ascending: false })
+        .limit(10);
+      const existingJob = (existingJobs || []).find((row: { id: string; reflection_data?: { monthRef?: string } | null; updated_at?: string | null }) =>
+        row.reflection_data?.monthRef === body.monthRef,
+      );
+      if (existingJob?.id) {
+        const updatedAt = existingJob.updated_at ? new Date(existingJob.updated_at).getTime() : 0;
+        const isFresh = updatedAt > Date.now() - 15 * 60 * 1000;
+        if (isFresh) {
+          return successResponse({ jobId: existingJob.id, status: "generating" }, undefined, 202);
+        }
+        await markReportJobFailed(
+          ctx.serviceClient,
+          existingJob.id,
+          body,
+          requestId,
+          "Geração anterior ficou pendente por tempo excessivo e foi reiniciada.",
+          "STALE_REPORT_JOB",
+        );
+      }
+
+      const { data: job, error: jobErr } = await ctx.serviceClient
+        .from("okr_wizard_sessions")
+        .insert({
+          wizard_type: "mbr-executive-report",
+          cycle_id: body.cycleId,
+          bu_id: buId,
+          started_by: profile.id,
+          status: "in_progress",
+          reflection_data: {
+            monthRef: body.monthRef,
+            generationStatus: "generating",
+            aiGenerationStatus: "generating",
+            startedAt: new Date().toISOString(),
+            requestId,
+          },
+          structure_version: "v1",
+        })
+        .select("id")
+        .single();
+
+      if (jobErr || !job?.id) {
+        console.error(`[${requestId}] Failed to create MBR report job:`, jobErr?.message);
+        return errorResponse("Failed to start report generation", 500, {
+          requestId,
+          error: "REPORT_JOB_CREATE_FAILED",
+        });
+      }
+
+      const work = runReportJob(req.url, ctx, job.id, body, requestId);
+      // @ts-expect-error EdgeRuntime is provided in the edge runtime.
+      if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as { waitUntil?: (promise: Promise<unknown>) => void }).waitUntil) {
+        // @ts-expect-error EdgeRuntime is provided in the edge runtime.
+        (EdgeRuntime as { waitUntil: (promise: Promise<unknown>) => void }).waitUntil(work);
+      } else {
+        work.catch((err) => console.error(`[${requestId}] report job background error:`, err));
+      }
+
+      return successResponse({ jobId: job.id, status: "generating" }, undefined, 202);
     }
 
     console.log(

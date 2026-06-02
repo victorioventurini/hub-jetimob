@@ -10,7 +10,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { okrsKeys } from '@/lib/queryKeys/okrs';
-import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { showAiEdgeFunctionErrorToast } from '@/modules/okrs/utils/edgeFunctionError';
@@ -126,6 +125,19 @@ export interface MbrExecutiveReportData {
   monthAnalyses: MbrExecutiveReportMonthAnalysis[];
   overallAchievement: MbrExecutiveReportOverallAchievement;
   analyzedTeams: MbrExecutiveReportAnalyzedTeam[];
+}
+
+interface MbrExecutiveReportJobState {
+  id: string;
+  status: 'generating' | 'failed';
+  updatedAt: string | null;
+  errorMessage?: string;
+}
+
+interface MbrExecutiveReportQueryData {
+  report: MbrExecutiveReportData | null;
+  generatedAt: string | null;
+  job: MbrExecutiveReportJobState | null;
 }
 
 
@@ -316,6 +328,12 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
   };
 }
 
+function getReportMonthRef(input: unknown): string {
+  const root = isRecord(input) ? input : {};
+  const source = typeof root.monthRef !== 'string' && isRecord(root.data) ? root.data : root;
+  return toText(source.monthRef);
+}
+
 
 export function useMbrExecutiveReport(cycleId: string | null, monthRef: string | null) {
   const supabase = useBuScopedSupabase();
@@ -332,27 +350,58 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
       // monthRef em JS porque está dentro de `reflection_data`.
       const { data, error } = await supabase
         .from('okr_wizard_sessions')
-        .select('reflection_data, completed_at')
+        .select('id, reflection_data, status, completed_at, created_at, updated_at')
         .eq('wizard_type', 'mbr-executive-report')
         .eq('cycle_id', cycleId!)
         .eq('bu_id', currentBuId!)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      if (!data || data.length === 0) return null;
+      if (!data || data.length === 0) {
+        return { report: null, generatedAt: null, job: null } satisfies MbrExecutiveReportQueryData;
+      }
 
+      let latestJob: MbrExecutiveReportJobState | null = null;
       for (const row of data) {
-        const normalized = normalizeMbrExecutiveReportData(row.reflection_data);
-        if (normalized.monthRef === monthRef && normalized.monthNarrative) {
-          return { report: normalized, generatedAt: row.completed_at };
+        const rowMonthRef = getReportMonthRef(row.reflection_data);
+        if (rowMonthRef !== monthRef) continue;
+
+        if (latestJob) continue;
+
+        if (row.status === 'completed') {
+          const normalized = normalizeMbrExecutiveReportData(row.reflection_data);
+          if (normalized.monthNarrative) {
+            return { report: normalized, generatedAt: row.completed_at, job: null } satisfies MbrExecutiveReportQueryData;
+          }
+        }
+
+        if (row.status === 'in_progress' && !latestJob) {
+          latestJob = {
+            id: row.id,
+            status: 'generating',
+            updatedAt: row.updated_at ?? row.created_at ?? null,
+          };
+        }
+
+        if (row.status === 'abandoned' && !latestJob) {
+          const root = isRecord(row.reflection_data) ? row.reflection_data : {};
+          latestJob = {
+            id: row.id,
+            status: 'failed',
+            updatedAt: row.updated_at ?? row.created_at ?? null,
+            errorMessage: toText(root.errorMessage),
+          };
         }
       }
-      return null;
+      return { report: null, generatedAt: null, job: latestJob } satisfies MbrExecutiveReportQueryData;
     },
     enabled: !!cycleId && !!currentBuId && !!monthRef,
     staleTime: 5 * 60 * 1000,
+    refetchInterval: (q) => {
+      const data = q.state.data as MbrExecutiveReportQueryData | null | undefined;
+      return data?.job?.status === 'generating' ? 3000 : false;
+    },
   });
 
   const generateMutation = useMutation({
@@ -367,46 +416,29 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
 
       if (fnError) throw fnError;
 
-      const reportData = normalizeMbrExecutiveReportData(fnData?.data || fnData);
-      // Aceitamos relatórios em modo fallback (narrativa determinística após
-      // falha temporária da IA). Só rejeitamos se não houver NENHUM conteúdo
-      // narrativo nem dados operacionais — sinal real de resposta inválida.
-      const hasAnyContent =
-        !!reportData.monthNarrative ||
-        !!reportData.commitmentsAnalysis ||
-        (reportData.overallAchievement?.byObjective?.length ?? 0) > 0 ||
-        (reportData.analyzedTeams?.length ?? 0) > 0;
-      if (!hasAnyContent) {
-        throw new Error('Invalid report response');
+      const response = isRecord(fnData) && isRecord(fnData.data) ? fnData.data : fnData;
+      if (isRecord(response) && toText(response.status) === 'generating') {
+        return {
+          jobId: toText(response.jobId),
+          status: 'generating' as const,
+        };
       }
-      // Garantia: monthRef sempre presente no snapshot persistido.
+
+      const reportData = normalizeMbrExecutiveReportData(response);
       if (!reportData.monthRef) reportData.monthRef = monthRef;
-
-      const { error: insertError } = await supabase
-        .from('okr_wizard_sessions')
-        .insert({
-          wizard_type: 'mbr-executive-report',
-          cycle_id: cycleId!,
-          bu_id: currentBuId!,
-          started_by: profile.id,
-          status: 'completed' as const,
-          completed_at: new Date().toISOString(),
-          reflection_data: reportData as unknown as Json,
-          // Relatório IA persistido como sessão (mesma estratégia do qbr-executive-report).
-          structure_version: 'v1',
-        });
-
-      if (insertError) {
-        console.error('Failed to persist MBR report:', insertError);
-      }
-
       return reportData;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(queryKey, {
-        report: data,
-        generatedAt: new Date().toISOString(),
-      });
+      if ('status' in data && data.status === 'generating') {
+        queryClient.setQueryData(queryKey, {
+          report: null,
+          generatedAt: null,
+          job: { id: data.jobId, status: 'generating', updatedAt: new Date().toISOString() },
+        } satisfies MbrExecutiveReportQueryData);
+        void queryClient.invalidateQueries({ queryKey });
+        return;
+      }
+      queryClient.setQueryData(queryKey, { report: data, generatedAt: new Date().toISOString(), job: null });
     },
     onError: async (error: any) => {
       console.error('Failed to generate MBR report:', error);
@@ -423,8 +455,9 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
   return {
     report: query.data?.report ?? null,
     generatedAt: query.data?.generatedAt ?? null,
+    generationJob: query.data?.job ?? null,
     isLoading: query.isLoading,
     generate: generateMutation.mutate,
-    isGenerating: generateMutation.isPending,
+    isGenerating: generateMutation.isPending || query.data?.job?.status === 'generating',
   };
 }
