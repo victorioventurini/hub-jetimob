@@ -218,7 +218,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     }
 
 
-    const llmConfig = await resolveLLMConfig(sc, "google/gemini-3-flash-preview");
+    const llmConfig = await resolveLLMConfig(sc, "google/gemini-2.5-pro");
     if (!llmConfig) {
       console.error(`[${requestId}] AI service not configured`);
       return errorResponse("AI service not configured", 500, {
