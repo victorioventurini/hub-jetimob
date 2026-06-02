@@ -367,6 +367,8 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
         const rowMonthRef = getReportMonthRef(row.reflection_data);
         if (rowMonthRef !== monthRef) continue;
 
+        if (latestJob) continue;
+
         if (row.status === 'completed') {
           const normalized = normalizeMbrExecutiveReportData(row.reflection_data);
           if (normalized.monthNarrative) {
