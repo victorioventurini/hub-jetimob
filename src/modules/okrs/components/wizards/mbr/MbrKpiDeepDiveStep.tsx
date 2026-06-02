@@ -28,6 +28,7 @@ import {
   type KpiGateBucket,
 } from '@/modules/okrs/components/wizards/shared/framework/config/stepContentAdapters';
 import { useMbrKpiLeaderInsights } from '@/modules/okrs/hooks/useMbrKpiLeaderInsights';
+import { useOrgKrPrimaryKpiIds } from '@/modules/okrs/hooks/useOrgKrPrimaryKpiIds';
 import { formatMonthLabel } from '@/modules/okrs/utils/mbr/referenceMonth';
 import type {
   MbrKpiSnapshot,
