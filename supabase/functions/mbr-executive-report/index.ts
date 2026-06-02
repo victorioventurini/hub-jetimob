@@ -60,6 +60,89 @@ import type {
 
 const MONTH_REF_RE = /^\d{4}-\d{2}$/;
 
+type ReportJobEnvelope = {
+  success?: boolean;
+  data?: unknown;
+  error?: { message?: string; code?: string };
+};
+
+async function markReportJobFailed(
+  sc: RequestContext["serviceClient"],
+  jobId: string,
+  body: ReportRequest,
+  requestId: string,
+  message: string,
+  code = "MBR_REPORT_GENERATION_FAILED",
+): Promise<void> {
+  await sc
+    .from("okr_wizard_sessions")
+    .update({
+      status: "abandoned",
+      reflection_data: {
+        monthRef: body.monthRef,
+        generationStatus: "failed",
+        aiGenerationStatus: "failed",
+        failedAt: new Date().toISOString(),
+        requestId,
+        errorMessage: message,
+        errorCode: code,
+      },
+    })
+    .eq("id", jobId);
+}
+
+async function runReportJob(
+  reqUrl: string,
+  ctx: RequestContext,
+  jobId: string,
+  body: ReportRequest,
+  parentRequestId: string,
+): Promise<void> {
+  const jobRequestId = `${parentRequestId}:job`;
+  const jobCtx: RequestContext = { ...ctx, requestId: jobRequestId };
+  const internalReq = new Request(reqUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cycleId: body.cycleId,
+      monthRef: body.monthRef,
+      bu_id: ctx.buId,
+      mode: "sync",
+      jobRequestId,
+    }),
+  });
+
+  try {
+    const response = await handler(internalReq, jobCtx);
+    const payload = await response.json().catch(() => null) as ReportJobEnvelope | null;
+    if (!response.ok || payload?.success === false) {
+      const message = payload?.error?.message || `Report generation failed with HTTP ${response.status}`;
+      await markReportJobFailed(ctx.serviceClient, jobId, body, jobRequestId, message, payload?.error?.code);
+      return;
+    }
+
+    const reportData = payload?.data ?? payload;
+    await ctx.serviceClient
+      .from("okr_wizard_sessions")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        reflection_data: reportData,
+      })
+      .eq("id", jobId);
+  } catch (err) {
+    const error = err as Error;
+    console.error(`[${jobRequestId}] Background MBR report job failed:`, error?.message || err);
+    await markReportJobFailed(
+      ctx.serviceClient,
+      jobId,
+      body,
+      jobRequestId,
+      error?.message || "Unknown report generation error",
+    );
+  }
+}
+
 function monthLabel(monthRef: string): string {
   const m = MONTH_REF_RE.exec(monthRef);
   if (!m) return monthRef;
