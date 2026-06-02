@@ -10,7 +10,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
 import { useBu } from '@/contexts/BuContext';
 import { okrsKeys } from '@/lib/queryKeys/okrs';
-import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { showAiEdgeFunctionErrorToast } from '@/modules/okrs/utils/edgeFunctionError';
@@ -355,11 +354,13 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
         .eq('wizard_type', 'mbr-executive-report')
         .eq('cycle_id', cycleId!)
         .eq('bu_id', currentBuId!)
-        .order('completed_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      if (!data || data.length === 0) return null;
+      if (!data || data.length === 0) {
+        return { report: null, generatedAt: null, job: null } satisfies MbrExecutiveReportQueryData;
+      }
 
       let latestJob: MbrExecutiveReportJobState | null = null;
       for (const row of data) {
@@ -413,46 +414,29 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
 
       if (fnError) throw fnError;
 
-      const reportData = normalizeMbrExecutiveReportData(fnData?.data || fnData);
-      // Aceitamos relatórios em modo fallback (narrativa determinística após
-      // falha temporária da IA). Só rejeitamos se não houver NENHUM conteúdo
-      // narrativo nem dados operacionais — sinal real de resposta inválida.
-      const hasAnyContent =
-        !!reportData.monthNarrative ||
-        !!reportData.commitmentsAnalysis ||
-        (reportData.overallAchievement?.byObjective?.length ?? 0) > 0 ||
-        (reportData.analyzedTeams?.length ?? 0) > 0;
-      if (!hasAnyContent) {
-        throw new Error('Invalid report response');
+      const response = isRecord(fnData) && isRecord(fnData.data) ? fnData.data : fnData;
+      if (isRecord(response) && toText(response.status) === 'generating') {
+        return {
+          jobId: toText(response.jobId),
+          status: 'generating' as const,
+        };
       }
-      // Garantia: monthRef sempre presente no snapshot persistido.
+
+      const reportData = normalizeMbrExecutiveReportData(response);
       if (!reportData.monthRef) reportData.monthRef = monthRef;
-
-      const { error: insertError } = await supabase
-        .from('okr_wizard_sessions')
-        .insert({
-          wizard_type: 'mbr-executive-report',
-          cycle_id: cycleId!,
-          bu_id: currentBuId!,
-          started_by: profile.id,
-          status: 'completed' as const,
-          completed_at: new Date().toISOString(),
-          reflection_data: reportData as unknown as Json,
-          // Relatório IA persistido como sessão (mesma estratégia do qbr-executive-report).
-          structure_version: 'v1',
-        });
-
-      if (insertError) {
-        console.error('Failed to persist MBR report:', insertError);
-      }
-
       return reportData;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(queryKey, {
-        report: data,
-        generatedAt: new Date().toISOString(),
-      });
+      if ('status' in data && data.status === 'generating') {
+        queryClient.setQueryData(queryKey, {
+          report: null,
+          generatedAt: null,
+          job: { id: data.jobId, status: 'generating', updatedAt: new Date().toISOString() },
+        } satisfies MbrExecutiveReportQueryData);
+        void queryClient.invalidateQueries({ queryKey });
+        return;
+      }
+      queryClient.setQueryData(queryKey, { report: data, generatedAt: new Date().toISOString(), job: null });
     },
     onError: async (error: any) => {
       console.error('Failed to generate MBR report:', error);
