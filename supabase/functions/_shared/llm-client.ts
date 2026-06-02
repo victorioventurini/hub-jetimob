@@ -155,7 +155,7 @@ export async function resolveLLMConfig(
   const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
   const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
   const GOOGLE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-  const DEFAULT_MODEL = "google/gemini-3-flash-preview";
+  const DEFAULT_MODEL = "google/gemini-2.5-pro";
 
   // Determine provider by model prefix
   const modelPrefix = preferredModel?.split("/")[0];
