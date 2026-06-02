@@ -5,7 +5,7 @@
  * Permite CRUD completo com edição inline e reclassificação.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { TextareaAutoSubmit } from '@/components/ui/textarea-auto-submit';
 import { Label } from '@/components/ui/label';
