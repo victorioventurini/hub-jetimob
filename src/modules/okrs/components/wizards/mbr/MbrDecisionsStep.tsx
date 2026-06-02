@@ -222,35 +222,28 @@ export function MbrDecisionsStep({
             </p>
           )}
 
-          {/* Previous MBR pending items */}
-          {previousMbrPendingItems.length > 0 && (
+          {/* Previous MBR pending items — editáveis com a mesma UI dos registros desta etapa */}
+          {carryOverDecisions.length > 0 && (
             <>
               <Separator />
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-status-amber" />
-                  Pendências do MBR Anterior ({previousMbrPendingItems.length})
+                  Pendências do MBR Anterior ({carryOverDecisions.length})
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  Próximos passos e ajustes de foco do último MBR
+                  Próximos passos e ajustes de foco do último MBR. Edite, reclassifique ou atribua responsável/prazo.
                 </p>
-                {previousMbrPendingItems.map((item) => {
-                  const config = CATEGORY_CONFIG[item.category];
-                  const Icon = config.icon;
-                  return (
-                    <Card key={item.id} className="border-dashed">
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <p className="text-sm flex-1">{item.text}</p>
-                          <Badge variant="secondary" className={cn('text-[10px]', config.color)}>
-                            {config.label}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {carryOverDecisions.map((d) => (
+                  <DecisionCard
+                    key={d.id}
+                    decision={d}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    showReclassify
+                    showOwnerDeadline
+                  />
+                ))}
               </div>
             </>
           )}
