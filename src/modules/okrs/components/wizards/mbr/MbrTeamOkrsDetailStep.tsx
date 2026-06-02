@@ -5,13 +5,14 @@
  * Navegação interna prev/next via currentTeamIndex — tudo dentro do wizard.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Users, Target, CheckCircle2, ArrowLeft, ArrowRight, FileText, AlertTriangle, XCircle, Compass, Sparkles, RefreshCw, ListChecks, MessageSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardStepHeader, WizardStepFooter, InlineDecisionInput } from '../shared';
 import { WizardStepScaffold } from '../shared/WizardStepScaffold';
