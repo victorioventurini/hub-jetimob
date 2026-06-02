@@ -59,6 +59,17 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         triggerClassName="w-full sm:w-[170px]"
       />
 
+      {/* Saúde */}
+      <UrlSelect
+        value={filters.health ?? 'all'}
+        onChange={(v) => onFiltersChange({ ...filters, health: v as ProjectHealth | 'all' })}
+        options={healthOptions}
+        includeAllOption
+        allOptionLabel="Saúde: Todas"
+        triggerClassName="w-full sm:w-[160px]"
+      />
+
+
       {/* Responsável */}
       <BuUserSelect
         value={filters.owner_id || undefined}
