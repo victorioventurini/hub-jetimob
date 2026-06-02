@@ -3,9 +3,9 @@ import { Label } from "@/components/ui/label";
 import type { AnalysisDepth } from "../../types";
 
 const OPTIONS: { value: AnalysisDepth; label: string; desc: string }[] = [
-  { value: "quick", label: "Rápida", desc: "Resumo direto" },
+  { value: "minimal", label: "Rápida", desc: "Resumo direto" },
   { value: "standard", label: "Padrão", desc: "Análise balanceada" },
-  { value: "deep", label: "Profunda", desc: "Detalhada e comparativa" },
+  { value: "full", label: "Profunda", desc: "Detalhada e comparativa" },
 ];
 
 interface Props {
