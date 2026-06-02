@@ -213,6 +213,51 @@ function ReportDisplay({
         </CardContent>
       </Card>
 
+      {report.overallAchievement && report.overallAchievement.byObjective.length > 0 && (
+        <ReportSection icon={Target} title="% de atingimento das OKRs">
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <span className="text-4xl font-semibold tabular-nums">
+                {report.overallAchievement.overallProgress}%
+              </span>
+              <span className="text-sm text-muted-foreground">
+                média dos objetivos do ciclo · {report.overallAchievement.byObjective.length} objetivos · {report.overallAchievement.byTeam.length} times
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Base de cálculo: progresso médio das KRs por objetivo → média dos objetivos. Mesma fórmula da página{' '}
+              <a href="/okrs" className="underline">/okrs</a>. KRs com KPI primária usam o valor efetivo da KPI até o fim do mês.
+            </p>
+            {report.overallAchievement.byTeam.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Time</th>
+                      <th className="text-right py-2 pr-4 font-medium text-muted-foreground">% atingimento</th>
+                      <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Objetivos</th>
+                      <th className="text-right py-2 pr-0 font-medium text-muted-foreground">KRs</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.overallAchievement.byTeam.map((t) => (
+                      <tr key={t.teamId || t.teamName} className="border-b last:border-0">
+                        <td className="py-2 pr-4">
+                          <Badge variant="secondary" className="text-xs">{t.teamName}</Badge>
+                        </td>
+                        <td className="py-2 pr-4 text-right tabular-nums font-medium">{t.progress}%</td>
+                        <td className="py-2 pr-4 text-right tabular-nums text-muted-foreground">{t.objectivesCount}</td>
+                        <td className="py-2 pr-0 text-right tabular-nums text-muted-foreground">{t.krCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </ReportSection>
+      )}
+
       <ReportSection icon={BarChart3} title="O que o mês nos disse">
         <p className="text-sm leading-relaxed whitespace-pre-line">
           {report.monthNarrative}
@@ -220,6 +265,7 @@ function ReportDisplay({
       </ReportSection>
 
       <OrgOkrsReportSection cycleId={cycleId} />
+
 
       <ReportSection icon={Target} title="Compromissos dos times para o próximo mês">
         {report.teamCommitments && report.teamCommitments.length > 0 && (
