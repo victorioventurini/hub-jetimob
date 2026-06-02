@@ -151,6 +151,32 @@ export interface KpiInsightsPartial {
   kpiInsights: { healthy: string; atRisk: string; critical: string };
 }
 
+type KpiSummaryItem = {
+  name?: string;
+  category?: string | null;
+  unit?: string | null;
+  direction?: string | null;
+  targetValue?: number | string | null;
+  currentValue?: number | string | null;
+  ragStatus?: string | null;
+  periodLabel?: string | null;
+};
+
+export function bucketKpisByRag(summary: KpiSummaryItem[]) {
+  const healthy: KpiSummaryItem[] = [];
+  const atRisk: KpiSummaryItem[] = [];
+  const critical: KpiSummaryItem[] = [];
+  const unknown: KpiSummaryItem[] = [];
+  for (const k of summary) {
+    const rag = (k.ragStatus || "").toString().toLowerCase();
+    if (rag === "green" || rag === "g" || rag === "on_track" || rag === "healthy") healthy.push(k);
+    else if (rag === "amber" || rag === "yellow" || rag === "a" || rag === "at_risk") atRisk.push(k);
+    else if (rag === "red" || rag === "r" || rag === "critical" || rag === "off_track") critical.push(k);
+    else unknown.push(k);
+  }
+  return { healthy, atRisk, critical, unknown };
+}
+
 export async function analyzeKpis(
   llmConfig: LLMConfig,
   kpisSummary: unknown,
@@ -159,47 +185,87 @@ export async function analyzeKpis(
   monthLabel: string,
   requestId: string,
 ): Promise<KpiInsightsPartial> {
-  const summary = Array.isArray(kpisSummary) ? kpisSummary : [];
+  const summary = (Array.isArray(kpisSummary) ? kpisSummary : []) as KpiSummaryItem[];
   const issues = Array.isArray(kpiIssues) ? kpiIssues : [];
   if (summary.length === 0 && issues.length === 0) {
     return { kpiInsights: { healthy: "", atRisk: "", critical: "" } };
   }
 
-  const prompt = `Abaixo está o status dos KPIs organizacionais até o fim de ${monthLabel}.
+  const buckets = bucketKpisByRag(summary);
 
-=== KPIs ORGANIZACIONAIS (${summary.length}) ===
-${JSON.stringify(summary)}
+  const prompt = `Status dos KPIs organizacionais/áreas até o fim de ${monthLabel}.
+Os KPIs JÁ ESTÃO PRÉ-CATEGORIZADOS por RAG. Você NÃO precisa recategorizar — analise cada bucket.
 
-=== KPIs COM JUSTIFICATIVA OU SEM DADOS (por time) ===
-${JSON.stringify(issues.slice(0, 20))}
+=== BUCKET "HEALTHY" (RAG verde — ${buckets.healthy.length}) ===
+${JSON.stringify(buckets.healthy)}
+
+=== BUCKET "AT RISK" (RAG amber — ${buckets.atRisk.length}) ===
+${JSON.stringify(buckets.atRisk)}
+
+=== BUCKET "CRITICAL" (RAG red — ${buckets.critical.length}) ===
+${JSON.stringify(buckets.critical)}
+
+=== KPIs SEM RAG DEFINIDO (${buckets.unknown.length}) ===
+${JSON.stringify(buckets.unknown)}
+(distribua entre os buckets pela distância currentValue vs targetValue considerando direction)
+
+=== JUSTIFICATIVAS DOS LÍDERES (KPIs com texto declarado por time) ===
+${JSON.stringify(issues.slice(0, 25))}
 
 === NOVOS KPIs SUGERIDOS PELOS LÍDERES ===
 ${JSON.stringify(Array.isArray(kpisToCreate) ? kpisToCreate.slice(0, 10) : [])}
 
-Para CADA bucket, escreva um parágrafo analítico (não um bullet) de 4-7 linhas que:
-- nomeie os KPIs relevantes (com o número quando útil — currentValue vs targetValue, RAG),
-- explique POR QUE estão nesse estado (causas declaradas ou inferidas com cuidado),
-- aponte SINAIS LIDERANÇA (tendência: melhorando, estagnado, piorando) e
-- termine com a IMPLICAÇÃO para o ciclo (o que isso significa para o CEO).
+Para CADA bucket, escreva um parágrafo DENSO (5-8 linhas, sem bullets) que:
+1. Cite NOMES de KPIs com os números (currentValue vs targetValue, unidade quando útil) — priorize os 3-5 mais relevantes do bucket.
+2. Explique CAUSAS usando as justificativas dos líderes quando existirem; se não houver, escreva "líderes não declararam causa".
+3. Identifique PADRÕES TRANSVERSAIS (ex.: "três KPIs comerciais sob pressão", "queda concentrada em retenção").
+4. Aponte TENDÊNCIA (acelerando, estagnado, desacelerando) quando o periodLabel/contexto permitir.
+5. Termine com a IMPLICAÇÃO para o ciclo / o que o CEO deve observar.
 
-Use string vazia ("") quando não houver KPI naquele bucket.
+Regras:
+- Use string vazia ("") APENAS se o bucket realmente estiver vazio (0 KPIs depois da redistribuição).
+- NÃO repita o mesmo KPI em mais de um bucket.
+- Não invente números — use apenas os do payload.
 
-Gere JSON:
+Gere APENAS este JSON:
 {
   "kpiInsights": {
-    "healthy":  "parágrafo denso de 4-7 linhas (ou string vazia)",
-    "atRisk":   "parágrafo denso de 4-7 linhas (ou string vazia)",
-    "critical": "parágrafo denso de 4-7 linhas (ou string vazia)"
+    "healthy":  "parágrafo denso 5-8 linhas (ou string vazia se bucket vazio)",
+    "atRisk":   "parágrafo denso 5-8 linhas (ou string vazia se bucket vazio)",
+    "critical": "parágrafo denso 5-8 linhas (ou string vazia se bucket vazio)"
   }
 }`;
 
-  return await callPartial<KpiInsightsPartial>(
+  const fallback: KpiInsightsPartial = { kpiInsights: { healthy: "", atRisk: "", critical: "" } };
+
+  let result = await callPartial<KpiInsightsPartial>(
     llmConfig,
     prompt,
-    { kpiInsights: { healthy: "", atRisk: "", critical: "" } },
+    fallback,
     requestId,
     "analyzeKpis",
   );
+
+  // Retry uma vez se vier completamente vazio mas há dados — combate falha
+  // intermitente do gateway (timeouts/429/parse) que apagava o card inteiro.
+  const allEmpty =
+    !result.kpiInsights.healthy &&
+    !result.kpiInsights.atRisk &&
+    !result.kpiInsights.critical;
+  const hasData = summary.length > 0 || issues.length > 0;
+  if (allEmpty && hasData) {
+    console.warn(`[${requestId}] [analyzeKpis] All buckets empty with data present — retrying once`);
+    await new Promise((r) => setTimeout(r, 800));
+    result = await callPartial<KpiInsightsPartial>(
+      llmConfig,
+      prompt,
+      fallback,
+      requestId,
+      "analyzeKpis(retry)",
+    );
+  }
+
+  return result;
 }
 
 // ----------------------------------------------------------------------------
