@@ -17,6 +17,7 @@ import {
   MessageSquare,
   RefreshCw,
   Share2,
+  Trash2,
   Wand2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,9 +32,11 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { useGenerateAnalysis } from "../hooks/useGenerateAnalysis";
+import { useDeleteAnalysisReport } from "../hooks/useDeleteAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
+import { ConfirmActionDialog } from "@/modules/assessments/components/ConfirmActionDialog";
 import { useAnalysisComments } from "../hooks/useAnalysisComments";
 import { useAnalysisDecisions } from "../hooks/useAnalysisDecisions";
 import type {
@@ -389,6 +392,13 @@ export default function AnalysisResultPage() {
   const { currentBuId } = useBu();
   const [shareOpen, setShareOpen] = useState(false);
   const generate = useGenerateAnalysis();
+  const deleteReport = useDeleteAnalysisReport();
+
+  const handleDelete = async () => {
+    if (!report) return;
+    await deleteReport.mutateAsync(report.id);
+    navigate("/analysis");
+  };
 
   const handleRegenerate = async () => {
     if (!report) return;
@@ -460,8 +470,8 @@ export default function AnalysisResultPage() {
           backTo="/analysis"
           backLabel="Voltar para Análises"
         actions={
-          report.status === "generating" || report.status === "pending" ? undefined : (
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {report.status !== "generating" && report.status !== "pending" && (
               <Button
                 size="sm"
                 variant="outline"
@@ -471,14 +481,31 @@ export default function AnalysisResultPage() {
                 <RefreshCw className={cn("mr-1.5 h-4 w-4", generate.isPending && "animate-spin")} />
                 {generate.isPending ? "Regenerando…" : "Regenerar"}
               </Button>
-              {report.status === "complete" && (
-                <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
-                  <Share2 className="mr-1.5 h-4 w-4" />
-                  Compartilhar
+            )}
+            {report.status === "complete" && (
+              <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
+                <Share2 className="mr-1.5 h-4 w-4" />
+                Compartilhar
+              </Button>
+            )}
+            <ConfirmActionDialog
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  disabled={deleteReport.isPending}
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  {deleteReport.isPending ? "Excluindo…" : "Excluir"}
                 </Button>
-              )}
-            </div>
-          )
+              }
+              title="Excluir análise?"
+              description="Esta ação não pode ser desfeita. A análise será removida do histórico."
+              confirmLabel="Excluir"
+              onConfirm={handleDelete}
+            />
+          </div>
         }
       />
 
