@@ -34,6 +34,8 @@ import {
 } from '@/modules/okrs/hooks';
 import { usePreviousMbrPendingItems } from '@/modules/okrs/hooks/usePreviousMbrPendingItems';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
+import { useTeams } from '@/modules/teams/hooks/useTeams';
+
 
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
