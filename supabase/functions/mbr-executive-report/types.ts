@@ -90,6 +90,8 @@ export interface ProjectIssue {
 export interface KrIssue {
   teamName: string;
   krId: string;
+  /** Título do KR (preenchido pelo enrich no index). */
+  title?: string;
   /** 'justified' = líder explicou RAG ≠ verde; */
   kind: 'justified';
   paceStatus?: string | null;

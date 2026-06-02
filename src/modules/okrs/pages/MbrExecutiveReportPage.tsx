@@ -418,7 +418,12 @@ function ReportDisplay({
                   {k.paceStatus && (
                     <Badge variant="outline" className="text-xs shrink-0 capitalize">{k.paceStatus}</Badge>
                   )}
-                  <span className="text-muted-foreground">{k.justification}</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    {k.title && (
+                      <span className="font-medium text-foreground">{k.title}</span>
+                    )}
+                    <span className="text-muted-foreground">{k.justification}</span>
+                  </div>
                 </div>
               ))}
               {report.krIssues.length > 30 && (
