@@ -34,6 +34,8 @@ import {
 } from '@/modules/okrs/hooks';
 import { usePreviousMbrPendingItems } from '@/modules/okrs/hooks/usePreviousMbrPendingItems';
 import { useRitualAvailability } from '@/modules/okrs/hooks';
+import { useTeams } from '@/modules/teams/hooks/useTeams';
+
 
 import { useBu } from '@/contexts/BuContext';
 import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase';
@@ -390,13 +392,15 @@ export default function MbrPage() {
 
   // Hidratar pauta consolidada do MBR a partir dos Pré-MBR + curadoria IA.
   // Adiciona itens novos ao final preservando ordem definida pelo líder.
-  const teamNamesByIdMemo = useMemo(
-    () =>
-      Object.fromEntries(
-        draft.data.teamOkrSnapshots.map((t) => [t.teamId, t.teamName]),
-      ),
-    [draft.data.teamOkrSnapshots],
-  );
+  const { data: allTeams = [] } = useTeams(true);
+  const teamNamesByIdMemo = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const t of allTeams) map[t.id] = t.name;
+    for (const t of draft.data.teamOkrSnapshots) {
+      if (t.teamName) map[t.teamId] = t.teamName;
+    }
+    return map;
+  }, [allTeams, draft.data.teamOkrSnapshots]);
 
   useEffect(() => {
     const current = panoramaCuration.agenda ?? [];
@@ -443,9 +447,7 @@ export default function MbrPage() {
     return <RitualUnavailableScreen wizardType="mbr" availability={availability} />;
   }
 
-  const teamNamesById = Object.fromEntries(
-    draft.data.teamOkrSnapshots.map((t) => [t.teamId, t.teamName]),
-  );
+  const teamNamesById = teamNamesByIdMemo;
 
   // Step render
   const renderStepContent = () => {
