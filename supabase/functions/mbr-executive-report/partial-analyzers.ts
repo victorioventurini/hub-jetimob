@@ -225,9 +225,14 @@ ${JSON.stringify(decisions.slice(0, 15))}
 === SUGESTÕES DE PAUTA ===
 ${JSON.stringify(agenda.slice(0, 15))}
 
-Gere JSON com até 6 itens priorizados (mais relevantes primeiro), cada um direto ao ponto:
+Gere até 8 itens priorizados (mais relevantes primeiro). Cada item deve:
+- ser direto e acionável (começar com verbo: "Decidir...", "Aprovar...", "Definir...", "Realocar..."),
+- explicitar o TRADE-OFF central (ex.: "Decidir entre acelerar X sacrificando Y, ou manter o ritmo atual aceitando atraso em Z"),
+- ter 1-3 linhas. Evite itens genéricos como "Discutir prioridades".
+
+Gere JSON:
 {
-  "decisionsNeeded": ["item 1", "item 2"]
+  "decisionsNeeded": ["item 1 (1-3 linhas com trade-off)", "item 2", "..."]
 }`;
 
   const result = await callPartial<DecisionsPartial>(
