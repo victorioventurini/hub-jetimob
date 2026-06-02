@@ -55,7 +55,6 @@ import type {
   AnalyzedTeam,
   KrRow,
   OrgObjectiveRow,
-  ParsedReport,
   ReportRequest,
   ReportResponse,
   TeamObjectiveRow,
