@@ -227,7 +227,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       });
     }
 
-    llmConfig.maxTokens = 2400;
+    llmConfig.maxTokens = 6000;
     llmConfig.temperature = 0.4;
 
     const messages: LLMMessage[] = [
