@@ -294,7 +294,9 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         agendaSuggestions,
         monthAnalyses,
         overallAchievement,
+        analyzedTeams,
       };
+
 
       console.log(`[${requestId}] MBR executive report generated successfully`);
       return successResponse(reportData);
