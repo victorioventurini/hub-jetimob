@@ -35,6 +35,13 @@ export interface QbrExecutiveReportOverallAchievement {
   byObjective: QbrExecutiveReportObjectiveAchievement[];
 }
 
+export interface QbrExecutiveAnalyzedTeam {
+  teamId: string;
+  teamName: string;
+  leaderName: string | null;
+  completedAt: string | null;
+}
+
 export interface QbrExecutiveReportData {
   quarterNarrative: string;
   proposalsAnalysis: string;
@@ -51,6 +58,7 @@ export interface QbrExecutiveReportData {
     krs: string[];
   }>;
   overallAchievement: QbrExecutiveReportOverallAchievement;
+  analyzedTeams: QbrExecutiveAnalyzedTeam[];
 }
 
 type ReportRecord = Record<string, unknown>;
