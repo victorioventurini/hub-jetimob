@@ -13,6 +13,7 @@ import { okrsKeys } from '@/lib/queryKeys/okrs';
 import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { showAiEdgeFunctionErrorToast } from '@/modules/okrs/utils/edgeFunctionError';
 
 export interface MbrExecutiveReportTeamCommitment {
   teamName: string;
