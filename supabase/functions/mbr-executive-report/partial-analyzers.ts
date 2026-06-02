@@ -266,7 +266,8 @@ Gere APENAS este JSON:
     console.warn(`[${requestId}] [analyzeKpis] All buckets empty with data present — retrying once`);
     await new Promise((r) => setTimeout(r, 800));
     result = await callPartial<KpiInsightsPartial>(
-      llmConfig,
+      sc,
+      preferredModel,
       prompt,
       fallback,
       requestId,
