@@ -447,9 +447,7 @@ export default function MbrPage() {
     return <RitualUnavailableScreen wizardType="mbr" availability={availability} />;
   }
 
-  const teamNamesById = Object.fromEntries(
-    draft.data.teamOkrSnapshots.map((t) => [t.teamId, t.teamName]),
-  );
+  const teamNamesById = teamNamesByIdMemo;
 
   // Step render
   const renderStepContent = () => {
