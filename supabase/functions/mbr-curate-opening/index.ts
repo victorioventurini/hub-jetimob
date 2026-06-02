@@ -364,6 +364,7 @@ Retorne APENAS o JSON, sem comentários adicionais.`;
         maxTokens: loaded.agent.max_tokens || 2000,
         temperature: loaded.agent.temperature ?? 0.3,
         timeoutMs: 90_000,
+        maxAttempts: 1,
       });
     } catch (err) {
       const latencyMs = Date.now() - startedAt;
