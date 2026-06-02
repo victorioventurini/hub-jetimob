@@ -235,6 +235,28 @@ export function MbrTeamOkrsDetailStep({
                 </div>
               )}
 
+              {/* Toggle: show team projects */}
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {showProjects ? (
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  )}
+                  <Label
+                    htmlFor="toggle-projects"
+                    className="text-xs cursor-pointer min-w-0 truncate"
+                  >
+                    Mostrar projetos
+                  </Label>
+                  <Switch
+                    id="toggle-projects"
+                    checked={showProjects}
+                    onCheckedChange={setShowProjects}
+                  />
+                </div>
+              )}
+
               {/* Reviewed checkbox for current team */}
               {currentTeam && (
                 <div className="flex items-center gap-1.5 min-w-0">
