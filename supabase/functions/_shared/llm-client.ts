@@ -478,10 +478,10 @@ export async function llmComplete(
  */
 export const LLM_FALLBACK_CHAIN = [
   "google/gemini-3-flash-preview",
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-flash-lite",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-flash-lite",
 ];
 
 function isTransientLlmFailure(err: unknown): boolean {
