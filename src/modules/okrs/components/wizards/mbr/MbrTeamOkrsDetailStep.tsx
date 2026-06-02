@@ -90,6 +90,28 @@ export function MbrTeamOkrsDetailStep({
   const safeIndex = Math.max(0, Math.min(currentTeamIndex, totalTeams - 1));
   const currentTeam = teamsWithOkrs[safeIndex] ?? null;
 
+  // Toggle: hide/show on-track OKRs (default: hidden — focus on risk/off-track)
+  const [showOnTrack, setShowOnTrack] = useState(false);
+
+  // Objetivo "on track" = todos os KRs verdes/not_started e nenhum em risco
+  const isObjectiveOnTrack = useCallback((obj: { krsAtRisk: number; keyResults: Array<{ status?: string | null }> }) => {
+    if (obj.krsAtRisk > 0) return false;
+    return obj.keyResults.every((kr) => {
+      const rag = toRagStatus(kr.status ?? 'not_started');
+      return rag === 'green' || rag === 'not_started';
+    });
+  }, []);
+
+  const visibleObjectives = useMemo(() => {
+    if (!currentTeam) return [];
+    if (showOnTrack) return currentTeam.objectives;
+    return currentTeam.objectives.filter((obj) => !isObjectiveOnTrack(obj));
+  }, [currentTeam, showOnTrack, isObjectiveOnTrack]);
+
+  const hiddenOnTrackCount = currentTeam
+    ? currentTeam.objectives.length - (showOnTrack ? currentTeam.objectives.length : visibleObjectives.length)
+    : 0;
+
   // Resolve nomes de projetos/marcos do time atual (BU-scoped, cache compartilhado com Pré-MBR)
   const { projects: teamProjects } = useMbrPreTeamProjects(currentTeam?.teamId ?? null, referenceMonth);
   const projectNameById = useMemo(() => {
