@@ -1,73 +1,87 @@
-# Alinhar % de atingimento das OKRs no MBR Executive Report
+## Objetivo
 
-> Pré-checklist consultado: `docs/canonical/core/INDEX.md`, `docs/canonical/modules/okrs.md`, `mem://features/okrs/okrs-master-standard`, `mem://features/kpis/kpis-master-standard`, `mem://backend/edge-function-standard-v4`.
+Garantir que o **% de atingimento das OKRs** seja idêntico em toda a plataforma — mesma fórmula, mesma agregação, mesmo override por KPI primária — onde quer que apareça: página `/okrs`, **MBR Executive Report** (já alinhado), **QBR Executive Report**, e todos os ritos sob `/rituals` (MBR-Pré, MBR, QBR-Pré, QBR-Pré C-Level, QBR-Meeting, QBR-Post, Weekly, Team Check-in, C-Level Check-in, Leader Prep, Construction Review, Org Health Review).
 
-## Diagnóstico
+## Diagnóstico (divergências encontradas)
 
-O % de atingimento exibido em `/okrs/executive/mbr-report` diverge de `/okrs/` por **4 violações canônicas** na edge function `mbr-executive-report`:
+| Local | Problema |
+|---|---|
+| `supabase/functions/qbr-executive-report/extractors.ts` | `calculateKrProgress` com clamp 0–100, sem unit, sem `maintain`. Não usa KPI primária. Sem `buildOverallAchievement` determinístico (LLM gera o %). |
+| `supabase/functions/_shared/hub-tools.ts` (l.715) | `calculateProgress` duplicado, clamp 0–100, sem unit, sem `maintain`. Usado pelas hub-tools dos agentes (qbr/mbr/weekly opening, learnings, etc.). |
+| `supabase/functions/okr-org-health-review/index.ts` | Recebe `progress` do caller; depende da fonte que o invoca (risco de divergência). |
+| `supabase/functions/mbr-summary/index.ts` | Idem (recebe `o.progress`). |
+| `supabase/functions/qbr-pre-summary`, `qbr-post-summary`, `qbr-meeting-summary`, `qbr-clevel-learnings-summary`, `mbr-curate-opening`, `mbr-pre-month-analysis`, `weekly-curate-opening` | Não recalculam progresso; consomem o que vem do payload/hub-tools — herdam o bug do `hub-tools.ts`. |
+| `src/modules/okrs/components/OrgObjectiveCard.tsx`, `TeamObjectiveCard.tsx`, `KrHistoryDialog.tsx`, `cycle-checkins/CycleCheckinsEvolution.tsx` | Cálculo inline ad-hoc (sem unit, sem `maintain`, sem KPI primária). |
 
-1. **Fórmula duplicada e divergente** — `extractors.ts::calculateKrProgress` é uma reimplementação local que não segue a Progress Canon (`mem://features/okrs/okrs-master-standard`):
-   - Aplica `Math.round` e arredonda antes da agregação (canônico não arredonda na função base; só na exibição).
-   - Não trata `direction = "maintain"` (binário).
-   - Não normaliza unidade (`%` etc.) como `progressCalculation.ts::normalizeProgressInputs`.
-   - Não conhece a tolerância de 15% nem o "sem clamp superior" (156% é resultado válido — `prompts.ts` já cita isso, mas a função clipa indiretamente ao tratar baseline=target).
-2. **Agregação por bucket, não por objetivo** — `buildTeamHealthSummary` só conta KRs em `achieved/onTrack/atRisk/offTrack`. A página `/okrs/` (`useCompanyOkrs`) calcula: progresso do objetivo = média das KRs; progresso geral = média dos objetivos. O LLM recebe só os baldes e **inventa** o %.
-3. **Ignora Primary KPI como fonte da KR** — Core Rule: *"Primary KPIs dictate KR progress automatically"*. A edge usa `kr.current_value` cru; quando há KPI primária, o valor autoritativo é a última leitura da KPI (`calculateKrProgressFromKpi`).
-4. **Status RAG não canônico** — usa `kr.status` direto; canônico exige `getEffectiveKrRagStatus` + `mapRagToCalculated` (evita "Não iniciada" indevida quando há check-in/KPI).
+## Estratégia
+
+Criar um único módulo canônico para edge functions, espelhando `src/modules/okrs/utils/progressCalculation.ts`, e refatorar todos os pontos acima para consumi-lo. Para o frontend, substituir formulações inline por `calculateProgress`.
 
 ## Mudanças
 
-### 1. `supabase/functions/mbr-executive-report/extractors.ts`
-- Reescrever `calculateKrProgress` espelhando bit-a-bit `calculateProgress` de `src/modules/okrs/utils/progressCalculation.ts`:
-  - Normalizar unidade.
-  - Tratar `direction === "maintain"` (binário).
-  - **Sem clamp superior** (manter 156% etc.); manter apenas `Math.max(0, x)`.
-  - **Não arredondar** na função base; arredondar só ao montar `OVERALL_ACHIEVEMENT` final.
-- Helper `resolveKrCurrentValue(kr)` que prefere o valor da KPI primária (carregado pelo data-loader) sobre `kr.current_value`.
-- Helper `resolveKrRagStatus(kr, progress, cycleProgress)` espelhando `getEffectiveKrRagStatus` (RAG 🟢≥70% · 🟡40–70% · 🔴<40% · ⚪ sem progresso, em relação ao progresso esperado do ciclo).
-- Novo `buildObjectiveAggregates(teamObjectives)` retornando:
-  - `byObjective: [{ id, title, teamName, progress, krCount }]`
-  - `byTeam: [{ teamId, teamName, progress, objectivesCount, krCount }]`
-  - `overallProgress` (média de objetivos, igual a `useCompanyOkrs`).
-- `buildTeamHealthSummary` continua existindo (buckets para narrativa qualitativa), mas passa a usar a fórmula canônica e o status efetivo.
+### 1. Canon compartilhado em edge functions
+**Novo:** `supabase/functions/_shared/okr-progress.ts`
+- Porta exata de `calculateProgress`, `calculateAggregatedProgress`, `calculateProgressFromNullable` e `calculateProgressRagStatus` do canon do frontend.
+- Suporte a `unit` (R$, R$ mil, R$ milhão), `direction: 'up' | 'down' | 'maintain'`, sem upper clamp.
+- Helper `resolveKrCurrentValue(kr)` priorizando `effective_current_value` (KPI primária) sobre `current_value` — extraído do que já existe em `mbr-executive-report/extractors.ts`.
+- Helper `buildOverallAchievement(teamObjectives, { rounding })` retornando `{ overallProgress, byTeam, byObjective }` — média de objetivos como `useCompanyOkrs`.
 
-### 2. `supabase/functions/mbr-executive-report/data-loader.ts`
-- Garantir SELECT explícito (sem `*`) das colunas necessárias em `okr_*_key_results`: `id, title, baseline, current_value, target, direction, unit, status, primary_kpi_id, deleted_at, cancelled_at`.
-- Carregar a última leitura de KPI primária por KR até `monthEndIso` (Promise.all conforme `mem://backend/edge-function-performance-standard`) e anexar como `effectiveCurrentValue` ao KR.
+### 2. QBR Executive Report
+**`supabase/functions/qbr-executive-report/data-loader.ts`**
+- SELECT explícito de `id, title, baseline, current_value, target, direction, unit, status, primary_kpi_id, deleted_at, cancelled_at` em KRs.
+- Carregar valores de KPI primária por KR (mesma rotina já feita no MBR — `loadPrimaryKpiValuesForKrs`), tornando `effective_current_value` disponível.
 
-### 3. `supabase/functions/mbr-executive-report/prompts.ts`
-- Adicionar bloco `OVERALL_ACHIEVEMENT` com `overallProgress`, `byTeam`, `byObjective` (números já calculados).
-- Instrução firme: *"Use EXATAMENTE os valores de OVERALL_ACHIEVEMENT ao citar % de atingimento; nunca recalcule."*
-- Manter o lembrete de que 100%+ é válido.
+**`supabase/functions/qbr-executive-report/extractors.ts`**
+- Remover `calculateKrProgress` local.
+- Importar do `_shared/okr-progress.ts`.
+- `buildTeamHealthSummary` passa a usar canon + `resolveKrCurrentValue` + `getEffectiveKrRagStatus` (RAG 🟢≥70 / 🟡40–70 / 🔴<40, considerando ritmo do ciclo).
+- Adicionar `buildOverallAchievement` agregando por objetivo → time → org.
 
-### 4. `supabase/functions/mbr-executive-report/types.ts`
-- Estender `ReportResponse` (e `ParsedReport` se necessário) com `overallAchievement: { overallProgress, byTeam, byObjective }`.
+**`supabase/functions/qbr-executive-report/types.ts`**
+- Estender `ReportResponse` com `overallAchievement`.
 
-### 5. `supabase/functions/mbr-executive-report/index.ts`
-- Chamar os novos agregadores, logar `overallProgress` + `byTeam.length` + `byObjective.length`, propagar em `ReportResponse`.
+**`supabase/functions/qbr-executive-report/prompts.ts`**
+- Bloco `OVERALL_ACHIEVEMENT` (mesma abordagem do MBR) com números pré-calculados e instrução "use exatamente estes valores".
 
-### 6. `src/modules/okrs/hooks/useMbrExecutiveReport.ts`
-- Tipar e expor `overallAchievement` em `MbrExecutiveReportData`.
+**`supabase/functions/qbr-executive-report/index.ts`**
+- Chamar agregador, logar `overallProgress` e contagens.
 
-### 7. `src/modules/okrs/pages/MbrExecutiveReportPage.tsx`
-- Renderizar o % de atingimento (hero/sumário) a partir de `overallAchievement.overallProgress` (determinístico), não do texto do LLM.
-- Quebra por time reaproveitando componente existente (`ProgressSummary` ou similar — sem duplicar).
+**`src/modules/okrs/hooks/useQbrExecutiveReport*` + página `QbrExecutiveReportPage` (ou equivalente em `executive-quarter-review`)**
+- Tipar e expor `overallAchievement`.
+- Renderizar card determinístico "% de atingimento das OKRs" (overall + tabela por time), espelhando o que já existe no MBR.
 
-## Detalhes técnicos
+### 3. Hub tools (afeta todos os ritos)
+**`supabase/functions/_shared/hub-tools.ts`**
+- Remover `calculateProgress` local.
+- Substituir por import do `_shared/okr-progress.ts`.
+- Ao buscar KRs em hub-tools (linha ~359), passar `unit` e respeitar `maintain`.
+- Quando KR tiver `primary_kpi_id`, resolver valor via KPI primária antes de calcular.
 
-- Edge function não pode importar de `src/`. Replicar a Progress Canon em um helper interno, com comentário apontando para `src/modules/okrs/utils/progressCalculation.ts` como SSOT.
-- Agregação (igual a `useCompanyOkrs`):
-  - `objectiveProgress = mean(KR.progress)` (filtrar `deleted_at`/`cancelled_at` conforme Core Rule de soft delete).
-  - `teamProgress = mean(objectiveProgress do time)`.
-  - `overallProgress = mean(objectiveProgress de todos os objetivos do ciclo)`.
-- Nenhuma alteração de schema/RLS; tudo derivado.
+Impacto direto (sem editar cada função): `qbr-pre-summary`, `qbr-post-summary`, `qbr-meeting-summary`, `qbr-clevel-learnings-summary`, `mbr-curate-opening`, `mbr-pre-month-analysis`, `weekly-curate-opening`, `okr-construction-review`, `okr-org-health-review` (quando usam hub-tools).
+
+### 4. okr-org-health-review e mbr-summary
+- Não recalculam, recebem do caller. Auditar `src/modules/okrs/hooks/useOkrOrgHealthReview.ts` e `useMbrSummary*` para garantir que enviam `progress` calculado via `calculateProgress` (canon), nunca via fórmula inline.
+
+### 5. Componentes frontend com cálculo inline
+Substituir formulações ad-hoc por `calculateProgress` (com `unit`):
+- `src/modules/okrs/components/OrgObjectiveCard.tsx` (l.65–68)
+- `src/modules/okrs/components/TeamObjectiveCard.tsx` (l.100–103)
+- `src/modules/okrs/components/KrHistoryDialog.tsx` (l.82)
+- `src/modules/okrs/components/cycle-checkins/CycleCheckinsEvolution.tsx` (l.180, 256)
+
+### 6. Wizards de ritos (`/rituals`)
+- Verificar que `MbrOrgOkrsStep`, `MbrTeamOkrsDetailStep`, `MbrPanoramaStep`, `QbrCLevelQuarterBalanceStep`, `QbrCLevelSystemReadStep`, `QbrMeetingOpeningStep`, `TeamKrReviewStep`, `KrContextCard`, `CheckinProgressBlock`, `AiInsightsCard` e `OrgOkrsReportSection` estão consumindo `calculateProgress` (ou um hook que o use) e não duplicando lógica. Onde houver duplicação, substituir.
+- `useCompanyOkrs` permanece a fonte de agregação org-level no frontend.
 
 ## Fora de escopo
-- Wizard MBR-pré.
-- QBR Executive Report (validar separadamente; mesma classe de bug provável).
-- Refatorar `useCompanyOkrs` (já é a fonte canônica).
+- Refatoração do `useCompanyOkrs` (já canônico).
+- Mudanças no cálculo de KPI attainment (`KpiEvolutionSection`) — domínio distinto.
+- Alteração de RAG thresholds.
 
 ## Validação
-1. `/okrs/?cycle=8fd8d5fa-...` — anotar % geral e por time.
-2. `/okrs/executive/mbr-report?cycle=8fd8d5fa-...` — após implantação, conferir que o número bate.
-3. Logs da edge: `overallProgress=X` deve coincidir com o da página de OKRs.
+Para o ciclo `8fd8d5fa-6145-4c13-8c22-5b45e5eb03c3`:
+1. Abrir `/okrs/?cycle=...` → registrar `overallProgress` por time + org.
+2. Abrir `/okrs/executive/mbr-report?cycle=...` → conferir igualdade (já alinhado).
+3. Abrir QBR Executive Report do mesmo ciclo → conferir igualdade.
+4. Abrir wizards de Weekly, MBR-Pré, MBR, QBR-Pré, QBR-Meeting de um time → conferir que % por KR/objetivo bate com `/okrs/`.
+5. Rodar `src/modules/okrs/utils/progressCalculation.test.ts` e adicionar casos para o novo `_shared/okr-progress.ts` (mesmos asserts).
