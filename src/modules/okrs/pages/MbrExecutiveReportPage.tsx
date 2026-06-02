@@ -312,6 +312,111 @@ function ReportDisplay({
         </div>
       </ReportSection>
 
+      {(report.projectsAnalysis || report.projectIssues.length > 0) && (
+        <ReportSection icon={FolderKanban} title="Projetos e marcos do mês">
+          {report.projectsAnalysis && (
+            <p className="text-sm leading-relaxed whitespace-pre-line mb-3">
+              {report.projectsAnalysis}
+            </p>
+          )}
+          {report.projectIssues.length > 0 && (
+            <div className="space-y-2">
+              {report.projectIssues.slice(0, 30).map((p, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <Badge variant="secondary" className="text-xs shrink-0">{p.teamName}</Badge>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {p.kind === 'project' ? 'Projeto' : 'Marco'}
+                  </Badge>
+                  <span className="text-muted-foreground">{p.justification}</span>
+                </div>
+              ))}
+              {report.projectIssues.length > 30 && (
+                <p className="text-xs text-muted-foreground">
+                  +{report.projectIssues.length - 30} outros itens não exibidos.
+                </p>
+              )}
+            </div>
+          )}
+        </ReportSection>
+      )}
+
+      {(report.krIssuesAnalysis || report.krIssues.length > 0) && (
+        <ReportSection icon={Flag} title="KRs fora da meta — justificativas dos times">
+          {report.krIssuesAnalysis && (
+            <p className="text-sm leading-relaxed whitespace-pre-line mb-3">
+              {report.krIssuesAnalysis}
+            </p>
+          )}
+          {report.krIssues.length > 0 && (
+            <div className="space-y-2">
+              {report.krIssues.slice(0, 30).map((k, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <Badge variant="secondary" className="text-xs shrink-0">{k.teamName}</Badge>
+                  {k.paceStatus && (
+                    <Badge variant="outline" className="text-xs shrink-0 capitalize">{k.paceStatus}</Badge>
+                  )}
+                  <span className="text-muted-foreground">{k.justification}</span>
+                </div>
+              ))}
+              {report.krIssues.length > 30 && (
+                <p className="text-xs text-muted-foreground">
+                  +{report.krIssues.length - 30} outros KRs não exibidos.
+                </p>
+              )}
+            </div>
+          )}
+        </ReportSection>
+      )}
+
+      {(report.leaderSignals || report.agendaSuggestions.length > 0 || report.kpisToCreate.length > 0 || report.kpiIssues.length > 0) && (
+        <ReportSection icon={Lightbulb} title="Sinais dos líderes">
+          {report.leaderSignals && (
+            <p className="text-sm leading-relaxed whitespace-pre-line mb-3">
+              {report.leaderSignals}
+            </p>
+          )}
+          {report.kpiIssues.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">KPIs com justificativa ou sem dados</p>
+              <div className="flex flex-wrap gap-1.5">
+                {report.kpiIssues.slice(0, 20).map((k, i) => (
+                  <Badge key={i} variant="outline" className="text-xs">
+                    {k.teamName} · {k.kind === 'no_data' ? 'sem dados' : 'justificado'}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {report.agendaSuggestions.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Sugestões de pauta</p>
+              <ul className="space-y-1">
+                {report.agendaSuggestions.slice(0, 10).map((a, i) => (
+                  <li key={i} className="text-sm flex items-start gap-2">
+                    <Badge variant="secondary" className="text-xs shrink-0">{a.teamName}</Badge>
+                    <span>{a.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {report.kpisToCreate.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Novos KPIs sugeridos</p>
+              <ul className="space-y-1">
+                {report.kpisToCreate.slice(0, 10).map((k, i) => (
+                  <li key={i} className="text-sm flex items-start gap-2">
+                    <Badge variant="secondary" className="text-xs shrink-0">{k.teamName}</Badge>
+                    <span>{k.description}{k.suggestedScope ? ` · ${k.suggestedScope}` : ''}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </ReportSection>
+      )}
+
+
       {report.decisionsNeeded && report.decisionsNeeded.length > 0 && (
         <ReportSection icon={AlertCircle} title="Decisões necessárias">
           <ul className="space-y-2">
