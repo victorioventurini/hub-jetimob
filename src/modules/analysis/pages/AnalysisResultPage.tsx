@@ -460,12 +460,25 @@ export default function AnalysisResultPage() {
           backTo="/analysis"
           backLabel="Voltar para Análises"
         actions={
-          report.status === "complete" ? (
-            <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
-              <Share2 className="mr-1.5 h-4 w-4" />
-              Compartilhar
-            </Button>
-          ) : undefined
+          report.status === "generating" || report.status === "pending" ? undefined : (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRegenerate}
+                disabled={generate.isPending}
+              >
+                <RefreshCw className={cn("mr-1.5 h-4 w-4", generate.isPending && "animate-spin")} />
+                {generate.isPending ? "Regenerando…" : "Regenerar"}
+              </Button>
+              {report.status === "complete" && (
+                <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
+                  <Share2 className="mr-1.5 h-4 w-4" />
+                  Compartilhar
+                </Button>
+              )}
+            </div>
+          )
         }
       />
 
