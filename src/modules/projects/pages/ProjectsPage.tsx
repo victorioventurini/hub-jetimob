@@ -70,6 +70,10 @@ export default function ProjectsPage() {
       if (status === 'all') next.delete('status');
       else next.set('status', status);
 
+      const health = newFilters.health ?? 'all';
+      if (health === 'all') next.delete('health');
+      else next.set('health', health);
+
       if (newFilters.owner_id) next.set('owner', newFilters.owner_id);
       else next.delete('owner');
 
