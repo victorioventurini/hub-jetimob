@@ -123,8 +123,8 @@ export function OkrProgressBar({
       </div>
       {showLabels && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mt-1 min-w-0">
-          <span className="truncate min-w-0 flex-1">Base: {formatValueWithUnit(baseline, unit)}</span>
-          <span className="truncate min-w-0 flex-1 text-right">Meta: {formatValueWithUnit(target, unit)}</span>
+          <span className="truncate min-w-0 flex-1">Base: {formatValueWithUnit(baseline, displayUnit)}</span>
+          <span className="truncate min-w-0 flex-1 text-right">Meta: {formatValueWithUnit(target, displayUnit)}</span>
         </div>
       )}
     </div>
