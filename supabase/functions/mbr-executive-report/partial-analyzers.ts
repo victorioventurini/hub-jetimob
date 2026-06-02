@@ -410,8 +410,9 @@ Gere JSON com exatamente esta estrutura. CADA campo deve ser denso, analítico e
     { role: "user", content: prompt },
   ];
 
-  const response = await llmComplete(
-    { ...llmConfig, maxTokens: 5000, temperature: 0.45 },
+  const response = await llmCompleteWithFallback(
+    sc,
+    preferredModel,
     messages,
     { maxTokens: 5000, temperature: 0.45, timeoutMs: 120_000 },
   );
