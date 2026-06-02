@@ -362,16 +362,44 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
       if (error) throw error;
       if (!data || data.length === 0) return null;
 
+      let latestJob: MbrExecutiveReportJobState | null = null;
       for (const row of data) {
-        const normalized = normalizeMbrExecutiveReportData(row.reflection_data);
-        if (normalized.monthRef === monthRef && normalized.monthNarrative) {
-          return { report: normalized, generatedAt: row.completed_at };
+        const rowMonthRef = getReportMonthRef(row.reflection_data);
+        if (rowMonthRef !== monthRef) continue;
+
+        if (row.status === 'completed') {
+          const normalized = normalizeMbrExecutiveReportData(row.reflection_data);
+          if (normalized.monthNarrative) {
+            return { report: normalized, generatedAt: row.completed_at, job: null } satisfies MbrExecutiveReportQueryData;
+          }
+        }
+
+        if (row.status === 'in_progress' && !latestJob) {
+          latestJob = {
+            id: row.id,
+            status: 'generating',
+            updatedAt: row.updated_at ?? row.created_at ?? null,
+          };
+        }
+
+        if (row.status === 'abandoned' && !latestJob) {
+          const root = isRecord(row.reflection_data) ? row.reflection_data : {};
+          latestJob = {
+            id: row.id,
+            status: 'failed',
+            updatedAt: row.updated_at ?? row.created_at ?? null,
+            errorMessage: toText(root.errorMessage),
+          };
         }
       }
-      return null;
+      return { report: null, generatedAt: null, job: latestJob } satisfies MbrExecutiveReportQueryData;
     },
     enabled: !!cycleId && !!currentBuId && !!monthRef,
     staleTime: 5 * 60 * 1000,
+    refetchInterval: (q) => {
+      const data = q.state.data as MbrExecutiveReportQueryData | null | undefined;
+      return data?.job?.status === 'generating' ? 3000 : false;
+    },
   });
 
   const generateMutation = useMutation({
