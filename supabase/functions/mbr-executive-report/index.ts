@@ -22,11 +22,13 @@ import {
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
-import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
+import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData, ritualSubmissionWindowIso } from "./data-loader.ts";
 import {
+  buildAnalyzedTeams,
   buildKpiSummary,
   buildOverallAchievement,
   buildTeamHealthSummary,
+  dedupSessionsByTeam,
   extractAgendaSuggestions,
   extractDecisions,
   extractKpiIssues,
@@ -37,13 +39,13 @@ import {
   extractMonthlyHighlights,
   extractProjectIssues,
   extractTeamCommitments,
-  filterSessionsByMonth,
 } from "./extractors.ts";
 import {
   buildMbrExecUserPrompt,
   MBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  AnalyzedTeam,
   KrRow,
   OrgObjectiveRow,
   ParsedReport,
@@ -51,6 +53,7 @@ import type {
   ReportResponse,
   TeamObjectiveRow,
 } from "./types.ts";
+
 
 const MONTH_REF_RE = /^\d{4}-\d{2}$/;
 
