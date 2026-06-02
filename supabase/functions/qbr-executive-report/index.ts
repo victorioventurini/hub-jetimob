@@ -21,9 +21,11 @@ import {
 import { tryParseAiJson } from "../_shared/ai-json.ts";
 import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
 import {
+  buildAnalyzedTeams,
   buildKpiSummary,
   buildOverallAchievement,
   buildTeamHealthSummary,
+  dedupSessionsByTeam,
   extractCLevelFlags,
   extractDecisions,
   extractKrSummary,
@@ -35,6 +37,7 @@ import {
   QBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  AnalyzedTeam,
   KrRow,
   OrgObjectiveRow,
   ParsedReport,
