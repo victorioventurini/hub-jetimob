@@ -313,7 +313,8 @@ Gere JSON:
 }`;
 
   const result = await callPartial<DecisionsPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     { decisionsNeeded: [] },
     requestId,
