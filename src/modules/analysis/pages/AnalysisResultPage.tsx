@@ -384,9 +384,27 @@ function AnalysisCommentSection({ reportId }: { reportId: string }) {
 
 export default function AnalysisResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
+  const navigate = useNavigate();
   const { data: report, isLoading } = useAnalysisReport(reportId);
   const { currentBuId } = useBu();
   const [shareOpen, setShareOpen] = useState(false);
+  const generate = useGenerateAnalysis();
+
+  const handleRegenerate = async () => {
+    if (!report) return;
+    const result = await generate.mutateAsync({
+      premise: report.premise,
+      additional_context: report.additional_context ?? undefined,
+      mode: report.mode,
+      modules: report.mode === "auto" ? [] : (report.modules ?? []),
+      scope: report.scope ?? {},
+      period: report.period,
+      depth: report.depth,
+      template_id: report.template_id ?? undefined,
+      title: report.title ?? undefined,
+    });
+    if (result?.report_id) navigate(`/analysis/${result.report_id}`);
+  };
 
   usePageTitle(report?.title || report?.premise?.slice(0, 60) || "Análise");
 
