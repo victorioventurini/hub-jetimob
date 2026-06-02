@@ -9,6 +9,9 @@ import { useOptionalBuClient } from '@/integrations/supabase/getOptionalBuClient
 import { useBu } from '@/contexts/BuContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { getEffectiveKrRagStatus } from '../utils/effectiveStatus';
+import { calculateProgress } from '../utils/progressCalculation';
+import type { OkrDirection } from '../types';
+
 
 // ============================================================
 // TYPES
@@ -73,14 +76,17 @@ export function useOrgOkrsForContext(cycleId: string | null | undefined) {
         baseline: number;
         current_value: number;
         target: number;
+        direction: string | null;
+        unit: string | null;
         status: string;
         org_objective_id: string;
       }> = [];
 
+
       if (objectiveIds.length > 0) {
         const { data: krsData, error: krsError } = await supabase
           .from('okr_org_key_results')
-          .select('id, title, baseline, current_value, target, status, org_objective_id')
+          .select('id, title, baseline, current_value, target, direction, unit, status, org_objective_id')
           .in('org_objective_id', objectiveIds)
           .is('deleted_at', null)
           .is('cancelled_at', null);
@@ -92,12 +98,18 @@ export function useOrgOkrsForContext(cycleId: string | null | undefined) {
       // Build objectives with KRs
       const objectivesWithKrs: OrgObjectiveForContext[] = (objectives || []).map(obj => {
         const objKrs = krs.filter(kr => kr.org_objective_id === obj.id);
-        
+
         const krsWithProgress: OrgKrForContext[] = objKrs.map(kr => {
-          const range = kr.target - kr.baseline;
-          const progress = range !== 0 
-            ? Math.min(100, Math.max(0, ((kr.current_value - kr.baseline) / range) * 100))
-            : 0;
+          // Progresso via canon (normaliza unidade); clamp visual em 100%.
+          const progress = Math.min(100, calculateProgress(
+            Number(kr.baseline) || 0,
+            Number(kr.current_value) || 0,
+            Number(kr.target) || 0,
+            ((kr.direction as OkrDirection) || 'up'),
+            { unit: (kr as { unit?: string | null }).unit ?? null },
+          ));
+
+
           
           return {
             id: kr.id,
