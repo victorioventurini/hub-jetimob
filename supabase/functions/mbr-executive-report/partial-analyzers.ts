@@ -111,7 +111,8 @@ Gere JSON:
 export interface KrIssuesPartial { krIssuesAnalysis: string }
 
 export async function analyzeKrIssues(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   krIssues: unknown,
   orgObjectivesSummary: unknown,
   requestId: string,
