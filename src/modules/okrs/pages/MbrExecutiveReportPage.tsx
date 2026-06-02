@@ -56,6 +56,8 @@ import {
 import { useMbrExecutiveReport, type MbrExecutiveReportData } from '../hooks/useMbrExecutiveReport';
 import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
 import { OrgOkrsReportSection } from '../components/qbr-report/OrgOkrsReportSection';
+import { AnalyzedTeamsHeader } from '../components/shared/AnalyzedTeamsHeader';
+
 
 const LOADING_MESSAGES = [
   'Coletando MBR-pré dos líderes...',
