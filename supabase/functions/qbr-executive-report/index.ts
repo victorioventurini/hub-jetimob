@@ -19,9 +19,10 @@ import {
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
-import { loadCycle, loadReportData } from "./data-loader.ts";
+import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
 import {
   buildKpiSummary,
+  buildOverallAchievement,
   buildTeamHealthSummary,
   extractCLevelFlags,
   extractDecisions,
@@ -34,10 +35,12 @@ import {
   QBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  KrRow,
   OrgObjectiveRow,
   ParsedReport,
   ReportRequest,
   ReportResponse,
+  TeamObjectiveRow,
 } from "./types.ts";
 
 async function handler(req: Request, ctx: RequestContext): Promise<Response> {
