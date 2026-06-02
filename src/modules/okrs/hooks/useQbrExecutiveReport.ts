@@ -35,6 +35,13 @@ export interface QbrExecutiveReportOverallAchievement {
   byObjective: QbrExecutiveReportObjectiveAchievement[];
 }
 
+export interface QbrExecutiveAnalyzedTeam {
+  teamId: string;
+  teamName: string;
+  leaderName: string | null;
+  completedAt: string | null;
+}
+
 export interface QbrExecutiveReportData {
   quarterNarrative: string;
   proposalsAnalysis: string;
@@ -51,6 +58,7 @@ export interface QbrExecutiveReportData {
     krs: string[];
   }>;
   overallAchievement: QbrExecutiveReportOverallAchievement;
+  analyzedTeams: QbrExecutiveAnalyzedTeam[];
 }
 
 type ReportRecord = Record<string, unknown>;
@@ -151,6 +159,19 @@ function normalizeQbrExecutiveReportData(input: unknown): QbrExecutiveReportData
         byObjective,
       };
     })(),
+    analyzedTeams: Array.isArray(source.analyzedTeams)
+      ? source.analyzedTeams.map((t) => {
+          const r = isRecord(t) ? t : {};
+          const leader = toText(r.leaderName);
+          const completed = toText(r.completedAt);
+          return {
+            teamId: toText(r.teamId),
+            teamName: toText(r.teamName) || 'Time não informado',
+            leaderName: leader ? leader : null,
+            completedAt: completed ? completed : null,
+          };
+        })
+      : [],
   };
 }
 

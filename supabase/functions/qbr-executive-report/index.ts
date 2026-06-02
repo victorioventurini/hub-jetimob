@@ -21,9 +21,11 @@ import {
 import { tryParseAiJson } from "../_shared/ai-json.ts";
 import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
 import {
+  buildAnalyzedTeams,
   buildKpiSummary,
   buildOverallAchievement,
   buildTeamHealthSummary,
+  dedupSessionsByTeam,
   extractCLevelFlags,
   extractDecisions,
   extractKrSummary,
@@ -35,6 +37,7 @@ import {
   QBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  AnalyzedTeam,
   KrRow,
   OrgObjectiveRow,
   ParsedReport,
@@ -106,6 +109,28 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       (teamsData || []).map((t: { id: string; name: string }) => [t.id, t.name]),
     );
 
+    // Deduplica QBR-pré por team_id (mais recente vence).
+    const dedupedQbrPre = dedupSessionsByTeam(qbrPreSessions || []);
+
+    // Resolve nomes dos líderes (started_by).
+    const leaderIds = Array.from(
+      new Set(dedupedQbrPre.map((s) => s.started_by).filter(Boolean) as string[]),
+    );
+    const profilesMap = new Map<string, string>();
+    if (leaderIds.length > 0) {
+      const { data: profilesData, error: profilesErr } = await sc
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", leaderIds);
+      if (profilesErr) {
+        console.error(`[${requestId}] Profiles lookup error:`, profilesErr.message);
+      }
+      for (const p of (profilesData || []) as Array<{ id: string; display_name: string | null }>) {
+        if (p?.id && p.display_name) profilesMap.set(p.id, p.display_name);
+      }
+    }
+    const analyzedTeams: AnalyzedTeam[] = buildAnalyzedTeams(dedupedQbrPre, teamsMap, profilesMap);
+
     // Resolve valor efetivo das KRs com KPI primária até o fim do ciclo
     // (Core Rule: Primary KPIs dictate KR progress automatically).
     const teamObjList = (teamObjectives || []) as TeamObjectiveRow[];
@@ -134,14 +159,14 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const teamHealthSummary = buildTeamHealthSummary(teamObjList, teamsMap);
     const overallAchievement = buildOverallAchievement(teamObjList, teamsMap);
     const kpisSummary = buildKpiSummary(orgKpis || []);
-    const leaderLearnings = extractLearnings(qbrPreSessions || []);
-    const nextCycleProposals = extractNextCycleProposals(qbrPreSessions || [], teamsMap);
+    const leaderLearnings = extractLearnings(dedupedQbrPre);
+    const nextCycleProposals = extractNextCycleProposals(dedupedQbrPre, teamsMap);
     const cLevelFlags = extractCLevelFlags(cLevelSession);
     const pendingDecisions = extractDecisions(decisionSessions || []);
     const orgObjectivesSummary = extractKrSummary((orgObjectives || []) as OrgObjectiveRow[]);
 
     console.log(
-      `[${requestId}] Prompt data ready: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, proposals=${nextCycleProposals.length}, decisions=${pendingDecisions.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
+      `[${requestId}] Prompt data ready: analyzedTeams=${analyzedTeams.length}, teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, proposals=${nextCycleProposals.length}, decisions=${pendingDecisions.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
     );
 
     const llmConfig = await resolveLLMConfig(sc, "google/gemini-3-flash-preview");
@@ -205,6 +230,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           : [],
         teamProposals: nextCycleProposals,
         overallAchievement,
+        analyzedTeams,
       };
 
       console.log(`[${requestId}] QBR executive report generated successfully`);

@@ -49,6 +49,7 @@ import { useQbrExecutiveReport, type QbrExecutiveReportData } from '../hooks/use
 import { KpiEvolutionSection } from '../components/qbr-report/KpiEvolutionSection';
 import { CriticalKpiComparison } from '../components/qbr-report/CriticalKpiComparison';
 import { OrgOkrsReportSection } from '../components/qbr-report/OrgOkrsReportSection';
+import { AnalyzedTeamsHeader } from '../components/shared/AnalyzedTeamsHeader';
 
 // ============================================================
 // LOADING MESSAGES
@@ -218,6 +219,8 @@ function ReportDisplay({
           </div>
         </CardContent>
       </Card>
+
+      <AnalyzedTeamsHeader teams={report.analyzedTeams || []} ritual="QBR" />
 
       {/* Section 0 — Overall Achievement (deterministic, mesma fórmula de /okrs) */}
       {report.overallAchievement && report.overallAchievement.byObjective.length > 0 && (

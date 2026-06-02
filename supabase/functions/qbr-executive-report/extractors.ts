@@ -11,6 +11,7 @@ import {
 } from "../_shared/okr-progress.ts";
 
 import type {
+  AnalyzedTeam,
   KpiRow,
   KpiValueRow,
   KrRow,
@@ -205,4 +206,42 @@ export function extractKrSummary(orgObjectives: { title: string; key_results?: K
       status: kr.status,
     })),
   }));
+}
+
+/**
+ * Deduplica sessões por `team_id` mantendo a mais recente (`completed_at DESC`).
+ * Evita que um time que re-submeteu o QBR-pré contribua em dobro.
+ */
+export function dedupSessionsByTeam(sessions: SessionRow[]): SessionRow[] {
+  const sorted = [...sessions].sort((a, b) => {
+    const ta = a.completed_at ? Date.parse(a.completed_at) : 0;
+    const tb = b.completed_at ? Date.parse(b.completed_at) : 0;
+    return tb - ta;
+  });
+  const seen = new Set<string>();
+  const out: SessionRow[] = [];
+  for (const s of sorted) {
+    if (!s.team_id || seen.has(s.team_id)) continue;
+    seen.add(s.team_id);
+    out.push(s);
+  }
+  return out;
+}
+
+/**
+ * Constrói a lista de times analisados, com nome do líder (started_by) resolvido.
+ */
+export function buildAnalyzedTeams(
+  sessions: SessionRow[],
+  teams: Map<string, string>,
+  profiles: Map<string, string>,
+): AnalyzedTeam[] {
+  return sessions
+    .map((s) => ({
+      teamId: s.team_id,
+      teamName: teams.get(s.team_id) || "Time",
+      leaderName: s.started_by ? profiles.get(s.started_by) ?? null : null,
+      completedAt: s.completed_at ?? null,
+    }))
+    .sort((a, b) => a.teamName.localeCompare(b.teamName, "pt-BR"));
 }

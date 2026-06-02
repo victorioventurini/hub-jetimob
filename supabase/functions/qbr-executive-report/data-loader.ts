@@ -46,7 +46,7 @@ export async function loadReportData(
       .is("deleted_at", null),
     sc
       .from("okr_wizard_sessions")
-      .select("team_id, reflection_data, completed_at")
+      .select("team_id, reflection_data, completed_at, started_by")
       .eq("wizard_type", "qbr-pre")
       .eq("cycle_id", cycleId)
       .eq("bu_id", buId)
