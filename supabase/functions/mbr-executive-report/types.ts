@@ -180,4 +180,6 @@ export interface ReportResponse {
   agendaSuggestions: AgendaSuggestionItem[];
   monthAnalyses: MonthAnalysisSummary[];
   overallAchievement: OverallAchievement;
+  analyzedTeams: AnalyzedTeam[];
 }
+
