@@ -393,19 +393,15 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
         generatedAt: new Date().toISOString(),
       });
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       console.error('Failed to generate MBR report:', error);
 
       const message = error?.message || '';
       if (message.includes('NO_MBR_PRE_FOR_MONTH') || message.includes('Nenhum MBR-pré')) {
         toast.error('Nenhum líder submeteu MBR-pré para este mês ainda.');
-      } else if (message.includes('429') || message.includes('Rate limit')) {
-        toast.error('Limite de requisições atingido. Tente novamente em alguns minutos.');
-      } else if (message.includes('402') || message.includes('credits')) {
-        toast.error('Créditos de IA esgotados. Contate o administrador.');
-      } else {
-        toast.error('Erro ao gerar o relatório executivo. Tente novamente.');
+        return;
       }
+      await showAiEdgeFunctionErrorToast(error, 'Erro ao gerar o relatório executivo. Tente novamente.');
     },
   });
 
