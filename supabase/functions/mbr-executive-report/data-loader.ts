@@ -103,6 +103,7 @@ export async function loadReportData(
       .eq("bu_id", buId)
       .eq("scope", "org")
       .eq("status", "active")
+      .eq("indicator_type", "kpi")
       .is("deleted_at", null),
     sc
       .from("okr_org_objectives")
