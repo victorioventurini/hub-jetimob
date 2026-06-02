@@ -18,6 +18,7 @@ import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useBu } from '@/contexts/BuContext';
 import { useIdentity } from '@/hooks/useIdentity';
+import { showAiEdgeFunctionErrorToast } from '@/modules/okrs/utils/edgeFunctionError';
 import type {
   MbrPanoramaCuration,
   MbrPanoramaCriticalKpiHighlight,
