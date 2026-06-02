@@ -30,6 +30,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
+import { useGenerateAnalysis } from "../hooks/useGenerateAnalysis";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
