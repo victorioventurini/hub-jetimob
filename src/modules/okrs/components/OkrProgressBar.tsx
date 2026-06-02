@@ -73,7 +73,7 @@ export function OkrProgressBar({
       {showLabels && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mb-1 min-w-0">
           <span className="truncate min-w-0 flex-1">
-            {formatValueWithUnit(current, unit)}
+            {formatValueWithUnit(current, displayUnit)}
           </span>
           <div className="flex items-center gap-1.5 shrink-0 max-w-full">
             {isOverachieved && (
