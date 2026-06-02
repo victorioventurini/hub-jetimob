@@ -5,7 +5,8 @@
 // Failures degrade gracefully to neutral text so the final report still renders.
 // ============================================================================
 
-import { llmComplete, type LLMConfig, type LLMMessage } from "../_shared/llm-client.ts";
+import { llmCompleteWithFallback, type LLMMessage } from "../_shared/llm-client.ts";
+import type { EdgeSupabaseClient } from "../_shared/types/common.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
 
 const PARTIAL_MAX_TOKENS = 3500;
@@ -26,7 +27,8 @@ Estilo OBRIGATÓRIO:
 Responda APENAS com JSON válido.`;
 
 async function callPartial<T>(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   userPrompt: string,
   fallback: T,
   requestId: string,
@@ -37,8 +39,9 @@ async function callPartial<T>(
     { role: "user", content: userPrompt },
   ];
   try {
-    const response = await llmComplete(
-      { ...llmConfig, maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE },
+    const response = await llmCompleteWithFallback(
+      sc,
+      preferredModel,
       messages,
       { maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE, timeoutMs: 90_000 },
     );
