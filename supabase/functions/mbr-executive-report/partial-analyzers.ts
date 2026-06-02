@@ -75,12 +75,20 @@ export async function analyzeProjects(
 
   const prompt = `Abaixo estão projetos e marcos com atraso ou risco no mês, com as justificativas declaradas pelos líderes.
 
-=== PROJETOS / MARCOS COM ISSUES ===
+=== PROJETOS / MARCOS COM ISSUES (${items.length} no total) ===
 ${JSON.stringify(items.slice(0, 30))}
+
+Produza uma análise EXECUTIVA E ANALÍTICA (não descritiva). Cubra, em ordem:
+1. PADRÕES TRANSVERSAIS nas causas declaradas — agrupe em 2-4 temas (ex.: dependência cruzada de Produto, capacidade técnica, escopo subdimensionado, bloqueios externos). Cite a frequência de cada tema.
+2. CONCENTRAÇÃO — quais áreas/times concentram os atrasos e por quê.
+3. IMPLICAÇÕES — quais OKRs/compromissos ficam em risco se nada mudar.
+4. RECOMENDAÇÕES — 2-3 movimentos concretos que o CEO pode endossar (não genéricos).
+
+Tamanho-alvo: 12-18 linhas em UM único parágrafo denso (sem bullets, sem markdown). Não liste projetos um a um — use exemplos só para ilustrar padrões.
 
 Gere JSON:
 {
-  "projectsAnalysis": "parágrafo de 3-5 linhas sobre projetos e marcos em atraso, citando PADRÕES nas justificativas dos líderes. Sem listar nomes um a um."
+  "projectsAnalysis": "parágrafo único, denso, analítico"
 }`;
 
   return await callPartial<ProjectsPartial>(
