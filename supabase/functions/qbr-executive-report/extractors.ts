@@ -2,6 +2,14 @@
 // QBR Executive Report — domain extractors and aggregators (pure functions)
 // ============================================================================
 
+import {
+  buildOverallAchievement as sharedBuildOverallAchievement,
+  calculateKrProgress as sharedCalculateKrProgress,
+  isKrLive,
+  krProgress,
+  type OverallAchievement,
+} from "../_shared/okr-progress.ts";
+
 import type {
   KpiRow,
   KpiValueRow,
@@ -11,19 +19,8 @@ import type {
   TeamProposal,
 } from "./types.ts";
 
-export function calculateKrProgress(
-  baseline: number,
-  current: number,
-  target: number,
-  direction: string,
-): number {
-  const range = Math.abs(target - baseline);
-  if (range === 0) return current === target ? 100 : 0;
-  const progress = direction === "down"
-    ? ((baseline - current) / (baseline - target)) * 100
-    : ((current - baseline) / (target - baseline)) * 100;
-  return Math.round(Math.max(0, progress));
-}
+// Re-export para retrocompatibilidade.
+export const calculateKrProgress = sharedCalculateKrProgress;
 
 export function buildTeamHealthSummary(
   teamObjectives: TeamObjectiveRow[],
@@ -53,14 +50,9 @@ export function buildTeamHealthSummary(
     }
     const entry = teamMap.get(teamId)!;
     for (const kr of obj.key_results || []) {
-      if (kr.deleted_at || kr.cancelled_at) continue;
+      if (!isKrLive(kr)) continue;
       entry.total++;
-      const progress = calculateKrProgress(
-        Number(kr.baseline) || 0,
-        Number(kr.current_value) || 0,
-        Number(kr.target) || 0,
-        kr.direction || "up",
-      );
+      const progress = krProgress(kr);
       if (progress >= 100) entry.achieved++;
       else if (kr.status === "green") entry.onTrack++;
       else if (kr.status === "yellow") entry.atRisk++;
@@ -70,6 +62,13 @@ export function buildTeamHealthSummary(
   }
 
   return Array.from(teamMap.values());
+}
+
+export function buildOverallAchievement(
+  teamObjectives: TeamObjectiveRow[],
+  teams: Map<string, string>,
+): OverallAchievement {
+  return sharedBuildOverallAchievement(teamObjectives, teams);
 }
 
 export function buildKpiSummary(kpis: KpiRow[]) {
@@ -202,12 +201,7 @@ export function extractKrSummary(orgObjectives: { title: string; key_results?: K
     title: o.title,
     krs: (o.key_results || []).map((kr: KrRow) => ({
       title: kr.title,
-      progress: calculateKrProgress(
-        Number(kr.baseline) || 0,
-        Number(kr.current_value) || 0,
-        Number(kr.target) || 0,
-        kr.direction || "up",
-      ),
+      progress: Math.round(krProgress(kr)),
       status: kr.status,
     })),
   }));

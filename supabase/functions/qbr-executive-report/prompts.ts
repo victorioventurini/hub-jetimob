@@ -12,6 +12,7 @@ Responda APENAS com JSON válido, sem markdown, sem explicações adicionais.`;
 export interface PromptInputs {
   cycleName: string;
   teamHealthSummary: unknown;
+  overallAchievement: unknown;
   kpisSummary: unknown;
   leaderLearnings: unknown;
   nextCycleProposals: unknown;
@@ -24,6 +25,7 @@ export function buildQbrExecUserPrompt(inputs: PromptInputs): string {
   const {
     cycleName,
     teamHealthSummary,
+    overallAchievement,
     kpisSummary,
     leaderLearnings,
     nextCycleProposals,
@@ -34,7 +36,15 @@ export function buildQbrExecUserPrompt(inputs: PromptInputs): string {
 
   return `Gere o relatório executivo para o ciclo "${cycleName}".
 
-=== ENTREGA DOS TIMES ===
+=== % DE ATINGIMENTO DOS OKRs (NÚMEROS OFICIAIS — USE EXATAMENTE ESTES) ===
+${JSON.stringify(overallAchievement)}
+
+REGRA OBRIGATÓRIA: ao citar qualquer % de atingimento (geral, por time ou por
+objetivo) use EXATAMENTE os valores acima. Não recalcule, não estime, não
+arredonde de forma diferente. Estes números seguem a Progress Canon do produto
+(igual ao que aparece em /okrs) e são a única fonte de verdade.
+
+=== ENTREGA DOS TIMES (contexto qualitativo — buckets RAG) ===
 ${JSON.stringify(teamHealthSummary)}
 
 === KPIs ORGANIZACIONAIS ===
@@ -57,7 +67,7 @@ ${JSON.stringify(orgObjectivesSummary)}
 
 Gere o relatório em JSON com exatamente esta estrutura:
 {
-  "quarterNarrative": "parágrafo de 5-8 linhas interpretando o quarter",
+  "quarterNarrative": "parágrafo de 5-8 linhas interpretando o quarter — cite o overallProgress quando relevante",
   "proposalsAnalysis": "parágrafo de 4-6 linhas analisando as propostas do próximo ciclo",
   "kpiInsights": {
     "healthy": "1-2 linhas sobre os KPIs em boa forma (omitir se não houver)",
