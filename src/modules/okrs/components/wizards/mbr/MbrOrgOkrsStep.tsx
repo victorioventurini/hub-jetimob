@@ -33,25 +33,10 @@ export interface MbrOrgOkrsStepProps {
 }
 
 // ============================================================
-// HELPERS
+// COMPONENT
 // ============================================================
 
-const TREND_MAP: Record<string, { icon: typeof TrendingUp; label: string; className: string }> = {
-  improving: { icon: TrendingUp, label: 'Melhorando', className: 'text-status-green' },
-  declining: { icon: TrendingDown, label: 'Declinando', className: 'text-status-red' },
-  stable: { icon: Minus, label: 'Estável', className: 'text-muted-foreground' },
-};
 
-function TrendIndicator({ trend }: { trend: string }) {
-  const config = TREND_MAP[trend] ?? TREND_MAP.stable;
-  const Icon = config.icon;
-  return (
-    <span className={cn('inline-flex items-center gap-1 text-xs', config.className)}>
-      <Icon className="h-3.5 w-3.5" />
-      {config.label}
-    </span>
-  );
-}
 
 // ============================================================
 // COMPONENT
