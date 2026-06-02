@@ -230,6 +230,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           : [],
         teamProposals: nextCycleProposals,
         overallAchievement,
+        analyzedTeams,
       };
 
       console.log(`[${requestId}] QBR executive report generated successfully`);
