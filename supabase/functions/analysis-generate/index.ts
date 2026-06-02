@@ -177,21 +177,38 @@ serve(async (req) => {
           ),
         ]);
 
-        const strategicJSON = safeParseJSON<StrategicJSON>(
-          strategicRes.status === "fulfilled" ? strategicRes.value : "{}",
-          {
-            title: body.premise.slice(0, 80),
-            key_metrics: [],
-            insights: [],
-            body: "Não foi possível gerar a análise. Tente novamente.",
-            sources: [],
-          },
-        );
+        const strategicRaw = strategicRes.status === "fulfilled" ? strategicRes.value : "";
+        const actionsRaw = actionsRes.status === "fulfilled" ? actionsRes.value : "";
 
-        const actionsJSON = safeParseJSON<{ actions?: ActionItem[] }>(
-          actionsRes.status === "fulfilled" ? actionsRes.value : "{}",
-          { actions: [] },
-        );
+        // Se ambos os agentes principais voltaram vazio (cadeia de modelos
+        // exaurida ou rejeição), marcamos o relatório como `failed` com
+        // mensagem clara, em vez de salvar um "complete" inútil.
+        const strategicOk = strategicRes.status === "fulfilled" && strategicRaw.trim().length > 0;
+        const actionsOk = actionsRes.status === "fulfilled" && actionsRaw.trim().length > 0;
+        if (!strategicOk && !actionsOk) {
+          await serviceClient
+            .from("analysis_reports")
+            .update({
+              status: "failed",
+              error_message:
+                "Todos os modelos de IA estão indisponíveis no momento. Tente novamente em alguns minutos.",
+            })
+            .eq("id", reportId);
+          console.warn(`[${requestId}] Report ${reportId} failed — all LLM fallbacks exhausted`);
+          return;
+        }
+
+        const strategicJSON = safeParseJSON<StrategicJSON>(strategicRaw || "{}", {
+          title: body.premise.slice(0, 80),
+          key_metrics: [],
+          insights: [],
+          body: "Não foi possível gerar a análise. Tente novamente.",
+          sources: [],
+        });
+
+        const actionsJSON = safeParseJSON<{ actions?: ActionItem[] }>(actionsRaw || "{}", {
+          actions: [],
+        });
 
         const sources = strategicJSON.sources?.length
           ? strategicJSON.sources
