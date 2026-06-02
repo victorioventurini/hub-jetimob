@@ -32,9 +32,11 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useBu } from "@/contexts/BuContext";
 import { useAnalysisReport } from "../hooks/useAnalysisReport";
 import { useGenerateAnalysis } from "../hooks/useGenerateAnalysis";
+import { useDeleteAnalysisReport } from "../hooks/useDeleteAnalysisReport";
 import { AnalysisFeedback } from "../components/feedback/AnalysisFeedback";
 import { ShareDialog } from "../components/ShareDialog";
 import { LoadingRotativo } from "../components/LoadingRotativo";
+import { ConfirmActionDialog } from "@/modules/assessments/components/ConfirmActionDialog";
 import { useAnalysisComments } from "../hooks/useAnalysisComments";
 import { useAnalysisDecisions } from "../hooks/useAnalysisDecisions";
 import type {
