@@ -45,6 +45,8 @@ import {
   kpiValueEntrySchema,
   type KpiValueEntryFormValues,
 } from './kpiValueEntrySchema';
+import { KpiValueInput } from './KpiValueInput';
+import { getMaskConfigForUnit, formatWithMask } from '../../utils/numberFormat';
 
 export interface KpiValueEntryFormProps {
   /** Unidade do KPI, exibida ao lado do label "Valor". */
@@ -199,9 +201,18 @@ export function KpiValueEntryForm({
     if (onInputTypeChange && watchedInputType) onInputTypeChange(watchedInputType);
   }, [watchedInputType, onInputTypeChange]);
 
-  const placeholder = placeholderValue !== undefined && placeholderValue !== null
-    ? `Ex: ${placeholderValue}`
-    : `Ex: ${unit === '%' ? '75.5' : unit === 'R$' ? '150000' : '42'}`;
+  const placeholder = (() => {
+    if (placeholderValue !== undefined && placeholderValue !== null && placeholderValue !== '') {
+      const asNum = typeof placeholderValue === 'number' ? placeholderValue : Number(placeholderValue);
+      if (Number.isFinite(asNum)) {
+        return `Ex.: ${formatWithMask(asNum, getMaskConfigForUnit(unit))}`;
+      }
+      return `Ex.: ${placeholderValue}`;
+    }
+    if (unit === 'R$') return 'Ex.: R$ 1.500,00';
+    if (unit === '%') return 'Ex.: 75,5';
+    return 'Ex.: 1.500';
+  })();
 
   const handleSubmit = form.handleSubmit(async (values) => {
     await onValidSubmit(values);
@@ -244,11 +255,13 @@ export function KpiValueEntryForm({
               <FormItem>
                 <FormLabel>Valor ({unit})</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <KpiValueInput
+                    unit={unit}
                     placeholder={placeholder}
-                    {...field}
+                    value={typeof field.value === 'number' ? field.value : undefined}
+                    onChange={(n) => field.onChange(n ?? '')}
+                    onBlur={field.onBlur}
+                    name={field.name}
                   />
                 </FormControl>
                 {valueAdornmentSlot}
