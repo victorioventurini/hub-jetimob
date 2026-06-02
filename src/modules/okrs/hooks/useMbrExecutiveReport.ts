@@ -28,6 +28,48 @@ export interface MbrExecutiveReportTeamHighlight {
   needsDecision: string;
 }
 
+export interface MbrExecutiveReportProjectIssue {
+  teamName: string;
+  kind: 'project' | 'milestone';
+  refId: string;
+  justification: string;
+}
+
+export interface MbrExecutiveReportKrIssue {
+  teamName: string;
+  krId: string;
+  paceStatus: string | null;
+  finalProgress: number | null;
+  state: string | null;
+  justification: string;
+}
+
+export interface MbrExecutiveReportKpiIssue {
+  teamName: string;
+  kpiId: string;
+  kind: 'justified' | 'no_data';
+  text: string;
+}
+
+export interface MbrExecutiveReportKpiToCreate {
+  teamName: string;
+  description: string;
+  suggestedScope: string;
+}
+
+export interface MbrExecutiveReportAgendaSuggestion {
+  teamName: string;
+  text: string;
+}
+
+export interface MbrExecutiveReportMonthAnalysis {
+  teamName: string;
+  summary: string;
+  offenders: string[];
+  risks: string[];
+  recommendations: string[];
+}
+
 export interface MbrExecutiveReportData {
   monthRef: string;
   monthNarrative: string;
@@ -40,6 +82,15 @@ export interface MbrExecutiveReportData {
   decisionsNeeded: string[];
   teamCommitments: MbrExecutiveReportTeamCommitment[];
   teamHighlights: MbrExecutiveReportTeamHighlight[];
+  projectsAnalysis: string;
+  krIssuesAnalysis: string;
+  leaderSignals: string;
+  projectIssues: MbrExecutiveReportProjectIssue[];
+  krIssues: MbrExecutiveReportKrIssue[];
+  kpiIssues: MbrExecutiveReportKpiIssue[];
+  kpisToCreate: MbrExecutiveReportKpiToCreate[];
+  agendaSuggestions: MbrExecutiveReportAgendaSuggestion[];
+  monthAnalyses: MbrExecutiveReportMonthAnalysis[];
 }
 
 type ReportRecord = Record<string, unknown>;
@@ -64,6 +115,10 @@ function toText(value: unknown): string {
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.map(toText).filter(Boolean);
+}
+
+function toNumberOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData {
@@ -104,6 +159,77 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
             needsDecision: toText(r.needsDecision),
           };
         })
+      : [],
+    projectsAnalysis: toText(source.projectsAnalysis),
+    krIssuesAnalysis: toText(source.krIssuesAnalysis),
+    leaderSignals: toText(source.leaderSignals),
+    projectIssues: Array.isArray(source.projectIssues)
+      ? source.projectIssues.map((p) => {
+          const r = isRecord(p) ? p : {};
+          const kind = r.kind === 'milestone' ? 'milestone' : 'project';
+          return {
+            teamName: toText(r.teamName) || 'Time não informado',
+            kind,
+            refId: toText(r.refId),
+            justification: toText(r.justification),
+          } as MbrExecutiveReportProjectIssue;
+        }).filter((p) => p.justification)
+      : [],
+    krIssues: Array.isArray(source.krIssues)
+      ? source.krIssues.map((k) => {
+          const r = isRecord(k) ? k : {};
+          return {
+            teamName: toText(r.teamName) || 'Time não informado',
+            krId: toText(r.krId),
+            paceStatus: typeof r.paceStatus === 'string' ? r.paceStatus : null,
+            finalProgress: toNumberOrNull(r.finalProgress),
+            state: typeof r.state === 'string' ? r.state : null,
+            justification: toText(r.justification),
+          } as MbrExecutiveReportKrIssue;
+        }).filter((k) => k.justification)
+      : [],
+    kpiIssues: Array.isArray(source.kpiIssues)
+      ? source.kpiIssues.map((k) => {
+          const r = isRecord(k) ? k : {};
+          const kind = r.kind === 'no_data' ? 'no_data' : 'justified';
+          return {
+            teamName: toText(r.teamName) || 'Time não informado',
+            kpiId: toText(r.kpiId),
+            kind,
+            text: toText(r.text),
+          } as MbrExecutiveReportKpiIssue;
+        }).filter((k) => k.text)
+      : [],
+    kpisToCreate: Array.isArray(source.kpisToCreate)
+      ? source.kpisToCreate.map((k) => {
+          const r = isRecord(k) ? k : {};
+          return {
+            teamName: toText(r.teamName) || 'Time não informado',
+            description: toText(r.description),
+            suggestedScope: toText(r.suggestedScope),
+          };
+        }).filter((k) => k.description)
+      : [],
+    agendaSuggestions: Array.isArray(source.agendaSuggestions)
+      ? source.agendaSuggestions.map((a) => {
+          const r = isRecord(a) ? a : {};
+          return {
+            teamName: toText(r.teamName) || 'Time não informado',
+            text: toText(r.text) || toText(a),
+          };
+        }).filter((a) => a.text)
+      : [],
+    monthAnalyses: Array.isArray(source.monthAnalyses)
+      ? source.monthAnalyses.map((m) => {
+          const r = isRecord(m) ? m : {};
+          return {
+            teamName: toText(r.teamName) || 'Time não informado',
+            summary: toText(r.summary),
+            offenders: toStringArray(r.offenders),
+            risks: toStringArray(r.risks),
+            recommendations: toStringArray(r.recommendations),
+          };
+        }).filter((m) => m.summary || m.offenders.length || m.risks.length || m.recommendations.length)
       : [],
   };
 }
