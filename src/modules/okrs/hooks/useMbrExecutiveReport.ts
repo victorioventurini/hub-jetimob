@@ -33,6 +33,8 @@ export interface MbrExecutiveReportProjectIssue {
   teamName: string;
   kind: 'project' | 'milestone';
   refId: string;
+  name?: string;
+  projectName?: string;
   justification: string;
 }
 
@@ -204,6 +206,8 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
             teamName: toText(r.teamName) || 'Time não informado',
             kind,
             refId: toText(r.refId),
+            name: toText(r.name) || undefined,
+            projectName: toText(r.projectName) || undefined,
             justification: toText(r.justification),
           } as MbrExecutiveReportProjectIssue;
         }).filter((p) => p.justification)

@@ -80,6 +80,10 @@ export interface ProjectIssue {
   /** 'project' = atraso/risco no projeto inteiro; 'milestone' = um marco. */
   kind: 'project' | 'milestone';
   refId: string;
+  /** Nome do projeto (para 'project') ou do marco (para 'milestone'). */
+  name?: string;
+  /** Nome do projeto pai quando kind = 'milestone'. */
+  projectName?: string;
   justification: string;
 }
 

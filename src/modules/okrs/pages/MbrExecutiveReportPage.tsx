@@ -381,7 +381,16 @@ function ReportDisplay({
                   <Badge variant="outline" className="text-xs shrink-0">
                     {p.kind === 'project' ? 'Projeto' : 'Marco'}
                   </Badge>
-                  <span className="text-muted-foreground">{p.justification}</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    {(p.name || p.projectName) && (
+                      <span className="font-medium text-foreground">
+                        {p.kind === 'milestone' && p.projectName
+                          ? `${p.projectName} › ${p.name || p.refId}`
+                          : (p.name || p.refId)}
+                      </span>
+                    )}
+                    <span className="text-muted-foreground">{p.justification}</span>
+                  </div>
                 </div>
               ))}
               {report.projectIssues.length > 30 && (
