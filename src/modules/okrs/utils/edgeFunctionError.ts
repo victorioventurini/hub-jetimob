@@ -54,6 +54,17 @@ export async function showAiEdgeFunctionErrorToast(
     toast.error("Créditos de IA esgotados. Contate o administrador do workspace.");
     return;
   }
+  if (
+    status === 503 ||
+    code === "MODEL_OVERLOADED" ||
+    lower.includes("unavailable") ||
+    lower.includes("overloaded") ||
+    lower.includes("high demand") ||
+    lower.includes("503")
+  ) {
+    toast.error("A IA está temporariamente sobrecarregada. Aguarde alguns segundos e tente novamente.");
+    return;
+  }
 
   toast.error(fallbackMessage);
 }
