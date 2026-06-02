@@ -128,6 +128,19 @@ export interface MbrExecutiveReportData {
   analyzedTeams: MbrExecutiveReportAnalyzedTeam[];
 }
 
+interface MbrExecutiveReportJobState {
+  id: string;
+  status: 'generating' | 'failed';
+  updatedAt: string | null;
+  errorMessage?: string;
+}
+
+interface MbrExecutiveReportQueryData {
+  report: MbrExecutiveReportData | null;
+  generatedAt: string | null;
+  job: MbrExecutiveReportJobState | null;
+}
+
 
 type ReportRecord = Record<string, unknown>;
 
@@ -314,6 +327,12 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
         })
       : [],
   };
+}
+
+function getReportMonthRef(input: unknown): string {
+  const root = isRecord(input) ? input : {};
+  const source = typeof root.monthRef !== 'string' && isRecord(root.data) ? root.data : root;
+  return toText(source.monthRef);
 }
 
 
