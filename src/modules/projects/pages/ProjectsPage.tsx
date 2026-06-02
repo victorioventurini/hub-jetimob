@@ -42,6 +42,7 @@ export default function ProjectsPage() {
 
   // URL state — canonical pattern
   const statusState = useUrlState<ProjectStatus | 'all'>({ key: 'status', defaultValue: 'all' });
+  const healthState = useUrlState<ProjectHealth | 'all'>({ key: 'health', defaultValue: 'all' });
   const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
   const teamState = useUrlState<string>({ key: 'teamId', defaultValue: '' });
   const krLinkState = useUrlState<string>({ key: 'krLink', defaultValue: '' });
@@ -51,6 +52,7 @@ export default function ProjectsPage() {
 
   const filters: ProjectFilters = {
     status: statusState.value,
+    health: healthState.value,
     search: search || undefined,
     owner_id: ownerState.value || undefined,
     team_id: teamState.value || undefined,
