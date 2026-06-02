@@ -320,6 +320,76 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
   }
 }
 
+/**
+ * Enriquece projectIssues com nome do projeto/marco (e nome do projeto pai
+ * para marcos), buscando em batch nas tabelas `projects` e `project_milestones`.
+ */
+async function enrichProjectIssueNames(
+  // deno-lint-ignore no-explicit-any
+  sc: any,
+  issues: import("./types.ts").ProjectIssue[],
+): Promise<void> {
+  if (issues.length === 0) return;
+
+  const projectIds = new Set<string>();
+  const milestoneIds = new Set<string>();
+  for (const it of issues) {
+    if (!it.refId) continue;
+    if (it.kind === "project") projectIds.add(it.refId);
+    else milestoneIds.add(it.refId);
+  }
+
+  const projectNameById = new Map<string, string>();
+  const milestoneInfoById = new Map<string, { name: string; project_id: string }>();
+
+  const [projRes, msRes] = await Promise.all([
+    projectIds.size > 0
+      ? sc.from("projects").select("id, name").in("id", Array.from(projectIds))
+      : Promise.resolve({ data: [] }),
+    milestoneIds.size > 0
+      ? sc.from("project_milestones").select("id, name, project_id").in("id", Array.from(milestoneIds))
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  for (const p of (projRes.data || []) as Array<{ id: string; name: string }>) {
+    projectNameById.set(p.id, p.name);
+  }
+  for (const m of (msRes.data || []) as Array<{ id: string; name: string; project_id: string }>) {
+    milestoneInfoById.set(m.id, { name: m.name, project_id: m.project_id });
+  }
+
+  // Buscar nomes dos projetos pai de marcos que ainda não foram carregados.
+  const parentProjectIds = new Set<string>();
+  for (const info of milestoneInfoById.values()) {
+    if (info.project_id && !projectNameById.has(info.project_id)) {
+      parentProjectIds.add(info.project_id);
+    }
+  }
+  if (parentProjectIds.size > 0) {
+    const { data } = await sc
+      .from("projects")
+      .select("id, name")
+      .in("id", Array.from(parentProjectIds));
+    for (const p of (data || []) as Array<{ id: string; name: string }>) {
+      projectNameById.set(p.id, p.name);
+    }
+  }
+
+  for (const it of issues) {
+    if (it.kind === "project") {
+      const name = projectNameById.get(it.refId);
+      if (name) it.name = name;
+    } else {
+      const info = milestoneInfoById.get(it.refId);
+      if (info) {
+        it.name = info.name;
+        const parent = projectNameById.get(info.project_id);
+        if (parent) it.projectName = parent;
+      }
+    }
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
