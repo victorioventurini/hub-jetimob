@@ -12,24 +12,98 @@ import type {
   KrRow,
   MbrSessionRow,
   MonthAnalysisSummary,
+  ObjectiveAchievement,
+  OverallAchievement,
   ProjectIssue,
+  TeamAchievement,
   TeamCommitment,
   TeamMonthlyHighlight,
   TeamObjectiveRow,
 } from "./types.ts";
 
+// ============================================================================
+// Progress Canon — espelha src/modules/okrs/utils/progressCalculation.ts (SSOT).
+// Edge functions não podem importar de src/; mantenha estas funções em sincronia
+// quando o canônico mudar. Regras:
+//   - Sem clamp superior (156% é valor válido).
+//   - Apenas Math.max(0, x) no piso.
+//   - direction === "maintain" é binário (current >= target ? 100 : 0).
+//   - Não arredondar na função base; arredondar só na exibição.
+// ============================================================================
+
+type OkrDir = "up" | "down" | "maintain";
+
+const UNIT_MULTIPLIERS: Record<string, number> = {
+  "R$": 1,
+  "R$ mil": 1_000,
+  "R$ milhão": 1_000_000,
+};
+
+function calcDirectionalProgress(
+  baseline: number,
+  current: number,
+  target: number,
+  direction: OkrDir,
+): number {
+  if (direction === "maintain") return current >= target ? 100 : 0;
+
+  if (direction === "up") {
+    if (target === baseline) return current >= target ? 100 : 0;
+    return Math.max(0, ((current - baseline) / (target - baseline)) * 100);
+  }
+
+  // direction === "down"
+  if (baseline === target) return current <= target ? 100 : 0;
+  return Math.max(0, ((baseline - current) / (baseline - target)) * 100);
+}
+
+function normalizeProgressInputs(
+  baseline: number,
+  current: number,
+  target: number,
+  unit?: string | null,
+) {
+  if (!unit || !(unit in UNIT_MULTIPLIERS)) return { baseline, current, target };
+  const mult = UNIT_MULTIPLIERS[unit];
+  const direct = calcDirectionalProgress(baseline, current, target, "up");
+  const scaled = calcDirectionalProgress(baseline * mult, current, target * mult, "up");
+  if (direct > 1000 && scaled >= 0 && scaled <= 1000) {
+    return { baseline: baseline * mult, current, target: target * mult };
+  }
+  return { baseline, current, target };
+}
+
+/** Canônico: SEM clamp superior, SEM arredondamento. */
 export function calculateKrProgress(
   baseline: number,
   current: number,
   target: number,
   direction: string,
+  unit?: string | null,
 ): number {
-  const range = Math.abs(target - baseline);
-  if (range === 0) return current === target ? 100 : 0;
-  const progress = direction === "down"
-    ? ((baseline - current) / (baseline - target)) * 100
-    : ((current - baseline) / (target - baseline)) * 100;
-  return Math.round(Math.max(0, progress));
+  const dir: OkrDir = direction === "down" ? "down" : direction === "maintain" ? "maintain" : "up";
+  const n = normalizeProgressInputs(baseline, current, target, unit);
+  return calcDirectionalProgress(n.baseline, n.current, n.target, dir);
+}
+
+/** Valor efetivo da KR: primário KPI > current_value cru. */
+function resolveKrCurrentValue(kr: KrRow): number {
+  if (typeof kr.effective_current_value === "number") return kr.effective_current_value;
+  return Number(kr.current_value) || 0;
+}
+
+function isKrLive(kr: KrRow): boolean {
+  return !kr.deleted_at && !kr.cancelled_at;
+}
+
+function krProgress(kr: KrRow): number {
+  return calculateKrProgress(
+    Number(kr.baseline) || 0,
+    resolveKrCurrentValue(kr),
+    Number(kr.target) || 0,
+    kr.direction || "up",
+    kr.unit ?? null,
+  );
 }
 
 export function buildTeamHealthSummary(
@@ -60,14 +134,9 @@ export function buildTeamHealthSummary(
     }
     const entry = teamMap.get(teamId)!;
     for (const kr of obj.key_results || []) {
-      if (kr.deleted_at || kr.cancelled_at) continue;
+      if (!isKrLive(kr)) continue;
       entry.total++;
-      const progress = calculateKrProgress(
-        Number(kr.baseline) || 0,
-        Number(kr.current_value) || 0,
-        Number(kr.target) || 0,
-        kr.direction || "up",
-      );
+      const progress = krProgress(kr);
       if (progress >= 100) entry.achieved++;
       else if (kr.status === "green") entry.onTrack++;
       else if (kr.status === "yellow") entry.atRisk++;
@@ -77,6 +146,67 @@ export function buildTeamHealthSummary(
   }
 
   return Array.from(teamMap.values());
+}
+
+/**
+ * Agrega progresso canônico no nível Objetivo → Time → Empresa, igual a
+ * `useCompanyOkrs` (src/modules/okrs/hooks/useCompanyOkrs.ts).
+ *
+ *   objectiveProgress = mean(KR.progress)
+ *   teamProgress      = mean(objectiveProgress do time)
+ *   overallProgress   = mean(objectiveProgress de TODOS os objetivos)
+ */
+export function buildOverallAchievement(
+  teamObjectives: TeamObjectiveRow[],
+  teams: Map<string, string>,
+): OverallAchievement {
+  const byObjective: ObjectiveAchievement[] = [];
+  const teamAgg = new Map<string, { progresses: number[]; krCount: number; name: string }>();
+
+  for (const obj of teamObjectives) {
+    const liveKrs = (obj.key_results || []).filter(isKrLive);
+    if (liveKrs.length === 0) continue;
+    const objProgress =
+      liveKrs.reduce((acc, kr) => acc + krProgress(kr), 0) / liveKrs.length;
+
+    const teamName = teams.get(obj.team_id) || "Time";
+    byObjective.push({
+      id: obj.id || "",
+      title: obj.title || "",
+      teamName,
+      progress: Math.round(objProgress),
+      krCount: liveKrs.length,
+    });
+
+    if (!teamAgg.has(obj.team_id)) {
+      teamAgg.set(obj.team_id, { progresses: [], krCount: 0, name: teamName });
+    }
+    const t = teamAgg.get(obj.team_id)!;
+    t.progresses.push(objProgress);
+    t.krCount += liveKrs.length;
+  }
+
+  const byTeam: TeamAchievement[] = Array.from(teamAgg.entries()).map(([teamId, t]) => ({
+    teamId,
+    teamName: t.name,
+    progress: Math.round(
+      t.progresses.reduce((a, b) => a + b, 0) / t.progresses.length,
+    ),
+    objectivesCount: t.progresses.length,
+    krCount: t.krCount,
+  }));
+
+  const overallProgress = byObjective.length === 0
+    ? 0
+    : Math.round(
+      byObjective.reduce((a, o) => a + o.progress, 0) / byObjective.length,
+    );
+
+  // Ordena por progresso desc para facilitar leitura no relatório.
+  byTeam.sort((a, b) => b.progress - a.progress);
+  byObjective.sort((a, b) => b.progress - a.progress);
+
+  return { overallProgress, byTeam, byObjective };
 }
 
 /**
