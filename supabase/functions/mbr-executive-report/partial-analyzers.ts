@@ -362,7 +362,8 @@ Use SEMPRE os números oficiais informados — não recalcule.
 Responda APENAS com JSON válido.`;
 
 export async function consolidateReport(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   inputs: ConsolidationInputs,
   requestId: string,
 ): Promise<ConsolidationPartial> {
