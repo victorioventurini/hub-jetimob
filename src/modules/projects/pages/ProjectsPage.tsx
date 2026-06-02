@@ -25,7 +25,7 @@ import { ProjectStatusSummary } from '../components/ProjectStatusSummary';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectViewToggle';
 import { ProjectGanttChart } from '../components/ProjectGanttChart';
-import type { ProjectArchivedState, ProjectFilters, ProjectStatus } from '../types';
+import type { ProjectArchivedState, ProjectFilters, ProjectHealth, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SavedLinksPopover } from '@/shared/saved-links';
 
