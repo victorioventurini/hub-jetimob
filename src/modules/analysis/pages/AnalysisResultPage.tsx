@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Info,
   MessageSquare,
+  RefreshCw,
   Share2,
   Wand2,
 } from "lucide-react";
