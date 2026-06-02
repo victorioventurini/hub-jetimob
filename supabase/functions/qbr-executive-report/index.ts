@@ -169,7 +169,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       `[${requestId}] Prompt data ready: analyzedTeams=${analyzedTeams.length}, teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, proposals=${nextCycleProposals.length}, decisions=${pendingDecisions.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
     );
 
-    const llmConfig = await resolveLLMConfig(sc, "google/gemini-2.5-pro");
+    const llmConfig = await resolveLLMConfig(sc, "google/gemini-3.5-flash");
     if (!llmConfig) {
       console.error(`[${requestId}] AI service not configured`);
       return errorResponse("AI service not configured", 500, {
