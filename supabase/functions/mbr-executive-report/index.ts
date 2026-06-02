@@ -258,19 +258,29 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         ? decisionsRes.value
         : (console.warn(`[${requestId}] analyzeDecisions rejected:`, decisionsRes.reason), { decisionsNeeded: [] });
 
-      const consolidation = await consolidateReport(llmConfig, {
-        cycleName: cycle.name,
-        monthLabel: monthLabelStr,
-        overallAchievement,
-        teamHealthSummary,
-        teamHighlights,
-        teamCommitments,
-        monthAnalyses,
-        projectsAnalysis: projectsPartial.projectsAnalysis,
-        krIssuesAnalysis: krIssuesPartial.krIssuesAnalysis,
-        kpiInsights: kpisPartial.kpiInsights,
-        decisionsNeeded: decisionsPartial.decisionsNeeded,
-      }, requestId);
+      let consolidation = {
+        monthNarrative: "",
+        commitmentsAnalysis: "",
+        leaderSignals: "",
+      };
+      try {
+        consolidation = await consolidateReport(llmConfig, {
+          cycleName: cycle.name,
+          monthLabel: monthLabelStr,
+          overallAchievement,
+          teamHealthSummary,
+          teamHighlights,
+          teamCommitments,
+          monthAnalyses,
+          projectsAnalysis: projectsPartial.projectsAnalysis,
+          krIssuesAnalysis: krIssuesPartial.krIssuesAnalysis,
+          kpiInsights: kpisPartial.kpiInsights,
+          decisionsNeeded: decisionsPartial.decisionsNeeded,
+        }, requestId);
+      } catch (err: unknown) {
+        const error = err as Error & { status?: number };
+        console.warn(`[${requestId}] Consolidation failed (returning partial report):`, error.message);
+      }
 
       const reportData: ReportResponse = {
         monthRef: body.monthRef,
@@ -297,7 +307,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       return successResponse(reportData);
     } catch (err: unknown) {
       const error = err as Error & { status?: number };
-      console.error(`[${requestId}] Consolidation failed:`, error.message);
+      console.error(`[${requestId}] Unhandled map-reduce error:`, error.message);
 
       if (error.status) {
         const mapped = mapLLMError(error.status, requestId);
