@@ -219,6 +219,7 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
           return {
             teamName: toText(r.teamName) || 'Time não informado',
             krId: toText(r.krId),
+            title: toText(r.title) || undefined,
             paceStatus: typeof r.paceStatus === 'string' ? r.paceStatus : null,
             finalProgress: toNumberOrNull(r.finalProgress),
             state: typeof r.state === 'string' ? r.state : null,
