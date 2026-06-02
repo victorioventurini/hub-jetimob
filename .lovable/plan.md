@@ -1,67 +1,80 @@
-## Problema
+## Diagnóstico
 
-O campo "Valor" no formulário `KpiValueEntryForm` é um `<input type="number">` cru. Líderes digitam `2.94` achando que estão lançando R$ 2,94 quando o KPI é em R$, ou digitam `150000` sem formatação visual. Não há feedback do formato esperado conforme a unidade do KPI.
+O erro não parece ser mais um problema de particionamento/modelo. Pelos logs da função `mbr-executive-report`, a causa atual é uma rajada de chamadas de IA em paralelo:
 
-## Solução
+- A função dispara 4 análises parciais simultâneas (`projects`, `KRs`, `KPIs`, `decisions`) e depois uma consolidação.
+- Quando o gateway responde `429`, cada chamada faz retries ao mesmo tempo, amplificando a rajada.
+- A função captura a falha da consolidação e retorna um relatório parcial com `monthNarrative: ""`.
+- No frontend, `useMbrExecutiveReport` considera qualquer relatório sem `monthNarrative` como inválido e lança `Invalid report response`.
 
-Substituir o input numérico nativo por um campo **mascarado por unidade**, mantendo o schema atual (`z.coerce.number`) inalterado — o componente expõe um `number` para o react-hook-form, mas o usuário vê e edita a string formatada em pt-BR.
+Resultado: o backend às vezes retorna “sucesso parcial”, mas a UI trata como erro ao regenerar.
 
-### Máscaras por unidade
+## Plano de correção
 
-| Unidade do KPI                          | Máscara exibida           | Decimais | Exemplo input → valor |
-|-----------------------------------------|---------------------------|----------|------------------------|
-| `R$`                                    | `R$ 1.234,56` (prefixo)   | 2 fixas  | `150000` → `R$ 1.500,00` |
-| `%`                                     | `12,34 %` (sufixo)        | até 2    | `75,5` → `75,5 %`     |
-| `Número`, `Clientes`, `Leads`, `pontos`, `Pontos`, `Dias`, `x`, ou qualquer outra | `1.234,56` + sufixo unidade | até 2  | `1500` → `1.500` Clientes |
+### 1. Remover a rajada paralela na geração MBR
 
-Regras comuns:
-- Separador de milhar: `.` Separador decimal: `,`
-- Aceita colar de planilha (`1.500,00`, `1500.00`, `1,500.00`) — normalizamos.
-- Bloqueia caracteres não numéricos.
-- Negativos permitidos (alguns KPIs podem ter delta negativo).
+Alterar `supabase/functions/mbr-executive-report/index.ts` para executar as etapas de IA de forma sequencial, não com `Promise.allSettled`:
 
-### Onde aplicar
+```text
+Projetos → KRs → KPIs → Decisões → Consolidação
+```
 
-Um único componente novo `KpiValueInput` substitui o `<Input type="number">` em:
+Isso reduz o pico de requisições simultâneas e evita que os retries de 4 chamadas concorram entre si.
 
-1. `src/modules/kpis/components/shared/KpiValueEntryForm.tsx` (SSOT — cobre `EditKpiValueDialog`, `AddKpiValueDialog`, `CollaboratorKpiStep` e demais ritos que reutilizam o SSOT).
+### 2. Adicionar espaçamento curto entre chamadas de IA
 
-Não é preciso tocar consumers — o form passa a unidade que já recebe via prop `unit`.
+Criar um pequeno helper local, por exemplo `pauseBetweenAiCalls`, com espera curta entre etapas bem-sucedidas/falhas.
 
-## Arquivos
+Objetivo: suavizar o throughput sem mudar o modelo nem aumentar particionamento.
 
-**Novo**
-- `src/modules/kpis/components/shared/KpiValueInput.tsx` — componente controlado (`value: number | undefined`, `onChange: (n) => void`, `unit: string`), renderiza `<Input>` com formatação on-blur e parse on-change; prefixo/sufixo via `InputAdornment` (div absoluto dentro do wrapper, padrão já usado no projeto).
-- `src/modules/kpis/utils/__tests__/numberFormat.test.ts` — testes unitários do parser/formatter.
+### 3. Garantir fallback não vazio para a narrativa executiva
 
-**Novo helper (puro)**
-- `src/modules/kpis/utils/numberFormat.ts` — funções `parseBrNumber(str): number | null`, `formatBrNumber(n, { decimals, style: 'currency' | 'percent' | 'decimal' })`, `getMaskConfigForUnit(unit)`.
+Adicionar um fallback determinístico no backend quando a consolidação por IA falhar:
 
-**Editado**
-- `src/modules/kpis/components/shared/KpiValueEntryForm.tsx` — trocar o `<Input type="number">` por `<KpiValueInput unit={unit} value={field.value} onChange={field.onChange} placeholder={placeholder} />`. Atualizar `placeholder` para refletir o formato mascarado (`Ex.: R$ 1.500,00`, `Ex.: 75,5 %`, `Ex.: 42`).
+- `monthNarrative`: texto básico usando mês, progresso geral, quantidade de times analisados e quantidade de KRs/projetos/KPIs com issues.
+- `commitmentsAnalysis`: resumo baseado nos compromissos existentes.
+- `leaderSignals`: resumo baseado em decisões/pautas/sinais coletados.
 
-## Detalhes técnicos
+Assim, mesmo com `429`, a função retorna um relatório válido e persistível, em vez de `monthNarrative: ""`.
 
-- `parseBrNumber` aceita ambos os formatos (`1.234,56` e `1234.56`) para tolerar paste:
-  - Se string contém `,` → trata `.` como milhar e `,` como decimal.
-  - Senão → trata `.` como decimal.
-- `KpiValueInput` mantém estado local `displayValue: string`:
-  - `onChange` do `<Input>`: extrai dígitos/sinais, atualiza `displayValue`, chama `props.onChange(parseBrNumber(...))`.
-  - `onBlur`: re-formata `displayValue` a partir do número canônico para garantir vista normalizada (`1500` → `1.500,00` em R$).
-  - Quando `props.value` muda externamente (reset do form), re-formata.
-- O schema continua `z.coerce.number()`; o RHF recebe `number | undefined`, então nenhuma alteração de validação ou submit é necessária.
-- Acessibilidade: `inputMode="decimal"` em mobile; `aria-describedby` aponta para microcopy de período já existente.
+### 4. Ajustar a validação do frontend sem mascarar erro real
 
-## Fora do escopo
+Em `src/modules/okrs/hooks/useMbrExecutiveReport.ts`:
 
-- Não alterar `EditKpiTargetDialog` (metas) — apenas valores. Pode ser feito em uma segunda iteração reutilizando o mesmo `KpiValueInput`.
-- Não alterar input de valores em KRs (KRs continuam bloqueados quando há Primary KPI).
-- Sem mudança de schema do banco; persistimos `number` como hoje.
+- Manter validação de estrutura mínima.
+- Não rejeitar automaticamente um relatório que tem dados operacionais, mas veio com narrativa fallback.
+- Se a função retornar erro HTTP real (`429`, `402`, `503`), continuar mostrando o toast específico já existente.
 
-## Validação após implementar
+### 5. Opcional no mesmo patch: mensagem de qualidade parcial
 
-1. Abrir `EditKpiValueDialog` de um KPI em R$ → digitar `150000` → ver `R$ 150.000,00` após blur.
-2. Mesmo dialog em KPI `%` → digitar `75,5` → ver `75,5 %`.
-3. Dialog em KPI `Clientes` → digitar `1500` → ver `1.500 Clientes`.
-4. Submeter os três e conferir no banco que o valor numérico está correto.
-5. Rodar `vitest` em `src/modules/kpis/utils/__tests__/numberFormat.test.ts`.
+Se o backend marcar o relatório como gerado com fallback, podemos persistir um campo simples em `reflection_data`, como:
+
+```text
+aiGenerationStatus: "partial_fallback"
+```
+
+E a tela pode mostrar uma observação discreta: “Narrativa gerada em modo reduzido por instabilidade temporária da IA”.
+
+Sem migration: esse campo fica dentro do snapshot JSON já existente.
+
+## Arquivos a alterar
+
+- `supabase/functions/mbr-executive-report/index.ts`
+  - trocar execução paralela por sequencial;
+  - adicionar fallback determinístico de consolidação;
+  - opcionalmente incluir metadado de status da geração.
+
+- `supabase/functions/mbr-executive-report/types.ts`
+  - opcional: adicionar campo de metadado no tipo `ReportResponse`.
+
+- `src/modules/okrs/hooks/useMbrExecutiveReport.ts`
+  - aceitar fallback válido e manter tratamento de erros HTTP reais.
+
+- `src/modules/okrs/pages/MbrExecutiveReportPage.tsx`
+  - opcional: exibir aviso discreto quando `aiGenerationStatus === "partial_fallback"`.
+
+## Validação
+
+- Testar a edge function `mbr-executive-report` diretamente para o ciclo informado e mês atual.
+- Confirmar que, mesmo sob `429`, ela não retorna mais relatório inválido.
+- Confirmar que a regeneração persiste o snapshot em `okr_wizard_sessions` e a página abre o relatório sem cair no toast genérico.
