@@ -255,11 +255,13 @@ export function KpiValueEntryForm({
               <FormItem>
                 <FormLabel>Valor ({unit})</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <KpiValueInput
+                    unit={unit}
                     placeholder={placeholder}
-                    {...field}
+                    value={typeof field.value === 'number' ? field.value : undefined}
+                    onChange={(n) => field.onChange(n ?? '')}
+                    onBlur={field.onBlur}
+                    name={field.name}
                   />
                 </FormControl>
                 {valueAdornmentSlot}
