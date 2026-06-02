@@ -92,6 +92,7 @@ export function MbrTeamOkrsDetailStep({
 
   // Toggle: hide/show on-track OKRs (default: hidden — focus on risk/off-track)
   const [showOnTrack, setShowOnTrack] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
 
   // Objetivo "on track" = todos os KRs verdes/not_started e nenhum em risco
   const isObjectiveOnTrack = useCallback((obj: { krsAtRisk: number; keyResults: Array<{ status?: string | null }> }) => {
@@ -230,6 +231,28 @@ export function MbrTeamOkrsDetailStep({
                     id="toggle-on-track"
                     checked={showOnTrack}
                     onCheckedChange={setShowOnTrack}
+                  />
+                </div>
+              )}
+
+              {/* Toggle: show team projects */}
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {showProjects ? (
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  )}
+                  <Label
+                    htmlFor="toggle-projects"
+                    className="text-xs cursor-pointer min-w-0 truncate"
+                  >
+                    Mostrar projetos
+                  </Label>
+                  <Switch
+                    id="toggle-projects"
+                    checked={showProjects}
+                    onCheckedChange={setShowProjects}
                   />
                 </div>
               )}
@@ -660,7 +683,9 @@ export function MbrTeamOkrsDetailStep({
           })()}
 
           {/* Projetos do time — bloco aditivo */}
-          <ProjectsSummary teamId={currentTeam.teamId} mode="detail" className="mt-2" />
+          {showProjects && (
+            <ProjectsSummary teamId={currentTeam.teamId} mode="detail" className="mt-2" />
+          )}
         </div>
       )}
     </WizardStepScaffold>
