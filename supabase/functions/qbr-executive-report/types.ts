@@ -111,4 +111,5 @@ export interface ReportResponse {
   decisionsNeeded: string[];
   teamProposals: TeamProposal[];
   overallAchievement: OverallAchievement;
+  analyzedTeams: AnalyzedTeam[];
 }
