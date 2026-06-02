@@ -390,7 +390,11 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     }
 
 
-    const llmConfig = await resolveLLMConfig(sc, "google/gemini-3.5-flash");
+    // Modelo preferido — `llmCompleteWithFallback` (chamado dentro de cada
+    // analyzer) tenta automaticamente outros provedores/modelos em caso de
+    // 429/402/503 no Gateway.
+    const PREFERRED_MODEL = "google/gemini-3.5-flash";
+    const llmConfig = await resolveLLMConfig(sc, PREFERRED_MODEL);
     if (!llmConfig) {
       console.error(`[${requestId}] AI service not configured`);
       return errorResponse("AI service not configured", 500, {
