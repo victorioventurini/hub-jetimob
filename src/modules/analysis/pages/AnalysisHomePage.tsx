@@ -24,9 +24,10 @@ import {
   endOfMonth,
   format,
 } from "date-fns";
-import type {
-  AnalysisComposerState,
-  AnalysisModule,
+import {
+  coerceAnalysisDepth,
+  type AnalysisComposerState,
+  type AnalysisModule,
 } from "../types";
 
 function defaultState(): AnalysisComposerState {
