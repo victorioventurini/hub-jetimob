@@ -8,6 +8,54 @@ import { useBuScopedSupabase } from '@/integrations/supabase/useBuScopedSupabase
 import { queryKeys } from '@/lib/queryKeys';
 import { toast } from 'sonner';
 
+/**
+ * MBR/Pré-MBR — quando uma ocorrência é reagendada, deslocamos a janela
+ * de `ritual_window_overrides` correspondente (mesmo bu + wizard_type + datas
+ * cobrindo o dia original) preservando o tamanho da janela. Caso não exista
+ * override, criamos uma de 1 dia (opens=closes=newDate). Isso mantém o gate
+ * de disponibilidade do rito alinhado com o calendário operacional.
+ */
+async function syncMbrWindowOverrideOnReschedule(
+  buSupabase: any,
+  params: { buId: string; wizardType: string; oldDate: string; newDate: string },
+): Promise<void> {
+  if (!['mbr', 'mbr-pre'].includes(params.wizardType)) return;
+  if (!params.buId || !params.oldDate || !params.newDate) return;
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const shiftDays = Math.round(
+    (new Date(params.newDate + 'T00:00:00').getTime() -
+      new Date(params.oldDate + 'T00:00:00').getTime()) / dayMs,
+  );
+  if (shiftDays === 0) return;
+
+  const { data: overrides } = await buSupabase
+    .from('ritual_window_overrides')
+    .select('id, opens_date, closes_date, cycle_id')
+    .eq('bu_id', params.buId)
+    .eq('wizard_type', params.wizardType)
+    .lte('opens_date', params.oldDate)
+    .gte('closes_date', params.oldDate);
+
+  const addDays = (iso: string, days: number) => {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  for (const o of overrides ?? []) {
+    await buSupabase
+      .from('ritual_window_overrides')
+      .update({
+        opens_date: addDays(o.opens_date, shiftDays),
+        closes_date: addDays(o.closes_date, shiftDays),
+        reason: `Sincronizado com reagendamento (${params.oldDate} → ${params.newDate})`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', o.id);
+  }
+}
+
 // ============================================================
 // TYPES
 // ============================================================
@@ -120,7 +168,7 @@ export function useRescheduleOccurrence() {
       // Get current occurrence
       const { data: occ, error: fetchErr } = await buSupabase
         .from('ritual_occurrences')
-        .select('planned_date, rescheduled_from')
+        .select('planned_date, rescheduled_from, wizard_type, bu_id')
         .eq('id', occurrenceId)
         .single();
 
@@ -137,6 +185,13 @@ export function useRescheduleOccurrence() {
         .eq('id', occurrenceId);
 
       if (error) throw error;
+
+      await syncMbrWindowOverrideOnReschedule(buSupabase, {
+        buId: (occ as any).bu_id ?? currentBu?.id ?? '',
+        wizardType: (occ as any).wizard_type,
+        oldDate: occ.planned_date as string,
+        newDate,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(currentBu?.id ?? null) });
@@ -244,6 +299,13 @@ export function useRescheduleOccurrencesBulk() {
 
       const firstError = results.find((r) => r.error)?.error;
       if (firstError) throw firstError;
+
+      await syncMbrWindowOverrideOnReschedule(buSupabase, {
+        buId: currentBu.id,
+        wizardType,
+        oldDate: plannedDate,
+        newDate,
+      });
 
       return { count: list.length };
     },
