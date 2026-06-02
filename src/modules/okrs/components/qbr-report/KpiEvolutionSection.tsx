@@ -370,7 +370,6 @@ export function KpiEvolutionSection() {
       <CardContent className="space-y-6">
         <KpiGroupTable title="🏢 Organizacional" kpis={grouped.org} />
         <KpiGroupTable title="📊 Área" kpis={grouped.area} />
-        <KpiGroupTable title="👥 Por Time" kpis={grouped.team} />
       </CardContent>
     </Card>
   );
