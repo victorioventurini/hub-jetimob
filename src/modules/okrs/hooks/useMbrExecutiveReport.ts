@@ -351,11 +351,10 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
       // monthRef em JS porque está dentro de `reflection_data`.
       const { data, error } = await supabase
         .from('okr_wizard_sessions')
-        .select('reflection_data, completed_at')
+        .select('id, reflection_data, status, completed_at, created_at, updated_at')
         .eq('wizard_type', 'mbr-executive-report')
         .eq('cycle_id', cycleId!)
         .eq('bu_id', currentBuId!)
-        .eq('status', 'completed')
         .order('completed_at', { ascending: false })
         .limit(20);
 
