@@ -12,6 +12,12 @@ export interface InvokeAgentOptions {
   maxTokens?: number;
   /** Override agent's temperature. */
   temperature?: number;
+  /**
+   * Tentativas por modelo antes de cair para o próximo da cadeia.
+   * Default 1 — a resiliência fica na cadeia de modelos, não em backoff
+   * dentro do mesmo modelo saturado.
+   */
+  maxAttemptsPerModel?: number;
 }
 
 /**
@@ -100,7 +106,11 @@ export async function invokeAgentDirect(
 
     try {
       console.log(`[${requestId}] Calling LLM for agent ${agentSlug} (model: ${llmConfig.model})`);
-      const response = await llmComplete(llmConfig, messages, { maxTokens, temperature });
+      const response = await llmComplete(llmConfig, messages, {
+        maxTokens,
+        temperature,
+        maxAttempts: options.maxAttemptsPerModel ?? 1,
+      });
       return response.content || "";
     } catch (err) {
       lastError = err;
