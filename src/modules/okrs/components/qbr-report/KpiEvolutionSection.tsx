@@ -236,11 +236,13 @@ export function KpiEvolutionSection() {
     enabled: !!buSupabase && !!currentBuId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      // 1. Fetch all active KPIs
+      // 1. Fetch active KPIs apenas org + área (ignora métricas e KPIs de time)
       const { data: metrics, error: metricsErr } = await buSupabase
         .from('kpi_metrics')
         .select('id, name, unit, target_value, direction, scope, team_id')
         .eq('lifecycle_status', 'active')
+        .eq('indicator_type', 'kpi')
+        .in('scope', ['org', 'area'])
         .is('deleted_at', null)
         .order('name');
       if (metricsErr) throw metricsErr;
