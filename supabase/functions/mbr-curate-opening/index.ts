@@ -396,7 +396,7 @@ Retorne APENAS o JSON, sem comentários adicionais.`;
         errorMessage,
       });
 
-      // Surface 429/402 to client; everything else cai em fallback manual
+      // Surface 429/402/503 ao client; demais erros caem em fallback manual
       if (httpErr?.status === 429) {
         return errorResponse(
           "Limite de requisições atingido. Tente novamente em alguns minutos.",
@@ -409,6 +409,16 @@ Retorne APENAS o JSON, sem comentários adicionais.`;
           "Créditos esgotados. Adicione créditos em Settings → Workspace → Usage.",
           402,
           { requestId, error: "PAYMENT_REQUIRED" },
+        );
+      }
+      if (
+        httpErr?.status === 503 ||
+        /UNAVAILABLE|overloaded|high demand/i.test(httpErr?.body || "")
+      ) {
+        return errorResponse(
+          "A IA está temporariamente sobrecarregada. Aguarde alguns segundos e tente novamente.",
+          503,
+          { requestId, error: "MODEL_OVERLOADED" },
         );
       }
 
