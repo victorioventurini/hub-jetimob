@@ -187,5 +187,16 @@ export interface ReportResponse {
   monthAnalyses: MonthAnalysisSummary[];
   overallAchievement: OverallAchievement;
   analyzedTeams: AnalyzedTeam[];
+  /** Snapshot factual dos KPIs até o fim do mês (para auditoria / fallback UI). */
+  kpisSummary?: Array<{
+    name?: string;
+    category?: string | null;
+    unit?: string | null;
+    direction?: string | null;
+    targetValue?: number | string | null;
+    currentValue?: number | string | null;
+    ragStatus?: string | null;
+    periodLabel?: string | null;
+  }>;
 }
 
