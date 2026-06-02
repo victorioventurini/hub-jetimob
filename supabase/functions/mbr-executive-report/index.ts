@@ -202,6 +202,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const pendingDecisions = extractDecisions([...monthMbrPre, ...monthMbr]);
     const orgObjectivesSummary = extractKrSummary((orgObjectives || []) as OrgObjectiveRow[]);
     const projectIssues = extractProjectIssues(monthMbrPre, teamsMap);
+    await enrichProjectIssueNames(sc, projectIssues);
     const krIssues = extractKrIssues(monthMbrPre, teamsMap);
     const kpiIssues = extractKpiIssues(monthMbrPre, teamsMap);
     const kpisToCreate = extractKpisToCreate(monthMbrPre, teamsMap);
