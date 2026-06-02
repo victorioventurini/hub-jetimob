@@ -67,6 +67,8 @@ const LOADING_MESSAGES = [
 
 function SourceChecklist() {
   const sources = [
+    '% de atingimento das OKRs calculado com a Progress Canon (mesma fórmula de /okrs)',
+    'KRs com KPI primária usam o valor efetivo da KPI até o fim do mês',
     'Snapshots do MBR-pré submetidos pelos líderes no mês',
     'KPIs organizacionais consolidados até o mês de referência',
     'OKRs do ciclo trimestral atual',
