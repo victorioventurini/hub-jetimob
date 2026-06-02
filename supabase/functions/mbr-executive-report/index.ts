@@ -204,6 +204,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const projectIssues = extractProjectIssues(monthMbrPre, teamsMap);
     await enrichProjectIssueNames(sc, projectIssues);
     const krIssues = extractKrIssues(monthMbrPre, teamsMap);
+    await enrichKrIssueTitles(sc, krIssues, teamObjList);
     const kpiIssues = extractKpiIssues(monthMbrPre, teamsMap);
     const kpisToCreate = extractKpisToCreate(monthMbrPre, teamsMap);
     const agendaSuggestions = extractAgendaSuggestions(monthMbrPre, teamsMap);
