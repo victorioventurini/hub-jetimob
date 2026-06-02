@@ -45,6 +45,8 @@ import {
   kpiValueEntrySchema,
   type KpiValueEntryFormValues,
 } from './kpiValueEntrySchema';
+import { KpiValueInput } from './KpiValueInput';
+import { getMaskConfigForUnit, formatWithMask } from '../../utils/numberFormat';
 
 export interface KpiValueEntryFormProps {
   /** Unidade do KPI, exibida ao lado do label "Valor". */
