@@ -554,7 +554,7 @@ export default function MbrExecutiveReportPage() {
     [quarterCycles, cycleState.value],
   );
 
-  const { report, generatedAt, isLoading: isLoadingReport, generate, isGenerating } =
+  const { report, generatedAt, generationJob, isLoading: isLoadingReport, generate, isGenerating } =
     useMbrExecutiveReport(cycleState.value || null, monthState.value || null);
 
   if (isLoadingCycles) {
@@ -609,6 +609,24 @@ export default function MbrExecutiveReportPage() {
             onRegenerate={() => generate()}
             isRegenerating={isGenerating}
           />
+        ) : generationJob?.status === 'failed' ? (
+          <Card className="max-w-xl mx-auto border-destructive/30">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+              <CardTitle>Não foi possível concluir a geração</CardTitle>
+              <CardDescription>
+                {generationJob.errorMessage || 'A geração anterior falhou antes de concluir.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full gap-2" size="lg" onClick={() => generate()}>
+                <RefreshCw className="h-4 w-4" />
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <>
             <Card className="max-w-xl mx-auto">

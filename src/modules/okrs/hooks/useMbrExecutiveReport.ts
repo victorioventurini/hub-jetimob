@@ -453,8 +453,9 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
   return {
     report: query.data?.report ?? null,
     generatedAt: query.data?.generatedAt ?? null,
+    generationJob: query.data?.job ?? null,
     isLoading: query.isLoading,
     generate: generateMutation.mutate,
-    isGenerating: generateMutation.isPending,
+    isGenerating: generateMutation.isPending || query.data?.job?.status === 'generating',
   };
 }
