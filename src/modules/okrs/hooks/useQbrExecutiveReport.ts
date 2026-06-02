@@ -159,6 +159,19 @@ function normalizeQbrExecutiveReportData(input: unknown): QbrExecutiveReportData
         byObjective,
       };
     })(),
+    analyzedTeams: Array.isArray(source.analyzedTeams)
+      ? source.analyzedTeams.map((t) => {
+          const r = isRecord(t) ? t : {};
+          const leader = toText(r.leaderName);
+          const completed = toText(r.completedAt);
+          return {
+            teamId: toText(r.teamId),
+            teamName: toText(r.teamName) || 'Time não informado',
+            leaderName: leader ? leader : null,
+            completedAt: completed ? completed : null,
+          };
+        })
+      : [],
   };
 }
 
