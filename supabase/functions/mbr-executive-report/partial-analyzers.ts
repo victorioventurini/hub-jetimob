@@ -40,7 +40,7 @@ async function callPartial<T>(
     const response = await llmComplete(
       { ...llmConfig, maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE },
       messages,
-      { maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE },
+      { maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE, timeoutMs: 90_000 },
     );
     if (!response.content) {
       console.warn(`[${requestId}] [${label}] Empty content, using fallback`);
@@ -334,7 +334,7 @@ Gere JSON com exatamente esta estrutura. CADA campo deve ser denso, analítico e
   const response = await llmComplete(
     { ...llmConfig, maxTokens: 5000, temperature: 0.45 },
     messages,
-    { maxTokens: 5000, temperature: 0.45 },
+    { maxTokens: 5000, temperature: 0.45, timeoutMs: 120_000 },
   );
   if (!response.content) {
     throw new Error("Empty consolidation response");

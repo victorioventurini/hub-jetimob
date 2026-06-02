@@ -362,10 +362,10 @@ export async function llmComplete(
     else options.signal.addEventListener("abort", () => controller.abort(), { once: true });
   }
 
-  // Retry transient upstream issues (503 UNAVAILABLE / "overloaded") with backoff.
-  // Não retenta 4xx (incl. 429/402) — esses precisam subir intactos.
-  const MAX_ATTEMPTS = 3;
-  const BACKOFF_MS = [800, 2400];
+  // Retry transient upstream issues (429 rate-limit, 500/502/503, "overloaded")
+  // com backoff exponencial + jitter. 400/401/402/403/404 sobem intactos.
+  const MAX_ATTEMPTS = 5;
+  const BACKOFF_MS = [800, 2000, 4500, 9000];
   let response: Response | null = null;
   let lastErrorText = "";
 
@@ -398,8 +398,11 @@ export async function llmComplete(
 
     lastErrorText = await response.text();
     const isTransient =
+      response.status === 429 ||
+      response.status === 500 ||
+      response.status === 502 ||
       response.status === 503 ||
-      /UNAVAILABLE|overloaded|high demand/i.test(lastErrorText);
+      /UNAVAILABLE|overloaded|high demand|rate.?limit/i.test(lastErrorText);
 
     if (!isTransient || attempt === MAX_ATTEMPTS - 1) {
       clearTimeout(timeoutId);
@@ -412,10 +415,20 @@ export async function llmComplete(
       throw error;
     }
 
+    // Respect Retry-After (segundos) quando vier do gateway/provider.
+    let waitMs = BACKOFF_MS[attempt] ?? 9000;
+    const retryAfter = response.headers.get("retry-after");
+    if (retryAfter) {
+      const asInt = parseInt(retryAfter, 10);
+      if (!Number.isNaN(asInt)) waitMs = Math.max(waitMs, asInt * 1000);
+    }
+    // Jitter para evitar thundering herd entre partials paralelos.
+    waitMs += Math.floor(Math.random() * 400);
+
     console.warn(
-      `[llmComplete] Upstream ${response.status} (transient), retrying in ${BACKOFF_MS[attempt]}ms (attempt ${attempt + 1}/${MAX_ATTEMPTS})`,
+      `[llmComplete] Upstream ${response.status} (transient), retrying in ${waitMs}ms (attempt ${attempt + 1}/${MAX_ATTEMPTS})`,
     );
-    await new Promise((r) => setTimeout(r, BACKOFF_MS[attempt]));
+    await new Promise((r) => setTimeout(r, waitMs));
   }
 
   clearTimeout(timeoutId);
