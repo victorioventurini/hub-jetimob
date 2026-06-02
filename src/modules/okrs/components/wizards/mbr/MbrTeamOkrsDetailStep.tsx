@@ -92,6 +92,7 @@ export function MbrTeamOkrsDetailStep({
 
   // Toggle: hide/show on-track OKRs (default: hidden — focus on risk/off-track)
   const [showOnTrack, setShowOnTrack] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
 
   // Objetivo "on track" = todos os KRs verdes/not_started e nenhum em risco
   const isObjectiveOnTrack = useCallback((obj: { krsAtRisk: number; keyResults: Array<{ status?: string | null }> }) => {
