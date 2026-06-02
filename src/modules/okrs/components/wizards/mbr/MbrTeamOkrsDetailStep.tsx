@@ -561,7 +561,19 @@ export function MbrTeamOkrsDetailStep({
             for (const f of sub?.krFinalStates ?? []) {
               if (f?.krId) krFinalStateMap.set(f.krId, { state: f.state, finalProgress: f.finalProgress, paceStatus: f.paceStatus });
             }
-            return currentTeam.objectives.map((objective) => (
+            if (visibleObjectives.length === 0 && currentTeam.objectives.length > 0) {
+              return (
+                <Card className="border-dashed">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-status-green shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Todos os {currentTeam.objectives.length} OKRs deste time estão on track. Ative "Mostrar OKRs on track" para visualizá-los.
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            }
+            return visibleObjectives.map((objective) => (
             <Card
               key={objective.objectiveId}
               className={cn(
