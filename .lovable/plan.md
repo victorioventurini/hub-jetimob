@@ -1,26 +1,26 @@
-# Acelerar fallback do LLM em `analysis-generate` (e demais usuários de `invokeAgentDirect`)
+## Objetivo
 
-## Causa raiz observada nos logs
-Quando o modelo principal (`gemini-3.5-flash`) está sob 429 (rate-limit), o `llmComplete` faz até **5 tentativas com backoff exponencial** *antes* do `invokeAgentDirect` cair no próximo modelo da cadeia. Resultado: cada agente leva ~30–60s só esperando o backoff de um único modelo saturado, e em chamadas paralelas (analista-estrategico + facilitador-decisoes) o usuário vê o relatório travar/“falhar” muito antes de tudo terminar. Quando o segundo modelo *também* está sob 503, o ciclo se repete.
+Na etapa **Pautas e decisões** do MBR, tornar os cartões da seção **"Pendências do MBR Anterior"** totalmente editáveis, usando o mesmo `DecisionCard` (com reclassificação, responsável, prazo, edição de texto e remoção) já usado para os registros criados dentro do próprio rito.
 
-Esse é o mesmo problema que foi resolvido no MBR: lá passamos `maxAttempts: 1` para evitar retry interno e pular direto para o fallback de modelo.
+## Comportamento
 
-## Mudança
-Aplicar o mesmo padrão centralmente em `supabase/functions/_shared/invoke-agent.ts`:
+- Cada pendência herdada vira um registro editável (texto, categoria, responsável, prazo).
+- Ao editar/reclassificar/atribuir responsável/prazo, a mudança é persistida no draft do MBR atual (em `decisions`), preservando o `id` original para reconciliação com a sessão anterior.
+- Continuam visualmente agrupadas sob o cabeçalho “Pendências do MBR Anterior”, separadas dos registros criados nesta etapa, para manter a leitura de origem.
+- Remover um item carry-over no MBR atual = descartá-lo (não voltará a aparecer na próxima sessão como pendente — fica resolvido).
 
-1. Passar `maxAttempts: 1` ao `llmComplete` dentro de `invokeAgentDirect`, **sem** retry interno por modelo. A resiliência fica 100% na cadeia de modelos (`FALLBACK_MODEL_CHAIN`), que mistura provedores.
-2. Aceitar `maxAttempts?: number` em `InvokeAgentOptions` para quem quiser override (default 1).
-3. Adicionar uma opção `throwOnAllExhausted?: boolean` (default mantém o comportamento atual: lançar). Permite a `analysis-generate` desligar isso quando quiser gracefully degradar.
+## Mudanças
 
-Em `supabase/functions/analysis-generate/index.ts`:
+### `src/modules/okrs/components/wizards/mbr/MbrDecisionsStep.tsx`
 
-4. Quando ambos os agentes (`analista-estrategico` + `facilitador-decisoes`) falharem mesmo após a cadeia, gravar `status = "failed"` com `error_message = "Todos os modelos de IA estão indisponíveis. Tente novamente em alguns minutos."` em vez de marcar como `complete` com corpo vazio. Hoje o report fica `complete` com texto genérico — confuso para o usuário.
-5. Manter o agente `analista-estrategico` (fase 1, sugestão de módulos) usando `throwOnMissingConfig: false`, sem alterar fluxo: ele já é melhor-esforço.
+1. **Hidratar pendências no estado editável**: em `useEffect`, mesclar em `decisions` cada item de `previousMbrPendingItems` cujo `id` ainda não esteja presente, marcando `metadata.carry_over = true` e preservando `category`/`text`/`owner`/`deadline` originais. Chamar `onDecisionsChange` uma única vez.
+2. **Separar carry-overs da listagem agrupada por step**: `groupedDecisions` passa a filtrar `d.metadata?.carry_over !== true`.
+3. **Substituir os `Card` read-only** (linhas 206–222) por `DecisionCard` com `showReclassify` e `showOwnerDeadline`, usando os mesmos `handleUpdate`/`handleRemove`. Manter o header da seção (`Clock` + “Pendências do MBR Anterior (N)”).
+4. Contador da seção passa a refletir os carry-overs presentes em `decisions` (não mais o prop bruto), para refletir remoções/edições em tempo real.
 
-## Impacto colateral
-Todos os outros consumidores de `invokeAgentDirect` (mbr-summary, qbr-*, team-checkin-summary, etc.) passam a usar a cadeia de modelos muito mais rápido — exatamente o comportamento desejado, alinhado ao fix anterior do MBR.
+Nenhuma mudança em `MbrPage.tsx`, hooks ou backend — `previousMbrPendingItems` continua sendo a fonte de hidratação inicial, e `decisions` segue como o estado canônico salvo no draft.
 
-## Validação
-1. Deploy de `analysis-generate` + reload do `_shared`.
-2. Disparar um novo relatório em `/analysis` — logs devem mostrar **uma** chamada por modelo, com fallback imediato em 429/503.
-3. Em caso de exaustão total, `analysis_reports.status = "failed"` com mensagem clara, e o frontend exibe erro tratado.
+## Fora de escopo
+
+- Seção “Sinalizações dos Pré-MBRs” (continua como “sugestão + botão adicionar”).
+- Carry-over de outros ritos (weekly/QBR).
