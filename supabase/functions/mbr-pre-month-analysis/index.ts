@@ -14,7 +14,7 @@
  *     recommendations: string[],
  *   }
  *
- * Stack canônico: withMiddleware + loadAgent + llmComplete + ai_agent_logs.
+ * Stack canônico: withMiddleware + loadAgent + llmCompleteWithFallback + ai_agent_logs.
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -25,7 +25,7 @@ import {
 } from "../_shared/middleware.ts";
 import { successResponse, errorResponse } from "../_shared/response.ts";
 import { loadAgent, buildSystemPrompt } from "../_shared/agent-loader.ts";
-import { resolveLLMConfig, llmComplete, type LLMMessage } from "../_shared/llm-client.ts";
+import { llmCompleteWithFallback, type LLMMessage } from "../_shared/llm-client.ts";
 import type { EdgeSupabaseClient, HttpLikeError } from "../_shared/types/common.ts";
 
 // ============================================================================
@@ -217,14 +217,7 @@ serve(async (req: Request) => {
       });
     }
 
-    // 2) Resolver LLM config
-    const llmConfig = await resolveLLMConfig(serviceClient, loaded.agent.model_name);
-    if (!llmConfig) {
-      logRequestCompletion(ctx, "success", "no-llm-config");
-      return successResponse({ origin: "manual", reason: "NO_LLM_CONFIG", output: null });
-    }
-
-    // 3) Prompts
+    // 2) Prompts
     const systemPrompt = await buildSystemPrompt(
       serviceClient,
       loaded.agent,
@@ -278,13 +271,15 @@ Retorne APENAS o JSON.`;
       { role: "user", content: userPrompt },
     ];
 
-    // 4) Chamar LLM
+    // 3) Chamar LLM com fallback multi-modelo. Evita bloquear o Pré-MBR
+    // quando o modelo configurado do agente estoura quota/rate-limit.
     const startedAt = Date.now();
     let llmResponse;
     try {
-      llmResponse = await llmComplete(llmConfig, messages, {
+      llmResponse = await llmCompleteWithFallback(serviceClient, loaded.agent.model_name, messages, {
         maxTokens: loaded.agent.max_tokens || 2500,
         temperature: loaded.agent.temperature ?? 0.4,
+        timeoutMs: 90_000,
       });
     } catch (err) {
       const latencyMs = Date.now() - startedAt;
@@ -295,7 +290,7 @@ Retorne APENAS o JSON.`;
       await logAgentInvocation(serviceClient, {
         agentName: loaded.agent.name,
         integrationKey: loaded.agent.integration_key,
-        model: llmConfig.model,
+        model: loaded.agent.model_name || "fallback-chain",
         buId: buId!,
         userId: user?.id ?? null,
         status: "error",
@@ -303,13 +298,6 @@ Retorne APENAS o JSON.`;
         errorMessage,
       });
 
-      if ((err as any)?.status === 429) {
-        return errorResponse(
-          "Limite de requisições atingido. Tente novamente em alguns minutos.",
-          429,
-          { requestId, error: "RATE_LIMITED" },
-        );
-      }
       if ((err as any)?.status === 402) {
         return errorResponse(
           "Créditos esgotados. Adicione créditos em Settings → Workspace → Usage.",
@@ -318,7 +306,7 @@ Retorne APENAS o JSON.`;
         );
       }
 
-      logRequestCompletion(ctx, "error", `LLM_ERROR: ${errorMessage}`);
+      logRequestCompletion(ctx, "success", `manual-fallback-after-llm-error: ${errorMessage}`);
       return successResponse({ origin: "manual", reason: "LLM_ERROR", output: null });
     }
 
@@ -329,7 +317,7 @@ Retorne APENAS o JSON.`;
     await logAgentInvocation(serviceClient, {
       agentName: loaded.agent.name,
       integrationKey: loaded.agent.integration_key,
-      model: llmConfig.model,
+      model: llmResponse.modelUsed || loaded.agent.model_name || "fallback-chain",
       buId: buId!,
       userId: user?.id ?? null,
       status: parsed ? "success" : "error",
