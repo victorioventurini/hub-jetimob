@@ -217,3 +217,187 @@ export function extractKrSummary(orgObjectives: { title: string; key_results?: K
     })),
   }));
 }
+
+// ============================================================================
+// NEW: cobertura completa dos campos do MBR-pré
+// ============================================================================
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return (value && typeof value === "object" && !Array.isArray(value))
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asStringRecord(value: unknown): Record<string, string> {
+  const obj = asRecord(value);
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const text = typeof v === "string" ? v.trim() : "";
+    if (text) out[k] = text;
+  }
+  return out;
+}
+
+export function extractProjectIssues(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+): ProjectIssue[] {
+  const out: ProjectIssue[] = [];
+  for (const session of sessions) {
+    const data = unwrapData(session);
+    const teamName = teams.get(session.team_id) || "Time";
+    const pj = asRecord(data.projectJustifications);
+    const projects = asStringRecord(pj.projects);
+    const milestones = asStringRecord(pj.milestones);
+    for (const [refId, text] of Object.entries(projects)) {
+      out.push({ teamName, kind: "project", refId, justification: text });
+    }
+    for (const [refId, text] of Object.entries(milestones)) {
+      out.push({ teamName, kind: "milestone", refId, justification: text });
+    }
+  }
+  return out;
+}
+
+export function extractKrIssues(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+): KrIssue[] {
+  const out: KrIssue[] = [];
+  for (const session of sessions) {
+    const data = unwrapData(session);
+    const teamName = teams.get(session.team_id) || "Time";
+    const justifications = asStringRecord(data.krJustifications);
+    const finalStates = Array.isArray(data.krFinalStates)
+      ? (data.krFinalStates as unknown[])
+      : [];
+    const stateMap = new Map<string, { paceStatus?: string; finalProgress?: number; state?: string }>();
+    for (const raw of finalStates) {
+      const r = asRecord(raw);
+      const krId = typeof r.krId === "string" ? r.krId : "";
+      if (!krId) continue;
+      stateMap.set(krId, {
+        paceStatus: typeof r.paceStatus === "string" ? r.paceStatus : undefined,
+        finalProgress: typeof r.finalProgress === "number" ? r.finalProgress : undefined,
+        state: typeof r.state === "string" ? r.state : undefined,
+      });
+    }
+    for (const [krId, text] of Object.entries(justifications)) {
+      const meta = stateMap.get(krId) || {};
+      out.push({
+        teamName,
+        krId,
+        kind: "justified",
+        paceStatus: meta.paceStatus ?? null,
+        finalProgress: meta.finalProgress ?? null,
+        state: meta.state ?? null,
+        justification: text,
+      });
+    }
+  }
+  return out;
+}
+
+export function extractKpiIssues(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+): KpiIssue[] {
+  const out: KpiIssue[] = [];
+  for (const session of sessions) {
+    const data = unwrapData(session);
+    const teamName = teams.get(session.team_id) || "Time";
+    const justifications = asStringRecord(data.kpiJustifications);
+    const noData = asStringRecord(data.kpiNoDataReasons);
+    for (const [kpiId, text] of Object.entries(justifications)) {
+      out.push({ teamName, kpiId, kind: "justified", text });
+    }
+    for (const [kpiId, text] of Object.entries(noData)) {
+      out.push({ teamName, kpiId, kind: "no_data", text });
+    }
+  }
+  return out;
+}
+
+export function extractKpisToCreate(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+): KpiToCreateSuggestion[] {
+  const out: KpiToCreateSuggestion[] = [];
+  for (const session of sessions) {
+    const data = unwrapData(session);
+    const teamName = teams.get(session.team_id) || "Time";
+    const items = Array.isArray(data.kpisToCreate) ? data.kpisToCreate as unknown[] : [];
+    for (const raw of items) {
+      const r = asRecord(raw);
+      const description = typeof r.description === "string" ? r.description.trim() : "";
+      if (!description) continue;
+      out.push({
+        teamName,
+        description,
+        suggestedScope: typeof r.suggestedScope === "string" ? r.suggestedScope : "",
+      });
+    }
+  }
+  return out;
+}
+
+export function extractAgendaSuggestions(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+): AgendaSuggestionItem[] {
+  const out: AgendaSuggestionItem[] = [];
+  for (const session of sessions) {
+    const data = unwrapData(session);
+    const teamName = teams.get(session.team_id) || "Time";
+    const items = Array.isArray(data.agendaSuggestions) ? data.agendaSuggestions as unknown[] : [];
+    for (const raw of items) {
+      if (typeof raw === "string" && raw.trim()) {
+        out.push({ teamName, text: raw.trim() });
+        continue;
+      }
+      const r = asRecord(raw);
+      const text = typeof r.text === "string" && r.text.trim()
+        ? r.text.trim()
+        : typeof r.title === "string" ? r.title.trim() : "";
+      if (text) out.push({ teamName, text });
+    }
+  }
+  return out;
+}
+
+export function extractMonthAnalyses(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+): MonthAnalysisSummary[] {
+  const out: MonthAnalysisSummary[] = [];
+  for (const session of sessions) {
+    const data = unwrapData(session);
+    const ma = asRecord(data.monthAnalysis);
+    if (!ma || Object.keys(ma).length === 0) continue;
+    const summary = typeof ma.summary === "string" ? ma.summary.trim() : "";
+    const mapToText = (arr: unknown): string[] =>
+      Array.isArray(arr)
+        ? arr.map((it) => {
+            if (typeof it === "string") return it;
+            const r = asRecord(it);
+            const title = typeof r.title === "string" ? r.title : "";
+            const detail = typeof r.detail === "string" ? r.detail : "";
+            return [title, detail].filter(Boolean).join(" — ");
+          }).filter(Boolean)
+        : [];
+    const recommendations = Array.isArray(ma.recommendations)
+      ? (ma.recommendations as unknown[]).map((r) => String(r)).filter(Boolean)
+      : [];
+    if (!summary && mapToText(ma.offenders).length === 0 && mapToText(ma.risks).length === 0 && recommendations.length === 0) {
+      continue;
+    }
+    out.push({
+      teamName: teams.get(session.team_id) || "Time",
+      summary,
+      offenders: mapToText(ma.offenders),
+      risks: mapToText(ma.risks),
+      recommendations,
+    });
+  }
+  return out;
+}
