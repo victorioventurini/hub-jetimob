@@ -199,6 +199,22 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         return errorResponse("Profile not found", 403, { requestId, error: "PROFILE_NOT_FOUND" });
       }
 
+      const { data: existingJobs } = await ctx.serviceClient
+        .from("okr_wizard_sessions")
+        .select("id, reflection_data")
+        .eq("wizard_type", "mbr-executive-report")
+        .eq("cycle_id", body.cycleId)
+        .eq("bu_id", buId)
+        .eq("status", "in_progress")
+        .order("updated_at", { ascending: false })
+        .limit(10);
+      const existingJob = (existingJobs || []).find((row: { id: string; reflection_data?: { monthRef?: string } | null }) =>
+        row.reflection_data?.monthRef === body.monthRef,
+      );
+      if (existingJob?.id) {
+        return successResponse({ jobId: existingJob.id, status: "generating" }, undefined, 202);
+      }
+
       const { data: job, error: jobErr } = await ctx.serviceClient
         .from("okr_wizard_sessions")
         .insert({
