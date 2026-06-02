@@ -22,69 +22,13 @@ import type {
 } from "./types.ts";
 
 // ============================================================================
-// Progress Canon — espelha src/modules/okrs/utils/progressCalculation.ts (SSOT).
-// Edge functions não podem importar de src/; mantenha estas funções em sincronia
-// quando o canônico mudar. Regras:
-//   - Sem clamp superior (156% é valor válido).
-//   - Apenas Math.max(0, x) no piso.
-//   - direction === "maintain" é binário (current >= target ? 100 : 0).
-//   - Não arredondar na função base; arredondar só na exibição.
+// Progress Canon — importa do _shared/okr-progress.ts (SSOT do edge).
+// Proibido reimplementar fórmula aqui (regra: mem://features/okrs).
 // ============================================================================
 
-type OkrDir = "up" | "down" | "maintain";
+export { calculateKrProgress } from "../_shared/okr-progress.ts";
+import { calculateKrProgress } from "../_shared/okr-progress.ts";
 
-const UNIT_MULTIPLIERS: Record<string, number> = {
-  "R$": 1,
-  "R$ mil": 1_000,
-  "R$ milhão": 1_000_000,
-};
-
-function calcDirectionalProgress(
-  baseline: number,
-  current: number,
-  target: number,
-  direction: OkrDir,
-): number {
-  if (direction === "maintain") return current >= target ? 100 : 0;
-
-  if (direction === "up") {
-    if (target === baseline) return current >= target ? 100 : 0;
-    return Math.max(0, ((current - baseline) / (target - baseline)) * 100);
-  }
-
-  // direction === "down"
-  if (baseline === target) return current <= target ? 100 : 0;
-  return Math.max(0, ((baseline - current) / (baseline - target)) * 100);
-}
-
-function normalizeProgressInputs(
-  baseline: number,
-  current: number,
-  target: number,
-  unit?: string | null,
-) {
-  if (!unit || !(unit in UNIT_MULTIPLIERS)) return { baseline, current, target };
-  const mult = UNIT_MULTIPLIERS[unit];
-  const direct = calcDirectionalProgress(baseline, current, target, "up");
-  const scaled = calcDirectionalProgress(baseline * mult, current, target * mult, "up");
-  if (direct > 1000 && scaled >= 0 && scaled <= 1000) {
-    return { baseline: baseline * mult, current, target: target * mult };
-  }
-  return { baseline, current, target };
-}
-
-/** Canônico: SEM clamp superior, SEM arredondamento. */
-export function calculateKrProgress(
-  baseline: number,
-  current: number,
-  target: number,
-  direction: string,
-  unit?: string | null,
-): number {
-  const dir: OkrDir = direction === "down" ? "down" : direction === "maintain" ? "maintain" : "up";
-  const n = normalizeProgressInputs(baseline, current, target, unit);
-  return calcDirectionalProgress(n.baseline, n.current, n.target, dir);
-}
 
 /** Valor efetivo da KR: primário KPI > current_value cru. */
 function resolveKrCurrentValue(kr: KrRow): number {

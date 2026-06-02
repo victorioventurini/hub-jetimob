@@ -89,22 +89,21 @@ export const TeamObjectiveCard = React.memo(function TeamObjectiveCard({ objecti
   // Filter KRs for this objective
   const objectiveKrs = allKeyResults?.filter(kr => kr.team_objective_id === objective.id && !kr.deleted_at) || [];
   
-  // Calculate average progress — cada KR contribui no máx. 100% para não
-  // distorcer a média do objetivo quando uma KR supera a meta (>100%).
+  // Calculate average progress — usa o canon (`calculateProgress`) com normalização de unidade.
+  // Cada KR contribui no máx. 100% para não distorcer a média do objetivo.
   const avgProgress = objectiveKrs.length > 0
     ? objectiveKrs.reduce((acc, kr) => {
-        const direction = kr.direction as 'up' | 'down';
-        let krProgress = 0;
-        if (direction === 'up') {
-          if (kr.target === kr.baseline) krProgress = kr.current_value >= kr.target ? 100 : 0;
-          else krProgress = ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100;
-        } else {
-          if (kr.baseline === kr.target) krProgress = kr.current_value <= kr.target ? 100 : 0;
-          else krProgress = ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100;
-        }
-        return acc + Math.max(0, Math.min(100, krProgress));
+        const krProgress = calculateProgress(
+          Number(kr.baseline) || 0,
+          Number(kr.current_value) || 0,
+          Number(kr.target) || 0,
+          (kr.direction as OkrDirection) || 'up',
+          { unit: kr.unit },
+        );
+        return acc + Math.min(100, krProgress);
       }, 0) / objectiveKrs.length
     : 0;
+
 
   // Count KR statuses
   const greenCount = objectiveKrs.filter(kr => kr.status === 'green').length;

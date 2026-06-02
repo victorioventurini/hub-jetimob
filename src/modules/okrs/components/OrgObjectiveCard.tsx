@@ -56,19 +56,17 @@ export const OrgObjectiveCard = React.memo(function OrgObjectiveCard({ objective
 
   const activeKrs = keyResults?.filter(kr => !kr.deleted_at) || [];
   
-  // Calculate average progress
+  // Calculate average progress — usa o canon (`calculateProgress`) com normalização de unidade.
   const avgProgress = activeKrs.length > 0
-    ? activeKrs.reduce((acc, kr) => {
-        const direction = kr.direction as 'up' | 'down';
-        if (direction === 'up') {
-          if (kr.target === kr.baseline) return acc + (kr.current_value >= kr.target ? 100 : 0);
-          return acc + Math.max(0, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100);
-        } else {
-          if (kr.baseline === kr.target) return acc + (kr.current_value <= kr.target ? 100 : 0);
-          return acc + Math.max(0, ((kr.baseline - kr.current_value) / (kr.baseline - kr.target)) * 100);
-        }
-      }, 0) / activeKrs.length
+    ? activeKrs.reduce((acc, kr) => acc + calculateProgress(
+        Number(kr.baseline) || 0,
+        Number(kr.current_value) || 0,
+        Number(kr.target) || 0,
+        (kr.direction as OkrDirection) || 'up',
+        { unit: kr.unit },
+      ), 0) / activeKrs.length
     : 0;
+
 
   // Count KR statuses
   const greenCount = activeKrs.filter(kr => kr.status === 'green').length;

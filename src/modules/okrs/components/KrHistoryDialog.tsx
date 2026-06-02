@@ -78,11 +78,14 @@ export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps
 
   if (!kr) return null;
 
-  const progress = kr.target !== kr.baseline
-    ? Math.max(0, ((kr.current_value - kr.baseline) / (kr.target - kr.baseline)) * 100)
-    : kr.direction === 'maintain' && kr.current_value >= kr.target
-      ? 100
-      : 0;
+  const progress = calculateProgress(
+    kr.baseline,
+    kr.current_value,
+    kr.target,
+    kr.direction,
+    { unit: kr.unit },
+  );
+
 
   const ownerInitials = kr.owner_name
     ?.split(' ')
