@@ -71,6 +71,11 @@ function SourceChecklist() {
     'KPIs organizacionais consolidados até o mês de referência',
     'OKRs do ciclo trimestral atual',
     'Destaques, riscos e próximos passos por time',
+    'Projetos e marcos em atraso justificados pelos líderes',
+    'KRs fora da meta com justificativa do time',
+    'KPIs com justificativa ou sem dados no mês',
+    'Sugestões de pauta e novos KPIs propostos pelos líderes',
+    'Análises mensais IA revisadas pelos líderes',
     'Decisões pendentes do mês',
   ];
   return (
