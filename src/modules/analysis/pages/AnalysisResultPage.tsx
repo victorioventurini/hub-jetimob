@@ -5,7 +5,7 @@
  * header, métricas, insights, ações sugeridas, decisões registradas e discussão.
  */
 import { memo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
