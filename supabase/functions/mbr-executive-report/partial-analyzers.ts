@@ -96,7 +96,8 @@ Gere JSON:
 }`;
 
   return await callPartial<ProjectsPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     { projectsAnalysis: "" },
     requestId,
