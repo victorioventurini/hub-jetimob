@@ -41,6 +41,7 @@ export interface MbrExecutiveReportProjectIssue {
 export interface MbrExecutiveReportKrIssue {
   teamName: string;
   krId: string;
+  title?: string;
   paceStatus: string | null;
   finalProgress: number | null;
   state: string | null;
