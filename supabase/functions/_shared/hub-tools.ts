@@ -33,6 +33,7 @@
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { calculateKrProgress } from "./okr-progress.ts";
 
 // =============================================================================
 // TYPES
