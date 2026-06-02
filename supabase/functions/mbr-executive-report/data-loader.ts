@@ -38,7 +38,7 @@ export async function loadReportData(
         id, title, status, team_id,
         key_results:okr_team_key_results(
           id, title, current_value, target, baseline,
-          direction, status, deleted_at, cancelled_at
+          direction, status, unit, deleted_at, cancelled_at
         )
       `)
       .eq("cycle_id", cycleId)
@@ -81,7 +81,7 @@ export async function loadReportData(
       .select(`
         id, title,
         key_results:okr_org_key_results(
-          id, title, current_value, target, baseline, direction, status
+          id, title, current_value, target, baseline, direction, status, unit
         )
       `)
       .eq("bu_id", buId)
@@ -91,4 +91,53 @@ export async function loadReportData(
       .neq("status", "cancelled")
       .neq("status", "discarded"),
   ]);
+}
+
+/**
+ * Carrega o valor efetivo da KPI primária para cada KR informado, considerando
+ * leituras até `monthEndIso`. Retorna um Map<krId, effectiveCurrentValue>.
+ *
+ * Implementa a Core Rule: "Primary KPIs dictate KR progress automatically".
+ */
+export async function loadPrimaryKpiValuesForKrs(
+  sc: EdgeSupabaseClient,
+  krIds: string[],
+  monthEndIso: string,
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (krIds.length === 0) return map;
+
+  const { data: links, error: linksErr } = await sc
+    .from("okr_kr_metrics")
+    .select("kr_id, kpi_id")
+    .in("kr_id", krIds)
+    .eq("role", "primary")
+    .is("deleted_at", null);
+
+  if (linksErr || !links || links.length === 0) return map;
+
+  const kpiIds = Array.from(new Set(links.map((l: { kpi_id: string }) => l.kpi_id).filter(Boolean)));
+  if (kpiIds.length === 0) return map;
+
+  const { data: values, error: valuesErr } = await sc
+    .from("kpi_values")
+    .select("kpi_id, value, reference_date")
+    .in("kpi_id", kpiIds)
+    .lte("reference_date", monthEndIso)
+    .order("reference_date", { ascending: false });
+
+  if (valuesErr || !values) return map;
+
+  // Última leitura por kpi_id (já ordenado desc).
+  const latestByKpi = new Map<string, number>();
+  for (const v of values as Array<{ kpi_id: string; value: number | null }>) {
+    if (!v?.kpi_id || latestByKpi.has(v.kpi_id)) continue;
+    if (typeof v.value === "number") latestByKpi.set(v.kpi_id, v.value);
+  }
+
+  for (const link of links as Array<{ kr_id: string; kpi_id: string }>) {
+    const val = latestByKpi.get(link.kpi_id);
+    if (typeof val === "number") map.set(link.kr_id, val);
+  }
+  return map;
 }

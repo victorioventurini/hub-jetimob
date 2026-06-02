@@ -22,9 +22,10 @@ import {
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
-import { loadCycle, loadReportData } from "./data-loader.ts";
+import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
 import {
   buildKpiSummary,
+  buildOverallAchievement,
   buildTeamHealthSummary,
   extractAgendaSuggestions,
   extractDecisions,
@@ -43,10 +44,12 @@ import {
   MBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  KrRow,
   OrgObjectiveRow,
   ParsedReport,
   ReportRequest,
   ReportResponse,
+  TeamObjectiveRow,
 } from "./types.ts";
 
 const MONTH_REF_RE = /^\d{4}-\d{2}$/;
@@ -134,8 +137,33 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const monthMbrPre = filterSessionsByMonth(mbrPreSessions || [], body.monthRef);
     const monthMbr = filterSessionsByMonth(mbrSessions || [], body.monthRef);
 
-    const teamHealthSummary = buildTeamHealthSummary(teamObjectives || [], teamsMap);
-    const kpisSummary = buildKpiSummary(orgKpis || [], monthEndIso(body.monthRef));
+    // Resolve valor efetivo das KRs com KPI primária (Core Rule canônica).
+    const teamObjList = (teamObjectives || []) as TeamObjectiveRow[];
+    const allKrIds: string[] = [];
+    for (const obj of teamObjList) {
+      for (const kr of obj.key_results || []) {
+        if (kr.id) allKrIds.push(kr.id);
+      }
+    }
+    const monthEndIsoVal = monthEndIso(body.monthRef);
+    const primaryKpiValues = await loadPrimaryKpiValuesForKrs(
+      sc,
+      allKrIds,
+      monthEndIsoVal,
+    );
+    if (primaryKpiValues.size > 0) {
+      for (const obj of teamObjList) {
+        for (const kr of obj.key_results || []) {
+          if (kr.id && primaryKpiValues.has(kr.id)) {
+            (kr as KrRow).effective_current_value = primaryKpiValues.get(kr.id)!;
+          }
+        }
+      }
+    }
+
+    const teamHealthSummary = buildTeamHealthSummary(teamObjList, teamsMap);
+    const overallAchievement = buildOverallAchievement(teamObjList, teamsMap);
+    const kpisSummary = buildKpiSummary(orgKpis || [], monthEndIsoVal);
     const teamCommitments = extractTeamCommitments(monthMbrPre, teamsMap);
     const teamHighlights = extractMonthlyHighlights(monthMbrPre, teamsMap);
     const pendingDecisions = extractDecisions([...monthMbrPre, ...monthMbr]);
@@ -148,7 +176,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const monthAnalyses = extractMonthAnalyses(monthMbrPre, teamsMap);
 
     console.log(
-      `[${requestId}] Prompt data: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, commitments=${teamCommitments.length}, highlights=${teamHighlights.length}, decisions=${pendingDecisions.length}, projects=${projectIssues.length}, krIssues=${krIssues.length}, kpiIssues=${kpiIssues.length}, kpisToCreate=${kpisToCreate.length}, agenda=${agendaSuggestions.length}, monthAnalyses=${monthAnalyses.length}`,
+      `[${requestId}] Prompt data: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, commitments=${teamCommitments.length}, highlights=${teamHighlights.length}, decisions=${pendingDecisions.length}, projects=${projectIssues.length}, krIssues=${krIssues.length}, kpiIssues=${kpiIssues.length}, kpisToCreate=${kpisToCreate.length}, agenda=${agendaSuggestions.length}, monthAnalyses=${monthAnalyses.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
     );
 
     if (monthMbrPre.length === 0) {
@@ -179,6 +207,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           cycleName: cycle.name,
           monthLabel: monthLabel(body.monthRef),
           teamHealthSummary,
+          overallAchievement,
           kpisSummary,
           teamHighlights,
           teamCommitments,
@@ -233,6 +262,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         kpisToCreate,
         agendaSuggestions,
         monthAnalyses,
+        overallAchievement,
       };
 
       console.log(`[${requestId}] MBR executive report generated successfully`);

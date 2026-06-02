@@ -15,6 +15,7 @@ export interface PromptInputs {
   cycleName: string;
   monthLabel: string;
   teamHealthSummary: unknown;
+  overallAchievement: unknown;
   kpisSummary: unknown;
   teamHighlights: unknown;
   teamCommitments: unknown;
@@ -33,6 +34,7 @@ export function buildMbrExecUserPrompt(inputs: PromptInputs): string {
     cycleName,
     monthLabel,
     teamHealthSummary,
+    overallAchievement,
     kpisSummary,
     teamHighlights,
     teamCommitments,
@@ -50,7 +52,15 @@ export function buildMbrExecUserPrompt(inputs: PromptInputs): string {
 
   return `Gere o relatório executivo do MÊS "${monthLabel}" (dentro do ciclo "${cycleName}").
 
-=== ENTREGA DOS TIMES NO QUARTER (contexto) ===
+=== % DE ATINGIMENTO DOS OKRs (NÚMEROS OFICIAIS — USE EXATAMENTE ESTES) ===
+${JSON.stringify(overallAchievement)}
+
+REGRA OBRIGATÓRIA: ao citar qualquer % de atingimento (geral, por time ou por
+objetivo) use EXATAMENTE os valores acima. Não recalcule, não estime, não
+arredonde de forma diferente. Estes números seguem a Progress Canon do produto
+(igual ao que aparece em /okrs) e são a única fonte de verdade.
+
+=== ENTREGA DOS TIMES NO QUARTER (contexto qualitativo — buckets RAG) ===
 ${JSON.stringify(teamHealthSummary)}
 
 === KPIs ORGANIZACIONAIS (consolidados até o fim de ${monthLabel}) ===
@@ -88,7 +98,7 @@ ${JSON.stringify(orgObjectivesSummary)}
 
 Gere o relatório em JSON com exatamente esta estrutura:
 {
-  "monthNarrative": "parágrafo de 5-8 linhas interpretando o mês — saúde dos OKRs, ritmo, principais movimentos e ofensores",
+  "monthNarrative": "parágrafo de 5-8 linhas interpretando o mês — saúde dos OKRs (cite o overallProgress acima), ritmo, principais movimentos e ofensores",
   "commitmentsAnalysis": "parágrafo de 4-6 linhas analisando os compromissos dos times para o próximo mês (foco, dependências cruzadas, riscos)",
   "kpiInsights": {
     "healthy": "1-2 linhas sobre os KPIs em boa forma (omitir se não houver)",

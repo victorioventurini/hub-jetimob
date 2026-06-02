@@ -70,6 +70,28 @@ export interface MbrExecutiveReportMonthAnalysis {
   recommendations: string[];
 }
 
+export interface MbrExecutiveReportObjectiveAchievement {
+  id: string;
+  title: string;
+  teamName: string;
+  progress: number;
+  krCount: number;
+}
+
+export interface MbrExecutiveReportTeamAchievement {
+  teamId: string;
+  teamName: string;
+  progress: number;
+  objectivesCount: number;
+  krCount: number;
+}
+
+export interface MbrExecutiveReportOverallAchievement {
+  overallProgress: number;
+  byTeam: MbrExecutiveReportTeamAchievement[];
+  byObjective: MbrExecutiveReportObjectiveAchievement[];
+}
+
 export interface MbrExecutiveReportData {
   monthRef: string;
   monthNarrative: string;
@@ -91,6 +113,7 @@ export interface MbrExecutiveReportData {
   kpisToCreate: MbrExecutiveReportKpiToCreate[];
   agendaSuggestions: MbrExecutiveReportAgendaSuggestion[];
   monthAnalyses: MbrExecutiveReportMonthAnalysis[];
+  overallAchievement: MbrExecutiveReportOverallAchievement;
 }
 
 type ReportRecord = Record<string, unknown>;
@@ -231,6 +254,38 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
           };
         }).filter((m) => m.summary || m.offenders.length || m.risks.length || m.recommendations.length)
       : [],
+    overallAchievement: (() => {
+      const oa = isRecord(source.overallAchievement) ? source.overallAchievement : {};
+      const byTeam = Array.isArray(oa.byTeam)
+        ? oa.byTeam.map((t) => {
+            const r = isRecord(t) ? t : {};
+            return {
+              teamId: toText(r.teamId),
+              teamName: toText(r.teamName) || 'Time não informado',
+              progress: toNumberOrNull(r.progress) ?? 0,
+              objectivesCount: toNumberOrNull(r.objectivesCount) ?? 0,
+              krCount: toNumberOrNull(r.krCount) ?? 0,
+            };
+          })
+        : [];
+      const byObjective = Array.isArray(oa.byObjective)
+        ? oa.byObjective.map((o) => {
+            const r = isRecord(o) ? o : {};
+            return {
+              id: toText(r.id),
+              title: toText(r.title),
+              teamName: toText(r.teamName) || 'Time não informado',
+              progress: toNumberOrNull(r.progress) ?? 0,
+              krCount: toNumberOrNull(r.krCount) ?? 0,
+            };
+          })
+        : [];
+      return {
+        overallProgress: toNumberOrNull(oa.overallProgress) ?? 0,
+        byTeam,
+        byObjective,
+      };
+    })(),
   };
 }
 
