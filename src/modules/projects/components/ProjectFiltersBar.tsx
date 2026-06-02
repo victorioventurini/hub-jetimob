@@ -29,6 +29,12 @@ const krLinkOptions: Array<{ value: string; label: string }> = [
   { value: 'not_linked', label: 'Sem KR vinculado' },
 ];
 
+const healthOptions: Array<{ value: string; label: string }> = [
+  { value: 'on_track', label: 'No prazo' },
+  { value: 'at_risk', label: 'Em risco' },
+  { value: 'late', label: 'Atrasados' },
+];
+
 const archivedStateOptions: Array<{ value: string; label: string }> = [
   { value: 'active', label: 'Ativos' },
   { value: 'archived', label: 'Arquivados' },
