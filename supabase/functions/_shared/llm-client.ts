@@ -324,6 +324,8 @@ export async function llmComplete(
     toolChoice?: string | { type: string; function: { name: string } };
     /** Timeout em ms para a chamada HTTP. Default 60s. */
     timeoutMs?: number;
+    /** Tentativas no mesmo modelo antes de subir erro para o fallback externo. */
+    maxAttempts?: number;
     /** AbortSignal externo (encadeado com o timeout interno). */
     signal?: AbortSignal;
   }
@@ -365,7 +367,7 @@ export async function llmComplete(
 
   // Retry transient upstream issues (429 rate-limit, 500/502/503, "overloaded")
   // com backoff exponencial + jitter. 400/401/402/403/404 sobem intactos.
-  const MAX_ATTEMPTS = 5;
+  const MAX_ATTEMPTS = Math.max(1, options?.maxAttempts ?? 5);
   const BACKOFF_MS = [800, 2000, 4500, 9000];
   let response: Response | null = null;
   let lastErrorText = "";
