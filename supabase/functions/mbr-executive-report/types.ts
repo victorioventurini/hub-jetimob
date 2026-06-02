@@ -3,17 +3,23 @@
 // ============================================================================
 
 export interface KrRow {
+  id?: string;
   baseline?: number | string | null;
   current_value?: number | string | null;
   target?: number | string | null;
   direction?: string | null;
   status?: string | null;
+  unit?: string | null;
   deleted_at?: string | null;
   cancelled_at?: string | null;
   title?: string;
+  /** Valor efetivo da KPI primária (preenchido pelo data-loader quando aplicável). */
+  effective_current_value?: number | null;
 }
 
 export interface TeamObjectiveRow {
+  id?: string;
+  title?: string;
   team_id: string;
   key_results?: KrRow[];
 }
@@ -121,6 +127,28 @@ export interface ReportRequest {
   monthRef: string; // YYYY-MM
 }
 
+export interface ObjectiveAchievement {
+  id: string;
+  title: string;
+  teamName: string;
+  progress: number;
+  krCount: number;
+}
+
+export interface TeamAchievement {
+  teamId: string;
+  teamName: string;
+  progress: number;
+  objectivesCount: number;
+  krCount: number;
+}
+
+export interface OverallAchievement {
+  overallProgress: number;
+  byTeam: TeamAchievement[];
+  byObjective: ObjectiveAchievement[];
+}
+
 export interface ReportResponse {
   monthRef: string;
   monthNarrative: string;
@@ -142,4 +170,5 @@ export interface ReportResponse {
   kpisToCreate: KpiToCreateSuggestion[];
   agendaSuggestions: AgendaSuggestionItem[];
   monthAnalyses: MonthAnalysisSummary[];
+  overallAchievement: OverallAchievement;
 }
