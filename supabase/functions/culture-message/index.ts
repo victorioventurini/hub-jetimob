@@ -176,7 +176,7 @@ ${knowledgeBase ? `\n\n=== BASE DE CONHECIMENTO ===\n${knowledgeBase}` : ""}`;
       scope: typedAgent.scope,
       integration_key: typedAgent.integration_key,
       status: "success",
-      model_used: "google/gemini-2.5-flash",
+      model_used: "google/gemini-2.5-pro",
       input_tokens: data.usage?.prompt_tokens,
       output_tokens: data.usage?.completion_tokens,
       total_tokens: data.usage?.total_tokens,
