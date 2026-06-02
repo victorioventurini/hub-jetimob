@@ -44,6 +44,15 @@ export interface KpiRow {
 export interface SessionRow {
   team_id: string;
   reflection_data?: { data?: Record<string, unknown> } | Record<string, unknown> | null;
+  completed_at?: string | null;
+  started_by?: string | null;
+}
+
+export interface AnalyzedTeam {
+  teamId: string;
+  teamName: string;
+  leaderName: string | null;
+  completedAt: string | null;
 }
 
 export interface OrgObjectiveRow {
