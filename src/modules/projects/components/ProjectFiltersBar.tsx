@@ -9,7 +9,7 @@ import { ListPageFilters } from '@/components/ui/list-page-filters';
 import { UrlSelect } from '@/shared/filters/UrlSelect';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
-import type { ProjectArchivedState, ProjectFilters, ProjectStatus } from '../types';
+import type { ProjectArchivedState, ProjectFilters, ProjectHealth, ProjectStatus } from '../types';
 
 interface ProjectFiltersBarProps {
   filters: ProjectFilters;
@@ -27,6 +27,12 @@ const statusOptions: Array<{ value: string; label: string }> = [
 const krLinkOptions: Array<{ value: string; label: string }> = [
   { value: 'linked', label: 'Vinculado a KR' },
   { value: 'not_linked', label: 'Sem KR vinculado' },
+];
+
+const healthOptions: Array<{ value: string; label: string }> = [
+  { value: 'on_track', label: 'No prazo' },
+  { value: 'at_risk', label: 'Em risco' },
+  { value: 'late', label: 'Atrasados' },
 ];
 
 const archivedStateOptions: Array<{ value: string; label: string }> = [
@@ -52,6 +58,17 @@ export function ProjectFiltersBar({ filters, onFiltersChange }: ProjectFiltersBa
         allOptionLabel="Todos os status"
         triggerClassName="w-full sm:w-[170px]"
       />
+
+      {/* Saúde */}
+      <UrlSelect
+        value={filters.health ?? 'all'}
+        onChange={(v) => onFiltersChange({ ...filters, health: v as ProjectHealth | 'all' })}
+        options={healthOptions}
+        includeAllOption
+        allOptionLabel="Saúde: Todas"
+        triggerClassName="w-full sm:w-[160px]"
+      />
+
 
       {/* Responsável */}
       <BuUserSelect

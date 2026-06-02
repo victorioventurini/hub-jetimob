@@ -132,6 +132,7 @@ export type ProjectArchivedState = 'active' | 'archived' | 'all';
 
 export interface ProjectFilters {
   status?: ProjectStatus | 'all';
+  health?: ProjectHealth | 'all';
   owner_id?: string;
   team_id?: string;
   linked_to_kr?: boolean | null;

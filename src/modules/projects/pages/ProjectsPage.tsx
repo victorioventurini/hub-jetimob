@@ -25,7 +25,7 @@ import { ProjectStatusSummary } from '../components/ProjectStatusSummary';
 import { ProjectDialog } from '../components/ProjectDialog';
 import { ProjectViewToggle, type ProjectViewMode } from '../components/ProjectViewToggle';
 import { ProjectGanttChart } from '../components/ProjectGanttChart';
-import type { ProjectArchivedState, ProjectFilters, ProjectStatus } from '../types';
+import type { ProjectArchivedState, ProjectFilters, ProjectHealth, ProjectStatus } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SavedLinksPopover } from '@/shared/saved-links';
 
@@ -42,6 +42,7 @@ export default function ProjectsPage() {
 
   // URL state — canonical pattern
   const statusState = useUrlState<ProjectStatus | 'all'>({ key: 'status', defaultValue: 'all' });
+  const healthState = useUrlState<ProjectHealth | 'all'>({ key: 'health', defaultValue: 'all' });
   const ownerState = useUrlState<string>({ key: 'owner', defaultValue: '' });
   const teamState = useUrlState<string>({ key: 'teamId', defaultValue: '' });
   const krLinkState = useUrlState<string>({ key: 'krLink', defaultValue: '' });
@@ -51,6 +52,7 @@ export default function ProjectsPage() {
 
   const filters: ProjectFilters = {
     status: statusState.value,
+    health: healthState.value,
     search: search || undefined,
     owner_id: ownerState.value || undefined,
     team_id: teamState.value || undefined,
@@ -67,6 +69,10 @@ export default function ProjectsPage() {
       const status = newFilters.status ?? 'all';
       if (status === 'all') next.delete('status');
       else next.set('status', status);
+
+      const health = newFilters.health ?? 'all';
+      if (health === 'all') next.delete('health');
+      else next.set('health', health);
 
       if (newFilters.owner_id) next.set('owner', newFilters.owner_id);
       else next.delete('owner');
