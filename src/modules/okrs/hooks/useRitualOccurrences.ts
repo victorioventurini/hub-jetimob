@@ -300,6 +300,13 @@ export function useRescheduleOccurrencesBulk() {
       const firstError = results.find((r) => r.error)?.error;
       if (firstError) throw firstError;
 
+      await syncMbrWindowOverrideOnReschedule(buSupabase, {
+        buId: currentBu.id,
+        wizardType,
+        oldDate: plannedDate,
+        newDate,
+      });
+
       return { count: list.length };
     },
     onSuccess: ({ count }) => {
