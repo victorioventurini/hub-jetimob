@@ -9,7 +9,7 @@ import { ListPageFilters } from '@/components/ui/list-page-filters';
 import { UrlSelect } from '@/shared/filters/UrlSelect';
 import { TeamSelect } from '@/components/selects/TeamSelect';
 import { BuUserSelect } from '@/components/selects/BuUserSelect';
-import type { ProjectArchivedState, ProjectFilters, ProjectStatus } from '../types';
+import type { ProjectArchivedState, ProjectFilters, ProjectHealth, ProjectStatus } from '../types';
 
 interface ProjectFiltersBarProps {
   filters: ProjectFilters;
