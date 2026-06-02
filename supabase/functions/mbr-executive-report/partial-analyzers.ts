@@ -247,7 +247,8 @@ Gere APENAS este JSON:
   const fallback: KpiInsightsPartial = { kpiInsights: { healthy: "", atRisk: "", critical: "" } };
 
   let result = await callPartial<KpiInsightsPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     fallback,
     requestId,
