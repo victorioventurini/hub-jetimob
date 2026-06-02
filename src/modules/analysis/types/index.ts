@@ -4,7 +4,20 @@
 
 export type AnalysisStatus = "pending" | "generating" | "complete" | "failed";
 export type AnalysisMode = "auto" | "manual" | "mixed";
-export type AnalysisDepth = "quick" | "standard" | "deep";
+export type AnalysisDepth = "auto" | "minimal" | "standard" | "full";
+
+/**
+ * Coage valores legados (quick/deep) para o vocabulário canônico do banco
+ * (enum `analysis_depth` = auto|minimal|standard|full).
+ */
+export function coerceAnalysisDepth(value: unknown): AnalysisDepth {
+  if (value === "quick") return "minimal";
+  if (value === "deep") return "full";
+  if (value === "auto" || value === "minimal" || value === "standard" || value === "full") {
+    return value;
+  }
+  return "standard";
+}
 export type AnalysisModule =
   | "kpis"
   | "okrs"

@@ -24,9 +24,10 @@ import {
   endOfMonth,
   format,
 } from "date-fns";
-import type {
-  AnalysisComposerState,
-  AnalysisModule,
+import {
+  coerceAnalysisDepth,
+  type AnalysisComposerState,
+  type AnalysisModule,
 } from "../types";
 
 function defaultState(): AnalysisComposerState {
@@ -67,7 +68,7 @@ export default function AnalysisHomePage() {
       premise: tpl.premise || prev.premise,
       mode: (d.mode as AnalysisComposerState["mode"]) || prev.mode,
       modules: (d.modules as AnalysisModule[]) || prev.modules,
-      depth: (d.depth as AnalysisComposerState["depth"]) || prev.depth,
+      depth: d.depth ? coerceAnalysisDepth(d.depth) : prev.depth,
       template_id: tpl.id,
     }));
   }, [templateId, templates]);

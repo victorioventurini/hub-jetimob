@@ -24,9 +24,9 @@ describe("Tipos de Analysis — contratos canônicos", () => {
     expect(valid).toEqual(["auto", "manual", "mixed"]);
   });
 
-  it("AnalysisDepth aceita quick/standard/deep", () => {
-    const valid: AnalysisDepth[] = ["quick", "standard", "deep"];
-    expect(valid).toEqual(["quick", "standard", "deep"]);
+  it("AnalysisDepth aceita auto/minimal/standard/full", () => {
+    const valid: AnalysisDepth[] = ["auto", "minimal", "standard", "full"];
+    expect(valid).toEqual(["auto", "minimal", "standard", "full"]);
   });
 
   it("AnalysisModule cobre os 6 módulos do Next", () => {

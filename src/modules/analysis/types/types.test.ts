@@ -24,10 +24,10 @@ describe('Analysis · enums', () => {
     expect(m).toEqual(expect.arrayContaining(['auto', 'manual', 'mixed']));
   });
 
-  it('Depth tem 3 níveis crescentes (quick → standard → deep)', () => {
-    const d: AnalysisDepth[] = ['quick', 'standard', 'deep'];
-    expect(d[0]).toBe('quick');
-    expect(d[d.length - 1]).toBe('deep');
+  it('Depth tem 4 níveis (auto, minimal → standard → full)', () => {
+    const d: AnalysisDepth[] = ['auto', 'minimal', 'standard', 'full'];
+    expect(d[1]).toBe('minimal');
+    expect(d[d.length - 1]).toBe('full');
   });
 
   it('Module cobre os domínios analisáveis', () => {

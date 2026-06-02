@@ -147,9 +147,9 @@ export function TemplateFormDialog({ open, onOpenChange, template }: Props) {
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="quick">Rápida</SelectItem>
+                  <SelectItem value="minimal">Rápida</SelectItem>
                   <SelectItem value="standard">Padrão</SelectItem>
-                  <SelectItem value="deep">Profunda</SelectItem>
+                  <SelectItem value="full">Profunda</SelectItem>
                 </SelectContent>
               </Select>
             </div>
