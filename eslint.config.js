@@ -3,6 +3,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import noInlineKrProgress from "./eslint-rules/no-inline-kr-progress.js";
 
 export default tseslint.config(
   { ignores: ["dist"] },
@@ -16,6 +17,11 @@ export default tseslint.config(
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      "lovable-okrs": {
+        rules: {
+          "no-inline-kr-progress": noInlineKrProgress,
+        },
+      },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -28,6 +34,9 @@ export default tseslint.config(
       "react-hooks/rules-of-hooks": "warn",
       "no-useless-escape": "warn",
       "no-case-declarations": "warn",
+      // OKR Progress Canon — bloqueia cálculo inline de % de KR fora dos arquivos canônicos.
+      "lovable-okrs/no-inline-kr-progress": "error",
     },
   },
 );
+
