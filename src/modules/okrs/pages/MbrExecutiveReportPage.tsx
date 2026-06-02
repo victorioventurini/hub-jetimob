@@ -217,6 +217,10 @@ function ReportDisplay({
         </CardContent>
       </Card>
 
+      <AnalyzedTeamsHeader teams={report.analyzedTeams || []} ritual="MBR" />
+
+
+
       {report.overallAchievement && report.overallAchievement.byObjective.length > 0 && (
         <ReportSection icon={Target} title="% de atingimento das OKRs">
           <div className="space-y-4">
