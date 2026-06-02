@@ -256,7 +256,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
 
     try {
       const response = await llmComplete(llmConfig, messages, {
-        maxTokens: 2400,
+        maxTokens: 6000,
         temperature: 0.4,
       });
 
