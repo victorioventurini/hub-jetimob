@@ -185,7 +185,8 @@ export function bucketKpisByRag(summary: KpiSummaryItem[]) {
 }
 
 export async function analyzeKpis(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   kpisSummary: unknown,
   kpiIssues: unknown,
   kpisToCreate: unknown,
