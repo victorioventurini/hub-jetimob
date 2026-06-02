@@ -16,12 +16,9 @@ import {
 } from "../_shared/middleware.ts";
 import { errorResponse, successResponse } from "../_shared/response.ts";
 import {
-  llmComplete,
-  type LLMMessage,
   mapLLMError,
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
-import { tryParseAiJson } from "../_shared/ai-json.ts";
 import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData, ritualSubmissionWindowIso } from "./data-loader.ts";
 import {
   buildAnalyzedTeams,
@@ -41,14 +38,20 @@ import {
   extractTeamCommitments,
 } from "./extractors.ts";
 import {
-  buildMbrExecUserPrompt,
-  MBR_EXEC_SYSTEM_PROMPT,
-} from "./prompts.ts";
+  analyzeDecisions,
+  analyzeKpis,
+  analyzeKrIssues,
+  analyzeProjects,
+  consolidateReport,
+  type DecisionsPartial,
+  type KpiInsightsPartial,
+  type KrIssuesPartial,
+  type ProjectsPartial,
+} from "./partial-analyzers.ts";
 import type {
   AnalyzedTeam,
   KrRow,
   OrgObjectiveRow,
-  ParsedReport,
   ReportRequest,
   ReportResponse,
   TeamObjectiveRow,
@@ -227,66 +230,57 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       });
     }
 
-    llmConfig.maxTokens = 6000;
-    llmConfig.temperature = 0.4;
-
-    const messages: LLMMessage[] = [
-      { role: "system", content: MBR_EXEC_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: buildMbrExecUserPrompt({
-          cycleName: cycle.name,
-          monthLabel: monthLabel(body.monthRef),
-          teamHealthSummary,
-          overallAchievement,
-          kpisSummary,
-          teamHighlights,
-          teamCommitments,
-          pendingDecisions,
-          orgObjectivesSummary,
-          projectIssues,
-          krIssues,
-          kpiIssues,
-          kpisToCreate,
-          agendaSuggestions,
-          monthAnalyses,
-        }),
-      },
-    ];
-
+    // ----------------------------------------------------------------------
+    // Map-reduce: 4 partial analyses in parallel + 1 consolidation
+    // ----------------------------------------------------------------------
     try {
-      const response = await llmComplete(llmConfig, messages, {
-        maxTokens: 6000,
-        temperature: 0.4,
-      });
+      const monthLabelStr = monthLabel(body.monthRef);
 
-      if (!response.content) {
-        return errorResponse("Empty AI response", 500, { requestId });
-      }
+      const [projectsRes, krIssuesRes, kpisRes, decisionsRes] = await Promise.allSettled([
+        analyzeProjects(llmConfig, projectIssues, requestId),
+        analyzeKrIssues(llmConfig, krIssues, orgObjectivesSummary, requestId),
+        analyzeKpis(llmConfig, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId),
+        analyzeDecisions(llmConfig, pendingDecisions, agendaSuggestions, requestId),
+      ]);
 
-      const parsed = tryParseAiJson<ParsedReport>(response.content, null);
-      if (!parsed) {
-        console.error(`[${requestId}] Failed to parse LLM JSON:`, response.content);
-        return errorResponse("Failed to parse AI response", 500, { requestId });
-      }
+      const projectsPartial: ProjectsPartial = projectsRes.status === "fulfilled"
+        ? projectsRes.value
+        : (console.warn(`[${requestId}] analyzeProjects rejected:`, projectsRes.reason), { projectsAnalysis: "" });
+      const krIssuesPartial: KrIssuesPartial = krIssuesRes.status === "fulfilled"
+        ? krIssuesRes.value
+        : (console.warn(`[${requestId}] analyzeKrIssues rejected:`, krIssuesRes.reason), { krIssuesAnalysis: "" });
+      const kpisPartial: KpiInsightsPartial = kpisRes.status === "fulfilled"
+        ? kpisRes.value
+        : (console.warn(`[${requestId}] analyzeKpis rejected:`, kpisRes.reason), { kpiInsights: { healthy: "", atRisk: "", critical: "" } });
+      const decisionsPartial: DecisionsPartial = decisionsRes.status === "fulfilled"
+        ? decisionsRes.value
+        : (console.warn(`[${requestId}] analyzeDecisions rejected:`, decisionsRes.reason), { decisionsNeeded: [] });
+
+      const consolidation = await consolidateReport(llmConfig, {
+        cycleName: cycle.name,
+        monthLabel: monthLabelStr,
+        overallAchievement,
+        teamHealthSummary,
+        teamHighlights,
+        teamCommitments,
+        monthAnalyses,
+        projectsAnalysis: projectsPartial.projectsAnalysis,
+        krIssuesAnalysis: krIssuesPartial.krIssuesAnalysis,
+        kpiInsights: kpisPartial.kpiInsights,
+        decisionsNeeded: decisionsPartial.decisionsNeeded,
+      }, requestId);
 
       const reportData: ReportResponse = {
         monthRef: body.monthRef,
-        monthNarrative: parsed.monthNarrative || "",
-        commitmentsAnalysis: parsed.commitmentsAnalysis || "",
-        kpiInsights: {
-          healthy: parsed.kpiInsights?.healthy || "",
-          atRisk: parsed.kpiInsights?.atRisk || "",
-          critical: parsed.kpiInsights?.critical || "",
-        },
-        decisionsNeeded: Array.isArray(parsed.decisionsNeeded)
-          ? parsed.decisionsNeeded
-          : [],
+        monthNarrative: consolidation.monthNarrative,
+        commitmentsAnalysis: consolidation.commitmentsAnalysis,
+        kpiInsights: kpisPartial.kpiInsights,
+        decisionsNeeded: decisionsPartial.decisionsNeeded,
         teamCommitments,
         teamHighlights,
-        projectsAnalysis: parsed.projectsAnalysis || "",
-        krIssuesAnalysis: parsed.krIssuesAnalysis || "",
-        leaderSignals: parsed.leaderSignals || "",
+        projectsAnalysis: projectsPartial.projectsAnalysis,
+        krIssuesAnalysis: krIssuesPartial.krIssuesAnalysis,
+        leaderSignals: consolidation.leaderSignals,
         projectIssues,
         krIssues,
         kpiIssues,
@@ -297,12 +291,11 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         analyzedTeams,
       };
 
-
-      console.log(`[${requestId}] MBR executive report generated successfully`);
+      console.log(`[${requestId}] MBR executive report generated successfully (map-reduce)`);
       return successResponse(reportData);
     } catch (err: unknown) {
       const error = err as Error & { status?: number };
-      console.error(`[${requestId}] LLM call failed:`, error.message);
+      console.error(`[${requestId}] Consolidation failed:`, error.message);
 
       if (error.status) {
         const mapped = mapLLMError(error.status, requestId);
