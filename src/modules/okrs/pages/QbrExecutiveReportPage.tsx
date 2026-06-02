@@ -220,6 +220,8 @@ function ReportDisplay({
         </CardContent>
       </Card>
 
+      <AnalyzedTeamsHeader teams={report.analyzedTeams || []} ritual="QBR" />
+
       {/* Section 0 — Overall Achievement (deterministic, mesma fórmula de /okrs) */}
       {report.overallAchievement && report.overallAchievement.byObjective.length > 0 && (
         <ReportSection icon={Target} title="% de atingimento das OKRs">
