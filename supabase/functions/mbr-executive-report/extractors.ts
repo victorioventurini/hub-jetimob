@@ -4,6 +4,7 @@
 
 import type {
   AgendaSuggestionItem,
+  AnalyzedTeam,
   KpiIssue,
   KpiRow,
   KpiToCreateSuggestion,
@@ -20,6 +21,7 @@ import type {
   TeamMonthlyHighlight,
   TeamObjectiveRow,
 } from "./types.ts";
+
 
 // ============================================================================
 // Progress Canon — importa do _shared/okr-progress.ts (SSOT do edge).
