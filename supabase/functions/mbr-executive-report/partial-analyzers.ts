@@ -142,7 +142,8 @@ Gere JSON:
 }`;
 
   return await callPartial<KrIssuesPartial>(
-    llmConfig,
+    sc,
+    preferredModel,
     prompt,
     { krIssuesAnalysis: "" },
     requestId,
