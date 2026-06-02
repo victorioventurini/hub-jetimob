@@ -8,14 +8,22 @@
 import { llmComplete, type LLMConfig, type LLMMessage } from "../_shared/llm-client.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
 
-const PARTIAL_MAX_TOKENS = 1500;
-const PARTIAL_TEMPERATURE = 0.4;
+const PARTIAL_MAX_TOKENS = 3500;
+const PARTIAL_TEMPERATURE = 0.45;
 
-const PARTIAL_SYSTEM = `Você é um consultor estratégico preparando partes de um relatório executivo MENSAL (MBR).
-Escreva em português brasileiro, tom executivo e direto.
-NUNCA use linguagem punitiva — prefira "abaixo do ritmo esperado".
-Use SEMPRE as justificativas declaradas pelos líderes — não invente causas.
-Responda APENAS com JSON válido, sem markdown.`;
+const PARTIAL_SYSTEM = `Você é um consultor estratégico sênior (ex-McKinsey/BCG) preparando partes de um relatório executivo MENSAL (MBR) para o CEO.
+Escreva em português brasileiro, tom executivo, denso e analítico — NÃO descritivo.
+
+Estilo OBRIGATÓRIO:
+- Vá além de listar fatos: explique CAUSAS, PADRÕES TRANSVERSAIS, IMPLICAÇÕES de 2ª ordem e o "e daí?".
+- Cruze informações entre times/áreas sempre que possível (ex.: "três times citam a mesma dependência de Produto").
+- Quantifique quando os dados permitirem (use números do payload — % de atingimento, contagens, RAG).
+- Use SEMPRE as justificativas declaradas pelos líderes — não invente causas; quando faltar dado, diga "líderes não declararam causa".
+- NUNCA use linguagem punitiva — prefira "abaixo do ritmo esperado", "demanda ajuste de rota".
+- Frases curtas, parágrafos longos. Sem bullets dentro dos campos de texto (a menos que o schema peça lista).
+- Sem markdown, sem títulos, sem emojis.
+
+Responda APENAS com JSON válido.`;
 
 async function callPartial<T>(
   llmConfig: LLMConfig,
