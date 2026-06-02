@@ -337,12 +337,7 @@ export function extractKrSummary(orgObjectives: { title: string; key_results?: K
     title: o.title,
     krs: (o.key_results || []).map((kr: KrRow) => ({
       title: kr.title,
-      progress: calculateKrProgress(
-        Number(kr.baseline) || 0,
-        Number(kr.current_value) || 0,
-        Number(kr.target) || 0,
-        kr.direction || "up",
-      ),
+      progress: Math.round(krProgress(kr)),
       status: kr.status,
     })),
   }));
