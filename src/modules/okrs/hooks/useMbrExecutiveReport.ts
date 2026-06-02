@@ -92,6 +92,13 @@ export interface MbrExecutiveReportOverallAchievement {
   byObjective: MbrExecutiveReportObjectiveAchievement[];
 }
 
+export interface MbrExecutiveReportAnalyzedTeam {
+  teamId: string;
+  teamName: string;
+  leaderName: string | null;
+  completedAt: string | null;
+}
+
 export interface MbrExecutiveReportData {
   monthRef: string;
   monthNarrative: string;
@@ -114,7 +121,9 @@ export interface MbrExecutiveReportData {
   agendaSuggestions: MbrExecutiveReportAgendaSuggestion[];
   monthAnalyses: MbrExecutiveReportMonthAnalysis[];
   overallAchievement: MbrExecutiveReportOverallAchievement;
+  analyzedTeams: MbrExecutiveReportAnalyzedTeam[];
 }
+
 
 type ReportRecord = Record<string, unknown>;
 
