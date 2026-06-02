@@ -86,12 +86,43 @@ export function MbrDecisionsStep({
   const [newText, setNewText] = useState('');
   const [newCategory, setNewCategory] = useState<TeamCheckinDecision['category']>('decision');
 
-  // Group by source step
+  // Hidrata pendências do MBR anterior em `decisions` (uma única vez), marcando
+  // `metadata.carry_over = true` para que sejam renderizadas na seção própria
+  // e fiquem totalmente editáveis (texto, categoria, responsável, prazo).
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    if (!previousMbrPendingItems || previousMbrPendingItems.length === 0) return;
+    const existingIds = new Set(decisions.map((d) => d.id));
+    const toAdd = previousMbrPendingItems
+      .filter((p) => !existingIds.has(p.id))
+      .map<TeamCheckinDecision>((p) => ({
+        ...p,
+        sourceStep: 'decisions',
+        metadata: {
+          ...((p as { metadata?: Record<string, unknown> }).metadata ?? {}),
+          carry_over: true,
+        },
+      }));
+    hydratedRef.current = true;
+    if (toAdd.length > 0) onDecisionsChange([...decisions, ...toAdd]);
+  }, [previousMbrPendingItems, decisions, onDecisionsChange]);
+
+  const carryOverDecisions = useMemo(
+    () =>
+      decisions.filter(
+        (d) => (d.metadata as { carry_over?: boolean } | undefined)?.carry_over === true,
+      ),
+    [decisions],
+  );
+
+  // Group by source step (exclui carry-overs — eles têm seção própria)
   const groupedDecisions = useMemo(() => {
     const groups: Record<string, TeamCheckinDecision[]> = {};
     const stepOrder = ['panorama', 'kpi-gate', 'org-okrs', 'decisions'];
 
     for (const d of decisions) {
+      if ((d.metadata as { carry_over?: boolean } | undefined)?.carry_over === true) continue;
       const step = (d.sourceStep as string) || 'decisions';
       if (!groups[step]) groups[step] = [];
       groups[step].push(d);
