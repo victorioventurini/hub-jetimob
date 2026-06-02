@@ -357,7 +357,7 @@ export async function queryOkrs(
       output += `   Key Results (${objKrs.length}):\n`;
       
       for (const kr of objKrs) {
-        const progress = calculateProgress(kr.baseline, kr.current_value, kr.target, kr.direction);
+        const progress = Math.round(calculateKrProgress(kr.baseline, kr.current_value, kr.target, kr.direction, kr.unit));
         const statusEmoji = getStatusEmoji(kr.status);
         
         output += `     ${statusEmoji} ${kr.title}\n`;
