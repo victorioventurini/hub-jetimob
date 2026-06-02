@@ -221,6 +221,10 @@ export function useMbrOpeningCuration(
 
         if (invokeError) {
           setError(invokeError.message);
+          await showAiEdgeFunctionErrorToast(
+            invokeError,
+            'Não foi possível gerar o rascunho com IA.',
+          );
           return null;
         }
 
