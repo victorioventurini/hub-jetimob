@@ -15,7 +15,7 @@ interface OkrProgressBarProps {
   target: number;
   direction: OkrDirection;
   status: OkrRagStatus;
-  unit?: string;
+  unit?: string | null;
   showLabels?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -33,12 +33,13 @@ export function OkrProgressBar({
   target,
   direction,
   status,
-  unit = '%',
+  unit,
   showLabels = true,
   size = 'md',
   className,
 }: OkrProgressBarProps) {
-  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction, { unit });
+  const displayUnit = unit ?? '%';
+  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction, { unit: unit ?? undefined });
   const isOverachieved = progress > 100;
 
   const getStatusColor = () => {
