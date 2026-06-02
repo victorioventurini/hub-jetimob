@@ -86,6 +86,13 @@ export interface MbrPanoramaStepProps {
   onAddSuggestedDecision?: (title: string, category?: string) => void;
   /** Mapa teamId → nome (para badges em itens de pauta vindos de Pré-MBR). */
   teamNamesById?: Record<string, string>;
+  /** Itens individuais surgidos no Pré-MBR (decisões pedidas, dependências cross-team). */
+  mbrPreSurfacedItems?: Array<{
+    key: string;
+    teamId: string;
+    kind: 'needs_decision' | 'cross_dependency';
+    text: string;
+  }>;
 }
 
 interface KpiGroup {
