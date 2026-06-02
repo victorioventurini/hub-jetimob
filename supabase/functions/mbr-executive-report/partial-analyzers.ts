@@ -40,7 +40,7 @@ async function callPartial<T>(
     const response = await llmComplete(
       { ...llmConfig, maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE },
       messages,
-      { maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE },
+      { maxTokens: PARTIAL_MAX_TOKENS, temperature: PARTIAL_TEMPERATURE, timeoutMs: 90_000 },
     );
     if (!response.content) {
       console.warn(`[${requestId}] [${label}] Empty content, using fallback`);
