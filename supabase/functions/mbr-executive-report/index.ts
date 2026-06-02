@@ -166,12 +166,14 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
 
   try {
     let body: ReportRequest;
+    let mode: "async" | "sync" = "async";
     try {
-      const raw = await req.json() as Partial<ReportRequest>;
+      const raw = await req.json() as Partial<ReportRequest> & { mode?: string };
       body = {
         cycleId: typeof raw?.cycleId === "string" ? raw.cycleId : "",
         monthRef: typeof raw?.monthRef === "string" ? raw.monthRef : "",
       };
+      mode = raw?.mode === "sync" ? "sync" : "async";
     } catch (parseError) {
       console.error(`[${requestId}] Invalid JSON body:`, parseError);
       return errorResponse("Invalid JSON body", 400, { requestId });
@@ -182,6 +184,57 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     }
     if (!body.monthRef || !MONTH_REF_RE.test(body.monthRef)) {
       return errorResponse("monthRef (YYYY-MM) is required", 400, { requestId });
+    }
+
+    if (mode === "async") {
+      const { data: profile, error: profileErr } = await ctx.serviceClient
+        .from("profiles")
+        .select("id")
+        .eq("user_id", ctx.user!.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (profileErr || !profile?.id) {
+        console.error(`[${requestId}] Profile lookup for report job failed:`, profileErr?.message);
+        return errorResponse("Profile not found", 403, { requestId, error: "PROFILE_NOT_FOUND" });
+      }
+
+      const { data: job, error: jobErr } = await ctx.serviceClient
+        .from("okr_wizard_sessions")
+        .insert({
+          wizard_type: "mbr-executive-report",
+          cycle_id: body.cycleId,
+          bu_id: buId,
+          started_by: profile.id,
+          status: "in_progress",
+          reflection_data: {
+            monthRef: body.monthRef,
+            generationStatus: "generating",
+            aiGenerationStatus: "generating",
+            startedAt: new Date().toISOString(),
+            requestId,
+          },
+          structure_version: "v1",
+        })
+        .select("id")
+        .single();
+
+      if (jobErr || !job?.id) {
+        console.error(`[${requestId}] Failed to create MBR report job:`, jobErr?.message);
+        return errorResponse("Failed to start report generation", 500, {
+          requestId,
+          error: "REPORT_JOB_CREATE_FAILED",
+        });
+      }
+
+      const work = runReportJob(req.url, ctx, job.id, body, requestId);
+      const edgeRuntime = (globalThis as typeof globalThis & {
+        EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
+      }).EdgeRuntime;
+      if (edgeRuntime?.waitUntil) edgeRuntime.waitUntil(work);
+      else work.catch((err) => console.error(`[${requestId}] report job background error:`, err));
+
+      return successResponse({ jobId: job.id, status: "generating" }, undefined, 202);
     }
 
     console.log(
