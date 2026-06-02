@@ -699,40 +699,9 @@ export async function getHubContextData(
 // =============================================================================
 // HELPERS
 // =============================================================================
+// (calculateProgress agora vem de ./okr-progress.ts — fonte de verdade única)
+// =============================================================================
 
-/**
- * Calculate KR progress percentage with direction-aware formula
- * 
- * For "up" direction: Progress = (current - baseline) / (target - baseline) × 100
- * For "down" direction: Progress = (baseline - current) / (baseline - target) × 100
- * For maintenance KRs (baseline = target): Returns 0% or 100% (binary)
- * 
- * @param baseline - Starting value
- * @param current - Current value
- * @param target - Target value
- * @param direction - "up" for increase goals, "down" for decrease goals
- * @returns Progress percentage clamped between 0 and 100
- */
-function calculateProgress(
-  baseline: number,
-  current: number,
-  target: number,
-  direction: string
-): number {
-  if (direction === "up") {
-    if (target === baseline) {
-      return current >= target ? 100 : 0;
-    }
-    const progress = ((current - baseline) / (target - baseline)) * 100;
-    return Math.max(0, Math.min(100, Math.round(progress)));
-  } else {
-    if (baseline === target) {
-      return current <= target ? 100 : 0;
-    }
-    const progress = ((baseline - current) / (baseline - target)) * 100;
-    return Math.max(0, Math.min(100, Math.round(progress)));
-  }
-}
 
 /**
  * Get emoji indicator for RAG status
