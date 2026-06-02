@@ -17,6 +17,7 @@ import {
   MessageSquare,
   RefreshCw,
   Share2,
+  Trash2,
   Wand2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
