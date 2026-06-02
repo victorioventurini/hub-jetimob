@@ -41,6 +41,7 @@ export interface ToolCall {
 export interface LLMResponse {
   content: string | null;
   toolCalls: ToolCall[] | null;
+  modelUsed?: string;
   usage: {
     promptTokens: number;
     completionTokens: number;
@@ -323,6 +324,8 @@ export async function llmComplete(
     toolChoice?: string | { type: string; function: { name: string } };
     /** Timeout em ms para a chamada HTTP. Default 60s. */
     timeoutMs?: number;
+    /** Tentativas no mesmo modelo antes de subir erro para o fallback externo. */
+    maxAttempts?: number;
     /** AbortSignal externo (encadeado com o timeout interno). */
     signal?: AbortSignal;
   }
@@ -364,7 +367,7 @@ export async function llmComplete(
 
   // Retry transient upstream issues (429 rate-limit, 500/502/503, "overloaded")
   // com backoff exponencial + jitter. 400/401/402/403/404 sobem intactos.
-  const MAX_ATTEMPTS = 5;
+  const MAX_ATTEMPTS = Math.max(1, options?.maxAttempts ?? 5);
   const BACKOFF_MS = [800, 2000, 4500, 9000];
   let response: Response | null = null;
   let lastErrorText = "";
@@ -448,6 +451,7 @@ export async function llmComplete(
   const result: LLMResponse = {
     content: data.choices?.[0]?.message?.content ?? null,
     toolCalls: data.choices?.[0]?.message?.tool_calls ?? null,
+    modelUsed: config.model,
     usage: data.usage
       ? {
           promptTokens: data.usage.prompt_tokens ?? 0,
@@ -476,10 +480,10 @@ export async function llmComplete(
  */
 export const LLM_FALLBACK_CHAIN = [
   "google/gemini-3-flash-preview",
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-flash-lite",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-flash-lite",
 ];
 
 function isTransientLlmFailure(err: unknown): boolean {
