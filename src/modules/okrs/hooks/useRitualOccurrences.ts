@@ -168,7 +168,7 @@ export function useRescheduleOccurrence() {
       // Get current occurrence
       const { data: occ, error: fetchErr } = await buSupabase
         .from('ritual_occurrences')
-        .select('planned_date, rescheduled_from')
+        .select('planned_date, rescheduled_from, wizard_type, bu_id')
         .eq('id', occurrenceId)
         .single();
 
@@ -185,6 +185,13 @@ export function useRescheduleOccurrence() {
         .eq('id', occurrenceId);
 
       if (error) throw error;
+
+      await syncMbrWindowOverrideOnReschedule(buSupabase, {
+        buId: (occ as any).bu_id ?? currentBu?.id ?? '',
+        wizardType: (occ as any).wizard_type,
+        oldDate: occ.planned_date as string,
+        newDate,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.ritualOccurrencesPrefix(currentBu?.id ?? null) });
