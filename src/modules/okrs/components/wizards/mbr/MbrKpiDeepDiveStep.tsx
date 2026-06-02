@@ -60,6 +60,11 @@ export function MbrKpiDeepDiveStep({
   // KPIs fora da meta: red/off_track, amber/yellow/at_risk e "sem dados".
   // Aceita tanto a nomenclatura RAG (red/yellow) quanto a operacional
   // (off_track/at_risk) para garantir paridade com o que o Pré-MBR registra.
+  // KPIs cobertos como `primary` por KRs Organizacionais são discutidos
+  // dentro do bloco de OKRs Org e ficam fora deste step para evitar
+  // duplicidade (ex.: EBITDA).
+  const { kpiIds: orgKrPrimaryKpiIds } = useOrgKrPrimaryKpiIds();
+
   const offTargetSnapshots = useMemo(
     () => {
       const OFF_TARGET = new Set([
@@ -70,9 +75,11 @@ export function MbrKpiDeepDiveStep({
         'off_track',
         'at_risk',
       ]);
-      return kpiSnapshots.filter((k) => OFF_TARGET.has(k.ragStatus));
+      return kpiSnapshots.filter(
+        (k) => OFF_TARGET.has(k.ragStatus) && !orgKrPrimaryKpiIds.has(k.kpiId),
+      );
     },
-    [kpiSnapshots],
+    [kpiSnapshots, orgKrPrimaryKpiIds],
   );
 
   const buckets: KpiGateBucket[] = useMemo(
