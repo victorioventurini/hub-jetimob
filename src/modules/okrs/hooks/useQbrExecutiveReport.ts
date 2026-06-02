@@ -119,6 +119,38 @@ function normalizeQbrExecutiveReportData(input: unknown): QbrExecutiveReportData
           };
         })
       : [],
+    overallAchievement: (() => {
+      const oa = isRecord(source.overallAchievement) ? source.overallAchievement : {};
+      const byTeam = Array.isArray(oa.byTeam)
+        ? oa.byTeam.map((t) => {
+            const r = isRecord(t) ? t : {};
+            return {
+              teamId: toText(r.teamId),
+              teamName: toText(r.teamName) || 'Time não informado',
+              progress: toInteger(r.progress),
+              objectivesCount: toInteger(r.objectivesCount),
+              krCount: toInteger(r.krCount),
+            };
+          })
+        : [];
+      const byObjective = Array.isArray(oa.byObjective)
+        ? oa.byObjective.map((o) => {
+            const r = isRecord(o) ? o : {};
+            return {
+              id: toText(r.id),
+              title: toText(r.title),
+              teamName: toText(r.teamName) || 'Time não informado',
+              progress: toInteger(r.progress),
+              krCount: toInteger(r.krCount),
+            };
+          })
+        : [];
+      return {
+        overallProgress: toInteger(oa.overallProgress),
+        byTeam,
+        byObjective,
+      };
+    })(),
   };
 }
 
