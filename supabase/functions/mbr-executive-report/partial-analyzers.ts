@@ -69,7 +69,8 @@ async function callPartial<T>(
 export interface ProjectsPartial { projectsAnalysis: string }
 
 export async function analyzeProjects(
-  llmConfig: LLMConfig,
+  sc: EdgeSupabaseClient,
+  preferredModel: string,
   projectIssues: unknown,
   requestId: string,
 ): Promise<ProjectsPartial> {
