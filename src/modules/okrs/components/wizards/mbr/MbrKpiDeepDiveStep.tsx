@@ -63,10 +63,13 @@ export function MbrKpiDeepDiveStep({
   // KPIs cobertos como `primary` por KRs Organizacionais são discutidos
   // dentro do bloco de OKRs Org e ficam fora deste step para evitar
   // duplicidade (ex.: EBITDA).
-  const { kpiIds: orgKrPrimaryKpiIds } = useOrgKrPrimaryKpiIds();
+  const { kpiIds: orgKrPrimaryKpiIds, isLoading: orgKrPrimaryLoading } = useOrgKrPrimaryKpiIds();
 
   const offTargetSnapshots = useMemo(
     () => {
+      // Aguarda a resolução do Set para evitar flash de KPIs que serão
+      // posteriormente excluídos (ex.: EBITDA enquanto query carrega).
+      if (orgKrPrimaryLoading) return [];
       const OFF_TARGET = new Set([
         'red',
         'yellow',
@@ -79,7 +82,7 @@ export function MbrKpiDeepDiveStep({
         (k) => OFF_TARGET.has(k.ragStatus) && !orgKrPrimaryKpiIds.has(k.kpiId),
       );
     },
-    [kpiSnapshots, orgKrPrimaryKpiIds],
+    [kpiSnapshots, orgKrPrimaryKpiIds, orgKrPrimaryLoading],
   );
 
   const buckets: KpiGateBucket[] = useMemo(
