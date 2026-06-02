@@ -27,6 +27,9 @@ import {
   Target,
   Users,
   CalendarDays,
+  FolderKanban,
+  Flag,
+  Lightbulb,
 } from 'lucide-react';
 
 import { HubLayout } from '@/components/layout/HubLayout';
