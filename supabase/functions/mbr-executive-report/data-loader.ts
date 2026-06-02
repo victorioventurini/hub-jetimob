@@ -101,7 +101,7 @@ export async function loadReportData(
         values:kpi_values(value, rag_status, period_label, reference_date, created_at)
       `)
       .eq("bu_id", buId)
-      .eq("scope", "org")
+      .in("scope", ["org", "area"])
       .eq("status", "active")
       .eq("indicator_type", "kpi")
       .is("deleted_at", null),
