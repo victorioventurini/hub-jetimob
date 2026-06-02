@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
-import { startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, format } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear, format } from "date-fns";
 import type { AnalysisPeriod } from "../../types";
 
 const presets: { key: string; label: string; build: () => AnalysisPeriod }[] = [
@@ -45,6 +45,15 @@ const presets: { key: string; label: string; build: () => AnalysisPeriod }[] = [
         label: "Trimestre passado",
       };
     },
+  },
+  {
+    key: "this_year",
+    label: "Todo o ano",
+    build: () => ({
+      start: format(startOfYear(new Date()), "yyyy-MM-dd"),
+      end: format(endOfYear(new Date()), "yyyy-MM-dd"),
+      label: "Todo o ano",
+    }),
   },
 ];
 
