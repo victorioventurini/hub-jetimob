@@ -4,6 +4,7 @@
 
 import type {
   AgendaSuggestionItem,
+  AnalyzedTeam,
   KpiIssue,
   KpiRow,
   KpiToCreateSuggestion,
@@ -20,6 +21,7 @@ import type {
   TeamMonthlyHighlight,
   TeamObjectiveRow,
 } from "./types.ts";
+
 
 // ============================================================================
 // Progress Canon — importa do _shared/okr-progress.ts (SSOT do edge).
@@ -194,7 +196,12 @@ function unwrapData(session: MbrSessionRow): Record<string, unknown> {
     : raw) || {}) as Record<string, unknown>;
 }
 
-/** Filtra sessões pelo `referenceMonth` capturado no draft do MBR-pré/MBR. */
+/**
+ * Mantém compatibilidade: filtra sessões pelo `referenceMonth` capturado no
+ * draft. Hoje **não é mais usado** como filtro primário — a seleção é feita
+ * via janela de `completed_at` no `data-loader`. Permanece exportado para
+ * eventuais auditorias/debug.
+ */
 export function filterSessionsByMonth(
   sessions: MbrSessionRow[],
   monthRef: string,
@@ -204,6 +211,47 @@ export function filterSessionsByMonth(
     return (data.referenceMonth as string | undefined) === monthRef;
   });
 }
+
+/**
+ * Deduplica sessões por `team_id` mantendo a mais recente (`completed_at DESC`).
+ * Evita que um time que re-submeteu o MBR-pré no mesmo mês contribua em dobro
+ * para o relatório executivo.
+ */
+export function dedupSessionsByTeam(sessions: MbrSessionRow[]): MbrSessionRow[] {
+  const sorted = [...sessions].sort((a, b) => {
+    const ta = a.completed_at ? Date.parse(a.completed_at) : 0;
+    const tb = b.completed_at ? Date.parse(b.completed_at) : 0;
+    return tb - ta;
+  });
+  const seen = new Set<string>();
+  const out: MbrSessionRow[] = [];
+  for (const s of sorted) {
+    if (!s.team_id || seen.has(s.team_id)) continue;
+    seen.add(s.team_id);
+    out.push(s);
+  }
+  return out;
+}
+
+/**
+ * Constrói a lista de times analisados pelo relatório, a partir das sessões
+ * MBR-pré deduplicadas. Inclui nome do líder (resolvido via map de profiles).
+ */
+export function buildAnalyzedTeams(
+  sessions: MbrSessionRow[],
+  teams: Map<string, string>,
+  profiles: Map<string, string>,
+): AnalyzedTeam[] {
+  return sessions
+    .map((s) => ({
+      teamId: s.team_id,
+      teamName: teams.get(s.team_id) || "Time",
+      leaderName: s.started_by ? profiles.get(s.started_by) ?? null : null,
+      completedAt: s.completed_at ?? null,
+    }))
+    .sort((a, b) => a.teamName.localeCompare(b.teamName, "pt-BR"));
+}
+
 
 export function extractTeamCommitments(
   sessions: MbrSessionRow[],

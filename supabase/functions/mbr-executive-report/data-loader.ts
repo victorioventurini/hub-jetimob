@@ -18,18 +18,42 @@ export async function loadCycle(
 }
 
 /**
+ * Janela em que aceitamos uma sessão MBR-pré/MBR como pertencente ao
+ * `monthRef`: o mês-calendário **seguinte** ao mês analisado. Ex.: para
+ * `monthRef='2026-05'`, aceitamos sessões com `completed_at` em jun/2026.
+ *
+ * Essa regra alinha o relatório executivo à mesma seleção exibida na lista
+ * de "Concluídos" da página do rito (`useRitualPreparationStatus`), evitando
+ * que sessões com `reflection_data.referenceMonth` errado (snapshot preso ao
+ * draft criado no mês anterior) fiquem de fora.
+ */
+export function ritualSubmissionWindowIso(
+  monthRef: string,
+): { start: string; end: string } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(monthRef);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const monthIdx = Number(m[2]) - 1; // 0-based
+  // Mês imediatamente seguinte ao analisado.
+  const nextStart = new Date(Date.UTC(year, monthIdx + 1, 1, 0, 0, 0));
+  const nextEnd = new Date(Date.UTC(year, monthIdx + 2, 1, 0, 0, 0) - 1);
+  return { start: nextStart.toISOString(), end: nextEnd.toISOString() };
+}
+
+/**
  * Carrega dados do mês de referência para o relatório executivo de MBR.
  *
- * NOTA: sessões MBR-pré/MBR são filtradas por `reflection_data->>'referenceMonth'`
- * em JS (depois do fetch) — o operador `->>` em `eq` no PostgREST não suporta
- * direto via SDK quando o campo está aninhado em `data.*`. Como o volume por
- * BU/ciclo é baixo (dezenas), o filtro em JS é seguro.
+ * Sessões MBR-pré/MBR são filtradas por janela de `completed_at` (mês
+ * seguinte ao `monthRef`). Sessões com `reflection_data.referenceMonth`
+ * fora dessa janela mas iguais ao `monthRef` ainda podem ser incluídas
+ * em uma segunda passada no extractor (compatibilidade).
  */
 export async function loadReportData(
   sc: EdgeSupabaseClient,
   cycleId: string,
   buId: string,
   cycleYear: number,
+  submissionWindow: { start: string; end: string },
 ) {
   return await Promise.all([
     sc
@@ -54,18 +78,22 @@ export async function loadReportData(
       .is("deleted_at", null),
     sc
       .from("okr_wizard_sessions")
-      .select("team_id, reflection_data, completed_at")
+      .select("team_id, reflection_data, completed_at, started_by")
       .eq("wizard_type", "mbr-pre")
       .eq("cycle_id", cycleId)
       .eq("bu_id", buId)
-      .eq("status", "completed"),
+      .eq("status", "completed")
+      .gte("completed_at", submissionWindow.start)
+      .lte("completed_at", submissionWindow.end),
     sc
       .from("okr_wizard_sessions")
-      .select("team_id, reflection_data, completed_at")
+      .select("team_id, reflection_data, completed_at, started_by")
       .eq("wizard_type", "mbr")
       .eq("cycle_id", cycleId)
       .eq("bu_id", buId)
-      .eq("status", "completed"),
+      .eq("status", "completed")
+      .gte("completed_at", submissionWindow.start)
+      .lte("completed_at", submissionWindow.end),
     sc
       .from("kpi_metrics")
       .select(`
@@ -92,6 +120,7 @@ export async function loadReportData(
       .neq("status", "discarded"),
   ]);
 }
+
 
 /**
  * Carrega o valor efetivo da KPI primária para cada KR informado, considerando

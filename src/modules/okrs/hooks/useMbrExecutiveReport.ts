@@ -92,6 +92,13 @@ export interface MbrExecutiveReportOverallAchievement {
   byObjective: MbrExecutiveReportObjectiveAchievement[];
 }
 
+export interface MbrExecutiveReportAnalyzedTeam {
+  teamId: string;
+  teamName: string;
+  leaderName: string | null;
+  completedAt: string | null;
+}
+
 export interface MbrExecutiveReportData {
   monthRef: string;
   monthNarrative: string;
@@ -114,7 +121,9 @@ export interface MbrExecutiveReportData {
   agendaSuggestions: MbrExecutiveReportAgendaSuggestion[];
   monthAnalyses: MbrExecutiveReportMonthAnalysis[];
   overallAchievement: MbrExecutiveReportOverallAchievement;
+  analyzedTeams: MbrExecutiveReportAnalyzedTeam[];
 }
+
 
 type ReportRecord = Record<string, unknown>;
 
@@ -286,8 +295,20 @@ function normalizeMbrExecutiveReportData(input: unknown): MbrExecutiveReportData
         byObjective,
       };
     })(),
+    analyzedTeams: Array.isArray(source.analyzedTeams)
+      ? source.analyzedTeams.map((t) => {
+          const r = isRecord(t) ? t : {};
+          return {
+            teamId: toText(r.teamId),
+            teamName: toText(r.teamName) || 'Time não informado',
+            leaderName: typeof r.leaderName === 'string' && r.leaderName.trim() ? r.leaderName : null,
+            completedAt: typeof r.completedAt === 'string' ? r.completedAt : null,
+          };
+        })
+      : [],
   };
 }
+
 
 export function useMbrExecutiveReport(cycleId: string | null, monthRef: string | null) {
   const supabase = useBuScopedSupabase();

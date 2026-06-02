@@ -22,11 +22,13 @@ import {
   resolveLLMConfig,
 } from "../_shared/llm-client.ts";
 import { tryParseAiJson } from "../_shared/ai-json.ts";
-import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData } from "./data-loader.ts";
+import { loadCycle, loadPrimaryKpiValuesForKrs, loadReportData, ritualSubmissionWindowIso } from "./data-loader.ts";
 import {
+  buildAnalyzedTeams,
   buildKpiSummary,
   buildOverallAchievement,
   buildTeamHealthSummary,
+  dedupSessionsByTeam,
   extractAgendaSuggestions,
   extractDecisions,
   extractKpiIssues,
@@ -37,13 +39,13 @@ import {
   extractMonthlyHighlights,
   extractProjectIssues,
   extractTeamCommitments,
-  filterSessionsByMonth,
 } from "./extractors.ts";
 import {
   buildMbrExecUserPrompt,
   MBR_EXEC_SYSTEM_PROMPT,
 } from "./prompts.ts";
 import type {
+  AnalyzedTeam,
   KrRow,
   OrgObjectiveRow,
   ParsedReport,
@@ -51,6 +53,7 @@ import type {
   ReportResponse,
   TeamObjectiveRow,
 } from "./types.ts";
+
 
 const MONTH_REF_RE = /^\d{4}-\d{2}$/;
 
@@ -113,6 +116,14 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
 
     const cycleYear = parseInt(String(cycle.start_date).substring(0, 4), 10);
 
+    const submissionWindow = ritualSubmissionWindowIso(body.monthRef);
+    if (!submissionWindow) {
+      return errorResponse("Invalid monthRef format", 400, { requestId });
+    }
+    console.log(
+      `[${requestId}] Submission window for monthRef=${body.monthRef}: ${submissionWindow.start} → ${submissionWindow.end}`,
+    );
+
     const [
       { data: teamObjectives, error: teamObjectivesErr },
       { data: teamsData, error: teamsErr },
@@ -120,7 +131,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       { data: mbrSessions, error: mbrErr },
       { data: orgKpis, error: orgKpisErr },
       { data: orgObjectives, error: orgObjectivesErr },
-    ] = await loadReportData(sc, body.cycleId, buId, cycleYear);
+    ] = await loadReportData(sc, body.cycleId, buId, cycleYear, submissionWindow);
 
     if (teamObjectivesErr) console.error(`[${requestId}] Team objectives error:`, teamObjectivesErr.message);
     if (teamsErr) console.error(`[${requestId}] Teams error:`, teamsErr.message);
@@ -133,9 +144,28 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       (teamsData || []).map((t: { id: string; name: string }) => [t.id, t.name]),
     );
 
-    // Filtra apenas as sessões cujo `referenceMonth` corresponde ao mês solicitado.
-    const monthMbrPre = filterSessionsByMonth(mbrPreSessions || [], body.monthRef);
-    const monthMbr = filterSessionsByMonth(mbrSessions || [], body.monthRef);
+    // Deduplica por team_id mantendo a sessão mais recente do mês.
+    const monthMbrPre = dedupSessionsByTeam(mbrPreSessions || []);
+    const monthMbr = dedupSessionsByTeam(mbrSessions || []);
+
+    // Resolve nomes dos líderes (started_by) das sessões selecionadas.
+    const leaderIds = Array.from(
+      new Set(monthMbrPre.map((s) => s.started_by).filter(Boolean) as string[]),
+    );
+    const profilesMap = new Map<string, string>();
+    if (leaderIds.length > 0) {
+      const { data: profilesData, error: profilesErr } = await sc
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", leaderIds);
+      if (profilesErr) {
+        console.error(`[${requestId}] Profiles lookup error:`, profilesErr.message);
+      }
+      for (const p of (profilesData || []) as Array<{ id: string; display_name: string | null }>) {
+        if (p?.id && p.display_name) profilesMap.set(p.id, p.display_name);
+      }
+    }
+    const analyzedTeams: AnalyzedTeam[] = buildAnalyzedTeams(monthMbrPre, teamsMap, profilesMap);
 
     // Resolve valor efetivo das KRs com KPI primária (Core Rule canônica).
     const teamObjList = (teamObjectives || []) as TeamObjectiveRow[];
@@ -176,7 +206,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     const monthAnalyses = extractMonthAnalyses(monthMbrPre, teamsMap);
 
     console.log(
-      `[${requestId}] Prompt data: teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, commitments=${teamCommitments.length}, highlights=${teamHighlights.length}, decisions=${pendingDecisions.length}, projects=${projectIssues.length}, krIssues=${krIssues.length}, kpiIssues=${kpiIssues.length}, kpisToCreate=${kpisToCreate.length}, agenda=${agendaSuggestions.length}, monthAnalyses=${monthAnalyses.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
+      `[${requestId}] Prompt data: analyzedTeams=${analyzedTeams.length}, teams=${teamHealthSummary.length}, kpis=${kpisSummary.length}, commitments=${teamCommitments.length}, highlights=${teamHighlights.length}, decisions=${pendingDecisions.length}, projects=${projectIssues.length}, krIssues=${krIssues.length}, kpiIssues=${kpiIssues.length}, kpisToCreate=${kpisToCreate.length}, agenda=${agendaSuggestions.length}, monthAnalyses=${monthAnalyses.length}, overallProgress=${overallAchievement.overallProgress}, byTeam=${overallAchievement.byTeam.length}, byObjective=${overallAchievement.byObjective.length}, primaryKpiOverrides=${primaryKpiValues.size}`,
     );
 
     if (monthMbrPre.length === 0) {
@@ -186,6 +216,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         { requestId, error: "NO_MBR_PRE_FOR_MONTH" },
       );
     }
+
 
     const llmConfig = await resolveLLMConfig(sc, "google/gemini-3-flash-preview");
     if (!llmConfig) {
@@ -263,7 +294,9 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         agendaSuggestions,
         monthAnalyses,
         overallAchievement,
+        analyzedTeams,
       };
+
 
       console.log(`[${requestId}] MBR executive report generated successfully`);
       return successResponse(reportData);
