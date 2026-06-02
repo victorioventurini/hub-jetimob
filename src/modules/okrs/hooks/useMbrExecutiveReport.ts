@@ -33,6 +33,8 @@ export interface MbrExecutiveReportProjectIssue {
   teamName: string;
   kind: 'project' | 'milestone';
   refId: string;
+  name?: string;
+  projectName?: string;
   justification: string;
 }
 
