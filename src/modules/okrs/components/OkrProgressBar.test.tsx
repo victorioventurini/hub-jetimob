@@ -272,4 +272,36 @@ describe('OkrProgressBar - Edge Cases', () => {
     );
     expect(container.querySelector('.custom-class')).toBeTruthy();
   });
+
+  it('regressão 17706%: normaliza unidade quando current foi digitado em escala diferente do target', () => {
+    // KR "R$ 400 mil em MRR" com current digitado em reais cru (70.822) e target em R$ mil (400).
+    // Sem normalização daria 17706%. Com unit="R$ mil" deve dar ~17,7% (arredondado: 18%).
+    render(
+      <OkrProgressBar
+        baseline={0}
+        current={70_822}
+        target={400}
+        direction="up"
+        status="green"
+        unit="R$ mil"
+        showLabels
+      />
+    );
+    expect(screen.queryByText(/17706/)).toBeNull();
+    expect(screen.getByText('18%')).toBeInTheDocument();
+  });
+
+  it('aceita unit=null sem quebrar (default %)', () => {
+    const { container } = render(
+      <OkrProgressBar
+        baseline={0}
+        current={50}
+        target={100}
+        direction="up"
+        status="green"
+        unit={null}
+      />
+    );
+    expect(container.firstChild).toBeTruthy();
+  });
 });

@@ -15,7 +15,7 @@ interface OkrProgressBarProps {
   target: number;
   direction: OkrDirection;
   status: OkrRagStatus;
-  unit?: string;
+  unit?: string | null;
   showLabels?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -33,12 +33,13 @@ export function OkrProgressBar({
   target,
   direction,
   status,
-  unit = '%',
+  unit,
   showLabels = true,
   size = 'md',
   className,
 }: OkrProgressBarProps) {
-  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction, { unit });
+  const displayUnit = unit ?? '%';
+  const progress = calculateProgress(baseline ?? 0, current ?? 0, target ?? 0, direction, { unit: unit ?? undefined });
   const isOverachieved = progress > 100;
 
   const getStatusColor = () => {
@@ -72,7 +73,7 @@ export function OkrProgressBar({
       {showLabels && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mb-1 min-w-0">
           <span className="truncate min-w-0 flex-1">
-            {formatValueWithUnit(current, unit)}
+            {formatValueWithUnit(current, displayUnit)}
           </span>
           <div className="flex items-center gap-1.5 shrink-0 max-w-full">
             {isOverachieved && (
@@ -122,8 +123,8 @@ export function OkrProgressBar({
       </div>
       {showLabels && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mt-1 min-w-0">
-          <span className="truncate min-w-0 flex-1">Base: {formatValueWithUnit(baseline, unit)}</span>
-          <span className="truncate min-w-0 flex-1 text-right">Meta: {formatValueWithUnit(target, unit)}</span>
+          <span className="truncate min-w-0 flex-1">Base: {formatValueWithUnit(baseline, displayUnit)}</span>
+          <span className="truncate min-w-0 flex-1 text-right">Meta: {formatValueWithUnit(target, displayUnit)}</span>
         </div>
       )}
     </div>

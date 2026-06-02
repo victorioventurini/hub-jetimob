@@ -97,6 +97,7 @@ export function OrgOkrsReportSection({ cycleId }: { cycleId: string | null }) {
                     target={orgKr.target}
                     direction={orgKr.direction}
                     status={orgKr.status}
+                    unit={orgKr.unit ?? undefined}
                     size="sm"
                   />
                   {showTeamKrs &&
