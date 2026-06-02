@@ -163,6 +163,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         content: buildQbrExecUserPrompt({
           cycleName: cycle.name,
           teamHealthSummary,
+          overallAchievement,
           kpisSummary,
           leaderLearnings,
           nextCycleProposals,
@@ -203,6 +204,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
           ? parsed.decisionsNeeded
           : [],
         teamProposals: nextCycleProposals,
+        overallAchievement,
       };
 
       console.log(`[${requestId}] QBR executive report generated successfully`);
