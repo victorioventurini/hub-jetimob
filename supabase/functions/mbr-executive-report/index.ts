@@ -233,36 +233,55 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
     }
 
     // ----------------------------------------------------------------------
-    // Map-reduce: 4 partial analyses in parallel + 1 consolidation
+    // Sequential map-reduce: 4 partial analyses serialized + 1 consolidation.
+    // Sequencial (não paralelo) para evitar rajadas de 429 no gateway de IA
+    // quando vários partials disparam retries simultâneos.
     // ----------------------------------------------------------------------
+    const INTER_CALL_DELAY_MS = 600;
+    const pause = () => new Promise((r) => setTimeout(r, INTER_CALL_DELAY_MS));
+
     try {
       const monthLabelStr = monthLabel(body.monthRef);
 
-      const [projectsRes, krIssuesRes, kpisRes, decisionsRes] = await Promise.allSettled([
-        analyzeProjects(llmConfig, projectIssues, requestId),
-        analyzeKrIssues(llmConfig, krIssues, orgObjectivesSummary, requestId),
-        analyzeKpis(llmConfig, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId),
-        analyzeDecisions(llmConfig, pendingDecisions, agendaSuggestions, requestId),
-      ]);
+      let projectsPartial: ProjectsPartial = { projectsAnalysis: "" };
+      let krIssuesPartial: KrIssuesPartial = { krIssuesAnalysis: "" };
+      let kpisPartial: KpiInsightsPartial = { kpiInsights: { healthy: "", atRisk: "", critical: "" } };
+      let decisionsPartial: DecisionsPartial = { decisionsNeeded: [] };
 
-      const projectsPartial: ProjectsPartial = projectsRes.status === "fulfilled"
-        ? projectsRes.value
-        : (console.warn(`[${requestId}] analyzeProjects rejected:`, projectsRes.reason), { projectsAnalysis: "" });
-      const krIssuesPartial: KrIssuesPartial = krIssuesRes.status === "fulfilled"
-        ? krIssuesRes.value
-        : (console.warn(`[${requestId}] analyzeKrIssues rejected:`, krIssuesRes.reason), { krIssuesAnalysis: "" });
-      const kpisPartial: KpiInsightsPartial = kpisRes.status === "fulfilled"
-        ? kpisRes.value
-        : (console.warn(`[${requestId}] analyzeKpis rejected:`, kpisRes.reason), { kpiInsights: { healthy: "", atRisk: "", critical: "" } });
-      const decisionsPartial: DecisionsPartial = decisionsRes.status === "fulfilled"
-        ? decisionsRes.value
-        : (console.warn(`[${requestId}] analyzeDecisions rejected:`, decisionsRes.reason), { decisionsNeeded: [] });
+      try {
+        projectsPartial = await analyzeProjects(llmConfig, projectIssues, requestId);
+      } catch (e) {
+        console.warn(`[${requestId}] analyzeProjects rejected:`, (e as Error)?.message);
+      }
+      await pause();
+
+      try {
+        krIssuesPartial = await analyzeKrIssues(llmConfig, krIssues, orgObjectivesSummary, requestId);
+      } catch (e) {
+        console.warn(`[${requestId}] analyzeKrIssues rejected:`, (e as Error)?.message);
+      }
+      await pause();
+
+      try {
+        kpisPartial = await analyzeKpis(llmConfig, kpisSummary, kpiIssues, kpisToCreate, monthLabelStr, requestId);
+      } catch (e) {
+        console.warn(`[${requestId}] analyzeKpis rejected:`, (e as Error)?.message);
+      }
+      await pause();
+
+      try {
+        decisionsPartial = await analyzeDecisions(llmConfig, pendingDecisions, agendaSuggestions, requestId);
+      } catch (e) {
+        console.warn(`[${requestId}] analyzeDecisions rejected:`, (e as Error)?.message);
+      }
+      await pause();
 
       let consolidation = {
         monthNarrative: "",
         commitmentsAnalysis: "",
         leaderSignals: "",
       };
+      let consolidationFailed = false;
       try {
         consolidation = await consolidateReport(llmConfig, {
           cycleName: cycle.name,
@@ -279,10 +298,43 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         }, requestId);
       } catch (err: unknown) {
         const error = err as Error & { status?: number };
-        console.warn(`[${requestId}] Consolidation failed (returning partial report):`, error.message);
+        console.warn(`[${requestId}] Consolidation failed (using deterministic fallback):`, error.message);
+        consolidationFailed = true;
       }
 
-      const reportData: ReportResponse = {
+      // Fallback determinístico para a narrativa quando a IA falhar — garante
+      // que o relatório seja válido e persistível mesmo sob rate limit.
+      const aiGenerationStatus: 'ok' | 'partial_fallback' = consolidationFailed
+        ? 'partial_fallback'
+        : 'ok';
+
+      if (!consolidation.monthNarrative) {
+        const teamsCount = analyzedTeams.length;
+        const overall = overallAchievement.overallProgress;
+        const krIssuesCount = krIssues.length;
+        const projIssuesCount = projectIssues.length;
+        const decisionsCount = decisionsPartial.decisionsNeeded.length || pendingDecisions.length;
+        consolidation.monthNarrative =
+          `Relatório executivo de ${monthLabelStr} consolidado a partir de ${teamsCount} ` +
+          `time(s) com MBR-pré submetido. Atingimento médio dos OKRs do ciclo: ${overall}%. ` +
+          `Foram registrados ${krIssuesCount} KR(s) fora da meta e ${projIssuesCount} projeto(s)/marco(s) ` +
+          `com atraso ou risco no mês. Há ${decisionsCount} decisão(ões) pendente(s) sinalizada(s) pelos líderes. ` +
+          `A narrativa analítica completa não pôde ser gerada por instabilidade temporária da IA — ` +
+          `as seções de análises parciais, KPIs, projetos, KRs, compromissos e decisões abaixo refletem ` +
+          `os dados oficiais submetidos pelos times.`;
+      }
+      if (!consolidation.commitmentsAnalysis && teamCommitments.length > 0) {
+        consolidation.commitmentsAnalysis =
+          `Compromissos consolidados de ${teamCommitments.length} time(s) para o próximo mês. ` +
+          `Consulte a seção "Compromissos por Time" para o detalhamento de foco e dependências cruzadas.`;
+      }
+      if (!consolidation.leaderSignals && (pendingDecisions.length > 0 || agendaSuggestions.length > 0)) {
+        consolidation.leaderSignals =
+          `Líderes registraram ${pendingDecisions.length} decisão(ões) pendente(s) e ` +
+          `${agendaSuggestions.length} sugestão(ões) de pauta. Detalhes nas seções correspondentes.`;
+      }
+
+      const reportData: ReportResponse & { aiGenerationStatus?: string } = {
         monthRef: body.monthRef,
         monthNarrative: consolidation.monthNarrative,
         commitmentsAnalysis: consolidation.commitmentsAnalysis,
@@ -301,10 +353,14 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
         monthAnalyses,
         overallAchievement,
         analyzedTeams,
+        aiGenerationStatus,
       };
 
-      console.log(`[${requestId}] MBR executive report generated successfully (map-reduce)`);
+      console.log(
+        `[${requestId}] MBR executive report generated successfully (sequential, status=${aiGenerationStatus})`,
+      );
       return successResponse(reportData);
+
     } catch (err: unknown) {
       const error = err as Error & { status?: number };
       console.error(`[${requestId}] Unhandled map-reduce error:`, error.message);

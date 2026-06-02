@@ -368,7 +368,15 @@ export function useMbrExecutiveReport(cycleId: string | null, monthRef: string |
       if (fnError) throw fnError;
 
       const reportData = normalizeMbrExecutiveReportData(fnData?.data || fnData);
-      if (!reportData.monthNarrative) {
+      // Aceitamos relatórios em modo fallback (narrativa determinística após
+      // falha temporária da IA). Só rejeitamos se não houver NENHUM conteúdo
+      // narrativo nem dados operacionais — sinal real de resposta inválida.
+      const hasAnyContent =
+        !!reportData.monthNarrative ||
+        !!reportData.commitmentsAnalysis ||
+        (reportData.overallAchievement?.byObjective?.length ?? 0) > 0 ||
+        (reportData.analyzedTeams?.length ?? 0) > 0;
+      if (!hasAnyContent) {
         throw new Error('Invalid report response');
       }
       // Garantia: monthRef sempre presente no snapshot persistido.
