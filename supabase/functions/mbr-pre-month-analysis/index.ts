@@ -280,6 +280,7 @@ Retorne APENAS o JSON.`;
         maxTokens: loaded.agent.max_tokens || 2500,
         temperature: loaded.agent.temperature ?? 0.4,
         timeoutMs: 90_000,
+        maxAttempts: 1,
       });
     } catch (err) {
       const latencyMs = Date.now() - startedAt;
