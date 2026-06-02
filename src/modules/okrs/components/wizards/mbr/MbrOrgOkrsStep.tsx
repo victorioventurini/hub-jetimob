@@ -7,18 +7,13 @@
  */
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Target, TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, User, AlertTriangle } from 'lucide-react';
+import { Target, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WizardStepHeader, WizardStepFooter, WizardStepScaffold, InlineDecisionInput, TeamKrsToggle } from '../shared';
-import { OkrProgressBar } from '../../OkrProgressBar';
-import { OkrStatusBadge } from '../../OkrStatusBadge';
+import { WizardStepHeader, WizardStepFooter, WizardStepScaffold, InlineDecisionInput } from '../shared';
+import { ObjectiveListItem } from '@/modules/okrs/components/dashboard/ObjectiveListItem';
 import type { MbrOrgOkrSnapshot, TeamCheckinDecision } from '@/modules/okrs/types/wizard';
-import type { OkrRagStatus, OkrDirection } from '@/modules/okrs/types';
 import type { OrgObjectiveWithKrs } from '@/modules/okrs/hooks/queries';
-import { formatPercent } from '@/modules/okrs/utils/formatPercent';
 
 // ============================================================
 // TYPES
