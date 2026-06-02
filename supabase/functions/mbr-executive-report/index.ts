@@ -201,18 +201,30 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
 
       const { data: existingJobs } = await ctx.serviceClient
         .from("okr_wizard_sessions")
-        .select("id, reflection_data")
+        .select("id, reflection_data, updated_at")
         .eq("wizard_type", "mbr-executive-report")
         .eq("cycle_id", body.cycleId)
         .eq("bu_id", buId)
         .eq("status", "in_progress")
         .order("updated_at", { ascending: false })
         .limit(10);
-      const existingJob = (existingJobs || []).find((row: { id: string; reflection_data?: { monthRef?: string } | null }) =>
+      const existingJob = (existingJobs || []).find((row: { id: string; reflection_data?: { monthRef?: string } | null; updated_at?: string | null }) =>
         row.reflection_data?.monthRef === body.monthRef,
       );
       if (existingJob?.id) {
-        return successResponse({ jobId: existingJob.id, status: "generating" }, undefined, 202);
+        const updatedAt = existingJob.updated_at ? new Date(existingJob.updated_at).getTime() : 0;
+        const isFresh = updatedAt > Date.now() - 15 * 60 * 1000;
+        if (isFresh) {
+          return successResponse({ jobId: existingJob.id, status: "generating" }, undefined, 202);
+        }
+        await markReportJobFailed(
+          ctx.serviceClient,
+          existingJob.id,
+          body,
+          requestId,
+          "Geração anterior ficou pendente por tempo excessivo e foi reiniciada.",
+          "STALE_REPORT_JOB",
+        );
       }
 
       const { data: job, error: jobErr } = await ctx.serviceClient
@@ -244,11 +256,13 @@ async function handler(req: Request, ctx: RequestContext): Promise<Response> {
       }
 
       const work = runReportJob(req.url, ctx, job.id, body, requestId);
-      const edgeRuntime = (globalThis as typeof globalThis & {
-        EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
-      }).EdgeRuntime;
-      if (edgeRuntime?.waitUntil) edgeRuntime.waitUntil(work);
-      else work.catch((err) => console.error(`[${requestId}] report job background error:`, err));
+      // @ts-expect-error EdgeRuntime is provided in the edge runtime.
+      if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as { waitUntil?: (promise: Promise<unknown>) => void }).waitUntil) {
+        // @ts-expect-error EdgeRuntime is provided in the edge runtime.
+        (EdgeRuntime as { waitUntil: (promise: Promise<unknown>) => void }).waitUntil(work);
+      } else {
+        work.catch((err) => console.error(`[${requestId}] report job background error:`, err));
+      }
 
       return successResponse({ jobId: job.id, status: "generating" }, undefined, 202);
     }
