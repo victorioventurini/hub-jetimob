@@ -42,6 +42,7 @@ import {
   analyzeKpis,
   analyzeKrIssues,
   analyzeProjects,
+  bucketKpisByRag,
   consolidateReport,
   type DecisionsPartial,
   type KpiInsightsPartial,
