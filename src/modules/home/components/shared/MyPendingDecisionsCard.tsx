@@ -16,6 +16,7 @@ import {
   useDecisionThread,
 } from '@/modules/okrs/hooks';
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
+import { getRitualLabel } from '@/modules/okrs/constants/ritualLabels';
 
 const MAX_VISIBLE = 5;
 
@@ -51,6 +52,8 @@ export function MyPendingDecisionsCard() {
             key={`${item.sessionId}-${item.decision.id}`}
             decision={item.decision}
             sessionId={item.sessionId}
+            ritualLabel={getRitualLabel(item.sessionType)}
+            createdAt={item.sessionCompletedAt}
             onUpdate={({ sessionId, decisionId, updates }) => {
               updateFollowUp({ sessionId, decisionId, updates });
             }}

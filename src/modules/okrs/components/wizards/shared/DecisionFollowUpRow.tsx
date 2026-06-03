@@ -58,6 +58,10 @@ export interface DecisionFollowUpRowProps {
   hideThread?: boolean;
   /** Profile id of the user who conducted the ritual (allowed to edit owner/deadline) */
   conductorProfileId?: string | null;
+  /** Label do rito de origem (ex.: "MBR", "Weekly") — exibido ao lado da etapa */
+  ritualLabel?: string;
+  /** Data ISO em que o item foi registrado (ex.: completed_at da sessão) */
+  createdAt?: string | null;
 }
 
 // ============================================================
@@ -122,6 +126,8 @@ export function DecisionFollowUpRow({
   isAddingMessage = false,
   hideThread = false,
   conductorProfileId,
+  ritualLabel,
+  createdAt,
 }: DecisionFollowUpRowProps) {
   const { profileId } = useIdentity();
   const { isWildcard } = usePermissions();
@@ -232,6 +238,14 @@ export function DecisionFollowUpRow({
               {decision.sourceStep && (
                 <span className="text-[10px] text-muted-foreground">
                   Etapa: {decision.sourceStep}
+                  {ritualLabel ? ` · ${ritualLabel}` : ''}
+                </span>
+              )}
+
+              {createdAt && (
+                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {format(parseISO(createdAt), 'dd/MM/yyyy', { locale: ptBR })}
                 </span>
               )}
 
