@@ -126,6 +126,8 @@ export function DecisionFollowUpRow({
   isAddingMessage = false,
   hideThread = false,
   conductorProfileId,
+  ritualLabel,
+  createdAt,
 }: DecisionFollowUpRowProps) {
   const { profileId } = useIdentity();
   const { isWildcard } = usePermissions();
