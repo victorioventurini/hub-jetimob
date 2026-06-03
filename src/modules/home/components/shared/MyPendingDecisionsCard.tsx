@@ -16,6 +16,7 @@ import {
   useDecisionThread,
 } from '@/modules/okrs/hooks';
 import { DecisionFollowUpRow } from '@/modules/okrs/components/wizards/shared/DecisionFollowUpRow';
+import { getRitualLabel } from '@/modules/okrs/constants/ritualLabels';
 
 const MAX_VISIBLE = 5;
 
