@@ -238,6 +238,14 @@ export function DecisionFollowUpRow({
               {decision.sourceStep && (
                 <span className="text-[10px] text-muted-foreground">
                   Etapa: {decision.sourceStep}
+                  {ritualLabel ? ` · ${ritualLabel}` : ''}
+                </span>
+              )}
+
+              {createdAt && (
+                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {format(parseISO(createdAt), 'dd/MM/yyyy', { locale: ptBR })}
                 </span>
               )}
 
