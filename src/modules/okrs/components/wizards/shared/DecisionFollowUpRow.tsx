@@ -58,6 +58,10 @@ export interface DecisionFollowUpRowProps {
   hideThread?: boolean;
   /** Profile id of the user who conducted the ritual (allowed to edit owner/deadline) */
   conductorProfileId?: string | null;
+  /** Label do rito de origem (ex.: "MBR", "Weekly") — exibido ao lado da etapa */
+  ritualLabel?: string;
+  /** Data ISO em que o item foi registrado (ex.: completed_at da sessão) */
+  createdAt?: string | null;
 }
 
 // ============================================================
