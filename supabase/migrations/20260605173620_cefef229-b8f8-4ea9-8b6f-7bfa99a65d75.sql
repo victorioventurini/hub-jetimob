@@ -1,0 +1,1 @@
+UPDATE public.okr_wizard_sessions SET evaluation_closed_at = now() WHERE id = '9232a217-9c57-4c55-abbb-922c2c776de3' AND evaluation_closed_at IS NULL;
