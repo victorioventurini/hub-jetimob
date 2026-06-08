@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Users, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Users, RefreshCw, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { TeamKrListItem } from './TeamKrListItem';
 import type { OrgKrWithTeamKrs } from '../../hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { CheckinDialog } from '../CheckinDialog';
+import { KrHistoryDialog } from '../KrHistoryDialog';
 import { useCanManageOrgOkr } from '../../hooks/useCanManageTeamOkr';
 import { useIdentity } from '@/hooks/useIdentity';
 import type { CheckinKrData } from '../checkin/checkinTypes';
