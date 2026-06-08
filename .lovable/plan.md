@@ -1,26 +1,100 @@
+
 ## Objetivo
 
-Na etapa **Pautas e decisões** do MBR, tornar os cartões da seção **"Pendências do MBR Anterior"** totalmente editáveis, usando o mesmo `DecisionCard` (com reclassificação, responsável, prazo, edição de texto e remoção) já usado para os registros criados dentro do próprio rito.
+Disponibilizar, na UI, um **modal de check-in para KR organizacional** equivalente ao das KRs de time — com histórico persistido, respeitando a Core Rule "Primary KPIs dictate KR progress automatically" e restrito a **owner da Org KR + BU Admin**.
 
-## Comportamento
+## Decisões-chave (pré-checklist consultado)
 
-- Cada pendência herdada vira um registro editável (texto, categoria, responsável, prazo).
-- Ao editar/reclassificar/atribuir responsável/prazo, a mudança é persistida no draft do MBR atual (em `decisions`), preservando o `id` original para reconciliação com a sessão anterior.
-- Continuam visualmente agrupadas sob o cabeçalho “Pendências do MBR Anterior”, separadas dos registros criados nesta etapa, para manter a leitura de origem.
-- Remover um item carry-over no MBR atual = descartá-lo (não voltará a aparecer na próxima sessão como pendente — fica resolvido).
+- **OKRs canonical** (`docs/canonical/modules/okrs.md` + `mem://features/okrs/okrs-master-standard`): toda atualização de KR passa pelo cálculo canônico (`calculateProgress`); RAG é o mesmo do team KR.
+- **Schema atual**: `okr_checkins.kr_id` tem FK exclusiva para `okr_team_key_results`. Para registrar histórico de Org KR sem quebrar essa FK, criamos uma tabela espelho `okr_org_checkins`.
+- **Reuso obrigatório**: os blocos `CheckinContextBlock`, `CheckinProgressBlock`, `CheckinStatusSelector`, `CheckinReflectionBlock` já são puros (recebem `kr` como prop). Vamos **generalizar `CheckinKrData`** e **introduzir um único `CheckinDialog` polimórfico** (por `scope: 'team' | 'org'`), não duplicar.
+- **Core Rule respeitada**: campo de valor fica read-only quando há KPI primária OU agregação de KRs de time cascade.
+- **Permissão**: gate via permission key `okrs.org_objective.update:bu` **OU** `owner_user_id === realProfileId`.
 
 ## Mudanças
 
-### `src/modules/okrs/components/wizards/mbr/MbrDecisionsStep.tsx`
+### 1. Backend (migração única)
 
-1. **Hidratar pendências no estado editável**: em `useEffect`, mesclar em `decisions` cada item de `previousMbrPendingItems` cujo `id` ainda não esteja presente, marcando `metadata.carry_over = true` e preservando `category`/`text`/`owner`/`deadline` originais. Chamar `onDecisionsChange` uma única vez.
-2. **Separar carry-overs da listagem agrupada por step**: `groupedDecisions` passa a filtrar `d.metadata?.carry_over !== true`.
-3. **Substituir os `Card` read-only** (linhas 206–222) por `DecisionCard` com `showReclassify` e `showOwnerDeadline`, usando os mesmos `handleUpdate`/`handleRemove`. Manter o header da seção (`Clock` + “Pendências do MBR Anterior (N)”).
-4. Contador da seção passa a refletir os carry-overs presentes em `decisions` (não mais o prop bruto), para refletir remoções/edições em tempo real.
+- **Nova tabela `okr_org_checkins`** espelhando `okr_checkins` (kr_id → `okr_org_key_results(id)`, previous_value, current_value, confidence, comments, user_id → profiles, bu_id, team_id NULL, created_at/updated_at).
+- **Trigger** `set_bu_id_from_org_kr` para preencher `bu_id`.
+- **GRANT** SELECT/INSERT/UPDATE/DELETE para `authenticated`, ALL para `service_role`.
+- **RLS**:
+  - `select`: membro da BU.
+  - `insert`: `has_role(auth.uid(), 'admin')` na BU **OU** `user_id = realProfileId` AND `owner_user_id(kr) = realProfileId`. Função `can_checkin_org_kr(_kr_id, _profile_id)` SECURITY DEFINER.
+  - `update/delete`: BU Admin only.
+- **Sem CHECK constraints** — usar trigger de validação se preciso.
 
-Nenhuma mudança em `MbrPage.tsx`, hooks ou backend — `previousMbrPendingItems` continua sendo a fonte de hidratação inicial, e `decisions` segue como o estado canônico salvo no draft.
+### 2. Generalização dos componentes de check-in (sem duplicação)
 
-## Fora de escopo
+- `src/modules/okrs/components/checkin/checkinTypes.ts`:
+  - Adicionar `scope: 'team' | 'org'` em `CheckinKrData`.
+  - Tornar `team_id` opcional; adicionar `org_objective?: { title; cycle_id }`.
+- `CheckinContextBlock`: ramificar título contextual ("Time X" vs "Organização / Objetivo Y").
+- `CheckinProgressBlock`: já recebe `isAutomatic` — basta passar verdadeiro quando houver KPI primária OU KRs de time cascade.
+- Demais blocos: sem mudança.
 
-- Seção “Sinalizações dos Pré-MBRs” (continua como “sugestão + botão adicionar”).
-- Carry-over de outros ritos (weekly/QBR).
+### 3. `CheckinDialog` polimórfico
+
+- Em `CheckinDialog.tsx`, ramificar pelo `kr.scope`:
+  - **team**: comportamento atual (`okr_checkins.insert` + `okr_team_key_results.update`).
+  - **org**: insert em `okr_org_checkins` + update em `okr_org_key_results(current_value, status)`.
+- `usePrimaryKpiForKr(kr.id, kr.scope)` já aceita `'team' | 'org'` — verificar e ajustar se necessário.
+- Detecção de "cascade ativa" via novo hook `useOrgKrCascadeSources(orgKrId)` que consulta `okr_team_key_results.parent_org_kr_id` (ou tabela de mapeamento existente). Se houver KR filha contribuindo → `isAutomatic = true`.
+- Mensagem explicativa quando bloqueado: "Valor derivado automaticamente da KPI primária / das KRs de time vinculadas."
+
+### 4. Hooks
+
+- `useCreateOrgCheckin` (espelho de `useCreateCheckin`) — fonte única de mutation para Org check-in (reuso futuro em wizards executivos).
+- Invalidar `queryKeys.okrs.orgKeyResults`, `queryKeys.okrs.orgObjective(id)`, `queryKeys.okrs.dashboardDataPrefix()`.
+
+### 5. UI — pontos de chamada
+
+- `OrgKrExpandableCard` (`src/modules/okrs/components/org-view/OrgKrExpandableCard.tsx`): adicionar botão **"Atualizar"** ao lado do header da Org KR (visível somente se o usuário tem permissão — usar `useIdentity` + permission key).
+- `OrgObjectiveViewPage`: nenhum ajuste estrutural.
+- `Visão Executiva` (`ExecutiveDashboardPage`): adicionar a mesma ação no card da Org KR.
+
+### 6. Permissão
+
+- Helper `useCanCheckinOrgKr(orgKr)`:
+  - `realProfileId === orgKr.owner_user_id` **ou**
+  - `hasPermission('okrs.org_objective.update:bu')`.
+- Gate aplicado tanto no botão (esconder/desabilitar) quanto no RLS (defesa em profundidade).
+
+### 7. Testes
+
+- Migração: smoke SQL no PR (insert válido owner / insert inválido não-owner / select cross-BU bloqueado).
+- Unit: `CheckinDialog` em modo `org` (mocked supabase), garantindo insert em `okr_org_checkins` e update em `okr_org_key_results`.
+- E2E: cenário em `e2e/okrs.spec.ts` — owner abre modal, atualiza valor, vê linha no histórico.
+
+## Detalhes técnicos
+
+```text
+checkin/ (já existe)
+├── CheckinContextBlock      ← generalizar título (team|org)
+├── CheckinProgressBlock     ← reuso direto
+├── CheckinStatusSelector    ← reuso direto
+├── CheckinReflectionBlock   ← reuso direto
+└── checkinTypes.ts          ← + scope, + org_objective
+
+CheckinDialog.tsx            ← ramificar mutation por scope
+hooks/
+├── useCreateCheckin.ts      ← inalterado (team)
+├── useCreateOrgCheckin.ts   ← NOVO (org, espelho)
+└── useOrgKrCascadeSources.ts← NOVO (detecta cascade)
+
+components/org-view/
+└── OrgKrExpandableCard.tsx  ← + botão "Atualizar" + dialog
+
+supabase/migrations/<ts>_okr_org_checkins.sql
+```
+
+### Histórico exibido
+
+- Drawer/seção no `OrgKrExpandableCard` reaproveitando `KrHistoryDialog` parametrizado por `scope`. (Ajuste mínimo: tabela-fonte por scope.)
+
+## Não faremos
+
+- Não duplicar `CheckinDialog` em `OrgCheckinDialog` (proibido por instrução).
+- Não tocar em `CheckinReflectionBlock`, `CheckinStatusSelector` (zero mudança).
+- Não alterar a FK de `okr_checkins` (mantemos tabela separada para clareza semântica e evitar regressão em queries existentes).
+- Não permitir override quando há KPI primária ou cascade (canon).
