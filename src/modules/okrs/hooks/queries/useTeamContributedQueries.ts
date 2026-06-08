@@ -90,7 +90,8 @@ export function useSharedOkrsSummary(scope: SharedOkrsScope = {}) {
 
       let query = supabase
         .from('v_shared_okrs_summary')
-        .select(AGGREGATE_FIELDS.sharedSummary);
+        .select(AGGREGATE_FIELDS.sharedSummary)
+        .eq('bu_id', currentBuId);
 
       if (teamId) {
         // Time é dono OU consta na lista de contribuidores
