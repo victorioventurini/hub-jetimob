@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Target, Zap, User, Calendar, Users } from "lucide-react";
+import { Target, Zap, User, Calendar, Users, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,10 @@ interface CheckinContextBlockProps {
 }
 
 export function CheckinContextBlock({ kr, userTeamName }: CheckinContextBlockProps) {
+  const isOrg = kr.scope === 'org';
+  const objectiveTitle = isOrg ? kr.org_objective?.title : kr.team_objective?.title;
+  const ObjectiveIcon = isOrg ? Building2 : Target;
+
   const getStatusLabel = (s: OkrRagStatus) => {
     switch (s) {
       case 'green': return 'On Track';
@@ -25,12 +29,14 @@ export function CheckinContextBlock({ kr, userTeamName }: CheckinContextBlockPro
   return (
     <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
       {/* Objective */}
-      {kr.team_objective && (
+      {objectiveTitle && (
         <div className="flex items-start gap-2">
-          <Target className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <ObjectiveIcon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-muted-foreground">Objetivo</p>
-            <p className="text-sm font-medium line-clamp-1">{kr.team_objective.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {isOrg ? 'Objetivo Organizacional' : 'Objetivo'}
+            </p>
+            <p className="text-sm font-medium line-clamp-1">{objectiveTitle}</p>
           </div>
         </div>
       )}
@@ -39,7 +45,9 @@ export function CheckinContextBlock({ kr, userTeamName }: CheckinContextBlockPro
       <div className="flex items-start gap-2">
         <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
         <div>
-          <p className="text-xs text-muted-foreground">Key Result</p>
+          <p className="text-xs text-muted-foreground">
+            {isOrg ? 'KR Organizacional' : 'Key Result'}
+          </p>
           <p className="text-sm font-medium">{kr.title}</p>
         </div>
       </div>

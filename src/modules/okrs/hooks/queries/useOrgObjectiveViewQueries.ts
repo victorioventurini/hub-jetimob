@@ -195,6 +195,8 @@ export function useOrgObjectiveView(objectiveId: string, cycleId?: string | null
           status: getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value),
           progress,
           trend: determineTrend(getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value), progress),
+          owner_user_id: (orgKr as any).owner_user_id ?? null,
+          org_objective_title: objective.title,
           linkedTeamKrs,
         };
       });
@@ -337,6 +339,8 @@ export function useAllOrgObjectivesView(year?: number, cycleId?: string | null) 
             status: getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value),
             progress,
             trend: determineTrend(getEffectiveKrRagStatus(orgKr.status, orgKr.baseline, orgKr.current_value), progress),
+            owner_user_id: (orgKr as any).owner_user_id ?? null,
+            org_objective_title: objective.title,
             linkedTeamKrs,
           };
         });

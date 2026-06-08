@@ -17,10 +17,10 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { getMentionDisplayText } from '@/components/mentions';
 import { useAuth } from '@/hooks/useAuth';
-import { Sparkles } from 'lucide-react';
-import type { OkrRagStatus } from '../types';
+import { Sparkles, Building2 } from 'lucide-react';
 import { useIdentity } from '@/hooks/useIdentity';
 import { usePrimaryKpiForKr } from '../hooks/usePrimaryKpiForKr';
+import { useOrgKrCascadeSources } from '../hooks/useOrgKrCascadeSources';
 import {
   CheckinContextBlock,
   CheckinProgressBlock,
@@ -37,6 +37,9 @@ interface CheckinDialogProps {
 }
 
 export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
+  const scope = kr.scope ?? 'team';
+  const isOrg = scope === 'org';
+
   const { userId, profileId } = useIdentity();
   const { user } = useAuth();
   const { client: supabase, buId, isReady } = useOptionalBuClient();
@@ -45,15 +48,18 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
   const [reflection, setReflection] = useState('');
   const [reflectionMentions, setReflectionMentions] = useState<string[]>([]);
   const [nextStep, setNextStep] = useState('');
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Check for primary KPI via okr_kr_metrics table (new system)
-  const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, 'team');
-  
-  // Determine if value is automatic (locked) - either via legacy metric_id OR new okr_kr_metrics
-  const isAutomatic = !!kr.metric_id || hasPrimaryKpi;
+
+  // KPI primária (mesma fonte para team & org)
+  const { hasPrimaryKpi, primaryKpi } = usePrimaryKpiForKr(kr.id, scope);
+
+  // Cascade (apenas relevante para Org KR)
+  const { hasCascade, linkedCount } = useOrgKrCascadeSources(isOrg ? kr.id : null);
+
+  // Lock manual input quando há fonte derivada
+  const isAutomatic = !!kr.metric_id || hasPrimaryKpi || (isOrg && hasCascade);
 
   const { data: userProfile } = useQuery({
     queryKey: queryKeys.okrs.userProfileForCheckin(userId ?? null, buId ?? null),
@@ -111,33 +117,76 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
       if (!profileId) throw new Error('Perfil não encontrado');
       const confidenceMap: Record<CheckinStatus, 'high' | 'medium' | 'low'> = { green: 'high', yellow: 'medium', red: 'low' };
       const comments = nextStep.trim() ? `${reflection.trim()}\n\n📌 Próximo passo: ${nextStep.trim()}` : reflection.trim();
-
-      // When KR has primary KPI, use KR's current value (which should be synced from KPI)
       const checkinValue = isAutomatic ? kr.current_value : parseFloat(currentValue);
 
-      const { data: checkinData, error } = await supabase.from('okr_checkins').insert({
-        kr_id: kr.id, current_value: checkinValue,
-        previous_value: kr.current_value, confidence: confidenceMap[status], blockers: null, comments,
-        user_id: profileId, team_id: userProfile?.team_id || null,
-      } as any).select('id').single();
-      if (error) throw error;
+      if (isOrg) {
+        // ===== Org KR =====
+        const { data: checkinData, error } = await supabase
+          .from('okr_org_checkins' as any)
+          .insert({
+            kr_id: kr.id,
+            current_value: checkinValue,
+            previous_value: kr.current_value,
+            confidence: confidenceMap[status],
+            blockers: null,
+            comments,
+            user_id: profileId,
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
 
-      if (reflectionMentions.length > 0 && checkinData) {
-        await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, getShareableUrl('okr_team_kr', kr.id));
+        if (reflectionMentions.length > 0 && checkinData) {
+          await processMentions(
+            reflection, 'checkin', (checkinData as any).id,
+            'kr', kr.id, getShareableUrl('okr_org_kr', kr.id),
+          );
+        }
+
+        if (!isAutomatic) {
+          const { error: updateError } = await supabase
+            .from('okr_org_key_results')
+            .update({ status, current_value: checkinValue })
+            .eq('id', kr.id);
+          if (updateError) throw updateError;
+        } else {
+          // Quando automático, sincroniza apenas o status RAG
+          const { error: updateError } = await supabase
+            .from('okr_org_key_results')
+            .update({ status })
+            .eq('id', kr.id);
+          if (updateError) throw updateError;
+        }
+      } else {
+        // ===== Team KR (comportamento original) =====
+        const { data: checkinData, error } = await supabase.from('okr_checkins').insert({
+          kr_id: kr.id, current_value: checkinValue,
+          previous_value: kr.current_value, confidence: confidenceMap[status], blockers: null, comments,
+          user_id: profileId, team_id: userProfile?.team_id || null,
+        } as any).select('id').single();
+        if (error) throw error;
+
+        if (reflectionMentions.length > 0 && checkinData) {
+          await processMentions(reflection, 'checkin', checkinData.id, 'kr', kr.id, getShareableUrl('okr_team_kr', kr.id));
+        }
+
+        const { error: updateError } = await supabase.from('okr_team_key_results').update({
+          status, current_value: checkinValue,
+        }).eq('id', kr.id);
+        if (updateError) throw updateError;
       }
-
-      // Only update KR value if not automatic
-      const { error: updateError } = await supabase.from('okr_team_key_results').update({ 
-        status, current_value: checkinValue,
-      }).eq('id', kr.id);
-      if (updateError) throw updateError;
     },
     onSuccess: () => {
-      // Use refetchType: 'active' para atualização imediata na UI
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkins(kr.id), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null), refetchType: 'active' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null), refetchType: 'active' });
+      if (isOrg) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgKeyResultsPrefix(), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgObjectivesPrefix(), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.orgCheckins(kr.id), refetchType: 'active' });
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.teamKeyResults(null), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkins(kr.id), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.pendingCheckins(null), refetchType: 'active' });
+        queryClient.invalidateQueries({ queryKey: queryKeys.okrs.checkinSummary(null), refetchType: 'active' });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.okrs.dashboardDataPrefix(), refetchType: 'active' });
       toast({ title: '✓ Check-in registrado', description: 'O progresso foi atualizado com sucesso.' });
       onOpenChange(false);
@@ -163,23 +212,33 @@ export function CheckinDialog({ open, onOpenChange, kr }: CheckinDialogProps) {
     createCheckin.mutate();
   };
 
+  const TitleIcon = isOrg ? Building2 : Sparkles;
+  const dialogTitle = isOrg ? 'Atualizar KR Organizacional' : 'Check-in de Progresso';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`${DIALOG_SIZES.md} max-h-[90vh] overflow-y-auto`}>
         <form onSubmit={handleSubmit}>
           <DialogHeader className="pb-2">
             <DialogTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="w-5 h-5 text-primary" />Check-in de Progresso
+              <TitleIcon className="w-5 h-5 text-primary" />{dialogTitle}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <CheckinContextBlock kr={kr} userTeamName={(userProfile?.team as any)?.name} />
+            <CheckinContextBlock kr={kr} userTeamName={isOrg ? undefined : (userProfile?.team as any)?.name} />
+            {isOrg && hasCascade && !hasPrimaryKpi && (
+              <div className="rounded-md border border-info/30 bg-info-muted/40 p-3 text-xs text-muted-foreground">
+                Valor derivado automaticamente de <strong>{linkedCount}</strong>{' '}
+                KR{linkedCount === 1 ? '' : 's'} de time vinculada{linkedCount === 1 ? '' : 's'} a este KR organizacional.
+                Você ainda pode registrar reflexão e atualizar o status RAG.
+              </div>
+            )}
             <Separator />
-            <CheckinProgressBlock 
-              kr={kr} 
-              currentValue={currentValue} 
-              status={status} 
-              isAutomatic={isAutomatic} 
+            <CheckinProgressBlock
+              kr={kr}
+              currentValue={currentValue}
+              status={status}
+              isAutomatic={isAutomatic}
               onValueChange={setCurrentValue}
               primaryKpi={primaryKpi}
             />

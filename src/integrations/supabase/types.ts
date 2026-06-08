@@ -6806,6 +6806,80 @@ export type Database = {
           },
         ]
       }
+      okr_org_checkins: {
+        Row: {
+          blockers: string | null
+          bu_id: string
+          comments: string | null
+          confidence: string
+          created_at: string
+          current_value: number
+          date: string
+          id: string
+          kr_id: string
+          previous_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blockers?: string | null
+          bu_id: string
+          comments?: string | null
+          confidence: string
+          created_at?: string
+          current_value: number
+          date?: string
+          id?: string
+          kr_id: string
+          previous_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blockers?: string | null
+          bu_id?: string
+          comments?: string | null
+          confidence?: string
+          created_at?: string
+          current_value?: number
+          date?: string
+          id?: string
+          kr_id?: string
+          previous_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "okr_org_checkins_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "okr_org_key_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_bu_all_profiles_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "okr_org_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profiles_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       okr_org_key_results: {
         Row: {
           baseline: number
@@ -11920,6 +11994,10 @@ export type Database = {
       calculate_project_health: {
         Args: { p_project_id: string }
         Returns: string
+      }
+      can_checkin_org_kr: {
+        Args: { _kr_id: string; _profile_id: string }
+        Returns: boolean
       }
       can_create_shared_team_kr_by_profile: {
         Args: {
