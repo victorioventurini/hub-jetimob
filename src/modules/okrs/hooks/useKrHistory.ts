@@ -47,17 +47,24 @@ export interface KrWithHistoryData {
 /**
  * Fetches KR check-in history for visualization
  */
-export function useKrHistory(krId: string | null | undefined) {
+export function useKrHistory(
+  krId: string | null | undefined,
+  scope: 'team' | 'org' = 'team',
+) {
   const { client: supabase, isReady, buId } = useOptionalBuClient();
+  const table = scope === 'org' ? 'okr_org_checkins' : 'okr_checkins';
 
   return useQuery({
-    queryKey: queryKeys.okrs.krCheckinHistory(buId ?? null, krId ?? null),
+    queryKey: [
+      ...queryKeys.okrs.krCheckinHistory(buId ?? null, krId ?? null),
+      scope,
+    ] as const,
     queryFn: async (): Promise<KrHistoryData | null> => {
       if (!krId || !supabase) return null;
 
       // Fetch checkins with explicit fields and limit
       const { data: checkins, error } = await supabase
-        .from('okr_checkins')
+        .from(table)
         .select(`
           id, date, previous_value, current_value, confidence,
           comments, blockers, created_at, user_id
