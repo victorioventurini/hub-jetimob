@@ -77,7 +77,7 @@ const directionLabels: Record<OkrDirection, string> = {
 };
 
 export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps) {
-  const { data: historyData, isLoading } = useKrHistory(kr?.id);
+  const { data: historyData, isLoading } = useKrHistory(kr?.id, kr?.scope ?? 'team');
 
   if (!kr) return null;
 
