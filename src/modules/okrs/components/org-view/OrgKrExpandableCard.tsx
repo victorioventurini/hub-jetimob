@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Users, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Users, RefreshCw, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { TeamKrListItem } from './TeamKrListItem';
 import type { OrgKrWithTeamKrs } from '../../hooks';
 import { RAG_STATUS_COLORS } from '@/lib/colors';
 import { CheckinDialog } from '../CheckinDialog';
+import { KrHistoryDialog } from '../KrHistoryDialog';
 import { useCanManageOrgOkr } from '../../hooks/useCanManageTeamOkr';
 import { useIdentity } from '@/hooks/useIdentity';
 import type { CheckinKrData } from '../checkin/checkinTypes';
@@ -41,6 +42,7 @@ const trendColors = {
 export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [checkinOpen, setCheckinOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const TrendIcon = trendIcons[orgKr.trend];
   const linkedCount = orgKr.linkedTeamKrs.length;
 
@@ -116,20 +118,32 @@ export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
             </button>
           </CollapsibleTrigger>
 
-          {canCheckin && (
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               size="sm"
-              variant="outline"
-              className="shrink-0"
+              variant="ghost"
               onClick={(e) => {
                 e.stopPropagation();
-                setCheckinOpen(true);
+                setHistoryOpen(true);
               }}
             >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Atualizar
+              <History className="w-3.5 h-3.5 mr-1.5" />
+              Histórico
             </Button>
-          )}
+            {canCheckin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCheckinOpen(true);
+                }}
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                Atualizar
+              </Button>
+            )}
+          </div>
         </div>
 
         <CollapsibleContent>
@@ -158,6 +172,24 @@ export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
           kr={checkinKr}
         />
       )}
+
+      <KrHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        kr={{
+          id: orgKr.id,
+          title: orgKr.title,
+          baseline: orgKr.baseline,
+          current_value: orgKr.current_value,
+          target: orgKr.target,
+          unit: orgKr.unit,
+          direction: orgKr.direction,
+          status: orgKr.status,
+          type: 'contribution',
+          objective_title: orgKr.org_objective_title ?? undefined,
+          scope: 'org',
+        }}
+      />
     </Card>
   );
 }

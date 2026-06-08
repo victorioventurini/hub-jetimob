@@ -41,6 +41,7 @@ interface KrData {
   owner_photo?: string | null;
   team_name?: string;
   objective_title?: string;
+  scope?: 'team' | 'org';
 }
 
 interface KrHistoryDialogProps {
@@ -76,7 +77,7 @@ const directionLabels: Record<OkrDirection, string> = {
 };
 
 export function KrHistoryDialog({ open, onOpenChange, kr }: KrHistoryDialogProps) {
-  const { data: historyData, isLoading } = useKrHistory(kr?.id);
+  const { data: historyData, isLoading } = useKrHistory(kr?.id, kr?.scope ?? 'team');
 
   if (!kr) return null;
 
