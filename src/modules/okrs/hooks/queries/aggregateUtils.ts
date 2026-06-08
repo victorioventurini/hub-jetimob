@@ -75,7 +75,7 @@ export const AGGREGATE_FIELDS = {
   ` as const,
 
   sharedSummary: `
-    objective_id, title, primary_team_id, primary_team_name,
+    objective_id, bu_id, title, primary_team_id, primary_team_name,
     contributor_count, is_shared, responsibility_model, status
   ` as const,
 
