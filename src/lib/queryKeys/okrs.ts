@@ -94,6 +94,14 @@ export const okrsKeys = {
   krPrimaryKpi: (krId: string, krType: string) =>
     ['okr-kr-primary-kpi', krId, krType] as const,
 
+  /** Cascade sources de uma Org KR (KRs de time linkadas via linked_org_kr_id) */
+  orgKrCascadeSources: (orgKrId: string) =>
+    ['okr-org-kr-cascade-sources', orgKrId] as const,
+
+  /** Histórico de check-ins de uma Org KR */
+  orgCheckins: (orgKrId: string) =>
+    ['okr-org-checkins', orgKrId] as const,
+
   /** v3.4.2: Valores efetivos da KR (considerando KPI primária) */
   krEffectiveValues: (krId: string, krType: string) =>
     ['okr-kr-effective-values', krId, krType] as const,
