@@ -11720,6 +11720,7 @@ export type Database = {
       }
       v_shared_okrs_summary: {
         Row: {
+          bu_id: string | null
           contributor_count: number | null
           contributor_team_ids: string[] | null
           contributor_team_names: string[] | null
@@ -11736,6 +11737,13 @@ export type Database = {
           year: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "okr_team_objectives_bu_id_fkey"
+            columns: ["bu_id"]
+            isOneToOne: false
+            referencedRelation: "bu_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "okr_team_objectives_team_id_fkey"
             columns: ["primary_team_id"]
