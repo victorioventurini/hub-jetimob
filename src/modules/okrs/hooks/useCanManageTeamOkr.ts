@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useManageableTeams } from "./useManageableTeams";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useBu } from "@/contexts/BuContext";
 
 /**
  * Hook para verificar se o usuário atual pode gerenciar OKRs de um time específico.
@@ -45,16 +46,19 @@ export function useCanManageTeamOkr(teamId: string | undefined | null) {
  * `org_objective` (create/cancel/delete são exclusivas de admin de BU).
  */
 export function useCanManageOrgOkr() {
-  const { has, isWildcard, isLoading } = usePermissions();
+  const { userRole } = useBu();
+  const { has, isWildcard, isLoading, isImpersonating } = usePermissions();
 
   const canManage = useMemo(() => {
     if (isWildcard) return true;
+    if (!isImpersonating && (userRole === 'admin' || userRole === 'super_admin')) return true;
     return (
       has('okrs.org_objective.create:bu') ||
       has('okrs.org_objective.cancel:bu') ||
-      has('okrs.org_objective.delete:bu')
+      has('okrs.org_objective.delete:bu') ||
+      has('okrs.org_objective.update:self_or_owner')
     );
-  }, [isWildcard, has]);
+  }, [isWildcard, isImpersonating, userRole, has]);
 
   return {
     canManage,

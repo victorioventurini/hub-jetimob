@@ -18,12 +18,18 @@ vi.mock('@/hooks/usePermissions', () => ({
   usePermissions: vi.fn(),
 }));
 
+vi.mock('@/contexts/BuContext', () => ({
+  useBu: vi.fn(),
+}));
+
 import { useCanManageTeamOkr, useCanManageOrgOkr } from './useCanManageTeamOkr';
 import { useManageableTeams } from './useManageableTeams';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useBu } from '@/contexts/BuContext';
 
 const mockUseManageableTeams = vi.mocked(useManageableTeams);
 const mockUsePermissions = vi.mocked(usePermissions);
+const mockUseBu = vi.mocked(useBu);
 
 function setupPermissions(opts: {
   permissions?: string[];
@@ -48,6 +54,10 @@ function setupTeams(teams: { id: string; name?: string }[], isLoading = false) {
     isLoading,
     hasManageableTeams: teams.length > 0,
   } as any);
+}
+
+function setupBu(userRole: string | null = null) {
+  mockUseBu.mockReturnValue({ userRole } as any);
 }
 
 describe('useCanManageTeamOkr', () => {
@@ -124,6 +134,7 @@ describe('useCanManageOrgOkr', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupTeams([]);
+    setupBu();
   });
 
   it('grants access to wildcard', () => {
@@ -132,8 +143,15 @@ describe('useCanManageOrgOkr', () => {
     expect(result.current.canManage).toBe(true);
   });
 
-  it('grants access with okrs.org_objective.update:bu permission', () => {
-    setupPermissions({ permissions: ['okrs.org_objective.update:bu'] });
+  it('grants access with an org_objective BU admin permission', () => {
+    setupPermissions({ permissions: ['okrs.org_objective.create:bu'] });
+    const { result } = renderHook(() => useCanManageOrgOkr());
+    expect(result.current.canManage).toBe(true);
+  });
+
+  it('grants access when current BU membership role is admin', () => {
+    setupPermissions({});
+    setupBu('admin');
     const { result } = renderHook(() => useCanManageOrgOkr());
     expect(result.current.canManage).toBe(true);
   });
