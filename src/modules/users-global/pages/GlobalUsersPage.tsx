@@ -356,7 +356,7 @@ export default function GlobalUsersPage() {
 
       <UserGlobalSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        onOpenChange={handleSheetOpenChange}
         user={selectedUser}
       />
     </div>
