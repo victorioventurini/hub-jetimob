@@ -118,20 +118,32 @@ export function OrgKrExpandableCard({ orgKr }: OrgKrExpandableCardProps) {
             </button>
           </CollapsibleTrigger>
 
-          {canCheckin && (
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               size="sm"
-              variant="outline"
-              className="shrink-0"
+              variant="ghost"
               onClick={(e) => {
                 e.stopPropagation();
-                setCheckinOpen(true);
+                setHistoryOpen(true);
               }}
             >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Atualizar
+              <History className="w-3.5 h-3.5 mr-1.5" />
+              Histórico
             </Button>
-          )}
+            {canCheckin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCheckinOpen(true);
+                }}
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                Atualizar
+              </Button>
+            )}
+          </div>
         </div>
 
         <CollapsibleContent>
