@@ -1,42 +1,38 @@
-## Problema
+# Localização: garantir "Brasília, DF" (e demais capitais) nos resultados
 
-Ao definir role global "colaborador" para `eduarda.oliveira@jetxp.com.br` em `/hub/users`, o backend retorna:
+## Contexto
 
-> there is no unique or exclusion constraint matching the ON CONFLICT specification
+O campo "Localização" usa `CityAutocomplete` → edge function `search-cities`, que combina:
+1. Cache local de ~50 capitais/cidades populares (inclui `Brasília / DF`)
+2. Google Places Autocomplete (`types=(cities)`, `country:br`)
 
-## Pré-checklist (revisado)
+Hoje a função só retorna o cache local quando ele tem **3 ou mais matches** (`if (localResults.length >= 3)`). Para `"brasilia"` só existe 1 match local (`Brasília, DF`), então cai no fallback do Google, que devolve apenas distritos/regiões (`Brasília – Plano Piloto`, `Brasília de Minas, MG`, `Brasília Legal`, …) — e `Brasília, DF` some da lista. O mesmo acontece com outras capitais que tenham bairros/distritos famosos.
 
-- `docs/canonical/core/INDEX.md` + `TCR_CORE.md` — OK.
-- `PERMISSIONS_AND_RBAC_MODEL.md` — `user_roles.role` é a role global única por usuário (super_admin/admin/collaborator/external).
-- `IDENTITY_CONVENTION.md` — `user_roles` é keyed por `user_id` (auth id). Atendido.
-- Schema real: única UNIQUE em `public.user_roles` é `(user_id, role)`. Não há unique em `user_id` sozinho.
+## Workaround imediato (sem código)
 
-## Causa raiz
+Digitar `plano piloto` e selecionar `Brasília – Plano Piloto` (resolve para DF). Ou usar a primeira opção mesmo — apesar do rótulo, o `place_id` é Brasília/DF.
 
-A RPC `public.update_user_global_role` faz:
+## Correção definitiva (1 arquivo)
 
-```sql
-INSERT INTO user_roles (user_id, role)
-VALUES (target_user_id, new_role::app_role)
-ON CONFLICT (user_id) DO UPDATE SET role = EXCLUDED.role;
-```
+`supabase/functions/search-cities/index.ts`: mudar estratégia de "ou/ou" para "sempre mesclar":
 
-Como não existe unique em `user_id` sozinho, o `ON CONFLICT (user_id)` falha sempre. O erro só aparece quando o usuário ainda não tem nenhuma row (no caso de Eduarda já existe pelo menos uma).
+1. Remover o early-return quando `localResults.length >= 3`.
+2. Sempre executar a busca no Google (quando houver chave).
+3. Mesclar `localResults` (prepended) + `googleResults`, deduplicando por `city+state` normalizado, limitando a 8.
+4. Se Google falhar/indisponível, manter fallback atual (retornar `localResults`).
 
-## Correção (única migration alterando o corpo da RPC)
+Resultado: `brasilia` → `Brasília, DF` no topo, seguido das opções do Google. Idem para `são paulo`, `rio`, etc.
 
-Reescrever `update_user_global_role` preservando validações atuais (`is_platform_admin`, restrição a `super_admin`) e a semântica "role global única":
+## Detalhes técnicos
 
-1. Se `new_role` vazio/null → `DELETE FROM user_roles WHERE user_id = target_user_id` (já funciona).
-2. Caso contrário:
-   - `DELETE FROM user_roles WHERE user_id = target_user_id AND role <> new_role::app_role;`
-   - `INSERT INTO user_roles (user_id, role) VALUES (target_user_id, new_role::app_role) ON CONFLICT (user_id, role) DO NOTHING;`
-
-Idempotente, usa a constraint real `(user_id, role)`, sem alterar schema, RLS, frontend, ou outras RPCs. Mantém `SECURITY DEFINER` e `SET search_path = public`.
+- Dedupe key: `normalizeQuery(city) + "|" + state.toUpperCase()`.
+- Cache em memória (`searchCache`) guarda o array já mesclado, TTL 1h.
+- CORS, validação Zod, `verify_jwt=false`, logs estruturados — preservados (conforme Edge Function Standard).
+- Sem mudanças em frontend, schema, RLS, query keys ou tipos.
 
 ## Validação
 
-1. `/hub/users?q=@jetxp` → abrir Eduarda → Role Global = "Colaborador" → salva sem erro; UI já reflete (invalidação canônica em `useUpdateGlobalRole`).
-2. Repetir a mesma seleção → sem erro (idempotência).
-3. Selecionar "Sem acesso global" → role removida.
-4. Usuário sem role prévia → primeira atribuição funciona.
+1. Onde o `CityAutocomplete` é usado → digitar `brasilia` → primeira opção `Brasília, DF`.
+2. `são paulo` → `São Paulo, SP` no topo.
+3. Cidade fora do cache (ex.: `pirassununga`) → continua via Google.
+4. Sem chave Google ativa → fallback só cache local preservado.

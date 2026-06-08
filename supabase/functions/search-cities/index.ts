@@ -200,15 +200,10 @@ serve(async (req) => {
       });
     }
 
-    // 2. Buscar no cache local de cidades populares
+    // 2. Buscar no cache local de cidades populares (sempre prepended ao resultado)
     const localResults = searchLocalCache(query);
-    if (localResults.length >= 3) {
-      console.log('Local cache hit for:', query, '- Found:', localResults.length);
-      searchCache.set(cacheKey, { predictions: localResults, timestamp: Date.now() });
-      return new Response(JSON.stringify({ predictions: localResults, cached: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+
+
 
     // 3. Get Google Maps API key from database
     const apiKey = await getIntegrationApiKey('google-maps');
